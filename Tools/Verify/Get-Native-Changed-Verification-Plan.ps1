@@ -1127,7 +1127,8 @@ function Add-Native-Tool-Suite {
         'Verify-Language-1.0-Multi-Field-Variants',
         'Verify-Generic-Nominal-Main-Pipeline',
         'Verify-Generic-Nominal-Function-Body',
-        'Verify-Generic-Nominal-Declaration-Dependency'
+        'Verify-Generic-Nominal-Declaration-Dependency',
+        'Verify-Generic-Nominal-Variant'
     )) {
         Add-Suite 'language-1-front-door'
         return

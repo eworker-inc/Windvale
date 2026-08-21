@@ -803,111 +803,30 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
 ) -> Compilerˉsourceˉgenericˉtypeˉcase {
     if Layout.Kind !=
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
-        Selected >= Layout.Items ||
+        Selected >= Layout.Items || Layout.Items > 256u32 ||
+        Bytesˉlength(Layout.Itemˉevidence) != Layout.Items * 16u32 ||
         !Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
             Input, Scan, Symbols, Layout
         ) {
         return Compilerˉsourceˉgenericˉtypeˉcaseˉmissing();
     }
-    let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Symbols.Directory, Scan.Modules, Layout.Declaration
-        );
-    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
-        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Layout.Module);
-    let Declarationˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            View.Source, 0u32, 1u32, 1u32, Match.Declarationˉoffset
-        );
-    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
-        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
-            View.Source, Match.Declarationˉoffset,
-            Declarationˉposition.Line, Declarationˉposition.Column, true
-        );
-    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            View.Source, Declaration.Declarationˉoffset,
-            Declarationˉposition.Line, Declarationˉposition.Column,
-            Declaration.Bodyˉoffset
-        );
-    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Declaration.Bodyˉoffset,
-            Bodyˉposition.Line, Bodyˉposition.Column
-        );
-    var Cursor: u32 = Brace.Nextˉoffset;
-    var Line: u32 = Brace.Nextˉline;
-    var Column: u32 = Brace.Nextˉcolumn;
-    var Index: u32 = 0u32;
-    while Index < Declaration.Items {
-        let Case: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Cursor, Line, Column
-            );
-        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Case.Nextˉoffset, Case.Nextˉline,
-                Case.Nextˉcolumn
-            );
-        var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
-        var Fields: u32 = 0u32;
-        if Afterˉname.Kind ==
-            Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            var Fieldˉcursor: u32 = Afterˉname.Nextˉoffset;
-            var Fieldˉline: u32 = Afterˉname.Nextˉline;
-            var Fieldˉcolumn: u32 = Afterˉname.Nextˉcolumn;
-            var Reading: bool = true;
-            while Reading {
-                let Parsed:
-                    Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
-                    Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
-                        View.Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn
-                    );
-                Fields = Fields + 1u32;
-                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
-                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        View.Source, Parsed.Nextˉoffset,
-                        Parsed.Nextˉline, Parsed.Nextˉcolumn
-                    );
-                if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                    let Afterˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
-                        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            View.Source, Separator.Nextˉoffset,
-                            Separator.Nextˉline, Separator.Nextˉcolumn
-                        );
-                    if Afterˉcomma.Kind ==
-                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-                        Reading = false;
-                        End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            View.Source, Afterˉcomma.Nextˉoffset,
-                            Afterˉcomma.Nextˉline,
-                            Afterˉcomma.Nextˉcolumn
-                        );
-                    } else {
-                        Fieldˉcursor = Separator.Nextˉoffset;
-                        Fieldˉline = Separator.Nextˉline;
-                        Fieldˉcolumn = Separator.Nextˉcolumn;
-                    }
-                } else {
-                    Reading = false;
-                    End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        View.Source, Separator.Nextˉoffset,
-                        Separator.Nextˉline, Separator.Nextˉcolumn
-                    );
-                }
-            }
-        }
-        if Index == Selected {
-            return Compilerˉsourceˉgenericˉtypeˉcase(
-                true, Case.Offset, Case.Length, Fields
-            );
-        }
-        Cursor = End.Nextˉoffset;
-        Line = End.Nextˉline;
-        Column = End.Nextˉcolumn;
-        Index = Index + 1u32;
+    let Entry: u32 = Selected * 16u32;
+    let Firstˉfield: u32 = Bytesˉreadˉu32ˉlittle(
+        Layout.Itemˉevidence, Entry + 8u32
+    );
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(
+        Layout.Itemˉevidence, Entry + 12u32
+    );
+    if Fields > 64u32 || Firstˉfield > Layout.Fields ||
+        Fields > Layout.Fields - Firstˉfield {
+        return Compilerˉsourceˉgenericˉtypeˉcaseˉmissing();
     }
-    return Compilerˉsourceˉgenericˉtypeˉcaseˉmissing();
+    return Compilerˉsourceˉgenericˉtypeˉcase(
+        true,
+        Bytesˉreadˉu32ˉlittle(Layout.Itemˉevidence, Entry),
+        Bytesˉreadˉu32ˉlittle(Layout.Itemˉevidence, Entry + 4u32),
+        Fields
+    );
 }
 
 export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
@@ -922,129 +841,27 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
         Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
             Input, Scan, Symbols, Layout, Selectedˉcase
         );
-    if !Caseˉview.Found || Selectedˉfield >= Caseˉview.Fields {
+    if !Caseˉview.Found || Selectedˉfield >= Caseˉview.Fields ||
+        Layout.Fields > 16384u32 ||
+        Bytesˉlength(Layout.Fieldˉevidence) != Layout.Fields * 16u32 {
         return Compilerˉsourceˉgenericˉtypeˉfieldˉmissing();
     }
-    let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-        Compilerˉsourceˉgenericˉtypeˉlayoutˉcatalog(Layout);
-    let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Symbols.Directory, Scan.Modules, Layout.Declaration
-        );
-    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
-        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Layout.Module);
-    let Declarationˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            View.Source, 0u32, 1u32, 1u32, Match.Declarationˉoffset
-        );
-    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
-        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
-            View.Source, Match.Declarationˉoffset,
-            Declarationˉposition.Line, Declarationˉposition.Column, true
-        );
-    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
-            View.Source, Declaration,
-            Declarationˉposition.Line, Declarationˉposition.Column
-        );
-    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            View.Source, Declaration.Declarationˉoffset,
-            Declarationˉposition.Line, Declarationˉposition.Column,
-            Declaration.Bodyˉoffset
-        );
-    let Brace: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Declaration.Bodyˉoffset,
-            Bodyˉposition.Line, Bodyˉposition.Column
-        );
-    var Cursor: u32 = Brace.Nextˉoffset;
-    var Line: u32 = Brace.Nextˉline;
-    var Column: u32 = Brace.Nextˉcolumn;
-    var Caseˉindex: u32 = 0u32;
-    while Caseˉindex < Declaration.Items {
-        let Case: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Cursor, Line, Column
-            );
-        let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                View.Source, Case.Nextˉoffset, Case.Nextˉline,
-                Case.Nextˉcolumn
-            );
-        var End: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉname;
-        if Afterˉname.Kind ==
-            Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
-            var Fieldˉcursor: u32 = Afterˉname.Nextˉoffset;
-            var Fieldˉline: u32 = Afterˉname.Nextˉline;
-            var Fieldˉcolumn: u32 = Afterˉname.Nextˉcolumn;
-            var Fieldˉindex: u32 = 0u32;
-            var Reading: bool = true;
-            while Reading {
-                let Parsed:
-                    Sourceˉdeclarations.Compilerˉsourceˉvariantˉfield =
-                    Sourceˉdeclarations.Compilerˉparseˉvariantˉfield(
-                        View.Source, Fieldˉcursor, Fieldˉline, Fieldˉcolumn
-                    );
-                if Caseˉindex == Selectedˉcase &&
-                    Fieldˉindex == Selectedˉfield {
-                    let Typeˉposition:
-                        Sourceˉbodies.Compilerˉsourceˉposition =
-                        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-                            View.Source, Fieldˉcursor,
-                            Fieldˉline, Fieldˉcolumn, Parsed.Typeˉoffset
-                        );
-                    let Substitution:
-                        Compilerˉsourceˉgenericˉtypeˉsubstitution =
-                        Compilerˉsourceˉgenericˉtypeˉsubstitute(
-                            Input, Scan, Symbols, Catalog, Layout.Instance,
-                            Layout.Module, View.Source, Generic,
-                            Parsed.Typeˉoffset,
-                            Typeˉposition.Line, Typeˉposition.Column
-                        );
-                    return Compilerˉsourceˉgenericˉtypeˉfield(
-                        true, Parsed.Nameˉoffset, Parsed.Nameˉlength,
-                        Substitution.Shape, Substitution.Nominalˉkind
-                    );
-                }
-                Fieldˉindex = Fieldˉindex + 1u32;
-                let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
-                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        View.Source, Parsed.Nextˉoffset,
-                        Parsed.Nextˉline, Parsed.Nextˉcolumn
-                    );
-                if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                    let Afterˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
-                        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            View.Source, Separator.Nextˉoffset,
-                            Separator.Nextˉline, Separator.Nextˉcolumn
-                        );
-                    if Afterˉcomma.Kind ==
-                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-                        Reading = false;
-                        End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                            View.Source, Afterˉcomma.Nextˉoffset,
-                            Afterˉcomma.Nextˉline,
-                            Afterˉcomma.Nextˉcolumn
-                        );
-                    } else {
-                        Fieldˉcursor = Separator.Nextˉoffset;
-                        Fieldˉline = Separator.Nextˉline;
-                        Fieldˉcolumn = Separator.Nextˉcolumn;
-                    }
-                } else {
-                    Reading = false;
-                    End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                        View.Source, Separator.Nextˉoffset,
-                        Separator.Nextˉline, Separator.Nextˉcolumn
-                    );
-                }
-            }
-        }
-        Cursor = End.Nextˉoffset;
-        Line = End.Nextˉline;
-        Column = End.Nextˉcolumn;
-        Caseˉindex = Caseˉindex + 1u32;
+    let Itemˉentry: u32 = Selectedˉcase * 16u32;
+    let Firstˉfield: u32 = Bytesˉreadˉu32ˉlittle(
+        Layout.Itemˉevidence, Itemˉentry + 8u32
+    );
+    if Firstˉfield > Layout.Fields ||
+        Selectedˉfield >= Layout.Fields - Firstˉfield {
+        return Compilerˉsourceˉgenericˉtypeˉfieldˉmissing();
     }
-    return Compilerˉsourceˉgenericˉtypeˉfieldˉmissing();
+    let Entry: u32 = (Firstˉfield + Selectedˉfield) * 16u32;
+    return Compilerˉsourceˉgenericˉtypeˉfield(
+        true,
+        Bytesˉreadˉu32ˉlittle(Layout.Fieldˉevidence, Entry),
+        Bytesˉreadˉu32ˉlittle(Layout.Fieldˉevidence, Entry + 4u32),
+        Bytesˉreadˉu32ˉlittle(Layout.Fieldˉevidence, Entry + 8u32),
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(
+            Bytesˉreadˉu32ˉlittle(Layout.Fieldˉevidence, Entry + 12u32)
+        )
+    );
 }

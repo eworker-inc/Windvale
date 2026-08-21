@@ -1,0 +1,37 @@
+#!wv/1 en@1
+module Genericˉnominalˉvariant;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+record Point {
+    X: i32;
+}
+
+variant Outcome<T> {
+    Value(Item: T, Attempts: u32,);
+    Failure(Code: u32,);
+    Empty;
+}
+
+fn Read(Input: Outcome<Point>) -> i32 {
+    return match Input {
+        case Outcome.Value {
+            Attempts: Attempts,
+            Item: Item,
+        } {
+            if Attempts == 2u32 { Item.X } else { 0 }
+        }
+        case Outcome.Failure { Code: Code, } {
+            if Code == 7u32 { 7 } else { 0 }
+        }
+        case Outcome.Empty { 0 }
+    };
+}
+
+export fn Main() -> i32 {
+    return Read(Outcome.Value<Point> {
+        Item: Point { X: 42 },
+        Attempts: 2u32,
+    });
+}

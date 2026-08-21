@@ -184,6 +184,21 @@ shape. WIR remains version 1.1 because operation identities are already an
 explicit field of its bounded directory; independent validation rejects a bad
 case, field, arity, operand nominal, packed identity, or result type.
 
+For an applied generic variant construction, the type arguments follow the
+selected case: `Outcome.Value<Point> { Item: Value, Attempts: Count }`. Typed
+lowering binds the owning `Outcome<Point>` through WVGT, reconstructs and
+independently validates its complete substituted case layout, and emits
+`Variantˉcreate = 65` with the private instance shape as both result and target.
+The case identity remains its declaration-order index. A match selector already
+has one exact concrete variant shape, so a pattern names `case Outcome.Value`
+without repeating type arguments. Lowering validates that the pattern's
+template and case belong to that selector, then emits `Variantˉcase = 66` and
+`Variantˉfield = 164` with the same private target. Bound fields receive their
+exact substituted shapes. The independent validator reconstructs the same WVGT
+layout and rejects a mismatched template, case, field, arity, packed identity,
+operand, or result. No unresolved generic parameter or runtime lookup enters
+published WIR or WVB.
+
 A dotted local record path emits one `Recordˉfield = 18` operation per segment
 in source order. Each intermediate result must retain an exact record nominal
 shape; a scalar or enum before the final segment is an invalid field target.

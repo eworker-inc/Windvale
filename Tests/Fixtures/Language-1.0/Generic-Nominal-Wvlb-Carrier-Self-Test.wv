@@ -117,6 +117,7 @@ export fn Main() -> i32 {
         Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
             Input, Scan, Symbols, 0u32, View.Source,
             Markerˉoffset(View.Source, "// use "), 1u32, 1u32,
+            0u32, 0u32, 0u32, 0u32,
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty()
         );
     let Typeˉcatalog:

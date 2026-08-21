@@ -178,7 +178,12 @@ local names an applied generic nominal such as `Box<T>`, binding resolves the
 direct function parameter through that same WVGC instance, admits the resulting
 `Box<Point>` through WVGT, and writes only its catalog-bounded private shape.
 The combined result uses WVLB 1.3 and retains both catalogs once; neither `T`
-nor a transient WVGS entry is serialized as a binding shape.
+nor a transient WVGS entry is serialized as a binding shape. When a match selector has a
+private generic-variant shape, named arm bindings use the independently
+validated substituted case layout. Each non-discarded field receives its exact
+concrete shape; `_` creates no entry. Pattern syntax does not repeat type
+arguments because the selector's private WVGT identity already selects the one
+concrete instance.
 
 Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and 1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates those versions unchanged and additionally checks WVLB 1.3. Together they check the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
 

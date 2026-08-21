@@ -56,7 +56,8 @@ fn Bind(
 ) -> Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
     let Offset: u32 = Markerˉoffset(Source, Marker);
     return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
-        Input, Scan, Symbols, 0u32, Source, Offset, 1u32, 1u32, Catalog
+        Input, Scan, Symbols, 0u32, Source, Offset, 1u32, 1u32,
+        0u32, 0u32, 0u32, 0u32, Catalog
     );
 }
 

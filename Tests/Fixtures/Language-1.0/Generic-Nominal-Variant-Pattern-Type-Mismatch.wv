@@ -1,0 +1,26 @@
+#!wv/1 en@1
+module Genericˉnominalˉvariantˉpatternˉtypeˉmismatch;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+record Point { X: i32; }
+
+variant Outcome<T> {
+    Value(Item: T,);
+    Empty;
+}
+
+fn Read(Input: Outcome<Point>) -> i32 {
+    return match Input {
+        case Outcome.Value { Item: Item, } {
+            let Wrong: i32 = Item;
+            Wrong
+        }
+        case Outcome.Empty { 0 }
+    };
+}
+
+export fn Main() -> i32 {
+    return Read(Outcome.Empty<Point> {});
+}

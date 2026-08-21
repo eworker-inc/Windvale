@@ -170,7 +170,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindingˉtypeˉsolution(
     );
 }
 
-fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+fn Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -189,7 +189,11 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
     Inˉspecialization: bool,
     Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
     Functionˉinstance: u32,
-    Inˉfunctionˉspecialization: bool
+    Inˉfunctionˉspecialization: bool,
+    Constructorˉnameˉlength: u32,
+    Constructorˉargumentsˉoffset: u32,
+    Constructorˉargumentsˉline: u32,
+    Constructorˉargumentsˉcolumn: u32
 ) -> Compilerˉsourceˉgenericˉtypeˉbinding {
     let Token: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
@@ -215,7 +219,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
             Symbols.Visibility, Owner, Source, Offset, Line, Column,
             Symbols.Records, Symbols.Enums, false
         );
-    if Ordinary.Status !=
+    if Constructorˉnameˉlength == 0u32 && Ordinary.Status !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
         return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
             Ordinary, Source, Catalog
@@ -271,7 +275,16 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
         Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
             Source, Offset, Line, Column, false
         );
-    let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+    var Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+    var Argumentsˉoffset: u32 = Qualified.Nextˉoffset;
+    var Argumentsˉline: u32 = Qualified.Nextˉline;
+    var Argumentsˉcolumn: u32 = Qualified.Nextˉcolumn;
+    if Constructorˉnameˉlength != 0u32 {
+        Qualifiedˉlength = Constructorˉnameˉlength;
+        Argumentsˉoffset = Constructorˉargumentsˉoffset;
+        Argumentsˉline = Constructorˉargumentsˉline;
+        Argumentsˉcolumn = Constructorˉargumentsˉcolumn;
+    }
     let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
             Input, Scan, Symbols.Directory, Symbols.Lookup,
@@ -304,8 +317,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
         );
     let Argumentsˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Qualified.Nextˉoffset,
-            Qualified.Nextˉline, Qualified.Nextˉcolumn
+            Source, Argumentsˉoffset, Argumentsˉline, Argumentsˉcolumn
         );
     if Generic.Parameters == 0u32 ||
         Argumentsˉstart.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
@@ -366,14 +378,15 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
                 );
             }
             let Nested: Compilerˉsourceˉgenericˉtypeˉbinding =
-                Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+                Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
                     Input, Scan, Symbols, Owner, Source,
                     Cursor, Currentˉline, Currentˉcolumn,
                     Workingˉcatalog, Depth + 1u32,
                     Specializationˉsource, Specializationˉgeneric,
                     Specializationˉsolution, Inˉspecialization,
                     Functionˉcatalog, Functionˉinstance,
-                    Inˉfunctionˉspecialization
+                    Inˉfunctionˉspecialization,
+                    0u32, 0u32, 0u32, 0u32
                 );
             if Nested.Status !=
                     Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
@@ -833,7 +846,7 @@ fn Compilerˉsourceˉgenericˉtypeˉbindingˉadmitˉdependencies(
         let Fieldˉentry: u32 =
             8u32 + Items * 16u32 + Fieldˉindex * 20u32;
         let Dependency: Compilerˉsourceˉgenericˉtypeˉbinding =
-            Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+            Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
                 Input, Scan, Symbols, Module, Source,
                 Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 8u32),
                 Bytesˉreadˉu32ˉlittle(Plan, Fieldˉentry + 12u32),
@@ -841,7 +854,8 @@ fn Compilerˉsourceˉgenericˉtypeˉbindingˉadmitˉdependencies(
                 Workingˉcatalog, Depth + 1u32,
                 Source, Generic, Solution, true,
                 Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
-                4294967295u32, false
+                4294967295u32, false,
+                0u32, 0u32, 0u32, 0u32
             );
         if Dependency.Status !=
                 Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
@@ -869,6 +883,10 @@ export fn Compilerˉsourceˉgenericˉtypeˉbind(
     Offset: u32,
     Line: u32,
     Column: u32,
+    Nominalˉnameˉlength: u32,
+    Argumentsˉoffset: u32,
+    Argumentsˉline: u32,
+    Argumentsˉcolumn: u32,
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
 ) -> Compilerˉsourceˉgenericˉtypeˉbinding {
     let Emptyˉgeneric: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
@@ -881,12 +899,13 @@ export fn Compilerˉsourceˉgenericˉtypeˉbind(
         Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcreate(
             Empty, Empty
         );
-    return Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+    return Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
         Input, Scan, Symbols, Owner, Source,
         Offset, Line, Column, Catalog, 0u32,
         Empty, Emptyˉgeneric, Emptyˉsolution, false,
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
-        4294967295u32, false
+        4294967295u32, false, Nominalˉnameˉlength,
+        Argumentsˉoffset, Argumentsˉline, Argumentsˉcolumn
     );
 }
 
@@ -899,6 +918,10 @@ export fn Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
     Offset: u32,
     Line: u32,
     Column: u32,
+    Nominalˉnameˉlength: u32,
+    Argumentsˉoffset: u32,
+    Argumentsˉline: u32,
+    Argumentsˉcolumn: u32,
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Functionˉsource: bytes,
     Functionˉgeneric: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric,
@@ -911,11 +934,13 @@ export fn Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
             Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
             Bytesˉslice(Input, 0u32, 0u32)
         );
-    return Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+    return Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
         Input, Scan, Symbols, Owner, Source,
         Offset, Line, Column, Catalog, 0u32,
         Functionˉsource, Functionˉgeneric, Emptyˉsolution, false,
-        Functionˉcatalog, Functionˉinstance, true
+        Functionˉcatalog, Functionˉinstance, true,
+        Nominalˉnameˉlength,
+        Argumentsˉoffset, Argumentsˉline, Argumentsˉcolumn
     );
 }
 
@@ -947,11 +972,12 @@ export fn Compilerˉsourceˉgenericˉtypeˉbindˉtypeˉspecialization(
             Solution.Status, Catalog, Token
         );
     }
-    return Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+    return Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
         Input, Scan, Symbols, Owner, Source,
         Offset, Line, Column, Catalog, 0u32,
         Typeˉsource, Typeˉgeneric, Solution, true,
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
-        4294967295u32, false
+        4294967295u32, false,
+        0u32, 0u32, 0u32, 0u32
     );
 }

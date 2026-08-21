@@ -2225,7 +2225,8 @@ fn Compilerˉsourceˉbindingsˉvariantˉfieldˉshape(
     Fieldsˉcolumn: u32,
     Queryˉsource: bytes,
     Queryˉoffset: u32,
-    Queryˉlength: u32
+    Queryˉlength: u32,
+    Substitutedˉshapes: bytes
 ) -> u32 {
     var Cursor: u32 = Fieldsˉoffset;
     var Line: u32 = Fieldsˉline;
@@ -2245,6 +2246,11 @@ fn Compilerˉsourceˉbindingsˉvariantˉfieldˉshape(
                 View.Source, Name.Offset, Name.Length,
                 Queryˉsource, Queryˉoffset, Queryˉlength
             ) {
+                if Bytesˉlength(Substitutedˉshapes) == Fields * 4u32 {
+                    return Bytesˉreadˉu32ˉlittle(
+                        Substitutedˉshapes, Index * 4u32
+                    );
+                }
                 let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
                     Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                         View.Source, Name.Nextˉoffset,
@@ -2289,6 +2295,7 @@ fn Compilerˉsourceˉbindingsˉcollectˉmatchˉfields(
     Fieldsˉline: u32,
     Fieldsˉcolumn: u32,
     Patternˉstart: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Substitutedˉshapes: bytes,
     Build: Compilerˉsourceˉbindingˉbuild
 ) -> Compilerˉsourceˉbindingˉbuild {
     var Result: Compilerˉsourceˉbindingˉbuild = Build;
@@ -2315,7 +2322,7 @@ fn Compilerˉsourceˉbindingsˉcollectˉmatchˉfields(
             Compilerˉsourceˉbindingsˉvariantˉfieldˉshape(
                 Input, Scan, Symbols, Nominal.Module, View,
                 Fields, Fieldsˉoffset, Fieldsˉline, Fieldsˉcolumn,
-                Source, Field.Offset, Field.Length
+                Source, Field.Offset, Field.Length, Substitutedˉshapes
             );
         let Discard: bool = Binding.Length == 1u32 &&
             Bytesˉreadˉu8(Source, Binding.Offset) == 95u8;
@@ -2381,6 +2388,7 @@ export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
     Function: u32,
     Source: bytes,
     Case: Sourceˉbodies.Compilerˉsourceˉmatchˉcase,
+    Substitutedˉshapes: bytes,
     Build: Compilerˉsourceˉbindingˉbuild
 ) -> Compilerˉsourceˉbindingˉbuild {
     if Case.Bindingˉlength == 0u32 { return Build; }
@@ -2504,6 +2512,13 @@ export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
                         Declaredˉcolon.Nextˉcolumn,
                         Symbols.Records, Symbols.Enums, false
                     );
+                var Declaredˉshape: u32 =
+                    Compilerˉsourceˉbindingsˉshape(Declaredˉtype);
+                if Bytesˉlength(Substitutedˉshapes) == 4u32 {
+                    Declaredˉshape = Bytesˉreadˉu32ˉlittle(
+                        Substitutedˉshapes, 0u32
+                    );
+                }
                 if Build.Nextˉslot >= 4096u32 {
                     return Compilerˉsourceˉbindingsˉbuildˉfailure(
                         Build, Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
@@ -2515,7 +2530,7 @@ export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
                     Module, Function, Compilerˉsourceˉbindingˉkind.Let,
                     Build.Nextˉslot,
                     Case.Bindingˉoffset, Case.Bindingˉlength,
-                    Compilerˉsourceˉbindingsˉshape(Declaredˉtype),
+                    Declaredˉshape,
                     Case.Blockˉoffset,
                     Case.Blockˉoffset + Case.Blockˉlength
                 );
@@ -2525,7 +2540,8 @@ export fn Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
             return Compilerˉsourceˉbindingsˉcollectˉmatchˉfields(
                 Input, Scan, Symbols, Module, Function, Source, Case,
                 Nominal, View, Fields, Fieldsˉoffset,
-                Fieldsˉline, Fieldsˉcolumn, Patternˉstart, Build
+                Fieldsˉline, Fieldsˉcolumn, Patternˉstart,
+                Substitutedˉshapes, Build
             );
         }
         Cursor = End.Nextˉoffset;
@@ -2800,6 +2816,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     );
                     let Caseˉbinding: Compilerˉsourceˉbindingˉbuild = Compilerˉsourceˉbindingsˉcollectˉmatchˉbinding(
                         Input, Scan, Symbols, Module, Function, Source, Case,
+                        Bytesˉslice(Source, 0u32, 0u32),
                         Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Result)
                     );
                     Result = Compilerˉsourceˉbindingsˉphaseˉbuild(Result, Caseˉbinding);
@@ -3039,6 +3056,7 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
                 Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                     Input, Scan, Symbols, Module, Source,
                     Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                    0u32, 0u32, 0u32, 0u32,
                     Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
                 );
             Typeˉstatus = Generalˉtype.Status;

@@ -1467,3 +1467,64 @@ and the remaining Foundation-special plan remain explicit Slice 4 work. The
 active Windvale-written compiler continues toward Compiler 1.0; the Seed name
 describes the shrinking source subset, while immutable Stage 0 remains recovery
 provenance rather than a maintained parallel compiler.
+
+## Slice 4 generic nominal variant execution checkpoint
+
+Decision 0818 connects general generic variants to ordinary source construction,
+matching, WIR validation, WVB materialization, verification, and execution.
+Construction spells the applied owner after the selected case, for example
+`Outcome.Value<Point> { Item: Value, Attempts: Count }`. A match arm remains
+`case Outcome.Value { ... }`: the selector's exact `Outcome<Point>` WVGT shape is
+the single specialization authority. Decision 0815's accepted construction
+grammar already admits this form, so the frozen grammar and its 251-input
+identity do not change.
+
+The implementation shares nominal field construction, consumes immutable
+validated generic layouts, and avoids rebuilding record or variant plans in the
+successful hot path. Generic construction uses private `Variantˉcreate = 65`;
+matching uses private `Variantˉcase = 66` and `Variantˉfield = 164`. Each named
+binding receives its substituted concrete shape. WVB maps all three targets to
+the ordinary materialized `__WvY` type, leaving no template, argument vector,
+private shape, or runtime-generic lookup.
+
+The active split route produces a 1,062,350-byte analyzer with 522 functions and
+869,515 code bytes at SHA-256
+`518f8a08a67a83f3338ff9bd5994afdc616c7750e6ab77e077d3f8bd32f16666`.
+Its eight-fragment Windows application is 33,452,032 bytes at SHA-256
+`d73c61b713067180029edf0112e6beddf02be35ffce58a03c9dce7da583ebbd5`,
+102,400 bytes below the unchanged 32 MiB product payload limit. The connected
+990,701-byte emitter contains 542 functions and 821,031 code bytes at SHA-256
+`05d130390f82b07a5d760f503fcc97b5157c0d5ed343d57bc8e04eb4bf4c1665`;
+its six-fragment Windows application is 21,803,520 bytes at SHA-256
+`31e0f1828f14cf4143ef9bafa68cdedb37c4b164d5793321b0976aad7afe62c4`.
+
+`Generic-Nominal-Variant.wv` publishes exact 771-byte WVSS, 104-byte WVCA,
+316-byte WVLB 1.3, 1,828-byte WVIR 1.3, and 947-byte WVB 1.16 products. Their
+source, WVB, and complete artifact-family identities are independently pinned.
+The 94-case inspector proves one `Outcome<Point>` WVGT entry, exact substituted
+`Item`, `Attempts`, and `Code` bindings, the private operations, ordinary
+multi-field materialization, case/field order, and template removal. The current
+source-built verifier accepts the WVB and the runner returns `42`. Three
+companion fixtures reject construction type mismatch, a missing construction
+field, and pattern type mismatch with exact one-line diagnostics and no partial
+downstream products.
+
+The generic-WIR compiler fixture is deterministic at 1,217,428 bytes and
+SHA-256
+`e7e991248d658e7b6551137f75f3782c4b977c8d9be35c158a26d5c815035b2a`.
+The Language owner grows from 252 to 349 registered cases, including 97 for this
+checkpoint, and source fixtures grow from 74 to 78. Its complete
+current-Windows run passes in 582,970 milliseconds, or 583,670 milliseconds
+including coordinator overhead. The 109-owner registry grows
+from 5,002 to 5,099 cases at SHA-256
+`1db0080019c37a83b25a025c4171fd902a5a28dba6012b14803f30ca5208ff83`.
+The directly changed generic type-binding, layout, materialization, and WVLB
+carrier owners pass 18, 21, 30, and 20 cases respectively, each with result
+`42`.
+These are focused current-Windows development results; paired-host conformance
+and release qualification remain independent gates.
+
+This closes ordinary construction and exhaustive named matching for general
+generic variants. Deeper generic-function formal patterns, broader constant
+expressions, collection implementation, and the remaining Foundation-special
+plan remain explicit Language 1.0 migration work.

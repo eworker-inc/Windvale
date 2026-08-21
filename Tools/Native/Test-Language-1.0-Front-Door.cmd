@@ -102,8 +102,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.wvb" ^
     "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1055646" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"b4f04ef8d843f1af0dcd405e3c19a02f8a11532ac9996745e8b3fc7b956c4e7d" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1062350" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"518f8a08a67a83f3338ff9bd5994afdc616c7750e6ab77e077d3f8bd32f16666" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -182,12 +182,51 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Emitter.wvb" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="985374" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"a95c9c248554919bfedae75795077467570924157d0c59a22060f1c1617a50e6" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="990701" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"05d130390f82b07a5d760f503fcc97b5157c0d5ed343d57bc8e04eb4bf4c1665" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     emitter "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
+set "FailureStep=compiler-generic-nominal-variant"
+echo START language 1 front door step=generic-nominal-variant
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Nominal-Variant.wv" ^
+    "%Work%\Generic-Nominal-Variant.wvss" ^
+    >"%Work%\Generic-Nominal-Variant-Admission.out" ^
+    2>"%Work%\Generic-Nominal-Variant-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Nominal-Variant-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Generic-Nominal-Variant.wvss" ^
+    "%Work%\Generic-Nominal-Variant.wvss" ^
+    "%Work%\Generic-Nominal-Variant.wvca" ^
+    "%Work%\Generic-Nominal-Variant.wvlb" ^
+    "%Work%\Generic-Nominal-Variant.wvir" ^
+    >"%Work%\Generic-Nominal-Variant-Analysis.out" ^
+    2>"%Work%\Generic-Nominal-Variant-Analysis.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Nominal-Variant-Analysis.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Emitter.exe" ^
+    "%Work%\Generic-Nominal-Variant.wvss" ^
+    "%Work%\Generic-Nominal-Variant.wvca" ^
+    "%Work%\Generic-Nominal-Variant.wvlb" ^
+    "%Work%\Generic-Nominal-Variant.wvir" ^
+    "%Work%\Generic-Nominal-Variant.wvb" ^
+    >"%Work%\Generic-Nominal-Variant-Emission.out" ^
+    2>"%Work%\Generic-Nominal-Variant-Emission.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Nominal-Variant-Emission.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_profiled_analysis_failure ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Nominal-Variant-Type-Mismatch.wv" ^
+    "Generic-Nominal-Variant-Type-Mismatch" "Typeˉmismatch" || goto :cleanup
+call :expect_profiled_analysis_failure ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Nominal-Variant-Missing-Field.wv" ^
+    "Generic-Nominal-Variant-Missing-Field" "Missingˉvariantˉfield" || goto :cleanup
+call :expect_profiled_analysis_failure ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Nominal-Variant-Pattern-Type-Mismatch.wv" ^
+    "Generic-Nominal-Variant-Pattern-Type-Mismatch" "Typeˉmismatch" || goto :cleanup
+for %%F in ("%Work%\Generic-Nominal-Variant.wvb") do set "GenericNominalVariantWvbBytes=%%~zF"
+echo INFO  language 1 front door step=generic-nominal-variant analysis=Published wvb-bytes=%GenericNominalVariantWvbBytes% rejections=3
 set "FailureStep=compiler-generic-nominal-main-emission"
 "%Work%\Emitter.exe" ^
     "%Work%\Generic-Nominal-Main.wvss" ^
@@ -273,8 +312,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
 fc /b "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir-B.wvb" >nul || goto :cleanup
-for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1210339" goto :cleanup
-certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"8587efd5dd86073ed0cdfe3c9a134bcb91c2b8316e82f9abfa800622c7530340" >nul || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1217428" goto :cleanup
+certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"e7e991248d658e7b6551137f75f3782c4b977c8d9be35c158a26d5c815035b2a" >nul || goto :cleanup
 for %%F in ("%Work%\Generic-Wir-A.wvb") do set "GenericWirWvbBytes=%%~zF"
 echo INFO  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% verification=pending-current-native
 set "FailureStep=compiler-minimum-a"
@@ -555,6 +594,20 @@ for %%F in ("%Work%\Verify-Generic-Wir.err") do if not "%%~zF"=="0" goto :cleanu
 findstr /c:"wvb status=Valid profile=compiler-aligned" ^
     "%Work%\Verify-Generic-Wir.out" >nul || goto :cleanup
 echo PASS  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% verification=current-native
+set "FailureStep=compiler-generic-nominal-variant-verifier"
+"%Work%\Verifier.exe" "%Work%\Generic-Nominal-Variant.wvb" ^
+    >"%Work%\Verify-Generic-Nominal-Variant.out" ^
+    2>"%Work%\Verify-Generic-Nominal-Variant.err" || goto :cleanup
+for %%F in ("%Work%\Verify-Generic-Nominal-Variant.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"wvb status=Valid profile=compiler-aligned" ^
+    "%Work%\Verify-Generic-Nominal-Variant.out" >nul || goto :cleanup
+node "%Native%\Verify-Generic-Nominal-Variant.mjs" ^
+    "%Work%\Generic-Nominal-Variant.wvss" ^
+    "%Work%\Generic-Nominal-Variant.wvca" ^
+    "%Work%\Generic-Nominal-Variant.wvlb" ^
+    "%Work%\Generic-Nominal-Variant.wvir" ^
+    "%Work%\Generic-Nominal-Variant.wvb" || goto :cleanup
+echo PASS  language 1 front door step=generic-nominal-variant verification=current-native cases=94
 set "FailureStep=fixed-integer-verifier"
 for %%N in (A Overflow Divide-By-Zero Invalid-Shift) do (
     "%Work%\Verifier.exe" "%Work%\Fixed-Integer-%%N.wvb" ^
@@ -714,6 +767,14 @@ for /f "usebackq delims=" %%L in ("%Work%\Floating-Run.out") do (
 )
 if not "%FloatingRunLines%"=="1" goto :cleanup
 if not "%FloatingRunLine%"=="Result: 42" goto :cleanup
+
+set "FailureStep=compiler-generic-nominal-variant-execution"
+"%Work%\Floating-Runner.exe" "%Work%\Generic-Nominal-Variant.wvb" ^
+    >"%Work%\Generic-Nominal-Variant-Run.out" ^
+    2>"%Work%\Generic-Nominal-Variant-Run.err" || goto :cleanup
+for %%F in ("%Work%\Generic-Nominal-Variant-Run.err") do if not "%%~zF"=="0" goto :cleanup
+call :expect_result_42 "%Work%\Generic-Nominal-Variant-Run.out" || goto :cleanup
+echo PASS  language 1 front door step=generic-nominal-variant cases=97 verification=current-native execution=42 rejections=3
 
 set "FailureStep=floating-runtime-oracle-build"
 call "%Native%\Build-Wvb.cmd" ^
@@ -1102,7 +1163,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=252 frozen-inputs=251 source-fixtures=74 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=349 frozen-inputs=251 source-fixtures=78 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=5 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_analysis_failure
@@ -1115,6 +1176,32 @@ set "AnalysisExit=!ERRORLEVEL!"
 if not "!AnalysisExit!"=="1" exit /b 1
 for %%F in ("%Work%\%~2.out") do if not "%%~zF"=="0" exit /b 1
 for %%F in ("%Work%\%~2.wvss" "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir") do if exist "%%~fF" exit /b 1
+set "AnalysisLine="
+set /a AnalysisLines=0
+for /f "usebackq delims=" %%L in ("%Work%\%~2.err") do (
+    set "AnalysisLine=%%L"
+    set /a AnalysisLines+=1 >nul
+)
+if not "!AnalysisLines!"=="1" exit /b 1
+if not "!AnalysisLine!"=="source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=%~3" exit /b 1
+exit /b 0
+
+:expect_profiled_analysis_failure
+setlocal EnableDelayedExpansion
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%~f1" "%Work%\%~2.wvss" ^
+    >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
+for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
+    "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
+    >"%Work%\%~2.out" 2>"%Work%\%~2.err"
+set "AnalysisExit=!ERRORLEVEL!"
+if not "!AnalysisExit!"=="1" exit /b 1
+for %%F in ("%Work%\%~2.out") do if not "%%~zF"=="0" exit /b 1
+for %%F in ("%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir") do if exist "%%~fF" exit /b 1
 set "AnalysisLine="
 set /a AnalysisLines=0
 for /f "usebackq delims=" %%L in ("%Work%\%~2.err") do (

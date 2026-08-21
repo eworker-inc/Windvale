@@ -186,9 +186,10 @@ The backend accepts:
 - zero capabilities for a portable module or declarations from the complete current Seed capability catalog for hosted/system modules;
 - private or exported functions, static data, storage-free constants, records, enums, and variants in any valid source declaration order;
 - `[i32]`, `text`, and `bytes` static data;
-- immutable nominal record, enum, and variant declarations, the exact
-  Foundation Option and Result generic variant families, plus bounded sequence
-  and local affine-builder shapes;
+- immutable nominal record, enum, and variant declarations, materialized general
+  generic record and variant instances, the exact Foundation Option and Result
+  generic variant families, plus bounded sequence and local affine-builder
+  shapes;
 - `void`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `bool`, `text`, `bytes`, record, enum, variant, and sequence function returns, parameters, explicitly typed or initializer-inferred locals, and temporaries, with builders restricted to verified locals;
 - literal operations produced directly or by typed-constant substitution, parameter/local load and store, static-data length and integer-array indexing, and function calls;
 - positional and named record construction through the same canonical operation, record field reads, enum constants, exact equality/inequality, and declared names;
@@ -337,6 +338,14 @@ translated through that same materialization entry to the ordinary WVB Types
 index. Result and operand shapes use the existing shape planner. The WVB
 operation is therefore indistinguishable from an ordinary monomorphic record
 construction or read, and no private shape or runtime generic lookup survives.
+
+The same translation applies to a private general-generic variant target.
+`Variantˉcreate = 65`, `Variantˉcase = 66`, and `Variantˉfield = 164` resolve
+through the validated WVGT materialization entry, then serialize the established
+ordinary WVB variant construction, case-test, and field operations against the
+ordinary `__WvY` Types index. The materialized case and field order and each
+substituted field shape are the runtime contract; the source template, its type
+arguments, and the private WIR shape are absent from WVB.
 
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 

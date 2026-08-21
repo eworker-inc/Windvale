@@ -60,7 +60,8 @@ fn Bind(
 ) -> Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
     return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
         Input, Scan, Symbols, 0u32, Source,
-        Markerˉoffset(Source, Marker), 1u32, 1u32, Catalog
+        Markerˉoffset(Source, Marker), 1u32, 1u32,
+        0u32, 0u32, 0u32, 0u32, Catalog
     );
 }
 

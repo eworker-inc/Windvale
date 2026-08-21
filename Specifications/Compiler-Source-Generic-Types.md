@@ -26,7 +26,9 @@ ordinary and private nominal identities, and emits the concrete entries before
 the existing private Foundation `Option` and `Result` specialization suffix.
 Applied record construction and field access consume those same substituted
 layouts in source bodies and lower through the ordinary monomorphic WIR/WVB
-record operations. A concrete generic-function specialization also supplies a
+record operations. Applied variant construction and matching likewise consume
+one substituted variant layout and lower through the ordinary monomorphic
+variant create, case-test, and field operations. A concrete generic-function specialization also supplies a
 bounded substitution context for an applied nominal use in its signature or
 body. Thus `Box<T>` in `Wrap<T>` becomes the same catalog identity as
 `Box<Point>` when `Wrap` is specialized for `Point`; no unresolved `T` enters
@@ -213,10 +215,15 @@ The connected source integration preserves these boundaries:
 5. **Implemented:** serialize the plan through the main Source WVB entry point as
    ordinary monomorphic Types entries, omit templates, and remap function,
    field, temporary, and nominal-operation targets through one canonical plan;
-6. **Implemented for records:** parse an explicit applied construction target,
-   validate its complete substituted layout, lower construction and chained
-   field reads through operations `17` and `18`, and map their private targets
-   to the materialized ordinary WVB type;
+6. **Implemented for records and variants:** parse an explicit applied
+   construction target, validate its complete substituted layout, lower record
+   construction and chained field reads through operations `17` and `18`, lower
+   variant construction, case tests, and named field extraction through
+   operations `65`, `66`, and `164`, and map every private target to the
+   materialized ordinary WVB type. Variant construction spells the application
+   after the selected case, as `Outcome.Value<Point> { ... }`; match patterns
+   remain `case Outcome.Value { ... }` because the selector already has one
+   exact concrete `Outcome<Point>` shape;
 7. **Implemented for generic record formals:** infer a generic-function
    argument by decomposing an exact actual WVGT identity only when its generic
    declaration and full arity match the formal application. A different
@@ -294,9 +301,10 @@ Its current 734,722-byte WVB has SHA-256
 It returns `42` and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
 content-keyed caches. Main Source WIR carriage, WVB insertion, template elision,
-nominal target remapping, and runtime generic-record construction/field use are
-connected. Applied generic fields inside a generic declaration's own layout,
-deeper nested generic-function patterns, generic variants, and Foundation
+nominal target remapping, runtime generic-record construction/field use, and
+runtime generic-variant construction/matching are connected. Applied generic
+fields inside a generic declaration's own layout are also connected. Deeper
+nested generic-function patterns, broader constant arguments, and Foundation
 migration remain later checkpoints.
 
 `Generic-Nominal-Main-Pipeline.wv` now covers the complete executable
@@ -320,6 +328,18 @@ function instances, WVGT contains one `Box<Point>`, WVB contains three concrete
 functions and two ordinary record types, and execution returns `42`. Companion
 fixtures reject mismatched construction, an unknown substituted field, and a
 different generic template during inference without publishing partial
-analysis products. Generic variants, a generic declaration whose own fields
-contain an applied generic type, and deeper nested formal patterns remain
-separate checkpoints.
+analysis products. A generic declaration whose own fields contain an applied
+generic type and general generic variants are covered by the following
+dependency and variant checkpoints; deeper nested formal patterns remain
+separate work.
+
+`Generic-Nominal-Variant.wv` covers an `Outcome<Point>` instance with a
+two-field `Value`, one-field `Failure`, and zero-field `Empty` case. Construction
+uses `Outcome.Value<Point>`, while the exact `Outcome<Point>` selector lets each
+match arm use the non-applied case name. Its independent inspector proves the
+WVGT instance, substituted WVLB bindings, private WIR operations `65`, `66`, and
+`164`, ordinary materialized WVB variant metadata, template removal, and the
+947-byte executable result. Execution returns `42`. Three companion fixtures
+reject construction type mismatch, a missing construction field, and a pattern
+binding type mismatch with exact diagnostics and no partial downstream
+artifacts.

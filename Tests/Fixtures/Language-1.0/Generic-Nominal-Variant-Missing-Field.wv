@@ -1,0 +1,19 @@
+#!wv/1 en@1
+module Genericˉnominalˉvariantˉmissingˉfield;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+record Point { X: i32; }
+
+variant Outcome<T> {
+    Value(Item: T, Attempts: u32,);
+    Empty;
+}
+
+export fn Main() -> i32 {
+    let Value: Outcome<Point> = Outcome.Value<Point> {
+        Item: Point { X: 42 },
+    };
+    return 0;
+}

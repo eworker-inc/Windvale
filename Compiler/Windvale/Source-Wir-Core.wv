@@ -1625,6 +1625,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
                         Input, Scan, Symbols, Module, Source,
                         Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                        0u32, 0u32, 0u32, 0u32,
                         Typeˉcatalog
                     );
                 Typeˉshape = General.Shape;
@@ -1641,6 +1642,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                         Input, Scan, Symbols, Module, Source,
                         Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                        0u32, 0u32, 0u32, 0u32,
                         Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
                     );
                 Typeˉshape = Specialized.Shape;
@@ -1687,6 +1689,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
                 Input, Scan, Symbols, Module, Source,
                 Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+                0u32, 0u32, 0u32, 0u32,
                 Typeˉcatalog
             );
         Returnˉshape = Generalˉreturn.Shape;
@@ -1700,6 +1703,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                 Input, Scan, Symbols, Module, Source,
                 Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+                0u32, 0u32, 0u32, 0u32,
                 Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
             );
         Returnˉshape = Specializedˉreturn.Shape;
@@ -1875,7 +1879,9 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
         );
         let Field: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-                Input, Scan, Symbols, Nominalˉindex, Member.Index, Argument
+                Input, Scan, Symbols,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+                Nominalˉindex, Member.Index, Argument
             );
         var Parameterˉshape: u32 = 0u32;
         if Field.Found { Parameterˉshape = Field.Shape; }
@@ -1963,6 +1969,11 @@ export fn Compilerˉsourceˉwirˉnominalˉbyˉshape(
 }
 
 fn Compilerˉsourceˉwirˉvariantˉtarget(Shape: u32) -> u32 {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Shape
+        ) {
+        return Shape;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
         return Shape;
     }
@@ -2357,7 +2368,7 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
     );
 }
 
-fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
+fn Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -2365,6 +2376,10 @@ fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
     Offset: u32,
     Line: u32,
     Column: u32,
+    Constructorˉnameˉlength: u32,
+    Constructorˉargumentsˉoffset: u32,
+    Constructorˉargumentsˉline: u32,
+    Constructorˉargumentsˉcolumn: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
     let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
@@ -2372,7 +2387,10 @@ fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
     if Build.Genericˉinstance == Compilerˉsourceˉwirˉsentinel() {
         return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
             Input, Scan, Symbols, Build.Currentˉmodule, Source,
-            Offset, Line, Column, Typeˉcatalog
+            Offset, Line, Column, Constructorˉnameˉlength,
+            Constructorˉargumentsˉoffset,
+            Constructorˉargumentsˉline,
+            Constructorˉargumentsˉcolumn, Typeˉcatalog
         );
     }
     let Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
@@ -2385,7 +2403,10 @@ fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
     if Declarationˉentry >= Symbolˉentries {
         return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
             Input, Scan, Symbols, Build.Currentˉmodule, Source,
-            Offset, Line, Column, Typeˉcatalog
+            Offset, Line, Column, Constructorˉnameˉlength,
+            Constructorˉargumentsˉoffset,
+            Constructorˉargumentsˉline,
+            Constructorˉargumentsˉcolumn, Typeˉcatalog
         );
     }
     let Symbolˉentry: u32 = 16u32 + Declarationˉentry * 24u32;
@@ -2409,7 +2430,10 @@ fn Compilerˉsourceˉwirˉbindˉgenericˉtype(
         );
     return Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
         Input, Scan, Symbols, Build.Currentˉmodule, Source,
-        Offset, Line, Column, Typeˉcatalog,
+        Offset, Line, Column, Constructorˉnameˉlength,
+        Constructorˉargumentsˉoffset,
+        Constructorˉargumentsˉline,
+        Constructorˉargumentsˉcolumn, Typeˉcatalog,
         Formalˉview.Source, Formalˉgeneric,
         Functionˉcatalog, Build.Genericˉinstance
     );
@@ -2972,6 +2996,213 @@ export fn Compilerˉsourceˉwirˉbinaryˉoperation(
     return WIR_OPERATION_ENUM_NOT_EQUAL;
 }
 
+fn Compilerˉsourceˉwirˉcompileˉnominalˉfields(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Module: u32,
+    Shape: u32,
+    Target: u32,
+    Auxiliary: u32,
+    Fields: u32,
+    Isˉvariant: bool,
+    Preservedˉshapes: bytes,
+    Baseˉtemporary: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉvalue {
+    var Operands: bytes = Compilerˉsourceˉwirˉempty(Source);
+    var Operand: u32 = 0u32;
+    while Operand < Fields {
+        Operands = Bytesˉconcat(Operands, Bytesˉfromˉu32ˉlittle(0u32));
+        Operand = Operand + 1u32;
+    }
+    let Seenˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Fields);
+    if !Seenˉresult.Valid {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
+            Module, Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
+    var Seen: bytes = Seenˉresult.Value;
+    var Result: Compilerˉsourceˉwirˉbuild = Build;
+    var Cursor: u32 = Expression.Itemsˉoffset;
+    var Position: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset
+        );
+    var Item: u32 = 0u32;
+    while Item < Expression.Items {
+        let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Cursor, Position.Line, Position.Column,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Field.Nextˉoffset, Field.Nextˉline,
+                Field.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        let Fieldˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        let Value: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉexpression(
+                Input, Scan, Symbols,
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Fieldˉexpression.Offset, Fieldˉexpression.Line,
+                Fieldˉexpression.Column,
+                Fieldˉexpression.Offset + Fieldˉexpression.Length,
+                Result
+            );
+        if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
+        if Value.Shape == 10u32 { return Value; }
+        var Member: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉrecordˉfieldˉbyˉshape(
+                Input, Scan, Symbols, Typeˉcatalog, Shape,
+                Source, Field.Offset, Field.Length
+            );
+        if Isˉvariant {
+            Member = Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
+                Input, Scan, Symbols, Typeˉcatalog, Target, Auxiliary,
+                Source, Field.Offset, Field.Length
+            );
+        }
+        if !Member.Found {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
+                Module, Field.Offset, Field.Line, Field.Column
+            );
+        }
+        if Bytesˉreadˉu8(Seen, Member.Index) != 0u8 {
+            var Duplicateˉstatus: Compilerˉsourceˉwirˉstatus =
+                Compilerˉsourceˉwirˉstatus.Duplicateˉrecordˉfield;
+            if Isˉvariant {
+                Duplicateˉstatus =
+                    Compilerˉsourceˉwirˉstatus.Duplicateˉvariantˉfield;
+            }
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Duplicateˉstatus,
+                Module, Field.Offset, Field.Line, Field.Column
+            );
+        }
+        if Value.Shape != Member.Shape {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                Module, Fieldˉexpression.Offset,
+                Fieldˉexpression.Line, Fieldˉexpression.Column
+            );
+        }
+        let Updatedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult =
+            Byteˉconstruction.Foundationˉbytesˉreplace(
+                Operands, Member.Index * 4u32, 4u32,
+                Bytesˉfromˉu32ˉlittle(Value.Temporary)
+            );
+        let Updatedˉseen: Byteˉconstruction.Foundationˉbytesˉresult =
+            Byteˉconstruction.Foundationˉbytesˉreplace(
+                Seen, Member.Index, 1u32, Bytesˉfromˉu8(1u8)
+            );
+        if !Updatedˉoperands.Valid || !Updatedˉseen.Valid {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+                Module, Field.Offset, Field.Line, Field.Column
+            );
+        }
+        Operands = Updatedˉoperands.Value;
+        Seen = Updatedˉseen.Value;
+        Result = Compilerˉsourceˉwirˉvalueˉbuild(Value);
+        Cursor = Fieldˉexpression.Nextˉoffset;
+        Position = Sourceˉbodies.Compilerˉsourceˉposition(
+            Fieldˉexpression.Nextˉoffset,
+            Fieldˉexpression.Nextˉline,
+            Fieldˉexpression.Nextˉcolumn
+        );
+        if Item + 1u32 < Expression.Items {
+            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉbodies.Compilerˉbodyˉtoken(
+                    Source, Cursor, Position.Line, Position.Column,
+                    Expression.Itemsˉoffset + Expression.Itemsˉlength
+                );
+            Cursor = Separator.Nextˉoffset;
+            Position = Sourceˉbodies.Compilerˉsourceˉposition(
+                Separator.Nextˉoffset,
+                Separator.Nextˉline, Separator.Nextˉcolumn
+            );
+        }
+        Item = Item + 1u32;
+    }
+    var Missing: u32 = 0u32;
+    while Missing < Fields {
+        if Bytesˉreadˉu8(Seen, Missing) == 0u8 {
+            if Bytesˉlength(Preservedˉshapes) != Fields * 4u32 {
+                var Missingˉstatus: Compilerˉsourceˉwirˉstatus =
+                    Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield;
+                if Isˉvariant {
+                    Missingˉstatus =
+                        Compilerˉsourceˉwirˉstatus.Missingˉvariantˉfield;
+                }
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Result, Missingˉstatus,
+                    Module, Expression.Offset,
+                    Expression.Line, Expression.Column
+                );
+            }
+            let Preserved: Compilerˉsourceˉwirˉvalue =
+                Compilerˉsourceˉwirˉemit(
+                    Result, WIR_OPERATION_RECORD_FIELD,
+                    Bytesˉreadˉu32ˉlittle(
+                        Preservedˉshapes, Missing * 4u32
+                    ),
+                    Compilerˉsourceˉwirˉoneˉoperand(Baseˉtemporary),
+                    Target, Missing,
+                    Expression.Firstˉoffset, Expression.Firstˉlength
+                );
+            if Preserved.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                return Preserved;
+            }
+            let Preservedˉoperands:
+                Byteˉconstruction.Foundationˉbytesˉresult =
+                Byteˉconstruction.Foundationˉbytesˉreplace(
+                    Operands, Missing * 4u32, 4u32,
+                    Bytesˉfromˉu32ˉlittle(Preserved.Temporary)
+                );
+            if !Preservedˉoperands.Valid {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Preserved),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+                    Module, Expression.Offset,
+                    Expression.Line, Expression.Column
+                );
+            }
+            Operands = Preservedˉoperands.Value;
+            Result = Compilerˉsourceˉwirˉvalueˉbuild(Preserved);
+        }
+        Missing = Missing + 1u32;
+    }
+    var Operation: u32 = WIR_OPERATION_RECORD_CREATE;
+    if Isˉvariant { Operation = WIR_OPERATION_VARIANT_CREATE; }
+    return Compilerˉsourceˉwirˉemit(
+        Result, Operation, Shape, Operands, Target, Auxiliary,
+        Expression.Offset, Expression.Length
+    );
+}
+
 fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -3038,7 +3269,11 @@ fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
     }
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Constructionˉtarget, Signature.Auxiliary
+            Input, Scan, Symbols,
+            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                Build.Genericˉevidence
+            ),
+            Constructionˉtarget, Signature.Auxiliary
         );
     let Fieldˉcount: u32 = Caseˉview.Fields;
     if !Caseˉview.Found || Fieldˉcount != Callable.Items {
@@ -3048,142 +3283,115 @@ fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
             Expression.Offset, Expression.Line, Expression.Column
         );
     }
-    let Empty: bytes = Compilerˉsourceˉwirˉempty(Source);
-    var Operands: bytes = Empty;
-    var Operandˉindex: u32 = 0u32;
-    while Operandˉindex < Fieldˉcount {
-        Operands = Bytesˉconcat(Operands, Bytesˉfromˉu32ˉlittle(0u32));
-        Operandˉindex = Operandˉindex + 1u32;
-    }
-    let Seenˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Fieldˉcount);
-    if !Seenˉresult.Valid {
+    return Compilerˉsourceˉwirˉcompileˉnominalˉfields(
+        Input, Scan, Symbols,
+        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+            Build.Genericˉevidence
+        ),
+        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Source, Expression, Callable.Module,
+        Constructionˉshape, Constructionˉtarget,
+        Signature.Auxiliary, Fieldˉcount, true,
+        Compilerˉsourceˉwirˉempty(Source),
+        Compilerˉsourceˉwirˉsentinel(), Build
+    );
+}
+
+
+
+fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉvariant(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Bound: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding,
+    Caseˉoffset: u32,
+    Caseˉlength: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉvalue {
+    if Bound.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Bound.Genericˉstatus !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Bound.Nominalˉkind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Bound.Shape
+        ) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
-            Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
-            Callable.Module,
+            Build, Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral,
+            Bound.Module,
+            Bound.Failureˉoffset, Bound.Failureˉline, Bound.Failureˉcolumn
+        );
+    }
+    let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+            Bound
+        );
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+            Bound.Shape
+        );
+    let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, Instance
+        );
+    if Layout.Shape != Bound.Shape || Layout.Declaration != Bound.Declaration ||
+        Layout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
+        Layout.Items > 256u32 ||
+        !Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Layout
+        ) {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral,
+            Bound.Module,
             Expression.Offset, Expression.Line, Expression.Column
         );
     }
-    var Seen: bytes = Seenˉresult.Value;
-    var Result: Compilerˉsourceˉwirˉbuild = Build;
-    var Cursor: u32 = Expression.Itemsˉoffset;
-    var Position: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            Source, Expression.Offset, Expression.Line, Expression.Column,
-            Expression.Itemsˉoffset
+    let Templateˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules, Bound.Declaration
         );
-    var Item: u32 = 0u32;
-    while Item < Expression.Items {
-        let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉbodies.Compilerˉbodyˉtoken(
-                Source, Cursor, Position.Line, Position.Column,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength
-            );
-        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉbodies.Compilerˉbodyˉtoken(
-                Source, Field.Nextˉoffset, Field.Nextˉline,
-                Field.Nextˉcolumn,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength
-            );
-        let Fieldˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression =
-            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
-                Source, Colon.Nextˉoffset, Colon.Nextˉline,
-                Colon.Nextˉcolumn,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength,
-                0u32, 0u32
-            );
-        let Value: Compilerˉsourceˉwirˉvalue =
-            Compilerˉsourceˉwirˉcompileˉexpression(
-                Input, Scan, Symbols,
-                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                Source, Fieldˉexpression.Offset, Fieldˉexpression.Line,
-                Fieldˉexpression.Column,
-                Fieldˉexpression.Offset + Fieldˉexpression.Length,
-                Result
-            );
-        if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
-        if Value.Shape == 10u32 { return Value; }
-        let Member: Compilerˉsourceˉwirˉmember =
-            Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
-                Input, Scan, Symbols, Constructionˉtarget,
-                Signature.Auxiliary, Source, Field.Offset, Field.Length
-            );
-        if !Member.Found {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if Bytesˉreadˉu8(Seen, Member.Index) != 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Duplicateˉvariantˉfield,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if Value.Shape != Member.Shape {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                Callable.Module, Fieldˉexpression.Offset,
-                Fieldˉexpression.Line, Fieldˉexpression.Column
-            );
-        }
-        let Updatedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult =
-            Byteˉconstruction.Foundationˉbytesˉreplace(
-                Operands, Member.Index * 4u32, 4u32,
-                Bytesˉfromˉu32ˉlittle(Value.Temporary)
-            );
-        let Updatedˉseen: Byteˉconstruction.Foundationˉbytesˉresult =
-            Byteˉconstruction.Foundationˉbytesˉreplace(
-                Seen, Member.Index, 1u32, Bytesˉfromˉu8(1u8)
-            );
-        if !Updatedˉoperands.Valid || !Updatedˉseen.Valid {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        Operands = Updatedˉoperands.Value;
-        Seen = Updatedˉseen.Value;
-        Result = Compilerˉsourceˉwirˉvalueˉbuild(Value);
-        Cursor = Fieldˉexpression.Nextˉoffset;
-        Position = Sourceˉbodies.Compilerˉsourceˉposition(
-            Fieldˉexpression.Nextˉoffset, Fieldˉexpression.Nextˉline,
-            Fieldˉexpression.Nextˉcolumn
+    let Selected: Compilerˉsourceˉwirˉmember =
+        Compilerˉsourceˉwirˉnominalˉmember(
+            Input, Scan, Symbols, Templateˉnominal,
+            Source, Caseˉoffset, Caseˉlength
         );
-        if Item + 1u32 < Expression.Items {
-            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
-                Sourceˉbodies.Compilerˉbodyˉtoken(
-                    Source, Cursor, Position.Line, Position.Column,
-                    Expression.Itemsˉoffset + Expression.Itemsˉlength
-                );
-            Cursor = Separator.Nextˉoffset;
-            Position = Sourceˉbodies.Compilerˉsourceˉposition(
-                Separator.Nextˉoffset, Separator.Nextˉline,
-                Separator.Nextˉcolumn
-            );
-        }
-        Item = Item + 1u32;
+    if !Selected.Found {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Unknownˉvariantˉcase,
+            Bound.Module,
+            Caseˉoffset, Expression.Line, Expression.Column
+        );
     }
-    var Missing: u32 = 0u32;
-    while Missing < Fieldˉcount {
-        if Bytesˉreadˉu8(Seen, Missing) == 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Result, Compilerˉsourceˉwirˉstatus.Missingˉvariantˉfield,
-                Callable.Module,
-                Expression.Offset, Expression.Line, Expression.Column
-            );
-        }
-        Missing = Missing + 1u32;
+    let Caseˉview: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Layout, Selected.Index
+        );
+    if !Caseˉview.Found || Caseˉview.Fields > 64u32 {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral,
+            Bound.Module,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
     }
-    return Compilerˉsourceˉwirˉemit(
-        Result, WIR_OPERATION_VARIANT_CREATE,
-        Constructionˉshape, Operands,
-        Constructionˉtarget, Signature.Auxiliary,
-        Expression.Offset, Expression.Length
+    var Result: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
+            Build, Bound.Catalogˉevidence
+        );
+    return Compilerˉsourceˉwirˉcompileˉnominalˉfields(
+        Input, Scan, Symbols, Catalog,
+        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Source, Expression, Bound.Module,
+        Bound.Shape, Bound.Shape, Selected.Index,
+        Caseˉview.Fields, true,
+        Compilerˉsourceˉwirˉempty(Source),
+        Compilerˉsourceˉwirˉsentinel(), Result
     );
 }
 
@@ -3196,14 +3404,9 @@ fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
     Bindingˉentries: u32,
     Source: bytes,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Bound: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
-    let Bound: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
-        Compilerˉsourceˉwirˉbindˉgenericˉtype(
-            Input, Scan, Symbols, Source,
-            Expression.Valueˉoffset, Expression.Line, Expression.Column,
-            Build
-        );
     if Bound.Status !=
             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
         Bound.Genericˉstatus !=
@@ -3246,138 +3449,90 @@ fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
         Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
             Build, Bound.Catalogˉevidence
         );
-    var Operands: bytes = Compilerˉsourceˉwirˉempty(Source);
-    var Operand: u32 = 0u32;
-    while Operand < Layout.Fields {
-        Operands = Bytesˉconcat(Operands, Bytesˉfromˉu32ˉlittle(0u32));
-        Operand = Operand + 1u32;
+    return Compilerˉsourceˉwirˉcompileˉnominalˉfields(
+        Input, Scan, Symbols, Catalog,
+        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Source, Expression, Bound.Module,
+        Bound.Shape, Bound.Shape, Bound.Declaration,
+        Layout.Fields, false,
+        Compilerˉsourceˉwirˉempty(Source),
+        Compilerˉsourceˉwirˉsentinel(), Result
+    );
+}
+
+fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉnominal(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉvalue {
+    var Lastˉdot: u32 = Expression.Valueˉlength;
+    var Character: u32 = 0u32;
+    while Character < Expression.Valueˉlength {
+        if Bytesˉreadˉu8(
+                Source, Expression.Valueˉoffset + Character
+            ) == 46u8 {
+            Lastˉdot = Character;
+        }
+        Character = Character + 1u32;
     }
-    let Seenˉresult: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Layout.Fields);
-    if !Seenˉresult.Valid {
-        return Compilerˉsourceˉwirˉfailureˉvalue(
-            Result, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
-            Bound.Module,
-            Expression.Offset, Expression.Line, Expression.Column
-        );
-    }
-    var Seen: bytes = Seenˉresult.Value;
-    var Cursor: u32 = Expression.Itemsˉoffset;
-    var Position: Sourceˉbodies.Compilerˉsourceˉposition =
-        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-            Source, Expression.Offset, Expression.Line, Expression.Column,
-            Expression.Itemsˉoffset
-        );
-    var Item: u32 = 0u32;
-    while Item < Expression.Items {
-        let Field: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉbodies.Compilerˉbodyˉtoken(
-                Source, Cursor, Position.Line, Position.Column,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength
+    if Lastˉdot < Expression.Valueˉlength {
+        let Constructorˉnominal:
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
+                Input, Scan, Symbols.Directory, Symbols.Lookup,
+                Build.Currentˉmodule, Source,
+                Expression.Valueˉoffset, Lastˉdot
             );
-        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉbodies.Compilerˉbodyˉtoken(
-                Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength
-            );
-        let Fieldˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression =
-            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
-                Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
-            );
-        let Value: Compilerˉsourceˉwirˉvalue =
-            Compilerˉsourceˉwirˉcompileˉexpression(
+        if Constructorˉnominal.Found && Constructorˉnominal.Kind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+            let Argumentsˉposition:
+                Sourceˉbodies.Compilerˉsourceˉposition =
+                Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                    Source, Expression.Offset,
+                    Expression.Line, Expression.Column,
+                    Expression.Valueˉoffset + Expression.Valueˉlength
+                );
+            let Arguments: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉbodies.Compilerˉbodyˉtoken(
+                    Source,
+                    Expression.Valueˉoffset + Expression.Valueˉlength,
+                    Argumentsˉposition.Line, Argumentsˉposition.Column,
+                    Expression.Offset + Expression.Length
+                );
+            let Bound:
+                Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
+                    Input, Scan, Symbols, Source,
+                    Expression.Valueˉoffset,
+                    Expression.Line, Expression.Column,
+                    Lastˉdot, Arguments.Offset,
+                    Arguments.Line, Arguments.Column, Build
+                );
+            return Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉvariant(
                 Input, Scan, Symbols,
                 Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                Source,
-                Fieldˉexpression.Offset, Fieldˉexpression.Line,
-                Fieldˉexpression.Column,
-                Fieldˉexpression.Offset + Fieldˉexpression.Length,
-                Result
-            );
-        if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
-        if Value.Shape == 10u32 { return Value; }
-        let Member: Compilerˉsourceˉwirˉmember =
-            Compilerˉsourceˉwirˉrecordˉfieldˉbyˉshape(
-                Input, Scan, Symbols, Catalog, Bound.Shape,
-                Source, Field.Offset, Field.Length
-            );
-        if !Member.Found {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
-                Bound.Module, Field.Offset, Field.Line, Field.Column
+                Source, Expression, Bound,
+                Expression.Valueˉoffset + Lastˉdot + 1u32,
+                Expression.Valueˉlength - Lastˉdot - 1u32, Build
             );
         }
-        if Bytesˉreadˉu8(Seen, Member.Index) != 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Duplicateˉrecordˉfield,
-                Bound.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if Value.Shape != Member.Shape {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                Bound.Module,
-                Fieldˉexpression.Offset,
-                Fieldˉexpression.Line, Fieldˉexpression.Column
-            );
-        }
-        let Updatedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult =
-            Byteˉconstruction.Foundationˉbytesˉreplace(
-                Operands, Member.Index * 4u32, 4u32,
-                Bytesˉfromˉu32ˉlittle(Value.Temporary)
-            );
-        let Updatedˉseen: Byteˉconstruction.Foundationˉbytesˉresult =
-            Byteˉconstruction.Foundationˉbytesˉreplace(
-                Seen, Member.Index, 1u32, Bytesˉfromˉu8(1u8)
-            );
-        if !Updatedˉoperands.Valid || !Updatedˉseen.Valid {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-                Bound.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        Operands = Updatedˉoperands.Value;
-        Seen = Updatedˉseen.Value;
-        Result = Compilerˉsourceˉwirˉvalueˉbuild(Value);
-        Cursor = Fieldˉexpression.Nextˉoffset;
-        Position = Sourceˉbodies.Compilerˉsourceˉposition(
-            Fieldˉexpression.Nextˉoffset,
-            Fieldˉexpression.Nextˉline, Fieldˉexpression.Nextˉcolumn
+    }
+    let Direct: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
+            Input, Scan, Symbols, Source,
+            Expression.Valueˉoffset, Expression.Line, Expression.Column,
+            0u32, 0u32, 0u32, 0u32, Build
         );
-        if Item + 1u32 < Expression.Items {
-            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
-                Sourceˉbodies.Compilerˉbodyˉtoken(
-                    Source, Cursor, Position.Line, Position.Column,
-                    Expression.Itemsˉoffset + Expression.Itemsˉlength
-                );
-            Cursor = Separator.Nextˉoffset;
-            Position = Sourceˉbodies.Compilerˉsourceˉposition(
-                Separator.Nextˉoffset,
-                Separator.Nextˉline, Separator.Nextˉcolumn
-            );
-        }
-        Item = Item + 1u32;
-    }
-    var Missing: u32 = 0u32;
-    while Missing < Layout.Fields {
-        if Bytesˉreadˉu8(Seen, Missing) == 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Result, Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield,
-                Bound.Module,
-                Expression.Offset, Expression.Line, Expression.Column
-            );
-        }
-        Missing = Missing + 1u32;
-    }
-    return Compilerˉsourceˉwirˉemit(
-        Result, WIR_OPERATION_RECORD_CREATE,
-        Bound.Shape, Operands, Bound.Shape, Bound.Declaration,
-        Expression.Offset, Expression.Length
+    return Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
+        Input, Scan, Symbols,
+        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Source, Expression, Direct, Build
     );
 }
 
@@ -3396,7 +3551,7 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
         Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Recordˉupdate;
     if Expression.Kind ==
             Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Genericˉnamedˉrecord {
-        return Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
+        return Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉnominal(
             Input, Scan, Symbols,
             Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
             Source, Expression, Build
@@ -3439,33 +3594,12 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
         );
     }
-    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-        Symbols.Directory, Scan.Modules, Callable.Directoryˉentry
-    );
     let Signature: Compilerˉsourceˉwirˉsignature = Compilerˉsourceˉwirˉrecordˉsignature(
         Input, Scan, Symbols, Callable, 0u32
     );
-    let Empty: bytes = Compilerˉsourceˉwirˉempty(Source);
-    var Recordˉoperands: bytes = Empty;
-    var Operandˉindex: u32 = 0u32;
-    while Operandˉindex < Callable.Items {
-        Recordˉoperands = Bytesˉconcat(
-            Recordˉoperands, Bytesˉfromˉu32ˉlittle(0u32)
-        );
-        Operandˉindex = Operandˉindex + 1u32;
-    }
-    let Seenˉresult: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉrepeat(
-        0u8, Callable.Items
-    );
-    if !Seenˉresult.Valid {
-        return Compilerˉsourceˉwirˉfailureˉvalue(
-            Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
-            Callable.Module, Expression.Offset, Expression.Line, Expression.Column
-        );
-    }
-    var Seen: bytes = Seenˉresult.Value;
     var Result: Compilerˉsourceˉwirˉbuild = Build;
     var Baseˉtemporary: u32 = Compilerˉsourceˉwirˉsentinel();
+    var Preservedˉshapes: bytes = Compilerˉsourceˉwirˉempty(Source);
     if Isˉupdate {
         let Baseˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
             Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
@@ -3476,8 +3610,7 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
             Compilerˉsourceˉwirˉcompileˉexpression(
                 Input, Scan, Symbols,
                 Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                Source,
-                Expression.Firstˉoffset, Baseˉposition.Line,
+                Source, Expression.Firstˉoffset, Baseˉposition.Line,
                 Baseˉposition.Column,
                 Expression.Firstˉoffset + Expression.Firstˉlength,
                 Result
@@ -3490,159 +3623,34 @@ export fn Compilerˉsourceˉwirˉcompileˉnamedˉrecord(
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Compilerˉsourceˉwirˉvalueˉbuild(Baseˉvalue),
                 Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉupdate,
-                Callable.Module,
-                Expression.Firstˉoffset,
-                Baseˉposition.Line,
-                Baseˉposition.Column
+                Callable.Module, Expression.Firstˉoffset,
+                Baseˉposition.Line, Baseˉposition.Column
             );
         }
         Baseˉtemporary = Baseˉvalue.Temporary;
         Result = Compilerˉsourceˉwirˉvalueˉbuild(Baseˉvalue);
-    }
-    var Cursor: u32 = Expression.Itemsˉoffset;
-    var Currentˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-        Source, Expression.Offset, Expression.Line, Expression.Column,
-        Expression.Itemsˉoffset
-    );
-    var Item: u32 = 0u32;
-    while Item < Expression.Items {
-        let Field: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉbodies.Compilerˉbodyˉtoken(
-            Source, Cursor, Currentˉposition.Line, Currentˉposition.Column,
-            Expression.Itemsˉoffset + Expression.Itemsˉlength
-        );
-        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉbodies.Compilerˉbodyˉtoken(
-            Source, Field.Nextˉoffset, Field.Nextˉline, Field.Nextˉcolumn,
-            Expression.Itemsˉoffset + Expression.Itemsˉlength
-        );
-        let Fieldˉvalue: Sourceˉbodies.Compilerˉsourceˉexpression = Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
-            Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
-            Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
-        );
-        let Value: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉcompileˉexpression(
-            Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Source,
-            Fieldˉvalue.Offset, Fieldˉvalue.Line, Fieldˉvalue.Column,
-            Fieldˉvalue.Offset + Fieldˉvalue.Length,
-            Result
-        );
-        if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
-        if Value.Shape == 10u32 { return Value; }
-        let Member: Compilerˉsourceˉwirˉmember = Compilerˉsourceˉwirˉnominalˉmember(
-            Input, Scan, Symbols, Nominal, Source, Field.Offset, Field.Length
-        );
-        if !Member.Found {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Unknownˉfield,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if Bytesˉreadˉu8(Seen, Member.Index) != 0u8 {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Duplicateˉrecordˉfield,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if Value.Shape != Member.Shape {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                Callable.Module,
-                Fieldˉvalue.Offset, Fieldˉvalue.Line, Fieldˉvalue.Column
-            );
-        }
-        let Updatedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
-            Recordˉoperands, Member.Index * 4u32, 4u32,
-            Bytesˉfromˉu32ˉlittle(Value.Temporary)
-        );
-        let Updatedˉseen: Byteˉconstruction.Foundationˉbytesˉresult = Byteˉconstruction.Foundationˉbytesˉreplace(
-            Seen, Member.Index, 1u32, Bytesˉfromˉu8(1u8)
-        );
-        if !Updatedˉoperands.Valid {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        if !Updatedˉseen.Valid {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Compilerˉsourceˉwirˉvalueˉbuild(Value),
-                Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-                Callable.Module, Field.Offset, Field.Line, Field.Column
-            );
-        }
-        Recordˉoperands = Updatedˉoperands.Value;
-        Seen = Updatedˉseen.Value;
-        Result = Compilerˉsourceˉwirˉvalueˉbuild(Value);
-        Cursor = Fieldˉvalue.Nextˉoffset;
-        Currentˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
-            Fieldˉvalue.Nextˉoffset, Fieldˉvalue.Nextˉline, Fieldˉvalue.Nextˉcolumn
-        );
-        if Item + 1u32 < Expression.Items {
-            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉbodies.Compilerˉbodyˉtoken(
-                Source, Cursor, Currentˉposition.Line, Currentˉposition.Column,
-                Expression.Itemsˉoffset + Expression.Itemsˉlength
-            );
-            Cursor = Separator.Nextˉoffset;
-            Currentˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
-                Separator.Nextˉoffset, Separator.Nextˉline, Separator.Nextˉcolumn
-            );
-        }
-        Item = Item + 1u32;
-    }
-    var Missing: u32 = 0u32;
-    while Missing < Callable.Items {
-        if Bytesˉreadˉu8(Seen, Missing) == 0u8 {
-            if !Isˉupdate {
-                return Compilerˉsourceˉwirˉfailureˉvalue(
-                    Result, Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield,
-                    Callable.Module,
-                    Expression.Offset, Expression.Line, Expression.Column
-                );
-            }
+        var Preservedˉindex: u32 = 0u32;
+        while Preservedˉindex < Callable.Items {
             let Preservedˉsignature: Compilerˉsourceˉwirˉsignature =
                 Compilerˉsourceˉwirˉrecordˉsignature(
-                    Input, Scan, Symbols, Callable, Missing
+                    Input, Scan, Symbols, Callable, Preservedˉindex
                 );
-            let Preserved: Compilerˉsourceˉwirˉvalue =
-                Compilerˉsourceˉwirˉemit(
-                    Result,
-                    WIR_OPERATION_RECORD_FIELD,
-                    Preservedˉsignature.Parameterˉshape,
-                    Compilerˉsourceˉwirˉoneˉoperand(Baseˉtemporary),
-                    Signature.Target,
-                    Missing,
-                    Expression.Firstˉoffset,
-                    Expression.Firstˉlength
-                );
-            if Preserved.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                return Preserved;
-            }
-            let Preservedˉoperands: Byteˉconstruction.Foundationˉbytesˉresult =
-                Byteˉconstruction.Foundationˉbytesˉreplace(
-                    Recordˉoperands, Missing * 4u32, 4u32,
-                    Bytesˉfromˉu32ˉlittle(Preserved.Temporary)
-                );
-            if !Preservedˉoperands.Valid {
-                return Compilerˉsourceˉwirˉfailureˉvalue(
-                    Compilerˉsourceˉwirˉvalueˉbuild(Preserved),
-                    Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
-                    Callable.Module,
-                    Expression.Offset, Expression.Line, Expression.Column
-                );
-            }
-            Recordˉoperands = Preservedˉoperands.Value;
-            Result = Compilerˉsourceˉwirˉvalueˉbuild(Preserved);
+            Preservedˉshapes = Bytesˉconcat(
+                Preservedˉshapes,
+                Bytesˉfromˉu32ˉlittle(
+                    Preservedˉsignature.Parameterˉshape
+                )
+            );
+            Preservedˉindex = Preservedˉindex + 1u32;
         }
-        Missing = Missing + 1u32;
     }
-    return Compilerˉsourceˉwirˉemit(
-        Result, WIR_OPERATION_RECORD_CREATE,
-        Signature.Returnˉshape, Recordˉoperands,
-        Signature.Target, Signature.Auxiliary,
-        Expression.Offset, Expression.Length
+    return Compilerˉsourceˉwirˉcompileˉnominalˉfields(
+        Input, Scan, Symbols,
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+        Source, Expression, Callable.Module,
+        Signature.Returnˉshape, Signature.Target, Signature.Auxiliary,
+        Callable.Items, false, Preservedˉshapes, Baseˉtemporary, Result
     );
 }
 
@@ -3827,20 +3835,28 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉtry(
         );
     let Validˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Operand.Shape - 196608u32, 0u32
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Operand.Shape - 196608u32, 0u32
         );
     let Failureˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Operand.Shape - 196608u32, 1u32
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Operand.Shape - 196608u32, 1u32
         );
     let Validˉfield: Compilerˉsourceˉwirˉmember =
         Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
-            Input, Scan, Symbols, Operand.Shape - 196608u32, 0u32,
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Operand.Shape - 196608u32, 0u32,
             Textˉtoˉutf8("Value"), 0u32, 5u32
         );
     let Failureˉfield: Compilerˉsourceˉwirˉmember =
         Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
-            Input, Scan, Symbols, Operand.Shape - 196608u32, 1u32,
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Operand.Shape - 196608u32, 1u32,
             Textˉtoˉutf8("Error"), 0u32, 5u32
         );
     var Accepted: bool = Operand.Shape == Returnˉshape &&
@@ -5150,7 +5166,8 @@ fn Compilerˉsourceˉwirˉgenericˉcontributeˉnominalˉformal(
                 Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
                 Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
                     Input, Scan, Symbols, Callable.Module, Pattern.Source,
-                    Cursor, Currentˉline, Currentˉcolumn, Typeˉcatalog
+                    Cursor, Currentˉline, Currentˉcolumn,
+                    0u32, 0u32, 0u32, 0u32, Typeˉcatalog
                 );
             if Concrete.Status !=
                     Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
@@ -6329,6 +6346,11 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
     if Matchˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
         return Matchˉvalue;
     }
+    let Matchˉtypeˉcatalog:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+            Matchˉvalue.Genericˉevidence
+        );
     var Matchˉshapeˉisˉsupported: bool = false;
     if Matchˉvalue.Shape >= 131072u32 + Symbols.Records {
         if Matchˉvalue.Shape < 131072u32 + Symbols.Records + Symbols.Enums {
@@ -6343,6 +6365,22 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
         Matchˉvalue.Shape
     ) { Matchˉshapeˉisˉsupported = true; }
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Matchˉvalue.Shape
+        ) {
+        let Matchˉgenericˉinstance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+                Matchˉvalue.Shape
+            );
+        Matchˉshapeˉisˉsupported =
+            Matchˉgenericˉinstance <
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                    Matchˉtypeˉcatalog
+                ) &&
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                Matchˉtypeˉcatalog, Matchˉgenericˉinstance
+            ) == 8u32;
+    }
     if !Matchˉshapeˉisˉsupported {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Compilerˉsourceˉwirˉvalueˉbuild(Matchˉvalue),
@@ -6353,9 +6391,25 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
             Matchˉvalueˉposition.Column
         );
     }
-    let Matchˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉwirˉnominalˉbyˉshape(
-        Input, Scan, Symbols, Matchˉvalue.Shape
-    );
+    var Matchˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Compilerˉsourceˉwirˉnominalˉbyˉshape(
+            Input, Scan, Symbols, Matchˉvalue.Shape
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Matchˉvalue.Shape
+        ) {
+        let Matchˉdirectoryˉentry: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+                Matchˉtypeˉcatalog,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+                    Matchˉvalue.Shape
+                )
+            );
+        Matchˉnominal =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+                Symbols.Directory, Scan.Modules, Matchˉdirectoryˉentry
+            );
+    }
     if !Matchˉnominal.Found {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Compilerˉsourceˉwirˉvalueˉbuild(Matchˉvalue),
@@ -6513,10 +6567,57 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
                 Caseˉmemberˉposition.Column
             );
         }
+        var Matchˉfieldˉshapes: bytes =
+            Compilerˉsourceˉwirˉempty(Source);
+        if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+                Matchˉvalue.Shape
+            ) {
+            let Specializedˉcase:
+                Compilerˉsourceˉwirˉvariantˉcaseˉview =
+                Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
+                    Input, Scan, Symbols, Matchˉtypeˉcatalog,
+                    Matchˉvalue.Shape, Bodyˉmember.Index
+                );
+            if !Specializedˉcase.Found {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Matchˉvalue),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉbinding,
+                    Matchˉnominal.Module,
+                    Bodyˉcase.Memberˉoffset,
+                    Caseˉmemberˉposition.Line,
+                    Caseˉmemberˉposition.Column
+                );
+            }
+            var Specializedˉfield: u32 = 0u32;
+            while Specializedˉfield < Specializedˉcase.Fields {
+                let Specializedˉmember: Compilerˉsourceˉwirˉmember =
+                    Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
+                        Input, Scan, Symbols, Matchˉtypeˉcatalog,
+                        Matchˉvalue.Shape, Bodyˉmember.Index,
+                        Specializedˉfield
+                    );
+                if !Specializedˉmember.Found || Specializedˉmember.Shape == 0u32 {
+                    return Compilerˉsourceˉwirˉfailureˉvalue(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Matchˉvalue),
+                        Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉbinding,
+                        Matchˉnominal.Module,
+                        Bodyˉcase.Memberˉoffset,
+                        Caseˉmemberˉposition.Line,
+                        Caseˉmemberˉposition.Column
+                    );
+                }
+                Matchˉfieldˉshapes = Bytesˉconcat(
+                    Matchˉfieldˉshapes,
+                    Bytesˉfromˉu32ˉlittle(Specializedˉmember.Shape)
+                );
+                Specializedˉfield = Specializedˉfield + 1u32;
+            }
+        }
         var Bindingˉvalid: bool = Bodyˉcase.Bindingˉlength == 0u32;
         if Matchˉisˉvariant {
             Bindingˉvalid = Compilerˉsourceˉwirˉvariantˉpatternˉisˉvalid(
-                Input, Scan, Symbols, Source, Bodyˉcase,
+                Input, Scan, Symbols, Matchˉtypeˉcatalog,
+                Source, Bodyˉcase,
                 Compilerˉsourceˉwirˉvariantˉtarget(Matchˉvalue.Shape),
                 Bodyˉmember.Index
             );
@@ -6641,6 +6742,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
                 Input, Scan, Symbols,
                 Result.Currentˉmodule, Result.Currentˉfunction,
                 Source, Bodyˉcase,
+                Matchˉfieldˉshapes,
                 Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindingˉphase)
             );
         Bindingˉphase = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
@@ -6666,7 +6768,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
         if Matchˉisˉvariant {
             Bodyˉcaseˉstart =
                 Compilerˉsourceˉwirˉbindˉvariantˉpattern(
-                    Input, Scan, Symbols, Source,
+                    Input, Scan, Symbols, Matchˉtypeˉcatalog, Source,
                     Matchˉvalue.Temporary,
                     Compilerˉsourceˉwirˉvariantˉtarget(Matchˉvalue.Shape),
                     Bodyˉmember.Index,
@@ -7192,11 +7294,11 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         );
                     let Declared:
                         Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
-                        Compilerˉsourceˉwirˉbindˉgenericˉtype(
+                        Compilerˉsourceˉwirˉbindˉgenericˉtypeˉat(
                             Input, Scan, Symbols, Source,
                             Statement.Typeˉoffset,
                             Typeˉposition.Line, Typeˉposition.Column,
-                            Localˉbuild
+                            0u32, 0u32, 0u32, 0u32, Localˉbuild
                         );
                     if Declared.Status !=
                             Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
@@ -9141,6 +9243,7 @@ fn Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Nominal: u32,
     Case: u32
 ) -> Compilerˉsourceˉwirˉvariantˉcaseˉview {
@@ -9148,6 +9251,30 @@ fn Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
         Compilerˉsourceˉwirˉvariantˉcaseˉview(
             false, Scan.Modules, 0u32, 0u32, 0u32, 1u32, 1u32
         );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Nominal
+        ) {
+        let Instance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+                Nominal
+            );
+        let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+                Input, Scan, Symbols, Typeˉcatalog, Instance
+            );
+        let Selected: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉcase =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+                Input, Scan, Symbols, Layout, Case
+            );
+        if Layout.Shape == Nominal && Selected.Found &&
+            Selected.Fields <= 64u32 {
+            return Compilerˉsourceˉwirˉvariantˉcaseˉview(
+                true, Layout.Module, Case, Selected.Fields,
+                0u32, 1u32, 1u32
+            );
+        }
+        return Missing;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) {
         if Case == 0u32 {
             return Compilerˉsourceˉwirˉvariantˉcaseˉview(
@@ -9285,10 +9412,33 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Nominal: u32,
     Case: u32,
     Fieldˉindex: u32
 ) -> Compilerˉsourceˉwirˉmember {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Nominal
+        ) {
+        let Instance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+                Nominal
+            );
+        let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+                Input, Scan, Symbols, Typeˉcatalog, Instance
+            );
+        let Selected: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+                Input, Scan, Symbols, Layout, Case, Fieldˉindex
+            );
+        if Layout.Shape != Nominal || !Selected.Found {
+            return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
+        }
+        return Compilerˉsourceˉwirˉmember(
+            true, Fieldˉindex, Selected.Shape
+        );
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) {
         if Case == 0u32 && Fieldˉindex == 0u32 {
             return Compilerˉsourceˉwirˉmember(
@@ -9314,7 +9464,7 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
     }
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Case
+            Input, Scan, Symbols, Typeˉcatalog, Nominal, Case
         );
     if !Caseˉview.Found || Fieldˉindex >= Caseˉview.Fields {
         return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
@@ -9367,12 +9517,58 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Nominal: u32,
     Case: u32,
     Queryˉsource: bytes,
     Queryˉoffset: u32,
     Queryˉlength: u32
 ) -> Compilerˉsourceˉwirˉmember {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Nominal
+        ) {
+        let Instance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+                Nominal
+            );
+        let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+                Input, Scan, Symbols, Typeˉcatalog, Instance
+            );
+        let Genericˉcaseˉview:
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉcase =
+            Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+                Input, Scan, Symbols, Layout, Case
+            );
+        if !Genericˉcaseˉview.Found || Genericˉcaseˉview.Fields > 64u32 {
+            return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
+        }
+        let Genericˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, Layout.Module
+            );
+        var Genericˉindex: u32 = 0u32;
+        while Genericˉindex < Genericˉcaseˉview.Fields {
+            let Genericˉfield:
+                Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+                Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+                    Input, Scan, Symbols, Layout, Case, Genericˉindex
+                );
+            if Genericˉfield.Found &&
+                Genericˉfield.Nameˉlength == Queryˉlength &&
+                Sourceˉset.Compilerˉsourceˉspansˉequal(
+                    Genericˉview.Source,
+                    Genericˉfield.Nameˉoffset, Genericˉfield.Nameˉlength,
+                    Queryˉsource, Queryˉoffset, Queryˉlength
+                ) {
+                return Compilerˉsourceˉwirˉmember(
+                    true, Genericˉindex, Genericˉfield.Shape
+                );
+            }
+            Genericˉindex = Genericˉindex + 1u32;
+        }
+        return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Nominal) {
         var Genericˉfieldˉnameˉvalid: bool = false;
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) &&
@@ -9397,12 +9593,13 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
             return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
         }
         return Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Case, 0u32
+            Input, Scan, Symbols, Typeˉcatalog,
+            Nominal, Case, 0u32
         );
     }
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Case
+            Input, Scan, Symbols, Typeˉcatalog, Nominal, Case
         );
     if !Caseˉview.Found {
         return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
@@ -9463,6 +9660,7 @@ fn Compilerˉsourceˉwirˉvariantˉpatternˉisˉvalid(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Source: bytes,
     Case: Sourceˉbodies.Compilerˉsourceˉmatchˉcase,
     Nominal: u32,
@@ -9470,7 +9668,7 @@ fn Compilerˉsourceˉwirˉvariantˉpatternˉisˉvalid(
 ) -> bool {
     let View: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Caseˉindex
+            Input, Scan, Symbols, Typeˉcatalog, Nominal, Caseˉindex
         );
     if !View.Found { return false; }
     if View.Fields == 0u32 { return Case.Bindingˉlength == 0u32; }
@@ -9504,7 +9702,8 @@ fn Compilerˉsourceˉwirˉvariantˉpatternˉisˉvalid(
         } else {
             let Member: Compilerˉsourceˉwirˉmember =
                 Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
-                    Input, Scan, Symbols, Nominal, Caseˉindex,
+                    Input, Scan, Symbols, Typeˉcatalog,
+                    Nominal, Caseˉindex,
                     Source, Field.Offset, Field.Length
                 );
             if !Member.Found || Member.Index >= View.Fields {
@@ -9558,6 +9757,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
     Source: bytes,
     Value: u32,
     Nominal: u32,
@@ -9568,7 +9768,7 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
 ) -> Compilerˉsourceˉwirˉbuild {
     let View: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Caseˉindex
+            Input, Scan, Symbols, Typeˉcatalog, Nominal, Caseˉindex
         );
     if !View.Found || View.Fields == 0u32 { return Build; }
     let Patternˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
@@ -9593,7 +9793,8 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
         }
         let Legacyˉfield: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-                Input, Scan, Symbols, Nominal, Caseˉindex, 0u32
+                Input, Scan, Symbols, Typeˉcatalog,
+                Nominal, Caseˉindex, 0u32
             );
         let Payload: Compilerˉsourceˉwirˉvalue =
             Compilerˉsourceˉwirˉemit(
@@ -9638,7 +9839,8 @@ fn Compilerˉsourceˉwirˉbindˉvariantˉpattern(
             );
         let Member: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
-                Input, Scan, Symbols, Nominal, Caseˉindex,
+                Input, Scan, Symbols, Typeˉcatalog,
+                Nominal, Caseˉindex,
                 Source, Field.Offset, Field.Length
             );
         let Discard: bool = Name.Length == 1u32 &&
@@ -9701,7 +9903,9 @@ export fn Compilerˉsourceˉwirˉvariantˉcaseˉbyˉindex(
 ) -> Compilerˉsourceˉwirˉmember {
     let View: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Case
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Nominal, Case
         );
     if !View.Found {
         return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
@@ -9711,7 +9915,9 @@ export fn Compilerˉsourceˉwirˉvariantˉcaseˉbyˉindex(
     }
     let Field: Compilerˉsourceˉwirˉmember =
         Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-            Input, Scan, Symbols, Nominal, Case, 0u32
+            Input, Scan, Symbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            Nominal, Case, 0u32
         );
     return Compilerˉsourceˉwirˉmember(Field.Found, Case, Field.Shape);
 }
@@ -9727,15 +9933,14 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
     Index: u32
 ) -> u32 {
     let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
+            Bindings.Directory
+        );
     if Operation == 17u32 {
         if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
                 Target
             ) {
-            let Typeˉcatalog:
-                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
-                Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
-                    Bindings.Directory
-                );
             let Instance: u32 =
                 Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
                     Target
@@ -9777,7 +9982,8 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
     if Operation == 65u32 {
         let Variantˉfield: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-                Input, Scan, Symbols, Target, Auxiliary, Index
+                Input, Scan, Symbols, Typeˉcatalog,
+                Target, Auxiliary, Index
             );
         if !Variantˉfield.Found { return 0u32; }
         return Variantˉfield.Shape;
@@ -9945,18 +10151,18 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
     }
     if Operation >= 65u32 {
         if Operation <= 67u32 {
-            let Variantˉcase: Compilerˉsourceˉwirˉmember =
-                Compilerˉsourceˉwirˉvariantˉcaseˉbyˉindex(
-                    Input, Scan, Symbols, Target, Auxiliary
-                );
-            if !Variantˉcase.Found { return false; }
             let Variantˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
                 Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
-                    Input, Scan, Symbols, Target, Auxiliary
+                    Input, Scan, Symbols, Typeˉcatalog, Target, Auxiliary
                 );
             if !Variantˉview.Found { return false; }
             if Operation == 65u32 {
                 var Variantˉresultˉshape: u32 = 196608u32 + Target;
+                if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+                        Target
+                    ) {
+                    Variantˉresultˉshape = Target;
+                }
                 if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Target) {
                     Variantˉresultˉshape = Target;
                 }
@@ -9966,7 +10172,12 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             if Operandˉcount != 1u32 { return false; }
             if Operation == 66u32 { return Shape == 4u32; }
             if Variantˉview.Fields != 1u32 { return false; }
-            return Shape == Variantˉcase.Shape;
+            let Variantˉfield: Compilerˉsourceˉwirˉmember =
+                Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
+                    Input, Scan, Symbols, Typeˉcatalog,
+                    Target, Auxiliary, 0u32
+                );
+            return Variantˉfield.Found && Shape == Variantˉfield.Shape;
         }
     }
     if Operation == 164u32 {
@@ -9974,7 +10185,8 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
         let Fieldˉindex: u32 = Auxiliary - Case * 64u32;
         let Field: Compilerˉsourceˉwirˉmember =
             Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-                Input, Scan, Symbols, Target, Case, Fieldˉindex
+                Input, Scan, Symbols, Typeˉcatalog,
+                Target, Case, Fieldˉindex
             );
         if !Field.Found { return false; }
         if Operandˉcount != 1u32 { return false; }
@@ -10164,6 +10376,11 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             }
             if Operationˉkind == 164u32 {
                 var Variantˉfieldˉownerˉshape: u32 = 196608u32 + Operationˉtarget;
+                if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+                        Operationˉtarget
+                    ) {
+                    Variantˉfieldˉownerˉshape = Operationˉtarget;
+                }
                 if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Operationˉtarget) {
                     Variantˉfieldˉownerˉshape = Operationˉtarget;
                 }
@@ -10291,6 +10508,11 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Operationˉkind >= 66u32 {
             if Operationˉkind <= 67u32 {
                 var Variantˉoperandˉownerˉshape: u32 = 196608u32 + Operationˉtarget;
+                if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+                        Operationˉtarget
+                    ) {
+                    Variantˉoperandˉownerˉshape = Operationˉtarget;
+                }
                 if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Operationˉtarget) {
                     Variantˉoperandˉownerˉshape = Operationˉtarget;
                 }
@@ -10854,7 +11076,8 @@ fn Compilerˉsourceˉwirˉscanˉgenericˉtype(
         Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
         Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
             Input, Scan, Symbols, Module, Source,
-            Offset, Line, Column, Catalog
+            Offset, Line, Column,
+            0u32, 0u32, 0u32, 0u32, Catalog
         );
     return Compilerˉsourceˉwirˉgenericˉtypeˉscan(
         General.Status, General.Genericˉstatus, General.Shape,
