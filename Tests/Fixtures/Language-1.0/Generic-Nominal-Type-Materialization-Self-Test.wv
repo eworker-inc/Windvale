@@ -7,6 +7,7 @@ import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉgenericˉtypeˉmaterialization as Materialization;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwvbˉgenericˉnominalˉtypes as Genericˉwvb;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
@@ -83,6 +84,19 @@ fn Nameˉis(
             Source, Offset, Length,
             Expectedˉbytes, 0u32, Bytesˉlength(Expectedˉbytes)
         );
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
 }
 
 export fn Main() -> i32 {
@@ -423,6 +437,121 @@ export fn Main() -> i32 {
             Input, Scan, Symbols, Emptyˉplan
         ) {
         return 20;
+    }
+
+    let Typeˉbase: u32 = Symbols.Records + Symbols.Enums + Symbols.Variants;
+    let Emitˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Catalog, Typeˉbase
+        );
+    let Emptyˉfoundationˉplan: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Encoded:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Emptyˉfoundationˉplan
+        );
+    if Encoded.Status !=
+            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid ||
+        Encoded.Entries != 4u32 || Encoded.Foundationˉvariants != 0u32 ||
+        Bytesˉlength(Encoded.Payload) != 220u32 || Encoded.Features != 32u32 ||
+        Encoded.Failureˉinstance != 4294967295u32 {
+        return 21;
+    }
+    if Bytesˉreadˉu8(Encoded.Payload, 0u32) != 1u8 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 1u32) != 9u32 ||
+        !Nameˉis(Encoded.Payload, 5u32, 9u32, "__WvY0000") ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 14u32) != 1u32 ||
+        !Nameˉis(Encoded.Payload, 22u32, 5u32, "Value") ||
+        Bytesˉreadˉu8(Encoded.Payload, 27u32) != 1u8 {
+        return 22;
+    }
+    if Bytesˉreadˉu8(Encoded.Payload, 28u32) != 1u8 ||
+        !Nameˉis(Encoded.Payload, 33u32, 9u32, "__WvY0001") ||
+        Bytesˉreadˉu8(Encoded.Payload, 55u32) != 7u8 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 56u32) != Typeˉbase {
+        return 23;
+    }
+    if Bytesˉreadˉu8(Encoded.Payload, 80u32) != 3u8 ||
+        !Nameˉis(Encoded.Payload, 85u32, 9u32, "__WvY0002") ||
+        Bytesˉreadˉu8(Encoded.Payload, 107u32) != 0u8 ||
+        Bytesˉreadˉu8(Encoded.Payload, 116u32) != 1u8 ||
+        Bytesˉreadˉu8(Encoded.Payload, 126u32) != 7u8 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 127u32) != Typeˉbase ||
+        Bytesˉreadˉu8(Encoded.Payload, 159u32) != 2u8 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 160u32) != 2u32 {
+        return 24;
+    }
+    if Bytesˉreadˉu8(Encoded.Payload, 188u32) != 1u8 ||
+        !Nameˉis(Encoded.Payload, 193u32, 9u32, "__WvY0003") ||
+        Bytesˉreadˉu8(Encoded.Payload, 215u32) != 11u8 ||
+        Bytesˉreadˉu32ˉlittle(Encoded.Payload, 216u32) !=
+            Typeˉbase + 2u32 {
+        return 25;
+    }
+    let Encodedˉagain:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Emptyˉfoundationˉplan
+        );
+    if !Bytesˉequal(Encoded.Payload, Encodedˉagain.Payload) {
+        return 26;
+    }
+    let Wrongˉbase:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Plan, Emptyˉfoundationˉplan
+        );
+    if Wrongˉbase.Status !=
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉtypeˉbase {
+        return 27;
+    }
+    let Shortˉfoundationˉplan: bytes = Bytesˉfromˉu8(1u8);
+    let Invalidˉshort:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Shortˉfoundationˉplan
+        );
+    let Invalidˉshape:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Bytesˉfromˉu32ˉlittle(1u32)
+        );
+    if Invalidˉshort.Status !=
+            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan ||
+        Invalidˉshape.Status !=
+            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan {
+        return 28;
+    }
+    let Optionˉshape: bytes = Bytesˉfromˉu32ˉlittle(1610612738u32);
+    let Duplicateˉfoundationˉplan: bytes =
+        Bytesˉconcat(Optionˉshape, Optionˉshape);
+    let Invalidˉduplicate:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Duplicateˉfoundationˉplan
+        );
+    let Withˉfoundation:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Emitˉplan, Optionˉshape
+        );
+    if Invalidˉduplicate.Status !=
+            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan ||
+        Withˉfoundation.Status !=
+            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid ||
+        Withˉfoundation.Foundationˉvariants != 1u32 ||
+        !Bytesˉequal(Encoded.Payload, Withˉfoundation.Payload) {
+        return 29;
+    }
+    let Invalidˉmaterialization:
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
+        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+            Input, Scan, Symbols, Tamperedˉentry, Emptyˉfoundationˉplan
+        );
+    if Invalidˉmaterialization.Status !=
+        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization {
+        return 30;
     }
     return 42;
 }

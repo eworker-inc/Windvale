@@ -745,6 +745,37 @@ then migrating Foundation special cases remain the next Slice 4 checkpoints.
 The broad Language 1, storage, OS, paired-host, and complete Qualification gates
 remain deferred to the final seven-slice integration gate.
 
+## Slice 4 generic nominal WVB Types-serialization checkpoint
+
+Decision 0811 consumes the fully reconstructed materialization plan and emits
+each WVGT instance as one ordinary concrete WVB record or variant Types entry.
+Catalog order becomes a contiguous suffix after declared nominals. Fixed-width
+private names `__WvY0000` through `__WvY1023` keep output deterministic and
+precede the existing `__WvZ000` Foundation suffix. Nested generic record and
+variant fields carry their final ordinary type-table targets; source parameters
+and private WVGT shapes are absent from the payload.
+
+The focused serializer validates the exact declared-type base, the reconstructed
+materialization, a unique at-most-256-entry Foundation first-use plan, the
+1,024-type ceiling, nested nominal kinds, shapes, and its 4 MiB output bound.
+Failure returns no partial payload. Existing record, variant, multi-field-case,
+shape, and feature encodings are reused, so this checkpoint adds no WVB version
+or runtime generic mechanism.
+
+The expanded 30-case fixture builds to a 731,861-byte WVB with SHA-256
+`c4283d87564abff8fe81d0d2fe6935745cbdc609dde20d2b97ad30d04f53c4c0`.
+Its five-fragment 17,704,448-byte hosted Windows executable has SHA-256
+`fdc0a0325e4d3e68ec133e7ad726c37f52f56c4a770e106c8593f9b85de8c14a`,
+returns `42`, and writes no output. The focused
+`generic-nominal-type-materialization` owner exposes its build, package, and
+execute phases and reuses both content-keyed caches.
+
+Main Source WIR does not yet carry retained WVGT evidence into Source WVB, and
+the complete backend does not yet insert these entries or remap their operation
+targets. This is therefore one exact connected checkpoint, not a claim that
+general generic applications compile. Those main-path changes, Foundation
+migration, collections, paired-host evidence, and the final broad gate remain.
+
 ## Slice 4 generic nominal WVLB-carrier checkpoint
 
 Decision 0809 extends the existing binding artifact rather than creating a

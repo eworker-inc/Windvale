@@ -142,6 +142,6 @@ try {
 
 if (Passed) {
     process.stdout.write(
-        'native generic nominal type materialization status=Passed cases=20 result=42\n'
+        'native generic nominal type materialization status=Passed cases=30 result=42\n'
     );
 }

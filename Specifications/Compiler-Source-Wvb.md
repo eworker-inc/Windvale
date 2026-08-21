@@ -297,6 +297,30 @@ They are deterministic emitter identities and are
 not public source names. Existing variant construction, test, field, runtime,
 and verifier rules execute every specialization.
 
+The focused general-generic serializer consumes one independently validated
+generic nominal materialization plan. It emits each retained instance as an
+ordinary concrete record or variant entry immediately after declared nominal
+types and before the Foundation suffix. Catalog order is canonical; private
+fixed-width names are `__WvY0000` through `__WvY1023`. Nested materialized
+record and variant shapes refer to their final ordinary Types indices. A field
+using a concrete Foundation generic shape resolves through the exact unique
+Foundation plan and targets the following `__WvZ` suffix.
+
+The serializer requires its first output index to equal
+`Records + Enums + Variants`, admits at most 1,024 total Types entries and 256
+Foundation shapes, and bounds its emitted entry payload to 4 MiB. It rejects an
+invalid materialization, a malformed, repeated, incomplete, or non-Foundation
+plan, an unsupported shape, an inconsistent nested nominal kind, or a type or
+evidence limit without returning partial output. It preserves the existing
+record/variant metadata and WVB feature bits, including multi-field marker `2`;
+it adds no WVB version or runtime generic representation.
+
+This focused serializer is not yet called by the main Source WVB entry point.
+Retained WVGT carriage through main Source WIR and insertion of these entries
+and their operation targets into complete WVB remain connected implementation
+work. The implemented contract therefore proves deterministic serialization,
+not general-generic application execution.
+
 WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
 
 WVIR operations `126` and `127` lower to WVB opcodes `BD` and `BE` for `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle`. They are ordinary members of the canonical WVB 1.11 vocabulary; the backend does not select another minor version when they occur.

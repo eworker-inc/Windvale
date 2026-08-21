@@ -1517,6 +1517,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Materialization.wvproj',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Materialization-Self-Test.wv',
+        'Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.cmd',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.sh',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.mjs'

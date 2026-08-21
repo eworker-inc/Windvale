@@ -1,0 +1,619 @@
+module Compilerˉsourceˉwvbˉgenericˉnominalˉtypes profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayouts;
+import Compilerˉsourceˉgenericˉtypeˉmaterialization as Materialization;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export enum Compilerˉsourceˉwvbˉgenericˉnominalˉstatus {
+    Valid = 0;
+    Invalidˉmaterialization = 1;
+    Invalidˉtypeˉbase = 2;
+    Invalidˉfoundationˉplan = 3;
+    Unsupportedˉshape = 4;
+    Typeˉlimit = 5;
+    Evidenceˉlimit = 6;
+}
+
+export record Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
+    Status: Compilerˉsourceˉwvbˉgenericˉnominalˉstatus;
+    Entries: u32;
+    Foundationˉvariants: u32;
+    Payload: bytes;
+    Features: u32;
+    Failureˉinstance: u32;
+}
+
+record Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    Status: Compilerˉsourceˉwvbˉgenericˉnominalˉstatus;
+    Payload: bytes;
+    Features: u32;
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉwvbˉgenericˉnominalˉstatus,
+    Instance: u32
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
+        Status, 0u32, 0u32,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
+        0u32, Instance
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(
+    Input: bytes
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
+        0u32
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉwvbˉgenericˉnominalˉstatus
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+        Status,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
+        0u32
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+    Part: Compilerˉsourceˉwvbˉgenericˉnominalˉpart,
+    Value: bytes
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    if Part.Status !=
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+        return Part;
+    }
+    let Current: u32 = Bytesˉlength(Part.Payload);
+    let Added: u32 = Bytesˉlength(Value);
+    if Added > 4194304u32 || Current > 4194304u32 - Added {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Evidenceˉlimit,
+            Part.Payload, Part.Features
+        );
+    }
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+        Part.Status, Bytesˉconcat(Part.Payload, Value), Part.Features
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+    Part: Compilerˉsourceˉwvbˉgenericˉnominalˉpart,
+    Features: u32
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+        Part.Status, Part.Payload, Part.Features | Features
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉstring(
+    Source: bytes,
+    Offset: u32,
+    Length: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Length),
+        Bytesˉslice(Source, Offset, Length)
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉname(
+    Instance: u32
+) -> bytes {
+    let Digits: bytes = Textˉtoˉutf8(U32ˉformat(10000u32 + Instance));
+    return Bytesˉconcat(
+        Textˉtoˉutf8("__WvY"),
+        Bytesˉslice(Digits, 1u32, 4u32)
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉencodedˉname(
+    Instance: u32
+) -> bytes {
+    let Name: bytes =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉname(Instance);
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Name)), Name
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉrank(
+    Foundationˉshapes: bytes,
+    Shape: u32
+) -> u32 {
+    var Rank: u32 = 0u32;
+    let Count: u32 = Bytesˉlength(Foundationˉshapes) / 4u32;
+    while Rank < Count {
+        if Bytesˉreadˉu32ˉlittle(Foundationˉshapes, Rank * 4u32) ==
+                Shape {
+            return Rank;
+        }
+        Rank = Rank + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel();
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉplanˉisˉvalid(
+    Foundationˉshapes: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Foundationˉshapes);
+    if Length > 1024u32 || Length - (Length / 4u32) * 4u32 != 0u32 {
+        return false;
+    }
+    let Count: u32 = Length / 4u32;
+    var Rank: u32 = 0u32;
+    while Rank < Count {
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Foundationˉshapes, Rank * 4u32
+        );
+        if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
+                Shape
+            ) {
+            return false;
+        }
+        var Prior: u32 = 0u32;
+        while Prior < Rank {
+            if Bytesˉreadˉu32ˉlittle(
+                    Foundationˉshapes, Prior * 4u32
+                ) == Shape {
+                return false;
+            }
+            Prior = Prior + 1u32;
+        }
+        Rank = Rank + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉscalarˉfeatures(
+    Shape: u32
+) -> u32 {
+    if Shape >= 11u32 && Shape <= 13u32 { return 2u32; }
+    if Shape == 16u32 { return 4u32; }
+    if Shape == 14u32 || Shape == 15u32 { return 8u32; }
+    if Shape == 9u32 || Shape == 10u32 { return 16u32; }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Foundationˉshapes: bytes,
+    Shape: u32
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
+            Shape
+        ) {
+        let Rank: u32 =
+            Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉrank(
+                Foundationˉshapes, Shape
+            );
+        if Rank == Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel() {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan
+            );
+        }
+        var Foundationˉshape: bytes = Bytesˉfromˉu8(11u8);
+        Foundationˉshape = Bytesˉconcat(
+            Foundationˉshape,
+            Bytesˉfromˉu32ˉlittle(
+                Plan.Firstˉtype + Plan.Instances + Rank
+            )
+        );
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Foundationˉshape, 0u32
+        );
+    }
+    if Shape >= 1073741824u32 && Shape < 1610612736u32 {
+        let Packed: bytes = Bytesˉfromˉu32ˉlittle(Shape);
+        let Compact: u32 = Bytesˉreadˉu16ˉlittle(Packed, 0u32);
+        let Upper: u32 = Bytesˉreadˉu16ˉlittle(Packed, 2u32);
+        var Element: u32 = Compact;
+        if Compact >= 4096u32 && Compact < 8192u32 {
+            Element = 65536u32 + Compact - 4096u32;
+        }
+        if Compact >= 8192u32 && Compact < 12288u32 {
+            Element = 131072u32 + Compact - 8192u32;
+        }
+        if Compact >= 12288u32 {
+            Element = 196608u32 + Compact - 12288u32;
+        }
+        var Maximum: u32 = 0u32;
+        var Collectionˉkind: u8 = 12u8;
+        if Shape < 1342177280u32 {
+            if Upper < 16384u32 { return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                    Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+                ); }
+            Maximum = Upper - 16384u32;
+        } else {
+            Collectionˉkind = 13u8;
+            if Upper < 20480u32 { return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                    Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+                ); }
+            Maximum = Upper - 20480u32;
+        }
+        if Maximum == 0u32 || Maximum > 4095u32 {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+            );
+        }
+        let Encodedˉelement:
+            Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+            Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
+                Input, Symbols, Plan, Foundationˉshapes, Element
+            );
+        if Encodedˉelement.Status !=
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+            return Encodedˉelement;
+        }
+        var Collection: bytes = Bytesˉfromˉu8(Collectionˉkind);
+        Collection = Bytesˉconcat(Collection, Encodedˉelement.Payload);
+        Collection = Bytesˉconcat(
+            Collection, Bytesˉfromˉu32ˉlittle(Maximum)
+        );
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Collection, Encodedˉelement.Features | 1u32
+        );
+    }
+    var Kind: u8 = 0u8;
+    if Shape == 1u32 { Kind = 1u8; }
+    if Shape == 2u32 { Kind = 4u8; }
+    if Shape == 3u32 { Kind = 5u8; }
+    if Shape == 4u32 { Kind = 2u8; }
+    if Shape == 5u32 { Kind = 3u8; }
+    if Shape == 6u32 { Kind = 6u8; }
+    if Shape == 7u32 { Kind = 9u8; }
+    if Shape == 8u32 { Kind = 10u8; }
+    if Shape == 9u32 { Kind = 20u8; }
+    if Shape == 10u32 { Kind = 21u8; }
+    if Shape == 11u32 { Kind = 14u8; }
+    if Shape == 12u32 { Kind = 15u8; }
+    if Shape == 13u32 { Kind = 16u8; }
+    if Shape == 14u32 { Kind = 18u8; }
+    if Shape == 15u32 { Kind = 19u8; }
+    if Shape == 16u32 { Kind = 17u8; }
+    if Shape >= 1u32 && Shape <= 16u32 {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Bytesˉfromˉu8(Kind),
+            Compilerˉsourceˉwvbˉgenericˉnominalˉscalarˉfeatures(Shape)
+        );
+    }
+    if Shape >= 65536u32 &&
+        Shape < 65536u32 + Plan.Firstˉtype + Plan.Instances {
+        let Target: u32 = Shape - 65536u32;
+        if Target >= Plan.Firstˉtype {
+            let Nested:
+                Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+                Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+                    Plan, Target - Plan.Firstˉtype
+                );
+            if !Nested.Found || Nested.Kind !=
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+                return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                    Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+                );
+            }
+        }
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Bytesˉconcat(
+                Bytesˉfromˉu8(7u8), Bytesˉfromˉu32ˉlittle(Target)
+            ), 0u32
+        );
+    }
+    if Shape >= 131072u32 + Symbols.Records &&
+        Shape < 131072u32 + Symbols.Records + Symbols.Enums {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Bytesˉconcat(
+                Bytesˉfromˉu8(8u8),
+                Bytesˉfromˉu32ˉlittle(Shape - 131072u32)
+            ), 0u32
+        );
+    }
+    if Shape >= 196608u32 &&
+        Shape < 196608u32 + Plan.Firstˉtype + Plan.Instances {
+        let Variantˉtarget: u32 = Shape - 196608u32;
+        if Variantˉtarget >= Plan.Firstˉtype {
+            let Nestedˉvariant:
+                Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+                Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+                    Plan, Variantˉtarget - Plan.Firstˉtype
+                );
+            if !Nestedˉvariant.Found || Nestedˉvariant.Kind !=
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+                return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                    Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+                );
+            }
+        }
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Bytesˉconcat(
+                Bytesˉfromˉu8(11u8),
+                Bytesˉfromˉu32ˉlittle(Variantˉtarget)
+            ), 0u32
+        );
+    }
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+        Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Foundationˉshapes: bytes,
+    Source: bytes,
+    Fieldˉindex: u32
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    let Field: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Plan, Fieldˉindex
+        );
+    if !Field.Found {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+        );
+    }
+    let Shape: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
+            Input, Symbols, Plan, Foundationˉshapes, Field.Shape
+        );
+    if Shape.Status !=
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+        return Shape;
+    }
+    var Result: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
+    Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+        Result,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉstring(
+            Source, Field.Nameˉoffset, Field.Nameˉlength
+        )
+    );
+    Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+        Result, Shape.Payload
+    );
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+        Result, Shape.Features
+    );
+}
+
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Foundationˉshapes: bytes,
+    Instance: u32
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    let Type: Materialization.Compilerˉsourceˉgenericˉmaterializedˉtype =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtype(
+            Plan, Instance
+        );
+    if !Type.Found || Type.Outputˉtype != Plan.Firstˉtype + Instance {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+        );
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Type.Module);
+    var Kind: u8 = 1u8;
+    if Type.Kind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+        Kind = 3u8;
+    } else {
+        if Type.Kind !=
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+            );
+        }
+    }
+    var Result: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
+    Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+        Result, Bytesˉfromˉu8(Kind)
+    );
+    Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+        Result,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉencodedˉname(Instance)
+    );
+    if Kind == 1u8 {
+        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Result, Bytesˉfromˉu32ˉlittle(Type.Fields)
+        );
+        var Fieldˉrank: u32 = 0u32;
+        while Fieldˉrank < Type.Fields {
+            let Encodedˉfield:
+                Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+                Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
+                    Input, Symbols, Plan, Foundationˉshapes, View.Source,
+                    Type.Firstˉfield + Fieldˉrank
+                );
+            if Encodedˉfield.Status !=
+                    Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+                return Encodedˉfield;
+            }
+            Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                Result, Encodedˉfield.Payload
+            );
+            Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+                Result, Encodedˉfield.Features
+            );
+            Fieldˉrank = Fieldˉrank + 1u32;
+        }
+        return Result;
+    }
+    Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+        Result, Bytesˉfromˉu32ˉlittle(Type.Cases)
+    );
+    var Caseˉrank: u32 = 0u32;
+    while Caseˉrank < Type.Cases {
+        let Case:
+            Materialization.Compilerˉsourceˉgenericˉmaterializedˉcase =
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉcase(
+                Plan, Type.Firstˉcase + Caseˉrank
+            );
+        if !Case.Found {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+            );
+        }
+        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Result,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstring(
+                View.Source, Case.Nameˉoffset, Case.Nameˉlength
+            )
+        );
+        if Case.Fields == 0u32 {
+            Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                Result, Bytesˉfromˉu8(0u8)
+            );
+        } else {
+            var Marker: bytes = Bytesˉfromˉu8(1u8);
+            if Case.Fields > 1u32 {
+                Marker = Bytesˉconcat(
+                    Bytesˉfromˉu8(2u8),
+                    Bytesˉfromˉu32ˉlittle(Case.Fields)
+                );
+                Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+                    Result, 32u32
+                );
+            }
+            Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                Result, Marker
+            );
+            var Caseˉfield: u32 = 0u32;
+            while Caseˉfield < Case.Fields {
+                let Encodedˉcaseˉfield:
+                    Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+                    Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
+                        Input, Symbols, Plan, Foundationˉshapes,
+                        View.Source, Case.Firstˉfield + Caseˉfield
+                    );
+                if Encodedˉcaseˉfield.Status !=
+                        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+                    return Encodedˉcaseˉfield;
+                }
+                Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Result, Encodedˉcaseˉfield.Payload
+                );
+                Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+                    Result, Encodedˉcaseˉfield.Features
+                );
+                Caseˉfield = Caseˉfield + 1u32;
+            }
+        }
+        Caseˉrank = Caseˉrank + 1u32;
+    }
+    return Result;
+}
+
+export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Foundationˉshapes: bytes
+) -> Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
+    let Sentinel: u32 =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel();
+    if !Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Plan
+        ) {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization,
+            Sentinel
+        );
+    }
+    let Typeˉbase: u32 = Symbols.Records + Symbols.Enums + Symbols.Variants;
+    if Plan.Firstˉtype != Typeˉbase {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉtypeˉbase,
+            Sentinel
+        );
+    }
+    if !Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉplanˉisˉvalid(
+            Foundationˉshapes
+        ) {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan,
+            Sentinel
+        );
+    }
+    let Foundationˉvariants: u32 = Bytesˉlength(Foundationˉshapes) / 4u32;
+    if Typeˉbase > 1024u32 || Plan.Instances > 1024u32 - Typeˉbase ||
+        Foundationˉvariants >
+            1024u32 - Typeˉbase - Plan.Instances {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Typeˉlimit,
+            Sentinel
+        );
+    }
+    var Result: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
+    var Instance: u32 = 0u32;
+    while Instance < Plan.Instances {
+        let Encoded: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+            Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
+                Input, Scan, Symbols, Plan, Foundationˉshapes, Instance
+            );
+        if Encoded.Status !=
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+                Input, Encoded.Status, Instance
+            );
+        }
+        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Result, Encoded.Payload
+        );
+        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+            Result, Encoded.Features
+        );
+        if Result.Status !=
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+                Input, Result.Status, Instance
+            );
+        }
+        Instance = Instance + 1u32;
+    }
+    return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
+        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+        Plan.Instances, Foundationˉvariants,
+        Result.Payload, Result.Features, Sentinel
+    );
+}
