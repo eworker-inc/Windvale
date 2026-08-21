@@ -1,0 +1,365 @@
+module Compilerˉsourceˉgenericˉtypeˉbinding profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export record Compilerˉsourceˉgenericˉtypeˉbinding {
+    Status: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus;
+    Genericˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Shape: u32;
+    Nominalˉkind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind;
+    Declaration: u32;
+    Module: u32;
+    Catalogˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus;
+    Catalogˉevidence: bytes;
+    Nextˉoffset: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+    Status: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus,
+    Genericˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus,
+    Shape: u32,
+    Nominalˉkind: Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind,
+    Declaration: u32,
+    Module: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Nextˉoffset: u32,
+    Nextˉline: u32,
+    Nextˉcolumn: u32,
+    Failureˉoffset: u32,
+    Failureˉline: u32,
+    Failureˉcolumn: u32
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Compilerˉsourceˉgenericˉtypeˉbinding(
+        Status, Genericˉstatus, Shape, Nominalˉkind,
+        Declaration, Module, Catalog.Status, Catalog.Evidence,
+        Nextˉoffset, Nextˉline, Nextˉcolumn,
+        Failureˉoffset, Failureˉline, Failureˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+    Binding: Compilerˉsourceˉgenericˉtypeˉbinding
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+        Binding.Catalogˉstatus,
+        Binding.Catalogˉevidence
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
+    Binding: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+        Binding.Status,
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(Binding),
+        Binding.Nominalˉkind, 4294967295u32, Binding.Nominalˉmodule,
+        Catalog,
+        Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
+        Binding.Failureˉoffset, Binding.Failureˉline,
+        Binding.Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+    Genericˉstatus: Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+        Genericˉstatus, 0u32,
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+        4294967295u32, 4294967295u32, Catalog,
+        Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn,
+        Token.Offset, Token.Line, Token.Column
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉbindingˉpreserveˉcatalog(
+    Binding: Compilerˉsourceˉgenericˉtypeˉbinding,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+        Binding.Status, Binding.Genericˉstatus, Binding.Shape,
+        Binding.Nominalˉkind, Binding.Declaration, Binding.Module, Catalog,
+        Binding.Nextˉoffset, Binding.Nextˉline, Binding.Nextˉcolumn,
+        Binding.Failureˉoffset, Binding.Failureˉline,
+        Binding.Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Owner: u32,
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Depth: u32
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    let Token: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Offset, Line, Column
+        );
+    if Depth > 32u32 {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Instantiationˉdepth,
+            Catalog, Token
+        );
+    }
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+        Catalog
+    ) {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Catalog, Token
+        );
+    }
+    let Ordinary: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+            Input, Scan, Symbols.Directory, Symbols.Lookup,
+            Symbols.Visibility, Owner, Source, Offset, Line, Column,
+            Symbols.Records, Symbols.Enums, false
+        );
+    if Ordinary.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
+            Ordinary, Catalog
+        );
+    }
+    if Token.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
+            Ordinary, Catalog
+        );
+    }
+    let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
+            Source, Offset, Line, Column, false
+        );
+    let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+    let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(
+            Input, Scan, Symbols.Directory, Symbols.Lookup,
+            Owner, Source, Token.Offset, Qualifiedˉlength
+        );
+    if !Match.Found ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉownedˉmatchˉisˉaccessible(
+            Input, Scan, Symbols.Visibility, Symbols.Lookup,
+            Owner, Source, Token.Offset, Qualifiedˉlength, Match
+        ) {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
+            Ordinary, Catalog
+        );
+    }
+    let Target: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Match.Module);
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Target.Source, Match.Declarationˉoffset, 1u32, 1u32, true
+        );
+    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            Target.Source, Declaration, 1u32, 1u32
+        );
+    let Argumentsˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Qualified.Nextˉoffset,
+            Qualified.Nextˉline, Qualified.Nextˉcolumn
+        );
+    if Generic.Parameters == 0u32 ||
+        Argumentsˉstart.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfromˉsymbol(
+            Ordinary, Catalog
+        );
+    }
+    var Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉsolution(
+            Target.Source, Generic
+        );
+    if Solution.Status !=
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+            Solution.Status, Catalog, Argumentsˉstart
+        );
+    }
+    var Workingˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Catalog;
+    var Cursor: u32 = Argumentsˉstart.Nextˉoffset;
+    var Currentˉline: u32 = Argumentsˉstart.Nextˉline;
+    var Currentˉcolumn: u32 = Argumentsˉstart.Nextˉcolumn;
+    var End: Sourceˉlexer.Compilerˉsourceˉtoken = Argumentsˉstart;
+    var Parameter: u32 = 0u32;
+    while Parameter < Generic.Parameters {
+        let Argumentˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        if Argumentˉtoken.Kind ==
+            Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                Catalog, Argumentˉtoken
+            );
+        }
+        let Declared: Sourceˉsymbols.Compilerˉsourceˉgenericˉparameterˉmatch =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉparameterˉat(
+                Target.Source, Generic, Parameter
+            );
+        if !Declared.Found {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+                Catalog, Argumentˉtoken
+            );
+        }
+        var Nextˉoffset: u32 = Argumentˉtoken.Nextˉoffset;
+        var Nextˉline: u32 = Argumentˉtoken.Nextˉline;
+        var Nextˉcolumn: u32 = Argumentˉtoken.Nextˉcolumn;
+        if Declared.Isˉtype {
+            if Argumentˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Integer {
+                return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
+                    Catalog, Argumentˉtoken
+                );
+            }
+            let Nested: Compilerˉsourceˉgenericˉtypeˉbinding =
+                Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+                    Input, Scan, Symbols, Owner, Source,
+                    Cursor, Currentˉline, Currentˉcolumn,
+                    Workingˉcatalog, Depth + 1u32
+                );
+            if Nested.Status !=
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+                Nested.Genericˉstatus !=
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+                return Compilerˉsourceˉgenericˉtypeˉbindingˉpreserveˉcatalog(
+                    Nested, Catalog
+                );
+            }
+            Solution =
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                    Solution, Parameter, 1u32, Nested.Shape, 0u32,
+                    Parameter, Argumentˉtoken.Offset
+                );
+            Workingˉcatalog =
+                Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(Nested);
+            Nextˉoffset = Nested.Nextˉoffset;
+            Nextˉline = Nested.Nextˉline;
+            Nextˉcolumn = Nested.Nextˉcolumn;
+        } else {
+            if Argumentˉtoken.Kind !=
+                    Sourceˉlexer.Compilerˉtokenˉkind.Integer ||
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnumericˉshape(
+                    Argumentˉtoken.Numericˉkind
+                ) != Declared.Shape {
+                return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
+                    Catalog, Argumentˉtoken
+                );
+            }
+            Solution =
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                    Solution, Parameter, 2u32,
+                    Argumentˉtoken.Numericˉvalue,
+                    Argumentˉtoken.Numericˉhigh,
+                    Parameter, Argumentˉtoken.Offset
+                );
+        }
+        if Solution.Status !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Solution.Status, Catalog, Argumentˉtoken
+            );
+        }
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Nextˉoffset, Nextˉline, Nextˉcolumn
+            );
+        if Parameter + 1u32 < Generic.Parameters {
+            if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                    Catalog, Separator
+                );
+            }
+            Cursor = Separator.Nextˉoffset;
+            Currentˉline = Separator.Nextˉline;
+            Currentˉcolumn = Separator.Nextˉcolumn;
+        } else {
+            End = Separator;
+            if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                End = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Separator.Nextˉoffset,
+                    Separator.Nextˉline, Separator.Nextˉcolumn
+                );
+            }
+            if End.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+                return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                    Catalog, End
+                );
+            }
+        }
+        Parameter = Parameter + 1u32;
+    }
+    let Admission: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Workingˉcatalog, Match.Directoryˉindex,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
+                Match.Kind
+            ),
+            Owner, Token.Offset, 16u32 + Declaration.Items * 16u32,
+            Solution
+        );
+    if Admission.Status !=
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+            Admission.Status, Catalog, Token
+        );
+    }
+    let Updated: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+            Admission
+        );
+    return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(
+            Admission.Instance
+        ),
+        Match.Kind, Match.Directoryˉindex, Match.Module, Updated,
+        End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn,
+        End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉbind(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Owner: u32,
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Compilerˉsourceˉgenericˉtypeˉbinding {
+    return Compilerˉsourceˉgenericˉtypeˉbindˉnested(
+        Input, Scan, Symbols, Owner, Source,
+        Offset, Line, Column, Catalog, 0u32
+    );
+}

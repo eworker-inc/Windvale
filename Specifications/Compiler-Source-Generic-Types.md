@@ -8,15 +8,21 @@ evidence: it lets symbol binding, typed WIR, and WVB emission refer to one
 monomorphic type identity without packing arbitrary nested arguments into a
 `u32` or adding runtime generics.
 
-The catalog and the first source connection are implemented and executed.
-Source Symbols now recognizes generic record/variant declarations, validates
-their ordered parameter namespaces and structurally unresolved field uses, and
-rejects a bare template where a concrete type is required. General full-arity
-generic nominal use still does not bind, lower, or emit. That connection must
-consume WVGT, validate every ordered argument against WVSD and source,
-substitute fields exactly, and emit only reachable concrete types. The existing
-private Foundation `Option` and `Result` shapes remain unchanged until that
-integration deliberately migrates them.
+The catalog, declaration ownership, and recursive full-arity type-use binding
+are implemented and executed. Source Symbols recognizes generic record/variant
+declarations, validates their ordered parameter namespaces and structurally
+unresolved field uses, and rejects a bare template where a concrete type is
+required. The focused binding phase resolves uses such as
+`Choice<Box<i32>, text>`, admits inner WVGT identities before parents, and
+returns the exact replacement catalog. The main Source WIR and WVB paths do not
+yet consume that result, substitute fields and cases, or emit reachable concrete
+types. The existing private Foundation `Option` and `Result` shapes remain
+unchanged until that integration deliberately migrates them.
+
+The current constant-argument connection accepts one exact suffixed
+fixed-integer token of the declared shape. Evaluation of the broader frozen
+Language 1.0 constant-expression production remains a subsequent migration
+checkpoint; it is not redefined as literal-only semantics here.
 
 Every integer is unsigned little-endian. Lengths are exact. A catalog is
 immutable evidence: admission returns a replacement value and never publishes
@@ -110,14 +116,15 @@ an equal instance before checking new-instance count or growth. A new entry is
 appended only after its derived depth, retained bytes, and aggregate estimate
 fit every bound.
 
-## Integration contract
+## Integration contract and progress
 
-The remaining source integration must preserve these boundaries:
+The connected source integration preserves these boundaries:
 
-1. retain every already-validated generic nominal parameter in declaration
-   order without assigning the template an ordinary concrete shape;
-2. resolve a full-arity type use recursively, admitting inner concrete types
-   before outer types;
+1. **Implemented:** retain every already-validated generic nominal parameter in
+   declaration order without assigning the template an ordinary concrete shape;
+2. **Implemented:** resolve a full-arity type use recursively, admitting inner
+   concrete types before outer types and rolling the complete catalog back when
+   the outer use fails;
 3. substitute WVGT arguments while validating record fields and variant cases;
 4. carry private shapes only through validated compiler artifacts that bind the
    exact WVGT evidence;
@@ -156,3 +163,16 @@ The four-fragment 15,083,520-byte hosted Windows executable has SHA-256
 returns `42`, and writes no output. The independent
 `generic-nominal-declarations` owner reproduces this focused evidence through
 content-keyed compiler and hosted-application caches.
+
+`Generic-Nominal-Type-Binding-Self-Test.wv` adds 18 focused assertions over
+direct, repeated, nested, type-plus-constant, phantom, trailing-comma, and
+ordinary nominal uses. It rejects wrong arity, argument-kind and constant-width
+mismatches, bare templates, arguments on non-generic nominals, malformed
+catalogs, and partial nested admission after a failed outer use. Its
+649,494-byte WVB has SHA-256
+`94a7b1672a846d329c9056f01539ca1d30499ddab0dc460862fd76a5855dfa9b`.
+The four-fragment 15,842,304-byte hosted Windows executable has SHA-256
+`9071f7a16051ff46f422cb692d63a10103d3b36e57d0242198203548dc9c0e07`,
+returns `42`, and writes no output. The independent
+`generic-nominal-type-binding` owner reproduces this boundary through the
+content-keyed project and hosted-application caches.

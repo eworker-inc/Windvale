@@ -43,8 +43,11 @@ full-arity explicit calls, equal-instance reuse, and multiple bounded concrete
 instances per declaration, including a type appearing only as the complete
 result type. WVGT 1.0 now supplies the bounded concrete identity, exact nested
 dependency order, and private compiler shapes required by general generic
-records and variants. Source binding, field substitution, WIR carriage, WVB
-materialization, and package-visible template publication remain Slice 4 work.
+records and variants. A focused recursive source binder now resolves complete
+type lists and exact fixed-width literal constants into transactional WVGT
+replacements. The frozen broader constant-expression contract, field
+substitution, WIR carriage, WVB materialization, and package-visible template
+publication remain Slice 4 work.
 Collections beyond the first structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
@@ -648,6 +651,38 @@ returns `42`, and writes no output. The new independently runnable
 phases and reuses content-keyed project and hosted-application checkpoints.
 The broad Language 1, storage, OS, paired-host, and complete Qualification gates
 remain deferred to the final seven-slice integration gate.
+
+## Slice 4 recursive generic nominal type-binding checkpoint
+
+Decision 0806 connects validated generic nominal declarations to WVGT without
+yet mixing in field substitution or WVB emission. The focused binder gives the
+ordinary type system first refusal, then parses an exact full-arity record or
+variant use. Type arguments bind recursively, exact fixed-width literal
+arguments satisfy constant parameters, nested instances enter WVGT before their
+parents, and structurally equal uses reuse the first private shape. Phantom
+arguments remain part of identity.
+
+One outer use is transactional. A later arity, separator, contribution, or
+admission failure restores the exact catalog status and evidence supplied by the
+caller, including when a nested instance had already succeeded locally.
+Malformed catalogs, a 33rd nesting level, mismatched type/constant kinds, and
+wrong constant widths reject without publishing new evidence. Ordinary
+nominals and the current Foundation-specialized `Option` and `Result` shapes do
+not enter WVGT.
+
+The 18-case fixture builds to a 649,494-byte WVB with SHA-256
+`94a7b1672a846d329c9056f01539ca1d30499ddab0dc460862fd76a5855dfa9b`.
+Its four-fragment 15,842,304-byte hosted Windows executable has SHA-256
+`9071f7a16051ff46f422cb692d63a10103d3b36e57d0242198203548dc9c0e07`,
+returns `42`, and writes no output. The independently runnable
+`generic-nominal-type-binding` owner exposes build, package, and execute phases
+and reuses the content-keyed project and hosted-application checkpoints.
+
+General generic nominal use still does not reach application WIR or WVB. Exact
+field/case substitution, private-shape carriage, reachable concrete type
+materialization, and Foundation migration remain the next connected Slice 4
+checkpoints. Storage, OS, broad Language 1, paired-host, and complete
+Qualification gates remain deferred to the final seven-slice integration gate.
 
 ## Slice 4 packed keyword dispatch checkpoint
 

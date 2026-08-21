@@ -1,0 +1,321 @@
+module Languageˉoneˉgenericˉnominalˉtypeˉbindingˉselfˉtest profile portable;
+
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+
+fn Sourceˉsymbolsˉone(Source: text) -> bytes {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    var Header: bytes = Sourceˉsymbolsˉmagic;
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(8u32));
+    var Directory: bytes = Bytesˉfromˉu32ˉlittle(24u32);
+    Directory = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Sourceˉbytes);
+}
+
+fn Markerˉoffset(Source: bytes, Marker: text) -> u32 {
+    let Markerˉbytes: bytes = Textˉtoˉutf8(Marker);
+    let Sourceˉlength: u32 = Bytesˉlength(Source);
+    let Markerˉlength: u32 = Bytesˉlength(Markerˉbytes);
+    if Markerˉlength == 0u32 || Markerˉlength > Sourceˉlength {
+        return 4294967295u32;
+    }
+    var Offset: u32 = 0u32;
+    while Offset <= Sourceˉlength - Markerˉlength {
+        var Equal: bool = true;
+        var Index: u32 = 0u32;
+        while Index < Markerˉlength {
+            if Bytesˉreadˉu8(Source, Offset + Index) !=
+                Bytesˉreadˉu8(Markerˉbytes, Index) {
+                Equal = false;
+            }
+            Index = Index + 1u32;
+        }
+        if Equal { return Offset + Markerˉlength; }
+        Offset = Offset + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Bind(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Marker: text,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding {
+    let Offset: u32 = Markerˉoffset(Source, Marker);
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+        Input, Scan, Symbols, 0u32, Source, Offset, 1u32, 1u32, Catalog
+    );
+}
+
+fn Bindingˉcatalog(
+    Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+        Binding
+    );
+}
+
+export fn Main() -> i32 {
+    var Source: text = "module Genericˉtypeˉbinding profile portable;\n";
+    Source = Textˉconcat(Source, "record Box<T> { Value: T; }\n");
+    Source = Textˉconcat(
+        Source,
+        "variant Choice<T, E> { Left(Value: T); Right(Error: E); }\n"
+    );
+    Source = Textˉconcat(
+        Source, "record Buffer<T, const Maximum: u32> { Value: T; }\n"
+    );
+    Source = Textˉconcat(Source, "record Marker<T> { Value: i32; }\n");
+    Source = Textˉconcat(Source, "record Plain { Value: i32; }\n");
+    Source = Textˉconcat(Source, "fn Root() -> i32 { return 0; }\n");
+    Source = Textˉconcat(Source, "// useˉbox Box<i32>\n");
+    Source = Textˉconcat(Source, "// useˉboxˉrepeat Box<i32>\n");
+    Source = Textˉconcat(
+        Source, "// useˉnested Choice<Box<i32>, text>\n"
+    );
+    Source = Textˉconcat(Source, "// useˉbuffer Buffer<u8, 8u32>\n");
+    Source = Textˉconcat(Source, "// useˉphantomˉa Marker<i32>\n");
+    Source = Textˉconcat(Source, "// useˉphantomˉb Marker<u32>\n");
+    Source = Textˉconcat(
+        Source, "// useˉwrongˉarity Box<i32, u32>\n"
+    );
+    Source = Textˉconcat(Source, "// useˉconstˉkind Buffer<u8, u32>\n");
+    Source = Textˉconcat(Source, "// useˉconstˉwidth Buffer<u8, 8u8>\n");
+    Source = Textˉconcat(Source, "// useˉtypeˉkind Box<8u32>\n");
+    Source = Textˉconcat(Source, "// useˉplain Plain\n");
+    Source = Textˉconcat(Source, "// useˉbare Box\n");
+    Source = Textˉconcat(Source, "// useˉtrailing Box<i32,>\n");
+    Source = Textˉconcat(
+        Source, "// useˉtransaction Choice<Box<bool>, text, i32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉnongenericˉarguments Plain<i32>\n"
+    );
+    let Input: bytes = Sourceˉsymbolsˉone(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 1;
+    }
+
+    var Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    var Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Bind(Input, Scan, Symbols, View.Source, "useˉbox ", Catalog);
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Binding.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) {
+        return 2;
+    }
+    Catalog = Bindingˉcatalog(Binding);
+    let Boxˉargument: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 0u32, 0u32
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 1u32 ||
+        Boxˉargument.Low != 1u32 {
+        return 3;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉboxˉrepeat ", Catalog
+    );
+    if Binding.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 1u32 {
+        return 4;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉnested ", Catalog
+    );
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(1u32) {
+        return 5;
+    }
+    Catalog = Bindingˉcatalog(Binding);
+    let Nestedˉbox: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 1u32, 0u32
+        );
+    let Nestedˉtext: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 1u32, 1u32
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 2u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉmaximumˉdepth(
+            Catalog
+        ) != 2u32 ||
+        Nestedˉbox.Low !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Nestedˉtext.Low != 5u32 {
+        return 6;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉbuffer ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    let Maximum: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 2u32, 1u32
+        );
+    if Binding.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(2u32) ||
+        !Maximum.Valid || Maximum.Kind != 2u32 || Maximum.Shape != 3u32 ||
+        Maximum.Low != 8u32 || Maximum.High != 0u32 {
+        return 7;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉphantomˉa ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    let Firstˉphantom: u32 = Binding.Shape;
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉphantomˉb ", Catalog
+    );
+    Catalog = Bindingˉcatalog(Binding);
+    if Firstˉphantom == Binding.Shape ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 5u32 {
+        return 8;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉtrailing ", Catalog
+    );
+    if Binding.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 5u32 {
+        return 9;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉplain ", Catalog
+    );
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Shape == 0u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Binding.Shape
+        ) || Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 5u32 {
+        return 10;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉwrongˉarity ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 5u32 {
+        return 11;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉconstˉkind ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch {
+        return 12;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉconstˉwidth ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch {
+        return 13;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉtypeˉkind ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+        Generics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch {
+        return 14;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉbare ", Catalog
+    );
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype ||
+        Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return 15;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉtransaction ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 5u32 {
+        return 16;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source,
+        "useˉnongenericˉarguments ", Catalog
+    );
+    if Binding.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype ||
+        Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid {
+        return 17;
+    }
+
+    let Badˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+            Bytesˉslice(Input, 0u32, 0u32)
+        );
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉbox ", Badˉcatalog
+    );
+    let Preservedˉbadˉcatalog:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Bindingˉcatalog(Binding);
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence ||
+        Preservedˉbadˉcatalog.Status !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
+        return 18;
+    }
+    return 42;
+}

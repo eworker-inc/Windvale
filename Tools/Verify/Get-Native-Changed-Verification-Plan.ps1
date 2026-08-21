@@ -1013,6 +1013,7 @@ function Add-Compiler-Suites {
 function Add-Source-Front-End-Suites {
     Add-Suite @(
         'source-containment',
+        'generic-nominal-type-binding',
         'language-1-front-door',
         'compiler-source-sentinel'
     )
@@ -1494,6 +1495,14 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Declaration-Self-Test.wv'
     )) {
         Add-Suite 'generic-nominal-declarations'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
+        'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv',
+        'Tools/Native/Test-Generic-Nominal-Type-Binding.cmd',
+        'Tools/Native/Test-Generic-Nominal-Type-Binding.sh',
+        'Tools/Native/Test-Generic-Nominal-Type-Binding.mjs'
+    )) {
+        Add-Suite 'generic-nominal-type-binding'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
@@ -2457,11 +2466,20 @@ foreach ($Path in $Paths) {
         )
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Generic-Resolution-Core.wv',
-        'Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
-        'Specifications/Compiler-Source-Generic-Resolution.md',
-        'Specifications/Compiler-Source-Generic-Types.md'
+        'Specifications/Compiler-Source-Generic-Resolution.md'
     )) {
         Add-Suite @('source-containment', 'language-1-front-door')
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Generic-Lowering-Core.wv',
+        'Compiler/Windvale/Source-Generic-Type-Binding-Core.wv',
+        'Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
+        'Specifications/Compiler-Source-Generic-Types.md'
+    )) {
+        Add-Suite @(
+            'source-containment',
+            'generic-nominal-type-binding',
+            'language-1-front-door'
+        )
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',
