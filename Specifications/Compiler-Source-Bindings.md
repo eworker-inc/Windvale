@@ -91,7 +91,7 @@ WVIR responsibilities.
 
 A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. A Language 1.0 record update binds its base once, then its replacement values left to right, before applying the same target-resolution and constructor-call evidence. Field existence, uniqueness, completeness or preservation, exact base/value types, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
-## WVLB 1.1 and 1.2 binding directories
+## WVLB 1.1, 1.2, and 1.3 binding directories
 
 All integers are unsigned little-endian. The directory contains no padding.
 
@@ -130,6 +130,38 @@ appended range per instance, correct declaration/instance mapping, concrete
 parameter and local shapes, canonical gap-free binding coverage, and exact
 total length.
 
+WVLB 1.3 is the retained-evidence carrier for general generic nominal types.
+It is selected only when the paired WVGT catalog contains at least one admitted
+record or variant instance. Ordinary source therefore remains byte-for-byte
+WVLB 1.1, and function-specialization-only source remains byte-for-byte WVLB
+1.2.
+
+The WVLB 1.3 header is 40 bytes. It retains offsets 0 through 24 from WVLB
+1.2, sets minor version `3`, stores the exact WVGT byte length at offset 28,
+stores combined catalog layout version `2` at offset 32, and requires the
+reserved `u32` at offset 36 to be zero. Offset 24 is the WVGC byte length and
+may be zero when there are no function specializations. Offset 28 is at least
+24 and must describe a non-empty valid WVGT 1.0 catalog. Function ranges retain
+the 16-byte WVLB 1.2 shape and cover the WVSD declarations plus any WVGC
+instances; generic nominal types do not create function ranges.
+
+After the ranges come the optional WVGC bytes, the required WVGT bytes, and the
+36-byte binding entries, in that exact order. A private WVGT shape is valid in
+a parameter or local entry only when its zero-based instance exists in the
+retained WVGT catalog. The private shape is compiler evidence, not a runtime
+type identity: materialization replaces it with the assigned ordinary record
+or variant shape before WVB emission. The validator rejects absent or empty
+WVGT evidence, out-of-catalog private shapes, cross-catalog length confusion,
+nonzero reserved fields, truncation, and trailing bytes.
+
+`Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase` is the
+publication path for the combined envelope. It is owned by the focused
+`Compilerˉsourceˉbindingsˉgenericˉtypes` module. An empty WVGT catalog delegates
+to the unchanged function-only binding module, preserving its prior format,
+source closure, and bytes. The carrier and independent validator are
+implemented; main WVIR construction still has to thread the admitted WVGT
+catalog into that entry point before general generic source selects WVLB 1.3.
+
 Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
 
 Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, `i64`, and `u64`; values `9` and `10` represent `unit` and `never`; values `11`, `12`, and `13` represent `i8`, `i16`, and `u16`; values `14` and `15` represent `f32` and `f64`; and value `16` represents `rune`. `unit` is concrete binding evidence. `never` is valid only as the later typed-WVIR result shape and is rejected for parameters and locals. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. Slice 3 additionally carries the exact private compact Foundation Option and Result shapes defined by the source-symbol contract. An exact singleton capability-reference shape is `268435456 + RootCapabilityDirectoryEntry` and is valid only when that entry is a required module-zero capability. Nominal indices are the canonical WVSD identities.
@@ -141,7 +173,7 @@ generic parameter index or WVGS entry enters a binding. The owning WVGC identity
 is carried once by the WVLB 1.2 catalog/range envelope rather than copied into
 individual binding entries.
 
-Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement for 1.2, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
+Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and 1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates those versions unchanged and additionally checks WVLB 1.3. Together they check the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
 
 ## Deterministic processing and performance
 

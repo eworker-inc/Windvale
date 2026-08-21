@@ -7,7 +7,8 @@ emission. It consumes one canonical admitted WVSS source set and publishes three
 individually bounded values:
 
 - one fixed 104-byte `WVCA 1.0` manifest;
-- one canonical `WVLB 1.1` or specialized `WVLB 1.2` binding directory; and
+- one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
+  specialization-evidence `WVLB 1.3` binding directory; and
 - one canonical `WVIR 1.1` or specialized `WVIR 1.2` typed source directory.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
@@ -52,6 +53,12 @@ missing, reordered, malformed, or mismatched catalog/body pair before emission.
 WVCA remains version 1.0 because its existing byte lengths and WVIR function
 count already bind either valid minor-version product without changing a field
 meaning.
+
+WVLB 1.3 additionally retains the bounded WVGT generic-nominal catalog after
+the function ranges and optional WVGC evidence. Its independent carrier and
+validation contract is implemented in the focused generic-type binding
+extension. The unchanged main fused analysis path still selects only WVLB 1.1
+or 1.2 until generic nominal type binding is connected to WVIR construction.
 
 The statuses distinguish an invalid manifest, rejected source symbols, source
 WIR construction failure, invalid supplied WVLB, and invalid supplied WVIR.

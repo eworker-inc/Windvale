@@ -1016,6 +1016,7 @@ function Add-Source-Front-End-Suites {
         'generic-nominal-type-binding',
         'generic-nominal-type-layout',
         'generic-nominal-type-materialization',
+        'generic-nominal-wvlb-carrier',
         'language-1-front-door',
         'compiler-source-sentinel'
     )
@@ -1521,6 +1522,14 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.mjs'
     )) {
         Add-Suite 'generic-nominal-type-materialization'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Wvlb-Carrier.wvproj',
+        'Tests/Fixtures/Language-1.0/Generic-Nominal-Wvlb-Carrier-Self-Test.wv',
+        'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.cmd',
+        'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.sh',
+        'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.mjs'
+    )) {
+        Add-Suite 'generic-nominal-wvlb-carrier'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
@@ -2489,6 +2498,7 @@ foreach ($Path in $Paths) {
         Add-Suite @('source-containment', 'language-1-front-door')
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Generic-Lowering-Core.wv',
+        'Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv',
         'Compiler/Windvale/Source-Generic-Type-Binding-Core.wv',
         'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
         'Compiler/Windvale/Source-Generic-Type-Materialization-Core.wv',
@@ -2500,6 +2510,7 @@ foreach ($Path in $Paths) {
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door'
         )
     } elseif ($Path -in @(

@@ -46,8 +46,11 @@ dependency order, and private compiler shapes required by general generic
 records and variants. A focused recursive source binder now resolves complete
 type lists and exact fixed-width literal constants into transactional WVGT
 replacements. The frozen broader constant-expression contract, field
-substitution, WIR carriage, WVB materialization, and package-visible template
-publication remain Slice 4 work.
+WIR carriage, WVB Types and operation emission, and package-visible template
+publication remain Slice 4 work. Field substitution and the deterministic
+materialization plan are implemented. WVLB 1.3 now supplies a validated
+retained-evidence carrier for the non-empty WVGT catalog without changing
+ordinary WVLB 1.1 or function-only WVLB 1.2 bytes.
 Collections beyond the first structural bounded signature and the
 repository-wide Seed-to-edition-1 source migration also remain Slice 4 or later
 work. Final paired-host and broad integration evidence remains
@@ -741,6 +744,52 @@ Connecting the plan to reachable source analysis, WVB Types and operations, and
 then migrating Foundation special cases remain the next Slice 4 checkpoints.
 The broad Language 1, storage, OS, paired-host, and complete Qualification gates
 remain deferred to the final seven-slice integration gate.
+
+## Slice 4 generic nominal WVLB-carrier checkpoint
+
+Decision 0809 extends the existing binding artifact rather than creating a
+fourth split-compiler product. WVLB 1.3 has a 40-byte header, retains the exact
+optional WVGC and required non-empty WVGT byte lengths separately, and places
+the two bounded catalogs between canonical 16-byte function ranges and binding
+entries. Generic nominal instances do not create function ranges. A binding
+may carry a private WVGT shape only when that instance exists in the retained
+catalog.
+
+Ordinary source continues to publish exact WVLB 1.1, and a program with only
+generic function specializations continues to publish exact WVLB 1.2. The
+focused generic-type publisher delegates to those existing forms when WVGT is
+empty. `Source-Bindings-Core.wv` and every established compiler project closure
+remain byte-for-byte unchanged. The extension validator reconstructs catalog
+offsets, validates both catalogs, checks the function-range/WVGC relation,
+bounds private shapes by WVGT instance count, and rejects cross-catalog length
+confusion, short headers, truncation, trailing bytes, and reserved-field
+mutations.
+
+The fixture proves both legal layouts: a type-only WVLB 1.3 with no WVGC
+bytes, and a combined directory with one retained WVGC specialization and one
+retained WVGT instance. The latter also proves the appended 16-byte function
+range maps back to its declaration and zero-based WVGC instance.
+
+The 20-case fixture builds to a 796,891-byte WVB with SHA-256
+`f0bfd9c749a380aca4efffb6ff61c6205d0a2b4bb94957149d7260d8db09add1`.
+Its five-fragment 20,293,120-byte hosted Windows executable has SHA-256
+`628c4c2ac2bf4029a767e821132209a406c52444486c7c61b1140b572a6bc52e`,
+returns `42`, and writes no output. The focused
+`generic-nominal-wvlb-carrier` owner reports build, package, and execute phases.
+
+The large pre-existing Generic-WIR project was also probed after restoring its
+project and source inputs exactly to `HEAD`. The native Seed build driver still
+exited `1` after approximately one minute and left an empty diagnostic log.
+That is a disclosed pre-existing Seed/hosted-builder limitation, not passing
+carrier evidence. It is also why this checkpoint does not import the extension
+into the fused WIR closure; the next integration checkpoint must first reduce,
+replace, or diagnose that closure rather than silently increasing it.
+
+This checkpoint establishes durable split-compiler carriage; it does not yet
+make the main fused compiler produce WVLB 1.3. Threading WVGT through Source WIR
+type binding and then consuming its materialization plan in Source WVB remain
+the next connected checkpoints. Broad storage, OS, paired-host, and complete
+Qualification gates remain deferred to the final seven-slice integration gate.
 
 ## Slice 4 packed keyword dispatch checkpoint
 

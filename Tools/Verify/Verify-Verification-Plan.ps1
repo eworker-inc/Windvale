@@ -157,6 +157,7 @@ $NativeCases = @(
         Name = 'Language 1.0 generic nominal type catalog routing'
         Paths = @(
             'Compiler/Windvale/Source-Generic-Lowering-Core.wv',
+            'Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Binding-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Materialization-Core.wv',
@@ -176,6 +177,7 @@ $NativeCases = @(
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door'
         )
         Gaps = @()
@@ -221,6 +223,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 generic nominal WVLB carrier owner routing'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Wvlb-Carrier.wvproj',
+            'Tests/Fixtures/Language-1.0/Generic-Nominal-Wvlb-Carrier-Self-Test.wv',
+            'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.cmd',
+            'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.sh',
+            'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.mjs'
+        )
+        Suites = @('generic-nominal-wvlb-carrier')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 generic nominal declaration routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
@@ -241,6 +256,7 @@ $NativeCases = @(
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -255,6 +271,7 @@ $NativeCases = @(
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -269,6 +286,7 @@ $NativeCases = @(
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door',
             'compiler-source-sentinel'
         )
@@ -412,6 +430,7 @@ $NativeCases = @(
             'generic-nominal-type-binding',
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
             'language-1-front-door',
             'compiler-source-sentinel',
             'lowerer-rejections',
@@ -3357,9 +3376,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 109 -or
+if ($VerificationOwnerLines.Count -ne 110 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 108-owner inventory differs.'
+    throw 'The native verification-owner header or exact 109-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3397,7 +3416,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 4873 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 4893 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
