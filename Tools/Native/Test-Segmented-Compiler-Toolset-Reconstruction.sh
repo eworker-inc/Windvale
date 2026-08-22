@@ -77,27 +77,14 @@ verify_family Compiler-Image-Canonical-Transport.wvb \
     windows-x64-wvimagetransport.exe linux-x64-wvimagetransport.elf || fail
 pass 'compiler-image transport reconstruction'
 
-failure_step='compiler-scale current compiler producer identity'
-build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
+failure_step='compiler-scale bootstrap analyzer identity'
+compiler_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
+[[ $(stat -c %s -- "$compiler_wvb") == 992412 ]] || fail
 printf '%s  %s\n' \
-    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 \
-    "$build_driver" | sha256sum --check --strict --quiet || fail
-workspace="$repository_root/Windvale.wvws"
-compiler_project="$repository_root/Projects/Examples/Windvale-Compiler.wvproj"
-compiler_wvb="$test_directory/Windvale-Compiler.wvb"
-echo 'START segmented compiler toolset reconstruction phase=compiler-scale item=4/4'
-failure_step='compiler-scale WVB build'
-"$build_driver" --workspace "$workspace" --project "$compiler_project" \
-    "$compiler_wvb" >"$test_directory/Compiler-Build.out" \
-    2>"$test_directory/Compiler-Build.err" || fail
-failure_step='compiler-scale WVB diagnostic'
-[[ ! -s $test_directory/Compiler-Build.err ]] || fail
-failure_step='compiler-scale WVB identity'
-[[ $(stat -c %s -- "$compiler_wvb") == 1116697 ]] || fail
-printf '%s  %s\n' \
-    8a60d9998909051eef97d6f871a060c74316452ebba5534bb9f2fe130ed9bcdf \
+    26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120 \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
-echo 'INFO  segmented compiler toolset reconstruction phase=compiler-scale step=WVB-build status=Complete bytes=1116697'
+echo 'START segmented compiler toolset reconstruction phase=compiler-scale item=4/4'
+echo 'INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=992412'
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 failure_step='compiler-scale native staging'
 echo 'START segmented compiler toolset reconstruction phase=compiler-scale step=native-staging'
@@ -109,7 +96,7 @@ failure_step='compiler-scale native staging diagnostic'
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 failure_step='compiler-scale native staging report'
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=31134274 chunks=40 manifest-bytes=504' \
+    'native x64 staging status=Complete object-bytes=31736596 chunks=41 manifest-bytes=516' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

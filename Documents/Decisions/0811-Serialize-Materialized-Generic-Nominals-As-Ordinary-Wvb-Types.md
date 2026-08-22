@@ -1,6 +1,6 @@
 # Decision 0811: Serialize materialized generic nominals as ordinary WVB Types
 
-- Status: Accepted
+- Status: Accepted; Foundation suffix superseded by Decision 0819
 - Date: 2026-08-21
 
 ## Context

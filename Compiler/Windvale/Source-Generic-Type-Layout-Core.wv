@@ -166,11 +166,6 @@ fn Compilerˉsourceˉgenericˉtypeˉshapeˉnominalˉkind(
             )
         );
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-            Shape
-        ) {
-        return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant;
-    }
     if Shape >= 65536u32 && Shape < 65536u32 + Symbols.Records {
         return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record;
     }
@@ -200,11 +195,6 @@ fn Compilerˉsourceˉgenericˉtypeˉshapeˉisˉvalid(
     if Shape >= 1u32 && Shape <= 16u32 { return true; }
     if Compilerˉsourceˉgenericˉtypeˉshapeˉisˉsequence(Shape) ||
         Compilerˉsourceˉgenericˉtypeˉshapeˉisˉbuilder(Shape) {
-        return true;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-            Shape
-        ) {
         return true;
     }
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(

@@ -295,34 +295,21 @@ Each Types entry carries its existing WVB kind tag and name. Record fields and e
 
 Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
 
-Before type emission, the backend scans function signatures and bindings in
-their canonical directory order for concrete Foundation generic shapes. It
-retains at most 256 unique shapes in deterministic first-use order. Each shape becomes one
-ordinary private WVB variant type whose fields use the expanded source argument
-shapes; all metadata and operation references use that resulting canonical Types
-index. Generic Option and Result templates are not runtime entries. Concrete
-private names use the fixed-width rank range `__WvZ000`
-through `__WvZ255`, so emitted Types order remains ordinal even past rank 9.
-They are deterministic emitter identities and are
-not public source names. Existing variant construction, test, field, runtime,
-and verifier rules execute every specialization.
-
-The main backend gives the general-generic serializer one independently
-validated materialization plan plus the exact source-to-WVB target maps. It
-emits each retained instance as an ordinary concrete record or variant entry
-immediately after concrete declared nominal types and before the Foundation
-suffix. Catalog order is canonical; private
+The main backend gives the generic serializer one independently validated
+materialization plan plus the exact source-to-WVB target maps. It emits each
+retained instance—including Foundation `Option<T>` and `Result<T, E>`—as an
+ordinary concrete record or variant entry immediately after concrete declared
+nominal types. Catalog order is canonical; private
 fixed-width names are `__WvY0000` through `__WvY1023`. Nested materialized
-record and variant shapes refer to their final ordinary Types indices. A field
-using a concrete Foundation generic shape resolves through the exact unique
-Foundation plan and targets the following `__WvZ` suffix.
+record and variant shapes refer to their final ordinary Types indices. Generic
+templates are not runtime entries, and no Foundation-only private-name or type
+suffix exists.
 
 The serializer requires its first output index to equal
-`Concrete-records + Enums + Concrete-variants`, admits at most 1,024 total Types entries and 256
-Foundation shapes, and bounds its emitted entry payload to 4 MiB. It rejects an
-invalid materialization, a malformed, repeated, incomplete, or non-Foundation
-plan, an unsupported shape, an inconsistent nested nominal kind, or a type or
-evidence limit without returning partial output. It preserves the existing
+`Concrete-records + Enums + Concrete-variants`, admits at most 1,024 total Types
+entries, and bounds its emitted entry payload to 4 MiB. It rejects an invalid
+materialization, an unsupported shape, an inconsistent nested nominal kind, or
+a type or evidence limit without returning partial output. It preserves the existing
 record/variant metadata and WVB feature bits, including multi-field marker `2`;
 it adds no WVB version or runtime generic representation.
 
@@ -530,13 +517,14 @@ checkpoint without silently advancing those consumers.
 
 `Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv` exercises concrete
 Option and Result construction and matching, same-error/different-success
-`try`, statement `try`, explicit migration adapters, and 16 concrete
-specializations spanning private ranks 0 through 15. It emits deterministically
-as a 3,383-byte WVB with SHA-256
-`64da5d52c01301c54f9391c9f8cdc3f7a8000e7c21694b06baa096354ba1d09f`,
+`try`, statement `try`, explicit migration adapters, and 16 ordinary concrete
+specializations spanning private ranks 0 through 15. Its constructors carry
+explicit complete type arguments, matching every other generic nominal
+construction. It emits deterministically as a 3,143-byte WVB with SHA-256
+`fb3d07717252b60dcbcd6da1a95dbf6bccb8b85ba79d3a08c5e0e6306b722a81`,
 passes the current compiler-aligned verifier, and executes with result `42`.
-Wrong arity, an extra argument, bare Result use, and a mismatched `try` error
-shape are rejected before WVB publication.
+Wrong arity, an extra argument, bare Result use, omitted construction arguments,
+and a mismatched `try` error shape are rejected before WVB publication.
 
 ## Verification
 

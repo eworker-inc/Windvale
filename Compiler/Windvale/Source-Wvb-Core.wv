@@ -15,24 +15,6 @@ import Compilerˉsourceˉwvbˉgenericˉnominalˉtypes as Genericˉnominalˉtypes
 import Compilerˉsourceˉwvbˉtemporaryˉslots as Temporaryˉslots;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
-data Compilerˉsourceˉwvbˉoptionˉprefix: bytes = [
-    3, 6, 0, 0, 0, 79, 112, 116, 105, 111, 110,
-    2, 0, 0, 0, 7, 0, 0, 0, 80, 114, 101, 115, 101, 110, 116,
-    1, 5, 0, 0, 0, 86, 97, 108, 117, 101
-];
-data Compilerˉsourceˉwvbˉoptionˉsuffix: bytes = [
-    6, 0, 0, 0, 65, 98, 115, 101, 110, 116, 0
-];
-data Compilerˉsourceˉwvbˉresultˉprefix: bytes = [
-    3, 6, 0, 0, 0, 82, 101, 115, 117, 108, 116,
-    2, 0, 0, 0, 5, 0, 0, 0, 86, 97, 108, 105, 100,
-    1, 5, 0, 0, 0, 86, 97, 108, 117, 101
-];
-data Compilerˉsourceˉwvbˉresultˉmiddle: bytes = [
-    7, 0, 0, 0, 70, 97, 105, 108, 117, 114, 101,
-    1, 5, 0, 0, 0, 69, 114, 114, 111, 114
-];
-
 export enum Compilerˉsourceˉwvbˉstatus {
     Valid = 0;
     Sourceˉwir = 1;
@@ -118,8 +100,6 @@ record Compilerˉsourceˉwvbˉsymbolˉorders {
     Concreteˉvariants: u32;
     Genericˉnominalˉentries: bytes;
     Genericˉnominals: u32;
-    Genericˉvariantˉshapes: bytes;
-    Genericˉvariants: u32;
 }
 
 export record Compilerˉsourceˉwvbˉsummary {
@@ -267,9 +247,6 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
         return Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
             Shape, Symbols, Orders
         ) != 4294967295u32;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
-        return true;
     }
     if Shape >= 268435456u32 {
         if Shape < 268439552u32 { return true; }
@@ -1142,7 +1119,6 @@ export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorders(
         Functions.Entries, Functions.Ranks,
         Recordˉtargets, Variantˉtargets,
         Concreteˉrecords, Concreteˉvariants,
-        Compilerˉsourceˉwvbˉempty(Input), 0u32,
         Compilerˉsourceˉwvbˉempty(Input), 0u32
     );
 }
@@ -1262,9 +1238,7 @@ export fn Compilerˉsourceˉwvbˉwithˉfunctionˉorder(
         Orders.Concreteˉrecords,
         Orders.Concreteˉvariants,
         Orders.Genericˉnominalˉentries,
-        Orders.Genericˉnominals,
-        Orders.Genericˉvariantˉshapes,
-        Orders.Genericˉvariants
+        Orders.Genericˉnominals
     );
 }
 
@@ -1408,9 +1382,7 @@ export fn Compilerˉsourceˉwvbˉwithˉdataˉorder(
         Orders.Concreteˉrecords,
         Orders.Concreteˉvariants,
         Orders.Genericˉnominalˉentries,
-        Orders.Genericˉnominals,
-        Orders.Genericˉvariantˉshapes,
-        Orders.Genericˉvariants
+        Orders.Genericˉnominals
     );
 }
 
@@ -1426,83 +1398,6 @@ export fn Compilerˉsourceˉwvbˉorderedˉrank(
     Entry: u32
 ) -> u32 {
     return Bytesˉreadˉu32ˉlittle(Order.Ranks, Entry * 4u32);
-}
-
-fn Compilerˉsourceˉwvbˉgenericˉplanˉadd(
-    Plan: bytes,
-    Shape: u32
-) -> bytes {
-    if Bytesˉlength(Plan) > 1024u32 ||
-        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
-        return Plan;
-    }
-    var Position: u32 = 0u32;
-    while Position < Bytesˉlength(Plan) / 4u32 {
-        let Existing: u32 = Bytesˉreadˉu32ˉlittle(Plan, Position * 4u32);
-        if Existing == Shape { return Plan; }
-        Position = Position + 1u32;
-    }
-    if Bytesˉlength(Plan) == 1024u32 {
-        return Bytesˉconcat(Plan, Bytesˉfromˉu8(0u8));
-    }
-    return Bytesˉconcat(Plan, Bytesˉfromˉu32ˉlittle(Shape));
-}
-
-fn Compilerˉsourceˉwvbˉcollectˉgenericˉplan(
-    Input: bytes,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Wir: bytes
-) -> bytes {
-    var Plan: bytes = Compilerˉsourceˉwvbˉempty(Input);
-    let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, 8u32);
-    var Functionˉindex: u32 = 0u32;
-    while Functionˉindex < Functionˉcount {
-        Plan = Compilerˉsourceˉwvbˉgenericˉplanˉadd(
-            Plan,
-            Bytesˉreadˉu32ˉlittle(
-                Wir,
-                Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
-                    Functionˉindex * 48u32 + 44u32
-            )
-        );
-        Functionˉindex = Functionˉindex + 1u32;
-    }
-    let Bindingˉcount: u32 = Bytesˉreadˉu32ˉlittle(Bindings.Directory, 8u32);
-    let Bindingˉoffset: u32 =
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
-            Bindings.Directory
-        );
-    var Bindingˉindex: u32 = 0u32;
-    while Bindingˉindex < Bindingˉcount {
-        Plan = Compilerˉsourceˉwvbˉgenericˉplanˉadd(
-            Plan,
-            Bytesˉreadˉu32ˉlittle(
-                Bindings.Directory,
-                Bindingˉoffset + Bindingˉindex * 36u32 + 24u32
-            )
-        );
-        Bindingˉindex = Bindingˉindex + 1u32;
-    }
-    return Plan;
-}
-
-fn Compilerˉsourceˉwvbˉcollectˉmaterializedˉfoundationˉplan(
-    Plan: bytes,
-    Materialization:
-        Genericˉmaterialization.Compilerˉsourceˉgenericˉtypeˉmaterialization
-) -> bytes {
-    var Result: bytes = Plan;
-    var Field: u32 = 0u32;
-    while Field < Materialization.Fields {
-        Result = Compilerˉsourceˉwvbˉgenericˉplanˉadd(
-            Result,
-            Bytesˉreadˉu32ˉlittle(
-                Materialization.Fieldˉevidence, Field * 16u32 + 8u32
-            )
-        );
-        Field = Field + 1u32;
-    }
-    return Result;
 }
 
 fn Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
@@ -1579,16 +1474,6 @@ fn Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
         if Kind == 8u32 { return 196608u32 + Genericˉtarget; }
         return 4294967295u32;
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
-        let Foundationˉtarget: u32 =
-            Compilerˉsourceˉwvbˉplannedˉvariantˉtarget(
-            Shape, Symbols, Orders
-        );
-        if Foundationˉtarget == 4294967295u32 {
-            return Foundationˉtarget;
-        }
-        return 196608u32 + Foundationˉtarget;
-    }
     if Shape >= 65536u32 && Shape < 131072u32 {
         let Recordˉtarget: u32 =
             Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
@@ -1664,19 +1549,6 @@ fn Compilerˉsourceˉwvbˉplannedˉvariantˉtarget(
         return Bytesˉreadˉu32ˉlittle(
             Orders.Genericˉnominalˉentries, Entry + 4u32
         );
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Target) {
-        var Rank: u32 = 0u32;
-        while Rank < Orders.Genericˉvariants {
-            if Bytesˉreadˉu32ˉlittle(
-                Orders.Genericˉvariantˉshapes, Rank * 4u32
-            ) == Target {
-                return Orders.Concreteˉrecords + Symbols.Enums +
-                    Orders.Concreteˉvariants + Orders.Genericˉnominals + Rank;
-            }
-            Rank = Rank + 1u32;
-        }
-        return 4294967295u32;
     }
     return Compilerˉsourceˉwvbˉplannedˉnominalˉtarget(
         Target, Symbols, Orders
@@ -2771,60 +2643,6 @@ fn Compilerˉsourceˉwvbˉencodeˉvariantˉfields(
     );
 }
 
-fn Compilerˉsourceˉwvbˉencodeˉfoundationˉgenericˉvariant(
-    Shape: u32,
-    Name: bytes
-) -> Compilerˉsourceˉwvbˉtypeˉencoding {
-    var Header: bytes = Bytesˉfromˉu8(3u8);
-    Header = Bytesˉconcat(
-        Header, Compilerˉsourceˉwvbˉencodedˉstring(Name)
-    );
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Shape) {
-        let Valueˉshape: u32 =
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
-                Shape - 1610612736u32
-            );
-        let Optionˉbody: bytes = Bytesˉslice(
-            Compilerˉsourceˉwvbˉoptionˉprefix, 11u32,
-            Bytesˉlength(Compilerˉsourceˉwvbˉoptionˉprefix) - 11u32
-        );
-        return Compilerˉsourceˉwvbˉtypeˉencoding(
-            Compilerˉsourceˉwvbˉstatus.Valid,
-            Bytesˉconcat(
-                Bytesˉconcat(
-                    Bytesˉconcat(Header, Optionˉbody),
-                    Compilerˉsourceˉwvbˉshape(Valueˉshape)
-                ),
-                Compilerˉsourceˉwvbˉoptionˉsuffix
-            ),
-            Compilerˉsourceˉwvbˉshapeˉfeatures(Valueˉshape)
-        );
-    }
-    let Firstˉshape: u32 =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉvalidˉshape(Shape);
-    let Errorˉshape: u32 =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(Shape);
-    let Resultˉbody: bytes = Bytesˉslice(
-        Compilerˉsourceˉwvbˉresultˉprefix, 11u32,
-        Bytesˉlength(Compilerˉsourceˉwvbˉresultˉprefix) - 11u32
-    );
-    return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid,
-        Bytesˉconcat(
-            Bytesˉconcat(
-                Bytesˉconcat(
-                    Bytesˉconcat(Header, Resultˉbody),
-                    Compilerˉsourceˉwvbˉshape(Firstˉshape)
-                ),
-                Compilerˉsourceˉwvbˉresultˉmiddle
-            ),
-            Compilerˉsourceˉwvbˉshape(Errorˉshape)
-        ),
-        Compilerˉsourceˉwvbˉshapeˉfeatures(Firstˉshape) |
-            Compilerˉsourceˉwvbˉshapeˉfeatures(Errorˉshape)
-    );
-}
-
 export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -2839,26 +2657,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉvariantˉtype(
     let Owner: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entryˉoffset);
     let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
         Compilerˉsourceˉwvbˉdeclaration(Source, Header, Symbols, Entry);
-    let Genericˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Symbols.Directory, Scan.Modules, Entry
-        );
-    let Genericˉfamily: u32 =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
-            Input, Scan, Genericˉnominal
-        );
-    if Genericˉfamily == 1u32 {
-        return Compilerˉsourceˉwvbˉencodeˉfoundationˉgenericˉvariant(
-            1610612738u32,
-            Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
-        );
-    }
-    if Genericˉfamily == 2u32 {
-        return Compilerˉsourceˉwvbˉencodeˉfoundationˉgenericˉvariant(
-            1879080962u32,
-            Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
-        );
-    }
     var Payload: bytes = Bytesˉfromˉu8(3u8);
     var Features: u32 = 0u32;
     Payload = Bytesˉconcat(
@@ -2938,7 +2736,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     }
     var Payload: bytes = Bytesˉfromˉu32ˉlittle(
         Orders.Concreteˉrecords + Symbols.Enums + Orders.Concreteˉvariants +
-            Orders.Genericˉnominals + Orders.Genericˉvariants
+            Orders.Genericˉnominals
     );
     var Rank: u32 = 0u32;
     var Features: u32 = 0u32;
@@ -3023,29 +2821,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉtypes(
     }
     Features = Features | Genericˉnominalˉencoding.Features;
     Payload = Bytesˉconcat(Payload, Genericˉnominalˉencoding.Payload);
-    Rank = 0u32;
-    while Rank < Orders.Genericˉvariants {
-        let Genericˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-            Orders.Genericˉvariantˉshapes, Rank * 4u32
-        );
-        let Genericˉrankˉdigits: bytes = Textˉtoˉutf8(
-            U32ˉformat(1000u32 + Rank)
-        );
-        let Genericˉname: bytes = Bytesˉconcat(
-            Textˉtoˉutf8("__WvZ"),
-            Bytesˉslice(Genericˉrankˉdigits, 1u32, 3u32)
-        );
-        let Encodedˉgeneric: Compilerˉsourceˉwvbˉtypeˉencoding =
-            Compilerˉsourceˉwvbˉencodeˉfoundationˉgenericˉvariant(
-                Genericˉshape, Genericˉname
-            );
-        if Encodedˉgeneric.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-            return Encodedˉgeneric;
-        }
-        Features = Features | Encodedˉgeneric.Features;
-        Payload = Bytesˉconcat(Payload, Encodedˉgeneric.Payload);
-        Rank = Rank + 1u32;
-    }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
         Compilerˉsourceˉwvbˉstatus.Valid, Payload, Features
     );
@@ -4442,20 +4217,6 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Symbols.Functions, Wirˉsummary.Operations
         );
     }
-    let Initialˉgenericˉplan: bytes =
-        Compilerˉsourceˉwvbˉcollectˉgenericˉplan(
-            Input, Bindings, Wirˉsummary.Directory
-        );
-    let Genericˉplan: bytes =
-        Compilerˉsourceˉwvbˉcollectˉmaterializedˉfoundationˉplan(
-            Initialˉgenericˉplan, Materialization
-        );
-    if Bytesˉlength(Genericˉplan) > 1024u32 {
-        return Compilerˉsourceˉwvbˉreachabilityˉfailure(
-            Input, Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
-            Wirˉsummary.Status, Symbols.Functions, Wirˉsummary.Operations
-        );
-    }
     let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
         Compilerˉsourceˉwvbˉsymbolˉorders(
             Baseˉorders.Capabilityˉentries, Baseˉorders.Capabilityˉranks,
@@ -4466,8 +4227,7 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Baseˉorders.Functionˉentries, Baseˉorders.Functionˉranks,
             Baseˉorders.Recordˉtargets, Baseˉorders.Variantˉtargets,
             Baseˉorders.Concreteˉrecords, Baseˉorders.Concreteˉvariants,
-            Materialization.Entryˉevidence, Materialization.Instances,
-            Genericˉplan, Bytesˉlength(Genericˉplan) / 4u32
+            Materialization.Entryˉevidence, Materialization.Instances
         );
     return Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
         Input, Scan, Symbols, Wirˉsummary, Orders
@@ -4520,23 +4280,6 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
             Symbols.Functions, Wirˉsummary.Operations
         );
     }
-    let Initialˉgenericˉplan: bytes =
-        Compilerˉsourceˉwvbˉcollectˉgenericˉplan(
-            Input, Bindings, Wirˉsummary.Directory
-        );
-    let Genericˉplan: bytes =
-        Compilerˉsourceˉwvbˉcollectˉmaterializedˉfoundationˉplan(
-            Initialˉgenericˉplan, Materialization
-        );
-    if Bytesˉlength(Genericˉplan) > 1024u32 {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
-            Wirˉsummary.Status,
-            Symbols.Functions,
-            Wirˉsummary.Operations
-        );
-    }
     let Orders: Compilerˉsourceˉwvbˉsymbolˉorders =
         Compilerˉsourceˉwvbˉsymbolˉorders(
             Baseˉorders.Capabilityˉentries, Baseˉorders.Capabilityˉranks,
@@ -4547,13 +4290,12 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
             Baseˉorders.Functionˉentries, Baseˉorders.Functionˉranks,
             Baseˉorders.Recordˉtargets, Baseˉorders.Variantˉtargets,
             Baseˉorders.Concreteˉrecords, Baseˉorders.Concreteˉvariants,
-            Materialization.Entryˉevidence, Materialization.Instances,
-            Genericˉplan, Bytesˉlength(Genericˉplan) / 4u32
+            Materialization.Entryˉevidence, Materialization.Instances
         );
     let Genericˉnominalˉencoding:
         Genericˉnominalˉtypes.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉnominalˉtypes.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Materialization, Genericˉplan,
+            Input, Scan, Symbols, Materialization,
             Baseˉorders.Recordˉtargets, Baseˉorders.Variantˉtargets,
             Baseˉorders.Concreteˉrecords, Concreteˉtypeˉbase
         );

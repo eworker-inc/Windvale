@@ -1528,3 +1528,56 @@ This closes ordinary construction and exhaustive named matching for general
 generic variants. Deeper generic-function formal patterns, broader constant
 expressions, collection implementation, and the remaining Foundation-special
 plan remain explicit Language 1.0 migration work.
+
+## Slice 4 Foundation generic unification checkpoint
+
+Decision 0819 completes the Foundation migration rather than preserving the
+temporary specialization described by earlier checkpoints. `Option<T>` and
+`Result<T, E>` now bind into ordinary WVGT, materialize beside user-defined
+generic variants, and serialize only as `__WvY` Types entries. The packed
+Foundation shape ranges, first-use plan, `__WvZ` suffix, and their dedicated
+WIR/WVB validation branches are deleted.
+
+`try` remains exact Foundation Result semantics, but it now inspects the
+ordinary materialized layout, requires matching error shapes, and selects the
+general variant fields. Foundation constructors require explicit complete type
+arguments like every other generic nominal constructor. One new rejection
+proves the retired inferred spelling publishes no WVB; the wrong-error fixture
+uses explicit construction so it continues to isolate `try` compatibility.
+The frozen grammar and its 251-input identity do not change.
+
+The clean analyzer publishes exact 3,233-byte WVSS, 104-byte WVCA, 1,796-byte
+WVLB, and 5,144-byte WVIR products for the complete Foundation fixture. The clean
+emitter publishes a 3,143-byte WVB 1.16 at SHA-256
+`fb3d07717252b60dcbcd6da1a95dbf6bccb8b85ba79d3a08c5e0e6306b722a81`.
+It contains `__WvY`, contains no `__WvZ`, and returns `42` in 360 scalar-runner
+instructions.
+
+The optimized emission compiler falls from 542 to 530 functions and from
+987,682 to 974,837 WVB bytes. Its Windows development package falls from
+21,718,016 to 21,490,688 bytes while preserving the unchanged 128-type native
+profile. The current analyzer is 1,055,866 bytes at SHA-256
+`2edf577a8b549fff0f351264e814e25783011a94942c904780a57be6ec1194b7`,
+and the current emitter is 974,837 bytes at SHA-256
+`25e9d5b491627b083ceb288f285901ca958bf3d1b12c427ba850a36a539328c9`.
+The compiler-scale Generic-WIR fixture builds twice to identical 1,210,665-byte
+WVBs at SHA-256
+`1b79838079339a397d05d4b03f8e42f94b978d7c583cf9ace4cb1e6abaedf696`.
+
+The segmented-toolset owner now stages the immutable 992,412-byte bootstrap
+analyzer instead of asking the recovery Seed to rebuild evolving compiler
+source. Its four cases still prove exact toolset reconstruction and
+compiler-scale staging while avoiding a duplicate, architecturally obsolete
+compiler build. The materialization owner retains 28 general-plan cases after
+deleting the two grouped side-plan cases. The Language owner grows to 350 cases
+and 79 source fixtures, including six Foundation cases. It subsumes the retired
+five-case partial monolithic compiler-source sentinel: current compiler
+reconstruction, deterministic compilation, verification, and execution remain
+in one owner. The 108-owner registry totals 5,093 cases at SHA-256
+`30f7a2130f41b18e5b4ca38e46775bb0ca4cbaef8add0cdf77e06589f4c660de`.
+The complete changed-file plan selects 11 focused owners with no gaps and passes
+all 31 general and 192 native routing cases.
+
+This closes the remaining Foundation-special plan. Deeper generic-function
+formal patterns, broader constant expressions, collection implementation,
+paired-host conformance, and release qualification remain independent work.

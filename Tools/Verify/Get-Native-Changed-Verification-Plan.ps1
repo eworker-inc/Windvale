@@ -1018,8 +1018,7 @@ function Add-Source-Front-End-Suites {
         'generic-nominal-type-layout',
         'generic-nominal-type-materialization',
         'generic-nominal-wvlb-carrier',
-        'language-1-front-door',
-        'compiler-source-sentinel'
+        'language-1-front-door'
     )
 }
 
@@ -1153,6 +1152,10 @@ function Add-Native-Tool-Suite {
         'Write-Split-Compiler-Producer-Identity'
     )) {
         Add-Suite 'compiler-split-development'
+        return
+    }
+    if ($Stem -eq 'Test-Compiler-Source-Sentinel') {
+        Add-Suite 'language-1-front-door'
         return
     }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
@@ -1560,10 +1563,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
         'Tests/Fixtures/Source-Wvb/Function-Only.wv'
     )) {
-        Add-Suite @('seed', 'compiler-reconstruction')
-        if ($Path -eq 'Tests/Fixtures/Source-Wvb/Function-Only.wv') {
-            Add-Suite 'compiler-source-sentinel'
-        }
+        Add-Suite @('seed', 'compiler-reconstruction', 'language-1-front-door')
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
         Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
     } elseif ($Path -eq
@@ -2617,7 +2617,7 @@ foreach ($Path in $Paths) {
             $Path.StartsWith('Projects/Examples/Windvale-Source-', [StringComparison]::Ordinal) -or
             $Path -eq 'Projects/Examples/Windvale-Compiler.wvproj' -or
             $Path.StartsWith('Tests/Fixtures/Source-Wvb/', [StringComparison]::Ordinal)) {
-            Add-Suite 'compiler-source-sentinel'
+            Add-Suite 'language-1-front-door'
         }
         if ($Path -in @(
             'Compiler/Windvale/Source-Declaration-Parser.wv',
@@ -3383,7 +3383,7 @@ foreach ($Path in $Paths) {
             'Specifications/Compiler-Source-Wir.md'
         )) {
             Add-Compiler-Suites
-            Add-Suite 'compiler-source-sentinel'
+            Add-Suite 'language-1-front-door'
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {

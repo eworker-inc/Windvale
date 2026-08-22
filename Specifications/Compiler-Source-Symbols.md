@@ -92,26 +92,24 @@ declaration is a template and does not bind as a bare value type; a bare use
 returns `Unknownˉtype`. When declaration validation reaches the `<` of an
 otherwise parsed generic nominal type production, Source Symbols defers that
 application and continues canonical declaration validation. It does not assign
-the template or use a concrete shape. Recursive argument binding, exact arity
-and kind checks, WVGT admission, substituted-field validation, and concrete WVB
-materialization remain the later phase boundary. The exact edition-1 Foundation
+the template or use a concrete shape. The later WVGT-aware semantic phase owns
+recursive argument binding, exact arity and kind checks, catalog admission,
+substituted-field validation, and concrete WVB materialization. The exact edition-1 Foundation
 `Option<T>` and `Result<T, E>` declarations pass the same generic parameter and
 payload validation instead of bypassing variant validation.
 
 A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Variant fields may contain implemented ordinary value shapes or their own admitted type parameter. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 
-Slice 3 recognizes two built-in generic declaration identities. The edition-1
+Language 1.0 recognizes two exact Foundation declaration identities. The edition-1
 module `Foundationˉoption` must export exactly `Option<T>` with ordered cases
 `Present(Value: T)` and `Absent`. The edition-1 module
 `Foundationˉresult` must export exactly `Result<T, E>` with ordered cases
-`Valid(Value: T)` and `Failure(Error: E)`. A use supplies exactly one or two
-arguments respectively. Each argument is one implemented primitive or one of
-the first 1,024 ordinary record, enum, or variant identities; nested generic,
-collection, capability, `never`, bare, wrong-arity, and lookalike uses are
-rejected. Compact Option shapes occupy `0x60000000 + T`; Result shapes occupy
-`0x70000000 + T * 16384 + E`, where `T` and `E` are the private compact value
-shape codes. These encodings are compiler-phase evidence, not source or WVB
-identities.
+`Valid(Value: T)` and `Failure(Error: E)`. Uses supply exactly one or two
+arguments respectively and enter the ordinary bounded WVGT catalog. A bare or
+wrong-arity use is rejected. Variant construction requires explicit complete
+arguments, just like user-defined generic nominal construction. The exact
+Result identity additionally authorizes `try`; no Foundation-only concrete
+shape, catalog, or WVB encoding exists.
 
 The first Slice 4 function-lowering checkpoints additionally admit a bounded
 function-generic subset. A type parameter may be the complete parameter or

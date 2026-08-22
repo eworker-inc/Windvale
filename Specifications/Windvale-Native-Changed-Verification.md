@@ -161,11 +161,11 @@ behavioral prerequisites: the tree reader consumes host-storage output, and the
 engine and tree writer consume the reader's committed depth-two output.
 
 Ordinary source-compiler and source-language contract changes select the
-`compiler-source-sentinel` instead of using database storage as a downstream
-proxy. The sentinel reconstructs the changed compiler through the shared
-content-addressed pipeline, compiles one four-function scalar/control program
-twice, compares the reports and WVB bytes, verifies the result independently,
-and executes it. Database storage remains selected for changes to its own
+`language-1-front-door` instead of using database storage or a legacy monolithic
+compiler as a downstream proxy. The owner reconstructs the current analyzer and
+emitter through the shared content-addressed split pipeline, compiles focused
+programs twice, compares exact WVB bytes, verifies the results independently,
+and executes them. Database storage remains selected for changes to its own
 sources or contracts, shared cache tooling, native lowering that can affect its
 generated images, and deliberate final milestone or qualification evidence.
 

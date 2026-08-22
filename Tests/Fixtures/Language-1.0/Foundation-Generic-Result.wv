@@ -27,9 +27,9 @@ fn Adaptˉmanualˉread(
     Status: Manualˉreadˉstatus
 ) -> Result.Result<i32, u32> {
     if Status.Valid {
-        return Result.Result.Valid { Value: Status.Value };
+        return Result.Result.Valid<i32, u32> { Value: Status.Value };
     }
-    return Result.Result.Failure {
+    return Result.Result.Failure<i32, u32> {
         Error: Adaptˉreadˉfailure(Status.Error)
     };
 }
@@ -45,14 +45,14 @@ fn Read(Fail: bool) -> Result.Result<i32, u32> {
 fn Forward(Fail: bool) -> Result.Result<u8, u32> {
     let Value: i32 = try Read(Fail);
     if Value != 41 {
-        return Result.Result.Failure { Error: 8u32 };
+        return Result.Result.Failure<u8, u32> { Error: 8u32 };
     }
-    return Result.Result.Valid { Value: 42u8 };
+    return Result.Result.Valid<u8, u32> { Value: 42u8 };
 }
 
 fn Statementˉforward() -> Result.Result<u8, u32> {
     try Read(false);
-    return Result.Result.Valid { Value: 42u8 };
+    return Result.Result.Valid<u8, u32> { Value: 42u8 };
 }
 
 fn Observeˉresult(
@@ -80,15 +80,15 @@ fn Genericˉrankˉpressure(
     Textˉvalue: Option.Option<text>,
     Bytesˉvalue: Option.Option<bytes>
 ) -> Option.Option<bytes> {
-    return Option.Option.Absent {};
+    return Option.Option.Absent<bytes> {};
 }
 
 fn Present() -> Option.Option<u32> {
-    return Option.Option.Present { Value: 42u32 };
+    return Option.Option.Present<u32> { Value: 42u32 };
 }
 
 fn Absent() -> Option.Option<u32> {
-    return Option.Option.Absent {};
+    return Option.Option.Absent<u32> {};
 }
 
 fn Observeˉoption(Value: Option.Option<u32>) -> i32 {

@@ -10,16 +10,14 @@ export enum Compilerˉsourceˉwvbˉgenericˉnominalˉstatus {
     Valid = 0;
     Invalidˉmaterialization = 1;
     Invalidˉtypeˉbase = 2;
-    Invalidˉfoundationˉplan = 3;
-    Unsupportedˉshape = 4;
-    Typeˉlimit = 5;
-    Evidenceˉlimit = 6;
+    Unsupportedˉshape = 3;
+    Typeˉlimit = 4;
+    Evidenceˉlimit = 5;
 }
 
 export record Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
     Status: Compilerˉsourceˉwvbˉgenericˉnominalˉstatus;
     Entries: u32;
-    Foundationˉvariants: u32;
     Payload: bytes;
     Features: u32;
     Failureˉinstance: u32;
@@ -45,7 +43,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
     Instance: u32
 ) -> Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
     return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
-        Status, 0u32, 0u32,
+        Status, 0u32,
         Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
         0u32, Instance
     );
@@ -133,54 +131,6 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉencodedˉname(
     );
 }
 
-fn Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉrank(
-    Foundationˉshapes: bytes,
-    Shape: u32
-) -> u32 {
-    var Rank: u32 = 0u32;
-    let Count: u32 = Bytesˉlength(Foundationˉshapes) / 4u32;
-    while Rank < Count {
-        if Bytesˉreadˉu32ˉlittle(Foundationˉshapes, Rank * 4u32) ==
-                Shape {
-            return Rank;
-        }
-        Rank = Rank + 1u32;
-    }
-    return Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel();
-}
-
-fn Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉplanˉisˉvalid(
-    Foundationˉshapes: bytes
-) -> bool {
-    let Length: u32 = Bytesˉlength(Foundationˉshapes);
-    if Length > 1024u32 || Length - (Length / 4u32) * 4u32 != 0u32 {
-        return false;
-    }
-    let Count: u32 = Length / 4u32;
-    var Rank: u32 = 0u32;
-    while Rank < Count {
-        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
-            Foundationˉshapes, Rank * 4u32
-        );
-        if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-                Shape
-            ) {
-            return false;
-        }
-        var Prior: u32 = 0u32;
-        while Prior < Rank {
-            if Bytesˉreadˉu32ˉlittle(
-                    Foundationˉshapes, Prior * 4u32
-                ) == Shape {
-                return false;
-            }
-            Prior = Prior + 1u32;
-        }
-        Rank = Rank + 1u32;
-    }
-    return true;
-}
-
 fn Compilerˉsourceˉwvbˉgenericˉnominalˉscalarˉfeatures(
     Shape: u32
 ) -> u32 {
@@ -195,7 +145,6 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
     Input: bytes,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Foundationˉshapes: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -226,31 +175,6 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
                 Bytesˉfromˉu8(Privateˉshapeˉkind),
                 Bytesˉfromˉu32ˉlittle(Privateˉoutput)
             ), 0u32
-        );
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-            Shape
-        ) {
-        let Rank: u32 =
-            Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉrank(
-                Foundationˉshapes, Shape
-            );
-        if Rank == Compilerˉsourceˉwvbˉgenericˉnominalˉsentinel() {
-            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
-                Input,
-                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan
-            );
-        }
-        var Foundationˉshape: bytes = Bytesˉfromˉu8(11u8);
-        Foundationˉshape = Bytesˉconcat(
-            Foundationˉshape,
-            Bytesˉfromˉu32ˉlittle(
-                Plan.Firstˉtype + Plan.Instances + Rank
-            )
-        );
-        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
-            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
-            Foundationˉshape, 0u32
         );
     }
     if Shape >= 1073741824u32 && Shape < 1610612736u32 {
@@ -290,7 +214,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         let Encodedˉelement:
             Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
-                Input, Symbols, Plan, Foundationˉshapes,
+                Input, Symbols, Plan,
                 Recordˉtargets, Variantˉtargets, Concreteˉrecords, Element
             );
         if Encodedˉelement.Status !=
@@ -389,7 +313,6 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
     Input: bytes,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Foundationˉshapes: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -408,7 +331,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
     }
     let Shape: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
         Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
-            Input, Symbols, Plan, Foundationˉshapes,
+            Input, Symbols, Plan,
             Recordˉtargets, Variantˉtargets, Concreteˉrecords, Field.Shape
         );
     if Shape.Status !=
@@ -436,7 +359,6 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Foundationˉshapes: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -507,7 +429,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
             let Encodedˉfield:
                 Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
                 Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
-                    Input, Symbols, Plan, Foundationˉshapes,
+                    Input, Symbols, Plan,
                     Recordˉtargets, Variantˉtargets, Concreteˉrecords, View.Source,
                     Typeˉfirstˉfield + Fieldˉrank
                 );
@@ -582,7 +504,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
                 let Encodedˉcaseˉfield:
                     Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
                     Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
-                        Input, Symbols, Plan, Foundationˉshapes,
+                        Input, Symbols, Plan,
                         Recordˉtargets, Variantˉtargets, Concreteˉrecords,
                         View.Source, Caseˉfirstˉfield + Caseˉfield
                     );
@@ -653,7 +575,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
-    Foundationˉshapes: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -688,19 +609,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
             Sentinel
         );
     }
-    if !Compilerˉsourceˉwvbˉgenericˉnominalˉfoundationˉplanˉisˉvalid(
-            Foundationˉshapes
-        ) {
-        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan,
-            Sentinel
-        );
-    }
-    let Foundationˉvariants: u32 = Bytesˉlength(Foundationˉshapes) / 4u32;
-    if Typeˉbase > 1024u32 || Plan.Instances > 1024u32 - Typeˉbase ||
-        Foundationˉvariants >
-            1024u32 - Typeˉbase - Plan.Instances {
+    if Typeˉbase > 1024u32 || Plan.Instances > 1024u32 - Typeˉbase {
         return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
             Input,
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Typeˉlimit,
@@ -713,7 +622,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
     while Instance < Plan.Instances {
         let Encoded: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
-                Input, Scan, Symbols, Plan, Foundationˉshapes,
+                Input, Scan, Symbols, Plan,
                 Recordˉtargets, Variantˉtargets, Concreteˉrecords, Instance
             );
         if Encoded.Status !=
@@ -737,8 +646,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
         Instance = Instance + 1u32;
     }
     return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
-        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
-        Plan.Instances, Foundationˉvariants,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid, Plan.Instances,
         Result.Payload, Result.Features, Sentinel
     );
 }

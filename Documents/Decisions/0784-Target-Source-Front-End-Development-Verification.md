@@ -1,6 +1,6 @@
 # Decision 0784: Target source-front-end development verification
 
-- Status: Accepted
+- Status: Accepted; legacy compiler-source owner superseded by Decision 0820
 - Date: 2026-08-20
 
 ## Context
@@ -46,6 +46,12 @@ This reduces redundant verification, not verification depth inside the selected
 owners. A newly discovered cross-boundary dependency must gain an explicit
 mapping and regression case rather than restoring one undifferentiated compiler
 bucket.
+
+Decision 0820 subsequently retires the partial monolithic
+`compiler-source-sentinel`. The listed source-front-end cores continue to select
+source containment, the focused generic owners, and the current split
+`language-1-front-door`; the recovery-only monolithic path is no longer an
+ordinary development owner.
 
 ## Reconsideration triggers
 

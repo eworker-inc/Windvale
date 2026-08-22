@@ -503,16 +503,15 @@ export fn Main() -> i32 {
         Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
             Input, Scan, Symbols, Catalog, Typeˉbase
         );
-    let Emptyˉfoundationˉplan: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Encoded:
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan, Emptyˉfoundationˉplan,
+            Input, Scan, Symbols, Emitˉplan,
             Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
         );
     if Encoded.Status !=
             Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid ||
-        Encoded.Entries != 4u32 || Encoded.Foundationˉvariants != 0u32 ||
+        Encoded.Entries != 4u32 ||
         Bytesˉlength(Encoded.Payload) != 220u32 || Encoded.Features != 32u32 ||
         Encoded.Failureˉinstance != 4294967295u32 {
         return 21;
@@ -551,7 +550,7 @@ export fn Main() -> i32 {
     let Encodedˉagain:
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan, Emptyˉfoundationˉplan,
+            Input, Scan, Symbols, Emitˉplan,
             Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
         );
     if !Bytesˉequal(Encoded.Payload, Encodedˉagain.Payload) {
@@ -560,13 +559,13 @@ export fn Main() -> i32 {
     let Wrongˉbase:
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Plan, Emptyˉfoundationˉplan,
+            Input, Scan, Symbols, Plan,
             Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
         );
     let Invalidˉtargets:
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan, Emptyˉfoundationˉplan,
+            Input, Scan, Symbols, Emitˉplan,
             Bytesˉslice(
                 Emitˉrecordˉtargets, 0u32,
                 Bytesˉlength(Emitˉrecordˉtargets) - 4u32
@@ -579,60 +578,15 @@ export fn Main() -> i32 {
             Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉtypeˉbase {
         return 27;
     }
-    let Shortˉfoundationˉplan: bytes = Bytesˉfromˉu8(1u8);
-    let Invalidˉshort:
-        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
-        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan, Shortˉfoundationˉplan,
-            Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
-        );
-    let Invalidˉshape:
-        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
-        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan,
-            Bytesˉfromˉu32ˉlittle(1u32),
-            Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
-        );
-    if Invalidˉshort.Status !=
-            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan ||
-        Invalidˉshape.Status !=
-            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan {
-        return 28;
-    }
-    let Optionˉshape: bytes = Bytesˉfromˉu32ˉlittle(1610612738u32);
-    let Duplicateˉfoundationˉplan: bytes =
-        Bytesˉconcat(Optionˉshape, Optionˉshape);
-    let Invalidˉduplicate:
-        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
-        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan,
-            Duplicateˉfoundationˉplan,
-            Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
-        );
-    let Withˉfoundation:
-        Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
-        Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
-            Input, Scan, Symbols, Emitˉplan, Optionˉshape,
-            Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
-        );
-    if Invalidˉduplicate.Status !=
-            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉfoundationˉplan ||
-        Withˉfoundation.Status !=
-            Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid ||
-        Withˉfoundation.Foundationˉvariants != 1u32 ||
-        !Bytesˉequal(Encoded.Payload, Withˉfoundation.Payload) {
-        return 29;
-    }
     let Invalidˉmaterialization:
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉencoding =
         Genericˉwvb.Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
             Input, Scan, Symbols, Tamperedˉentry,
-            Emptyˉfoundationˉplan,
             Emitˉrecordˉtargets, Emitˉvariantˉtargets, 0u32, Typeˉbase
         );
     if Invalidˉmaterialization.Status !=
         Genericˉwvb.Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization {
-        return 30;
+        return 28;
     }
     return 42;
 }

@@ -683,9 +683,6 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
         Symbols.Directory, Shape
     ) { return true; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-        Shape
-    ) { return true; }
     if Shape >= 1073741824u32 {
         if Shape < 1610612736u32 { return true; }
     }
@@ -1932,27 +1929,6 @@ export fn Compilerˉsourceˉwirˉnominalˉbyˉshape(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Shape: u32
 ) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch {
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
-        var Genericˉentry: u32 = 0u32;
-        let Genericˉentries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-        var Genericˉfamily: u32 = 1u32;
-        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape) {
-            Genericˉfamily = 2u32;
-        }
-        while Genericˉentry < Genericˉentries {
-            let Genericˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-                    Symbols.Directory, Scan.Modules, Genericˉentry
-                );
-            if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
-                Input, Scan, Genericˉnominal
-            ) == Genericˉfamily {
-                return Genericˉnominal;
-            }
-            Genericˉentry = Genericˉentry + 1u32;
-        }
-        return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉmatchˉnone(Scan.Modules);
-    }
     var Wanted: u32 = Shape - 65536u32;
     if Shape >= 131072u32 { Wanted = Shape - 131072u32; }
     if Shape >= 196608u32 { Wanted = Shape - 196608u32; }
@@ -1972,9 +1948,6 @@ fn Compilerˉsourceˉwirˉvariantˉtarget(Shape: u32) -> u32 {
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
             Shape
         ) {
-        return Shape;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
         return Shape;
     }
     return Shape - 196608u32;
@@ -3231,42 +3204,8 @@ fn Compilerˉsourceˉwirˉcompileˉnamedˉvariant(
             Input, Scan, Symbols, Callable, Source,
             Expression.Valueˉoffset, Expression.Valueˉlength, 0u32
         );
-    let Constructionˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
-            Symbols.Directory, Scan.Modules, Callable.Directoryˉentry
-        );
-    let Constructionˉfamily: u32 =
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
-            Input, Scan, Constructionˉnominal
-        );
-    var Constructionˉshape: u32 = Signature.Returnˉshape;
-    var Constructionˉtarget: u32 = Signature.Target;
-    if Constructionˉfamily != 0u32 {
-        let Constructionˉreturnˉshape: u32 =
-            Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
-                Input, Scan, Symbols, Source, Build
-            );
-        var Constructionˉmatches: bool =
-            Constructionˉfamily == 1u32 &&
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(
-                Constructionˉreturnˉshape
-            );
-        if Constructionˉfamily == 2u32 {
-            Constructionˉmatches =
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(
-                    Constructionˉreturnˉshape
-                );
-        }
-        if !Constructionˉmatches {
-            return Compilerˉsourceˉwirˉfailureˉvalue(
-                Build, Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral,
-                Callable.Module,
-                Expression.Offset, Expression.Line, Expression.Column
-            );
-        }
-        Constructionˉshape = Constructionˉreturnˉshape;
-        Constructionˉtarget = Constructionˉreturnˉshape;
-    }
+    let Constructionˉshape: u32 = Signature.Returnˉshape;
+    let Constructionˉtarget: u32 = Signature.Target;
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
             Input, Scan, Symbols,
@@ -3711,9 +3650,77 @@ fn Compilerˉsourceˉwirˉisˉfoundationˉresult(
         );
 }
 
+fn Compilerˉsourceˉwirˉresultˉlayoutˉmissing(
+) -> Compilerˉsourceˉwirˉmember {
+    return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32
+) -> Compilerˉsourceˉwirˉmember {
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Shape
+        ) {
+        return Compilerˉsourceˉwirˉresultˉlayoutˉmissing();
+    }
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+    let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, Instance
+        );
+    if Layout.Shape != Shape || Layout.Items != 2u32 || Layout.Fields != 2u32 ||
+        Layout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
+        !Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Layout
+        ) {
+        return Compilerˉsourceˉwirˉresultˉlayoutˉmissing();
+    }
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules, Layout.Declaration
+        );
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
+            Input, Scan, Nominal
+        ) != 2u32 {
+        return Compilerˉsourceˉwirˉresultˉlayoutˉmissing();
+    }
+    let Valid: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Layout, 0u32
+        );
+    let Failure: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉcase =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉcase(
+            Input, Scan, Symbols, Layout, 1u32
+        );
+    let Value: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Layout, 0u32, 0u32
+        );
+    let Error: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Layout, 1u32, 0u32
+        );
+    if !Valid.Found || Valid.Fields != 1u32 ||
+        !Failure.Found || Failure.Fields != 1u32 ||
+        !Value.Found || !Error.Found {
+        return Compilerˉsourceˉwirˉresultˉlayoutˉmissing();
+    }
+    return Compilerˉsourceˉwirˉmember(
+        true, Value.Shape, Error.Shape
+    );
+}
+
 fn Compilerˉsourceˉwirˉpropagateˉtry(
     Operand: Compilerˉsourceˉwirˉvalue,
     Returnˉshape: u32,
+    Errorˉshape: u32,
+    Genericˉfields: bool,
     Offset: u32,
     Length: u32
 ) -> Compilerˉsourceˉwirˉbuild {
@@ -3736,14 +3743,19 @@ fn Compilerˉsourceˉwirˉpropagateˉtry(
     Result = Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Failureˉblock);
     var Failureˉtemporary: u32 = Operand.Temporary;
     if Operand.Shape != Returnˉshape {
+        var Failureˉoperation: u32 = WIR_OPERATION_VARIANT_PAYLOAD;
+        var Failureˉtarget: u32 = Operand.Shape;
+        var Failureˉauxiliary: u32 = 1u32;
+        if Genericˉfields {
+            Failureˉoperation = WIR_OPERATION_VARIANT_FIELD;
+            Failureˉtarget = Compilerˉsourceˉwirˉvariantˉtarget(Operand.Shape);
+            Failureˉauxiliary = 64u32;
+        }
         let Failureˉpayload: Compilerˉsourceˉwirˉvalue =
             Compilerˉsourceˉwirˉemit(
-                Result, WIR_OPERATION_VARIANT_PAYLOAD,
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(
-                    Operand.Shape
-                ),
+                Result, Failureˉoperation, Errorˉshape,
                 Compilerˉsourceˉwirˉoneˉoperand(Operand.Temporary),
-                Operand.Shape, 1u32, Offset, Length
+                Failureˉtarget, Failureˉauxiliary, Offset, Length
             );
         let Failureˉbuild: Compilerˉsourceˉwirˉbuild =
             Compilerˉsourceˉwirˉvalueˉbuild(Failureˉpayload);
@@ -3781,29 +3793,41 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉtry(
     let Returnˉshape: u32 = Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
         Input, Scan, Symbols, Source, Build
     );
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Operand.Shape) ||
-        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Returnˉshape) {
-        if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Operand.Shape) ||
-            !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Returnˉshape) ||
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(Operand.Shape) !=
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(Returnˉshape) {
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence);
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Operand.Shape
+        ) || Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Returnˉshape
+        ) {
+        let Operandˉresult: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Typeˉcatalog, Operand.Shape
+            );
+        let Returnˉresult: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Typeˉcatalog, Returnˉshape
+            );
+        if !Operandˉresult.Found || !Returnˉresult.Found ||
+            Operandˉresult.Shape != Returnˉresult.Shape {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Invalidˉtry,
                 Build.Currentˉmodule, Offset, Line, Column
             );
         }
-        let Genericˉpropagated: Compilerˉsourceˉwirˉbuild =
+        let Privateˉpropagated: Compilerˉsourceˉwirˉbuild =
             Compilerˉsourceˉwirˉpropagateˉtry(
-                Operand, Returnˉshape, Offset, Length
+                Operand, Returnˉshape, Operandˉresult.Shape, true,
+                Offset, Length
             );
         if !Valueˉrequired {
             return Compilerˉsourceˉwirˉvalueˉfrom(
-                Genericˉpropagated, 0u32, Compilerˉsourceˉwirˉsentinel()
+                Privateˉpropagated, 0u32, Compilerˉsourceˉwirˉsentinel()
             );
         }
         return Compilerˉsourceˉwirˉemit(
-            Genericˉpropagated, WIR_OPERATION_VARIANT_PAYLOAD,
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉvalidˉshape(Operand.Shape),
+            Privateˉpropagated, WIR_OPERATION_VARIANT_FIELD,
+            Operandˉresult.Index,
             Compilerˉsourceˉwirˉoneˉoperand(Operand.Temporary),
             Operand.Shape, 0u32, Offset, Length
         );
@@ -3883,7 +3907,8 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉtry(
     }
     let Propagated: Compilerˉsourceˉwirˉbuild =
         Compilerˉsourceˉwirˉpropagateˉtry(
-            Operand, Returnˉshape, Offset, Length
+            Operand, Returnˉshape, Failureˉfield.Shape, false,
+            Offset, Length
         );
     if !Valueˉrequired {
         return Compilerˉsourceˉwirˉvalueˉfrom(
@@ -5764,10 +5789,19 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             if Genericˉargumentˉmatched {
                 Expected = Value.Shape;
             } else {
-                let Argumentˉsignature: Compilerˉsourceˉwirˉsignature = Compilerˉsourceˉwirˉcallableˉsignature(
-                    Input, Scan, Symbols, Callable,
-                    Source, Expression.Valueˉoffset, Expression.Valueˉlength, Item
-                );
+                let Argumentˉsignature: Compilerˉsourceˉwirˉsignature =
+                    Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
+                        Input, Scan, Symbols, Callable,
+                        Source, Expression.Valueˉoffset,
+                        Expression.Valueˉlength, Item,
+                        Compilerˉsourceˉwirˉgenericˉcatalog(
+                            Value.Genericˉevidence
+                        ),
+                        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                            Value.Genericˉevidence
+                        ),
+                        Compilerˉsourceˉwirˉsentinel()
+                    );
                 Expected = Argumentˉsignature.Parameterˉshape;
             }
         }
@@ -6362,9 +6396,6 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
             Matchˉshapeˉisˉsupported = true;
         }
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-        Matchˉvalue.Shape
-    ) { Matchˉshapeˉisˉsupported = true; }
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
             Matchˉvalue.Shape
         ) {
@@ -9275,27 +9306,6 @@ fn Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
         }
         return Missing;
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) {
-        if Case == 0u32 {
-            return Compilerˉsourceˉwirˉvariantˉcaseˉview(
-                true, Scan.Modules, Case, 1u32, 0u32, 1u32, 1u32
-            );
-        }
-        if Case == 1u32 {
-            return Compilerˉsourceˉwirˉvariantˉcaseˉview(
-                true, Scan.Modules, Case, 0u32, 0u32, 1u32, 1u32
-            );
-        }
-        return Missing;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Nominal) {
-        if Case <= 1u32 {
-            return Compilerˉsourceˉwirˉvariantˉcaseˉview(
-                true, Scan.Modules, Case, 1u32, 0u32, 1u32, 1u32
-            );
-        }
-        return Missing;
-    }
     let Directoryˉentry: u32 = Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
         Symbols, Nominal, 8u32
     );
@@ -9439,29 +9449,6 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
             true, Fieldˉindex, Selected.Shape
         );
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) {
-        if Case == 0u32 && Fieldˉindex == 0u32 {
-            return Compilerˉsourceˉwirˉmember(
-                true, 0u32,
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
-                    Nominal - 1610612736u32
-                )
-            );
-        }
-        return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Nominal) {
-        if Fieldˉindex == 0u32 && Case <= 1u32 {
-            var Genericˉfieldˉshape: u32 =
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉvalidˉshape(Nominal);
-            if Case == 1u32 {
-                Genericˉfieldˉshape =
-                    Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(Nominal);
-            }
-            return Compilerˉsourceˉwirˉmember(true, 0u32, Genericˉfieldˉshape);
-        }
-        return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
-    }
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
             Input, Scan, Symbols, Typeˉcatalog, Nominal, Case
@@ -9568,34 +9555,6 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉname(
             Genericˉindex = Genericˉindex + 1u32;
         }
         return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Nominal) {
-        var Genericˉfieldˉnameˉvalid: bool = false;
-        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Nominal) &&
-            Case == 0u32 {
-            Genericˉfieldˉnameˉvalid = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
-                Queryˉsource, Queryˉoffset, Queryˉlength, "Value"
-            );
-        }
-        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Nominal) {
-            if Case == 0u32 {
-                Genericˉfieldˉnameˉvalid = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
-                    Queryˉsource, Queryˉoffset, Queryˉlength, "Value"
-                );
-            }
-            if Case == 1u32 {
-                Genericˉfieldˉnameˉvalid = Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
-                    Queryˉsource, Queryˉoffset, Queryˉlength, "Error"
-                );
-            }
-        }
-        if !Genericˉfieldˉnameˉvalid {
-            return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
-        }
-        return Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
-            Input, Scan, Symbols, Typeˉcatalog,
-            Nominal, Case, 0u32
-        );
     }
     let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
         Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
@@ -10163,9 +10122,6 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
                     ) {
                     Variantˉresultˉshape = Target;
                 }
-                if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Target) {
-                    Variantˉresultˉshape = Target;
-                }
                 if Shape != Variantˉresultˉshape { return false; }
                 return Operandˉcount == Variantˉview.Fields;
             }
@@ -10381,9 +10337,6 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                     ) {
                     Variantˉfieldˉownerˉshape = Operationˉtarget;
                 }
-                if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Operationˉtarget) {
-                    Variantˉfieldˉownerˉshape = Operationˉtarget;
-                }
                 if Operandˉshape != Variantˉfieldˉownerˉshape {
                     return false;
                 }
@@ -10511,9 +10464,6 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                 if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
                         Operationˉtarget
                     ) {
-                    Variantˉoperandˉownerˉshape = Operationˉtarget;
-                }
-                if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Operationˉtarget) {
                     Variantˉoperandˉownerˉshape = Operationˉtarget;
                 }
                 if Firstˉoperandˉshape != Variantˉoperandˉownerˉshape { return false; }

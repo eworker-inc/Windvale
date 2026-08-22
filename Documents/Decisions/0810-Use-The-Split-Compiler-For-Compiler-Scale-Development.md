@@ -61,6 +61,12 @@ cacheable package/execute checks after reconstructing its current analyzer and
 emitter. The verification-owner registry records 160 Language 1.0 cases, 36 of
 which are compiler cases.
 
+The independent segmented-toolset reconstruction owner uses the immutable
+992,412-byte bootstrap analyzer as its compiler-scale staging sentinel. It does
+not ask the recovery Seed to rebuild evolving compiler source. This preserves
+the segmented stager's exact compiler-scale evidence without duplicating the
+current split compilation owned by the Language 1.0 front door.
+
 ## Consequences
 
 Compiler development is no longer falsely gated by the historical Seed's

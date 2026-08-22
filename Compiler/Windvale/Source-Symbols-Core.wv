@@ -1928,25 +1928,6 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
     return 2u32;
 }
 
-export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(
-    Shape: u32
-) -> bool {
-    return Shape >= 1610612736u32 && Shape < 1610629120u32;
-}
-
-export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(
-    Shape: u32
-) -> bool {
-    return Shape >= 1879048192u32 && Shape <= 2147483647u32;
-}
-
-export fn Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-    Shape: u32
-) -> bool {
-    return Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉoption(Shape) ||
-        Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape);
-}
-
 export fn Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
     Shape: u32
 ) -> u32 {
@@ -1979,37 +1960,11 @@ export fn Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
     return 0u32;
 }
 
-export fn Compilerˉsourceˉsymbolsˉfoundationˉresultˉvalidˉshape(
-    Shape: u32
-) -> u32 {
-    if !Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape) {
-        return 0u32;
-    }
-    return Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
-        (Shape - 1879048192u32) / 16384u32
-    );
-}
-
-export fn Compilerˉsourceˉsymbolsˉfoundationˉresultˉerrorˉshape(
-    Shape: u32
-) -> u32 {
-    if !Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉresult(Shape) {
-        return 0u32;
-    }
-    let Payload: u32 = Shape - 1879048192u32;
-    return Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
-        Payload - (Payload / 16384u32) * 16384u32
-    );
-}
-
 export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
     Binding: Compilerˉsourceˉtypeˉbinding
 ) -> u32 {
     let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
     if Primitive != 0u32 { return Primitive; }
-    if Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(
-        Binding.Nominalˉindex
-    ) { return Binding.Nominalˉindex; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence ||
         Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
         return Binding.Nominalˉindex;
@@ -2365,9 +2320,6 @@ export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
         Shape < 131072u32 + Records + Enums { return true; }
     if Shape >= 196608u32 + Records + Enums &&
         Shape < 196608u32 + Records + Enums + Variants { return true; }
-    if Compilerˉsourceˉsymbolsˉshapeˉisˉfoundationˉgeneric(Shape) {
-        return true;
-    }
     return false;
 }
 
@@ -2531,83 +2483,9 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             Qualified.Nextˉline, Qualified.Nextˉcolumn
         );
     if Genericˉargumentsˉstart.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less {
-        if Genericˉfamily == 0u32 || Genericˉfamily > 2u32 {
-            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
-                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉargumentsˉstart
-            );
-        }
-        let Genericˉfirstˉargument: Compilerˉsourceˉtypeˉbinding =
-            Compilerˉsourceˉsymbolsˉbindˉtype(
-                Input, Scan, Directory, Lookup, Visibility, Owner, Source,
-                Genericˉargumentsˉstart.Nextˉoffset, Genericˉargumentsˉstart.Nextˉline,
-                Genericˉargumentsˉstart.Nextˉcolumn, Records, Enums, false
-            );
-        if Genericˉfirstˉargument.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-            return Genericˉfirstˉargument;
-        }
-        let Genericˉfirstˉshape: u32 = Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
-            Compilerˉsourceˉsymbolsˉtypeˉshape(Genericˉfirstˉargument)
-        );
-        if Genericˉfirstˉshape == 0u32 {
-            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                Compilerˉsourceˉsymbolˉstatus.Invalidˉcollectionˉelement,
-                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉargumentsˉstart
-            );
-        }
-        let Genericˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
-            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Genericˉfirstˉargument.Nextˉoffset,
-                Genericˉfirstˉargument.Nextˉline, Genericˉfirstˉargument.Nextˉcolumn
-            );
-        var Genericˉshape: u32 = 1610612736u32 + Genericˉfirstˉshape;
-        var Genericˉright: Sourceˉlexer.Compilerˉsourceˉtoken = Genericˉseparator;
-        if Genericˉfamily == 2u32 {
-            if Genericˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
-                    Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉseparator
-                );
-            }
-            let Genericˉsecondˉargument: Compilerˉsourceˉtypeˉbinding =
-                Compilerˉsourceˉsymbolsˉbindˉtype(
-                    Input, Scan, Directory, Lookup, Visibility, Owner, Source,
-                    Genericˉseparator.Nextˉoffset, Genericˉseparator.Nextˉline,
-                    Genericˉseparator.Nextˉcolumn, Records, Enums, false
-                );
-            if Genericˉsecondˉargument.Status != Compilerˉsourceˉsymbolˉstatus.Valid {
-                return Genericˉsecondˉargument;
-            }
-            let Genericˉsecondˉshape: u32 = Compilerˉsourceˉsymbolsˉgenericˉcompactˉshape(
-                Compilerˉsourceˉsymbolsˉtypeˉshape(Genericˉsecondˉargument)
-            );
-            if Genericˉsecondˉshape == 0u32 {
-                return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                    Compilerˉsourceˉsymbolˉstatus.Invalidˉcollectionˉelement,
-                    Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉseparator
-                );
-            }
-            Genericˉshape = 1879048192u32 + Genericˉfirstˉshape * 16384u32 + Genericˉsecondˉshape;
-            Genericˉright = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Genericˉsecondˉargument.Nextˉoffset,
-                Genericˉsecondˉargument.Nextˉline, Genericˉsecondˉargument.Nextˉcolumn
-            );
-        }
-        if Genericˉright.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-            Genericˉright = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Source, Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn
-            );
-        }
-        if Genericˉright.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Greater {
-            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
-                Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
-                Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉright
-            );
-        }
-        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
-            Kind, Match.Kind, Genericˉshape, Match.Module,
-            Token.Offset, Genericˉright.Nextˉoffset - Token.Offset,
-            Genericˉright.Nextˉoffset, Genericˉright.Nextˉline, Genericˉright.Nextˉcolumn
+        return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+            Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+            Kind, Match.Kind, Nominalˉindex, Match.Module, Genericˉargumentsˉstart
         );
     }
     if Genericˉfamily != 0u32 {

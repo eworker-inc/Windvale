@@ -42,9 +42,8 @@ is `rune`. Record shapes start at
 `65536`; enum shapes start at `131072 + RecordCount`; variant shapes start at
 `196608`. Exact singleton capability-reference shapes are `268435456 +
 RootCapabilityDirectoryEntry`. Packed high families retain sequence/builder
-element identity and maximum. The private high families `0x60000000` and
-`0x70000000` retain exact compact Foundation Option and Result arguments from
-the symbol contract. Nominal suffixes are canonical WVSD nominal indices.
+element identity and maximum. Nominal suffixes are canonical WVSD nominal
+indices; Foundation generic values do not reserve another packed shape family.
 
 Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
@@ -151,11 +150,13 @@ accepting its signature and operations.
 
 An edition-1 accepted `try` evaluates its expression once and requires the exact
 Foundation `Result<T, E>` identity. The current function must return
-`Result<U, E>` with the same expanded error shape. Lowering emits the existing
-case test and branch. The success block extracts `Valid.Value` as `T`; statement
+`Result<U, E>` with the same exact substituted error shape. Lowering emits the
+general variant case test and branch. The success block selects `Valid.Value`
+as `T` through `Variantˉfield = 164`; statement
 `try` discards that extracted value. When `T` equals `U`, the failure block
 returns the original result temporary. Otherwise it extracts `Failure.Error`
-and constructs the exact `Result<U, E>.Failure` before returning. Different
+through the same field operation and constructs the exact materialized
+`Result<U, E>.Failure` before returning. Different
 error shapes are rejected and require an explicit source adapter. The retained
 descriptorless Seed statement subset still accepts its prior concrete nominal
 shape. No inferred conversion, hidden call, new WVIR operation, or

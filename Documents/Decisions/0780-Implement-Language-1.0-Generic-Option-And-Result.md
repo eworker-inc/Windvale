@@ -1,6 +1,6 @@
 # Decision 0780: Implement Language 1.0 generic Option and Result
 
-- Status: Accepted
+- Status: Accepted; Foundation-only representation superseded by Decision 0819
 - Date: 2026-08-20
 
 ## Context

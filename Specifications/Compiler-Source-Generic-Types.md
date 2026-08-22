@@ -23,7 +23,8 @@ the resulting catalog in WVLB 1.3, and carries catalog-bounded private shapes in
 paired WVIR evidence. Main Source WVB consumes that catalog, materializes every
 retained instance, omits source templates from the WVB Types table, remaps
 ordinary and private nominal identities, and emits the concrete entries before
-the existing private Foundation `Option` and `Result` specialization suffix.
+all retained Foundation `Option` and `Result` instances through that same
+ordinary `__WvY` sequence; no Foundation specialization suffix remains.
 Applied record construction and field access consume those same substituted
 layouts in source bodies and lower through the ordinary monomorphic WIR/WVB
 record operations. Applied variant construction and matching likewise consume
@@ -289,23 +290,25 @@ as a distinct lexer token. The independent `generic-nominal-type-layout` owner
 reproduces the build, package, and execution boundary through content-keyed
 caches and returns `42` without output.
 
-`Generic-Nominal-Type-Materialization-Self-Test.wv` now carries 30 focused cases
+`Generic-Nominal-Type-Materialization-Self-Test.wv` now carries 28 focused cases
 over four dependency-ordered record and variant instances. It verifies assigned
 ordinary type indices, fixed-width type/case/field ranges, record and variant
 private-shape replacement, missing indices, an empty plan, the type limit,
 invalid or missing catalog declarations, builder and nested-variant
-rejection, and tampered-evidence reconstruction.
+rejection, and tampered-evidence reconstruction. The retired Foundation side-plan
+admission and corruption cases are absent because Foundation `Option` and `Result`
+now enter this same materialization plan as ordinary generic variants.
 
-Its current 734,722-byte WVB has SHA-256
-`080990672a4f2912877ddae201c9fe0b35c858c40d51dc072567a3191e6e7757`.
+Its current 734,188-byte WVB has SHA-256
+`bca0964398015bdda80f136b0ea5c1c6fd09283f5357cd24117a2bf562138646`.
 It returns `42` and writes no output. The independent
 `generic-nominal-type-materialization` owner reproduces this boundary through
 content-keyed caches. Main Source WIR carriage, WVB insertion, template elision,
 nominal target remapping, runtime generic-record construction/field use, and
 runtime generic-variant construction/matching are connected. Applied generic
 fields inside a generic declaration's own layout are also connected. Deeper
-nested generic-function patterns, broader constant arguments, and Foundation
-migration remain later checkpoints.
+nested generic-function patterns and broader constant arguments remain later
+checkpoints.
 
 `Generic-Nominal-Main-Pipeline.wv` now covers the complete executable
 analysis-to-WVB path. Its 20-case inspector requires exact 377-byte WVSS,
