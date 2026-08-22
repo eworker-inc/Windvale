@@ -297,6 +297,14 @@ array, parser, and borrow groups, the focused owner reports 59 cases and returns
 `42` without output. This checkpoint does not claim Vector operations or WVB
 runtime support.
 
+Canonical Vector and Sequence uses in ordinary function signatures are now
+admitted through the early symbol pass as deferred types and resolved to their
+exact private shapes by the WVGT-aware WIR phase. Borrow-mode checking consumes
+the validated catalog kind: kind 11 Vector is move-owned and kind 12 Sequence
+is shared immutable. Consequently, a borrowed Sequence may satisfy a by-value
+read-through parameter, while a borrowed Vector cannot satisfy a consuming
+by-value parameter. This connection still does not publish either type to WVB.
+
 `Generic-Nominal-Type-Layout-Self-Test.wv` adds 21 focused assertions over
 concrete record and variant layouts. It verifies field and case order, total
 payload counts, private and ordinary substituted shapes, missing indices,

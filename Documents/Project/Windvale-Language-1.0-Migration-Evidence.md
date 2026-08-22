@@ -1744,3 +1744,37 @@ adds no lines to it. Runtime-backed collection representation and helpers will
 live in a focused acyclic compiler module, preserving Source WIR as orchestration;
 any later extraction from the large core will follow a cohesive ownership
 boundary rather than create numbered or mechanically split fragments.
+
+## Slice 4 Vector and Sequence function-value checkpoint
+
+Decision 0824 connects the canonical Vector and Sequence identities to ordinary
+function signatures and call ownership. The early Source Symbols phase admits
+only an exact imported `Foundationˉcollections.Vector<T>` or `Sequence<T>`
+type and defers its shape. Source WIR then resolves that type through the same
+bounded WVGT catalog that owns its kind, element, identity, and dependency
+evidence. No private numeric range is treated as sufficient proof.
+
+Call checking classifies kind 11 Vector as move-owned and kind 12 Sequence as
+shared immutable. The focused `Borrow-Sequence-Read-Through.wv` source publishes
+valid symbol, binding, and 424-byte WVIR evidence when a borrowed sequence is
+passed through a by-value read position. The equivalent
+`Borrow-Vector-Owned-Read-Through.wv` source publishes valid symbol and binding
+evidence, then fails exactly as `Invalidˉborrow` without a WVIR artifact. These
+two cases extend the Language 1.0 front-door owner from 363 to 365 cases and its
+borrow group from seven to nine.
+
+The current analyzer is 1,100,197 WVB bytes at SHA-256
+`f678904797a4b81f621a457f33dc57d83403c3f57273935ebe773b7e1ec3b3f3`;
+its 34,632,192-byte Windows development application has SHA-256
+`f0f1d776b502600b69e415f1772bc4f7210fd19f25731619ae74600690fe5d8b`.
+The registry contains 108 owners and 5,149 declared cases at SHA-256
+`7506d35f266b8dfacf5288685dbada8468f34731046bdf289269f1aa975f88e9`,
+and changed-file planning passes 31 general plus 194 native routing cases.
+
+`Source-Wir-Core.wv` is 12,198 lines at this checkpoint. Its changes are limited
+to the ownership classifier and signature-binding calls. A safe later refactor
+will extract the cohesive collection expression-lowering and validation
+pipeline with its callers; a helper-only or numbered mechanical split is not a
+stable module boundary. WVB 1.18 representation and collection construction,
+append, freeze, length, indexed borrow, and runtime execution remain the next
+connected Slice 4 work.

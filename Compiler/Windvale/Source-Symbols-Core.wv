@@ -2348,6 +2348,47 @@ export fn Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
         );
     }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+        let Qualified: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
+                Source, Offset, Line, Column, false
+            );
+        let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+        let Vectorˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+            Compilerˉsourceˉsymbolsˉfoundationˉvectorˉmodule(
+                Input, Scan, Lookup, Owner, Source,
+                Token.Offset, Qualifiedˉlength
+            );
+        let Sequenceˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+            Compilerˉsourceˉsymbolsˉfoundationˉsequenceˉmodule(
+                Input, Scan, Lookup, Owner, Source,
+                Token.Offset, Qualifiedˉlength
+            );
+        if Vectorˉmodule.Found || Sequenceˉmodule.Found {
+            let Collectionˉtype: Sourceˉdeclarations.Compilerˉparseˉstep =
+                Sourceˉdeclarations.Compilerˉparseˉtype(
+                    Source, Offset, Line, Column, false, false
+                );
+            if !Allowˉunresolved {
+                return Compilerˉsourceˉsymbolsˉconcreteˉtypeˉvalue(
+                    Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                    0u32,
+                    Collectionˉtype.Nextˉoffset,
+                    Collectionˉtype.Nextˉline,
+                    Collectionˉtype.Nextˉcolumn,
+                    Token.Offset, Token.Line, Token.Column
+                );
+            }
+            return Compilerˉsourceˉsymbolsˉconcreteˉtypeˉvalue(
+                Compilerˉsourceˉsymbolˉstatus.Valid,
+                0u32,
+                Collectionˉtype.Nextˉoffset,
+                Collectionˉtype.Nextˉline,
+                Collectionˉtype.Nextˉcolumn,
+                Collectionˉtype.Nextˉoffset,
+                Collectionˉtype.Nextˉline,
+                Collectionˉtype.Nextˉcolumn
+            );
+        }
         let Parameter: Compilerˉsourceˉgenericˉparameterˉmatch =
             Compilerˉsourceˉsymbolsˉgenericˉparameter(
                 Source, Generic, Token.Offset, Token.Length

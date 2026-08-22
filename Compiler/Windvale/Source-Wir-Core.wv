@@ -730,8 +730,24 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape: u32) -> bool {
 
 fn Compilerˉsourceˉwirˉvalueˉclassify(
     Shape: u32,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
 ) -> u32 {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        let Instance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+        if Instance <
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                Typeˉcatalog
+            ) {
+            let Kind: u32 =
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                    Typeˉcatalog, Instance
+                );
+            if Kind == 12u32 { return WIR_VALUE_CLASS_SHARED; }
+            if Kind == 11u32 { return WIR_VALUE_CLASS_OWNED; }
+        }
+    }
     if Shape == 5u32 || Shape == 6u32 ||
         Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) {
         return WIR_VALUE_CLASS_SHARED;
@@ -1721,7 +1737,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Parameterˉtype.Line,
                     Parameterˉtype.Column,
                     Symbols.Records, Symbols.Enums, Generic,
-                    Catalog, Genericˉinstance, Generic.Parameters == 0u32
+                    Catalog, Genericˉinstance, false
                 );
             var Typeˉshape: u32 = Type.Shape;
             var Typeˉnextˉoffset: u32 = Type.Nextˉoffset;
@@ -1805,7 +1821,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             Returnˉparameterˉtype.Line,
             Returnˉparameterˉtype.Column,
             Symbols.Records, Symbols.Enums, Generic,
-            Catalog, Genericˉinstance, Generic.Parameters == 0u32
+            Catalog, Genericˉinstance, false
         );
     var Returnˉshape: u32 = Returnˉtype.Shape;
     if Returnˉtype.Status ==
@@ -6280,7 +6296,12 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             );
         }
         let Valueˉclass: u32 =
-            Compilerˉsourceˉwirˉvalueˉclassify(Value.Shape, Symbols);
+            Compilerˉsourceˉwirˉvalueˉclassify(
+                Value.Shape, Symbols,
+                Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Value.Genericˉevidence
+                )
+            );
         if !Compilerˉsourceˉwirˉborrowˉmodeˉisˉaccepted(
                 Argumentˉsignature.Parameterˉmode,
                 Actualˉmode, Valueˉclass

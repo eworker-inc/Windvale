@@ -244,6 +244,13 @@ statement match remains unchanged. No new operation or WVIR version is needed.
 
 `&&` and `||` lower the left operand, branch to either a short-result block or a right-operand block, and join those Boolean values with `Valueˉphi`. The right expression therefore has no operation or runtime behavior on the skipped path. The operation records the short and right predecessor identities so independent validation does not infer phi ownership from layout alone.
 
+Borrow-mode checking classifies the canonical WVGT kind-11 `Vector<T>` identity
+as owned and kind-12 `Sequence<T>` as shared immutable. A borrowed sequence may
+therefore satisfy a by-value read-through position without consuming its shared
+backing, while a borrowed vector cannot satisfy a consuming by-value position.
+The classification consumes the validated generic-type catalog; a private shape
+without matching evidence is not inferred from its numeric range.
+
 `break` closes the current block with a jump to the nearest enclosing loop's after-block. `continue` closes it with a jump to that loop's condition block. Nested loops replace those targets while their bodies are lowered. Compound assignment emits exactly one local load, lowers the right operand, applies the corresponding checked `i32` or `u32` arithmetic operation, and emits one store; an immutable, missing, mismatched, or unsupported target is rejected before publication.
 
 ## Verification tiers and current boundary

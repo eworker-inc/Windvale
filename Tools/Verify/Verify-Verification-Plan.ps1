@@ -254,6 +254,8 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Borrow-Missing-Explicit.wv',
             'Tests/Fixtures/Language-1.0/Borrow-Mutable-From-Let.wv',
             'Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Sequence-Read-Through.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Vector-Owned-Read-Through.wv',
             'Tests/Fixtures/Language-1.0/Borrow-Return.wv'
         )
         Suites = @('language-1-front-door')
@@ -3501,7 +3503,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5147 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5149 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

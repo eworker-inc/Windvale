@@ -123,6 +123,14 @@ order for the generic resolver; the resolved value must still fit the existing
 positive 1-through-4,095 collection bound. It does not create a runtime generic
 type.
 
+Canonical `Foundationˉcollections.Vector<T>` and `Sequence<T>` function
+signature uses are deferred through the early symbol pass with an unresolved
+shape after exact imported-module and syntax admission. The bounded generic-type
+catalog then owns their kind, element, private shape, and dependency evidence;
+the generic-aware binding phase substitutes that exact shape before WIR. This
+does not admit an unqualified spelling, a lookalike module, or a forgeable
+nominal declaration into the symbol directory.
+
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
 Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs; narrow signed constants retain sign plus bounded magnitude until WIR emits their exact named-width two's-complement bits; rune constants retain one already validated Unicode scalar. No width or overflow behavior inherits the host runtime.

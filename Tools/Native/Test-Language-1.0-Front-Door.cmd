@@ -232,7 +232,42 @@ call :expect_analysis_failure ^
 call :expect_analysis_failure ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Owned-Read-Through.wv" ^
     "Borrow-Owned-Read-Through" "Invalidˉborrow" || goto :cleanup
-echo PASS  language 1 front door step=borrow-call-semantics cases=7 execution=42
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Sequence-Read-Through.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Borrow-Sequence-Admitted.wvss" ^
+    >"%Work%\Borrow-Sequence-Admission.out" ^
+    2>"%Work%\Borrow-Sequence-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Borrow-Sequence-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Borrow-Sequence-Admitted.wvss" ^
+    "%Work%\Borrow-Sequence.wvss" "%Work%\Borrow-Sequence.wvca" ^
+    "%Work%\Borrow-Sequence.wvlb" "%Work%\Borrow-Sequence.wvir" ^
+    >"%Work%\Borrow-Sequence.out" 2>"%Work%\Borrow-Sequence.err" || goto :cleanup
+for %%F in ("%Work%\Borrow-Sequence.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"source analysis status=Published" "%Work%\Borrow-Sequence.out" >nul || goto :cleanup
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Vector-Owned-Read-Through.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Borrow-Vector-Admitted.wvss" ^
+    >"%Work%\Borrow-Vector-Admission.out" ^
+    2>"%Work%\Borrow-Vector-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Borrow-Vector-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Borrow-Vector-Admitted.wvss" ^
+    "%Work%\Borrow-Vector.wvss" "%Work%\Borrow-Vector.wvca" ^
+    "%Work%\Borrow-Vector.wvlb" "%Work%\Borrow-Vector.wvir" ^
+    >"%Work%\Borrow-Vector.out" 2>"%Work%\Borrow-Vector.err"
+if not errorlevel 1 goto :cleanup
+if errorlevel 2 goto :cleanup
+for %%F in ("%Work%\Borrow-Vector.out") do if not "%%~zF"=="0" goto :cleanup
+findstr /c:"wir-status=Invalidˉborrow" "%Work%\Borrow-Vector.err" >nul || goto :cleanup
+if exist "%Work%\Borrow-Vector.wvir" goto :cleanup
+echo PASS  language 1 front door step=borrow-call-semantics cases=9 execution=42 vector=Owned sequence=Shared
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
 "%Work%\Admitter.exe" ^
@@ -1239,7 +1274,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=363 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=7 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=365 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_analysis_failure
