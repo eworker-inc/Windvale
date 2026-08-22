@@ -1,6 +1,7 @@
 module Compilerˉsourceˉwvbˉmemoryˉadapter profile portable;
 
 import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 
 fn Compilerˉsourceˉwvbˉmemoryˉheader(Kind: u32, Length: u32) -> bytes {
     var Header: bytes = Textˉtoˉutf8("WVCO");
@@ -27,7 +28,8 @@ fn Compilerˉsourceˉwvbˉmemoryˉdiagnostic(
 }
 
 export fn Main(Input: bytes) -> bytes {
-    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input);
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Input);
     var Kind: u32 = 0u32;
     var Payload: bytes = Summary.Bytecode;
     if Summary.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {

@@ -22,7 +22,8 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-WVB 1.17 but has not repinned the paired reconstruction inventory.
+WVB 1.17 and metadata parsing to WVB 1.18 but has not repinned the paired
+reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -62,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.17. Its shared scalar interpreter
+The current source-built runner accepts WVB 1.11 through 1.18. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -99,18 +100,26 @@ The format admits lengths through 4,095; this profile's 768-cell shared arena is
 an explicit finite runtime resource and may report bounded aggregate exhaustion
 for a valid value that does not fit. It never changes the value's length,
 silently allocates dynamic capacity, or skips the bounds check.
+The WVB 1.18 envelope and function-directory paths parse kind-5 Vector,
+kind-6 Sequence, and matching shapes `23` and `24`. This is metadata support:
+the runner has no Vector/Sequence construction or operation opcode and therefore
+does not claim an executable storage representation for those values. A module
+whose independent `Main` uses no collection value can still execute after its
+unused exact signatures are verified.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 205,945-byte WVB at SHA-256
-`04782c2fe6897c0678e6c7b9b57dbef3f87f58f1f10899915855c80be7f8f75f`.
-Its profile-5 application is 2,052,096 bytes at SHA-256
-`72d9e2ecb30943d8bcdde7b351f539ffc41c383bd91f10a202c1934240acd7cf`.
+The current Windows development build is a 209,917-byte WVB at SHA-256
+`62c9a42433e4e14a984fd42a9ce4db6c6d303677a09de21849b4418952cf5215`.
+Its profile-5 application is 2,077,184 bytes at SHA-256
+`7c55925b23cd6e9c470c76a2d34b9f9285471e83489b9adeee8e3a9a008530c3`.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
-`42`, and reports code `3008` for the verified out-of-bounds mutation. Paired
+`42`, and reports code `3008` for the verified out-of-bounds mutation. It also
+parses the deterministic 436-byte WVB 1.18 Vector/Sequence metadata fixture and
+executes its independent `Main` with result `42`. Paired
 reconstruction, browser execution, and candidate promotion remain separate
 gates.
 

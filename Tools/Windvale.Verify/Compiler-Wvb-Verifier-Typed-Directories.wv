@@ -19,7 +19,8 @@ export fn Hˉlocalˉshapes(
     while Index < Parameterˉcount {
         let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
         var Nominal: u32 = 0u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 {
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
+            Kind == 23u8 || Kind == 24u8 {
             Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -27,7 +28,8 @@ export fn Hˉlocalˉshapes(
             Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal))
         );
         Cursor = Cursor + 1u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 {
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
+            Kind == 23u8 || Kind == 24u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -39,7 +41,8 @@ export fn Hˉlocalˉshapes(
         let Localˉkind: u8 = Bytesˉreadˉu8(Input, Cursor);
         var Localˉnominal: u32 = 0u32;
         if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
-            Localˉkind == 22u8 {
+            Localˉkind == 22u8 || Localˉkind == 23u8 ||
+            Localˉkind == 24u8 {
             Localˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -51,7 +54,8 @@ export fn Hˉlocalˉshapes(
         );
         Cursor = Cursor + 1u32;
         if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
-            Localˉkind == 22u8 {
+            Localˉkind == 22u8 || Localˉkind == 23u8 ||
+            Localˉkind == 24u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;

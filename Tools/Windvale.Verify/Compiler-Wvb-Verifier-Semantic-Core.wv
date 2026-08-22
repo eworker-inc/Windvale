@@ -57,23 +57,25 @@ export fn Aˉidentifier(Input: bytes) -> bytes {
 
 fn Bˉextendedˉshape(Minor: u32, Kind: u32) -> bool {
     if Kind >= 14u32 && Kind <= 16u32 {
-        return Minor >= 12u32 && Minor <= 17u32;
+        return Minor >= 12u32 && Minor <= 18u32;
     }
-    if Kind == 17u32 { return Minor >= 13u32 && Minor <= 17u32; }
+    if Kind == 17u32 { return Minor >= 13u32 && Minor <= 18u32; }
     if Kind == 18u32 || Kind == 19u32 {
-        return Minor >= 14u32 && Minor <= 17u32;
+        return Minor >= 14u32 && Minor <= 18u32;
     }
     if Kind == 20u32 || Kind == 21u32 {
-        return Minor >= 15u32 && Minor <= 17u32;
+        return Minor >= 15u32 && Minor <= 18u32;
     }
-    if Kind == 22u32 { return Minor == 17u32; }
+    if Kind == 22u32 { return Minor >= 17u32 && Minor <= 18u32; }
+    if Kind == 23u32 || Kind == 24u32 { return Minor == 18u32; }
     return false;
 }
 
 fn Bˉshapeˉend(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
     var End: u32 = Cursor + 1u32;
-    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+        Kind == 23u32 || Kind == 24u32 {
         End = End + 4u32;
     }
     return End;
@@ -98,6 +100,147 @@ fn Bˉvariantˉcaseˉend(Input: bytes, Cursor: u32) -> u32 {
     return End;
 }
 
+fn Bˉtypesˉend(
+    Input: bytes,
+    Minor: u32,
+    Cursor: u32,
+    End: u32
+) -> u32 {
+    if Cursor > End || 4u32 > End - Cursor { return 0u32; }
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if Typeˉcount > 1024u32 { return 0u32; }
+    var Reading: u32 = Cursor + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Typeˉcount {
+        if Reading > End || 5u32 > End - Reading { return 0u32; }
+        let Raw: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Reading));
+        if Raw < 1u32 || Raw > 6u32 { return 0u32; }
+        Reading = Reading + 1u32;
+        var Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Reading);
+        if Length < 1u32 || Length > 255u32 { return 0u32; }
+        Reading = Reading + 4u32;
+        if Length > End - Reading { return 0u32; }
+        Reading = Reading + Length;
+        if Raw == 4u32 {
+            if Minor < 17u32 || Minor > 18u32 || Reading >= End {
+                return 0u32;
+            }
+            Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Reading));
+            if Length < 1u32 { return 0u32; }
+            if Length > 11u32 {
+                if !Bˉextendedˉshape(Minor, Length) { return 0u32; }
+            }
+            Reading = Reading + 1u32;
+            if Length == 7u32 || Length == 8u32 || Length == 11u32 ||
+                Length == 22u32 || Length == 23u32 || Length == 24u32 {
+                if 4u32 > End - Reading { return 0u32; }
+                Reading = Reading + 4u32;
+            }
+            if 4u32 > End - Reading { return 0u32; }
+            let Arrayˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Reading);
+            if Arrayˉcount > 4095u32 { return 0u32; }
+            Reading = Reading + 4u32;
+        } else if Raw == 5u32 || Raw == 6u32 {
+            if Minor != 18u32 || Reading >= End { return 0u32; }
+            Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Reading));
+            if Length < 1u32 || Length == 21u32 { return 0u32; }
+            if Length > 11u32 {
+                if !Bˉextendedˉshape(Minor, Length) { return 0u32; }
+            }
+            Reading = Reading + 1u32;
+            if Length == 7u32 || Length == 8u32 || Length == 11u32 ||
+                Length == 22u32 || Length == 23u32 || Length == 24u32 {
+                if 4u32 > End - Reading { return 0u32; }
+                Reading = Reading + 4u32;
+            }
+        } else {
+            if 4u32 > End - Reading { return 0u32; }
+            let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Reading);
+            if Count < 1u32 { return 0u32; }
+            if Raw == 1u32 {
+                if Count > 64u32 { return 0u32; }
+            } else {
+                if Count > 256u32 { return 0u32; }
+            }
+            Reading = Reading + 4u32;
+            var Innerˉindex: u32 = 0u32;
+            while Innerˉindex < Count {
+                if Reading > End || 4u32 > End - Reading { return 0u32; }
+                Length = Bytesˉreadˉu32ˉlittle(Input, Reading);
+                if Length < 1u32 || Length > 255u32 { return 0u32; }
+                Reading = Reading + 4u32;
+                if Length > End - Reading { return 0u32; }
+                Reading = Reading + Length;
+                if Raw == 1u32 {
+                    if Reading >= End { return 0u32; }
+                    Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Reading));
+                    if Length < 1u32 { return 0u32; }
+                    if Length > 11u32 {
+                        if !Bˉextendedˉshape(Minor, Length) { return 0u32; }
+                    }
+                    Reading = Reading + 1u32;
+                    if Length == 7u32 || Length == 8u32 ||
+                        Length == 11u32 || Length == 22u32 ||
+                        Length == 23u32 || Length == 24u32 {
+                        if 4u32 > End - Reading { return 0u32; }
+                        Reading = Reading + 4u32;
+                    }
+                } else if Raw == 2u32 {
+                    if 4u32 > End - Reading { return 0u32; }
+                    Reading = Reading + 4u32;
+                } else {
+                    if Reading >= End { return 0u32; }
+                    let Payloadˉpresent: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Input, Reading)
+                    );
+                    if Payloadˉpresent > 2u32 { return 0u32; }
+                    Reading = Reading + 1u32;
+                    var Payloadˉfields: u32 = 0u32;
+                    if Payloadˉpresent == 1u32 { Payloadˉfields = 1u32; }
+                    if Payloadˉpresent == 2u32 {
+                        if Minor < 16u32 || Minor > 18u32 ||
+                            4u32 > End - Reading {
+                            return 0u32;
+                        }
+                        Payloadˉfields = Bytesˉreadˉu32ˉlittle(Input, Reading);
+                        if Payloadˉfields < 2u32 || Payloadˉfields > 64u32 {
+                            return 0u32;
+                        }
+                        Reading = Reading + 4u32;
+                    }
+                    var Payloadˉfield: u32 = 0u32;
+                    while Payloadˉfield < Payloadˉfields {
+                        if 4u32 > End - Reading { return 0u32; }
+                        Length = Bytesˉreadˉu32ˉlittle(Input, Reading);
+                        if Length < 1u32 || Length > 255u32 { return 0u32; }
+                        Reading = Reading + 4u32;
+                        if Length > End - Reading { return 0u32; }
+                        Reading = Reading + Length;
+                        if Reading >= End { return 0u32; }
+                        Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Reading));
+                        if Length < 1u32 { return 0u32; }
+                        if Length > 11u32 {
+                            if !Bˉextendedˉshape(Minor, Length) { return 0u32; }
+                        }
+                        Reading = Reading + 1u32;
+                        if Length == 7u32 || Length == 8u32 ||
+                            Length == 11u32 || Length == 22u32 ||
+                            Length == 23u32 || Length == 24u32 {
+                            if 4u32 > End - Reading { return 0u32; }
+                            Reading = Reading + 4u32;
+                        }
+                        Payloadˉfield = Payloadˉfield + 1u32;
+                    }
+                }
+                Innerˉindex = Innerˉindex + 1u32;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    if Reading != End { return 0u32; }
+    return Reading;
+}
+
 export fn Bˉstructure(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
@@ -110,7 +253,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Minor != 11u32 && Minor != 12u32 && Minor != 13u32 &&
         Minor != 14u32 && Minor != 15u32 && Minor != 16u32 &&
-        Minor != 17u32 {
+        Minor != 17u32 && Minor != 18u32 {
         return Invalid;
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Invalid; }
@@ -128,10 +271,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
     var Raw: u32 = 0u32;
     var Width: u32 = 0u32;
     var Functionˉcount: u32 = 0u32;
-    var Typeˉcount: u32 = 0u32;
     var Expectedˉcodeˉoffset: u32 = 0u32;
-    var Payloadˉfields: u32 = 0u32;
-    var Payloadˉfield: u32 = 0u32;
 
     while Expectedˉkind <= 7u32 {
         if Cursor > Total { return Invalid; }
@@ -281,7 +421,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     }
                     Payloadˉcursor = Payloadˉcursor + 1u32;
                     if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 ||
-                        Raw == 22u32 {
+                        Raw == 22u32 || Raw == 23u32 || Raw == 24u32 {
                         if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                         Payloadˉcursor = Payloadˉcursor + 4u32;
                     }
@@ -294,7 +434,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                 }
                 Payloadˉcursor = Payloadˉcursor + 1u32;
                 if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 ||
-                    Raw == 22u32 {
+                    Raw == 22u32 || Raw == 23u32 || Raw == 24u32 {
                     if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                     Payloadˉcursor = Payloadˉcursor + 4u32;
                 }
@@ -312,7 +452,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     }
                     Payloadˉcursor = Payloadˉcursor + 1u32;
                     if Raw == 7u32 || Raw == 8u32 || Raw == 11u32 ||
-                        Raw == 22u32 {
+                        Raw == 22u32 || Raw == 23u32 || Raw == 24u32 {
                         if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                         Payloadˉcursor = Payloadˉcursor + 4u32;
                     }
@@ -382,7 +522,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     if Raw <= 191u32 { Width = 1u32; }
                 }
                 if Raw == 192u32 {
-                    if Minor < 12u32 || Minor > 17u32 { return Invalid; }
+                    if Minor < 12u32 || Minor > 18u32 { return Invalid; }
                     if 3u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                     let Fixedˉkind: u32 = U32ˉfromˉu8(
                         Bytesˉreadˉu8(Input, Payloadˉcursor + 1u32)
@@ -412,7 +552,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     }
                 }
                 if Raw == 193u32 {
-                    if Minor < 13u32 || Minor > 17u32 { return Invalid; }
+                    if Minor < 13u32 || Minor > 18u32 { return Invalid; }
                     if 2u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                     let Runeˉoperation: u32 = U32ˉfromˉu8(
                         Bytesˉreadˉu8(Input, Payloadˉcursor + 1u32)
@@ -432,7 +572,7 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     }
                 }
                 if Raw == 194u32 {
-                    if Minor < 14u32 || Minor > 17u32 { return Invalid; }
+                    if Minor < 14u32 || Minor > 18u32 { return Invalid; }
                     if 3u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
                     let Floatingˉkind: u32 = U32ˉfromˉu8(
                         Bytesˉreadˉu8(Input, Payloadˉcursor + 1u32)
@@ -451,19 +591,19 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                     }
                 }
                 if Raw == 195u32 {
-                    if Minor < 15u32 || Minor > 17u32 { return Invalid; }
+                    if Minor < 15u32 || Minor > 18u32 { return Invalid; }
                     Width = 1u32;
                 }
                 if Raw == 196u32 {
-                    if Minor < 16u32 || Minor > 17u32 { return Invalid; }
+                    if Minor < 16u32 || Minor > 18u32 { return Invalid; }
                     Width = 9u32;
                 }
                 if Raw == 197u32 {
-                    if Minor != 17u32 { return Invalid; }
+                    if Minor < 17u32 || Minor > 18u32 { return Invalid; }
                     Width = 5u32;
                 }
                 if Raw == 198u32 {
-                    if Minor != 17u32 { return Invalid; }
+                    if Minor < 17u32 || Minor > 18u32 { return Invalid; }
                     Width = 1u32;
                 }
                 if Width == 0u32 { return Invalid; }
@@ -506,128 +646,10 @@ export fn Bˉstructure(Input: bytes) -> bytes {
         }
 
         if Expectedˉkind == 7u32 {
-            if Payloadˉlength < 4u32 { return Invalid; }
-            Typeˉcount = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-            if Typeˉcount > 1024u32 { return Invalid; }
-            Payloadˉcursor = Payloadˉcursor + 4u32;
-            Index = 0u32;
-            while Index < Typeˉcount {
-                if Payloadˉcursor > Payloadˉend { return Invalid; }
-                if 5u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                Raw = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                if Raw < 1u32 { return Invalid; }
-                if Raw > 4u32 { return Invalid; }
-                Payloadˉcursor = Payloadˉcursor + 1u32;
-                Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-                if Length < 1u32 { return Invalid; }
-                if Length > 255u32 { return Invalid; }
-                Payloadˉcursor = Payloadˉcursor + 4u32;
-                if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
-                Payloadˉcursor = Payloadˉcursor + Length;
-                if Raw == 4u32 {
-                    if Minor != 17u32 { return Invalid; }
-                    if Payloadˉcursor >= Payloadˉend { return Invalid; }
-                    Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                    if Length < 1u32 { return Invalid; }
-                    if Length > 11u32 {
-                        if !Bˉextendedˉshape(Minor, Length) { return Invalid; }
-                    }
-                    Payloadˉcursor = Payloadˉcursor + 1u32;
-                    if Length == 7u32 || Length == 8u32 || Length == 11u32 ||
-                        Length == 22u32 {
-                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                        Payloadˉcursor = Payloadˉcursor + 4u32;
-                    }
-                    if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                    Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-                    if Count > 4095u32 { return Invalid; }
-                    Payloadˉcursor = Payloadˉcursor + 4u32;
-                } else {
-                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                Count = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-                if Count < 1u32 { return Invalid; }
-                if Raw == 1u32 {
-                    if Count > 64u32 { return Invalid; }
-                } else {
-                    if Count > 256u32 { return Invalid; }
-                }
-                Payloadˉcursor = Payloadˉcursor + 4u32;
-                Innerˉindex = 0u32;
-                while Innerˉindex < Count {
-                    if Payloadˉcursor > Payloadˉend { return Invalid; }
-                    if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                    Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-                    if Length < 1u32 { return Invalid; }
-                    if Length > 255u32 { return Invalid; }
-                    Payloadˉcursor = Payloadˉcursor + 4u32;
-                    if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
-                    Payloadˉcursor = Payloadˉcursor + Length;
-                    if Raw == 1u32 {
-                        if Payloadˉcursor >= Payloadˉend { return Invalid; }
-                        Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                        if Length < 1u32 { return Invalid; }
-                        if Length > 11u32 {
-                            if !Bˉextendedˉshape(Minor, Length) { return Invalid; }
-                        }
-                        Payloadˉcursor = Payloadˉcursor + 1u32;
-                        if Length == 7u32 || Length == 8u32 ||
-                            Length == 11u32 || Length == 22u32 {
-                            if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                            Payloadˉcursor = Payloadˉcursor + 4u32;
-                        }
-                    } else if Raw == 2u32 {
-                        if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                        Payloadˉcursor = Payloadˉcursor + 4u32;
-                    } else {
-                        if Payloadˉcursor >= Payloadˉend { return Invalid; }
-                        let Payloadˉpresent: u32 = U32ˉfromˉu8(
-                            Bytesˉreadˉu8(Input, Payloadˉcursor)
-                        );
-                        if Payloadˉpresent > 2u32 { return Invalid; }
-                        Payloadˉcursor = Payloadˉcursor + 1u32;
-                        Payloadˉfields = 0u32;
-                        if Payloadˉpresent == 1u32 { Payloadˉfields = 1u32; }
-                        if Payloadˉpresent == 2u32 {
-                            if Minor < 16u32 || Minor > 17u32 { return Invalid; }
-                            if 4u32 > Payloadˉend - Payloadˉcursor {
-                                return Invalid;
-                            }
-                            Payloadˉfields = Bytesˉreadˉu32ˉlittle(
-                                Input, Payloadˉcursor
-                            );
-                            if Payloadˉfields < 2u32 || Payloadˉfields > 64u32 {
-                                return Invalid;
-                            }
-                            Payloadˉcursor = Payloadˉcursor + 4u32;
-                        }
-                        Payloadˉfield = 0u32;
-                        while Payloadˉfield < Payloadˉfields {
-                            if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                            Length = Bytesˉreadˉu32ˉlittle(Input, Payloadˉcursor);
-                            if Length < 1u32 || Length > 255u32 { return Invalid; }
-                            Payloadˉcursor = Payloadˉcursor + 4u32;
-                            if Length > Payloadˉend - Payloadˉcursor { return Invalid; }
-                            Payloadˉcursor = Payloadˉcursor + Length;
-                            if Payloadˉcursor >= Payloadˉend { return Invalid; }
-                            Length = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Payloadˉcursor));
-                            if Length < 1u32 { return Invalid; }
-                            if Length > 11u32 {
-                                if !Bˉextendedˉshape(Minor, Length) { return Invalid; }
-                            }
-                            Payloadˉcursor = Payloadˉcursor + 1u32;
-                            if Length == 7u32 || Length == 8u32 ||
-                                Length == 11u32 || Length == 22u32 {
-                                if 4u32 > Payloadˉend - Payloadˉcursor { return Invalid; }
-                                Payloadˉcursor = Payloadˉcursor + 4u32;
-                            }
-                            Payloadˉfield = Payloadˉfield + 1u32;
-                        }
-                    }
-                    Innerˉindex = Innerˉindex + 1u32;
-                }
-                }
-                Index = Index + 1u32;
-            }
+            Payloadˉcursor = Bˉtypesˉend(
+                Input, Minor, Payloadˉcursor, Payloadˉend
+            );
+            if Payloadˉcursor == 0u32 { return Invalid; }
         }
 
         if Payloadˉcursor != Payloadˉend { return Invalid; }
@@ -1173,7 +1195,8 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                     return Invalid;
                 }
                 if Rawˉshape == 7u32 || Rawˉshape == 8u32 ||
-                    Rawˉshape == 11u32 || Rawˉshape == 22u32 {
+                    Rawˉshape == 11u32 || Rawˉshape == 22u32 ||
+                    Rawˉshape == 23u32 || Rawˉshape == 24u32 {
                     Nominalˉindex = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                     if Nominalˉindex >= Typeˉcount { return Invalid; }
                     Cursor = Cursor + 4u32;
@@ -1191,6 +1214,8 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                         Typeˉcursor = Typeˉcursor + 4u32 + Skipˉlength;
                         if Typeˉkind == 4u32 {
                             Typeˉcursor = Bˉshapeˉend(Input, Typeˉcursor) + 4u32;
+                        } else if Typeˉkind == 5u32 || Typeˉkind == 6u32 {
+                            Typeˉcursor = Bˉshapeˉend(Input, Typeˉcursor);
                         } else {
                             Itemˉcount = Bytesˉreadˉu32ˉlittle(
                                 Input,
@@ -1212,7 +1237,9 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                                     if Fieldˉshape == 7u32 ||
                                         Fieldˉshape == 8u32 ||
                                         Fieldˉshape == 11u32 ||
-                                        Fieldˉshape == 22u32 {
+                                        Fieldˉshape == 22u32 ||
+                                        Fieldˉshape == 23u32 ||
+                                        Fieldˉshape == 24u32 {
                                         Typeˉcursor = Typeˉcursor + 4u32;
                                     }
                                 } else if Typeˉkind == 2u32 {
@@ -1236,8 +1263,12 @@ export fn Eˉfunctions(Input: bytes) -> bytes {
                         if Typeˉkind != 2u32 { return Invalid; }
                     } else if Rawˉshape == 11u32 {
                         if Typeˉkind != 3u32 { return Invalid; }
-                    } else {
+                    } else if Rawˉshape == 22u32 {
                         if Typeˉkind != 4u32 { return Invalid; }
+                    } else if Rawˉshape == 23u32 {
+                        if Typeˉkind != 5u32 { return Invalid; }
+                    } else {
+                        if Typeˉkind != 6u32 { return Invalid; }
                     }
                 }
                 Shapeˉindex = Shapeˉindex + 1u32;
@@ -1289,6 +1320,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     var Firstˉenum: u32 = Typeˉcount;
     var Firstˉvariant: u32 = Typeˉcount;
     var Firstˉarray: u32 = Typeˉcount;
+    var Firstˉvector: u32 = Typeˉcount;
     while Typeˉindex < Typeˉcount {
         Typeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor));
         if Typeˉkind == 2u32 {
@@ -1302,12 +1334,24 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             if Firstˉenum == Typeˉcount { Firstˉenum = Typeˉindex; }
             if Firstˉvariant == Typeˉcount { Firstˉvariant = Typeˉindex; }
             if Firstˉarray == Typeˉcount { Firstˉarray = Typeˉindex; }
+        } else if Typeˉkind == 5u32 {
+            if Firstˉenum == Typeˉcount { Firstˉenum = Typeˉindex; }
+            if Firstˉvariant == Typeˉcount { Firstˉvariant = Typeˉindex; }
+            if Firstˉarray == Typeˉcount { Firstˉarray = Typeˉindex; }
+            if Firstˉvector == Typeˉcount { Firstˉvector = Typeˉindex; }
+        } else if Typeˉkind == 6u32 {
+            if Firstˉenum == Typeˉcount { Firstˉenum = Typeˉindex; }
+            if Firstˉvariant == Typeˉcount { Firstˉvariant = Typeˉindex; }
+            if Firstˉarray == Typeˉcount { Firstˉarray = Typeˉindex; }
+            if Firstˉvector == Typeˉcount { Firstˉvector = Typeˉindex; }
         }
         Typeˉcursor = Typeˉcursor + 1u32;
         Typeˉnameˉlength = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
         Typeˉcursor = Typeˉcursor + 4u32 + Typeˉnameˉlength;
         if Typeˉkind == 4u32 {
             Typeˉcursor = Bˉshapeˉend(Input, Typeˉcursor) + 4u32;
+        } else if Typeˉkind == 5u32 || Typeˉkind == 6u32 {
+            Typeˉcursor = Bˉshapeˉend(Input, Typeˉcursor);
         } else {
             Typeˉitemˉcount = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
             Typeˉcursor = Typeˉcursor + 4u32;
@@ -1321,7 +1365,8 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     );
                     Typeˉcursor = Typeˉcursor + 1u32;
                     if Typeˉshape == 7u32 || Typeˉshape == 8u32 ||
-                        Typeˉshape == 11u32 || Typeˉshape == 22u32 {
+                        Typeˉshape == 11u32 || Typeˉshape == 22u32 ||
+                        Typeˉshape == 23u32 || Typeˉshape == 24u32 {
                         Typeˉcursor = Typeˉcursor + 4u32;
                     }
                 } else if Typeˉkind == 2u32 {
@@ -1371,7 +1416,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             Shape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-                Shape == 22u32 {
+                Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1379,7 +1424,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
         Shape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
         Functionˉcursor = Functionˉcursor + 1u32;
         if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-            Shape == 22u32 {
+            Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
             Functionˉcursor = Functionˉcursor + 4u32;
         }
         Localˉcount = Bytesˉreadˉu32ˉlittle(Input, Functionˉcursor);
@@ -1389,7 +1434,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             Shape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-                Shape == 22u32 {
+                Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1490,7 +1535,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 if Operand < Firstˉvariant || Operand >= Typeˉcount { return Invalid; }
             }
             if Opcode == 197u32 {
-                if Operand < Firstˉarray || Operand >= Typeˉcount { return Invalid; }
+                if Operand < Firstˉarray || Operand >= Firstˉvector { return Invalid; }
             }
             if Opcode == 106u32 {
                 if Operand < Firstˉenum { return Invalid; }
@@ -1527,7 +1572,8 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                             );
                             Targetˉtypeˉcursor = Targetˉtypeˉcursor + 1u32;
                             if Typeˉshape == 7u32 || Typeˉshape == 8u32 ||
-                                Typeˉshape == 11u32 || Typeˉshape == 22u32 {
+                                Typeˉshape == 11u32 || Typeˉshape == 22u32 ||
+                                Typeˉshape == 23u32 || Typeˉshape == 24u32 {
                                 Targetˉtypeˉcursor = Targetˉtypeˉcursor + 4u32;
                             }
                         } else if Typeˉkind == 2u32 {
@@ -1729,7 +1775,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     );
                     Targetˉfunction = Targetˉfunction + 1u32;
                     if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-                        Shape == 22u32 {
+                        Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
                         Targetˉfunction = Targetˉfunction + 4u32;
                     }
                     Shapeˉindex = Shapeˉindex + 1u32;
@@ -1737,7 +1783,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 Shape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉfunction));
                 Targetˉfunction = Targetˉfunction + 1u32;
                 if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-                    Shape == 22u32 {
+                    Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
                     Targetˉfunction = Targetˉfunction + 4u32;
                 }
                 Localˉcount = Bytesˉreadˉu32ˉlittle(Input, Targetˉfunction);
@@ -1749,7 +1795,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     );
                     Targetˉfunction = Targetˉfunction + 1u32;
                     if Shape == 7u32 || Shape == 8u32 || Shape == 11u32 ||
-                        Shape == 22u32 {
+                        Shape == 22u32 || Shape == 23u32 || Shape == 24u32 {
                         Targetˉfunction = Targetˉfunction + 4u32;
                     }
                     Shapeˉindex = Shapeˉindex + 1u32;
@@ -1775,16 +1821,20 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     return Input;
 }
 
-export fn Gˉtypes(Input: bytes) -> bytes {
-    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Header: u32 = 12u32;
-    var Section: u32 = 1u32;
-    while Section < 7u32 {
-        Header = Header + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Header + 4u32);
-        Section = Section + 1u32;
-    }
-    let Payload: u32 = Header + 8u32;
-    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Payload);
+record Gˉtypeˉranges {
+    Valid: bool;
+    Firstˉenum: u32;
+    Firstˉvariant: u32;
+    Firstˉarray: u32;
+    Firstˉvector: u32;
+    Firstˉsequence: u32;
+}
+
+fn Gˉtypeˉrangesˉread(
+    Input: bytes,
+    Payload: u32,
+    Count: u32
+) -> Gˉtypeˉranges {
     var Cursor: u32 = Payload + 4u32;
     var Typeˉindex: u32 = 0u32;
     var Kind: u32 = 0u32;
@@ -1796,6 +1846,8 @@ export fn Gˉtypes(Input: bytes) -> bytes {
     var Firstˉenum: u32 = Count;
     var Firstˉvariant: u32 = Count;
     var Firstˉarray: u32 = Count;
+    var Firstˉvector: u32 = Count;
+    var Firstˉsequence: u32 = Count;
 
     while Typeˉindex < Count {
         Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
@@ -1803,7 +1855,9 @@ export fn Gˉtypes(Input: bytes) -> bytes {
             if Firstˉenum == Count {
                 Firstˉenum = Typeˉindex;
             }
-            if Firstˉvariant != Count { return Invalid; }
+            if Firstˉvariant != Count {
+                return Gˉtypeˉranges(false, Count, Count, Count, Count, Count);
+            }
         } else if Kind == 3u32 {
             if Firstˉenum == Count { Firstˉenum = Typeˉindex; }
             if Firstˉvariant == Count { Firstˉvariant = Typeˉindex; }
@@ -1811,14 +1865,30 @@ export fn Gˉtypes(Input: bytes) -> bytes {
             if Firstˉenum == Count { Firstˉenum = Typeˉindex; }
             if Firstˉvariant == Count { Firstˉvariant = Typeˉindex; }
             if Firstˉarray == Count { Firstˉarray = Typeˉindex; }
+        } else if Kind == 5u32 {
+            if Firstˉenum == Count { Firstˉenum = Typeˉindex; }
+            if Firstˉvariant == Count { Firstˉvariant = Typeˉindex; }
+            if Firstˉarray == Count { Firstˉarray = Typeˉindex; }
+            if Firstˉvector == Count { Firstˉvector = Typeˉindex; }
+        } else if Kind == 6u32 {
+            if Firstˉenum == Count { Firstˉenum = Typeˉindex; }
+            if Firstˉvariant == Count { Firstˉvariant = Typeˉindex; }
+            if Firstˉarray == Count { Firstˉarray = Typeˉindex; }
+            if Firstˉvector == Count { Firstˉvector = Typeˉindex; }
+            if Firstˉsequence == Count { Firstˉsequence = Typeˉindex; }
         } else {
-            if Firstˉenum != Count { return Invalid; }
+            if Firstˉenum != Count {
+                return Gˉtypeˉranges(false, Count, Count, Count, Count, Count);
+            }
         }
         Cursor = Cursor + 1u32;
         Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Cursor);
         Cursor = Cursor + 4u32 + Nameˉlength;
         if Kind == 4u32 {
             Cursor = Bˉshapeˉend(Input, Cursor) + 4u32;
+            Typeˉindex = Typeˉindex + 1u32;
+        } else if Kind == 5u32 || Kind == 6u32 {
+            Cursor = Bˉshapeˉend(Input, Cursor);
             Typeˉindex = Typeˉindex + 1u32;
         } else {
         Itemˉcount = Bytesˉreadˉu32ˉlittle(Input, Cursor);
@@ -1830,9 +1900,12 @@ export fn Gˉtypes(Input: bytes) -> bytes {
             if Kind == 1u32 {
                 Rawˉshape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
                 Cursor = Cursor + 1u32;
-                if Rawˉshape == 21u32 { return Invalid; }
+                if Rawˉshape == 21u32 {
+                    return Gˉtypeˉranges(false, Count, Count, Count, Count, Count);
+                }
                 if Rawˉshape == 7u32 || Rawˉshape == 8u32 ||
-                    Rawˉshape == 11u32 || Rawˉshape == 22u32 {
+                    Rawˉshape == 11u32 || Rawˉshape == 22u32 ||
+                    Rawˉshape == 23u32 || Rawˉshape == 24u32 {
                     Cursor = Cursor + 4u32;
                 }
             } else if Kind == 2u32 {
@@ -1846,8 +1919,40 @@ export fn Gˉtypes(Input: bytes) -> bytes {
         }
     }
 
-    Cursor = Payload + 4u32;
-    Typeˉindex = 0u32;
+    return Gˉtypeˉranges(
+        true, Firstˉenum, Firstˉvariant, Firstˉarray,
+        Firstˉvector, Firstˉsequence
+    );
+}
+
+export fn Gˉtypes(Input: bytes) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Header: u32 = 12u32;
+    var Section: u32 = 1u32;
+    while Section < 7u32 {
+        Header = Header + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Header + 4u32);
+        Section = Section + 1u32;
+    }
+    let Payload: u32 = Header + 8u32;
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Payload);
+    let Ranges: Gˉtypeˉranges = Gˉtypeˉrangesˉread(
+        Input, Payload, Count
+    );
+    if !Ranges.Valid { return Invalid; }
+    let Firstˉenum: u32 = Ranges.Firstˉenum;
+    let Firstˉvariant: u32 = Ranges.Firstˉvariant;
+    let Firstˉarray: u32 = Ranges.Firstˉarray;
+    let Firstˉvector: u32 = Ranges.Firstˉvector;
+    let Firstˉsequence: u32 = Ranges.Firstˉsequence;
+
+    var Cursor: u32 = Payload + 4u32;
+    var Typeˉindex: u32 = 0u32;
+    var Kind: u32 = 0u32;
+    var Nameˉlength: u32 = 0u32;
+    var Itemˉcount: u32 = 0u32;
+    var Itemˉindex: u32 = 0u32;
+    var Itemˉnameˉlength: u32 = 0u32;
+    var Rawˉshape: u32 = 0u32;
     var Previousˉkind: u32 = 0u32;
     var Previousˉname: u32 = 0u32;
     var Previousˉlength: u32 = 0u32;
@@ -1967,7 +2072,8 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                         );
                         Rescan = Rescan + 1u32;
                         if Rescanˉshape == 7u32 || Rescanˉshape == 8u32 ||
-                            Rescanˉshape == 11u32 || Rescanˉshape == 22u32 {
+                            Rescanˉshape == 11u32 || Rescanˉshape == 22u32 ||
+                            Rescanˉshape == 23u32 || Rescanˉshape == 24u32 {
                             Rescan = Rescan + 4u32;
                         }
                     } else if Rescanˉkind == 2u32 {
@@ -1982,14 +2088,15 @@ export fn Gˉtypes(Input: bytes) -> bytes {
         }
 
         Cursor = Name + Nameˉlength;
-        if Kind == 4u32 {
+        if Kind == 4u32 || Kind == 5u32 || Kind == 6u32 {
             Rawˉshape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-            if Rawˉshape < 1u32 || Rawˉshape == 21u32 || Rawˉshape > 22u32 {
+            if Rawˉshape < 1u32 || Rawˉshape == 21u32 || Rawˉshape > 24u32 {
                 return Invalid;
             }
             Cursor = Cursor + 1u32;
             if Rawˉshape == 7u32 || Rawˉshape == 8u32 ||
-                Rawˉshape == 11u32 || Rawˉshape == 22u32 {
+                Rawˉshape == 11u32 || Rawˉshape == 22u32 ||
+                Rawˉshape == 23u32 || Rawˉshape == 24u32 {
                 Nominalˉindex = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                 if Rawˉshape == 7u32 && Nominalˉindex >= Firstˉenum {
                     return Invalid;
@@ -2004,16 +2111,28 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                         Nominalˉindex >= Firstˉarray) {
                     return Invalid;
                 }
-                if Rawˉshape == 22u32 && Nominalˉindex < Firstˉarray {
+                if Rawˉshape == 22u32 &&
+                    (Nominalˉindex < Firstˉarray ||
+                        Nominalˉindex >= Firstˉvector) {
+                    return Invalid;
+                }
+                if Rawˉshape == 23u32 &&
+                    (Nominalˉindex < Firstˉvector ||
+                        Nominalˉindex >= Firstˉsequence) {
+                    return Invalid;
+                }
+                if Rawˉshape == 24u32 && Nominalˉindex < Firstˉsequence {
                     return Invalid;
                 }
                 if Nominalˉindex >= Count { return Invalid; }
                 Cursor = Cursor + 4u32;
             }
-            if Bytesˉreadˉu32ˉlittle(Input, Cursor) > 4095u32 {
-                return Invalid;
+            if Kind == 4u32 {
+                if Bytesˉreadˉu32ˉlittle(Input, Cursor) > 4095u32 {
+                    return Invalid;
+                }
+                Cursor = Cursor + 4u32;
             }
-            Cursor = Cursor + 4u32;
             Itemˉcount = 0u32;
         } else {
             Itemˉcount = Bytesˉreadˉu32ˉlittle(Input, Cursor);
@@ -2070,7 +2189,8 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                     );
                     Previousˉitem = Previousˉitem + 1u32;
                     if Rescanˉshape == 7u32 || Rescanˉshape == 8u32 ||
-                        Rescanˉshape == 11u32 || Rescanˉshape == 22u32 {
+                        Rescanˉshape == 11u32 || Rescanˉshape == 22u32 ||
+                        Rescanˉshape == 23u32 || Rescanˉshape == 24u32 {
                         Previousˉitem = Previousˉitem + 4u32;
                     }
                 } else if Kind == 2u32 {
@@ -2093,7 +2213,8 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                 Rawˉshape = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
                 Cursor = Cursor + 1u32;
                 if Rawˉshape == 7u32 || Rawˉshape == 8u32 ||
-                    Rawˉshape == 11u32 || Rawˉshape == 22u32 {
+                    Rawˉshape == 11u32 || Rawˉshape == 22u32 ||
+                    Rawˉshape == 23u32 || Rawˉshape == 24u32 {
                     Nominalˉindex = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                     if Rawˉshape == 7u32 && Nominalˉindex >= Firstˉenum {
                         return Invalid;
@@ -2108,7 +2229,17 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                     if Rawˉshape == 11u32 && Nominalˉindex >= Firstˉarray {
                         return Invalid;
                     }
-                    if Rawˉshape == 22u32 && Nominalˉindex < Firstˉarray {
+                    if Rawˉshape == 22u32 &&
+                        (Nominalˉindex < Firstˉarray ||
+                            Nominalˉindex >= Firstˉvector) {
+                        return Invalid;
+                    }
+                    if Rawˉshape == 23u32 &&
+                        (Nominalˉindex < Firstˉvector ||
+                            Nominalˉindex >= Firstˉsequence) {
+                        return Invalid;
+                    }
+                    if Rawˉshape == 24u32 && Nominalˉindex < Firstˉsequence {
                         return Invalid;
                     }
                     if Nominalˉindex >= Count { return Invalid; }
@@ -2177,7 +2308,8 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                     if Rawˉshape == 21u32 { return Invalid; }
                     if Rawˉshape == 11u32 { return Invalid; }
                     if Rawˉshape == 7u32 || Rawˉshape == 8u32 ||
-                        Rawˉshape == 22u32 {
+                        Rawˉshape == 22u32 || Rawˉshape == 23u32 ||
+                        Rawˉshape == 24u32 {
                         Nominalˉindex = Bytesˉreadˉu32ˉlittle(Input, Cursor);
                         if Rawˉshape == 7u32 && Nominalˉindex >= Firstˉenum {
                             return Invalid;
@@ -2186,7 +2318,18 @@ export fn Gˉtypes(Input: bytes) -> bytes {
                             (Nominalˉindex < Firstˉenum || Nominalˉindex >= Firstˉvariant) {
                             return Invalid;
                         }
-                        if Rawˉshape == 22u32 && Nominalˉindex < Firstˉarray {
+                        if Rawˉshape == 22u32 &&
+                            (Nominalˉindex < Firstˉarray ||
+                                Nominalˉindex >= Firstˉvector) {
+                            return Invalid;
+                        }
+                        if Rawˉshape == 23u32 &&
+                            (Nominalˉindex < Firstˉvector ||
+                                Nominalˉindex >= Firstˉsequence) {
+                            return Invalid;
+                        }
+                        if Rawˉshape == 24u32 &&
+                            Nominalˉindex < Firstˉsequence {
                             return Invalid;
                         }
                         if Nominalˉindex >= Count { return Invalid; }

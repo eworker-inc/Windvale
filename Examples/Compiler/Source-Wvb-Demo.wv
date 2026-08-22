@@ -2,6 +2,7 @@ module Compilerˉsourceˉwvbˉdemo profile portable;
 
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 
 fn Compilerˉsourceˉwvbˉdemoˉinput(Source: text) -> bytes {
     let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
@@ -18,7 +19,7 @@ fn Compilerˉsourceˉwvbˉdemoˉinput(Source: text) -> bytes {
 fn Compilerˉsourceˉwvbˉdemoˉstatus(
     Source: text
 ) -> Sourceˉwvb.Compilerˉsourceˉwvbˉstatus {
-    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
+    let Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(Source)
     );
     return Summary.Status;
@@ -62,7 +63,7 @@ fn Compilerˉsourceˉwvbˉdemoˉdataˉcount(Bytecode: bytes) -> u32 {
 }
 
 export fn Main() -> i32 {
-    let Valid: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
+    let Valid: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉinput(
             "module Wvbˉdemo profile portable; fn Add(Value: i32) -> i32 { return Value + 1; } export fn Main() -> i32 { return Add(41); }"
         )
@@ -96,7 +97,7 @@ export fn Main() -> i32 {
     if Compilerˉsourceˉwvbˉdemoˉstatus(
         "module Wvbˉtry profile portable; variant Outcome { Valid; Failure(Error: u32); } fn Check(Fail: bool) -> Outcome { if Fail { return Outcome.Failure(1u32); } return Outcome.Valid(); } export fn Main() -> Outcome { try Check(false); return Outcome.Valid(); }"
     ) != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 36; }
-    let Composed: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(
+    let Composed: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary = Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(
         Compilerˉsourceˉwvbˉdemoˉpair(
             "module Wvbˉroot profile portable; import Wvbˉdependency as Dependency; export fn Main() -> i32 { return Dependency.Wvbˉvalue(); }",
             "module Wvbˉdependency profile portable; export fn Wvbˉvalue() -> i32 { return 42; }"
@@ -130,7 +131,7 @@ export fn Main() -> i32 {
         return 21;
     }
     let Reachabilityˉcompiled: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Reachabilityˉinput);
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Reachabilityˉinput);
     if Reachability.Codeˉbytes != Reachabilityˉcompiled.Codeˉbytes {
         return 22;
     }
@@ -175,7 +176,7 @@ export fn Main() -> i32 {
         return 27;
     }
     let Optimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉoptimized(
             Reachabilityˉinput
         );
     if Optimized.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid ||
@@ -188,7 +189,7 @@ export fn Main() -> i32 {
         return 29;
     }
     let Repeatedˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉoptimized(
             Reachabilityˉinput
         );
     if Repeatedˉoptimized.Bytecode != Optimized.Bytecode { return 30; }
@@ -196,9 +197,9 @@ export fn Main() -> i32 {
         "module Wvbˉliteralˉpruning profile portable; fn Dead() -> text { return \"unused\"; } fn Live() -> text { return \"used\"; } export fn Main() -> text { return Live(); }"
     );
     let Literalˉfull: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Literalˉinput);
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Literalˉinput);
     let Literalˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(Literalˉinput);
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉoptimized(Literalˉinput);
     if Literalˉfull.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid ||
         Literalˉoptimized.Status !=
         Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
@@ -214,9 +215,9 @@ export fn Main() -> i32 {
         "module Wvbˉexplicitˉdataˉpruning profile portable; data Dead: bytes = [1u8]; data Used: bytes = [42u8]; export fn Main() -> u32 { return Bytesˉlength(Used); }"
     );
     let Explicitˉdataˉfull: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Explicitˉdataˉinput);
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Explicitˉdataˉinput);
     let Explicitˉdataˉoptimized: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉoptimized(
             Explicitˉdataˉinput
         );
     if Explicitˉdataˉfull.Status !=

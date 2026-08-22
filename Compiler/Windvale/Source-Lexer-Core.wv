@@ -1,7 +1,5 @@
 module Compilerˉsourceˉlexer profile portable;
 
-import Foundationˉdecimalˉparsing as Decimalˉparsing;
-
 export enum Compilerˉtokenˉkind {
     End = 0;
     Bad = 1;
@@ -1614,15 +1612,15 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                     }
                 }
             }
+            let Parsed: Compilerˉsourceˉwideˉparse = Compilerˉsourceˉwideˉdecimalˉparse(
+                Input, Tokenˉstart, Digitˉend - Tokenˉstart
+            );
             if Numericˉkind == Compilerˉnumericˉkind.I64 ||
                 Numericˉkind == Compilerˉnumericˉkind.U64 {
-                let Wide: Compilerˉsourceˉwideˉparse = Compilerˉsourceˉwideˉdecimalˉparse(
-                    Input, Tokenˉstart, Digitˉend - Tokenˉstart
-                );
                 var Wideˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
-                if !Wide.Valid { Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
+                if !Parsed.Valid { Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
                 if Numericˉkind == Compilerˉnumericˉkind.I64 {
-                    if Wide.High > 2147483647u32 {
+                    if Parsed.High > 2147483647u32 {
                         Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                     }
                 }
@@ -1636,42 +1634,39 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                     Line,
                     Column,
                     Numericˉkind,
-                    Wide.Low,
-                    Wide.High,
+                    Parsed.Low,
+                    Parsed.High,
                     Tokenˉstart,
                     Tokenˉline,
                     Tokenˉcolumn
                 );
             }
-            let Parsed: Decimalˉparsing.Foundationˉu32ˉparse = Decimalˉparsing.Foundationˉu32ˉdecimalˉparse(
-                Input,
-                Tokenˉstart,
-                Digitˉend - Tokenˉstart
-            );
             var Numericˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
-            if !Parsed.Valid { Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
+            if !Parsed.Valid || Parsed.High != 0u32 {
+                Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+            }
             if Numericˉkind == Compilerˉnumericˉkind.I32 {
-                if Parsed.Value > 2147483647u32 {
+                if Parsed.Low > 2147483647u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.U8 {
-                if Parsed.Value > 255u32 {
+                if Parsed.Low > 255u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.I8 {
-                if Parsed.Value > 127u32 {
+                if Parsed.Low > 127u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.I16 {
-                if Parsed.Value > 32767u32 {
+                if Parsed.Low > 32767u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.U16 {
-                if Parsed.Value > 65535u32 {
+                if Parsed.Low > 65535u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
@@ -1685,7 +1680,7 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                 Line,
                 Column,
                 Numericˉkind,
-                Parsed.Value,
+                Parsed.Low,
                 Tokenˉstart,
                 Tokenˉline,
                 Tokenˉcolumn

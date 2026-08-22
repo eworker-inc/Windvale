@@ -166,6 +166,8 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         if Privateˉkind == 4u32 { Privateˉshapeˉkind = 7u8; }
         if Privateˉkind == 8u32 { Privateˉshapeˉkind = 11u8; }
         if Privateˉkind == 10u32 { Privateˉshapeˉkind = 22u8; }
+        if Privateˉkind == 11u32 { Privateˉshapeˉkind = 23u8; }
+        if Privateˉkind == 12u32 { Privateˉshapeˉkind = 24u8; }
         if Privateˉshapeˉkind == 0u8 || Privateˉoutput == 4294967295u32 {
             return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
                 Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
@@ -173,6 +175,9 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         }
         var Privateˉfeatures: u32 = 0u32;
         if Privateˉkind == 10u32 { Privateˉfeatures = 64u32; }
+        if Privateˉkind == 11u32 || Privateˉkind == 12u32 {
+            Privateˉfeatures = 128u32;
+        }
         return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
             Bytesˉconcat(
@@ -404,65 +409,92 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     }
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
         Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Typeˉmodule);
-    if Typeˉkind == 10u32 {
+    if Typeˉkind >= 10u32 && Typeˉkind <= 12u32 {
         if Typeˉcases != 0u32 || Typeˉfields != 0u32 {
             return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
                 Input,
                 Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
             );
         }
-        let Arrayˉcatalog:
+        let Descriptorˉcatalog:
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
                 Plan.Catalogˉstatus, Plan.Catalogˉevidence
             );
-        let Arrayˉelement:
+        let Descriptorˉelement:
             Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
-                Arrayˉcatalog, Instance, 0u32
+                Descriptorˉcatalog, Instance, 0u32
             );
-        let Arrayˉcount:
+        let Descriptorˉcount:
             Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
-                Arrayˉcatalog, Instance, 1u32
+                Descriptorˉcatalog, Instance, 1u32
             );
-        if !Arrayˉelement.Valid || Arrayˉelement.Kind != 1u32 ||
-            Arrayˉelement.Shape != 0u32 || Arrayˉelement.High != 0u32 ||
-            !Arrayˉcount.Valid || Arrayˉcount.Kind != 2u32 ||
-            Arrayˉcount.Shape != 8u32 || Arrayˉcount.High != 0u32 ||
-            Arrayˉcount.Low > 4095u32 {
+        if !Descriptorˉelement.Valid || Descriptorˉelement.Kind != 1u32 ||
+            Descriptorˉelement.Shape != 0u32 ||
+            Descriptorˉelement.High != 0u32 ||
+            (Typeˉkind == 10u32 &&
+                (!Descriptorˉcount.Valid || Descriptorˉcount.Kind != 2u32 ||
+                    Descriptorˉcount.Shape != 8u32 ||
+                    Descriptorˉcount.High != 0u32 ||
+                    Descriptorˉcount.Low > 4095u32)) {
             return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
                 Input,
                 Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
             );
         }
-        let Arrayˉshape: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        let Descriptorˉshape:
+            Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
                 Input, Symbols, Plan,
                 Recordˉtargets, Variantˉtargets,
-                Concreteˉrecords, Arrayˉelement.Low
+                Concreteˉrecords, Descriptorˉelement.Low
             );
-        if Arrayˉshape.Status !=
-            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
-            return Arrayˉshape;
+        if Descriptorˉshape.Status !=
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+            return Descriptorˉshape;
         }
-        var Arrayˉresult: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+        var Descriptorˉresult:
+            Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
-        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
-            Arrayˉresult, Bytesˉfromˉu8(4u8)
-        );
-        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
-            Arrayˉresult,
+        if Typeˉkind == 10u32 {
+            Descriptorˉresult =
+                Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Descriptorˉresult, Bytesˉfromˉu8(4u8)
+                );
+        }
+        if Typeˉkind == 11u32 {
+            Descriptorˉresult =
+                Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Descriptorˉresult, Bytesˉfromˉu8(5u8)
+                );
+        }
+        if Typeˉkind == 12u32 {
+            Descriptorˉresult =
+                Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Descriptorˉresult, Bytesˉfromˉu8(6u8)
+                );
+        }
+        Descriptorˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Descriptorˉresult,
             Compilerˉsourceˉwvbˉgenericˉnominalˉencodedˉname(Instance)
         );
-        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
-            Arrayˉresult, Arrayˉshape.Payload
+        Descriptorˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Descriptorˉresult, Descriptorˉshape.Payload
         );
-        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
-            Arrayˉresult, Bytesˉfromˉu32ˉlittle(Arrayˉcount.Low)
-        );
+        if Typeˉkind == 10u32 {
+            Descriptorˉresult =
+                Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Descriptorˉresult,
+                    Bytesˉfromˉu32ˉlittle(Descriptorˉcount.Low)
+                );
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+                Descriptorˉresult, Descriptorˉshape.Features | 64u32
+            );
+        }
         return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
-            Arrayˉresult, Arrayˉshape.Features | 64u32
+            Descriptorˉresult, Descriptorˉshape.Features | 128u32
         );
     }
     var Kind: u8 = 1u8;

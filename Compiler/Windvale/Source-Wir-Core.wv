@@ -734,18 +734,18 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
     Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
 ) -> u32 {
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
-        let Instance: u32 =
-            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
-        if Instance <
+        if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape) <
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
                 Typeˉcatalog
             ) {
-            let Kind: u32 =
-                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
-                    Typeˉcatalog, Instance
-                );
-            if Kind == 12u32 { return WIR_VALUE_CLASS_SHARED; }
-            if Kind == 11u32 { return WIR_VALUE_CLASS_OWNED; }
+            if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                Typeˉcatalog,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape)
+            ) == 12u32 { return WIR_VALUE_CLASS_SHARED; }
+            if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                Typeˉcatalog,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape)
+            ) == 11u32 { return WIR_VALUE_CLASS_OWNED; }
         }
     }
     if Shape == 5u32 || Shape == 6u32 ||

@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and depends only on `Foundationˉdecimalˉparsing`.
+`Compilerˉsourceˉlexer` is the first Windvale-written self-hosted compiler slice. It tokenizes the complete implemented Seed lexical surface over immutable UTF-8 bytes. The module is portable, capability-free, and has no Foundation dependency.
 
 The original streaming implementation is cross-host qualified at `d91dbfb` under Decision 0025. Decision 0042's bounded dispatch and Decision 0055's validated-scan reuse are cross-host qualified, with the latter qualified at `1a4fca7`. It does not replace the Stage 0 compiler yet.
 
@@ -76,8 +76,10 @@ exceed 2,147,483,647. The exact suffixes `i8`, `i16`, `u8`, `u16`, `u32`,
 18,446,744,073,709,551,615 respectively. A preceding unary minus is separate
 syntax, not part of the token. Narrow values use `Numericˉvalue` with
 `Numericˉhigh` zero; wide values use the two fields as a little-endian low/high
-`u32` pair. Narrow digits are parsed by `Foundationˉu32ˉdecimalˉparse`; the
-lexer owns a bounded two-limb decimal accumulator for wide literals.
+`u32` pair. One bounded two-limb decimal accumulator parses every integer
+literal width. Narrow forms reject a nonzero high limb and then apply their
+exact type bound; this keeps one overflow contract without retaining a second
+Foundation parser in every compiler source closure.
 
 Strings accept the simple escapes `\"`, `\\`, `\n`, `\r`, and `\t`, plus `\u` followed by exactly four hexadecimal digits. Escaped UTF-16 high and low surrogates must be paired. Raw LF or CR terminates scanning with `Unterminatedˉstring`.
 

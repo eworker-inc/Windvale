@@ -1,0 +1,142 @@
+module Compilerˉsourceˉwvbˉcompilation profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉprofile as Sourceˉprofile;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwvb as Sourceˉwvb;
+
+export record Compilerˉsourceˉwvbˉprofileˉcompilation {
+    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus;
+    Failureˉoffset: u32;
+    Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary;
+}
+
+fn Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
+    Input: bytes,
+    Status: Sourceˉwvb.Compilerˉsourceˉwvbˉstatus,
+    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+    Function: u32,
+    Operation: u32,
+    Line: u32
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉsummary {
+    return Sourceˉwvb.Compilerˉsourceˉwvbˉsummary(
+        Status,
+        Wirˉstatus,
+        0u32,
+        0u32,
+        Sourceˉwvb.Compilerˉsourceˉwvbˉempty(Input),
+        Function,
+        Operation,
+        Line
+    );
+}
+
+export fn Compilerˉsourceˉwvbˉcompile(
+    Input: bytes,
+    Optimize: bool
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
+            Input,
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Wirˉsummary.Status,
+            Wirˉsummary.Failureˉfunction,
+            0u32,
+            Wirˉsummary.Failureˉline
+        );
+    }
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Wirˉcompilation
+        );
+    return Sourceˉwvb.Compilerˉemitˉpreparedˉsourceˉwvb(
+        Input, Scan, Symbols, Bindings, Wirˉsummary, Optimize
+    );
+}
+
+export fn Compilerˉcompileˉsourceˉwvb(
+    Input: bytes
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉsummary {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
+        return Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        );
+    }
+    return Compilerˉsourceˉwvbˉcompile(Input, false);
+}
+
+export fn Compilerˉcompileˉsourceˉwvbˉoptimized(
+    Input: bytes
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉsummary {
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
+        return Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        );
+    }
+    return Compilerˉsourceˉwvbˉcompile(Input, true);
+}
+
+fn Compilerˉsourceˉwvbˉprofileˉfailure(
+    Input: bytes,
+    Status: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus,
+    Offset: u32
+) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
+    return Compilerˉsourceˉwvbˉprofileˉcompilation(
+        Status,
+        Offset,
+        Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
+            Input,
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile,
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            0u32,
+            0u32
+        )
+    );
+}
+
+export fn Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+    Input: bytes,
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Optimize: bool
+) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
+    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
+        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
+            Input, Lock, Expectedˉlockˉhash, Profile
+        );
+    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        return Compilerˉsourceˉwvbˉprofileˉfailure(
+            Input, Admitted.Status, Admitted.Failureˉoffset
+        );
+    }
+    return Compilerˉsourceˉwvbˉprofileˉcompilation(
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+        Bytesˉlength(Input),
+        Compilerˉsourceˉwvbˉcompile(Admitted.Input, Optimize)
+    );
+}

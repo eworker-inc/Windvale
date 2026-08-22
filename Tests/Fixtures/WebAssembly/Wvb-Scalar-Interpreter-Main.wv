@@ -60,7 +60,8 @@ fn Variantˉcaseˉfields(
             let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
             Cursor = Cursor + 1u32;
             if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
-                Fieldˉkind == 11u32 || Fieldˉkind == 22u32 {
+                Fieldˉkind == 11u32 || Fieldˉkind == 22u32 ||
+                Fieldˉkind == 23u32 || Fieldˉkind == 24u32 {
                 Cursor = Cursor + 4u32;
             }
             Fieldˉindex = Fieldˉindex + 1u32;
@@ -104,7 +105,8 @@ fn Aggregateˉfieldˉdirectory(
             Bytesˉreadˉu8(Module, Elementˉshape)
         );
         if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
-            Elementˉkind == 11u32 || Elementˉkind == 22u32 {
+            Elementˉkind == 11u32 || Elementˉkind == 22u32 ||
+            Elementˉkind == 23u32 || Elementˉkind == 24u32 {
             Cursor = Cursor + 4u32;
         }
         return Bytesˉconcat(
@@ -218,7 +220,8 @@ fn Aggregateˉselectedˉfieldˉvalues(
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
         Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+            Kind == 23u32 || Kind == 24u32 {
             Cursor = Cursor + 4u32;
         }
         var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
@@ -431,7 +434,8 @@ fn Fieldˉshapeˉat(
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
         Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+            Kind == 23u32 || Kind == 24u32 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -1054,7 +1058,8 @@ export fn Main(Request: bytes) -> bytes {
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -1082,7 +1087,8 @@ export fn Main(Request: bytes) -> bytes {
         }
         Functionˉcursor = Functionˉcursor + 1u32;
         if Returnˉkind == 7u32 || Returnˉkind == 8u32 ||
-            Returnˉkind == 11u32 || Returnˉkind == 22u32 {
+            Returnˉkind == 11u32 || Returnˉkind == 22u32 ||
+            Returnˉkind == 23u32 || Returnˉkind == 24u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
                 return Invalid;
             }
@@ -1108,7 +1114,8 @@ export fn Main(Request: bytes) -> bytes {
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -1443,7 +1450,8 @@ export fn Main(Request: bytes) -> bytes {
                 8u32
             );
             if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 8u32 ||
-                Loadedˉshapeˉkind == 11u32 || Loadedˉshapeˉkind == 22u32 {
+                Loadedˉshapeˉkind == 11u32 || Loadedˉshapeˉkind == 22u32 ||
+                Loadedˉshapeˉkind == 23u32 || Loadedˉshapeˉkind == 24u32 {
                 let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Loadedˉshapeˉoffset + 4u32

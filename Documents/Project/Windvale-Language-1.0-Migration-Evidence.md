@@ -1778,3 +1778,59 @@ pipeline with its callers; a helper-only or numbered mechanical split is not a
 stable module boundary. WVB 1.18 representation and collection construction,
 append, freeze, length, indexed borrow, and runtime execution remain the next
 connected Slice 4 work.
+
+## Slice 4 Vector and Sequence WVB 1.18 type checkpoint
+
+Decision 0825 gives the already admitted collection identities an exact
+portable representation without reusing the obsolete fixed-capacity
+collection types. WVB 1.18 Types kind `5` represents
+`Foundationˉcollections.Vector<T>` and kind `6` represents `Sequence<T>`.
+Each descriptor contains its canonical private name and exact element shape;
+neither contains a source maximum, backing capacity, allocator, or authority.
+Function and other value metadata use shapes `23` and `24` followed by the
+matching Types index.
+
+The exported-signature fixture publishes a deterministic 436-byte WVB at
+SHA-256
+`c51529baa7fb7b5cfb24e2508520044cce9f2661b9fb1dccb2321b5e122ec73d`.
+Its two descriptors retain exact `i32` elements, its Vector and Sequence
+parameters point to different matching kinds, and its independent `Main`
+returns `42`. The focused six-case test proves compiler-aligned verification,
+that scalar execution, and exact rejection of a pre-1.18 header, invalid
+element shape, descriptor-kind confusion, and Types-index confusion. This is
+metadata support only; no collection value is allocated or executed.
+
+The current verifier is 222,399 WVB bytes at SHA-256
+`9424d62eba7f5efb37363bcef439afeb198c943a1439703bb3492378310a24d0`;
+its Windows profile-2 application is 1,827,840 bytes. The current scalar runner
+is 209,917 WVB bytes at SHA-256
+`62c9a42433e4e14a984fd42a9ce4db6c6d303677a09de21849b4418952cf5215`;
+its Windows profile-5 application is 2,077,184 bytes. The verifier's structural
+type scan and type-range discovery now have focused helpers, while executable
+shape encoding has its own helper so the native function remains below the
+fixed frame-local bound.
+
+Prepared emission is now separate from direct compilation and source-profile
+admission. Removing the direct/profile dependency from the emitter leaves its
+1,899,183-byte source set at 3,780,080 WVIR bytes, safely below the fixed 4 MiB
+bootstrap product limit. The current 1,013,482-byte emitter WVB has SHA-256
+`3fb526c3298406a3ba71df5e074d58d000532e80640421fc4d665389d7a0ea0d`;
+its profile-7 Windows application is 22,320,128 bytes. The current analyzer
+publishes 3,287,604 WVIR bytes and a 1,098,751-byte WVB at SHA-256
+`4e24d6312b01efbd8caeb155ed1a0ce4339f4debe3cf2d77e300798e11ccd68b`;
+its profile-7 application is 34,622,976 bytes. Rebuilding both products through
+that pair is byte-identical.
+
+The lexer also uses one bounded two-limb decimal accumulator for every integer
+literal, removing the duplicate Foundation decimal-parsing module from compiler
+closures without changing the literal contract. `Source-Wir-Core.wv` remains a
+large orchestration module, but this checkpoint keeps serialization and runtime
+metadata changes outside it. Collection construction, append, freeze, length,
+indexed borrow, ownership execution, allocation limits, and reclamation remain
+the next connected Slice 4 work.
+
+The 108-owner verification registry now declares 5,155 cases at SHA-256
+`7f102e24a7035aab8c0c7c135e9df44bfc864fc2e772e66fe8f85ad1108afc72`.
+The dual-host Language 1.0 owner declares 371 cases, including six exact WVB
+1.18 type-representation cases, and both host scripts share the nine-case
+Vector/Sequence-aware borrow checkpoint.

@@ -2,5 +2,4 @@ windvale-project 2
 root "Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Lexer-Core.wv"
-source "Foundation/Decimal-Parsing.wv"
 emit wvb

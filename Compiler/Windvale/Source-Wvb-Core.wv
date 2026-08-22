@@ -7,7 +7,6 @@ import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉgenericˉtypeˉmaterialization as Genericˉmaterialization;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
-import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
@@ -113,12 +112,6 @@ export record Compilerˉsourceˉwvbˉsummary {
     Failureˉline: u32;
 }
 
-export record Compilerˉsourceˉwvbˉprofileˉcompilation {
-    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus;
-    Failureˉoffset: u32;
-    Summary: Compilerˉsourceˉwvbˉsummary;
-}
-
 export record Compilerˉsourceˉwvbˉreachability {
     Status: Compilerˉsourceˉwvbˉstatus;
     Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
@@ -156,26 +149,6 @@ export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
         Function,
         Operation,
         0u32
-    );
-}
-
-fn Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
-    Input: bytes,
-    Status: Compilerˉsourceˉwvbˉstatus,
-    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
-    Function: u32,
-    Operation: u32,
-    Line: u32
-) -> Compilerˉsourceˉwvbˉsummary {
-    return Compilerˉsourceˉwvbˉsummary(
-        Status,
-        Wirˉstatus,
-        0u32,
-        0u32,
-        Compilerˉsourceˉwvbˉempty(Input),
-        Function,
-        Operation,
-        Line
     );
 }
 
@@ -1477,6 +1450,8 @@ fn Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
         if Kind == 4u32 { return 65536u32 + Genericˉtarget; }
         if Kind == 8u32 { return 196608u32 + Genericˉtarget; }
         if Kind == 10u32 { return 262144u32 + Genericˉtarget; }
+        if Kind == 11u32 { return 327680u32 + Genericˉtarget; }
+        if Kind == 12u32 { return 393216u32 + Genericˉtarget; }
         return 4294967295u32;
     }
     if Shape >= 65536u32 && Shape < 131072u32 {
@@ -1539,6 +1514,18 @@ fn Compilerˉsourceˉwvbˉplannedˉshape(
         return Bytesˉconcat(
             Bytesˉfromˉu8(22u8),
             Bytesˉfromˉu32ˉlittle(Planned - 262144u32)
+        );
+    }
+    if Planned >= 327680u32 && Planned < 393216u32 {
+        return Bytesˉconcat(
+            Bytesˉfromˉu8(23u8),
+            Bytesˉfromˉu32ˉlittle(Planned - 327680u32)
+        );
+    }
+    if Planned >= 393216u32 && Planned < 458752u32 {
+        return Bytesˉconcat(
+            Bytesˉfromˉu8(24u8),
+            Bytesˉfromˉu32ˉlittle(Planned - 393216u32)
         );
     }
     return Compilerˉsourceˉwvbˉshape(
@@ -4625,6 +4612,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if (Features & 16u32) != 0u32 { Wvbˉminor = 15u32; }
     if (Features & 32u32) != 0u32 { Wvbˉminor = 16u32; }
     if (Features & 64u32) != 0u32 { Wvbˉminor = 17u32; }
+    if (Features & 128u32) != 0u32 { Wvbˉminor = 18u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(
@@ -4667,113 +4655,5 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         Symbols.Functions,
         Wirˉsummary.Operations,
         0u32
-    );
-}
-
-export fn Compilerˉsourceˉwvbˉcompile(
-    Input: bytes,
-    Optimize: bool
-) -> Compilerˉsourceˉwvbˉsummary {
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
-        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
-            Input, Scan, Symbols
-        );
-    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
-    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉsummaryˉfailureˉat(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Wirˉsummary.Status,
-            Wirˉsummary.Failureˉfunction,
-            0u32,
-            Wirˉsummary.Failureˉline
-        );
-    }
-    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
-            Symbols, Wirˉcompilation
-        );
-    return Compilerˉemitˉpreparedˉsourceˉwvb(
-        Input, Scan, Symbols, Bindings, Wirˉsummary, Optimize
-    );
-}
-
-export fn Compilerˉcompileˉsourceˉwvb(
-    Input: bytes
-) -> Compilerˉsourceˉwvbˉsummary {
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
-        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
-            0u32,
-            0u32
-        );
-    }
-    return Compilerˉsourceˉwvbˉcompile(Input, false);
-}
-
-export fn Compilerˉcompileˉsourceˉwvbˉoptimized(
-    Input: bytes
-) -> Compilerˉsourceˉwvbˉsummary {
-    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
-        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
-    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid || Scan.Version != 1u32 {
-        return Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
-            0u32,
-            0u32
-        );
-    }
-    return Compilerˉsourceˉwvbˉcompile(Input, true);
-}
-
-fn Compilerˉsourceˉwvbˉprofileˉfailure(
-    Input: bytes,
-    Status: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus,
-    Offset: u32
-) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
-    return Compilerˉsourceˉwvbˉprofileˉcompilation(
-        Status,
-        Offset,
-        Compilerˉsourceˉwvbˉsummaryˉfailure(
-            Input,
-            Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
-            0u32,
-            0u32
-        )
-    );
-}
-
-export fn Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
-    Input: bytes,
-    Lock: bytes,
-    Expectedˉlockˉhash: bytes,
-    Profile: bytes,
-    Optimize: bool
-) -> Compilerˉsourceˉwvbˉprofileˉcompilation {
-    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
-        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
-            Input, Lock, Expectedˉlockˉhash, Profile
-        );
-    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉprofileˉfailure(
-            Input, Admitted.Status, Admitted.Failureˉoffset
-        );
-    }
-    return Compilerˉsourceˉwvbˉprofileˉcompilation(
-        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
-        Bytesˉlength(Input),
-        Compilerˉsourceˉwvbˉcompile(Admitted.Input, Optimize)
     );
 }

@@ -1,6 +1,7 @@
 module Windvaleˉcompilerˉbuildˉdriver profile hosted;
 
 import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉwir as Sourceˉwir;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
@@ -357,13 +358,13 @@ fn Compilerˉbuildˉdriverˉpublishˉsummary(
 fn Compilerˉbuildˉdriverˉpublish(Input: bytes, Outputˉpath: text) -> i32 {
     return Compilerˉbuildˉdriverˉpublishˉsummary(
         Input,
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input),
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Input),
         Outputˉpath
     );
 }
 
 fn Compilerˉbuildˉdriverˉprofileˉfailure(
-    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation
+    Compilation: Sourceˉcompilation.Compilerˉsourceˉwvbˉprofileˉcompilation
 ) -> text {
     var Report: text = "build status=Sourceˉprofileˉrejected profile-status=";
     Report = Textˉconcat(Report, Enumˉname(Compilation.Profileˉstatus));
@@ -378,8 +379,8 @@ fn Compilerˉbuildˉdriverˉpublishˉprofile(
     Profile: bytes,
     Outputˉpath: text
 ) -> i32 {
-    let Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation =
-        Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+    let Compilation: Sourceˉcompilation.Compilerˉsourceˉwvbˉprofileˉcompilation =
+        Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
             Input, Lock, Expectedˉlockˉhash, Profile, false
         );
     if Compilation.Profileˉstatus !=

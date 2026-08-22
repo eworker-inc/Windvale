@@ -13,7 +13,8 @@ record Hˉoperationˉstate {
 
 fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+        Kind == 23u32 || Kind == 24u32 {
         return 5u32;
     }
     return 1u32;
@@ -45,6 +46,9 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     Next = Next + 4u32 + Nameˉlength;
     if Kind == 4u32 {
         return Next + Hˉshapeˉwidth(Input, Next) + 4u32;
+    }
+    if Kind == 5u32 || Kind == 6u32 {
+        return Next + Hˉshapeˉwidth(Input, Next);
     }
     let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
     Next = Next + 4u32;
@@ -114,7 +118,8 @@ fn Hˉvariantˉcaseˉat(
         let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
         var Fieldˉnominal: u32 = 0u32;
         if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
-            Fieldˉkind == 11u32 || Fieldˉkind == 22u32 {
+            Fieldˉkind == 11u32 || Fieldˉkind == 22u32 ||
+            Fieldˉkind == 23u32 || Fieldˉkind == 24u32 {
             Fieldˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(Result, Bytesˉslice(Input, Cursor, 1u32));
@@ -326,7 +331,8 @@ export fn Hˉrecord(
             let Expectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉcursor));
             var Expectedˉnominal: u32 = 0u32;
             if Expectedˉkind == 7u32 || Expectedˉkind == 8u32 ||
-                Expectedˉkind == 11u32 || Expectedˉkind == 22u32 {
+                Expectedˉkind == 11u32 || Expectedˉkind == 22u32 ||
+                Expectedˉkind == 23u32 || Expectedˉkind == 24u32 {
                 Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Fieldˉcursor + 1u32);
             }
             let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
@@ -394,7 +400,7 @@ export fn Hˉrecord(
     let Pushˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Sourceˉtype));
     var Pushˉnominal: u32 = 0u32;
     if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 ||
-        Pushˉkind == 22u32 {
+        Pushˉkind == 22u32 || Pushˉkind == 23u32 || Pushˉkind == 24u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Sourceˉtype + 1u32);
     }
     return Hˉoperationˉstate(
@@ -424,7 +430,8 @@ fn Hˉarrayˉdescriptor(Input: bytes, Types: u32, Typeˉindex: u32) -> bytes {
     let Elementˉkind: u8 = Bytesˉreadˉu8(Input, Typeˉcursor);
     var Elementˉnominal: u32 = 0u32;
     if Elementˉkind == 7u8 || Elementˉkind == 8u8 ||
-        Elementˉkind == 11u8 || Elementˉkind == 22u8 {
+        Elementˉkind == 11u8 || Elementˉkind == 22u8 ||
+        Elementˉkind == 23u8 || Elementˉkind == 24u8 {
         Elementˉnominal = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor + 1u32);
     }
     let Countˉcursor: u32 = Typeˉcursor + Hˉshapeˉwidth(Input, Typeˉcursor);
@@ -545,7 +552,8 @@ export fn Hˉcall(
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
             Targetˉcursor = Targetˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Targetˉcursor = Targetˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -557,7 +565,8 @@ export fn Hˉcall(
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
             Targetˉcursor = Targetˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Targetˉcursor = Targetˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -584,7 +593,8 @@ export fn Hˉcall(
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
             Argumentˉcursor = Argumentˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Argumentˉcursor = Argumentˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -592,7 +602,8 @@ export fn Hˉcall(
         let Expectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
         var Expectedˉnominal: u32 = 0u32;
         if Expectedˉkind == 7u32 || Expectedˉkind == 8u32 ||
-            Expectedˉkind == 11u32 || Expectedˉkind == 22u32 {
+            Expectedˉkind == 11u32 || Expectedˉkind == 22u32 ||
+            Expectedˉkind == 23u32 || Expectedˉkind == 24u32 {
             Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Argumentˉcursor + 1u32);
         }
         let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
@@ -613,7 +624,8 @@ export fn Hˉcall(
         Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
         Targetˉreturn = Targetˉreturn + 1u32;
         if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
             Targetˉreturn = Targetˉreturn + 4u32;
         }
         Shapeˉindex = Shapeˉindex + 1u32;
@@ -621,7 +633,7 @@ export fn Hˉcall(
     let Pushˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
     var Pushˉnominal: u32 = 0u32;
     if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 ||
-        Pushˉkind == 22u32 {
+        Pushˉkind == 22u32 || Pushˉkind == 23u32 || Pushˉkind == 24u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Targetˉreturn + 1u32);
     }
     return Hˉoperationˉstate(
@@ -696,6 +708,32 @@ export fn Hˉcapability(
     );
 }
 
+fn Hˉencodedˉshape(Kind: u32, Nominal: u32) -> bytes {
+    var Encodedˉkind: bytes = Bytesˉfromˉu8(0u8);
+    if Kind == 1u32 { Encodedˉkind = Bytesˉfromˉu8(1u8); }
+    if Kind == 2u32 { Encodedˉkind = Bytesˉfromˉu8(2u8); }
+    if Kind == 3u32 { Encodedˉkind = Bytesˉfromˉu8(3u8); }
+    if Kind == 4u32 { Encodedˉkind = Bytesˉfromˉu8(4u8); }
+    if Kind == 5u32 { Encodedˉkind = Bytesˉfromˉu8(5u8); }
+    if Kind == 6u32 { Encodedˉkind = Bytesˉfromˉu8(6u8); }
+    if Kind == 7u32 { Encodedˉkind = Bytesˉfromˉu8(7u8); }
+    if Kind == 8u32 { Encodedˉkind = Bytesˉfromˉu8(8u8); }
+    if Kind == 9u32 { Encodedˉkind = Bytesˉfromˉu8(9u8); }
+    if Kind == 10u32 { Encodedˉkind = Bytesˉfromˉu8(10u8); }
+    if Kind == 11u32 { Encodedˉkind = Bytesˉfromˉu8(11u8); }
+    if Kind == 14u32 { Encodedˉkind = Bytesˉfromˉu8(14u8); }
+    if Kind == 15u32 { Encodedˉkind = Bytesˉfromˉu8(15u8); }
+    if Kind == 16u32 { Encodedˉkind = Bytesˉfromˉu8(16u8); }
+    if Kind == 17u32 { Encodedˉkind = Bytesˉfromˉu8(17u8); }
+    if Kind == 18u32 { Encodedˉkind = Bytesˉfromˉu8(18u8); }
+    if Kind == 19u32 { Encodedˉkind = Bytesˉfromˉu8(19u8); }
+    if Kind == 20u32 { Encodedˉkind = Bytesˉfromˉu8(20u8); }
+    if Kind == 22u32 { Encodedˉkind = Bytesˉfromˉu8(22u8); }
+    if Kind == 23u32 { Encodedˉkind = Bytesˉfromˉu8(23u8); }
+    if Kind == 24u32 { Encodedˉkind = Bytesˉfromˉu8(24u8); }
+    return Bytesˉconcat(Encodedˉkind, Bytesˉfromˉu32ˉlittle(Nominal));
+}
+
 export fn Hˉexecutable(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
@@ -752,7 +790,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -761,7 +800,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
         Functionˉcursor = Functionˉcursor + 1u32;
         if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
             Functionˉcursor = Functionˉcursor + 4u32;
         }
         let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(
@@ -775,7 +815,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1310,7 +1351,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 var Returnˉexpectedˉnominal: u32 = 0u32;
                 if Returnˉexpectedˉkind == 7u32 || Returnˉexpectedˉkind == 8u32 ||
                     Returnˉexpectedˉkind == 11u32 ||
-                    Returnˉexpectedˉkind == 22u32 {
+                    Returnˉexpectedˉkind == 22u32 ||
+                    Returnˉexpectedˉkind == 23u32 ||
+                    Returnˉexpectedˉkind == 24u32 {
                     Returnˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉtype + 1u32);
                 }
                 if Returnˉexpectedˉkind != 0u32 {
@@ -1350,29 +1393,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             }
 
             if Hasˉpush {
-                var Encodedˉkind: bytes = Bytesˉfromˉu8(0u8);
-                if Pushˉkind == 1u32 { Encodedˉkind = Bytesˉfromˉu8(1u8); }
-                if Pushˉkind == 2u32 { Encodedˉkind = Bytesˉfromˉu8(2u8); }
-                if Pushˉkind == 3u32 { Encodedˉkind = Bytesˉfromˉu8(3u8); }
-                if Pushˉkind == 4u32 { Encodedˉkind = Bytesˉfromˉu8(4u8); }
-                if Pushˉkind == 5u32 { Encodedˉkind = Bytesˉfromˉu8(5u8); }
-                if Pushˉkind == 6u32 { Encodedˉkind = Bytesˉfromˉu8(6u8); }
-                if Pushˉkind == 7u32 { Encodedˉkind = Bytesˉfromˉu8(7u8); }
-                if Pushˉkind == 8u32 { Encodedˉkind = Bytesˉfromˉu8(8u8); }
-                if Pushˉkind == 9u32 { Encodedˉkind = Bytesˉfromˉu8(9u8); }
-                if Pushˉkind == 10u32 { Encodedˉkind = Bytesˉfromˉu8(10u8); }
-                if Pushˉkind == 11u32 { Encodedˉkind = Bytesˉfromˉu8(11u8); }
-                if Pushˉkind == 14u32 { Encodedˉkind = Bytesˉfromˉu8(14u8); }
-                if Pushˉkind == 15u32 { Encodedˉkind = Bytesˉfromˉu8(15u8); }
-                if Pushˉkind == 16u32 { Encodedˉkind = Bytesˉfromˉu8(16u8); }
-                if Pushˉkind == 17u32 { Encodedˉkind = Bytesˉfromˉu8(17u8); }
-                if Pushˉkind == 18u32 { Encodedˉkind = Bytesˉfromˉu8(18u8); }
-                if Pushˉkind == 19u32 { Encodedˉkind = Bytesˉfromˉu8(19u8); }
-                if Pushˉkind == 20u32 { Encodedˉkind = Bytesˉfromˉu8(20u8); }
-                if Pushˉkind == 22u32 { Encodedˉkind = Bytesˉfromˉu8(22u8); }
-                let Encodedˉshape: bytes = Bytesˉconcat(
-                    Encodedˉkind,
-                    Bytesˉfromˉu32ˉlittle(Pushˉnominal)
+                let Encodedˉshape: bytes = Hˉencodedˉshape(
+                    Pushˉkind, Pushˉnominal
                 );
                 Stack = Bytesˉconcat(Stack, Encodedˉshape);
                 Depth = Depth + 1u32;
@@ -1463,7 +1485,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             ));
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
             if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
+                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
+                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 {
                 Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
             }
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
@@ -1474,7 +1497,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         ));
         Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
         if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-            Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
+            Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
+            Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 {
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
         }
         let Controlˉlocalˉcount: u32 = Bytesˉreadˉu32ˉlittle(
@@ -1490,7 +1514,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             ));
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
             if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
+                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
+                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 {
                 Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
             }
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;

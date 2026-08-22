@@ -2352,18 +2352,19 @@ export fn Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
             Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
                 Source, Offset, Line, Column, false
             );
-        let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
-        let Vectorˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        var Collectionˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
             Compilerˉsourceˉsymbolsˉfoundationˉvectorˉmodule(
                 Input, Scan, Lookup, Owner, Source,
-                Token.Offset, Qualifiedˉlength
+                Token.Offset, Qualified.Nextˉoffset - Token.Offset
             );
-        let Sequenceˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
-            Compilerˉsourceˉsymbolsˉfoundationˉsequenceˉmodule(
+        if !Collectionˉmodule.Found {
+            Collectionˉmodule =
+                Compilerˉsourceˉsymbolsˉfoundationˉsequenceˉmodule(
                 Input, Scan, Lookup, Owner, Source,
-                Token.Offset, Qualifiedˉlength
-            );
-        if Vectorˉmodule.Found || Sequenceˉmodule.Found {
+                    Token.Offset, Qualified.Nextˉoffset - Token.Offset
+                );
+        }
+        if Collectionˉmodule.Found {
             let Collectionˉtype: Sourceˉdeclarations.Compilerˉparseˉstep =
                 Sourceˉdeclarations.Compilerˉparseˉtype(
                     Source, Offset, Line, Column, false, false

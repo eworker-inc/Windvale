@@ -3,5 +3,4 @@ root "Examples/Compiler/Source-Body-Parser-Demo.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Lexer-Core.wv"
-source "Foundation/Decimal-Parsing.wv"
 emit wvb

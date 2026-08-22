@@ -5,5 +5,4 @@ source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"
 source "Compiler/Windvale/Source-Lexer-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
-source "Foundation/Decimal-Parsing.wv"
 emit wvb

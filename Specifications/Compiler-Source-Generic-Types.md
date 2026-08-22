@@ -186,10 +186,11 @@ An earlier WVGT reference retains its private shape in materialized field
 evidence. This prevents an ordinary source nominal target from being confused
 with an equal numeric output Types index after templates are removed. Final WVB
 shape planning resolves the private identity to `65536 + output-index` for a
-record, `196608 + output-index` for a variant, or the exact fixed-array type.
+record, `196608 + output-index` for a variant, the exact fixed-array type,
+`327680 + output-index` for Vector, or `393216 + output-index` for Sequence.
 Vector and Sequence materialization entries deliberately have no fields or
-cases and remain unsupported for WVB publication until their runtime-backed
-shape and operations are connected. No private shape survives successful WVB
+cases. WVB 1.18 publishes their exact element-bearing descriptors and value
+shapes without claiming runtime-backed operations. No private shape survives successful WVB
 serialization. Each evidence stream is at most
 4 MiB; all three streams plus the retained catalog are at most 16 MiB. Capacity
 is checked before concatenation, and a failed plan publishes empty derived
@@ -294,8 +295,8 @@ and argument kind, bare use, validated fieldless layouts and materialization,
 rejection of a lookalike module, and rejection of hostile catalog evidence that
 names that lookalike as an intrinsic owner. Together with the existing generic,
 array, parser, and borrow groups, the focused owner reports 59 cases and returns
-`42` without output. This checkpoint does not claim Vector operations or WVB
-runtime support.
+`42` without output. WVB 1.18 now publishes those type identities, but this
+checkpoint still does not claim Vector operations or runtime value support.
 
 Canonical Vector and Sequence uses in ordinary function signatures are now
 admitted through the early symbol pass as deferred types and resolved to their
@@ -303,7 +304,9 @@ exact private shapes by the WVGT-aware WIR phase. Borrow-mode checking consumes
 the validated catalog kind: kind 11 Vector is move-owned and kind 12 Sequence
 is shared immutable. Consequently, a borrowed Sequence may satisfy a by-value
 read-through parameter, while a borrowed Vector cannot satisfy a consuming
-by-value parameter. This connection still does not publish either type to WVB.
+by-value parameter. WVB publication retains that exact type identity through
+kind-5/kind-6 descriptors and shape tags 23/24; ownership remains a static
+compiler contract and no move or collection opcode is added.
 
 `Generic-Nominal-Type-Layout-Self-Test.wv` adds 21 focused assertions over
 concrete record and variant layouts. It verifies field and case order, total

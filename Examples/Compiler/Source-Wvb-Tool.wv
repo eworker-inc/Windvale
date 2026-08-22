@@ -2,6 +2,7 @@ module Compilerˉsourceˉwvbˉtool profile hosted;
 
 import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
+import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -65,9 +66,9 @@ fn Compilerˉsourceˉwvbˉtoolˉisˉcomplete(Argument: text) -> bool {
 fn Compilerˉsourceˉwvbˉtoolˉcompile(Input: bytes, Optimize: bool)
     -> Sourceˉwvb.Compilerˉsourceˉwvbˉsummary {
     if Optimize {
-        return Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉoptimized(Input);
+        return Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉoptimized(Input);
     }
-    return Sourceˉwvb.Compilerˉcompileˉsourceˉwvb(Input);
+    return Sourceˉcompilation.Compilerˉcompileˉsourceˉwvb(Input);
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉreport(
@@ -99,7 +100,7 @@ fn Compilerˉsourceˉwvbˉtoolˉfailure(
 }
 
 fn Compilerˉsourceˉwvbˉtoolˉprofileˉfailure(
-    Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation
+    Compilation: Sourceˉcompilation.Compilerˉsourceˉwvbˉprofileˉcompilation
 ) -> text {
     var Report: text = "source profile status=";
     Report = Textˉconcat(Report, Enumˉname(Compilation.Profileˉstatus));
@@ -154,8 +155,8 @@ export fn Main() -> i32 {
     var Summary: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary =
         Compilerˉsourceˉwvbˉtoolˉcompile(Textˉtoˉutf8(""), Optimize);
     if Hasˉprofileˉinputs {
-        let Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉprofileˉcompilation =
-            Sourceˉwvb.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
+        let Compilation: Sourceˉcompilation.Compilerˉsourceˉwvbˉprofileˉcompilation =
+            Sourceˉcompilation.Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
                 Input,
                 file.read_bytes(process.argument(Lockˉargument)),
                 Textˉtoˉutf8(process.argument(Lockˉhashˉargument)),

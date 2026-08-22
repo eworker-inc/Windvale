@@ -2,9 +2,10 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.17 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.18 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.17, the current implementation proves
+For the execution subset through WVB 1.17 and the WVB 1.18 Vector/Sequence
+metadata checkpoint, the current implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
 and code → WVB → verifier → source-built scalar runtime path. Every accepted
@@ -12,12 +13,16 @@ compilation emits one self-contained module and does not introduce runtime
 linkage. Direct native lowering, browser packaging, and Windvale OS execution
 retain their separately versioned subsets.
 
-## Public result
+## Direct compilation result
 
 ```text
 Compilerˉcompileˉsourceˉwvb(Input: bytes)
     -> Compilerˉsourceˉwvbˉsummary
 ```
+
+This direct entry point belongs to `Compilerˉsourceˉwvbˉcompilation`. The
+prepared backend keeps the summary type and byte encoder so emitter-only source
+sets do not carry source-profile or duplicate analysis dependencies.
 
 On success, `Status` and `Wirˉstatus` are `Valid`, `Bytecode` contains one complete canonical WVB module using the lowest required minor version, and the summary reports function and code-byte counts. On failure, `Bytecode` is empty and the summary identifies the first function and WVIR operation involved plus the one-based source line when the upstream WVIR boundary supplied it. Command-line and build-driver diagnostics print that location instead of leaving a long compiler phase silent about its source failure.
 
@@ -32,7 +37,7 @@ Compilerˉemitˉpreparedˉsourceˉwvb(
 ) -> Compilerˉsourceˉwvbˉsummary
 ```
 
-The ordinary one-shot compiler prepares those exact values and delegates to
+The separate direct-compilation module prepares those exact values and delegates to
 this function. Untrusted persisted evidence must enter through
 `Compilerˉsourceˉemission`, which validates WVCA, WVLB, and WVIR before calling
 the prepared backend. The prepared function is not an alternate semantic path
@@ -42,7 +47,7 @@ validation contract is specified in
 
 ## Language 1.0 source-profile admission
 
-The edition-1 front door has the separate portable entry point:
+The edition-1 direct-compilation module has the separate portable entry point:
 
 ```text
 Compilerˉcompileˉsourceˉwvbˉwithˉprofileˉinputs(
@@ -291,7 +296,7 @@ prefix. When templates exist, the backend builds bounded record and variant
 target maps, omits every template, compacts concrete declarations, and remaps all
 downstream shapes and operation targets before serialization.
 
-Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern.
+Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
 
 Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
 
@@ -463,9 +468,17 @@ exact encoded element shape followed by the `u32` fixed length. It is nominal
 only at the serialization boundary so nested arrays and exact `T, N` identity
 remain unambiguous; source cannot name the private `__WvY` identity.
 
+An ordinary private WVGT instance of intrinsic kind `11` maps to WVB shape byte
+`23` and a kind-5 Types entry; intrinsic kind `12` maps to shape byte `24` and a
+kind-6 entry. Each entry carries only its private name and exact encoded element
+shape. The representation deliberately carries no fixed maximum or capacity,
+and selecting either descriptor or shape selects WVB 1.18. This checkpoint does
+not add an operation or executable collection storage layout.
+
 The encoder writes canonical Module, Capabilities, Data, Functions, Code,
-Exports, and Types section envelopes. It emits WVB 1.17 for fixed-array
-metadata, shapes, construction, or access, otherwise WVB 1.16 for multi-field variant
+Exports, and Types section envelopes. It emits WVB 1.18 for Vector or Sequence
+metadata or shapes, otherwise WVB 1.17 for fixed-array metadata, shapes,
+construction, or access, otherwise WVB 1.16 for multi-field variant
 metadata or a named variant-field instruction, otherwise WVB 1.15 for unit or
 never evidence, WVB 1.14 for floating evidence, WVB 1.13 for rune evidence,
 WVB 1.12 for fixed-width integer evidence, and the byte-identical WVB 1.11
@@ -532,6 +545,18 @@ the source-built native scalar runner returns `42`. Six focused WVB cases prove
 the success path, deterministic `WVR3008` bounds failure, pre-1.17 version
 rejection, the 4,095 type-count boundary, and constructor type-index validation.
 
+`Tests/Fixtures/Language-1.0/Vector-Sequence-Wvb-Types.wv` retains exported
+`Vector<i32>` and `Sequence<i32>` function signatures plus an unaffected
+`Main() -> i32`. It publishes deterministically as a 436-byte WVB 1.18 module
+with SHA-256
+`c51529baa7fb7b5cfb24e2508520044cce9f2661b9fb1dccb2321b5e122ec73d`.
+Its Types section contains kind-5 Vector and kind-6 Sequence descriptors; the
+function shapes use tags `23` and `24` and target those entries exactly. The
+compiler-aligned verifier accepts it and the metadata-capable scalar runner
+executes only the independent `Main`, returning `42`. Four malformed mutations
+prove minor-version, element-shape, descriptor-kind, and target-kind rejection.
+No collection value is constructed or executed by this checkpoint.
+
 The scalar representation uses one eight-byte value cell and the existing
 fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot
 or `0xffffffff`; the high `u32` is
@@ -542,7 +567,8 @@ and variant spans and releases descriptor fields before one retry. The
 26,134 guest instructions, and proves reclamation beyond arena capacity.
 
 Direct native array lowering, browser packaging, and Windvale OS execution remain
-explicit subsets below the WVB 1.17 fixed-array vocabulary. Decision 0773 owns this scalar execution
+explicit subsets below the WVB 1.17 fixed-array execution vocabulary. Vector and
+Sequence execution also remains below the WVB 1.18 metadata vocabulary. Decision 0773 owns this scalar execution
 checkpoint without silently advancing those consumers.
 
 `Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv` exercises concrete

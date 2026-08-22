@@ -24,15 +24,18 @@ four-artifact verifier bundle from
 [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and
 canonical semantic validation, typed executable-flow validation,
 control-target reachability, and exact empty-stack join contracts. Its current
-source accepts WVB 1.11 through 1.17. It gates fixed-integer tags 14 through 16
+source accepts WVB 1.11 through 1.18. It gates fixed-integer tags 14 through 16
 and opcode `C0` from 1.12, rune tag 17 and `C1` from 1.13, floating tags 18 and
 19 plus `C2` from 1.14, unit/never tags 20/21 plus `C3` from 1.15, multi-field
 variant metadata plus `C4` from 1.16, and kind-4 fixed-array metadata, shape 22,
-`C5`, and `C6` only under 1.17. Unit is an ordinary value; never is return-only,
+`C5`, and `C6` only under 1.17, then kind-5 Vector and kind-6 Sequence metadata
+plus shapes 23 and 24 only under 1.18. Unit is an ordinary value; never is return-only,
 pushes no call result, and cannot execute a return. Arrays contain zero through
 4,095 exact-shape elements, every constructor consumes the descriptor's exact
 count and type, checked access consumes a complete `u64`, and every nominal
-reference targets the matching kind. The verifier rejects invalid
+reference targets the matching kind. Vector and Sequence descriptors contain
+one exact non-`never` element shape and no fixed maximum or capacity; their
+shapes must target the matching descriptor kind. The verifier rejects invalid
 type/operation combinations, non-scalar runes, unknown selectors, truncated or
 over-wide immediates, forbidden never positions, and stack-shape mismatches. The
 native application retains one typed walk under a `u64` host meter. It constructs
