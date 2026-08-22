@@ -1710,3 +1710,37 @@ borrow parser fixture selects only `generic-nominal-type-binding`; the semantic
 fixtures select only `language-1-front-door`. This section records focused
 current-Windows evidence only. The complete front door, paired-host conformance,
 full ownership checker, and release qualification remain separate gates.
+
+## Slice 4 Vector and Sequence type-identity checkpoint
+
+Decision 0823 admits the canonical edition-1
+`Foundationˉcollections.Vector<T>` and `Foundationˉcollections.Sequence<T>`
+type identities without changing the frozen grammar or disguising the legacy
+fixed-capacity `builder<T, N>` and `sequence<T, N>` types as the Language 1.0
+collections. The compiler binds only the exact Foundation module identities,
+requires one type argument, retains bounded structural evidence for reuse, and
+supports nesting with the already implemented generic nominal types.
+
+Layout and private-shape materialization recognize the two new compiler-supplied
+intrinsics as fieldless identities. Publication deliberately remains closed:
+the WVB planner rejects kinds 11 and 12 until WVB 1.18 defines their dynamic
+descriptor and the runtime implements construction, append, freeze, length, and
+indexed-borrow semantics. This checkpoint therefore proves type identity only;
+it does not claim executable collection operations.
+
+The focused `generic-nominal-type-binding` owner now reports 59 cases. Its
+765,440-byte WVB has SHA-256
+`6c65821f1303782b820e87a191cc94c69dccf7529d76ae5498b24595a5c226b3`,
+and its 18,334,720-byte Windows development application has SHA-256
+`a6d38b676e6856a584ccecc50e9e36cd66dc96333493431586b44254838d1d9e`;
+the application exits with the expected result 42. The verification registry
+contains 108 owners and 5,147 declared cases at SHA-256
+`1e8b3cd06dd7038d2ec55607386bb7fabf1a1c90c8dd407ab966b1c96619856f`.
+Changed-file verification planning passes 31 general and 194 native routing
+cases against that identity.
+
+`Source-Wir-Core.wv` is 12,177 lines at this checkpoint. The type-identity work
+adds no lines to it. Runtime-backed collection representation and helpers will
+live in a focused acyclic compiler module, preserving Source WIR as orchestration;
+any later extraction from the large core will follow a cohesive ownership
+boundary rather than create numbered or mechanically split fragments.

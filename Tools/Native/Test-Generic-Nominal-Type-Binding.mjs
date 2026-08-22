@@ -138,6 +138,6 @@ try {
 
 if (Passed) {
     process.stdout.write(
-        'native generic nominal type binding status=Passed cases=45 result=42\n'
+        'native generic nominal type binding status=Passed cases=59 result=42\n'
     );
 }

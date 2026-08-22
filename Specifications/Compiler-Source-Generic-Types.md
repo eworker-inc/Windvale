@@ -3,7 +3,8 @@
 ## Status and boundary
 
 `Compilerˉsourceˉgenericˉtypeˉlowering` defines the bounded canonical identity
-of concrete generic record and variant instances. `WVGT 1.0` is compiler-phase
+of concrete generic record, variant, and compiler-supplied Foundation
+collection instances. `WVGT 1.0` is compiler-phase
 evidence: it lets symbol binding, typed WIR, and WVB emission refer to one
 monomorphic type identity without packing arbitrary nested arguments into a
 `u32` or adding runtime generics.
@@ -62,8 +63,11 @@ The type catalog shares the frozen generic bounds:
 
 Within compiler evidence only, catalog instance `i` has shape
 `0x80000000 + i`, for `i` from zero through 255. Values in
-`0x80000000..0x800000ff` never enter WVB. They are replaced by ordinary
-concrete record or variant type identities during emission. All other values at
+`0x80000000..0x800000ff` never enter WVB. Records, variants, and fixed arrays
+are replaced by their concrete WVB type identities during emission. Owned
+vectors and immutable sequences remain private compiler identities until their
+WVB 1.18 operation/runtime checkpoint is connected; a WVB publication attempt
+that reaches one is rejected rather than erasing or guessing its meaning. All other values at
 or above `0x80000000` are invalid type arguments in WVGT 1.0.
 
 An entry may refer to an earlier WVGT shape as a type argument. It may not refer
@@ -91,7 +95,7 @@ Each instance has a 28-byte prefix:
 | Offset | Size | Meaning |
 | ---: | ---: | --- |
 | 0 | 4 | Canonical WVSD declaration identity. |
-| 4 | 4 | WVSD declaration kind: record `4` or variant `8`. |
+| 4 | 4 | Concrete kind: record `4`, variant `8`, fixed array `10`, owned vector `11`, or immutable sequence `12`. |
 | 8 | 4 | Exact nesting depth. |
 | 12 | 4 | First-admission origin module identity. |
 | 16 | 4 | First-admission source-byte offset. |
@@ -124,7 +128,9 @@ Complete validation checks:
 
 - exact magic, version, total length, retained-byte count, and aggregate values;
 - every count and limit before an indexed read or allocation;
-- record/variant declaration kinds and non-sentinel identities and origins;
+- admitted declaration/intrinsic kinds and non-sentinel identities and origins;
+- canonical edition-1 `Foundationˉcollections` module identity for fixed arrays,
+  owned vectors, and immutable sequences;
 - complete WVGS solutions with one through 32 valid ordered arguments;
 - exact fixed-integer constant width and value bounds;
 - private-shape range, earlier-instance ordering, and recomputed depth;
@@ -180,8 +186,11 @@ An earlier WVGT reference retains its private shape in materialized field
 evidence. This prevents an ordinary source nominal target from being confused
 with an equal numeric output Types index after templates are removed. Final WVB
 shape planning resolves the private identity to `65536 + output-index` for a
-record or `196608 + output-index` for a variant and validates its exact kind.
-No private shape survives WVB serialization. Each evidence stream is at most
+record, `196608 + output-index` for a variant, or the exact fixed-array type.
+Vector and Sequence materialization entries deliberately have no fields or
+cases and remain unsupported for WVB publication until their runtime-backed
+shape and operations are connected. No private shape survives successful WVB
+serialization. Each evidence stream is at most
 4 MiB; all three streams plus the retained catalog are at most 16 MiB. Capacity
 is checked before concatenation, and a failed plan publishes empty derived
 evidence plus the first failing instance rather than a prefix.
@@ -276,6 +285,17 @@ The four-fragment 15,842,304-byte hosted Windows executable has SHA-256
 returns `42`, and writes no output. The independent
 `generic-nominal-type-binding` owner reproduces this boundary through the
 content-keyed project and hosted-application caches.
+
+`Fixed-Array-Type-Binding-Self-Test.wv` now also admits the canonical
+`Foundationˉcollections.Vector<T>` and `Sequence<T>` identities as WVGT kinds
+`11` and `12`. Fourteen added groups cover direct and repeated admission,
+nested dependency order, exact element evidence, trailing commas, wrong arity
+and argument kind, bare use, validated fieldless layouts and materialization,
+rejection of a lookalike module, and rejection of hostile catalog evidence that
+names that lookalike as an intrinsic owner. Together with the existing generic,
+array, parser, and borrow groups, the focused owner reports 59 cases and returns
+`42` without output. This checkpoint does not claim Vector operations or WVB
+runtime support.
 
 `Generic-Nominal-Type-Layout-Self-Test.wv` adds 21 focused assertions over
 concrete record and variant layouts. It verifies field and case order, total

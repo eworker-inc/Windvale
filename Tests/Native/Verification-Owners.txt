@@ -26,7 +26,7 @@ assembler-golden|Test-Assembler-Golden|4|4|Tests: 4, Passed: 4, Failed: 0
 wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
 source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
 generic-nominal-declarations|Test-Generic-Nominal-Declarations|12|2|native generic nominal declarations status=Passed cases=12 result=42
-generic-nominal-type-binding|Test-Generic-Nominal-Type-Binding|45|2|native generic nominal type binding status=Passed cases=45 result=42
+generic-nominal-type-binding|Test-Generic-Nominal-Type-Binding|59|2|native generic nominal type binding status=Passed cases=59 result=42
 generic-nominal-type-layout|Test-Generic-Nominal-Type-Layout|21|2|native generic nominal type layout status=Passed cases=21 result=42
 generic-nominal-type-materialization|Test-Generic-Nominal-Type-Materialization|28|2|native generic nominal type materialization status=Passed cases=28 result=42
 generic-nominal-wvlb-carrier|Test-Generic-Nominal-Wvlb-Carrier|20|2|native generic nominal WVLB carrier status=Passed cases=20 result=42

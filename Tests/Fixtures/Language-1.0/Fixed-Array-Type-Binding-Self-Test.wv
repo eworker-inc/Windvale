@@ -2,8 +2,11 @@ module Languageˉoneˉfixedˉarrayˉtypeˉbindingˉselfˉtest profile portable;
 
 import Compilerˉsourceˉgenericˉlowering as Generics;
 import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayout;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉgenericˉtypeˉmaterialization as Materialization;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 
@@ -128,11 +131,36 @@ export fn Run() -> i32 {
     Source = Textˉconcat(
         Source, "// useˉunqualified Array<u8, 2u64>\n"
     );
+    Source = Textˉconcat(
+        Source, "// useˉvector Collections.Vector<u32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvectorˉrepeat Collections.Vector<u32>\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "// useˉsequenceˉnested Collections.Sequence<Collections.Vector<u8>>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉsequence Collections.Sequence<u32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvectorˉtrailing Collections.Vector<u32,>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvectorˉextra Collections.Vector<u8, u32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvectorˉkind Collections.Vector<8u32>\n"
+    );
+    Source = Textˉconcat(
+        Source, "// useˉvectorˉbare Collections.Vector\n"
+    );
     let Foundation: text = Textˉconcat(
         "\nmodule Foundationˉcollections;\nprofile core;\n",
         Textˉconcat(
             "platform linux, windows, windvale;\nauthority library;\n\n",
-            "// Array<T, N> is a compiler-supplied Foundation intrinsic.\n"
+            "// Array<T, N>, Vector<T>, and Sequence<T> are compiler-supplied Foundation intrinsics.\n"
         )
     );
     let Input: bytes = Sourceˉsymbolsˉtwoˉeditionˉone(Source, Foundation);
@@ -269,6 +297,125 @@ export fn Run() -> i32 {
         return 12;
     }
 
+    Binding = Bind(Input, Scan, Symbols, View.Source, "useˉvector ", Catalog);
+    if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Genericˉstatus != Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Binding.Shape != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(5u32) {
+        return 40;
+    }
+    Catalog = Bindingˉcatalog(Binding);
+    let Vectorˉelement: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 5u32, 0u32
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) != 6u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(Catalog, 5u32) != 11u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉmodule(Catalog, 5u32) != 1u32 ||
+        !Vectorˉelement.Valid || Vectorˉelement.Kind != 1u32 ||
+        Vectorˉelement.Low != 3u32 {
+        return 41;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvectorˉrepeat ", Catalog
+    );
+    if Binding.Shape != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(5u32) ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Bindingˉcatalog(Binding)
+        ) != 6u32 {
+        return 53;
+    }
+
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉsequenceˉnested ", Catalog
+    );
+    if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Shape != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(7u32) {
+        return 43;
+    }
+    Catalog = Bindingˉcatalog(Binding);
+    let Sequenceˉelement: Generics.Compilerˉsourceˉgenericˉargument =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog, 7u32, 0u32
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) != 8u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(Catalog, 6u32) != 11u32 ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(Catalog, 7u32) != 12u32 ||
+        !Sequenceˉelement.Valid || Sequenceˉelement.Low !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(6u32) ||
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉmaximumˉdepth(Catalog) != 2u32 {
+        return 44;
+    }
+
+    Binding = Bind(Input, Scan, Symbols, View.Source, "useˉsequence ", Catalog);
+    if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Binding.Shape != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(8u32) {
+        return 45;
+    }
+    Catalog = Bindingˉcatalog(Binding);
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvectorˉtrailing ", Catalog
+    );
+    if Binding.Shape != Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(5u32) {
+        return 46;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvectorˉextra ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity {
+        return 47;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvectorˉkind ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch {
+        return 48;
+    }
+    Binding = Bind(
+        Input, Scan, Symbols, View.Source, "useˉvectorˉbare ", Catalog
+    );
+    if Binding.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity {
+        return 49;
+    }
+
+    let Vectorˉlayout: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 5u32
+        );
+    let Sequenceˉlayout: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, 8u32
+        );
+    if Vectorˉlayout.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Vectorˉlayout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector ||
+        Sequenceˉlayout.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Valid ||
+        Sequenceˉlayout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence ||
+        Vectorˉlayout.Fields != 0u32 || Sequenceˉlayout.Fields != 0u32 {
+        return 50;
+    }
+    let Collectionˉplan:
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
+            Input, Scan, Symbols, Catalog, 32u32
+        );
+    if Collectionˉplan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Collectionˉplan.Instances != 9u32 || Collectionˉplan.Records != 0u32 ||
+        Collectionˉplan.Variants != 0u32 || Collectionˉplan.Fields != 0u32 ||
+        Bytesˉlength(Collectionˉplan.Entryˉevidence) != 324u32 ||
+        !Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉisˉvalid(
+            Input, Scan, Symbols, Collectionˉplan
+        ) {
+        return 51;
+    }
+
     var Wrongˉsource: text = "module Wrongˉarray;\n";
     Wrongˉsource = Textˉconcat(Wrongˉsource, "profile core;\n");
     Wrongˉsource = Textˉconcat(
@@ -281,6 +428,9 @@ export fn Run() -> i32 {
     Wrongˉsource = Textˉconcat(Wrongˉsource, "fn Root() -> i32 { return 0; }\n");
     Wrongˉsource = Textˉconcat(
         Wrongˉsource, "// useˉwrong Collections.Array<u8, 2u64>\n"
+    );
+    Wrongˉsource = Textˉconcat(
+        Wrongˉsource, "// useˉwrongˉvector Collections.Vector<u8>\n"
     );
     let Wrongˉinput: bytes = Sourceˉsymbolsˉtwoˉeditionˉone(
         Wrongˉsource,
@@ -305,6 +455,52 @@ export fn Run() -> i32 {
     if Wrongˉbinding.Status !=
         Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
         return 13;
+    }
+    let Wrongˉvectorˉbinding:
+        Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Bind(
+            Wrongˉinput, Wrongˉscan, Wrongˉsymbols,
+            Wrongˉview.Source, "useˉwrongˉvector ",
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty()
+        );
+    if Wrongˉvectorˉbinding.Status !=
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
+        return 52;
+    }
+    var Hostileˉsolution:
+        Generics.Compilerˉsourceˉgenericˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+            Bytesˉfromˉu32ˉlittle(1u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+    Hostileˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+            Hostileˉsolution, 0u32, 1u32, 2u32, 0u32, 0u32, 0u32
+        );
+    Hostileˉsolution =
+        Generics.Compilerˉsourceˉgenericˉsolutionˉfinish(
+            Hostileˉsolution
+        );
+    let Hostileˉadmission:
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty(),
+            0u32, 11u32, 1u32, 0u32, 16u32, Hostileˉsolution
+        );
+    let Hostileˉlayout:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Wrongˉinput, Wrongˉscan, Wrongˉsymbols,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+                Hostileˉadmission
+            ),
+            0u32
+        );
+    if Hostileˉlayout.Genericˉstatus !=
+            Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence ||
+        Hostileˉlayout.Symbolˉstatus !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype {
+        return 54;
     }
     return 42;
 }

@@ -120,7 +120,8 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
             Catalog, Reference
         );
-    if Kind == 4u32 || Kind == 8u32 || Kind == 10u32 { return Shape; }
+    if Kind == 4u32 || Kind == 8u32 || Kind == 10u32 ||
+        Kind == 11u32 || Kind == 12u32 { return Shape; }
     return 0u32;
 }
 
@@ -183,8 +184,12 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
             (Layout.Kind ==
                     Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant &&
                 Bytesˉlength(Layout.Itemˉevidence) != Layout.Items * 16u32) ||
-            (Layout.Kind ==
-                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray &&
+            ((Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray ||
+              Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector ||
+              Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence) &&
                 (Layout.Fields != 0u32 ||
                  Bytesˉlength(Layout.Itemˉevidence) != 0u32 ||
                  Bytesˉlength(Layout.Fieldˉevidence) != 0u32)) {
@@ -301,7 +306,11 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
             }
             Cases = Cases + Layout.Items;
         } else if Layout.Kind !=
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray {
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray &&
+            Layout.Kind !=
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector &&
+            Layout.Kind !=
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence {
             return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
                 Input,
                 Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,

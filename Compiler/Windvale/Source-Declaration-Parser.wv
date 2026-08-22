@@ -66,6 +66,8 @@ export enum Compilerˉsourceˉdeclarationˉkind {
     Optionalˉcapability = 8;
     Variant = 9;
     Fixedˉarray = 10;
+    Ownedˉvector = 11;
+    Immutableˉsequence = 12;
 }
 
 export record Compilerˉparseˉstep {

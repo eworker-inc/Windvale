@@ -4,5 +4,6 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
-// Array<T, N> is a compiler-supplied Foundation intrinsic. This source module
-// owns its canonical import identity without introducing a constructible record.
+// Array<T, N>, Vector<T>, and Sequence<T> are compiler-supplied Foundation
+// intrinsics. This source module owns their canonical import identities without
+// introducing forgeable constructible records.

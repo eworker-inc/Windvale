@@ -605,6 +605,8 @@ export fn Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant { return 7u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant { return 8u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray { return 10u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector { return 11u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence { return 12u32; }
     return 0u32;
 }
 
@@ -620,6 +622,8 @@ export fn Compilerˉsourceˉsymbolsˉdeclarationˉkind(
     if Value == 7u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant; }
     if Value == 8u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant; }
     if Value == 10u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray; }
+    if Value == 11u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector; }
+    if Value == 12u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence; }
     return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End;
 }
 
@@ -1409,22 +1413,39 @@ export fn Compilerˉsourceˉsymbolsˉquery(
     );
 }
 
-export fn Compilerˉsourceˉsymbolsˉfoundationˉarrayˉmodule(
+fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Lookup: bytes,
     Owner: u32,
     Source: bytes,
     Nameˉoffset: u32,
-    Nameˉlength: u32
+    Nameˉlength: u32,
+    Intrinsic: u32
 ) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
     let Query: Compilerˉsourceˉsymbolˉquery = Compilerˉsourceˉsymbolsˉquery(
         Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength
     );
-    if !Query.Qualified || !Query.Aliasˉfound ||
-        !Compilerˉsourceˉsymbolsˉnameˉequals(
+    if !Query.Qualified || !Query.Aliasˉfound {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    var Intrinsicˉmatches: bool = false;
+    if Intrinsic == 1u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Query.Nameˉoffset, Query.Nameˉlength, "Array"
-        ) {
+        );
+    }
+    if Intrinsic == 2u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vector"
+        );
+    }
+    if Intrinsic == 3u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequence"
+        );
+    }
+    if !Intrinsicˉmatches {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
@@ -1438,6 +1459,48 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉarrayˉmodule(
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
     return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Query.Target);
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉarrayˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    return Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+        Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength, 1u32
+    );
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉvectorˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    return Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+        Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength, 2u32
+    );
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉsequenceˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    return Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+        Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength, 3u32
+    );
 }
 
 export fn Compilerˉsourceˉsymbolsˉdeclarationˉisˉexported(

@@ -590,6 +590,24 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
             Compilerˉsourceˉgenericˉtypeˉshapeˉnominalˉkind(
                 Symbols, Catalog, Instance, Arrayˉelement.Low
             );
+        var Arrayˉmoduleˉvalid: bool = Arrayˉmodule < Scan.Modules;
+        if Arrayˉmoduleˉvalid {
+            let Arrayˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Arrayˉmodule
+                );
+            let Arrayˉheader:
+                Sourceˉdeclarations.Compilerˉsourceˉheader =
+                Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                    Arrayˉview.Source
+                );
+            Arrayˉmoduleˉvalid = Arrayˉview.Edition == 1u32 &&
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                    Arrayˉview.Source,
+                    Arrayˉheader.Nameˉoffset, Arrayˉheader.Nameˉlength,
+                    "Foundationˉcollections"
+                );
+        }
         if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
                 Catalog, Instance
             ) != 2u32 ||
@@ -603,7 +621,7 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
                 Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability ||
             !Arrayˉcount.Valid || Arrayˉcount.Kind != 2u32 ||
             Arrayˉcount.Shape != 8u32 || Arrayˉcount.High != 0u32 ||
-            Arrayˉcount.Low > 4095u32 || Arrayˉmodule >= Scan.Modules ||
+            Arrayˉcount.Low > 4095u32 || !Arrayˉmoduleˉvalid ||
             Arrayˉoffset != 0u32 {
             return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
                 Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
@@ -622,6 +640,85 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray,
             0u32, Arrayˉmodule, Arrayˉcount.Low, 0u32,
             Arrayˉempty, Arrayˉempty, Catalog,
+            0u32, 1u32, 1u32
+        );
+    }
+    if Kindˉvalue == 11u32 || Kindˉvalue == 12u32 {
+        let Collectionˉelement:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Catalog, Instance, 0u32
+            );
+        let Collectionˉmodule: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉmodule(
+                Catalog, Instance
+            );
+        let Collectionˉoffset: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉoffset(
+                Catalog, Instance
+            );
+        let Collectionˉelementˉkind:
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind =
+            Compilerˉsourceˉgenericˉtypeˉshapeˉnominalˉkind(
+                Symbols, Catalog, Instance, Collectionˉelement.Low
+            );
+        var Collectionˉmoduleˉvalid: bool = Collectionˉmodule < Scan.Modules;
+        if Collectionˉmoduleˉvalid {
+            let Collectionˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Collectionˉmodule
+                );
+            let Collectionˉheader:
+                Sourceˉdeclarations.Compilerˉsourceˉheader =
+                Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                    Collectionˉview.Source
+                );
+            Collectionˉmoduleˉvalid = Collectionˉview.Edition == 1u32 &&
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                    Collectionˉview.Source,
+                    Collectionˉheader.Nameˉoffset,
+                    Collectionˉheader.Nameˉlength,
+                    "Foundationˉcollections"
+                );
+        }
+        if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+                Catalog, Instance
+            ) != 1u32 ||
+            !Collectionˉelement.Valid || Collectionˉelement.Kind != 1u32 ||
+            Collectionˉelement.Shape != 0u32 ||
+            Collectionˉelement.Low == 10u32 ||
+            Collectionˉelement.High != 0u32 ||
+            !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉvalid(
+                Symbols, Catalog, Instance, Collectionˉelement.Low
+            ) || Compilerˉsourceˉgenericˉtypeˉshapeˉisˉbuilder(
+                Collectionˉelement.Low
+            ) || Collectionˉelementˉkind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability ||
+            !Collectionˉmoduleˉvalid || Collectionˉoffset != 0u32 {
+            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                Instance, Catalog, Collectionˉoffset, 1u32, 1u32
+            );
+        }
+        let Collectionˉempty: bytes = Bytesˉslice(
+            Catalog.Evidence, 0u32, 0u32
+        );
+        var Collectionˉdeclarationˉkind:
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind =
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Ownedˉvector;
+        if Kindˉvalue == 12u32 {
+            Collectionˉdeclarationˉkind =
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Immutableˉsequence;
+        }
+        return Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Instance,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Instance),
+            Collectionˉdeclarationˉkind,
+            0u32, Collectionˉmodule, 0u32, 0u32,
+            Collectionˉempty, Collectionˉempty, Catalog,
             0u32, 1u32, 1u32
         );
     }
