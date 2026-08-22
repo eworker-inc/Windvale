@@ -935,6 +935,7 @@ fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
 export fn Hˉexecutable(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     var Envelope: u32 = 12u32;
     var Sectionˉkind: u32 = 1u32;
     var Payload: u32 = 0u32;
@@ -1508,6 +1509,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Hasˉpush = Callˉstate.Hasˉpush;
                 Pushˉkind = Callˉstate.Pushˉkind;
                 Pushˉnominal = Callˉstate.Pushˉnominal;
+                if Minor >= 20u32 && Pushˉkind == 23u32 {
+                    Pushˉkind = 25u32;
+                }
                 Handled = true;
             }
 
@@ -1545,7 +1549,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Handled = true;
             }
             if Opcode == 81u32 {
-                let Returnˉexpectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Returnˉtype));
+                var Returnˉexpectedˉkind: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Input, Returnˉtype)
+                );
                 if Returnˉexpectedˉkind == 21u32 { return Invalid; }
                 var Returnˉexpectedˉnominal: u32 = 0u32;
                 if Returnˉexpectedˉkind == 7u32 || Returnˉexpectedˉkind == 8u32 ||
@@ -1554,6 +1560,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Returnˉexpectedˉkind == 23u32 ||
                     Returnˉexpectedˉkind == 24u32 {
                     Returnˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉtype + 1u32);
+                }
+                if Minor >= 20u32 && Returnˉexpectedˉkind == 23u32 {
+                    Returnˉexpectedˉkind = 25u32;
                 }
                 if Returnˉexpectedˉkind != 0u32 {
                     if Depth == 0u32 { return Invalid; }

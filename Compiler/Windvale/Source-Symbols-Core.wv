@@ -1455,6 +1455,16 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
             Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequenceˉat"
         );
     }
+    if Intrinsic == 6u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vectorˉlength"
+        );
+    }
+    if Intrinsic == 7u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vectorˉfreeze"
+        );
+    }
     if !Intrinsicˉmatches {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }

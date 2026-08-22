@@ -1148,6 +1148,17 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
 node "$script_directory/Verify-Language-1.0-Sequence-Reads.mjs" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
     "$work/Sequence-Read.wvb" "$work" || exit $?
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Freeze-Main-Pipeline.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$work/Vector-Read-Freeze.wvb" \
+    >"$work/Vector-Read-Freeze.out" 2>"$work/Vector-Read-Freeze.err" || exit $?
+[[ ! -s $work/Vector-Read-Freeze.err ]] || exit 1
+node "$script_directory/Verify-Language-1.0-Vector-Reads-Freeze.mjs" \
+    "$work/Verifier.elf" "$work/Floating-Runner.elf" \
+    "$work/Vector-Read-Freeze.wvb" "$work" || exit $?
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Wrong-Owner.wv" \
     Sequence-Read-Wrong-Owner Invalidˉcollection \
@@ -1165,12 +1176,45 @@ expect_profiled_analysis_failure_with_dependencies \
     Sequence-Read-Lookalike Invalidˉargument \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Lookalike-Module.wv" || exit $?
+if node "$script_directory/Run-Split-Compiler.mjs" \
+    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Use-After.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$work/Vector-Freeze-Use-After.wvb" \
+    >"$work/Vector-Freeze-Use-After.out" \
+    2>"$work/Vector-Freeze-Use-After.err"; then
+    exit 1
+fi
+[[ ! -e $work/Vector-Freeze-Use-After.wvb ]] || exit 1
+[[ $(<"$work/Vector-Freeze-Use-After.err") == \
+    'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir' ]] || exit 1
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Wrong-Borrow.wv" \
+    Vector-Freeze-Wrong-Borrow Invalidˉborrow \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Parameter.wv" \
+    Vector-Read-Parameter Invalidˉcollection \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Unsupported-Element.wv" \
+    Vector-Read-Unsupported-Element Invalidˉcollection \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Wrong-Borrow.wv" \
+    Vector-Read-Wrong-Borrow Invalidˉborrow \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
 vector_sequence_types_wvb_bytes=$(wc -c < "$work/Vector-Sequence-Types.wvb")
 sequence_read_wvb_bytes=$(wc -c < "$work/Sequence-Read.wvb")
+vector_read_freeze_wvb_bytes=$(wc -c < "$work/Vector-Read-Freeze.wvb")
 printf 'INFO  language 1 vector-sequence types wvb-bytes=%s\n' \
     "$vector_sequence_types_wvb_bytes"
 printf 'INFO  language 1 sequence reads wvb-bytes=%s cases=10\n' \
     "$sequence_read_wvb_bytes"
+printf 'INFO  language 1 vector reads and freeze wvb-bytes=%s cases=13\n' \
+    "$vector_read_freeze_wvb_bytes"
 echo 'PASS  language 1 front door phase=vector-sequence-types item=9/13'
 
 echo 'START language 1 front door phase=unit-never item=10/13'
@@ -1424,4 +1468,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=393 frozen-inputs=251 source-fixtures=92 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=406 frozen-inputs=251 source-fixtures=92 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=13 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

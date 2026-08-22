@@ -2004,3 +2004,60 @@ its one-fragment Windows package is 797,184 bytes at SHA-256
 `8307a87aa7f70cc9519ade98140554db9e5b6de834d39c86149ec8441624b8d6`.
 That freshly reconstructed tool admits the exact Sequence fixture used by this
 checkpoint. No native opcode or packaging bound changed.
+
+## Slice 4/5 exact Foundation Vector read and freeze checkpoint
+
+Decision 0830 connects `Vectorˉlength` and `Vectorˉfreeze` to the exact
+`Foundationˉcollections` owner. Length requires an explicit immutable borrow of
+a direct owned non-parameter local and preserves it. Freeze requires that local
+as a value, consumes it, and returns the exact same-element Sequence declared by
+the enclosing function. Parameters, mutable borrow, borrowed freeze, indirect
+expressions, resource-bearing elements, and use after freeze reject.
+
+The implementation adds WVIR operations 169 and 170. Their target is the source
+local slot, their auxiliary shape is the validated WVGT Vector identity, and
+freeze's result is the validated WVGT Sequence identity. Independent WVIR
+validation reconstructs both element shapes. The fixture exposed and fixed a
+general catalog-admission omission: the optimized signature pre-scan considered
+only user-declared generic nominals, so a compiler-supplied collection used only
+as a function return could receive a private shape without a retained WVGT
+entry. The pre-scan now also activates for the exact Foundation collections
+module and admits parameter and return types before body lowering.
+
+Emission uses WVB 1.20 `local.take` for Vector stores, Vector returns, and both
+new operations. Length takes the owner, executes `CA`, stores the scalar result,
+and restores the same unique Vector local. Freeze takes the owner and executes
+`C9` without restoring it. The compiler-aligned verifier now requires a WVB 1.20
+Vector-returning function to return unique evidence and models its call result
+as unique; the runtime representation remains unchanged.
+
+The positive two-module source fixture publishes a 288-byte WVLB, a 640-byte
+WVIR, and a deterministic 546-byte WVB 1.20 module at SHA-256
+`fc51afb9c7b8a17dd9fd044e971f22944e0d96ec872de910de3f0114d066e20f`.
+The 240,230-byte verifier candidate at SHA-256
+`ec612f4b1950121ce1c2d519472c24399a13975502bb690c49549d4c2460e833`
+accepts it, and the unchanged 228,106-byte WVB 1.20 runner returns 42. Its
+collection functions are retained as compiler/verifier lowering oracles but are
+not called by `Main`; the existing direct WVB 1.20 fixture remains the runtime
+oracle until fallible source Vector construction lands.
+
+Eight harness cases cover the verifier, runner, old minor, shared-return and
+shared-read substitutions, and three type-immediate corruptions. Five source
+cases reject use after freeze, wrong borrow modes, parameters, and unsupported
+elements. The 13 additions reuse the existing Vector/Sequence phase rather than
+repeat compiler bootstrap, verifier construction, or runner construction.
+
+The 108-owner verification registry now declares 5,190 cases at SHA-256
+`e4e10295a6ebe799ebd86bbe649569bbda9bb7c8ee5371a370d3b5de81f84d66`.
+
+The first source ownership profile is intentionally straight-line: one basic
+block and at most one outstanding consumed Vector local per function.
+Multiple outstanding moves, branch and loop fixed points, parameter transfer,
+general expected-type propagation, fallible construction, recoverable append,
+and non-scalar elements remain explicit next work.
+
+`Source-Wir-Core.wv` is now a stronger cohesion signal, not an evidence-limit
+failure. The maintained analyzer and emitter split projects still compile under
+the fixed four-MiB WVIR product bound. The recommended later extraction owns
+collection signatures, lowering, ownership validation, and dynamic WVIR checks
+together; it must not create numbered fragments or hide cross-phase invariants.

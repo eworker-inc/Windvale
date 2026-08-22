@@ -132,6 +132,7 @@ $NativeCases = @(
             'Tools/Native/Verify-Language-1.0-Multi-Field-Variants.mjs',
             'Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs',
             'Tools/Native/Verify-Language-1.0-Sequence-Reads.mjs',
+            'Tools/Native/Verify-Language-1.0-Vector-Reads-Freeze.mjs',
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
             'Tools/Native/Test-Language-1.0-Front-Door.cmd',
             'Tools/Native/Test-Language-1.0-Front-Door.sh',
@@ -3506,7 +3507,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5177 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5190 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

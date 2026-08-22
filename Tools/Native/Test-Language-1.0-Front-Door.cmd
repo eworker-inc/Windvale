@@ -946,6 +946,19 @@ set "FailureStep=sequence-reads-verifier-runtime"
 node "%Native%\Verify-Language-1.0-Sequence-Reads.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
     "%Work%\Sequence-Read.wvb" "%Work%" || goto :cleanup
+set "FailureStep=vector-reads-freeze-compile"
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Freeze-Main-Pipeline.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Vector-Read-Freeze.wvb" ^
+    >"%Work%\Vector-Read-Freeze.out" 2>"%Work%\Vector-Read-Freeze.err" || goto :cleanup
+for %%F in ("%Work%\Vector-Read-Freeze.err") do if not "%%~zF"=="0" goto :cleanup
+set "FailureStep=vector-reads-freeze-verifier-runtime"
+node "%Native%\Verify-Language-1.0-Vector-Reads-Freeze.mjs" ^
+    "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
+    "%Work%\Vector-Read-Freeze.wvb" "%Work%" || goto :cleanup
 set "FailureStep=sequence-reads-rejections"
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Wrong-Owner.wv" ^
@@ -964,10 +977,40 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     "Sequence-Read-Lookalike" "Invalidˉargument" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Lookalike-Module.wv" || goto :cleanup
+set "FailureStep=vector-reads-freeze-rejections"
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Use-After.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Vector-Freeze-Use-After.wvb" ^
+    >"%Work%\Vector-Freeze-Use-After.out" 2>"%Work%\Vector-Freeze-Use-After.err"
+if not errorlevel 1 goto :cleanup
+if exist "%Work%\Vector-Freeze-Use-After.wvb" goto :cleanup
+findstr /x /c:"source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir" ^
+    "%Work%\Vector-Freeze-Use-After.err" >nul || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Wrong-Borrow.wv" ^
+    "Vector-Freeze-Wrong-Borrow" "Invalidˉborrow" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Parameter.wv" ^
+    "Vector-Read-Parameter" "Invalidˉcollection" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Unsupported-Element.wv" ^
+    "Vector-Read-Unsupported-Element" "Invalidˉcollection" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Wrong-Borrow.wv" ^
+    "Vector-Read-Wrong-Borrow" "Invalidˉborrow" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
 for %%F in ("%Work%\Vector-Sequence-Types.wvb") do set "VectorSequenceTypesWvbBytes=%%~zF"
 for %%F in ("%Work%\Sequence-Read.wvb") do set "SequenceReadWvbBytes=%%~zF"
+for %%F in ("%Work%\Vector-Read-Freeze.wvb") do set "VectorReadFreezeWvbBytes=%%~zF"
 echo INFO  language 1 vector-sequence types wvb-bytes=%VectorSequenceTypesWvbBytes%
 echo INFO  language 1 sequence reads wvb-bytes=%SequenceReadWvbBytes% cases=10
+echo INFO  language 1 vector reads and freeze wvb-bytes=%VectorReadFreezeWvbBytes% cases=13
 echo PASS  language 1 front door phase=vector-sequence-types item=9/13
 
 set "FailureStep=unit-never-compile-a"
@@ -1338,7 +1381,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=393 frozen-inputs=251 source-fixtures=92 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=406 frozen-inputs=251 source-fixtures=92 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=13 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_analysis_failure

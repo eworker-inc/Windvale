@@ -1,0 +1,25 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉreadˉfreeze;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+fn Acquire() -> Collections.Vector<i32> {
+    return Acquire();
+}
+
+export fn Readˉlength() -> u64 {
+    let Values: Collections.Vector<i32> = Acquire();
+    return Collections.Vectorˉlength(borrow Values);
+}
+
+export fn Freeze() -> Collections.Sequence<i32> {
+    let Values: Collections.Vector<i32> = Acquire();
+    return Collections.Vectorˉfreeze(Values);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

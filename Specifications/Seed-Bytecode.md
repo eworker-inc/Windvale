@@ -492,21 +492,23 @@ retained maximum. `sequence.element` checks the full `u64` index and reports
 
 The WVB 1.19 verifier attaches non-serialized linear evidence to the Vector
 produced by `vector.create_reserved`. Append preserves that evidence, Vector
-length observes without consuming it, and freeze consumes it. An ordinary
-`local.load`, field extraction, array extraction, or call result does not create
-the evidence, so it cannot be used by these Vector operations. This deliberately
-keeps the first executable subset alias-free. Sequence is shared immutable and
-therefore retains ordinary copyable local behavior.
+length observes without consuming it, and freeze consumes it. In WVB 1.19 an
+ordinary `local.load`, field extraction, array extraction, or call result does
+not create the evidence, so it cannot be used by these Vector operations. This
+deliberately keeps the first executable subset alias-free. Sequence is shared
+immutable and therefore retains ordinary copyable local behavior.
 
 WVB 1.20 `local.take` transfers the unique evidence from an exact kind-23
 non-parameter local to the operand stack. It does not retain or release the
 backing. The source local becomes unavailable and its runtime cell becomes
-zero; a later unique `local.store` may initialize it again. Parameter slots
+zero; a later unique `local.store` may initialize it again. A WVB 1.20 function
+declared to return exact Vector must return unique evidence, and a successful
+`call` to that declaration produces unique Vector evidence. Parameter slots
 cannot be taken in this checkpoint because calls do not yet transfer unique
-Vector evidence. `local.load` remains a retaining shared read and never creates
-unique evidence. Consequently, every Vector `local.store` in a WVB 1.20 module
-consumes a unique Vector, while WVB 1.19 retains its earlier non-unique
-local-store behavior for compatibility.
+Vector arguments into parameters. `local.load` remains a retaining shared read
+and never creates unique evidence. Consequently, every Vector `local.store` in
+a WVB 1.20 module consumes a unique Vector, while WVB 1.19 retains its earlier
+non-unique local-store behavior for compatibility.
 
 The WVB 1.20 verifier proves definite Vector-local availability before typed
 execution. Vector parameters begin initialized and available for shared loads

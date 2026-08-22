@@ -173,7 +173,11 @@ source closure, and bytes. The carrier and independent validator are
 implemented. Main WVIR construction now threads its admitted WVGT catalog into
 this entry point, so a generic nominal signature or explicit local selects WVLB
 1.3 while ordinary and function-specialization-only source retain their prior
-bytes.
+bytes. Signature catalog admission scans parameter and return types whenever the
+source set contains either a generic nominal declaration or the exact
+`Foundationˉcollections` module. This ensures a collection type used only as a
+function return—such as `Sequence<i32>` returned by `Vectorˉfreeze`—has a real
+WVGT entry rather than an out-of-catalog private shape.
 
 Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
 
@@ -206,14 +210,16 @@ One combined full pass constructs local evidence and binds body references. The 
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 
-Before ambient intrinsic lookup, a qualified call may select the two
-compiler-supplied Sequence reads only through the exact Foundation collection
-module query. Binding records `Sequenceˉlength` as a one-argument intrinsic
-with WVIR operation identity 167 and `Sequenceˉat` as a two-argument intrinsic
-with identity 168. A lookalike module falls through to ordinary callable lookup
-and cannot obtain either synthetic match. The element-dependent parameter and
-result shapes are resolved later from the validated WVGT catalog; WVLB does not
-serialize a guessed generic shape for these calls.
+Before ambient intrinsic lookup, a qualified call may select four
+compiler-supplied collection operations only through the exact Foundation
+collection module query. Binding records `Sequenceˉlength` as a one-argument
+intrinsic with WVIR operation identity 167, `Sequenceˉat` as a two-argument
+intrinsic with identity 168, `Vectorˉlength` as a one-argument intrinsic with
+identity 169, and `Vectorˉfreeze` as a one-argument intrinsic with identity 170.
+A lookalike module falls through to ordinary callable lookup and cannot obtain
+any synthetic match. Element-dependent parameter and result shapes are resolved
+later from the validated WVGT catalog; WVLB does not serialize a guessed generic
+shape for these calls.
 
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 

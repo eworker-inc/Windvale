@@ -570,6 +570,38 @@ passes the collection-aware compiler verifier, and returns 42 from its
 independent `Main`. This checkpoint copies only resource-free scalar elements;
 it does not claim general borrowed-result lowering.
 
+`Tests/Fixtures/Language-1.0/Vector-Read-Freeze-Main-Pipeline.wv` connects the
+owned scalar Vector subset to the same canonical Foundation identity. A direct
+non-parameter `Vector<T>` local may be observed only by the explicit immutable
+borrow `Vectorˉlength(borrow Values)` or consumed by
+`Vectorˉfreeze(Values)`. Parameters, mutable borrows, borrowed freeze operands,
+indirect expressions, and non-scalar element shapes remain rejected. WVIR
+operation 169 carries the exact Vector shape in its auxiliary field and returns
+`u64`; operation 170 carries the Vector auxiliary shape and the exact same-
+element Sequence result shape. Both carry the source-local slot as their target
+and no ordinary operands. Independent WVIR validation reconstructs both types
+from WVGT and rejects a mismatched element or catalog index.
+
+WVB emission uses `local.take` before `CA vector.length`, stores the scalar
+result, then stores the still-unique Vector back into its original local. Freeze
+uses `local.take` followed by `C9 vector.freeze` and leaves that local
+unavailable. A WVB 1.20 function declared to return Vector must return unique
+Vector evidence, and a call to that declaration produces the corresponding
+unique result; generated Vector stores and Vector returns therefore use
+`local.take`, never retaining `local.load`. The initial source ownership check is
+straight-line and admits one outstanding consumed Vector local per function.
+Branch-sensitive moves, multiple simultaneous consumed locals, Vector
+parameters, and general expected-type propagation remain later ownership work.
+
+The 546-byte WVB 1.20 fixture has SHA-256
+`fc51afb9c7b8a17dd9fd044e971f22944e0d96ec872de910de3f0114d066e20f`.
+Its independent `Main` returns 42; its unexecuted collection functions provide
+the exact compiler-lowering and verifier oracle until source-level fallible
+Vector construction is implemented. Six byte-level corruptions cover version,
+unique return, unique length access, and three Types immediates. Five source
+rejections cover use after freeze, wrong borrow modes, parameters, and an
+unsupported element.
+
 The scalar representation uses one eight-byte value cell and the existing
 fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot
 or `0xffffffff`; the high `u32` is

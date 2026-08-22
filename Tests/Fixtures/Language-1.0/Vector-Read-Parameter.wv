@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉreadˉparameter;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+export fn Read(Value: Collections.Vector<i32>) -> u64 {
+    return Collections.Vectorˉlength(borrow Value);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

@@ -1127,6 +1127,7 @@ function Add-Native-Tool-Suite {
         'Verify-Language-1.0-Multi-Field-Variants',
         'Verify-Language-1.0-Vector-Sequence-Runtime',
         'Verify-Language-1.0-Sequence-Reads',
+        'Verify-Language-1.0-Vector-Reads-Freeze',
         'Verify-Generic-Nominal-Main-Pipeline',
         'Verify-Generic-Nominal-Function-Body',
         'Verify-Generic-Nominal-Declaration-Dependency',

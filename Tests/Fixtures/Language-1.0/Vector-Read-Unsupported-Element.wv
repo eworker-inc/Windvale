@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉreadˉunsupportedˉelement;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+fn Acquire() -> Collections.Vector<text> {
+    return Acquire();
+}
+
+export fn Read() -> u64 {
+    let Values: Collections.Vector<text> = Acquire();
+    return Collections.Vectorˉlength(borrow Values);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}
