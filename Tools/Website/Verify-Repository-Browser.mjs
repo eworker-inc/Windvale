@@ -69,8 +69,14 @@ assert.doesNotMatch(Highlightedˉwindvaleˉassembly, /shiki-plain|<script|javasc
 const Readme = Manifest.documents.find((Document) => Document.path === "README.md");
 const Renderedˉreadme = await Readˉpublication(Readme.publishedUrl);
 assert.match(Renderedˉreadme, /^<h1 id="windvale">Windvale<\/h1>/u);
-assert.match(Renderedˉreadme, /src="\/repository\/assets\/[a-f0-9]{64}\.png"/u);
 assert.match(Renderedˉreadme, /href="\/docs\/\?path=Documents%2FProject%2FProgress\.md"/u);
+
+const Progress = Manifest.documents.find((Document) => Document.path === "Documents/Project/Progress.md");
+const Renderedˉprogress = await Readˉpublication(Progress.publishedUrl);
+assert.match(
+    Renderedˉprogress,
+    /<a href="\/repository\/assets\/[a-f0-9]{64}\.svg"><img src="\/repository\/assets\/[a-f0-9]{64}\.svg"/u,
+);
 
 for (const Document of Manifest.documents) {
     assert.match(Document.contentHash, /^[a-f0-9]{64}$/u);
