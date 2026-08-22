@@ -171,7 +171,7 @@ lowering plan and the same bounded function batches. It first traverses every
 batch to validate progress and artifact lengths, prove every relocation field
 is a zero placeholder inside the code chunk that owns it, retain canonical
 relocation order, and construct the segmentable WVO region plan without one
-complete code value. The projected object remains bounded to 32 MiB.
+complete code value. The projected object remains bounded to 64 MiB.
 
 An immutable cursor then yields one exact `(position, bytes)` step in canonical
 WVO order: prefix, one or more code batches, alignment padding, optional
@@ -230,7 +230,7 @@ is atomically visible.
 
 The focused capability-free staging-manifest module owns canonical
 serialization and validation. A valid manifest has exactly `24 + chunks * 12`
-bytes, one through 518 chunks, a nonzero WVO no larger than 32 MiB, and the
+bytes, one through 518 chunks, a nonzero WVO no larger than 64 MiB, and the
 exact 4 MiB ceiling. Indices must equal their entry ordinals; the first
 position is zero; every nonzero length is within the ceiling and remaining WVO
 extent; positions are contiguous; and the final position equals the declared
@@ -266,7 +266,7 @@ manifest snapshot plus the actual bounded metadata chunks. Chunk zero must be
 the exact 49-byte WVO 1.0 x86-64 header and canonical `.text` declaration. The
 compiler-output profile has one or two sections; an optional `.rodata`
 declaration is an exact 27-byte chunk at the computed end of text. Counts,
-flags, alignment, equal data/memory extents, the combined 32 MiB section-data
+flags, alignment, equal data/memory extents, the combined 64 MiB section-data
 ceiling, following manifest boundaries, and the minimum declared symbol and
 relocation tail are checked without loading the intervening section data into
 one value. Valid evidence exposes object length, counts, both section lengths,
@@ -351,7 +351,7 @@ one focused x64 object. It validates the exact `WVFI 1` table, arena geometry,
 record pointers and bounds, then selects immutable payload records by a bounded
 first ordinal, stride of one or two, and fixed header skip with checked aggregate
 accounting. The staged-WVO wrapper retains ordinals two onward with no skip and
-the 32 MiB ceiling. The hosted-container wrapper selects alternating response
+the 64 MiB ceiling. The hosted-container wrapper selects alternating response
 ordinals three onward, skips each 40-byte `WVHU 1` envelope, requires an even
 snapshot count, and bounds at most 31 canonical segment payloads. The WVO path
 has current-host execution evidence; hosted execution remains part of its

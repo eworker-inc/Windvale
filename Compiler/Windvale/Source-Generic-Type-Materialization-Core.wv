@@ -120,7 +120,7 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
             Catalog, Reference
         );
-    if Kind == 4u32 || Kind == 8u32 { return Shape; }
+    if Kind == 4u32 || Kind == 8u32 || Kind == 10u32 { return Shape; }
     return 0u32;
 }
 
@@ -182,7 +182,12 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
                 Bytesˉlength(Layout.Itemˉevidence) != 0u32) ||
             (Layout.Kind ==
                     Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant &&
-                Bytesˉlength(Layout.Itemˉevidence) != Layout.Items * 16u32) {
+                Bytesˉlength(Layout.Itemˉevidence) != Layout.Items * 16u32) ||
+            (Layout.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray &&
+                (Layout.Fields != 0u32 ||
+                 Bytesˉlength(Layout.Itemˉevidence) != 0u32 ||
+                 Bytesˉlength(Layout.Fieldˉevidence) != 0u32)) {
             return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
                 Input,
                 Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
@@ -251,7 +256,8 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
         if Layout.Kind ==
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
             Records = Records + 1u32;
-        } else {
+        } else if Layout.Kind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
             Variants = Variants + 1u32;
             var Case: u32 = 0u32;
             while Case < Layout.Items {
@@ -294,6 +300,14 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
                 Case = Case + 1u32;
             }
             Cases = Cases + Layout.Items;
+        } else if Layout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray {
+            return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                Input,
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
+                Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                Firstˉtype, Catalog, Instance
+            );
         }
         var Field: u32 = 0u32;
         while Field < Layout.Fields {

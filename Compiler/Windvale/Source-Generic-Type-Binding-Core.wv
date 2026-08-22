@@ -4,6 +4,7 @@ import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
@@ -284,6 +285,216 @@ fn Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
         Argumentsˉoffset = Constructorˉargumentsˉoffset;
         Argumentsˉline = Constructorˉargumentsˉline;
         Argumentsˉcolumn = Constructorˉargumentsˉcolumn;
+    }
+    let Arrayˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉarrayˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Token.Offset, Qualifiedˉlength
+        );
+    if Constructorˉnameˉlength == 0u32 && Arrayˉmodule.Found {
+        let Arrayˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Argumentsˉoffset, Argumentsˉline, Argumentsˉcolumn
+            );
+        if Arrayˉleft.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Less {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                Catalog, Arrayˉleft
+            );
+        }
+        let Arrayˉelementˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Arrayˉleft.Nextˉoffset,
+                Arrayˉleft.Nextˉline, Arrayˉleft.Nextˉcolumn
+            );
+        if Arrayˉelementˉtoken.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Integer ||
+            Arrayˉelementˉtoken.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
+                Catalog, Arrayˉelementˉtoken
+            );
+        }
+        let Arrayˉelement: Compilerˉsourceˉgenericˉtypeˉbinding =
+            Compilerˉsourceˉgenericˉtypeˉbindˉnestedˉat(
+                Input, Scan, Symbols, Owner, Source,
+                Arrayˉleft.Nextˉoffset,
+                Arrayˉleft.Nextˉline, Arrayˉleft.Nextˉcolumn,
+                Catalog, Depth + 1u32,
+                Specializationˉsource, Specializationˉgeneric,
+                Specializationˉsolution, Inˉspecialization,
+                Functionˉcatalog, Functionˉinstance,
+                Inˉfunctionˉspecialization,
+                0u32, 0u32, 0u32, 0u32
+            );
+        if Arrayˉelement.Status !=
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Arrayˉelement.Genericˉstatus !=
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉpreserveˉcatalog(
+                Arrayˉelement, Catalog
+            );
+        }
+        let Arrayˉelementˉcatalog:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(Arrayˉelement);
+        let Arrayˉcomma: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Arrayˉelement.Nextˉoffset,
+                Arrayˉelement.Nextˉline, Arrayˉelement.Nextˉcolumn
+            );
+        if Arrayˉcomma.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                Catalog, Arrayˉcomma
+            );
+        }
+        let Arrayˉcountˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Arrayˉcomma.Nextˉoffset,
+                Arrayˉcomma.Nextˉline, Arrayˉcomma.Nextˉcolumn
+            );
+        var Arrayˉcountˉlow: u32 = Arrayˉcountˉtoken.Numericˉvalue;
+        var Arrayˉcountˉhigh: u32 = Arrayˉcountˉtoken.Numericˉhigh;
+        var Arrayˉcountˉvalid: bool = Arrayˉcountˉtoken.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Integer &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnumericˉshape(
+                Arrayˉcountˉtoken.Numericˉkind
+            ) == 8u32;
+        if (Inˉspecialization || Inˉfunctionˉspecialization) &&
+            Arrayˉcountˉtoken.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            let Arrayˉcountˉparameter:
+                Sourceˉsymbols.Compilerˉsourceˉgenericˉparameterˉmatch =
+                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉgenericˉparameter(
+                    Specializationˉsource, Specializationˉgeneric,
+                    Arrayˉcountˉtoken.Offset, Arrayˉcountˉtoken.Length
+                );
+            if Arrayˉcountˉparameter.Found &&
+                !Arrayˉcountˉparameter.Isˉtype &&
+                Arrayˉcountˉparameter.Shape == 8u32 {
+                var Arrayˉcountˉargument:
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+                    Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉargument(
+                        Specializationˉsolution,
+                        Arrayˉcountˉparameter.Index
+                    );
+                if Inˉfunctionˉspecialization {
+                    Arrayˉcountˉargument =
+                        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉargument(
+                            Functionˉcatalog, Functionˉinstance,
+                            Arrayˉcountˉparameter.Index
+                        );
+                }
+                if Arrayˉcountˉargument.Valid &&
+                    Arrayˉcountˉargument.Kind == 2u32 &&
+                    Arrayˉcountˉargument.Shape == 8u32 {
+                    Arrayˉcountˉlow = Arrayˉcountˉargument.Low;
+                    Arrayˉcountˉhigh = Arrayˉcountˉargument.High;
+                    Arrayˉcountˉvalid = true;
+                }
+            }
+        }
+        if !Arrayˉcountˉvalid {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Kindˉmismatch,
+                Catalog, Arrayˉcountˉtoken
+            );
+        }
+        if Arrayˉcountˉhigh != 0u32 || Arrayˉcountˉlow > 4095u32 {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉvalue,
+                Catalog, Arrayˉcountˉtoken
+            );
+        }
+        var Arrayˉright: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Arrayˉcountˉtoken.Nextˉoffset,
+                Arrayˉcountˉtoken.Nextˉline,
+                Arrayˉcountˉtoken.Nextˉcolumn
+            );
+        if Arrayˉright.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Arrayˉright = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Arrayˉright.Nextˉoffset,
+                Arrayˉright.Nextˉline, Arrayˉright.Nextˉcolumn
+            );
+        }
+        var Arrayˉcloseˉoffset: u32 = Arrayˉright.Nextˉoffset;
+        var Arrayˉcloseˉline: u32 = Arrayˉright.Nextˉline;
+        var Arrayˉcloseˉcolumn: u32 = Arrayˉright.Nextˉcolumn;
+        if Arrayˉright.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Shiftˉright {
+            Arrayˉcloseˉoffset = Arrayˉright.Offset + 1u32;
+            Arrayˉcloseˉline = Arrayˉright.Line;
+            Arrayˉcloseˉcolumn = Arrayˉright.Column + 1u32;
+        } else if Arrayˉright.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Greater {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Explicitˉarity,
+                Catalog, Arrayˉright
+            );
+        }
+        let Arrayˉparameterˉkinds: bytes = Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu32ˉlittle(2u32)
+        );
+        let Arrayˉparameterˉshapes: bytes = Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(8u32)
+        );
+        var Arrayˉsolution:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution =
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcreate(
+                Arrayˉparameterˉkinds, Arrayˉparameterˉshapes
+            );
+        Arrayˉsolution =
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                Arrayˉsolution, 0u32, 1u32, Arrayˉelement.Shape, 0u32,
+                0u32, Arrayˉelementˉtoken.Offset
+            );
+        Arrayˉsolution =
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcontribute(
+                Arrayˉsolution, 1u32, 2u32,
+                Arrayˉcountˉlow, Arrayˉcountˉhigh,
+                1u32, Arrayˉcountˉtoken.Offset
+            );
+        Arrayˉsolution =
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉfinish(
+                Arrayˉsolution
+            );
+        if Arrayˉsolution.Status !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Arrayˉsolution.Status, Catalog, Arrayˉcountˉtoken
+            );
+        }
+        let Arrayˉadmission:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmission =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉadmit(
+                Arrayˉelementˉcatalog, 0u32, 10u32, Arrayˉmodule.Index,
+                0u32, 16u32 + Arrayˉcountˉlow, Arrayˉsolution
+            );
+        if Arrayˉadmission.Status !=
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid {
+            return Compilerˉsourceˉgenericˉtypeˉbindingˉfailure(
+                Arrayˉadmission.Status, Catalog, Token
+            );
+        }
+        let Arrayˉupdated:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉadmissionˉcatalog(
+                Arrayˉadmission
+            );
+        return Compilerˉsourceˉgenericˉtypeˉbindingˉvalue(
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(
+                Arrayˉadmission.Instance
+            ),
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray,
+            0u32, Arrayˉmodule.Index, Arrayˉupdated,
+            Arrayˉcloseˉoffset, Arrayˉcloseˉline, Arrayˉcloseˉcolumn,
+            Arrayˉcloseˉoffset, Arrayˉcloseˉline, Arrayˉcloseˉcolumn
+        );
     }
     let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfindˉownedˉnominal(

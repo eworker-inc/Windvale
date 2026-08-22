@@ -96,7 +96,7 @@ function Parseˉstatus(result, code, status = '') {
     if (result.code !== code) {
         Reject(`Unexpected checkpoint test exit ${result.code}: ${result.stderr}`);
     }
-    const match = /^native segmented project cache status=(Created|Hit) key=([0-9a-f]{64}) entry-offset=([0-9]+) fragments=([1-8])$/.exec(result.stdout);
+    const match = /^native segmented project cache status=(Created|Hit) key=([0-9a-f]{64}) entry-offset=([0-9]+) fragments=([1-9]|1[0-6])$/.exec(result.stdout);
     if (status === '') {
         if (result.stdout !== '') {
             Reject(`Unexpected failed checkpoint output: ${result.stdout}`);

@@ -80,10 +80,10 @@ installed by the separately owned hosted-toolset refresh.
 Its recovery-only retained targets are
 `windows-x64-hosted-verifier-metadata-request-v1` and
 `linux-x64-hosted-verifier-metadata-request-v1`. Their exact applications are
-200,192-byte Windows SHA-256
-`8ee1bc4362193059e8536048bd5886e4d5bf5d5f78bbdfd6f4c9cdb8686804c7`
+201,216-byte Windows SHA-256
+`9676bdb292ebc08893bec8c677745a6e4676e3726808844205739174b26d2e61`
 and 200,704-byte Linux SHA-256
-`4492bcaa51983185d8e9681bacca1770f9117e5b7c28806aa1eaf629497b09c4`.
+`f6b012988daf0c18ed6bb5ac8f2fd410d56aaba2f1559066442d40b118177e78`.
 The C# writer owns only deletion-bound recovery target/identity wiring.
 [Decision 0466](../Documents/Decisions/0466-Native-WVHV-Request-Container-Reconstruction.md)
 adds exact native reconstruction of both products; independent Linux execution

@@ -10,7 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Transport=%RepositoryRoot%\Artifacts\Native-Segmented-Compiler-Toolset-Candidate\windows-x64-wvimagetransport.exe"
 
-certutil -hashfile "%Transport%" SHA256 | findstr /I /C:"3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92" >nul
+certutil -hashfile "%Transport%" SHA256 | findstr /I /C:"e724a5efbffc233fda76f55bfb5cc01c044e221882b5de5f247b0ab236726f81" >nul
 if errorlevel 1 (
     >&2 echo The Windows compiler-image transport artifact digest is invalid.
     exit /b 1

@@ -1120,6 +1120,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
         'Verify-Language-1.0-Fixed-Integers',
+        'Verify-Language-1.0-Fixed-Arrays',
         'Verify-Language-1.0-Runes',
         'Verify-Language-1.0-Floating',
         'Verify-Language-1.0-Unit-Never',
@@ -1147,6 +1148,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Build-Cached-Split-Project-Wvb',
+        'Split-Project-Source-Ordering-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development',
         'Write-Split-Compiler-Producer-Identity'
@@ -1508,6 +1510,8 @@ foreach ($Path in $Paths) {
         Add-Suite 'generic-nominal-declarations'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
+        'Tests/Fixtures/Language-1.0/Fixed-Array-Parser-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Fixed-Array-Type-Binding-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv',
         'Tools/Native/Test-Generic-Nominal-Type-Binding.cmd',
         'Tools/Native/Test-Generic-Nominal-Type-Binding.sh',
@@ -1542,6 +1546,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',
+        'Libraries/Foundation/Collections/Collections.wv',
         'Libraries/Foundation/Values/Option.wv',
         'Libraries/Foundation/Values/Result.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
@@ -2781,6 +2786,19 @@ foreach ($Path in $Paths) {
             Add-Suite 'console-publisher-reconstruction'
         }
     } elseif ($Path -in @(
+        'Runtime/Windvale/Native-Hosted-Fixed-Services-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Orchestration-Control-Core.wv',
+        'Runtime/Windvale/Native-Hosted-Source-Geometry-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv',
+        'Runtime/Windvale/Streaming-Sha256-Evidence-Core.wv'
+    )) {
+        Add-Bytecode-Suites
+        Add-Hosted-Publisher-Suites
+        Add-Suite @(
+            'console-packager-container-reconstruction',
+            'seed-native-front-door'
+        )
+    } elseif ($Path -in @(
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Admission.wv',
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Construction-Core.wv',
         'Runtime/Windvale/Native-Hosted-Verifier-Metadata-Request-Core.wv',
@@ -3349,11 +3367,17 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Hosted-Container-Startup.md',
             'Specifications/Windvale-Native-Hosted-Enum-Processes.md',
             'Specifications/Windvale-Native-Hosted-Fixed-Services.md',
+            'Specifications/Windvale-Native-Hosted-Metadata-Request.md',
             'Specifications/Windvale-Native-Hosted-Orchestration-Control.md',
             'Specifications/Windvale-Native-Hosted-Publication-Request.md',
             'Specifications/Windvale-Native-Hosted-Service-Bundle-Request.md',
             'Specifications/Windvale-Native-Hosted-Service-Bundle.md',
-            'Specifications/Windvale-Native-Hosted-Startup-Instantiation.md'
+            'Specifications/Windvale-Native-Hosted-Startup-Instantiation.md',
+            'Specifications/Windvale-Native-Hosted-Tool-Metadata-Construction.md',
+            'Specifications/Windvale-Native-Publication-Lifetime.md',
+            'Specifications/Windvale-Native-Publication-Plan.md',
+            'Specifications/Windvale-Native-Service-Bundle-Materialization.md',
+            'Specifications/Windvale-Native-Streaming-Sha256-Evidence.md'
         )) {
             Add-Hosted-Publisher-Suites
             Add-Suite @(

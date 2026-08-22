@@ -45,9 +45,9 @@ services used by the other hosted-container transition tools.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata constructor WVB | 27,222 | `459e9b820b788adeedcfb1dda9dc92301e60c7add754622c81fb9b24fd8418ab` |
-| Windows metadata constructor | 256,512 | `5813cb3a6c12a75b7787915c782d86281bdc17c2bdcba322f4de6f4bcd6f87af` |
-| Linux metadata constructor | 258,048 | `ffa54f3bbd7596763f944bea47a98b22bf137b755274ddd0540625a6ef8a34d2` |
+| Metadata constructor WVB | 27,798 | `921214287d034b343f5c17fbf52f125b1176f8f310dc4f0f2ede54291cfd8404` |
+| Windows metadata constructor | 261,120 | `061f9f2b67c8abfbb00a226f821bd848ec38debbaeccff345e275a8dbb2bb93b` |
+| Linux metadata constructor | 262,144 | `3be100e773ce76f89f70e06d6070486a3d08c3d6dc01211f79d8efe7917793e7` |
 
 The WVB reconstructs through the native Project 1 front door. Focused
 current-host evidence builds the public CLI target, reproduces the frozen

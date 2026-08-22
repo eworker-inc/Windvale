@@ -18,7 +18,11 @@ live at the repository root. Component-local manifests remain appropriate, and
 a future workspace/index contract may improve discovery without changing
 Project 1 semantics.
 
-## Exact products
+## Retained exact products
+
+The following table is the last promoted profile-5 runner candidate. The current
+source development checkpoint described below advances portable execution to
+WVB 1.17 but has not repinned the paired reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -58,7 +62,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The source-built runner accepts WVB 1.11 through 1.16. Its shared scalar interpreter
+The current source-built runner accepts WVB 1.11 through 1.17. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -85,11 +89,30 @@ fields; case tests allocate nothing; payload and named-field reads preserve the
 verified shape. Stack values, active locals, and saved frame locals are traced
 through selected field metadata when the arena collects. A malformed
 case/value mismatch returns `WVR3017`.
+The WVB 1.17 path represents an immutable fixed array in the same traced,
+bounded aggregate arena, tagged by its exact kind-4 Types identity. `C5` copies
+the descriptor's fixed number of already evaluated element cells in index order;
+`C6` consumes a full `u64` index, returns the exact element shape, and reports
+`WVR3008` when the index is not below the fixed length. Nested array, record, and
+variant cells participate in the same type-directed mark/sweep traversal.
+The format admits lengths through 4,095; this profile's 768-cell shared arena is
+an explicit finite runtime resource and may report bounded aggregate exhaustion
+for a valid value that does not fit. It never changes the value's length,
+silently allocates dynamic capacity, or skips the bounds check.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
+
+The current Windows development build is a 205,945-byte WVB at SHA-256
+`04782c2fe6897c0678e6c7b9b57dbef3f87f58f1f10899915855c80be7f8f75f`.
+Its profile-5 application is 2,052,096 bytes at SHA-256
+`72d9e2ecb30943d8bcdde7b351f539ffc41c383bd91f10a202c1934240acd7cf`.
+It accepts the deterministic 375-byte fixed-array compiler fixture, returns
+`42`, and reports code `3008` for the verified out-of-bounds mutation. Paired
+reconstruction, browser execution, and candidate promotion remain separate
+gates.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

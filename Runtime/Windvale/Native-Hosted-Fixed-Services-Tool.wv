@@ -34,10 +34,17 @@ fn Textˉisˉequal(Left: text, Right: text) -> bool {
 }
 
 fn Fragmentˉchunksˉfromˉtext(Value: bytes) -> u32 {
-    if Bytesˉlength(Value) != 1u32 { return 0u32; }
-    let Digit: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, 0u32));
-    if Digit < 49u32 || Digit > 56u32 { return 0u32; }
-    return Digit - 48u32;
+    let Length: u32 = Bytesˉlength(Value);
+    if Length == 0u32 || Length > 2u32 { return 0u32; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, 0u32));
+    if Length == 1u32 {
+        if First < 49u32 || First > 57u32 { return 0u32; }
+        return First - 48u32;
+    }
+    if First != 49u32 { return 0u32; }
+    let Second: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, 1u32));
+    if Second < 48u32 || Second > 54u32 { return 0u32; }
+    return 10u32 + Second - 48u32;
 }
 
 fn Prefixˉisˉvalid(Prefix: text) -> bool {

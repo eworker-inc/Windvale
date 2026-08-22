@@ -235,7 +235,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
         }
         let Readˉonlyˉposition: u32 = Afterˉtext + 27u32;
         if Readˉonlyˉbytes > Objectˉbytes - Readˉonlyˉposition ||
-            Readˉonlyˉbytes > 33554432u32 - Textˉbytes {
+            Readˉonlyˉbytes > 67108864u32 - Textˉbytes {
             return Invalid(
                 Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent
             );

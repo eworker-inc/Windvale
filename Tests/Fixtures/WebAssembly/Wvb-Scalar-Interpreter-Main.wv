@@ -60,7 +60,7 @@ fn Variantˉcaseˉfields(
             let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
             Cursor = Cursor + 1u32;
             if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
-                Fieldˉkind == 11u32 {
+                Fieldˉkind == 11u32 || Fieldˉkind == 22u32 {
                 Cursor = Cursor + 4u32;
             }
             Fieldˉindex = Fieldˉindex + 1u32;
@@ -93,8 +93,25 @@ fn Aggregateˉfieldˉdirectory(
     var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
         Typeˉoffsets,
         (Owner - 1u32) * 4u32
-    ) + 1u32;
+    );
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+    Cursor = Cursor + 1u32;
     Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    if Kind == 4u32 {
+        let Elementˉshape: u32 = Cursor;
+        Cursor = Cursor + 1u32;
+        let Elementˉkind: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Module, Elementˉshape)
+        );
+        if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
+            Elementˉkind == 11u32 || Elementˉkind == 22u32 {
+            Cursor = Cursor + 4u32;
+        }
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Module, Cursor)),
+            Bytesˉfromˉu32ˉlittle(Elementˉshape)
+        );
+    }
     let Fields: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
     return Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(Fields),
@@ -136,7 +153,7 @@ fn Localˉaggregateˉroots(
     var Offset: u32 = 0u32;
     while Offset < Length {
         let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset);
-        if Kind == 7u32 || Kind == 11u32 {
+        if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 {
             Roots = Bytesˉconcat(
                 Roots,
                 Bytesˉslice(Values, Valueˉoffset + Offset, 8u32)
@@ -201,10 +218,10 @@ fn Aggregateˉselectedˉfieldˉvalues(
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
         Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
             Cursor = Cursor + 4u32;
         }
-        var Selected: bool = Kind == 7u32 || Kind == 11u32;
+        var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
         if Descriptors { Selected = Kind == 3u32 || Kind == 6u32; }
         if Selected {
             Result = Bytesˉconcat(
@@ -215,6 +232,56 @@ fn Aggregateˉselectedˉfieldˉvalues(
         Index = Index + 1u32;
     }
     return Result;
+}
+
+fn Aggregateˉselectedˉownerˉvalues(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Owner: u32,
+    Fieldˉcount: u32,
+    Values: bytes,
+    Valueˉslot: u32,
+    Descriptors: bool
+) -> bytes {
+    if Owner < 2147483648u32 {
+        let Typeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+            Typeˉoffsets,
+            (Owner - 1u32) * 4u32
+        );
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉcursor)) == 4u32 {
+            var Shape: u32 = Typeˉcursor + 1u32;
+            Shape = Shape + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Shape);
+            let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+            var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
+            if Descriptors { Selected = Kind == 3u32 || Kind == 6u32; }
+            var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
+            if Selected {
+                var Index: u32 = 0u32;
+                while Index < Fieldˉcount {
+                    Result = Bytesˉconcat(
+                        Result,
+                        Bytesˉslice(Values, (Valueˉslot + Index) * 8u32, 8u32)
+                    );
+                    Index = Index + 1u32;
+                }
+            }
+            return Result;
+        }
+    }
+    let Directory: bytes = Aggregateˉfieldˉdirectory(
+        Module, Typeˉoffsets, Owner
+    );
+    if Bytesˉlength(Directory) != 8u32 {
+        return Bytesˉslice(Values, 0u32, 0u32);
+    }
+    return Aggregateˉselectedˉfieldˉvalues(
+        Module,
+        Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+        Fieldˉcount,
+        Values,
+        Valueˉslot,
+        Descriptors
+    );
 }
 
 fn Markˉaggregateˉroots(
@@ -259,9 +326,10 @@ fn Markˉaggregateˉroots(
                         }
                         Roots = Bytesˉconcat(
                             Roots,
-                            Aggregateˉselectedˉfieldˉvalues(
+                            Aggregateˉselectedˉownerˉvalues(
                                 Module,
-                                Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+                                Typeˉoffsets,
+                                Owner,
                                 Size,
                                 Records,
                                 Slot,
@@ -311,9 +379,10 @@ fn Sweepˉaggregates(
                 }
                 Released = Bytesˉconcat(
                     Released,
-                    Aggregateˉselectedˉfieldˉvalues(
+                    Aggregateˉselectedˉownerˉvalues(
                         Module,
-                        Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+                        Typeˉoffsets,
+                        Owner,
                         Size,
                         Records,
                         Slot,
@@ -362,7 +431,7 @@ fn Fieldˉshapeˉat(
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
         Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 {
+        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -467,6 +536,13 @@ fn Defaultˉfieldˉvalue(
             Bytesˉfromˉu32ˉlittle(
                 2147483648u32 + (Variantˉtype + 1u32) * 256u32
             )
+        );
+    }
+    if Kind == 22u32 {
+        let Arrayˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(4294967295u32),
+            Bytesˉfromˉu32ˉlittle(Arrayˉtype + 1u32)
         );
     }
     return Zeroˉcell;
@@ -978,7 +1054,7 @@ export fn Main(Request: bytes) -> bytes {
             Parameterˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Parameterˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -1006,7 +1082,7 @@ export fn Main(Request: bytes) -> bytes {
         }
         Functionˉcursor = Functionˉcursor + 1u32;
         if Returnˉkind == 7u32 || Returnˉkind == 8u32 ||
-            Returnˉkind == 11u32 {
+            Returnˉkind == 11u32 || Returnˉkind == 22u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
                 return Invalid;
             }
@@ -1032,7 +1108,7 @@ export fn Main(Request: bytes) -> bytes {
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
-                Shapeˉkind == 11u32 {
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Localˉnominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module,
                     Functionˉcursor
@@ -1367,7 +1443,7 @@ export fn Main(Request: bytes) -> bytes {
                 8u32
             );
             if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 8u32 ||
-                Loadedˉshapeˉkind == 11u32 {
+                Loadedˉshapeˉkind == 11u32 || Loadedˉshapeˉkind == 22u32 {
                 let Loadedˉnominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Loadedˉshapeˉoffset + 4u32
@@ -1410,6 +1486,12 @@ export fn Main(Request: bytes) -> bytes {
                                 )
                             );
                         }
+                        if Loadedˉshapeˉkind == 22u32 {
+                            Loadedˉvalue = Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(4294967295u32),
+                                Bytesˉfromˉu32ˉlittle(Loadedˉnominalˉtoken)
+                            );
+                        }
                     }
                 }
             }
@@ -1430,7 +1512,8 @@ export fn Main(Request: bytes) -> bytes {
                 }
                 Heapˉallocations = Loadedˉallocations;
             }
-            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 11u32 {
+            if Loadedˉshapeˉkind == 7u32 || Loadedˉshapeˉkind == 11u32 ||
+                Loadedˉshapeˉkind == 22u32 {
                 Stackˉproducedˉkind = 2u32;
             }
             Stack = Bytesˉconcat(Stack, Loadedˉvalue);
@@ -1665,7 +1748,8 @@ export fn Main(Request: bytes) -> bytes {
         if Payloadˉlength >= 96u32 {
         if Payloadˉlength <= 125u32 ||
             (Payloadˉlength >= 151u32 && Payloadˉlength <= 153u32) ||
-            Payloadˉlength == 196u32 {
+            Payloadˉlength == 196u32 || Payloadˉlength == 197u32 ||
+            Payloadˉlength == 198u32 {
         if Payloadˉlength <= 103u32 {
             Stack = Executeˉbaseˉcomparison(
                 Payloadˉlength, Stack, Zeroˉvalue
@@ -1675,7 +1759,8 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 104u32 || Payloadˉlength == 151u32 {
+        if Payloadˉlength == 104u32 || Payloadˉlength == 151u32 ||
+            Payloadˉlength == 197u32 {
             let Recordˉcreation: bytes = Aggregateˉcreation(
                 Module,
                 Typeˉoffsets,
@@ -1771,9 +1856,10 @@ export fn Main(Request: bytes) -> bytes {
                                     );
                                 Recordˉreachableˉvalues = Bytesˉconcat(
                                     Recordˉreachableˉvalues,
-                                    Aggregateˉselectedˉfieldˉvalues(
+                                    Aggregateˉselectedˉownerˉvalues(
                                         Module,
-                                        Recordˉtypeˉcursor + 4u32,
+                                        Typeˉoffsets,
+                                        Recordˉowner,
                                         Recordˉfieldˉcount,
                                         Recordˉfields,
                                         0u32,
@@ -1926,7 +2012,7 @@ export fn Main(Request: bytes) -> bytes {
                     )
                 );
             }
-            if Payloadˉlength == 104u32 {
+            if Payloadˉlength == 104u32 || Payloadˉlength == 197u32 {
                 Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             } else {
                 Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
@@ -2032,7 +2118,8 @@ export fn Main(Request: bytes) -> bytes {
             if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
                 Stackˉproducedˉkind = 1u32;
             }
-            if Selectedˉfieldˉkind == 7u32 || Selectedˉfieldˉkind == 11u32 {
+            if Selectedˉfieldˉkind == 7u32 || Selectedˉfieldˉkind == 11u32 ||
+                Selectedˉfieldˉkind == 22u32 {
                 Stackˉproducedˉkind = 2u32;
             }
             if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
@@ -2058,6 +2145,96 @@ export fn Main(Request: bytes) -> bytes {
             } else {
                 Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
             }
+            Mainˉfound = true;
+        }
+        if Payloadˉlength == 198u32 {
+            let Arrayˉelementˉstackˉlength: u32 = Bytesˉlength(Stack);
+            if Arrayˉelementˉstackˉlength < 16u32 { return Invalid; }
+            let Arrayˉelementˉindexˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack, Arrayˉelementˉstackˉlength - 8u32
+            );
+            let Arrayˉelementˉindexˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack, Arrayˉelementˉstackˉlength - 4u32
+            );
+            let Arrayˉelementˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack, Arrayˉelementˉstackˉlength - 16u32
+            );
+            let Arrayˉelementˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+                Stack, Arrayˉelementˉstackˉlength - 12u32
+            );
+            Stack = Bytesˉslice(
+                Stack, 0u32, Arrayˉelementˉstackˉlength - 16u32
+            );
+            if Arrayˉelementˉowner == 0u32 ||
+                Arrayˉelementˉowner >= 2147483648u32 {
+                return Invalid;
+            }
+            let Arrayˉelementˉdirectory: bytes = Aggregateˉfieldˉdirectory(
+                Module, Typeˉoffsets, Arrayˉelementˉowner
+            );
+            if Bytesˉlength(Arrayˉelementˉdirectory) != 8u32 {
+                return Invalid;
+            }
+            let Arrayˉelementˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Arrayˉelementˉdirectory, 0u32
+            );
+            let Arrayˉelementˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                Arrayˉelementˉdirectory, 4u32
+            );
+            if Arrayˉelementˉindexˉhigh != 0u32 ||
+                Arrayˉelementˉindexˉlow >= Arrayˉelementˉcount {
+                Sectionˉkind = 3008u32;
+            }
+            var Arrayˉelementˉvalue: bytes = Zeroˉcell;
+            if Sectionˉkind == 0u32 {
+                if Arrayˉelementˉslot == 4294967295u32 {
+                    Arrayˉelementˉvalue = Defaultˉfieldˉvalue(
+                        Module,
+                        Typeˉoffsets,
+                        Arrayˉelementˉshape,
+                        Zeroˉcell
+                    );
+                } else {
+                    Arrayˉelementˉvalue = Bytesˉslice(
+                        Records,
+                        (Arrayˉelementˉslot + Arrayˉelementˉindexˉlow) * 8u32,
+                        8u32
+                    );
+                }
+            }
+            let Arrayˉelementˉkind: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Module, Arrayˉelementˉshape)
+            );
+            Stackˉconsumed = 2u32;
+            Stackˉproduced = true;
+            if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 {
+                Stackˉproducedˉkind = 1u32;
+            }
+            if Arrayˉelementˉkind == 7u32 || Arrayˉelementˉkind == 11u32 ||
+                Arrayˉelementˉkind == 22u32 {
+                Stackˉproducedˉkind = 2u32;
+            }
+            if Sectionˉkind == 0u32 {
+                if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 {
+                    let Arrayˉelementˉretainedˉallocations: bytes =
+                        Retainˉdescriptor(
+                            Heapˉallocations,
+                            Heapˉallocationˉcount,
+                            Arrayˉelementˉvalue
+                        );
+                    if Bytesˉreadˉu32ˉlittle(Arrayˉelementˉvalue, 4u32) > 0u32 &&
+                        Bytesˉlength(Arrayˉelementˉretainedˉallocations) == 0u32 {
+                        return Invalid;
+                    }
+                    if Bytesˉlength(Arrayˉelementˉretainedˉallocations) !=
+                        Bytesˉlength(Heapˉallocations) {
+                        return Invalid;
+                    }
+                    Heapˉallocations = Arrayˉelementˉretainedˉallocations;
+                }
+                Stack = Bytesˉconcat(Stack, Arrayˉelementˉvalue);
+            }
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
         }
         if Payloadˉlength == 106u32 {

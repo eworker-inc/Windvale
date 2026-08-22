@@ -733,6 +733,30 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'compiler-scale hosted publication specifications'
+        Paths = @(
+            'Specifications/Windvale-Native-Hosted-Metadata-Request.md',
+            'Specifications/Windvale-Native-Hosted-Tool-Metadata-Construction.md',
+            'Specifications/Windvale-Native-Publication-Lifetime.md',
+            'Specifications/Windvale-Native-Publication-Plan.md',
+            'Specifications/Windvale-Native-Service-Bundle-Materialization.md',
+            'Specifications/Windvale-Native-Streaming-Sha256-Evidence.md'
+        )
+        Suites = @(
+            'seed-native-front-door',
+            'wvb-runner-reconstruction',
+            'wv-linker-reconstruction',
+            'wvb-inspector-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'shared segmented compiler construction primitives'
         Paths = @(
             'Tools/Native/Stage-Compiler-Wvb.cmd',
@@ -3460,7 +3484,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5093 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5114 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

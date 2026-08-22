@@ -15,9 +15,9 @@ const CHUNK_RECORD_BYTES: u32 = 20u32;
 const REGION_RECORD_BYTES: u32 = 12u32;
 const EVIDENCE_HEADER_BYTES: u32 = 64u32;
 const EVIDENCE_RECORD_BYTES: u32 = 44u32;
-// Hosted containers admit up to eight native-image fragments followed by
+// Hosted containers admit up to sixteen native-image fragments followed by
 // exactly ten service resources.
-const MAXIMUM_CHUNKS: u32 = 18u32;
+const MAXIMUM_CHUNKS: u32 = 26u32;
 const MAXIMUM_REGIONS: u32 = 16u32;
 const MAXIMUM_LOGICAL_BYTES: u32 = 67108864u32;
 const MAXIMUM_RESOURCE_BYTES: u32 = 4194304u32;

@@ -19,7 +19,7 @@ wvsha256evidence <manifest.wvhs> <chunk-prefix> <evidence.wvhe>
 ```
 
 Chunk resource `N` is named `<chunk-prefix>.chunk-N`. The prefix contains one
-through 18 chunks. This admits the hosted-container maximum of eight native
+through 26 chunks. This admits the hosted-container maximum of sixteen native
 fragments followed by exactly ten fixed service resources. Each resource
 remains at most 4,194,304 bytes, but their logical concatenation may contain up
 to 67,108,864 bytes. The command reads
@@ -43,7 +43,7 @@ record per region.
 | 0 | 4 | magic | ASCII `WVHS`, `0x53485657` |
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | Exact header plus records |
-| 12 | 4 | chunk count | `1` through `18` |
+| 12 | 4 | chunk count | `1` through `26` |
 | 16 | 4 | region count | `1` through `16` |
 | 20 | 4 | logical bytes | `1` through 64 MiB |
 | 24 | 8 | reserved | Zero |
@@ -104,9 +104,9 @@ reused by the native metadata-request producer.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Streaming evidence WVB | 48,364 | `95a112cc469c7667e8158cd57770a806501ede1bdea9a82a797b770b9e59dea4` |
-| Windows streaming evidence tool | 914,432 | `16719d10c539c8950b620c7eee73e23d82a915b5e395977da9eabdf88e18e9a9` |
-| Linux streaming evidence tool | 913,408 | `e0383452a56712748a17ffbe1f780817c338bf1900d3ef914706604ce592b6ea` |
+| Streaming evidence WVB | 48,364 | `966076d3eaeaa508311765a40878604baaa535ca2fbbf012b4cd07b96fc728f8` |
+| Windows streaming evidence tool | 914,432 | `0e7f76bf6dbb97b7d42a32e82d0616b2bf8f8f7841afb93cff63b2831a2e4007` |
+| Linux streaming evidence tool | 913,408 | `05a4478be2e0ff158becf5f06f65a788e82df5e861f00c3c13bae77b3908dbfe` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; the

@@ -10,7 +10,7 @@ alignment fill from Stage 0 to portable Windvale without widening the ordinary
 4 MiB `bytes` value.
 
 The segmented session covers every accepted publication image through the
-existing 34 MiB limit. It replaces the bounded version-1 whole-image contract;
+current 64 MiB limit. It replaces the bounded version-1 whole-image contract;
 version 1 remains historical evidence and is not accepted by the current
 bridge. Operating-system allocation, pointers, service tables, W^X authority,
 invocation, and teardown remain outside this contract.
@@ -122,12 +122,12 @@ validation, publication-plan consumption, source/fill intersection, exact
 segment construction, and the response. Its bridge is capability-free
 `Main(bytes) -> bytes`.
 
-The retained bridge WVB is 17,150 bytes with SHA-256
-`327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902`.
+The source bridge build is 17,150 bytes with SHA-256
+`e7243b66fdb5558443826c0d479dfb87a1ded8380add1a329be80f04f4c677e8`.
 The normal runtime embeds only its 179,452-byte WVNF 1 artifact with SHA-256
 `d0b12e426e891f6ee78209ab817dde7c547c0f68541750d39dd665607434e7a9`.
 The separately compiled core is 17,185 bytes with SHA-256
-`97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008`.
+`54b0a8586fa12f4eb593eff5336d53fae6d79a4fb61ff455f9e4467ae47d60ca`.
 
 The narrow service-free bootstrap may publish only internally selected,
 digest-bound, independently verified fragments with no runtime services. It

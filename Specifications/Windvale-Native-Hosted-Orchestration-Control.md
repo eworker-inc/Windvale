@@ -19,11 +19,11 @@ wvhostcontrol evidence <sources.wvsg> <output.wvhs>
 ```
 
 `metadata` accepts profiles 1 through 7 and a native entry below the existing
-32 MiB native-code ceiling. It writes the exact 32-byte `WVMI 1` record with
+64 MiB segmented native-code ceiling. It writes the exact 32-byte `WVMI 1` record with
 zero reserved fields and no host-supplied bundle offset.
 
 `evidence` admits canonical `WVSG 1` with eleven regions and eleven through
-eighteen chunks. It copies each already admitted 20-byte chunk record exactly
+twenty-six chunks. It copies each already admitted 20-byte chunk record exactly
 and projects each 16-byte source region to the corresponding 12-byte `WVHS 1`
 identity region by omitting only its image placement. Logical offsets and
 lengths remain unchanged. The result is self-checked against the exact source
@@ -43,10 +43,10 @@ file read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Orchestration-control WVB | 21,214 | `1d9f86cf636de119bde26a7b5fda5977e032db336d07c3937f0dd42df000e4bf` |
-| Native WVO | 219,635 | `86ba4c10926dd95c4211859edef8604489d164f6b4a0e96e8ff8dafc9841036e` |
-| Windows application | 236,032 | `2483ec3c219f63cf6d16e114fcc8d7ef563296b5b7dea4d9b370c914d8b94362` |
-| Linux application | 237,568 | `45c8bf1163556c851db8b7fecb2556e899c816d06bd39209d65db942fea3c44a` |
+| Orchestration-control WVB | 21,214 | `2bb4415cdb5b8f42c00f6d1e760d2aa0b52c5fe47f1617372eefa61c24d325f3` |
+| Native WVO | 219,635 | `955e31d0d6a83ae306f885671ad2c0ad9c9dc09b366917f4c742ba8ad9e087d4` |
+| Windows application | 236,032 | `2aa9fa9ea5d6d7c4860d65734de0fe538877700b9fcea5f6b8ca616e5cb2cd2f` |
+| Linux application | 237,568 | `0bb6d21a928a880bfebdb522918d8aaa147bb3849f42b2c519bbdf2f7ca4a1d0` |
 
 The native Project 1 front door reproduces the WVB byte for byte, and the
 digest-bound native lowerer reproduces the exact Stage 0 WVO. Package wiring

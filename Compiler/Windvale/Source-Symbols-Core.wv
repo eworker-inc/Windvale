@@ -604,6 +604,7 @@ export fn Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function { return 6u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant { return 7u32; }
     if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant { return 8u32; }
+    if Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray { return 10u32; }
     return 0u32;
 }
 
@@ -618,6 +619,7 @@ export fn Compilerˉsourceˉsymbolsˉdeclarationˉkind(
     if Value == 6u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function; }
     if Value == 7u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Constant; }
     if Value == 8u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant; }
+    if Value == 10u32 { return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray; }
     return Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End;
 }
 
@@ -1407,6 +1409,37 @@ export fn Compilerˉsourceˉsymbolsˉquery(
     );
 }
 
+export fn Compilerˉsourceˉsymbolsˉfoundationˉarrayˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    let Query: Compilerˉsourceˉsymbolˉquery = Compilerˉsourceˉsymbolsˉquery(
+        Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength
+    );
+    if !Query.Qualified || !Query.Aliasˉfound ||
+        !Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Array"
+        ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+        View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+        "Foundationˉcollections"
+    ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Query.Target);
+}
+
 export fn Compilerˉsourceˉsymbolsˉdeclarationˉisˉexported(
     Lookup: bytes,
     Match: Compilerˉsourceˉsymbolˉmatch
@@ -1966,7 +1999,8 @@ export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
     let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
     if Primitive != 0u32 { return Primitive; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence ||
-        Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder {
+        Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Builder ||
+        Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Array {
         return Binding.Nominalˉindex;
     }
     if Binding.Nominalˉkind ==

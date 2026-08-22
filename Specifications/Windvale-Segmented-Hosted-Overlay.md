@@ -24,11 +24,11 @@ code that uses that provider table.
 
 The application must be one canonical `WVLI 1.0` image with:
 
-- one through eight contiguous fragments;
+- one through sixteen contiguous fragments;
 - every non-final fragment exactly 4,194,304 bytes;
 - no fragment larger than 4,194,304 bytes;
 - one `Main` entry strictly inside the declared image; and
-- no more than 33,554,432 complete image bytes.
+- no more than 67,108,864 complete image bytes.
 
 The implementation reopens every declared chunk as one regular, non-reparse
 file and checks its index, position, exact length, and full image coverage.
@@ -67,7 +67,7 @@ patched.
 ## Output and failure behavior
 
 The provider starts after zero through fifteen zero alignment bytes. Its
-complete image must fit both the 32 MiB total-image ceiling and unused space in
+complete image must fit both the 64 MiB total-image ceiling and unused space in
 the application's final 4 MiB fragment. The fragment count does not change.
 
 Composition copies earlier application fragments unchanged, streams the final
@@ -93,7 +93,7 @@ as one in-memory Windvale value.
 ## Deliberate limits
 
 Version 1 accepts one common/platform storage-provider pair, one trampoline,
-and one already linked application. It does not emit a new `WVLI`, add a ninth
+and one already linked application. It does not emit a new `WVLI`, add another
 fragment, split a provider across fragments, accept an arbitrary provider
 family, or prove durable publication. Generalize this boundary only when a
 second real hosted-provider family supplies exact composition and verification

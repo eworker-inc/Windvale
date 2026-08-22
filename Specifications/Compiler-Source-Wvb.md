@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.16 module, and returns the bytes without using hosted capabilities.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes a validated source set through `Compilerˉsourceˉwir`, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.17 module, and returns the bytes without using hosted capabilities.
 
-For the execution subset through WVB 1.16, the current implementation proves
+For the execution subset through WVB 1.17, the current implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
 and code → WVB → verifier → source-built scalar runtime path. Every accepted
@@ -372,6 +372,17 @@ it cannot reinterpret a multi-field case as one payload. Any `C4` operation
 selects WVB 1.16 even when it addresses the legacy marker-`1` encoding of a
 single-field case.
 
+WVIR operation `165` lowers to WVB 1.17 opcode `C5`, followed by the canonical
+kind-4 Types index for its exact `Collections.Array<T, N>` instance. It consumes
+the literal's `N` exact element temporaries in index order and produces the
+private array shape. WVIR operation `166` lowers to the one-byte opcode `C6`; it
+consumes that exact array plus a complete `u64` index and produces `T`. Any
+materialized array type, array shape, or either operation selects WVB 1.17.
+The current source parser and WIR operation representation admit at most 64
+elements in one literal even though the serialized type descriptor supports
+lengths zero through 4,095. That is a named compiler construction limit, not a
+different array type or an inferred dynamic collection.
+
 Named-record syntax has disappeared by this boundary: typed WVIR has already evaluated source fields left to right and reordered their temporary operands to canonical declaration order. It therefore lowers through the same record-construction opcode and value layout as the retained positional spelling.
 
 ## Capability translation
@@ -446,8 +457,15 @@ Primitive WVIR shapes map to WVB shapes as follows:
 | 13 | `u16` | 16 |
 | 16 | `rune` | 17 |
 
+An ordinary private WVGT instance of intrinsic kind `10` maps to WVB shape byte
+`22` followed by its planned kind-4 Types index. Its Types entry carries one
+exact encoded element shape followed by the `u32` fixed length. It is nominal
+only at the serialization boundary so nested arrays and exact `T, N` identity
+remain unambiguous; source cannot name the private `__WvY` identity.
+
 The encoder writes canonical Module, Capabilities, Data, Functions, Code,
-Exports, and Types section envelopes. It emits WVB 1.16 for multi-field variant
+Exports, and Types section envelopes. It emits WVB 1.17 for fixed-array
+metadata, shapes, construction, or access, otherwise WVB 1.16 for multi-field variant
 metadata or a named variant-field instruction, otherwise WVB 1.15 for unit or
 never evidence, WVB 1.14 for floating evidence, WVB 1.13 for rune evidence,
 WVB 1.12 for fixed-width integer evidence, and the byte-identical WVB 1.11
@@ -502,6 +520,18 @@ marker, count, nominal, case, field, type, runtime case mismatch, and truncation
 boundaries. The in-range case-mismatch module is rejected by the verifier and
 fails direct scalar execution with `WVR3017`.
 
+`Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv` imports the canonical
+`Foundationˉcollections` owner, constructs an exact
+`Collections.Array<i32, 3u64>` from `[40i32, 42i32, 44i32,]`, and reads index
+`1u64`. The current compiler publishes a deterministic 375-byte WVB 1.17 module
+with SHA-256
+`e2125aba54aca71af5d10a6c7c4228460f2de28230503ad61b0b2877e8b593a7`.
+Its Types section contains one kind-4 `Array<i32, 3>` descriptor; its code uses
+one `C5` and one `C6`. The independent compiler-aligned verifier accepts it and
+the source-built native scalar runner returns `42`. Six focused WVB cases prove
+the success path, deterministic `WVR3008` bounds failure, pre-1.17 version
+rejection, the 4,095 type-count boundary, and constructor type-index validation.
+
 The scalar representation uses one eight-byte value cell and the existing
 fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot
 or `0xffffffff`; the high `u32` is
@@ -511,8 +541,8 @@ and variant spans and releases descriptor fields before one retry. The
 512-byte one-field pressure fixture performs 900 replacements, returns `42` in
 26,134 guest instructions, and proves reclamation beyond arena capacity.
 
-Direct native lowering, browser packaging, and Windvale OS execution remain
-explicit subsets below WVB 1.16. Decision 0773 owns this scalar execution
+Direct native array lowering, browser packaging, and Windvale OS execution remain
+explicit subsets below the WVB 1.17 fixed-array vocabulary. Decision 0773 owns this scalar execution
 checkpoint without silently advancing those consumers.
 
 `Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv` exercises concrete

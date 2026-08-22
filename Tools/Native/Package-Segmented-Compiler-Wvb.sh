@@ -59,12 +59,12 @@ echo 'segmented compiler package step=transport status=Complete'
 
 transport_line=$(sed -n '/^compiler image transport status=Complete /p' "$temporary_directory/Transport.txt")
 native_entry=$(printf '%s\n' "$transport_line" | sed -n 's/^.* entry-offset=\([0-9][0-9]*\) chunks=.*$/\1/p')
-fragment_count=$(printf '%s\n' "$transport_line" | sed -n 's/^.* chunks=\([1-8]\) manifest-bytes=.*$/\1/p')
+fragment_count=$(printf '%s\n' "$transport_line" | sed -n 's/^.* chunks=\([1-9]\|1[0-6]\) manifest-bytes=.*$/\1/p')
 case "$native_entry" in
     ''|*[!0-9]*) echo 'The compiler-image transport did not report one decimal Main entry.' >&2; exit 1 ;;
 esac
 case "$fragment_count" in
-    [1-8]) ;;
+    [1-9]|1[0-6]) ;;
     *) echo 'The compiler-image transport did not report one canonical chunk count.' >&2; exit 1 ;;
 esac
 

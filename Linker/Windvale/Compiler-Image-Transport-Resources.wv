@@ -99,7 +99,7 @@ export fn Linkerˉcompilerˉimageˉtransportˉresourceˉplanˉbuild(
     }
     let Outputs: u32 =
         (Summary.Imageˉbytes + 4194303u32) / 4194304u32;
-    if Outputs == 0u32 || Outputs > 8u32 {
+    if Outputs == 0u32 || Outputs > 16u32 {
         return Invalid(
             Linkerˉcompilerˉimageˉtransportˉresourceˉstatus.Outputˉchunks
         );

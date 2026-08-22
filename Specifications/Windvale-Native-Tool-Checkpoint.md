@@ -159,7 +159,7 @@ The segmented-project `Checkpoint.txt` contains these exact ASCII lines:
 windvale-native-segmented-project-checkpoint 1
 key <64-lowercase-hex>
 entry-offset <canonical-unsigned-decimal>
-fragments <1-through-8>
+fragments <1-through-16>
 wvb-bytes <canonical-positive-decimal>
 wvb-sha256 <64-lowercase-hex>
 manifest-bytes <canonical-positive-decimal>
@@ -171,7 +171,7 @@ fragment-0-sha256 <64-lowercase-hex>
 
 The record is at most 4,096 bytes. The WVB is nonempty and no larger than
 67,108,864 bytes. The canonical image is nonempty and no larger than
-33,554,432 bytes across one through eight fragments of at most 4,194,304 bytes.
+67,108,864 bytes across one through sixteen fragments of at most 4,194,304 bytes.
 The exact `WVLI 1` manifest must declare its own size, image size, entry,
 fragment count, fragment limit, and one contiguous ordered extent for every
 measured fragment. A miss builds the WVB, stages WVO fragments, links and
@@ -200,7 +200,7 @@ length-framed SHA-256 key from these ordered fields:
 8. the exact target startup WVO.
 
 Inputs must be canonical ordinary non-link files. Each input is nonempty and at
-most 67,108,864 bytes. Image mode accepts one through eight fragments, every
+most 67,108,864 bytes. Image mode accepts one through sixteen fragments, every
 nonfinal fragment is exactly 4 MiB, and every fragment is at most 4 MiB. The
 lowercase 64-hex key names
 `hosted-application-v1/<host-family>/<key>`; the target remains key material and

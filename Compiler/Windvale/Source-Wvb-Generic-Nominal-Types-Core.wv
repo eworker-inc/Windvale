@@ -1,6 +1,7 @@
 module Compilerˉsourceˉwvbˉgenericˉnominalˉtypes profile portable;
 
 import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayouts;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉgenericˉtypeˉmaterialization as Materialization;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -164,17 +165,20 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         var Privateˉshapeˉkind: u8 = 0u8;
         if Privateˉkind == 4u32 { Privateˉshapeˉkind = 7u8; }
         if Privateˉkind == 8u32 { Privateˉshapeˉkind = 11u8; }
+        if Privateˉkind == 10u32 { Privateˉshapeˉkind = 22u8; }
         if Privateˉshapeˉkind == 0u8 || Privateˉoutput == 4294967295u32 {
             return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
                 Input, Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
             );
         }
+        var Privateˉfeatures: u32 = 0u32;
+        if Privateˉkind == 10u32 { Privateˉfeatures = 64u32; }
         return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
             Bytesˉconcat(
                 Bytesˉfromˉu8(Privateˉshapeˉkind),
                 Bytesˉfromˉu32ˉlittle(Privateˉoutput)
-            ), 0u32
+            ), Privateˉfeatures
         );
     }
     if Shape >= 1073741824u32 && Shape < 1610612736u32 {
@@ -400,6 +404,67 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     }
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
         Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Typeˉmodule);
+    if Typeˉkind == 10u32 {
+        if Typeˉcases != 0u32 || Typeˉfields != 0u32 {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+            );
+        }
+        let Arrayˉcatalog:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+                Plan.Catalogˉstatus, Plan.Catalogˉevidence
+            );
+        let Arrayˉelement:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Arrayˉcatalog, Instance, 0u32
+            );
+        let Arrayˉcount:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Arrayˉcatalog, Instance, 1u32
+            );
+        if !Arrayˉelement.Valid || Arrayˉelement.Kind != 1u32 ||
+            Arrayˉelement.Shape != 0u32 || Arrayˉelement.High != 0u32 ||
+            !Arrayˉcount.Valid || Arrayˉcount.Kind != 2u32 ||
+            Arrayˉcount.Shape != 8u32 || Arrayˉcount.High != 0u32 ||
+            Arrayˉcount.Low > 4095u32 {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
+            );
+        }
+        let Arrayˉshape: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+            Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
+                Input, Symbols, Plan,
+                Recordˉtargets, Variantˉtargets,
+                Concreteˉrecords, Arrayˉelement.Low
+            );
+        if Arrayˉshape.Status !=
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+            return Arrayˉshape;
+        }
+        var Arrayˉresult: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+            Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
+        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Arrayˉresult, Bytesˉfromˉu8(4u8)
+        );
+        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Arrayˉresult,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉencodedˉname(Instance)
+        );
+        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Arrayˉresult, Arrayˉshape.Payload
+        );
+        Arrayˉresult = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+            Arrayˉresult, Bytesˉfromˉu32ˉlittle(Arrayˉcount.Low)
+        );
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+            Arrayˉresult, Arrayˉshape.Features | 64u32
+        );
+    }
     var Kind: u8 = 1u8;
     if Typeˉkind == 8u32 {
         Kind = 3u8;

@@ -156,7 +156,7 @@ placeholder/padding verifier; their owned relocation fields are replaced while
 the rest of the chunk is copied exactly. Read-only-data chunks are copied at
 their derived image positions. Every input and output value remains within the
 ordinary 4 MiB value ceiling, while the complete planned image remains within
-the explicit 32 MiB large-native ceiling.
+the explicit 64 MiB segmented-compiler ceiling.
 
 `Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Verification.wv` is the
 separate output verifier for this candidate. Its scalar cursor revalidates the
@@ -182,7 +182,7 @@ little-endian manifest written only after every chunk has been staged:
 | 4 | 2 | Major version `1` |
 | 6 | 2 | Minor version `0` |
 | 8 | 4 | Total manifest bytes, exactly `28 + chunk-count * 12` |
-| 12 | 4 | Complete flat-image bytes, one through 32 MiB |
+| 12 | 4 | Complete flat-image bytes, one through 64 MiB |
 | 16 | 4 | `Main` entry offset, strictly inside the image |
 | 20 | 4 | Chunk count, one through 518 |
 | 24 | 4 | Maximum chunk bytes, exactly `4,194,304` |
@@ -243,7 +243,7 @@ canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
 The exact 75,666-byte tool WVB has SHA-256
-`1a1614c4010baf47f5f1766de5f71806356ec14fa8f5bc67a62b5b2342269edd`.
+`b2460134db0bd9810d9d20415ba5cf1807b24a0df71b42e5955cd40851481b46`.
 Its canonical repository source closure is
 `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -263,9 +263,9 @@ toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
 The Windows candidate is 854,016 bytes at SHA-256
-`e467d211d141ab75b838ece9b3c4625b6b5b2768b63dcacadd040368844e18db`;
+`ed87716ae3ae805d38bfbe5fcfeee1a74c983f82416e5d36a9695085747de3fe`;
 the Linux candidate is 856,064 bytes at SHA-256
-`7ef825a8054cb8f63c10c957b234f9c371fe1507d7ee20f3e6dbabf73e550cb2`.
+`8d94c36a58da696caa09d5323c826936373f48d538f404fdc01df3bea9c4d379`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
@@ -283,7 +283,7 @@ prefix, source `WVLI`, output chunk prefix, and output `WVLI`.
 
 Before reading any chunk, the portable resource plan validates both manifests
 and prefixes, rejects every control/chunk collision, admits one through 62
-source chunks, and derives one through eight output chunks from the declared
+source chunks, and derives one through sixteen output chunks from the declared
 image length. The process reads every source chunk once in manifest order and
 checks its exact length. It preserves the byte sequence while emitting every
 non-final output at exactly 4,194,304 bytes and one nonempty final remainder.
@@ -291,11 +291,11 @@ The image length and entry offset remain unchanged. A newly validated `WVLI` is
 written last; incomplete output chunks are not completion evidence.
 
 The exact transport WVB is 23,836 bytes at SHA-256
-`dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d`.
+`d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8`.
 The Windows application is 269,312 bytes at SHA-256
-`3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92`;
+`e724a5efbffc233fda76f55bfb5cc01c044e221882b5de5f247b0ab236726f81`;
 the Linux application is 270,336 bytes at SHA-256
-`30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108`.
+`9ff5401eca1ffd93a49077dd6ebc56c446c59939379a481f22662465fc3cf6db`.
 Both applications reconstruct through Decision 0496's current-Windows-host
 native cross-target path. The checked-in native processes and digest-bound
 launchers remain the normal candidate front door; Linux execution and
@@ -309,11 +309,11 @@ hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
 The segmented producer WVB is exactly 542,219 bytes at SHA-256
-`786e271556b141c476ef9ce32beb65acded5ce8b76a61f1ba295994b97272dc7`.
+`4507a1497bc5805e98d66efbef6277a42763107b84d10e7e915eb11ba2b92738`.
 Its Windows application is 7,855,104 bytes at SHA-256
-`5303a5580831dad96c2f46a50aa9f0ce4c4c3dc70d4612dac8a03dc1c78b1aeb`;
+`ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda`;
 its Linux application is 7,856,128 bytes at SHA-256
-`5ea8569ce076087aa3b11afc19ce492d0a062f96e872a52dd6a93b889860f3cb`.
+`8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401`.
 Decisions 0496, 0542, 0545, 0583, 0713, 0724, and 0770 reconstruct this pair and the staging and transport pairs from
 the retained native candidate toolset on Windows. That construction does not
 by itself prove Stage 2, Linux execution, promotion, or a seed-independent
@@ -323,7 +323,7 @@ The shared `Package-Hosted-Wvb` launcher exposes a separate image-input form:
 `image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry-offset>
 <output> [target]`. Its ordinary form accepts the same optional final
 `windows` or `linux` target; omission retains current-host selection. It admits
-profile 1 through 7, one through eight canonical chunks, and a decimal entry.
+profile 1 through 7, one through sixteen canonical chunks, and a decimal entry.
 The native source-geometry process independently reopens
 and validates exact chunk lengths and the canonical non-final 4 MiB rule before
 metadata or container construction. The source WVB remains the capability and
@@ -343,8 +343,8 @@ compiler image remains unchanged. The ordinary Wv linker validates and lays
 out the common provider, selected host provider, and one exact `Main`
 trampoline after that image; composition patches only the trampoline's signed
 relative jump back to the compiler image entry. The provider must fit in the
-unused tail of the last canonical fragment, so the existing one-through-eight
-fragment and 32 MiB limits remain unchanged.
+unused tail of the last canonical fragment, so the existing one-through-sixteen
+fragment and 64 MiB limits remain unchanged.
 
 This boundary supplies hosted storage code, not storage authority. The hosted
 container still binds the provider table and its one rights-limited storage

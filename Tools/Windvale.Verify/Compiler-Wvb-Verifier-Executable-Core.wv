@@ -13,7 +13,9 @@ record Hˉoperationˉstate {
 
 fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
-    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 { return 5u32; }
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 {
+        return 5u32;
+    }
     return 1u32;
 }
 
@@ -41,6 +43,9 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     var Next: u32 = Cursor + 1u32;
     let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
     Next = Next + 4u32 + Nameˉlength;
+    if Kind == 4u32 {
+        return Next + Hˉshapeˉwidth(Input, Next) + 4u32;
+    }
     let Itemˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
     Next = Next + 4u32;
     var Item: u32 = 0u32;
@@ -109,7 +114,7 @@ fn Hˉvariantˉcaseˉat(
         let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
         var Fieldˉnominal: u32 = 0u32;
         if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
-            Fieldˉkind == 11u32 {
+            Fieldˉkind == 11u32 || Fieldˉkind == 22u32 {
             Fieldˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(Result, Bytesˉslice(Input, Cursor, 1u32));
@@ -321,7 +326,7 @@ export fn Hˉrecord(
             let Expectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Fieldˉcursor));
             var Expectedˉnominal: u32 = 0u32;
             if Expectedˉkind == 7u32 || Expectedˉkind == 8u32 ||
-                Expectedˉkind == 11u32 {
+                Expectedˉkind == 11u32 || Expectedˉkind == 22u32 {
                 Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Fieldˉcursor + 1u32);
             }
             let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
@@ -388,7 +393,8 @@ export fn Hˉrecord(
     Sourceˉtype = Sourceˉtype + 4u32 + Selectedˉfieldˉnameˉlength;
     let Pushˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Sourceˉtype));
     var Pushˉnominal: u32 = 0u32;
-    if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 {
+    if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 ||
+        Pushˉkind == 22u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Sourceˉtype + 1u32);
     }
     return Hˉoperationˉstate(
@@ -398,6 +404,114 @@ export fn Hˉrecord(
         true,
         Pushˉkind,
         Pushˉnominal
+    );
+}
+
+fn Hˉarrayˉdescriptor(Input: bytes, Types: u32, Typeˉindex: u32) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Typeˉcursor: u32 = Types + 4u32;
+    var Currentˉtype: u32 = 0u32;
+    while Currentˉtype < Typeˉindex {
+        Typeˉcursor = Hˉnextˉtype(Input, Typeˉcursor);
+        Currentˉtype = Currentˉtype + 1u32;
+    }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != 4u32 {
+        return Invalid;
+    }
+    Typeˉcursor = Typeˉcursor + 1u32;
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+    Typeˉcursor = Typeˉcursor + 4u32 + Nameˉlength;
+    let Elementˉkind: u8 = Bytesˉreadˉu8(Input, Typeˉcursor);
+    var Elementˉnominal: u32 = 0u32;
+    if Elementˉkind == 7u8 || Elementˉkind == 8u8 ||
+        Elementˉkind == 11u8 || Elementˉkind == 22u8 {
+        Elementˉnominal = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor + 1u32);
+    }
+    let Countˉcursor: u32 = Typeˉcursor + Hˉshapeˉwidth(Input, Typeˉcursor);
+    var Result: bytes = Bytesˉfromˉu8(Elementˉkind);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Elementˉnominal));
+    return Bytesˉconcat(
+        Result,
+        Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Input, Countˉcursor))
+    );
+}
+
+fn Hˉarray(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcode + Cursor));
+    if Opcode == 197u32 {
+        let Createdˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Functionˉcode + Cursor + 1u32
+        );
+        let Createdˉdescriptor: bytes = Hˉarrayˉdescriptor(
+            Input, Types, Createdˉtypeˉindex
+        );
+        if Bytesˉlength(Createdˉdescriptor) != 9u32 {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        let Elementˉkind: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Createdˉdescriptor, 0u32)
+        );
+        let Elementˉnominal: u32 = Bytesˉreadˉu32ˉlittle(
+            Createdˉdescriptor, 1u32
+        );
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Createdˉdescriptor, 5u32);
+        if Count > Depth { return Hˉoperationˉfailure(Stack, Depth); }
+        var Resultˉstack: bytes = Stack;
+        var Resultˉdepth: u32 = Depth;
+        var Element: u32 = 0u32;
+        while Element < Count {
+            let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)) !=
+                Elementˉkind {
+                return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
+            }
+            if Bytesˉreadˉu32ˉlittle(Resultˉstack, Actualˉoffset + 1u32) !=
+                Elementˉnominal {
+                return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
+            }
+            Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actualˉoffset);
+            Resultˉdepth = Resultˉdepth - 1u32;
+            Element = Element + 1u32;
+        }
+        return Hˉoperationˉstate(
+            true, Resultˉstack, Resultˉdepth, true, 22u32, Createdˉtypeˉindex
+        );
+    }
+    if Opcode != 198u32 || Depth < 2u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Indexˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Indexˉoffset)) != 10u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack, Indexˉoffset + 1u32) != 0u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Arrayˉoffset: u32 = Indexˉoffset - 5u32;
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Arrayˉoffset)) != 22u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Selectedˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Stack, Arrayˉoffset + 1u32
+    );
+    let Selectedˉdescriptor: bytes = Hˉarrayˉdescriptor(
+        Input, Types, Selectedˉtypeˉindex
+    );
+    if Bytesˉlength(Selectedˉdescriptor) != 9u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    return Hˉoperationˉstate(
+        true,
+        Bytesˉslice(Stack, 0u32, Arrayˉoffset),
+        Depth - 2u32,
+        true,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Selectedˉdescriptor, 0u32)),
+        Bytesˉreadˉu32ˉlittle(Selectedˉdescriptor, 1u32)
     );
 }
 
@@ -430,7 +544,8 @@ export fn Hˉcall(
         while Shapeˉindex < Skippedˉtargetˉparameters + 1u32 {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
             Targetˉcursor = Targetˉcursor + 1u32;
-            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Targetˉcursor = Targetˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -441,7 +556,8 @@ export fn Hˉcall(
         while Shapeˉindex < Targetˉlocals {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉcursor));
             Targetˉcursor = Targetˉcursor + 1u32;
-            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Targetˉcursor = Targetˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -467,14 +583,16 @@ export fn Hˉcall(
         while Shapeˉindex < Wantedˉparameter {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
             Argumentˉcursor = Argumentˉcursor + 1u32;
-            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Argumentˉcursor = Argumentˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
         }
         let Expectedˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Argumentˉcursor));
         var Expectedˉnominal: u32 = 0u32;
-        if Expectedˉkind == 7u32 || Expectedˉkind == 8u32 || Expectedˉkind == 11u32 {
+        if Expectedˉkind == 7u32 || Expectedˉkind == 8u32 ||
+            Expectedˉkind == 11u32 || Expectedˉkind == 22u32 {
             Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Argumentˉcursor + 1u32);
         }
         let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
@@ -494,14 +612,16 @@ export fn Hˉcall(
     while Shapeˉindex < Targetˉparameters {
         Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
         Targetˉreturn = Targetˉreturn + 1u32;
-        if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+        if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
             Targetˉreturn = Targetˉreturn + 4u32;
         }
         Shapeˉindex = Shapeˉindex + 1u32;
     }
     let Pushˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Targetˉreturn));
     var Pushˉnominal: u32 = 0u32;
-    if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 {
+    if Pushˉkind == 7u32 || Pushˉkind == 8u32 || Pushˉkind == 11u32 ||
+        Pushˉkind == 22u32 {
         Pushˉnominal = Bytesˉreadˉu32ˉlittle(Input, Targetˉreturn + 1u32);
     }
     return Hˉoperationˉstate(
@@ -631,7 +751,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         while Shapeˉindex < Parameterˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -639,7 +760,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         let Returnˉtype: u32 = Functionˉcursor;
         Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
         Functionˉcursor = Functionˉcursor + 1u32;
-        if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+        if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+            Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
             Functionˉcursor = Functionˉcursor + 4u32;
         }
         let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(
@@ -652,7 +774,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         while Shapeˉindex < Localˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcursor));
             Functionˉcursor = Functionˉcursor + 1u32;
-            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 || Shapeˉkind == 11u32 {
+            if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
+                Shapeˉkind == 11u32 || Shapeˉkind == 22u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -716,6 +839,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             if Opcode == 129u32 { Width = 9u32; }
             if Opcode >= 151u32 && Opcode <= 153u32 { Width = 9u32; }
             if Opcode == 196u32 { Width = 9u32; }
+            if Opcode == 197u32 { Width = 5u32; }
             if Opcode == 192u32 {
                 Width = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -1093,6 +1217,23 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Pushˉnominal = Variantˉfieldˉstate.Pushˉnominal;
                 Handled = true;
             }
+            if Opcode == 197u32 || Opcode == 198u32 {
+                let Arrayˉstate: Hˉoperationˉstate = Hˉarray(
+                    Input,
+                    Functionˉcode,
+                    Cursor,
+                    Types,
+                    Stack,
+                    Depth
+                );
+                if !Arrayˉstate.Valid { return Invalid; }
+                Stack = Arrayˉstate.Stack;
+                Depth = Arrayˉstate.Depth;
+                Hasˉpush = Arrayˉstate.Hasˉpush;
+                Pushˉkind = Arrayˉstate.Pushˉkind;
+                Pushˉnominal = Arrayˉstate.Pushˉnominal;
+                Handled = true;
+            }
 
             if Opcode == 104u32 || Opcode == 105u32 {
                 let Recordˉstate: Hˉoperationˉstate = Hˉrecord(
@@ -1168,7 +1309,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 if Returnˉexpectedˉkind == 21u32 { return Invalid; }
                 var Returnˉexpectedˉnominal: u32 = 0u32;
                 if Returnˉexpectedˉkind == 7u32 || Returnˉexpectedˉkind == 8u32 ||
-                    Returnˉexpectedˉkind == 11u32 {
+                    Returnˉexpectedˉkind == 11u32 ||
+                    Returnˉexpectedˉkind == 22u32 {
                     Returnˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉtype + 1u32);
                 }
                 if Returnˉexpectedˉkind != 0u32 {
@@ -1227,6 +1369,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 if Pushˉkind == 18u32 { Encodedˉkind = Bytesˉfromˉu8(18u8); }
                 if Pushˉkind == 19u32 { Encodedˉkind = Bytesˉfromˉu8(19u8); }
                 if Pushˉkind == 20u32 { Encodedˉkind = Bytesˉfromˉu8(20u8); }
+                if Pushˉkind == 22u32 { Encodedˉkind = Bytesˉfromˉu8(22u8); }
                 let Encodedˉshape: bytes = Bytesˉconcat(
                     Encodedˉkind,
                     Bytesˉfromˉu32ˉlittle(Pushˉnominal)
@@ -1320,7 +1463,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             ));
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
             if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 {
+                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
                 Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
             }
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
@@ -1331,7 +1474,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         ));
         Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
         if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-            Controlˉshapeˉkind == 11u32 {
+            Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
         }
         let Controlˉlocalˉcount: u32 = Bytesˉreadˉu32ˉlittle(
@@ -1347,7 +1490,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             ));
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
             if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 {
+                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 {
                 Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
             }
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
@@ -1419,6 +1562,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 Controlˉwidth = 9u32;
             }
             if Controlˉopcode == 196u32 { Controlˉwidth = 9u32; }
+            if Controlˉopcode == 197u32 { Controlˉwidth = 5u32; }
             if Controlˉopcode == 192u32 {
                 Controlˉwidth = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(

@@ -47,6 +47,7 @@ export enum Compilerˉsourceˉtypeˉkind {
     F32 = 19;
     F64 = 20;
     Rune = 21;
+    Array = 22;
 }
 
 export enum Compilerˉsourceˉdeclarationˉkind {
@@ -60,6 +61,7 @@ export enum Compilerˉsourceˉdeclarationˉkind {
     Constant = 7;
     Optionalˉcapability = 8;
     Variant = 9;
+    Fixedˉarray = 10;
 }
 
 export record Compilerˉparseˉstep {

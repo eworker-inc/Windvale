@@ -29,8 +29,8 @@ handles.
 | 12 | 4 | target | `1` Windows or `2` Linux |
 | 16 | 4 | verifier profile | `2` or `8` |
 | 20 | 4 | bundle offset | `4,096` |
-| 24 | 4 | bundle bytes | `1` through `35,651,584` |
-| 28 | 4 | native image bytes | `1` through `33,554,432`, within the bundle |
+| 24 | 4 | bundle bytes | `1` through `67,108,864` |
+| 28 | 4 | native image bytes | `1` through `67,108,864`, within the bundle |
 | 32 | 4 | native entry | Within the native image |
 | 36 | 4 | service count | `6` |
 | 40 | 32 | native SHA-256 | Nonzero exact evidence |

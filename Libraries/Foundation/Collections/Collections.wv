@@ -1,0 +1,8 @@
+#!wv/1 en@1
+module Foundationˉcollections;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+// Array<T, N> is a compiler-supplied Foundation intrinsic. This source module
+// owns its canonical import identity without introducing a constructible record.

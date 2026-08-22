@@ -1908,6 +1908,63 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         );
         return Compilerˉsourceˉbindingsˉbodyˉcombine(First, Second);
     }
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Array {
+        var Arrayˉelements: Compilerˉsourceˉbindingˉbody =
+            Compilerˉsourceˉbindingsˉbodyˉempty();
+        var Arrayˉcursor: u32 = Expression.Itemsˉoffset;
+        var Arrayˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line, Expression.Column,
+                Expression.Itemsˉoffset
+            );
+        var Arrayˉitem: u32 = 0u32;
+        while Arrayˉitem < Expression.Items {
+            let Arrayˉelement: Sourceˉbodies.Compilerˉsourceˉexpression =
+                Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                    Source, Arrayˉcursor,
+                    Arrayˉposition.Line, Arrayˉposition.Column,
+                    Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                    0u32, 0u32
+                );
+            let Arrayˉbound: Compilerˉsourceˉbindingˉbody =
+                Compilerˉsourceˉbindingsˉbindˉexpression(
+                    Input, Scan, Symbols,
+                    Payload, Bindingˉfirst, Bindingˉentries,
+                    Module, Function, Source,
+                    Arrayˉelement.Offset,
+                    Arrayˉelement.Line, Arrayˉelement.Column,
+                    Arrayˉelement.Offset + Arrayˉelement.Length
+                );
+            Arrayˉelements = Compilerˉsourceˉbindingsˉbodyˉcombine(
+                Arrayˉelements, Arrayˉbound
+            );
+            if Arrayˉelements.Status !=
+                    Compilerˉsourceˉbindingˉstatus.Valid {
+                return Arrayˉelements;
+            }
+            Arrayˉcursor = Arrayˉelement.Nextˉoffset;
+            Arrayˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
+                Arrayˉelement.Nextˉoffset,
+                Arrayˉelement.Nextˉline, Arrayˉelement.Nextˉcolumn
+            );
+            if Arrayˉitem + 1u32 < Expression.Items {
+                let Arrayˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉbodies.Compilerˉbodyˉtoken(
+                        Source, Arrayˉcursor,
+                        Arrayˉposition.Line, Arrayˉposition.Column,
+                        Expression.Itemsˉoffset + Expression.Itemsˉlength
+                    );
+                Arrayˉcursor = Arrayˉseparator.Nextˉoffset;
+                Arrayˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
+                    Arrayˉseparator.Nextˉoffset,
+                    Arrayˉseparator.Nextˉline,
+                    Arrayˉseparator.Nextˉcolumn
+                );
+            }
+            Arrayˉitem = Arrayˉitem + 1u32;
+        }
+        return Arrayˉelements;
+    }
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Index {
         let Localˉsequence: Compilerˉsourceˉlocalˉmatch = Compilerˉsourceˉbindingsˉfindˉlocal(
             Source, Payload, Bindingˉfirst, Bindingˉentries,

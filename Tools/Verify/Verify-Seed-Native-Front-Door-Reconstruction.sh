@@ -970,7 +970,7 @@ exact_build \
     "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Core.wvproj" \
     "$NATIVE_PUBLICATION_MODULE" \
     7190 \
-    3048902ce708d6e640d484507efc1d567399bcafed6e2c133ca2827aff83189f \
+    6ae3062c75f539288bb8b9a322635d442cb132c990f2ede9fba7f7546acedc3c \
     00001c16 \
     'build status=Published verification=compiler-aligned functions=8 code-bytes=5333 module-bytes=7190'
 exact_inspect "$NATIVE_PUBLICATION_MODULE" 'profile=portable' 'Native\u02C9publication\u02C9result' 'Native\u02C9publication\u02C9status' 'Native\u02C9publication\u02C9plan' 'section name=exports offset=6507 bytes=336 count=8'
@@ -978,7 +978,7 @@ exact_build \
     "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication.wvproj" \
     "$NATIVE_PUBLICATION_BRIDGE_MODULE" \
     6758 \
-    111608af768b18adb9be8b531214aeb14c472efef482fad507224aaa1b18909c \
+    36576cb0a55a21ff0eca0e0dedadbe9b6093a8c8ce047c2400083a965c488def \
     00001a66 \
     'build status=Published verification=compiler-aligned functions=9 code-bytes=5399 module-bytes=6758'
 exact_inspect "$NATIVE_PUBLICATION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=71 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=6432 bytes=17 count=1'
@@ -987,14 +987,14 @@ exact_build \
     "$REPOSITORY_ROOT/Projects/Runtime/Windvale-Native-Service-Bundle-Materialization-Core.wvproj" \
     "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_CORE_MODULE" \
     17185 \
-    97063c0c3d264d9b9ede73cc316c68798c66d61732c5b115f71a33e486ee7008 \
+    54b0a8586fa12f4eb593eff5336d53fae6d79a4fb61ff455f9e4467ae47d60ca \
     00004321 \
     'build status=Published verification=compiler-aligned functions=19 code-bytes=14253 module-bytes=17185'
 exact_build \
     "$REPOSITORY_ROOT/Projects/Runtime/Windvale-Native-Service-Bundle-Materialization.wvproj" \
     "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" \
     17150 \
-    327b753062d46755b934cfe6e6bc16550ec711c8b7d2aff46eac4bf0d8d9d902 \
+    e7243b66fdb5558443826c0d479dfb87a1ded8380add1a329be80f04f4c677e8 \
     000042fe \
     'build status=Published verification=compiler-aligned functions=20 code-bytes=14319 module-bytes=17150'
 exact_inspect "$NATIVE_SERVICE_BUNDLE_MATERIALIZATION_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=91 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=16693 bytes=17 count=1'
@@ -1212,7 +1212,7 @@ exact_build \
     "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime-Core.wvproj" \
     "$NATIVE_PUBLICATION_LIFETIME_CORE_MODULE" \
     4955 \
-    a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3 \
+    7c303d1bdab63977339cc51e9d0c31b9a83fea98469719de730e146f48a7c86d \
     0000135b \
     'build status=Published verification=compiler-aligned functions=7 code-bytes=3358 module-bytes=4955'
 exact_inspect "$NATIVE_PUBLICATION_LIFETIME_CORE_MODULE" 'profile=portable' 'Native\u02C9publication\u02C9lifetime\u02C9result' 'Native\u02C9publication\u02C9lifetime\u02C9status' 'Native\u02C9publication\u02C9lifetime\u02C9plan' 'section name=exports offset=4321 bytes=358 count=7'
@@ -1220,7 +1220,7 @@ exact_build \
     "$REPOSITORY_ROOT/Compiler/Windvale/Native-Publication-Lifetime.wvproj" \
     "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" \
     4442 \
-    f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554 \
+    d5bcab5f0524a55c5ad85bfa5d8c742077a959201decf12e92b7f01cad9e0fc9 \
     0000115a \
     'build status=Published verification=compiler-aligned functions=8 code-bytes=3424 module-bytes=4442'
 exact_inspect "$NATIVE_PUBLICATION_LIFETIME_BRIDGE_MODULE" 'profile=portable' 'section name=capabilities offset=81 bytes=4 count=0' 'name="Main" parameters=1 result=bytes' 'section name=exports offset=4207 bytes=17 count=1'

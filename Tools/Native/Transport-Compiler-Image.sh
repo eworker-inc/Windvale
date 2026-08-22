@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Segmented-Compiler-Toolset-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108' \
+    '9ff5401eca1ffd93a49077dd6ebc56c446c59939379a481f22662465fc3cf6db' \
     'linux-x64-wvimagetransport.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux compiler-image transport artifact digest is invalid.' >&2
     exit 1

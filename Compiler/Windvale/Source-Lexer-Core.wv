@@ -1557,59 +1557,52 @@ export fn Compilerˉlexˉnextˉafterˉscan(
             let Digitˉend: u32 = Cursor;
             var Numericˉkind: Compilerˉnumericˉkind = Compilerˉnumericˉkind.I32;
             if Total - Cursor >= 2u32 {
-                if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "i8") {
-                    let I8ˉfollowing: u32 = Cursor + 2u32;
-                    if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I8ˉfollowing, Total) == 0u32 {
-                        Numericˉkind = Compilerˉnumericˉkind.I8;
-                        Cursor = I8ˉfollowing;
-                        Column = Column + 2u32;
-                    }
-                } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 2u32, "u8") {
-                    let U8ˉfollowing: u32 = Cursor + 2u32;
-                    if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U8ˉfollowing, Total) == 0u32 {
-                        Numericˉkind = Compilerˉnumericˉkind.U8;
-                        Cursor = U8ˉfollowing;
-                        Column = Column + 2u32;
-                    }
+                let Shortˉtoken: Compilerˉtokenˉkind =
+                    Compilerˉsourceˉkeywordˉkind(Input, Cursor, 2u32);
+                var Shortˉsuffix: Compilerˉnumericˉkind =
+                    Compilerˉnumericˉkind.None;
+                if Shortˉtoken == Compilerˉtokenˉkind.I8 {
+                    Shortˉsuffix = Compilerˉnumericˉkind.I8;
+                } else if Shortˉtoken == Compilerˉtokenˉkind.U8 {
+                    Shortˉsuffix = Compilerˉnumericˉkind.U8;
+                }
+                let Shortˉfollowing: u32 = Cursor + 2u32;
+                if Shortˉsuffix != Compilerˉnumericˉkind.None &&
+                    Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
+                        Input, Shortˉfollowing, Total
+                    ) == 0u32 {
+                    Numericˉkind = Shortˉsuffix;
+                    Cursor = Shortˉfollowing;
+                    Column = Column + 2u32;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.I32 {
                 if Total - Cursor >= 3u32 {
-                    if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "i64") {
-                        let I64ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I64ˉfollowing, Total) == 0u32 {
-                            Numericˉkind = Compilerˉnumericˉkind.I64;
-                            Cursor = I64ˉfollowing;
-                            Column = Column + 3u32;
-                        }
-                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "i16") {
-                        let I16ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, I16ˉfollowing, Total) == 0u32 {
-                            Numericˉkind = Compilerˉnumericˉkind.I16;
-                            Cursor = I16ˉfollowing;
-                            Column = Column + 3u32;
-                        }
-                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u32") {
-                        let U32ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U32ˉfollowing, Total) == 0u32 {
-                            Numericˉkind = Compilerˉnumericˉkind.U32;
-                            Cursor = U32ˉfollowing;
-                            Column = Column + 3u32;
-                        }
-                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u16") {
-                        let U16ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U16ˉfollowing, Total) == 0u32 {
-                            Numericˉkind = Compilerˉnumericˉkind.U16;
-                            Cursor = U16ˉfollowing;
-                            Column = Column + 3u32;
-                        }
-                    } else if Compilerˉsourceˉspanˉequalsˉtext(Input, Cursor, 3u32, "u64") {
-                        let U64ˉfollowing: u32 = Cursor + 3u32;
-                        if Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(Input, U64ˉfollowing, Total) == 0u32 {
-                            Numericˉkind = Compilerˉnumericˉkind.U64;
-                            Cursor = U64ˉfollowing;
-                            Column = Column + 3u32;
-                        }
+                    let Longˉtoken: Compilerˉtokenˉkind =
+                        Compilerˉsourceˉkeywordˉkind(Input, Cursor, 3u32);
+                    var Longˉsuffix: Compilerˉnumericˉkind =
+                        Compilerˉnumericˉkind.None;
+                    if Longˉtoken == Compilerˉtokenˉkind.I16 {
+                        Longˉsuffix = Compilerˉnumericˉkind.I16;
+                    } else if Longˉtoken == Compilerˉtokenˉkind.I32 {
+                        Longˉsuffix = Compilerˉnumericˉkind.I32;
+                    } else if Longˉtoken == Compilerˉtokenˉkind.I64 {
+                        Longˉsuffix = Compilerˉnumericˉkind.I64;
+                    } else if Longˉtoken == Compilerˉtokenˉkind.U16 {
+                        Longˉsuffix = Compilerˉnumericˉkind.U16;
+                    } else if Longˉtoken == Compilerˉtokenˉkind.U32 {
+                        Longˉsuffix = Compilerˉnumericˉkind.U32;
+                    } else if Longˉtoken == Compilerˉtokenˉkind.U64 {
+                        Longˉsuffix = Compilerˉnumericˉkind.U64;
+                    }
+                    let Longˉfollowing: u32 = Cursor + 3u32;
+                    if Longˉsuffix != Compilerˉnumericˉkind.None &&
+                        Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
+                            Input, Longˉfollowing, Total
+                        ) == 0u32 {
+                        Numericˉkind = Longˉsuffix;
+                        Cursor = Longˉfollowing;
+                        Column = Column + 3u32;
                     }
                 }
             }

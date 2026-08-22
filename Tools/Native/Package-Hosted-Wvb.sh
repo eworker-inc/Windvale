@@ -8,7 +8,7 @@ if [[ ($# -eq 3 || $# -eq 4) && $1 =~ ^[1-7]$ && $2 == *.wvb ]]; then
     output_argument=$3
     target=${4:-linux}
 elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-7]$ &&
-        $3 == *.wvb && $5 =~ ^[1-8]$ && $6 =~ ^[0-9]+$ ]]; then
+        $3 == *.wvb && $5 =~ ^([1-9]|1[0-6])$ && $6 =~ ^[0-9]+$ ]]; then
     image_mode=1
     profile=$2
     input_argument=$3
@@ -19,7 +19,7 @@ elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-7]$ &&
     target=${8:-linux}
 else
     echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
-    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-8> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
+    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
     exit 64
 fi
 case "$target:$output_argument" in
@@ -97,7 +97,7 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 23f2bf3e62212d37d2eb07ab95620e9c708181e7d6e899e8dc409d89e72bbe8e 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 7f323dabafff6ef6c158ad1ad45c40474c60c282fda3baba3928b4d7cac8a2e4 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1

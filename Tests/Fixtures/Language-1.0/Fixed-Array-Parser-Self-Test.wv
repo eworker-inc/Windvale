@@ -1,0 +1,36 @@
+module Languageˉoneˉfixedˉarrayˉparserˉselfˉtest profile portable;
+
+import Compilerˉsourceˉbodyˉparser as Bodies;
+
+export fn Main() -> i32 {
+    let Emptyˉsource: bytes = Textˉtoˉutf8("[]");
+    let Emptyˉexpression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Emptyˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Emptyˉsource), 0u32, 0u32
+        );
+    if Emptyˉexpression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Emptyˉexpression.Kind !=
+            Bodies.Compilerˉsourceˉexpressionˉkind.Array ||
+        Emptyˉexpression.Items != 0u32 || Emptyˉexpression.Nodes != 1u32 ||
+        Emptyˉexpression.Depth != 1u32 {
+        return 1;
+    }
+    let Itemsˉsource: bytes = Textˉtoˉutf8("[40i32, 42i32, 44i32,]");
+    let Itemsˉexpression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Itemsˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Itemsˉsource), 0u32, 0u32
+        );
+    if Itemsˉexpression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Itemsˉexpression.Kind !=
+            Bodies.Compilerˉsourceˉexpressionˉkind.Array ||
+        Itemsˉexpression.Items != 3u32 || Itemsˉexpression.Nodes != 4u32 ||
+        Itemsˉexpression.Depth != 2u32 ||
+        Itemsˉexpression.Length != Bytesˉlength(Itemsˉsource) {
+        return 2;
+    }
+    return 42;
+}

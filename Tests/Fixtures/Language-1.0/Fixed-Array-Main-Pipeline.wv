@@ -1,0 +1,12 @@
+#!wv/1 en@1
+module Languageˉoneˉfixedˉarrayˉmainˉpipeline;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+export fn Main() -> i32 {
+    let Values: Collections.Array<i32, 3u64> = [40i32, 42i32, 44i32,];
+    return Values[1u64];
+}

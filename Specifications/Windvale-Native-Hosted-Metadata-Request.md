@@ -85,9 +85,9 @@ bound to the publication plan.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-request WVB | 68,641 | `c90fc5f817454a48c76b476d68fc4460426ba3bce9a787114b693600c4dbe784` |
-| Windows metadata-request tool | 1,100,800 | `cd22508c0f933d60cf1ed1850c2c45002fb0093c02b4a4befe778c5f040e07cf` |
-| Linux metadata-request tool | 1,101,824 | `df370d3434a946784f337a4a7a18eb847a5ec694d7b6fe886c2e89f79b3b301e` |
+| Metadata-request WVB | 69,357 | `b3b7d958e5a2a7569fb982030192ca31876de08c64ee04ce2027655bcbbd084c` |
+| Windows metadata-request tool | 1,105,920 | `1f52c4ec882506876348465c5fa91ba190387f096b79838264f6fc6f7176bb1e` |
+| Linux metadata-request tool | 1,105,920 | `6090e214bea51ac508d0ca511593f93f3f71e02c9671e0cb0b818eb095d08df7` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; no

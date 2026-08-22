@@ -357,6 +357,15 @@ export fn Main() -> i32 {
         Resources.Streamingˉsha256ˉresourceˉevidenceˉbegin(Manifest);
     var Region: u32 = 0u32;
     while Region < Regions {
+        console.write_line(
+            Textˉconcat(
+                Textˉconcat(
+                    "hosted metadata request step=hash region=",
+                    U32ˉformat(Region + 1u32)
+                ),
+                Textˉconcat("/", U32ˉformat(Regions))
+            )
+        );
         var State = Resources.Streamingˉsha256ˉresourceˉregionˉbegin(
             Manifest, Region
         );
@@ -365,14 +374,31 @@ export fn Main() -> i32 {
             if Resources.Streamingˉsha256ˉresourceˉregionˉusesˉchunk(
                 State, Manifest, Index
             ) {
+                console.write_line(
+                    Textˉconcat(
+                        Textˉconcat(
+                            "hosted metadata request step=hash chunk=",
+                            U32ˉformat(Index + 1u32)
+                        ),
+                        Textˉconcat("/", U32ˉformat(Chunks))
+                    )
+                );
+                let Resource: bytes = file.read_bytes(
+                    Resources.Streamingˉsha256ˉresourceˉname(Prefix, Index)
+                );
+                console.write_line(
+                    Textˉconcat(
+                        "hosted metadata request step=hash read-bytes=",
+                        U32ˉformat(Bytesˉlength(Resource))
+                    )
+                );
                 State = Resources.Streamingˉsha256ˉresourceˉregionˉupdate(
                     State,
                     Manifest,
                     Index,
-                    file.read_bytes(
-                        Resources.Streamingˉsha256ˉresourceˉname(Prefix, Index)
-                    )
+                    Resource
                 );
+                console.write_line("hosted metadata request step=hash update=Complete");
             }
             Index = Index + 1u32;
         }

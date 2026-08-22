@@ -3,6 +3,9 @@ import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    Orderˉsplitˉprojectˉsourceˉpayloads,
+} from './Split-Project-Source-Ordering-Core.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -26,6 +29,24 @@ if (process.arch !== 'x64' ||
 
 const Testˉroot = await mkdtemp(path.join(os.tmpdir(), TEMPORARY_PREFIX));
 try {
+    const Root = Buffer.from('module Root;\n', 'utf8');
+    const Mainˉfile = Buffer.from(
+        'module WebAssemblyˉinterpreter;\n',
+        'utf8',
+    );
+    const Envelopeˉfile = Buffer.from(
+        'module WebAssemblyˉinterpreterˉenvelope;\n',
+        'utf8',
+    );
+    const Ordered = Orderˉsplitˉprojectˉsourceˉpayloads([
+        Root,
+        Envelopeˉfile,
+        Mainˉfile,
+    ]);
+    if (Ordered.length !== 3 || Ordered[0] !== Root ||
+        Ordered[1] !== Mainˉfile || Ordered[2] !== Envelopeˉfile) {
+        Reject('Declared module identities did not determine source order.');
+    }
     const Cacheˉroot = path.join(Testˉroot, 'cache');
     const Outputˉroot = path.join(Testˉroot, 'output');
     await mkdir(Outputˉroot);
@@ -70,8 +91,8 @@ try {
         Reject(`The failed cache publication retained debris: ${Debris[0]}`);
     }
     console.log(
-        'split project cache test cases=1 status=Passed ' +
-        'forced-failure-cleanup=Passed',
+        'split project cache test cases=2 status=Passed ' +
+        'module-order=Passed forced-failure-cleanup=Passed',
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);

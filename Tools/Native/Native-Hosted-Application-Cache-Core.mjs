@@ -235,7 +235,7 @@ export async function Getˉhostedˉapplicationˉcacheˉkey(
     if (path.extname(inputPath).toLowerCase() !== '.wvb') {
         Reject('The hosted-application cache-key input must be a WVB.');
     }
-    if (!/^[1-8]$/.test(fragmentCountText)) {
+    if (!/^(?:[1-9]|1[0-6])$/.test(fragmentCountText)) {
         Reject('The hosted-application cache-key fragment count is invalid.');
     }
     if (entry.length > 20 || !/^(0|[1-9][0-9]*)$/.test(entry) ||

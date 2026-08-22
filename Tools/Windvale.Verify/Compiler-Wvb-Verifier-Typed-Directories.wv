@@ -19,7 +19,7 @@ export fn Hˉlocalˉshapes(
     while Index < Parameterˉcount {
         let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
         var Nominal: u32 = 0u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 {
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 {
             Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -27,7 +27,7 @@ export fn Hˉlocalˉshapes(
             Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal))
         );
         Cursor = Cursor + 1u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 {
+        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -38,7 +38,8 @@ export fn Hˉlocalˉshapes(
     while Index < Localˉcount {
         let Localˉkind: u8 = Bytesˉreadˉu8(Input, Cursor);
         var Localˉnominal: u32 = 0u32;
-        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 {
+        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
+            Localˉkind == 22u8 {
             Localˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -49,7 +50,8 @@ export fn Hˉlocalˉshapes(
             )
         );
         Cursor = Cursor + 1u32;
-        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 {
+        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
+            Localˉkind == 22u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -76,7 +78,7 @@ export fn Iˉcontrolˉdirectory(
         if Opcode == 1u32 || (Opcode >= 3u32 && Opcode <= 7u32) ||
             Opcode == 9u32 || Opcode == 10u32 || Opcode == 48u32 ||
             Opcode == 49u32 || Opcode == 64u32 || Opcode == 65u32 ||
-            Opcode == 104u32 || Opcode == 105u32 {
+            Opcode == 104u32 || Opcode == 105u32 || Opcode == 197u32 {
             Width = 5u32;
         }
         if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||

@@ -131,7 +131,7 @@ export fn Nativeˉpublicationˉplan(Input: bytes) -> Nativeˉpublicationˉresult
             Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
         );
     }
-    if Fragmentˉbytes > 33554432u32 {
+    if Fragmentˉbytes > 67108864u32 {
         return Nativeˉpublicationˉfailure(
             Input, Nativeˉpublicationˉstatus.Invalidˉfragment, 12u32
         );
@@ -149,7 +149,7 @@ export fn Nativeˉpublicationˉplan(Input: bytes) -> Nativeˉpublicationˉresult
     }
 
     let Initialˉpadding: u32 = Nativeˉpublicationˉalignmentˉpadding(Fragmentˉbytes);
-    if Initialˉpadding > 35651584u32 - Fragmentˉbytes {
+    if Initialˉpadding > 67108864u32 - Fragmentˉbytes {
         return Nativeˉpublicationˉfailure(
             Input, Nativeˉpublicationˉstatus.Imageˉlimit, 12u32
         );
@@ -188,13 +188,13 @@ export fn Nativeˉpublicationˉplan(Input: bytes) -> Nativeˉpublicationˉresult
         }
 
         let Padding: u32 = Nativeˉpublicationˉalignmentˉpadding(Cursor);
-        if Padding > 35651584u32 - Cursor {
+        if Padding > 67108864u32 - Cursor {
             return Nativeˉpublicationˉfailure(
                 Input, Nativeˉpublicationˉstatus.Imageˉlimit, Recordˉoffset + 4u32
             );
         }
         let Offset: u32 = Cursor + Padding;
-        if Size > 35651584u32 - Offset {
+        if Size > 67108864u32 - Offset {
             return Nativeˉpublicationˉfailure(
                 Input, Nativeˉpublicationˉstatus.Imageˉlimit, Recordˉoffset + 4u32
             );

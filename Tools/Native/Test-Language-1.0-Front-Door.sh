@@ -90,11 +90,11 @@ expect_profiled_analysis_failure() {
         "source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=$expected_status" ]]
 }
 
-echo 'START language 1 front door phase=frozen-fixtures item=1/11'
+echo 'START language 1 front door phase=frozen-fixtures item=1/12'
 node "$script_directory/Verify-Language-1.0-Migration-Fixtures.mjs" || exit $?
-echo 'PASS  language 1 front door phase=frozen-fixtures item=1/11'
+echo 'PASS  language 1 front door phase=frozen-fixtures item=1/12'
 
-echo 'START language 1 front door phase=descriptor item=2/11'
+echo 'START language 1 front door phase=descriptor item=2/12'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj" \
     "$work/Descriptor-A.wvb" >/dev/null || exit $?
@@ -107,9 +107,9 @@ cmp -s -- "$work/Descriptor-A.wvb" "$work/Descriptor-B.wvb" || exit 1
 [[ ! -s $work/Run.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected.out"
 cmp -s -- "$work/Expected.out" "$work/Run.out" || exit 1
-echo 'PASS  language 1 front door phase=descriptor item=2/11'
+echo 'PASS  language 1 front door phase=descriptor item=2/12'
 
-echo 'START language 1 front door phase=value-front-end item=3/11'
+echo 'START language 1 front door phase=value-front-end item=3/12'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj" \
     "$work/Value-Front-End.wvb" >/dev/null || exit $?
@@ -167,9 +167,9 @@ generic_type_catalog_result=$?
 generic_type_catalog_wvb_bytes=$(wc -c < "$work/Generic-Type-Catalog.wvb")
 printf 'PASS  language 1 front door step=generic-type-catalog wvb-bytes=%s\n' \
     "$generic_type_catalog_wvb_bytes"
-echo 'PASS  language 1 front door phase=value-front-end item=3/11'
+echo 'PASS  language 1 front door phase=value-front-end item=3/12'
 
-echo 'START language 1 front door phase=compiler-slice item=4/11'
+echo 'START language 1 front door phase=compiler-slice item=4/12'
 [[ $(wc -c < "$bootstrap_analyzer_wvb") -eq 992412 ]] || exit 1
 printf '%s  %s\n' \
     26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120 \
@@ -200,9 +200,12 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Analyzer.wvb" \
     "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
     "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1055866 ]] || exit 1
+printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
+    "$(wc -c < "$work/Analyzer.wvb")" \
+    "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1077512 ]] || exit 1
 printf '%s  %s\n' \
-    2edf577a8b549fff0f351264e814e25783011a94942c904780a57be6ec1194b7 \
+    9fa2a7a7b37329b399252eaa353a43599bd393f2c29dd1deb351b2bf1b512068 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -277,9 +280,12 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Emitter.wvb" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
-[[ $(wc -c < "$work/Emitter.wvb") -eq 974837 ]] || exit 1
+printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
+    "$(wc -c < "$work/Emitter.wvb")" \
+    "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
+[[ $(wc -c < "$work/Emitter.wvb") -eq 998402 ]] || exit 1
 printf '%s  %s\n' \
-    25e9d5b491627b083ceb288f285901ca958bf3d1b12c427ba850a36a539328c9 \
+    53b22d621cd3d169a69deb99bed0c4c5f9f1a15c11bac189076916625cef9743 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
@@ -414,9 +420,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
 cmp -s -- "$work/Generic-Wir-A.wvb" "$work/Generic-Wir-B.wvb" || exit 1
-[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1210665 ]] || exit 1
+[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1236227 ]] || exit 1
 printf '%s  %s\n' \
-    1b79838079339a397d05d4b03f8e42f94b978d7c583cf9ace4cb1e6abaedf696 \
+    37f6a8eeefb522e18685e3d96cfc9b27ee77e07698cd77f184cbb38280d59868 \
     "$work/Generic-Wir-A.wvb" | sha256sum --check --strict --quiet || exit $?
 generic_wir_wvb_bytes=$(wc -c < "$work/Generic-Wir-A.wvb")
 printf 'INFO  language 1 front door step=generic-wir-split wvb-bytes=%s verification=pending-current-native\n' \
@@ -694,9 +700,9 @@ expect_rejection_with_digest \
 printf '%s  %s\n' \
     '25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae' \
     "$work/Minimum-A.wvb" | sha256sum --check --status || exit 1
-echo 'PASS  language 1 front door phase=compiler-slice item=4/11'
+echo 'PASS  language 1 front door phase=compiler-slice item=4/12'
 
-echo 'START language 1 front door phase=fixed-integers item=5/11'
+echo 'START language 1 front door phase=fixed-integers item=5/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -822,9 +828,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
     "$(wc -c < "$work/Fixed-Integer-A.wvb")"
-echo 'PASS  language 1 front door phase=fixed-integers item=5/11'
+echo 'PASS  language 1 front door phase=fixed-integers item=5/12'
 
-echo 'START language 1 front door phase=runes item=6/11'
+echo 'START language 1 front door phase=runes item=6/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -885,9 +891,9 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 rune_wvb_bytes=$(wc -c < "$work/Rune-A.wvb")
 printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
-echo 'PASS  language 1 front door phase=runes item=6/11'
+echo 'PASS  language 1 front door phase=runes item=6/12'
 
-echo 'START language 1 front door phase=floating item=7/11'
+echo 'START language 1 front door phase=floating item=7/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -963,9 +969,34 @@ runtime_result=$?
 [[ $runtime_result -eq 42 ]] || exit 1
 floating_wvb_bytes=$(wc -c < "$work/Floating-A.wvb")
 printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
-echo 'PASS  language 1 front door phase=floating item=7/11'
+echo 'PASS  language 1 front door phase=floating item=7/12'
 
-echo 'START language 1 front door phase=unit-never item=8/11'
+echo 'START language 1 front door phase=fixed-arrays item=8/12'
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$work/Fixed-Array-A.wvb" \
+    >"$work/Fixed-Array-A.out" 2>"$work/Fixed-Array-A.err" || exit $?
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$work/Fixed-Array-B.wvb" \
+    >"$work/Fixed-Array-B.out" 2>"$work/Fixed-Array-B.err" || exit $?
+[[ ! -s $work/Fixed-Array-A.err && ! -s $work/Fixed-Array-B.err ]] || exit 1
+cmp -s -- "$work/Fixed-Array-A.out" "$work/Fixed-Array-B.out" || exit 1
+cmp -s -- "$work/Fixed-Array-A.wvb" "$work/Fixed-Array-B.wvb" || exit 1
+node "$script_directory/Verify-Language-1.0-Fixed-Arrays.mjs" \
+    "$work/Verifier.elf" "$work/Floating-Runner.elf" \
+    "$work/Fixed-Array-A.wvb" "$work" || exit $?
+fixed_array_wvb_bytes=$(wc -c < "$work/Fixed-Array-A.wvb")
+printf 'INFO  language 1 fixed-array wvb-bytes=%s\n' "$fixed_array_wvb_bytes"
+echo 'PASS  language 1 front door phase=fixed-arrays item=8/12'
+
+echo 'START language 1 front door phase=unit-never item=9/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1003,9 +1034,9 @@ unit_wvb_bytes=$(wc -c < "$work/Unit-A.wvb")
 never_wvb_bytes=$(wc -c < "$work/Never-A.wvb")
 printf 'INFO  language 1 unit-never unit-wvb-bytes=%s never-wvb-bytes=%s\n' \
     "$unit_wvb_bytes" "$never_wvb_bytes"
-echo 'PASS  language 1 front door phase=unit-never item=8/11'
+echo 'PASS  language 1 front door phase=unit-never item=9/12'
 
-echo 'START language 1 front door phase=multi-field-variants item=9/11'
+echo 'START language 1 front door phase=multi-field-variants item=10/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1094,9 +1125,9 @@ cmp -s -- "$work/Expected-Variant.out" \
 multi_field_variant_wvb_bytes=$(wc -c < "$work/Multi-Field-Variant-A.wvb")
 printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
     "$multi_field_variant_wvb_bytes"
-echo 'PASS  language 1 front door phase=multi-field-variants item=9/11'
+echo 'PASS  language 1 front door phase=multi-field-variants item=10/12'
 
-echo 'START language 1 front door phase=typed-failure item=10/11'
+echo 'START language 1 front door phase=typed-failure item=11/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1132,9 +1163,9 @@ cmp -s -- "$work/Expected-Variant.out" "$work/Result-Try-Run.out" || exit 1
 result_try_wvb_bytes=$(wc -c < "$work/Result-Try-A.wvb")
 printf 'INFO  language 1 typed-failure wvb-bytes=%s\n' \
     "$result_try_wvb_bytes"
-echo 'PASS  language 1 front door phase=typed-failure item=10/11'
+echo 'PASS  language 1 front door phase=typed-failure item=11/12'
 
-echo 'START language 1 front door phase=foundation-generics item=11/11'
+echo 'START language 1 front door phase=foundation-generics item=12/12'
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1215,5 +1246,5 @@ generic_specializations_wvb_bytes=$(wc -c < \
     "$work/Generic-Specializations-A.wvb")
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
-echo 'PASS  language 1 front door phase=foundation-generics item=11/11'
-printf 'native language 1 front door status=Passed cases=350 frozen-inputs=251 source-fixtures=79 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+echo 'PASS  language 1 front door phase=foundation-generics item=12/12'
+printf 'native language 1 front door status=Passed cases=356 frozen-inputs=251 source-fixtures=79 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

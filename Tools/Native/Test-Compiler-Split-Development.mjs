@@ -182,7 +182,6 @@ async function Readˉproject(Relative) {
         Reject(`The focused project contract is invalid: ${Relative}`);
     }
     const Inputs = [];
-    const Sourceˉspellings = [];
     let Roots = 0;
     for (const Line of Lines.slice(1, -1)) {
         const Match = /^(root|source) "([^"\r\n]+)"$/u.exec(Line);
@@ -197,8 +196,6 @@ async function Readˉproject(Relative) {
             if (Inputs.length !== 0) {
                 Reject(`The focused project root is not first: ${Relative}`);
             }
-        } else {
-            Sourceˉspellings.push(Match[2]);
         }
         const Input = path.join(REPOSITORY_ROOT, ...Match[2].split('/'));
         const Canonical = await realpath(Input).catch(() => '');
@@ -210,10 +207,9 @@ async function Readˉproject(Relative) {
     if (Roots !== 1 || Inputs.length < 1 || Inputs.length > 64) {
         Reject(`The focused project source count is invalid: ${Relative}`);
     }
-    const Sorted = [...Sourceˉspellings].sort();
-    if (Sourceˉspellings.some((Value, Index) => Value !== Sorted[Index])) {
-        Reject(`The focused project sources are not in canonical order: ${Relative}`);
-    }
+    // The project sequence is the semantic WVSS sequence. Filename sorting is
+    // not a valid proxy for declared module-identity order (`*-Main.wv` is a
+    // common counterexample); the source analyzer validates that order.
     return Inputs;
 }
 

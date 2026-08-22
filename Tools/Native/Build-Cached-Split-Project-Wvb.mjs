@@ -22,6 +22,9 @@ import {
     REPOSITORY_ROOT,
     Requireˉnativeˉprojectˉcacheˉrequestˉunchanged,
 } from './Native-Project-Cache-Key-Core.mjs';
+import {
+    Orderˉsplitˉprojectˉsourceˉpayloads,
+} from './Split-Project-Source-Ordering-Core.mjs';
 
 const MAXIMUM_VALUE_BYTES = 4_194_304;
 const MAXIMUM_WVB_BYTES = 16_777_216;
@@ -76,7 +79,7 @@ const Emitterˉidentity = await Readˉproducerˉidentity(
 
 const Cacheˉroot = await Prepareˉcacheˉroot();
 const Analysisˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
-    'project-analysis-wvca-v2',
+    'project-analysis-wvca-v3',
     [Analyzerˉidentityˉpath],
 );
 const Analysisˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(
@@ -102,7 +105,7 @@ const Orderedˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
 });
 const Analysisˉfamily = await Prepareˉfamily(
     Cacheˉroot,
-    'project-analysis-wvca-v2',
+    'project-analysis-wvca-v3',
 );
 const Analysisˉcheckpoint = await Acquireˉanalysis(
     Analysisˉfamily,
@@ -113,7 +116,7 @@ const Analysisˉcheckpoint = await Acquireˉanalysis(
 );
 
 const Emissionˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
-    'project-split-wvb-optimized-v2',
+    'project-split-wvb-optimized-v3',
     [Analyzerˉidentityˉpath, Emitterˉidentityˉpath],
 );
 const Emissionˉrequest = await Getˉnativeˉprojectˉcacheˉrequest(
@@ -130,7 +133,7 @@ await Requireˉproducerˉidentityˉunchanged(
 );
 const Emissionˉfamily = await Prepareˉfamily(
     Cacheˉroot,
-    'project-split-wvb-optimized-v2',
+    'project-split-wvb-optimized-v3',
 );
 const Emissionˉcheckpoint = await Acquireˉemission(
     Emissionˉfamily,
@@ -174,13 +177,20 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
     try {
         Temporary = await Allocateˉtemporary(Family, Request.key);
         await Verifyˉproducer(Analyzer, Identity);
+        const Admittedˉsourceˉset = path.join(
+            Temporary,
+            'Admitted.wvss',
+        );
+        await Writeˉadmittedˉsourceˉset(Inputs, Admittedˉsourceˉset);
         await Run(Analyzer, [
-            ...Inputs,
+            '--admitted-source-set',
+            Admittedˉsourceˉset,
             path.join(Temporary, 'Source.wvss'),
             path.join(Temporary, 'Manifest.wvca'),
             path.join(Temporary, 'Bindings.wvlb'),
             path.join(Temporary, 'Wir.wvir'),
         ], 'analysis');
+        await rm(Admittedˉsourceˉset, { force: true });
         await Verifyˉproducer(Analyzer, Identity);
         const Evidence = await Analysisˉevidence(Temporary);
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
@@ -199,9 +209,74 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
         await Validateˉanalysis(Checkpoint, Request.key);
         console.log(`split project step=analysis cache=Created key=${Request.key}`);
         return Checkpoint;
+    } catch (Error) {
+        await Reportˉanalysisˉfailureˉoutputs(Temporary);
+        throw Error;
     } finally {
         await Removeˉtemporary(Family, Request.key, Temporary);
     }
+}
+
+async function Reportˉanalysisˉfailureˉoutputs(Directory) {
+    if (Directory === '') {
+        return;
+    }
+    for (const Name of [
+        'Admitted.wvss',
+        'Source.wvss',
+        'Manifest.wvca',
+        'Bindings.wvlb',
+        'Wir.wvir',
+    ]) {
+        const Information = await lstat(path.join(Directory, Name)).catch(() => null);
+        const State = Information !== null && Information.isFile() &&
+            !Information.isSymbolicLink()
+            ? `file bytes=${Information.size}`
+            : 'absent';
+        console.error(`split project failure artifact=${Name} state=${State}`);
+    }
+}
+
+async function Writeˉadmittedˉsourceˉset(Inputs, Candidate) {
+    if (Inputs.length < 1 || Inputs.length > 64) {
+        Reject('The admitted source set has invalid module cardinality.');
+    }
+    const Headerˉbytes = 16 + Inputs.length * 8;
+    const Header = Buffer.alloc(16);
+    Header.write('WVSS', 0, 4, 'ascii');
+    Header.writeUInt16LE(1, 4);
+    Header.writeUInt16LE(0, 6);
+    Header.writeUInt32LE(Inputs.length, 8);
+    Header.writeUInt32LE(Inputs.length * 8, 12);
+    const Directory = Buffer.alloc(Inputs.length * 8);
+    const Unorderedˉpayloads = [];
+    let Payloadˉbytes = 0;
+    for (let Index = 0; Index < Inputs.length; Index += 1) {
+        const Remaining = MAXIMUM_VALUE_BYTES - Headerˉbytes - Payloadˉbytes;
+        if (Remaining < 1) {
+            Reject('The admitted source set exceeds 4 MiB.');
+        }
+        const Payload = await Readˉbounded(
+            Inputs[Index],
+            `source module ${Index}`,
+            Remaining,
+        );
+        Unorderedˉpayloads.push(Payload);
+        Payloadˉbytes += Payload.length;
+    }
+    const Payloads = Orderˉsplitˉprojectˉsourceˉpayloads(
+        Unorderedˉpayloads,
+    );
+    let Payloadˉoffset = 0;
+    for (let Index = 0; Index < Payloads.length; Index += 1) {
+        Directory.writeUInt32LE(Headerˉbytes + Payloadˉoffset, Index * 8);
+        Directory.writeUInt32LE(Payloads[Index].length, Index * 8 + 4);
+        Payloadˉoffset += Payloads[Index].length;
+    }
+    await writeFile(
+        Candidate,
+        Buffer.concat([Header, Directory, ...Payloads], Headerˉbytes + Payloadˉbytes),
+    );
 }
 
 function Parseˉprojectˉ2(Text) {
@@ -247,9 +322,8 @@ function Parseˉprojectˉ2(Text) {
     if (Root === '' || Emit !== 1 || Sources.length > 63) {
         Reject('The split compiler Project 2 manifest has invalid cardinality.');
     }
-    Sources.sort((Left, Right) => Left.text < Right.text
-        ? -1
-        : Left.text > Right.text ? 1 : 0);
+    // Dependency order is resolved from declared module identities after the
+    // bounded source snapshots are read. Manifest path order is not semantic.
     return [Root, ...Sources.map(Source => Source.path)];
 }
 

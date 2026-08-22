@@ -10,7 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Producer=%RepositoryRoot%\Artifacts\Native-Segmented-Compiler-Toolset-Candidate\windows-x64-wvstage.exe"
 
-certutil -hashfile "%Producer%" SHA256 | findstr /I /C:"5303a5580831dad96c2f46a50aa9f0ce4c4c3dc70d4612dac8a03dc1c78b1aeb" >nul
+certutil -hashfile "%Producer%" SHA256 | findstr /I /C:"ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda" >nul
 if errorlevel 1 (
     >&2 echo The Windows segmented WVO producer artifact digest is invalid.
     exit /b 1

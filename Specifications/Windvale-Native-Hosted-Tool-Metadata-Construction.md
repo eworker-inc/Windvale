@@ -28,8 +28,8 @@ service-placement records.
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
 | 16 | 4 | hosted profile | `1` through `7` |
 | 20 | 4 | bundle offset | Exactly `4,096` |
-| 24 | 4 | bundle bytes | `1` through 34 MiB |
-| 28 | 4 | native-image bytes | `1` through 32 MiB and no larger than the bundle |
+| 24 | 4 | bundle bytes | `1` through 64 MiB |
+| 28 | 4 | native-image bytes | `1` through 64 MiB and no larger than the bundle |
 | 32 | 4 | native entry | Within the native image |
 | 36 | 4 | service count | Exactly `10` |
 | 40 | 32 | native-image SHA-256 | Raw nonzero digest of the native image extent |

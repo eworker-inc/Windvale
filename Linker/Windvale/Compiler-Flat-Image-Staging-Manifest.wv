@@ -75,7 +75,7 @@ export fn Linkerˉcompilerˉflatˉimageˉmanifestˉvalidate(
     }
 
     let Imageˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
-    if Imageˉbytes == 0u32 || Imageˉbytes > 33554432u32 {
+    if Imageˉbytes == 0u32 || Imageˉbytes > 67108864u32 {
         return Invalid(
             Linkerˉcompilerˉflatˉimageˉmanifestˉstatus.Imageˉsize
         );
@@ -149,7 +149,7 @@ export fn Linkerˉcompilerˉflatˉimageˉmanifestˉbuild(
     Entryˉoffset: u32,
     Chunks: u32
 ) -> bytes {
-    if Imageˉbytes == 0u32 || Imageˉbytes > 33554432u32 ||
+    if Imageˉbytes == 0u32 || Imageˉbytes > 67108864u32 ||
         Entryˉoffset >= Imageˉbytes || Chunks == 0u32 || Chunks > 518u32 ||
         Bytesˉlength(Entries) != Chunks * 12u32 {
         return Bytesˉslice(Entries, 0u32, 0u32);

@@ -70,7 +70,7 @@ export fn Main() -> i32 {
         Decimal.Foundationˉu32ˉdecimalˉparse(
             Countˉtext, 0u32, Bytesˉlength(Countˉtext)
         );
-    if !Parsed.Valid || Parsed.Value == 0u32 || Parsed.Value > 8u32 ||
+    if !Parsed.Valid || Parsed.Value == 0u32 || Parsed.Value > 16u32 ||
         !Sources.Immutableˉsourceˉprefixˉisˉvalid(Prefix) {
         return Reject();
     }

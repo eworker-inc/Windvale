@@ -5,7 +5,8 @@
 This document specifies the current Windvale bytecode family: the WVB 1.11
 baseline, the WVB 1.12 fixed-width-integer extension, the WVB 1.13 rune
 extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
-`never` extension, and the WVB 1.16 named variant-field extension. Windvale is in early
+`never` extension, the WVB 1.16 named variant-field extension, and the WVB 1.17
+fixed-array extension. Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
 independent module metadata, nominal payload variants, bounded sequences and
@@ -18,11 +19,14 @@ binary32 and binary64 shapes and one exact floating-point instruction family.
 WVB 1.15 adds an ordinary one-value `unit` shape, a return-only uninhabited
 `never` shape, and the canonical unit constant. WVB 1.16 adds bounded
 multi-field variant metadata and exact named field extraction while retaining
-the zero-field and one-field metadata bytes. A canonical writer emits the lowest required
+the zero-field and one-field metadata bytes. WVB 1.17 adds exact nominal
+fixed-array metadata, array values, construction, and checked `u64` indexing.
+A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
-never evidence, and 1.16 for multi-field variant metadata or field extraction.
-A WVB 1.16-capable reader accepts all six versions and never admits an
+never evidence, 1.16 for multi-field variant metadata or field extraction, and
+1.17 for any fixed-array type, value shape, construction, or indexing operation.
+A WVB 1.17-capable reader accepts all seven versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -44,7 +48,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, 14, 15, or 16
+u16      minor version: 11, 12, 13, 14, 15, 16, or 17
 u32      section count: 7
 ```
 
@@ -183,7 +187,7 @@ The reference launcher selects exported `Main() -> i32` as the executable source
 ```text
 u32      nominal type count
 repeat:
-  u8     nominal kind: 1 record, 2 enum, 3 variant
+  u8     nominal kind: 1 record, 2 enum, 3 variant, 4 fixed array
   string nominal type name
   if record:
     u32    field count
@@ -202,7 +206,7 @@ repeat:
       u8     field encoding:
              0 no fields
              1 one legacy field
-             2 field list, WVB 1.16 only
+             2 field list, WVB 1.16 and later
       if encoding 1:
         string field name
         shape  field type
@@ -211,9 +215,24 @@ repeat:
         repeat:
           string field name
           shape  field type
+  if fixed array:
+    shape  element type
+    u32    element count, 0 through 4095
 ```
 
-Nominal types are grouped by kind, then strictly sorted by ordinal name, and names are unique across all kinds. Record field order is declaration order and therefore constructor order; field names are unique within the record. Seed requires between 1 and 64 fields. Enums contain 1 through 256 uniquely named members with unique `i32` values. Variants contain 1 through 256 unique ordered cases and zero through 64 uniquely named fields per case. Encoding `0` is canonical for no fields, encoding `1` is canonical for exactly one field and preserves all earlier WVB bytes, and encoding `2` is canonical only for two through 64 fields in WVB 1.16. Field shapes obey the bounded, acyclic source restrictions.
+Nominal types are grouped by kind, then strictly sorted by ordinal name, and
+names are unique across all kinds. Record field order is declaration order and
+therefore constructor order; field names are unique within the record. Seed
+requires between 1 and 64 fields. Enums contain 1 through 256 uniquely named
+members with unique `i32` values. Variants contain 1 through 256 unique ordered
+cases and zero through 64 uniquely named fields per case. Encoding `0` is
+canonical for no fields, encoding `1` is canonical for exactly one field and
+preserves all earlier WVB bytes, and encoding `2` is canonical only for two
+through 64 fields in WVB 1.16 and later. A fixed-array descriptor exists only in
+WVB 1.17, contains one exact non-`never` value shape plus its length, and has no
+field names or capacity. Its compiler-generated private name identifies the
+concrete source `Array<T, N>` instance. Field and element shapes obey the
+bounded, acyclic source restrictions.
 
 ## Value types
 
@@ -240,6 +259,7 @@ Nominal types are grouped by kind, then strictly sorted by ordinal name, and nam
 19 f64 (WVB 1.14 and later)
 20 unit (WVB 1.15 and later)
 21 never (WVB 1.15 and later)
+22 fixed array followed by u32 nominal-type index (WVB 1.17 only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -251,7 +271,12 @@ collection element, or operand-stack value. Immutable integer arrays are module
 data and are not operand-stack values. A `bytes` value is an immutable sequence
 or slice view and can be stored in locals, passed to functions, and returned.
 
-Function parameter, result, local, record-field, and variant-payload types use a value shape. A primitive shape is its one-byte value type. A nominal shape is byte `7`, `8`, or `11` followed by a `u32` Types-section index. A collection shape is byte `12` or `13`, its recursively encoded non-collection element shape, then its `u32` maximum. Nominal identity and collection kind/element/maximum are exact.
+Function parameter, result, local, record-field, variant-payload, and array
+element types use a value shape. A primitive shape is its one-byte value type. A
+nominal shape is byte `7`, `8`, `11`, or `22` followed by a `u32` Types-section
+index of the matching kind. A collection shape is byte `12` or `13`, its
+recursively encoded non-collection element shape, then its `u32` maximum.
+Nominal identity and collection kind/element/maximum are exact.
 
 `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64` are ordinary scalar
 shapes. They do not
@@ -261,7 +286,8 @@ bytes 14 through 16 and opcode `C0` are invalid in WVB 1.11. Shape byte 17 and
 opcode `C1` are invalid before WVB 1.13. Shape bytes 18 and 19 and opcode `C2`
 are invalid before WVB 1.14. Shape bytes 20 and 21 and opcode `C3` are invalid
 before WVB 1.15. Variant field-list marker `2` and opcode `C4` are invalid
-before WVB 1.16. Each later version admits the complete vocabulary of every
+before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
+invalid before WVB 1.17. Each later version admits the complete vocabulary of every
 earlier version.
 
 ## Instruction encoding
@@ -402,6 +428,8 @@ C1 rune            u8 operation, then operation-specific payload
 C2 floating        u8 type tag, u8 operation, then operation-specific payload
 C3 unit.const      no immediate; produces the sole `unit` value
 C4 variant.field   u32 variant-type index, u32 packed case/field; consumes variant, produces exact field
+C5 array.create    u32 array-type index; consumes exactly N elements in index order, produces exact array
+C6 array.element   no immediate; consumes exact array and u64 index, produces exact element
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -507,17 +535,28 @@ field. Construction consumes exactly zero through 64 operands in declaration
 order. There is no dynamic field lookup, name lookup, allocation, conversion,
 or representation exposure in either instruction.
 
+`C5` carries one canonical kind-4 Types index. It consumes exactly that
+descriptor's `N` element values in ascending index order, requires every operand
+to have the descriptor's exact element shape, and produces one shape-22 value
+with the same type index. `C6` consumes that exact array followed by one complete
+`u64` index and produces the descriptor's exact element shape. An index greater
+than or equal to `N` traps with `WVR3008`. Construction and access expose no
+backing address, capacity, host layout, conversion, common-type inference, or
+dynamic element lookup. A target may use inline storage, an arena, or another
+unobservable bounded representation; resource exhaustion remains a target
+failure and cannot change successful value semantics.
+
 ## Verification
 
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11, 1.12, 1.13, 1.14, 1.15, or 1.16 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, and every multi-field variant encoding or field instruction requires 1.16.
+- The version is WVB 1.11 through 1.17 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, and every fixed-array descriptor, shape, construction, or access requires 1.17.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
 - Every local, data, function, and capability index is valid and has the required type.
-- Every record, enum, or variant declaration, nominal shape, constructor operand, field access, legacy payload access, case test, constant, and enum comparison has valid nominal identity, bounded indices and counts, unique field names, and exact types.
+- Every record, enum, variant, or fixed-array declaration, nominal shape, constructor operand, field or element access, legacy payload access, case test, constant, and enum comparison has valid nominal identity, bounded indices and counts, unique names where applicable, and exact types.
 - Every collection shape has an admitted non-collection element and maximum; builder transitions and sequence operations have exact types and cannot cross forbidden boundaries.
 - Division/remainder, bitwise/shift, fixed-integer, rune, floating-point, and content equality operations have exact operand types; shifts use a `u32` count and content equality is limited to text and bytes.
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.

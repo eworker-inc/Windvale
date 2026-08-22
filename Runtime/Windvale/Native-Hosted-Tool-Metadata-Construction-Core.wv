@@ -195,8 +195,8 @@ export fn Nativeˉhostedˉtoolˉmetadataˉbuild(Input: bytes) -> bytes {
     if Target < 1u32 || Target > 2u32 ||
         Profile < 1u32 || Profile > 7u32 ||
         Bundleˉoffset != 4096u32 ||
-        Bundleˉbytes == 0u32 || Bundleˉbytes > 35651584u32 ||
-        Nativeˉbytes == 0u32 || Nativeˉbytes > 33554432u32 ||
+        Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 ||
+        Nativeˉbytes == 0u32 || Nativeˉbytes > 67108864u32 ||
         Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes ||
         Bytesˉreadˉu32ˉlittle(Input, 36u32) != 10u32 ||
         Allˉzero(Input, 40u32, 32u32) ||

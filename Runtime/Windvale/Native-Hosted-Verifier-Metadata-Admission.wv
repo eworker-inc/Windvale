@@ -140,9 +140,9 @@ export fn Nativeˉhostedˉverifierˉmetadataˉisˉvalidˉforˉprofile(
     let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 68u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 72u32);
     if Bundleˉoffset != 4096u32 || Bundleˉoffset % 16u32 != 0u32 ||
-        Bundleˉbytes == 0u32 || Bundleˉbytes > 35651584u32 ||
+        Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 64u32) != 0u32 ||
-        Nativeˉbytes == 0u32 || Nativeˉbytes > 33554432u32 ||
+        Nativeˉbytes == 0u32 || Nativeˉbytes > 67108864u32 ||
         Nativeˉbytes > Bundleˉbytes || Nativeˉentry >= Nativeˉbytes ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 76u32) != 2097152u32 ||
         Bytesˉreadˉu32ˉlittle(Input, Offset + 80u32) != 134217728u32 ||

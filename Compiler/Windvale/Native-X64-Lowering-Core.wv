@@ -5911,7 +5911,7 @@ fn Compilerˉnativeˉx64ˉfunctionˉartifactsˉareˉvalid(
     if Relocationˉbytes > 524288u32 || Relocationˉbytes % 8u32 != 0u32 {
         return false;
     }
-    if Codeˉbytes > 33554432u32 { return false; }
+    if Codeˉbytes > 67108864u32 { return false; }
     if Relocationˉbytes > Payloadˉbytes {
         return false;
     }
@@ -5937,8 +5937,8 @@ fn Compilerˉnativeˉx64ˉcombineˉfunctionˉartifacts(
     }
     let Leftˉcodeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Left, 12u32);
     let Rightˉcodeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Right, 12u32);
-    if Leftˉcodeˉbytes > 33554432u32 ||
-        Rightˉcodeˉbytes > 33554432u32 - Leftˉcodeˉbytes {
+    if Leftˉcodeˉbytes > 67108864u32 ||
+        Rightˉcodeˉbytes > 67108864u32 - Leftˉcodeˉbytes {
         return Compilerˉnativeˉx64ˉempty(Input);
     }
     let Relocationˉbytes: u32 =
@@ -6385,14 +6385,14 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         ) {
             Nativeˉabi = 23u32;
         }
-        if Expectedˉmachineˉcodeˉbytes > 33554432u32 {
+        if Expectedˉmachineˉcodeˉbytes > 67108864u32 {
             return Compilerˉnativeˉx64ˉplanˉfailure(
                 Input,
                 Compilerˉnativeˉx64ˉstatus.Outputˉlimit
             );
         }
         if Machineˉbytes >
-            33554432u32 - Expectedˉmachineˉcodeˉbytes {
+            67108864u32 - Expectedˉmachineˉcodeˉbytes {
             return Compilerˉnativeˉx64ˉplanˉfailure(
                 Input,
                 Compilerˉnativeˉx64ˉstatus.Outputˉlimit
@@ -6526,7 +6526,7 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
             Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes() ||
         Bytesˉlength(Plan.Functionˉcursors) != Plan.Functionˉcount * 4u32 ||
         Bytesˉlength(Plan.Relocationˉlengths) != Plan.Functionˉcount * 4u32 ||
-        Plan.Machineˉcodeˉbytes > 33554432u32 ||
+        Plan.Machineˉcodeˉbytes > 67108864u32 ||
         Plan.Relocationˉbytes > 524288u32 ||
         Plan.Dataˉcount > Staticˉdata.Compilerˉnativeˉx64ˉdataˉlimit() ||
         Bytesˉlength(Plan.Dataˉkinds) != Plan.Dataˉcount ||
@@ -6576,7 +6576,7 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
         if Functionˉrelocationˉbytes > 524288u32 - Batchˉrelocationˉbytes {
             Fits = false;
         }
-        if Functionˉcodeˉbytes > 33554432u32 - Batchˉcodeˉbytes {
+        if Functionˉcodeˉbytes > 67108864u32 - Batchˉcodeˉbytes {
             Fits = false;
         }
         let Currentˉpayloadˉbytes: u32 =

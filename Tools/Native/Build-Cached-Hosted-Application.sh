@@ -2,8 +2,8 @@
 set -uo pipefail
 
 if [[ $# -ne 7 || ! $1 =~ ^[1-7]$ || $2 != *.wvb ||
-      ! $4 =~ ^[1-8]$ || ! $5 =~ ^(0|[1-9][0-9]*)$ ]]; then
-    echo 'Usage: ./Tools/Native/Build-Cached-Hosted-Application.sh <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-count-1-through-8> <entry> <output.elf|output.exe> <linux|windows>' >&2
+      ! $4 =~ ^([1-9]|1[0-6])$ || ! $5 =~ ^(0|[1-9][0-9]*)$ ]]; then
+    echo 'Usage: ./Tools/Native/Build-Cached-Hosted-Application.sh <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-count-1-through-16> <entry> <output.elf|output.exe> <linux|windows>' >&2
     exit 64
 fi
 case "$7:$6" in

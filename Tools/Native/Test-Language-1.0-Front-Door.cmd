@@ -23,12 +23,12 @@ mkdir "%Work%" || exit /b 1
 set "Result=1"
 set "FailureStep=frozen-fixtures"
 
-echo START language 1 front door phase=frozen-fixtures item=1/11
+echo START language 1 front door phase=frozen-fixtures item=1/12
 node "%Native%\Verify-Language-1.0-Migration-Fixtures.mjs" || goto :cleanup
-echo PASS  language 1 front door phase=frozen-fixtures item=1/11
+echo PASS  language 1 front door phase=frozen-fixtures item=1/12
 
 set "FailureStep=descriptor"
-echo START language 1 front door phase=descriptor item=2/11
+echo START language 1 front door phase=descriptor item=2/12
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-A.wvb" >nul || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Source-Descriptor.wvproj" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Descriptor-A.wvb" "%Work%\Descriptor-B.wvb" >nul || goto :cleanup
@@ -42,10 +42,10 @@ for /f "usebackq delims=" %%L in ("%Work%\Run.out") do (
 )
 if not "%RunLines%"=="1" goto :cleanup
 if not "%RunLine%"=="Result: 42" goto :cleanup
-echo PASS  language 1 front door phase=descriptor item=2/11
+echo PASS  language 1 front door phase=descriptor item=2/12
 
 set "FailureStep=value-front-end"
-echo START language 1 front door phase=value-front-end item=3/11
+echo START language 1 front door phase=value-front-end item=3/12
 call "%Native%\Build-Wvb.cmd" "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Value-Front-End.wvproj" "%Work%\Value-Front-End.wvb" >nul || goto :cleanup
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-Front-End.wvb" >"%Work%\Value-Front-End.out" 2>"%Work%\Value-Front-End.err" || goto :cleanup
 for %%F in ("%Work%\Value-Front-End.err") do if not "%%~zF"=="0" goto :cleanup
@@ -75,10 +75,10 @@ if not "%GenericTypeCatalogResult%"=="42" goto :cleanup
 for %%F in ("%Work%\Generic-Type-Catalog.out" "%Work%\Generic-Type-Catalog.err") do if not "%%~zF"=="0" goto :cleanup
 for %%F in ("%Work%\Generic-Type-Catalog.wvb") do set "GenericTypeCatalogWvbBytes=%%~zF"
 echo PASS  language 1 front door step=generic-type-catalog wvb-bytes=%GenericTypeCatalogWvbBytes%
-echo PASS  language 1 front door phase=value-front-end item=3/11
+echo PASS  language 1 front door phase=value-front-end item=3/12
 
 set "FailureStep=compiler-split-bootstrap-identities"
-echo START language 1 front door phase=compiler-slice item=4/11
+echo START language 1 front door phase=compiler-slice item=4/12
 for %%F in ("%BootstrapAnalyzerWvb%") do if not "%%~zF"=="992412" goto :cleanup
 certutil -hashfile "%BootstrapAnalyzerWvb%" SHA256 | findstr /I /C:"26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120" >nul || goto :cleanup
 for %%F in ("%BootstrapEmitterWvb%") do if not "%%~zF"=="895787" goto :cleanup
@@ -102,8 +102,10 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.wvb" ^
     "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1055866" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"2edf577a8b549fff0f351264e814e25783011a94942c904780a57be6ec1194b7" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1077512" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"9fa2a7a7b37329b399252eaa353a43599bd393f2c29dd1deb351b2bf1b512068" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -182,8 +184,10 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Emitter.wvb" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="974837" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"25e9d5b491627b083ceb288f285901ca958bf3d1b12c427ba850a36a539328c9" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
+certutil -hashfile "%Work%\Emitter.wvb" SHA256
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="998402" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"53b22d621cd3d169a69deb99bed0c4c5f9f1a15c11bac189076916625cef9743" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -312,8 +316,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
 fc /b "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir-B.wvb" >nul || goto :cleanup
-for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1210665" goto :cleanup
-certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"1b79838079339a397d05d4b03f8e42f94b978d7c583cf9ace4cb1e6abaedf696" >nul || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1236227" goto :cleanup
+certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"37f6a8eeefb522e18685e3d96cfc9b27ee77e07698cd77f184cbb38280d59868" >nul || goto :cleanup
 for %%F in ("%Work%\Generic-Wir-A.wvb") do set "GenericWirWvbBytes=%%~zF"
 echo INFO  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% verification=pending-current-native
 set "FailureStep=compiler-minimum-a"
@@ -545,10 +549,10 @@ call :expect_rejection_with_digest "%RepositoryRoot%\Tests\Fixtures\Language-1.0
 set "FailureStep=compiler-identity"
 for %%F in ("%Work%\Minimum-A.wvb") do if not "%%~zF"=="221" goto :cleanup
 certutil -hashfile "%Work%\Minimum-A.wvb" SHA256 | findstr /I /C:"25a18cf13d791db1e85fd6b237f89f21d4a0c7b9460b0a72db2da5e5deb205ae" >nul || goto :cleanup
-echo PASS  language 1 front door phase=compiler-slice item=4/11
+echo PASS  language 1 front door phase=compiler-slice item=4/12
 
 set "FailureStep=fixed-integer-compile-a"
-echo START language 1 front door phase=fixed-integers item=5/11
+echo START language 1 front door phase=fixed-integers item=5/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -648,10 +652,10 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 "%Work%\Fixed-Integer-Runtime.exe"
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Fixed-Integer-A.wvb") do echo INFO  language 1 fixed-integer wvb-bytes=%%~zF
-echo PASS  language 1 front door phase=fixed-integers item=5/11
+echo PASS  language 1 front door phase=fixed-integers item=5/12
 
 set "FailureStep=rune-compile-a"
-echo START language 1 front door phase=runes item=6/11
+echo START language 1 front door phase=runes item=6/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -711,10 +715,10 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Rune-A.wvb") do set "RuneWvbBytes=%%~zF"
 echo INFO  language 1 rune wvb-bytes=%RuneWvbBytes%
-echo PASS  language 1 front door phase=runes item=6/11
+echo PASS  language 1 front door phase=runes item=6/12
 
 set "FailureStep=floating-compile-a"
-echo START language 1 front door phase=floating item=7/11
+echo START language 1 front door phase=floating item=7/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -797,10 +801,39 @@ call "%Native%\Package-Console.cmd" windows-x64-console-v1 ^
 if not "%ERRORLEVEL%"=="42" goto :cleanup
 for %%F in ("%Work%\Floating-A.wvb") do set "FloatingWvbBytes=%%~zF"
 echo INFO  language 1 floating wvb-bytes=%FloatingWvbBytes%
-echo PASS  language 1 front door phase=floating item=7/11
+echo PASS  language 1 front door phase=floating item=7/12
+
+set "FailureStep=fixed-array-compile-a"
+echo START language 1 front door phase=fixed-arrays item=8/12
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Fixed-Array-A.wvb" ^
+    >"%Work%\Fixed-Array-A.out" 2>"%Work%\Fixed-Array-A.err" || goto :cleanup
+set "FailureStep=fixed-array-compile-b"
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%Work%\Fixed-Array-B.wvb" ^
+    >"%Work%\Fixed-Array-B.out" 2>"%Work%\Fixed-Array-B.err" || goto :cleanup
+set "FailureStep=fixed-array-determinism"
+for %%F in ("%Work%\Fixed-Array-A.err" "%Work%\Fixed-Array-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Fixed-Array-A.out" "%Work%\Fixed-Array-B.out" >nul || goto :cleanup
+fc /b "%Work%\Fixed-Array-A.wvb" "%Work%\Fixed-Array-B.wvb" >nul || goto :cleanup
+set "FailureStep=fixed-array-verifier-runtime"
+node "%Native%\Verify-Language-1.0-Fixed-Arrays.mjs" ^
+    "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
+    "%Work%\Fixed-Array-A.wvb" "%Work%" || goto :cleanup
+for %%F in ("%Work%\Fixed-Array-A.wvb") do set "FixedArrayWvbBytes=%%~zF"
+echo INFO  language 1 fixed-array wvb-bytes=%FixedArrayWvbBytes%
+echo PASS  language 1 front door phase=fixed-arrays item=8/12
 
 set "FailureStep=unit-never-compile-a"
-echo START language 1 front door phase=unit-never item=8/11
+echo START language 1 front door phase=unit-never item=9/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -855,10 +888,10 @@ if not "%NeverRunLine%"=="Result: 42" goto :cleanup
 for %%F in ("%Work%\Unit-A.wvb") do set "UnitWvbBytes=%%~zF"
 for %%F in ("%Work%\Never-A.wvb") do set "NeverWvbBytes=%%~zF"
 echo INFO  language 1 unit-never unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes%
-echo PASS  language 1 front door phase=unit-never item=8/11
+echo PASS  language 1 front door phase=unit-never item=9/12
 
 set "FailureStep=multi-field-variant-compile-a"
-echo START language 1 front door phase=multi-field-variants item=9/11
+echo START language 1 front door phase=multi-field-variants item=10/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -934,10 +967,10 @@ for %%F in ("%Work%\Variant-Runtime-Pressure.err") do if not "%%~zF"=="0" goto :
 call :expect_result_42 "%Work%\Variant-Runtime-Pressure.out" || goto :cleanup
 for %%F in ("%Work%\Multi-Field-Variant-A.wvb") do set "MultiFieldVariantWvbBytes=%%~zF"
 echo INFO  language 1 multi-field-variants wvb-bytes=%MultiFieldVariantWvbBytes%
-echo PASS  language 1 front door phase=multi-field-variants item=9/11
+echo PASS  language 1 front door phase=multi-field-variants item=10/12
 
 set "FailureStep=typed-failure-compile-a"
-echo START language 1 front door phase=typed-failure item=10/11
+echo START language 1 front door phase=typed-failure item=11/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -971,10 +1004,10 @@ for %%F in ("%Work%\Result-Try-Run.err") do if not "%%~zF"=="0" goto :cleanup
 call :expect_result_42 "%Work%\Result-Try-Run.out" || goto :cleanup
 for %%F in ("%Work%\Result-Try-A.wvb") do set "ResultTryWvbBytes=%%~zF"
 echo INFO  language 1 typed-failure wvb-bytes=%ResultTryWvbBytes%
-echo PASS  language 1 front door phase=typed-failure item=10/11
+echo PASS  language 1 front door phase=typed-failure item=11/12
 
 set "FailureStep=foundation-generics-compile-a"
-echo START language 1 front door phase=foundation-generics item=11/11
+echo START language 1 front door phase=foundation-generics item=12/12
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -1049,7 +1082,7 @@ for %%F in ("%Work%\Generic-Specializations-Run.err") do if not "%%~zF"=="0" got
 call :expect_result_42 "%Work%\Generic-Specializations-Run.out" || goto :cleanup
 for %%F in ("%Work%\Generic-Specializations-A.wvb") do set "GenericSpecializationsWvbBytes=%%~zF"
 echo PASS  language 1 front door step=generic-specializations wvb-bytes=%GenericSpecializationsWvbBytes%
-echo PASS  language 1 front door phase=foundation-generics item=11/11
+echo PASS  language 1 front door phase=foundation-generics item=12/12
 set "Result=0"
 
 :cleanup
@@ -1079,6 +1112,8 @@ if not "%Result%"=="0" (
     if exist "%Work%\Rune-Run.err" type "%Work%\Rune-Run.err" >&2
     if exist "%Work%\Floating-A.out" type "%Work%\Floating-A.out" >&2
     if exist "%Work%\Floating-A.err" type "%Work%\Floating-A.err" >&2
+    if exist "%Work%\Fixed-Array-A.err" type "%Work%\Fixed-Array-A.err" >&2
+    if exist "%Work%\Fixed-Array-B.err" type "%Work%\Fixed-Array-B.err" >&2
     if exist "%Work%\Floating-B.err" type "%Work%\Floating-B.err" >&2
     if exist "%Work%\Verify-Floating.out" type "%Work%\Verify-Floating.out" >&2
     if exist "%Work%\Verify-Floating.err" type "%Work%\Verify-Floating.err" >&2
@@ -1163,7 +1198,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=350 frozen-inputs=251 source-fixtures=79 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=356 frozen-inputs=251 source-fixtures=79 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_analysis_failure

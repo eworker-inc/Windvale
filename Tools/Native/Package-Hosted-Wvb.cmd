@@ -19,7 +19,7 @@ if "%~7"=="" goto :usage
 if not "%~9"=="" goto :usage
 echo(%~2| findstr /r /x "[1-7]" >nul || goto :usage
 if /I not "%~x3"==".wvb" goto :usage
-echo(%~5| findstr /r /x "[1-8]" >nul || goto :usage
+echo(%~5| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
 echo(%~6| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
 set "ImageMode=1"
 set "Profile=%~2"
@@ -82,7 +82,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 23f2bf3e62212d37d2eb07ab95620e9c708181e7d6e899e8dc409d89e72bbe8e "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 7f323dabafff6ef6c158ad1ad45c40474c60c282fda3baba3928b4d7cac8a2e4 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
@@ -242,5 +242,5 @@ exit /b 0
 
 :usage
 >&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
->&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-8^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
+>&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
 exit /b 64

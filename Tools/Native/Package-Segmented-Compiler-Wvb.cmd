@@ -60,7 +60,7 @@ for /f "tokens=9,11 delims== " %%E in ('findstr /b /c:"compiler image transport 
 if not defined NativeEntry goto :cleanup
 if not defined FragmentCount goto :cleanup
 echo(%NativeEntry%| findstr /r /x "[0-9][0-9]*" >nul || goto :cleanup
-echo(%FragmentCount%| findstr /r /x "[1-8]" >nul || goto :cleanup
+echo(%FragmentCount%| findstr /r /x "[1-9] 1[0-6]" >nul || goto :cleanup
 
 echo segmented compiler package step=container fragments=%FragmentCount% entry=%NativeEntry%
 if "%DevelopmentCache%"=="1" (

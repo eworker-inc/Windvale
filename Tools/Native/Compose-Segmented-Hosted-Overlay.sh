@@ -14,7 +14,8 @@ common_provider=$3
 platform_provider=$4
 output_prefix=$5
 maximum_chunk_bytes=4194304
-maximum_image_bytes=33554432
+maximum_image_bytes=67108864
+maximum_chunk_count=16
 
 read_u32() {
     local path=$1 offset=$2 values
@@ -36,7 +37,7 @@ application_chunks=$(read_u32 "$manifest" 20) || exit 1
 chunk_limit=$(read_u32 "$manifest" 24) || exit 1
 if ((declared_manifest_bytes != manifest_bytes || application_bytes == 0 ||
     application_bytes > maximum_image_bytes || application_entry >= application_bytes ||
-    application_chunks == 0 || application_chunks > 8 || chunk_limit != maximum_chunk_bytes ||
+    application_chunks == 0 || application_chunks > maximum_chunk_count || chunk_limit != maximum_chunk_bytes ||
     manifest_bytes != 28 + application_chunks * 12)); then
     echo 'The segmented application manifest bounds are invalid.' >&2
     exit 1
@@ -60,7 +61,7 @@ for ((index=0; index<application_chunks; index++)); do
     position=$((position + chunk_bytes))
 done
 ((position == application_bytes)) || { echo 'The segmented application chunks do not cover the declared image.' >&2; exit 1; }
-for ((index=0; index<8; index++)); do
+for ((index=0; index<maximum_chunk_count; index++)); do
     [[ ! -e $output_prefix.chunk-$index ]] || { echo "The overlay output chunk already exists: $output_prefix.chunk-$index" >&2; exit 1; }
 done
 

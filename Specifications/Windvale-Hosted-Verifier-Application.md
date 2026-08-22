@@ -18,7 +18,31 @@ Windows/Linux applications. The route runs on the current Windows host and
 consumes retained same-release native toolsets; independent Linux execution,
 clean bootstrap, qualification, promotion, and recovery release remain.
 
-These are deliberately fixed tool profiles, not a general hosted-application format. The verifier enforces the same canonical compiler-aligned rules as the four-artifact verifier bundle from [the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and canonical semantic validation, typed executable-flow validation, control-target reachability, and exact empty-stack join contracts. Its current source accepts WVB 1.11 through 1.15, admits fixed-integer tags 14 through 16 and opcode `C0` only from 1.12, admits rune tag 17 and opcode `C1` only from 1.13, admits floating tags 18 and 19 and opcode `C2` only from 1.14, and admits unit/never tags 20/21 plus unit opcode `C3` only under 1.15. Unit is an ordinary value; never is return-only, pushes no call result, and cannot execute a return. The verifier rejects invalid type/operation combinations, non-scalar runes, unknown selectors, truncated or over-wide immediates, forbidden never positions, and stack-shape mismatches. The native application retains one typed walk under a `u64` host meter. It constructs fixed-width per-function local-shape and control-boundary directories before the typed and reachability checks, avoiding repeated variable-width rescans without changing acceptance. The WebAssembly bundle partitions that walk only because execution ABI 3 exposes a `u32` meter. General WVB programs that require non-empty control-flow joins remain outside the verifier profile. The inspector decodes the separately specified structural/report subset and is never a substitute for semantic verification.
+These are deliberately fixed tool profiles, not a general hosted-application
+format. The verifier enforces the same canonical compiler-aligned rules as the
+four-artifact verifier bundle from
+[the WebAssembly contract](Windvale-WebAssembly.md): complete envelope and
+canonical semantic validation, typed executable-flow validation,
+control-target reachability, and exact empty-stack join contracts. Its current
+source accepts WVB 1.11 through 1.17. It gates fixed-integer tags 14 through 16
+and opcode `C0` from 1.12, rune tag 17 and `C1` from 1.13, floating tags 18 and
+19 plus `C2` from 1.14, unit/never tags 20/21 plus `C3` from 1.15, multi-field
+variant metadata plus `C4` from 1.16, and kind-4 fixed-array metadata, shape 22,
+`C5`, and `C6` only under 1.17. Unit is an ordinary value; never is return-only,
+pushes no call result, and cannot execute a return. Arrays contain zero through
+4,095 exact-shape elements, every constructor consumes the descriptor's exact
+count and type, checked access consumes a complete `u64`, and every nominal
+reference targets the matching kind. The verifier rejects invalid
+type/operation combinations, non-scalar runes, unknown selectors, truncated or
+over-wide immediates, forbidden never positions, and stack-shape mismatches. The
+native application retains one typed walk under a `u64` host meter. It constructs
+fixed-width per-function local-shape and control-boundary directories before the
+typed and reachability checks, avoiding repeated variable-width rescans without
+changing acceptance. The WebAssembly bundle partitions that walk only because
+execution ABI 3 exposes a `u32` meter. General WVB programs that require
+non-empty control-flow joins remain outside the verifier profile. The inspector
+decodes the separately specified structural/report subset and is never a
+substitute for semantic verification.
 
 The canonical source project is [`Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj`](../Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj). It composes:
 

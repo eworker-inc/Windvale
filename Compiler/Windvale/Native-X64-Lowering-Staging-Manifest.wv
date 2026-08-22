@@ -71,7 +71,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
     }
 
     let Objectˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
-    if Objectˉbytes == 0u32 || Objectˉbytes > 33554432u32 {
+    if Objectˉbytes == 0u32 || Objectˉbytes > 67108864u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Objectˉsize
         );
@@ -146,7 +146,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉmanifestˉbuild(
     Objectˉbytes: u32,
     Chunks: u32
 ) -> bytes {
-    if Objectˉbytes == 0u32 || Objectˉbytes > 33554432u32 {
+    if Objectˉbytes == 0u32 || Objectˉbytes > 67108864u32 {
         return Bytesˉslice(Entries, 0u32, 0u32);
     }
     if Chunks == 0u32 || Chunks > 518u32 {

@@ -70,9 +70,9 @@ The application declares exactly `console.write_line`,
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Request WVB | 29,170 | `aef88f86d77179a05cc3da8555acfa9e2f3af42d96a6080305ab67eb994aa424` |
-| Windows application | 342,016 | `25b887bb0c90e0021d304a19df416cea8a48c38b66a06fcc204cb08bdfb6ad7a` |
-| Linux application | 344,064 | `9efd837fc5d33c713edf6c487cf49af35e49f690311433b37b05304abdaad7f7` |
+| Request WVB | 29,344 | `3c8ecf590fc521819763ec47e28a5875baa7bbed5b8739540f84130006f63697` |
+| Windows application | 343,040 | `3f83c0f6e73120bb62513c99af6a77074d5bde172d75208657c5c758d4a18437` |
+| Linux application | 344,064 | `d1d7f2b7df0b36d0fa8a7282f01a555448c10f643467b987a42ba5d34204c5c1` |
 
 These rows are the retained packaged products from the hosted-toolset refresh
 that consumes the profile-7-capable source. The WVB builds through the native

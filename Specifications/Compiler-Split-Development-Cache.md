@@ -40,19 +40,21 @@ identity in place.
 
 ## Keys and checkpoints
 
-The analysis cache uses namespace `project-analysis-wvca-v2` and binds the
+The analysis cache uses namespace `project-analysis-wvca-v3` and binds the
 workspace marker, analyzer-identity bytes, project identity and bytes, and the
 ordered root/source closure through the shared length-framed Project 2 key. Its
 checkpoint records exact size and SHA-256 evidence for WVSS, the fixed 104-byte
 WVCA, WVLB, and WVIR.
 
 The coordinator validates the strict Project 2 directives independently of the
-key builder, places the declared root first, and sorts dependency source paths
-by their canonical manifest spelling before invoking the analyzer. Therefore
-Project 2's semantically irrelevant directive order never changes source-module
-meaning or successful WVB bytes.
+key builder, places the declared root first, reads every bounded source snapshot,
+and sorts dependencies by the ordinal UTF-8 bytes of their declared module
+identities before invoking the analyzer. A filename such as `*-Main.wv` is not
+used as a proxy for that identity. Therefore Project 2's semantically irrelevant
+directive order never changes source-module meaning or successful WVB bytes. The
+version-3 family prevents a pre-fix path-ordered checkpoint from being reused.
 
-The emission cache uses namespace `project-split-wvb-optimized-v2`, binds both
+The emission cache uses namespace `project-split-wvb-optimized-v3`, binds both
 producer identities and the same closure, and records the exact analysis key
 beside the WVB size and hash. The fixed optimized target therefore participates
 in both the producer identity and cache-family name. Both cache families are

@@ -6,7 +6,7 @@
 
 The contract is separate from [`WVPQ 1` and `WVPL 1`](Windvale-Native-Publication-Plan.md). `WVPL` owns image extent and service placement. `WVLT` owns the lifetime actions permitted after that exact image extent is accepted. Neither format is a public application, object, cache, or executable-container format.
 
-All integers are unsigned 32-bit little-endian values. Every reserved field is zero. Unknown versions, trailing bytes, missing bytes, unknown status values, altered transitions, or image extents outside 1 through 34 MiB are rejected.
+All integers are unsigned 32-bit little-endian values. Every reserved field is zero. Unknown versions, trailing bytes, missing bytes, unknown status values, altered transitions, or image extents outside 1 through 64 MiB are rejected.
 
 ## Request envelope: `WVLQ 1`
 
@@ -17,7 +17,7 @@ The request is exactly 20 bytes.
 | 0 | 4 | magic | ASCII `WVLQ`, encoded as `0x514c5657` |
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | Exactly `20` |
-| 12 | 4 | image bytes | Exact accepted `WVPL` extent, `1` through `35,651,584` |
+| 12 | 4 | image bytes | Exact accepted `WVPL` extent, `1` through `67,108,864` |
 | 16 | 4 | reserved | Zero |
 
 ## Response envelope: `WVLT 1`
@@ -84,13 +84,13 @@ A rejected request produces an exact 32-byte `WVLT 1` header with zero image ext
 | 2 | `Invalidˉmagic` | Request magic differs. |
 | 3 | `Invalidˉversion` | Request version differs. |
 | 4 | `Invalidˉreserved` | The reserved field is nonzero. |
-| 5 | `Invalidˉimage` | Image extent is zero or above 34 MiB. |
+| 5 | `Invalidˉimage` | Image extent is zero or above 64 MiB. |
 
 A planner rejection maps to `WVN4015`. A malformed successful response or forged in-process plan maps to `WVN4016`. An attempted host action outside the accepted current-state transition maps to `WVN4017` before that operation occurs.
 
 ## Windvale owner and host adapter
 
-`Compiler/Windvale/Native-Publication-Lifetime-Core.wv` is portable and owns request validation, status selection, and canonical transition construction. [Decision 0365](../Documents/Decisions/0365-Native-Publication-Planner-Execution.md) makes `Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv` a capability-free portable `Main(bytes) -> bytes` wrapper. The current core is 4,955 bytes with SHA-256 `a9e540c5c9ddaaeb4f45ab08a902a0a9019ce8155d544e319485c023b7d485d3`; the retained bridge is 4,442 bytes with SHA-256 `f966e7f7553def7f3d57be0d3bed67b1b010f0e2cd4907c4ef78760a140fd554`.
+`Compiler/Windvale/Native-Publication-Lifetime-Core.wv` is portable and owns request validation, status selection, and canonical transition construction. [Decision 0365](../Documents/Decisions/0365-Native-Publication-Planner-Execution.md) makes `Compiler/Windvale/Native-Publication-Lifetime-Bridge.wv` a capability-free portable `Main(bytes) -> bytes` wrapper. The current core is 4,955 bytes with SHA-256 `7c303d1bdab63977339cc51e9d0c31b9a83fea98469719de730e146f48a7c86d`; its source bridge build is 4,442 bytes with SHA-256 `d5bcab5f0524a55c5ad85bfa5d8c742077a959201decf12e92b7f01cad9e0fc9`.
 
 The retained bridge is digest-checked, verified, lowered, and run as a service-free native byte-input fragment. A narrow bootstrap supplies only the already accepted nine-transition lifetime needed to publish that planner without recursion. The host independently reconstructs every returned header field and transition, then passes only that verified immutable plan to one internal executable-image owner. The owner keeps the raw address private to the runtime assembly, tracks actual state, checks the accepted transition before each operation, and releases from every post-allocation partial state. The reference interpreter remains differential and recovery evidence.
 

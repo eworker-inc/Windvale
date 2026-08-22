@@ -20,9 +20,9 @@ import {
 } from './Native-Project-Cache-Key-Core.mjs';
 
 const MAXIMUM_PRODUCT_BYTES = 67_108_864;
-const MAXIMUM_IMAGE_BYTES = 33_554_432;
+const MAXIMUM_IMAGE_BYTES = 67_108_864;
 const MAXIMUM_FRAGMENT_BYTES = 4_194_304;
-const MAXIMUM_FRAGMENT_COUNT = 8;
+const MAXIMUM_FRAGMENT_COUNT = 16;
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const WINDOWS = process.platform === 'win32';
 const HOST_FAMILY = WINDOWS ? 'windows-x64' : 'linux-x64';
@@ -37,34 +37,34 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'windows-x64-wvstage.exe'),
-            sha256: '5303a5580831dad96c2f46a50aa9f0ce4c4c3dc70d4612dac8a03dc1c78b1aeb'
+            sha256: 'ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda'
         },
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'windows-x64-wvlinkstage.exe'),
-            sha256: 'e467d211d141ab75b838ece9b3c4625b6b5b2768b63dcacadd040368844e18db'
+            sha256: 'ed87716ae3ae805d38bfbe5fcfeee1a74c983f82416e5d36a9695085747de3fe'
         },
         {
             name: 'compiler-image transport',
             path: path.join(TOOL_ROOT, 'windows-x64-wvimagetransport.exe'),
-            sha256: '3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92'
+            sha256: 'e724a5efbffc233fda76f55bfb5cc01c044e221882b5de5f247b0ab236726f81'
         }
     ]
     : [
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'linux-x64-wvstage.elf'),
-            sha256: '5ea8569ce076087aa3b11afc19ce492d0a062f96e872a52dd6a93b889860f3cb'
+            sha256: '8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401'
         },
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'linux-x64-wvlinkstage.elf'),
-            sha256: '7ef825a8054cb8f63c10c957b234f9c371fe1507d7ee20f3e6dbabf73e550cb2'
+            sha256: '8d94c36a58da696caa09d5323c826936373f48d538f404fdc01df3bea9c4d379'
         },
         {
             name: 'compiler-image transport',
             path: path.join(TOOL_ROOT, 'linux-x64-wvimagetransport.elf'),
-            sha256: '30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108'
+            sha256: '9ff5401eca1ffd93a49077dd6ebc56c446c59939379a481f22662465fc3cf6db'
         }
     ];
 
@@ -352,7 +352,7 @@ function Runˉproducer(application, arguments_, label) {
 }
 
 function Parseˉtransportˉreport(report) {
-    const match = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-8]) manifest-bytes=([0-9]+)$/.exec(report);
+    const match = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-9]|1[0-6]) manifest-bytes=([0-9]+)$/.exec(report);
     if (match === null) {
         Reject('The compiler-image transport report differs.');
     }

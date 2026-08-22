@@ -5,7 +5,7 @@ if "%~7"=="" goto :usage
 if not "%~8"=="" goto :usage
 echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
-echo(%~4| findstr /r /x "[1-8]" >nul || goto :usage
+echo(%~4| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
 echo(%~5| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
 
 set "Profile=%~1"
@@ -164,5 +164,5 @@ del /f /q "%KeyOutput%" >nul 2>nul
 exit /b 1
 
 :usage
->&2 echo Usage: Tools\Native\Build-Cached-Hosted-Application.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-count-1-through-8^> ^<entry^> ^<output.exe^|output.elf^> ^<windows^|linux^>
+>&2 echo Usage: Tools\Native\Build-Cached-Hosted-Application.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-count-1-through-16^> ^<entry^> ^<output.exe^|output.elf^> ^<windows^|linux^>
 exit /b 64

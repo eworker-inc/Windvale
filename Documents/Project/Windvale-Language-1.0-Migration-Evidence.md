@@ -20,7 +20,9 @@ record update, fixed-width
 `unit`, and return-only `never` now cross the compiler, verifier, and scalar
 runtime together. Named zero-through-64-field variant construction and
 destructuring now cross the compiler, compiler-aligned verifier, and
-source-built native scalar runner through WVB 1.16. Project 3 carries the
+source-built native scalar runner through WVB 1.16. Contextual immutable fixed
+arrays now cross the same compiler, independent verifier, and scalar runner
+through WVB 1.17. Project 3 carries the
 profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
@@ -1556,13 +1558,13 @@ instructions.
 The optimized emission compiler falls from 542 to 530 functions and from
 987,682 to 974,837 WVB bytes. Its Windows development package falls from
 21,718,016 to 21,490,688 bytes while preserving the unchanged 128-type native
-profile. The current analyzer is 1,055,866 bytes at SHA-256
+profile. At that Foundation checkpoint, the analyzer is 1,055,866 bytes at SHA-256
 `2edf577a8b549fff0f351264e814e25783011a94942c904780a57be6ec1194b7`,
-and the current emitter is 974,837 bytes at SHA-256
-`25e9d5b491627b083ceb288f285901ca958bf3d1b12c427ba850a36a539328c9`.
-The compiler-scale Generic-WIR fixture builds twice to identical 1,210,665-byte
+and the current fixed-array emitter is 998,402 bytes at SHA-256
+`53b22d621cd3d169a69deb99bed0c4c5f9f1a15c11bac189076916625cef9743`.
+The compiler-scale Generic-WIR fixture builds twice to identical 1,236,227-byte
 WVBs at SHA-256
-`1b79838079339a397d05d4b03f8e42f94b978d7c583cf9ace4cb1e6abaedf696`.
+`37f6a8eeefb522e18685e3d96cfc9b27ee77e07698cd77f184cbb38280d59868`.
 
 The segmented-toolset owner now stages the immutable 992,412-byte bootstrap
 analyzer instead of asking the recovery Seed to rebuild evolving compiler
@@ -1581,3 +1583,67 @@ all 31 general and 192 native routing cases.
 This closes the remaining Foundation-special plan. Deeper generic-function
 formal patterns, broader constant expressions, collection implementation,
 paired-host conformance, and release qualification remain independent work.
+
+## Slice 4 fixed-array and WVB 1.17 checkpoint
+
+Decision 0821 implements the numeric/graphics workload's contextual fixed-array
+surface without changing the frozen grammar. `Foundationˉcollections` owns
+the canonical intrinsic `Array<T, N>` identity. The compiler requires an exact
+expected type, exact `T` elements, and exact `u64` `N`; types admit zero through
+4,095 while one literal is bounded to 64 element expressions by the existing
+parser/WIR item limit. Construction evaluates left to right once, and indexing
+uses a checked `u64`.
+
+The internal generic catalog uses kind `10`. WVIR operations `165` and `166`
+carry fixed-array construction and element access. WVB 1.17 adds Types kind `4`,
+shape `22`, `C5` construction, and `C6` access. The concrete
+`Collections.Array<i32, 3u64>` fixture publishes a 375-byte WVB at SHA-256
+`e2125aba54aca71af5d10a6c7c4228460f2de28230503ad61b0b2877e8b593a7`.
+Its function has a declared maximum stack of three, one exact kind-4
+`Array<i32, 3>` descriptor, one `C5`, and one `C6`.
+
+The current source-built verifier WVB is 205,363 bytes at SHA-256
+`c1befdbebd700504192fb305492f080709885335617855c0897c953cfa3fade6`;
+its Windows profile-2 application is 1,719,808 bytes at SHA-256
+`a45a46a8e33d74e1278c53579c26461f1f2e010029cf4af754729644abf6d545`.
+It accepts the exact fixture. The current source-built runner is 205,945 WVB
+bytes at SHA-256
+`04782c2fe6897c0678e6c7b9b57dbef3f87f58f1f10899915855c80be7f8f75f`;
+its Windows profile-5 application is 2,052,096 bytes at SHA-256
+`72d9e2ecb30943d8bcdde7b351f539ffc41c383bd91f10a202c1934240acd7cf`.
+Execution reports `Result: 42`.
+
+Six focused WVB cases prove exact verification/execution, deterministic
+out-of-bounds code `3008` (`WVR3008`), rejection when the same extension is
+relabeled 1.16, rejection of count 4,096, and rejection of an unknown `C5` type
+index. The runner stores array cells in its existing traced 768-cell immutable
+aggregate arena and now follows nested array/record/variant descriptors during
+collection. The 4,095 serialized length is a format/type bound; the fixed arena
+is an explicit consumer resource bound rather than hidden source capacity.
+
+Compiler packaging now admits a bounded 64 MiB hosted product split across at
+most sixteen fragments. The current analyzer is 1,077,512 WVB bytes at SHA-256
+`9fa2a7a7b37329b399252eaa353a43599bd393f2c29dd1deb351b2bf1b512068`.
+Its current Windows application is 33,997,312
+bytes at SHA-256
+`87ba2718b9f219a69f9e102045bcbb3331c37c96f1923eb605652fc9e0896e4f`;
+the current emitter application is 21,970,432 bytes at SHA-256
+`5224d55da8b201515dc7f15394cc3e7b21950a90242d2157b85d78f55241cfc1`.
+The analyzer requires profile 7's 80-billion-instruction packaging envelope;
+profile 6 stops normally at its lower 64-billion bound.
+
+The split cache also advances to version-3 families and orders bounded
+dependency snapshots by declared module identity rather than filename. Its
+two-case focused test proves semantic ordering and forced-failure temporary
+cleanup. Rebuilding the runner through the corrected family produces the exact
+same 205,945 WVB bytes.
+
+The complete current-Windows Language owner passes all 356 declared cases. The
+108-owner registry contains 5,114 declared cases at SHA-256
+`c57a0d8bca9f940392a192aff978f7716cbc1356c36d0a36e3d61c280fc1674e`;
+changed-file planning has no uncovered paths and its regression suite passes 31
+general plus 193 native routing cases.
+
+This remains current-Windows development evidence. Direct native array
+lowering, browser and Windvale OS consumers, paired-host conformance, and
+release qualification remain separate gates.

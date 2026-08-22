@@ -562,6 +562,69 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
             Instance, Catalog, Sentinel, Sentinel, Sentinel
         );
     }
+    let Kindˉvalue: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+            Catalog, Instance
+        );
+    if Kindˉvalue == 10u32 {
+        let Arrayˉelement:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Catalog, Instance, 0u32
+            );
+        let Arrayˉcount:
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+                Catalog, Instance, 1u32
+            );
+        let Arrayˉmodule: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉmodule(
+                Catalog, Instance
+            );
+        let Arrayˉoffset: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉoffset(
+                Catalog, Instance
+            );
+        let Arrayˉelementˉkind:
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind =
+            Compilerˉsourceˉgenericˉtypeˉshapeˉnominalˉkind(
+                Symbols, Catalog, Instance, Arrayˉelement.Low
+            );
+        if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+                Catalog, Instance
+            ) != 2u32 ||
+            !Arrayˉelement.Valid || Arrayˉelement.Kind != 1u32 ||
+            Arrayˉelement.Shape != 0u32 || Arrayˉelement.High != 0u32 ||
+            !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉvalid(
+                Symbols, Catalog, Instance, Arrayˉelement.Low
+            ) || Compilerˉsourceˉgenericˉtypeˉshapeˉisˉbuilder(
+                Arrayˉelement.Low
+            ) || Arrayˉelementˉkind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability ||
+            !Arrayˉcount.Valid || Arrayˉcount.Kind != 2u32 ||
+            Arrayˉcount.Shape != 8u32 || Arrayˉcount.High != 0u32 ||
+            Arrayˉcount.Low > 4095u32 || Arrayˉmodule >= Scan.Modules ||
+            Arrayˉoffset != 0u32 {
+            return Compilerˉsourceˉgenericˉtypeˉlayoutˉfailure(
+                Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence,
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
+                Instance, Catalog, Arrayˉoffset, 1u32, 1u32
+            );
+        }
+        let Arrayˉempty: bytes = Bytesˉslice(
+            Catalog.Evidence, 0u32, 0u32
+        );
+        return Compilerˉsourceˉgenericˉtypeˉlayoutˉvalue(
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Instance,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Instance),
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Fixedˉarray,
+            0u32, Arrayˉmodule, Arrayˉcount.Low, 0u32,
+            Arrayˉempty, Arrayˉempty, Catalog,
+            0u32, 1u32, 1u32
+        );
+    }
     let Declarationˉindex: u32 =
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
             Catalog, Instance
@@ -569,10 +632,6 @@ export fn Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
     let Match: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
             Symbols.Directory, Scan.Modules, Declarationˉindex
-        );
-    let Kindˉvalue: u32 =
-        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
-            Catalog, Instance
         );
     if !Match.Found ||
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkindˉvalue(

@@ -76,14 +76,11 @@ construct_pair() {
 
     transport_line=$(sed -n '/^compiler image transport status=Complete /p' "$work_directory/Transport.txt")
     native_entry=$(printf '%s\n' "$transport_line" | sed -n 's/^.* entry-offset=\([0-9][0-9]*\) chunks=.*$/\1/p')
-    fragment_count=$(printf '%s\n' "$transport_line" | sed -n 's/^.* chunks=\([1-8]\) manifest-bytes=.*$/\1/p')
+    fragment_count=$(printf '%s\n' "$transport_line" | sed -n 's/^.* chunks=\([0-9][0-9]*\) manifest-bytes=.*$/\1/p')
     case "$native_entry" in
         ''|*[!0-9]*) return 1 ;;
     esac
-    case "$fragment_count" in
-        [1-8]) ;;
-        *) return 1 ;;
-    esac
+    ((fragment_count >= 1 && fragment_count <= 16)) || return 1
 
     "$script_directory/Package-Hosted-Wvb.sh" image 6 \
         "$wvb" "$canonical_prefix" "$fragment_count" "$native_entry" \
@@ -128,31 +125,31 @@ verify_file() {
 }
 
 verify_file "$wvo_staging_wvb" 542219 \
-    786e271556b141c476ef9ce32beb65acded5ce8b76a61f1ba295994b97272dc7 \
+    4507a1497bc5805e98d66efbef6277a42763107b84d10e7e915eb11ba2b92738 \
     'WVO staging producer WVB' || exit 1
 verify_file "$output_root/windows-x64-wvstage.exe" 7855104 \
-    5303a5580831dad96c2f46a50aa9f0ce4c4c3dc70d4612dac8a03dc1c78b1aeb \
+    ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda \
     'Windows WVO staging producer' || exit 1
 verify_file "$output_root/linux-x64-wvstage.elf" 7856128 \
-    5ea8569ce076087aa3b11afc19ce492d0a062f96e872a52dd6a93b889860f3cb \
+    8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 75666 \
-    1a1614c4010baf47f5f1766de5f71806356ec14fa8f5bc67a62b5b2342269edd \
+    b2460134db0bd9810d9d20415ba5cf1807b24a0df71b42e5955cd40851481b46 \
     'compiler-image staging WVB' || exit 1
 verify_file "$output_root/windows-x64-wvlinkstage.exe" 854016 \
-    e467d211d141ab75b838ece9b3c4625b6b5b2768b63dcacadd040368844e18db \
+    ed87716ae3ae805d38bfbe5fcfeee1a74c983f82416e5d36a9695085747de3fe \
     'Windows compiler-image staging application' || exit 1
 verify_file "$output_root/linux-x64-wvlinkstage.elf" 856064 \
-    7ef825a8054cb8f63c10c957b234f9c371fe1507d7ee20f3e6dbabf73e550cb2 \
+    8d94c36a58da696caa09d5323c826936373f48d538f404fdc01df3bea9c4d379 \
     'Linux compiler-image staging application' || exit 1
 verify_file "$transport_wvb" 23836 \
-    dc5f460ce89bcce2678092030376c8ddc928e682b263af2a73ba2a57034b6d4d \
+    d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8 \
     'compiler-image transport WVB' || exit 1
 verify_file "$output_root/windows-x64-wvimagetransport.exe" 269312 \
-    3d1479e286f3486c9ae4cc48a542fb7654cc8bca52ec240f8f3ee030e7c79d92 \
+    e724a5efbffc233fda76f55bfb5cc01c044e221882b5de5f247b0ab236726f81 \
     'Windows compiler-image transport application' || exit 1
 verify_file "$output_root/linux-x64-wvimagetransport.elf" 270336 \
-    30386b1e571b5b444befbfb7c15ee9ce5cb30e7744cf84ddfee89cbf1e2e8108 \
+    9ff5401eca1ffd93a49077dd6ebc56c446c59939379a481f22662465fc3cf6db \
     'Linux compiler-image transport application' || exit 1
 
 for application in \

@@ -5,6 +5,8 @@ import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Languageˉoneˉfixedˉarrayˉtypeˉbindingˉselfˉtest as Fixedˉarrayˉbinding;
+import Languageˉoneˉfixedˉarrayˉparserˉselfˉtest as Fixedˉarrayˉparser;
 
 data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
 
@@ -317,6 +319,14 @@ export fn Main() -> i32 {
         Preservedˉbadˉcatalog.Status !=
             Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
         return 18;
+    }
+    let Fixedˉarrayˉparserˉresult: i32 = Fixedˉarrayˉparser.Main();
+    if Fixedˉarrayˉparserˉresult != 42 {
+        return 19;
+    }
+    let Fixedˉarrayˉbindingˉresult: i32 = Fixedˉarrayˉbinding.Run();
+    if Fixedˉarrayˉbindingˉresult != 42 {
+        return 20;
     }
     return 42;
 }

@@ -144,7 +144,7 @@ export fn Nativeˉpublicationˉlifetimeˉplan(
             12u32
         );
     }
-    if Imageˉbytes > 35651584u32 {
+    if Imageˉbytes > 67108864u32 {
         return Nativeˉpublicationˉlifetimeˉfailure(
             Input,
             Nativeˉpublicationˉlifetimeˉstatus.Invalidˉimage,

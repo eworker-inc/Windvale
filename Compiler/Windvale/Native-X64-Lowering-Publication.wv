@@ -301,7 +301,7 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
             Data(Plan),
             Relocations
         );
-    if !Objectˉregions.Valid || Objectˉregions.Objectˉbytes > 33554432u32 {
+    if !Objectˉregions.Valid || Objectˉregions.Objectˉbytes > 67108864u32 {
         return Invalidˉregions(Input);
     }
     return Compilerˉnativeˉx64ˉpublicationˉregions(

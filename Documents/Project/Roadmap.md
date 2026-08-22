@@ -117,6 +117,15 @@ one bounded shared record/variant arena. Direct native lowering, browser, and OS
 consumers remain explicitly narrower. Value-producing control flow, localized
 token execution, and paired-host conformance remain later gates.
 
+Slice 4 now also implements contextual immutable fixed arrays through shared
+generic identity, WVIR operations 165/166, WVB 1.17 kind-4 metadata/shape 22,
+the compiler-aligned verifier, and the source-built scalar runner under
+[Decision 0821](../Decisions/0821-Implement-Fixed-Arrays-As-Wvb-1.17.md).
+The exact three-element program returns `42`; checked out-of-bounds access
+reports `WVR3008`. Mutable slices, vectors, direct native/browser/OS array
+execution, paired-host conformance, and the remaining migration slices stay
+open.
+
 ## How to read this roadmap
 
 This file contains forward product workstreams, their dependency order,

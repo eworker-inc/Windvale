@@ -8,7 +8,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $maximumChunkBytes = 4MB
-$maximumImageBytes = 32MB
+$maximumImageBytes = 64MB
+$maximumChunkCount = 16
 
 function Read-U32Little([byte[]] $Value, [int] $Offset) {
     return [uint32](([uint32]$Value[$Offset]) -bor
@@ -46,7 +47,7 @@ $applicationChunks = Read-U32Little $manifest 20
 if ((Read-U32Little $manifest 8) -ne $manifest.Length -or
     $applicationBytes -eq 0 -or $applicationBytes -gt $maximumImageBytes -or
     $applicationEntry -ge $applicationBytes -or
-    $applicationChunks -eq 0 -or $applicationChunks -gt 8 -or
+    $applicationChunks -eq 0 -or $applicationChunks -gt $maximumChunkCount -or
     (Read-U32Little $manifest 24) -ne $maximumChunkBytes -or
     $manifest.Length -ne 28 + $applicationChunks * 12) {
     throw 'The segmented application manifest bounds are invalid.'
@@ -73,7 +74,7 @@ for ($index = 0; $index -lt $applicationChunks; $index++) {
 if ($position -ne $applicationBytes) {
     throw 'The segmented application chunks do not cover the declared image.'
 }
-for ($index = 0; $index -lt 8; $index++) {
+for ($index = 0; $index -lt $maximumChunkCount; $index++) {
     if (Test-Path -LiteralPath "$outputPrefixPath.chunk-$index") {
         throw "The overlay output chunk already exists: $outputPrefixPath.chunk-$index"
     }
