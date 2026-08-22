@@ -271,7 +271,7 @@ main {
     position: relative;
     isolation: isolate;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(380px, 0.82fr);
+    grid-template-columns: minmax(0, 1.06fr) minmax(390px, 0.94fr);
     align-items: center;
     gap: clamp(42px, 6vw, 84px);
     min-height: 620px;
@@ -413,65 +413,122 @@ h1 {
     font-size: 10px;
 }
 
-.hero-art {
-    display: grid;
-    place-items: center;
-    margin-bottom: 0;
+.stack-visual {
+    width: min(100%, 510px);
+    justify-self: end;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line-strong) 84%, transparent);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: 0 24px 58px rgba(23, 85, 177, 0.14);
 }
 
-.hero-art picture {
+.stack-visual picture,
+.stack-visual img {
     display: block;
-    width: min(100%, 510px);
-}
-
-.hero-art img {
     width: 100%;
-    height: auto;
-    border: 1px solid var(--line-strong);
-    border-radius: 17px;
-    box-shadow: 0 22px 48px rgba(23, 85, 177, 0.14);
 }
 
-.hero-art figcaption {
+.stack-visual img {
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+}
+
+.stack-visual figcaption {
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 96%, var(--blue-soft));
+}
+
+.stack-visual-heading {
     display: flex;
-    width: min(100%, 510px);
+    align-items: start;
     justify-content: space-between;
-    gap: 16px;
-    margin-top: 10px;
+    gap: 20px;
+    padding: 14px 16px 10px;
+}
+
+.stack-visual-heading span {
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.stack-visual-heading strong {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 650;
+    text-align: right;
+}
+
+.stack-visual ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0 16px 12px;
+    list-style: none;
+}
+
+.stack-visual li {
+    flex: 1 1 82px;
+    min-width: 0;
+    padding: 8px 9px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--surface);
+}
+
+.stack-visual li > span,
+.stack-visual li strong,
+.stack-visual li small {
+    display: block;
+}
+
+.stack-visual li > span {
+    margin-bottom: 5px;
+    color: var(--blue);
+    font-size: 8px;
+    font-weight: 850;
+}
+
+.stack-visual li strong {
+    margin-bottom: 3px;
+    font-size: 10px;
+}
+
+.stack-visual li small {
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.4;
+}
+
+.stack-visual figcaption > p {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 10px 16px 13px;
+    border-top: 1px solid var(--line);
     color: var(--muted);
     font-size: 10px;
     line-height: 1.45;
 }
 
-.hero-art figcaption strong {
-    color: var(--ink);
+.stack-visual figcaption > p > span {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 4px var(--green-soft);
 }
 
-.hero-art figcaption a {
-    color: var(--blue);
-    font-weight: 750;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-.comic-transcript {
-    width: min(100%, 510px);
-    margin-top: 8px;
-    color: var(--muted);
-    font-size: 10px;
-    line-height: 1.55;
-}
-
-.comic-transcript summary {
-    width: max-content;
-    color: var(--muted);
-    cursor: pointer;
-    font-weight: 700;
-}
-
-.comic-transcript ol {
-    margin: 8px 0 0;
-    padding-left: 20px;
+.stack-visual figcaption > p strong {
+    color: var(--green);
 }
 
 .quick-links {
@@ -1583,7 +1640,7 @@ button:focus-visible {
         padding-top: 42px;
     }
 
-    .hero-art {
+    .stack-visual {
         width: min(620px, 100%);
         justify-self: center;
     }
@@ -1690,16 +1747,6 @@ button:focus-visible {
 
     .button {
         width: 100%;
-    }
-
-    .hero-art img {
-        max-height: none;
-    }
-
-    .hero-art figcaption {
-        align-items: start;
-        flex-direction: column;
-        gap: 3px;
     }
 
     .progress-strip {

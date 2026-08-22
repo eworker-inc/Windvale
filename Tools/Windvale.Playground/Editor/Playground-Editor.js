@@ -61,7 +61,7 @@ const WINDVALE_COMPLETIONS = [
     { label: "var", group: "storage", detail: "Declare a mutable local value" },
     { label: "portable", group: "profile", detail: "Portable module profile" },
     { label: "hosted", group: "profile", detail: "Hosted module profile" },
-    { label: "system", group: "profile", detail: "System module profile (not executable in this playground)" },
+    { label: "system", group: "profile", detail: "System module profile (not executable in this Workbench)" },
     { label: "i32", group: "type", detail: "Signed 32-bit integer type" },
     { label: "u8", group: "type", detail: "Unsigned 8-bit integer type" },
     { label: "u32", group: "type", detail: "Unsigned 32-bit integer type" },

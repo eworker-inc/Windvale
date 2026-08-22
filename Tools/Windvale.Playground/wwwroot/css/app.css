@@ -159,6 +159,7 @@ svg {
 
 .playground-nav,
 .playground-nav a,
+.workspace-boundary,
 .toolbar-actions,
 .example-picker,
 .run-button,
@@ -269,24 +270,51 @@ svg {
         url("/assets/nova-scotia-coast.webp") center 48% / cover no-repeat;
 }
 
-.native-toolbar-note {
+.workspace-boundary {
     display: flex;
     align-items: center;
-    gap: 7px;
-    padding: 0 15px;
-    color: var(--green);
-    font-size: 9px;
-    font-weight: 760;
-    letter-spacing: 0.045em;
+    min-width: 0;
+    gap: 9px;
+    padding: 5px 15px;
+}
+
+.workspace-boundary a,
+.workspace-boundary > div {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+    padding: 4px 7px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    text-decoration: none;
+}
+
+.workspace-boundary a:hover,
+.workspace-boundary a:focus-visible {
+    border-color: var(--blue);
+}
+
+.workspace-boundary span {
+    color: var(--blue);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
 }
 
-.native-toolbar-note i {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
+.workspace-boundary strong {
+    color: var(--text);
+    font-size: 9px;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.workspace-boundary b {
+    color: var(--muted);
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
 .toolbar-actions {
@@ -635,6 +663,18 @@ select {
     line-height: 1.4;
 }
 
+.workspace-card .workspace-import-status {
+    margin-top: 8px;
+    padding-top: 7px;
+    color: var(--green);
+    border-top: 1px solid color-mix(in srgb, var(--blue) 22%, var(--line));
+    font-weight: 650;
+}
+
+.workspace-card .workspace-import-status.failure {
+    color: var(--red);
+}
+
 .native-profile-card > span,
 .native-profile-card > strong {
     display: block;
@@ -928,6 +968,106 @@ select {
 
 .result-view[hidden] {
     display: none;
+}
+
+.inspection-view {
+    min-height: 100%;
+}
+
+.inspection-view .execution-layout {
+    min-height: 0;
+}
+
+.pipeline-map {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(100px, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 8px;
+    list-style: none;
+    background: var(--line);
+}
+
+.pipeline-map li {
+    position: relative;
+    min-width: 0;
+    padding: 9px 11px;
+    background: var(--panel);
+}
+
+.pipeline-map li:not(:last-child)::after {
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    z-index: 2;
+    width: 9px;
+    height: 9px;
+    border-top: 1px solid var(--line-strong);
+    border-right: 1px solid var(--line-strong);
+    background: var(--panel);
+    transform: translateY(-50%) rotate(45deg);
+    content: "";
+}
+
+.pipeline-map span,
+.pipeline-map strong,
+.pipeline-map small {
+    display: block;
+}
+
+.pipeline-map span {
+    margin-bottom: 4px;
+    color: var(--faint);
+    font-size: 8px;
+    font-weight: 800;
+}
+
+.pipeline-map strong {
+    color: var(--text);
+    font-size: 10px;
+}
+
+.pipeline-map small {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 8px;
+}
+
+.pipeline-map li.current,
+.pipeline-map li.running {
+    background: var(--blue-soft);
+}
+
+.pipeline-map li.current span,
+.pipeline-map li.running span {
+    color: var(--blue);
+}
+
+.pipeline-map li.complete {
+    background: var(--green-soft);
+}
+
+.pipeline-map li.complete span,
+.pipeline-map li.complete strong {
+    color: var(--green);
+}
+
+.pipeline-map li.failed {
+    background: var(--red-soft);
+}
+
+.pipeline-map li.failed span,
+.pipeline-map li.failed strong {
+    color: var(--red);
+}
+
+.inspection-note {
+    max-width: 720px;
+    margin: 0;
+    padding: 15px 18px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.5;
 }
 
 .terminal-view {
@@ -1495,7 +1635,7 @@ select {
         padding: 7px 9px;
     }
 
-    .native-toolbar-note {
+    .workspace-boundary {
         display: none;
     }
 
@@ -1556,6 +1696,11 @@ select {
 
     .execution-layout {
         grid-template-columns: 1fr;
+    }
+
+    .pipeline-map {
+        grid-template-columns: repeat(5, minmax(82px, 1fr));
+        overflow-x: auto;
     }
 
     .capability-evidence,

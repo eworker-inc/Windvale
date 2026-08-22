@@ -3,11 +3,18 @@ import { Compileˉandˉrun } from "./windvale-compiler-host.js";
 import { EXAMPLES, SCRATCH_SOURCE } from "./playground-examples.js";
 import { Createˉworkbenchˉshell } from "./workbench-shell.js";
 import { Openˉworkbenchˉworkspace } from "./workbench-workspace.js";
+import {
+    Chooseˉworkspaceˉcopyˉname,
+    MAXIMUM_REPOSITORY_FRAGMENT_BYTES,
+    MAXIMUM_REPOSITORY_SOURCE_BYTES,
+    Selectˉrepositoryˉcopy,
+} from "./workbench-repository-copy.js";
 
 const MAXIMUM_SOURCE_TABS = 12;
 const COMPILER_TIMEOUT_MILLISECONDS = 300_000;
 const MAXIMUM_TERMINAL_CHARACTERS = 256 * 1024;
 const MAXIMUM_TERMINAL_LINES = 2_000;
+const MAXIMUM_REPOSITORY_MANIFEST_BYTES = 4 * 1024 * 1024;
 
 const Shell = document.getElementById("playground-shell");
 const Editorˉelement = document.getElementById("monaco-editor");
@@ -26,6 +33,7 @@ const Statusˉdiagnostics = document.getElementById("status-diagnostics");
 const Runˉstate = document.getElementById("run-state");
 const Errorˉui = document.getElementById("playground-error-ui");
 const Workspaceˉsummary = document.getElementById("workspace-summary");
+const Workspaceˉimportˉstatus = document.getElementById("workspace-import-status");
 const Terminalˉtranscript = document.getElementById("terminal-transcript");
 const Terminalˉform = document.getElementById("terminal-command-form");
 const Terminalˉinput = document.getElementById("terminal-command-input");
@@ -45,7 +53,7 @@ let Sourceˉtabs = [{
 let Activeˉsourceˉtabˉid = 1;
 let Nextˉsourceˉtabˉid = 2;
 let Nextˉscratchˉnumber = 1;
-let Activeˉresultˉtab = "terminal";
+let Activeˉresultˉtab = "execution";
 let Editorˉready = false;
 let Isˉrunning = false;
 let Workbenchˉshell = null;
@@ -126,6 +134,102 @@ async function Initializeˉworkbench() {
     Appendˉterminalˉline("Windvale Workbench ready. This browser host is not Windvale OS.", "system");
     Appendˉterminalˉline("Type 'help' for commands. Hello-Windvale.wv is ready in /workspace.", "system");
     Terminalˉinput.disabled = false;
+    await Importˉrepositoryˉcopy(Workspace);
+}
+
+async function Importˉrepositoryˉcopy(Workspace) {
+    const Parameters = new URLSearchParams(window.location.search);
+    const Copies = Parameters.getAll("copy");
+    if (Copies.length === 0) {
+        return;
+    }
+    Workspaceˉimportˉstatus.hidden = false;
+    Workspaceˉimportˉstatus.classList.remove("failure");
+    Workspaceˉimportˉstatus.textContent = "Checking the published repository copy…";
+
+    try {
+        if (Copies.length !== 1) {
+            throw new Error("Only one repository source can be copied at a time.");
+        }
+        const Manifestˉresponse = await fetch("/repository/manifest.json", {
+            cache: "no-cache",
+            headers: { Accept: "application/json" },
+        });
+        if (!Manifestˉresponse.ok) {
+            throw new Error(`Repository manifest returned ${Manifestˉresponse.status}.`);
+        }
+        const Manifest = JSON.parse(await Readˉboundedˉtext(
+            Manifestˉresponse,
+            MAXIMUM_REPOSITORY_MANIFEST_BYTES,
+            "The repository manifest is oversized.",
+        ));
+        const Copy = Selectˉrepositoryˉcopy(Manifest, Copies[0]);
+        const Sourceˉresponse = await fetch(Copy.Publishedˉurl, {
+            cache: "force-cache",
+            headers: { Accept: "text/html" },
+        });
+        if (!Sourceˉresponse.ok) {
+            throw new Error(`Repository source returned ${Sourceˉresponse.status}.`);
+        }
+        const Fragment = await Readˉboundedˉtext(
+            Sourceˉresponse,
+            MAXIMUM_REPOSITORY_FRAGMENT_BYTES,
+            "The repository source fragment is oversized.",
+        );
+        const Parsed = new DOMParser().parseFromString(Fragment, "text/html");
+        const Lines = Array.from(Parsed.querySelectorAll("pre.shiki code > .line"));
+        if (Lines.length === 0 || Lines.length > 20_000) {
+            throw new Error("The repository source fragment is malformed.");
+        }
+        const Source = Lines.map(Line => Line.textContent ?? "").join("\n");
+        const Sourceˉbytes = new TextEncoder().encode(Source);
+        if (Sourceˉbytes.byteLength !== Copy.Size ||
+            Sourceˉbytes.byteLength > MAXIMUM_REPOSITORY_SOURCE_BYTES) {
+            throw new Error("The repository source length does not match its manifest.");
+        }
+        const Digest = Array.from(
+            new Uint8Array(await crypto.subtle.digest("SHA-256", Sourceˉbytes)),
+            Byte => Byte.toString(16).padStart(2, "0"),
+        ).join("");
+        if (Digest !== Copy.Contentˉhash) {
+            throw new Error("The repository source identity does not match its manifest.");
+        }
+
+        const Existing = await Workspace.List();
+        const Name = Chooseˉworkspaceˉcopyˉname(Copy.Fileˉname, Existing);
+        await Workspace.Writeˉtext(Name, Source);
+        Openˉworkspaceˉsource(
+            Name,
+            Source,
+            `Editable copy of ${Copy.Path} from repository snapshot ${Copy.Commit.slice(0, 12)}. The published repository remains read-only.`,
+        );
+        Workspaceˉimportˉstatus.textContent = `Copied ${Copy.Path} into /workspace as ${Name}.`;
+        Appendˉterminalˉline(`copied repository:${Copy.Path} to /workspace/${Name}`, "system");
+        Parameters.delete("copy");
+        const Url = new URL(window.location.href);
+        Url.search = Parameters.toString();
+        window.history.replaceState(null, "", Url);
+    }
+    catch (Failure) {
+        const Message = Failure instanceof Error
+            ? Failure.message
+            : "The repository source could not be copied.";
+        Workspaceˉimportˉstatus.classList.add("failure");
+        Workspaceˉimportˉstatus.textContent = Message;
+        Appendˉterminalˉline(Message, "error");
+    }
+}
+
+async function Readˉboundedˉtext(Response, Maximumˉbytes, Oversizedˉmessage) {
+    const Declaredˉlength = Number(Response.headers.get("content-length"));
+    if (Number.isFinite(Declaredˉlength) && Declaredˉlength > Maximumˉbytes) {
+        throw new Error(Oversizedˉmessage);
+    }
+    const Value = await Response.text();
+    if (new TextEncoder().encode(Value).byteLength > Maximumˉbytes) {
+        throw new Error(Oversizedˉmessage);
+    }
+    return Value;
 }
 
 async function Executeˉterminalˉcommand(Event) {
@@ -187,7 +291,11 @@ function Appendˉterminalˉline(Value, Kind = "output") {
     Terminalˉtranscript.scrollTop = Terminalˉtranscript.scrollHeight;
 }
 
-function Openˉworkspaceˉsource(Name, Source) {
+function Openˉworkspaceˉsource(
+    Name,
+    Source,
+    Description = "Loaded from the browser-native /workspace.",
+) {
     if (Isˉrunning) {
         throw new Error("The editor is locked while a Windvale program is running.");
     }
@@ -195,7 +303,7 @@ function Openˉworkspaceˉsource(Name, Source) {
     const Existing = Sourceˉtabs.find(Tab => Tab.Fileˉname === Name);
     if (Existing !== undefined) {
         Existing.Source = Source;
-        Existing.Description = "Loaded from the browser-native /workspace.";
+        Existing.Description = Description;
         Activeˉsourceˉtabˉid = Existing.Id;
     } else {
         if (Sourceˉtabs.length >= MAXIMUM_SOURCE_TABS) {
@@ -204,7 +312,7 @@ function Openˉworkspaceˉsource(Name, Source) {
         const Tab = {
             Id: Nextˉsourceˉtabˉid++,
             Fileˉname: Name,
-            Description: "Loaded from the browser-native /workspace.",
+            Description,
             Exampleˉid: null,
             Authorizeˉconsoleˉwriteˉline: false,
             Source,
@@ -396,15 +504,18 @@ async function Executeˉsource(Source, Keepˉterminalˉselected) {
     Editor.SetDiagnostics([]);
     Setˉdiagnosticˉcount(0);
     if (!Keepˉterminalˉselected) {
-        Selectˉresultˉtab("output");
+        Selectˉresultˉtab("execution");
     }
     const Started = performance.now();
     const Updateˉprogress = () => {
         const Seconds = Math.floor((performance.now() - Started) / 1_000);
-        Resultˉviews.get("output").innerHTML = `
-            <div class="running-state">
-                <span class="activity-ring" aria-hidden="true"></span>
-                <p><strong>Compiling natively in WebAssembly…</strong><span>${Seconds.toLocaleString()} seconds elapsed</span></p>
+        Resultˉviews.get("execution").innerHTML = `
+            <div class="inspection-view">
+                ${Pipelineˉmap("running")}
+                <div class="running-state">
+                    <span class="activity-ring" aria-hidden="true"></span>
+                    <p><strong>Compiling natively in WebAssembly…</strong><span>${Seconds.toLocaleString()} seconds elapsed</span></p>
+                </div>
             </div>`;
     };
     Updateˉprogress();
@@ -462,7 +573,7 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
     const Statusˉclass = Passed ? "success" : "failure";
     const Diagnostic = Frameworkˉrequests === 0
         ? (Passed ? null : `Verified WVB execution returned WVR${Result.ExecutionStatus}.`)
-        : `The static playground unexpectedly requested ${Frameworkˉrequests} .NET/Blazor framework asset(s).`;
+        : `The static Workbench unexpectedly requested ${Frameworkˉrequests} .NET/Blazor framework asset(s).`;
     Setˉrunˉstate(Statusˉclass, Statusˉlabel);
     Setˉresultˉstatus(Statusˉclass, Statusˉlabel);
     Setˉdiagnosticˉcount(Diagnostic === null ? 0 : 1);
@@ -484,7 +595,9 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
         <div class="channel-heading"><span>Canonical WVB bytes</span><span>${Result.Wvb.byteLength.toLocaleString()} bytes</span></div>
         <pre class="bytecode-output">${Hexˉdump(new Uint8Array(Result.Wvb))}</pre>`;
     Resultˉviews.get("execution").innerHTML = `
-        <div class="execution-layout native-execution-layout">
+        <div class="inspection-view">
+          ${Pipelineˉmap(Passed ? "complete" : "execution-failed")}
+          <div class="execution-layout native-execution-layout">
             <dl class="execution-grid">
                 ${Evidenceˉitem("Pipeline", Statusˉlabel)}
                 ${Evidenceˉitem("Module profile", Result.ModuleProfile ?? "—")}
@@ -509,6 +622,7 @@ function Renderˉpipelineˉresult(Result, Instructionˉbudget, Elapsedˉmillisec
                 <code>${Frameworkˉrequests} .NET / Blazor</code>
                 <p class="wasm-note">The direct compiler package is identity-checked before use. Its returned WVB is treated as untrusted input and admitted again before execution.</p>
             </div>
+          </div>
         </div>`;
 }
 
@@ -523,14 +637,40 @@ function Renderˉfailure(Message, Elapsedˉmilliseconds, Frameworkˉrequests) {
         <pre class="console-output diagnostic">${Escapeˉhtml(Safeˉmessage)}</pre>`;
     Resultˉviews.get("bytecode").innerHTML = '<div class="empty-state"><span aria-hidden="true">—</span><p>No WVB was produced.</p></div>';
     Resultˉviews.get("execution").innerHTML = `
-        <div class="execution-layout native-execution-layout">
+        <div class="inspection-view">
+          ${Pipelineˉmap("compile-failed")}
+          <div class="execution-layout native-execution-layout">
             <dl class="execution-grid">
                 ${Evidenceˉitem("Pipeline", "Failed")}
                 ${Evidenceˉitem("Elapsed", `${(Elapsedˉmilliseconds / 1_000).toFixed(1)} seconds`)}
                 ${Evidenceˉitem("Framework requests", `${Frameworkˉrequests}`)}
             </dl>
             <div class="digest"><span>Boundary</span><code>No WVB was executed.</code></div>
+          </div>
         </div>`;
+}
+
+function Pipelineˉmap(State) {
+    const Stages = [
+        ["01", "Source", "Editable input"],
+        ["02", "Compile", "Windvale-native"],
+        ["03", "WVB", "Canonical bytes"],
+        ["04", "Verify", "Untrusted admission"],
+        ["05", "Execute", "Bounded runtime"],
+    ];
+    return `<ol class="pipeline-map ${State}" aria-label="Windvale compile and execution pipeline">${Stages.map((Stage, Index) => {
+        let Classˉname = "";
+        if (State === "complete") {
+            Classˉname = "complete";
+        } else if (State === "running") {
+            Classˉname = Index === 0 ? "complete" : Index === 1 ? "running" : "";
+        } else if (State === "execution-failed") {
+            Classˉname = Index < 4 ? "complete" : "failed";
+        } else if (State === "compile-failed") {
+            Classˉname = Index === 0 ? "complete" : Index === 1 ? "failed" : "";
+        }
+        return `<li${Classˉname ? ` class="${Classˉname}"` : ""}><span>${Stage[0]}</span><strong>${Stage[1]}</strong><small>${Stage[2]}</small></li>`;
+    }).join("")}</ol>`;
 }
 
 function Renderˉdiagnostics(Message) {
@@ -631,6 +771,6 @@ function Escapeˉhtml(Value) {
 function Showˉunexpectedˉfailure(Failure) {
     Errorˉui.hidden = false;
     Errorˉui.firstChild.textContent = Failure instanceof Error
-        ? `The playground encountered an unexpected browser error: ${Failure.message} `
-        : "The playground encountered an unexpected browser error. ";
+        ? `The Workbench encountered an unexpected browser error: ${Failure.message} `
+        : "The Workbench encountered an unexpected browser error. ";
 }

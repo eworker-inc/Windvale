@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="./" />
     <meta name="description" content="Edit, store, compile, verify, and run Windvale programs in a browser-native workbench." />
-    <meta itemprop="name" content="Windvale Playground" />
-    <meta itemprop="description" content="Compile, verify, and run Windvale programs locally in your browser." />
+    <meta itemprop="name" content="Windvale Workbench" />
+    <meta itemprop="description" content="Edit, compile, inspect, verify, and run Windvale programs locally in your browser." />
     <meta itemprop="inLanguage" content="en-CA" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f8fb" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#08111b" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Windvale" />
     <meta property="og:locale" content="en_CA" />
-    <meta property="og:title" content="Windvale Playground" />
-    <meta property="og:description" content="Compile, verify, and run Windvale programs locally in your browser." />
+    <meta property="og:title" content="Windvale Workbench" />
+    <meta property="og:description" content="Edit, compile, inspect, verify, and run Windvale programs locally in your browser." />
     <meta property="og:url" content="https://windvale.ca/playground/" />
     <meta property="og:image" content="https://windvale.ca/preview-2026-08-06.jpg" />
     <meta property="og:image:secure_url" content="https://windvale.ca/preview-2026-08-06.jpg" />
@@ -29,8 +29,8 @@
     <meta property="og:image:height" content="512" />
     <meta property="og:image:alt" content="Windvale's white wind-and-butterfly mark on a dark square background." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Windvale Playground" />
-    <meta name="twitter:description" content="Compile, verify, and run Windvale programs locally in your browser." />
+    <meta name="twitter:title" content="Windvale Workbench" />
+    <meta name="twitter:description" content="Edit, compile, inspect, verify, and run Windvale programs locally in your browser." />
     <meta name="twitter:image" content="https://windvale.ca/preview-2026-08-06.jpg" />
     <meta name="twitter:image:alt" content="Windvale project card with the wind-and-butterfly mark, an introduction to its computing stack, and a glowing blue wind spiral." />
     <link rel="canonical" href="https://windvale.ca/playground/" />
@@ -44,7 +44,7 @@
     <script src="js/theme-bootstrap.js"></script>
     <link rel="stylesheet" href="css/app.css" />
     <link rel="stylesheet" href="editor/playground-editor.css" />
-    <title>Windvale Playground and Workbench</title>
+    <title>Windvale Workbench</title>
 </head>
 <body>
     <div class="playground-shell" id="playground-shell">
@@ -54,13 +54,13 @@
                 <span>Windvale</span>
             </a>
             <nav class="playground-nav" aria-label="Primary navigation">
-                <a class="project-progress-link" href="../docs/?path=Documents%2FProject%2FProgress.md">Project progress</a>
-                <a href="../progress/">Comics</a>
+                <a class="project-progress-link" href="../#stack">Stack</a>
                 <a href="../docs/">Docs</a>
                 <a href="../code/">Code</a>
+                <a href="../docs/?path=Documents%2FProject%2FSeed-Verification-Evidence.md">Evidence</a>
                 <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
                 <a class="support-link" href="../support/">Support</a>
-                <a class="playground-link active" href="." aria-current="page">Playground</a>
+                <a class="playground-link active" href="." aria-current="page">Workbench</a>
             </nav>
             <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
                 <svg class="theme-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.2 15.2A8.5 8.5 0 0 1 8.8 3.8 8.5 8.5 0 1 0 20.2 15.2Z" /></svg>
@@ -70,7 +70,17 @@
 
         <div class="playground-frame">
           <div class="ide-toolbar">
-            <div class="native-toolbar-note"><i></i> Browser-native Workbench · Windvale-native WebAssembly compiler and runtime</div>
+            <div class="workspace-boundary" aria-label="Repository and workspace boundary">
+                <a href="../code/">
+                    <span>Repository</span>
+                    <strong>Published · read-only</strong>
+                </a>
+                <b aria-hidden="true">copy →</b>
+                <div>
+                    <span>Workspace</span>
+                    <strong>Browser-local · editable</strong>
+                </div>
+            </div>
             <div class="toolbar-actions">
                 <label class="example-picker">
                     <span>Open example</span>
@@ -123,6 +133,7 @@ export fn Main() -> i32 {
                             <span>Workbench workspace</span>
                             <strong id="workspace-summary">Mounting /workspace…</strong>
                             <p>Shell files persist in origin-private browser storage when available. Applications do not receive ambient workspace access.</p>
+                            <p class="workspace-import-status" id="workspace-import-status" role="status" hidden></p>
                         </div>
                         <fieldset class="capabilities">
                             <legend>Capability grants</legend>
@@ -153,15 +164,15 @@ export fn Main() -> i32 {
 
             <section class="results-pane" aria-label="Program results">
                 <nav class="result-tabs" aria-label="Result views">
-                    <button class="active" type="button" data-result-tab="terminal" aria-pressed="true">Workbench</button>
+                    <button class="active" type="button" data-result-tab="execution" aria-pressed="true">Inspect</button>
                     <button type="button" data-result-tab="output" aria-pressed="false">Output</button>
                     <button type="button" data-result-tab="diagnostics" aria-pressed="false">Diagnostics <span class="tab-count" id="diagnostic-count" hidden>0</span></button>
-                    <button type="button" data-result-tab="bytecode" aria-pressed="false">Bytecode</button>
-                    <button type="button" data-result-tab="execution" aria-pressed="false">Execution</button>
+                    <button type="button" data-result-tab="bytecode" aria-pressed="false">WVB bytes</button>
+                    <button type="button" data-result-tab="terminal" aria-pressed="false">Shell</button>
                     <span class="result-status" id="result-status" hidden></span>
                 </nav>
                 <div class="result-body" aria-live="polite">
-                    <div class="result-view terminal-view" data-result-view="terminal">
+                    <div class="result-view terminal-view" data-result-view="terminal" hidden>
                         <div class="terminal" id="workbench-terminal" role="application" aria-label="Windvale Workbench terminal">
                             <div class="terminal-banner">
                                 <span>Windvale Workbench</span>
@@ -183,7 +194,18 @@ export fn Main() -> i32 {
                     </div>
                     <div class="result-view" data-result-view="diagnostics" hidden></div>
                     <div class="result-view" data-result-view="bytecode" hidden></div>
-                    <div class="result-view" data-result-view="execution" hidden></div>
+                    <div class="result-view" data-result-view="execution">
+                        <div class="inspection-view">
+                            <ol class="pipeline-map ready" aria-label="Windvale compile and execution pipeline">
+                                <li class="current"><span>01</span><strong>Source</strong><small>Editable input</small></li>
+                                <li><span>02</span><strong>Compile</strong><small>Windvale-native</small></li>
+                                <li><span>03</span><strong>WVB</strong><small>Canonical bytes</small></li>
+                                <li><span>04</span><strong>Verify</strong><small>Untrusted admission</small></li>
+                                <li><span>05</span><strong>Execute</strong><small>Bounded runtime</small></li>
+                            </ol>
+                            <p class="inspection-note">Run the active source to inspect each boundary, the WVB identity and size, capability grant, and execution result.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -209,7 +231,7 @@ export fn Main() -> i32 {
         </div>
     </div>
     <div id="playground-error-ui" hidden>
-        The playground encountered an unexpected browser error.
+        The Workbench encountered an unexpected browser error.
         <a href="." class="reload">Reload</a>
         <button class="dismiss" type="button">×</button>
     </div>

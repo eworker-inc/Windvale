@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Windvale is a source-available programming language growing its own compiler, runtime, tools, and operating system." />
-    <meta itemprop="name" content="Windvale — The stack is growing" />
-    <meta itemprop="description" content="A programming language growing its own compiler, runtime, tools, and operating system." />
+    <meta name="description" content="Windvale is a source-available computing stack designed to be inspected from readable source through verified execution." />
+    <meta itemprop="name" content="Windvale — A computing stack you can inspect end to end" />
+    <meta itemprop="description" content="A source-available computing stack designed to be inspected from readable source through verified execution." />
     <meta itemprop="inLanguage" content="en-CA" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f8fb" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#08111b" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Windvale" />
     <meta property="og:locale" content="en_CA" />
-    <meta property="og:title" content="Windvale — The stack is growing" />
-    <meta property="og:description" content="A programming language growing its own compiler, runtime, tools, and operating system." />
+    <meta property="og:title" content="Windvale — A computing stack you can inspect end to end" />
+    <meta property="og:description" content="A source-available computing stack designed to be inspected from readable source through verified execution." />
     <meta property="og:url" content="https://windvale.ca/" />
     <meta property="og:image" content="https://windvale.ca/preview-2026-08-06.jpg" />
     <meta property="og:image:secure_url" content="https://windvale.ca/preview-2026-08-06.jpg" />
@@ -28,8 +28,8 @@
     <meta property="og:image:height" content="512" />
     <meta property="og:image:alt" content="Windvale's white wind-and-butterfly mark on a dark square background." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Windvale — The stack is growing" />
-    <meta name="twitter:description" content="A programming language growing its own compiler, runtime, tools, and operating system." />
+    <meta name="twitter:title" content="Windvale — A computing stack you can inspect end to end" />
+    <meta name="twitter:description" content="A source-available computing stack designed to be inspected from readable source through verified execution." />
     <meta name="twitter:image" content="https://windvale.ca/preview-2026-08-06.jpg" />
     <meta name="twitter:image:alt" content="Windvale project card with the wind-and-butterfly mark, an introduction to its computing stack, and a glowing blue wind spiral." />
     <link rel="canonical" href="https://windvale.ca/" />
@@ -43,7 +43,7 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-3PB4LZFMRE"></script>
     <script type="module" src="/analytics.js"></script>
     <script type="module" src="site.js"></script>
-    <title>Windvale — The stack is growing</title>
+    <title>Windvale — A computing stack you can inspect end to end</title>
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -55,13 +55,13 @@
                 <span>Windvale</span>
             </a>
             <nav aria-label="Primary navigation">
-                <a class="project-progress-link" href="/docs/?path=Documents%2FProject%2FProgress.md">Project progress</a>
-                <a href="/progress/">Comics</a>
+                <a class="project-progress-link" href="#stack">Stack</a>
                 <a href="/docs/">Docs</a>
                 <a href="/code/">Code</a>
+                <a href="/docs/?path=Documents%2FProject%2FSeed-Verification-Evidence.md">Evidence</a>
                 <a href="https://github.com/eworker-inc/Windvale">GitHub</a>
                 <a href="/support/">Support</a>
-                <a class="nav-button" href="/playground/">Playground <span aria-hidden="true">↗</span></a>
+                <a class="nav-button" href="/playground/">Workbench <span aria-hidden="true">↗</span></a>
             </nav>
             <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch color theme">
                 <span class="material-symbol" aria-hidden="true">dark_mode</span>
@@ -72,96 +72,96 @@
     <main id="main">
         <section class="hero" id="overview">
             <div class="hero-copy">
-                <p class="eyebrow">AI-authored · human-directed</p>
-                <h1>A programming language growing its own computing stack.</h1>
+                <p class="eyebrow">Source-available · Signed 0.1 preview</p>
+                <h1>A computing stack you can inspect end to end.</h1>
                 <p class="hero-intro">
-                    Windvale brings the language, compiler, runtime, tools, and operating system into one source-available project designed to be read, tested, and understood.
+                    Windvale is one coherent system: a readable language, deterministic compiler, portable bytecode, verified runtime, native tools, libraries, database work, and an operating-system path. The working stack runs on Windows and Linux, and its compiler and interpreter also run in the browser.
                 </p>
                 <div class="hero-actions">
-                    <a class="button primary" href="https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0">Install 0.1.0 <span aria-hidden="true">→</span></a>
-                    <a class="button secondary" href="/playground/">Try in the browser</a>
-                    <a class="button secondary" href="/code/">Explore the source</a>
-                    <a class="button support" href="/support/">Support Windvale <span aria-hidden="true">♥</span></a>
+                    <a class="button primary" href="/playground/">Open the Workbench <span aria-hidden="true">→</span></a>
+                    <a class="button secondary" href="https://github.com/eworker-inc/Windvale/releases/tag/v0.1.0">Install 0.1.0</a>
+                    <a class="button secondary" href="/code/">Inspect the source</a>
                 </div>
-                <div class="runs-on" aria-label="Windvale runs on Windows, Linux, and the browser">
-                    <span>Runs today on</span>
+                <div class="runs-on" aria-label="Windvale is available today on Windows, Linux, and in the browser">
+                    <span>Available today</span>
                     <strong>Windows</strong>
                     <strong>Linux</strong>
-                    <strong>Browser</strong>
+                    <strong>Browser Workbench</strong>
                 </div>
             </div>
 
-            <figure class="hero-art">
+            <figure class="stack-visual" id="stack">
                 <picture>
                     <source
                         type="image/webp"
-                        srcset="assets/progress/windvale-progress-2026-08-20-640.webp 640w, assets/progress/windvale-progress-2026-08-20-1120.webp 1120w"
+                        srcset="assets/windvale-stack-lab-2026-08-22-640.webp 640w, assets/windvale-stack-lab-2026-08-22-1120.webp 1120w"
                         sizes="(max-width: 850px) calc(100vw - 30px), 510px" />
                     <img
-                        src="assets/progress/windvale-progress-2026-08-20-1120.webp"
+                        src="assets/windvale-stack-lab-2026-08-22-1120.webp"
                         width="1120"
-                        height="1120"
+                        height="747"
                         decoding="async"
                         fetchpriority="high"
-                        alt="Four-panel Day 23 comic showing completed Language 1.0 migration Slices 0–3, active Slice 4 generic checkpoints, and the remaining compiler-integration path." />
+                        alt="Five transparent computing modules joined by continuous blue circuitry, branching upward like a tree beside embedded hardware and an industrial robot arm." />
                 </picture>
                 <figcaption>
-                    <span><strong>Latest progress story</strong> · <time datetime="2026-08-20">20 August 2026</time></span>
-                    <a href="/progress/">All stories →</a>
-                </figcaption>
-                <details class="comic-transcript">
-                    <summary>Read the comic transcript</summary>
-                    <ol>
-                        <li>A human collaborator asks, “Day 23 already?” Beside him, a migration board marks Slices 0 through 3 complete and Slice 4 in progress. The robot says, “Slice 4 is active.”</li>
-                        <li>Three completed laboratory checkpoints—generic functions, multiple specializations, and concrete generic identities—feed toward pending records, variants, and collections work. Source binding, field substitution, WIR, and WVB remain open.</li>
-                        <li>A staircase marks Slices 0 through 3 complete, Slice 4 active, and Slices 5 through 8 ahead. The “We are here: Slice 4” arrow points directly at the active step. The robot says, “Next up: connect the rest.”</li>
-                        <li>The human asks, “So… how much longer?” The robot answers, “Still unknown. But the path is clearer.”</li>
-                        <li>The closing banner reads, “Day 23: Generics are taking shape. Slice 4 keeps moving forward.”</li>
+                    <div class="stack-visual-heading">
+                        <span>Windvale stack</span>
+                        <strong>One system · explicit boundaries</strong>
+                    </div>
+                    <ol aria-label="Windvale stack layers">
+                        <li><span>01</span><strong>Source</strong><small>Language · packages</small></li>
+                        <li><span>02</span><strong>Compiler</strong><small>WIR · lowering</small></li>
+                        <li><span>03</span><strong>Bytecode</strong><small>Canonical WVB</small></li>
+                        <li><span>04</span><strong>Execution</strong><small>Verifier · runtime</small></li>
+                        <li><span>05</span><strong>Systems</strong><small>Libraries · WVDB · OS path</small></li>
                     </ol>
-                </details>
+                    <p><span aria-hidden="true"></span><strong>Working now</strong> Source → canonical WVB → verification → execution</p>
+                </figcaption>
             </figure>
         </section>
 
         <section class="quick-links" aria-label="Windvale links">
             <a href="/playground/">
-                <span class="link-icon blue material-symbol" aria-hidden="true">rocket_launch</span>
-                <span><strong>Open the playground</strong><small>Write and run a program in your browser.</small></span>
+                <span class="link-icon blue material-symbol" aria-hidden="true">terminal</span>
+                <span><strong>Open the Workbench</strong><small>Write, compile, inspect, and run Windvale in your browser.</small></span>
                 <b aria-hidden="true">→</b>
             </a>
             <a href="/code/">
                 <span class="link-icon green material-symbol" aria-hidden="true">code</span>
-                <span><strong>Explore the source</strong><small>Browse highlighted Windvale code and the complete tree.</small></span>
+                <span><strong>Inspect the stack</strong><small>Browse the published source from language to operating system.</small></span>
                 <b aria-hidden="true">→</b>
             </a>
             <a href="/docs/">
                 <span class="link-icon violet material-symbol" aria-hidden="true">book_2</span>
-                <span><strong>Read the documents</strong><small>Learn why Windvale is built this way.</small></span>
+                <span><strong>Understand the system</strong><small>Read the architecture, specifications, decisions, and guides.</small></span>
                 <b aria-hidden="true">→</b>
             </a>
-            <a href="/support/">
-                <span class="link-icon amber material-symbol" aria-hidden="true">favorite</span>
-                <span><strong>Support Windvale</strong><small>Help fund AI compute, testing, and continued development.</small></span>
+            <a href="/docs/?path=Documents%2FProject%2FSeed-Verification-Evidence.md">
+                <span class="link-icon amber" aria-hidden="true">✓</span>
+                <span><strong>Check the evidence</strong><small>See reproducibility, verification, and current platform claims.</small></span>
                 <b aria-hidden="true">→</b>
             </a>
         </section>
 
-        <section class="progress-strip" id="progress" aria-labelledby="progress-title">
+        <section class="progress-strip" id="status" aria-labelledby="status-title">
             <div>
-                <p class="kicker">Follow the build</p>
-                <h2 id="progress-title">Useful today. Still growing downward.</h2>
-                <p>The installable 0.1.0 preview now puts Windvale and its core tools on Windows and Linux while the language, package system, and operating system keep advancing.</p>
+                <p class="kicker">Emerging, with a working core</p>
+                <h2 id="status-title">Use what exists. Inspect what comes next.</h2>
+                <p>The signed 0.1 preview, portable bytecode path, native tools, and browser compiler are available now. Language 1.0, broader libraries, WVDB, and Windvale OS remain active work—not finished-product claims.</p>
             </div>
             <nav aria-label="Project status links">
-                <a href="/docs/?path=Documents%2FProject%2FProgress.md">Current progress <span aria-hidden="true">→</span></a>
-                <a href="/progress/">Progress comics</a>
+                <a href="/docs/?path=Documents%2FProject%2FSeed-Verification-Evidence.md">Review evidence <span aria-hidden="true">→</span></a>
                 <a href="/docs/?path=Documents%2FProject%2FRoadmap.md">Roadmap</a>
-                <a href="/docs/?path=Documents%2FProject%2FSeed-Verification-Evidence.md">Evidence</a>
+                <a href="/docs/?path=Documents%2FProject%2FProgress.md">Current work</a>
+                <a href="/support/">Support</a>
             </nav>
         </section>
     </main>
     <footer class="site-footer">
         <span>Windvale is stewarded by <a href="https://eworker.ca">E-Worker Inc</a>.</span>
         <nav aria-label="Legal and project links">
+            <a href="/progress/">Project history</a>
             <a href="/docs/?path=LICENSE.md">Community Source License</a>
             <a href="/docs/?path=THIRD-PARTY-NOTICES.md">Third-party notices</a>
             <a href="mailto:info@eworker.ca">Commercial licensing</a>

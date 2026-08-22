@@ -16,6 +16,7 @@ let Manifest;
 let Files = [];
 let Selectedˉpath = "";
 let Searchˉquery = "";
+const MAXIMUM_WORKBENCH_COPY_BYTES = 64 * 1024;
 
 function Setˉstatus(Message, Failure = false) {
     const Content = document.querySelector("#code-content");
@@ -95,6 +96,18 @@ async function Selectˉfile(Path, Push) {
     const Hasˉdocument = Manifest.documents.some((Document) => Document.path === File.path);
     Documentˉlink.hidden = !Hasˉdocument;
     Documentˉlink.href = `/docs/?path=${encodeURIComponent(File.path)}`;
+    const Workbenchˉlink = document.querySelector("#code-workbench-link");
+    const Canˉopenˉworkbenchˉcopy = File.language === "windvale" &&
+        File.kind === "text" && File.path.endsWith(".wv") &&
+        typeof File.publishedUrl === "string" &&
+        Number.isSafeInteger(File.size) && File.size >= 0 &&
+        File.size <= MAXIMUM_WORKBENCH_COPY_BYTES;
+    Workbenchˉlink.hidden = !Canˉopenˉworkbenchˉcopy;
+    Workbenchˉlink.href = `/playground/?copy=${encodeURIComponent(File.path)}`;
+    Workbenchˉlink.setAttribute(
+        "aria-label",
+        `Open an editable copy of ${File.path} in the Windvale Workbench`,
+    );
     document.querySelector("#copy-code").disabled = !File.publishedUrl;
     document.title = `${File.path.split("/").at(-1)} — Windvale source`;
 

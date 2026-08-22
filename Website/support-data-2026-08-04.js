@@ -7,7 +7,7 @@ export const SUPPORT_TIERS = Object.freeze([
         icon: "flare",
         accent: "cyan",
         image: new URL("./assets/support/spark-2026-08-04.jpg", import.meta.url).href,
-        description: "Helps cover the AI compute and tools behind an active development session.",
+        description: "Helps cover the compute, tools, and verification behind an active development session.",
         checkoutUrl: "https://buy.stripe.com/fZu8wI2vi8hFeB8e9G1sQ00",
     },
     {
@@ -18,7 +18,7 @@ export const SUPPORT_TIERS = Object.freeze([
         icon: "construction",
         accent: "green",
         image: new URL("./assets/support/builder-2026-08-04.jpg", import.meta.url).href,
-        description: "Supports continued work across the compiler, runtime, playground, and documentation.",
+        description: "Supports continued work across the compiler, runtime, Workbench, and documentation.",
         checkoutUrl: "https://buy.stripe.com/6oU28k0nacxV50y7Li1sQ01",
     },
     {

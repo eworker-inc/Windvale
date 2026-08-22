@@ -103276,7 +103276,7 @@ var jSe = [
 	{
 		label: "system",
 		group: "profile",
-		detail: "System module profile (not executable in this playground)"
+		detail: "System module profile (not executable in this Workbench)"
 	},
 	{
 		label: "i32",

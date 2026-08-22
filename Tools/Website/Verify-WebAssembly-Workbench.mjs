@@ -4,6 +4,10 @@ import {
     Parseˉcommandˉline,
 } from "../Windvale.Playground/wwwroot/js/workbench-shell.js";
 import { Validateˉworkspaceˉname } from "../Windvale.Playground/wwwroot/js/workbench-workspace.js";
+import {
+    Chooseˉworkspaceˉcopyˉname,
+    Selectˉrepositoryˉcopy,
+} from "../Windvale.Playground/wwwroot/js/workbench-repository-copy.js";
 
 assert.deepEqual(
     Parseˉcommandˉline('write Notes.txt "hello browser workspace"'),
@@ -15,6 +19,37 @@ assert.throws(() => Parseˉcommandˉline("cat 'unfinished"), /not closed/u);
 assert.equal(Validateˉworkspaceˉname("Hello-Windvale.wv"), "Hello-Windvale.wv");
 assert.throws(() => Validateˉworkspaceˉname("../outside.wv"), /one ASCII segment/u);
 assert.throws(() => Validateˉworkspaceˉname("Nested/file.wv"), /one ASCII segment/u);
+
+const Repositoryˉmanifest = {
+    version: 1,
+    commit: "a".repeat(40),
+    files: [{
+        path: "Examples/Seed/Hello-Windvale.wv",
+        size: 194,
+        contentHash: "b".repeat(64),
+        language: "windvale",
+        kind: "text",
+        publishedUrl: `/repository/code/${"c".repeat(64)}.html`,
+    }],
+};
+const Repositoryˉcopy = Selectˉrepositoryˉcopy(
+    Repositoryˉmanifest,
+    "Examples/Seed/Hello-Windvale.wv",
+);
+assert.equal(Repositoryˉcopy.Fileˉname, "Hello-Windvale.wv");
+assert.throws(
+    () => Selectˉrepositoryˉcopy(Repositoryˉmanifest, "../Hello-Windvale.wv"),
+    /malformed/u,
+);
+assert.throws(
+    () => Selectˉrepositoryˉcopy(Repositoryˉmanifest, "README.md"),
+    /Windvale source path/u,
+);
+assert.equal(Chooseˉworkspaceˉcopyˉname("Hello-Windvale.wv", []), "Hello-Windvale.wv");
+assert.equal(
+    Chooseˉworkspaceˉcopyˉname("Hello-Windvale.wv", [{ Name: "Hello-Windvale.wv" }]),
+    "Hello-Windvale-Repository-Copy.wv",
+);
 
 const Files = new Map([["Hello.wv", "source one"]]);
 const Opened = [];

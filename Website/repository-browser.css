@@ -437,6 +437,19 @@ details[open] > .repository-directory-name::before {
     border-color: var(--blue);
 }
 
+.repository-actions .workbench-copy-link {
+    color: #ffffff;
+    border-color: var(--blue);
+    background: var(--blue);
+}
+
+.repository-actions .workbench-copy-link:hover,
+.repository-actions .workbench-copy-link:focus-visible {
+    color: #ffffff;
+    border-color: var(--blue-hover);
+    background: var(--blue-hover);
+}
+
 .repository-actions button:disabled {
     opacity: 0.5;
     cursor: default;
