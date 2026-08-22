@@ -11,15 +11,15 @@ const Demoˉdirectory = path.join(
 );
 const Previewˉsource = Object.freeze({
     relativePath: "Website/preview.png",
-    sha256: "47fecbc4a2e0c3c4f0a853715e9ee30377ad95b7b6d6b9f16877645d25d6c460",
+    sha256: "65bc733c5d9aa08e8074697ec8f1752900644dafbb5fa4d35a035c498273cbd7",
     width: 1731,
     height: 909,
     format: "png",
 });
 const Previewˉwide = Object.freeze({
-    relativePath: "Website/preview-2026-08-06.jpg",
-    url: "https://windvale.ca/preview-2026-08-06.jpg",
-    sha256: "52e1338fe5095e361c0b7619c4a6ff1854fe688f4c67bc749eef2e513384dacd",
+    relativePath: "Website/preview-2026-08-22.jpg",
+    url: "https://windvale.ca/preview-2026-08-22.jpg",
+    sha256: "d2b80ffc86945ce3b1daf5fbabd75b04b2bdf3ce1d10e006b6bc90e4974867a1",
     width: 1200,
     height: 630,
     format: "jpeg",
