@@ -1,9 +1,5 @@
 # Windvale
 
-![Four-panel Day 23 comic showing completed Language 1.0 migration Slices 0–3, active Slice 4 generic checkpoints, and the remaining compiler-integration path](Documents/Project/Images/Windvale-Project-Progress-2026-08-20.png)
-
-*Day 23: Language 1.0 Migration Slices 0–3 are complete and Slice 4 is active. Generic functions, multiple concrete specializations, and concrete generic identities now have working checkpoints; records, variants, and broader collections still need to be connected through the compiler.*
-
 Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
 
 AI systems produce the source and prose. Humans define the objectives, direct the work, review and test the results, decide what the project accepts and publishes, and remain responsible for publication. [E-Worker Inc](https://eworker.ca) provides project stewardship.

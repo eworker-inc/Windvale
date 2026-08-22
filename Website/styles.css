@@ -1268,12 +1268,13 @@ h1 {
 
 .support-tier-visual {
     position: relative;
-    height: 145px;
+    height: 152px;
     margin-bottom: 16px;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line));
     border-radius: 10px;
-    background: #071018;
+    background: #07111c;
+    isolation: isolate;
 }
 
 .supporter-group-icon {
@@ -1284,16 +1285,196 @@ h1 {
     background: color-mix(in srgb, var(--accent) 12%, var(--surface));
 }
 
-.support-tier-image {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 240ms ease;
+.support-tier-diagram {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    color: var(--accent);
+    background:
+        radial-gradient(circle at 64% 48%, color-mix(in srgb, var(--accent) 15%, transparent), transparent 36%),
+        linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
+        linear-gradient(135deg, #091827, #050c14);
+    background-size: auto, 18px 18px, 18px 18px, auto;
 }
 
-.support-tier:hover .support-tier-image {
-    transform: scale(1.025);
+.support-tier-diagram::before,
+.support-tier-diagram::after {
+    position: absolute;
+    content: "";
+}
+
+.support-tier-diagram::before {
+    inset: 0;
+    opacity: 0.55;
+    background: linear-gradient(115deg, transparent 28%, color-mix(in srgb, var(--accent) 12%, transparent) 50%, transparent 72%);
+}
+
+.support-tier-diagram::after {
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.48);
+}
+
+.support-tier-diagram-code,
+.support-tier-diagram-label {
+    position: absolute;
+    z-index: 5;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.support-tier-diagram-code {
+    top: 13px;
+    left: 14px;
+    color: color-mix(in srgb, var(--accent) 72%, #ffffff);
+}
+
+.support-tier-diagram-label {
+    bottom: 13px;
+    left: 14px;
+    color: rgba(230, 241, 250, 0.72);
+}
+
+.support-tier-diagram-axis {
+    position: absolute;
+    top: 50%;
+    right: 12%;
+    left: 12%;
+    z-index: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 34%, transparent), transparent);
+}
+
+.support-tier-diagram-network {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    width: 174px;
+    height: 86px;
+    transform: translate(-50%, -50%);
+}
+
+.support-tier-diagram-network::before,
+.support-tier-diagram-network::after {
+    position: absolute;
+    top: 50%;
+    left: 4%;
+    width: 92%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 70%, #ffffff), transparent);
+    content: "";
+    transform-origin: center;
+}
+
+.support-tier-diagram-network::before {
+    transform: rotate(19deg);
+}
+
+.support-tier-diagram-network::after {
+    transform: rotate(-19deg);
+}
+
+.support-tier-diagram-node {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border: 1px solid color-mix(in srgb, var(--accent) 75%, #ffffff);
+    border-radius: 50%;
+    background: #07111c;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 48%, transparent);
+}
+
+.support-tier-diagram-node:nth-child(1) { top: 68%; left: 2%; }
+.support-tier-diagram-node:nth-child(2) { top: 18%; left: 25%; }
+.support-tier-diagram-node:nth-child(3) { top: 47%; left: 48%; }
+.support-tier-diagram-node:nth-child(4) { top: 12%; left: 72%; }
+.support-tier-diagram-node:nth-child(5) { top: 64%; left: 96%; }
+
+.support-tier-diagram-glyph {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    color: color-mix(in srgb, var(--accent) 76%, #ffffff);
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, #07111c 84%, var(--accent));
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 22%, transparent);
+    font-size: 26px;
+    transform: translate(-50%, -50%);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.support-tier:hover .support-tier-diagram-glyph {
+    box-shadow: 0 0 34px color-mix(in srgb, var(--accent) 30%, transparent);
+    transform: translate(-50%, -50%) scale(1.035);
+}
+
+.diagram-pulse .support-tier-diagram-glyph,
+.diagram-verify .support-tier-diagram-glyph,
+.diagram-network .support-tier-diagram-glyph {
+    border-radius: 50%;
+}
+
+.diagram-pulse .support-tier-diagram-glyph {
+    box-shadow:
+        0 0 0 9px color-mix(in srgb, var(--accent) 7%, transparent),
+        0 0 30px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.diagram-modules .support-tier-diagram-node,
+.diagram-foundation .support-tier-diagram-node {
+    width: 16px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.diagram-stream .support-tier-diagram-network {
+    width: 218px;
+    transform: translate(-50%, -50%) skewX(-12deg);
+}
+
+.diagram-stream .support-tier-diagram-network::before,
+.diagram-stream .support-tier-diagram-network::after {
+    height: 2px;
+    transform: translateY(-11px);
+}
+
+.diagram-stream .support-tier-diagram-network::after {
+    transform: translateY(11px);
+}
+
+.diagram-verify .support-tier-diagram-glyph {
+    box-shadow:
+        0 0 0 8px color-mix(in srgb, var(--accent) 8%, transparent),
+        0 0 0 17px color-mix(in srgb, var(--accent) 5%, transparent),
+        0 0 32px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.diagram-foundation .support-tier-diagram-network {
+    top: 61%;
+    height: 54px;
+}
+
+.diagram-foundation .support-tier-diagram-node:nth-child(1) { top: 64%; left: 12%; }
+.diagram-foundation .support-tier-diagram-node:nth-child(2) { top: 64%; left: 31%; }
+.diagram-foundation .support-tier-diagram-node:nth-child(3) { top: 64%; left: 50%; }
+.diagram-foundation .support-tier-diagram-node:nth-child(4) { top: 64%; left: 69%; }
+.diagram-foundation .support-tier-diagram-node:nth-child(5) { top: 64%; left: 88%; }
+
+.diagram-network .support-tier-diagram-network {
+    width: 202px;
+    height: 104px;
 }
 
 .support-tier-note {

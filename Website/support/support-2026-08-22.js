@@ -1,4 +1,4 @@
-import { SUPPORT_CURRENCY, SUPPORT_TIERS } from "../support-data-2026-08-04.js";
+import { SUPPORT_CURRENCY, SUPPORT_TIERS } from "../support-data-2026-08-22.js";
 
 const TIER_BY_KEY = new Map(SUPPORT_TIERS.map((Tier) => [Tier.key, Tier]));
 const RECOGNITION_ORDER = Object.freeze([
@@ -30,17 +30,30 @@ function Isˉstripeˉpaymentˉlink(Value) {
     }
 }
 
+function Buildˉtierˉvisual(Tier) {
+    const Visual = Makeˉelement("div", "support-tier-visual");
+    const Diagram = Makeˉelement("div", `support-tier-diagram diagram-${Tier.diagram}`);
+    Diagram.setAttribute("aria-hidden", "true");
+
+    const Network = Makeˉelement("span", "support-tier-diagram-network");
+    for (let Index = 0; Index < 5; Index += 1) {
+        Network.append(Makeˉelement("i", "support-tier-diagram-node"));
+    }
+
+    Diagram.append(
+        Makeˉelement("span", "support-tier-diagram-code", Tier.visualCode),
+        Makeˉelement("span", "support-tier-diagram-axis"),
+        Network,
+        Makeˉelement("span", "support-tier-diagram-glyph material-symbol", Tier.icon),
+        Makeˉelement("span", "support-tier-diagram-label", Tier.visualLabel),
+    );
+    Visual.append(Diagram, Makeˉelement("span", "support-tier-note", Tier.note));
+    return Visual;
+}
+
 function Buildˉtierˉcard(Tier) {
     const Card = Makeˉelement("article", `support-tier accent-${Tier.accent}`);
-    const Visual = Makeˉelement("div", "support-tier-visual");
-    const Image = Makeˉelement("img", "support-tier-image");
-    Image.src = Tier.image;
-    Image.alt = "";
-    Image.width = 768;
-    Image.height = 512;
-    Image.loading = "lazy";
-    Image.decoding = "async";
-    Visual.append(Image, Makeˉelement("span", "support-tier-note", Tier.note));
+    const Visual = Buildˉtierˉvisual(Tier);
 
     const Amount = Makeˉelement("p", "support-tier-amount", Tier.amount);
     Amount.append(Makeˉelement("small", "", ` ${SUPPORT_CURRENCY}`));
