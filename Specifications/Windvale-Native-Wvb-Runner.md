@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-WVB 1.17 and metadata parsing to WVB 1.18 but has not repinned the paired
+the scalar collection subset of WVB 1.19 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.18. Its shared scalar interpreter
+The current source-built runner accepts WVB 1.11 through 1.19. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -101,25 +101,49 @@ an explicit finite runtime resource and may report bounded aggregate exhaustion
 for a valid value that does not fit. It never changes the value's length,
 silently allocates dynamic capacity, or skips the bounds check.
 The WVB 1.18 envelope and function-directory paths parse kind-5 Vector,
-kind-6 Sequence, and matching shapes `23` and `24`. This is metadata support:
-the runner has no Vector/Sequence construction or operation opcode and therefore
-does not claim an executable storage representation for those values. A module
-whose independent `Main` uses no collection value can still execute after its
-unused exact signatures are verified.
+kind-6 Sequence, and matching shapes `23` and `24`. WVB 1.19 adds executable
+reserved construction, unchecked append after a proved capacity check,
+consuming freeze, Vector/Sequence length, and checked Sequence element access
+for resource-free scalar elements. Each value is one eight-byte descriptor
+into the existing 64 KiB refcounted heap. Its backing stores a `u32` current
+length, a positive `u32` retained maximum, and exactly that many eight-byte
+cells. The scalar profile admits at most 2,047 cells per backing allocation,
+so one value occupies at most 16 KiB.
+
+Vector mutation updates the uniquely owned backing; freeze transfers the
+linear Vector token to an immutable Sequence without allocating. The token is
+created only by reserved construction, is preserved by append and Vector
+length, and is consumed by freeze. Ordinary Vector local loads do not recreate
+it. Sequence length and element access preserve their shared immutable owner.
+The runner mirrors these verifier rules with separate descriptor, collection,
+and unique-Vector stack flags. Sequence local loads retain; stores release the
+replaced owner; function teardown releases Vector and Sequence locals.
+Allocation metadata reuses inactive entries and first-fits released spans.
+Text, bytes, aggregates, and nested collection elements remain outside this
+checkpoint because their element-owned destruction and tracing are not yet
+implemented. This low-level runtime surface does not claim the public fallible
+`Memoryˉbudget` constructor or its `Result` lowering.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 209,917-byte WVB at SHA-256
-`62c9a42433e4e14a984fd42a9ce4db6c6d303677a09de21849b4418952cf5215`.
-Its profile-5 application is 2,077,184 bytes at SHA-256
-`7c55925b23cd6e9c470c76a2d34b9f9285471e83489b9adeee8e3a9a008530c3`.
+The current Windows development build is a 226,540-byte WVB at SHA-256
+`a3b63a20d7a360889477346d970490c2f1139be8687add203955271844bc92f9`.
+The promoted profile-5 application identity in the table above has not been
+repinned to this source checkpoint.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
 `42`, and reports code `3008` for the verified out-of-bounds mutation. It also
 parses the deterministic 436-byte WVB 1.18 Vector/Sequence metadata fixture and
-executes its independent `Main` with result `42`. Paired
+executes its independent `Main` with result `42`. A deterministic 971-byte
+WVB 1.19 derivative executes all six collection opcodes, performs six 16-KiB
+allocation cycles that require descriptor reclamation, and returns `42`; its
+SHA-256 is
+`14c8f442c499669139b5106d62bf4687450a6b4537b5e224f637fbecc4ada251`.
+Four malformed type/version cases reject semantically, one copied-Vector case
+rejects during typed execution, and capacity and index violations remain valid
+bytecode and fail exactly as `WVR3008`. Paired
 reconstruction, browser execution, and candidate promotion remain separate
 gates.
 

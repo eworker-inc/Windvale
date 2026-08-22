@@ -6,8 +6,9 @@ This document specifies the current Windvale bytecode family: the WVB 1.11
 baseline, the WVB 1.12 fixed-width-integer extension, the WVB 1.13 rune
 extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
 `never` extension, the WVB 1.16 named variant-field extension, the WVB 1.17
-fixed-array extension, and the WVB 1.18 Vector and Sequence type-representation
-extension. Windvale is in early
+fixed-array extension, the WVB 1.18 Vector and Sequence type-representation
+extension, and the WVB 1.19 scalar Vector/Sequence execution extension.
+Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
 independent module metadata, nominal payload variants, bounded sequences and
@@ -24,13 +25,16 @@ the zero-field and one-field metadata bytes. WVB 1.17 adds exact nominal
 fixed-array metadata, array values, construction, and checked `u64` indexing.
 WVB 1.18 adds exact runtime-budgeted Vector and immutable Sequence type
 metadata without adding collection operations or a storage representation.
+WVB 1.19 adds a first runtime-backed scalar operation subset with explicit
+linear Vector evidence.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
 never evidence, 1.16 for multi-field variant metadata or field extraction, and
 1.17 for any fixed-array type, value shape, construction, or indexing operation,
-and 1.18 for any Vector or Sequence descriptor or value shape.
-A WVB 1.18-capable reader accepts all eight versions and never admits an
+1.18 for any Vector or Sequence descriptor or value shape, and 1.19 for any
+Vector or Sequence execution operation.
+A WVB 1.19-capable reader accepts all nine versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -240,7 +244,7 @@ WVB 1.17, contains one exact non-`never` value shape plus its length, and has no
 field names or capacity. Its compiler-generated private name identifies the
 concrete source `Array<T, N>` instance. Field and element shapes obey the
 bounded, acyclic source restrictions. Vector and Sequence descriptors exist
-only in WVB 1.18. Each contains one exact non-`never` element shape and a
+in WVB 1.18 and later. Each contains one exact non-`never` element shape and a
 compiler-generated private name identifying the concrete `Vector<T>` or
 `Sequence<T>` instance. Neither descriptor contains a source maximum, backing
 capacity, allocator, or authority.
@@ -271,8 +275,8 @@ capacity, allocator, or authority.
 20 unit (WVB 1.15 and later)
 21 never (WVB 1.15 and later)
 22 fixed array followed by u32 nominal-type index (WVB 1.17 only)
-23 Vector followed by u32 nominal-type index (WVB 1.18 only)
-24 Sequence followed by u32 nominal-type index (WVB 1.18 only)
+23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
+24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -444,6 +448,12 @@ C3 unit.const      no immediate; produces the sole `unit` value
 C4 variant.field   u32 variant-type index, u32 packed case/field; consumes variant, produces exact field
 C5 array.create    u32 array-type index; consumes exactly N elements in index order, produces exact array
 C6 array.element   no immediate; consumes exact array and u64 index, produces exact element
+C7 vector.create_reserved u32 Vector-type index; consumes u64 maximum, produces unique exact Vector
+C8 vector.append_unchecked u32 Vector-type index; consumes unique Vector and exact element, produces unique replacement Vector
+C9 vector.freeze   u32 Vector-type index, u32 Sequence-type index; consumes unique Vector, produces exact Sequence
+CA vector.length   u32 Vector-type index; preserves unique Vector and pushes u64 current length
+CB sequence.length u32 Sequence-type index; preserves Sequence and pushes u64 current length
+CC sequence.element u32 Sequence-type index; preserves Sequence, consumes u64 index, and pushes exact element
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -454,6 +464,34 @@ C6 array.element   no immediate; consumes exact array and u64 index, produces ex
 50 pop
 51 return
 ```
+
+Opcodes `C7` through `CC` exist only in WVB 1.19 and require matching kind-5
+or kind-6 Types entries. In this first runtime checkpoint, their element shape
+must be a resource-free scalar: `i32`, `bool`, `u8`, `u32`, an exact nominal
+enum, `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, or `f64`. Records,
+variants, fixed arrays, text, bytes, nested collections, and other values that
+need element-owned destruction or tracing remain invalid for these opcodes.
+
+`vector.create_reserved` is a low-level checked backend primitive. Its current
+portable scalar profile admits a positive maximum through 2,047 cells and may
+report bounded allocation failure before publishing a Vector. The public
+Language 1.0 Foundation constructor remains a fallible `Memoryˉbudget` API;
+the opcode does not synthesize that source-level `Result` or grant allocation
+authority. `vector.append_unchecked` is emitted only after a successful
+capacity check; a violated precondition reports `WVR3008` without publishing a
+replacement. Freeze consumes the mutable owner and may share its backing with
+the immutable result. Both length operations return the current count, not the
+retained maximum. `sequence.element` checks the full `u64` index and reports
+`WVR3008` when it is not below the current length.
+
+The WVB 1.19 verifier attaches non-serialized linear evidence to the Vector
+produced by `vector.create_reserved`. Append preserves that evidence, Vector
+length observes without consuming it, and freeze consumes it. An ordinary
+`local.load`, field extraction, array extraction, or call result does not create
+the evidence, so it cannot be used by these Vector operations. This deliberately
+keeps the first executable subset alias-free while ownership-aware local and
+borrow lowering remains a later compiler checkpoint. Sequence is shared
+immutable and therefore retains ordinary copyable local behavior.
 
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
@@ -565,7 +603,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.18 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, and every Vector or Sequence descriptor or shape requires 1.18.
+- The version is WVB 1.11 through 1.19 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, and every Vector or Sequence execution operation requires exactly 1.19.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.

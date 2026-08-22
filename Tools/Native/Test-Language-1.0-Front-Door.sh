@@ -1003,9 +1003,11 @@ node "$script_directory/Verify-Language-1.0-Floating.mjs" \
     "$work/Verifier.elf" "$work/Floating-A.wvb" \
     "$work/Floating-Malformed" || exit $?
 
-"$script_directory/Build-Wvb.sh" \
+node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Wvb-Runner.wvproj" \
-    "$work/Floating-Runner.wvb" >/dev/null || exit $?
+    "$work/Floating-Runner.wvb" \
+    "$work/Analyzer.elf" "$work/Analyzer.identity" \
+    "$work/Emitter.elf" "$work/Emitter.identity" >/dev/null || exit $?
 "$script_directory/Package-Hosted-Wvb.sh" 5 \
     "$work/Floating-Runner.wvb" "$work/Floating-Runner.elf" linux \
     >/dev/null || exit $?
@@ -1086,6 +1088,9 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     2>"$work/Vector-Sequence-Types.err" || exit $?
 [[ ! -s $work/Vector-Sequence-Types.err ]] || exit 1
 node "$script_directory/Verify-Language-1.0-Vector-Sequence-Types.mjs" \
+    "$work/Verifier.elf" "$work/Floating-Runner.elf" \
+    "$work/Vector-Sequence-Types.wvb" "$work" || exit $?
+node "$script_directory/Verify-Language-1.0-Vector-Sequence-Runtime.mjs" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
     "$work/Vector-Sequence-Types.wvb" "$work" || exit $?
 vector_sequence_types_wvb_bytes=$(wc -c < "$work/Vector-Sequence-Types.wvb")
@@ -1344,4 +1349,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=371 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=380 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=9 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=971 multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

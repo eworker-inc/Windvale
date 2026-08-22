@@ -4,6 +4,7 @@ import Foundationˉsha256 as Sha256;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
 
 data Stackˉeffects: bytes = [
     0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
@@ -142,6 +143,12 @@ fn Stackˉaggregateˉroots(
         Cursor = Cursor + 8u32;
     }
     return Roots;
+}
+
+fn Stackˉflagˉset(Low: u32, High: u32, Index: u32) -> bool {
+    if Index < 32u32 { return ((Low >> Index) & 1u32) != 0u32; }
+    if Index < 64u32 { return ((High >> (Index - 32u32)) & 1u32) != 0u32; }
+    return false;
 }
 
 fn Localˉaggregateˉroots(
@@ -1218,6 +1225,10 @@ export fn Main(Request: bytes) -> bytes {
     var Stackˉdescriptorˉflagsˉhigh: u32 = 0u32;
     var Stackˉrecordˉflagsˉlow: u32 = 0u32;
     var Stackˉrecordˉflagsˉhigh: u32 = 0u32;
+    var Stackˉcollectionˉflagsˉlow: u32 = 0u32;
+    var Stackˉcollectionˉflagsˉhigh: u32 = 0u32;
+    var Stackˉvectorˉflagsˉlow: u32 = 0u32;
+    var Stackˉvectorˉflagsˉhigh: u32 = 0u32;
     var Frames: bytes = Invalid;
     var Heap: bytes = Invalid;
     var Heapˉallocations: bytes = Invalid;
@@ -1503,8 +1514,13 @@ export fn Main(Request: bytes) -> bytes {
                     }
                 }
             }
-            if Loadedˉshapeˉkind == 3u32 || Loadedˉshapeˉkind == 6u32 {
+            if Loadedˉshapeˉkind == 3u32 || Loadedˉshapeˉkind == 6u32 ||
+                Loadedˉshapeˉkind == 23u32 ||
+                Loadedˉshapeˉkind == 24u32 {
                 Stackˉproducedˉkind = 1u32;
+                if Loadedˉshapeˉkind == 24u32 {
+                    Stackˉproducedˉkind = 4u32;
+                }
                 let Loadedˉallocations: bytes = Retainˉdescriptor(
                     Heapˉallocations,
                     Heapˉallocationˉcount,
@@ -1549,7 +1565,9 @@ export fn Main(Request: bytes) -> bytes {
                 Localˉshapes,
                 Storedˉshapeˉoffset
             );
-            if Storedˉshapeˉkind == 3u32 || Storedˉshapeˉkind == 6u32 {
+            if Storedˉshapeˉkind == 3u32 || Storedˉshapeˉkind == 6u32 ||
+                Storedˉshapeˉkind == 23u32 ||
+                Storedˉshapeˉkind == 24u32 {
                 let Previousˉstoredˉvalue: bytes = Bytesˉslice(
                     Locals,
                     Storedˉlocalˉoffset,
@@ -1757,7 +1775,8 @@ export fn Main(Request: bytes) -> bytes {
         if Payloadˉlength <= 125u32 ||
             (Payloadˉlength >= 151u32 && Payloadˉlength <= 153u32) ||
             Payloadˉlength == 196u32 || Payloadˉlength == 197u32 ||
-            Payloadˉlength == 198u32 {
+            Payloadˉlength == 198u32 ||
+            (Payloadˉlength >= 199u32 && Payloadˉlength <= 204u32) {
         if Payloadˉlength <= 103u32 {
             Stack = Executeˉbaseˉcomparison(
                 Payloadˉlength, Stack, Zeroˉvalue
@@ -2244,6 +2263,295 @@ export fn Main(Request: bytes) -> bytes {
             }
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             Mainˉfound = true;
+        }
+        if Payloadˉlength >= 199u32 && Payloadˉlength <= 204u32 {
+            let Collectionˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Module, Payload + 1u32
+            );
+            var Collectionˉexpectedˉkind: u32 = 5u32;
+            if Payloadˉlength >= 203u32 {
+                Collectionˉexpectedˉkind = 6u32;
+            }
+            let Collectionˉelementˉshape: u32 =
+                Collections.Collectionˉelementˉshape(
+                    Module,
+                    Typeˉoffsets,
+                    Typeˉcount,
+                    Collectionˉtype,
+                    Collectionˉexpectedˉkind
+                );
+            if !Collections.Collectionˉscalarˉelement(
+                Module, Collectionˉelementˉshape
+            ) {
+                return Invalid;
+            }
+
+            if Payloadˉlength == 199u32 {
+                let Collectionˉcreateˉstack: u32 = Bytesˉlength(Stack);
+                if Collectionˉcreateˉstack < 8u32 { return Invalid; }
+                let Collectionˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack, Collectionˉcreateˉstack - 8u32
+                );
+                let Collectionˉmaximumˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack, Collectionˉcreateˉstack - 4u32
+                );
+                if Collectionˉmaximumˉhigh != 0u32 ||
+                    Collectionˉmaximum == 0u32 ||
+                    Collectionˉmaximum > 2047u32 {
+                    Sectionˉkind = 3015u32;
+                } else {
+                    Heapˉallocationˉvalue =
+                        Collections.Collectionˉemptyˉbacking(
+                            Collectionˉmaximum, Zeroˉcell
+                        );
+                    if Bytesˉlength(Heapˉallocationˉvalue) == 0u32 {
+                        return Invalid;
+                    }
+                    Heapˉallocationˉrequested = true;
+                    Stack = Bytesˉslice(
+                        Stack, 0u32, Collectionˉcreateˉstack - 8u32
+                    );
+                    Stackˉconsumed = 1u32;
+                    Stackˉproduced = true;
+                    Stackˉproducedˉkind = 3u32;
+                }
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+                Mainˉfound = true;
+            }
+
+            if Payloadˉlength == 200u32 {
+                let Collectionˉappendˉstack: u32 = Bytesˉlength(Stack);
+                if Collectionˉappendˉstack < 16u32 { return Invalid; }
+                let Collectionˉappendˉvector: bytes = Bytesˉslice(
+                    Stack, Collectionˉappendˉstack - 16u32, 8u32
+                );
+                let Collectionˉappendˉvalue: bytes = Bytesˉslice(
+                    Stack, Collectionˉappendˉstack - 8u32, 8u32
+                );
+                let Collectionˉappendˉslot: u32 =
+                    Stackˉdescriptorˉcount - 2u32;
+                if !Stackˉflagˉset(
+                    Stackˉdescriptorˉflagsˉlow,
+                    Stackˉdescriptorˉflagsˉhigh,
+                    Collectionˉappendˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉvectorˉflagsˉlow,
+                    Stackˉvectorˉflagsˉhigh,
+                    Collectionˉappendˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉcollectionˉflagsˉlow,
+                    Stackˉcollectionˉflagsˉhigh,
+                    Collectionˉappendˉslot
+                ) {
+                    return Invalid;
+                }
+                if !Collections.Collectionˉbackingˉvalid(
+                    Heap,
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Collectionˉappendˉvector
+                ) {
+                    return Invalid;
+                }
+                let Collectionˉnextˉheap: bytes =
+                    Collections.Collectionˉappend(
+                        Heap,
+                        Collectionˉappendˉvector,
+                        Collectionˉappendˉvalue
+                    );
+                if Bytesˉlength(Collectionˉnextˉheap) == 0u32 {
+                    Sectionˉkind = 3008u32;
+                } else {
+                    Heap = Collectionˉnextˉheap;
+                    Stack = Bytesˉconcat(
+                        Bytesˉslice(
+                            Stack, 0u32, Collectionˉappendˉstack - 16u32
+                        ),
+                        Collectionˉappendˉvector
+                    );
+                    Stackˉconsumed = 2u32;
+                    Stackˉproduced = true;
+                    Stackˉproducedˉkind = 3u32;
+                }
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+                Mainˉfound = true;
+            }
+
+            if Payloadˉlength == 201u32 {
+                let Collectionˉsequenceˉtype: u32 =
+                    Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+                let Collectionˉsequenceˉelement: u32 =
+                    Collections.Collectionˉelementˉshape(
+                        Module,
+                        Typeˉoffsets,
+                        Typeˉcount,
+                        Collectionˉsequenceˉtype,
+                        6u32
+                    );
+                if Collectionˉsequenceˉelement == 4294967295u32 ||
+                    Bytesˉreadˉu8(Module, Collectionˉsequenceˉelement) !=
+                        Bytesˉreadˉu8(Module, Collectionˉelementˉshape) {
+                    return Invalid;
+                }
+                let Collectionˉfreezeˉelementˉkind: u32 = U32ˉfromˉu8(
+                    Bytesˉreadˉu8(Module, Collectionˉelementˉshape)
+                );
+                if Collectionˉfreezeˉelementˉkind == 8u32 &&
+                    Bytesˉreadˉu32ˉlittle(
+                        Module, Collectionˉsequenceˉelement + 1u32
+                    ) != Bytesˉreadˉu32ˉlittle(
+                        Module, Collectionˉelementˉshape + 1u32
+                    ) {
+                    return Invalid;
+                }
+                let Collectionˉfreezeˉstack: u32 = Bytesˉlength(Stack);
+                if Collectionˉfreezeˉstack < 8u32 { return Invalid; }
+                let Collectionˉfreezeˉvalue: bytes = Bytesˉslice(
+                    Stack, Collectionˉfreezeˉstack - 8u32, 8u32
+                );
+                let Collectionˉfreezeˉslot: u32 =
+                    Stackˉdescriptorˉcount - 1u32;
+                if !Stackˉflagˉset(
+                    Stackˉdescriptorˉflagsˉlow,
+                    Stackˉdescriptorˉflagsˉhigh,
+                    Collectionˉfreezeˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉvectorˉflagsˉlow,
+                    Stackˉvectorˉflagsˉhigh,
+                    Collectionˉfreezeˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉcollectionˉflagsˉlow,
+                    Stackˉcollectionˉflagsˉhigh,
+                    Collectionˉfreezeˉslot
+                ) {
+                    return Invalid;
+                }
+                if !Collections.Collectionˉbackingˉvalid(
+                    Heap,
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Collectionˉfreezeˉvalue
+                ) {
+                    return Invalid;
+                }
+                Stackˉconsumed = 1u32;
+                Stackˉproduced = true;
+                Stackˉproducedˉkind = 4u32;
+                Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+                Mainˉfound = true;
+            }
+
+            if Payloadˉlength == 202u32 || Payloadˉlength == 203u32 {
+                let Collectionˉlengthˉstack: u32 = Bytesˉlength(Stack);
+                if Collectionˉlengthˉstack < 8u32 { return Invalid; }
+                let Collectionˉlengthˉvalue: bytes = Bytesˉslice(
+                    Stack, Collectionˉlengthˉstack - 8u32, 8u32
+                );
+                let Collectionˉlengthˉslot: u32 =
+                    Stackˉdescriptorˉcount - 1u32;
+                let Collectionˉlengthˉvector: bool = Stackˉflagˉset(
+                    Stackˉvectorˉflagsˉlow,
+                    Stackˉvectorˉflagsˉhigh,
+                    Collectionˉlengthˉslot
+                );
+                if !Stackˉflagˉset(
+                    Stackˉdescriptorˉflagsˉlow,
+                    Stackˉdescriptorˉflagsˉhigh,
+                    Collectionˉlengthˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉcollectionˉflagsˉlow,
+                    Stackˉcollectionˉflagsˉhigh,
+                    Collectionˉlengthˉslot
+                ) || (Payloadˉlength == 202u32 &&
+                    !Collectionˉlengthˉvector) ||
+                    (Payloadˉlength == 203u32 &&
+                        Collectionˉlengthˉvector) {
+                    return Invalid;
+                }
+                if !Collections.Collectionˉbackingˉvalid(
+                    Heap,
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Collectionˉlengthˉvalue
+                ) {
+                    return Invalid;
+                }
+                Stack = Bytesˉconcat(
+                    Stack,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(
+                            Collections.Collectionˉlength(
+                                Heap, Collectionˉlengthˉvalue
+                            )
+                        ),
+                        Zeroˉvalue
+                    )
+                );
+                Stackˉconsumed = 0u32;
+                Stackˉproduced = true;
+                Stackˉproducedˉkind = 0u32;
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+                Mainˉfound = true;
+            }
+
+            if Payloadˉlength == 204u32 {
+                let Collectionˉelementˉstack: u32 = Bytesˉlength(Stack);
+                if Collectionˉelementˉstack < 16u32 { return Invalid; }
+                let Collectionˉsequenceˉvalue: bytes = Bytesˉslice(
+                    Stack, Collectionˉelementˉstack - 16u32, 8u32
+                );
+                let Collectionˉsequenceˉslot: u32 =
+                    Stackˉdescriptorˉcount - 2u32;
+                if !Stackˉflagˉset(
+                    Stackˉdescriptorˉflagsˉlow,
+                    Stackˉdescriptorˉflagsˉhigh,
+                    Collectionˉsequenceˉslot
+                ) || Stackˉflagˉset(
+                    Stackˉvectorˉflagsˉlow,
+                    Stackˉvectorˉflagsˉhigh,
+                    Collectionˉsequenceˉslot
+                ) || !Stackˉflagˉset(
+                    Stackˉcollectionˉflagsˉlow,
+                    Stackˉcollectionˉflagsˉhigh,
+                    Collectionˉsequenceˉslot
+                ) {
+                    return Invalid;
+                }
+                let Collectionˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack, Collectionˉelementˉstack - 8u32
+                );
+                let Collectionˉindexˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                    Stack, Collectionˉelementˉstack - 4u32
+                );
+                if !Collections.Collectionˉbackingˉvalid(
+                    Heap,
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Collectionˉsequenceˉvalue
+                ) {
+                    return Invalid;
+                }
+                let Collectionˉselected: bytes =
+                    Collections.Collectionˉelement(
+                        Heap, Collectionˉsequenceˉvalue, Collectionˉindex
+                    );
+                if Collectionˉindexˉhigh != 0u32 ||
+                    Bytesˉlength(Collectionˉselected) != 8u32 {
+                    Sectionˉkind = 3008u32;
+                } else {
+                    Stack = Bytesˉconcat(
+                        Bytesˉslice(
+                            Stack, 0u32, Collectionˉelementˉstack - 8u32
+                        ),
+                        Collectionˉselected
+                    );
+                    Stackˉconsumed = 1u32;
+                    Stackˉproduced = true;
+                    Stackˉproducedˉkind = 0u32;
+                }
+                Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+                Mainˉfound = true;
+            }
         }
         if Payloadˉlength == 106u32 {
             let Enumˉtype: u32 = Bytesˉreadˉu32ˉlittle(
@@ -3399,15 +3707,25 @@ export fn Main(Request: bytes) -> bytes {
             if Returnˉisˉdescriptor {
                 Stackˉproducedˉkind = 1u32;
             }
-            if Stackˉdescriptorˉcount <= 32u32 {
-                if ((Stackˉrecordˉflagsˉlow
-                    >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32 {
-                    Stackˉproducedˉkind = 2u32;
-                }
-            } else {
-                if ((Stackˉrecordˉflagsˉhigh
-                    >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32 {
-                    Stackˉproducedˉkind = 2u32;
+            let Returnˉisˉrecord: bool = Stackˉflagˉset(
+                Stackˉrecordˉflagsˉlow,
+                Stackˉrecordˉflagsˉhigh,
+                Stackˉdescriptorˉcount - 1u32
+            );
+            if Returnˉisˉrecord { Stackˉproducedˉkind = 2u32; }
+            let Returnˉisˉcollection: bool = Stackˉflagˉset(
+                Stackˉcollectionˉflagsˉlow,
+                Stackˉcollectionˉflagsˉhigh,
+                Stackˉdescriptorˉcount - 1u32
+            );
+            if Returnˉisˉcollection {
+                Stackˉproducedˉkind = 4u32;
+                if Stackˉflagˉset(
+                    Stackˉvectorˉflagsˉlow,
+                    Stackˉvectorˉflagsˉhigh,
+                    Stackˉdescriptorˉcount - 1u32
+                ) {
+                    Stackˉproducedˉkind = 3u32;
                 }
             }
             var Returnˉresult: bytes = Bytesˉslice(
@@ -3517,8 +3835,10 @@ export fn Main(Request: bytes) -> bytes {
                     Localˉshapes,
                     Returningˉshapeˉoffset + Returningˉlocalˉoffset
                 );
-                if Returningˉlocalˉkind == 3u32
-                    || Returningˉlocalˉkind == 6u32 {
+                if Returningˉlocalˉkind == 3u32 ||
+                    Returningˉlocalˉkind == 6u32 ||
+                    Returningˉlocalˉkind == 23u32 ||
+                    Returningˉlocalˉkind == 24u32 {
                     Releasedˉdescriptors = Bytesˉconcat(
                         Releasedˉdescriptors,
                         Bytesˉslice(Locals, Returningˉlocalˉoffset, 8u32)
@@ -3757,10 +4077,18 @@ export fn Main(Request: bytes) -> bytes {
                 Stackˉrecordˉflagsˉlow =
                     Stackˉrecordˉflagsˉlow & Stackˉdescriptorˉmask;
                 Stackˉrecordˉflagsˉhigh = 0u32;
+                Stackˉcollectionˉflagsˉlow =
+                    Stackˉcollectionˉflagsˉlow & Stackˉdescriptorˉmask;
+                Stackˉcollectionˉflagsˉhigh = 0u32;
+                Stackˉvectorˉflagsˉlow =
+                    Stackˉvectorˉflagsˉlow & Stackˉdescriptorˉmask;
+                Stackˉvectorˉflagsˉhigh = 0u32;
             }
             if Stackˉremainingˉcount == 32u32 {
                 Stackˉdescriptorˉflagsˉhigh = 0u32;
                 Stackˉrecordˉflagsˉhigh = 0u32;
+                Stackˉcollectionˉflagsˉhigh = 0u32;
+                Stackˉvectorˉflagsˉhigh = 0u32;
             }
             if Stackˉremainingˉcount > 32u32 {
                 let Stackˉhighˉcount: u32 =
@@ -3776,9 +4104,17 @@ export fn Main(Request: bytes) -> bytes {
                 Stackˉrecordˉflagsˉhigh =
                     Stackˉrecordˉflagsˉhigh
                         & Stackˉdescriptorˉhighˉmask;
+                Stackˉcollectionˉflagsˉhigh =
+                    Stackˉcollectionˉflagsˉhigh
+                        & Stackˉdescriptorˉhighˉmask;
+                Stackˉvectorˉflagsˉhigh =
+                    Stackˉvectorˉflagsˉhigh
+                        & Stackˉdescriptorˉhighˉmask;
             }
             if Stackˉproduced {
-                if Stackˉproducedˉkind == 1u32 {
+                if Stackˉproducedˉkind == 1u32 ||
+                    Stackˉproducedˉkind == 3u32 ||
+                    Stackˉproducedˉkind == 4u32 {
                     if Stackˉremainingˉcount < 32u32 {
                         Stackˉdescriptorˉflagsˉlow =
                             Stackˉdescriptorˉflagsˉlow
@@ -3799,6 +4135,31 @@ export fn Main(Request: bytes) -> bytes {
                         if Stackˉremainingˉcount >= 64u32 { return Invalid; }
                         Stackˉrecordˉflagsˉhigh =
                             Stackˉrecordˉflagsˉhigh
+                                | (1u32 << (Stackˉremainingˉcount - 32u32));
+                    }
+                }
+                if Stackˉproducedˉkind == 3u32 ||
+                    Stackˉproducedˉkind == 4u32 {
+                    if Stackˉremainingˉcount < 32u32 {
+                        Stackˉcollectionˉflagsˉlow =
+                            Stackˉcollectionˉflagsˉlow
+                                | (1u32 << Stackˉremainingˉcount);
+                    } else {
+                        if Stackˉremainingˉcount >= 64u32 { return Invalid; }
+                        Stackˉcollectionˉflagsˉhigh =
+                            Stackˉcollectionˉflagsˉhigh
+                                | (1u32 << (Stackˉremainingˉcount - 32u32));
+                    }
+                }
+                if Stackˉproducedˉkind == 3u32 {
+                    if Stackˉremainingˉcount < 32u32 {
+                        Stackˉvectorˉflagsˉlow =
+                            Stackˉvectorˉflagsˉlow
+                                | (1u32 << Stackˉremainingˉcount);
+                    } else {
+                        if Stackˉremainingˉcount >= 64u32 { return Invalid; }
+                        Stackˉvectorˉflagsˉhigh =
+                            Stackˉvectorˉflagsˉhigh
                                 | (1u32 << (Stackˉremainingˉcount - 32u32));
                     }
                 }

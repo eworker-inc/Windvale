@@ -1834,3 +1834,60 @@ The 108-owner verification registry now declares 5,155 cases at SHA-256
 The dual-host Language 1.0 owner declares 371 cases, including six exact WVB
 1.18 type-representation cases, and both host scripts share the nine-case
 Vector/Sequence-aware borrow checkpoint.
+
+## Slice 4 Vector and Sequence WVB 1.19 runtime checkpoint
+
+Decision 0826 gives the WVB 1.18 identities their first owned executable
+backing without reviving exact-capacity source types. WVB 1.19 adds reserved
+construction, append after a proved capacity check, consuming freeze,
+Vector/Sequence length, and checked Sequence element access. The independent
+verifier requires exact kind-5/kind-6 Types indices and exact scalar element
+shapes through every stack transition.
+
+The scalar runner stores one descriptor per value in its existing reclaiming
+64 KiB heap. A backing contains current length, retained maximum, and fixed
+eight-byte scalar cells. The current profile admits at most 2,047 cells, or 16
+KiB, for one backing. Local loads retain the allocation; stores release the
+replaced owner; length and element operations preserve their collection owner
+on the operand stack; explicit pop and function teardown release owned
+descriptors. Freeze shares the backing without allocation and prevents later
+mutation through the verified Sequence shape.
+
+The deterministic runtime fixture is 971 bytes at SHA-256
+`14c8f442c499669139b5106d62bf4687450a6b4537b5e224f637fbecc4ada251`.
+It executes all six operations across six 16-KiB allocation cycles and returns
+`42`; completing those cycles requires inactive allocation metadata and heap
+spans to be reused. Four version/type corruptions reject semantically, one
+ordinary Vector-local copy rejects during typed execution, and two otherwise
+valid modules fail capacity or index access exactly as `WVR3008`.
+
+The current verifier is 232,414 WVB bytes at SHA-256
+`27941493d2c818d67da8cffbcb686de32517ac46a2a659b3a5e5884e2d59fb7e`.
+The current runner is 226,540 WVB bytes at SHA-256
+`a3b63a20d7a360889477346d970490c2f1139be8687add203955271844bc92f9`.
+The runner's collection operations live in a new focused module, and backing
+initialization grows its zero-cell block logarithmically. `Source-Wir-Core.wv`
+is unchanged; its size does not impede this runtime slice.
+
+The verifier carries one non-serialized linear Vector marker from reserved
+construction through append and observation into consuming freeze. The runner
+mirrors it with bounded stack flags. This prevents ordinary local loading from
+creating a second mutable owner without adding copy-on-write allocation to the
+hot append path.
+
+This is a low-level backend checkpoint, not the complete Foundation contract.
+Source `Memoryˉbudget` construction and `Result` lowering, recoverable append,
+borrowed indexed access, compiler opcode selection, non-scalar elements, native
+lowering, and WebAssembly qualification remain explicit next work. The
+Language 1.0 owner advances from 371 to 380 cases.
+
+The focused WVB 1.19 build, package, verification, execution, corruption, and
+terminal-failure evidence passes all nine cases. Changed-file Development
+verification also passes planning and the `seed` and `seed-native-front-door`
+owners, then stops in the pre-existing WVB-to-WVO reconstruction identity:
+the retained lowerer candidate was last refreshed under the floating-point
+checkpoint, while `Native-X64-Lowering-Core.wv` changed later for fixed arrays.
+The reconstruction still produces matching sizes and exact Return-42 and
+metadata results, but its lowerer and hosted-package hashes no longer match the
+retained candidate. That independent native-candidate promotion is not claimed
+or repinned by this scalar-runner checkpoint.

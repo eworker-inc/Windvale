@@ -1125,6 +1125,7 @@ function Add-Native-Tool-Suite {
         'Verify-Language-1.0-Floating',
         'Verify-Language-1.0-Unit-Never',
         'Verify-Language-1.0-Multi-Field-Variants',
+        'Verify-Language-1.0-Vector-Sequence-Runtime',
         'Verify-Generic-Nominal-Main-Pipeline',
         'Verify-Generic-Nominal-Function-Body',
         'Verify-Generic-Nominal-Declaration-Dependency',
@@ -1563,6 +1564,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
         'Tests/Native/Language-1.0-Fixture-Inventory.txt'
     )) {
         Add-Suite 'language-1-front-door'

@@ -443,7 +443,182 @@ fn Hˉarrayˉdescriptor(Input: bytes, Types: u32, Typeˉindex: u32) -> bytes {
     );
 }
 
-fn Hˉarray(
+fn Hˉcollectionˉdescriptor(
+    Input: bytes,
+    Types: u32,
+    Typeˉindex: u32,
+    Expectedˉkind: u32
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Typeˉcursor: u32 = Types + 4u32;
+    var Currentˉtype: u32 = 0u32;
+    while Currentˉtype < Typeˉindex {
+        Typeˉcursor = Hˉnextˉtype(Input, Typeˉcursor);
+        Currentˉtype = Currentˉtype + 1u32;
+    }
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)) != Expectedˉkind {
+        return Invalid;
+    }
+    Typeˉcursor = Typeˉcursor + 1u32;
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor);
+    Typeˉcursor = Typeˉcursor + 4u32 + Nameˉlength;
+    let Elementˉkind: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Input, Typeˉcursor)
+    );
+    var Elementˉnominal: u32 = 0u32;
+    if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
+        Elementˉkind == 11u32 || Elementˉkind == 22u32 ||
+        Elementˉkind == 23u32 || Elementˉkind == 24u32 {
+        Elementˉnominal = Bytesˉreadˉu32ˉlittle(Input, Typeˉcursor + 1u32);
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu8(Bytesˉreadˉu8(Input, Typeˉcursor)),
+        Bytesˉfromˉu32ˉlittle(Elementˉnominal)
+    );
+}
+
+fn Hˉcollectionˉscalarˉelement(Element: bytes) -> bool {
+    if Bytesˉlength(Element) != 5u32 { return false; }
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Element, 0u32));
+    if Kind == 1u32 || Kind == 2u32 || Kind == 4u32 || Kind == 5u32 ||
+        Kind == 8u32 || Kind == 9u32 || Kind == 10u32 ||
+        (Kind >= 14u32 && Kind <= 20u32) {
+        return true;
+    }
+    return false;
+}
+
+fn Hˉcollection(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Types: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    let Opcode: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
+    );
+    let Firstˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Functionˉcode + Cursor + 1u32
+    );
+    var Expectedˉkind: u32 = 5u32;
+    if Opcode >= 203u32 { Expectedˉkind = 6u32; }
+    let Element: bytes = Hˉcollectionˉdescriptor(
+        Input, Types, Firstˉtype, Expectedˉkind
+    );
+    if !Hˉcollectionˉscalarˉelement(Element) {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+
+    if Opcode == 199u32 {
+        if Depth < 1u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        let Maximumˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Maximumˉoffset)) != 10u32 {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        return Hˉoperationˉstate(
+            true,
+            Bytesˉslice(Stack, 0u32, Maximumˉoffset),
+            Depth - 1u32,
+            true,
+            25u32,
+            Firstˉtype
+        );
+    }
+    if Opcode == 200u32 {
+        if Depth < 2u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        let Appendˉvalueˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Appendˉvalueˉoffset)) !=
+            U32ˉfromˉu8(Bytesˉreadˉu8(Element, 0u32)) ||
+            Bytesˉreadˉu32ˉlittle(Stack, Appendˉvalueˉoffset + 1u32) !=
+            Bytesˉreadˉu32ˉlittle(Element, 1u32) {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        let Appendˉvectorˉoffset: u32 = Appendˉvalueˉoffset - 5u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Appendˉvectorˉoffset)) != 25u32 ||
+            Bytesˉreadˉu32ˉlittle(Stack, Appendˉvectorˉoffset + 1u32) != Firstˉtype {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        return Hˉoperationˉstate(
+            true,
+            Bytesˉslice(Stack, 0u32, Appendˉvectorˉoffset),
+            Depth - 2u32,
+            true,
+            25u32,
+            Firstˉtype
+        );
+    }
+    if Opcode == 201u32 {
+        if Depth < 1u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        let Sequenceˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Functionˉcode + Cursor + 5u32
+        );
+        let Sequenceˉelement: bytes = Hˉcollectionˉdescriptor(
+            Input, Types, Sequenceˉtype, 6u32
+        );
+        if Bytesˉlength(Sequenceˉelement) != Bytesˉlength(Element) ||
+            Bytesˉreadˉu8(Sequenceˉelement, 0u32) !=
+                Bytesˉreadˉu8(Element, 0u32) ||
+            Bytesˉreadˉu32ˉlittle(Sequenceˉelement, 1u32) !=
+                Bytesˉreadˉu32ˉlittle(Element, 1u32) {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        let Freezeˉvectorˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Freezeˉvectorˉoffset)) != 25u32 ||
+            Bytesˉreadˉu32ˉlittle(Stack, Freezeˉvectorˉoffset + 1u32) != Firstˉtype {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        return Hˉoperationˉstate(
+            true,
+            Bytesˉslice(Stack, 0u32, Freezeˉvectorˉoffset),
+            Depth - 1u32,
+            true,
+            24u32,
+            Sequenceˉtype
+        );
+    }
+    if Opcode == 202u32 || Opcode == 203u32 {
+        if Depth < 1u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        let Lengthˉvalueˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+        var Valueˉkind: u32 = 25u32;
+        if Opcode == 203u32 { Valueˉkind = 24u32; }
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Lengthˉvalueˉoffset)) != Valueˉkind ||
+            Bytesˉreadˉu32ˉlittle(Stack, Lengthˉvalueˉoffset + 1u32) != Firstˉtype {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        return Hˉoperationˉstate(
+            true,
+            Stack,
+            Depth,
+            true,
+            10u32,
+            0u32
+        );
+    }
+    if Opcode != 204u32 || Depth < 2u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Indexˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Indexˉoffset)) != 10u32 {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Sequenceˉoffset: u32 = Indexˉoffset - 5u32;
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Sequenceˉoffset)) != 24u32 ||
+        Bytesˉreadˉu32ˉlittle(Stack, Sequenceˉoffset + 1u32) != Firstˉtype {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    return Hˉoperationˉstate(
+        true,
+        Bytesˉslice(Stack, 0u32, Indexˉoffset),
+        Depth - 1u32,
+        true,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Element, 0u32)),
+        Bytesˉreadˉu32ˉlittle(Element, 1u32)
+    );
+}
+
+fn Hˉcollectionˉorˉarray(
     Input: bytes,
     Functionˉcode: u32,
     Cursor: u32,
@@ -452,6 +627,9 @@ fn Hˉarray(
     Depth: u32
 ) -> Hˉoperationˉstate {
     let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Functionˉcode + Cursor));
+    if Opcode >= 199u32 && Opcode <= 204u32 {
+        return Hˉcollection(Input, Functionˉcode, Cursor, Types, Stack, Depth);
+    }
     if Opcode == 197u32 {
         let Createdˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Input, Functionˉcode + Cursor + 1u32
@@ -731,7 +909,27 @@ fn Hˉencodedˉshape(Kind: u32, Nominal: u32) -> bytes {
     if Kind == 22u32 { Encodedˉkind = Bytesˉfromˉu8(22u8); }
     if Kind == 23u32 { Encodedˉkind = Bytesˉfromˉu8(23u8); }
     if Kind == 24u32 { Encodedˉkind = Bytesˉfromˉu8(24u8); }
+    if Kind == 25u32 { Encodedˉkind = Bytesˉfromˉu8(25u8); }
     return Bytesˉconcat(Encodedˉkind, Bytesˉfromˉu32ˉlittle(Nominal));
+}
+
+fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
+    if Opcode == 2u32 || Opcode == 8u32 { return 2u32; }
+    if Opcode == 1u32 || (Opcode >= 3u32 && Opcode <= 7u32) ||
+        Opcode == 9u32 || Opcode == 10u32 ||
+        Opcode == 48u32 || Opcode == 49u32 ||
+        Opcode == 64u32 || Opcode == 65u32 ||
+        Opcode == 104u32 || Opcode == 105u32 || Opcode == 197u32 ||
+        Opcode == 199u32 || Opcode == 200u32 ||
+        (Opcode >= 202u32 && Opcode <= 204u32) {
+        return 5u32;
+    }
+    if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
+        (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
+        Opcode == 201u32 {
+        return 9u32;
+    }
+    return 1u32;
 }
 
 export fn Hˉexecutable(Input: bytes) -> bytes {
@@ -858,29 +1056,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             let Opcode: u32 = U32ˉfromˉu8(
                 Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
             );
-            var Width: u32 = 1u32;
-            if Opcode == 2u32 { Width = 2u32; }
-            if Opcode == 8u32 { Width = 2u32; }
-            if Opcode == 1u32 { Width = 5u32; }
-            if Opcode == 3u32 { Width = 5u32; }
-            if Opcode == 4u32 { Width = 5u32; }
-            if Opcode == 5u32 { Width = 5u32; }
-            if Opcode == 6u32 { Width = 5u32; }
-            if Opcode == 7u32 { Width = 5u32; }
-            if Opcode == 9u32 { Width = 5u32; }
-            if Opcode == 10u32 { Width = 5u32; }
-            if Opcode == 48u32 { Width = 5u32; }
-            if Opcode == 49u32 { Width = 5u32; }
-            if Opcode == 64u32 { Width = 5u32; }
-            if Opcode == 65u32 { Width = 5u32; }
-            if Opcode == 104u32 { Width = 5u32; }
-            if Opcode == 105u32 { Width = 5u32; }
-            if Opcode == 106u32 { Width = 9u32; }
-            if Opcode == 128u32 { Width = 9u32; }
-            if Opcode == 129u32 { Width = 9u32; }
-            if Opcode >= 151u32 && Opcode <= 153u32 { Width = 9u32; }
-            if Opcode == 196u32 { Width = 9u32; }
-            if Opcode == 197u32 { Width = 5u32; }
+            var Width: u32 = Hˉfixedˉinstructionˉwidth(Opcode);
             if Opcode == 192u32 {
                 Width = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -1258,8 +1434,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Pushˉnominal = Variantˉfieldˉstate.Pushˉnominal;
                 Handled = true;
             }
-            if Opcode == 197u32 || Opcode == 198u32 {
-                let Arrayˉstate: Hˉoperationˉstate = Hˉarray(
+            if Opcode >= 197u32 && Opcode <= 204u32 {
+                let Arrayˉstate: Hˉoperationˉstate = Hˉcollectionˉorˉarray(
                     Input,
                     Functionˉcode,
                     Cursor,
@@ -1563,31 +1739,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 Input,
                 Controlˉfunctionˉcode + Controlˉcursor
             ));
-            var Controlˉwidth: u32 = 1u32;
-            if Controlˉopcode == 2u32 { Controlˉwidth = 2u32; }
-            if Controlˉopcode == 8u32 { Controlˉwidth = 2u32; }
-            if Controlˉopcode == 1u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 3u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 4u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 5u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 6u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 7u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 9u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 10u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 48u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 49u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 64u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 65u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 104u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 105u32 { Controlˉwidth = 5u32; }
-            if Controlˉopcode == 106u32 { Controlˉwidth = 9u32; }
-            if Controlˉopcode == 128u32 { Controlˉwidth = 9u32; }
-            if Controlˉopcode == 129u32 { Controlˉwidth = 9u32; }
-            if Controlˉopcode >= 151u32 && Controlˉopcode <= 153u32 {
-                Controlˉwidth = 9u32;
-            }
-            if Controlˉopcode == 196u32 { Controlˉwidth = 9u32; }
-            if Controlˉopcode == 197u32 { Controlˉwidth = 5u32; }
+            var Controlˉwidth: u32 = Hˉfixedˉinstructionˉwidth(
+                Controlˉopcode
+            );
             if Controlˉopcode == 192u32 {
                 Controlˉwidth = 3u32;
                 if U32ˉfromˉu8(Bytesˉreadˉu8(

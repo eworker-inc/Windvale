@@ -1,0 +1,146 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore profile portable;
+
+export fn Collectionˉelementˉshape(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Type: u32,
+    Expectedˉkind: u32
+) -> u32 {
+    if Type >= Typeˉcount { return 4294967295u32; }
+    let Typeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets, Type * 4u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉoffset)) != Expectedˉkind {
+        return 4294967295u32;
+    }
+    let Nameˉoffset: u32 = Typeˉoffset + 1u32;
+    return Nameˉoffset + 4u32 + Bytesˉreadˉu32ˉlittle(
+        Module, Nameˉoffset
+    );
+}
+
+export fn Collectionˉscalarˉelement(Module: bytes, Shape: u32) -> bool {
+    if Shape == 4294967295u32 { return false; }
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+    if Kind == 1u32 || Kind == 2u32 || Kind == 4u32 || Kind == 5u32 ||
+        Kind == 8u32 || Kind == 9u32 || Kind == 10u32 ||
+        (Kind >= 14u32 && Kind <= 20u32) {
+        return true;
+    }
+    return false;
+}
+
+export fn Collectionˉemptyˉbacking(
+    Maximum: u32,
+    Zeroˉcell: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Zeroˉcell, 0u32, 0u32);
+    if Maximum == 0u32 || Maximum > 2047u32 ||
+        Bytesˉlength(Zeroˉcell) != 8u32 {
+        return Empty;
+    }
+    let Requiredˉcellˉbytes: u32 = Maximum * 8u32;
+    var Cells: bytes = Zeroˉcell;
+    while Bytesˉlength(Cells) < Requiredˉcellˉbytes {
+        let Remaining: u32 = Requiredˉcellˉbytes - Bytesˉlength(Cells);
+        var Addition: bytes = Cells;
+        if Bytesˉlength(Addition) > Remaining {
+            Addition = Bytesˉslice(Addition, 0u32, Remaining);
+        }
+        Cells = Bytesˉconcat(Cells, Addition);
+    }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(0u32),
+            Bytesˉfromˉu32ˉlittle(Maximum)
+        ),
+        Cells
+    );
+}
+
+export fn Collectionˉbackingˉvalid(
+    Heap: bytes,
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> bool {
+    if Bytesˉlength(Value) != 8u32 { return false; }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length < 16u32 || Length > 16384u32 || Length % 8u32 != 0u32 ||
+        Offset > Bytesˉlength(Heap) || Length > Bytesˉlength(Heap) - Offset {
+        return false;
+    }
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
+    if Maximum == 0u32 || Maximum > 2047u32 ||
+        Length != (Maximum + 1u32) * 8u32 || Count > Maximum {
+        return false;
+    }
+    var Found: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Allocationˉcount {
+        let Entry: u32 = Index * 12u32;
+        if Bytesˉreadˉu32ˉlittle(Allocations, Entry + 8u32) > 0u32 &&
+            Bytesˉreadˉu32ˉlittle(Allocations, Entry) == Offset &&
+            Bytesˉreadˉu32ˉlittle(Allocations, Entry + 4u32) == Length {
+            Found = true;
+        }
+        Index = Index + 1u32;
+    }
+    return Found;
+}
+
+export fn Collectionˉlength(Heap: bytes, Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Heap,
+        Bytesˉreadˉu32ˉlittle(Value, 0u32)
+    );
+}
+
+export fn Collectionˉappend(
+    Heap: bytes,
+    Value: bytes,
+    Element: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Heap, 0u32, 0u32);
+    if Bytesˉlength(Element) != 8u32 { return Empty; }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    if Count >= Maximum { return Empty; }
+    let Elementˉoffset: u32 = Offset + 8u32 + Count * 8u32;
+    var Result: bytes = Bytesˉconcat(
+        Bytesˉslice(Heap, 0u32, Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Count + 1u32),
+            Bytesˉfromˉu32ˉlittle(Maximum)
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Bytesˉslice(Heap, Offset + 8u32, Count * 8u32)
+    );
+    Result = Bytesˉconcat(Result, Element);
+    let Suffix: u32 = Elementˉoffset + 8u32;
+    if Suffix < Bytesˉlength(Heap) {
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉslice(Heap, Suffix, Bytesˉlength(Heap) - Suffix)
+        );
+    }
+    return Result;
+}
+
+export fn Collectionˉelement(
+    Heap: bytes,
+    Value: bytes,
+    Index: u32
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Heap, 0u32, 0u32);
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
+    if Index >= Count { return Empty; }
+    return Bytesˉslice(Heap, Offset + 8u32 + Index * 8u32, 8u32);
+}

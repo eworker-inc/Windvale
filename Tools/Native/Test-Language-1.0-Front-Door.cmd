@@ -826,9 +826,11 @@ node "%Native%\Verify-Language-1.0-Floating.mjs" ^
     "%Work%\Floating-Malformed" || goto :cleanup
 
 set "FailureStep=floating-runner-build"
-call "%Native%\Build-Wvb.cmd" ^
+node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Wvb-Runner.wvproj" ^
-    "%Work%\Floating-Runner.wvb" >nul || goto :cleanup
+    "%Work%\Floating-Runner.wvb" ^
+    "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
+    "%Work%\Emitter.exe" "%Work%\Emitter.identity" >nul || goto :cleanup
 set "FailureStep=floating-runner-package"
 call "%Native%\Package-Hosted-Wvb.cmd" 5 ^
     "%Work%\Floating-Runner.wvb" "%Work%\Floating-Runner.exe" windows ^
@@ -921,6 +923,10 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
 for %%F in ("%Work%\Vector-Sequence-Types.err") do if not "%%~zF"=="0" goto :cleanup
 set "FailureStep=vector-sequence-types-verifier-runtime"
 node "%Native%\Verify-Language-1.0-Vector-Sequence-Types.mjs" ^
+    "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
+    "%Work%\Vector-Sequence-Types.wvb" "%Work%" || goto :cleanup
+set "FailureStep=vector-sequence-runtime"
+node "%Native%\Verify-Language-1.0-Vector-Sequence-Runtime.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
     "%Work%\Vector-Sequence-Types.wvb" "%Work%" || goto :cleanup
 for %%F in ("%Work%\Vector-Sequence-Types.wvb") do set "VectorSequenceTypesWvbBytes=%%~zF"
@@ -1295,7 +1301,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=371 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=380 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=9 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=9 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=971 multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_analysis_failure
