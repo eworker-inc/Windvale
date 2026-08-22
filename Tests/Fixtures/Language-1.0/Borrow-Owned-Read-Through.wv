@@ -1,0 +1,18 @@
+module Languageˉoneˉborrowˉownedˉreadˉthrough profile portable;
+
+record Packet {
+    Value: i32;
+}
+
+fn Consume(Value: Packet) -> i32 {
+    return Value.Value;
+}
+
+fn Forward(Value: borrow Packet) -> i32 {
+    return Consume(Value);
+}
+
+export fn Main() -> i32 {
+    let Value: Packet = Packet { Value: 42 };
+    return Forward(borrow Value);
+}

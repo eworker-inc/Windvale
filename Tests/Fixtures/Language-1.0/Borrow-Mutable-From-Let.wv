@@ -1,0 +1,10 @@
+module Languageˉoneˉborrowˉmutableˉfromˉlet profile portable;
+
+fn Observe(Value: borrow mut i32) -> i32 {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Fixed: i32 = 42;
+    return Observe(borrow mut Fixed);
+}

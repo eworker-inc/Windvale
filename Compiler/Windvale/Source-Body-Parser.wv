@@ -700,6 +700,7 @@ export fn Compilerˉbodyˉunaryˉprecedence(Kind: Sourceˉlexer.Compilerˉtoken�
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Tilde { return 13u32; }
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Freeze { return 13u32; }
     if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try { return 13u32; }
+    if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Borrow { return 13u32; }
     return 0u32;
 }
 
@@ -2017,11 +2018,30 @@ export fn Compilerˉparseˉexpressionˉvalidated(
     var Left: Compilerˉsourceˉexpression = Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Expectedˉexpression, First, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
     if Unaryˉprecedence > 0u32 {
         if Unaryˉprecedence >= Parentˉprecedence {
-            let Operand: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn, Endˉoffset, Unaryˉprecedence, Nesting + 1u32);
+            var Operandˉoffset: u32 = First.Nextˉoffset;
+            var Operandˉline: u32 = First.Nextˉline;
+            var Operandˉcolumn: u32 = First.Nextˉcolumn;
+            var Operatorˉlength: u32 = First.Length;
+            var Mutableˉborrow: bool = false;
+            if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+                let Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Compilerˉbodyˉtoken(
+                        Input, Operandˉoffset, Operandˉline,
+                        Operandˉcolumn, Endˉoffset
+                    );
+                if Maybeˉmutable.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+                    Mutableˉborrow = true;
+                    Operatorˉlength = Maybeˉmutable.Nextˉoffset - First.Offset;
+                    Operandˉoffset = Maybeˉmutable.Nextˉoffset;
+                    Operandˉline = Maybeˉmutable.Nextˉline;
+                    Operandˉcolumn = Maybeˉmutable.Nextˉcolumn;
+                }
+            }
+            let Operand: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, Operandˉoffset, Operandˉline, Operandˉcolumn, Endˉoffset, Unaryˉprecedence, Nesting + 1u32);
             if Operand.Status != Compilerˉbodyˉparseˉstatus.Valid { return Operand; }
             let Unaryˉdepth: u32 = Operand.Depth + 1u32;
             if Unaryˉdepth > 64u32 { return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Nestingˉlimit, First, Sourceˉlexer.Compilerˉtokenˉkind.Identifier); }
-            Left = Compilerˉbodyˉexpressionˉmake(Compilerˉsourceˉexpressionˉkind.Unary, First.Kind, First.Offset, Operand.Offset + Operand.Length, First.Line, First.Column, First.Offset, First.Length, Operand.Offset, Operand.Length, First.Offset, 0u32, First.Offset, First.Offset, 0u32, Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false, Operand.Nextˉoffset, Operand.Nextˉline, Operand.Nextˉcolumn, Operand.Nodes + 1u32, Unaryˉdepth);
+            Left = Compilerˉbodyˉexpressionˉmake(Compilerˉsourceˉexpressionˉkind.Unary, First.Kind, First.Offset, Operand.Offset + Operand.Length, First.Line, First.Column, First.Offset, Operatorˉlength, Operand.Offset, Operand.Length, First.Offset, 0u32, First.Offset, First.Offset, 0u32, Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, Mutableˉborrow, Operand.Nextˉoffset, Operand.Nextˉline, Operand.Nextˉcolumn, Operand.Nodes + 1u32, Unaryˉdepth);
         } else {
             Left = Compilerˉbodyˉparseˉprimary(Input, Offset, Line, Column, Endˉoffset, Nesting);
         }

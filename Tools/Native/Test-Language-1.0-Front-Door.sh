@@ -203,9 +203,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1077512 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1088695 ]] || exit 1
 printf '%s  %s\n' \
-    9fa2a7a7b37329b399252eaa353a43599bd393f2c29dd1deb351b2bf1b512068 \
+    4b5692c0caa9b53126b5461cc1c09fedcd7a716d4ed7f14f28abc9d80248ce58 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -283,14 +283,56 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 998402 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1002147 ]] || exit 1
 printf '%s  %s\n' \
-    53b22d621cd3d169a69deb99bed0c4c5f9f1a15c11bac189076916625cef9743 \
+    5601ff3d80f8babcc8ef3ecd5615e56729d4905ae7884606b61270d0efc3ecdc \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     emitter "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
+echo 'START language 1 front door step=borrow-call-semantics'
+"$work/Analyzer.elf" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv" \
+    "$work/Borrow-Call.wvss" "$work/Borrow-Call.wvca" \
+    "$work/Borrow-Call.wvlb" "$work/Borrow-Call.wvir" \
+    >"$work/Borrow-Call-Analysis.out" \
+    2>"$work/Borrow-Call-Analysis.err" || exit $?
+[[ ! -s $work/Borrow-Call-Analysis.err ]] || exit 1
+"$work/Emitter.elf" \
+    "$work/Borrow-Call.wvss" "$work/Borrow-Call.wvca" \
+    "$work/Borrow-Call.wvlb" "$work/Borrow-Call.wvir" \
+    "$work/Borrow-Call.wvb" \
+    >"$work/Borrow-Call-Emission.out" \
+    2>"$work/Borrow-Call-Emission.err" || exit $?
+[[ ! -s $work/Borrow-Call-Emission.err ]] || exit 1
+"$script_directory/Verify-Wvb.sh" "$work/Borrow-Call.wvb" || exit $?
+"$script_directory/Run-Wvb.sh" "$work/Borrow-Call.wvb" \
+    >"$work/Borrow-Call-Run.out" \
+    2>"$work/Borrow-Call-Run.err" || exit $?
+[[ ! -s $work/Borrow-Call-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Borrow-Call.out"
+cmp -s -- "$work/Expected-Borrow-Call.out" \
+    "$work/Borrow-Call-Run.out" || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Missing-Explicit.wv" \
+    Borrow-Missing-Explicit Invalidˉborrow || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Immutable-To-Mutable.wv" \
+    Borrow-Immutable-To-Mutable Invalidˉborrow || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Mutable-From-Let.wv" \
+    Borrow-Mutable-From-Let Invalidˉborrow || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Escape-Local.wv" \
+    Borrow-Escape-Local Invalidˉborrow || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Return.wv" \
+    Borrow-Return Invalidˉborrow || exit 1
+expect_analysis_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv" \
+    Borrow-Owned-Read-Through Invalidˉborrow || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics cases=7 execution=42'
 echo 'START language 1 front door step=generic-nominal-variant'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
@@ -1247,4 +1289,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=12/12'
-printf 'native language 1 front door status=Passed cases=356 frozen-inputs=251 source-fixtures=79 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=363 frozen-inputs=251 source-fixtures=86 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=7 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

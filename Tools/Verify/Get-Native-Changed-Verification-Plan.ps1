@@ -1510,6 +1510,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'generic-nominal-declarations'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
+        'Tests/Fixtures/Language-1.0/Borrow-Parser-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Fixed-Array-Parser-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Fixed-Array-Type-Binding-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv',
@@ -1551,6 +1552,7 @@ foreach ($Path in $Paths) {
         'Libraries/Foundation/Values/Result.wv',
         'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
         'Projects/Tests/Language-1.0-Foundation-Generic-Result.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Borrow-Call.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Collection-Analysis-Publication.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj',

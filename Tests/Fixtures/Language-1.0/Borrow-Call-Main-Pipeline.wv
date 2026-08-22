@@ -1,0 +1,36 @@
+module Languageˉoneˉborrowˉcall profile portable;
+
+fn Observe(Value: borrow i32) -> i32 {
+    return Value;
+}
+
+fn Observeˉmutable(Value: borrow mut i32) -> i32 {
+    return Value + 1;
+}
+
+fn Copyˉobserved(Value: i32) -> i32 {
+    return Value;
+}
+
+fn Readˉthrough(Value: borrow i32) -> i32 {
+    return Copyˉobserved(Value);
+}
+
+fn Forwardˉmutable(Value: borrow mut i32) -> i32 {
+    return Observeˉmutable(borrow mut Value);
+}
+
+export fn Main() -> i32 {
+    let Fixed: i32 = 40;
+    var Mutable: i32 = 41;
+    if Observe(borrow Fixed) != 40 {
+        return 1;
+    }
+    if Copyˉobserved(borrow Fixed) != 40 {
+        return 2;
+    }
+    if Readˉthrough(borrow Fixed) != 40 {
+        return 3;
+    }
+    return Forwardˉmutable(borrow mut Mutable);
+}

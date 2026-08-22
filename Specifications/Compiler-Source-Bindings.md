@@ -65,6 +65,17 @@ Parameter and local names are unique across the complete function. Shadowing is 
 
 Parameters and `let` locals are immutable. Only a visible `var` local may be an assignment target. Ordinary `=` contributes one assignment occurrence. `+=`, `-=`, and `*=` bind the same simple mutable-local target as one read followed by one assignment before traversing the right operand; the exact operator and value types remain WVIR responsibilities. Local type annotations accept primitive types, visible record/enum types, or an exact required root capability-reference type under the qualified source-symbol rules. An omitted local annotation is recorded as unresolved inference evidence; complete expression typing remains owned by WVIR.
 
+A function parameter or result may carry the edition-1 `borrow` or `borrow mut`
+prefix. Source Symbols and this phase skip that prefix before binding the exact
+underlying type, so the existing WVSD and WVLB shape layouts remain unchanged.
+WVLB records parameter identity, slot, and underlying shape; it is not the
+borrow-mode or lifetime authority. Typed WVIR rereads the already validated
+source signature, enforces the current call-scoped mode and origin rules, and
+reports `Invalidˉborrow` without publishing WVIR when they fail.
+The transient local match also exposes the declaration offset already present
+in WVLB so typed analysis can recover one parameter's mode without rescanning
+the complete function signature. This adds no serialized field or version.
+
 ## Name and call binding
 
 A name expression resolves first to an active local/parameter and then to an accessible global data or constant declaration. A root constant is storage-free: binding recognizes its value-namespace declaration but creates no parameter/local WVLB entry or runtime data slot. Typed WVIR reparses its already validated declaration and substitutes the exact value. Constants in imported modules are rejected by the preceding symbol phase. A field expression currently proves that its base is an active local/parameter or an accessible nominal declaration; field ownership and result type are deferred to typed expression binding. Indexed data names must resolve to accessible global data.

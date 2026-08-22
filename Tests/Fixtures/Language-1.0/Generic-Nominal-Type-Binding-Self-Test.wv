@@ -5,6 +5,7 @@ import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Languageˉoneˉborrowˉparserˉselfˉtest as Borrowˉparser;
 import Languageˉoneˉfixedˉarrayˉtypeˉbindingˉselfˉtest as Fixedˉarrayˉbinding;
 import Languageˉoneˉfixedˉarrayˉparserˉselfˉtest as Fixedˉarrayˉparser;
 
@@ -327,6 +328,10 @@ export fn Main() -> i32 {
     let Fixedˉarrayˉbindingˉresult: i32 = Fixedˉarrayˉbinding.Run();
     if Fixedˉarrayˉbindingˉresult != 42 {
         return 20;
+    }
+    let Borrowˉparserˉresult: i32 = Borrowˉparser.Main();
+    if Borrowˉparserˉresult != 42 {
+        return Borrowˉparserˉresult;
     }
     return 42;
 }

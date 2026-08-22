@@ -234,12 +234,29 @@ $NativeCases = @(
         Name = 'Language 1.0 generic nominal type-binding owner routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
+            'Tests/Fixtures/Language-1.0/Borrow-Parser-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv',
             'Tools/Native/Test-Generic-Nominal-Type-Binding.cmd',
             'Tools/Native/Test-Generic-Nominal-Type-Binding.sh',
             'Tools/Native/Test-Generic-Nominal-Type-Binding.mjs'
         )
         Suites = @('generic-nominal-type-binding')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 borrow semantic routing'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Language-1-Borrow-Call.wvproj',
+            'Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Escape-Local.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Immutable-To-Mutable.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Missing-Explicit.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Mutable-From-Let.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv',
+            'Tests/Fixtures/Language-1.0/Borrow-Return.wv'
+        )
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3484,7 +3501,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5114 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5133 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

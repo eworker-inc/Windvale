@@ -15,7 +15,7 @@ Compilerˉvalidateˉsourceˉwir(Input: bytes)
 
 On success, the summary contains module, function-entry, block, operation, temporary, and operand counts plus an independently validated WVIR directory. On failure, the directory is empty and the summary identifies the first deterministic failure by module, related module, WVSD function entry, byte offset, and one-based line/column.
 
-The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, invalid record update, invalid named variant construction, and invalid value blocks. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, values `35` through `37` own an invalid variant literal plus duplicate or missing variant fields, and `Invalidˉvalueˉblock = 38` owns a malformed or valueless value-producing control arm, without renumbering retained values.
+The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, invalid record update, invalid named variant construction, and invalid value blocks. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, values `35` through `37` own an invalid variant literal plus duplicate or missing variant fields, `Invalidˉvalueˉblock = 38` owns a malformed or valueless value-producing control arm, values `39` through `41` own generic resolution, specialization, and bounded-iteration failures, `Invalidˉarray = 42` owns fixed-array construction and access failures, and `Invalidˉborrow = 43` owns invalid borrow formation, mode, origin, read-through, or escape, without renumbering retained values.
 
 ## Typed lowering rules
 
@@ -135,6 +135,33 @@ descriptor before ordinary body lowering. Its WVIR function body therefore
 contains only the same collection shape and operations as a hand-written
 monomorphic function. Multiple bodies use the WVIR 1.4 directory envelope
 above; no WVIR operation value changes.
+
+The call-scoped borrow checkpoint rereads each validated function signature and
+retains a compile-time mode for the selected parameter and result: by value,
+immutable borrow, or mutable borrow. These modes are bounded `u32` compiler
+facts, not nominal program types, and are erased before WVIR publication. A call
+requires the actual and formal modes to agree. The one exception is the frozen
+read-through rule: an explicit borrowed actual may satisfy a by-value formal
+only when conservative classification proves the value Copy or shared
+immutable. Scalars and enums are Copy; `text`, `bytes`, and immutable sequences
+are shared; builders and capability-shaped values are conservatively owned; an
+unproven aggregate remains unknown.
+
+A direct name or field argument rooted in a parameter derives its actual mode
+from that parameter's declaration offset already carried by the transient local
+match. This is a bounded local lookup; it does not rescan the complete current
+signature for every call. An owned or unknown aggregate therefore cannot pass a
+by-value position through a bare borrowed parameter.
+
+An explicit mutable borrow currently requires a direct `var` local or a
+parameter already declared `borrow mut`. A standalone borrow expression cannot
+be stored or returned and fails with `Invalidˉborrow`; borrow formation is
+accepted only while compiling one call argument. Borrowed result signatures are
+parsed but rejected until the one-owner provenance rule is represented and
+validated. This checkpoint does not yet claim move invalidation, overlapping-
+borrow lifetime analysis, aggregate-derived ownership, resource cleanup, or the
+complete Slice 5 checker. It adds no WVIR operation, WVB opcode, runtime object,
+or serialized borrow record.
 
 A concrete generic-function specialization may use one applied generic nominal
 whose arguments are direct function type or constant parameters. Signature,

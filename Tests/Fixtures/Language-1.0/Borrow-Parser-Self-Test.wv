@@ -1,0 +1,181 @@
+module Languageˉoneˉborrowˉparserˉselfˉtest profile portable;
+
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉlexer as Lexer;
+
+fn Token(Source: text) -> Lexer.Compilerˉsourceˉtoken {
+    let Input: bytes = Textˉtoˉutf8(Source);
+    return Lexer.Compilerˉlexˉnextˉafterˉscan(Input, 0u32, 1u32, 1u32);
+}
+
+export fn Main() -> i32 {
+    let Borrowˉtoken: Lexer.Compilerˉsourceˉtoken = Token("borrow");
+    if Borrowˉtoken.Status != Lexer.Compilerˉlexˉstatus.Valid ||
+        Borrowˉtoken.Kind != Lexer.Compilerˉtokenˉkind.Borrow ||
+        Borrowˉtoken.Length != 6u32 {
+        return 1;
+    }
+    let Mutˉtoken: Lexer.Compilerˉsourceˉtoken = Token("mut");
+    if Mutˉtoken.Status != Lexer.Compilerˉlexˉstatus.Valid ||
+        Mutˉtoken.Kind != Lexer.Compilerˉtokenˉkind.Mut ||
+        Mutˉtoken.Length != 3u32 {
+        return 2;
+    }
+    let Borrowedˉtoken: Lexer.Compilerˉsourceˉtoken = Token("borrowed");
+    let Mutableˉidentifier: Lexer.Compilerˉsourceˉtoken = Token("mutable");
+    if Borrowedˉtoken.Kind != Lexer.Compilerˉtokenˉkind.Identifier ||
+        Mutableˉidentifier.Kind != Lexer.Compilerˉtokenˉkind.Identifier {
+        return 3;
+    }
+
+    let Valueˉsource: bytes = Textˉtoˉutf8("i32");
+    let Valueˉstart: Lexer.Compilerˉsourceˉtoken =
+        Declarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Valueˉsource, 0u32, 1u32, 1u32
+        );
+    let Value: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉparameterˉtype(
+            Valueˉsource, 0u32, 1u32, 1u32, false
+        );
+    if Declarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Valueˉsource, 0u32, 1u32, 1u32
+        ) != Declarations.COMPILER_SOURCE_BORROW_MODE_VALUE ||
+        Valueˉstart.Offset != 0u32 ||
+        Value.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Value.Typeˉkind != Declarations.Compilerˉsourceˉtypeˉkind.I32 {
+        return 4;
+    }
+
+    let Immutableˉsource: bytes = Textˉtoˉutf8("borrow text");
+    let Immutableˉstart: Lexer.Compilerˉsourceˉtoken =
+        Declarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Immutableˉsource, 0u32, 1u32, 1u32
+        );
+    let Immutable: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉparameterˉtype(
+            Immutableˉsource, 0u32, 1u32, 1u32, false
+        );
+    if Declarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Immutableˉsource, 0u32, 1u32, 1u32
+        ) !=
+            Declarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE ||
+        Immutableˉstart.Offset != 7u32 ||
+        Immutable.Typeˉkind !=
+            Declarations.Compilerˉsourceˉtypeˉkind.Text ||
+        Immutable.Nextˉoffset != Bytesˉlength(Immutableˉsource) {
+        return 5;
+    }
+
+    let Mutableˉsource: bytes = Textˉtoˉutf8("borrow mut Buffer");
+    let Mutableˉstart: Lexer.Compilerˉsourceˉtoken =
+        Declarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Mutableˉsource, 0u32, 1u32, 1u32
+        );
+    let Mutable: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉparameterˉtype(
+            Mutableˉsource, 0u32, 1u32, 1u32, false
+        );
+    if Declarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Mutableˉsource, 0u32, 1u32, 1u32
+        ) != Declarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE ||
+        Mutableˉstart.Offset != 11u32 ||
+        Mutable.Typeˉkind !=
+            Declarations.Compilerˉsourceˉtypeˉkind.Named ||
+        Mutable.Nextˉoffset != Bytesˉlength(Mutableˉsource) {
+        return 6;
+    }
+
+    let Missingˉsource: bytes = Textˉtoˉutf8("borrow mut");
+    let Missing: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉparameterˉtype(
+            Missingˉsource, 0u32, 1u32, 1u32, false
+        );
+    if Declarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Missingˉsource, 0u32, 1u32, 1u32
+        ) != Declarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE ||
+        Missing.Status == Declarations.Compilerˉparseˉstatus.Valid {
+        return 7;
+    }
+
+    let Functionˉsource: bytes = Textˉtoˉutf8(
+        "export fn Select(Input: borrow text, Output: borrow mut bytes) -> borrow text { return Input; }"
+    );
+    let Functionˉfirst: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            Functionˉsource, 0u32, 1u32, 1u32
+        );
+    let Function: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉfunctionˉdeclaration(
+            Functionˉsource, Functionˉfirst
+        );
+    if Function.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Function.Kind !=
+            Declarations.Compilerˉsourceˉdeclarationˉkind.Function ||
+        Function.Items != 2u32 ||
+        Function.Nextˉoffset != Bytesˉlength(Functionˉsource) {
+        return 8;
+    }
+
+    let Invalidˉfunctionˉsource: bytes = Textˉtoˉutf8(
+        "fn Invalid(Value: mut text) -> i32 { return 0; }"
+    );
+    let Invalidˉfunctionˉfirst: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            Invalidˉfunctionˉsource, 0u32, 1u32, 1u32
+        );
+    let Invalidˉfunction: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉfunctionˉdeclaration(
+            Invalidˉfunctionˉsource, Invalidˉfunctionˉfirst
+        );
+    if Invalidˉfunction.Status == Declarations.Compilerˉparseˉstatus.Valid {
+        return 9;
+    }
+
+    let Borrowˉexpressionˉsource: bytes = Textˉtoˉutf8("borrow Value");
+    let Borrowˉexpression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Borrowˉexpressionˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Borrowˉexpressionˉsource), 0u32, 0u32
+        );
+    if Borrowˉexpression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Borrowˉexpression.Kind !=
+            Bodies.Compilerˉsourceˉexpressionˉkind.Unary ||
+        Borrowˉexpression.Operator != Lexer.Compilerˉtokenˉkind.Borrow ||
+        Borrowˉexpression.Booleanˉvalue ||
+        Borrowˉexpression.Valueˉlength != 6u32 ||
+        Borrowˉexpression.Firstˉoffset != 7u32 ||
+        Borrowˉexpression.Firstˉlength != 5u32 {
+        return 10;
+    }
+
+    let Mutableˉexpressionˉsource: bytes =
+        Textˉtoˉutf8("borrow mut Value");
+    let Mutableˉexpression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Mutableˉexpressionˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Mutableˉexpressionˉsource), 0u32, 0u32
+        );
+    if Mutableˉexpression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Mutableˉexpression.Operator != Lexer.Compilerˉtokenˉkind.Borrow ||
+        !Mutableˉexpression.Booleanˉvalue ||
+        Mutableˉexpression.Valueˉlength != 10u32 ||
+        Mutableˉexpression.Firstˉoffset != 11u32 ||
+        Mutableˉexpression.Firstˉlength != 5u32 {
+        return 11;
+    }
+
+    let Bareˉmutˉsource: bytes = Textˉtoˉutf8("mut Value");
+    let Bareˉmut: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Bareˉmutˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Bareˉmutˉsource), 0u32, 0u32
+        );
+    if Bareˉmut.Status == Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Bareˉmut.Found != Lexer.Compilerˉtokenˉkind.Mut {
+        return 12;
+    }
+    return 42;
+}

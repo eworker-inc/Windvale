@@ -50,6 +50,10 @@ export enum Compilerˉsourceˉtypeˉkind {
     Array = 22;
 }
 
+export const COMPILER_SOURCE_BORROW_MODE_VALUE: u32 = 0u32;
+export const COMPILER_SOURCE_BORROW_MODE_IMMUTABLE: u32 = 1u32;
+export const COMPILER_SOURCE_BORROW_MODE_MUTABLE: u32 = 2u32;
+
 export enum Compilerˉsourceˉdeclarationˉkind {
     End = 0;
     Import = 1;
@@ -607,6 +611,71 @@ export fn Compilerˉparseˉtype(
 ) -> Compilerˉparseˉstep {
     return Compilerˉparseˉtypeˉnested(
         Input, Offset, Line, Column, Allowˉvoid, Allowˉarray, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉparameterˉtypeˉstart(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Sourceˉlexer.Compilerˉsourceˉtoken {
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Offset, Line, Column
+        );
+    if First.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Borrow { return First; }
+    let Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, First.Nextˉoffset,
+            First.Nextˉline, First.Nextˉcolumn
+        );
+    if Maybeˉmutable.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+        return Maybeˉmutable;
+    }
+    return Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Input, Maybeˉmutable.Nextˉoffset,
+        Maybeˉmutable.Nextˉline, Maybeˉmutable.Nextˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉparameterˉborrowˉmode(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> u32 {
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Offset, Line, Column
+        );
+    if First.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+        return COMPILER_SOURCE_BORROW_MODE_VALUE;
+    }
+    let Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, First.Nextˉoffset,
+            First.Nextˉline, First.Nextˉcolumn
+        );
+    if Maybeˉmutable.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+        return COMPILER_SOURCE_BORROW_MODE_MUTABLE;
+    }
+    return COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
+}
+
+export fn Compilerˉparseˉparameterˉtype(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Allowˉvoid: bool
+) -> Compilerˉparseˉstep {
+    let Type: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉsourceˉparameterˉtypeˉstart(
+            Input, Offset, Line, Column
+        );
+    return Compilerˉparseˉtype(
+        Input, Type.Offset, Type.Line, Type.Column, Allowˉvoid, false
     );
 }
 
@@ -2205,7 +2274,7 @@ export fn Compilerˉparseˉfunctionˉdeclaration(
             if Parameterˉname.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Parameterˉname, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
             let Parameterˉcolon: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Parameterˉname.Nextˉoffset, Parameterˉname.Nextˉline, Parameterˉname.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Colon);
             if Parameterˉcolon.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Parameterˉcolon, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
-            let Parameterˉtype: Compilerˉparseˉstep = Compilerˉparseˉtype(Input, Parameterˉcolon.Nextˉoffset, Parameterˉcolon.Nextˉline, Parameterˉcolon.Nextˉcolumn, false, false);
+            let Parameterˉtype: Compilerˉparseˉstep = Compilerˉparseˉparameterˉtype(Input, Parameterˉcolon.Nextˉoffset, Parameterˉcolon.Nextˉline, Parameterˉcolon.Nextˉcolumn, false);
             if Parameterˉtype.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Parameterˉtype, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
             Parameters = Parameters + 1u32;
             if Parameters > 64u32 {
@@ -2229,7 +2298,7 @@ export fn Compilerˉparseˉfunctionˉdeclaration(
     if Afterˉright.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉright, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
     let Afterˉarrow: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Afterˉright.Nextˉoffset, Afterˉright.Nextˉline, Afterˉright.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Arrow);
     if Afterˉarrow.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉarrow, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
-    let Returnˉtype: Compilerˉparseˉstep = Compilerˉparseˉtype(Input, Afterˉarrow.Nextˉoffset, Afterˉarrow.Nextˉline, Afterˉarrow.Nextˉcolumn, true, false);
+    let Returnˉtype: Compilerˉparseˉstep = Compilerˉparseˉparameterˉtype(Input, Afterˉarrow.Nextˉoffset, Afterˉarrow.Nextˉline, Afterˉarrow.Nextˉcolumn, true);
     if Returnˉtype.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Returnˉtype, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
     let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Returnˉtype.Nextˉoffset, Returnˉtype.Nextˉline, Returnˉtype.Nextˉcolumn);
     let Body: Compilerˉparseˉstep = Compilerˉparseˉskipˉblockˉafterˉscan(Input, Returnˉtype.Nextˉoffset, Returnˉtype.Nextˉline, Returnˉtype.Nextˉcolumn);

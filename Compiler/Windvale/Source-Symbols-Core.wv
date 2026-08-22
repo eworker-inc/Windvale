@@ -4684,11 +4684,14 @@ export fn Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
         );
-        let Type: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
-        );
+        let Type: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn, false
+            );
         let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
+            Source, Type.Nextˉoffset,
+            Type.Nextˉline, Type.Nextˉcolumn
         );
         Cursor = Separator.Nextˉoffset;
         Currentˉline = Separator.Nextˉline;
@@ -5334,10 +5337,16 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
+        let Parameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn
+            );
         let Binding: Compilerˉsourceˉconcreteˉtype =
             Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
                 Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
-                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Parameterˉtype.Offset,
+                Parameterˉtype.Line, Parameterˉtype.Column,
                 Counts.Records, Counts.Enums, Generic,
                 Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
                 4294967295u32, true
@@ -5369,10 +5378,17 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉfunction(
     let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
     );
+    let Returnˉparameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline,
+            Arrow.Nextˉcolumn
+        );
     let Returnˉtype: Compilerˉsourceˉconcreteˉtype =
         Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
             Input, Scan, Directory, Counts.Lookup, Visibility, Module, Source,
-            Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            Returnˉparameterˉtype.Offset,
+            Returnˉparameterˉtype.Line,
+            Returnˉparameterˉtype.Column,
             Counts.Records, Counts.Enums, Generic,
             Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
             4294967295u32, true

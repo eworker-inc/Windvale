@@ -57,6 +57,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Genericˉspecialization = 40;
     Genericˉiterationˉlimit = 41;
     Invalidˉarray = 42;
+    Invalidˉborrow = 43;
 }
 
 
@@ -247,7 +248,14 @@ record Compilerˉsourceˉwirˉsignature {
     Returnˉshape: u32;
     Target: u32;
     Auxiliary: u32;
+    Parameterˉmode: u32;
+    Returnˉmode: u32;
 }
+
+const WIR_VALUE_CLASS_UNKNOWN: u32 = 0u32;
+const WIR_VALUE_CLASS_COPY: u32 = 1u32;
+const WIR_VALUE_CLASS_SHARED: u32 = 2u32;
+const WIR_VALUE_CLASS_OWNED: u32 = 3u32;
 
 record Compilerˉsourceˉwirˉgenericˉformal {
     Found: bool;
@@ -718,6 +726,29 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape: u32) -> bool {
 export fn Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape: u32) -> bool {
     if Shape < 1342177280u32 { return false; }
     return Shape < 1610612736u32;
+}
+
+fn Compilerˉsourceˉwirˉvalueˉclassify(
+    Shape: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> u32 {
+    if Shape == 5u32 || Shape == 6u32 ||
+        Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) {
+        return WIR_VALUE_CLASS_SHARED;
+    }
+    if (Shape >= 1u32 && Shape <= 4u32) ||
+        (Shape >= 7u32 && Shape <= 16u32) ||
+        (Shape >= 131072u32 + Symbols.Records &&
+            Shape < 131072u32 + Symbols.Records + Symbols.Enums) {
+        return WIR_VALUE_CLASS_COPY;
+    }
+    if Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) ||
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+            Symbols.Directory, Shape
+        ) {
+        return WIR_VALUE_CLASS_OWNED;
+    }
+    return WIR_VALUE_CLASS_UNKNOWN;
 }
 
 export fn Compilerˉsourceˉwirˉshapeˉisˉfixedˉarray(
@@ -1655,6 +1686,8 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
     var Currentˉline: u32 = Left.Nextˉline;
     var Currentˉcolumn: u32 = Left.Nextˉcolumn;
     var Parameterˉshape: u32 = 0u32;
+    var Parameterˉmode: u32 =
+        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
     var Index: u32 = 0u32;
     var Reading: bool = true;
     while Reading {
@@ -1670,11 +1703,23 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Current.Nextˉoffset, Current.Nextˉline, Current.Nextˉcolumn
             );
+            let Parameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                    Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                    Colon.Nextˉcolumn
+                );
+            let Currentˉparameterˉmode: u32 =
+                Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+                    Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                    Colon.Nextˉcolumn
+                );
             let Type: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
                 Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
                     Input, Scan, Symbols.Directory, Symbols.Lookup,
                     Symbols.Visibility, Module, Source,
-                    Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                    Parameterˉtype.Offset,
+                    Parameterˉtype.Line,
+                    Parameterˉtype.Column,
                     Symbols.Records, Symbols.Enums, Generic,
                     Catalog, Genericˉinstance, Generic.Parameters == 0u32
                 );
@@ -1689,7 +1734,9 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
                         Input, Scan, Symbols, Module, Source,
-                        Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                        Parameterˉtype.Offset,
+                        Parameterˉtype.Line,
+                        Parameterˉtype.Column,
                         0u32, 0u32, 0u32, 0u32,
                         Typeˉcatalog
                     );
@@ -1706,7 +1753,9 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
                     Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                         Input, Scan, Symbols, Module, Source,
-                        Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                        Parameterˉtype.Offset,
+                        Parameterˉtype.Line,
+                        Parameterˉtype.Column,
                         0u32, 0u32, 0u32, 0u32,
                         Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
                     );
@@ -1717,6 +1766,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             }
             if Index == Argument {
                 Parameterˉshape = Typeˉshape;
+                Parameterˉmode = Currentˉparameterˉmode;
             }
             let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Typeˉnextˉoffset, Typeˉnextˉline, Typeˉnextˉcolumn
@@ -1737,11 +1787,23 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
     let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Cursor, Currentˉline, Currentˉcolumn
     );
+    let Returnˉparameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline,
+            Arrow.Nextˉcolumn
+        );
+    let Returnˉmode: u32 =
+        Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline,
+            Arrow.Nextˉcolumn
+        );
     let Returnˉtype: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
             Input, Scan, Symbols.Directory, Symbols.Lookup,
             Symbols.Visibility, Module, Source,
-            Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            Returnˉparameterˉtype.Offset,
+            Returnˉparameterˉtype.Line,
+            Returnˉparameterˉtype.Column,
             Symbols.Records, Symbols.Enums, Generic,
             Catalog, Genericˉinstance, Generic.Parameters == 0u32
         );
@@ -1753,7 +1815,9 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
                 Input, Scan, Symbols, Module, Source,
-                Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+                Returnˉparameterˉtype.Offset,
+                Returnˉparameterˉtype.Line,
+                Returnˉparameterˉtype.Column,
                 0u32, 0u32, 0u32, 0u32,
                 Typeˉcatalog
             );
@@ -1767,14 +1831,17 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
             Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                 Input, Scan, Symbols, Module, Source,
-                Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+                Returnˉparameterˉtype.Offset,
+                Returnˉparameterˉtype.Line,
+                Returnˉparameterˉtype.Column,
                 0u32, 0u32, 0u32, 0u32,
                 Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
             );
         Returnˉshape = Specializedˉreturn.Shape;
     }
     return Compilerˉsourceˉwirˉsignature(
-        Parameterˉshape, Returnˉshape, 0u32, 0u32
+        Parameterˉshape, Returnˉshape, 0u32, 0u32,
+        Parameterˉmode, Returnˉmode
     );
 }
 
@@ -1861,7 +1928,9 @@ export fn Compilerˉsourceˉwirˉrecordˉsignature(
         Parameterˉshape,
         65536u32 + Nominalˉindex,
         Nominalˉindex,
-        Callable.Directoryˉentry
+        Callable.Directoryˉentry,
+        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE,
+        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
     );
 }
 
@@ -1887,7 +1956,9 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
                 Nameˉsource, Nameˉoffset, Nameˉlength
             ),
             Compilerˉsourceˉwirˉsentinel(),
-            0u32
+            0u32,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
         );
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
@@ -1914,7 +1985,9 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
                 Capabilityˉnameˉlength
             ),
             Callable.Directoryˉentry,
-            0u32
+            0u32,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
         );
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Record {
@@ -1954,7 +2027,9 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
             Parameterˉshape,
             196608u32 + Nominalˉindex,
             Nominalˉindex,
-            Member.Index
+            Member.Index,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE,
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
         );
     }
     let Entry: u32 = 16u32 + Callable.Directoryˉentry * 24u32;
@@ -1968,7 +2043,9 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
         Function.Parameterˉshape,
         Function.Returnˉshape,
         Callable.Directoryˉentry,
-        0u32
+        0u32,
+        Function.Parameterˉmode,
+        Function.Returnˉmode
     );
 }
 
@@ -3695,6 +3772,27 @@ fn Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
     return Signature.Returnˉshape;
 }
 
+fn Compilerˉsourceˉwirˉparameterˉborrowˉmode(
+    Source: bytes,
+    Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch
+) -> u32 {
+    if !Local.Found ||
+        Local.Kind != Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter {
+        return Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+    }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Local.Declarationˉoffset, 1u32, 1u32
+        );
+    let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    return Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+        Source, Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn
+    );
+}
+
 fn Compilerˉsourceˉwirˉisˉfoundationˉresult(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -4526,6 +4624,14 @@ fn Compilerˉsourceˉwirˉcompileˉunaryˉexpression(
         );
     if Operand.Status != Compilerˉsourceˉwirˉstatus.Valid ||
         Operand.Shape == 10u32 { return Operand; }
+    if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Compilerˉsourceˉwirˉvalueˉbuild(Operand),
+            Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+            Build.Currentˉmodule,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
     if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Try {
         return Compilerˉsourceˉwirˉcompileˉvalueˉtry(
             Input, Scan, Symbols, Source,
@@ -5242,21 +5348,23 @@ fn Compilerˉsourceˉwirˉfunctionˉgenericˉformal(
                 Formalˉsource, Formalˉparameter.Nextˉoffset,
                 Formalˉparameter.Nextˉline, Formalˉparameter.Nextˉcolumn
             );
+        let Formalˉparameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Formalˉsource, Formalˉcolon.Nextˉoffset,
+                Formalˉcolon.Nextˉline, Formalˉcolon.Nextˉcolumn
+            );
         if Formalˉindex == Argument {
             return Compilerˉsourceˉwirˉgenericˉformal(
                 true, Formalˉsource, Formalˉgeneric,
-                Formalˉcolon.Nextˉoffset,
-                Formalˉcolon.Nextˉline,
-                Formalˉcolon.Nextˉcolumn
+                Formalˉparameterˉtype.Offset,
+                Formalˉparameterˉtype.Line,
+                Formalˉparameterˉtype.Column
             );
         }
         let Formalˉtype: Sourceˉdeclarations.Compilerˉparseˉstep =
-            Sourceˉdeclarations.Compilerˉparseˉtype(
-                Formalˉsource,
-                Formalˉcolon.Nextˉoffset,
-                Formalˉcolon.Nextˉline,
-                Formalˉcolon.Nextˉcolumn,
-                false, false
+            Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                Formalˉsource, Formalˉcolon.Nextˉoffset,
+                Formalˉcolon.Nextˉline, Formalˉcolon.Nextˉcolumn, false
             );
         let Formalˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
             Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
@@ -5284,11 +5392,16 @@ fn Compilerˉsourceˉwirˉfunctionˉgenericˉformal(
                 Formalˉsource, Formalˉcursor,
                 Formalˉline, Formalˉcolumn
             );
+        let Formalˉreturn: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Formalˉsource, Formalˉarrow.Nextˉoffset,
+                Formalˉarrow.Nextˉline, Formalˉarrow.Nextˉcolumn
+            );
         return Compilerˉsourceˉwirˉgenericˉformal(
             true, Formalˉsource, Formalˉgeneric,
-            Formalˉarrow.Nextˉoffset,
-            Formalˉarrow.Nextˉline,
-            Formalˉarrow.Nextˉcolumn
+            Formalˉreturn.Offset,
+            Formalˉreturn.Line,
+            Formalˉreturn.Column
         );
     }
     return Compilerˉsourceˉwirˉgenericˉformal(
@@ -5706,6 +5819,71 @@ fn Compilerˉsourceˉwirˉfunctionˉisˉgeneric(
     return Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less;
 }
 
+fn Compilerˉsourceˉwirˉborrowˉmodeˉisˉaccepted(
+    Formal: u32,
+    Actual: u32,
+    Class: u32
+) -> bool {
+    if Formal == Actual { return true; }
+    if Formal == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+        Actual != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+        return Class == WIR_VALUE_CLASS_COPY ||
+            Class == WIR_VALUE_CLASS_SHARED;
+    }
+    return false;
+}
+
+fn Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> bool {
+    if Expression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
+        return false;
+    }
+    let Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+            Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Expression.Valueˉoffset, Expression.Valueˉlength,
+            Expression.Offset
+        );
+    if !Local.Found { return false; }
+    if Local.Kind == Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Var {
+        return true;
+    }
+    if Local.Kind == Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter {
+        return Compilerˉsourceˉwirˉparameterˉborrowˉmode(Source, Local) ==
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE;
+    }
+    return false;
+}
+
+fn Compilerˉsourceˉwirˉdirectˉborrowˉmode(
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> u32 {
+    var Nameˉoffset: u32 = Expression.Valueˉoffset;
+    var Nameˉlength: u32 = Expression.Valueˉlength;
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Field {
+        Nameˉoffset = Expression.Firstˉoffset;
+        Nameˉlength = Expression.Firstˉlength;
+    } else if Expression.Kind !=
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
+        return Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+    }
+    let Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+            Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Nameˉoffset, Nameˉlength, Expression.Offset
+        );
+    return Compilerˉsourceˉwirˉparameterˉborrowˉmode(Source, Local);
+}
+
 export fn Compilerˉsourceˉwirˉcompileˉcall(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -5992,16 +6170,68 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Source, Cursor, Currentˉposition.Line, Currentˉposition.Column,
             Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
         );
+        var Actualˉmode: u32 =
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+        var Explicitˉborrow: bool = false;
+        var Valueˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression =
+            Callˉargument;
+        if Callˉargument.Kind ==
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unary &&
+            Callˉargument.Operator ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+            Explicitˉborrow = true;
+            Actualˉmode =
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
+            if Callˉargument.Booleanˉvalue {
+                Actualˉmode =
+                    Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE;
+            }
+            let Borrowedˉposition:
+                Sourceˉbodies.Compilerˉsourceˉposition =
+                Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                    Source, Callˉargument.Offset,
+                    Callˉargument.Line, Callˉargument.Column,
+                    Callˉargument.Firstˉoffset
+                );
+            Valueˉexpression =
+                Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                    Source, Callˉargument.Firstˉoffset,
+                    Borrowedˉposition.Line, Borrowedˉposition.Column,
+                    Callˉargument.Firstˉoffset +
+                        Callˉargument.Firstˉlength,
+                    0u32, 0u32
+                );
+        }
         let Value: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉcompileˉexpression(
             Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
             Source,
-            Callˉargument.Offset, Callˉargument.Line, Callˉargument.Column,
-            Callˉargument.Offset + Callˉargument.Length,
+            Valueˉexpression.Offset,
+            Valueˉexpression.Line, Valueˉexpression.Column,
+            Valueˉexpression.Offset + Valueˉexpression.Length,
             Result
         );
         if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
         if Value.Shape == 10u32 { return Value; }
-        var Expected: u32 = 0u32;
+        if !Explicitˉborrow {
+            Actualˉmode = Compilerˉsourceˉwirˉdirectˉborrowˉmode(
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Valueˉexpression
+            );
+        }
+        let Argumentˉsignature: Compilerˉsourceˉwirˉsignature =
+            Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
+                Input, Scan, Symbols, Callable,
+                Source, Expression.Valueˉoffset,
+                Expression.Valueˉlength, Item,
+                Compilerˉsourceˉwirˉgenericˉcatalog(
+                    Value.Genericˉevidence
+                ),
+                Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Value.Genericˉevidence
+                ),
+                Compilerˉsourceˉwirˉsentinel()
+            );
+        var Expected: u32 = Argumentˉsignature.Parameterˉshape;
         if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Expression.Valueˉoffset, Expression.Valueˉlength, "Enumˉname"
         ) {
@@ -6039,21 +6269,6 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             }
             if Genericˉargumentˉmatched {
                 Expected = Value.Shape;
-            } else {
-                let Argumentˉsignature: Compilerˉsourceˉwirˉsignature =
-                    Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
-                        Input, Scan, Symbols, Callable,
-                        Source, Expression.Valueˉoffset,
-                        Expression.Valueˉlength, Item,
-                        Compilerˉsourceˉwirˉgenericˉcatalog(
-                            Value.Genericˉevidence
-                        ),
-                        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
-                            Value.Genericˉevidence
-                        ),
-                        Compilerˉsourceˉwirˉsentinel()
-                    );
-                Expected = Argumentˉsignature.Parameterˉshape;
             }
         }
         if Value.Shape != Expected {
@@ -6062,6 +6277,34 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Compilerˉsourceˉwirˉstatus.Invalidˉargument,
                 Callable.Module,
                 Callˉargument.Offset, Callˉargument.Line, Callˉargument.Column
+            );
+        }
+        let Valueˉclass: u32 =
+            Compilerˉsourceˉwirˉvalueˉclassify(Value.Shape, Symbols);
+        if !Compilerˉsourceˉwirˉborrowˉmodeˉisˉaccepted(
+                Argumentˉsignature.Parameterˉmode,
+                Actualˉmode, Valueˉclass
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module,
+                Callˉargument.Offset,
+                Callˉargument.Line, Callˉargument.Column
+            );
+        }
+        if Actualˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE &&
+            !Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Valueˉexpression
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Build.Currentˉmodule,
+                Callˉargument.Offset,
+                Callˉargument.Line, Callˉargument.Column
             );
         }
         Argumentˉoperands = Bytesˉconcat(
@@ -6164,6 +6407,14 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
         Operation = WIR_OPERATION_CALL_CAPABILITY;
+    }
+    if Signature.Returnˉmode !=
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Result, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+            Callable.Module,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
     }
     if Signature.Returnˉshape == 10u32 {
         let Neverˉcall: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
@@ -8314,10 +8565,16 @@ fn Compilerˉsourceˉwirˉbindˉfunctionˉparameters(
                 Source, Parameter.Nextˉoffset,
                 Parameter.Nextˉline, Parameter.Nextˉcolumn
             );
+        let Parameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn
+            );
         let Type: Compilerˉsourceˉwirˉgenericˉtypeˉscan =
             Compilerˉsourceˉwirˉscanˉgenericˉtype(
                 Input, Scan, Symbols, Module, Source,
-                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Parameterˉtype.Offset,
+                Parameterˉtype.Line, Parameterˉtype.Column,
                 false,
                 Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
                     Result.Genericˉevidence
@@ -8426,6 +8683,15 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
             ),
             Result.Genericˉinstance
     );
+    if Signature.Returnˉmode !=
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+        return Compilerˉsourceˉwirˉbuildˉfailure(
+            Result, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+            Module, Module, Function,
+            Declaration.Declarationˉoffset,
+            Declarationˉline, Declarationˉcolumn
+        );
+    }
     let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
         Source,
         Declaration.Declarationˉoffset,
@@ -11383,10 +11649,16 @@ fn Compilerˉsourceˉwirˉscanˉgenericˉfunctionˉsignature(
                 Source, Parameter.Nextˉoffset,
                 Parameter.Nextˉline, Parameter.Nextˉcolumn
             );
+        let Parameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn
+            );
         let Type: Compilerˉsourceˉwirˉgenericˉtypeˉscan =
             Compilerˉsourceˉwirˉscanˉgenericˉtype(
                 Input, Scan, Symbols, Module, Source,
-                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Parameterˉtype.Offset,
+                Parameterˉtype.Line, Parameterˉtype.Column,
                 false, Working
             );
         if Type.Status !=
@@ -11420,9 +11692,15 @@ fn Compilerˉsourceˉwirˉscanˉgenericˉfunctionˉsignature(
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn
         );
+    let Returnˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline,
+            Arrow.Nextˉcolumn
+        );
     return Compilerˉsourceˉwirˉscanˉgenericˉtype(
         Input, Scan, Symbols, Module, Source,
-        Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+        Returnˉtype.Offset,
+        Returnˉtype.Line, Returnˉtype.Column,
         true, Working
     );
 }

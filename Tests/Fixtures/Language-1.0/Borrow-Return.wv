@@ -1,0 +1,10 @@
+module Languageˉoneˉborrowˉreturn profile portable;
+
+fn Select(Value: borrow i32) -> borrow i32 {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Fixed: i32 = 42;
+    return Select(borrow Fixed);
+}

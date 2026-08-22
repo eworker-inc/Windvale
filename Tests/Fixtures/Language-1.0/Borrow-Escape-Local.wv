@@ -1,0 +1,7 @@
+module Languageˉoneˉborrowˉescapeˉlocal profile portable;
+
+export fn Main() -> i32 {
+    let Fixed: i32 = 42;
+    let Escaped: i32 = borrow Fixed;
+    return Escaped;
+}

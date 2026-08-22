@@ -26,6 +26,15 @@ through WVB 1.17. Project 3 carries the
 profile artifacts; Project 2 and
 descriptorless Seed retain their prior behavior.
 
+The compiler now also recognizes the frozen `borrow T` and `borrow mut T`
+signature and expression surface. One call-scoped checkpoint proves explicit
+immutable and mutable arguments, conservative Copy/shared read-through, and
+direct mutable origins. It rejects omitted modes, immutable-to-mutable calls,
+mutable borrowing from `let`, standalone borrow storage, and borrowed results
+until provenance is represented. This is prerequisite evidence, not a claim
+that Slice 5 ownership, moves, lifetime overlap, resources, or cleanup is
+complete.
+
 Value-producing `if` and exhaustive enum/variant `match` now cross the reference
 compiler and scalar runtime, completing Slice 2's planned value-and-control
 compiler surface. Slice 3 publishes the exact edition-1
@@ -1647,3 +1656,57 @@ general plus 193 native routing cases.
 This remains current-Windows development evidence. Direct native array
 lowering, browser and Windvale OS consumers, paired-host conformance, and
 release qualification remain separate gates.
+
+## Borrow parser and call-scoped semantic checkpoint
+
+Decision 0822 implements the frozen `borrow` and `mut` keywords without changing
+the Language 1.0 grammar. Declaration parsing accepts `borrow T`, `borrow mut T`,
+and borrowed results while preserving the exact underlying type location. Body
+parsing represents immutable and mutable borrow unary expressions and rejects a
+bare `mut`. The focused parser owner adds 12 cases and still returns `42`.
+
+Source Symbols and WVLB bind the underlying shape and retain their serialized
+formats. Typed WIR rereads the validated signature, keeps parameter and result
+modes only as compiler facts, and erases them before publication. Exact borrow
+modes must agree at a call. A borrowed actual may satisfy a by-value position
+only for a conservatively proven Copy or shared immutable shape. `borrow mut`
+requires a direct `var` or a parameter already declared `borrow mut`.
+Standalone borrow storage and all borrowed results currently report
+`Invalidˉborrow`; one-owner result provenance remains later work.
+
+The executable six-function fixture publishes an 857-byte WVB at SHA-256
+`deef20a9559e7930d37eb62d973e2e95a4e0e328d8dfdb0837321d389985ed69`.
+The compiler-aligned verifier accepts it and execution reports `Result: 42`.
+Six separate malformed semantic fixtures reject omitted explicit borrowing,
+immutable-to-mutable use, mutable borrowing from `let`, local borrow escape, and
+borrowed return, plus owned by-value read-through from a borrowed parameter,
+with the exact `Invalidˉborrow` status.
+
+The current analyzer is 1,088,695 WVB bytes at SHA-256
+`4b5692c0caa9b53126b5461cc1c09fedcd7a716d4ed7f14f28abc9d80248ce58`;
+its Windows development application is 34,402,816 bytes at SHA-256
+`e9e8de91115175ebe0e7e081e4dac97adb2a46b00031d9d975f6c95f24230763`.
+The current emitter is 1,002,147 WVB bytes at SHA-256
+`5601ff3d80f8babcc8ef3ecd5615e56729d4905ae7884606b61270d0efc3ecdc`;
+its Windows development application is 22,080,512 bytes at SHA-256
+`b15dda33d7312c4f68c321e92877a34a0e32e9be30f5e1ed01a206529b6eebd8`.
+The emitter remains exactly at the native lowerer's 128-type bound. Two
+implementation-only enums initially raised it to 130 and caused
+`Unsupportedˉmodule`; representing those modes as named bounded integers
+restored bootstrap compatibility without changing source semantics.
+
+Direct borrowed-parameter call arguments recover their mode from the existing
+binding declaration offset. An initial implementation reparsed the complete
+current signature at each such call and failed the large emitter self-hosting
+path; the bounded declaration-offset lookup keeps the common path local and the
+complete 1,940,645-byte emitter source set now publishes analysis successfully.
+
+The verification registry now contains 108 owners and 5,133 declared cases at
+SHA-256
+`37b044d13ba09b34e9cc4d38dbf7e41fb190b84e773579af47352598fa921737`.
+The seven semantic cases are registered in the cross-host Language 1.0 front door,
+and changed-file planning passes 31 general plus 194 native routing cases. The
+borrow parser fixture selects only `generic-nominal-type-binding`; the semantic
+fixtures select only `language-1-front-door`. This section records focused
+current-Windows evidence only. The complete front door, paired-host conformance,
+full ownership checker, and release qualification remain separate gates.

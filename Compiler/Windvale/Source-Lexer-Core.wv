@@ -103,6 +103,8 @@ export enum Compilerˉtokenˉkind {
     Base = 97;
     Runeˉliteral = 98;
     Floatingˉliteral = 99;
+    Borrow = 100;
+    Mut = 101;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -400,6 +402,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         if First == 108u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "let") { return Compilerˉtokenˉkind.Let; }
         }
+        if First == 109u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "mut") { return Compilerˉtokenˉkind.Mut; }
+        }
         if First == 116u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "try") { return Compilerˉtokenˉkind.Try; }
         }
@@ -469,6 +474,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 6u32 {
+        if First == 98u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "borrow") { return Compilerˉtokenˉkind.Borrow; }
+        }
         if First == 101u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "export") { return Compilerˉtokenˉkind.Export; }
         }

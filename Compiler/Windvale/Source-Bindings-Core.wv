@@ -67,6 +67,7 @@ export record Compilerˉsourceˉlocalˉmatch {
     Kind: Compilerˉsourceˉbindingˉkind;
     Slot: u32;
     Shape: u32;
+    Declarationˉoffset: u32;
 }
 
 export record Compilerˉsourceˉbindingˉbuild {
@@ -1074,7 +1075,8 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
                             true,
                             Compilerˉsourceˉbindingsˉkind(Bytesˉreadˉu32ˉlittle(Payload, Entry + 8u32)),
                             Bytesˉreadˉu32ˉlittle(Payload, Entry + 12u32),
-                            Bytesˉreadˉu32ˉlittle(Payload, Entry + 24u32)
+                            Bytesˉreadˉu32ˉlittle(Payload, Entry + 24u32),
+                            Priorˉoffset
                         );
                     }
                 }
@@ -1083,7 +1085,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
         Index = Index + 1u32;
     }
     return Compilerˉsourceˉlocalˉmatch(
-        false, Compilerˉsourceˉbindingˉkind.None, 0u32, 0u32
+        false, Compilerˉsourceˉbindingˉkind.None, 0u32, 0u32, 0u32
     );
 }
 
@@ -3089,11 +3091,17 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
         let Colon: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Parameter.Nextˉoffset, Parameter.Nextˉline, Parameter.Nextˉcolumn
         );
+        let Parameterˉtype: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉtypeˉstart(
+                Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                Colon.Nextˉcolumn
+            );
         let Directˉtype: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
             Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
                 Input, Scan, Symbols.Directory, Symbols.Lookup,
                 Symbols.Visibility, Module, Source,
-                Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                Parameterˉtype.Offset,
+                Parameterˉtype.Line, Parameterˉtype.Column,
                 Symbols.Records, Symbols.Enums, Generic,
                 Catalog, Genericˉinstance, false
             );
@@ -3112,7 +3120,9 @@ export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(
                 Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
                 Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
                     Input, Scan, Symbols, Module, Source,
-                    Colon.Nextˉoffset, Colon.Nextˉline, Colon.Nextˉcolumn,
+                    Parameterˉtype.Offset,
+                    Parameterˉtype.Line,
+                    Parameterˉtype.Column,
                     0u32, 0u32, 0u32, 0u32,
                     Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
                 );
