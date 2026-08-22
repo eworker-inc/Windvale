@@ -1776,7 +1776,7 @@ export fn Main(Request: bytes) -> bytes {
             (Payloadˉlength >= 151u32 && Payloadˉlength <= 153u32) ||
             Payloadˉlength == 196u32 || Payloadˉlength == 197u32 ||
             Payloadˉlength == 198u32 ||
-            (Payloadˉlength >= 199u32 && Payloadˉlength <= 204u32) {
+            (Payloadˉlength >= 199u32 && Payloadˉlength <= 205u32) {
         if Payloadˉlength <= 103u32 {
             Stack = Executeˉbaseˉcomparison(
                 Payloadˉlength, Stack, Zeroˉvalue
@@ -2552,6 +2552,55 @@ export fn Main(Request: bytes) -> bytes {
                 Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
                 Mainˉfound = true;
             }
+        }
+        if Payloadˉlength == 205u32 {
+            let Takenˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Module, Payload + 1u32
+            );
+            if Takenˉlocalˉindex >= Functionˉcursor / 8u32 ||
+                Takenˉlocalˉindex < Bytesˉreadˉu32ˉlittle(
+                Functionˉframeˉmetadata, Functionˉindex * 8u32
+            ) {
+                return Invalid;
+            }
+            let Takenˉlocalˉoffset: u32 = Takenˉlocalˉindex * 8u32;
+            let Takenˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                Functionˉshapeˉoffsets,
+                Functionˉindex * 4u32
+            ) + Takenˉlocalˉoffset;
+            if Bytesˉreadˉu32ˉlittle(
+                Localˉshapes, Takenˉshapeˉoffset
+            ) != 23u32 {
+                return Invalid;
+            }
+            let Takenˉvalue: bytes = Bytesˉslice(
+                Locals, Takenˉlocalˉoffset, 8u32
+            );
+            if !Collections.Collectionˉbackingˉvalid(
+                Heap,
+                Heapˉallocations,
+                Heapˉallocationˉcount,
+                Takenˉvalue
+            ) {
+                return Invalid;
+            }
+            Locals = Bytesˉconcat(
+                Bytesˉconcat(
+                    Bytesˉslice(Locals, 0u32, Takenˉlocalˉoffset),
+                    Zeroˉcell
+                ),
+                Bytesˉslice(
+                    Locals,
+                    Takenˉlocalˉoffset + 8u32,
+                    Functionˉcursor - 8u32 - Takenˉlocalˉoffset
+                )
+            );
+            Stack = Bytesˉconcat(Stack, Takenˉvalue);
+            Stackˉconsumed = 0u32;
+            Stackˉproduced = true;
+            Stackˉproducedˉkind = 3u32;
+            Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+            Mainˉfound = true;
         }
         if Payloadˉlength == 106u32 {
             let Enumˉtype: u32 = Bytesˉreadˉu32ˉlittle(

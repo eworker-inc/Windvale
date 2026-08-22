@@ -131,7 +131,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 19u32 { return Invalid; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 20u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -330,11 +330,11 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             + Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor);
         if Typeˉkind == 4u32 || Typeˉkind == 5u32 || Typeˉkind == 6u32 {
             if Typeˉkind == 4u32 &&
-                (Moduleˉminor < 17u32 || Moduleˉminor > 19u32) {
+                (Moduleˉminor < 17u32 || Moduleˉminor > 20u32) {
                 return Invalid;
             }
             if (Typeˉkind == 5u32 || Typeˉkind == 6u32) &&
-                (Moduleˉminor < 18u32 || Moduleˉminor > 19u32) {
+                (Moduleˉminor < 18u32 || Moduleˉminor > 20u32) {
                 return Invalid;
             }
             let Typeˉelementˉshape: u32 = U32ˉfromˉu8(
@@ -384,26 +384,26 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 if Fieldˉshapeˉkind < 1u32 { return Invalid; }
                 if Fieldˉshapeˉkind > 10u32 {
                     var Extendedˉfieldˉshape: bool = Moduleˉminor >= 12u32 &&
-                        Moduleˉminor <= 19u32 && Fieldˉshapeˉkind >= 14u32 &&
+                        Moduleˉminor <= 20u32 && Fieldˉshapeˉkind >= 14u32 &&
                         Fieldˉshapeˉkind <= 16u32;
-                    if Moduleˉminor >= 13u32 && Moduleˉminor <= 19u32 &&
+                    if Moduleˉminor >= 13u32 && Moduleˉminor <= 20u32 &&
                         Fieldˉshapeˉkind == 17u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor >= 14u32 && Moduleˉminor <= 19u32 &&
+                    if Moduleˉminor >= 14u32 && Moduleˉminor <= 20u32 &&
                         Fieldˉshapeˉkind >= 18u32 &&
                         Fieldˉshapeˉkind <= 19u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor >= 15u32 && Moduleˉminor <= 19u32 &&
+                    if Moduleˉminor >= 15u32 && Moduleˉminor <= 20u32 &&
                         Fieldˉshapeˉkind == 20u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor >= 17u32 && Moduleˉminor <= 19u32 &&
+                    if Moduleˉminor >= 17u32 && Moduleˉminor <= 20u32 &&
                         Fieldˉshapeˉkind == 22u32 {
                         Extendedˉfieldˉshape = true;
                     }
-                    if Moduleˉminor >= 18u32 && Moduleˉminor <= 19u32 &&
+                    if Moduleˉminor >= 18u32 && Moduleˉminor <= 20u32 &&
                         (Fieldˉshapeˉkind == 23u32 ||
                             Fieldˉshapeˉkind == 24u32) {
                         Extendedˉfieldˉshape = true;
@@ -432,7 +432,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 if Variantˉfieldˉmarker == 1u32 {
                     Variantˉfieldˉcount = 1u32;
                 } else if Variantˉfieldˉmarker == 2u32 {
-                    if Moduleˉminor < 16u32 || Moduleˉminor > 19u32 {
+                    if Moduleˉminor < 16u32 || Moduleˉminor > 20u32 {
                         return Invalid;
                     }
                     Variantˉfieldˉcount = Bytesˉreadˉu32ˉlittle(
@@ -457,27 +457,27 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                     if Variantˉfieldˉshape < 1u32 { return Invalid; }
                     if Variantˉfieldˉshape > 10u32 {
                         var Extendedˉvariantˉshape: bool =
-                            Moduleˉminor >= 12u32 && Moduleˉminor <= 19u32 &&
+                            Moduleˉminor >= 12u32 && Moduleˉminor <= 20u32 &&
                             Variantˉfieldˉshape >= 14u32 &&
                             Variantˉfieldˉshape <= 16u32;
-                        if Moduleˉminor >= 13u32 && Moduleˉminor <= 19u32 &&
+                        if Moduleˉminor >= 13u32 && Moduleˉminor <= 20u32 &&
                             Variantˉfieldˉshape == 17u32 {
                             Extendedˉvariantˉshape = true;
                         }
-                        if Moduleˉminor >= 14u32 && Moduleˉminor <= 19u32 &&
+                        if Moduleˉminor >= 14u32 && Moduleˉminor <= 20u32 &&
                             Variantˉfieldˉshape >= 18u32 &&
                             Variantˉfieldˉshape <= 19u32 {
                             Extendedˉvariantˉshape = true;
                         }
-                        if Moduleˉminor >= 15u32 && Moduleˉminor <= 19u32 &&
+                        if Moduleˉminor >= 15u32 && Moduleˉminor <= 20u32 &&
                             Variantˉfieldˉshape == 20u32 {
                             Extendedˉvariantˉshape = true;
                         }
-                        if Moduleˉminor >= 17u32 && Moduleˉminor <= 19u32 &&
+                        if Moduleˉminor >= 17u32 && Moduleˉminor <= 20u32 &&
                             Variantˉfieldˉshape == 22u32 {
                             Extendedˉvariantˉshape = true;
                         }
-                        if Moduleˉminor >= 18u32 && Moduleˉminor <= 19u32 &&
+                        if Moduleˉminor >= 18u32 && Moduleˉminor <= 20u32 &&
                             (Variantˉfieldˉshape == 23u32 ||
                                 Variantˉfieldˉshape == 24u32) {
                             Extendedˉvariantˉshape = true;

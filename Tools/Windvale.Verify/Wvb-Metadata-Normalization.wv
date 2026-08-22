@@ -338,7 +338,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
-        Minor < 11u32 || Minor > 19u32 ||
+        Minor < 11u32 || Minor > 20u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
         return Invalid;
     }

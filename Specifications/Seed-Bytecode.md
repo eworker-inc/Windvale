@@ -7,7 +7,8 @@ baseline, the WVB 1.12 fixed-width-integer extension, the WVB 1.13 rune
 extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
 `never` extension, the WVB 1.16 named variant-field extension, the WVB 1.17
 fixed-array extension, the WVB 1.18 Vector and Sequence type-representation
-extension, and the WVB 1.19 scalar Vector/Sequence execution extension.
+extension, the WVB 1.19 scalar Vector/Sequence execution extension, and the
+WVB 1.20 owned-Vector local-transfer extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -27,14 +28,16 @@ WVB 1.18 adds exact runtime-budgeted Vector and immutable Sequence type
 metadata without adding collection operations or a storage representation.
 WVB 1.19 adds a first runtime-backed scalar operation subset with explicit
 linear Vector evidence.
+WVB 1.20 adds an exact local transfer that moves that evidence without
+retaining the backing or leaving a second mutable owner.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
 never evidence, 1.16 for multi-field variant metadata or field extraction, and
 1.17 for any fixed-array type, value shape, construction, or indexing operation,
-1.18 for any Vector or Sequence descriptor or value shape, and 1.19 for any
-Vector or Sequence execution operation.
-A WVB 1.19-capable reader accepts all nine versions and never admits an
+1.18 for any Vector or Sequence descriptor or value shape, 1.19 for any
+Vector or Sequence execution operation, and 1.20 for `local.take`.
+A WVB 1.20-capable reader accepts all ten versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -56,7 +59,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, 14, 15, 16, 17, or 18
+u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, or 20
 u32      section count: 7
 ```
 
@@ -305,8 +308,10 @@ are invalid before WVB 1.14. Shape bytes 20 and 21 and opcode `C3` are invalid
 before WVB 1.15. Variant field-list marker `2` and opcode `C4` are invalid
 before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
-invalid before WVB 1.18. Each later version admits the complete vocabulary of every
-earlier version.
+invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
+1.19, and opcode `CD` is invalid before WVB 1.20. Each later version admits
+the complete instruction and type vocabulary of every earlier version, subject
+to that version's ownership rules.
 
 ## Instruction encoding
 
@@ -454,6 +459,7 @@ C9 vector.freeze   u32 Vector-type index, u32 Sequence-type index; consumes uniq
 CA vector.length   u32 Vector-type index; preserves unique Vector and pushes u64 current length
 CB sequence.length u32 Sequence-type index; preserves Sequence and pushes u64 current length
 CC sequence.element u32 Sequence-type index; preserves Sequence, consumes u64 index, and pushes exact element
+CD local.take      u32 non-parameter local index; empties one available exact Vector local and produces its unique Vector
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -465,7 +471,7 @@ CC sequence.element u32 Sequence-type index; preserves Sequence, consumes u64 in
 51 return
 ```
 
-Opcodes `C7` through `CC` exist only in WVB 1.19 and require matching kind-5
+Opcodes `C7` through `CC` exist in WVB 1.19 and later and require matching kind-5
 or kind-6 Types entries. In this first runtime checkpoint, their element shape
 must be a resource-free scalar: `i32`, `bool`, `u8`, `u32`, an exact nominal
 enum, `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, or `f64`. Records,
@@ -489,9 +495,30 @@ produced by `vector.create_reserved`. Append preserves that evidence, Vector
 length observes without consuming it, and freeze consumes it. An ordinary
 `local.load`, field extraction, array extraction, or call result does not create
 the evidence, so it cannot be used by these Vector operations. This deliberately
-keeps the first executable subset alias-free while ownership-aware local and
-borrow lowering remains a later compiler checkpoint. Sequence is shared
-immutable and therefore retains ordinary copyable local behavior.
+keeps the first executable subset alias-free. Sequence is shared immutable and
+therefore retains ordinary copyable local behavior.
+
+WVB 1.20 `local.take` transfers the unique evidence from an exact kind-23
+non-parameter local to the operand stack. It does not retain or release the
+backing. The source local becomes unavailable and its runtime cell becomes
+zero; a later unique `local.store` may initialize it again. Parameter slots
+cannot be taken in this checkpoint because calls do not yet transfer unique
+Vector evidence. `local.load` remains a retaining shared read and never creates
+unique evidence. Consequently, every Vector `local.store` in a WVB 1.20 module
+consumes a unique Vector, while WVB 1.19 retains its earlier non-unique
+local-store behavior for compatibility.
+
+The WVB 1.20 verifier proves definite Vector-local availability before typed
+execution. Vector parameters begin initialized and available for shared loads
+but cannot be taken; Vector locals begin unavailable. A unique store makes the
+target available; a load requires it to be available without consuming it; a
+take requires it and then makes it unavailable. Forward control-flow joins
+intersect availability so a local is usable only when every incoming path owns
+it. The initial bounded profile
+admits at most 64 Vector local slots and 4,096 instructions in a function that
+uses `local.take`; backward branches in such a function are rejected until the
+loop ownership fixed-point is implemented. These are verifier limits, not
+portable source collection limits.
 
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
@@ -603,7 +630,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.19 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, and every Vector or Sequence execution operation requires exactly 1.19.
+- The version is WVB 1.11 through 1.20 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, and `local.take` requires exactly 1.20.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -614,6 +641,7 @@ Verification is required before execution and rejects a module unless:
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
+- WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join; functions using `local.take` satisfy its explicit instruction, Vector-local, and acyclic-control limits.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return

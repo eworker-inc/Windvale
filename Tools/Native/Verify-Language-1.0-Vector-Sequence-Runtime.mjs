@@ -37,7 +37,44 @@ const Mutations = [
     {
         name: 'old-minor',
         accepted: false,
-        mutate: Candidate => Candidate.writeUInt16LE(18, 6),
+        mutate: Candidate => Candidate.writeUInt16LE(19, 6),
+    },
+    {
+        name: 'out-of-range-take',
+        accepted: false,
+        mutate: Candidate => Candidate.writeUInt32LE(
+            5, Findˉfirst(Candidate, Buffer.from([205, 1, 0, 0, 0])) + 1,
+        ),
+    },
+    {
+        name: 'uninitialized-take',
+        accepted: false,
+        phase: 'control-reachability',
+        mutate: Candidate => Candidate.writeUInt32LE(
+            4, Findˉfirst(Candidate, Buffer.from([205, 1, 0, 0, 0])) + 1,
+        ),
+    },
+    {
+        name: 'double-take',
+        accepted: false,
+        phase: 'control-reachability',
+        mutate: Candidate => {
+            const Start = Findˉfirst(
+                Candidate,
+                Buffer.from([
+                    205, 1, 0, 0, 0,
+                    1, 20, 0, 0, 0,
+                    200, 0, 0, 0, 0,
+                    5, 1, 0, 0, 0,
+                ]),
+            );
+            Buffer.concat([
+                Instructionˉu32(205, 1),
+                Instructionˉu32(5, 4),
+                Instructionˉu32(205, 1),
+                Instructionˉu32(5, 1),
+            ]).copy(Candidate, Start);
+        },
     },
     {
         name: 'create-type-confusion',
@@ -190,11 +227,12 @@ function Buildˉruntime(Input) {
         Stringˉfield('Main'),
         U32(0),
         Shape(1),
-        U32(4),
+        U32(5),
         Shape(1),
         Shape(23, 0),
         Shape(24, 1),
         Shape(10),
+        Shape(23, 0),
         U32(Functions.entries[2].codeOffset),
         U32(Runtimeˉcode.length),
         U32(3),
@@ -212,7 +250,7 @@ function Buildˉruntime(Input) {
     const Header = Buffer.alloc(12);
     Header.write('WVB1', 0, 'ascii');
     Header.writeUInt16LE(1, 4);
-    Header.writeUInt16LE(19, 6);
+    Header.writeUInt16LE(20, 6);
     Header.writeUInt32LE(7, 8);
     const Payloads = new Map();
     for (let Kind = 1; Kind <= 7; Kind += 1) {
@@ -232,12 +270,18 @@ function Buildˉruntimeˉcode() {
     for (let Cycle = 0; Cycle < 6; Cycle += 1) {
         Operations.push(Instructionˉu64(129, 2047n));
         Operations.push(Instructionˉu32(199, 0));
+        Operations.push(Instructionˉu32(5, 1));
+        Operations.push(Instructionˉu32(205, 1));
         Operations.push(Instructionˉu32(1, 20));
         Operations.push(Instructionˉu32(200, 0));
+        Operations.push(Instructionˉu32(5, 1));
+        Operations.push(Instructionˉu32(205, 1));
         Operations.push(Instructionˉu32(1, 22));
         Operations.push(Instructionˉu32(200, 0));
         Operations.push(Instructionˉu32(202, 0));
         Operations.push(Instructionˉu32(5, 3));
+        Operations.push(Instructionˉu32(5, 1));
+        Operations.push(Instructionˉu32(205, 1));
         Operations.push(Buffer.concat([U8(201), U32(0), U32(1)]));
         Operations.push(Instructionˉu32(203, 1));
         Operations.push(Instructionˉu32(5, 3));

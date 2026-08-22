@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-the scalar collection subset of WVB 1.19 but has not repinned the paired
+the scalar collection subset through WVB 1.20 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.19. Its shared scalar interpreter
+The current source-built runner accepts WVB 1.11 through 1.20. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -117,7 +117,13 @@ length, and is consumed by freeze. Ordinary Vector local loads do not recreate
 it. Sequence length and element access preserve their shared immutable owner.
 The runner mirrors these verifier rules with separate descriptor, collection,
 and unique-Vector stack flags. Sequence local loads retain; stores release the
-replaced owner; function teardown releases Vector and Sequence locals.
+replaced owner; function teardown releases Vector and Sequence locals. WVB
+1.20 adds `local.take`: the runner copies an available non-parameter Vector
+local descriptor to the operand stack, zeros the eight-byte source local, and
+transfers the unique-Vector flag without changing the allocation reference
+count. Parameter slots are rejected until calls transfer unique evidence. The
+verifier rejects out-of-range, uninitialized, and repeated takes before
+execution.
 Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
@@ -129,21 +135,23 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 226,540-byte WVB at SHA-256
-`a3b63a20d7a360889477346d970490c2f1139be8687add203955271844bc92f9`.
+The current Windows development build is a 228,106-byte WVB at SHA-256
+`63b8c862372e619bc9472d85ce850e7d621ed2106950b3e2ddaf801eaa6c78ee`.
 The promoted profile-5 application identity in the table above has not been
 repinned to this source checkpoint.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
 `42`, and reports code `3008` for the verified out-of-bounds mutation. It also
 parses the deterministic 436-byte WVB 1.18 Vector/Sequence metadata fixture and
-executes its independent `Main` with result `42`. A deterministic 971-byte
-WVB 1.19 derivative executes all six collection opcodes, performs six 16-KiB
-allocation cycles that require descriptor reclamation, and returns `42`; its
+executes its independent `Main` with result `42`. A deterministic 1,156-byte
+WVB 1.20 derivative executes all six collection opcodes plus `local.take`,
+performs six 16-KiB allocation cycles that require descriptor reclamation, and
+returns `42`; its
 SHA-256 is
-`14c8f442c499669139b5106d62bf4687450a6b4537b5e224f637fbecc4ada251`.
-Four malformed type/version cases reject semantically, one copied-Vector case
-rejects during typed execution, and capacity and index violations remain valid
-bytecode and fail exactly as `WVR3008`. Paired
+`baa69aadf3b9c65900110d9aa3372989e051045e30207a87b720dbc0a663dd25`.
+Five malformed type/version/index cases reject semantically, one copied-Vector case
+rejects during typed execution, uninitialized and repeated transfers reject
+during control/ownership analysis, and capacity and index violations remain
+valid bytecode and fail exactly as `WVR3008`. Paired
 reconstruction, browser execution, and candidate promotion remain separate
 gates.
 

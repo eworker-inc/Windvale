@@ -921,7 +921,7 @@ fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
         Opcode == 64u32 || Opcode == 65u32 ||
         Opcode == 104u32 || Opcode == 105u32 || Opcode == 197u32 ||
         Opcode == 199u32 || Opcode == 200u32 ||
-        (Opcode >= 202u32 && Opcode <= 204u32) {
+        (Opcode >= 202u32 && Opcode <= 205u32) {
         return 5u32;
     }
     if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
@@ -1248,7 +1248,30 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Localˉshapes,
                     Storedˉshape + 1u32
                 );
+                if Firstˉkind == 23u32 &&
+                    Bytesˉreadˉu16ˉlittle(Input, 6u32) >= 20u32 {
+                    Firstˉkind = 25u32;
+                }
                 Popˉcount = 1u32;
+                Handled = true;
+            }
+            if Opcode == 205u32 {
+                let Takenˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input,
+                    Functionˉcode + Cursor + 1u32
+                );
+                if Takenˉlocalˉindex < Parameterˉcount { return Invalid; }
+                let Takenˉshape: u32 = Takenˉlocalˉindex * 5u32;
+                if U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Localˉshapes, Takenˉshape
+                )) != 23u32 {
+                    return Invalid;
+                }
+                Hasˉpush = true;
+                Pushˉkind = 25u32;
+                Pushˉnominal = Bytesˉreadˉu32ˉlittle(
+                    Localˉshapes, Takenˉshape + 1u32
+                );
                 Handled = true;
             }
 
@@ -1652,6 +1675,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉfunctionˉcursor
         );
         Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+        let Controlˉparameterˉtypes: u32 = Controlˉfunctionˉcursor;
         var Controlˉshapeˉindex: u32 = 0u32;
         var Controlˉshapeˉkind: u32 = 0u32;
         while Controlˉshapeˉindex < Controlˉparameterˉcount {
@@ -1682,6 +1706,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉfunctionˉcursor
         );
         Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
+        let Controlˉlocalˉtypes: u32 = Controlˉfunctionˉcursor;
         Controlˉshapeˉindex = 0u32;
         while Controlˉshapeˉindex < Controlˉlocalˉcount {
             Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -1708,6 +1733,15 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
 
         let Controlˉfunctionˉcode: u32 = Controlˉcode
             + Controlˉfunctionˉcodeˉoffset;
+        let Controlˉlocalˉslots: u32 = Controlˉparameterˉcount
+            + Controlˉlocalˉcount;
+        let Controlˉlocalˉshapes: bytes = Typedˉdirectories.Hˉlocalˉshapes(
+            Input,
+            Controlˉparameterˉtypes,
+            Controlˉparameterˉcount,
+            Controlˉlocalˉtypes,
+            Controlˉlocalˉcount
+        );
         let Controlˉdirectory: Typedˉdirectories.Hˉcontrolˉdirectory =
             Typedˉdirectories.Iˉcontrolˉdirectory(
                 Input,
@@ -1717,6 +1751,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         if !Controlˉdirectory.Valid { return Controlˉinvalid; }
         var Controlˉcursor: u32 = 0u32;
         var Controlˉpreviousˉopcode: u32 = 0u32;
+        var Controlˉfunctionˉinstructions: u32 = 0u32;
+        var Controlˉhasˉtake: bool = false;
+        var Controlˉhasˉbackwardˉcontrol: bool = false;
         while Controlˉcursor < Controlˉfunctionˉcodeˉlength {
             if Controlˉcursor > 0u32 {
                 var Controlˉneedsˉpredecessor: bool = false;
@@ -1777,6 +1814,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             }
             Controlˉaggregateˉinstructions = Controlˉaggregateˉinstructions
                 + 1u32;
+            Controlˉfunctionˉinstructions =
+                Controlˉfunctionˉinstructions + 1u32;
+            if Controlˉopcode == 205u32 { Controlˉhasˉtake = true; }
             if Controlˉaggregateˉinstructions > 400000u32 {
                 return Controlˉinvalid;
             }
@@ -1791,6 +1831,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 );
                 if Controlˉtarget >= Controlˉfunctionˉcodeˉlength {
                     return Controlˉinvalid;
+                }
+                if Controlˉtarget <= Controlˉcursor {
+                    Controlˉhasˉbackwardˉcontrol = true;
                 }
                 if Controlˉtarget != 0u32 && Bytesˉreadˉu8(
                     Controlˉdirectory.Boundaries,
@@ -1808,6 +1851,175 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 if Controlˉpreviousˉopcode != 81u32 {
                     return Controlˉinvalid;
                 }
+            }
+        }
+        if Controlˉhasˉtake {
+            if Controlˉfunctionˉinstructions > 4096u32 ||
+                Controlˉhasˉbackwardˉcontrol {
+                return Controlˉinvalid;
+            }
+            var Ownedˉvectorˉcount: u32 = 0u32;
+            var Ownedˉavailableˉlow: u32 = 0u32;
+            var Ownedˉavailableˉhigh: u32 = 0u32;
+            var Ownedˉslot: u32 = 0u32;
+            while Ownedˉslot < Controlˉlocalˉslots {
+                if U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Controlˉlocalˉshapes, Ownedˉslot * 5u32
+                )) == 23u32 {
+                    if Ownedˉvectorˉcount >= 64u32 {
+                        return Controlˉinvalid;
+                    }
+                    if Ownedˉslot < Controlˉparameterˉcount {
+                        if Ownedˉvectorˉcount < 32u32 {
+                            Ownedˉavailableˉlow = Ownedˉavailableˉlow |
+                                (1u32 << Ownedˉvectorˉcount);
+                        } else {
+                            Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
+                                (1u32 << (Ownedˉvectorˉcount - 32u32));
+                        }
+                    }
+                    Ownedˉvectorˉcount = Ownedˉvectorˉcount + 1u32;
+                }
+                Ownedˉslot = Ownedˉslot + 1u32;
+            }
+
+            var Ownedˉbranches: bytes = Controlˉinvalid;
+            var Ownedˉcursor: u32 = 0u32;
+            var Ownedˉreachable: bool = true;
+            while Ownedˉcursor < Controlˉfunctionˉcodeˉlength {
+                var Ownedˉbranch: u32 = 0u32;
+                while Ownedˉbranch < Bytesˉlength(Ownedˉbranches) {
+                    if Bytesˉreadˉu32ˉlittle(
+                        Ownedˉbranches, Ownedˉbranch
+                    ) == Ownedˉcursor {
+                        let Ownedˉbranchˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+                            Ownedˉbranches, Ownedˉbranch + 4u32
+                        );
+                        let Ownedˉbranchˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                            Ownedˉbranches, Ownedˉbranch + 8u32
+                        );
+                        if Ownedˉreachable {
+                            Ownedˉavailableˉlow = Ownedˉavailableˉlow &
+                                Ownedˉbranchˉlow;
+                            Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
+                                Ownedˉbranchˉhigh;
+                        } else {
+                            Ownedˉavailableˉlow = Ownedˉbranchˉlow;
+                            Ownedˉavailableˉhigh = Ownedˉbranchˉhigh;
+                            Ownedˉreachable = true;
+                        }
+                    }
+                    Ownedˉbranch = Ownedˉbranch + 12u32;
+                }
+                if !Ownedˉreachable { return Controlˉinvalid; }
+
+                let Ownedˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input, Controlˉfunctionˉcode + Ownedˉcursor
+                ));
+                var Ownedˉwidth: u32 = Hˉfixedˉinstructionˉwidth(
+                    Ownedˉopcode
+                );
+                if Ownedˉopcode == 192u32 {
+                    Ownedˉwidth = 3u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Input,
+                        Controlˉfunctionˉcode + Ownedˉcursor + 2u32
+                    )) == 0u32 { Ownedˉwidth = 5u32; }
+                }
+                if Ownedˉopcode == 193u32 {
+                    Ownedˉwidth = 2u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Input,
+                        Controlˉfunctionˉcode + Ownedˉcursor + 1u32
+                    )) == 0u32 { Ownedˉwidth = 6u32; }
+                }
+                if Ownedˉopcode == 194u32 {
+                    Ownedˉwidth = 3u32;
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(
+                        Input,
+                        Controlˉfunctionˉcode + Ownedˉcursor + 2u32
+                    )) == 0u32 {
+                        Ownedˉwidth = 7u32;
+                        if U32ˉfromˉu8(Bytesˉreadˉu8(
+                            Input,
+                            Controlˉfunctionˉcode + Ownedˉcursor + 1u32
+                        )) == 19u32 { Ownedˉwidth = 11u32; }
+                    }
+                }
+
+                if Ownedˉopcode == 4u32 || Ownedˉopcode == 5u32 ||
+                    Ownedˉopcode == 205u32 {
+                    let Ownedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                        Input,
+                        Controlˉfunctionˉcode + Ownedˉcursor + 1u32
+                    );
+                    var Ownedˉrank: u32 = 4294967295u32;
+                    if Ownedˉlocal < Controlˉlocalˉslots &&
+                        U32ˉfromˉu8(Bytesˉreadˉu8(
+                            Controlˉlocalˉshapes, Ownedˉlocal * 5u32
+                        )) == 23u32 {
+                        Ownedˉrank = 0u32;
+                        var Ownedˉearlier: u32 = 0u32;
+                        while Ownedˉearlier < Ownedˉlocal {
+                            if U32ˉfromˉu8(Bytesˉreadˉu8(
+                                Controlˉlocalˉshapes,
+                                Ownedˉearlier * 5u32
+                            )) == 23u32 {
+                                Ownedˉrank = Ownedˉrank + 1u32;
+                            }
+                            Ownedˉearlier = Ownedˉearlier + 1u32;
+                        }
+                    }
+                    if Ownedˉrank != 4294967295u32 {
+                        if Ownedˉopcode == 4u32 || Ownedˉopcode == 205u32 {
+                            var Ownedˉavailable: bool = false;
+                            if Ownedˉrank < 32u32 {
+                                Ownedˉavailable = ((Ownedˉavailableˉlow >>
+                                    Ownedˉrank) & 1u32) == 1u32;
+                            } else {
+                                Ownedˉavailable = ((Ownedˉavailableˉhigh >>
+                                    (Ownedˉrank - 32u32)) & 1u32) == 1u32;
+                            }
+                            if !Ownedˉavailable { return Controlˉinvalid; }
+                        }
+                        if Ownedˉopcode == 5u32 {
+                            if Ownedˉrank < 32u32 {
+                                Ownedˉavailableˉlow = Ownedˉavailableˉlow |
+                                    (1u32 << Ownedˉrank);
+                            } else {
+                                Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
+                                    (1u32 << (Ownedˉrank - 32u32));
+                            }
+                        }
+                        if Ownedˉopcode == 205u32 {
+                            if Ownedˉrank < 32u32 {
+                                Ownedˉavailableˉlow = Ownedˉavailableˉlow &
+                                    ~(1u32 << Ownedˉrank);
+                            } else {
+                                Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
+                                    ~(1u32 << (Ownedˉrank - 32u32));
+                            }
+                        }
+                    }
+                }
+                if Ownedˉopcode == 48u32 || Ownedˉopcode == 49u32 {
+                    Ownedˉbranches = Bytesˉconcat(
+                        Ownedˉbranches,
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
+                                Input,
+                                Controlˉfunctionˉcode + Ownedˉcursor + 1u32
+                            )),
+                            Bytesˉconcat(
+                                Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉlow),
+                                Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉhigh)
+                            )
+                        )
+                    );
+                    if Ownedˉopcode == 48u32 { Ownedˉreachable = false; }
+                }
+                if Ownedˉopcode == 81u32 { Ownedˉreachable = false; }
+                Ownedˉcursor = Ownedˉcursor + Ownedˉwidth;
             }
         }
         Controlˉfunctionˉindex = Controlˉfunctionˉindex + 1u32;

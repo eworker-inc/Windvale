@@ -1891,3 +1891,57 @@ The reconstruction still produces matching sizes and exact Return-42 and
 metadata results, but its lowerer and hosted-package hashes no longer match the
 retained candidate. That independent native-candidate promotion is not claimed
 or repinned by this scalar-runner checkpoint.
+
+## Slice 4/5 owned Vector local transfer checkpoint
+
+Decision 0827 advances the collection backend to WVB 1.20 with `CD`
+`local.take`. The instruction transfers one available exact Vector descriptor
+from a non-parameter local to the operand stack, zeros the source cell, and
+preserves the allocation reference count. Parameter transfer waits for the
+move-at-call contract. This bridges Slice 4 collection
+lowering to Slice 5 ownership without pretending that ordinary retaining
+`local.load` can recover a mutable owner.
+
+The verifier performs bounded definite-availability analysis only in functions
+that use the new operation. Vector parameters are initialized for shared loads
+but cannot be taken; locals begin unavailable, unique stores restore
+availability, loads preserve it, takes consume it, and forward joins intersect
+it. The initial profile admits at most 64 Vector slots and 4,096 instructions
+and rejects backward control flow until loop ownership fixed points are
+implemented.
+
+The current verifier is 239,824 WVB bytes at SHA-256
+`bfb60c8f80856c15399b457ab8c471e0e600492e0ffc39d34a718d0cb45e0a5b`.
+The current runner is 228,106 WVB bytes at SHA-256
+`63b8c862372e619bc9472d85ce850e7d621ed2106950b3e2ddaf801eaa6c78ee`.
+The deterministic 1,156-byte WVB 1.20 fixture has SHA-256
+`baa69aadf3b9c65900110d9aa3372989e051045e30207a87b720dbc0a663dd25`.
+It transfers the Vector before each append and freeze across six 16-KiB
+allocation cycles and returns `42`.
+
+All 12 focused cases pass. In addition to the WVB 1.19 evidence, an
+out-of-range local index rejects semantically, while an uninitialized take and
+a repeated take reject during control/ownership analysis. WVB 1.19 execution
+remains accepted. The Language 1.0 owner advances from 380 to 383 cases; the
+three additions are malformed ownership-flow cases, not repeated broad builds.
+
+The 108-owner registry now declares 5,167 cases at SHA-256
+`40e0baf6e1db78464fd72313e22a05e8a9df065e18128ec26c269f5be239b085`.
+
+`Source-Wir-Core.wv` remains unchanged. Its size is a future cohesion/refactor
+signal, but it is not on this runtime/verifier path and does not impede the
+checkpoint. Source/WVIR selection, public fallible `Memoryˉbudget`
+construction, recoverable append, loop ownership, and borrow lowering remain
+the next connected work.
+
+Changed-file planning has no coverage gaps, and its 31 general plus 194 native
+routing cases pass after synchronizing the verification registry identity. The
+`seed` owner passes 26 cases and `seed-native-front-door` passes its focused
+case. The broader gate then reaches the retained WVB-to-WVO reconstruction and
+stops after three passing checks at the pre-existing lowerer-candidate identity
+drift documented by the WVB 1.19 checkpoint. A direct Language 1.0 retry passes
+frozen-fixture and descriptor phases, then the retained pre-split `Run-Wvb`
+candidate rejects the existing generic-calls value-front-end fixture before the
+owner builds the changed split-compiler runner. Neither broader failure reaches
+or contradicts the passing WVB 1.20 verifier/runtime oracle; no qualification,
+candidate promotion, or cross-host conformance is claimed here.
