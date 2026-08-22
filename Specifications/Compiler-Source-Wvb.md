@@ -557,6 +557,19 @@ executes only the independent `Main`, returning `42`. Four malformed mutations
 prove minor-version, element-shape, descriptor-kind, and target-kind rejection.
 No collection value is constructed or executed by this checkpoint.
 
+`Tests/Fixtures/Language-1.0/Sequence-Read-Main-Pipeline.wv` is the first exact
+source-to-runtime Sequence API selection. Its qualified calls bind only through
+the canonical `Foundationˉcollections` owner. WVIR operations 167 and 168 plan
+the exact private Sequence shape; emission selects WVB 1.19 `CB` and `CC` with
+the matching kind-6 Types index. Because both operations preserve their shared
+owner below the scalar result, emission stores the result and follows it with
+one `pop`; operation-length and maximum-stack planning include that release.
+The 472-byte module has SHA-256
+`8f8cb926df946bff3b254b37304ac7cf8ffa744ccea963703cfcfebfdf7e1831`,
+passes the collection-aware compiler verifier, and returns 42 from its
+independent `Main`. This checkpoint copies only resource-free scalar elements;
+it does not claim general borrowed-result lowering.
+
 The scalar representation uses one eight-byte value cell and the existing
 fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot
 or `0xffffffff`; the high `u32` is

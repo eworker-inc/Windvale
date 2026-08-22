@@ -1945,3 +1945,62 @@ candidate rejects the existing generic-calls value-front-end fixture before the
 owner builds the changed split-compiler runner. Neither broader failure reaches
 or contradicts the passing WVB 1.20 verifier/runtime oracle; no qualification,
 candidate promotion, or cross-host conformance is claimed here.
+
+## Slice 4 exact Foundation Sequence read checkpoint
+
+Decision 0828 connects the public immutable Sequence read surface to the
+already verified WVB 1.19 runtime operations. Only a qualified alias whose
+target module header is exactly `Foundationˉcollections` can select
+`Sequenceˉlength` or `Sequenceˉat`; a fake module with the same member spelling
+is rejected even when its argument is a real Foundation Sequence.
+
+The compiler infers `T` from validated WVGT kind 12, accepts only the
+resource-free Copy scalar subset, and lowers the Foundation borrowed element
+result as its equivalent copied scalar value. WVIR operations 167 and 168 retain
+the exact private Sequence target. WVB emission writes `CB` and `CC` with the
+planned kind-6 Types index, stores each scalar result, and then pops the
+preserved shared owner.
+
+The focused source fixture publishes a 472-byte WVB 1.19 module at SHA-256
+`8f8cb926df946bff3b254b37304ac7cf8ffa744ccea963703cfcfebfdf7e1831`.
+The current verifier accepts it and the runner returns 42. Four byte-level
+corruptions reject the version, both Types immediates, and descriptor kind;
+four source cases reject the owner, index, element, and lookalike boundaries.
+These ten cases join the existing Vector/Sequence phase without repeating the
+heavy compiler bootstrap.
+
+The 108-owner registry now declares 5,177 cases at SHA-256
+`2c4b82a7381d33509a64d1bd0ff057c7871408d2478ae5ff7326e7cb78602ea5`.
+
+The split compiler independently accepts the complete 1.64-MiB WVIR compiler
+source and its 242,736-byte binding evidence, then emits a 1,278,211-byte
+compiler module. The complete source-to-WVB closure likewise analyzes and emits
+successfully. The older monolithic builder still reports its retained
+order-sensitive post-binding failure at the total function count; that result
+does not contradict the accepted split-compiler evidence.
+
+The current split analyzer is 1,104,336 WVB bytes at SHA-256
+`55c08703e4b4a93904e21ec82a9305adcf895290f6540c55262b115c69565b97`
+and packages as a 34,725,376-byte Windows application. The current target-aware
+emitter is 1,019,952 WVB bytes at SHA-256
+`9d53ba13e68c186a0092a2f77c6fc22071b128dc6c629d5f010a7a7b8ab1bdc3`
+and packages as a 22,391,808-byte Windows application. The front-door scripts
+pin those exact current WVB identities before using either product.
+
+`Source-Wir-Core.wv` is 12,343 lines after this checkpoint. The size is not a
+compilation or verification blocker, but it is a maintainability signal. The
+later refactor boundary should own collection call signatures, lowering, and
+validation together; a numbered or helper-only mechanical split would obscure
+the invariants and is not recommended.
+
+During host reconstruction, Decision 0829 also corrected an independent WVB
+1.18 regression in the profile-admission closure. The admission source had
+been changed from the portable Foundation SHA-256 function to VM opcode `7D`,
+which the current native x64 backend does not lower. The portable function is
+now retained in all affected compiler project closures. The current admission
+product is 82,924 WVB bytes at SHA-256
+`7a7da249ff51647e2c279a9d06c05897f071683991aca0748ad6f40e02887512`;
+its one-fragment Windows package is 797,184 bytes at SHA-256
+`8307a87aa7f70cc9519ade98140554db9e5b6de834d39c86149ec8441624b8d6`.
+That freshly reconstructed tool admits the exact Sequence fixture used by this
+checkpoint. No native opcode or packaging bound changed.

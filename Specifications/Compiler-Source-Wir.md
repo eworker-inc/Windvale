@@ -251,6 +251,17 @@ backing, while a borrowed vector cannot satisfy a consuming by-value position.
 The classification consumes the validated generic-type catalog; a private shape
 without matching evidence is not inferred from its numeric range.
 
+Exact Foundation Sequence reads reuse that catalog proof. Operation 167
+`Foundationˉsequenceˉlength` consumes one temporary whose shape is the target
+kind-12 private Sequence and produces `u64`. Operation 168
+`Foundationˉsequenceˉelement` consumes that Sequence plus `u64`, and its result
+must equal the catalog's element shape. Both require auxiliary zero and the
+resource-free Copy scalar subset accepted by WVB 1.19. For that subset only,
+the public `borrow T` result is read and copied as `T`; resource-bearing element
+borrows remain rejected until provenance is represented. Independent WVIR
+validation reconstructs the same kind and element from WVGT, so a private-range
+number, mismatched result, wrong index, or unsupported element cannot publish.
+
 `break` closes the current block with a jump to the nearest enclosing loop's after-block. `continue` closes it with a jump to that loop's condition block. Nested loops replace those targets while their bodies are lowered. Compound assignment emits exactly one local load, lowers the right operand, applies the corresponding checked `i32` or `u32` arithmetic operation, and emits one store; an immutable, missing, mismatched, or unsupported target is rejected before publication.
 
 ## Verification tiers and current boundary

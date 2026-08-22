@@ -235,6 +235,8 @@ const WIR_OPERATION_UNIT_CONSTANT: u32 = 163u32;
 const WIR_OPERATION_VARIANT_FIELD: u32 = 164u32;
 const WIR_OPERATION_ARRAY_CREATE: u32 = 165u32;
 const WIR_OPERATION_ARRAY_ELEMENT: u32 = 166u32;
+const WIR_OPERATION_FOUNDATION_SEQUENCE_LENGTH: u32 = 167u32;
+const WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT: u32 = 168u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -856,6 +858,37 @@ export fn Compilerˉsourceˉwirˉcollectionˉdescriptor(Shape: u32) -> u32 {
     if Element < 8192u32 { return 1073741824u32 + Element - 4096u32; }
     if Element < 12288u32 { return 2147483648u32 + Element - 8192u32; }
     return 3221225472u32 + Element - 12288u32;
+}
+
+export fn Compilerˉsourceˉwirˉshapeˉisˉfoundationˉsequence(
+    Shape: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
+        Catalog, Shape, 12u32
+    );
+}
+
+export fn Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+    Shape: u32,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> u32 {
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+        Catalog, Shape, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+    Shape: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> bool {
+    if Shape == 1u32 || Shape == 2u32 || Shape == 3u32 ||
+        Shape == 4u32 || Shape == 7u32 || Shape == 8u32 ||
+        (Shape >= 11u32 && Shape <= 16u32) {
+        return true;
+    }
+    return Shape >= 131072u32 + Symbols.Records &&
+        Shape < 131072u32 + Symbols.Records + Symbols.Enums;
 }
 
 
@@ -1964,6 +1997,32 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
     Genericˉinstance: u32
 ) -> Compilerˉsourceˉwirˉsignature {
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic {
+        if Callable.Directoryˉentry ==
+                WIR_OPERATION_FOUNDATION_SEQUENCE_LENGTH {
+            return Compilerˉsourceˉwirˉsignature(
+                0u32, 8u32, Compilerˉsourceˉwirˉsentinel(), 0u32,
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE,
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
+            );
+        }
+        if Callable.Directoryˉentry ==
+                WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT {
+            var Sequenceˉparameterˉshape: u32 = 0u32;
+            var Sequenceˉparameterˉmode: u32 =
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+            if Argument == 0u32 {
+                Sequenceˉparameterˉmode =
+                    Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE;
+            } else {
+                Sequenceˉparameterˉshape = 8u32;
+            }
+            return Compilerˉsourceˉwirˉsignature(
+                Sequenceˉparameterˉshape, 0u32,
+                Compilerˉsourceˉwirˉsentinel(), 0u32,
+                Sequenceˉparameterˉmode,
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
+            );
+        }
         return Compilerˉsourceˉwirˉsignature(
             Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
                 Nameˉsource, Nameˉoffset, Nameˉlength, Argument
@@ -6017,6 +6076,16 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
         );
     }
+    var Foundationˉsequenceˉoperation: u32 = 0u32;
+    if Callable.Kind ==
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic &&
+        (Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_SEQUENCE_LENGTH ||
+            Callable.Directoryˉentry ==
+                WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT) {
+        Foundationˉsequenceˉoperation = Callable.Directoryˉentry;
+    }
+    var Foundationˉsequenceˉshape: u32 = 0u32;
+    var Foundationˉsequenceˉelement: u32 = 0u32;
     var Genericˉparameters: u32 = 0u32;
     let Emptyˉgenericˉparameters: bytes = Compilerˉsourceˉwirˉempty(Source);
     var Genericˉsource: bytes = Source;
@@ -6248,7 +6317,35 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Compilerˉsourceˉwirˉsentinel()
             );
         var Expected: u32 = Argumentˉsignature.Parameterˉshape;
-        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+        if Foundationˉsequenceˉoperation != 0u32 && Item == 0u32 {
+            let Sequenceˉcatalog:
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+                Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Value.Genericˉevidence
+                );
+            let Sequenceˉelement: u32 =
+                Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+                    Value.Shape, Sequenceˉcatalog
+                );
+            if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉsequence(
+                    Value.Shape, Sequenceˉcatalog
+                ) ||
+                !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+                    Sequenceˉelement, Symbols
+                ) {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
+                    Callable.Module,
+                    Callˉargument.Offset,
+                    Callˉargument.Line,
+                    Callˉargument.Column
+                );
+            }
+            Foundationˉsequenceˉshape = Value.Shape;
+            Foundationˉsequenceˉelement = Sequenceˉelement;
+            Expected = Value.Shape;
+        } else if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Expression.Valueˉoffset, Expression.Valueˉlength, "Enumˉname"
         ) {
             if Value.Shape >= 131072u32 + Symbols.Records {
@@ -6408,16 +6505,25 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     var Operation: u32 = WIR_OPERATION_CALL_FUNCTION;
     var Target: u32 = Signature.Target;
     var Auxiliary: u32 = Signature.Auxiliary;
+    var Returnˉshape: u32 = Signature.Returnˉshape;
     if Genericˉparameters > 0u32 {
         Target = Bytesˉreadˉu32ˉlittle(
             Symbols.Directory, 8u32
         ) + Genericˉinstance;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic {
-        Operation = Compilerˉsourceˉwirˉintrinsicˉoperation(
-            Source, Expression.Valueˉoffset, Expression.Valueˉlength
-        );
-        Target = Compilerˉsourceˉwirˉsentinel();
+        if Foundationˉsequenceˉoperation != 0u32 {
+            Operation = Foundationˉsequenceˉoperation;
+            Target = Foundationˉsequenceˉshape;
+            if Operation == WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT {
+                Returnˉshape = Foundationˉsequenceˉelement;
+            }
+        } else {
+            Operation = Compilerˉsourceˉwirˉintrinsicˉoperation(
+                Source, Expression.Valueˉoffset, Expression.Valueˉlength
+            );
+            Target = Compilerˉsourceˉwirˉsentinel();
+        }
         Auxiliary = 0u32;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Record {
@@ -6437,7 +6543,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Expression.Offset, Expression.Line, Expression.Column
         );
     }
-    if Signature.Returnˉshape == 10u32 {
+    if Returnˉshape == 10u32 {
         let Neverˉcall: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
             Result, Operation, 0u32,
             Argumentˉoperands, Target, Auxiliary,
@@ -6457,7 +6563,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         );
     }
     return Compilerˉsourceˉwirˉemit(
-        Result, Operation, Signature.Returnˉshape,
+        Result, Operation, Returnˉshape,
         Argumentˉoperands, Target, Auxiliary,
         Expression.Offset, Expression.Length
     );
@@ -9161,6 +9267,8 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 164u32 { return Shape != 0u32; }
     if Operation == 165u32 { return Shape != 0u32; }
     if Operation == 166u32 { return Shape != 0u32; }
+    if Operation == 167u32 { return Shape == 8u32; }
+    if Operation == 168u32 { return Shape != 0u32; }
     return false;
 }
 
@@ -9264,6 +9372,8 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 164u32 { return Count == 1u32; }
     if Operation == 165u32 { return Count <= 64u32; }
     if Operation == 166u32 { return Count == 2u32; }
+    if Operation == 167u32 { return Count == 1u32; }
+    if Operation == 168u32 { return Count == 2u32; }
     return false;
 }
 
@@ -9415,6 +9525,11 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
     if Operation == 149u32 || Operation == 150u32 { return Shape == 16u32; }
     if Operation >= 152u32 {
         if Operation <= 162u32 { return Shape == 14u32 || Shape == 15u32; }
+    }
+    if Operation == 167u32 { return Index == 0u32; }
+    if Operation == 168u32 {
+        if Index == 0u32 { return true; }
+        return Shape == 8u32;
     }
     return true;
 }
@@ -10562,6 +10677,27 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
         Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
             Bindings.Directory
         );
+    if Operation == 167u32 || Operation == 168u32 {
+        if Auxiliary != 0u32 ||
+            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉsequence(
+                Target, Typeˉcatalog
+            ) {
+            return false;
+        }
+        let Element: u32 =
+            Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+                Target, Typeˉcatalog
+            );
+        if !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+            Element, Symbols
+        ) {
+            return false;
+        }
+        if Operation == 167u32 {
+            return Operandˉcount == 1u32 && Shape == 8u32;
+        }
+        return Operandˉcount == 2u32 && Shape == Element;
+    }
     if Operation == 68u32 {
         if !Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) { return false; }
         if Operandˉcount != 0u32 { return false; }
@@ -10849,7 +10985,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 166u32 { return false; }
+        if Operationˉkind > 168u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
             Operationˉshape, Symbols, Typeˉcatalog, true
         ) {
@@ -10915,6 +11051,15 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                         Operationˉtarget, Operationˉauxiliary, Operandˉindex
                     );
                 if Operandˉshape != Arrayˉoperandˉshape { return false; }
+            }
+            if Operationˉkind == 167u32 || Operationˉkind == 168u32 {
+                var Collectionˉoperandˉshape: u32 = Operationˉtarget;
+                if Operandˉindex == 1u32 {
+                    Collectionˉoperandˉshape = 8u32;
+                }
+                if Operandˉshape != Collectionˉoperandˉshape {
+                    return false;
+                }
             }
             if Operationˉkind == 164u32 {
                 var Variantˉfieldˉownerˉshape: u32 = 196608u32 + Operationˉtarget;

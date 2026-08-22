@@ -206,6 +206,15 @@ One combined full pass constructs local evidence and binds body references. The 
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 
+Before ambient intrinsic lookup, a qualified call may select the two
+compiler-supplied Sequence reads only through the exact Foundation collection
+module query. Binding records `Sequenceˉlength` as a one-argument intrinsic
+with WVIR operation identity 167 and `Sequenceˉat` as a two-argument intrinsic
+with identity 168. A lookalike module falls through to ordinary callable lookup
+and cannot obtain either synthetic match. The element-dependent parameter and
+result shapes are resolved later from the validated WVGT catalog; WVLB does not
+serialize a guessed generic shape for these calls.
+
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
 ## Current deterministic artifacts and retained evidence

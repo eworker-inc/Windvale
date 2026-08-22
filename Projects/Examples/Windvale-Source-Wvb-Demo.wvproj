@@ -21,4 +21,5 @@ source "Compiler/Windvale/Source-Wvb-Compilation-Core.wv"
 source "Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv"
 source "Compiler/Windvale/Source-Wvb-Temporary-Slots.wv"
 source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256.wv"
 emit wvb

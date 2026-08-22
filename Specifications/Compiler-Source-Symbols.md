@@ -131,6 +131,13 @@ the generic-aware binding phase substitutes that exact shape before WIR. This
 does not admit an unqualified spelling, a lookalike module, or a forgeable
 nominal declaration into the symbol directory.
 
+The compiler-supplied `Sequenceˉlength` and `Sequenceˉat` call spellings use
+the same exact owner gate. The query must be qualified, its alias must resolve,
+the selected member must match exactly, and the target module header must name
+`Foundationˉcollections`. The symbol phase returns only the owning module
+identity; it does not publish a forgeable function declaration or infer an
+intrinsic from the member name alone.
+
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 
 Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs; narrow signed constants retain sign plus bounded magnitude until WIR emits their exact named-width two's-complement bits; rune constants retain one already validated Unicode scalar. No width or overflow behavior inherits the host runtime.

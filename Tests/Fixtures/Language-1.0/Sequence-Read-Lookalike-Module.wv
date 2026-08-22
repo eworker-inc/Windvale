@@ -1,0 +1,5 @@
+#!wv/1 en@1
+module Lookalikeˉcollections;
+profile core;
+platform linux, windows, windvale;
+authority library;

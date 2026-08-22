@@ -6,4 +6,5 @@ source "Compiler/Windvale/Source-Descriptor-Core.wv"
 source "Compiler/Windvale/Source-Lexer-Core.wv"
 source "Compiler/Windvale/Source-Profile-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
+source "Foundation/Sha256.wv"
 emit wvb

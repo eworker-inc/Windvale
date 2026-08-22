@@ -1,0 +1,22 @@
+#!wv/1 en@1
+module Languageˉoneˉsequenceˉread;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+export fn Readˉat(
+    Value: borrow Collections.Sequence<i32>,
+    Index: u64
+) -> i32 {
+    let Count: u64 = Collections.Sequenceˉlength(Value);
+    if Index >= Count {
+        return 0;
+    }
+    return Collections.Sequenceˉat(Value, Index);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

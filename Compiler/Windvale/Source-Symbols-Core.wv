@@ -1413,7 +1413,7 @@ export fn Compilerˉsourceˉsymbolsˉquery(
     );
 }
 
-fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Lookup: bytes,
@@ -1443,6 +1443,16 @@ fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     if Intrinsic == 3u32 {
         Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequence"
+        );
+    }
+    if Intrinsic == 4u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequenceˉlength"
+        );
+    }
+    if Intrinsic == 5u32 {
+        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequenceˉat"
         );
     }
     if !Intrinsicˉmatches {

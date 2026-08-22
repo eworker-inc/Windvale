@@ -376,6 +376,46 @@ export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
     );
 }
 
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32,
+    Kind: u32
+) -> bool {
+    if !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return false;
+    }
+    let Instance: u32 =
+        Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+    if Instance >= Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) {
+        return false;
+    }
+    return Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+        Catalog, Instance
+    ) == Kind;
+}
+
+export fn Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+    Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32,
+    Parameter: u32
+) -> u32 {
+    if !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return 4294967295u32;
+    }
+    let Argument: Sourceˉgenerics.Compilerˉsourceˉgenericˉargument =
+        Compilerˉsourceˉgenericˉtypeˉcatalogˉargument(
+            Catalog,
+            Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape),
+            Parameter
+        );
+    if !Argument.Valid || Argument.Kind != 1u32 ||
+        Argument.Shape != 0u32 || Argument.High != 0u32 ||
+        Argument.Low == 0u32 {
+        return 4294967295u32;
+    }
+    return Argument.Low;
+}
+
 fn Compilerˉsourceˉgenericˉtypeˉcatalogˉcandidateˉdepth(
     Catalog: Compilerˉsourceˉgenericˉtypeˉcatalog,
     Solution: Sourceˉgenerics.Compilerˉsourceˉgenericˉsolution

@@ -1,0 +1,18 @@
+#!wv/1 en@1
+module Languageˉoneˉsequenceˉreadˉlookalike;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Lookalikeˉcollections as Collections;
+import Foundationˉcollections as Real;
+
+export fn Read(
+    Value: borrow Real.Sequence<i32>
+) -> u64 {
+    return Collections.Sequenceˉlength(Value);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

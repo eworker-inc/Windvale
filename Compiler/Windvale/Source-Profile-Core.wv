@@ -2,6 +2,7 @@ module Compilerˉsourceˉprofile profile portable;
 
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉset as Sourceˉset;
+import Foundationˉsha256 as Sha256;
 
 export enum Compilerˉsourceˉprofileˉstatus {
     Valid = 0;
@@ -319,7 +320,7 @@ fn Compilerˉsourceˉprofileˉexpectedˉhashˉvalid(Expected: bytes) -> bool {
 
 fn Compilerˉsourceˉprofileˉhashˉmatches(Value: bytes, Expected: bytes) -> bool {
     if !Compilerˉsourceˉprofileˉexpectedˉhashˉvalid(Expected) { return false; }
-    let Actual: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
+    let Actual: bytes = Sha256.Foundationˉsha256ˉhex(Value);
     return Compilerˉsourceˉprofileˉspansˉequal(
         Actual, 0u32, Bytesˉlength(Actual), Expected, 0u32, Bytesˉlength(Expected)
     );

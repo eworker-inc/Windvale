@@ -1433,6 +1433,28 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
     Offset: u32,
     Length: u32
 ) -> Compilerˉsourceˉbindingˉmatch {
+    let Sequenceˉlengthˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 4u32
+        );
+    if Sequenceˉlengthˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Sequenceˉlengthˉmodule.Index, 1u32, 167u32
+        );
+    }
+    let Sequenceˉatˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 5u32
+        );
+    if Sequenceˉatˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Sequenceˉatˉmodule.Index, 2u32, 168u32
+        );
+    }
     let Intrinsic: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉintrinsicˉarity(
         Source, Offset, Length
     );
