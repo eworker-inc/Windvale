@@ -106,25 +106,23 @@ chain only through hash-pinned Project 3 lock/profile inputs, uses a no-copy bod
 view, parses the standalone Core header, and compiles one minimal edition-1 program
 deterministically through WIR and WVB. Project 2 and descriptorless Seed remain on
 their prior path; no ambient profile fallback or parallel compiler was added.
-Slice 2 is active: its primitive identities, 23 bounded front-end assertions,
-named record update, WVB 1.12 fixed integers, WVB 1.13 runes, WVB 1.14 strict
-floating point, and WVB 1.15 ordinary `unit` plus return-only `never` now cross
-the shared compiler, verifier, and scalar runner. The rebuilt compiler rejects
-Seed-only `void` at the edition-1 boundary without publication. Named variant
-construction and destructuring now cross the compiler and independent verifier
-through WVB 1.16 and execute through the source-built native scalar runner with
-one bounded shared record/variant arena. Direct native lowering, browser, and OS
-consumers remain explicitly narrower. Value-producing control flow, localized
-token execution, and paired-host conformance remain later gates.
+Slices 2 and 3 cover the frozen scalar/value surface, named record and variant
+behavior, typed failure, generic Foundation `Option`/`Result`, canonical generic
+syntax and resolution, and bounded generic-function specialization. Their
+implemented WVB 1.12 through 1.16 paths cross the shared compiler, verifier, and
+source-built scalar runner. Direct native lowering, browser, and OS consumers
+remain explicitly narrower where their declared subsets have not advanced.
 
-Slice 4 now also implements contextual immutable fixed arrays through shared
-generic identity, WVIR operations 165/166, WVB 1.17 kind-4 metadata/shape 22,
-the compiler-aligned verifier, and the source-built scalar runner under
-[Decision 0821](../Decisions/0821-Implement-Fixed-Arrays-As-Wvb-1.17.md).
-The exact three-element program returns `42`; checked out-of-bounds access
-reports `WVR3008`. Mutable slices, vectors, direct native/browser/OS array
-execution, paired-host conformance, and the remaining migration slices stay
-open.
+Slice 4 now includes generic nominal materialization, contextual immutable fixed
+arrays, executable Vector/Sequence metadata and runtime operations, owned Vector
+local transfer, exact Foundation Sequence reads, Vector length/freeze, and exact
+freeze result contexts. [Decision 0831](../Decisions/0831-Propagate-Exact-Collection-Result-Contexts.md)
+records the current 1,199-byte WVB 1.20 oracle and the 412-case focused Language
+1.0 owner. The next connected result is the canonical owned `Memoryˉbudget` and
+allocation-effect boundary, followed by public fallible Vector construction and
+recoverable append. Remaining collection families, general ownership, localized
+token execution, direct native/browser/OS collection execution, and paired-host
+conformance remain later gates.
 
 ## How to read this roadmap
 

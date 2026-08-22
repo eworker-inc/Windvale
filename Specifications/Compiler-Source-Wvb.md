@@ -590,17 +590,26 @@ Vector evidence, and a call to that declaration produces the corresponding
 unique result; generated Vector stores and Vector returns therefore use
 `local.take`, never retaining `local.load`. The initial source ownership check is
 straight-line and admits one outstanding consumed Vector local per function.
-Branch-sensitive moves, multiple simultaneous consumed locals, Vector
-parameters, and general expected-type propagation remain later ownership work.
+Branch-sensitive moves, multiple simultaneous consumed locals, and Vector
+parameters remain later ownership work. Freeze receives one already-declared
+exact result context from a typed local initializer, assignment target,
+enclosing function return, or parameter of an already selected non-generic
+fixed-signature call. That context must be the canonical same-element
+`Sequence<T>`; an inferred local, missing context, or mismatched result rejects
+before WVIR publication. The result context never selects a callable or solves
+generic arguments. Context propagation through value-producing control flow
+and generic calls remains later work.
 
-The 546-byte WVB 1.20 fixture has SHA-256
-`fc51afb9c7b8a17dd9fd044e971f22944e0d96ec872de910de3f0114d066e20f`.
-Its independent `Main` returns 42; its unexecuted collection functions provide
-the exact compiler-lowering and verifier oracle until source-level fallible
-Vector construction is implemented. Six byte-level corruptions cover version,
-unique return, unique length access, and three Types immediates. Five source
-rejections cover use after freeze, wrong borrow modes, parameters, and an
-unsupported element.
+The 1,199-byte WVB 1.20 fixture has SHA-256
+`c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.
+Its independent `Main` returns 42; its nine functions retain direct-return,
+declared-local, assignment, and nested fixed-signature argument lowering
+oracles until source-level fallible Vector construction is implemented. Six
+byte-level corruptions cover version, unique return, unique length access, and
+three Types immediates. Eight source rejections cover use after freeze, wrong
+borrow modes, parameters, an unsupported element, a missing inferred result,
+and mismatched result and argument contexts. The focused harness therefore has
+11 cases and the front-door phase has 19 cases.
 
 The scalar representation uses one eight-byte value cell and the existing
 fixed 768-cell immutable aggregate arena. The low `u32` is the first field slot

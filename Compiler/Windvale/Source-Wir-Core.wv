@@ -4829,11 +4829,10 @@ fn Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
     Expectedˉshape: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
-    if Offset >= Endˉoffset || Bytesˉreadˉu8(Source, Offset) != 91u8 {
-        return Compilerˉsourceˉwirˉcompileˉexpression(
-            Input, Scan, Symbols,
-            Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Source, Offset, Line, Column, Endˉoffset, Build
+    if Offset >= Endˉoffset {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+            Build.Currentˉmodule, Offset, Line, Column
         );
     }
     let Contextualˉexpression:
@@ -4841,6 +4840,14 @@ fn Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
         Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
             Source, Offset, Line, Column, Endˉoffset, 0u32, 0u32
         );
+    if Contextualˉexpression.Kind ==
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Call {
+        return Compilerˉsourceˉwirˉcompileˉcall(
+            Input, Scan, Symbols,
+            Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Source, Contextualˉexpression, Expectedˉshape, Build
+        );
+    }
     if Contextualˉexpression.Kind !=
         Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Array {
         return Compilerˉsourceˉwirˉcompileˉexpression(
@@ -5386,7 +5393,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
     }
     return Compilerˉsourceˉwirˉcompileˉcall(
         Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-        Source, Expression, Build
+        Source, Expression, Compilerˉsourceˉwirˉsentinel(), Build
     );
 }
 
@@ -5997,6 +6004,7 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
     Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch,
     Operation: u32,
+    Expectedˉshape: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     let Position: Sourceˉbodies.Compilerˉsourceˉposition =
@@ -6086,11 +6094,15 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Local.Slot, Local.Shape, Expression.Offset, Expression.Length
         );
     }
-    let Sequenceˉshape: u32 = Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
-        Input, Scan, Symbols, Source, Build
-    );
+    let Sequenceˉshape: u32 = Expectedˉshape;
     if Sequenceˉshape == 0u32 ||
-        Sequenceˉshape == Compilerˉsourceˉwirˉsentinel() {
+        Sequenceˉshape == Compilerˉsourceˉwirˉsentinel() ||
+        !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉsequence(
+            Sequenceˉshape, Catalog
+        ) ||
+        Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+            Sequenceˉshape, Catalog
+        ) != Element {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
             Callable.Module,
@@ -6114,6 +6126,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     Bindingˉentries: u32,
     Source: bytes,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Expectedˉshape: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
@@ -6244,7 +6257,8 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         return Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Input, Scan, Symbols,
             Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Source, Expression, Callable, Foundationˉvectorˉoperation, Build
+            Source, Expression, Callable, Foundationˉvectorˉoperation,
+            Expectedˉshape, Build
         );
     }
     var Genericˉparameters: u32 = 0u32;
@@ -6448,13 +6462,33 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                     0u32, 0u32
                 );
         }
-        let Value: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉcompileˉexpression(
+        var Contextualˉargumentˉshape: u32 = 0u32;
+        if Genericˉparameters == 0u32 {
+            let Contextualˉargumentˉsignature:
+                Compilerˉsourceˉwirˉsignature =
+                Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
+                    Input, Scan, Symbols, Callable,
+                    Source, Expression.Valueˉoffset,
+                    Expression.Valueˉlength, Item,
+                    Compilerˉsourceˉwirˉgenericˉcatalog(
+                        Result.Genericˉevidence
+                    ),
+                    Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                        Result.Genericˉevidence
+                    ),
+                    Compilerˉsourceˉwirˉsentinel()
+                );
+            Contextualˉargumentˉshape =
+                Contextualˉargumentˉsignature.Parameterˉshape;
+        }
+        let Value: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
             Input, Scan, Symbols, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
             Source,
             Valueˉexpression.Offset,
             Valueˉexpression.Line, Valueˉexpression.Column,
             Valueˉexpression.Offset + Valueˉexpression.Length,
-            Result
+            Contextualˉargumentˉshape, Result
         );
         if Value.Status != Compilerˉsourceˉwirˉstatus.Valid { return Value; }
         if Value.Shape == 10u32 { return Value; }

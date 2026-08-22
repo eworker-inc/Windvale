@@ -2061,3 +2061,47 @@ failure. The maintained analyzer and emitter split projects still compile under
 the fixed four-MiB WVIR product bound. The recommended later extraction owns
 collection signatures, lowering, ownership validation, and dynamic WVIR checks
 together; it must not create numbered fragments or hide cross-phase invariants.
+
+## Slice 4/5 exact collection result-context checkpoint
+
+Decision 0831 replaces freeze's enclosing-return special case with one bounded
+contextual-call contract. An ordinary call can receive an exact shape from a
+declared local initializer, assignment target, enclosing return, or parameter
+of an already selected non-generic fixed-signature function. The context cannot
+select a declaration, solve a generic argument, or infer an untyped local.
+
+`Vectorˉfreeze` accepts only the canonical same-element
+`Foundationˉcollections.Sequence<T>` context. The source compiler rejects a
+missing inferred result, a mismatched declared Sequence element, and a nested
+call whose selected parameter has the wrong Sequence element before WVIR
+publication. Independent WVIR validation remains unchanged and reconstructs
+the same Vector and Sequence element evidence from WVGT.
+
+The expanded source fixture contains nine functions and publishes a 584-byte
+WVLB, a 1,792-byte WVIR, and a deterministic 1,199-byte WVB 1.20 module at
+SHA-256
+`c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.
+The current verifier accepts it and the unchanged runner returns 42. Eleven
+harness cases plus eight source rejections make the focused Vector read/freeze
+phase 19 cases.
+
+The exact current split analyzer is 1,112,436 WVB bytes at SHA-256
+`d294003a2cb37c33475c384de71f34d95a18254d34116b8883c576ac416bbbcb`
+and packages as a 35,059,200-byte Windows application at SHA-256
+`f12e299b1c9787538b3c6bc41a2a1d0538c2eacebcd3b770849c630867c5b879`.
+Its 1,673,348 source bytes produce 3,335,328 WVIR bytes and 910,794 code bytes,
+remaining below the maintained four-MiB WVIR product bound.
+
+The Language 1.0 owner advances from 406 to 412 cases. The 108-owner registry
+now declares 5,196 cases at SHA-256
+`b3db60ae871d308c36cf17cc02639efd3a8a7b6d4a107bafb646af1abe6e690c`.
+
+`Source-Wir-Core.wv` is 12,611 lines. This checkpoint adds one coherent expected-
+shape path; it does not make file length a semantic or evidence failure. A later
+refactor should extract a named contextual-expression or collection-lowering
+owner with an explicit phase contract, not mechanically divide the file.
+
+The next connected checkpoint remains canonical `Memoryˉbudget` identity,
+ownership, allocation effect, and launcher transfer before public fallible
+Vector construction and recoverable append. No budget-free or unbounded
+constructor is introduced here.

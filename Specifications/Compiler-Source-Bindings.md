@@ -221,6 +221,15 @@ any synthetic match. Element-dependent parameter and result shapes are resolved
 later from the validated WVGT catalog; WVLB does not serialize a guessed generic
 shape for these calls.
 
+Binding does not use a call's expected result to select an intrinsic or ordinary
+declaration. During typed WVIR construction, an already selected ordinary call
+may receive one exact contextual shape from a declared local, assignment target,
+function return, or parameter of a selected non-generic fixed-signature call.
+`Vectorˉfreeze` consumes only an exact canonical same-element `Sequence<T>`
+context. Missing, inferred, or mismatched contexts reject before publication;
+generic argument solving remains argument-derived or explicit and never uses
+the result context.
+
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 
 ## Current deterministic artifacts and retained evidence

@@ -97,7 +97,7 @@ try {
     }
     console.log(
         'language 1 vector reads and freeze status=Passed ' +
-        `cases=${Cases.length + 2} bytes=${Input.length}`,
+        `cases=${Cases.length + 5} contextual-cases=3 bytes=${Input.length}`,
     );
 } finally {
     for (const Candidate of Created) {
@@ -130,11 +130,22 @@ function Inspectˉlayout(Input) {
     Requireˉcollectionˉtypes(Input, Sections.get(7));
     const Functions = Inspectˉfunctions(Input, Sections.get(4), Sections.get(5));
     const Acquire = Requireˉfunction(Functions, 'Acquire', '1700000000');
+    const Acquireˉsequence = Requireˉfunction(
+        Functions, 'Acquireˉsequence', '1801000000',
+    );
+    const Consume = Requireˉfunction(Functions, 'Consume', '0a');
     const Freeze = Requireˉfunction(Functions, 'Freeze', '1801000000');
+    const Freezeˉargument = Requireˉfunction(
+        Functions, 'Freezeˉargument', '0a',
+    );
+    const Freezeˉassignment = Requireˉfunction(
+        Functions, 'Freezeˉassignment', '0a',
+    );
+    const Freezeˉlocal = Requireˉfunction(Functions, 'Freezeˉlocal', '0a');
     Requireˉfunction(Functions, 'Main', '01');
     const Length = Requireˉfunction(Functions, 'Readˉlength', '0a');
-    if (Functions.size !== 4) {
-        Reject('The fixture must retain exactly four functions.');
+    if (Functions.size !== 9) {
+        Reject('The fixture must retain exactly nine functions.');
     }
 
     const Acquireˉpattern = Buffer.from([
@@ -167,7 +178,47 @@ function Inspectˉlayout(Input) {
         81,
     ]);
     Requireˉexactˉcode(Input, Acquire, Acquireˉpattern);
+    Requireˉexactˉcode(
+        Input, Acquireˉsequence,
+        Buffer.from('40010000000500000000040000000051', 'hex'),
+    );
+    Requireˉexactˉcode(
+        Input, Consume,
+        Buffer.from(
+            '040000000005010000000401000000cb01000000050200000050040200000051',
+            'hex',
+        ),
+    );
     Requireˉexactˉcode(Input, Freeze, Freezeˉpattern);
+    Requireˉexactˉcode(
+        Input, Freezeˉargument,
+        Buffer.from(
+            '40000000000501000000cd010000000500000000cd00000000' +
+            'c9000000000100000005020000000402000000400200000005' +
+            '03000000040300000051',
+            'hex',
+        ),
+    );
+    Requireˉexactˉcode(
+        Input, Freezeˉassignment,
+        Buffer.from(
+            '40010000000502000000040200000005000000004000000000' +
+            '0503000000cd030000000501000000cd01000000c90000000001' +
+            '0000000504000000040400000005000000000400000000050500' +
+            '00000405000000cb01000000050600000050040600000051',
+            'hex',
+        ),
+    );
+    Requireˉexactˉcode(
+        Input, Freezeˉlocal,
+        Buffer.from(
+            '40000000000502000000cd020000000500000000cd00000000' +
+            'c9000000000100000005030000000403000000050100000004' +
+            '0100000005040000000404000000cb01000000050500000050' +
+            '040500000051',
+            'hex',
+        ),
+    );
     Requireˉexactˉcode(Input, Length, Lengthˉpattern);
     return {
         acquireTake: Acquire.codeStart + 10,

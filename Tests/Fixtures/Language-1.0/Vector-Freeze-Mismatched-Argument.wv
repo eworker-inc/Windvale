@@ -1,0 +1,24 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉfreezeˉmismatchedˉargument;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+
+fn Acquire() -> Collections.Vector<i32> {
+    return Acquire();
+}
+
+fn Consume(Value: Collections.Sequence<u32>) -> u64 {
+    return Collections.Sequenceˉlength(borrow Value);
+}
+
+export fn Freeze() -> u64 {
+    let Values: Collections.Vector<i32> = Acquire();
+    return Consume(Collections.Vectorˉfreeze(Values));
+}
+
+export fn Main() -> i32 {
+    return 42;
+}
