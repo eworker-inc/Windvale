@@ -1429,52 +1429,36 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     if !Query.Qualified || !Query.Aliasˉfound {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
-    var Intrinsicˉmatches: bool = false;
-    if Intrinsic == 1u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Array"
-        );
-    }
-    if Intrinsic == 2u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vector"
-        );
-    }
-    if Intrinsic == 3u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequence"
-        );
-    }
-    if Intrinsic == 4u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequenceˉlength"
-        );
-    }
-    if Intrinsic == 5u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Sequenceˉat"
-        );
-    }
-    if Intrinsic == 6u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vectorˉlength"
-        );
-    }
-    if Intrinsic == 7u32 {
-        Intrinsicˉmatches = Compilerˉsourceˉsymbolsˉnameˉequals(
-            Source, Query.Nameˉoffset, Query.Nameˉlength, "Vectorˉfreeze"
-        );
-    }
-    if !Intrinsicˉmatches {
+    var Expectedˉname: text = "";
+    if Intrinsic == 1u32 { Expectedˉname = "Array"; }
+    if Intrinsic == 2u32 { Expectedˉname = "Vector"; }
+    if Intrinsic == 3u32 { Expectedˉname = "Sequence"; }
+    if Intrinsic == 4u32 { Expectedˉname = "Sequenceˉlength"; }
+    if Intrinsic == 5u32 { Expectedˉname = "Sequenceˉat"; }
+    if Intrinsic == 6u32 { Expectedˉname = "Vectorˉlength"; }
+    if Intrinsic == 7u32 { Expectedˉname = "Vectorˉfreeze"; }
+    if Intrinsic == 8u32 { Expectedˉname = "Memoryˉbudget"; }
+    if Intrinsic < 1u32 || Intrinsic > 8u32 ||
+        !Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
+        ) {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
         Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
     let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
         Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    var Expectedˉmodule: text = "Foundationˉcollections";
+    if Intrinsic == 8u32 {
+        if View.Edition != 1u32 {
+            return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(
+                false, Scan.Modules
+            );
+        }
+        Expectedˉmodule = "Foundationˉmemory";
+    }
     if !Compilerˉsourceˉsymbolsˉnameˉequals(
-        View.Source, Header.Nameˉoffset, Header.Nameˉlength,
-        "Foundationˉcollections"
+        View.Source, Header.Nameˉoffset, Header.Nameˉlength, Expectedˉmodule
     ) {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
@@ -2079,6 +2063,12 @@ export fn Compilerˉsourceˉsymbolsˉgenericˉexpandedˉshape(
 export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
     Binding: Compilerˉsourceˉtypeˉbinding
 ) -> u32 {
+    if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named &&
+        Binding.Nominalˉkind ==
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End &&
+        Binding.Nominalˉindex == 805306368u32 {
+        return 805306368u32;
+    }
     let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
     if Primitive != 0u32 { return Primitive; }
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Sequence ||
@@ -2372,6 +2362,24 @@ export fn Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
             Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
                 Source, Offset, Line, Column, false
             );
+        let Memoryˉbudgetˉmodule:
+            Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+            Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+                Input, Scan, Lookup, Owner, Source,
+                Token.Offset, Qualified.Nextˉoffset - Token.Offset, 8u32
+            );
+        if Memoryˉbudgetˉmodule.Found {
+            return Compilerˉsourceˉsymbolsˉconcreteˉtypeˉvalue(
+                Compilerˉsourceˉsymbolˉstatus.Valid,
+                805306368u32,
+                Qualified.Nextˉoffset,
+                Qualified.Nextˉline,
+                Qualified.Nextˉcolumn,
+                Qualified.Nextˉoffset,
+                Qualified.Nextˉline,
+                Qualified.Nextˉcolumn
+            );
+        }
         var Collectionˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
             Compilerˉsourceˉsymbolsˉfoundationˉvectorˉmodule(
                 Input, Scan, Lookup, Owner, Source,
@@ -2471,6 +2479,7 @@ export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
     Allowˉnoˉvalue: bool
 ) -> bool {
     if Shape == 0u32 { return Allowˉnoˉvalue; }
+    if Shape == 805306368u32 { return true; }
     if Shape <= 9u32 { return true; }
     if Shape == 10u32 { return Allowˉnoˉvalue; }
     if Shape >= 11u32 && Shape <= 16u32 { return true; }
@@ -2570,6 +2579,30 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
         Source, Offset, Line, Column, false
     );
     let Qualifiedˉlength: u32 = Qualified.Nextˉoffset - Token.Offset;
+    let Memoryˉbudgetˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
+            Input, Scan, Lookup, Owner, Source,
+            Token.Offset, Qualifiedˉlength, 8u32
+        );
+    if Memoryˉbudgetˉmodule.Found {
+        if Forˉfield {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype,
+                Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+                805306368u32,
+                Memoryˉbudgetˉmodule.Index, Token
+            );
+        }
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
+            Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            805306368u32,
+            Memoryˉbudgetˉmodule.Index,
+            Token.Offset, Qualifiedˉlength,
+            Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
+        );
+    }
     let Capability: Compilerˉsourceˉsymbolˉmatch = Compilerˉsourceˉsymbolsˉfindˉpriorˉinˉdirectory(
         Input, Scan, Directory, Lookup, 0u32, 4294967295u32,
         Source, Token.Offset, Qualifiedˉlength,

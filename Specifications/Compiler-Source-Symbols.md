@@ -131,6 +131,17 @@ the generic-aware binding phase substitutes that exact shape before WIR. This
 does not admit an unqualified spelling, a lookalike module, or a forgeable
 nominal declaration into the symbol directory.
 
+Edition-1 source also recognizes the exact imported identity
+`Foundationˉmemory.Memoryˉbudget`. The selected alias must resolve to an
+edition-1 module whose header name is exactly `Foundationˉmemory`; an
+unqualified spelling and a same-spelled member in any other module remain
+`Unknownˉtype`. The binding uses private fixed shape `805306368` and an internal
+named/end sentinel rather than a forgeable nominal declaration. It is valid in
+function signatures but rejected as a record field until its opaque storage
+representation exists. This exact header gate is not package authentication:
+the admitted source set and project source lock remain responsible for choosing
+the trusted Foundation module.
+
 The compiler-supplied `Sequenceˉlength` and `Sequenceˉat` call spellings use
 the same exact owner gate. The query must be qualified, its alias must resolve,
 the selected member must match exactly, and the target module header must name

@@ -1,0 +1,19 @@
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉtypeˉidentity;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+
+fn Observe(Budget: borrow Memory.Memoryˉbudget) -> u64 {
+    return 42u64;
+}
+
+export fn Run(Budget: Memory.Memoryˉbudget) -> u64 {
+    return Observe(borrow Budget);
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

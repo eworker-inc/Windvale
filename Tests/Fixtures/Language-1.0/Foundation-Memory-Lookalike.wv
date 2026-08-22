@@ -1,0 +1,8 @@
+#!wv/1 en@1
+module Foundationˉmemoryˉlookalike;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+// Matching member spelling in a different module does not acquire the
+// canonical Foundationˉmemory opaque identity.

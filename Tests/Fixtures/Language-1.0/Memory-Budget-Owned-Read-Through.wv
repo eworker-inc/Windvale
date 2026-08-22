@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉownedˉreadˉthrough;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+
+fn Consume(Budget: Memory.Memoryˉbudget) -> unit {
+    return;
+}
+
+export fn Invalid(Budget: borrow Memory.Memoryˉbudget) -> unit {
+    Consume(borrow Budget);
+    return;
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

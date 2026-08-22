@@ -2105,3 +2105,44 @@ The next connected checkpoint remains canonical `Memoryˉbudget` identity,
 ownership, allocation effect, and launcher transfer before public fallible
 Vector construction and recoverable append. No budget-free or unbounded
 constructor is introduced here.
+
+## Slice 4/5 canonical Memory budget identity checkpoint
+
+Decision 0832 connects the exact qualified edition-1
+`Foundationˉmemory.Memoryˉbudget` identity to source binding and WIR ownership.
+The alias must target an edition-1 module whose exact header name is
+`Foundationˉmemory`; unqualified use and the same member spelling in a different
+module fail as `Unknownˉtype`. The Foundation source remains an intrinsic holder
+and publishes no forgeable record or constructor. Project admission and its
+source lock, not the header spelling alone, select the trusted dependency.
+
+The compiler carries the opaque type as private fixed shape `805306368` with an
+internal named/end sentinel. Function signatures may receive it, immutable
+borrows may observe it, and WIR classifies it as owned. A borrowed budget cannot
+satisfy a consuming by-value parameter and fails as `Invalidˉborrow`. Record
+fields reject the shape until opaque storage and destruction are represented.
+No new public declaration kind, WVIR operation, or language ABI number is added.
+
+WVB emission explicitly returns
+`source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape`
+with no output module. Runtime representation, moves and destruction, launcher
+or parent-domain transfer, `Split`, allocation effects, exact enum backing,
+`Allocationˉfailure`, leases, provider accounting, and public fallible Vector
+construction remain connected later checkpoints.
+
+The maintained 992,412-byte analyzer producer compiles the current
+1,114,218-byte analyzer at SHA-256
+`640ba1a9714979927433fa4936c73fa164b83f33ad22c794e86092ee8e17faa8`.
+That analyzer compiles the current 1,029,551-byte emitter at SHA-256
+`a3bdffe028b2d4268358324a9b9a13aba2841730dd8f7334c4512a4f312827eb`.
+The positive two-module fixture publishes 104 manifest bytes, 120 binding bytes,
+and 424 WVIR bytes. Four negative/publication cases cover owned read-through,
+unqualified and lookalike identity, and unsupported WVB output.
+
+The focused Language 1.0 owner advances from 412 to 417 cases. The 108-owner
+registry advances from 5,196 to 5,201 declared cases at SHA-256
+`bdff820b2e13034763962928b1c162e22f9852102ccb60dd5bb04f525c4c173d`.
+`Source-Wir-Core.wv` reaches 12,612 lines, but this checkpoint adds only its
+fixed-shape validity and ownership checks. The later maintainability refactor
+should extract a named phase with type/ownership or collection-lowering
+invariants rather than numbered file fragments.

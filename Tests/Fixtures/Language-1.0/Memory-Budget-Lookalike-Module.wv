@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉlookalikeˉmodule;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemoryˉlookalike as Memory;
+
+export fn Invalid(Budget: Memory.Memoryˉbudget) -> u64 {
+    return 42u64;
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

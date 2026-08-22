@@ -600,6 +600,13 @@ before WVIR publication. The result context never selects a callable or solves
 generic arguments. Context propagation through value-producing control flow
 and generic calls remains later work.
 
+The exact edition-1 `Foundationˉmemory.Memoryˉbudget` source identity reaches
+valid WVIR as private owned shape `805306368`, but WVB emission deliberately
+returns `Unsupportedˉshape` and publishes no module. WVB gains no provisional
+type tag, opcode, or runtime representation from this checkpoint. The first
+supported encoding must arrive with exact move/destruction behavior, launcher
+or parent-domain transfer, bounded accounting, and malformed-module coverage.
+
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.
 Its independent `Main` returns 42; its nine functions retain direct-return,

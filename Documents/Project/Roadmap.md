@@ -116,13 +116,15 @@ remain explicitly narrower where their declared subsets have not advanced.
 Slice 4 now includes generic nominal materialization, contextual immutable fixed
 arrays, executable Vector/Sequence metadata and runtime operations, owned Vector
 local transfer, exact Foundation Sequence reads, Vector length/freeze, and exact
-freeze result contexts. [Decision 0831](../Decisions/0831-Propagate-Exact-Collection-Result-Contexts.md)
-records the current 1,199-byte WVB 1.20 oracle and the 412-case focused Language
-1.0 owner. The next connected result is the canonical owned `Memoryˉbudget` and
-allocation-effect boundary, followed by public fallible Vector construction and
-recoverable append. Remaining collection families, general ownership, localized
-token execution, direct native/browser/OS collection execution, and paired-host
-conformance remain later gates.
+freeze result contexts. [Decision 0832](../Decisions/0832-Bind-The-Canonical-Foundation-Memory-Budget-Identity.md)
+now adds the canonical qualified `Memoryˉbudget` source identity and owned WIR
+classification while explicitly rejecting WVB publication. The focused
+Language 1.0 owner declares 417 cases. The next connected result is the budget's
+runtime/launcher transfer and allocation-effect boundary, followed by public
+fallible Vector construction and recoverable append. Remaining collection
+families, general ownership, localized token execution, direct
+native/browser/OS collection execution, and paired-host conformance remain
+later gates.
 
 ## How to read this roadmap
 

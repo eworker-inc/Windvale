@@ -209,6 +209,7 @@ export fn Compilerˉsourceˉwvbˉshapeˉisˉsupported(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> bool {
+    if Shape == 805306368u32 { return false; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
         Shape, Symbols.Records, Symbols.Enums, Symbols.Variants, Allowˉvoid
     ) {

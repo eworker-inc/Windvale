@@ -698,6 +698,7 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
         Symbols.Directory, Shape
     ) { return true; }
+    if Shape == 805306368u32 { return true; }
     if Shape >= 1073741824u32 {
         if Shape < 1610612736u32 { return true; }
     }
@@ -765,7 +766,7 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
     if Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) ||
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
             Symbols.Directory, Shape
-        ) {
+        ) || Shape == 805306368u32 {
         return WIR_VALUE_CLASS_OWNED;
     }
     return WIR_VALUE_CLASS_UNKNOWN;

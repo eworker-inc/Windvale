@@ -251,6 +251,14 @@ backing, while a borrowed vector cannot satisfy a consuming by-value position.
 The classification consumes the validated generic-type catalog; a private shape
 without matching evidence is not inferred from its numeric range.
 
+The private compiler shape `805306368` represents only the exact edition-1
+`Foundationˉmemory.Memoryˉbudget` identity and is classified as owned. An
+explicit immutable borrow may satisfy an observing borrowed parameter, while a
+borrowed budget cannot satisfy a consuming by-value parameter. This checkpoint
+admits no source construction, move operation, `Split`, allocation effect,
+lease, launcher transfer, or serialized representation. The numeric shape is
+private compiler evidence rather than a Language ABI value.
+
 Exact Foundation Sequence reads reuse that catalog proof. Operation 167
 `Foundationˉsequenceˉlength` consumes one temporary whose shape is the target
 kind-12 private Sequence and produces `u64`. Operation 168

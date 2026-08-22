@@ -1,0 +1,12 @@
+#!wv/1 en@1
+module Foundationˉmemory;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+// Memoryˉbudget is a compiler-supplied, representation-hidden, move-owned
+// Foundation identity. Core source can receive it from an admitted launcher or
+// parent domain but cannot construct one from ambient memory. Split, allocation
+// effects, exact Allocationˉreason enum representation, Allocationˉfailure,
+// leases, and executable provider accounting land in later migration
+// checkpoints. This module does not publish forgeable record substitutes.
