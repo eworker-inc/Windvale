@@ -263,6 +263,9 @@ reparse it.
 - Admit the exact effect-clause front end required to express allocation and
   release, while leaving complete resolution, inference, function-value, and
   capture enforcement owned by Slice 6.
+- Admit the exact `using Name = Expression Block` front end and retain its
+  binding, acquisition, and body spans before connecting owned-resource
+  classification, reverse-order release, and exit-path lowering.
 - Migrate Foundation and one hosted file/resource consumer before broad rollout.
 
 ### Slice 6: functions and effects

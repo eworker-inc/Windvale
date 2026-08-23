@@ -2549,3 +2549,54 @@ compatibility, function values, and WVIR/WVB/package evidence remain Slice 6
 work. Slice 5 next connects the `memory.allocate` identity far enough to verify
 allocation leases, then adds public fallible Vector construction and
 recoverable append.
+
+## Slice 5 `using` statement front-end checkpoint
+
+[Decision 0839](../Decisions/0839-Admit-Exact-Language-1.0-Using-Statements.md)
+admits the exact frozen `using Name = Expression Block` source shape without
+claiming resource semantics. The lexer appends token identity 103. Edition 1
+admits it while descriptorless Seed rejects it. The body parser appends statement
+kind 14 and retains the binding-name, acquisition-expression, and complete body
+spans in its existing flat immutable record.
+
+The parser counts the acquisition and body descendants under the existing
+4,096-statement, 4,096-node-per-expression, and depth-64 limits. It allocates no
+child-statement collection. The checkpoint does not yet add the lexical binding
+to semantic scope, classify an owned resource, prove moves or borrows, select a
+release protocol, lower cleanup edges, or alter WVIR/WVB. Full Unicode project
+identifier admission remains a separate normalized source-profile front-door
+qualification; this direct canonical-parser owner covers the already implemented
+ASCII/U+02C9 view without changing that frozen requirement.
+
+The focused owner builds its hosted fixture twice, compares exact WVB bytes,
+packages the module through the maintained segmented native path, and executes
+18 cases in two bounded parallel batches. Cases cover the keyword, ordinary and
+`try` acquisitions, nested scopes, comments and line tracking, retained spans
+and counts, every missing structural component, unterminated input, edition
+separation, contextual `usingx`, exact accepted/rejected nesting boundaries,
+and macron-separated identifiers. The 378,739-byte module is byte-identical at
+SHA-256
+`cab55c5abbf301fe1a9dbafe6566444d7cba9aee6d1d1eddaf23d26d3406847e`;
+all packaged Windows selectors return 42.
+
+One rerun exposed a real Windows development-wrapper race: simultaneous
+`Build-Wvb.cmd` processes can begin with identical `%RANDOM%` candidates and
+previously used a check-then-create sequence. The wrapper now treats directory
+creation as the atomic claim and retries at most 32 times. This is a measured
+workflow reliability fix worth retaining before self-hosting; it is not broad
+tuning of the transitional compiler.
+
+The new focused owner advances the registry to 112 owners and 5,316 cases at
+SHA-256
+`fc53fb21939dd854c4a7f3e8a46602a62dd04078444002723375d77b9c1f3e93`.
+The complete body-parser fixture exceeds the small scripting runner's existing
+bounded call-depth profile, so executable evidence uses the maintained native
+segmented package rather than widening the runner. Paired Linux execution
+remains pending.
+
+This remains a Slice 5 front-end checkpoint. Allocation leases and honest
+`memory.allocate` enforcement, public fallible Vector construction/recoverable
+append, general owned calls and control-flow joins, semantic `using`, reverse
+successful-acquisition release, and one real hosted resource consumer remain
+before Slice 5 is complete. Canonical effect resolution, inference, function
+values, and capture enforcement remain Slice 6 work.

@@ -1518,6 +1518,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-effect-clause-front-end'
     } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
+        'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Using-Front-End.cmd',
+        'Tools/Native/Test-Language-1.0-Using-Front-End.sh',
+        'Tools/Native/Test-Language-1.0-Using-Front-End.mjs'
+    )) {
+        Add-Suite 'language-1-using-front-end'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Declaration-Self-Test.wv'
     )) {
@@ -2577,6 +2585,13 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'language-1-effect-clause-front-end'
         }
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Body-Parser.wv',
+            'Compiler/Windvale/Source-Set-Core.wv'
+        )) {
+            Add-Suite 'language-1-using-front-end'
+        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',
@@ -3441,6 +3456,9 @@ foreach ($Path in $Paths) {
             Add-Compiler-Suites
             $script:DatabaseStorageDevelopmentEligible = $false
             Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
+        } elseif ($Path -eq 'Specifications/Compiler-Source-Body-Parser.md') {
+            Add-Compiler-Suites
+            Add-Suite 'language-1-using-front-end'
         } elseif ($Path -in @(
             'Specifications/Seed-Language.md',
             'Specifications/Seed-Records.md',
@@ -3449,6 +3467,9 @@ foreach ($Path in $Paths) {
         )) {
             Add-Compiler-Suites
             Add-Suite 'language-1-front-door'
+            if ($Path -eq 'Specifications/Seed-Language.md') {
+                Add-Suite 'language-1-using-front-end'
+            }
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {
             Add-Suite 'uefi-packager'
         } elseif ($Path -eq 'Specifications/Wv-Dump-Core.md') {

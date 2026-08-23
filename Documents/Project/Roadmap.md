@@ -138,9 +138,15 @@ the verifier, and the source-built runner. Its 15-case owner proves both
 successful and refused splits plus nine malformed modules.
 [Decision 0838](../Decisions/0838-Admit-Exact-Language-1.0-Effect-Clauses.md)
 then admits bounded exact `effects(...)` syntax and retains its declaration
-span/count evidence without claiming semantic resolution. The next connected
-results are canonical effect resolution and call enforcement, allocation
-leases, and public fallible Vector construction with recoverable append.
+span/count evidence without claiming semantic resolution.
+[Decision 0839](../Decisions/0839-Admit-Exact-Language-1.0-Using-Statements.md)
+then admits the bounded `using Name = Expression Block` syntax and retains its
+binding, acquisition, and body spans without claiming resource semantics. The
+next connected Slice 5 results are allocation leases, public fallible Vector
+construction with recoverable append, general owned calls and control-flow
+joins, semantic cleanup lowering, reverse-order release, and one hosted
+consumer. Canonical effect resolution, call enforcement, function values, and
+captures follow in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

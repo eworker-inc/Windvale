@@ -8,11 +8,18 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Admitted the exact Language 1.0 `using Name = Expression { ... }` statement
+  at the source front end. Edition 1 now has appended token identity 103 and
+  statement kind 14, retained binding/acquisition/body spans, existing bounded
+  descendant accounting, and an independent deterministic 18-case owner.
+  Resource typing, semantic binding, moves, and exactly-once reverse-order
+  release remain Slice 5 work.
 - Admitted the exact Language 1.0 `effects(...)` clause at the source front
   end. Edition 1 now has an appended `effects` token, bounded canonical
   lowercase-ASCII identities, retained clause span/count metadata, and 20
   isolated deterministic cases. This is syntax and declaration evidence only;
   effect resolution, inference, call checking, and WVB evidence remain pending.
+
 - Began Language 1.0 Migration Slice 5 with an exact WVB 1.21
   launcher-to-entry `Memoryˉbudget` transfer. The compiler, independent
   verifier, and source-built scalar runner admit the opaque owner only as the
@@ -98,6 +105,9 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Changed
 
+- Made the Windows native WVB build wrapper retry temporary-directory creation
+  atomically with a 32-attempt bound, removing the observed parallel-build race
+  caused by identical `%RANDOM%` candidates.
 - Refreshed the exact current compiler, segmented staging-producer, and
   WVB-to-WVO candidate families after adding hosted byte output, while
   retaining the byte-identical unaffected fixtures. Owners that need the

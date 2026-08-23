@@ -1,0 +1,212 @@
+module Languageˉoneˉusingˉfrontˉendˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Parse(
+    Source: text,
+    Nesting: u32
+) -> Bodies.Compilerˉsourceˉstatement {
+    let Input: bytes = Textˉtoˉutf8(Source);
+    return Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+        Input, 0u32, 1u32, 1u32, Bytesˉlength(Input), Nesting
+    );
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 {
+        let Keyword: bytes = Textˉtoˉutf8("using");
+        if Lexer.Compilerˉsourceˉkeywordˉkind(
+            Keyword, 0u32, Bytesˉlength(Keyword)
+        ) != Lexer.Compilerˉtokenˉkind.Using { return 1; }
+        return 42;
+    }
+    if Selected == 98u32 {
+        let Simple: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open() { return; }", 0u32
+        );
+        if Simple.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Simple.Kind != Bodies.Compilerˉsourceˉstatementˉkind.Using ||
+            Simple.Nameˉoffset != 6u32 || Simple.Nameˉlength != 4u32 ||
+            Simple.Expressionˉoffset != 13u32 ||
+            Simple.Expressionˉlength != 6u32 ||
+            Simple.Firstˉblockˉoffset != 20u32 ||
+            Simple.Firstˉblockˉlength != 11u32 ||
+            Simple.Statements != 2u32 || Simple.Expressions != 1u32 {
+            return 2;
+        }
+        return 42;
+    }
+    if Selected == 99u32 {
+        let Tried: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = try Open() { Finish(File); }", 0u32
+        );
+        if Tried.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Tried.Kind != Bodies.Compilerˉsourceˉstatementˉkind.Using ||
+            Tried.Expressionˉlength != 10u32 ||
+            Tried.Statements != 2u32 || Tried.Expressions != 4u32 {
+            return 3;
+        }
+        return 42;
+    }
+    if Selected == 100u32 {
+        let Nested: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using Outer = Open() { using Inner = Open() { Use(Inner); } }",
+            0u32
+        );
+        if Nested.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Nested.Statements != 3u32 || Nested.Expressions != 4u32 ||
+            Nested.Maximumˉstatementˉdepth != 3u32 {
+            return 4;
+        }
+        return 42;
+    }
+    if Selected == 101u32 {
+        let Commented: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using // resource\n File = Open() // body\n {\n return;\n }",
+            0u32
+        );
+        if Commented.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Commented.Nextˉline != 5u32 || Commented.Nextˉcolumn != 3u32 {
+            return 5;
+        }
+        return 42;
+    }
+    if Selected == 102u32 {
+        let Missingˉname: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using = Open() { return; }", 0u32
+        );
+        if Missingˉname.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉname.Expected != Lexer.Compilerˉtokenˉkind.Identifier ||
+            Missingˉname.Found != Lexer.Compilerˉtokenˉkind.Equals {
+            return 6;
+        }
+        return 42;
+    }
+    if Selected == 103u32 {
+        let Keywordˉname: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using using = Open() { return; }", 0u32
+        );
+        if Keywordˉname.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Keywordˉname.Expected != Lexer.Compilerˉtokenˉkind.Identifier ||
+            Keywordˉname.Found != Lexer.Compilerˉtokenˉkind.Using {
+            return 7;
+        }
+        return 42;
+    }
+    if Selected == 104u32 {
+        let Missingˉequals: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File Open() { return; }", 0u32
+        );
+        if Missingˉequals.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉequals.Expected != Lexer.Compilerˉtokenˉkind.Equals ||
+            Missingˉequals.Found != Lexer.Compilerˉtokenˉkind.Identifier {
+            return 8;
+        }
+        return 42;
+    }
+    if Selected == 105u32 {
+        let Missingˉexpression: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = { return; }", 0u32
+        );
+        if Missingˉexpression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉexpression {
+            return 9;
+        }
+        return 42;
+    }
+    if Selected == 106u32 {
+        let Missingˉblock: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open();", 0u32
+        );
+        if Missingˉblock.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉblock.Expected != Lexer.Compilerˉtokenˉkind.Leftˉbrace ||
+            Missingˉblock.Found != Lexer.Compilerˉtokenˉkind.Semicolon {
+            return 10;
+        }
+        return 42;
+    }
+    if Selected == 107u32 {
+        let Unterminated: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open() { return;", 0u32
+        );
+        if Unterminated.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Unterminated.Expected != Lexer.Compilerˉtokenˉkind.Rightˉbrace ||
+            Unterminated.Found != Lexer.Compilerˉtokenˉkind.End {
+            return 11;
+        }
+        return 42;
+    }
+    if Selected == 108u32 {
+        let Excessiveˉnesting: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open() { return; }", 65u32
+        );
+        if Excessiveˉnesting.Status != Bodies.Compilerˉbodyˉparseˉstatus.Nestingˉlimit {
+            return 12;
+        }
+        return 42;
+    }
+    if Selected == 109u32 {
+        if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            1u32, Lexer.Compilerˉtokenˉkind.Using
+        ) { return 13; }
+        return 42;
+    }
+    if Selected == 110u32 {
+        if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            0u32, Lexer.Compilerˉtokenˉkind.Using
+        ) { return 14; }
+        return 42;
+    }
+    if Selected == 111u32 {
+        let Word: bytes = Textˉtoˉutf8("usingx");
+        if Lexer.Compilerˉsourceˉkeywordˉkind(
+            Word, 0u32, Bytesˉlength(Word)
+        ) != Lexer.Compilerˉtokenˉkind.Identifier { return 15; }
+        return 42;
+    }
+    if Selected == 112u32 {
+        let Maximumˉaccepted: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open() {}", 63u32
+        );
+        if Maximumˉaccepted.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Maximumˉaccepted.Maximumˉstatementˉdepth != 1u32 {
+            return 16;
+        }
+        return 42;
+    }
+    if Selected == 113u32 {
+        let Maximumˉrejected: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using File = Open() {}", 64u32
+        );
+        if Maximumˉrejected.Status != Bodies.Compilerˉbodyˉparseˉstatus.Nestingˉlimit {
+            return 17;
+        }
+        return 42;
+    }
+    if Selected == 114u32 {
+        let Separatedˉname: Bodies.Compilerˉsourceˉstatement = Parse(
+            "using Resourceˉhandle = Openˉresource() { Useˉresource(Resourceˉhandle); }", 0u32
+        );
+        if Separatedˉname.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Separatedˉname.Nameˉlength != 16u32 ||
+            Separatedˉname.Statements != 2u32 ||
+            Separatedˉname.Expressions != 3u32 {
+            return 18;
+        }
+        return 42;
+    }
+    return 64;
+}

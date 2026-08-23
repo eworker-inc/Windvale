@@ -104,6 +104,7 @@ export enum Compilerˉtokenˉkind {
     Borrow = 100;
     Mut = 101;
     Effects = 102;
+    Using = 103;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -469,6 +470,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 119u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "while") { return Compilerˉtokenˉkind.While; }
+        }
+        if First == 117u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "using") { return Compilerˉtokenˉkind.Using; }
         }
         return Compilerˉtokenˉkind.Identifier;
     }

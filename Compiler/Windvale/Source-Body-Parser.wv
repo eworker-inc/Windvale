@@ -30,6 +30,7 @@ export enum Compilerˉsourceˉstatementˉkind {
     Push = 11;
     For = 12;
     Try = 13;
+    Using = 14;
 }
 
 export enum Compilerˉsourceˉexpressionˉkind {
@@ -3125,6 +3126,90 @@ export fn Compilerˉbodyˉparseˉforˉstatement(
     );
 }
 
+export fn Compilerˉbodyˉparseˉusingˉstatement(
+    Input: bytes,
+    Start: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Endˉoffset: u32,
+    Statementˉnesting: u32
+) -> Compilerˉsourceˉstatement {
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Start.Nextˉoffset, Start.Nextˉline, Start.Nextˉcolumn,
+        Endˉoffset
+    );
+    let Afterˉname: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Start.Nextˉoffset, Start.Nextˉline, Start.Nextˉcolumn,
+        Endˉoffset, Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+    );
+    if Afterˉname.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉstatementˉfailure(
+            Afterˉname, Compilerˉsourceˉstatementˉkind.Using, Start
+        );
+    }
+    let Afterˉequals: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline,
+        Afterˉname.Nextˉcolumn, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Equals
+    );
+    if Afterˉequals.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉstatementˉfailure(
+            Afterˉequals, Compilerˉsourceˉstatementˉkind.Using, Start
+        );
+    }
+    let Resource: Compilerˉsourceˉexpression =
+        Compilerˉparseˉexpressionˉvalidated(
+            Input, Afterˉequals.Nextˉoffset, Afterˉequals.Nextˉline,
+            Afterˉequals.Nextˉcolumn, Endˉoffset, 0u32, 0u32
+        );
+    if Resource.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉstatementˉfailure(
+            Compilerˉbodyˉstepˉfromˉexpression(Resource),
+            Compilerˉsourceˉstatementˉkind.Using, Start
+        );
+    }
+    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Resource.Nextˉoffset, Resource.Nextˉline,
+        Resource.Nextˉcolumn, Endˉoffset
+    );
+    let Body: Compilerˉbodyˉparseˉstep = Compilerˉparseˉblockˉvalidated(
+        Input, Resource.Nextˉoffset, Resource.Nextˉline,
+        Resource.Nextˉcolumn, Endˉoffset, Statementˉnesting + 1u32
+    );
+    if Body.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉstatementˉfailure(
+            Body, Compilerˉsourceˉstatementˉkind.Using, Start
+        );
+    }
+    let Statements: u32 = 1u32 + Body.Statements;
+    if Statements > 4096u32 {
+        return Compilerˉbodyˉstatementˉfailure(
+            Compilerˉbodyˉstepˉfromˉtoken(
+                Compilerˉbodyˉparseˉstatus.Itemˉlimit, Start,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            ),
+            Compilerˉsourceˉstatementˉkind.Using, Start
+        );
+    }
+    let Result: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉstepˉvalid(
+        Body.Nextˉoffset, Body.Nextˉline, Body.Nextˉcolumn,
+        Statements, Resource.Nodes + Body.Expressions,
+        Body.Maximumˉstatementˉdepth + 1u32,
+        Compilerˉbodyˉmaximum(
+            Resource.Depth, Body.Maximumˉexpressionˉdepth
+        )
+    );
+    return Compilerˉbodyˉstatementˉmake(
+        Compilerˉsourceˉstatementˉkind.Using, false,
+        Start, Body.Nextˉoffset,
+        Name.Offset, Name.Length,
+        Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown,
+        Start.Offset, 0u32,
+        Resource.Offset, Resource.Length,
+        Bodyˉstart.Offset, Body.Nextˉoffset - Bodyˉstart.Offset,
+        Start.Offset, 0u32,
+        Result
+    );
+}
+
 export fn Compilerˉbodyˉparseˉblockˉstatement(
     Input: bytes,
     Start: Sourceˉlexer.Compilerˉsourceˉtoken,
@@ -3156,6 +3241,7 @@ export fn Compilerˉparseˉnextˉstatementˉvalidated(
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.While { return Compilerˉbodyˉparseˉwhileˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Push { return Compilerˉbodyˉparseˉpushˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.For { return Compilerˉbodyˉparseˉforˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
+    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Using { return Compilerˉbodyˉparseˉusingˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match { return Compilerˉbodyˉparseˉmatchˉstatement(Input, Start, Endˉoffset, Statementˉnesting, false); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Return { return Compilerˉbodyˉparseˉreturnˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try {

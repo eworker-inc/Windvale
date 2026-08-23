@@ -52,10 +52,16 @@ if "%~2"=="" (
     set "OutputPath=%~f2"
 )
 
+set /a AllocationAttempts=0
 :allocate
+set /a AllocationAttempts+=1
+if %AllocationAttempts% GTR 32 (
+    >&2 echo The native build could not allocate a private temporary directory.
+    exit /b 1
+)
 set "TemporaryDirectory=%TEMP%\windvale-native-build-%RANDOM%-%RANDOM%-%RANDOM%"
-if exist "%TemporaryDirectory%" goto :allocate
-mkdir "%TemporaryDirectory%" || exit /b 1
+mkdir "%TemporaryDirectory%" >nul 2>nul
+if errorlevel 1 goto :allocate
 set "CandidatePath=%TemporaryDirectory%\Candidate.wvb"
 set "CandidateResource=%CandidatePath:\=/%"
 

@@ -182,6 +182,13 @@ continue;
 return [<expression>];
 ```
 
+The staged Edition 1 front end additionally recognizes
+`using <name> = <expression> { <statements> }`. Token identity 103 and statement
+kind 14 retain its binding, acquisition-expression, and body spans under the
+ordinary statement/expression bounds. Descriptorless Seed rejects `using` as a
+reserved token. This is parser evidence only: the current semantic compiler does
+not yet classify the result as a resource, bind its ownership, or lower release.
+
 `let` locals and parameters are immutable. `var` locals may be assigned after initialization. `+=`, `-=`, and `*=` are statement-only compound assignments to a simple mutable-local name. They read the target once before evaluating the right operand, apply the underlying checked same-type operation, and store only after that operation succeeds; they are not expressions and cannot be chained. The current compiler admits `i8`, `i16`, `i32`, `i64`, `u16`, `u32`, and `u64` as underlying arithmetic types.
 
 A local without a type annotation receives the initializer's one exact non-void type; inference performs no conversion, does not cross a function boundary, and does not affect explicitly typed parameters or function results. A void initializer is rejected. Blocks use lexical scope. Parameters and locals must have unique names within their function in Seed; nested shadowing is rejected to keep diagnostics and lowering simple. `break` exits the nearest enclosing `while` or `for`; `continue` transfers to that loop's next condition or element. Either statement outside a loop is rejected. `return`, `break`, and `continue` are unconditional block exits, so a later statement in the same block is unreachable and rejected.

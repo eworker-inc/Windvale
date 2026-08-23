@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉbodyˉparser` is the third Windvale-written compiler slice. It parses the complete implemented Seed statement/expression grammar from the exact function-body spans supplied by the declaration pass.
+`Compilerˉsourceˉbodyˉparser` is the third Windvale-written compiler slice. It parses the complete implemented Seed statement/expression grammar plus explicitly staged Language 1.0 front-end forms from the exact function-body spans supplied by the declaration pass.
 
 The implementation is cross-host qualified under Decision 0027. It imports `Compilerˉsourceˉdeclarationˉparser`, which imports the qualified lexer and decimal parser.
 
@@ -13,6 +13,7 @@ The parser recognizes:
 - `let` and `var` locals with an optional explicit non-void, non-array type and one required initializer;
 - simple identifier `=`, `+=`, `-=`, and `*=` assignment;
 - statement and value-producing `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, statement and value-producing exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
+- the Language 1.0 resource-scope form `using Name = Expression Block`;
 - `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, and `u64` integer literals plus rune, string-shape, and Boolean literals;
 - the Language 1.0 empty-parentheses unit literal `()`;
 - qualified names, field access, one call or index postfix, named record
@@ -23,7 +24,16 @@ The parser recognizes:
 - `||`, `&&`, bitwise `|`/`^`/`&`, equality, comparisons, shifts, addition/subtraction, and multiplication/division/remainder with the Stage 0 precedence and left-associativity rules;
 - nonempty parenthesized expressions without a synthetic group node.
 
-This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, and `Try = 13`; expression kinds append `Builder = 11`, `Unit = 12`, `Recordˉupdate = 13`, `Rune = 14`, `Floating = 15`, `If = 16`, `Match = 17`, and `Explicitˉgenericˉcall = 18`. An explicit-generic call retains the complete qualified-name span, the type/constant-argument interior span and count, and the ordinary call-argument interior span and count. `::` is mandatory; a bare `Name<T>(...)` stays in the relational-expression grammar and is not reinterpreted as a generic call. The parser accepts fixed-integer constant tokens in a type-argument list while semantic resolution owns the declaration-ordered type-versus-constant classification and complete constant-expression contract. A value match reuses the bounded statement-match view with value-block arms; its selector is parsed by the ordinary expression parser and may therefore include a brace-form nominal construction before the arm-list brace. A rune expression carries the lexer's already validated scalar in `Numericˉvalue`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, `Try = 13`, and `Using = 14`; expression kinds append `Builder = 11`, `Unit = 12`, `Recordˉupdate = 13`, `Rune = 14`, `Floating = 15`, `If = 16`, `Match = 17`, and `Explicitˉgenericˉcall = 18`. An explicit-generic call retains the complete qualified-name span, the type/constant-argument interior span and count, and the ordinary call-argument interior span and count. `::` is mandatory; a bare `Name<T>(...)` stays in the relational-expression grammar and is not reinterpreted as a generic call. The parser accepts fixed-integer constant tokens in a type-argument list while semantic resolution owns the declaration-ordered type-versus-constant classification and complete constant-expression contract. A value match reuses the bounded statement-match view with value-block arms; its selector is parsed by the ordinary expression parser and may therefore include a brace-form nominal construction before the arm-list brace. A rune expression carries the lexer's already validated scalar in `Numericˉvalue`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
+
+A `using` statement retains the binding-name span, acquisition-expression span,
+and complete brace-delimited body span in the existing flat statement record. It
+includes its acquisition and body descendants in the ordinary 4,096-statement,
+4,096-node-per-expression, and depth-64 accounting. This checkpoint does not
+classify the acquisition result as an owned resource, introduce the binding in
+semantic scope, prove moves or borrows, select a release protocol, or lower
+reverse-order cleanup. Those are Slice 5 ownership and resource responsibilities.
+Descriptorless Seed rejects the appended `using` token; Edition 1 admits it.
 
 Each value `if` or value `match` arm contains zero or more ordinary statements
 followed by one final expression without a semicolon. A missing final expression
@@ -53,6 +63,9 @@ Compilerˉparseˉexpressionˉspan(Input, Offset, Line, Column, Endˉoffset)
     -> Compilerˉsourceˉexpression
 
 Compilerˉparseˉnextˉstatementˉvalidated(Input, Offset, Line, Column, Endˉoffset, Statementˉnesting)
+    -> Compilerˉsourceˉstatement
+
+Compilerˉbodyˉparseˉusingˉstatement(Input, Start, Endˉoffset, Statementˉnesting)
     -> Compilerˉsourceˉstatement
 
 Compilerˉparseˉblockˉvalidated(Input, Offset, Line, Column, Endˉoffset, Statementˉnesting)
