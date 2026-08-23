@@ -1,0 +1,206 @@
+module Languageˉoneˉeffectˉclauseˉfrontˉendˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Effectˉisˉvalid(Input: text, Count: u32) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Input);
+    let Clause: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉeffectˉclause(
+            Bytes, 0u32, 1u32, 1u32
+        );
+    return Clause.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+        Clause.Items == Count && Clause.Nextˉoffset == Bytesˉlength(Bytes);
+}
+
+fn Effectˉhasˉstatus(
+    Input: text,
+    Status: Declarations.Compilerˉparseˉstatus
+) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Input);
+    let Clause: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉeffectˉclause(
+            Bytes, 0u32, 1u32, 1u32
+        );
+    return Clause.Status == Status;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 {
+        let Keyword: bytes = Textˉtoˉutf8("effects");
+        if Lexer.Compilerˉsourceˉkeywordˉkind(
+            Keyword, 0u32, Bytesˉlength(Keyword)
+        ) != Lexer.Compilerˉtokenˉkind.Effects { return 1; }
+        return 42;
+    }
+    if Selected == 98u32 {
+        if !Effectˉisˉvalid("effects()", 0u32) { return 2; }
+        return 42;
+    }
+    if Selected == 99u32 {
+        if !Effectˉisˉvalid("effects(memory.allocate)", 1u32) { return 3; }
+        return 42;
+    }
+    if Selected == 100u32 {
+        if !Effectˉisˉvalid(
+            "effects(memory.allocate, resource.release, task.spawn,)", 3u32
+        ) { return 4; }
+        return 42;
+    }
+    if Selected == 101u32 {
+        if !Effectˉisˉvalid(
+            "effects(task // comment\n . spawn,\u00A0unsafe.address)", 2u32
+        ) {
+            return 5;
+        }
+        return 42;
+    }
+    if Selected == 102u32 {
+        if !Effectˉhasˉstatus(
+            "effects(Memory.allocate)",
+            Declarations.Compilerˉparseˉstatus.Invalidˉmetadata
+        ) { return 6; }
+        return 42;
+    }
+    if Selected == 103u32 {
+        if !Effectˉhasˉstatus(
+            "effects(_memory.allocate)",
+            Declarations.Compilerˉparseˉstatus.Invalidˉmetadata
+        ) { return 7; }
+        return 42;
+    }
+    if Selected == 104u32 {
+        if !Effectˉhasˉstatus(
+            "effects(memory..allocate)",
+            Declarations.Compilerˉparseˉstatus.Invalidˉmetadata
+        ) { return 8; }
+        return 42;
+    }
+    if Selected == 105u32 {
+        if !Effectˉhasˉstatus(
+            "effects(memory.allocate",
+            Declarations.Compilerˉparseˉstatus.Expectedˉtoken
+        ) { return 9; }
+        return 42;
+    }
+    if Selected == 106u32 {
+        if !Effectˉisˉvalid(
+            "effects(a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)",
+            32u32
+        ) { return 10; }
+        return 42;
+    }
+    if Selected == 107u32 {
+        if !Effectˉhasˉstatus(
+            "effects(a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)",
+            Declarations.Compilerˉparseˉstatus.Itemˉlimit
+        ) { return 11; }
+        return 42;
+    }
+    if Selected == 108u32 {
+        if !Effectˉisˉvalid(
+            "effects(a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a)", 1u32
+        ) { return 12; }
+        return 42;
+    }
+    if Selected == 109u32 {
+        if !Effectˉhasˉstatus(
+            "effects(a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a.a)",
+            Declarations.Compilerˉparseˉstatus.Itemˉlimit
+        ) { return 13; }
+        return 42;
+    }
+    if Selected == 110u32 {
+        if !Effectˉisˉvalid("effects(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)", 1u32) { return 14; }
+        return 42;
+    }
+    if Selected == 111u32 {
+        if !Effectˉhasˉstatus(
+            "effects(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)",
+            Declarations.Compilerˉparseˉstatus.Itemˉlimit
+        ) { return 15; }
+        return 42;
+    }
+    if Selected == 112u32 {
+        let Explicitˉsource: bytes = Textˉtoˉutf8(
+            "export fn Allocate() -> i32 effects(memory.allocate) { return 42; }"
+        );
+        let Explicitˉfirst: Lexer.Compilerˉsourceˉtoken =
+            Lexer.Compilerˉlexˉnextˉafterˉscan(
+                Explicitˉsource, 0u32, 1u32, 1u32
+            );
+        let Explicit: Declarations.Compilerˉsourceˉdeclaration =
+            Declarations.Compilerˉparseˉfunctionˉdeclaration(
+                Explicitˉsource, Explicitˉfirst
+            );
+        if Explicit.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+            !Explicit.Hasˉeffectˉclause || Explicit.Effects != 1u32 ||
+            Explicit.Effectˉclauseˉlength != 24u32 ||
+            Explicit.Bodyˉoffset <= Explicit.Effectˉclauseˉoffset {
+            return 16;
+        }
+        return 42;
+    }
+    if Selected == 113u32 {
+        let Emptyˉsource: bytes = Textˉtoˉutf8(
+            "export fn Pure() -> i32 effects() { return 42; }"
+        );
+        let Emptyˉfirst: Lexer.Compilerˉsourceˉtoken =
+            Lexer.Compilerˉlexˉnextˉafterˉscan(
+                Emptyˉsource, 0u32, 1u32, 1u32
+            );
+        let Empty: Declarations.Compilerˉsourceˉdeclaration =
+            Declarations.Compilerˉparseˉfunctionˉdeclaration(
+                Emptyˉsource, Emptyˉfirst
+            );
+        if Empty.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+            !Empty.Hasˉeffectˉclause || Empty.Effects != 0u32 ||
+            Empty.Effectˉclauseˉlength != 9u32 {
+            return 17;
+        }
+        return 42;
+    }
+    if Selected == 114u32 {
+        let Inferredˉsource: bytes = Textˉtoˉutf8(
+            "fn Local() -> i32 { return 42; }"
+        );
+        let Inferredˉfirst: Lexer.Compilerˉsourceˉtoken =
+            Lexer.Compilerˉlexˉnextˉafterˉscan(
+                Inferredˉsource, 0u32, 1u32, 1u32
+            );
+        let Inferred: Declarations.Compilerˉsourceˉdeclaration =
+            Declarations.Compilerˉparseˉfunctionˉdeclaration(
+                Inferredˉsource, Inferredˉfirst
+            );
+        if Inferred.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+            Inferred.Hasˉeffectˉclause || Inferred.Effects != 0u32 {
+            return 18;
+        }
+        return 42;
+    }
+    if Selected == 115u32 {
+        if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            1u32, Lexer.Compilerˉtokenˉkind.Effects
+        ) { return 19; }
+        return 42;
+    }
+    if Selected == 116u32 {
+        if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            0u32, Lexer.Compilerˉtokenˉkind.Effects
+        ) { return 20; }
+        return 42;
+    }
+    return 64;
+}

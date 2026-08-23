@@ -1510,6 +1510,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'compiler-split-development'
     } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Clause-Front-End.wvproj',
+        'Tests/Fixtures/Language-1.0/Effect-Clause-Front-End-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.cmd',
+        'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.sh',
+        'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.mjs'
+    )) {
+        Add-Suite 'language-1-effect-clause-front-end'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Declaration-Self-Test.wv'
     )) {
@@ -2562,6 +2570,13 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Bindings-Core.wv'
     )) {
         Add-Source-Front-End-Suites
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Declaration-Parser.wv',
+            'Compiler/Windvale/Source-Set-Core.wv'
+        )) {
+            Add-Suite 'language-1-effect-clause-front-end'
+        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',

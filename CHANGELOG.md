@@ -8,6 +8,11 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Admitted the exact Language 1.0 `effects(...)` clause at the source front
+  end. Edition 1 now has an appended `effects` token, bounded canonical
+  lowercase-ASCII identities, retained clause span/count metadata, and 20
+  isolated deterministic cases. This is syntax and declaration evidence only;
+  effect resolution, inference, call checking, and WVB evidence remain pending.
 - Began Language 1.0 Migration Slice 5 with an exact WVB 1.21
   launcher-to-entry `Memoryˉbudget` transfer. The compiler, independent
   verifier, and source-built scalar runner admit the opaque owner only as the

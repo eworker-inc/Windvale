@@ -135,9 +135,13 @@ not the public `Memoryˉbudget` representation.
 [Decision 0837](../Decisions/0837-Execute-Memory-Budget-Split-As-Wvb-1.23.md)
 connects operation 171 to exact WVB 1.23, bounded forward-control ownership,
 the verifier, and the source-built runner. Its 15-case owner proves both
-successful and refused splits plus nine malformed modules. The next connected
-results are allocation leases/effects and public fallible Vector construction with
-recoverable append. Remaining collection
+successful and refused splits plus nine malformed modules.
+[Decision 0838](../Decisions/0838-Admit-Exact-Language-1.0-Effect-Clauses.md)
+then admits bounded exact `effects(...)` syntax and retains its declaration
+span/count evidence without claiming semantic resolution. The next connected
+results are canonical effect resolution and call enforcement, allocation
+leases, and public fallible Vector construction with recoverable append.
+Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain
 later gates.

@@ -35,6 +35,11 @@ until provenance is represented. This is prerequisite evidence, not a claim
 that Slice 5 ownership, moves, lifetime overlap, resources, or cleanup is
 complete.
 
+The Edition 1 front end now also recognizes bounded exact `effects(...)`
+clauses and retains their source span and identity count. This is the syntax
+prerequisite for allocation work, not yet canonical effect resolution,
+inference, call checking, or serialized compiler evidence.
+
 Value-producing `if` and exhaustive enum/variant `match` now cross the reference
 compiler and scalar runtime, completing Slice 2's planned value-and-control
 compiler surface. Slice 3 publishes the exact edition-1
@@ -2492,3 +2497,55 @@ still dominates elapsed time; that is a later measured workflow target. Broad
 transitional-compiler tuning remains deferred until self-hosting. Allocation
 leases/effects, public fallible Vector construction and recoverable append,
 general owned calls, `using`, reverse release, and one hosted consumer remain.
+
+## Slice 5 effect-clause front-end prerequisite
+
+[Decision 0838](../Decisions/0838-Admit-Exact-Language-1.0-Effect-Clauses.md)
+adds the source boundary needed before allocation can carry an honest
+`memory.allocate` effect. The lexer appends token identity 102 for the exact
+`effects` keyword. Edition 1 admits it while descriptorless Seed rejects it.
+The declaration parser accepts the frozen empty, comma-separated, and
+trailing-comma forms immediately after a function return type.
+
+Effect identities are canonical lowercase ASCII segments. The implementation
+bounds a clause to 32 identities, 16 segments per identity, 128 canonical
+identity bytes, and 16,384 source bytes including exact lexer whitespace and
+line-comment trivia. The function declaration record retains clause presence,
+exact source offset/length, and identity count; an omitted local clause remains
+distinguishable for later inference.
+
+The first token-record parser made the correct grammar unnecessarily expensive
+at its own declared maxima. The retained implementation scans canonical
+identity bytes directly while reusing the lexer's whitespace, UTF-8 width, and
+identifier-component primitives. This makes the 32-identity, 16-segment, and
+128-byte boundary cases executable under the current bounded verifier without
+raising a runtime limit. It is a durable blocker fix, not broad tuning of the
+transitional compiler.
+
+One hosted test WVB uses the bounded scripting profile to select exactly one
+case per fresh execution. The focused owner builds twice, compares exact bytes,
+validates the pinned host runner, and runs all 20 selectors. The 373,281-byte
+module is byte-identical at SHA-256
+`0a6e703cbb9b0536addaad8211c82d6d99ffddb9cf999d61ae6d45910b53153c`;
+all Windows selectors return 42. The registry advances to 111 owners and 5,298
+cases at SHA-256
+`eb61fe17b976553df0e53564b625aa2b37f9ec802cc5772d7740b06eeb2eb7ed`.
+
+The immutable Seed rejects the complete compiler project at its pre-existing
+compiler-scale boundary (`Sourceˉbindings`, function sentinel 647, operation
+zero); the unchanged parent revision rejects at sentinel 646. This is not an
+effect-clause semantic failure. The maintained split analyzer accepts the
+1,717,674-byte source set and publishes 251,336 binding bytes plus 3,433,904
+WVIR bytes. Its paired emitter publishes the 612-function, 1,342,735-byte WVB
+at SHA-256
+`7f4d93fc7f427f5f9f75b4813baed92c00284c5d5ef4f5c996ca0fa0539dd69f`.
+Compiler-scale development therefore continues through the split compiler
+under Decision 0810 rather than widening or tuning the immutable recovery Seed.
+Paired Linux execution remains pending.
+
+This is deliberately not complete effect semantics. Canonical registry
+resolution, explicit exported empty sets, local inference, call/capture
+compatibility, function values, and WVIR/WVB/package evidence remain Slice 6
+work. Slice 5 next connects the `memory.allocate` identity far enough to verify
+allocation leases, then adds public fallible Vector construction and
+recoverable append.

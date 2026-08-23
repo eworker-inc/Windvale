@@ -260,6 +260,9 @@ reparse it.
 - Add Copy/shared/owned/borrowed classification.
 - Implement moves, borrow checking, freeze, handles, reverse-order release, and
   `using`.
+- Admit the exact effect-clause front end required to express allocation and
+  release, while leaving complete resolution, inference, function-value, and
+  capture enforcement owned by Slice 6.
 - Migrate Foundation and one hosted file/resource consumer before broad rollout.
 
 ### Slice 6: functions and effects

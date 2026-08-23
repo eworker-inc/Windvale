@@ -19,8 +19,17 @@ capability <qualified.name>;
 [export] record <Name> { <Field>: <value-type>; ... }
 [export] enum <Name> { <Member> = <nonnegative-i32>; ... }
 [export] variant <Name> { <Case>[(<Payload>: <value-type>)]; ... }
-[export] fn <Name>(<parameters>) -> <type> { <statements> }
+[export] fn <Name>(<parameters>) -> <type> [effects(<identity>, ...)] { <statements> }
 ```
+
+The current Edition 1 front end recognizes the exact `effects` keyword after
+a function return type. It admits an empty set, comma-separated canonical
+lowercase ASCII identities, and one trailing comma. One clause is bounded to
+32 identities, 16 dot-separated segments per identity, 128 canonical bytes per
+identity, and 16,384 source bytes including trivia. The declaration record
+retains presence, source span, and count. Descriptorless Seed rejects the token.
+This checkpoint does not yet resolve identities, require explicit exported
+sets, derive local sets, check calls or captures, or serialize effect evidence.
 
 Stage 0 also implements the replacement independent-metadata header. Metadata declarations occur immediately after the module name and before imports:
 

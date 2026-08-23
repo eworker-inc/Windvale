@@ -386,6 +386,7 @@ export fn Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.F64 { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rune { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Base { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Effects { return false; }
         return true;
     }
     return false;

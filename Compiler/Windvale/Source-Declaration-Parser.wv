@@ -113,6 +113,10 @@ export record Compilerˉsourceˉdeclaration {
     Bodyˉoffset: u32;
     Bodyˉlength: u32;
     Items: u32;
+    Hasˉeffectˉclause: bool;
+    Effectˉclauseˉoffset: u32;
+    Effectˉclauseˉlength: u32;
+    Effects: u32;
     Nextˉoffset: u32;
     Nextˉline: u32;
     Nextˉcolumn: u32;
@@ -382,6 +386,258 @@ export fn Compilerˉparseˉqualifiedˉname(
         Currentˉcolumn,
         Compilerˉsourceˉtypeˉkind.Unknown,
         Parts
+    );
+}
+
+export fn Compilerˉparseˉeffectˉclause(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉparseˉstep {
+    let Afterˉeffects: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Offset, Line, Column, Sourceˉlexer.Compilerˉtokenˉkind.Effects
+    );
+    if Afterˉeffects.Status != Compilerˉparseˉstatus.Valid {
+        return Afterˉeffects;
+    }
+    let Afterˉleft: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Afterˉeffects.Nextˉoffset, Afterˉeffects.Nextˉline,
+        Afterˉeffects.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis
+    );
+    if Afterˉleft.Status != Compilerˉparseˉstatus.Valid { return Afterˉleft; }
+
+    let Total: u32 = Bytesˉlength(Input);
+    let Clauseˉstart: u32 = Offset;
+    var Cursor: u32 = Afterˉleft.Nextˉoffset;
+    var Currentˉline: u32 = Afterˉleft.Nextˉline;
+    var Currentˉcolumn: u32 = Afterˉleft.Nextˉcolumn;
+    var Effects: u32 = 0u32;
+    var Parts: u32 = 0u32;
+    var Identityˉbytes: u32 = 0u32;
+    var Expectˉsegment: bool = true;
+    var Reading: bool = true;
+    while Reading {
+        if Cursor < Clauseˉstart || Cursor - Clauseˉstart > 16384u32 {
+            return Compilerˉparseˉstepˉfailure(
+                Compilerˉparseˉstatus.Itemˉlimit,
+                Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                Cursor, Currentˉline, Currentˉcolumn,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis,
+                Sourceˉlexer.Compilerˉtokenˉkind.End
+            );
+        }
+
+        var Skipping: bool = true;
+        while Skipping {
+            if Cursor >= Total {
+                Skipping = false;
+            } else {
+                let Whiteˉlength: u32 =
+                    Sourceˉlexer.Compilerˉsourceˉwhitespaceˉlengthˉafterˉscan(
+                        Input, Cursor, Total
+                    );
+                if Whiteˉlength > 0u32 {
+                    if Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                        Currentˉline = Currentˉline + 1u32;
+                        Currentˉcolumn = 1u32;
+                    } else {
+                        Currentˉcolumn = Currentˉcolumn + 1u32;
+                    }
+                    Cursor = Cursor + Whiteˉlength;
+                } else if Total - Cursor >= 2u32 &&
+                    Bytesˉreadˉu8(Input, Cursor) == 47u8 &&
+                    Bytesˉreadˉu8(Input, Cursor + 1u32) == 47u8 {
+                    Cursor = Cursor + 2u32;
+                    Currentˉcolumn = Currentˉcolumn + 2u32;
+                    var Commentˉcontinues: bool = true;
+                    while Commentˉcontinues {
+                        if Cursor >= Total ||
+                            Bytesˉreadˉu8(Input, Cursor) == 10u8 {
+                            Commentˉcontinues = false;
+                        } else {
+                            let Characterˉlength: u32 =
+                                Sourceˉlexer.Compilerˉsourceˉutf8ˉlength(
+                                    Input, Cursor
+                                );
+                            if Characterˉlength == 0u32 ||
+                                Characterˉlength > Total - Cursor {
+                                return Compilerˉparseˉstepˉfailure(
+                                    Compilerˉparseˉstatus.Lexicalˉerror,
+                                    Sourceˉlexer.Compilerˉlexˉstatus.Invalidˉutf8,
+                                    Cursor, Currentˉline, Currentˉcolumn,
+                                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                                    Sourceˉlexer.Compilerˉtokenˉkind.Bad
+                                );
+                            }
+                            Currentˉcolumn = Currentˉcolumn +
+                                Sourceˉlexer.Compilerˉsourceˉcolumnˉwidth(
+                                    Input, Cursor
+                                );
+                            Cursor = Cursor + Characterˉlength;
+                        }
+                    }
+                } else {
+                    Skipping = false;
+                }
+                if Cursor < Clauseˉstart ||
+                    Cursor - Clauseˉstart > 16384u32 {
+                    return Compilerˉparseˉstepˉfailure(
+                        Compilerˉparseˉstatus.Itemˉlimit,
+                        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                        Cursor, Currentˉline, Currentˉcolumn,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis,
+                        Sourceˉlexer.Compilerˉtokenˉkind.End
+                    );
+                }
+            }
+        }
+
+        if Expectˉsegment {
+            if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 41u8 {
+                if Parts != 0u32 {
+                    return Compilerˉparseˉstepˉfailure(
+                        Compilerˉparseˉstatus.Invalidˉmetadata,
+                        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                        Cursor, Currentˉline, Currentˉcolumn,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+                    );
+                }
+                return Compilerˉparseˉstepˉvalid(
+                    Cursor + 1u32, Currentˉline, Currentˉcolumn + 1u32,
+                    Compilerˉsourceˉtypeˉkind.Unknown, Effects
+                );
+            }
+            if Effects >= 32u32 {
+                return Compilerˉparseˉstepˉfailure(
+                    Compilerˉparseˉstatus.Itemˉlimit,
+                    Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                    Cursor, Currentˉline, Currentˉcolumn,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                );
+            }
+            if Parts >= 16u32 {
+                return Compilerˉparseˉstepˉfailure(
+                    Compilerˉparseˉstatus.Itemˉlimit,
+                    Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                    Cursor, Currentˉline, Currentˉcolumn,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                );
+            }
+            if Cursor >= Total {
+                let Endˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        Input, Cursor, Currentˉline, Currentˉcolumn
+                    );
+                return Compilerˉparseˉstepˉfromˉtoken(
+                    Compilerˉparseˉstatus.Invalidˉmetadata, Endˉtoken,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                );
+            }
+            let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+            if First < 97u32 || First > 122u32 {
+                let Invalidˉsegment: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        Input, Cursor, Currentˉline, Currentˉcolumn
+                    );
+                return Compilerˉparseˉstepˉfromˉtoken(
+                    Compilerˉparseˉstatus.Invalidˉmetadata, Invalidˉsegment,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                );
+            }
+            let Segmentˉstart: u32 = Cursor;
+            let Segmentˉline: u32 = Currentˉline;
+            let Segmentˉcolumn: u32 = Currentˉcolumn;
+            var Segmentˉcontinues: bool = true;
+            while Segmentˉcontinues {
+                if Cursor >= Total {
+                    Segmentˉcontinues = false;
+                } else {
+                    let Character: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Input, Cursor)
+                    );
+                    var Canonical: bool =
+                        Character >= 97u32 && Character <= 122u32;
+                    if Character >= 48u32 && Character <= 57u32 {
+                        Canonical = true;
+                    }
+                    if Character == 95u32 { Canonical = true; }
+                    if Canonical {
+                        if Identityˉbytes >= 128u32 {
+                            return Compilerˉparseˉstepˉfailure(
+                                Compilerˉparseˉstatus.Itemˉlimit,
+                                Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                                Cursor, Currentˉline, Currentˉcolumn,
+                                Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                            );
+                        }
+                        Identityˉbytes = Identityˉbytes + 1u32;
+                        Cursor = Cursor + 1u32;
+                        Currentˉcolumn = Currentˉcolumn + 1u32;
+                    } else {
+                        if Sourceˉlexer.Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
+                            Input, Cursor, Total
+                        ) > 0u32 {
+                            return Compilerˉparseˉstepˉfailure(
+                                Compilerˉparseˉstatus.Invalidˉmetadata,
+                                Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                                Segmentˉstart, Segmentˉline, Segmentˉcolumn,
+                                Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                            );
+                        }
+                        Segmentˉcontinues = false;
+                    }
+                }
+            }
+            Parts = Parts + 1u32;
+            Expectˉsegment = false;
+        } else if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 46u8 {
+            if Identityˉbytes >= 128u32 {
+                return Compilerˉparseˉstepˉfailure(
+                    Compilerˉparseˉstatus.Itemˉlimit,
+                    Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                    Cursor, Currentˉline, Currentˉcolumn,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Dot
+                );
+            }
+            Identityˉbytes = Identityˉbytes + 1u32;
+            Cursor = Cursor + 1u32;
+            Currentˉcolumn = Currentˉcolumn + 1u32;
+            Expectˉsegment = true;
+        } else if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 44u8 {
+            Effects = Effects + 1u32;
+            Cursor = Cursor + 1u32;
+            Currentˉcolumn = Currentˉcolumn + 1u32;
+            Parts = 0u32;
+            Identityˉbytes = 0u32;
+            Expectˉsegment = true;
+        } else if Cursor < Total && Bytesˉreadˉu8(Input, Cursor) == 41u8 {
+            Effects = Effects + 1u32;
+            return Compilerˉparseˉstepˉvalid(
+                Cursor + 1u32, Currentˉline, Currentˉcolumn + 1u32,
+                Compilerˉsourceˉtypeˉkind.Unknown, Effects
+            );
+        } else {
+            let Unexpected: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Input, Cursor, Currentˉline, Currentˉcolumn
+                );
+            return Compilerˉparseˉstepˉfromˉtoken(
+                Compilerˉparseˉstatus.Expectedˉtoken, Unexpected,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+            );
+        }
+    }
+    return Compilerˉparseˉstepˉvalid(
+        Cursor, Currentˉline, Currentˉcolumn,
+        Compilerˉsourceˉtypeˉkind.Unknown, Effects
     );
 }
 
@@ -1101,6 +1357,10 @@ export fn Compilerˉsourceˉdeclarationˉmake(
         Bodyˉoffset,
         Bodyˉend - Bodyˉoffset,
         Items,
+        false,
+        0u32,
+        0u32,
+        0u32,
         Nextˉoffset,
         Nextˉline,
         Nextˉcolumn,
@@ -2339,10 +2599,93 @@ export fn Compilerˉparseˉfunctionˉdeclaration(
     if Afterˉarrow.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉarrow, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
     let Returnˉtype: Compilerˉparseˉstep = Compilerˉparseˉparameterˉtype(Input, Afterˉarrow.Nextˉoffset, Afterˉarrow.Nextˉline, Afterˉarrow.Nextˉcolumn, true);
     if Returnˉtype.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Returnˉtype, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
-    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Returnˉtype.Nextˉoffset, Returnˉtype.Nextˉline, Returnˉtype.Nextˉcolumn);
-    let Body: Compilerˉparseˉstep = Compilerˉparseˉskipˉblockˉafterˉscan(Input, Returnˉtype.Nextˉoffset, Returnˉtype.Nextˉline, Returnˉtype.Nextˉcolumn);
+    var Bodyˉsourceˉoffset: u32 = Returnˉtype.Nextˉoffset;
+    var Bodyˉsourceˉline: u32 = Returnˉtype.Nextˉline;
+    var Bodyˉsourceˉcolumn: u32 = Returnˉtype.Nextˉcolumn;
+    var Hasˉeffects: bool = false;
+    var Effectˉoffset: u32 = 0u32;
+    var Effectˉend: u32 = 0u32;
+    var Effects: u32 = 0u32;
+    let Maybeˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Bodyˉsourceˉoffset, Bodyˉsourceˉline, Bodyˉsourceˉcolumn
+        );
+    if Maybeˉeffects.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Effects {
+        let Clause: Compilerˉparseˉstep = Compilerˉparseˉeffectˉclause(
+            Input, Bodyˉsourceˉoffset, Bodyˉsourceˉline, Bodyˉsourceˉcolumn
+        );
+        if Clause.Status != Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉdeclarationˉfailure(
+                Clause, Compilerˉsourceˉdeclarationˉkind.Function,
+                Isˉexported, Token.Offset, Name.Offset, Name.Length
+            );
+        }
+        Hasˉeffects = true;
+        Effectˉoffset = Maybeˉeffects.Offset;
+        Effectˉend = Clause.Nextˉoffset;
+        Effects = Clause.Items;
+        Bodyˉsourceˉoffset = Clause.Nextˉoffset;
+        Bodyˉsourceˉline = Clause.Nextˉline;
+        Bodyˉsourceˉcolumn = Clause.Nextˉcolumn;
+    }
+    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Bodyˉsourceˉoffset, Bodyˉsourceˉline, Bodyˉsourceˉcolumn
+        );
+    let Body: Compilerˉparseˉstep = Compilerˉparseˉskipˉblockˉafterˉscan(
+        Input, Bodyˉsourceˉoffset, Bodyˉsourceˉline, Bodyˉsourceˉcolumn
+    );
     if Body.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Body, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Token.Offset, Name.Offset, Name.Length); }
-    return Compilerˉsourceˉdeclarationˉmake(Compilerˉparseˉstatus.Valid, Sourceˉlexer.Compilerˉlexˉstatus.Valid, Compilerˉsourceˉdeclarationˉkind.Function, Isˉexported, Name.Offset, Name.Length, Token.Offset, Body.Nextˉoffset, Bodyˉstart.Offset, Body.Nextˉoffset, Parameters, Body.Nextˉoffset, Body.Nextˉline, Body.Nextˉcolumn, Body.Nextˉoffset, Body.Nextˉline, Body.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.End, Sourceˉlexer.Compilerˉtokenˉkind.End);
+    let Declaration: Compilerˉsourceˉdeclaration =
+        Compilerˉsourceˉdeclarationˉmake(
+            Compilerˉparseˉstatus.Valid,
+            Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+            Compilerˉsourceˉdeclarationˉkind.Function,
+            Isˉexported,
+            Name.Offset,
+            Name.Length,
+            Token.Offset,
+            Body.Nextˉoffset,
+            Bodyˉstart.Offset,
+            Body.Nextˉoffset,
+            Parameters,
+            Body.Nextˉoffset,
+            Body.Nextˉline,
+            Body.Nextˉcolumn,
+            Body.Nextˉoffset,
+            Body.Nextˉline,
+            Body.Nextˉcolumn,
+            Sourceˉlexer.Compilerˉtokenˉkind.End,
+            Sourceˉlexer.Compilerˉtokenˉkind.End
+        );
+    if Hasˉeffects {
+        return Compilerˉsourceˉdeclaration(
+            Declaration.Status,
+            Declaration.Lexicalˉstatus,
+            Declaration.Kind,
+            Declaration.Isˉexported,
+            Declaration.Nameˉoffset,
+            Declaration.Nameˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Declaration.Bodyˉoffset,
+            Declaration.Bodyˉlength,
+            Declaration.Items,
+            true,
+            Effectˉoffset,
+            Effectˉend - Effectˉoffset,
+            Effects,
+            Declaration.Nextˉoffset,
+            Declaration.Nextˉline,
+            Declaration.Nextˉcolumn,
+            Declaration.Failureˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Declaration.Expected,
+            Declaration.Found
+        );
+    }
+    return Declaration;
 }
 
 export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(

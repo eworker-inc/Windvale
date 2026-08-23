@@ -103,6 +103,7 @@ export enum Compilerˉtokenˉkind {
     Floatingˉliteral = 99;
     Borrow = 100;
     Mut = 101;
+    Effects = 102;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -505,6 +506,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
     if Length == 7u32 {
         let Sevenˉhead: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
         let Sevenˉtail: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 3u32);
+        if Sevenˉhead == 1701209701u32 {
+            if Sevenˉtail == 1937007461u32 { return Compilerˉtokenˉkind.Effects; }
+        }
         if Sevenˉhead == 1818850658u32 {
             if Sevenˉtail == 1919247468u32 { return Compilerˉtokenˉkind.Builder; }
         }

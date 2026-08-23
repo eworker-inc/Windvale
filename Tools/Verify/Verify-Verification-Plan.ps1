@@ -333,6 +333,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 effect clause front-end routing'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Clause-Front-End.wvproj',
+            'Tests/Fixtures/Language-1.0/Effect-Clause-Front-End-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.cmd',
+            'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.sh',
+            'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.mjs'
+        )
+        Suites = @('language-1-effect-clause-front-end')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 generic nominal declaration routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
@@ -368,7 +381,8 @@ $NativeCases = @(
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
-            'language-1-front-door'
+            'language-1-front-door',
+            'language-1-effect-clause-front-end'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -526,6 +540,7 @@ $NativeCases = @(
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
             'language-1-front-door',
+            'language-1-effect-clause-front-end',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
@@ -3495,9 +3510,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 111 -or
+if ($VerificationOwnerLines.Count -ne 112 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 110-owner inventory differs.'
+    throw 'The native verification-owner header or exact 111-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3535,7 +3550,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5278 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5298 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

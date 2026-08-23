@@ -654,6 +654,15 @@ runner returns `42` for both provider outcomes. Allocation effects and leases,
 general owned arguments/returns, fallible Vector construction, and direct
 native/browser/OS execution remain later connected checkpoints.
 
+The Edition 1 source front end now appends token identity 102 for `effects` and
+parses an optional exact clause after a function return type. It retains clause
+presence, byte span, and identity count under fixed 32-identity,
+16-segment-per-identity, 128-canonical-byte, and 16,384-source-byte limits.
+This checkpoint does not change WVIR or WVB: canonical identity resolution,
+local inference, exported-signature enforcement, call compatibility, and
+serialized effect evidence remain required before an effect is executable
+compiler evidence.
+
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.
 Its independent `Main` returns 42; its nine functions retain direct-return,
