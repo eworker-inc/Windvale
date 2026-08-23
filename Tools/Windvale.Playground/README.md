@@ -64,7 +64,7 @@ Deploy `Tools/Windvale.Playground/wwwroot` below the website's `/playground/` pa
 - Capabilities: optional per-tab `console.write_line` grant; 65,536-byte all-or-nothing standard-output envelope; no other browser authority.
 - Isolation: package loading, compilation, WVB admission, and execution occur in a disposable worker with a five-minute containment timeout.
 - Evidence: pipeline status, bounded standard output, scalar result, elapsed time, compiler/execution counters, canonical WVB bytes and digest, and a zero-framework-request assertion.
-- Editor: repository-built Monaco ESM with Windvale highlighting, completions, source tabs, `Ctrl+Enter` execution, and `Ctrl+M` or `Ctrl+;` insertion of `ˉ`.
+- Editor: repository-built Monaco ESM with Windvale 1.0 lexical highlighting and completions, current compiler compatibility words, source tabs, `Ctrl+Enter` execution, and `Ctrl+M` or `Ctrl+;` insertion of `ˉ`.
 
 ## Artifact production and recovery
 

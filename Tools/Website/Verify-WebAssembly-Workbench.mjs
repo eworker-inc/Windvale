@@ -8,6 +8,57 @@ import {
     Chooseˉworkspaceˉcopyˉname,
     Selectˉrepositoryˉcopy,
 } from "../Windvale.Playground/wwwroot/js/workbench-repository-copy.js";
+import {
+    Createˉwindvaleˉtokensˉprovider,
+    Isˉwindvaleˉnumber,
+    WINDVALE_COMPLETIONS,
+    WINDVALE_IDENTIFIER_PATTERN,
+    WINDVALE_LANGUAGE_1_RESERVED_WORDS,
+    WINDVALE_OPERATORS,
+} from "../Windvale.Playground/Editor/Windvale-Language.js";
+
+assert.equal(WINDVALE_LANGUAGE_1_RESERVED_WORDS.length, 76);
+const Windvaleˉprovider = Createˉwindvaleˉtokensˉprovider();
+const Highlightedˉwords = new Set([
+    ...Windvaleˉprovider.declarationKeywords,
+    ...Windvaleˉprovider.controlKeywords,
+    ...Windvaleˉprovider.storageKeywords,
+    ...Windvaleˉprovider.profileKeywords,
+    ...Windvaleˉprovider.typeKeywords,
+    ...Windvaleˉprovider.literalKeywords,
+]);
+for (const Word of WINDVALE_LANGUAGE_1_RESERVED_WORDS) {
+    assert.equal(Highlightedˉwords.has(Word), true, `Windvale 1.0 word is not highlighted: ${Word}`);
+    assert.equal(WINDVALE_COMPLETIONS.some(Completion => Completion.label === Word), true,
+        `Windvale 1.0 word is not completed: ${Word}`);
+}
+assert.equal(Highlightedˉwords.has("while"), true, "The grammar's while terminal must be highlighted.");
+assert.deepEqual(WINDVALE_OPERATORS.slice(0, 15), [
+    "->", "&&", "||", "<<", ">>", "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=", "%=", "+",
+]);
+for (const Number of [
+    "0", "1_000_000i32", "0xDEAD_BEEFu64", "0b1010_0101u8",
+    "1.25", "1e10f32", "0x1.8p+1f64",
+]) {
+    assert.equal(Isˉwindvaleˉnumber(Number), true, `Windvale 1.0 number is not recognized: ${Number}`);
+}
+for (const Invalid of ["_1", "1_0_", "0X1u8", "0b102", "1.f32", "0x1.0f64"]) {
+    assert.equal(Isˉwindvaleˉnumber(Invalid), false, `Malformed Windvale number is recognized: ${Invalid}`);
+}
+for (const Identifier of ["Moduleˉreader", "Δοκιμήˉτιμή", "値ˉをˉ読む"]) {
+    const Match = WINDVALE_IDENTIFIER_PATTERN.exec(Identifier);
+    assert.equal(Match?.index, 0, `Windvale 1.0 identifier does not start-match: ${Identifier}`);
+    assert.equal(Match?.[0].length, Identifier.length, `Windvale 1.0 identifier is only partly matched: ${Identifier}`);
+}
+for (const Invalid of ["ˉModule", "Moduleˉ", "Moduleˉˉreader"]) {
+    const Match = WINDVALE_IDENTIFIER_PATTERN.exec(Invalid);
+    assert.notEqual(Match?.index === 0 && Match?.[0].length === Invalid.length, true,
+        `Malformed macron-separated identifier is recognized: ${Invalid}`);
+}
+for (let Hashˉcount = 0; Hashˉcount <= 8; Hashˉcount += 1) {
+    assert.ok(Windvaleˉprovider.tokenizer[`rawText${Hashˉcount}`]);
+    assert.ok(Windvaleˉprovider.tokenizer[`rawBytes${Hashˉcount}`]);
+}
 
 assert.deepEqual(
     Parseˉcommandˉline('write Notes.txt "hello browser workspace"'),

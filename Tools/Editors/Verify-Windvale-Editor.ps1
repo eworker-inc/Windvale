@@ -87,6 +87,10 @@ Assert-Condition ($GrammarContribution.scopeName -eq 'source.windvale') 'The con
 Assert-Condition ($Grammar.scopeName -eq 'source.windvale') 'The grammar root scope must be source.windvale.'
 Assert-Condition (@($Grammar.fileTypes) -contains 'wv') 'The TextMate grammar must declare the wv file type.'
 Assert-Condition ($Configuration.comments.lineComment -eq '//') 'Windvale line comments must use //.'
+$Wordˉpattern = [regex]::new($Configuration.wordPattern, [System.Text.RegularExpressions.RegexOptions]::CultureInvariant)
+foreach ($Word in @('Δοκιμήˉτιμή', '0xDEAD_BEEFu64', '1.25e-2f64')) {
+    Assert-FullMatch $Wordˉpattern $Word 'Editor word-selection token'
+}
 
 $ConfigurationReference = Join-Path $ExtensionRoot ($Language.configuration -replace '^\./', '')
 $GrammarReference = Join-Path $ExtensionRoot ($GrammarContribution.path -replace '^\./', '')
@@ -96,6 +100,7 @@ Assert-Condition ((Resolve-Path -LiteralPath $GrammarReference).Path -eq (Resolv
     'The package grammar path does not resolve to the maintained grammar.'
 
 $RequiredIncludes = @(
+    '#source-descriptor',
     '#comments',
     '#strings',
     '#declarations',
@@ -118,11 +123,24 @@ foreach ($Include in $RequiredIncludes) {
     Assert-Condition ($ActualIncludes -contains $Include) "The root grammar does not include required rule '$Include'."
 }
 
+$Sourceˉdescriptorˉpattern = Get-RulePattern $Grammar 'source-descriptor'
+Assert-FullMatch $Sourceˉdescriptorˉpattern '#!wv/1 windvale.unicode17-source@1' 'Language 1.0 source descriptor'
+
 $KeywordCases = [ordered]@{
-    'declaration-keywords' = @('module', 'profile', 'import', 'as', 'capability', 'data', 'const', 'record', 'enum', 'variant', 'export', 'fn')
-    'control-keywords' = @('if', 'else', 'while', 'for', 'in', 'match', 'case', 'push', 'break', 'continue', 'return')
-    'storage-keywords' = @('let', 'var', 'freeze')
-    'profile-keywords' = @('portable', 'hosted', 'system')
+    'declaration-keywords' = @(
+        'module', 'profile', 'platform', 'authority', 'import', 'as',
+        'requires', 'optional', 'capability', 'version', 'data', 'const',
+        'record', 'enum', 'variant', 'protocol', 'implement', 'derive',
+        'package', 'foreign', 'export', 'fn', 'where', 'maximum')
+    'control-keywords' = @(
+        'if', 'else', 'while', 'for', 'in', 'match', 'case', 'try', 'await',
+        'using', 'task', 'scope', 'policy', 'join', 'cancel_join', 'fail_join',
+        'break', 'continue', 'return')
+    'storage-keywords' = @(
+        'let', 'var', 'borrow', 'mut', 'copy', 'move', 'base', 'unsafe',
+        'async', 'effects', 'freeze', 'push')
+    'profile-keywords' = @(
+        'core', 'hosted', 'system', 'application', 'library', 'service', 'portable')
     'type-keywords' = @(
         'i8', 'i16', 'i32', 'i64', 'u8', 'u16', 'u32', 'u64',
         'f32', 'f64', 'rune', 'bool', 'text', 'bytes', 'sequence',
@@ -138,10 +156,28 @@ foreach ($Rule in $KeywordCases.GetEnumerator()) {
 }
 
 $ReservedPatterns = @($KeywordCases.Keys | ForEach-Object { Get-RulePattern $Grammar $_ })
-foreach ($Identifier in @('moduleˉname', 'trueˉvalue', 'i32ˉvalue', 'lengthening')) {
+foreach ($Identifier in @('moduleˉname', 'trueˉvalue', 'i32ˉvalue', 'lengthening', 'moduleΔ')) {
     foreach ($Pattern in $ReservedPatterns) {
         Assert-Condition (!$Pattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a reserved word."
     }
+}
+
+$Languageˉoneˉreservedˉwords = @(
+    'application', 'as', 'async', 'authority', 'await', 'base', 'bool', 'borrow',
+    'break', 'bytes', 'cancel_join', 'capability', 'case', 'const', 'continue',
+    'copy', 'core', 'data', 'derive', 'effects', 'else', 'enum', 'export', 'f32',
+    'f64', 'fail_join', 'false', 'fn', 'for', 'foreign', 'hosted', 'i8', 'i16',
+    'i32', 'i64', 'if', 'implement', 'import', 'in', 'join', 'let', 'library',
+    'match', 'module', 'move', 'mut', 'never', 'optional', 'maximum', 'package',
+    'platform', 'policy', 'profile', 'protocol', 'record', 'requires', 'return',
+    'rune', 'scope', 'service', 'system', 'task', 'text', 'true', 'try', 'u8',
+    'u16', 'u32', 'u64', 'unit', 'unsafe', 'using', 'var', 'variant', 'version',
+    'where')
+Assert-Condition ($Languageˉoneˉreservedˉwords.Count -eq 76) `
+    'The Windvale Language 1.0 reserved-word fixture must contain exactly 76 words.'
+foreach ($Keyword in $Languageˉoneˉreservedˉwords) {
+    Assert-Condition (@($ReservedPatterns | Where-Object { $_.IsMatch($Keyword) }).Count -eq 1) `
+        "Windvale Language 1.0 reserved word '$Keyword' must be recognized by exactly one grammar category."
 }
 
 $ConstantDeclarationPattern = Get-RulePattern $Grammar 'declarations' 4
@@ -156,11 +192,16 @@ $FloatingNumberPattern = Get-RulePattern $Grammar 'numbers'
 $NumberPattern = Get-RulePattern $Grammar 'numbers' 1
 foreach ($Number in @(
     '0',
+    '1_000_000',
+    '0xDEAD_BEEF',
+    '0b1010_0101',
     '2147483647',
     '0i8',
     '127i8',
     '0i16',
     '32767i16',
+    '0i32',
+    '2147483647i32',
     '0i64',
     '9223372036854775807i64',
     '0u8',
@@ -173,20 +214,25 @@ foreach ($Number in @(
     '18446744073709551615u64')) {
     Assert-FullMatch $NumberPattern $Number 'Numeric token'
 }
-foreach ($Identifier in @('Value0', '0u32suffix', '0u64suffix', 'Fieldˉ0u8')) {
+foreach ($Identifier in @('Value0', '0u32suffix', '0u64suffix', 'Fieldˉ0u8', '0xValue')) {
     Assert-Condition (!$NumberPattern.IsMatch($Identifier)) "Identifier '$Identifier' is incorrectly matched as a numeric token."
 }
 foreach ($Number in @(
     '0x0p+0f32',
-    '0X1.8P+1f32',
+    '0x1.8P+1f32',
     '0x1.0p-149f32',
-    '0x1.0000000000000p+0f64')) {
+    '0x1.0000000000000p+0f64',
+    '0x1p0',
+    '1.0',
+    '1_000.25e-2f64',
+    '1e10f32')) {
     Assert-FullMatch $FloatingNumberPattern $Number 'Floating numeric token'
 }
 foreach ($Invalid in @(
     '0x1.0f32',
     '0x1.p+0f32',
-    '0x1.0p+0',
+    '0X1.0p+0f32',
+    '1__0.0f32',
     '0x1.0p+0f64suffix')) {
     Assert-Condition (!$FloatingNumberPattern.IsMatch($Invalid)) `
         "Invalid floating token '$Invalid' is incorrectly matched by the grammar."
@@ -199,16 +245,33 @@ Assert-Condition ($NamedRecord.Success -and $NamedRecord.Value -eq 'Readˉreques
     'The editor grammar must recognize a named-record literal type before its field block.'
 Assert-Condition (!$NamedRecordPattern.IsMatch('Ready { Process(Value); }')) `
     'The named-record grammar must not classify an ordinary condition before a block as a type.'
+$Unicodeˉdeclaration = (Get-RulePattern $Grammar 'declarations').Match('module Δοκιμήˉ値')
+Assert-Condition ($Unicodeˉdeclaration.Success -and $Unicodeˉdeclaration.Length -eq 'module Δοκιμήˉ値'.Length) `
+    'The editor grammar must recognize Windvale 1.0 Unicode identifiers and macron-separated segments.'
 
 $ControlPattern = Get-RulePattern $Grammar 'control-keywords'
 Assert-Condition ($ControlPattern.Matches('else if').Count -eq 2) `
     'The editor grammar must recognize both control words in block-form else if.'
 
-$CommentPattern = Get-RulePattern $Grammar 'comments'
+$Documentationˉcommentˉpattern = Get-RulePattern $Grammar 'comments'
+Assert-FullMatch $Documentationˉcommentˉpattern '/// Windvale documentation' 'Documentation comment'
+$CommentPattern = Get-RulePattern $Grammar 'comments' 1
 Assert-FullMatch $CommentPattern '// Windvale comment' 'Line comment'
 $OperatorPattern = Get-RulePattern $Grammar 'operators'
-foreach ($Operator in @('->', '&&', '||', '<<', '>>', '==', '!=', '<=', '>=', '+=', '-=', '*=', '+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '<', '>', '=')) {
+foreach ($Operator in @('->', '&&', '||', '<<', '>>', '==', '!=', '<=', '>=', '+=', '-=', '*=', '/=', '%=', '+', '-', '*', '/', '%', '&', '|', '^', '~', '!', '<', '>', '=')) {
     Assert-FullMatch $OperatorPattern $Operator 'Operator'
+}
+
+$Stringˉscopes = @($Grammar.repository.strings.patterns | ForEach-Object { $_.name })
+foreach ($Scope in @(
+    'string.quoted.other.raw.byte.windvale',
+    'string.quoted.other.raw.windvale',
+    'string.quoted.triple.byte.windvale',
+    'string.quoted.triple.windvale',
+    'string.quoted.double.byte.windvale',
+    'string.quoted.double.windvale',
+    'string.quoted.single.rune.windvale')) {
+    Assert-Condition ($Stringˉscopes -contains $Scope) "Required Windvale 1.0 literal scope '$Scope' is missing."
 }
 
 $SamplePath = Join-Path $RepositoryRoot 'Examples/Seed/Hello-Windvale.wv'

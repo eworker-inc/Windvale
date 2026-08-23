@@ -136,7 +136,7 @@ It returns immutable evidence containing:
 
 The worker core contains no DOM, file, network capability, extension API, or deployment API. The static JavaScript page is the normal UI adapter; it also owns the explicitly bounded Workbench workspace and does not transfer that authority into the worker. No Chrome or other browser extension is required. The reusable C# engine remains a separate recovery and differential-test boundary.
 
-The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer mirrors the implemented lexical categories in `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Editor text crosses into the disposable worker only when a run is requested. The current native compiler diagnostic envelope does not carry source locations, so the normal page reports its exact bounded text without inventing editor markers.
+The UI adapter hosts a locally bundled Monaco editor. Its Windvale tokenizer covers the Language 1.0 lexical categories and retains the current compiler's compatibility words in step with `Tools/Editors/Windvale/syntaxes/Windvale.tmLanguage.json`; it is presentation support rather than a source-language contract or compiler front end. Editor text crosses into the disposable worker only when a run is requested. The current native compiler diagnostic envelope does not carry source locations, so the normal page reports its exact bounded text without inventing editor markers.
 
 ## Static-hosting contract
 

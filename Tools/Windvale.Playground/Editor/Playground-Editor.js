@@ -17,6 +17,14 @@ import "monaco-editor/editor/contrib/suggest/browser/suggestController.js";
 import "monaco-editor/editor/contrib/wordHighlighter/browser/wordHighlighter.js";
 import "monaco-editor/editor/contrib/wordOperations/browser/wordOperations.js";
 import "monaco-editor/editor/contrib/wordPartOperations/browser/wordPartOperations.js";
+import {
+    Createˉwindvaleˉtokensˉprovider,
+    WINDVALE_AUTHORITY_VALUES,
+    WINDVALE_COMPLETIONS,
+    WINDVALE_MODULE_PROFILE_VALUES,
+    WINDVALE_TYPE_KEYWORDS,
+    WINDVALE_WORD_PATTERN,
+} from "./Windvale-Language.js";
 
 const LAYOUT_STORAGE_KEY = "windvale-playground-layout";
 const THEME_STORAGE_KEY = "windvale-theme";
@@ -42,63 +50,6 @@ self.MonacoEnvironment = {
         return new Editorˉworker();
     },
 };
-
-const WINDVALE_COMPLETIONS = [
-    { label: "module", group: "declaration", detail: "Declare this module" },
-    { label: "profile", group: "declaration", detail: "Select the module capability profile" },
-    { label: "import", group: "declaration", detail: "Import another module" },
-    { label: "capability", group: "declaration", detail: "Declare a required hosted capability" },
-    { label: "data", group: "declaration", detail: "Declare immutable module data" },
-    { label: "record", group: "declaration", detail: "Declare a record type" },
-    { label: "enum", group: "declaration", detail: "Declare an enumeration type" },
-    { label: "export", group: "declaration", detail: "Export a declaration" },
-    { label: "fn", group: "declaration", detail: "Declare a function" },
-    { label: "if", group: "control", detail: "Conditional branch" },
-    { label: "else", group: "control", detail: "Alternative conditional branch" },
-    { label: "while", group: "control", detail: "Repeat while a condition is true" },
-    { label: "return", group: "control", detail: "Return from the current function" },
-    { label: "let", group: "storage", detail: "Declare an immutable local value" },
-    { label: "var", group: "storage", detail: "Declare a mutable local value" },
-    { label: "portable", group: "profile", detail: "Portable module profile" },
-    { label: "hosted", group: "profile", detail: "Hosted module profile" },
-    { label: "system", group: "profile", detail: "System module profile (not executable in this Workbench)" },
-    { label: "i32", group: "type", detail: "Signed 32-bit integer type" },
-    { label: "u8", group: "type", detail: "Unsigned 8-bit integer type" },
-    { label: "u32", group: "type", detail: "Unsigned 32-bit integer type" },
-    { label: "bool", group: "type", detail: "Boolean type" },
-    { label: "text", group: "type", detail: "UTF-8 text value type" },
-    { label: "bytes", group: "type", detail: "Byte sequence type" },
-    { label: "void", group: "type", detail: "No return value" },
-    { label: "true", group: "literal", detail: "Boolean true literal" },
-    { label: "false", group: "literal", detail: "Boolean false literal" },
-    { label: "length", group: "built-in", detail: "Get the length of a supported value" },
-    { label: "Bytesˉlength", group: "built-in", detail: "Get an immutable byte sequence length" },
-    { label: "Bytesˉslice", group: "built-in", detail: "Create an immutable byte slice" },
-    { label: "Bytesˉreadˉu8", group: "built-in", detail: "Read one unsigned byte" },
-    { label: "Bytesˉreadˉu16ˉlittle", group: "built-in", detail: "Read an unsigned 16-bit little-endian value" },
-    { label: "Bytesˉreadˉu32ˉlittle", group: "built-in", detail: "Read an unsigned 32-bit little-endian value" },
-    { label: "Bytesˉreadˉi32ˉlittle", group: "built-in", detail: "Read a signed 32-bit little-endian value" },
-    { label: "Bytesˉconcat", group: "built-in", detail: "Concatenate two immutable byte sequences" },
-    { label: "Bytesˉfromˉu8", group: "built-in", detail: "Encode one unsigned byte" },
-    { label: "Bytesˉfromˉu16ˉlittle", group: "built-in", detail: "Encode an unsigned 16-bit little-endian value" },
-    { label: "Bytesˉfromˉu32ˉlittle", group: "built-in", detail: "Encode an unsigned 32-bit little-endian value" },
-    { label: "Bytesˉfromˉi32ˉlittle", group: "built-in", detail: "Encode a signed 32-bit little-endian value" },
-    { label: "Bytesˉsha256ˉhex", group: "built-in", detail: "Hash bytes as lowercase SHA-256 text" },
-    { label: "Textˉtoˉutf8", group: "built-in", detail: "Encode text as strict UTF-8 bytes" },
-    { label: "Textˉutf8ˉisˉvalid", group: "built-in", detail: "Check whether bytes are strict UTF-8" },
-    { label: "Textˉfromˉutf8", group: "built-in", detail: "Decode strict UTF-8 bytes as text" },
-    { label: "Textˉconcat", group: "built-in", detail: "Concatenate two text values" },
-    { label: "Textˉquote", group: "built-in", detail: "Format text as a quoted Windvale literal" },
-    { label: "I32ˉformat", group: "built-in", detail: "Format a signed integer as text" },
-    { label: "U8ˉformat", group: "built-in", detail: "Format an unsigned byte as text" },
-    { label: "U32ˉformat", group: "built-in", detail: "Format an unsigned integer as text" },
-    { label: "U32ˉfromˉu8", group: "built-in", detail: "Widen an unsigned byte to u32" },
-    { label: "U64ˉfromˉu32", group: "built-in", detail: "Widen an unsigned u32 to u64" },
-    { label: "Enumˉname", group: "built-in", detail: "Get the declared name of an enum value" },
-    { label: "console.write", group: "capability", detail: "Write text without a newline" },
-    { label: "console.write_line", group: "capability", detail: "Write one line of text" },
-    { label: "diagnostic.write_line", group: "capability", detail: "Write one line to the diagnostic channel" },
-];
 
 const COMPLETION_GROUP_ORDER = new Map([
     ["declaration", "0"],
@@ -239,42 +190,16 @@ function Registerˉwindvaleˉlanguage() {
             { open: "[", close: "]" },
             { open: "(", close: ")" },
             { open: "\"", close: "\"", notIn: ["string", "comment"] },
+            { open: "'", close: "'", notIn: ["string", "comment"] },
         ],
-        surroundingPairs: [["{", "}"], ["[", "]"], ["(", ")"], ["\"", "\""]],
+        surroundingPairs: [["{", "}"], ["[", "]"], ["(", ")"], ["\"", "\""], ["'", "'"]],
+        wordPattern: WINDVALE_WORD_PATTERN,
     });
-    Monaco.languages.setMonarchTokensProvider("windvale", {
-        defaultToken: "",
-        tokenizer: {
-            root: [
-                [/\/\/.*$/, "comment"],
-                [/"/, { token: "string.quote", bracket: "@open", next: "@string" }],
-                [/\b(?:module|profile|import|capability|data|record|enum|export|fn)\b/, "keyword.declaration"],
-                [/\b(?:if|else|while|return)\b/, "keyword.control"],
-                [/\b(?:let|var)\b/, "keyword.storage"],
-                [/\b(?:portable|hosted|system)\b/, "keyword.profile"],
-                [/\b(?:i32|u8|u32|bool|text|bytes|void)\b/, "type"],
-                [/\b(?:true|false)\b/, "constant.language"],
-                [/\blength\b/, "support.function"],
-                [/[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+(?=\s*\()/, "function.capability"],
-                [/[A-Za-z_][A-Za-z0-9_ˉ]*(?=\s*\()/, "function"],
-                [/\d+(?:u8|u32)?\b/, "number"],
-                [/->|==|!=|<=|>=|[+\-*!<>=]/, "operator"],
-                [/[{}()[\]]/, "@brackets"],
-                [/[;:,]/, "delimiter"],
-                [/[A-Za-z_][A-Za-z0-9_ˉ]*/, "identifier"],
-            ],
-            string: [
-                [/[^\\"]+/, "string"],
-                [/\\(?:["\\nrt]|u[0-9A-Fa-f]{4})/, "string.escape"],
-                [/\\./, "string.escape.invalid"],
-                [/"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
-            ],
-        },
-    });
+    Monaco.languages.setMonarchTokensProvider("windvale", Createˉwindvaleˉtokensˉprovider());
     Monaco.languages.registerCompletionItemProvider("windvale", {
         provideCompletionItems(model, position) {
             const Lineˉprefix = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
-            const Token = Lineˉprefix.match(/[A-Za-z_][A-Za-z0-9_ˉ.]*$/u)?.[0] ?? "";
+            const Token = Lineˉprefix.match(/[_\p{XID_Continue}ˉ.]+$/u)?.[0] ?? "";
             const Contextˉprefix = Lineˉprefix.slice(0, Lineˉprefix.length - Token.length);
             const Range = {
                 startLineNumber: position.lineNumber,
@@ -284,16 +209,20 @@ function Registerˉwindvaleˉlanguage() {
             };
 
             let Acceptedˉgroups;
+            let Acceptedˉlabels;
             if (/\bprofile\s*$/u.test(Contextˉprefix)) {
-                Acceptedˉgroups = new Set(["profile"]);
+                Acceptedˉlabels = new Set(WINDVALE_MODULE_PROFILE_VALUES);
+            } else if (/\bauthority\s*$/u.test(Contextˉprefix)) {
+                Acceptedˉlabels = new Set(WINDVALE_AUTHORITY_VALUES);
             } else if (/\bcapability\s*$/u.test(Contextˉprefix)) {
                 Acceptedˉgroups = new Set(["capability"]);
             } else if (/(?::|->)\s*$/u.test(Contextˉprefix)) {
-                Acceptedˉgroups = new Set(["type"]);
+                Acceptedˉlabels = new Set([...WINDVALE_TYPE_KEYWORDS, "borrow"]);
             }
 
             const Matchingˉcompletions = WINDVALE_COMPLETIONS.filter(Completion =>
                 (!Acceptedˉgroups || Acceptedˉgroups.has(Completion.group))
+                && (!Acceptedˉlabels || Acceptedˉlabels.has(Completion.label))
                 && Completion.label.startsWith(Token),
             );
 

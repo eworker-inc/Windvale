@@ -7,6 +7,9 @@
   ],
   "patterns": [
     {
+      "include": "#source-descriptor"
+    },
+    {
       "include": "#comments"
     },
     {
@@ -56,8 +59,20 @@
     }
   ],
   "repository": {
+    "source-descriptor": {
+      "patterns": [
+        {
+          "name": "meta.preprocessor.source-descriptor.windvale",
+          "match": "\\A#!wv/1 [A-Za-z][A-Za-z0-9]*(?:-[A-Za-z][A-Za-z0-9]*)*(?:\\.[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z][A-Za-z0-9]*)*)*@[1-9][0-9]*(?=\\r?$)"
+        }
+      ]
+    },
     "comments": {
       "patterns": [
+        {
+          "name": "comment.line.documentation.windvale",
+          "match": "///.*$"
+        },
         {
           "name": "comment.line.double-slash.windvale",
           "match": "//.*$"
@@ -66,6 +81,111 @@
     },
     "strings": {
       "patterns": [
+        {
+          "name": "string.quoted.other.raw.byte.windvale",
+          "begin": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])br(#{0,8})\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"\\1",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          }
+        },
+        {
+          "name": "string.quoted.other.raw.windvale",
+          "begin": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])r(#{0,8})\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"\\1",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          }
+        },
+        {
+          "name": "string.quoted.triple.byte.windvale",
+          "begin": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])b\"\"\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"\"\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.windvale",
+              "match": "\\\\(?:[\\\\'\"nrt0{}]|x[0-9A-Fa-f]{2})"
+            },
+            {
+              "name": "invalid.illegal.escape.windvale",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.triple.windvale",
+          "begin": "\"\"\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"\"\"",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.windvale",
+              "match": "\\\\(?:[\\\\'\"nrt0{}]|u\\{[0-9A-Fa-f]{1,6}\\})"
+            },
+            {
+              "name": "invalid.illegal.escape.windvale",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.byte.windvale",
+          "begin": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])b\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "\"|$",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.windvale",
+              "match": "\\\\(?:[\\\\'\"nrt0{}]|x[0-9A-Fa-f]{2})"
+            },
+            {
+              "name": "invalid.illegal.escape.windvale",
+              "match": "\\\\."
+            }
+          ]
+        },
         {
           "name": "string.quoted.double.windvale",
           "begin": "\"",
@@ -83,7 +203,32 @@
           "patterns": [
             {
               "name": "constant.character.escape.windvale",
-              "match": "\\\\(?:[\"\\\\nrt]|u[0-9A-Fa-f]{4})"
+              "match": "\\\\(?:[\\\\'\"nrt0{}]|u\\{[0-9A-Fa-f]{1,6}\\})"
+            },
+            {
+              "name": "invalid.illegal.escape.windvale",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.rune.windvale",
+          "begin": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.windvale"
+            }
+          },
+          "end": "'|$",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.windvale"
+            }
+          },
+          "patterns": [
+            {
+              "name": "constant.character.escape.windvale",
+              "match": "\\\\(?:[\\\\'\"nrt0{}]|u\\{[0-9A-Fa-f]{1,6}\\})"
             },
             {
               "name": "invalid.illegal.escape.windvale",
@@ -96,7 +241,7 @@
     "declarations": {
       "patterns": [
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(module|import)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(module|import)\\s+([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.module.windvale"
@@ -107,7 +252,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(capability)\\s+([a-z_][a-z0-9_]*(?:\\.[a-z_][a-z0-9_]*)+)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(capability)\\s+([a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+)",
           "captures": {
             "1": {
               "name": "keyword.declaration.capability.windvale"
@@ -118,7 +263,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(record|enum|variant)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(record|enum|variant|protocol)\\s+([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.type.windvale"
@@ -129,7 +274,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(data)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(data)\\s+([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.data.windvale"
@@ -140,7 +285,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(const)\\s+([A-Z_][A-Z0-9_]*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(const)\\s+([A-Z_][A-Z0-9_]*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.constant.windvale"
@@ -151,7 +296,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(fn)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(fn)\\s+([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "keyword.declaration.function.windvale"
@@ -162,7 +307,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(let|var)\\s+([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(let|var)\\s+([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "storage.modifier.windvale"
@@ -174,7 +319,7 @@
         },
         {
           "name": "variable.other.definition.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*:)"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)(?=\\s*:)"
         }
       ]
     },
@@ -182,7 +327,7 @@
       "patterns": [
         {
           "name": "keyword.declaration.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:module|profile|import|as|capability|data|const|record|enum|variant|export|fn)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:module|profile|platform|authority|import|as|requires|optional|capability|version|data|const|record|enum|variant|protocol|implement|derive|package|foreign|export|fn|where|maximum)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -190,7 +335,7 @@
       "patterns": [
         {
           "name": "keyword.control.flow.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:if|else|while|for|in|match|case|try|push|break|continue|return)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:if|else|while|for|in|match|case|try|await|using|task|scope|policy|join|cancel_join|fail_join|break|continue|return)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -198,7 +343,7 @@
       "patterns": [
         {
           "name": "storage.modifier.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:let|var|freeze)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:let|var|borrow|mut|copy|move|base|unsafe|async|effects|freeze|push)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -206,7 +351,7 @@
       "patterns": [
         {
           "name": "storage.modifier.profile.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:portable|hosted|system)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:core|portable|hosted|system|application|library|service)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -214,7 +359,7 @@
       "patterns": [
         {
           "name": "storage.type.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|rune|bool|text|bytes|sequence|builder|unit|never|void)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|rune|bool|text|bytes|unit|never|sequence|builder|void)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -222,7 +367,7 @@
       "patterns": [
         {
           "name": "constant.language.boolean.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])(?:true|false)(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])(?:true|false)(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
@@ -230,14 +375,14 @@
       "patterns": [
         {
           "name": "support.function.builtin.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])length(?![A-Za-z0-9_ˉ])"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])length(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])"
         }
       ]
     },
     "numbers": {
       "patterns": [
         {
-          "match": "(?<![A-Za-z0-9_ˉ])(0[xX][0-9A-Fa-f]+(?:\\.[0-9A-Fa-f]+)?[pP][+-]?[0-9]+)(f32|f64)(?![A-Za-z0-9_ˉ])",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])((?:[0-9](?:_?[0-9])*\\.[0-9](?:_?[0-9])*(?:[eE][+-]?[0-9](?:_?[0-9])*)?|[0-9](?:_?[0-9])*[eE][+-]?[0-9](?:_?[0-9])*|0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*(?:\\.[0-9A-Fa-f](?:_?[0-9A-Fa-f])*)?[pP][+-]?[0-9](?:_?[0-9])*))(f32|f64)?(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])",
           "captures": {
             "1": {
               "name": "constant.numeric.float.hexadecimal.windvale"
@@ -248,7 +393,7 @@
           }
         },
         {
-          "match": "(?<![A-Za-z0-9_ˉ])([0-9]+)(i8|i16|i64|u8|u16|u32|u64)?(?![A-Za-z0-9_ˉ])",
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])((?:0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*|0b[01](?:_?[01])*|[0-9](?:_?[0-9])*))(i8|i16|i32|i64|u8|u16|u32|u64)?(?![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])",
           "captures": {
             "1": {
               "name": "constant.numeric.integer.decimal.windvale"
@@ -264,7 +409,7 @@
       "patterns": [
         {
           "name": "entity.name.type.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*\\{\\s*[A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*\\s*:)"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)(?=\\s*\\{\\s*[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*\\s*:)"
         }
       ]
     },
@@ -276,14 +421,14 @@
         },
         {
           "name": "entity.name.function.call.windvale",
-          "match": "(?<![A-Za-z0-9_ˉ])([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)(?=\\s*\\()"
+          "match": "(?<![\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_ˉ])([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)(?=\\s*\\()"
         }
       ]
     },
     "members": {
       "patterns": [
         {
-          "match": "(\\.)([A-Za-z_][A-Za-z0-9_]*(?:ˉ[A-Za-z_][A-Za-z0-9_]*)*)",
+          "match": "(\\.)([\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*(?:ˉ[\\p{L}\\p{Nl}_][\\p{L}\\p{Nl}\\p{Mn}\\p{Mc}\\p{Nd}\\p{Pc}_]*)*)",
           "captures": {
             "1": {
               "name": "punctuation.accessor.windvale"
@@ -299,7 +444,7 @@
       "patterns": [
         {
           "name": "keyword.operator.windvale",
-          "match": "->|&&|\\|\\||<<|>>|==|!=|<=|>=|\\+=|-=|\\*=|[+\\-*/%&|^~!<>=]"
+          "match": "->|&&|\\|\\||<<|>>|==|!=|<=|>=|\\+=|-=|\\*=|/=|%=|[+\\-*/%&|^~!<>=]"
         }
       ]
     },
