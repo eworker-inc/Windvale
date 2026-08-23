@@ -2645,3 +2645,37 @@ The front-door contract advances to 478 cases and 114 source fixtures. The
 `ae29842cedcd3eda416b8008cf77e03b9346faba5bf0779d4ebacc7468be51f0`.
 Focused Windows evidence is present; the complete front-door rerun and paired
 Linux execution remain the later qualification gate.
+
+## Generation-safe allocation-lease accounting evidence
+
+[Decision 0841](../Decisions/0841-Prove-Generation-Safe-Allocation-Leases.md)
+extends the fixed-capacity memory oracle without changing its private 2,616-byte
+state. Every available budget token now has an odd generation. Converting it to
+one allocation lease advances to the following even generation, so Split and
+budget release reject the old token immediately. A released slot selects the
+next greater odd generation when reused; generation `4294967295` stays retired.
+
+The current lease evidence is a private 28-byte value containing the domain and
+generation plus exact maximum-retained, current-retained, and alignment fields.
+Construction accepts power-of-two alignment from 1 through 4,096, positive
+maximum bytes, ordered current bytes, and a maximum within the budget's
+unreserved authority. Exhaustion reports reason 1 with exact requested and
+available bytes while preserving the state. Invalid metadata is rejected before
+mutation. Successful conversion makes the budget stale, and release accepts
+only the exact token-carried metadata before recursively crediting the parent.
+
+The focused self-test preserves the original 17 budget cases and adds 12 lease
+cases. Two independent builds match as a 35,799-byte WVB at SHA-256
+`3f156ef17f29c5673c0d383c713e04814327243783d2047cce2fc8fe6be117fb`;
+the packaged Windows execution returns 42. The owner summary is:
+
+```text
+native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=35799
+```
+
+The registry remains 112 owners and contains 5,344 cases at SHA-256
+`b34bd9e5ce73255db7da366b908dda29249df9514aff6f7dbb1918ce4d4489e1`.
+This is an accounting oracle, not an executable operation-172 or physical-
+allocation claim. The current 15-case Split owner also passes unchanged: both
+typed modules execute to 42 and all nine bytecode corruptions reject. Paired
+Linux execution remains required evidence before promotion.

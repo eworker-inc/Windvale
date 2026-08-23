@@ -87,14 +87,14 @@ export fn Main() -> i32 {
     if !Budgets.Memoryˉbudgetˉstateˉisˉvalid(Retiredˉslot) ||
         !Skippedˉretired.Valid || !Skippedˉretired.Succeeded ||
         Bytesˉreadˉu32ˉlittle(Skippedˉretired.Token, 0u32) != 3u32 ||
-        Bytesˉreadˉu32ˉlittle(Skippedˉretired.Token, 4u32) != 2u32 {
+        Bytesˉreadˉu32ˉlittle(Skippedˉretired.Token, 4u32) != 3u32 {
         return 12;
     }
     let Reused: Budgets.Memoryˉbudgetˉsplitˉresult =
         Budgets.Splitˉmemoryˉbudget(State, Root, 1u64, 0u32);
     if !Reused.Valid || !Reused.Succeeded ||
         Bytesˉreadˉu32ˉlittle(Reused.Token, 0u32) != 2u32 ||
-        Bytesˉreadˉu32ˉlittle(Reused.Token, 4u32) != 2u32 {
+        Bytesˉreadˉu32ˉlittle(Reused.Token, 4u32) != 3u32 {
         return 12;
     }
     State = Reused.State;
@@ -110,6 +110,90 @@ export fn Main() -> i32 {
         return 14;
     }
 
+    let Leaseˉexhausted: Budgets.Allocationˉleaseˉresult =
+        Budgets.Constructˉallocationˉlease(
+            State, Reused.Token, 2u64, 1u64, 8u32
+        );
+    if !Leaseˉexhausted.Valid || Leaseˉexhausted.Succeeded ||
+        Leaseˉexhausted.Reason != 1u8 ||
+        Leaseˉexhausted.Requestedˉbytes != 2u64 ||
+        Leaseˉexhausted.Availableˉbytes != 1u64 ||
+        !Bytesˉequal(Leaseˉexhausted.State, State) {
+        return 18;
+    }
+    let Invalidˉalignment: Budgets.Allocationˉleaseˉresult =
+        Budgets.Constructˉallocationˉlease(
+            State, Reused.Token, 1u64, 1u64, 3u32
+        );
+    if Invalidˉalignment.Valid ||
+        !Bytesˉequal(Invalidˉalignment.State, State) {
+        return 19;
+    }
+    let Lease: Budgets.Allocationˉleaseˉresult =
+        Budgets.Constructˉallocationˉlease(
+            State, Reused.Token, 1u64, 1u64, 8u32
+        );
+    if !Lease.Valid || !Lease.Succeeded || Lease.Reason != 0u8 ||
+        Lease.Maximumˉretainedˉbytes != 1u64 ||
+        Lease.Currentˉretainedˉbytes != 1u64 ||
+        Lease.Alignmentˉceiling != 8u32 ||
+        Bytesˉlength(Lease.Token) != 28u32 ||
+        Bytesˉreadˉu32ˉlittle(Lease.Token, 0u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Lease.Token, 4u32) != 4u32 {
+        return 20;
+    }
+    State = Lease.State;
+    if !Budgets.Allocationˉleaseˉisˉvalid(
+            State, Lease.Token, 1u64, 1u64, 8u32
+        ) || Budgets.Allocationˉleaseˉisˉvalid(
+            State, Lease.Token, 1u64, 2u64, 8u32
+        ) {
+        return 21;
+    }
+    let Staleˉbudgetˉsplit: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Reused.Token, 0u64, 0u32);
+    let Staleˉbudgetˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉmemoryˉbudget(State, Reused.Token);
+    if Staleˉbudgetˉsplit.Valid || Staleˉbudgetˉrelease.Valid {
+        return 22;
+    }
+    let Wrongˉleaseˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉallocationˉlease(
+            State, Lease.Token, 1u64, 1u64, 4u32
+        );
+    if Wrongˉleaseˉrelease.Valid ||
+        !Bytesˉequal(Wrongˉleaseˉrelease.State, State) {
+        return 23;
+    }
+    let Leaseˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉallocationˉlease(
+            State, Lease.Token, 1u64, 1u64, 8u32
+        );
+    if !Leaseˉrelease.Valid { return 24; }
+    State = Leaseˉrelease.State;
+    if Budgets.Memoryˉbudgetˉentryˉisˉactive(State, 2u32) ||
+        Budgets.Memoryˉbudgetˉreservedˉbytes(State, 1u32) != 1u64 ||
+        Budgets.Memoryˉbudgetˉchildˉcount(State, 1u32) != 1u32 {
+        return 25;
+    }
+    let Staleˉleaseˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉallocationˉlease(
+            State, Lease.Token, 1u64, 1u64, 8u32
+        );
+    if Staleˉleaseˉrelease.Valid { return 26; }
+    let Teardownˉlease: Budgets.Allocationˉleaseˉresult =
+        Budgets.Constructˉallocationˉlease(
+            State, Second.Token, 1u64, 0u64, 8u32
+        );
+    if !Teardownˉlease.Valid || !Teardownˉlease.Succeeded ||
+        !Budgets.Allocationˉleaseˉisˉvalid(
+            Teardownˉlease.State, Teardownˉlease.Token,
+            1u64, 0u64, 8u32
+        ) {
+        return 27;
+    }
+    State = Teardownˉlease.State;
+
     let Malformed: bytes = Replaceˉu32(State, 16u32 + 20u32, 3u32);
     let Malformedˉsplit: Budgets.Memoryˉbudgetˉsplitˉresult =
         Budgets.Splitˉmemoryˉbudget(Malformed, Root, 1u64, 0u32);
@@ -117,7 +201,7 @@ export fn Main() -> i32 {
         Budgets.Releaseˉmemoryˉbudget(Malformed, Root);
     if Budgets.Memoryˉbudgetˉstateˉisˉvalid(Malformed) ||
         Malformedˉsplit.Valid || Malformedˉrelease.Valid {
-        return 15;
+        return 28;
     }
 
     let Teardown: Budgets.Memoryˉbudgetˉreleaseˉresult =
@@ -129,7 +213,7 @@ export fn Main() -> i32 {
     var Identity: u32 = 1u32;
     while Identity <= 65u32 {
         if Budgets.Memoryˉbudgetˉentryˉisˉactive(Teardown.State, Identity) {
-            return 17;
+            return 29;
         }
         Identity = Identity + 1u32;
     }

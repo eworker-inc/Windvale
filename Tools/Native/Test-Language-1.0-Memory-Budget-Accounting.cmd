@@ -30,7 +30,7 @@ call "%Native%\Build-Wvb.cmd" "%Project%" "%Work%\Accounting-B.wvb" ^
 for %%F in ("%Work%\Build-B.err") do if not "%%~zF"=="0" goto :cleanup
 fc /b "%Work%\Accounting-A.wvb" "%Work%\Accounting-B.wvb" >nul || goto :cleanup
 for %%F in ("%Work%\Accounting-A.wvb") do set "WvbBytes=%%~zF"
-if not "%WvbBytes%"=="24825" goto :cleanup
+if not "%WvbBytes%"=="35799" goto :cleanup
 
 set "FailureStep=package"
 echo START language 1 memory budget accounting phase=package item=3/4
@@ -57,5 +57,5 @@ if not "%Result%"=="0" (
 )
 if exist "%Work%\." rmdir /s /q "%Work%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 memory budget accounting status=Passed cases=17 result=42 state-bytes=2616 capacity=65 wvb-bytes=%WvbBytes%
+echo native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%WvbBytes%
 exit /b 0

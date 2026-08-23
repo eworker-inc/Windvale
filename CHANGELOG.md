@@ -8,6 +8,12 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Added a bounded generation-safe allocation-lease accounting oracle. Budget
+  owners use odd generations, successful lease transfer advances atomically to
+  an even generation, exact maximum/current/alignment metadata is bound into
+  private lease evidence, and release or teardown recursively credits parent
+  accounting. This is the correctness model for later Vector allocation, not a
+  public token format or bytecode representation.
 - Bound the frozen fallible `Vectorˉconstructˉreserved::<T>` contract through
   exact Foundation identity, explicit generic/result checking, typed WVIR
   operation 172, and affine budget consumption. The independent boundary

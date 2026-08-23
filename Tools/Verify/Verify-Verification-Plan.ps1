@@ -94,11 +94,22 @@ $NativeCases = @(
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj',
             'Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv',
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.sh'
         )
         Suites = @('language-1-memory-budget-accounting')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 shared memory-budget runtime oracle'
+        Paths = @(
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv'
+        )
+        Suites = @(
+            'language-1-memory-budget-accounting',
+            'language-1-memory-budget-split-execution'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3589,7 +3600,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5332 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5344 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

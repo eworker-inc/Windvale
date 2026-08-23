@@ -23,6 +23,19 @@ export record Memoryˉbudgetˉreleaseˉresult {
     State: bytes;
 }
 
+export record Allocationˉleaseˉresult {
+    Valid: bool;
+    Succeeded: bool;
+    Reason: u8;
+    Requestedˉbytes: u64;
+    Availableˉbytes: u64;
+    Maximumˉretainedˉbytes: u64;
+    Currentˉretainedˉbytes: u64;
+    Alignmentˉceiling: u32;
+    Token: bytes;
+    State: bytes;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -58,6 +71,25 @@ fn Token(Identity: u32, Generation: u32) -> bytes {
     return Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(Identity),
         Bytesˉfromˉu32ˉlittle(Generation)
+    );
+}
+
+fn Leaseˉtoken(
+    Identity: u32,
+    Generation: u32,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> bytes {
+    var Value: bytes = Token(Identity, Generation);
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu64ˉlittle(Maximumˉretainedˉbytes)
+    );
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu64ˉlittle(Currentˉretainedˉbytes)
+    );
+    return Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Alignmentˉceiling)
     );
 }
 
@@ -139,6 +171,49 @@ fn Tokenˉownsˉentry(State: bytes, Value: bytes) -> bool {
     return Entryˉactive(State, Identity) &&
         Entryˉownerˉactive(State, Identity) &&
         Entryˉgeneration(State, Identity) == Tokenˉgeneration(Value);
+}
+
+fn Generationˉisˉbudget(Value: u32) -> bool {
+    return Value != 0u32 && Value % 2u32 == 1u32;
+}
+
+fn Generationˉisˉlease(Value: u32) -> bool {
+    return Value != 0u32 && Value % 2u32 == 0u32;
+}
+
+fn Tokenˉownsˉbudget(State: bytes, Value: bytes) -> bool {
+    return Tokenˉownsˉentry(State, Value) &&
+        Generationˉisˉbudget(Tokenˉgeneration(Value));
+}
+
+fn Tokenˉownsˉlease(State: bytes, Value: bytes) -> bool {
+    if Bytesˉlength(Value) != 28u32 { return false; }
+    let Identity: u32 = Tokenˉidentity(Value);
+    if Identity < 1u32 || Identity > MEMORY_BUDGET_CAPACITY { return false; }
+    return Entryˉactive(State, Identity) &&
+        Entryˉownerˉactive(State, Identity) &&
+        Entryˉgeneration(State, Identity) == Tokenˉgeneration(Value) &&
+        Generationˉisˉlease(Tokenˉgeneration(Value));
+}
+
+fn Nextˉbudgetˉgeneration(Prior: u32) -> u32 {
+    if Prior == 4294967295u32 { return 0u32; }
+    var Candidate: u32 = Prior + 1u32;
+    if Candidate % 2u32 == 0u32 {
+        if Candidate == 4294967295u32 { return 0u32; }
+        Candidate = Candidate + 1u32;
+    }
+    return Candidate;
+}
+
+fn Alignmentˉisˉvalid(Value: u32) -> bool {
+    if Value == 0u32 || Value > 4096u32 { return false; }
+    var Remaining: u32 = Value;
+    while Remaining > 1u32 {
+        if Remaining % 2u32 != 0u32 { return false; }
+        Remaining = Remaining / 2u32;
+    }
+    return true;
 }
 
 fn Memoryˉbudgetˉentryˉstructureˉisˉvalid(
@@ -254,7 +329,8 @@ export fn Constructˉrootˉmemoryˉbudget(
 
 export fn Rootˉmemoryˉbudgetˉtoken(State: bytes) -> bytes {
     if !Memoryˉbudgetˉstateˉisˉvalid(State) || !Entryˉactive(State, 1u32) ||
-        !Entryˉownerˉactive(State, 1u32) {
+        !Entryˉownerˉactive(State, 1u32) ||
+        !Generationˉisˉbudget(Entryˉgeneration(State, 1u32)) {
         return Empty(State);
     }
     return Token(1u32, Entryˉgeneration(State, 1u32));
@@ -282,7 +358,7 @@ export fn Splitˉmemoryˉbudget(
         false, false, 0u8, Maximumˉbytes, 0u64, Empty(State), State
     );
     if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
-        !Tokenˉownsˉentry(State, Parentˉtoken) ||
+        !Tokenˉownsˉbudget(State, Parentˉtoken) ||
         Maximumˉchildren > MEMORY_BUDGET_CAPACITY - 1u32 {
         return Invalid;
     }
@@ -305,7 +381,9 @@ export fn Splitˉmemoryˉbudget(
             Searching = false;
         } else {
             if Entryˉactive(State, Child) ||
-                Entryˉgeneration(State, Child) == 4294967295u32 {
+                Nextˉbudgetˉgeneration(
+                    Entryˉgeneration(State, Child)
+                ) == 0u32 {
                 Child = Child + 1u32;
             } else {
                 Searching = false;
@@ -316,7 +394,7 @@ export fn Splitˉmemoryˉbudget(
         return Splitˉfailure(State, 3u8, Maximumˉbytes, Available);
     }
     let Priorˉgeneration: u32 = Entryˉgeneration(State, Child);
-    let Childˉgeneration: u32 = Priorˉgeneration + 1u32;
+    let Childˉgeneration: u32 = Nextˉbudgetˉgeneration(Priorˉgeneration);
     var Candidate: bytes = Replaceˉentry(
         State,
         Child,
@@ -396,16 +474,12 @@ fn Finalizeˉunownedˉchain(State: bytes, Initialˉidentity: u32) -> bytes {
     return Candidate;
 }
 
-export fn Releaseˉmemoryˉbudget(
+fn Releaseˉownedˉentry(
     State: bytes,
     Value: bytes
 ) -> Memoryˉbudgetˉreleaseˉresult {
     let Invalid: Memoryˉbudgetˉreleaseˉresult =
         Memoryˉbudgetˉreleaseˉresult(false, State);
-    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
-        !Tokenˉownsˉentry(State, Value) {
-        return Invalid;
-    }
     let Identity: u32 = Tokenˉidentity(Value);
     var Candidate: bytes = Replaceˉu32(
         State, Entryˉoffset(Identity) + 12u32, 0u32
@@ -416,6 +490,130 @@ export fn Releaseˉmemoryˉbudget(
         return Invalid;
     }
     return Memoryˉbudgetˉreleaseˉresult(true, Candidate);
+}
+
+export fn Releaseˉmemoryˉbudget(
+    State: bytes,
+    Value: bytes
+) -> Memoryˉbudgetˉreleaseˉresult {
+    let Invalid: Memoryˉbudgetˉreleaseˉresult =
+        Memoryˉbudgetˉreleaseˉresult(false, State);
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉbudget(State, Value) {
+        return Invalid;
+    }
+    return Releaseˉownedˉentry(State, Value);
+}
+
+fn Allocationˉleaseˉinvalid(
+    State: bytes,
+    Requestedˉbytes: u64,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> Allocationˉleaseˉresult {
+    return Allocationˉleaseˉresult(
+        false, false, 0u8, Requestedˉbytes, 0u64,
+        Maximumˉretainedˉbytes, Currentˉretainedˉbytes,
+        Alignmentˉceiling, Empty(State), State
+    );
+}
+
+export fn Constructˉallocationˉlease(
+    State: bytes,
+    Budgetˉtoken: bytes,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> Allocationˉleaseˉresult {
+    let Invalid: Allocationˉleaseˉresult = Allocationˉleaseˉinvalid(
+        State, Maximumˉretainedˉbytes, Maximumˉretainedˉbytes,
+        Currentˉretainedˉbytes, Alignmentˉceiling
+    );
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉbudget(State, Budgetˉtoken) ||
+        Maximumˉretainedˉbytes == 0u64 ||
+        Currentˉretainedˉbytes > Maximumˉretainedˉbytes ||
+        !Alignmentˉisˉvalid(Alignmentˉceiling) {
+        return Invalid;
+    }
+    let Identity: u32 = Tokenˉidentity(Budgetˉtoken);
+    let Maximum: u64 = Entryˉmaximumˉbytes(State, Identity);
+    let Reserved: u64 = Entryˉreservedˉbytes(State, Identity);
+    let Available: u64 = Maximum - Reserved;
+    if Maximumˉretainedˉbytes > Available {
+        return Allocationˉleaseˉresult(
+            true, false, 1u8, Maximumˉretainedˉbytes, Available,
+            Maximumˉretainedˉbytes, Currentˉretainedˉbytes,
+            Alignmentˉceiling, Empty(State), State
+        );
+    }
+    let Budgetˉgeneration: u32 = Tokenˉgeneration(Budgetˉtoken);
+    if Budgetˉgeneration == 4294967295u32 {
+        return Allocationˉleaseˉresult(
+            true, false, 3u8, Maximumˉretainedˉbytes, Available,
+            Maximumˉretainedˉbytes, Currentˉretainedˉbytes,
+            Alignmentˉceiling, Empty(State), State
+        );
+    }
+    let Leaseˉgeneration: u32 = Budgetˉgeneration + 1u32;
+    let Candidate: bytes = Replaceˉu32(
+        State, Entryˉoffset(Identity), Leaseˉgeneration
+    );
+    if !Memoryˉbudgetˉstateˉisˉvalid(Candidate) {
+        return Invalid;
+    }
+    return Allocationˉleaseˉresult(
+        true, true, 0u8, Maximumˉretainedˉbytes, Available,
+        Maximumˉretainedˉbytes, Currentˉretainedˉbytes,
+        Alignmentˉceiling,
+        Leaseˉtoken(
+            Identity, Leaseˉgeneration, Maximumˉretainedˉbytes,
+            Currentˉretainedˉbytes, Alignmentˉceiling
+        ),
+        Candidate
+    );
+}
+
+export fn Allocationˉleaseˉisˉvalid(
+    State: bytes,
+    Leaseˉtoken: bytes,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> bool {
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉlease(State, Leaseˉtoken) ||
+        Maximumˉretainedˉbytes == 0u64 ||
+        Currentˉretainedˉbytes > Maximumˉretainedˉbytes ||
+        !Alignmentˉisˉvalid(Alignmentˉceiling) ||
+        Bytesˉreadˉu64ˉlittle(Leaseˉtoken, 8u32) !=
+            Maximumˉretainedˉbytes ||
+        Bytesˉreadˉu64ˉlittle(Leaseˉtoken, 16u32) !=
+            Currentˉretainedˉbytes ||
+        Bytesˉreadˉu32ˉlittle(Leaseˉtoken, 24u32) != Alignmentˉceiling {
+        return false;
+    }
+    let Identity: u32 = Tokenˉidentity(Leaseˉtoken);
+    return Maximumˉretainedˉbytes <=
+        Entryˉmaximumˉbytes(State, Identity) -
+            Entryˉreservedˉbytes(State, Identity);
+}
+
+export fn Releaseˉallocationˉlease(
+    State: bytes,
+    Leaseˉtoken: bytes,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> Memoryˉbudgetˉreleaseˉresult {
+    if !Allocationˉleaseˉisˉvalid(
+        State, Leaseˉtoken, Maximumˉretainedˉbytes,
+        Currentˉretainedˉbytes, Alignmentˉceiling
+    ) {
+        return Memoryˉbudgetˉreleaseˉresult(false, State);
+    }
+    return Releaseˉownedˉentry(State, Leaseˉtoken);
 }
 
 export fn Teardownˉmemoryˉbudgets(State: bytes) -> Memoryˉbudgetˉreleaseˉresult {

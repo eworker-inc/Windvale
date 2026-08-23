@@ -386,12 +386,40 @@ one use-after-consumption case protect the boundary.
 The front-door summary advances to 478 cases and 114 source fixtures. The
 registry remains 112 owners and advances to 5,332 cases at SHA-256
 `ae29842cedcd3eda416b8008cf77e03b9346faba5bf0779d4ebacc7468be51f0`.
-Executable construction, allocation-lease accounting, recoverable append,
+Executable construction, physical-provider connection, recoverable append,
 semantic effect enforcement, general owned calls, `using`, reverse release,
 and a real hosted resource consumer remain before Slice 5 completes. Internal
 compiler micro-optimization remains deferred until Language 1.0 becomes the
 seed; exact semantics, bounded verification, and workflow-blocker fixes remain
 appropriate during migration.
+
+## Current Slice 5 allocation-lease accounting checkpoint
+
+[Decision 0841](../Decisions/0841-Prove-Generation-Safe-Allocation-Leases.md)
+adds the provider-independent owner transition needed beneath executable
+construction. Budget generations are odd; successful lease conversion advances
+to the following even generation and makes the old budget stale before
+publication. Reused budget slots advance to the next odd generation, while the
+maximum generation remains retired.
+
+The private 28-byte lease evidence binds domain identity, generation, maximum
+retained bytes, current retained bytes, and alignment ceiling. It is carried by
+the bounded runtime oracle and is explicitly not source data, WVB, ABI, or a
+required target layout. Construction validates positive and ordered byte limits,
+power-of-two alignment through 4,096, and available authority. Budget or
+generation exhaustion preserves the input state and reports exact recoverable
+evidence. Release requires the same exact metadata, invalidates the owner, and
+recursively credits the parent; teardown handles live budgets and leases under
+the existing 65-domain bounds.
+
+The focused accounting owner now passes 29 cases. Its deterministic 35,799-byte
+WVB has SHA-256
+`3f156ef17f29c5673c0d383c713e04814327243783d2047cce2fc8fe6be117fb`.
+The registry remains 112 owners and advances to 5,344 cases at SHA-256
+`b34bd9e5ce73255db7da366b908dda29249df9514aff6f7dbb1918ce4d4489e1`.
+The next checkpoint connects operation 172 to one bytecode instruction,
+compiler-aligned verification, physical Vector backing, typed success/refusal,
+and collection-owned lease release.
 
 ## Removal checkpoint
 
