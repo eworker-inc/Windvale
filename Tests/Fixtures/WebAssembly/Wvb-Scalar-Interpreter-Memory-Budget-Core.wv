@@ -1,0 +1,482 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore profile portable;
+
+const MEMORY_BUDGET_MAGIC: u32 = 1112364631u32;
+const MEMORY_BUDGET_VERSION: u32 = 1u32;
+const MEMORY_BUDGET_CAPACITY: u32 = 65u32;
+const MEMORY_BUDGET_HEADER_BYTES: u32 = 16u32;
+const MEMORY_BUDGET_ENTRY_BYTES: u32 = 40u32;
+const MEMORY_BUDGET_STATE_BYTES: u32 = 2616u32;
+const U64_MAXIMUM: u64 = 18446744073709551615u64;
+
+export record Memoryˉbudgetˉsplitˉresult {
+    Valid: bool;
+    Succeeded: bool;
+    Reason: u8;
+    Requestedˉbytes: u64;
+    Availableˉbytes: u64;
+    Token: bytes;
+    State: bytes;
+}
+
+export record Memoryˉbudgetˉreleaseˉresult {
+    Valid: bool;
+    State: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Entryˉoffset(Identity: u32) -> u32 {
+    return MEMORY_BUDGET_HEADER_BYTES +
+        (Identity - 1u32) * MEMORY_BUDGET_ENTRY_BYTES;
+}
+
+fn Replaceˉentry(State: bytes, Identity: u32, Entry: bytes) -> bytes {
+    let Offset: u32 = Entryˉoffset(Identity);
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(State, 0u32, Offset), Entry),
+        Bytesˉslice(
+            State,
+            Offset + MEMORY_BUDGET_ENTRY_BYTES,
+            MEMORY_BUDGET_STATE_BYTES - Offset - MEMORY_BUDGET_ENTRY_BYTES
+        )
+    );
+}
+
+fn Replaceˉu32(State: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(State, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(State, Offset + 4u32, MEMORY_BUDGET_STATE_BYTES - Offset - 4u32)
+    );
+}
+
+fn Token(Identity: u32, Generation: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Identity),
+        Bytesˉfromˉu32ˉlittle(Generation)
+    );
+}
+
+fn Inactiveˉentry(Generation: u32) -> bytes {
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Generation);
+    var Index: u32 = 1u32;
+    while Index < 10u32 {
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+        Index = Index + 1u32;
+    }
+    return Entry;
+}
+
+fn Activeˉentry(
+    Generation: u32,
+    Parent: u32,
+    Ownerˉactive: bool,
+    Maximumˉchildren: u32,
+    Childˉcount: u32,
+    Maximumˉbytes: u64,
+    Reservedˉbytes: u64
+) -> bytes {
+    var Owner: u32 = 0u32;
+    if Ownerˉactive { Owner = 1u32; }
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Generation);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Parent));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Owner));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉchildren));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Childˉcount));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(Maximumˉbytes));
+    return Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(Reservedˉbytes));
+}
+
+fn Entryˉgeneration(State: bytes, Identity: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity));
+}
+
+fn Entryˉparent(State: bytes, Identity: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity) + 4u32);
+}
+
+fn Entryˉactive(State: bytes, Identity: u32) -> bool {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity) + 8u32) == 1u32;
+}
+
+fn Entryˉownerˉactive(State: bytes, Identity: u32) -> bool {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity) + 12u32) == 1u32;
+}
+
+fn Entryˉmaximumˉchildren(State: bytes, Identity: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity) + 16u32);
+}
+
+fn Entryˉchildˉcount(State: bytes, Identity: u32) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(State, Entryˉoffset(Identity) + 20u32);
+}
+
+fn Entryˉmaximumˉbytes(State: bytes, Identity: u32) -> u64 {
+    return Bytesˉreadˉu64ˉlittle(State, Entryˉoffset(Identity) + 24u32);
+}
+
+fn Entryˉreservedˉbytes(State: bytes, Identity: u32) -> u64 {
+    return Bytesˉreadˉu64ˉlittle(State, Entryˉoffset(Identity) + 32u32);
+}
+
+fn Tokenˉidentity(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 0u32);
+}
+
+fn Tokenˉgeneration(Value: bytes) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(Value, 4u32);
+}
+
+fn Tokenˉownsˉentry(State: bytes, Value: bytes) -> bool {
+    if Bytesˉlength(Value) != 8u32 { return false; }
+    let Identity: u32 = Tokenˉidentity(Value);
+    if Identity < 1u32 || Identity > MEMORY_BUDGET_CAPACITY { return false; }
+    return Entryˉactive(State, Identity) &&
+        Entryˉownerˉactive(State, Identity) &&
+        Entryˉgeneration(State, Identity) == Tokenˉgeneration(Value);
+}
+
+fn Memoryˉbudgetˉentryˉstructureˉisˉvalid(
+    State: bytes,
+    Identity: u32
+) -> bool {
+    let Offset: u32 = Entryˉoffset(Identity);
+    let Active: u32 = Bytesˉreadˉu32ˉlittle(State, Offset + 8u32);
+    let Owner: u32 = Bytesˉreadˉu32ˉlittle(State, Offset + 12u32);
+    if Active > 1u32 || Owner > 1u32 || Owner > Active { return false; }
+    if Active == 0u32 {
+        var Zeroˉoffset: u32 = 4u32;
+        while Zeroˉoffset < MEMORY_BUDGET_ENTRY_BYTES {
+            if Bytesˉreadˉu32ˉlittle(State, Offset + Zeroˉoffset) != 0u32 {
+                return false;
+            }
+            Zeroˉoffset = Zeroˉoffset + 4u32;
+        }
+        return true;
+    }
+    if Entryˉgeneration(State, Identity) == 0u32 { return false; }
+    let Parent: u32 = Entryˉparent(State, Identity);
+    if Identity == 1u32 {
+        if Parent != 0u32 { return false; }
+    } else {
+        if Parent < 1u32 || Parent > MEMORY_BUDGET_CAPACITY ||
+            !Entryˉactive(State, Parent) {
+            return false;
+        }
+        var Ancestor: u32 = Parent;
+        var Depth: u32 = 0u32;
+        while Ancestor != 0u32 {
+            if Ancestor == Identity { return false; }
+            Depth = Depth + 1u32;
+            if Depth > MEMORY_BUDGET_CAPACITY { return false; }
+            Ancestor = Entryˉparent(State, Ancestor);
+        }
+    }
+    if Entryˉreservedˉbytes(State, Identity) >
+        Entryˉmaximumˉbytes(State, Identity) {
+        return false;
+    }
+    return Entryˉchildˉcount(State, Identity) <=
+        Entryˉmaximumˉchildren(State, Identity);
+}
+
+fn Memoryˉbudgetˉentryˉaccountingˉisˉvalid(
+    State: bytes,
+    Identity: u32
+) -> bool {
+    if !Entryˉactive(State, Identity) { return true; }
+    var Count: u32 = 0u32;
+    var Reserved: u64 = 0u64;
+    var Child: u32 = 2u32;
+    while Child <= MEMORY_BUDGET_CAPACITY {
+        if Entryˉactive(State, Child) &&
+            Entryˉparent(State, Child) == Identity {
+            let Childˉmaximum: u64 = Entryˉmaximumˉbytes(State, Child);
+            if Childˉmaximum > U64_MAXIMUM - Reserved { return false; }
+            Reserved = Reserved + Childˉmaximum;
+            Count = Count + 1u32;
+        }
+        Child = Child + 1u32;
+    }
+    return Count == Entryˉchildˉcount(State, Identity) &&
+        Reserved == Entryˉreservedˉbytes(State, Identity);
+}
+
+export fn Memoryˉbudgetˉstateˉisˉvalid(State: bytes) -> bool {
+    if Bytesˉlength(State) != MEMORY_BUDGET_STATE_BYTES { return false; }
+    if Bytesˉreadˉu32ˉlittle(State, 0u32) != MEMORY_BUDGET_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(State, 4u32) != MEMORY_BUDGET_VERSION ||
+        Bytesˉreadˉu32ˉlittle(State, 8u32) != MEMORY_BUDGET_CAPACITY ||
+        Bytesˉreadˉu32ˉlittle(State, 12u32) != 1u32 {
+        return false;
+    }
+
+    var Identity: u32 = 1u32;
+    while Identity <= MEMORY_BUDGET_CAPACITY {
+        if !Memoryˉbudgetˉentryˉstructureˉisˉvalid(State, Identity) ||
+            !Memoryˉbudgetˉentryˉaccountingˉisˉvalid(State, Identity) {
+            return false;
+        }
+        Identity = Identity + 1u32;
+    }
+    return true;
+}
+
+export fn Constructˉrootˉmemoryˉbudget(
+    Maximumˉbytes: u64,
+    Maximumˉchildren: u32
+) -> bytes {
+    if Maximumˉchildren > MEMORY_BUDGET_CAPACITY - 1u32 {
+        return Bytesˉfromˉu32ˉlittle(0u32);
+    }
+    var State: bytes = Bytesˉfromˉu32ˉlittle(MEMORY_BUDGET_MAGIC);
+    State = Bytesˉconcat(State, Bytesˉfromˉu32ˉlittle(MEMORY_BUDGET_VERSION));
+    State = Bytesˉconcat(State, Bytesˉfromˉu32ˉlittle(MEMORY_BUDGET_CAPACITY));
+    State = Bytesˉconcat(State, Bytesˉfromˉu32ˉlittle(1u32));
+    State = Bytesˉconcat(
+        State,
+        Activeˉentry(1u32, 0u32, true, Maximumˉchildren, 0u32,
+            Maximumˉbytes, 0u64)
+    );
+    var Identity: u32 = 2u32;
+    while Identity <= MEMORY_BUDGET_CAPACITY {
+        State = Bytesˉconcat(State, Inactiveˉentry(0u32));
+        Identity = Identity + 1u32;
+    }
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) { return Empty(State); }
+    return State;
+}
+
+export fn Rootˉmemoryˉbudgetˉtoken(State: bytes) -> bytes {
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) || !Entryˉactive(State, 1u32) ||
+        !Entryˉownerˉactive(State, 1u32) {
+        return Empty(State);
+    }
+    return Token(1u32, Entryˉgeneration(State, 1u32));
+}
+
+fn Splitˉfailure(
+    State: bytes,
+    Reason: u8,
+    Requestedˉbytes: u64,
+    Availableˉbytes: u64
+) -> Memoryˉbudgetˉsplitˉresult {
+    return Memoryˉbudgetˉsplitˉresult(
+        true, false, Reason, Requestedˉbytes, Availableˉbytes,
+        Empty(State), State
+    );
+}
+
+export fn Splitˉmemoryˉbudget(
+    State: bytes,
+    Parentˉtoken: bytes,
+    Maximumˉbytes: u64,
+    Maximumˉchildren: u32
+) -> Memoryˉbudgetˉsplitˉresult {
+    let Invalid: Memoryˉbudgetˉsplitˉresult = Memoryˉbudgetˉsplitˉresult(
+        false, false, 0u8, Maximumˉbytes, 0u64, Empty(State), State
+    );
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉentry(State, Parentˉtoken) ||
+        Maximumˉchildren > MEMORY_BUDGET_CAPACITY - 1u32 {
+        return Invalid;
+    }
+    let Parent: u32 = Tokenˉidentity(Parentˉtoken);
+    let Parentˉmaximum: u64 = Entryˉmaximumˉbytes(State, Parent);
+    let Parentˉreserved: u64 = Entryˉreservedˉbytes(State, Parent);
+    let Available: u64 = Parentˉmaximum - Parentˉreserved;
+    if Maximumˉbytes > Available {
+        return Splitˉfailure(State, 1u8, Maximumˉbytes, Available);
+    }
+    if Entryˉchildˉcount(State, Parent) >=
+        Entryˉmaximumˉchildren(State, Parent) {
+        return Splitˉfailure(State, 1u8, Maximumˉbytes, Available);
+    }
+
+    var Child: u32 = 2u32;
+    var Searching: bool = true;
+    while Searching {
+        if Child > MEMORY_BUDGET_CAPACITY {
+            Searching = false;
+        } else {
+            if Entryˉactive(State, Child) ||
+                Entryˉgeneration(State, Child) == 4294967295u32 {
+                Child = Child + 1u32;
+            } else {
+                Searching = false;
+            }
+        }
+    }
+    if Child > MEMORY_BUDGET_CAPACITY {
+        return Splitˉfailure(State, 3u8, Maximumˉbytes, Available);
+    }
+    let Priorˉgeneration: u32 = Entryˉgeneration(State, Child);
+    let Childˉgeneration: u32 = Priorˉgeneration + 1u32;
+    var Candidate: bytes = Replaceˉentry(
+        State,
+        Child,
+        Activeˉentry(
+            Childˉgeneration, Parent, true, Maximumˉchildren, 0u32,
+            Maximumˉbytes, 0u64
+        )
+    );
+    Candidate = Replaceˉentry(
+        Candidate,
+        Parent,
+        Activeˉentry(
+            Entryˉgeneration(Candidate, Parent),
+            Entryˉparent(Candidate, Parent),
+            Entryˉownerˉactive(Candidate, Parent),
+            Entryˉmaximumˉchildren(Candidate, Parent),
+            Entryˉchildˉcount(Candidate, Parent) + 1u32,
+            Entryˉmaximumˉbytes(Candidate, Parent),
+            Entryˉreservedˉbytes(Candidate, Parent) + Maximumˉbytes
+        )
+    );
+    if !Memoryˉbudgetˉstateˉisˉvalid(Candidate) { return Invalid; }
+    return Memoryˉbudgetˉsplitˉresult(
+        true, true, 0u8, Maximumˉbytes, Available,
+        Token(Child, Childˉgeneration), Candidate
+    );
+}
+
+fn Finalizeˉunownedˉchain(State: bytes, Initialˉidentity: u32) -> bytes {
+    var Candidate: bytes = State;
+    var Identity: u32 = Initialˉidentity;
+    var Steps: u32 = 0u32;
+    var Finalizing: bool = true;
+    while Finalizing {
+        if Identity == 0u32 {
+            Finalizing = false;
+        } else {
+            if !Entryˉactive(Candidate, Identity) ||
+                Entryˉownerˉactive(Candidate, Identity) ||
+                Entryˉchildˉcount(Candidate, Identity) != 0u32 {
+                Finalizing = false;
+            } else {
+                let Parent: u32 = Entryˉparent(Candidate, Identity);
+                let Maximum: u64 = Entryˉmaximumˉbytes(Candidate, Identity);
+                let Generation: u32 = Entryˉgeneration(Candidate, Identity);
+                Candidate = Replaceˉentry(
+                    Candidate, Identity, Inactiveˉentry(Generation)
+                );
+                if Parent != 0u32 {
+                    let Parentˉreserved: u64 =
+                        Entryˉreservedˉbytes(Candidate, Parent);
+                    let Parentˉchildren: u32 =
+                        Entryˉchildˉcount(Candidate, Parent);
+                    if Parentˉreserved < Maximum || Parentˉchildren == 0u32 {
+                        return Empty(State);
+                    }
+                    Candidate = Replaceˉentry(
+                        Candidate,
+                        Parent,
+                        Activeˉentry(
+                            Entryˉgeneration(Candidate, Parent),
+                            Entryˉparent(Candidate, Parent),
+                            Entryˉownerˉactive(Candidate, Parent),
+                            Entryˉmaximumˉchildren(Candidate, Parent),
+                            Parentˉchildren - 1u32,
+                            Entryˉmaximumˉbytes(Candidate, Parent),
+                            Parentˉreserved - Maximum
+                        )
+                    );
+                }
+                Identity = Parent;
+                Steps = Steps + 1u32;
+                if Steps > MEMORY_BUDGET_CAPACITY { return Empty(State); }
+            }
+        }
+    }
+    return Candidate;
+}
+
+export fn Releaseˉmemoryˉbudget(
+    State: bytes,
+    Value: bytes
+) -> Memoryˉbudgetˉreleaseˉresult {
+    let Invalid: Memoryˉbudgetˉreleaseˉresult =
+        Memoryˉbudgetˉreleaseˉresult(false, State);
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉentry(State, Value) {
+        return Invalid;
+    }
+    let Identity: u32 = Tokenˉidentity(Value);
+    var Candidate: bytes = Replaceˉu32(
+        State, Entryˉoffset(Identity) + 12u32, 0u32
+    );
+    Candidate = Finalizeˉunownedˉchain(Candidate, Identity);
+    if Bytesˉlength(Candidate) != MEMORY_BUDGET_STATE_BYTES ||
+        !Memoryˉbudgetˉstateˉisˉvalid(Candidate) {
+        return Invalid;
+    }
+    return Memoryˉbudgetˉreleaseˉresult(true, Candidate);
+}
+
+export fn Teardownˉmemoryˉbudgets(State: bytes) -> Memoryˉbudgetˉreleaseˉresult {
+    let Invalid: Memoryˉbudgetˉreleaseˉresult =
+        Memoryˉbudgetˉreleaseˉresult(false, State);
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) { return Invalid; }
+    var Candidate: bytes = State;
+    var Identity: u32 = 1u32;
+    while Identity <= MEMORY_BUDGET_CAPACITY {
+        if Entryˉactive(Candidate, Identity) &&
+            Entryˉownerˉactive(Candidate, Identity) {
+            Candidate = Replaceˉu32(
+                Candidate, Entryˉoffset(Identity) + 12u32, 0u32
+            );
+        }
+        Identity = Identity + 1u32;
+    }
+    var Pass: u32 = 0u32;
+    while Pass < MEMORY_BUDGET_CAPACITY {
+        Identity = 1u32;
+        while Identity <= MEMORY_BUDGET_CAPACITY {
+            if Entryˉactive(Candidate, Identity) &&
+                Entryˉchildˉcount(Candidate, Identity) == 0u32 {
+                Candidate = Finalizeˉunownedˉchain(Candidate, Identity);
+                if Bytesˉlength(Candidate) != MEMORY_BUDGET_STATE_BYTES {
+                    return Invalid;
+                }
+            }
+            Identity = Identity + 1u32;
+        }
+        Pass = Pass + 1u32;
+    }
+    Identity = 1u32;
+    while Identity <= MEMORY_BUDGET_CAPACITY {
+        if Entryˉactive(Candidate, Identity) { return Invalid; }
+        Identity = Identity + 1u32;
+    }
+    if !Memoryˉbudgetˉstateˉisˉvalid(Candidate) { return Invalid; }
+    return Memoryˉbudgetˉreleaseˉresult(true, Candidate);
+}
+
+export fn Memoryˉbudgetˉreservedˉbytes(State: bytes, Identity: u32) -> u64 {
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) || Identity < 1u32 ||
+        Identity > MEMORY_BUDGET_CAPACITY || !Entryˉactive(State, Identity) {
+        return U64_MAXIMUM;
+    }
+    return Entryˉreservedˉbytes(State, Identity);
+}
+
+export fn Memoryˉbudgetˉchildˉcount(State: bytes, Identity: u32) -> u32 {
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) || Identity < 1u32 ||
+        Identity > MEMORY_BUDGET_CAPACITY || !Entryˉactive(State, Identity) {
+        return 4294967295u32;
+    }
+    return Entryˉchildˉcount(State, Identity);
+}
+
+export fn Memoryˉbudgetˉentryˉisˉactive(State: bytes, Identity: u32) -> bool {
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) || Identity < 1u32 ||
+        Identity > MEMORY_BUDGET_CAPACITY {
+        return false;
+    }
+    return Entryˉactive(State, Identity);
+}

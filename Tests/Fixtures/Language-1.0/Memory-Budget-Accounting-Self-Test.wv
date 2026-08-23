@@ -1,0 +1,137 @@
+module Languageˉoneˉmemoryˉbudgetˉaccountingˉselfˉtest profile portable;
+
+import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore as Budgets;
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
+    if Bytesˉlength(First) != Bytesˉlength(Second) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(First) {
+        if Bytesˉreadˉu8(First, Index) != Bytesˉreadˉu8(Second, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Main() -> i32 {
+    var State: bytes = Budgets.Constructˉrootˉmemoryˉbudget(10000u64, 2u32);
+    if !Budgets.Memoryˉbudgetˉstateˉisˉvalid(State) { return 1; }
+    let Root: bytes = Budgets.Rootˉmemoryˉbudgetˉtoken(State);
+    if Bytesˉlength(Root) != 8u32 { return 2; }
+
+    let First: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Root, 4096u64, 1u32);
+    if !First.Valid || !First.Succeeded || First.Reason != 0u8 ||
+        First.Requestedˉbytes != 4096u64 ||
+        First.Availableˉbytes != 10000u64 || Bytesˉlength(First.Token) != 8u32 {
+        return 3;
+    }
+    State = First.State;
+    if Budgets.Memoryˉbudgetˉreservedˉbytes(State, 1u32) != 4096u64 ||
+        Budgets.Memoryˉbudgetˉchildˉcount(State, 1u32) != 1u32 {
+        return 4;
+    }
+
+    let Exhausted: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Root, 6000u64, 0u32);
+    if !Exhausted.Valid || Exhausted.Succeeded || Exhausted.Reason != 1u8 ||
+        Exhausted.Requestedˉbytes != 6000u64 ||
+        Exhausted.Availableˉbytes != 5904u64 ||
+        Bytesˉlength(Exhausted.Token) != 0u32 ||
+        !Bytesˉequal(Exhausted.State, State) {
+        return 5;
+    }
+
+    let Grandchild: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, First.Token, 2048u64, 0u32);
+    if !Grandchild.Valid || !Grandchild.Succeeded { return 6; }
+    State = Grandchild.State;
+
+    let Firstˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉmemoryˉbudget(State, First.Token);
+    if !Firstˉrelease.Valid { return 7; }
+    State = Firstˉrelease.State;
+    if !Budgets.Memoryˉbudgetˉentryˉisˉactive(State, 2u32) ||
+        Budgets.Memoryˉbudgetˉreservedˉbytes(State, 1u32) != 4096u64 {
+        return 8;
+    }
+
+    let Grandchildˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉmemoryˉbudget(State, Grandchild.Token);
+    if !Grandchildˉrelease.Valid { return 9; }
+    State = Grandchildˉrelease.State;
+    if Budgets.Memoryˉbudgetˉentryˉisˉactive(State, 2u32) ||
+        Budgets.Memoryˉbudgetˉentryˉisˉactive(State, 3u32) ||
+        Budgets.Memoryˉbudgetˉreservedˉbytes(State, 1u32) != 0u64 ||
+        Budgets.Memoryˉbudgetˉchildˉcount(State, 1u32) != 0u32 {
+        return 10;
+    }
+    let Staleˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉmemoryˉbudget(State, First.Token);
+    if Staleˉrelease.Valid { return 11; }
+
+    let Retiredˉslot: bytes = Replaceˉu32(State, 56u32, 4294967295u32);
+    let Skippedˉretired: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(Retiredˉslot, Root, 1u64, 0u32);
+    if !Budgets.Memoryˉbudgetˉstateˉisˉvalid(Retiredˉslot) ||
+        !Skippedˉretired.Valid || !Skippedˉretired.Succeeded ||
+        Bytesˉreadˉu32ˉlittle(Skippedˉretired.Token, 0u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(Skippedˉretired.Token, 4u32) != 2u32 {
+        return 12;
+    }
+    let Reused: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Root, 1u64, 0u32);
+    if !Reused.Valid || !Reused.Succeeded ||
+        Bytesˉreadˉu32ˉlittle(Reused.Token, 0u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Reused.Token, 4u32) != 2u32 {
+        return 12;
+    }
+    State = Reused.State;
+    let Second: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Root, 1u64, 0u32);
+    if !Second.Valid || !Second.Succeeded { return 13; }
+    State = Second.State;
+    let Childˉlimit: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(State, Root, 0u64, 0u32);
+    if !Childˉlimit.Valid || Childˉlimit.Succeeded ||
+        Childˉlimit.Reason != 1u8 || Childˉlimit.Availableˉbytes != 9998u64 ||
+        !Bytesˉequal(Childˉlimit.State, State) {
+        return 14;
+    }
+
+    let Malformed: bytes = Replaceˉu32(State, 16u32 + 20u32, 3u32);
+    let Malformedˉsplit: Budgets.Memoryˉbudgetˉsplitˉresult =
+        Budgets.Splitˉmemoryˉbudget(Malformed, Root, 1u64, 0u32);
+    let Malformedˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Releaseˉmemoryˉbudget(Malformed, Root);
+    if Budgets.Memoryˉbudgetˉstateˉisˉvalid(Malformed) ||
+        Malformedˉsplit.Valid || Malformedˉrelease.Valid {
+        return 15;
+    }
+
+    let Teardown: Budgets.Memoryˉbudgetˉreleaseˉresult =
+        Budgets.Teardownˉmemoryˉbudgets(State);
+    if !Teardown.Valid ||
+        !Budgets.Memoryˉbudgetˉstateˉisˉvalid(Teardown.State) {
+        return 16;
+    }
+    var Identity: u32 = 1u32;
+    while Identity <= 65u32 {
+        if Budgets.Memoryˉbudgetˉentryˉisˉactive(Teardown.State, Identity) {
+            return 17;
+        }
+        Identity = Identity + 1u32;
+    }
+    return 42;
+}

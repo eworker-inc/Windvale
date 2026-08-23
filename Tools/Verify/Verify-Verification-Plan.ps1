@@ -90,6 +90,19 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 bounded memory-budget accounting owner'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj',
+            'Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv',
+            'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.cmd',
+            'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.sh'
+        )
+        Suites = @('language-1-memory-budget-accounting')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 frozen source and descriptor front door'
         Paths = @(
             'Compiler/Windvale/Source-Descriptor-Core.wv',
@@ -3469,9 +3482,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 109 -or
+if ($VerificationOwnerLines.Count -ne 110 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 108-owner inventory differs.'
+    throw 'The native verification-owner header or exact 109-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3509,7 +3522,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5246 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5263 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

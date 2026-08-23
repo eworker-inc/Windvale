@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
+emit wvb

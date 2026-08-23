@@ -1550,6 +1550,14 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Generic-Nominal-Wvlb-Carrier.mjs'
     )) {
         Add-Suite 'generic-nominal-wvlb-carrier'
+    } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj',
+        'Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv',
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.cmd',
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.sh'
+    )) {
+        Add-Suite 'language-1-memory-budget-accounting'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',

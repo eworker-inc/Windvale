@@ -2399,3 +2399,50 @@ and one hosted resource consumer remain. Broad optimization of the transitional
 compiler remains deferred until Language 1.0 becomes the active seed; only
 measured migration blockers and verification/caching costs are optimized during
 the slices. Candidate toolset and paired-host qualification remain pending.
+
+## Slice 5 bounded memory-budget accounting oracle
+
+The next checkpoint implements the provider-independent accounting behavior as
+portable Windvale source without yet making WVIR operation 171 executable. The
+model has one root plus at most 64 child-domain slots. Its 2,616-byte internal
+state consists of a 16-byte header and 65 fixed 40-byte entries. An 8-byte
+identity/generation token owns one live entry. This byte layout is a bounded
+implementation oracle for the current compiler and runner; it is not a public
+serialized format or the normative representation of `Memoryˉbudget`.
+
+`Splitˉmemoryˉbudget` validates the complete state and parent token before
+mutation. Success atomically reserves the child's maximum bytes and one child
+slot, advances the reused slot generation, and returns the child token. Byte or
+per-parent child exhaustion returns allocation reason 1 with exact requested and
+available bytes; global slot or generation exhaustion returns reason 3. Every
+failure preserves the original state and publishes no token. The target-
+unaddressable reason remains for the later physical allocation boundary rather
+than being fabricated by pure accounting.
+
+Release first removes the owner. A domain with live descendants remains active,
+so its maximum stays reserved in its parent. Releasing the last descendant
+finalizes the unowned ancestor chain and recursively credits exact maxima and
+child counts. Stale tokens fail through generation comparison. Teardown removes
+all owners and finalizes every domain under fixed pass, depth, and capacity
+bounds. Complete validation rejects malformed headers, flags, parent chains,
+cycles, overflow, reserved totals, and child counts before accepting state.
+The straightforward validator is quadratic in the fixed capacity; broad tuning
+is deferred until the real self-hosted compiler/runtime is profiled.
+
+The self-test exercises 17 success, failure, reuse, malformed-input, and teardown
+outcomes and returns 42. The deterministic WVB contains 34 functions, 21,533
+code bytes, and 24,825 module bytes at SHA-256
+`4d4214dd2e1ebf9b2864e1ef07d51dac48d569fc99b3989368b2a95e42c7d9b5`.
+The Windows focused owner builds it twice, compares exact bytes, packages it as
+a hosted native application, executes it, and passes in about 13 seconds. Its
+Linux counterpart has the same bounded phases; cross-host execution remains
+pending.
+
+The accounting files route to their own focused owner rather than the 462-case
+Language front door. The verification registry therefore advances from 108
+owners and 5,246 cases to 109 owners and 5,263 cases at SHA-256
+`826da92d26ba1e58be07cd99bf1b995a7d9331d8a23381fad4655a3095a8c846`.
+This is a verification-feedback improvement worth retaining now; it does not
+optimize compiler internals that may be replaced at self-hosting. WVB operation
+171 connection, launcher profile selection, allocation leases/effects, and
+public fallible Vector construction remain the next implementation checkpoints.
