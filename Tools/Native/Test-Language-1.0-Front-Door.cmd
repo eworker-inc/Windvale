@@ -117,8 +117,8 @@ for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="82924" goto :cleanup
 certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"7a7da249ff51647e2c279a9d06c05897f071683991aca0748ad6f40e02887512" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1132570" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"e3eef9e462f47cb88d4de174eb1e714106b346137538d9e6b396361b834d8471" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1144757" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"384cb966d9b8718fda0c2e7bf3863ae168ce7d9fcb911d076b87d5e33400b0e3" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -199,8 +199,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1055285" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"bd87930696685475920bdc73dcf72dde01ae0eb5dae94579e28b9a79d018d606" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1078300" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"215034c1149ee898ae4a9980bbe82326cb0d2a82fe7939e6191af64972a9af50" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -467,6 +467,58 @@ for %%F in ("%Work%\Memory-Budget-Entry-A.wvb") do set "MemoryBudgetEntryWvbByte
 if not "%MemoryBudgetEntryWvbBytes%"=="242" goto :cleanup
 echo PASS  language 1 front door step=memory-budget-entry item=compile format=WVB-1.21 deterministic=1 wvb-bytes=%MemoryBudgetEntryWvbBytes%
 echo PASS  language 1 front door step=borrow-call-semantics cases=14 execution=42 vector=Owned sequence=Shared memory-budget=Owned-WVIR
+set "FailureStep=compiler-memory-budget-split"
+echo START language 1 front door step=memory-budget-split
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Wir.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
+    "%Work%\Memory-Budget-Split-Admitted.wvss" ^
+    >"%Work%\Memory-Budget-Split-Admission.out" ^
+    2>"%Work%\Memory-Budget-Split-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Memory-Budget-Split-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Memory-Budget-Split-Admitted.wvss" ^
+    "%Work%\Memory-Budget-Split.wvss" ^
+    "%Work%\Memory-Budget-Split.wvca" ^
+    "%Work%\Memory-Budget-Split.wvlb" ^
+    "%Work%\Memory-Budget-Split.wvir" ^
+    >"%Work%\Memory-Budget-Split-Analysis.out" ^
+    2>"%Work%\Memory-Budget-Split-Analysis.err" || goto :cleanup
+for %%F in ("%Work%\Memory-Budget-Split-Analysis.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /b /c:"source analysis status=Published " ^
+    "%Work%\Memory-Budget-Split-Analysis.out" >nul || goto :cleanup
+mkdir "%Work%\Memory-Budget-Split-Malformed" || goto :cleanup
+node "%Native%\Verify-Language-1.0-Memory-Budget-Split-Wir.mjs" ^
+    "%Work%\Emitter.exe" ^
+    "%Work%\Memory-Budget-Split.wvss" ^
+    "%Work%\Memory-Budget-Split.wvca" ^
+    "%Work%\Memory-Budget-Split.wvlb" ^
+    "%Work%\Memory-Budget-Split.wvir" ^
+    "%Work%\Memory-Budget-Split-Malformed" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Immutable-Borrow.wv" ^
+    "Memory-Budget-Split-Immutable-Borrow" "Invalidˉborrow" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Wrong-Limit.wv" ^
+    "Memory-Budget-Split-Wrong-Limit" "Invalidˉargument" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Wrong-Result.wv" ^
+    "Memory-Budget-Split-Wrong-Result" "Genericˉresolution" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Wrong-Allocation-Failure.wv" ^
+    "Memory-Budget-Split-Wrong-Allocation-Failure" "Genericˉresolution" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.5 valid=1 wvb-boundary=1 malformed=7 source-rejections=4
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
 "%Work%\Admitter.exe" ^
@@ -591,8 +643,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
 fc /b "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir-B.wvb" >nul || goto :cleanup
-for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1295691" goto :cleanup
-certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"6afc2f4574158d5b151c7d4c0ec85eca132e26f88187f8d5fda8b2c866be9e6b" >nul || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1315395" goto :cleanup
+certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"1da34176e4e17f395fadccfff9fe4f7f5e346ec2c919658744915ca86b7d6c19" >nul || goto :cleanup
 for %%F in ("%Work%\Generic-Wir-A.wvb") do set "GenericWirWvbBytes=%%~zF"
 echo INFO  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% verification=pending-current-native
 set "FailureStep=compiler-minimum-a"
@@ -1627,7 +1679,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=449 frozen-inputs=251 source-fixtures=101 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=462 frozen-inputs=251 source-fixtures=107 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_profiled_emission_failure

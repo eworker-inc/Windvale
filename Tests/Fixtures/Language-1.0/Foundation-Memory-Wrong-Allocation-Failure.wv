@@ -1,0 +1,19 @@
+#!wv/1 en@1
+module Foundationˉmemory;
+profile core;
+platform linux, windows, windvale;
+authority library;
+
+export enum Allocationˉreason: u8 {
+    Budgetˉexhausted = 1u8;
+    Targetˉunaddressable = 2u8;
+    Providerˉunavailable = 3u8;
+    Fragmented = 4u8;
+}
+
+// The canonical failure contract requires Availableˉbytes: u64.
+export record Allocationˉfailure {
+    Reason: Allocationˉreason;
+    Requestedˉbytes: u64;
+    Availableˉbytes: u32;
+}

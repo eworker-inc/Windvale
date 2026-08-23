@@ -2343,3 +2343,59 @@ qualification remain pending. Budget splitting,
 allocation leases/effects/accounting, public fallible Vector construction,
 general moves, `using`, reverse-order release, and one hosted resource consumer
 remain before Slice 5 is complete.
+
+## Slice 5 memory-budget Split WVIR checkpoint
+
+Decision 0836 binds the first exact budget-splitting boundary without claiming
+an executable allocation provider. Edition-1 source resolves only canonical
+`Foundationˉmemory.Split`; it requires `borrow mut` of a directly named mutable
+`Memoryˉbudget` local, exact `u64` byte and `u32` child limits, and the canonical
+materialized `Result<Memoryˉbudget, Allocationˉfailure>`. The failure identity
+is structural as well as nominal: its three declaration-order fields must be
+the same-module `Allocationˉreason`, `Requestedˉbytes: u64`, and
+`Availableˉbytes: u64`.
+
+Typed lowering publishes operation `171`. Its two operands are the evaluated
+numeric limits, its target is the parent local slot, and its auxiliary value is
+the Foundation memory module. Split selects WVIR 1.5 without specialization and
+1.6 with specialization; programs without it retain their prior 1.3/1.4 header
+and bytes. A conservative single-block affine proof tracks live budget slots
+and moved temporaries, rejects duplicate ownership and use after move, and
+requires temporary owners to be consumed. The proof is extracted behind one
+focused function after the inline form reproducibly exceeded the current native
+emitter's record-storage analysis boundary.
+
+The positive three-module fixture publishes 568 WVIR bytes: five function
+entries, two blocks, six operations, five temporaries, three operands, and one
+operation 171. The current WVB emitter returns `Unsupportedˉshape` at function
+2, operation 6 and publishes no bytecode. Seven byte-level mutations reject an
+older minor, operation 172, a primitive result, missing operand, consumed parent
+slot, wrong module, and swapped numeric operands. Four source cases reject an
+immutable borrow, wrong limit width, wrong result identity, and a same-name
+Foundation failure record whose `Availableˉbytes` is `u32`.
+
+The source-built analyzer is 1,144,757 bytes at SHA-256
+`384cb966d9b8718fda0c2e7bf3863ae168ce7d9fcb911d076b87d5e33400b0e3`,
+with 549 functions and 938,146 code bytes. The source-built emitter is 1,078,300
+bytes at SHA-256
+`215034c1149ee898ae4a9980bbe82326cb0d2a82fe7939e6191af64972a9af50`,
+with 561 functions and 897,085 code bytes. Both native packages complete under
+the retained bounds.
+
+The first complete owner run passed the 13 new cases, then exposed one stale
+pre-Split compiler-generic-WIR golden. Its two outputs were already identical at
+1,315,395 bytes and SHA-256
+`1da34176e4e17f395fadccfff9fe4f7f5e346ec2c919658744915ca86b7d6c19`.
+After updating that exact size/hash oracle, the current native verifier accepted
+the artifact and the repeated focused owner passed all 13 phases and 462 cases
+in 725,200 ms; the owner coordinator completed in 725,980 ms. The 108-owner
+registry now declares 5,246 cases at SHA-256
+`824e1b4fb800916b3f149c235e16d366c3213f25faa7f71fc35bce498b52fd18`.
+
+This is an early Slice 5 compiler/WVIR checkpoint. Executable provider
+debit/credit, failure atomicity, allocation leases and effects, control-flow
+ownership joins, fallible Vector construction, `using`, reverse-order release,
+and one hosted resource consumer remain. Broad optimization of the transitional
+compiler remains deferred until Language 1.0 becomes the active seed; only
+measured migration blockers and verification/caching costs are optimized during
+the slices. Candidate toolset and paired-host qualification remain pending.

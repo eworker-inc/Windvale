@@ -124,9 +124,12 @@ from the launcher into the WVB 1.21 entry parameter and releasing it on
 invocation teardown.
 [Decision 0835](../Decisions/0835-Represent-U8-Backed-Enums-As-Wvb-1.22.md)
 then gives retained `u8`-backed enums an exact WVB 1.22 descriptor and connected
-execution path; the focused owner now declares 449 cases. The next connected
-result is budget splitting, allocation leases/effects/accounting, and
-public fallible Vector construction with recoverable append. Remaining collection
+execution path. [Decision 0836](../Decisions/0836-Bind-Memory-Budget-Split-In-Wvir-1.5.md)
+binds the exact mutable-parent Split call and its affine evidence as WVIR
+1.5/1.6 while keeping WVB execution closed; the focused owner now declares 462
+cases. The next connected result is executable budget splitting, allocation
+leases/effects/accounting, and public fallible Vector construction with
+recoverable append. Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain
 later gates.

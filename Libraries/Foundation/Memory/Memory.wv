@@ -6,9 +6,10 @@ authority library;
 
 // Memoryˉbudget is a compiler-supplied, representation-hidden, move-owned
 // Foundation identity. Core source can receive it from an admitted launcher or
-// parent domain but cannot construct one from ambient memory. Split, allocation
-// effects, leases, and executable provider accounting land in later migration
-// checkpoints. This module does not publish forgeable record substitutes.
+// parent domain but cannot construct one from ambient memory. Split has an exact
+// source and WVIR identity; allocation effects, leases, and executable provider
+// accounting land in later migration checkpoints. This module does not publish
+// forgeable record substitutes.
 
 export enum Allocationˉreason: u8 {
     Budgetˉexhausted = 1u8;

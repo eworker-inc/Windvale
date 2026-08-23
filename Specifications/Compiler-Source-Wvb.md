@@ -2,10 +2,10 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.18 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.22 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.17 and the WVB 1.18 Vector/Sequence
-metadata checkpoint, the current implementation proves
+For the execution subset through WVB 1.22, including the current
+Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
 and code → WVB → verifier → source-built scalar runtime path. Every accepted
@@ -634,9 +634,16 @@ module with one 16-byte function body and a zero-count Types section. The
 independent verifier accepts that module and rejects version downgrade,
 primitive substitution, renamed entry, budget result, second budget parameter,
 budget local, budget local-load, budget local-store, and missing-export
-mutations. The source-built runner
-transfers one fresh opaque token, releases it once on completed top-level
-return, and produces `42`. `Split`, nested moves, allocation effects, leases,
+mutations. The source-built runner transfers one fresh opaque token, releases it
+once on completed top-level return, and produces `42`.
+
+Typed WVIR 1.5/1.6 may now contain
+`Foundationˉmemoryˉsplit = 171`. The current WVB writer deliberately rejects
+that operation as `Unsupportedˉshape` and returns no bytecode. It does not map
+the private Result identity, invent a budget-copy representation, or claim
+provider accounting before the runtime contract exists. This closed boundary is
+covered both by the positive source/WVIR fixture and by malformed WVIR cases.
+Executable Split, nested control-flow moves, allocation effects, leases,
 provider accounting, and fallible Vector construction remain later connected
 checkpoints.
 

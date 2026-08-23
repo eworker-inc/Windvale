@@ -1441,7 +1441,8 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     if Intrinsic == 6u32 { Expectedˉname = "Vectorˉlength"; }
     if Intrinsic == 7u32 { Expectedˉname = "Vectorˉfreeze"; }
     if Intrinsic == 8u32 { Expectedˉname = "Memoryˉbudget"; }
-    if Intrinsic < 1u32 || Intrinsic > 8u32 ||
+    if Intrinsic == 9u32 { Expectedˉname = "Split"; }
+    if Intrinsic < 1u32 || Intrinsic > 9u32 ||
         !Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
         ) {
@@ -1452,7 +1453,7 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
         Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
     var Expectedˉmodule: text = "Foundationˉcollections";
-    if Intrinsic == 8u32 {
+    if Intrinsic == 8u32 || Intrinsic == 9u32 {
         if View.Edition != 1u32 {
             return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(
                 false, Scan.Modules
