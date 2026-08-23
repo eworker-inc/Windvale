@@ -1,6 +1,8 @@
 module Windvaleˉcompilerˉwvbˉverifierˉtool profile hosted;
 
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semanticˉverifier;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadataˉnormalization;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -8,17 +10,80 @@ capability file.read_bytes;
 capability process.argument;
 capability process.argument_count;
 
+fn Reportˉsemanticˉfailure(Input: bytes) -> u32 {
+    let Normalized: bytes =
+        Metadataˉnormalization.Windvaleˉwvbˉmetadataˉnormalize(Input);
+    if Bytesˉlength(Normalized) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=normalization"
+        );
+        return 0u32;
+    }
+
+    var State: bytes = Semanticˉverifier.Bˉstructure(Normalized);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=structure"
+        );
+        return 0u32;
+    }
+    State = Semanticˉverifier.Cˉmoduleˉandˉcapabilities(State);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=module-capabilities"
+        );
+        return 0u32;
+    }
+    State = Semanticˉverifier.Dˉdata(State);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=data"
+        );
+        return 0u32;
+    }
+    State = Semanticˉverifier.Eˉfunctions(State);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=functions"
+        );
+        return 0u32;
+    }
+    State = Semanticˉverifier.Fˉcodeˉandˉexports(State);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=code-exports"
+        );
+        return 0u32;
+    }
+    State = Semanticˉverifier.Gˉtypes(State);
+    if Bytesˉlength(State) == 0u32 {
+        diagnostic.write_line(
+            "wvb status=Invalid phase=semantic step=types"
+        );
+        return 0u32;
+    }
+    diagnostic.write_line(
+        "wvb status=Invalid phase=semantic step=metadata"
+    );
+    return 0u32;
+}
+
 export fn Main() -> i32 {
     if process.argument_count() != 1u32 {
         diagnostic.write_line("Usage: wvverify <module.wvb>");
         return 64;
     }
 
-    let Status: u32 = Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(
-        file.read_bytes(process.argument(0u32))
-    );
+    let Input: bytes = file.read_bytes(process.argument(0u32));
+    let Status: u32 =
+        Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(Input);
     if Status == 1u32 {
-        diagnostic.write_line("wvb status=Invalid phase=semantic");
+        let Reportˉstatus: u32 = Reportˉsemanticˉfailure(Input);
+        if Reportˉstatus != 0u32 {
+            diagnostic.write_line(
+                "wvb status=Invalid phase=semantic step=reporting"
+            );
+        }
         return 1;
     }
     if Status == 2u32 {

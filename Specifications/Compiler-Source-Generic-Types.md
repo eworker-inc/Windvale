@@ -65,9 +65,12 @@ Within compiler evidence only, catalog instance `i` has shape
 `0x80000000 + i`, for `i` from zero through 255. Values in
 `0x80000000..0x800000ff` never enter WVB. Records, variants, and fixed arrays
 are replaced by their concrete WVB type identities during emission. Owned
-vectors and immutable sequences remain private compiler identities until their
-WVB 1.18 operation/runtime checkpoint is connected; a WVB publication attempt
-that reaches one is rejected rather than erasing or guessing its meaning. All other values at
+vectors and immutable sequences remain private compiler identities until final
+WVB shape planning assigns their exact public type references. WVB 1.18
+introduced their descriptors, and WVB 1.24 executes fallible owned-Vector
+construction against an explicit allocation budget. A WVB publication attempt
+that cannot resolve one is rejected rather than erasing or guessing its
+meaning. All other values at
 or above `0x80000000` are invalid type arguments in WVGT 1.0.
 
 An entry may refer to an earlier WVGT shape as a type argument. It may not refer
@@ -171,9 +174,12 @@ dependencies. These are separate properties.
 ## Materialization plan
 
 The materialization phase consumes exact Source Set, Source Symbols, and WVGT
-evidence. It creates each concrete layout once in catalog order and assigns
-instance `i` the ordinary Types index `First-type + i`. The complete range must
-fit the existing 1,024-type compiler bound.
+evidence. It creates each concrete layout once in catalog dependency order, but
+assigns WVB output ranks in canonical serialized-kind order: records, variants,
+owned vectors, immutable sequences, then fixed arrays. Catalog order therefore
+continues to prove that nested layouts are available before consumers, while a
+separate bounded rank maps each private identity to its final ordinary Types
+index. The complete range must fit the existing 1,024-type compiler bound.
 
 Each type entry is 36 bytes: private WVGT shape, ordinary output Types index,
 declaration kind, declaration identity, module identity, first case, case
@@ -190,8 +196,9 @@ record, `196608 + output-index` for a variant, the exact fixed-array type,
 `327680 + output-index` for Vector, or `393216 + output-index` for Sequence.
 Vector and Sequence materialization entries deliberately have no fields or
 cases. WVB 1.18 publishes their exact element-bearing descriptors and value
-shapes without claiming runtime-backed operations. No private shape survives successful WVB
-serialization. Each evidence stream is at most
+shapes; WVB 1.24 additionally admits allocation-budget-backed owned-Vector
+construction. No private shape survives successful WVB serialization. Each
+evidence stream is at most
 4 MiB; all three streams plus the retained catalog are at most 16 MiB. Capacity
 is checked before concatenation, and a failed plan publishes empty derived
 evidence plus the first failing instance rather than a prefix.

@@ -343,7 +343,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 23u32) ||
+                if (Moduleˉminor < 21u32 || Moduleˉminor > 24u32) ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -415,7 +415,7 @@ fn Readˉfunctionˉdirectory(
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
                 Shapeˉkind == 21u32 ||
                 (Shapeˉkind == 25u32 &&
-                    (Moduleˉminor != 23u32 ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 24u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -985,6 +985,69 @@ record Memoryˉbudgetˉexecution {
     Records: bytes;
 }
 
+fn Allocateˉallocationˉfailure(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Resultˉtype: u32,
+    Reason: u8,
+    Requestedˉbytes: u64,
+    Availableˉbytes: u64,
+    Metadata: bytes,
+    Records: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉallocation {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Aggregateˉallocation = Aggregateˉallocation(
+        false, Empty, Metadata, Records
+    );
+    let Failureˉcase: bytes = Variantˉcaseˉfields(
+        Module, Typeˉoffsets, Resultˉtype, 1u32
+    );
+    if Bytesˉlength(Failureˉcase) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 {
+        return Invalid;
+    }
+    let Failureˉshape: u32 = Fieldˉshapeˉat(
+        Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 7u32 {
+        return Invalid;
+    }
+    let Failureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Failureˉshape + 1u32
+    );
+    let Failureˉowner: u32 = Failureˉtype + 1u32;
+    let Failureˉdirectory: bytes = Aggregateˉfieldˉdirectory(
+        Module, Typeˉoffsets, Failureˉowner
+    );
+    if Bytesˉlength(Failureˉdirectory) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 0u32) != 3u32 {
+        return Invalid;
+    }
+    let Reasonˉshape: u32 = Fieldˉshapeˉat(
+        Module, Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 4u32), 0u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Reasonˉshape)) != 8u32 {
+        return Invalid;
+    }
+    let Reasonˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Reasonˉshape + 1u32
+    );
+    var Failureˉfields: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Reason)),
+        Bytesˉfromˉu32ˉlittle(Reasonˉtype + 1u32)
+    );
+    Failureˉfields = Bytesˉconcat(
+        Failureˉfields, Bytesˉfromˉu64ˉlittle(Requestedˉbytes)
+    );
+    Failureˉfields = Bytesˉconcat(
+        Failureˉfields, Bytesˉfromˉu64ˉlittle(Availableˉbytes)
+    );
+    return Allocateˉaggregateˉwithoutˉcollection(
+        Failureˉowner, Failureˉfields, Metadata, Records, Zeroˉcell
+    );
+}
+
 fn Executeˉmemoryˉbudgetˉsplit(
     Module: bytes,
     Typeˉoffsets: bytes,
@@ -1032,56 +1095,11 @@ fn Executeˉmemoryˉbudgetˉsplit(
     var Records: bytes = Initialˉrecords;
     if !Split.Succeeded {
         Case = 1u32;
-        let Failureˉcase: bytes = Variantˉcaseˉfields(
-            Module, Typeˉoffsets, Resultˉtype, Case
-        );
-        if Bytesˉlength(Failureˉcase) != 8u32 ||
-            Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 {
-            return Invalid;
-        }
-        let Failureˉshape: u32 = Fieldˉshapeˉat(
-            Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
-        );
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 7u32 {
-            return Invalid;
-        }
-        let Failureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-            Module, Failureˉshape + 1u32
-        );
-        let Failureˉowner: u32 = Failureˉtype + 1u32;
-        let Failureˉdirectory: bytes = Aggregateˉfieldˉdirectory(
-            Module, Typeˉoffsets, Failureˉowner
-        );
-        if Bytesˉlength(Failureˉdirectory) != 8u32 ||
-            Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 0u32) != 3u32 {
-            return Invalid;
-        }
-        let Reasonˉshape: u32 = Fieldˉshapeˉat(
-            Module, Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 4u32), 0u32
-        );
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Reasonˉshape)) != 8u32 {
-            return Invalid;
-        }
-        let Reasonˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-            Module, Reasonˉshape + 1u32
-        );
-        var Failureˉfields: bytes = Bytesˉconcat(
-            Bytesˉfromˉu32ˉlittle(U32ˉfromˉu8(Split.Reason)),
-            Bytesˉfromˉu32ˉlittle(Reasonˉtype + 1u32)
-        );
-        Failureˉfields = Bytesˉconcat(
-            Failureˉfields, Bytesˉfromˉu64ˉlittle(Split.Requestedˉbytes)
-        );
-        Failureˉfields = Bytesˉconcat(
-            Failureˉfields, Bytesˉfromˉu64ˉlittle(Split.Availableˉbytes)
-        );
         let Failureˉallocation: Aggregateˉallocation =
-            Allocateˉaggregateˉwithoutˉcollection(
-                Failureˉowner,
-                Failureˉfields,
-                Metadata,
-                Records,
-                Zeroˉcell
+            Allocateˉallocationˉfailure(
+                Module, Typeˉoffsets, Resultˉtype, Split.Reason,
+                Split.Requestedˉbytes, Split.Availableˉbytes,
+                Metadata, Records, Zeroˉcell
             );
         if !Failureˉallocation.Valid { return Invalid; }
         Resultˉfields = Failureˉallocation.Handle;
@@ -1109,6 +1127,201 @@ fn Executeˉmemoryˉbudgetˉsplit(
         Split.State,
         Resultˉallocation.Metadata,
         Resultˉallocation.Values
+    );
+}
+
+record Vectorˉconstructˉexecution {
+    Valid: bool;
+    Status: u32;
+    Stack: bytes;
+    Locals: bytes;
+    State: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Heap: bytes;
+    Heapˉallocations: bytes;
+    Heapˉallocationˉcount: u32;
+    Allocationˉleases: bytes;
+}
+
+fn Executeˉvectorˉconstructˉreserved(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Initialˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Initialˉheap: bytes,
+    Initialˉheapˉallocations: bytes,
+    Initialˉheapˉallocationˉcount: u32,
+    Initialˉallocationˉleases: bytes,
+    Zeroˉcell: bytes
+) -> Vectorˉconstructˉexecution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Vectorˉconstructˉexecution = Vectorˉconstructˉexecution(
+        false, 0u32, Empty, Initialˉlocals, Initialˉstate,
+        Initialˉmetadata, Initialˉrecords, Initialˉheap,
+        Initialˉheapˉallocations, Initialˉheapˉallocationˉcount,
+        Initialˉallocationˉleases
+    );
+    let Stackˉlength: u32 = Bytesˉlength(Initialˉstack);
+    if Stackˉlength < 8u32 || Bytesˉlength(Initialˉallocationˉleases) !=
+        Initialˉheapˉallocationˉcount * 28u32 {
+        return Invalid;
+    }
+    let Budgetˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 1u32
+    );
+    let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 5u32
+    );
+    if Budgetˉlocal >= Bytesˉlength(Initialˉlocals) / 8u32 ||
+        Resultˉtype >= Typeˉcount {
+        return Invalid;
+    }
+    let Maximumˉitems: u64 = Bytesˉreadˉu64ˉlittle(
+        Initialˉstack, Stackˉlength - 8u32
+    );
+    if Maximumˉitems == 0u64 {
+        return Vectorˉconstructˉexecution(
+            true, 3008u32,
+            Bytesˉslice(Initialˉstack, 0u32, Stackˉlength - 8u32),
+            Initialˉlocals, Initialˉstate, Initialˉmetadata,
+            Initialˉrecords, Initialˉheap, Initialˉheapˉallocations,
+            Initialˉheapˉallocationˉcount, Initialˉallocationˉleases
+        );
+    }
+    let Budgetˉoffset: u32 = Budgetˉlocal * 8u32;
+    let Budgetˉtoken: bytes = Bytesˉslice(
+        Initialˉlocals, Budgetˉoffset, 8u32
+    );
+    var Locals: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉlocals, 0u32, Budgetˉoffset), Zeroˉcell
+        ),
+        Bytesˉslice(
+            Initialˉlocals, Budgetˉoffset + 8u32,
+            Bytesˉlength(Initialˉlocals) - Budgetˉoffset - 8u32
+        )
+    );
+    var Requestedˉbytes: u64 = 18446744073709551615u64;
+    if Maximumˉitems <= 2305843009213693950u64 {
+        Requestedˉbytes = Maximumˉitems * 8u64 + 8u64;
+    }
+    var State: bytes = Initialˉstate;
+    var Metadata: bytes = Initialˉmetadata;
+    var Records: bytes = Initialˉrecords;
+    var Heap: bytes = Initialˉheap;
+    var Heapˉallocations: bytes = Initialˉheapˉallocations;
+    var Heapˉallocationˉcount: u32 = Initialˉheapˉallocationˉcount;
+    var Allocationˉleases: bytes = Initialˉallocationˉleases;
+    var Case: u32 = 0u32;
+    var Resultˉfields: bytes = Empty;
+    var Failureˉreason: u8 = 0u8;
+    var Failureˉavailable: u64 = 0u64;
+
+    if Maximumˉitems > 2047u64 {
+        Failureˉreason = 2u8;
+        let Targetˉreleasedˉbudget: Budgets.Memoryˉbudgetˉreleaseˉresult =
+            Budgets.Releaseˉmemoryˉbudget(State, Budgetˉtoken);
+        if !Targetˉreleasedˉbudget.Valid { return Invalid; }
+        State = Targetˉreleasedˉbudget.State;
+    } else {
+        let Lease: Budgets.Allocationˉleaseˉresult =
+            Budgets.Constructˉallocationˉlease(
+                State, Budgetˉtoken, Requestedˉbytes, Requestedˉbytes, 8u32
+            );
+        if !Lease.Valid { return Invalid; }
+        if !Lease.Succeeded {
+            Failureˉreason = Lease.Reason;
+            Failureˉavailable = Lease.Availableˉbytes;
+            let Refusalˉreleasedˉbudget:
+                Budgets.Memoryˉbudgetˉreleaseˉresult =
+                Budgets.Releaseˉmemoryˉbudget(State, Budgetˉtoken);
+            if !Refusalˉreleasedˉbudget.Valid { return Invalid; }
+            State = Refusalˉreleasedˉbudget.State;
+        } else {
+            let Maximumˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+                Initialˉstack, Stackˉlength - 8u32
+            );
+            let Backing: bytes = Collections.Collectionˉemptyˉbacking(
+                Maximumˉlow, Zeroˉcell
+            );
+            if Bytesˉlength(Backing) == 0u32 { return Invalid; }
+            let Allocation: Heapˉallocationˉresult = Allocateˉheapˉvalue(
+                Heap, Heapˉallocations, Heapˉallocationˉcount, Backing
+            );
+            if !Allocation.Valid { return Invalid; }
+            if !Allocation.Succeeded {
+                Failureˉreason = 4u8;
+                let Releasedˉlease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+                    Budgets.Releaseˉallocationˉlease(
+                        Lease.State, Lease.Token, Requestedˉbytes,
+                        Requestedˉbytes, 8u32
+                    );
+                if !Releasedˉlease.Valid { return Invalid; }
+                State = Releasedˉlease.State;
+            } else {
+                State = Lease.State;
+                Heap = Allocation.Heap;
+                Heapˉallocations = Allocation.Allocations;
+                Heapˉallocationˉcount = Allocation.Count;
+                if Allocation.Count > Initialˉheapˉallocationˉcount {
+                    var Leaseˉpadding: bytes = Zeroˉcell;
+                    Leaseˉpadding = Bytesˉconcat(Leaseˉpadding, Zeroˉcell);
+                    Leaseˉpadding = Bytesˉconcat(Leaseˉpadding, Zeroˉcell);
+                    Leaseˉpadding = Bytesˉconcat(
+                        Leaseˉpadding, Bytesˉfromˉu32ˉlittle(0u32)
+                    );
+                    Allocationˉleases = Bytesˉconcat(
+                        Initialˉallocationˉleases, Leaseˉpadding
+                    );
+                }
+                Allocationˉleases = Replaceˉallocationˉlease(
+                    Allocationˉleases, Heapˉallocationˉcount,
+                    Allocation.Index, Lease.Token
+                );
+                if Bytesˉlength(Allocationˉleases) !=
+                    Heapˉallocationˉcount * 28u32 {
+                    return Invalid;
+                }
+                Resultˉfields = Allocation.Descriptor;
+            }
+        }
+    }
+
+    if Failureˉreason != 0u8 {
+        Case = 1u32;
+        let Failureˉallocation: Aggregateˉallocation =
+            Allocateˉallocationˉfailure(
+                Module, Typeˉoffsets, Resultˉtype, Failureˉreason,
+                Requestedˉbytes, Failureˉavailable,
+                Metadata, Records, Zeroˉcell
+            );
+        if !Failureˉallocation.Valid { return Invalid; }
+        Resultˉfields = Failureˉallocation.Handle;
+        Metadata = Failureˉallocation.Metadata;
+        Records = Failureˉallocation.Values;
+    }
+    let Resultˉowner: u32 = 2147483648u32 +
+        (Resultˉtype + 1u32) * 256u32 + Case;
+    let Resultˉallocation: Aggregateˉallocation =
+        Allocateˉaggregateˉwithoutˉcollection(
+            Resultˉowner, Resultˉfields, Metadata, Records, Zeroˉcell
+        );
+    if !Resultˉallocation.Valid { return Invalid; }
+    return Vectorˉconstructˉexecution(
+        true, 0u32,
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉstack, 0u32, Stackˉlength - 8u32),
+            Resultˉallocation.Handle
+        ),
+        Locals, State, Resultˉallocation.Metadata,
+        Resultˉallocation.Values, Heap, Heapˉallocations,
+        Heapˉallocationˉcount, Allocationˉleases
     );
 }
 
@@ -1348,6 +1561,331 @@ fn Releaseˉdescriptor(
             Selectedˉentry + 12u32,
             Bytesˉlength(Allocations) - Selectedˉentry - 12u32
         )
+    );
+}
+
+fn Descriptorˉallocationˉindex(
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> u32 {
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length == 0u32 { return 4294967295u32; }
+    let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    var Scan: u32 = 0u32;
+    while Scan < Allocationˉcount {
+        let Entry: u32 = Scan * 12u32;
+        let References: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations, Entry + 8u32
+        );
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
+        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations, Entry + 4u32
+        );
+        if References > 0u32 && Valueˉoffset >= Offset &&
+            Valueˉoffset - Offset <= Allocationˉlength &&
+            Length <= Allocationˉlength - (Valueˉoffset - Offset) {
+            return Scan;
+        }
+        Scan = Scan + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Replaceˉallocationˉlease(
+    Leases: bytes,
+    Allocationˉcount: u32,
+    Index: u32,
+    Lease: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Leases, 0u32, 0u32);
+    if Index >= Allocationˉcount || Bytesˉlength(Lease) != 28u32 ||
+        Bytesˉlength(Leases) != Allocationˉcount * 28u32 {
+        return Invalid;
+    }
+    let Offset: u32 = Index * 28u32;
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Leases, 0u32, Offset), Lease),
+        Bytesˉslice(
+            Leases, Offset + 28u32,
+            Bytesˉlength(Leases) - Offset - 28u32
+        )
+    );
+}
+
+fn Zeroˉallocationˉleases(Count: u32, Zeroˉlease: bytes) -> bytes {
+    let Empty: bytes = Bytesˉslice(Zeroˉlease, 0u32, 0u32);
+    if Count > 4096u32 || Bytesˉlength(Zeroˉlease) != 28u32 {
+        return Empty;
+    }
+    var Leases: bytes = Empty;
+    var Slot: u32 = 0u32;
+    while Slot < Count {
+        Leases = Bytesˉconcat(Leases, Zeroˉlease);
+        Slot = Slot + 1u32;
+    }
+    return Leases;
+}
+
+record Descriptorˉreleaseˉexecution {
+    Valid: bool;
+    State: bytes;
+    Allocations: bytes;
+    Leases: bytes;
+}
+
+fn Releaseˉdescriptorˉandˉlease(
+    Initialˉstate: bytes,
+    Initialˉallocations: bytes,
+    Allocationˉcount: u32,
+    Initialˉleases: bytes,
+    Value: bytes,
+    Zeroˉlease: bytes
+) -> Descriptorˉreleaseˉexecution {
+    let Invalid: Descriptorˉreleaseˉexecution =
+        Descriptorˉreleaseˉexecution(
+            false, Initialˉstate, Initialˉallocations, Initialˉleases
+        );
+    if Bytesˉlength(Value) != 8u32 ||
+        Bytesˉlength(Initialˉallocations) != Allocationˉcount * 12u32 ||
+        Bytesˉlength(Initialˉleases) != Allocationˉcount * 28u32 ||
+        Bytesˉlength(Zeroˉlease) != 28u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu32ˉlittle(Value, 4u32) == 0u32 {
+        return Descriptorˉreleaseˉexecution(
+            true, Initialˉstate, Initialˉallocations, Initialˉleases
+        );
+    }
+    let Index: u32 = Descriptorˉallocationˉindex(
+        Initialˉallocations, Allocationˉcount, Value
+    );
+    if Index == 4294967295u32 { return Invalid; }
+    let References: u32 = Bytesˉreadˉu32ˉlittle(
+        Initialˉallocations, Index * 12u32 + 8u32
+    );
+    let Allocations: bytes = Releaseˉdescriptor(
+        Initialˉallocations, Allocationˉcount, Value
+    );
+    if Bytesˉlength(Allocations) != Bytesˉlength(Initialˉallocations) {
+        return Invalid;
+    }
+    var State: bytes = Initialˉstate;
+    var Leases: bytes = Initialˉleases;
+    if References == 1u32 {
+        let Lease: bytes = Bytesˉslice(Leases, Index * 28u32, 28u32);
+        if Bytesˉreadˉu32ˉlittle(Lease, 0u32) != 0u32 {
+            let Released: Budgets.Memoryˉbudgetˉreleaseˉresult =
+                Budgets.Releaseˉallocationˉlease(
+                    State,
+                    Lease,
+                    Bytesˉreadˉu64ˉlittle(Lease, 8u32),
+                    Bytesˉreadˉu64ˉlittle(Lease, 16u32),
+                    Bytesˉreadˉu32ˉlittle(Lease, 24u32)
+                );
+            if !Released.Valid { return Invalid; }
+            State = Released.State;
+            Leases = Replaceˉallocationˉlease(
+                Leases, Allocationˉcount, Index, Zeroˉlease
+            );
+            if Bytesˉlength(Leases) != Allocationˉcount * 28u32 {
+                return Invalid;
+            }
+        }
+    }
+    return Descriptorˉreleaseˉexecution(
+        true, State, Allocations, Leases
+    );
+}
+
+fn Releaseˉdescriptorsˉandˉleases(
+    Initialˉstate: bytes,
+    Initialˉallocations: bytes,
+    Allocationˉcount: u32,
+    Initialˉleases: bytes,
+    Values: bytes,
+    Zeroˉlease: bytes
+) -> Descriptorˉreleaseˉexecution {
+    let Invalid: Descriptorˉreleaseˉexecution =
+        Descriptorˉreleaseˉexecution(
+            false, Initialˉstate, Initialˉallocations, Initialˉleases
+        );
+    if Bytesˉlength(Values) % 8u32 != 0u32 { return Invalid; }
+    var State: bytes = Initialˉstate;
+    var Allocations: bytes = Initialˉallocations;
+    var Leases: bytes = Initialˉleases;
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Values) {
+        let Released: Descriptorˉreleaseˉexecution =
+            Releaseˉdescriptorˉandˉlease(
+                State,
+                Allocations,
+                Allocationˉcount,
+                Leases,
+                Bytesˉslice(Values, Cursor, 8u32),
+                Zeroˉlease
+            );
+        if !Released.Valid { return Invalid; }
+        State = Released.State;
+        Allocations = Released.Allocations;
+        Leases = Released.Leases;
+        Cursor = Cursor + 8u32;
+    }
+    return Descriptorˉreleaseˉexecution(
+        true, State, Allocations, Leases
+    );
+}
+
+fn Leasedˉdescriptorˉfromˉrecord(
+    Records: bytes,
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Leases: bytes,
+    Handle: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Handle, 0u32, 0u32);
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Handle, 0u32);
+    let Owner: u32 = Bytesˉreadˉu32ˉlittle(Handle, 4u32);
+    if Slot == 4294967295u32 || Owner < 2147483648u32 ||
+        (Owner & 255u32) != 0u32 || Slot >= Bytesˉlength(Records) / 8u32 ||
+        Bytesˉlength(Leases) != Allocationˉcount * 28u32 {
+        return Empty;
+    }
+    let Candidate: bytes = Bytesˉslice(Records, Slot * 8u32, 8u32);
+    let Index: u32 = Descriptorˉallocationˉindex(
+        Allocations, Allocationˉcount, Candidate
+    );
+    if Index == 4294967295u32 || Bytesˉreadˉu32ˉlittle(
+        Leases, Index * 28u32
+    ) == 0u32 {
+        return Empty;
+    }
+    return Candidate;
+}
+
+record Heapˉallocationˉresult {
+    Valid: bool;
+    Succeeded: bool;
+    Descriptor: bytes;
+    Heap: bytes;
+    Allocations: bytes;
+    Count: u32;
+    Index: u32;
+}
+
+fn Allocateˉheapˉvalue(
+    Initialˉheap: bytes,
+    Initialˉallocations: bytes,
+    Initialˉcount: u32,
+    Value: bytes
+) -> Heapˉallocationˉresult {
+    let Empty: bytes = Bytesˉslice(Initialˉheap, 0u32, 0u32);
+    let Invalid: Heapˉallocationˉresult = Heapˉallocationˉresult(
+        false, false, Empty, Initialˉheap, Initialˉallocations,
+        Initialˉcount, 4294967295u32
+    );
+    if Bytesˉlength(Initialˉallocations) != Initialˉcount * 12u32 {
+        return Invalid;
+    }
+    let Length: u32 = Bytesˉlength(Value);
+    if Length == 0u32 || Length > 65536u32 {
+        return Invalid;
+    }
+    var Offset: u32 = 0u32;
+    var Searching: bool = true;
+    while Searching {
+        var Nearestˉoffset: u32 = 65536u32;
+        var Nearestˉlength: u32 = 0u32;
+        var Spaceˉscan: u32 = 0u32;
+        while Spaceˉscan < Initialˉcount {
+            let Spaceˉentry: u32 = Spaceˉscan * 12u32;
+            if Bytesˉreadˉu32ˉlittle(
+                Initialˉallocations, Spaceˉentry + 8u32
+            ) > 0u32 {
+                let Candidateˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+                    Initialˉallocations, Spaceˉentry
+                );
+                if Candidateˉoffset >= Offset &&
+                    Candidateˉoffset < Nearestˉoffset {
+                    Nearestˉoffset = Candidateˉoffset;
+                    Nearestˉlength = Bytesˉreadˉu32ˉlittle(
+                        Initialˉallocations, Spaceˉentry + 4u32
+                    );
+                }
+            }
+            Spaceˉscan = Spaceˉscan + 1u32;
+        }
+        if Length <= Nearestˉoffset - Offset {
+            Searching = false;
+        } else if Nearestˉoffset == 65536u32 {
+            return Heapˉallocationˉresult(
+                true, false, Empty, Initialˉheap, Initialˉallocations,
+                Initialˉcount, 4294967295u32
+            );
+        } else {
+            Offset = Nearestˉoffset + Nearestˉlength;
+            if Offset > 65536u32 - Length {
+                return Heapˉallocationˉresult(
+                    true, false, Empty, Initialˉheap, Initialˉallocations,
+                    Initialˉcount, 4294967295u32
+                );
+            }
+        }
+    }
+
+    let End: u32 = Offset + Length;
+    let Heapˉlength: u32 = Bytesˉlength(Initialˉheap);
+    var Heap: bytes = Bytesˉconcat(
+        Bytesˉslice(Initialˉheap, 0u32, Offset), Value
+    );
+    if End < Heapˉlength {
+        Heap = Bytesˉconcat(
+            Heap, Bytesˉslice(Initialˉheap, End, Heapˉlength - End)
+        );
+    }
+    var Index: u32 = Initialˉcount;
+    var Metadataˉscan: u32 = 0u32;
+    while Metadataˉscan < Initialˉcount {
+        if Bytesˉreadˉu32ˉlittle(
+            Initialˉallocations, Metadataˉscan * 12u32 + 8u32
+        ) == 0u32 {
+            Index = Metadataˉscan;
+            Metadataˉscan = Initialˉcount;
+        }
+        Metadataˉscan = Metadataˉscan + 1u32;
+    }
+    let Entryˉvalue: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Offset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Length),
+            Bytesˉfromˉu32ˉlittle(1u32)
+        )
+    );
+    var Allocations: bytes = Initialˉallocations;
+    var Count: u32 = Initialˉcount;
+    if Index == Initialˉcount {
+        if Initialˉcount >= 4096u32 { return Invalid; }
+        Allocations = Bytesˉconcat(Allocations, Entryˉvalue);
+        Count = Count + 1u32;
+    } else {
+        let Metadataˉentry: u32 = Index * 12u32;
+        Allocations = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Allocations, 0u32, Metadataˉentry), Entryˉvalue
+            ),
+            Bytesˉslice(
+                Allocations, Metadataˉentry + 12u32,
+                Bytesˉlength(Allocations) - Metadataˉentry - 12u32
+            )
+        );
+    }
+    return Heapˉallocationˉresult(
+        true, true,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Offset),
+            Bytesˉfromˉu32ˉlittle(Length)
+        ),
+        Heap, Allocations, Count, Index
     );
 }
 
@@ -2004,6 +2542,7 @@ record Localˉexecution {
     Stack: bytes;
     Locals: bytes;
     Heapˉallocations: bytes;
+    Releasedˉdescriptors: bytes;
     Producedˉkind: u32;
 }
 
@@ -2026,7 +2565,7 @@ fn Executeˉlocal(
     if Opcode != 4u32 && Opcode != 5u32 {
         return Localˉexecution(
             true, false, Initialˉstack, Initialˉlocals,
-            Initialˉheapˉallocations, Initialˉproducedˉkind
+            Initialˉheapˉallocations, Empty, Initialˉproducedˉkind
         );
     }
     var Stack: bytes = Initialˉstack;
@@ -2045,7 +2584,7 @@ fn Executeˉlocal(
         );
         if Shapeˉkind == 25u32 {
             return Localˉexecution(
-                false, true, Empty, Empty, Empty, Producedˉkind
+                false, true, Empty, Empty, Empty, Empty, Producedˉkind
             );
         }
         var Value: bytes = Bytesˉslice(Locals, Localˉindex * 8u32, 8u32);
@@ -2100,12 +2639,12 @@ fn Executeˉlocal(
             if Bytesˉreadˉu32ˉlittle(Value, 4u32) > 0u32 &&
                 Bytesˉlength(Retained) == 0u32 {
                 return Localˉexecution(
-                    false, true, Empty, Empty, Empty, Producedˉkind
+                    false, true, Empty, Empty, Empty, Empty, Producedˉkind
                 );
             }
             if Bytesˉlength(Retained) != Bytesˉlength(Heapˉallocations) {
                 return Localˉexecution(
-                    false, true, Empty, Empty, Empty, Producedˉkind
+                    false, true, Empty, Empty, Empty, Empty, Producedˉkind
                 );
             }
             Heapˉallocations = Retained;
@@ -2116,6 +2655,7 @@ fn Executeˉlocal(
         }
         Stack = Bytesˉconcat(Stack, Value);
     } else {
+        var Releasedˉdescriptors: bytes = Empty;
         let Storedˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Module, Payload + 1u32
         );
@@ -2137,16 +2677,7 @@ fn Executeˉlocal(
                 Locals, Storedˉlocalˉoffset, 8u32
             );
             if Bytesˉreadˉu32ˉlittle(Previous, 4u32) > 0u32 {
-                let Released: bytes = Releaseˉdescriptor(
-                    Heapˉallocations, Heapˉallocationˉcount, Previous
-                );
-                if Bytesˉlength(Released) == 0u32 ||
-                    Bytesˉlength(Released) != Bytesˉlength(Heapˉallocations) {
-                    return Localˉexecution(
-                        false, true, Empty, Empty, Empty, Producedˉkind
-                    );
-                }
-                Heapˉallocations = Released;
+                Releasedˉdescriptors = Previous;
             }
         }
         Locals = Bytesˉconcat(
@@ -2160,9 +2691,13 @@ fn Executeˉlocal(
                 Localˉframeˉlength - 8u32 - Storedˉlocalˉoffset
             )
         );
+        return Localˉexecution(
+            true, true, Stack, Locals, Heapˉallocations,
+            Releasedˉdescriptors, Producedˉkind
+        );
     }
     return Localˉexecution(
-        true, true, Stack, Locals, Heapˉallocations, Producedˉkind
+        true, true, Stack, Locals, Heapˉallocations, Empty, Producedˉkind
     );
 }
 
@@ -2527,6 +3062,9 @@ record Extendedˉexecution {
     Recordˉmetadata: bytes;
     Records: bytes;
     Heapˉallocations: bytes;
+    Memoryˉbudgetˉstate: bytes;
+    Heapˉallocationˉcount: u32;
+    Allocationˉleases: bytes;
     Locals: bytes;
     Consumed: u32;
     Produced: bool;
@@ -2905,7 +3443,8 @@ fn Executeˉcollection(
             Functionˉframeˉmetadata, Functionˉindex * 8u32
         );
         if Takenˉshapeˉkind != 23u32 &&
-            (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 23u32 ||
+            ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 24u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
@@ -2994,7 +3533,8 @@ fn Executeˉaggregate(
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Extendedˉexecution = Extendedˉexecution(
         false, false, Empty, 0u32, Empty, false, Empty,
-        Empty, Empty, Empty, Empty, Empty, 0u32, false, 0u32, 0u32
+        Empty, Empty, Empty, Empty, Empty, 0u32, Empty, Empty,
+        0u32, false, 0u32, 0u32
     );
     let Recordˉcapacity: u32 = 768u32;
     let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
@@ -3390,6 +3930,9 @@ fn Executeˉaggregate(
             Selectedˉfieldˉkind == 22u32 {
             Stackˉproducedˉkind = 2u32;
         }
+        if Selectedˉfieldˉkind == 23u32 {
+            Stackˉproducedˉkind = 3u32;
+        }
         if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
             let Retainedˉallocations: bytes = Retainˉdescriptor(
                 Heapˉallocations,
@@ -3553,7 +4096,8 @@ fn Executeˉaggregate(
     return Extendedˉexecution(
         true, Mainˉfound, Stack, Sectionˉkind, Releasedˉdescriptors,
         Heapˉallocationˉrequested, Heapˉallocationˉvalue, Heap,
-        Recordˉmetadata, Records, Heapˉallocations, Locals,
+        Recordˉmetadata, Records, Heapˉallocations, Empty, 0u32, Empty,
+        Locals,
         Stackˉconsumed, Stackˉproduced, Stackˉproducedˉkind,
         Aggregateˉinstructions
     );
@@ -3573,7 +4117,9 @@ fn Executeˉextended(
     Zeroˉcell: bytes,
     Initialˉheap: bytes,
     Initialˉheapˉallocations: bytes,
-    Heapˉallocationˉcount: u32,
+    Initialˉheapˉallocationˉcount: u32,
+    Initialˉmemoryˉbudgetˉstate: bytes,
+    Initialˉallocationˉleases: bytes,
     Initialˉrecordˉmetadata: bytes,
     Initialˉrecords: bytes,
     Stackˉdescriptorˉflagsˉlow: u32,
@@ -3586,6 +4132,8 @@ fn Executeˉextended(
     Stackˉvectorˉflagsˉhigh: u32,
     Functionˉshapeˉoffsets: bytes,
     Functionˉindex: u32,
+    Mainˉindex: u32,
+    Mainˉhasˉmemoryˉbudget: bool,
     Initialˉlocals: bytes,
     Localˉshapes: bytes,
     Functionˉcursor: u32,
@@ -3596,7 +4144,8 @@ fn Executeˉextended(
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Extendedˉexecution = Extendedˉexecution(
         false, false, Empty, 0u32, Empty, false, Empty,
-        Empty, Empty, Empty, Empty, Empty, 0u32, false, 0u32, 0u32
+        Empty, Empty, Empty, Empty, Empty, 0u32, Empty, Empty,
+        0u32, false, 0u32, 0u32
     );
     let Recordˉcapacity: u32 = 768u32;
     let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
@@ -3613,12 +4162,110 @@ fn Executeˉextended(
     var Recordˉmetadata: bytes = Initialˉrecordˉmetadata;
     var Records: bytes = Initialˉrecords;
     var Heapˉallocations: bytes = Initialˉheapˉallocations;
+    var Memoryˉbudgetˉstate: bytes = Initialˉmemoryˉbudgetˉstate;
+    var Heapˉallocationˉcount: u32 = Initialˉheapˉallocationˉcount;
+    var Allocationˉleases: bytes = Initialˉallocationˉleases;
     var Locals: bytes = Initialˉlocals;
     var Stackˉconsumed: u32 = Initialˉconsumed;
     var Stackˉproduced: bool = Initialˉproduced;
     var Stackˉproducedˉkind: u32 = Initialˉproducedˉkind;
     var Aggregateˉinstructions: u32 = 0u32;
     var Mainˉfound: bool = false;
+
+    if Payloadˉlength == 206u32 {
+        if !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
+            return Invalid;
+        }
+        let Budgetˉresult: Memoryˉbudgetˉexecution =
+            Executeˉmemoryˉbudgetˉsplit(
+                Module,
+                Typeˉoffsets,
+                Payload,
+                Stack,
+                Locals,
+                Memoryˉbudgetˉstate,
+                Recordˉmetadata,
+                Records,
+                Zeroˉcell
+            );
+        if !Budgetˉresult.Valid { return Invalid; }
+        Stack = Budgetˉresult.Stack;
+        Memoryˉbudgetˉstate = Budgetˉresult.State;
+        Recordˉmetadata = Budgetˉresult.Metadata;
+        Records = Budgetˉresult.Records;
+        Stackˉconsumed = 2u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 2u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+        Mainˉfound = true;
+    }
+
+    if Payloadˉlength == 207u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 24u32 ||
+            !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
+            return Invalid;
+        }
+        let Vectorˉresult: Vectorˉconstructˉexecution =
+            Executeˉvectorˉconstructˉreserved(
+                Module, Typeˉoffsets, Typeˉcount, Payload, Stack,
+                Locals, Memoryˉbudgetˉstate, Recordˉmetadata, Records,
+                Heap, Heapˉallocations, Heapˉallocationˉcount,
+                Allocationˉleases, Zeroˉcell
+            );
+        if !Vectorˉresult.Valid { return Invalid; }
+        Sectionˉkind = Vectorˉresult.Status;
+        Stack = Vectorˉresult.Stack;
+        Locals = Vectorˉresult.Locals;
+        Memoryˉbudgetˉstate = Vectorˉresult.State;
+        Recordˉmetadata = Vectorˉresult.Metadata;
+        Records = Vectorˉresult.Records;
+        Heap = Vectorˉresult.Heap;
+        Heapˉallocations = Vectorˉresult.Heapˉallocations;
+        Heapˉallocationˉcount = Vectorˉresult.Heapˉallocationˉcount;
+        Allocationˉleases = Vectorˉresult.Allocationˉleases;
+        Stackˉconsumed = 1u32;
+        Stackˉproduced = Sectionˉkind == 0u32;
+        Stackˉproducedˉkind = 2u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+        Mainˉfound = true;
+    }
+
+    if Payloadˉlength == 80u32 {
+        let Popˉstackˉlength: u32 = Bytesˉlength(Stack);
+        if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
+        var Popˉisˉdescriptor: bool = false;
+        if Stackˉdescriptorˉcount <= 32u32 {
+            Popˉisˉdescriptor = ((Stackˉdescriptorˉflagsˉlow
+                >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32;
+        } else {
+            Popˉisˉdescriptor = ((Stackˉdescriptorˉflagsˉhigh
+                >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32;
+        }
+        let Popped: bytes = Bytesˉslice(
+            Stack, Popˉstackˉlength - 8u32, 8u32
+        );
+        if Popˉisˉdescriptor {
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors, Popped
+            );
+        }
+        if Stackˉflagˉset(
+            Stackˉrecordˉflagsˉlow,
+            Stackˉrecordˉflagsˉhigh,
+            Stackˉdescriptorˉcount - 1u32
+        ) {
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors,
+                Leasedˉdescriptorˉfromˉrecord(
+                    Records, Heapˉallocations, Heapˉallocationˉcount,
+                    Allocationˉleases, Popped
+                )
+            );
+        }
+        Stack = Bytesˉslice(Stack, 0u32, Popˉstackˉlength - 8u32);
+        Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+        Mainˉfound = true;
+    }
 
     if Payloadˉlength >= 96u32 {
     if Payloadˉlength <= 125u32 ||
@@ -4016,6 +4663,9 @@ fn Executeˉextended(
         Recordˉmetadata,
         Records,
         Heapˉallocations,
+        Memoryˉbudgetˉstate,
+        Heapˉallocationˉcount,
+        Allocationˉleases,
         Locals,
         Stackˉconsumed,
         Stackˉproduced,
@@ -4164,6 +4814,17 @@ export fn Main(Request: bytes) -> bytes {
             Bytesˉslice(Zeroˉlocals, 8u32, Functionˉcursor - 8u32)
         );
     }
+    var Zeroˉlease: bytes = Zeroˉcell;
+    Zeroˉlease = Bytesˉconcat(Zeroˉlease, Zeroˉcell);
+    Zeroˉlease = Bytesˉconcat(Zeroˉlease, Zeroˉcell);
+    Zeroˉlease = Bytesˉconcat(Zeroˉlease, Zeroˉvalue);
+    var Allocationˉleases: bytes = Zeroˉallocationˉleases(
+        Heapˉallocationˉcount, Zeroˉlease
+    );
+    if Bytesˉlength(Allocationˉleases) !=
+        Heapˉallocationˉcount * 28u32 {
+        return Invalid;
+    }
     let Recordˉcapacity: u32 = 768u32;
     let Recordˉmetadataˉlength: u32 = Recordˉcapacity * 8u32;
     var Recordˉmetadata: bytes =
@@ -4267,6 +4928,9 @@ export fn Main(Request: bytes) -> bytes {
             Stack = Localˉresult.Stack;
             Locals = Localˉresult.Locals;
             Heapˉallocations = Localˉresult.Heapˉallocations;
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors, Localˉresult.Releasedˉdescriptors
+            );
             Stackˉproducedˉkind = Localˉresult.Producedˉkind;
             Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
             Mainˉfound = true;
@@ -4316,34 +4980,6 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 206u32 {
-            if !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
-                return Invalid;
-            }
-            let Budgetˉresult: Memoryˉbudgetˉexecution =
-                Executeˉmemoryˉbudgetˉsplit(
-                    Module,
-                    Typeˉoffsets,
-                    Payload,
-                    Stack,
-                    Locals,
-                    Memoryˉbudgetˉstate,
-                    Recordˉmetadata,
-                    Records,
-                    Zeroˉcell
-                );
-            if !Budgetˉresult.Valid { return Invalid; }
-            Stack = Budgetˉresult.Stack;
-            Memoryˉbudgetˉstate = Budgetˉresult.State;
-            Recordˉmetadata = Budgetˉresult.Metadata;
-            Records = Budgetˉresult.Records;
-            Stackˉconsumed = 2u32;
-            Stackˉproduced = true;
-            Stackˉproducedˉkind = 2u32;
-            Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
-            Mainˉfound = true;
-        }
-
         let Extended: Extendedˉexecution = Executeˉextended(
             Module,
             Typeˉoffsets,
@@ -4359,6 +4995,8 @@ export fn Main(Request: bytes) -> bytes {
             Heap,
             Heapˉallocations,
             Heapˉallocationˉcount,
+            Memoryˉbudgetˉstate,
+            Allocationˉleases,
             Recordˉmetadata,
             Records,
             Stackˉdescriptorˉflagsˉlow,
@@ -4371,6 +5009,8 @@ export fn Main(Request: bytes) -> bytes {
             Stackˉvectorˉflagsˉhigh,
             Functionˉshapeˉoffsets,
             Functionˉindex,
+            Mainˉindex,
+            Mainˉhasˉmemoryˉbudget,
             Locals,
             Localˉshapes,
             Functionˉcursor,
@@ -4392,6 +5032,9 @@ export fn Main(Request: bytes) -> bytes {
             Recordˉmetadata = Extended.Recordˉmetadata;
             Records = Extended.Records;
             Heapˉallocations = Extended.Heapˉallocations;
+            Memoryˉbudgetˉstate = Extended.Memoryˉbudgetˉstate;
+            Heapˉallocationˉcount = Extended.Heapˉallocationˉcount;
+            Allocationˉleases = Extended.Allocationˉleases;
             Locals = Extended.Locals;
             Stackˉconsumed = Extended.Consumed;
             Stackˉproduced = Extended.Produced;
@@ -4757,27 +5400,6 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 80u32 {
-            let Popˉstackˉlength: u32 = Bytesˉlength(Stack);
-            if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
-            var Popˉisˉdescriptor: bool = false;
-            if Stackˉdescriptorˉcount <= 32u32 {
-                Popˉisˉdescriptor = ((Stackˉdescriptorˉflagsˉlow
-                    >> (Stackˉdescriptorˉcount - 1u32)) & 1u32) != 0u32;
-            } else {
-                Popˉisˉdescriptor = ((Stackˉdescriptorˉflagsˉhigh
-                    >> (Stackˉdescriptorˉcount - 33u32)) & 1u32) != 0u32;
-            }
-            if Popˉisˉdescriptor {
-                Releasedˉdescriptors = Bytesˉconcat(
-                    Releasedˉdescriptors,
-                    Bytesˉslice(Stack, Popˉstackˉlength - 8u32, 8u32)
-                );
-            }
-            Stack = Bytesˉslice(Stack, 0u32, Popˉstackˉlength - 8u32);
-            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
-            Mainˉfound = true;
-        }
         if Payloadˉlength == 81u32 {
             let Returnˉstackˉlength: u32 = Bytesˉlength(Stack);
             if Stackˉdescriptorˉcount == 0u32 { return Invalid; }
@@ -4937,6 +5559,20 @@ export fn Main(Request: bytes) -> bytes {
                         Bytesˉslice(Locals, Returningˉlocalˉoffset, 8u32)
                     );
                 }
+                if Returningˉlocalˉkind == 11u32 {
+                    let Returningˉleasedˉdescriptor: bytes =
+                        Leasedˉdescriptorˉfromˉrecord(
+                            Records, Heapˉallocations,
+                            Heapˉallocationˉcount, Allocationˉleases,
+                            Bytesˉslice(
+                                Locals, Returningˉlocalˉoffset, 8u32
+                            )
+                        );
+                    Releasedˉdescriptors = Bytesˉconcat(
+                        Releasedˉdescriptors,
+                        Returningˉleasedˉdescriptor
+                    );
+                }
                 Returningˉlocalˉoffset = Returningˉlocalˉoffset + 8u32;
             }
             Functionˉindex = Bytesˉreadˉu32ˉlittle(
@@ -4977,34 +5613,19 @@ export fn Main(Request: bytes) -> bytes {
         // Copy operation results first, release consumed owners second, and
         // only then reuse a free span for the pending immutable result.
         if Sectionˉkind == 0u32 {
-            var Releasedˉcursor: u32 = 0u32;
-            while Releasedˉcursor < Bytesˉlength(Releasedˉdescriptors) {
-                let Releasedˉvalue: bytes = Bytesˉslice(
+            let Releaseˉresult: Descriptorˉreleaseˉexecution =
+                Releaseˉdescriptorsˉandˉleases(
+                    Memoryˉbudgetˉstate,
+                    Heapˉallocations,
+                    Heapˉallocationˉcount,
+                    Allocationˉleases,
                     Releasedˉdescriptors,
-                    Releasedˉcursor,
-                    8u32
+                    Zeroˉlease
                 );
-                let Releasedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Releasedˉvalue,
-                    4u32
-                );
-                if Releasedˉlength > 0u32 {
-                    let Releasedˉallocations: bytes = Releaseˉdescriptor(
-                        Heapˉallocations,
-                        Heapˉallocationˉcount,
-                        Releasedˉvalue
-                    );
-                    if Bytesˉlength(Releasedˉallocations) == 0u32 {
-                        return Invalid;
-                    }
-                    if Bytesˉlength(Releasedˉallocations)
-                        != Bytesˉlength(Heapˉallocations) {
-                        return Invalid;
-                    }
-                    Heapˉallocations = Releasedˉallocations;
-                }
-                Releasedˉcursor = Releasedˉcursor + 8u32;
-            }
+            if !Releaseˉresult.Valid { return Invalid; }
+            Memoryˉbudgetˉstate = Releaseˉresult.State;
+            Heapˉallocations = Releaseˉresult.Allocations;
+            Allocationˉleases = Releaseˉresult.Leases;
 
             if Heapˉallocationˉrequested {
                 let Allocatedˉlength: u32 = Bytesˉlength(
@@ -5113,13 +5734,25 @@ export fn Main(Request: bytes) -> bytes {
                         );
                         if Allocatedˉmetadataˉindex
                             == Heapˉallocationˉcount {
+                            if Heapˉallocationˉcount >= 4096u32 {
+                                return Invalid;
+                            }
                             Heapˉallocations = Bytesˉconcat(
                                 Heapˉallocations,
                                 Allocatedˉmetadataˉvalue
                             );
+                            Allocationˉleases = Bytesˉconcat(
+                                Allocationˉleases, Zeroˉlease
+                            );
                             Heapˉallocationˉcount =
                                 Heapˉallocationˉcount + 1u32;
                         } else {
+                            if Bytesˉreadˉu32ˉlittle(
+                                Allocationˉleases,
+                                Allocatedˉmetadataˉindex * 28u32
+                            ) != 0u32 {
+                                return Invalid;
+                            }
                             let Allocatedˉmetadataˉentry: u32 =
                                 Allocatedˉmetadataˉindex * 12u32;
                             Heapˉallocations = Bytesˉconcat(

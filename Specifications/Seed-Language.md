@@ -114,8 +114,9 @@ Parameters and local variables may also carry an exact required root capability 
   An edition-1 module that requests the launcher-owned root budget uses exact
   `Main(Memoryˉbudget) -> i32` in WVB 1.21, or in WVB 1.22 when combined with
   a retained `u8` enum. WVB 1.22 without shape `25` retains ordinary
-  `Main() -> i32`. WVB 1.23 requires the budget entry and permits affine
-  budget locals only in `Main` when executable Split is present.
+  `Main() -> i32`. WVB 1.23 and WVB 1.24 require the budget entry and permit
+  affine budget/result locals only in `Main` when executable Split or fallible
+  Vector construction is present.
 - Capability declarations must be unique and use qualified lowercase names.
 - A portable module cannot declare or call hosted capabilities.
 

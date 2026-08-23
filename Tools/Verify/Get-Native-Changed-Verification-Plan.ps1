@@ -1139,6 +1139,10 @@ function Add-Native-Tool-Suite {
         'Verify-Generic-Nominal-Variant'
     )) {
         Add-Suite 'language-1-front-door'
+        if ($Path -eq
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv') {
+            Add-Suite 'language-1-memory-budget-split-execution'
+        }
         return
     }
     if ($Stem -eq 'Build-Cached-Os-X64-Project-Wvbs') {
@@ -1551,10 +1555,15 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Generic-Nominal-Type-Layout.mjs'
     )) {
         Add-Suite 'generic-nominal-type-layout'
+    } elseif ($Path -eq
+        'Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv') {
+        Add-Suite @(
+            'generic-nominal-type-materialization',
+            'language-1-memory-budget-split-execution'
+        )
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Materialization.wvproj',
         'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Materialization-Self-Test.wv',
-        'Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.cmd',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.sh',
         'Tools/Native/Test-Generic-Nominal-Type-Materialization.mjs'
@@ -1584,6 +1593,9 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'
@@ -1692,6 +1704,15 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/webassembly-verification/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/WebAssembly/', [StringComparison]::Ordinal)) {
         Add-WebAssemblyVerification
+        if ($Path -in @(
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv'
+        )) {
+            Add-Suite 'language-1-memory-budget-split-execution'
+        }
     } elseif ($Path.StartsWith(
         'Tests/Fixtures/Scripting/',
         [StringComparison]::Ordinal) -or
@@ -1860,7 +1881,8 @@ foreach ($Path in $Paths) {
             'model-provider',
             'file-read-application',
             'wvb-inspector-reconstruction',
-            'language-1-front-door'
+            'language-1-front-door',
+            'language-1-memory-budget-split-execution'
         )
         if ($Path -in @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
@@ -2572,7 +2594,8 @@ foreach ($Path in $Paths) {
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
-            'language-1-front-door'
+            'language-1-front-door',
+            'language-1-memory-budget-split-execution'
         )
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
@@ -2707,6 +2730,9 @@ foreach ($Path in $Paths) {
             'Projects/Examples/Windvale-Source-Wvb-Demo.wvproj'
         )) {
             Add-Suite 'segmented-compiler-toolset-reconstruction'
+        }
+        if ($Path -eq 'Compiler/Windvale/Source-Wvb-Core.wv') {
+            Add-Suite 'language-1-memory-budget-split-execution'
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites

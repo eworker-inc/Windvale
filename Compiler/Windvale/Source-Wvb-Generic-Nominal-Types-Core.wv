@@ -143,6 +143,15 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉscalarˉfeatures(
     return 0u32;
 }
 
+fn Compilerˉsourceˉwvbˉgenericˉnominalˉkindˉrank(Kind: u32) -> u32 {
+    if Kind == 4u32 { return 0u32; }
+    if Kind == 8u32 { return 1u32; }
+    if Kind == 10u32 { return 2u32; }
+    if Kind == 11u32 { return 3u32; }
+    if Kind == 12u32 { return 4u32; }
+    return 4294967295u32;
+}
+
 fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
     Input: bytes,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -373,7 +382,8 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
-    Instance: u32
+    Instance: u32,
+    Expectedˉoutput: u32
 ) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
     let Typeˉoutput: u32 =
         Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
@@ -403,7 +413,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
         Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
             Plan, Instance, 8u32
         );
-    if Typeˉoutput != Plan.Firstˉtype + Instance {
+    if Typeˉoutput != Expectedˉoutput {
         return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
             Input,
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization
@@ -717,32 +727,53 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
     }
     var Result: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
         Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
-    var Instance: u32 = 0u32;
-    while Instance < Plan.Instances {
-        let Encoded: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
-            Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
-                Input, Scan, Symbols, Plan,
-                Recordˉtargets, Variantˉtargets, Concreteˉrecords, Instance
-            );
-        if Encoded.Status !=
-                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
-            return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
-                Input, Encoded.Status, Instance
-            );
+    var Encodedˉentries: u32 = 0u32;
+    var Kindˉrank: u32 = 0u32;
+    while Kindˉrank < 5u32 {
+        var Instance: u32 = 0u32;
+        while Instance < Plan.Instances {
+            let Typeˉkind: u32 =
+                Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
+                    Plan, Instance, 2u32
+                );
+            if Compilerˉsourceˉwvbˉgenericˉnominalˉkindˉrank(Typeˉkind) ==
+                    Kindˉrank {
+                let Encoded: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
+                    Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
+                        Input, Scan, Symbols, Plan,
+                        Recordˉtargets, Variantˉtargets, Concreteˉrecords,
+                        Instance, Typeˉbase + Encodedˉentries
+                    );
+                if Encoded.Status !=
+                        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+                    return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+                        Input, Encoded.Status, Instance
+                    );
+                }
+                Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
+                    Result, Encoded.Payload
+                );
+                Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
+                    Result, Encoded.Features
+                );
+                if Result.Status !=
+                        Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
+                    return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+                        Input, Result.Status, Instance
+                    );
+                }
+                Encodedˉentries = Encodedˉentries + 1u32;
+            }
+            Instance = Instance + 1u32;
         }
-        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉappend(
-            Result, Encoded.Payload
+        Kindˉrank = Kindˉrank + 1u32;
+    }
+    if Encodedˉentries != Plan.Instances {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization,
+            Encodedˉentries
         );
-        Result = Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfeatures(
-            Result, Encoded.Features
-        );
-        if Result.Status !=
-                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
-            return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
-                Input, Result.Status, Instance
-            );
-        }
-        Instance = Instance + 1u32;
     }
     return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
         Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid, Plan.Instances,

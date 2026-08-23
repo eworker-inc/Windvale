@@ -126,8 +126,8 @@ invocation teardown.
 then gives retained `u8`-backed enums an exact WVB 1.22 descriptor and connected
 execution path. [Decision 0836](../Decisions/0836-Bind-Memory-Budget-Split-In-Wvir-1.5.md)
 binds the exact mutable-parent Split call and its affine evidence as WVIR
-1.5/1.6; the focused front door declares 462
-cases. A separate 17-case executable accounting oracle now proves bounded child
+1.5/1.6; the focused front door declares 478
+cases. A separate 29-case executable accounting oracle now proves bounded child
 reservation, failure atomicity, generation-safe reuse, deferred parent release,
 recursive credit, malformed-state rejection, and teardown in about thirteen
 seconds locally. Its fixed 65-entry state is an internal implementation model,
@@ -141,9 +141,17 @@ then admits bounded exact `effects(...)` syntax and retains its declaration
 span/count evidence without claiming semantic resolution.
 [Decision 0839](../Decisions/0839-Admit-Exact-Language-1.0-Using-Statements.md)
 then admits the bounded `using Name = Expression Block` syntax and retains its
-binding, acquisition, and body spans without claiming resource semantics. The
-next connected Slice 5 results are allocation leases, public fallible Vector
-construction with recoverable append, general owned calls and control-flow
+binding, acquisition, and body spans without claiming resource semantics.
+[Decision 0840](../Decisions/0840-Bind-Fallible-Vector-Construction-In-Wvir.md)
+then binds exact fallible Vector construction as operation 172,
+[Decision 0841](../Decisions/0841-Prove-Generation-Safe-Allocation-Leases.md)
+proves generation-safe budget-to-lease transfer, and
+[Decision 0842](../Decisions/0842-Execute-Fallible-Vector-Construction-As-Wvb-1.24.md)
+connects the operation to canonical WVB 1.24, compiler-aligned verification,
+typed target refusal, physical scalar backing, and descriptor-owned release.
+The combined 32-case owner retains Split and adds the executable Vector success,
+failure, zero-precondition, and malformed-module matrix. The next connected
+Slice 5 results are recoverable append, general owned calls and control-flow
 joins, semantic cleanup lowering, reverse-order release, and one hosted
 consumer. Canonical effect resolution, call enforcement, function values, and
 captures follow in Slice 6.

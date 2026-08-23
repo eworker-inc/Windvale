@@ -125,6 +125,49 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
     return 0u32;
 }
 
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉkindˉrank(
+    Kind: u32
+) -> u32 {
+    if Kind == 4u32 { return 0u32; }
+    if Kind == 8u32 { return 1u32; }
+    if Kind == 10u32 { return 2u32; }
+    if Kind == 11u32 { return 3u32; }
+    if Kind == 12u32 { return 4u32; }
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉrank(
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Instances: u32,
+    Instance: u32
+) -> u32 {
+    let Kind: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+            Catalog, Instance
+        );
+    let Kindˉrank: u32 =
+        Compilerˉsourceˉgenericˉtypeˉmaterializationˉkindˉrank(Kind);
+    if Kindˉrank == 4294967295u32 { return Kindˉrank; }
+    var Rank: u32 = 0u32;
+    var Candidate: u32 = 0u32;
+    while Candidate < Instances {
+        let Candidateˉkind: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                Catalog, Candidate
+            );
+        let Candidateˉrank: u32 =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉkindˉrank(
+                Candidateˉkind
+            );
+        if Candidateˉrank < Kindˉrank ||
+            (Candidateˉrank == Kindˉrank && Candidate < Instance) {
+            Rank = Rank + 1u32;
+        }
+        Candidate = Candidate + 1u32;
+    }
+    return Rank;
+}
+
 export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -219,13 +262,25 @@ export fn Compilerˉsourceˉgenericˉtypeˉmaterialize(
             Typeˉcases = Layout.Items;
         }
         let Firstˉfield: u32 = Fields;
+        let Outputˉrank: u32 =
+            Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉrank(
+                Catalog, Instances, Instance
+            );
+        if Outputˉrank == Sentinel {
+            return Compilerˉsourceˉgenericˉtypeˉmaterializationˉfailure(
+                Input,
+                Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout,
+                Layout.Genericˉstatus, Layout.Symbolˉstatus,
+                Firstˉtype, Catalog, Instance
+            );
+        }
         Entryˉevidence =
             Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
                 Entryˉevidence, Layout.Shape
             );
         Entryˉevidence =
             Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(
-                Entryˉevidence, Firstˉtype + Instance
+                Entryˉevidence, Firstˉtype + Outputˉrank
             );
         Entryˉevidence =
             Compilerˉsourceˉgenericˉtypeˉmaterializationˉappendˉu32(

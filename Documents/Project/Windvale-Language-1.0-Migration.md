@@ -421,6 +421,42 @@ The next checkpoint connects operation 172 to one bytecode instruction,
 compiler-aligned verification, physical Vector backing, typed success/refusal,
 and collection-owned lease release.
 
+## Current Slice 5 executable fallible Vector checkpoint
+
+[Decision 0842](../Decisions/0842-Execute-Fallible-Vector-Construction-As-Wvb-1.24.md)
+connects operation 172 to WVB 1.24 opcode `CF`. The instruction consumes one
+exact `u64` maximum and the named available budget, then produces only exact
+`Result<Vector<T>, Allocationˉfailure>`. The verifier derives Vector and failure
+identity from that Result and tracks it as affine; WVB contains no lease token,
+provider generation, heap pointer, or backing layout.
+
+The runner converts the budget to one private generation-safe lease, allocates
+one reserved scalar Vector backing, and binds lease lifetime to the descriptor.
+Success and target refusal both consume the source budget and return typed
+Result paths; local refusal cleanup releases whichever owner remains. Zero is a
+violated precondition and traps with `WVR3008`. Requested-byte evidence
+saturates rather than wrapping, and the runner's 2,047-cell backing ceiling
+remains an explicit target profile rather than a Language maximum.
+
+Generic materialization remains dependency-ordered, but WVB emission now uses a
+separate bounded nominal-category rank and remaps private references. The exact
+Result may therefore point forward to its Vector descriptor while the Types
+directory retains canonical category order.
+
+The successful fixture is deterministic 747-byte WVB 1.24 at SHA-256
+`e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1`.
+The combined focused owner passes 32 cases: five valid modules, 19 malformed
+mutations, both Split and Vector provider outcomes, deterministic publication,
+and the zero trap. The registry remains 112 owners and advances to 5,361 cases
+at SHA-256
+`7da8ebac77d31f21554b198e9ee90598280c31c72cf65c1c7344835eddc4b8a4`.
+
+Recoverable append, general owned calls and joins, semantic `using`, reverse-
+order release, and one hosted resource consumer remain in Slice 5. Broad
+transitional-compiler micro-optimization remains deferred until self-hosting;
+measured packaging/cache waste and correctness blockers remain appropriate
+current work.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

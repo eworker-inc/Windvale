@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-executable memory-budget Split through WVB 1.23 but has not repinned the paired
+fallible Vector construction through WVB 1.24 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.23. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.24. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,8 +124,9 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 supplies one fresh opaque root-budget
-token to the sole parameter of exported `Main(Memoryˉbudget) -> i32`. The
+WVB 1.21, WVB 1.22 with shape `25`, WVB 1.23, or WVB 1.24 supplies one fresh
+opaque root-budget token to the sole parameter of exported
+`Main(Memoryˉbudget) -> i32`. The
 interpreter validates that exact
 shape placement before execution and rejects every bytecode load or store of
 the token. The active invocation owns an identity/generation pair outside the
@@ -149,11 +150,20 @@ preserves the parent and returns the exact Failure evidence. Shape-25 budget
 locals and Split-result locals move through `local.take`, never through a
 retaining load. Invocation teardown releases every surviving domain under the
 provider's fixed bounds.
+WVB 1.24 adds exact opcode `CF`. Its two immediates select one available budget
+local and exact `Result<Vector<T>, Allocationˉfailure>` type, and its sole stack
+operand is `u64 Maximumˉitems`. Zero traps with `WVR3008`. For the current
+resource-free scalar element subset, a positive representable maximum converts
+the budget to one private allocation lease, allocates the reserved Vector
+backing, and publishes Valid. A positive target-unrepresentable maximum
+publishes exact Failure and releases the still-local owner. The lease remains
+attached to the backing and is released exactly once with the final descriptor.
+Requested-byte evidence saturates at `u64`. The scalar runner's 2,047-cell
+backing limit is an explicit profile bound, not a portable Language maximum.
 Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
-implemented. This low-level runtime surface does not claim the public fallible
-`Memoryˉbudget` constructor or its `Result` lowering.
+implemented.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused
@@ -211,6 +221,16 @@ reservation. A second fixture requests 100,000 bytes and returns `42` through
 the typed refusal branch. The compiler-aligned verifier accepts both and
 rejects nine version, opcode, local, type, and layout corruptions. This is
 development evidence; paired-host runner reconstruction remains unrepinned.
+
+The executable fallible Vector fixture is deterministic 747-byte WVB 1.24 at
+SHA-256
+`e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1`.
+The compiler-aligned verifier accepts successful, refused, and zero-precondition
+modules. The runner returns `42` for successful construction and typed
+target-unaddressable refusal; zero fails with `WVR3008` after four guest
+instructions. Ten exact version, opcode, local, Result, Vector, and failure-
+layout mutations reject. This is current Windows development evidence; paired-
+host reconstruction and promoted-candidate repinning remain separate gates.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

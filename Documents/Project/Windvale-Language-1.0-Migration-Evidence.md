@@ -2679,3 +2679,37 @@ This is an accounting oracle, not an executable operation-172 or physical-
 allocation claim. The current 15-case Split owner also passes unchanged: both
 typed modules execute to 42 and all nine bytecode corruptions reject. Paired
 Linux execution remains required evidence before promotion.
+
+## Executable fallible Vector-construction evidence
+
+[Decision 0842](../Decisions/0842-Execute-Fallible-Vector-Construction-As-Wvb-1.24.md)
+connects WVIR operation 172 to exact WVB 1.24 opcode `CF`. Its first immediate
+is the consumed shape-25 budget slot, its second is exact
+`Result<Vector<i32>, Allocationˉfailure>`, and its sole operand is `u64
+Maximumˉitems`. The Types directory is canonically ordered as allocation-
+failure record, allocation-reason enum, Result variant, and Vector descriptor;
+the Result Valid payload points forward to the Vector type.
+
+The successful source emits twice to identical 747-byte WVB at SHA-256
+`e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1`.
+The ordinary target-unaddressable fixture emits 756 bytes, and the zero-
+precondition fixture emits 753 bytes. The compiler-aligned verifier accepts all
+three. The source-built native runner returns 42 for success and typed refusal;
+zero reports `WVR3008` after four guest instructions.
+
+The combined owner preserves the 752-byte Split oracle and rejects 19 exact
+mutations: nine Split and ten Vector version, opcode, local, type, Result,
+Vector, and allocation-failure corruptions. Its terminal evidence is:
+
+```text
+native language 1 memory budget and vector execution status=Passed cases=32 valid=5 malformed=19 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=747 vector-sha256=e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1
+```
+
+The verifier now reports the exact semantic rejection stage on invalid input.
+The scalar runner retains its 2,048-cell native frame ceiling; cohesive extended
+execution and descriptor-release extraction brought its largest function below
+that bound instead of widening it. The registry remains 112 owners and contains
+5,361 cases at SHA-256
+`7da8ebac77d31f21554b198e9ee90598280c31c72cf65c1c7344835eddc4b8a4`.
+Paired Linux execution and promoted-runner repinning remain required before a
+cross-host conformance claim.

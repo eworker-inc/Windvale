@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.23 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.24 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.23, including the current
+For the execution subset through WVB 1.24, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -650,20 +650,36 @@ remains rejected in this first executable ownership profile.
 `5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53`.
 The compiler-aligned verifier accepts successful and refused Split programs,
 rejects nine version/opcode/local/type/layout mutations, and the source-built
-runner returns `42` for both provider outcomes. Allocation effects and leases,
-general owned arguments/returns, fallible Vector construction, and direct
+runner returns `42` for both provider outcomes. General owned arguments/returns
+and direct
 native/browser/OS execution remain later connected checkpoints.
 
 Typed WVIR 1.5/1.6 operation
-`Foundationˉvectorˉconstructˉreserved = 172` is admitted and independently
-validated but is not yet executable WVB. The operation carries one exact `u64`
-maximum-items operand, consumes the direct `Memoryˉbudget` local named by
-`Target`, names the canonical Foundation memory module in `Auxiliary`, and
-produces exact `Result<Vector<T>, Allocationˉfailure>`. The current emitter
-returns `Unsupportedˉoperation` and publishes no WVB. Executable lowering waits
-for one versioned allocation-lease and Vector-owner representation with atomic
-debit/refusal/teardown behavior; the typed operation does not freeze either
-implementation strategy.
+`Foundationˉvectorˉconstructˉreserved = 172` lowers to WVB 1.24 opcode `CF`.
+The instruction carries the consumed `Memoryˉbudget` local and exact
+`Result<Vector<T>, Allocationˉfailure>` type as immediates; the exact `u64`
+maximum-items value remains its sole stack operand. The verifier reconstructs
+the scalar Vector element and exact failure record from that Result and tracks
+the Result as affine until matching transfers its Valid Vector. The runner
+converts the budget to one private allocation lease, publishes either the
+reserved backing or exact typed refusal, and releases the lease with the final
+descriptor. Neither WVIR nor WVB exposes a lease token, provider generation,
+heap address, capacity pointer, or target representation.
+
+Generic source instances remain dependency-ordered internally, while WVB Types
+entries use a separate canonical nominal-category rank. Private nominal
+references are remapped to that output rank. The exact constructor fixture
+therefore emits Result before Vector and lets Result's Valid payload point
+forward to the later Vector descriptor; dependency discovery order is not a
+serialized ordering rule.
+
+`Vector-Construct-Reserved-Executable.wv` deterministically emits a 747-byte
+WVB 1.24 module at SHA-256
+`e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1`.
+The compiler-aligned verifier accepts success, target-unaddressable refusal,
+and zero-precondition modules, rejects ten exact opcode/local/type/layout
+mutations, and the source-built runner returns `42` for both Result paths. Zero
+traps with `WVR3008` after four guest instructions.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause
@@ -678,7 +694,7 @@ The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.
 Its independent `Main` returns 42; its nine functions retain direct-return,
 declared-local, assignment, and nested fixed-signature argument lowering
-oracles until source-level fallible Vector construction is implemented. Six
+oracles independently of fallible Vector construction. Six
 byte-level corruptions cover version, unique return, unique length access, and
 three Types immediates. Eight source rejections cover use after freeze, wrong
 borrow modes, parameters, an unsupported element, a missing inferred result,

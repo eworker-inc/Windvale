@@ -654,6 +654,12 @@ Construction requires a positive maximum, consumes one budget, and reserves the
 complete representation/capacity for that item maximum. The empty generic call
 uses edition 1's explicit `::<T>` syntax. Later append cannot fail for physical
 growth; capacity rejection returns the unchanged original value and vector.
+Zero is a violated constructor precondition and traps before allocation.
+If a positive maximum cannot be represented by the selected target, construction
+returns `Allocationˉfailure` with reason `Targetˉunaddressable`; it does not
+silently narrow the maximum. Requested-byte evidence is saturated at `u64`
+rather than wrapped. A target's smaller executable allocation profile is not a
+portable Language maximum.
 Length reports accepted items. Both borrow calls, replacement, and removal
 require `Index < Vectorˉlength` and trap before access on a violated proved
 precondition. Replacement accepts the new value once and returns the prior

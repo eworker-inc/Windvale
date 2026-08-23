@@ -114,10 +114,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Language 1.0 executable memory-budget Split owner'
+        Name = 'Language 1.0 executable memory-budget Split and Vector owner'
         Paths = @(
             'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
             'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'
@@ -213,6 +216,7 @@ $NativeCases = @(
             'Compiler/Windvale/Source-Generic-Type-Layout-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Materialization-Core.wv',
             'Compiler/Windvale/Source-Generic-Type-Lowering-Core.wv',
+            'Compiler/Windvale/Source-Wvb-Generic-Nominal-Types-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Materialization.wvproj',
@@ -229,7 +233,8 @@ $NativeCases = @(
             'generic-nominal-type-layout',
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
-            'language-1-front-door'
+            'language-1-front-door',
+            'language-1-memory-budget-split-execution'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -590,6 +595,7 @@ $NativeCases = @(
             'language-1-front-door',
             'language-1-effect-clause-front-end',
             'language-1-using-front-end',
+            'language-1-memory-budget-split-execution',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
         )
@@ -1020,6 +1026,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'wvb-containment',
             'language-1-front-door',
+            'language-1-memory-budget-split-execution',
             'model-provider',
             'file-read-application',
             'libraries'
@@ -2054,6 +2061,23 @@ $NativeCases = @(
         Suites = @('hosted-verifier-publisher-files')
         Gaps = @()
         VerifyPlan = $false
+    },
+    @{
+        Name = 'WebAssembly scalar runner allocation execution owner'
+        Paths = @(
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
+            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv'
+        )
+        Suites = @(
+            'language-1-front-door',
+            'language-1-memory-budget-split-execution'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+        VerifyWebAssembly = $true
     },
     @{
         Name = 'WebAssembly engine checkpoint owner'
@@ -3600,7 +3624,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5344 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5361 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

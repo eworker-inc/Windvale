@@ -315,9 +315,11 @@ maximum-items temporary, `Target` is the consumed budget local slot, and
 `Auxiliary` is the canonical Foundation memory module index that owns
 `Allocationˉfailure`. Independent validation reconstructs the Result, Vector,
 element, and failure identities and consumes the available budget slot in the
-same bounded ownership proof used by Split. WVB emission deliberately returns
-`Unsupportedˉoperation` without output until allocation leases, provider debit,
-failure atomicity, and representation-independent Vector ownership are joined.
+same bounded ownership proof used by Split. WVB 1.24 lowers the operation to
+opcode `CF`, which carries the consumed budget-local index and exact Result
+type. The maximum remains the sole stack operand. The bytecode verifier derives
+the Vector type from the Result Valid payload and never serializes the private
+lease, provider generation, heap address, or backing representation.
 
 Exact Foundation Sequence reads reuse that catalog proof. Operation 167
 `Foundationˉsequenceˉlength` consumes one temporary whose shape is the target

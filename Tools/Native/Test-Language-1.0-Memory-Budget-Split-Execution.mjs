@@ -23,6 +23,8 @@ const BOOTSTRAP_EMITTER_SHA256 =
     'ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94';
 const EXPECTED_SUCCESS_SHA256 =
     '5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53';
+const EXPECTED_VECTOR_SUCCESS_SHA256 =
+    'e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -129,12 +131,24 @@ try {
     const Successˉa = path.join(Work, 'Success-A.wvb');
     const Successˉb = path.join(Work, 'Success-B.wvb');
     const Failure = path.join(Work, 'Failure.wvb');
+    const Vectorˉsuccessˉa = path.join(Work, 'Vector-Success-A.wvb');
+    const Vectorˉsuccessˉb = path.join(Work, 'Vector-Success-B.wvb');
+    const Vectorˉfailure = path.join(Work, 'Vector-Failure.wvb');
+    const Vectorˉzero = path.join(Work, 'Vector-Zero.wvb');
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉb);
     Compile('failure-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Failure-Executable.wv', Failure);
+    Compileˉvector('vector-success-a-compile', Admitter, Analyzer, Emitter,
+        'Vector-Construct-Reserved-Executable.wv', Vectorˉsuccessˉa);
+    Compileˉvector('vector-success-b-compile', Admitter, Analyzer, Emitter,
+        'Vector-Construct-Reserved-Executable.wv', Vectorˉsuccessˉb);
+    Compileˉvector('vector-failure-compile', Admitter, Analyzer, Emitter,
+        'Vector-Construct-Reserved-Failure-Executable.wv', Vectorˉfailure);
+    Compileˉvector('vector-zero-compile', Admitter, Analyzer, Emitter,
+        'Vector-Construct-Reserved-Zero-Executable.wv', Vectorˉzero);
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
     if (!Successˉbytes.equals(Successˉbˉbytes)) {
@@ -146,6 +160,20 @@ try {
         Reject(`The executable Split fixture digest differs: ${Successˉsha256}.`);
     }
     Inspectˉexactˉmodule(readFileSync(Failure), false);
+    const Vectorˉsuccessˉbytes = readFileSync(Vectorˉsuccessˉa);
+    if (!Vectorˉsuccessˉbytes.equals(readFileSync(Vectorˉsuccessˉb))) {
+        Reject('The executable Vector construction fixture is not deterministic.');
+    }
+    if (Vectorˉsuccessˉbytes.readUInt16LE(6) !== 24) {
+        Reject('The executable Vector construction fixture is not WVB 1.24.');
+    }
+    const Vectorˉsha256 = Digest(Vectorˉsuccessˉbytes);
+    if (Vectorˉsha256 !== EXPECTED_VECTOR_SUCCESS_SHA256) {
+        Reject(`The executable Vector fixture digest differs: ${Vectorˉsha256}.`);
+    }
+    const Vectorˉlayout = Inspectˉexactˉvectorˉmodule(Vectorˉsuccessˉbytes);
+    Inspectˉexactˉvectorˉmodule(readFileSync(Vectorˉfailure), false);
+    Inspectˉexactˉvectorˉmodule(readFileSync(Vectorˉzero), false);
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -157,6 +185,9 @@ try {
     ]);
     Requireˉvalid(Verifier, Successˉa, 'successful Split module');
     Requireˉvalid(Verifier, Failure, 'refused Split module');
+    Requireˉvalid(Verifier, Vectorˉsuccessˉa, 'successful Vector module');
+    Requireˉvalid(Verifier, Vectorˉfailure, 'refused Vector module');
+    Requireˉvalid(Verifier, Vectorˉzero, 'zero-maximum Vector module');
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -182,6 +213,43 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Vectorˉmalformedˉcases = [
+        ['vector-version-downgrade', Bytes => Bytes.writeUInt16LE(23, 6)],
+        ['vector-unknown-opcode', Bytes => {
+            Bytes[Vectorˉlayout.opcode] = 208;
+        }],
+        ['vector-non-budget-local', Bytes => {
+            Bytes.writeUInt32LE(1, Vectorˉlayout.opcode + 1);
+        }],
+        ['vector-missing-budget-local', Bytes => {
+            Bytes.writeUInt32LE(4, Vectorˉlayout.opcode + 1);
+        }],
+        ['vector-missing-result-type', Bytes => {
+            Bytes.writeUInt32LE(4, Vectorˉlayout.opcode + 5);
+        }],
+        ['vector-record-result-type', Bytes => {
+            Bytes.writeUInt32LE(0, Vectorˉlayout.opcode + 5);
+        }],
+        ['vector-primitive-valid-payload', Bytes => {
+            Bytes[Vectorˉlayout.validPayloadShape] = 1;
+        }],
+        ['vector-wrong-valid-type', Bytes => {
+            Bytes.writeUInt32LE(1, Vectorˉlayout.validPayloadShape + 1);
+        }],
+        ['vector-budget-in-failure-record', Bytes => {
+            Bytes[Vectorˉlayout.requestedBytesShape] = 25;
+        }],
+        ['vector-wrong-allocation-field', Bytes => {
+            Bytes[Vectorˉlayout.availableBytesShape] = 5;
+        }],
+    ];
+    for (const [Name, Mutate] of Vectorˉmalformedˉcases) {
+        const Candidate = Buffer.from(Vectorˉsuccessˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
 
     const Runnerˉwvb = path.join(Work, 'Runner.wvb');
     const Runner = path.join(Work, `Runner${Executableˉsuffix}`);
@@ -194,11 +262,25 @@ try {
     ]);
     Requireˉresultˉ42(Runner, Successˉa, 'successful Split execution');
     Requireˉresultˉ42(Runner, Failure, 'refused Split execution');
+    Requireˉresultˉ42(
+        Runner, Vectorˉsuccessˉa, 'successful Vector construction execution',
+    );
+    Requireˉresultˉ42(
+        Runner, Vectorˉfailure, 'refused Vector construction execution',
+    );
+    Requireˉruntimeˉfailure(
+        Runner, Vectorˉzero, 3008, 'zero-maximum Vector construction execution',
+    );
 
     process.stdout.write(
-        'native language 1 memory budget split execution status=Passed ' +
-        `cases=15 valid=2 malformed=${Malformedˉcases.length} ` +
-        `result=42 wvb-bytes=${Successˉbytes.length} sha256=${Successˉsha256}\n`,
+        'native language 1 memory budget and vector execution status=Passed ' +
+        `cases=32 valid=5 malformed=${
+            Malformedˉcases.length + Vectorˉmalformedˉcases.length
+        } ` +
+        `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
+        `split-sha256=${Successˉsha256} ` +
+        `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
+        `vector-sha256=${Vectorˉsha256}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -220,6 +302,22 @@ function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
         path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
+        path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
+        path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
+        Output,
+    ]);
+}
+
+function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
+    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+        Admitter, Analyzer, Emitter,
+        '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+        '--source-profile', Sourceˉprofile,
+        path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Foundation', 'Collections',
+            'Collections.wv',
+        ),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
         Output,
@@ -275,7 +373,11 @@ function Requireˉvalid(Verifier, Candidate, Label) {
     if (Result.error !== undefined || Result.status !== 0 ||
         Normalize(Result.stdout) !== 'wvb status=Valid profile=compiler-aligned\n' ||
         Result.stderr.length !== 0) {
-        Reject(`The verifier rejected the ${Label}.`);
+        Reject(
+            `The verifier rejected the ${Label}: status=${Result.status} ` +
+            `error=${Result.error?.message ?? ''}\n` +
+            `stdout=${Result.stdout}\nstderr=${Result.stderr}`,
+        );
     }
 }
 
@@ -298,6 +400,20 @@ function Requireˉresultˉ42(Runner, Candidate, Label) {
     if (Result.error !== undefined || Result.status !== 0 ||
         Normalize(Result.stdout) !== 'Result: 42\n' || Result.stderr.length !== 0) {
         Reject(`The ${Label} differed: status=${Result.status}.`);
+    }
+}
+
+function Requireˉruntimeˉfailure(Runner, Candidate, Status, Label) {
+    const Result = spawnSync(Runner, [Candidate], {
+        encoding: 'utf8', windowsHide: true,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+    });
+    if (Result.error !== undefined || Result.status === 0 ||
+        Result.stdout.length !== 0 ||
+        !Normalize(Result.stderr).startsWith(
+            `wvb run status=Failed code=${Status} instructions=`,
+        )) {
+        Reject(`The ${Label} failure differed: status=${Result.status}.`);
     }
 }
 
@@ -332,6 +448,56 @@ function Inspectˉexactˉmodule(Bytes, Requireˉsuccessˉsize = true) {
     if (Matches.length !== 1 || Bytes.readUInt32LE(Matches[0] + 1) !== 1 ||
         Bytes.readUInt32LE(Matches[0] + 5) !== 2) {
         Reject('The executable Split fixture opcode differs.');
+    }
+    return {
+        opcode: Matches[0],
+        validPayloadShape: Types[2].cases[0].fields[0].shapeOffset,
+        requestedBytesShape: Types[0].fields[1].shapeOffset,
+        availableBytesShape: Types[0].fields[2].shapeOffset,
+    };
+}
+
+function Inspectˉexactˉvectorˉmodule(Bytes, Requireˉsuccessˉsize = true) {
+    if ((Requireˉsuccessˉsize && Bytes.length !== 747) ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 24 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The executable Vector fixture is not exact WVB 1.24.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Function = Parseˉmain(Bytes, Sections[4]);
+    const Types = Parseˉtypes(Bytes, Sections[7]);
+    const Expectedˉlocalˉshapes = [11, 23, 7, 10, 11, 11, 2, 23, 1, 7, 1, 1];
+    if (Function.parameterCount !== 1 || Function.parameterShape !== 25 ||
+        Function.returnShape !== 1 ||
+        Function.localShapes.length !== Expectedˉlocalˉshapes.length ||
+        Expectedˉlocalˉshapes.some(
+            (Shape, Index) => Function.localShapes[Index] !== Shape,
+        ) ||
+        Types.length !== 4 || Types[0].kind !== 1 || Types[1].kind !== 7 ||
+        Types[2].kind !== 3 || Types[2].cases.length !== 2 ||
+        Types[2].cases[0].fields.length !== 1 ||
+        Types[2].cases[0].fields[0].shape !== 23 ||
+        Types[2].cases[0].fields[0].typeIndex !== 3 ||
+        Types[2].cases[1].fields.length !== 1 ||
+        Types[2].cases[1].fields[0].shape !== 7 ||
+        Types[2].cases[1].fields[0].typeIndex !== 0 ||
+        Types[3].kind !== 5 || Types[3].element.shape !== 1 ||
+        Types[0].fields.length !== 3 || Types[0].fields[1].shape !== 10) {
+        Reject(
+            'The executable Vector fixture nominal layout differs: ' +
+            `function=${JSON.stringify(Function)} types=${JSON.stringify(Types)}.`,
+        );
+    }
+    const Codeˉstart = Sections[5].payload + Function.codeOffset;
+    const Codeˉend = Codeˉstart + Function.codeLength;
+    const Matches = [];
+    for (let Cursor = Codeˉstart; Cursor < Codeˉend; Cursor += 1) {
+        if (Bytes[Cursor] === 207) Matches.push(Cursor);
+    }
+    if (Matches.length !== 1 || Bytes.readUInt32LE(Matches[0] + 1) !== 0 ||
+        Bytes.readUInt32LE(Matches[0] + 5) !== 2) {
+        Reject('The executable Vector fixture opcode differs.');
     }
     return {
         opcode: Matches[0],
@@ -408,7 +574,7 @@ function Parseˉtypes(Bytes, Section) {
         const Kind = Bytes[Cursor++];
         const Name = Readˉstring(Bytes, Cursor);
         Cursor = Name.end;
-        const Entry = { kind: Kind, fields: [], cases: [] };
+        const Entry = { kind: Kind, fields: [], cases: [], element: null };
         if (Kind === 1) {
             const Fieldˉcount = Bytes.readUInt32LE(Cursor);
             Cursor += 4;
@@ -419,6 +585,9 @@ function Parseˉtypes(Bytes, Section) {
                 Entry.fields.push(Shape);
                 Cursor = Shape.end;
             }
+        } else if (Kind === 5) {
+            Entry.element = Readˉshape(Bytes, Cursor);
+            Cursor = Entry.element.end;
         } else if (Kind === 7) {
             Cursor += 1;
             const Memberˉcount = Bytes.readUInt32LE(Cursor);
