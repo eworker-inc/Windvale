@@ -8,8 +8,9 @@ extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
 `never` extension, the WVB 1.16 named variant-field extension, the WVB 1.17
 fixed-array extension, the WVB 1.18 Vector and Sequence type-representation
 extension, the WVB 1.19 scalar Vector/Sequence execution extension, and the
-WVB 1.20 owned-Vector local-transfer extension, and the WVB 1.21 launcher-owned
-memory-budget entry extension.
+WVB 1.20 owned-Vector local-transfer extension, the WVB 1.21 launcher-owned
+memory-budget entry extension, and the WVB 1.22 exact `u8`-backed-enum
+extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -34,15 +35,19 @@ retaining the backing or leaving a second mutable owner.
 WVB 1.21 adds one representation-hidden owned token supplied by the launcher
 as the sole parameter of exported `Main`. Source bytecode cannot construct,
 copy, store, return, or embed the token.
+WVB 1.22 adds an exact one-byte member representation for edition-1 enums
+whose declared backing is `u8`. The ordinary enum value shape and instruction
+family are unchanged.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
 never evidence, 1.16 for multi-field variant metadata or field extraction, and
 1.17 for any fixed-array type, value shape, construction, or indexing operation,
 1.18 for any Vector or Sequence descriptor or value shape, 1.19 for any
-Vector or Sequence execution operation, and 1.20 for `local.take`.
-WVB 1.21 is selected only for the exact launcher-owned memory-budget entry.
-A WVB 1.21-capable reader accepts all eleven versions and never admits an
+Vector or Sequence execution operation, 1.20 for `local.take`, and 1.21 for the
+exact launcher-owned memory-budget entry. WVB 1.22 is selected for any kind-7
+`u8` enum descriptor, including a module that also carries the budget entry.
+A WVB 1.22-capable reader accepts all twelve versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -64,7 +69,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, or 21
+u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, or 22
 u32      section count: 7
 ```
 
@@ -199,7 +204,9 @@ Exports are strictly sorted by ordinal name. An exported name must equal the ref
 For WVB 1.11 through 1.20, the reference launcher selects exported
 `Main() -> i32` as the executable source entry point. WVB 1.21 instead requires
 exactly one exported `Main(Memoryˉbudget) -> i32`; the launcher transfers one
-fresh root-budget token into that parameter before the first instruction.
+fresh root-budget token into that parameter before the first instruction. WVB
+1.22 uses the ordinary zero-parameter entry unless shape `25` is present. When
+it is present, the same exact one-parameter transfer rule applies.
 Future native object formats must define an ASCII-safe external symbol mapping
 separately.
 
@@ -208,19 +215,26 @@ separately.
 ```text
 u32      nominal type count
 repeat:
-  u8     nominal kind: 1 record, 2 enum, 3 variant, 4 fixed array,
-                       5 Vector, 6 Sequence
+  u8     nominal kind: 1 record, 2 i32-backed enum, 3 variant,
+                       4 fixed array, 5 Vector, 6 Sequence,
+                       7 u8-backed enum (WVB 1.22 only)
   string nominal type name
   if record:
     u32    field count
     repeat:
       string field name
       shape field type
-  if enum:
+  if i32-backed enum:
     u32    member count
     repeat:
       string member name
       i32  member value
+  if u8-backed enum:
+    u8     source backing identity: 6 (`u8`)
+    u32    member count
+    repeat:
+      string member name
+      u8     member value
   if variant:
     u32    case count
     repeat:
@@ -244,11 +258,18 @@ repeat:
     shape  element type
 ```
 
-Nominal types are grouped by kind, then strictly sorted by ordinal name, and
-names are unique across all kinds. Record field order is declaration order and
+Nominal types are grouped by semantic category, then strictly sorted by ordinal
+name, and names are unique across all categories. Kinds `2` and `7` share the
+one enum category, so differently backed enums are ordered together by name.
+Record field order is declaration order and
 therefore constructor order; field names are unique within the record. Seed
 requires between 1 and 64 fields. Enums contain 1 through 256 uniquely named
-members with unique `i32` values. Variants contain 1 through 256 unique ordered
+members with unique values in their exact encoded backing. Kind `2` retains the
+canonical signed `i32` member encoding of every earlier WVB. Kind `7` exists
+only in WVB 1.22, carries exact source backing identity byte `6`, and encodes
+each member in one byte without narrowing or sign reinterpretation. The backing
+identity is an edition-1 compiler type identity, not WVB value-shape byte `4`.
+Variants contain 1 through 256 unique ordered
 cases and zero through 64 uniquely named fields per case. Encoding `0` is
 canonical for no fields, encoding `1` is canonical for exactly one field and
 preserves all earlier WVB bytes, and encoding `2` is canonical only for two
@@ -290,7 +311,7 @@ capacity, allocator, or authority.
 22 fixed array followed by u32 nominal-type index (WVB 1.17 only)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
-25 Memoryˉbudget launcher token (WVB 1.21 only)
+25 Memoryˉbudget launcher token (WVB 1.21 or 1.22 entry only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -307,10 +328,14 @@ element types use a value shape. A primitive shape is its one-byte value type. A
 nominal shape is byte `7`, `8`, `11`, `22`, `23`, or `24` followed by a `u32` Types-section
 index of the matching kind. A collection shape is byte `12` or `13`, its
 recursively encoded non-collection element shape, then its `u32` maximum.
-Nominal identity and collection kind/element/maximum are exact.
+Nominal identity and collection kind/element/maximum are exact. Enum shape byte
+`8` accepts either kind `2` or kind `7`; the Types index retains the backing
+distinction without introducing a second runtime enum value shape.
 
-Shape `25` is not a general value shape. It occurs exactly once in a WVB 1.21
-module: as parameter zero of the one-parameter function named `Main`. That
+Shape `25` is not a general value shape. It occurs at most once in WVB 1.21 or
+1.22: as parameter zero of the one-parameter function named `Main`. WVB 1.21
+requires that occurrence; WVB 1.22 permits it only when the module also needs
+the kind-7 enum extension. That
 function returns `i32` and is exported under the same name. Shape `25` is
 invalid as any other parameter, result, non-parameter local, record field,
 variant payload, collection element, or Types entry. No instruction constructs
@@ -331,7 +356,10 @@ before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
 1.19, and opcode `CD` is invalid before WVB 1.20. Shape byte `25` is valid only
-under the WVB 1.21 entry rule above. Each later version admits
+under the WVB 1.21-or-1.22 entry rule above. Type kind `7` is valid only in WVB
+1.22, and every WVB 1.22 module contains at least one kind-7 descriptor so an
+earlier vocabulary is never published under an unnecessarily high version.
+Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
 
@@ -544,8 +572,9 @@ uses `local.take`; backward branches in such a function are rejected until the
 loop ownership fixed-point is implemented. These are verifier limits, not
 portable source collection limits.
 
-WVB 1.21 transfers one opaque launcher-owned root-budget token into `Main`'s
-parameter-zero cell. The current scalar profile represents the token as an
+WVB 1.21, or WVB 1.22 with shape `25`, transfers one opaque launcher-owned
+root-budget token into `Main`'s parameter-zero cell. The current scalar profile
+represents the token as an
 identity plus provider generation and keeps its byte maximum and accounting
 state outside bytecode. Because this checkpoint exposes no budget operation,
 the maximum cannot affect program results yet. A completed top-level return
@@ -665,7 +694,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.21 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, `local.take` requires at least 1.20, and shape `25` requires exactly 1.21.
+- The version is WVB 1.11 through 1.22 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, `local.take` requires at least 1.20, shape `25` requires 1.21 or 1.22, and kind `7` requires exactly 1.22.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -677,7 +706,8 @@ Verification is required before execution and rejects a module unless:
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
 - WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join; functions using `local.take` satisfy its explicit instruction, Vector-local, and acyclic-control limits.
-- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token.
+- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token. WVB 1.22 applies the same rule if shape `25` is present; otherwise its exported entry is ordinary `Main() -> i32`.
+- Every WVB 1.22 module contains at least one kind-7 descriptor; every kind-7 descriptor has exact backing identity `6`, 1 through 256 uniquely named members, unique one-byte values, and participates in the same canonical enum ordering and shape-8 identity as kind `2`.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return

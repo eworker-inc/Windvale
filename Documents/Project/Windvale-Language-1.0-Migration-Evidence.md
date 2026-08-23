@@ -7,7 +7,7 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 3 are complete and Slice 4 is active. The existing
+Migration Slices 1 through 4 are complete and Slice 5 is active. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -2301,3 +2301,45 @@ the exact observed value. No compiler, verifier, runtime, fixture, or owner-chil
 input changed afterward, so the passing child work was retained rather than
 rerun solely for terminal-string comparison; the independent frozen-input and
 verification-plan contracts were rerun against the corrected metadata.
+
+## Slice 5 exact `u8` enum representation checkpoint
+
+Decision 0835 advances one actually used fixed-width enum backing through the
+connected compiler, WVB verifier, and source-built runner. WVB 1.22 adds kind
+`7` without changing historical kind-2 `i32` enum bytes. Its descriptor carries
+the exact source backing identity `6` plus one byte per member value. Both kinds
+share the ordinary enum value shape, instruction family, and one name-sorted
+enum category.
+
+`Enum-U8-Used-Main.wv` now emits a deterministic 415-byte WVB 1.22 at SHA-256
+`961ba417955a523b9fc21e0b71df7a8d99613252b7450700dd4381aa94e825ed`.
+The descriptor encodes `Deliveryˉstate`, `Pending = 1`, and `Complete = 2`;
+the independent verifier accepts it and the source-built runner returns `42`.
+Nine bounded mutations reject old/future version selection, wrong backing,
+duplicate or truncated values, a missing kind-7 feature, an unknown type kind,
+and an out-of-range enum shape index. Retained wider enum backings remain closed
+without narrowing or partial output.
+
+The current emitter is 1,055,285 bytes at SHA-256
+`bd87930696685475920bdc73dcf72dde01ae0eb5dae94579e28b9a79d018d606`
+with 554 functions and 877,444 code bytes. The current compiler-aligned verifier
+is 248,741 bytes at SHA-256
+`f401d89796c48b4d6890a465d6f47c1a21c864cb48383ce54c8ec9bc1a0c3e08`.
+
+Adding the descriptor path exposed existing per-function bytecode and native
+2,048-cell limits in the source-built runner. Focused helper extraction keeps
+both bounds unchanged: the rebuilt 257,017-byte runner has SHA-256
+`269130ea87bba7504af0d7d8337a7d1b8748d61671611ffb816d7ca5f7fa2e02`,
+98 functions, and 232,834 code bytes, and lowers to a 2,842,043-byte native
+object. This is measured migration-blocker removal, not the deferred broad
+optimization of the transitional compiler.
+
+The focused Language 1.0 owner advances from 440 to 449 cases. The 108-owner
+registry advances from 5,224 to 5,233 declared cases at SHA-256
+`e40651f750eddb420500561ad0969cec233261f2666c47f383e958e28744a5b8`.
+The final Windows child passes all 13 phases and 449 cases in 745,820 ms; its
+owner coordinator completes in 746,630 ms. Candidate toolset and paired-host
+qualification remain pending. Budget splitting,
+allocation leases/effects/accounting, public fallible Vector construction,
+general moves, `using`, reverse-order release, and one hosted resource consumer
+remain before Slice 5 is complete.

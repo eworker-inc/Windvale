@@ -199,8 +199,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1054673" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"2b5b4af681a36569b39be9dd46999af5b7babbc5cff53e6d3aec5227590a7e8b" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1055285" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"bd87930696685475920bdc73dcf72dde01ae0eb5dae94579e28b9a79d018d606" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -240,10 +240,28 @@ call :expect_result_42 "%Work%\Enum-Backing-All-Run.out" || goto :cleanup
 for %%F in ("%Work%\Enum-Backing-All.wvb") do set "EnumDeadTypeWvbBytes=%%~zF"
 if not "%EnumDeadTypeWvbBytes%"=="217" goto :cleanup
 set "FailureStep=compiler-enum-u8-used-wvb-boundary"
-call :expect_profiled_emission_failure ^
+node "%Native%\Run-Split-Compiler.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-U8-Used-Main.wv" ^
-    "Enum-U8-Used-Main" ^
-    "source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape function=2 operation=6 source-line=0" || goto :cleanup
+    "%Work%\Enum-U8-Used-Main-A.wvb" ^
+    >"%Work%\Enum-U8-Used-Main-A.out" ^
+    2>"%Work%\Enum-U8-Used-Main-A.err" || goto :cleanup
+node "%Native%\Run-Split-Compiler.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-U8-Used-Main.wv" ^
+    "%Work%\Enum-U8-Used-Main-B.wvb" ^
+    >"%Work%\Enum-U8-Used-Main-B.out" ^
+    2>"%Work%\Enum-U8-Used-Main-B.err" || goto :cleanup
+for %%F in ("%Work%\Enum-U8-Used-Main-A.err" "%Work%\Enum-U8-Used-Main-B.err") do if not "%%~zF"=="0" goto :cleanup
+fc /b "%Work%\Enum-U8-Used-Main-A.wvb" ^
+    "%Work%\Enum-U8-Used-Main-B.wvb" >nul || goto :cleanup
+for %%F in ("%Work%\Enum-U8-Used-Main-A.wvb") do set "EnumU8WvbBytes=%%~zF"
+if not "%EnumU8WvbBytes%"=="415" goto :cleanup
+certutil -hashfile "%Work%\Enum-U8-Used-Main-A.wvb" SHA256 | findstr /I /C:"961ba417955a523b9fc21e0b71df7a8d99613252b7450700dd4381aa94e825ed" >nul || goto :cleanup
 set "FailureStep=compiler-enum-symbol-rejections"
 call :expect_profiled_symbol_failure ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-Backing-Duplicate-Signed.wv" ^
@@ -1035,6 +1053,12 @@ set "FailureStep=memory-budget-entry-runtime"
 for %%F in ("%Work%\Memory-Budget-Entry-Run.err") do if not "%%~zF"=="0" goto :cleanup
 call :expect_result_42 "%Work%\Memory-Budget-Entry-Run.out" || goto :cleanup
 echo PASS  language 1 front door step=memory-budget-entry item=runtime transfer=launcher-to-main release=deterministic result=42
+set "FailureStep=compiler-enum-u8-runtime"
+node "%Native%\Verify-Language-1.0-U8-Enums.mjs" ^
+    "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
+    "%Work%\Enum-U8-Used-Main-A.wvb" ^
+    "%Work%\Enum-U8-Malformed" || goto :cleanup
+echo PASS  language 1 front door step=enum-u8 valid=1 malformed=9 version=1.22 result=42
 set "FailureStep=floating-runner-execution"
 "%Work%\Floating-Runner.exe" "%Work%\Floating-A.wvb" ^
     >"%Work%\Floating-Run.out" 2>"%Work%\Floating-Run.err" || goto :cleanup
@@ -1603,7 +1627,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=440 frozen-inputs=251 source-fixtures=101 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=11 borrow-cases=14 memory-budget-entry-cases=12 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=449 frozen-inputs=251 source-fixtures=101 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_profiled_emission_failure

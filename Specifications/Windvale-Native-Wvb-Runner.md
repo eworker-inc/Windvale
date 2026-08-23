@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-the launcher-owned budget entry through WVB 1.21 but has not repinned the paired
+exact `u8` enums through WVB 1.22 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,9 +63,9 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.21. Its shared scalar interpreter
-implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
-overflow, division-by-zero, and shift traps from Decision 0768. The bounded
+The current source-built runner accepts WVB 1.11 through 1.22. Its shared scalar
+interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
+checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
 to keep the main interpreter below compiler/lowerer function limits; they are
 not a second interpreter or alternate semantic path.
@@ -124,8 +124,9 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21 supplies one fresh opaque root-budget token to the sole parameter of
-exported `Main(Memoryˉbudget) -> i32`. The interpreter validates that exact
+WVB 1.21, or WVB 1.22 with shape `25`, supplies one fresh opaque root-budget
+token to the sole parameter of exported `Main(Memoryˉbudget) -> i32`. The
+interpreter validates that exact
 shape placement before execution and rejects every bytecode load or store of
 the token. The active invocation owns an identity/generation pair outside the
 ordinary forgeable value vocabulary. On completed top-level return it verifies
@@ -135,6 +136,13 @@ resource domain. The launcher's maximum-byte accounting is intentionally
 unobservable until `Split` and allocation-lease operations land; no bytecode
 constructor, general call transfer, or fallible allocation API is claimed by
 this checkpoint.
+WVB 1.22 parses kind-7 enum descriptors only with exact source backing identity
+`6` and one-byte member tags. The existing enum value cell, constant,
+comparison, and name operations use the same nominal identity path as kind `2`;
+there is no host enum conversion or second interpreter. A module whose newest
+feature is kind `7` may retain the ordinary `Main() -> i32` entry. If it also
+contains shape `25`, the WVB 1.21 budget transfer and teardown rules remain
+mandatory.
 Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
@@ -146,8 +154,12 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 230,259-byte WVB at SHA-256
-`d1393ec3cb83d95cf86902768893846e4dc0e5a742b46363c86e19712ec674ba`.
+The current Windows development build is a 257,017-byte WVB at SHA-256
+`269130ea87bba7504af0d7d8337a7d1b8748d61671611ffb816d7ca5f7fa2e02`.
+It contains 98 functions and 232,834 code bytes. Cohesive directory, request,
+data/local/bytes, collection, aggregate, and extended-operation helpers keep
+every source-built function below the existing bytecode and 2,048 native
+physical-cell limits; neither limit was raised.
 The promoted profile-5 application identity in the table above has not been
 repinned to this source checkpoint.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
@@ -176,6 +188,15 @@ and count, entry identity, return and local placement, local load and store, and
 a missing export. This is
 development evidence for the source contract, not a repinning of the promoted
 paired-host runner.
+
+The compiler-produced `u8` enum fixture is a deterministic 415-byte WVB 1.22
+module at SHA-256
+`961ba417955a523b9fc21e0b71df7a8d99613252b7450700dd4381aa94e825ed`.
+The compiler-aligned verifier accepts its exact kind-7 descriptor and the
+source-built runner returns `42`. A separate bounded verifier rejects nine
+mutations spanning version downgrade/advance, backing identity, duplicate and
+truncated values, a missing kind-7 feature, unknown kind, and an out-of-range
+enum shape index.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

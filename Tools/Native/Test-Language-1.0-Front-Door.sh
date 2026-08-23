@@ -425,9 +425,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1054673 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1055285 ]] || exit 1
 printf '%s  %s\n' \
-    2b5b4af681a36569b39be9dd46999af5b7babbc5cff53e6d3aec5227590a7e8b \
+    bd87930696685475920bdc73dcf72dde01ae0eb5dae94579e28b9a79d018d606 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
@@ -467,10 +467,32 @@ cmp -s -- "$work/Expected-Enum-Backing-All.out" \
     "$work/Enum-Backing-All-Run.out" || exit 1
 enum_dead_type_wvb_bytes=$(wc -c < "$work/Enum-Backing-All.wvb")
 [[ $enum_dead_type_wvb_bytes -eq 217 ]] || exit 1
-expect_profiled_emission_failure \
+node "$script_directory/Run-Split-Compiler.mjs" \
+    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-U8-Used-Main.wv" \
-    Enum-U8-Used-Main \
-    'source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape function=2 operation=6 source-line=0' || exit 1
+    "$work/Enum-U8-Used-Main-A.wvb" \
+    >"$work/Enum-U8-Used-Main-A.out" \
+    2>"$work/Enum-U8-Used-Main-A.err" || exit $?
+node "$script_directory/Run-Split-Compiler.mjs" \
+    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-U8-Used-Main.wv" \
+    "$work/Enum-U8-Used-Main-B.wvb" \
+    >"$work/Enum-U8-Used-Main-B.out" \
+    2>"$work/Enum-U8-Used-Main-B.err" || exit $?
+[[ ! -s $work/Enum-U8-Used-Main-A.err ]] || exit 1
+[[ ! -s $work/Enum-U8-Used-Main-B.err ]] || exit 1
+cmp -s -- "$work/Enum-U8-Used-Main-A.wvb" \
+    "$work/Enum-U8-Used-Main-B.wvb" || exit 1
+enum_u8_wvb_bytes=$(wc -c < "$work/Enum-U8-Used-Main-A.wvb")
+[[ $enum_u8_wvb_bytes -eq 415 ]] || exit 1
+printf '%s  %s\n' \
+    961ba417955a523b9fc21e0b71df7a8d99613252b7450700dd4381aa94e825ed \
+    "$work/Enum-U8-Used-Main-A.wvb" |
+    sha256sum --check --strict --quiet || exit $?
 expect_profiled_symbol_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-Duplicate-Signed.wv" \
     Enum-Backing-Duplicate-Signed Duplicateˉenumˉvalue || exit 1
@@ -1331,6 +1353,11 @@ printf 'Result: 42\n' >"$work/Expected-Memory-Budget-Entry.out"
 cmp -s -- "$work/Expected-Memory-Budget-Entry.out" \
     "$work/Memory-Budget-Entry-Run.out" || exit 1
 echo 'PASS  language 1 front door step=memory-budget-entry item=runtime transfer=launcher-to-main release=deterministic result=42'
+node "$script_directory/Verify-Language-1.0-U8-Enums.mjs" \
+    "$work/Verifier.elf" "$work/Floating-Runner.elf" \
+    "$work/Enum-U8-Used-Main-A.wvb" \
+    "$work/Enum-U8-Malformed" || exit $?
+echo 'PASS  language 1 front door step=enum-u8 valid=1 malformed=9 version=1.22 result=42'
 "$work/Floating-Runner.elf" "$work/Floating-A.wvb" \
     >"$work/Floating-Run.out" 2>"$work/Floating-Run.err" || exit $?
 [[ ! -s $work/Floating-Run.err ]] || exit 1
@@ -1764,4 +1791,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=440 frozen-inputs=251 source-fixtures=101 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=11 borrow-cases=14 memory-budget-entry-cases=12 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=449 frozen-inputs=251 source-fixtures=101 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

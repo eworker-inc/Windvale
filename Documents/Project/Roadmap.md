@@ -121,8 +121,11 @@ adds the canonical qualified `Memoryˉbudget` source identity and owned WIR
 classification. [Decision 0834](../Decisions/0834-Transfer-The-Launcher-Memory-Budget-As-Wvb-1.21.md)
 begins Slice 5 by transferring that opaque owner
 from the launcher into the WVB 1.21 entry parameter and releasing it on
-invocation teardown. The focused Language 1.0 owner declares 440 cases. The next
-connected result is budget splitting, allocation leases/effects/accounting, and
+invocation teardown.
+[Decision 0835](../Decisions/0835-Represent-U8-Backed-Enums-As-Wvb-1.22.md)
+then gives retained `u8`-backed enums an exact WVB 1.22 descriptor and connected
+execution path; the focused owner now declares 449 cases. The next connected
+result is budget splitting, allocation leases/effects/accounting, and
 public fallible Vector construction with recoverable append. Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

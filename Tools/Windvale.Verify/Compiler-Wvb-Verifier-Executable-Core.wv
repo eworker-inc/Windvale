@@ -44,6 +44,7 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     var Next: u32 = Cursor + 1u32;
     let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
     Next = Next + 4u32 + Nameˉlength;
+    if Kind == 7u32 { Next = Next + 1u32; }
     if Kind == 4u32 {
         return Next + Hˉshapeˉwidth(Input, Next) + 4u32;
     }
@@ -60,6 +61,8 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
             Next = Next + Hˉshapeˉwidth(Input, Next);
         } else if Kind == 2u32 {
             Next = Next + 4u32;
+        } else if Kind == 7u32 {
+            Next = Next + 1u32;
         } else {
             Next = Hˉvariantˉcaseˉend(Input, Next);
         }

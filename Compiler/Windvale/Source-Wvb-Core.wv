@@ -2546,19 +2546,30 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
             Backing.Kind
         );
     }
-    if Backingˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 {
+    if Backingˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 &&
+        Backingˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8 {
         return Compilerˉsourceˉwvbˉtypeˉencoding(
             Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
             Compilerˉsourceˉwvbˉempty(Source), 0u32
         );
     }
+    let U8ˉbacked: bool =
+        Backingˉkind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.U8;
     var Payload: bytes = Bytesˉfromˉu8(2u8);
+    var Features: u32 = 0u32;
+    if U8ˉbacked {
+        Payload = Bytesˉfromˉu8(7u8);
+        Features = Features | 2048u32;
+    }
     Payload = Bytesˉconcat(
         Payload,
         Compilerˉsourceˉwvbˉencodedˉstring(
             Compilerˉsourceˉwvbˉsymbolˉname(Input, Scan, Symbols, Entry)
         )
     );
+    if U8ˉbacked {
+        Payload = Bytesˉconcat(Payload, Bytesˉfromˉu8(6u8));
+    }
     Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Declaration.Items));
     let Brace: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
         Source, Declaration.Bodyˉoffset, 1u32, 1u32
@@ -2591,7 +2602,15 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         if Negative && Encodedˉvalue != 0u32 {
             Encodedˉvalue = 4294967295u32 - Encodedˉvalue + 1u32;
         }
-        Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Encodedˉvalue));
+        if U8ˉbacked {
+            Payload = Bytesˉconcat(
+                Payload, Compilerˉsourceˉwvbˉlowˉbyte(Encodedˉvalue)
+            );
+        } else {
+            Payload = Bytesˉconcat(
+                Payload, Bytesˉfromˉu32ˉlittle(Encodedˉvalue)
+            );
+        }
         let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );
@@ -2601,7 +2620,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         Memberˉindex = Memberˉindex + 1u32;
     }
     return Compilerˉsourceˉwvbˉtypeˉencoding(
-        Compilerˉsourceˉwvbˉstatus.Valid, Payload, 0u32
+        Compilerˉsourceˉwvbˉstatus.Valid, Payload, Features
     );
 }
 
@@ -5006,6 +5025,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if (Features & 256u32) != 0u32 { Wvbˉminor = 19u32; }
     if (Features & 512u32) != 0u32 { Wvbˉminor = 20u32; }
     if (Features & 1024u32) != 0u32 { Wvbˉminor = 21u32; }
+    if (Features & 2048u32) != 0u32 { Wvbˉminor = 22u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(
