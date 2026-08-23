@@ -1558,6 +1558,14 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.sh'
     )) {
         Add-Suite 'language-1-memory-budget-accounting'
+    } elseif ($Path -in @(
+        'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'
+    )) {
+        Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or
         $Path -in @(
         'Compiler/Windvale/Source-Descriptor-Core.wv',

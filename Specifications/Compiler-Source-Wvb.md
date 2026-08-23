@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.22 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.23 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.22, including the current
+For the execution subset through WVB 1.23, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -637,15 +637,22 @@ budget local, budget local-load, budget local-store, and missing-export
 mutations. The source-built runner transfers one fresh opaque token, releases it
 once on completed top-level return, and produces `42`.
 
-Typed WVIR 1.5/1.6 may now contain
-`Foundationˉmemoryˉsplit = 171`. The current WVB writer deliberately rejects
-that operation as `Unsupportedˉshape` and returns no bytecode. It does not map
-the private Result identity, invent a budget-copy representation, or claim
-provider accounting before the runtime contract exists. This closed boundary is
-covered both by the positive source/WVIR fixture and by malformed WVIR cases.
-Executable Split, nested control-flow moves, allocation effects, leases,
-provider accounting, and fallible Vector construction remain later connected
-checkpoints.
+Typed WVIR 1.5/1.6 operation `Foundationˉmemoryˉsplit = 171` lowers to WVB
+1.23 opcode `CE` with the parent local and exact materialized Result type as
+its two immediates. The emitter maps the private budget to shape `25`, requires
+`u64` and `u32` operands, and uses `local.take` for affine budget and Split
+Result locals. A bounded forward-control proof tracks at most 64 owned slots
+across at most 64 blocks and intersects availability at joins; backward control
+remains rejected in this first executable ownership profile.
+
+`Memory-Budget-Split-Executable.wv` deterministically emits a 752-byte WVB
+1.23 module at SHA-256
+`5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53`.
+The compiler-aligned verifier accepts successful and refused Split programs,
+rejects nine version/opcode/local/type/layout mutations, and the source-built
+runner returns `42` for both provider outcomes. Allocation effects and leases,
+general owned arguments/returns, fallible Vector construction, and direct
+native/browser/OS execution remain later connected checkpoints.
 
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.

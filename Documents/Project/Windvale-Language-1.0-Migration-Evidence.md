@@ -2446,3 +2446,49 @@ This is a verification-feedback improvement worth retaining now; it does not
 optimize compiler internals that may be replaced at self-hosting. WVB operation
 171 connection, launcher profile selection, allocation leases/effects, and
 public fallible Vector construction remain the next implementation checkpoints.
+
+## Slice 5 executable memory-budget Split checkpoint
+
+[Decision 0837](../Decisions/0837-Execute-Memory-Budget-Split-As-Wvb-1.23.md)
+connects WVIR operation 171 to WVB 1.23 opcode `CE` and the bounded accounting
+provider. The nine-byte instruction carries the mutable parent-local index and
+the exact materialized Result type. It consumes `u64` maximum bytes followed by
+`u32` maximum children, preserves the parent owner, and produces one affine
+`Result<Memoryˉbudget, Allocationˉfailure>`.
+
+WVB 1.23 permits shape `25` only in the launcher entry and non-parameter locals
+of `Main`. `local.take` moves budget and exact Split-result owners without a
+copy. The verifier recognizes the result by its exact machine layout rather
+than compiler-generated private names. Its Valid case contains shape `25`; its
+Failure case contains the exact record, `u8` reason enum, and two `u64` fields.
+
+The source ownership proof now performs bounded forward-CFG dataflow across at
+most 64 blocks and 64 owned slots. Incoming ownership is intersected at joins,
+temporary budget owners must be consumed, and backward control remains closed.
+This admits an ordinary Result match without introducing an unbounded loop
+fixed point.
+
+The success fixture deterministically emits 752-byte WVB 1.23 at SHA-256
+`5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53`.
+A second fixture requests 100,000 bytes from the reference runner's 98,304-byte
+root and proves the typed failure branch. The current verifier accepts both,
+nine version/opcode/local/type/layout mutations reject, and the source-built
+runner returns 42 for both the successful and refused split.
+
+The rebuilt analyzer remains 1,144,757 bytes at SHA-256
+`384cb966d9b8718fda0c2e7bf3863ae168ce7d9fcb911d076b87d5e33400b0e3`.
+The emitter is 1,084,963 bytes at SHA-256
+`694aa254b7147f2964d7cab3f7dba96e1076509c8ec3c91768e3c529b2ae71a4`;
+the verifier is 263,234 bytes at SHA-256
+`5f8e8c93818bc64a1360e9b20d3893edddea3854b6d618d52d16bf3488bde468`;
+and the runner is 282,833 bytes at SHA-256
+`2e37fc47eb61b8420bc9d30d24385a9427815f55c735d76adaff51ebb68e0f95`.
+
+The focused 15-case owner passes on Windows and advances the registry to 110
+owners and 5,278 cases at SHA-256
+`90cf308458315c105b3f735217a54bb9cc189d23099e9587b88d31998007178a`.
+Its warm run shows compiler-product cache hits are quick while native packaging
+still dominates elapsed time; that is a later measured workflow target. Broad
+transitional-compiler tuning remains deferred until self-hosting. Allocation
+leases/effects, public fallible Vector construction and recoverable append,
+general owned calls, `using`, reverse release, and one hosted consumer remain.

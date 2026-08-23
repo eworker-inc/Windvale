@@ -139,6 +139,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉscalarˉfeatures(
     if Shape == 16u32 { return 4u32; }
     if Shape == 14u32 || Shape == 15u32 { return 8u32; }
     if Shape == 9u32 || Shape == 10u32 { return 16u32; }
+    if Shape == 805306368u32 { return 4096u32; }
     return 0u32;
 }
 
@@ -257,7 +258,8 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
     if Shape == 14u32 { Kind = 18u8; }
     if Shape == 15u32 { Kind = 19u8; }
     if Shape == 16u32 { Kind = 17u8; }
-    if Shape >= 1u32 && Shape <= 16u32 {
+    if Shape == 805306368u32 { Kind = 25u8; }
+    if (Shape >= 1u32 && Shape <= 16u32) || Shape == 805306368u32 {
         return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
             Bytesˉfromˉu8(Kind),

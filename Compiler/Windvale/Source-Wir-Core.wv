@@ -11560,113 +11560,217 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
         Scanˉindex = Scanˉindex + 1u32;
     }
     if !Hasˉmemoryˉsplit { return true; }
-    if Range.Blockˉcount != 1u32 { return false; }
-
-    var Slotˉstate: bytes = Compilerˉsourceˉwirˉempty(Directory);
-    var Slot: u32 = 0u32;
-    while Slot < Range.Parameters + Range.Locals {
-        var Live: u8 = 0u8;
-        if Slot < Range.Parameters &&
-            Compilerˉsourceˉwirˉbindingˉshape(
-                Bindings, Symbolˉentries, Function, Slot
-            ) == 805306368u32 {
-            Live = 1u8;
-        }
-        Slotˉstate = Bytesˉconcat(Slotˉstate, Bytesˉfromˉu8(Live));
-        Slot = Slot + 1u32;
+    let Slotˉcount: u32 = Range.Parameters + Range.Locals;
+    if Range.Blockˉcount == 0u32 || Range.Blockˉcount > 64u32 ||
+        Slotˉcount > 64u32 {
+        return false;
     }
 
-    var Temporaryˉstate: bytes = Compilerˉsourceˉwirˉempty(Directory);
-    var Operationˉindex: u32 = 0u32;
-    while Operationˉindex < Range.Operationˉcount {
-        let Operationˉentry: u32 = Operationsˉoffset +
-            (Range.Firstˉoperation + Operationˉindex) * 32u32;
-        let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationˉentry + 4u32
-        );
-        let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationˉentry + 8u32
-        );
-        let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationˉentry + 16u32
-        );
-        let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationˉentry + 20u32
-        );
-        let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationˉentry + 24u32
-        );
-        if Operationˉshape != 0u32 {
-            var Temporaryˉlive: u8 = 0u8;
-            if Operationˉshape == 805306368u32 { Temporaryˉlive = 1u8; }
-            Temporaryˉstate = Bytesˉconcat(
-                Temporaryˉstate, Bytesˉfromˉu8(Temporaryˉlive)
+    var Blockˉstates: bytes = Compilerˉsourceˉwirˉempty(Directory);
+    var Blockˉstateˉindex: u32 = 0u32;
+    while Blockˉstateˉindex < Range.Blockˉcount * Slotˉcount {
+        Blockˉstates = Bytesˉconcat(Blockˉstates, Bytesˉfromˉu8(0u8));
+        Blockˉstateˉindex = Blockˉstateˉindex + 1u32;
+    }
+    var Reachable: bytes = Compilerˉsourceˉwirˉempty(Directory);
+    var Blockˉindex: u32 = 0u32;
+    while Blockˉindex < Range.Blockˉcount {
+        Reachable = Bytesˉconcat(Reachable, Bytesˉfromˉu8(0u8));
+        Blockˉindex = Blockˉindex + 1u32;
+    }
+    Reachable = Compilerˉsourceˉwirˉownershipˉstateˉset(
+        Reachable, 0u32, 1u8
+    );
+    var Slot: u32 = 0u32;
+    while Slot < Range.Parameters {
+        if Compilerˉsourceˉwirˉbindingˉshape(
+            Bindings, Symbolˉentries, Function, Slot
+        ) == 805306368u32 {
+            Blockˉstates = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                Blockˉstates, Slot, 1u8
             );
         }
+        Slot = Slot + 1u32;
+    }
+    var Temporaryˉstate: bytes = Compilerˉsourceˉwirˉempty(Directory);
+    var Temporaryˉblock: bytes = Compilerˉsourceˉwirˉempty(Directory);
+    Blockˉindex = 0u32;
+    while Blockˉindex < Range.Blockˉcount {
+        if Bytesˉreadˉu8(Reachable, Blockˉindex) != 1u8 { return false; }
+        let Stateˉoffset: u32 = Blockˉindex * Slotˉcount;
+        var Slotˉstate: bytes = Bytesˉslice(
+            Blockˉstates, Stateˉoffset, Slotˉcount
+        );
+        let Blockˉentry: u32 = Blocksˉoffset +
+            (Range.Firstˉblock + Blockˉindex) * 28u32;
+        let Blockˉfirstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Blockˉentry + 4u32
+        );
+        let Blockˉoperationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Blockˉentry + 8u32
+        );
+        var Blockˉoperation: u32 = 0u32;
+        while Blockˉoperation < Blockˉoperationˉcount {
+            let Operationˉentry: u32 = Operationsˉoffset +
+                (Blockˉfirstˉoperation + Blockˉoperation) * 32u32;
+            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 4u32
+            );
+            let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 8u32
+            );
+            let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 16u32
+            );
+            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 20u32
+            );
+            let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 24u32
+            );
+            if Operationˉshape != 0u32 {
+                var Temporaryˉlive: u8 = 0u8;
+                if Operationˉshape == 805306368u32 {
+                    Temporaryˉlive = 1u8;
+                }
+                Temporaryˉstate = Bytesˉconcat(
+                    Temporaryˉstate, Bytesˉfromˉu8(Temporaryˉlive)
+                );
+                Temporaryˉblock = Bytesˉconcat(
+                    Temporaryˉblock, Bytesˉfromˉu32ˉlittle(Blockˉindex)
+                );
+            }
 
-        var Operandˉindex: u32 = 0u32;
-        var Firstˉoperandˉshape: u32 = 0u32;
-        while Operandˉindex < Operandˉcount {
-            let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory,
-                Operandsˉoffset + (Firstˉoperand + Operandˉindex) * 4u32
-            );
-            let Operandˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory,
-                Temporariesˉoffset +
-                    (Range.Firstˉtemporary + Operandˉtemporary) * 4u32
-            );
-            if Operandˉindex == 0u32 { Firstˉoperandˉshape = Operandˉshape; }
-            if Operandˉshape == 805306368u32 {
-                if Operationˉkind != 8u32 || Operandˉindex != 0u32 ||
-                    Bytesˉreadˉu8(
-                        Temporaryˉstate, Operandˉtemporary
+            var Operandˉindex: u32 = 0u32;
+            var Firstˉoperandˉshape: u32 = 0u32;
+            while Operandˉindex < Operandˉcount {
+                let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+                    Directory,
+                    Operandsˉoffset + (Firstˉoperand + Operandˉindex) * 4u32
+                );
+                let Operandˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                    Directory,
+                    Temporariesˉoffset +
+                        (Range.Firstˉtemporary + Operandˉtemporary) * 4u32
+                );
+                if Operandˉindex == 0u32 {
+                    Firstˉoperandˉshape = Operandˉshape;
+                }
+                if Operandˉshape == 805306368u32 {
+                    if Operationˉkind != 8u32 || Operandˉindex != 0u32 ||
+                        Bytesˉreadˉu8(
+                            Temporaryˉstate, Operandˉtemporary
+                        ) != 1u8 || Bytesˉreadˉu32ˉlittle(
+                            Temporaryˉblock, Operandˉtemporary * 4u32
+                        ) != Blockˉindex {
+                        return false;
+                    }
+                    Temporaryˉstate =
+                        Compilerˉsourceˉwirˉownershipˉstateˉset(
+                            Temporaryˉstate, Operandˉtemporary, 0u8
+                        );
+                }
+                Operandˉindex = Operandˉindex + 1u32;
+            }
+
+            if Operationˉkind == 7u32 &&
+                Operationˉshape == 805306368u32 {
+                if Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 1u8 {
+                    return false;
+                }
+                Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                    Slotˉstate, Operationˉtarget, 0u8
+                );
+            }
+            if Operationˉkind == 8u32 &&
+                Firstˉoperandˉshape == 805306368u32 {
+                if Operationˉtarget < Range.Parameters ||
+                    Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 0u8 {
+                    return false;
+                }
+                Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                    Slotˉstate, Operationˉtarget, 1u8
+                );
+            }
+            if Operationˉkind == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT {
+                if Operationˉtarget >= Slotˉcount ||
+                    Compilerˉsourceˉwirˉbindingˉshape(
+                        Bindings, Symbolˉentries, Function, Operationˉtarget
+                    ) != 805306368u32 || Bytesˉreadˉu8(
+                        Slotˉstate, Operationˉtarget
                     ) != 1u8 {
                     return false;
                 }
-                Temporaryˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
-                    Temporaryˉstate, Operandˉtemporary, 0u8
+            }
+            Blockˉoperation = Blockˉoperation + 1u32;
+        }
+
+        var Temporary: u32 = 0u32;
+        while Temporary < Bytesˉlength(Temporaryˉstate) {
+            if Bytesˉreadˉu8(Temporaryˉstate, Temporary) == 1u8 &&
+                Bytesˉreadˉu32ˉlittle(
+                    Temporaryˉblock, Temporary * 4u32
+                ) == Blockˉindex {
+                return false;
+            }
+            Temporary = Temporary + 1u32;
+        }
+
+        let Terminator: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Blockˉentry + 12u32
+        );
+        var Successorˉcount: u32 = 0u32;
+        if Terminator == 1u32 { Successorˉcount = 1u32; }
+        if Terminator == 2u32 { Successorˉcount = 2u32; }
+        var Successor: u32 = 0u32;
+        while Successor < Successorˉcount {
+            var Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Blockˉentry + 20u32
+            );
+            if Successor == 1u32 {
+                Target = Bytesˉreadˉu32ˉlittle(
+                    Directory, Blockˉentry + 24u32
                 );
             }
-            Operandˉindex = Operandˉindex + 1u32;
-        }
-
-        if Operationˉkind == 7u32 && Operationˉshape == 805306368u32 {
-            if Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 1u8 {
+            if Target <= Blockˉindex || Target >= Range.Blockˉcount {
                 return false;
             }
-            Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
-                Slotˉstate, Operationˉtarget, 0u8
+            let Targetˉoffset: u32 = Target * Slotˉcount;
+            var Targetˉstate: bytes = Slotˉstate;
+            if Bytesˉreadˉu8(Reachable, Target) == 1u8 {
+                Targetˉstate = Compilerˉsourceˉwirˉempty(Directory);
+                Slot = 0u32;
+                while Slot < Slotˉcount {
+                    var Joined: u8 = 0u8;
+                    if Bytesˉreadˉu8(
+                        Blockˉstates, Targetˉoffset + Slot
+                    ) == 1u8 && Bytesˉreadˉu8(Slotˉstate, Slot) == 1u8 {
+                        Joined = 1u8;
+                    }
+                    Targetˉstate = Bytesˉconcat(
+                        Targetˉstate, Bytesˉfromˉu8(Joined)
+                    );
+                    Slot = Slot + 1u32;
+                }
+            } else {
+                Reachable = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                    Reachable, Target, 1u8
+                );
+            }
+            Blockˉstates = Bytesˉconcat(
+                Bytesˉconcat(
+                    Bytesˉslice(Blockˉstates, 0u32, Targetˉoffset),
+                    Targetˉstate
+                ),
+                Bytesˉslice(
+                    Blockˉstates,
+                    Targetˉoffset + Slotˉcount,
+                    Bytesˉlength(Blockˉstates) - Targetˉoffset - Slotˉcount
+                )
             );
+            Successor = Successor + 1u32;
         }
-        if Operationˉkind == 8u32 &&
-            Firstˉoperandˉshape == 805306368u32 {
-            if Operationˉtarget < Range.Parameters ||
-                Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 0u8 {
-                return false;
-            }
-            Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
-                Slotˉstate, Operationˉtarget, 1u8
-            );
-        }
-        if Operationˉkind == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT {
-            if Operationˉtarget >= Range.Parameters + Range.Locals ||
-                Compilerˉsourceˉwirˉbindingˉshape(
-                    Bindings, Symbolˉentries, Function, Operationˉtarget
-                ) != 805306368u32 ||
-                Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 1u8 {
-                return false;
-            }
-        }
-        Operationˉindex = Operationˉindex + 1u32;
-    }
-
-    var Temporary: u32 = 0u32;
-    while Temporary < Bytesˉlength(Temporaryˉstate) {
-        if Bytesˉreadˉu8(Temporaryˉstate, Temporary) != 0u8 {
-            return false;
-        }
-        Temporary = Temporary + 1u32;
+        Blockˉindex = Blockˉindex + 1u32;
     }
     return true;
 }

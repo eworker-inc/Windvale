@@ -126,14 +126,17 @@ invocation teardown.
 then gives retained `u8`-backed enums an exact WVB 1.22 descriptor and connected
 execution path. [Decision 0836](../Decisions/0836-Bind-Memory-Budget-Split-In-Wvir-1.5.md)
 binds the exact mutable-parent Split call and its affine evidence as WVIR
-1.5/1.6 while keeping WVB execution closed; the focused owner now declares 462
+1.5/1.6; the focused front door declares 462
 cases. A separate 17-case executable accounting oracle now proves bounded child
 reservation, failure atomicity, generation-safe reuse, deferred parent release,
 recursive credit, malformed-state rejection, and teardown in about thirteen
 seconds locally. Its fixed 65-entry state is an internal implementation model,
-not the public `Memoryˉbudget` representation. The next connected result is WVB
-execution of operation 171 against that accounting behavior, followed by
-allocation leases/effects and public fallible Vector construction with
+not the public `Memoryˉbudget` representation.
+[Decision 0837](../Decisions/0837-Execute-Memory-Budget-Split-As-Wvb-1.23.md)
+connects operation 171 to exact WVB 1.23, bounded forward-control ownership,
+the verifier, and the source-built runner. Its 15-case owner proves both
+successful and refused splits plus nine malformed modules. The next connected
+results are allocation leases/effects and public fallible Vector construction with
 recoverable append. Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

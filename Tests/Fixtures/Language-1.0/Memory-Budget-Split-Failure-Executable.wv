@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉsplitˉfailureˉexecutable;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Parent: Memory.Memoryˉbudget = Budget;
+    let Outcome: Resultˉvalues.Result<
+        Memory.Memoryˉbudget,
+        Memory.Allocationˉfailure
+    > = Memory.Split(borrow mut Parent, 100000u64, 2u32);
+    return match Outcome {
+        case Resultˉvalues.Result.Valid { Value: Child } { 1 }
+        case Resultˉvalues.Result.Failure { Error: Failure } { 42 }
+    };
+}

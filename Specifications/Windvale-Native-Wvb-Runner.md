@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-exact `u8` enums through WVB 1.22 but has not repinned the paired
+executable memory-budget Split through WVB 1.23 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.22. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.23. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,7 +124,7 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21, or WVB 1.22 with shape `25`, supplies one fresh opaque root-budget
+WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 supplies one fresh opaque root-budget
 token to the sole parameter of exported `Main(Memoryˉbudget) -> i32`. The
 interpreter validates that exact
 shape placement before execution and rejects every bytecode load or store of
@@ -132,10 +132,7 @@ the token. The active invocation owns an identity/generation pair outside the
 ordinary forgeable value vocabulary. On completed top-level return it verifies
 the pair, zeros the parameter cell, and releases the invocation token exactly
 once before publishing the result. A failed invocation is torn down as one
-resource domain. The launcher's maximum-byte accounting is intentionally
-unobservable until `Split` and allocation-lease operations land; no bytecode
-constructor, general call transfer, or fallible allocation API is claimed by
-this checkpoint.
+resource domain.
 WVB 1.22 parses kind-7 enum descriptors only with exact source backing identity
 `6` and one-byte member tags. The existing enum value cell, constant,
 comparison, and name operations use the same nominal identity path as kind `2`;
@@ -143,6 +140,15 @@ there is no host enum conversion or second interpreter. A module whose newest
 feature is kind `7` may retain the ordinary `Main() -> i32` entry. If it also
 contains shape `25`, the WVB 1.21 budget transfer and teardown rules remain
 mandatory.
+WVB 1.23 adds exact opcode `CE`. Its two immediates select one available budget
+local and the exact Split Result type; its stack operands are `u64` maximum
+bytes followed by `u32` maximum children. The runner binds a 98,304-byte,
+64-child root and uses the fixed-capacity accounting provider. Success
+atomically reserves both limits and returns one Valid child owner; refusal
+preserves the parent and returns the exact Failure evidence. Shape-25 budget
+locals and Split-result locals move through `local.take`, never through a
+retaining load. Invocation teardown releases every surviving domain under the
+provider's fixed bounds.
 Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
@@ -154,9 +160,9 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 257,017-byte WVB at SHA-256
-`269130ea87bba7504af0d7d8337a7d1b8748d61671611ffb816d7ca5f7fa2e02`.
-It contains 98 functions and 232,834 code bytes. Cohesive directory, request,
+The current Windows development build is a 282,833-byte WVB at SHA-256
+`2e37fc47eb61b8420bc9d30d24385a9427815f55c735d76adaff51ebb68e0f95`.
+It contains 131 functions and 255,391 code bytes. Cohesive directory, request,
 data/local/bytes, collection, aggregate, and extended-operation helpers keep
 every source-built function below the existing bytecode and 2,048 native
 physical-cell limits; neither limit was raised.
@@ -197,6 +203,14 @@ source-built runner returns `42`. A separate bounded verifier rejects nine
 mutations spanning version downgrade/advance, backing identity, duplicate and
 truncated values, a missing kind-7 feature, unknown kind, and an out-of-range
 enum shape index.
+
+The executable Split fixture is deterministic 752-byte WVB 1.23 at SHA-256
+`5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53`.
+The source-built runner returns `42` after a successful 4,096-byte/two-child
+reservation. A second fixture requests 100,000 bytes and returns `42` through
+the typed refusal branch. The compiler-aligned verifier accepts both and
+rejects nine version, opcode, local, type, and layout corruptions. This is
+development evidence; paired-host runner reconstruction remains unrepinned.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

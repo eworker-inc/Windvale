@@ -71,6 +71,132 @@ fn Hˉnextˉtype(Input: bytes, Cursor: u32) -> u32 {
     return Next;
 }
 
+fn Hˉtypeˉat(Input: bytes, Types: u32, Typeˉindex: u32) -> u32 {
+    var Cursor: u32 = Types + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Typeˉindex {
+        Cursor = Hˉnextˉtype(Input, Cursor);
+        Index = Index + 1u32;
+    }
+    return Cursor;
+}
+
+fn Hˉafterˉencodedˉstring(Input: bytes, Cursor: u32) -> u32 {
+    return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor);
+}
+
+fn Hˉmemoryˉbudgetˉresultˉisˉexact(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Resultˉtype: u32
+) -> bool {
+    if Resultˉtype >= Typeˉcount { return false; }
+    let Resultˉcursor: u32 = Hˉtypeˉat(Input, Types, Resultˉtype);
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Resultˉcursor)) != 3u32 {
+        return false;
+    }
+    let Resultˉitems: u32 = Hˉafterˉencodedˉstring(
+        Input, Resultˉcursor + 1u32
+    );
+    if Bytesˉreadˉu32ˉlittle(Input, Resultˉitems) != 2u32 { return false; }
+
+    let Validˉcase: bytes = Hˉvariantˉcaseˉat(
+        Input, Types, Resultˉtype, 0u32
+    );
+    let Failureˉcase: bytes = Hˉvariantˉcaseˉat(
+        Input, Types, Resultˉtype, 1u32
+    );
+    if Bytesˉlength(Validˉcase) != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(Validˉcase, 0u32) != 1u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Validˉcase, 4u32)) != 25u32 ||
+        Bytesˉreadˉu32ˉlittle(Validˉcase, 5u32) != 0u32 {
+        return false;
+    }
+    if Bytesˉlength(Failureˉcase) != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(Failureˉcase, 4u32)) != 7u32 {
+        return false;
+    }
+    let Failureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Failureˉcase, 5u32
+    );
+    if Failureˉtype >= Typeˉcount { return false; }
+
+    var Cursor: u32 = Hˉtypeˉat(Input, Types, Failureˉtype);
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 1u32 {
+        return false;
+    }
+    Cursor = Hˉafterˉencodedˉstring(Input, Cursor + 1u32);
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 3u32 { return false; }
+    Cursor = Cursor + 4u32;
+    var Reasonˉtype: u32 = Typeˉcount;
+    var Field: u32 = 0u32;
+    while Field < 3u32 {
+        Cursor = Hˉafterˉencodedˉstring(Input, Cursor);
+        let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+        if Field == 0u32 {
+            if Fieldˉkind != 8u32 { return false; }
+            Reasonˉtype = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+            Cursor = Cursor + 5u32;
+        } else {
+            if Fieldˉkind != 10u32 { return false; }
+            Cursor = Cursor + 1u32;
+        }
+        Field = Field + 1u32;
+    }
+    if Reasonˉtype >= Typeˉcount { return false; }
+    if Failureˉtype + 1u32 < Typeˉcount && Cursor !=
+        Hˉtypeˉat(Input, Types, Failureˉtype + 1u32) {
+        return false;
+    }
+
+    Cursor = Hˉtypeˉat(Input, Types, Reasonˉtype);
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 7u32 {
+        return false;
+    }
+    Cursor = Hˉafterˉencodedˉstring(Input, Cursor + 1u32);
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != 6u32 {
+        return false;
+    }
+    Cursor = Cursor + 1u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 4u32 { return false; }
+    Cursor = Cursor + 4u32;
+    var Member: u32 = 0u32;
+    while Member < 4u32 {
+        Cursor = Hˉafterˉencodedˉstring(Input, Cursor);
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor)) != Member + 1u32 {
+            return false;
+        }
+        Cursor = Cursor + 1u32;
+        Member = Member + 1u32;
+    }
+    if Reasonˉtype + 1u32 < Typeˉcount && Cursor !=
+        Hˉtypeˉat(Input, Types, Reasonˉtype + 1u32) {
+        return false;
+    }
+    return true;
+}
+fn Hˉownedˉlocalˉshape(
+    Input: bytes,
+    Types: u32,
+    Typeˉcount: u32,
+    Localˉshapes: bytes,
+    Slot: u32,
+    Minor: u32
+) -> bool {
+    let Shape: u32 = Slot * 5u32;
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Localˉshapes, Shape));
+    if Kind == 23u32 { return true; }
+    if Minor != 23u32 { return false; }
+    if Kind == 25u32 { return true; }
+    if Kind != 11u32 { return false; }
+    return Hˉmemoryˉbudgetˉresultˉisˉexact(
+        Input, Types, Typeˉcount,
+        Bytesˉreadˉu32ˉlittle(Localˉshapes, Shape + 1u32)
+    );
+}
+
 fn Hˉvariantˉcaseˉat(
     Input: bytes,
     Types: u32,
@@ -269,17 +395,26 @@ fn Hˉvariantˉfield(
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Variantˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Variantˉoffset)) != 11u32 ||
+    let Variantˉkind: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Stack, Variantˉoffset)
+    );
+    if (Variantˉkind != 11u32 && Variantˉkind != 28u32) ||
         Bytesˉreadˉu32ˉlittle(Stack, Variantˉoffset + 1u32) != Variantˉtype {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Fieldˉshape: u32 = 4u32 + Fieldˉindex * 5u32;
+    var Producedˉkind: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Variantˉcase, Fieldˉshape)
+    );
+    if Variantˉkind == 28u32 && Producedˉkind == 25u32 {
+        Producedˉkind = 27u32;
+    }
     return Hˉoperationˉstate(
         true,
         Bytesˉslice(Stack, 0u32, Variantˉoffset),
         Depth - 1u32,
         true,
-        U32ˉfromˉu8(Bytesˉreadˉu8(Variantˉcase, Fieldˉshape)),
+        Producedˉkind,
         Bytesˉreadˉu32ˉlittle(Variantˉcase, Fieldˉshape + 1u32)
     );
 }
@@ -525,7 +660,7 @@ fn Hˉcollection(
             Bytesˉslice(Stack, 0u32, Maximumˉoffset),
             Depth - 1u32,
             true,
-            25u32,
+            26u32,
             Firstˉtype
         );
     }
@@ -539,7 +674,7 @@ fn Hˉcollection(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         let Appendˉvectorˉoffset: u32 = Appendˉvalueˉoffset - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Appendˉvectorˉoffset)) != 25u32 ||
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Appendˉvectorˉoffset)) != 26u32 ||
             Bytesˉreadˉu32ˉlittle(Stack, Appendˉvectorˉoffset + 1u32) != Firstˉtype {
             return Hˉoperationˉfailure(Stack, Depth);
         }
@@ -548,7 +683,7 @@ fn Hˉcollection(
             Bytesˉslice(Stack, 0u32, Appendˉvectorˉoffset),
             Depth - 2u32,
             true,
-            25u32,
+            26u32,
             Firstˉtype
         );
     }
@@ -568,7 +703,7 @@ fn Hˉcollection(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         let Freezeˉvectorˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Freezeˉvectorˉoffset)) != 25u32 ||
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Freezeˉvectorˉoffset)) != 26u32 ||
             Bytesˉreadˉu32ˉlittle(Stack, Freezeˉvectorˉoffset + 1u32) != Firstˉtype {
             return Hˉoperationˉfailure(Stack, Depth);
         }
@@ -584,7 +719,7 @@ fn Hˉcollection(
     if Opcode == 202u32 || Opcode == 203u32 {
         if Depth < 1u32 { return Hˉoperationˉfailure(Stack, Depth); }
         let Lengthˉvalueˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-        var Valueˉkind: u32 = 25u32;
+        var Valueˉkind: u32 = 26u32;
         if Opcode == 203u32 { Valueˉkind = 24u32; }
         if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Lengthˉvalueˉoffset)) != Valueˉkind ||
             Bytesˉreadˉu32ˉlittle(Stack, Lengthˉvalueˉoffset + 1u32) != Firstˉtype {
@@ -913,7 +1048,148 @@ fn Hˉencodedˉshape(Kind: u32, Nominal: u32) -> bytes {
     if Kind == 23u32 { Encodedˉkind = Bytesˉfromˉu8(23u8); }
     if Kind == 24u32 { Encodedˉkind = Bytesˉfromˉu8(24u8); }
     if Kind == 25u32 { Encodedˉkind = Bytesˉfromˉu8(25u8); }
+    if Kind == 26u32 { Encodedˉkind = Bytesˉfromˉu8(26u8); }
+    if Kind == 27u32 { Encodedˉkind = Bytesˉfromˉu8(27u8); }
+    if Kind == 28u32 { Encodedˉkind = Bytesˉfromˉu8(28u8); }
     return Bytesˉconcat(Encodedˉkind, Bytesˉfromˉu32ˉlittle(Nominal));
+}
+
+fn Hˉlocalˉoperation(
+    Input: bytes,
+    Minor: u32,
+    Functionˉcode: u32,
+    Functionˉcodeˉlength: u32,
+    Cursor: u32,
+    Types: u32,
+    Localˉshapes: bytes,
+    Parameterˉcount: u32,
+    Localˉcount: u32,
+    Stack: bytes,
+    Depth: u32
+) -> Hˉoperationˉstate {
+    let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Input, Functionˉcode + Cursor
+    ));
+    let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Functionˉcode + Cursor + 1u32
+    );
+    if Localˉindex >= Parameterˉcount + Localˉcount {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    let Localˉshape: u32 = Localˉindex * 5u32;
+    let Localˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Localˉshapes, Localˉshape
+    ));
+    let Localˉnominal: u32 = Bytesˉreadˉu32ˉlittle(
+        Localˉshapes, Localˉshape + 1u32
+    );
+    let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
+
+    if Opcode == 4u32 {
+        if Localˉkind == 25u32 { return Hˉoperationˉfailure(Stack, Depth); }
+        if Minor == 23u32 && Localˉkind == 11u32 &&
+            Hˉmemoryˉbudgetˉresultˉisˉexact(
+                Input, Types, Typeˉcount, Localˉnominal
+            ) {
+            if Cursor + 5u32 >= Functionˉcodeˉlength ||
+                U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Input, Functionˉcode + Cursor + 5u32
+                )) != 152u32 {
+                return Hˉoperationˉfailure(Stack, Depth);
+            }
+        }
+        return Hˉoperationˉstate(
+            true, Stack, Depth, true, Localˉkind, Localˉnominal
+        );
+    }
+
+    if Opcode == 205u32 {
+        let Isˉsplitˉresult: bool = Minor == 23u32 &&
+            Localˉkind == 11u32 && Hˉmemoryˉbudgetˉresultˉisˉexact(
+                Input, Types, Typeˉcount, Localˉnominal
+            );
+        if Localˉkind != 23u32 && Localˉkind != 25u32 &&
+            !Isˉsplitˉresult {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        if Localˉindex < Parameterˉcount && Localˉkind == 23u32 {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        var Takenˉpushˉkind: u32 = 26u32;
+        if Localˉkind == 25u32 { Takenˉpushˉkind = 27u32; }
+        if Isˉsplitˉresult { Takenˉpushˉkind = 28u32; }
+        return Hˉoperationˉstate(
+            true, Stack, Depth, true, Takenˉpushˉkind, Localˉnominal
+        );
+    }
+
+    var Popˉcount: u32 = 1u32;
+    var Firstˉkind: u32 = Localˉkind;
+    var Firstˉnominal: u32 = Localˉnominal;
+    var Secondˉkind: u32 = 0u32;
+    var Pushˉresult: bool = false;
+    var Pushˉkind: u32 = 0u32;
+    var Pushˉnominal: u32 = 0u32;
+    if Opcode == 5u32 {
+        if Firstˉkind == 23u32 && Minor >= 20u32 { Firstˉkind = 26u32; }
+        if Minor == 23u32 && Firstˉkind == 25u32 { Firstˉkind = 27u32; }
+        if Minor == 23u32 && Firstˉkind == 11u32 &&
+            Hˉmemoryˉbudgetˉresultˉisˉexact(
+                Input, Types, Typeˉcount, Firstˉnominal
+            ) { Firstˉkind = 28u32; }
+    } else if Opcode == 206u32 {
+        let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Functionˉcode + Cursor + 5u32
+        );
+        if Minor != 23u32 || Localˉkind != 25u32 ||
+            !Hˉmemoryˉbudgetˉresultˉisˉexact(
+                Input, Types, Typeˉcount, Resultˉtype
+            ) {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
+        Popˉcount = 2u32;
+        Firstˉkind = 5u32;
+        Firstˉnominal = 0u32;
+        Secondˉkind = 10u32;
+        Pushˉresult = true;
+        Pushˉkind = 28u32;
+        Pushˉnominal = Resultˉtype;
+    } else {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+
+    var Resultˉstack: bytes = Stack;
+    var Resultˉdepth: u32 = Depth;
+    var Pop: u32 = 0u32;
+    while Pop < Popˉcount {
+        if Resultˉdepth == 0u32 {
+            return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
+        }
+        var Expectedˉkind: u32 = Firstˉkind;
+        var Expectedˉnominal: u32 = Firstˉnominal;
+        if Pop == 1u32 {
+            Expectedˉkind = Secondˉkind;
+            Expectedˉnominal = 0u32;
+        }
+        let Actual: u32 = Bytesˉlength(Resultˉstack) - 5u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actual)) !=
+                Expectedˉkind || Bytesˉreadˉu32ˉlittle(
+                    Resultˉstack, Actual + 1u32
+                ) != Expectedˉnominal {
+            return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
+        }
+        Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actual);
+        Resultˉdepth = Resultˉdepth - 1u32;
+        Pop = Pop + 1u32;
+    }
+    return Hˉoperationˉstate(
+        true,
+        Resultˉstack,
+        Resultˉdepth,
+        Pushˉresult,
+        Pushˉkind,
+        Pushˉnominal
+    );
 }
 
 fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
@@ -929,10 +1205,43 @@ fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
     }
     if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
         (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
-        Opcode == 201u32 {
+        Opcode == 201u32 || Opcode == 206u32 {
         return 9u32;
     }
     return 1u32;
+}
+
+fn Hˉinstructionˉwidth(
+    Input: bytes,
+    Functionˉcode: u32,
+    Cursor: u32,
+    Opcode: u32
+) -> u32 {
+    var Width: u32 = Hˉfixedˉinstructionˉwidth(Opcode);
+    if Opcode == 192u32 {
+        Width = 3u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input, Functionˉcode + Cursor + 2u32
+        )) == 0u32 { Width = 5u32; }
+    }
+    if Opcode == 193u32 {
+        Width = 2u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input, Functionˉcode + Cursor + 1u32
+        )) == 0u32 { Width = 6u32; }
+    }
+    if Opcode == 194u32 {
+        Width = 3u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input, Functionˉcode + Cursor + 2u32
+        )) == 0u32 {
+            Width = 7u32;
+            if U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input, Functionˉcode + Cursor + 1u32
+            )) == 19u32 { Width = 11u32; }
+        }
+    }
+    return Width;
 }
 
 export fn Hˉexecutable(Input: bytes) -> bytes {
@@ -1060,36 +1369,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             let Opcode: u32 = U32ˉfromˉu8(
                 Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
             );
-            var Width: u32 = Hˉfixedˉinstructionˉwidth(Opcode);
-            if Opcode == 192u32 {
-                Width = 3u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input, Functionˉcode + Cursor + 2u32
-                )) == 0u32 {
-                    Width = 5u32;
-                }
-            }
-            if Opcode == 193u32 {
-                Width = 2u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input, Functionˉcode + Cursor + 1u32
-                )) == 0u32 {
-                    Width = 6u32;
-                }
-            }
-            if Opcode == 194u32 {
-                Width = 3u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input, Functionˉcode + Cursor + 2u32
-                )) == 0u32 {
-                    Width = 7u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Input, Functionˉcode + Cursor + 1u32
-                    )) == 19u32 {
-                        Width = 11u32;
-                    }
-                }
-            }
+            let Width: u32 = Hˉinstructionˉwidth(
+                Input, Functionˉcode, Cursor, Opcode
+            );
             Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
             if Aggregateˉinstructions > 400000u32 { return Invalid; }
 
@@ -1223,64 +1505,29 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Handled = true;
             }
 
-            if Opcode == 4u32 {
-                let Localˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+            if Opcode == 4u32 || Opcode == 5u32 ||
+                Opcode == 205u32 || Opcode == 206u32 {
+                let Localˉstate: Hˉoperationˉstate = Hˉlocalˉoperation(
                     Input,
-                    Functionˉcode + Cursor + 1u32
-                );
-                let Wantedˉshape: u32 = Localˉindex * 5u32;
-                Pushˉkind = U32ˉfromˉu8(
-                    Bytesˉreadˉu8(Localˉshapes, Wantedˉshape)
-                );
-                if Pushˉkind == 25u32 { return Invalid; }
-                Pushˉnominal = Bytesˉreadˉu32ˉlittle(
+                    Minor,
+                    Functionˉcode,
+                    Functionˉcodeˉlength,
+                    Cursor,
+                    Types,
                     Localˉshapes,
-                    Wantedˉshape + 1u32
+                    Parameterˉcount,
+                    Localˉcount,
+                    Stack,
+                    Depth
                 );
-                Hasˉpush = true;
+                if !Localˉstate.Valid { return Invalid; }
+                Stack = Localˉstate.Stack;
+                Depth = Localˉstate.Depth;
+                Hasˉpush = Localˉstate.Hasˉpush;
+                Pushˉkind = Localˉstate.Pushˉkind;
+                Pushˉnominal = Localˉstate.Pushˉnominal;
                 Handled = true;
             }
-            if Opcode == 5u32 {
-                let Storedˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
-                    Input,
-                    Functionˉcode + Cursor + 1u32
-                );
-                let Storedˉshape: u32 = Storedˉlocalˉindex * 5u32;
-                Firstˉkind = U32ˉfromˉu8(
-                    Bytesˉreadˉu8(Localˉshapes, Storedˉshape)
-                );
-                if Firstˉkind == 25u32 { return Invalid; }
-                Firstˉnominal = Bytesˉreadˉu32ˉlittle(
-                    Localˉshapes,
-                    Storedˉshape + 1u32
-                );
-                if Firstˉkind == 23u32 &&
-                    Bytesˉreadˉu16ˉlittle(Input, 6u32) >= 20u32 {
-                    Firstˉkind = 25u32;
-                }
-                Popˉcount = 1u32;
-                Handled = true;
-            }
-            if Opcode == 205u32 {
-                let Takenˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
-                    Input,
-                    Functionˉcode + Cursor + 1u32
-                );
-                if Takenˉlocalˉindex < Parameterˉcount { return Invalid; }
-                let Takenˉshape: u32 = Takenˉlocalˉindex * 5u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Localˉshapes, Takenˉshape
-                )) != 23u32 {
-                    return Invalid;
-                }
-                Hasˉpush = true;
-                Pushˉkind = 25u32;
-                Pushˉnominal = Bytesˉreadˉu32ˉlittle(
-                    Localˉshapes, Takenˉshape + 1u32
-                );
-                Handled = true;
-            }
-
             if Opcode == 7u32 { Popˉcount = 1u32; Firstˉkind = 1u32; Hasˉpush = true; Pushˉkind = 1u32; Handled = true; }
             if Opcode == 11u32 { Popˉcount = 1u32; Firstˉkind = 6u32; Hasˉpush = true; Pushˉkind = 5u32; Handled = true; }
             if Opcode == 12u32 { Popˉcount = 3u32; Firstˉkind = 5u32; Secondˉkind = 5u32; Thirdˉkind = 6u32; Hasˉpush = true; Pushˉkind = 6u32; Handled = true; }
@@ -1515,7 +1762,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Pushˉkind = Callˉstate.Pushˉkind;
                 Pushˉnominal = Callˉstate.Pushˉnominal;
                 if Minor >= 20u32 && Pushˉkind == 23u32 {
-                    Pushˉkind = 25u32;
+                    Pushˉkind = 26u32;
                 }
                 Handled = true;
             }
@@ -1567,7 +1814,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Returnˉexpectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Returnˉtype + 1u32);
                 }
                 if Minor >= 20u32 && Returnˉexpectedˉkind == 23u32 {
-                    Returnˉexpectedˉkind = 25u32;
+                    Returnˉexpectedˉkind = 26u32;
                 }
                 if Returnˉexpectedˉkind != 0u32 {
                     if Depth == 0u32 { return Invalid; }
@@ -1637,9 +1884,201 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
     return Input;
 }
 
+fn Iˉownedˉcontrolˉisˉvalid(
+    Input: bytes,
+    Minor: u32,
+    Types: u32,
+    Functionˉcode: u32,
+    Functionˉcodeˉlength: u32,
+    Localˉslots: u32,
+    Parameterˉcount: u32,
+    Localˉshapes: bytes
+) -> bool {
+    var Ownedˉvectorˉcount: u32 = 0u32;
+    var Ownedˉavailableˉlow: u32 = 0u32;
+    var Ownedˉavailableˉhigh: u32 = 0u32;
+    var Ownedˉslot: u32 = 0u32;
+    while Ownedˉslot < Localˉslots {
+        if Hˉownedˉlocalˉshape(
+            Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+            Localˉshapes, Ownedˉslot, Minor
+        ) {
+            if Ownedˉvectorˉcount >= 64u32 { return false; }
+            if Ownedˉslot < Parameterˉcount {
+                if Ownedˉvectorˉcount < 32u32 {
+                    Ownedˉavailableˉlow = Ownedˉavailableˉlow |
+                        (1u32 << Ownedˉvectorˉcount);
+                } else {
+                    Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
+                        (1u32 << (Ownedˉvectorˉcount - 32u32));
+                }
+            }
+            Ownedˉvectorˉcount = Ownedˉvectorˉcount + 1u32;
+        }
+        Ownedˉslot = Ownedˉslot + 1u32;
+    }
+
+    var Ownedˉbranches: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Ownedˉcursor: u32 = 0u32;
+    var Ownedˉreachable: bool = true;
+    while Ownedˉcursor < Functionˉcodeˉlength {
+        var Ownedˉbranch: u32 = 0u32;
+        while Ownedˉbranch < Bytesˉlength(Ownedˉbranches) {
+            if Bytesˉreadˉu32ˉlittle(
+                Ownedˉbranches, Ownedˉbranch
+            ) == Ownedˉcursor {
+                let Ownedˉbranchˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+                    Ownedˉbranches, Ownedˉbranch + 4u32
+                );
+                let Ownedˉbranchˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                    Ownedˉbranches, Ownedˉbranch + 8u32
+                );
+                if Ownedˉreachable {
+                    Ownedˉavailableˉlow = Ownedˉavailableˉlow &
+                        Ownedˉbranchˉlow;
+                    Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
+                        Ownedˉbranchˉhigh;
+                } else {
+                    Ownedˉavailableˉlow = Ownedˉbranchˉlow;
+                    Ownedˉavailableˉhigh = Ownedˉbranchˉhigh;
+                    Ownedˉreachable = true;
+                }
+            }
+            Ownedˉbranch = Ownedˉbranch + 12u32;
+        }
+        if !Ownedˉreachable { return false; }
+
+        let Ownedˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input, Functionˉcode + Ownedˉcursor
+        ));
+        let Ownedˉwidth: u32 = Hˉinstructionˉwidth(
+            Input, Functionˉcode, Ownedˉcursor, Ownedˉopcode
+        );
+
+        if Ownedˉopcode == 4u32 || Ownedˉopcode == 5u32 ||
+            Ownedˉopcode == 205u32 {
+            let Ownedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Functionˉcode + Ownedˉcursor + 1u32
+            );
+            var Ownedˉrank: u32 = 4294967295u32;
+            if Ownedˉlocal < Localˉslots && Hˉownedˉlocalˉshape(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Localˉshapes, Ownedˉlocal, Minor
+            ) {
+                Ownedˉrank = 0u32;
+                var Ownedˉearlier: u32 = 0u32;
+                while Ownedˉearlier < Ownedˉlocal {
+                    if Hˉownedˉlocalˉshape(
+                        Input, Types,
+                        Bytesˉreadˉu32ˉlittle(Input, Types),
+                        Localˉshapes, Ownedˉearlier, Minor
+                    ) { Ownedˉrank = Ownedˉrank + 1u32; }
+                    Ownedˉearlier = Ownedˉearlier + 1u32;
+                }
+            }
+            if Ownedˉrank != 4294967295u32 {
+                if Ownedˉopcode == 4u32 || Ownedˉopcode == 205u32 {
+                    var Ownedˉavailable: bool = false;
+                    if Ownedˉrank < 32u32 {
+                        Ownedˉavailable = ((Ownedˉavailableˉlow >>
+                            Ownedˉrank) & 1u32) == 1u32;
+                    } else {
+                        Ownedˉavailable = ((Ownedˉavailableˉhigh >>
+                            (Ownedˉrank - 32u32)) & 1u32) == 1u32;
+                    }
+                    if !Ownedˉavailable { return false; }
+                }
+                if Ownedˉopcode == 5u32 {
+                    let Ownedˉstoredˉkind: u32 = U32ˉfromˉu8(
+                        Bytesˉreadˉu8(Localˉshapes, Ownedˉlocal * 5u32)
+                    );
+                    var Ownedˉalreadyˉavailable: bool = false;
+                    if Ownedˉrank < 32u32 {
+                        Ownedˉalreadyˉavailable =
+                            ((Ownedˉavailableˉlow >> Ownedˉrank) & 1u32)
+                                == 1u32;
+                    } else {
+                        Ownedˉalreadyˉavailable =
+                            ((Ownedˉavailableˉhigh >>
+                                (Ownedˉrank - 32u32)) & 1u32) == 1u32;
+                    }
+                    if Ownedˉstoredˉkind != 23u32 &&
+                        Ownedˉalreadyˉavailable {
+                        return false;
+                    }
+                    if Ownedˉrank < 32u32 {
+                        Ownedˉavailableˉlow = Ownedˉavailableˉlow |
+                            (1u32 << Ownedˉrank);
+                    } else {
+                        Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
+                            (1u32 << (Ownedˉrank - 32u32));
+                    }
+                }
+                if Ownedˉopcode == 205u32 {
+                    if Ownedˉrank < 32u32 {
+                        Ownedˉavailableˉlow = Ownedˉavailableˉlow &
+                            ~(1u32 << Ownedˉrank);
+                    } else {
+                        Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
+                            ~(1u32 << (Ownedˉrank - 32u32));
+                    }
+                }
+            }
+        }
+        if Ownedˉopcode == 206u32 {
+            let Ownedˉparent: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Functionˉcode + Ownedˉcursor + 1u32
+            );
+            if Ownedˉparent >= Localˉslots || !Hˉownedˉlocalˉshape(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                Localˉshapes, Ownedˉparent, Minor
+            ) || U32ˉfromˉu8(Bytesˉreadˉu8(
+                Localˉshapes, Ownedˉparent * 5u32
+            )) != 25u32 { return false; }
+            var Ownedˉparentˉrank: u32 = 0u32;
+            var Ownedˉparentˉearlier: u32 = 0u32;
+            while Ownedˉparentˉearlier < Ownedˉparent {
+                if Hˉownedˉlocalˉshape(
+                    Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
+                    Localˉshapes, Ownedˉparentˉearlier, Minor
+                ) { Ownedˉparentˉrank = Ownedˉparentˉrank + 1u32; }
+                Ownedˉparentˉearlier = Ownedˉparentˉearlier + 1u32;
+            }
+            var Ownedˉparentˉavailable: bool = false;
+            if Ownedˉparentˉrank < 32u32 {
+                Ownedˉparentˉavailable = ((Ownedˉavailableˉlow >>
+                    Ownedˉparentˉrank) & 1u32) == 1u32;
+            } else {
+                Ownedˉparentˉavailable = ((Ownedˉavailableˉhigh >>
+                    (Ownedˉparentˉrank - 32u32)) & 1u32) == 1u32;
+            }
+            if !Ownedˉparentˉavailable { return false; }
+        }
+        if Ownedˉopcode == 48u32 || Ownedˉopcode == 49u32 {
+            Ownedˉbranches = Bytesˉconcat(
+                Ownedˉbranches,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
+                        Input, Functionˉcode + Ownedˉcursor + 1u32
+                    )),
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉlow),
+                        Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉhigh)
+                    )
+                )
+            );
+            if Ownedˉopcode == 48u32 { Ownedˉreachable = false; }
+        }
+        if Ownedˉopcode == 81u32 { Ownedˉreachable = false; }
+        Ownedˉcursor = Ownedˉcursor + Ownedˉwidth;
+    }
+    return true;
+}
+
 export fn Iˉcontrol(Input: bytes) -> bytes {
     let Controlˉinvalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Controlˉtotal: u32 = Bytesˉlength(Input);
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     var Controlˉenvelope: u32 = 12u32;
     var Controlˉsectionˉkind: u32 = 1u32;
     var Controlˉpayload: u32 = 0u32;
@@ -1648,7 +2087,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     var Controlˉfunctionsˉend: u32 = 0u32;
     var Controlˉcode: u32 = 0u32;
     var Controlˉcodeˉlength: u32 = 0u32;
-    while Controlˉsectionˉkind <= 5u32 {
+    var Types: u32 = 0u32;
+    while Controlˉsectionˉkind <= 7u32 {
         Controlˉpayload = Controlˉenvelope + 8u32;
         Controlˉpayloadˉlength = Bytesˉreadˉu32ˉlittle(
             Input,
@@ -1662,6 +2102,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉcode = Controlˉpayload;
             Controlˉcodeˉlength = Controlˉpayloadˉlength;
         }
+        if Controlˉsectionˉkind == 7u32 { Types = Controlˉpayload; }
         Controlˉenvelope = Controlˉpayload + Controlˉpayloadˉlength;
         Controlˉsectionˉkind = Controlˉsectionˉkind + 1u32;
     }
@@ -1790,47 +2231,19 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 Input,
                 Controlˉfunctionˉcode + Controlˉcursor
             ));
-            var Controlˉwidth: u32 = Hˉfixedˉinstructionˉwidth(
+            let Controlˉwidth: u32 = Hˉinstructionˉwidth(
+                Input,
+                Controlˉfunctionˉcode,
+                Controlˉcursor,
                 Controlˉopcode
             );
-            if Controlˉopcode == 192u32 {
-                Controlˉwidth = 3u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input,
-                    Controlˉfunctionˉcode + Controlˉcursor + 2u32
-                )) == 0u32 {
-                    Controlˉwidth = 5u32;
-                }
-            }
-            if Controlˉopcode == 193u32 {
-                Controlˉwidth = 2u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input,
-                    Controlˉfunctionˉcode + Controlˉcursor + 1u32
-                )) == 0u32 {
-                    Controlˉwidth = 6u32;
-                }
-            }
-            if Controlˉopcode == 194u32 {
-                Controlˉwidth = 3u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input,
-                    Controlˉfunctionˉcode + Controlˉcursor + 2u32
-                )) == 0u32 {
-                    Controlˉwidth = 7u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Input,
-                        Controlˉfunctionˉcode + Controlˉcursor + 1u32
-                    )) == 19u32 {
-                        Controlˉwidth = 11u32;
-                    }
-                }
-            }
             Controlˉaggregateˉinstructions = Controlˉaggregateˉinstructions
                 + 1u32;
             Controlˉfunctionˉinstructions =
                 Controlˉfunctionˉinstructions + 1u32;
-            if Controlˉopcode == 205u32 { Controlˉhasˉtake = true; }
+            if Controlˉopcode == 205u32 || Controlˉopcode == 206u32 {
+                Controlˉhasˉtake = true;
+            }
             if Controlˉaggregateˉinstructions > 400000u32 {
                 return Controlˉinvalid;
             }
@@ -1869,171 +2282,17 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         }
         if Controlˉhasˉtake {
             if Controlˉfunctionˉinstructions > 4096u32 ||
-                Controlˉhasˉbackwardˉcontrol {
+                Controlˉhasˉbackwardˉcontrol || !Iˉownedˉcontrolˉisˉvalid(
+                    Input,
+                    Minor,
+                    Types,
+                    Controlˉfunctionˉcode,
+                    Controlˉfunctionˉcodeˉlength,
+                    Controlˉlocalˉslots,
+                    Controlˉparameterˉcount,
+                    Controlˉlocalˉshapes
+                ) {
                 return Controlˉinvalid;
-            }
-            var Ownedˉvectorˉcount: u32 = 0u32;
-            var Ownedˉavailableˉlow: u32 = 0u32;
-            var Ownedˉavailableˉhigh: u32 = 0u32;
-            var Ownedˉslot: u32 = 0u32;
-            while Ownedˉslot < Controlˉlocalˉslots {
-                if U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Controlˉlocalˉshapes, Ownedˉslot * 5u32
-                )) == 23u32 {
-                    if Ownedˉvectorˉcount >= 64u32 {
-                        return Controlˉinvalid;
-                    }
-                    if Ownedˉslot < Controlˉparameterˉcount {
-                        if Ownedˉvectorˉcount < 32u32 {
-                            Ownedˉavailableˉlow = Ownedˉavailableˉlow |
-                                (1u32 << Ownedˉvectorˉcount);
-                        } else {
-                            Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
-                                (1u32 << (Ownedˉvectorˉcount - 32u32));
-                        }
-                    }
-                    Ownedˉvectorˉcount = Ownedˉvectorˉcount + 1u32;
-                }
-                Ownedˉslot = Ownedˉslot + 1u32;
-            }
-
-            var Ownedˉbranches: bytes = Controlˉinvalid;
-            var Ownedˉcursor: u32 = 0u32;
-            var Ownedˉreachable: bool = true;
-            while Ownedˉcursor < Controlˉfunctionˉcodeˉlength {
-                var Ownedˉbranch: u32 = 0u32;
-                while Ownedˉbranch < Bytesˉlength(Ownedˉbranches) {
-                    if Bytesˉreadˉu32ˉlittle(
-                        Ownedˉbranches, Ownedˉbranch
-                    ) == Ownedˉcursor {
-                        let Ownedˉbranchˉlow: u32 = Bytesˉreadˉu32ˉlittle(
-                            Ownedˉbranches, Ownedˉbranch + 4u32
-                        );
-                        let Ownedˉbranchˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
-                            Ownedˉbranches, Ownedˉbranch + 8u32
-                        );
-                        if Ownedˉreachable {
-                            Ownedˉavailableˉlow = Ownedˉavailableˉlow &
-                                Ownedˉbranchˉlow;
-                            Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
-                                Ownedˉbranchˉhigh;
-                        } else {
-                            Ownedˉavailableˉlow = Ownedˉbranchˉlow;
-                            Ownedˉavailableˉhigh = Ownedˉbranchˉhigh;
-                            Ownedˉreachable = true;
-                        }
-                    }
-                    Ownedˉbranch = Ownedˉbranch + 12u32;
-                }
-                if !Ownedˉreachable { return Controlˉinvalid; }
-
-                let Ownedˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
-                    Input, Controlˉfunctionˉcode + Ownedˉcursor
-                ));
-                var Ownedˉwidth: u32 = Hˉfixedˉinstructionˉwidth(
-                    Ownedˉopcode
-                );
-                if Ownedˉopcode == 192u32 {
-                    Ownedˉwidth = 3u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Input,
-                        Controlˉfunctionˉcode + Ownedˉcursor + 2u32
-                    )) == 0u32 { Ownedˉwidth = 5u32; }
-                }
-                if Ownedˉopcode == 193u32 {
-                    Ownedˉwidth = 2u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Input,
-                        Controlˉfunctionˉcode + Ownedˉcursor + 1u32
-                    )) == 0u32 { Ownedˉwidth = 6u32; }
-                }
-                if Ownedˉopcode == 194u32 {
-                    Ownedˉwidth = 3u32;
-                    if U32ˉfromˉu8(Bytesˉreadˉu8(
-                        Input,
-                        Controlˉfunctionˉcode + Ownedˉcursor + 2u32
-                    )) == 0u32 {
-                        Ownedˉwidth = 7u32;
-                        if U32ˉfromˉu8(Bytesˉreadˉu8(
-                            Input,
-                            Controlˉfunctionˉcode + Ownedˉcursor + 1u32
-                        )) == 19u32 { Ownedˉwidth = 11u32; }
-                    }
-                }
-
-                if Ownedˉopcode == 4u32 || Ownedˉopcode == 5u32 ||
-                    Ownedˉopcode == 205u32 {
-                    let Ownedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
-                        Input,
-                        Controlˉfunctionˉcode + Ownedˉcursor + 1u32
-                    );
-                    var Ownedˉrank: u32 = 4294967295u32;
-                    if Ownedˉlocal < Controlˉlocalˉslots &&
-                        U32ˉfromˉu8(Bytesˉreadˉu8(
-                            Controlˉlocalˉshapes, Ownedˉlocal * 5u32
-                        )) == 23u32 {
-                        Ownedˉrank = 0u32;
-                        var Ownedˉearlier: u32 = 0u32;
-                        while Ownedˉearlier < Ownedˉlocal {
-                            if U32ˉfromˉu8(Bytesˉreadˉu8(
-                                Controlˉlocalˉshapes,
-                                Ownedˉearlier * 5u32
-                            )) == 23u32 {
-                                Ownedˉrank = Ownedˉrank + 1u32;
-                            }
-                            Ownedˉearlier = Ownedˉearlier + 1u32;
-                        }
-                    }
-                    if Ownedˉrank != 4294967295u32 {
-                        if Ownedˉopcode == 4u32 || Ownedˉopcode == 205u32 {
-                            var Ownedˉavailable: bool = false;
-                            if Ownedˉrank < 32u32 {
-                                Ownedˉavailable = ((Ownedˉavailableˉlow >>
-                                    Ownedˉrank) & 1u32) == 1u32;
-                            } else {
-                                Ownedˉavailable = ((Ownedˉavailableˉhigh >>
-                                    (Ownedˉrank - 32u32)) & 1u32) == 1u32;
-                            }
-                            if !Ownedˉavailable { return Controlˉinvalid; }
-                        }
-                        if Ownedˉopcode == 5u32 {
-                            if Ownedˉrank < 32u32 {
-                                Ownedˉavailableˉlow = Ownedˉavailableˉlow |
-                                    (1u32 << Ownedˉrank);
-                            } else {
-                                Ownedˉavailableˉhigh = Ownedˉavailableˉhigh |
-                                    (1u32 << (Ownedˉrank - 32u32));
-                            }
-                        }
-                        if Ownedˉopcode == 205u32 {
-                            if Ownedˉrank < 32u32 {
-                                Ownedˉavailableˉlow = Ownedˉavailableˉlow &
-                                    ~(1u32 << Ownedˉrank);
-                            } else {
-                                Ownedˉavailableˉhigh = Ownedˉavailableˉhigh &
-                                    ~(1u32 << (Ownedˉrank - 32u32));
-                            }
-                        }
-                    }
-                }
-                if Ownedˉopcode == 48u32 || Ownedˉopcode == 49u32 {
-                    Ownedˉbranches = Bytesˉconcat(
-                        Ownedˉbranches,
-                        Bytesˉconcat(
-                            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
-                                Input,
-                                Controlˉfunctionˉcode + Ownedˉcursor + 1u32
-                            )),
-                            Bytesˉconcat(
-                                Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉlow),
-                                Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉhigh)
-                            )
-                        )
-                    );
-                    if Ownedˉopcode == 48u32 { Ownedˉreachable = false; }
-                }
-                if Ownedˉopcode == 81u32 { Ownedˉreachable = false; }
-                Ownedˉcursor = Ownedˉcursor + Ownedˉwidth;
             }
         }
         Controlˉfunctionˉindex = Controlˉfunctionˉindex + 1u32;
