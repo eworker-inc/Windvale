@@ -1,0 +1,21 @@
+#!wv/1 en@1
+module Enumˉu8ˉusedˉmain;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Deliveryˉstate: u8 {
+    Pending = 1u8;
+    Complete = 2u8;
+}
+
+fn Read() -> Deliveryˉstate {
+    return Deliveryˉstate.Complete;
+}
+
+export fn Main() -> i32 {
+    if Read() == Deliveryˉstate.Complete {
+        return 42;
+    }
+    return 1;
+}

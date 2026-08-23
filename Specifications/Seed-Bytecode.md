@@ -8,7 +8,8 @@ extension, the WVB 1.14 floating-point extension, and the WVB 1.15 `unit` and
 `never` extension, the WVB 1.16 named variant-field extension, the WVB 1.17
 fixed-array extension, the WVB 1.18 Vector and Sequence type-representation
 extension, the WVB 1.19 scalar Vector/Sequence execution extension, and the
-WVB 1.20 owned-Vector local-transfer extension.
+WVB 1.20 owned-Vector local-transfer extension, and the WVB 1.21 launcher-owned
+memory-budget entry extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -30,6 +31,9 @@ WVB 1.19 adds a first runtime-backed scalar operation subset with explicit
 linear Vector evidence.
 WVB 1.20 adds an exact local transfer that moves that evidence without
 retaining the backing or leaving a second mutable owner.
+WVB 1.21 adds one representation-hidden owned token supplied by the launcher
+as the sole parameter of exported `Main`. Source bytecode cannot construct,
+copy, store, return, or embed the token.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -37,7 +41,8 @@ never evidence, 1.16 for multi-field variant metadata or field extraction, and
 1.17 for any fixed-array type, value shape, construction, or indexing operation,
 1.18 for any Vector or Sequence descriptor or value shape, 1.19 for any
 Vector or Sequence execution operation, and 1.20 for `local.take`.
-A WVB 1.20-capable reader accepts all ten versions and never admits an
+WVB 1.21 is selected only for the exact launcher-owned memory-budget entry.
+A WVB 1.21-capable reader accepts all eleven versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -59,7 +64,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, or 20
+u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, or 21
 u32      section count: 7
 ```
 
@@ -191,7 +196,12 @@ repeat:
 
 Exports are strictly sorted by ordinal name. An exported name must equal the referenced function's Seed name.
 
-The reference launcher selects exported `Main() -> i32` as the executable source entry point. Future native object formats must define an ASCII-safe external symbol mapping separately.
+For WVB 1.11 through 1.20, the reference launcher selects exported
+`Main() -> i32` as the executable source entry point. WVB 1.21 instead requires
+exactly one exported `Main(Memoryˉbudget) -> i32`; the launcher transfers one
+fresh root-budget token into that parameter before the first instruction.
+Future native object formats must define an ASCII-safe external symbol mapping
+separately.
 
 ## Types section
 
@@ -280,6 +290,7 @@ capacity, allocator, or authority.
 22 fixed array followed by u32 nominal-type index (WVB 1.17 only)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
+25 Memoryˉbudget launcher token (WVB 1.21 only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -298,6 +309,16 @@ index of the matching kind. A collection shape is byte `12` or `13`, its
 recursively encoded non-collection element shape, then its `u32` maximum.
 Nominal identity and collection kind/element/maximum are exact.
 
+Shape `25` is not a general value shape. It occurs exactly once in a WVB 1.21
+module: as parameter zero of the one-parameter function named `Main`. That
+function returns `i32` and is exported under the same name. Shape `25` is
+invalid as any other parameter, result, non-parameter local, record field,
+variant payload, collection element, or Types entry. No instruction constructs
+it, and `local.load` and `local.store` reject its parameter slot. This first
+encoding makes launcher transfer and deterministic top-level release
+executable without exposing representation or claiming `Split`, allocation
+leases, or collection allocation.
+
 `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64` are ordinary scalar
 shapes. They do not
 widen counts, indices, lengths, code offsets, enum backing values, or existing
@@ -309,7 +330,8 @@ before WVB 1.15. Variant field-list marker `2` and opcode `C4` are invalid
 before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
-1.19, and opcode `CD` is invalid before WVB 1.20. Each later version admits
+1.19, and opcode `CD` is invalid before WVB 1.20. Shape byte `25` is valid only
+under the WVB 1.21 entry rule above. Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
 
@@ -522,6 +544,17 @@ uses `local.take`; backward branches in such a function are rejected until the
 loop ownership fixed-point is implemented. These are verifier limits, not
 portable source collection limits.
 
+WVB 1.21 transfers one opaque launcher-owned root-budget token into `Main`'s
+parameter-zero cell. The current scalar profile represents the token as an
+identity plus provider generation and keeps its byte maximum and accounting
+state outside bytecode. Because this checkpoint exposes no budget operation,
+the maximum cannot affect program results yet. A completed top-level return
+validates the token, clears its cell, and releases the root exactly once before
+publishing the `i32` result. Rejection, trap, or provider teardown invalidates
+the invocation domain without making the token available to bytecode. General
+moves, nested calls, `Split`, allocation leases, and fallible collection
+construction remain later ownership checkpoints.
+
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
 
@@ -632,7 +665,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.20 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, and `local.take` requires exactly 1.20.
+- The version is WVB 1.11 through 1.21 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, `local.take` requires at least 1.20, and shape `25` requires exactly 1.21.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -644,6 +677,7 @@ Verification is required before execution and rejects a module unless:
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
 - WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join; functions using `local.take` satisfy its explicit instruction, Vector-local, and acyclic-control limits.
+- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return

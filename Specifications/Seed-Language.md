@@ -94,12 +94,16 @@ Parameters and local variables may also carry an exact required root capability 
   contextual; an explicit suffix must equal the backing; negatives require a
   signed backing; signed minima are admitted; and `-0` is the same value as
   `0` for uniqueness. Source analysis implements all eight backings. The
-  current WVB 1.20 writer emits exact signed `i32` backing only and rejects the
-  other seven as `Unsupportedˉshape` without narrowing or partial output.
+  current WVB writer emits exact signed `i32` backing only and rejects a
+  retained use of any other backing as `Unsupportedˉshape` without narrowing
+  or partial output. Optimized output may omit the entire nominal declaration
+  family only when no nominal shape is used in the complete retained WIR.
 - A descriptorless Seed variant contains 1 through 256 unique cases. A case has no payload or exactly one uniquely named non-`void`, non-builder, non-collection, non-variant payload. An admitted edition-1 case has zero through 64 uniquely named fields; an empty parenthesized declaration is invalid and a no-data case omits parentheses.
 - A constant name uses `ALL_CAPS_WITH_UNDERSCORES`, has one explicit admitted scalar or enum type, and has no mutable storage or address identity.
 - A root module exports functions explicitly with `export`. An imported source module marks every function `export` and may expose record and enum declarations as its static source contract; composition internalizes all three declaration kinds rather than re-exporting them from the root WVB.
-- `windvale run` looks for an exported function named `Main` with signature `fn() -> i32`.
+- Descriptorless Seed `windvale run` looks for exported `Main() -> i32`.
+  Edition-1 WVB 1.21 instead uses the exact launcher-owned
+  `Main(Memoryˉbudget) -> i32` entry contract.
 - Capability declarations must be unique and use qualified lowercase names.
 - A portable module cannot declare or call hosted capabilities.
 

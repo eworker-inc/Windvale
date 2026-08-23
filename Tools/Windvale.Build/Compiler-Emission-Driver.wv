@@ -16,7 +16,19 @@ fn Failure(Result: Emission.Compilerˉsourceˉemission) -> text {
     Report = Textˉconcat(Report, " analysis-status=");
     Report = Textˉconcat(Report, Enumˉname(Result.Analysisˉstatus));
     Report = Textˉconcat(Report, " wvb-status=");
-    return Textˉconcat(Report, Enumˉname(Result.Compilation.Status));
+    Report = Textˉconcat(Report, Enumˉname(Result.Compilation.Status));
+    Report = Textˉconcat(Report, " function=");
+    Report = Textˉconcat(
+        Report, U32ˉformat(Result.Compilation.Failureˉfunction)
+    );
+    Report = Textˉconcat(Report, " operation=");
+    Report = Textˉconcat(
+        Report, U32ˉformat(Result.Compilation.Failureˉoperation)
+    );
+    Report = Textˉconcat(Report, " source-line=");
+    return Textˉconcat(
+        Report, U32ˉformat(Result.Compilation.Failureˉline)
+    );
 }
 
 fn Success(Result: Emission.Compilerˉsourceˉemission) -> text {

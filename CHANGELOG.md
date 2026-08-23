@@ -8,6 +8,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Began Language 1.0 Migration Slice 5 with an exact WVB 1.21
+  launcher-to-entry `Memoryˉbudget` transfer. The compiler, independent
+  verifier, and source-built scalar runner admit the opaque owner only as the
+  sole `Main` parameter, reject forgeable copies or alternate placements, and
+  release it deterministically on invocation teardown. Optimized emission also
+  omits the complete nominal Types family when the full retained WIR closure has
+  no nominal use, while a used unsupported enum still rejects without output.
 - Froze the exact Windvale Language 1.0 source design and completed the first
   vertical compiler slice over its identity-pinned 16-bundle/72-source fixture
   inventory. Project 3 now supplies an exact source-input lock, pinned lock

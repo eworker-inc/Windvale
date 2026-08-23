@@ -269,9 +269,15 @@ reachable-function scan retains only explicit data targeted by `Bytesˉconstant`
 declaration. Retained explicit declarations are validated while they are encoded;
 omitted declarations are validated once without adding payload bytes. The filtered
 canonical data order remaps explicit and synthetic values into one ordinal
-namespace. Nominal Types remain complete in this slice; pruning them requires a
-separate referenced-type closure. Identical optimized inputs produce identical
-retained order, section contents, and bytes.
+namespace. Optimized emission now has one conservative all-or-nothing nominal
+case: if the complete validated WVIR closure contains no declared or generic
+nominal shape in a function result, parameter, local, temporary, operation
+result, record/variant target, or collection target, it emits the canonical
+zero-count Types section. If any such use exists, the complete Types order is
+retained unchanged. This removes wholly unused imported declaration families
+without introducing partial index remapping; a future referenced-type closure
+is still required for selective nominal pruning. Identical optimized inputs
+produce identical retained order, section contents, and bytes.
 
 The optimized compiler derives reachability from the same validated source scan,
 symbol directory, WVIR summary, and canonical orders already prepared for emission.
@@ -296,9 +302,9 @@ prefix. When templates exist, the backend builds bounded record and variant
 target maps, omits every template, compacts concrete declarations, and remaps all
 downstream shapes and operation targets before serialization.
 
-Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve the exact signed `i32` value as its canonical two's-complement 32-bit pattern, including `-2147483648`. Descriptorless Seed declarations continue to supply their historical nonnegative `i32` subset. An edition-1 enum backed by `i8`, `i16`, `i64`, `u8`, `u16`, `u32`, or `u64` is valid source-analysis evidence but makes the current WVB 1.20 writer return `Unsupportedˉshape` before it publishes a partial module; it is never narrowed to `i32`. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
+Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve the exact signed `i32` value as its canonical two's-complement 32-bit pattern, including `-2147483648`. Descriptorless Seed declarations continue to supply their historical nonnegative `i32` subset. An edition-1 enum backed by `i8`, `i16`, `i64`, `u8`, `u16`, `u32`, or `u64` is valid source-analysis evidence but makes the current writer return `Unsupportedˉshape` before it publishes a partial module whenever executable WVIR actually requires nominal Types; it is never narrowed to `i32`. A program whose entire nominal declaration family is unused may instead take the zero-count optimized Types path above. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
 
-Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
+Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; shape `16` encodes WVB 1.13 tag `17` for `rune`; and exact intrinsic shape `805306368` encodes WVB 1.21 byte `25` only at the launcher entry boundary. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result. Shape `25` is restricted to the sole parameter of exported `Main` returning `i32`; the remaining encodings apply uniformly wherever their source types are admitted.
 
 The main backend gives the generic serializer one independently validated
 materialization plan plus the exact source-to-WVB target maps. It emits each
@@ -601,11 +607,33 @@ generic arguments. Context propagation through value-producing control flow
 and generic calls remains later work.
 
 The exact edition-1 `Foundationˉmemory.Memoryˉbudget` source identity reaches
-valid WVIR as private owned shape `805306368`, but WVB emission deliberately
-returns `Unsupportedˉshape` and publishes no module. WVB gains no provisional
-type tag, opcode, or runtime representation from this checkpoint. The first
-supported encoding must arrive with exact move/destruction behavior, launcher
-or parent-domain transfer, bounded accounting, and malformed-module coverage.
+valid WVIR as private owned shape `805306368`. WVB 1.21 encodes that shape as
+byte `25` only when it is parameter zero and the sole parameter of exported
+`Main`, whose result is exactly `i32`. The encoder rejects the intrinsic in
+every other parameter, result, local, temporary, record, variant, or operation
+position. It emits no constructor or move opcode and does not place the
+intrinsic in Types. The compiler-selected minor is exactly 1.21 when the entry
+token is present; all earlier vocabularies remain available under that header.
+
+The canonical Foundation memory import currently also contains exact
+`Allocationˉreason: u8` and `Allocationˉfailure` declarations. The optimized
+no-nominal-use rule removes both from the entry fixture's executable Types
+section, so their deliberately unsupported enum representation does not block
+an unrelated budget parameter. `Enum-Backing-All.wv` is the matching positive
+dead-type oracle and emits a 217-byte executable with zero Types. The
+`Enum-U8-Used-Main.wv` oracle actually uses its `u8` enum and still returns
+`Unsupportedˉshape` without output.
+
+`Memory-Budget-Entry-Main.wv` deterministically emits a 242-byte WVB 1.21
+module with one 16-byte function body and a zero-count Types section. The
+independent verifier accepts that module and rejects version downgrade,
+primitive substitution, renamed entry, budget result, second budget parameter,
+budget local, budget local-load, budget local-store, and missing-export
+mutations. The source-built runner
+transfers one fresh opaque token, releases it once on completed top-level
+return, and produces `42`. `Split`, nested moves, allocation effects, leases,
+provider accounting, and fallible Vector construction remain later connected
+checkpoints.
 
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.

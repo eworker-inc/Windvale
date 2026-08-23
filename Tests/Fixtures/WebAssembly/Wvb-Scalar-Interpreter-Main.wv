@@ -1029,6 +1029,7 @@ export fn Main(Request: bytes) -> bytes {
     var Functionˉcodeˉlengths: bytes = Invalid;
     var Functionˉshapeˉoffsets: bytes = Invalid;
     var Localˉshapes: bytes = Invalid;
+    var Mainˉhasˉmemoryˉbudget: bool = false;
     while Functionˉindex < Functionˉcount {
         Functionˉcursor = Functionˉcursor + 4u32
             + Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor);
@@ -1051,6 +1052,14 @@ export fn Main(Request: bytes) -> bytes {
         var Parameterˉnominalˉtoken: u32 = 0u32;
         while Shapeˉindex < Parameterˉcount {
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
+            if Shapeˉkind == 25u32 {
+                if Moduleˉminor != 21u32 || Functionˉindex != Mainˉindex ||
+                    Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
+                    Mainˉhasˉmemoryˉbudget {
+                    return Invalid;
+                }
+                Mainˉhasˉmemoryˉbudget = true;
+            }
             if Functionˉindex == Mainˉindex {
                 if Requestˉmajor == 2u32 {
                     if Shapeˉindex == 0u32 {
@@ -1092,6 +1101,7 @@ export fn Main(Request: bytes) -> bytes {
         if !Fixed.Shapeˉisˉsupported(Returnˉkind, Moduleˉminor) {
             return Invalid;
         }
+        if Returnˉkind == 25u32 { return Invalid; }
         Functionˉcursor = Functionˉcursor + 1u32;
         if Returnˉkind == 7u32 || Returnˉkind == 8u32 ||
             Returnˉkind == 11u32 || Returnˉkind == 22u32 ||
@@ -1117,7 +1127,7 @@ export fn Main(Request: bytes) -> bytes {
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) {
                 return Invalid;
             }
-            if Shapeˉkind == 21u32 { return Invalid; }
+            if Shapeˉkind == 21u32 || Shapeˉkind == 25u32 { return Invalid; }
             Localˉnominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
@@ -1170,7 +1180,14 @@ export fn Main(Request: bytes) -> bytes {
         );
         if Functionˉindex == Mainˉindex {
             if Requestˉmajor == 1u32 {
-                if Parameterˉcount != 0u32 { return Invalid; }
+                if Moduleˉminor == 21u32 {
+                    if Parameterˉcount != 1u32 ||
+                        !Mainˉhasˉmemoryˉbudget {
+                        return Invalid;
+                    }
+                } else if Parameterˉcount != 0u32 {
+                    return Invalid;
+                }
                 if Returnˉkind != 1u32 { return Invalid; }
             } else if Requestˉmajor == 2u32 {
                 if Parameterˉcount != 1u32 { return Invalid; }
@@ -1218,6 +1235,18 @@ export fn Main(Request: bytes) -> bytes {
         0u32,
         Functionˉcursor
     );
+    var Rootˉmemoryˉbudgetˉactive: bool = false;
+    if Mainˉhasˉmemoryˉbudget {
+        if Functionˉcursor < 8u32 { return Invalid; }
+        Rootˉmemoryˉbudgetˉactive = true;
+        Locals = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(1u32),
+                Bytesˉfromˉu32ˉlittle(1u32)
+            ),
+            Bytesˉslice(Locals, 8u32, Functionˉcursor - 8u32)
+        );
+    }
     var Stack: bytes = Invalid;
     // Keep descriptor identity separate from cell bits so pop never treats a
     // scalar with an offset/length-like value as heap ownership.
@@ -1455,6 +1484,7 @@ export fn Main(Request: bytes) -> bytes {
                 Localˉshapes,
                 Loadedˉshapeˉoffset
             );
+            if Loadedˉshapeˉkind == 25u32 { return Invalid; }
             var Loadedˉvalue: bytes = Bytesˉslice(
                 Locals,
                 Loadedˉlocalˉindex * 8u32,
@@ -1565,6 +1595,7 @@ export fn Main(Request: bytes) -> bytes {
                 Localˉshapes,
                 Storedˉshapeˉoffset
             );
+            if Storedˉshapeˉkind == 25u32 { return Invalid; }
             if Storedˉshapeˉkind == 3u32 || Storedˉshapeˉkind == 6u32 ||
                 Storedˉshapeˉkind == 23u32 ||
                 Storedˉshapeˉkind == 24u32 {
@@ -3789,6 +3820,19 @@ export fn Main(Request: bytes) -> bytes {
             );
             var Framesˉlength: u32 = Bytesˉlength(Frames);
             if Framesˉlength == 0u32 {
+                if Mainˉhasˉmemoryˉbudget {
+                    if !Rootˉmemoryˉbudgetˉactive ||
+                        Bytesˉlength(Locals) < 8u32 ||
+                        Bytesˉreadˉu32ˉlittle(Locals, 0u32) != 1u32 ||
+                        Bytesˉreadˉu32ˉlittle(Locals, 4u32) != 1u32 {
+                        return Invalid;
+                    }
+                    Locals = Bytesˉconcat(
+                        Zeroˉcell,
+                        Bytesˉslice(Locals, 8u32, Bytesˉlength(Locals) - 8u32)
+                    );
+                    Rootˉmemoryˉbudgetˉactive = false;
+                }
                 if Requestˉmajor == 2u32 {
                     Framesˉlength = Bytesˉlength(Heap);
                     Mainˉcodeˉoffset = Bytesˉreadˉu32ˉlittle(

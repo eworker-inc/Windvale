@@ -197,9 +197,11 @@ phase has already validated that member against its explicit Language 1.0
 backing type. This representation lets matching, equality, and name lookup stay
 nominal and lossless for every admitted fixed-integer backing while each output
 contract decides which backing representations it can serialize. The current
-WVB 1.20 writer accepts exact `i32`-backed enums only and rejects a module that
-contains any other enum backing before publishing bytecode; WIR does not
-truncate a wider or unsigned tag to fit that boundary.
+WVB writer accepts executable exact `i32`-backed enums only and rejects any
+retained nominal use of another backing before publishing bytecode; WIR does
+not truncate a wider or unsigned tag to fit that boundary. Optimized emission
+may omit the complete nominal declaration family only when a full WIR-closure
+scan proves that no nominal shape is used anywhere.
 
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. For an applied generic record target, typed lowering admits the complete type through the paired WVGT catalog, reconstructs and independently validates its substituted record layout, and gives the operation that private shape as both result and target; `Auxiliary` retains the template's WVSD declaration identity. A field read from that value emits the existing `Recordˉfield = 18` with the private receiver shape as target and the zero-based substituted field identity in `Auxiliary`. Its result is the field's exact substituted shape. Validation requires the private instance, declaration, record kind, layout, operand arity, field identity, and result shape to agree with the paired catalog.
 

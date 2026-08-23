@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-the scalar collection subset through WVB 1.20 but has not repinned the paired
+the launcher-owned budget entry through WVB 1.21 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.20. Its shared scalar interpreter
+The current source-built runner accepts WVB 1.11 through 1.21. Its shared scalar interpreter
 implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact checked
 overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,6 +124,17 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
+WVB 1.21 supplies one fresh opaque root-budget token to the sole parameter of
+exported `Main(Memoryˉbudget) -> i32`. The interpreter validates that exact
+shape placement before execution and rejects every bytecode load or store of
+the token. The active invocation owns an identity/generation pair outside the
+ordinary forgeable value vocabulary. On completed top-level return it verifies
+the pair, zeros the parameter cell, and releases the invocation token exactly
+once before publishing the result. A failed invocation is torn down as one
+resource domain. The launcher's maximum-byte accounting is intentionally
+unobservable until `Split` and allocation-lease operations land; no bytecode
+constructor, general call transfer, or fallible allocation API is claimed by
+this checkpoint.
 Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
@@ -135,8 +146,8 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 228,106-byte WVB at SHA-256
-`63b8c862372e619bc9472d85ce850e7d621ed2106950b3e2ddaf801eaa6c78ee`.
+The current Windows development build is a 230,259-byte WVB at SHA-256
+`d1393ec3cb83d95cf86902768893846e4dc0e5a742b46363c86e19712ec674ba`.
 The promoted profile-5 application identity in the table above has not been
 repinned to this source checkpoint.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
@@ -154,6 +165,17 @@ during control/ownership analysis, and capacity and index violations remain
 valid bytecode and fail exactly as `WVR3008`. Paired
 reconstruction, browser execution, and candidate promotion remain separate
 gates.
+
+The compiler-produced budget-entry fixture is a deterministic 242-byte WVB
+1.21 module with 16 code bytes and SHA-256
+`499c59fa1207917fd64ee0703569d3dc4a80c5075fc99923e657adc5e4f9ed65`.
+The compiler-aligned verifier accepts it and the source-built runner returns
+`42` after releasing the entry token. A separate bounded verifier accepts the
+canonical module and rejects nine mutations spanning version, parameter shape
+and count, entry identity, return and local placement, local load and store, and
+a missing export. This is
+development evidence for the source contract, not a repinning of the promoted
+paired-host runner.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

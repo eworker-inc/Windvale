@@ -1,0 +1,11 @@
+#!wv/1 en@1
+module Languageˉoneˉmemoryˉbudgetˉentryˉmain;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    return 42;
+}

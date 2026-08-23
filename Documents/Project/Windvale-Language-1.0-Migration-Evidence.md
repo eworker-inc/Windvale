@@ -594,11 +594,13 @@ Specialization indices begin after the complete WVSD entry directory rather
 than after the source function count. `Generic-Multiple-Specializations.wv`
 therefore places a record before `Identity<Type>`, infers distinct `i32` and
 `u32` instances, and explicitly reuses the `i32` instance. Two current split
-builds produce the same 498-byte WVB with SHA-256
-`d2054fc0a60dca7d48aa2427efb608b10d2198425960bc54381babc5824b7d01`.
+builds produce the same 473-byte WVB with SHA-256
+`39811a38c92b8d4a6459750c64f85cf4e500bb4a2e4e83d31ab3bab626a70e12`.
 The strict compiler-aligned verifier accepts it and the native scalar runner
 returns `42`. Its three reachable WVB functions are `Main` plus the two concrete
-bodies; the source generic placeholder is not emitted or exported.
+bodies; the source generic placeholder is not emitted or exported. The current
+optimized writer also removes the unused ordinary record declaration because
+the complete retained WIR has no nominal use.
 
 Independent validation now checks the exact embedded substitution, concrete
 parameter and result signatures, catalog/declaration mapping, and specialized
@@ -2234,3 +2236,68 @@ Windows batch sources retain required CRLF, and macron-bearing diagnostics use
 exact one-line comparisons rather than code-page-sensitive `findstr` patterns.
 The independent verification planner passes 31 general and 194 native routing
 cases, including explicit coverage of this 0833 amendment manifest.
+
+## Slice 5 launcher memory-budget transfer checkpoint
+
+Decision 0834 advances the canonical
+`Foundationˉmemory.Memoryˉbudget` identity across bytecode verification and
+source-built execution without pretending that general resource operations are
+complete. WVB 1.21 appends private shape byte `25`. Its only valid placement is
+the sole parameter of exported `Main(Memoryˉbudget) -> i32`; it cannot appear in
+another signature, local, temporary, aggregate, collection, operation, call,
+constructor, move, load, store, or return.
+
+At launch, the scalar runner creates a fresh opaque identity/generation token
+and transfers it into the entry parameter. Completed top-level return verifies
+the token, zeros the cell, releases the invocation ownership exactly once, and
+then publishes the result. Failure tears down the invocation domain. Budget
+capacity is deliberately unobservable until `Split`, allocation leases, and
+exact provider accounting exist; this checkpoint adds no public constructor or
+fallible collection API.
+
+The exact `Memory-Budget-Entry-Main.wv` fixture emits a deterministic 242-byte
+WVB with 16 code bytes at SHA-256
+`499c59fa1207917fd64ee0703569d3dc4a80c5075fc99923e657adc5e4f9ed65`.
+The compiler-aligned verifier accepts it and the source-built runner returns
+`42`. An independent bounded verifier accepts the valid module and rejects
+nine malformed variants covering version, parameter shape/count, entry name,
+return and local placement, load, store, and a missing export.
+
+One conservative emitter optimization removes a connected blocker. When a
+complete WIR-closure scan sees no nominal use in signatures, locals,
+temporaries, operations, aggregates, variants, or collections, optimized output
+emits an empty Types section. If any nominal use exists, the complete table and
+existing indices remain unchanged. The all-width declaration-only enum fixture
+therefore emits a 217-byte executable and returns `42`; an actually used `u8`
+enum still returns `Unsupportedˉshape`. This does not implement partial type
+pruning or widened enum execution.
+
+The maintained analyzer remains 1,132,570 bytes at SHA-256
+`e3eef9e462f47cb88d4de174eb1e714106b346137538d9e6b396361b834d8471`.
+The current emitter is 1,054,673 bytes at SHA-256
+`2b5b4af681a36569b39be9dd46999af5b7babbc5cff53e6d3aec5227590a7e8b`.
+Exact self-emission consumes 1,961,550 source bytes and produces 104 manifest
+bytes, 294,832 binding bytes, 3,926,604 WIR bytes, 554 functions, and 876,881
+code bytes. The independent native verifier accepts the resulting WVB. The
+current source-built runner is 230,259 WVB bytes at SHA-256
+`d1393ec3cb83d95cf86902768893846e4dc0e5a742b46363c86e19712ec674ba`.
+
+The focused Language 1.0 owner advances from 427 to 440 cases. Its 12 budget
+cases cover deterministic compilation, one valid and nine malformed verifier
+cases, and runtime transfer/release; the added enum case preserves the used-u8
+rejection. The 108-owner registry advances from 5,211 to 5,224 cases at
+SHA-256
+`78dcce3ba389c2e265c1601bbe32f84e873e8742c795ab1a243317013301b0db`.
+This remains an early Slice 5 checkpoint. General moves and borrows, `using`,
+reverse-order release, budget splitting/accounting, and one real hosted resource
+consumer remain before Slice 5 is complete.
+
+The final Windows child run completed all 13 phases and printed the exact
+440-case passing summary in 727,310 ms. Its coordinator then rejected only the
+registered terminal text because that registry still named the pre-optimization
+498-byte generic-specializations artifact; the run had produced the correct
+473-byte artifact above. The registry and coordinator digest were corrected to
+the exact observed value. No compiler, verifier, runtime, fixture, or owner-child
+input changed afterward, so the passing child work was retained rather than
+rerun solely for terminal-string comparison; the independent frozen-input and
+verification-plan contracts were rerun against the corrected metadata.

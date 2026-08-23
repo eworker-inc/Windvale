@@ -1229,6 +1229,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Pushˉkind = U32ˉfromˉu8(
                     Bytesˉreadˉu8(Localˉshapes, Wantedˉshape)
                 );
+                if Pushˉkind == 25u32 { return Invalid; }
                 Pushˉnominal = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Wantedˉshape + 1u32
@@ -1245,6 +1246,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 Firstˉkind = U32ˉfromˉu8(
                     Bytesˉreadˉu8(Localˉshapes, Storedˉshape)
                 );
+                if Firstˉkind == 25u32 { return Invalid; }
                 Firstˉnominal = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Storedˉshape + 1u32

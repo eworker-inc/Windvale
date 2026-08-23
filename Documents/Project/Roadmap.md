@@ -117,11 +117,13 @@ Slice 4 now includes generic nominal materialization, contextual immutable fixed
 arrays, executable Vector/Sequence metadata and runtime operations, owned Vector
 local transfer, exact Foundation Sequence reads, Vector length/freeze, and exact
 freeze result contexts. [Decision 0832](../Decisions/0832-Bind-The-Canonical-Foundation-Memory-Budget-Identity.md)
-now adds the canonical qualified `Memoryˉbudget` source identity and owned WIR
-classification while explicitly rejecting WVB publication. The focused
-Language 1.0 owner declares 417 cases. The next connected result is the budget's
-runtime/launcher transfer and allocation-effect boundary, followed by public
-fallible Vector construction and recoverable append. Remaining collection
+adds the canonical qualified `Memoryˉbudget` source identity and owned WIR
+classification. [Decision 0834](../Decisions/0834-Transfer-The-Launcher-Memory-Budget-As-Wvb-1.21.md)
+begins Slice 5 by transferring that opaque owner
+from the launcher into the WVB 1.21 entry parameter and releasing it on
+invocation teardown. The focused Language 1.0 owner declares 440 cases. The next
+connected result is budget splitting, allocation leases/effects/accounting, and
+public fallible Vector construction with recoverable append. Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain
 later gates.

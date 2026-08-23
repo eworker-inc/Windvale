@@ -234,11 +234,13 @@ the pinned scalar runner returns `42` in 26 instructions.
 `Generic-Multiple-Specializations.wv` places a record before the generic
 declaration, infers `Identity<i32>` and `Identity<u32>`, and explicitly reuses
 the first instance. The current split compiler deterministically emits a
-498-byte WVB with SHA-256
-`d2054fc0a60dca7d48aa2427efb608b10d2198425960bc54381babc5824b7d01`.
+473-byte WVB with SHA-256
+`39811a38c92b8d4a6459750c64f85cf4e500bb4a2e4e83d31ab3bab626a70e12`.
 Strict compiler-aligned verification accepts it and the native scalar runner
 returns `42`. The WVB contains three reachable functions: `Main` and the two
-concrete specializations; the generic source placeholder is absent.
+concrete specializations; the generic source placeholder is absent. Its unused
+ordinary record declaration is also absent under the optimized writer's
+all-or-nothing no-nominal-use rule.
 
 `Generic-Collection-Analysis-Publication-Self-Test.wv` extends that source
 analysis proof to structural type-plus-constant inference. It rejects a
