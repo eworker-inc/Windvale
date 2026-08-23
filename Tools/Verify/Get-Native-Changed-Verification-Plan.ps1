@@ -976,6 +976,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md',
         'Documents/Project/Windvale-Language-1.0-Localization-Workloads.md',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0815-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
@@ -1128,6 +1129,7 @@ function Add-Native-Tool-Suite {
         'Verify-Language-1.0-Vector-Sequence-Runtime',
         'Verify-Language-1.0-Sequence-Reads',
         'Verify-Language-1.0-Vector-Reads-Freeze',
+        'Run-WebAssembly-Scalar-Wvb',
         'Verify-Generic-Nominal-Main-Pipeline',
         'Verify-Generic-Nominal-Function-Body',
         'Verify-Generic-Nominal-Declaration-Dependency',
@@ -1586,6 +1588,7 @@ foreach ($Path in $Paths) {
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0815-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',

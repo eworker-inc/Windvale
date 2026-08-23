@@ -4,7 +4,7 @@ profile core;
 platform linux, windows, windvale;
 authority application;
 
-enum Selection {
+enum Selection: i32 {
     Chosen = 0;
     Stopped = 1;
 }

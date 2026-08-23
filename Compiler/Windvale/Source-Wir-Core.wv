@@ -2311,8 +2311,16 @@ export fn Compilerˉsourceˉwirˉnominalˉmember(
                 let Enumˉvalue: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                     View.Source, Enumˉequals.Nextˉoffset, Enumˉequals.Nextˉline, Enumˉequals.Nextˉcolumn
                 );
+                var Enumˉliteral: Sourceˉlexer.Compilerˉsourceˉtoken = Enumˉvalue;
+                if Enumˉvalue.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+                    Enumˉliteral = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                        View.Source, Enumˉvalue.Nextˉoffset,
+                        Enumˉvalue.Nextˉline, Enumˉvalue.Nextˉcolumn
+                    );
+                }
                 let Enumˉend: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                    View.Source, Enumˉvalue.Nextˉoffset, Enumˉvalue.Nextˉline, Enumˉvalue.Nextˉcolumn
+                    View.Source, Enumˉliteral.Nextˉoffset,
+                    Enumˉliteral.Nextˉline, Enumˉliteral.Nextˉcolumn
                 );
                 Cursor = Enumˉend.Nextˉoffset;
                 Currentˉline = Enumˉend.Nextˉline;
@@ -4641,6 +4649,29 @@ fn Compilerˉsourceˉwirˉcompileˉliteralˉexpression(
             Integerˉshape = 13u32;
             Integerˉoperation = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
         }
+        var Positiveˉoverflow: bool = false;
+        if Integerˉshape == 1u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 2147483647u32;
+        }
+        if Integerˉshape == 7u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh >= 2147483648u32;
+        }
+        if Integerˉshape == 11u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 127u32;
+        }
+        if Integerˉshape == 12u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 32767u32;
+        }
+        if Positiveˉoverflow {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉconstant,
+                Build.Currentˉmodule,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
         return Compilerˉsourceˉwirˉemit(
             Build, Integerˉoperation, Integerˉshape,
             Compilerˉsourceˉwirˉempty(Source),
@@ -4718,6 +4749,34 @@ fn Compilerˉsourceˉwirˉcompileˉunaryˉexpression(
             Source, Expression.Offset, Expression.Line, Expression.Column,
             Expression.Firstˉoffset
         );
+    if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+        let Literal: Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Expression.Firstˉoffset, Position.Line, Position.Column,
+                Expression.Firstˉoffset + Expression.Firstˉlength,
+                0u32, 0u32
+            );
+        if Literal.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Integer {
+            let Kind: Sourceˉlexer.Compilerˉnumericˉkind = Literal.Numericˉkind;
+            if !Sourceˉlexer.Compilerˉsourceˉintegerˉfits(
+                    Kind, Literal.Numericˉvalue, Literal.Numericˉhigh, false
+                ) && Sourceˉlexer.Compilerˉsourceˉintegerˉfits(
+                    Kind, Literal.Numericˉvalue, Literal.Numericˉhigh, true
+                ) {
+                let Minimumˉshape: u32 =
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnumericˉshape(Kind);
+                var Minimumˉoperation: u32 = WIR_OPERATION_FIXED_INTEGER_CONSTANT;
+                if Minimumˉshape == 1u32 { Minimumˉoperation = WIR_OPERATION_I32_CONSTANT; }
+                if Minimumˉshape == 7u32 { Minimumˉoperation = WIR_OPERATION_I64_CONSTANT; }
+                return Compilerˉsourceˉwirˉemit(
+                    Build, Minimumˉoperation, Minimumˉshape,
+                    Compilerˉsourceˉwirˉempty(Source),
+                    Literal.Numericˉvalue, Literal.Numericˉhigh,
+                    Expression.Offset, Expression.Length
+                );
+            }
+        }
+    }
     let Operand: Compilerˉsourceˉwirˉvalue =
         Compilerˉsourceˉwirˉcompileˉexpression(
             Input, Scan, Symbols,

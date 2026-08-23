@@ -1,0 +1,9 @@
+#!wv/1 en@1
+module Enumˉbackingˉunsignedˉnegative;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Wrong: u8 {
+    Value = -1u8;
+}

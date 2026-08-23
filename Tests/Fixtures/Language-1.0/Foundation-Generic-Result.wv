@@ -7,7 +7,7 @@ authority application;
 import Foundationˉoption as Option;
 import Foundationˉresult as Result;
 
-enum Readˉfailure {
+enum Readˉfailure: i32 {
     Missing = 0;
 }
 

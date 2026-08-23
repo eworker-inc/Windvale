@@ -45,6 +45,9 @@ export enum Compilerˉsourceˉsymbolˉstatus {
     Duplicateˉvariantˉcase = 33;
     Invalidˉvariantˉpayload = 34;
     Invalidˉcollectionˉelement = 35;
+    Missingˉenumˉbacking = 36;
+    Invalidˉenumˉbacking = 37;
+    Invalidˉenumˉvalue = 38;
 }
 
 enum Compilerˉsourceˉnamespaceˉkind {
@@ -3197,12 +3200,22 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉenumˉmember(
         let Equals: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             View.Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
-        );
-        let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            View.Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
-        );
+        var Value: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Equals.Nextˉoffset,
+                Equals.Nextˉline, Equals.Nextˉcolumn
+            );
+        if Value.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+            Value = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
+        }
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
         Cursor = End.Nextˉoffset;
         Line = End.Nextˉline;
         Column = End.Nextˉcolumn;
@@ -3594,6 +3607,28 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I8 { Shape = 11u32; }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.I16 { Shape = 12u32; }
         if Expression.Numericˉkind == Sourceˉlexer.Compilerˉnumericˉkind.U16 { Shape = 13u32; }
+        var Positiveˉoverflow: bool = false;
+        if Shape == 1u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 2147483647u32;
+        }
+        if Shape == 7u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh >= 2147483648u32;
+        }
+        if Shape == 11u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 127u32;
+        }
+        if Shape == 12u32 {
+            Positiveˉoverflow = Expression.Numericˉhigh != 0u32 ||
+                Expression.Numericˉvalue > 32767u32;
+        }
+        if Positiveˉoverflow {
+            return Compilerˉsourceˉsymbolsˉconstantˉfailureˉat(
+                Compilerˉsourceˉsymbolˉstatus.Constantˉoverflow,
+                Module, Expression
+            );
+        }
         if Shape == 7u32 || Shape == 8u32 {
             return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
                 Shape, Expression.Numericˉvalue, Expression.Numericˉhigh, false
@@ -3683,6 +3718,33 @@ export fn Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
             0u32,
             0u32
         );
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Minus &&
+            Operandˉexpression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Integer {
+            let Kind: Sourceˉlexer.Compilerˉnumericˉkind =
+                Operandˉexpression.Numericˉkind;
+            if !Sourceˉlexer.Compilerˉsourceˉintegerˉfits(
+                    Kind, Operandˉexpression.Numericˉvalue,
+                    Operandˉexpression.Numericˉhigh, false
+                ) && Sourceˉlexer.Compilerˉsourceˉintegerˉfits(
+                    Kind, Operandˉexpression.Numericˉvalue,
+                    Operandˉexpression.Numericˉhigh, true
+                ) {
+                let Minimumˉshape: u32 =
+                    Compilerˉsourceˉsymbolsˉnumericˉshape(Kind);
+                if Minimumˉshape == 7u32 {
+                    return Compilerˉsourceˉsymbolsˉconstantˉsuccessˉwide(
+                        Minimumˉshape, Operandˉexpression.Numericˉvalue,
+                        Operandˉexpression.Numericˉhigh, true
+                    );
+                }
+                if Minimumˉshape == 1u32 || Minimumˉshape == 11u32 ||
+                    Minimumˉshape == 12u32 {
+                    return Compilerˉsourceˉsymbolsˉconstantˉsuccess(
+                        Minimumˉshape, Operandˉexpression.Numericˉvalue, true
+                    );
+                }
+            }
+        }
         let Operand: Compilerˉsourceˉconstantˉvalue =
             Compilerˉsourceˉsymbolsˉconstantˉevaluateˉexpression(
                 Input, Scan, Symbols, Module, Source,
@@ -4779,7 +4841,7 @@ export fn Compilerˉsourceˉsymbolsˉfieldˉisˉduplicate(
     return false;
 }
 
-export fn Compilerˉsourceˉsymbolsˉenumˉduplicate(
+fn Compilerˉsourceˉsymbolsˉlegacyˉenumˉduplicate(
     Source: bytes,
     Firstˉoffset: u32,
     Firstˉline: u32,
@@ -4793,31 +4855,102 @@ export fn Compilerˉsourceˉsymbolsˉenumˉduplicate(
     var Currentˉline: u32 = Firstˉline;
     var Currentˉcolumn: u32 = Firstˉcolumn;
     while Cursor < Currentˉname.Offset {
-        let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Cursor, Currentˉline, Currentˉcolumn
-        );
+        let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
         if Name.Offset >= Currentˉname.Offset {
-            return Compilerˉsourceˉenumˉduplicate(Duplicateˉname, Duplicateˉvalue);
+            return Compilerˉsourceˉenumˉduplicate(
+                Duplicateˉname, Duplicateˉvalue
+            );
         }
         if Sourceˉset.Compilerˉsourceˉspansˉequal(
             Source, Name.Offset, Name.Length,
             Source, Currentˉname.Offset, Currentˉname.Length
         ) { Duplicateˉname = true; }
-        let Equals: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
-        );
-        let Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
-        );
-        if Value.Numericˉvalue == Currentˉvalue { Duplicateˉvalue = true; }
-        let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
-        );
+        let Equals: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+            );
+        let Value: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Equals.Nextˉoffset,
+                Equals.Nextˉline, Equals.Nextˉcolumn
+            );
+        if Value.Numericˉvalue == Currentˉvalue {
+            Duplicateˉvalue = true;
+        }
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
         Cursor = End.Nextˉoffset;
         Currentˉline = End.Nextˉline;
         Currentˉcolumn = End.Nextˉcolumn;
     }
-    return Compilerˉsourceˉenumˉduplicate(Duplicateˉname, Duplicateˉvalue);
+    return Compilerˉsourceˉenumˉduplicate(
+        Duplicateˉname, Duplicateˉvalue
+    );
+}
+
+fn Compilerˉsourceˉsymbolsˉenumˉduplicateˉflags(
+    Source: bytes,
+    Firstˉoffset: u32,
+    Firstˉline: u32,
+    Firstˉcolumn: u32,
+    Currentˉname: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Currentˉlow: u32,
+    Currentˉhigh: u32,
+    Currentˉnegative: bool
+) -> u32 {
+    var Flags: u32 = 0u32;
+    var Cursor: u32 = Firstˉoffset;
+    var Currentˉline: u32 = Firstˉline;
+    var Currentˉcolumn: u32 = Firstˉcolumn;
+    while Cursor < Currentˉname.Offset {
+        let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        if Name.Offset >= Currentˉname.Offset { return Flags; }
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Name.Offset, Name.Length,
+            Source, Currentˉname.Offset, Currentˉname.Length
+        ) { Flags = Flags | 1u32; }
+        let Equals: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+            );
+        var Value: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Equals.Nextˉoffset,
+                Equals.Nextˉline, Equals.Nextˉcolumn
+            );
+        var Negative: bool = false;
+        if Value.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+            Negative = true;
+            Value = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
+        }
+        if Value.Numericˉvalue == 0u32 && Value.Numericˉhigh == 0u32 {
+            Negative = false;
+        }
+        if Value.Numericˉvalue == Currentˉlow &&
+            Value.Numericˉhigh == Currentˉhigh &&
+            Negative == Currentˉnegative { Flags = Flags | 2u32; }
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
+        Cursor = End.Nextˉoffset;
+        Currentˉline = End.Nextˉline;
+        Currentˉcolumn = End.Nextˉcolumn;
+    }
+    return Flags;
 }
 
 export fn Compilerˉsourceˉsymbolsˉparameterˉisˉduplicate(
@@ -5087,7 +5220,8 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
     Source: bytes,
     Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
     Declarationˉline: u32,
-    Declarationˉcolumn: u32
+    Declarationˉcolumn: u32,
+    Edition: u32
 ) -> Compilerˉsourceˉsymbolˉsummary {
     let Nameˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
         Source,
@@ -5096,6 +5230,135 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
         Declarationˉcolumn,
         Declaration.Nameˉoffset
     );
+    let Nameˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Nameˉoffset,
+            Nameˉposition.Line, Nameˉposition.Column
+        );
+    let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Nameˉtoken.Nextˉoffset,
+            Nameˉtoken.Nextˉline, Nameˉtoken.Nextˉcolumn
+        );
+    if Edition == 1u32 &&
+        Afterˉname.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts, Compilerˉsourceˉsymbolˉstatus.Missingˉenumˉbacking,
+            Module, Scan.Modules, Declaration.Kind, Afterˉname.Offset,
+            Afterˉname.Line, Afterˉname.Column
+        );
+    }
+    let Explicitˉbacking: bool =
+        Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon;
+    if !Explicitˉbacking {
+        if Declaration.Items == 0u32 {
+            return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                Input, Counts, Compilerˉsourceˉsymbolˉstatus.Emptyˉenum,
+                Module, Scan.Modules, Declaration.Kind,
+                Declaration.Nameˉoffset,
+                Nameˉposition.Line, Nameˉposition.Column
+            );
+        }
+        let Legacyˉbodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Declaration.Declarationˉoffset,
+                Declarationˉline, Declarationˉcolumn,
+                Declaration.Bodyˉoffset
+            );
+        let Legacyˉbrace: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Declaration.Bodyˉoffset,
+                Legacyˉbodyˉposition.Line, Legacyˉbodyˉposition.Column
+            );
+        let Legacyˉfirstˉoffset: u32 = Legacyˉbrace.Nextˉoffset;
+        let Legacyˉfirstˉline: u32 = Legacyˉbrace.Nextˉline;
+        let Legacyˉfirstˉcolumn: u32 = Legacyˉbrace.Nextˉcolumn;
+        var Legacyˉcursor: u32 = Legacyˉfirstˉoffset;
+        var Legacyˉline: u32 = Legacyˉfirstˉline;
+        var Legacyˉcolumn: u32 = Legacyˉfirstˉcolumn;
+        var Legacyˉindex: u32 = 0u32;
+        while Legacyˉindex < Declaration.Items {
+            let Legacyˉmember: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Legacyˉcursor, Legacyˉline, Legacyˉcolumn
+                );
+            let Legacyˉequals: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Legacyˉmember.Nextˉoffset,
+                    Legacyˉmember.Nextˉline, Legacyˉmember.Nextˉcolumn
+                );
+            let Legacyˉvalue: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Legacyˉequals.Nextˉoffset,
+                    Legacyˉequals.Nextˉline, Legacyˉequals.Nextˉcolumn
+                );
+            if Legacyˉvalue.Kind ==
+                    Sourceˉlexer.Compilerˉtokenˉkind.Minus ||
+                Legacyˉvalue.Numericˉkind !=
+                    Sourceˉlexer.Compilerˉnumericˉkind.I32 ||
+                Legacyˉvalue.Numericˉhigh != 0u32 ||
+                Legacyˉvalue.Numericˉvalue > 2147483647u32 {
+                return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                    Input, Counts,
+                    Compilerˉsourceˉsymbolˉstatus.Invalidˉenumˉvalue,
+                    Module, Module, Declaration.Kind,
+                    Legacyˉvalue.Offset,
+                    Legacyˉvalue.Line, Legacyˉvalue.Column
+                );
+            }
+            let Legacyˉduplicate: Compilerˉsourceˉenumˉduplicate =
+                Compilerˉsourceˉsymbolsˉlegacyˉenumˉduplicate(
+                    Source, Legacyˉfirstˉoffset,
+                    Legacyˉfirstˉline, Legacyˉfirstˉcolumn,
+                    Legacyˉmember, Legacyˉvalue.Numericˉvalue
+                );
+            if Legacyˉduplicate.Name {
+                return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                    Input, Counts,
+                    Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉmember,
+                    Module, Module, Declaration.Kind,
+                    Legacyˉmember.Offset,
+                    Legacyˉmember.Line, Legacyˉmember.Column
+                );
+            }
+            if Legacyˉduplicate.Value {
+                return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                    Input, Counts,
+                    Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉvalue,
+                    Module, Module, Declaration.Kind,
+                    Legacyˉvalue.Offset,
+                    Legacyˉvalue.Line, Legacyˉvalue.Column
+                );
+            }
+            let Legacyˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Source, Legacyˉvalue.Nextˉoffset,
+                    Legacyˉvalue.Nextˉline, Legacyˉvalue.Nextˉcolumn
+                );
+            Legacyˉcursor = Legacyˉend.Nextˉoffset;
+            Legacyˉline = Legacyˉend.Nextˉline;
+            Legacyˉcolumn = Legacyˉend.Nextˉcolumn;
+            Legacyˉindex = Legacyˉindex + 1u32;
+        }
+        return Counts;
+    }
+    var Backingˉnumeric: Sourceˉlexer.Compilerˉnumericˉkind =
+        Sourceˉlexer.Compilerˉnumericˉkind.I32;
+    let Backing: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Afterˉname.Nextˉoffset,
+            Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
+        );
+    Backingˉnumeric =
+        Sourceˉlexer.Compilerˉsourceˉnumericˉkindˉfromˉtoken(Backing.Kind);
+    if Backingˉnumeric == Sourceˉlexer.Compilerˉnumericˉkind.None {
+        return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+            Input, Counts,
+            Compilerˉsourceˉsymbolˉstatus.Invalidˉenumˉbacking,
+            Module, Module, Declaration.Kind,
+            Backing.Offset, Backing.Line, Backing.Column
+        );
+    }
     if Declaration.Items == 0u32 {
         return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
             Input, Counts, Compilerˉsourceˉsymbolˉstatus.Emptyˉenum,
@@ -5124,27 +5387,68 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉenum(
         let Equals: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
-        );
-        let Duplicate: Compilerˉsourceˉenumˉduplicate = Compilerˉsourceˉsymbolsˉenumˉduplicate(
-            Source, Firstˉoffset, Firstˉline, Firstˉcolumn, Member, Value.Numericˉvalue
-        );
-        if Duplicate.Name {
+        var Value: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Equals.Nextˉoffset,
+                Equals.Nextˉline, Equals.Nextˉcolumn
+            );
+        var Negative: bool = false;
+        if Value.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+            Negative = true;
+            Value = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
+        }
+        if Value.Numericˉvalue == 0u32 && Value.Numericˉhigh == 0u32 {
+            Negative = false;
+        }
+        var Contextual: bool = Value.Numericˉkind ==
+            Sourceˉlexer.Compilerˉnumericˉkind.I32;
+        if Contextual && Value.Length >= 3u32 {
+            let Ending: u32 = Value.Offset + Value.Length - 3u32;
+            if Bytesˉreadˉu8(Source, Ending) == 105u8 &&
+                Bytesˉreadˉu8(Source, Ending + 1u32) == 51u8 &&
+                Bytesˉreadˉu8(Source, Ending + 2u32) == 50u8 {
+                Contextual = false;
+            }
+        }
+        let Valueˉvalid: bool =
+            (Contextual || Value.Numericˉkind == Backingˉnumeric) &&
+            Sourceˉlexer.Compilerˉsourceˉintegerˉfits(
+                Backingˉnumeric, Value.Numericˉvalue,
+                Value.Numericˉhigh, Negative
+            );
+        if !Valueˉvalid {
+            return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
+                Input, Counts, Compilerˉsourceˉsymbolˉstatus.Invalidˉenumˉvalue,
+                Module, Module, Declaration.Kind,
+                Value.Offset, Value.Line, Value.Column
+            );
+        }
+        let Duplicateˉflags: u32 =
+            Compilerˉsourceˉsymbolsˉenumˉduplicateˉflags(
+                Source, Firstˉoffset, Firstˉline, Firstˉcolumn, Member,
+                Value.Numericˉvalue, Value.Numericˉhigh, Negative
+            );
+        if (Duplicateˉflags & 1u32) != 0u32 {
             return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
                 Input, Counts, Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉmember,
                 Module, Module, Declaration.Kind, Member.Offset, Member.Line, Member.Column
             );
         }
-        if Duplicate.Value {
+        if (Duplicateˉflags & 2u32) != 0u32 {
             return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
                 Input, Counts, Compilerˉsourceˉsymbolˉstatus.Duplicateˉenumˉvalue,
-                Module, Module, Declaration.Kind, Value.Offset, Value.Line, Value.Column
+                Module, Module, Declaration.Kind,
+                Value.Offset, Value.Line, Value.Column
             );
         }
-        let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
-        );
+        let End: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset,
+                Value.Nextˉline, Value.Nextˉcolumn
+            );
         Cursor = End.Nextˉoffset;
         Currentˉline = End.Nextˉline;
         Currentˉcolumn = End.Nextˉcolumn;
@@ -5638,7 +5942,8 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉdeclarations(
                 if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Enum {
                     Result = Compilerˉsourceˉsymbolsˉvalidateˉenum(
                         Input, Scan, Counts, Module, View.Source, Declaration,
-                        Declarationˉposition.Line, Declarationˉposition.Column
+                        Declarationˉposition.Line, Declarationˉposition.Column,
+                        View.Edition
                     );
                 }
                 if Declaration.Kind == Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {

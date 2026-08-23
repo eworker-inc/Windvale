@@ -51,6 +51,10 @@ export fn Runtimeˉvirtualˉbytes(Target: u32, Profile: u32) -> u32 {
         if Target == 1u32 { return 510214144u32; }
         return 508116992u32;
     }
+    if Profile == 7u32 {
+        if Target == 1u32 { return 576798720u32; }
+        return 574701568u32;
+    }
     if Target == 1u32 { return 476135424u32; }
     return 474038272u32;
 }
@@ -72,6 +76,13 @@ export fn Runtimeˉoffset(Index: u32, Target: u32, Profile: u32) -> u32 {
         if Index == 12u32 { return 506011648u32; }
         if Target == 1u32 { return 508112896u32; }
         return 507064320u32;
+    }
+    if Profile == 7u32 {
+        if Index == 10u32 { return 237051904u32; }
+        if Index == 11u32 { return 304160768u32; }
+        if Index == 12u32 { return 572596224u32; }
+        if Target == 1u32 { return 574697472u32; }
+        return 573648896u32;
     }
     if Index == 10u32 { return 136388608u32; }
     if Index == 11u32 { return 203497472u32; }

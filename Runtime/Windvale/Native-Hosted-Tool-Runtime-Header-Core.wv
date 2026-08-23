@@ -22,12 +22,12 @@ fn Zeroes(Input: bytes, Count: u32) -> bytes {
 }
 
 fn Instructionˉlimitˉlow(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 2690588672u32; }
+    if Profile == 7u32 { return 0u32; }
     return 3870457856u32;
 }
 
 fn Instructionˉlimitˉhigh(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 18u32; }
+    if Profile == 7u32 { return 32u32; }
     return 14u32;
 }
 

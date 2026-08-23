@@ -1,0 +1,49 @@
+#!wv/1 en@1
+module Enumˉbackingˉall;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Signedˉeight: i8 {
+    Minimum = -128i8;
+    Contextual = 7;
+}
+
+enum Signedˉsixteen: i16 {
+    Minimum = -32768i16;
+    Contextual = 8;
+}
+
+enum Signedˉthirtyˉtwo: i32 {
+    Minimum = -2147483648i32;
+    Contextual = 9;
+}
+
+enum Signedˉsixtyˉfour: i64 {
+    Minimum = -9223372036854775808i64;
+    Contextual = 10;
+}
+
+enum Unsignedˉeight: u8 {
+    Maximum = 255u8;
+    Contextual = 11;
+}
+
+enum Unsignedˉsixteen: u16 {
+    Maximum = 65535u16;
+    Contextual = 12;
+}
+
+enum Unsignedˉthirtyˉtwo: u32 {
+    Maximum = 4294967295u32;
+    Contextual = 13;
+}
+
+enum Unsignedˉsixtyˉfour: u64 {
+    Minimum = 0u64;
+    Contextualˉmaximum = 18446744073709551615;
+}
+
+export fn Main() -> i32 {
+    return 42;
+}

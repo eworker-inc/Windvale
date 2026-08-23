@@ -86,7 +86,16 @@ Parameters and local variables may also carry an exact required root capability 
 - Function and data names occupy separate namespaces. Constants share the value namespace with data and cannot reuse an earlier data or constant name.
 - Record names define a nominal type, a preferred named-literal target, and the retained positional constructor. A function cannot use the same name as a record construction target, and records or functions cannot take a reserved intrinsic call name.
 - A record contains 1 through 64 uniquely named fields in declaration order. Seed record fields may be primitive values, enums, or other immutable record identities; record containment must be acyclic.
-- An enum contains 1 through 256 uniquely named members with unique explicit `i32` values. Seed source currently accepts nonnegative values; bytecode preserves signed `i32` values for forward evolution.
+- A descriptorless Seed enum contains 1 through 256 uniquely named members with
+  unique explicit nonnegative `i32` values. This compatibility form remains for
+  the compiler's existing implementation sources. Edition-1 source instead
+  requires `enum Name: <i8|i16|i32|i64|u8|u16|u32|u64>` and validates every
+  explicit member tag exactly against that backing. An unsuffixed literal is
+  contextual; an explicit suffix must equal the backing; negatives require a
+  signed backing; signed minima are admitted; and `-0` is the same value as
+  `0` for uniqueness. Source analysis implements all eight backings. The
+  current WVB 1.20 writer emits exact signed `i32` backing only and rejects the
+  other seven as `Unsupportedˉshape` without narrowing or partial output.
 - A descriptorless Seed variant contains 1 through 256 unique cases. A case has no payload or exactly one uniquely named non-`void`, non-builder, non-collection, non-variant payload. An admitted edition-1 case has zero through 64 uniquely named fields; an empty parenthesized declaration is invalid and a no-data case omits parentheses.
 - A constant name uses `ALL_CAPS_WITH_UNDERSCORES`, has one explicit admitted scalar or enum type, and has no mutable storage or address identity.
 - A root module exports functions explicitly with `export`. An imported source module marks every function `export` and may expose record and enum declarations as its static source contract; composition internalizes all three declaration kinds rather than re-exporting them from the root WVB.

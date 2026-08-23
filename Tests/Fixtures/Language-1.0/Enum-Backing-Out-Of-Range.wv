@@ -1,0 +1,9 @@
+#!wv/1 en@1
+module Enumˉbackingˉoutˉofˉrange;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Wrong: i8 {
+    Value = 128;
+}

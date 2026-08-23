@@ -673,6 +673,54 @@ fn Compilerˉsourceˉtokenˉmakeˉwide(
     );
 }
 
+export fn Compilerˉsourceˉintegerˉfits(
+    Kind: Compilerˉnumericˉkind,
+    Low: u32,
+    High: u32,
+    Negative: bool
+) -> bool {
+    if Kind == Compilerˉnumericˉkind.U64 { return !Negative; }
+    if Kind == Compilerˉnumericˉkind.I64 {
+        if High < 2147483648u32 { return true; }
+        return Negative && High == 2147483648u32 && Low == 0u32;
+    }
+    if High != 0u32 { return false; }
+    if Kind == Compilerˉnumericˉkind.U32 { return !Negative; }
+    if Kind == Compilerˉnumericˉkind.U8 {
+        return !Negative && Low <= 255u32;
+    }
+    if Kind == Compilerˉnumericˉkind.U16 {
+        return !Negative && Low <= 65535u32;
+    }
+    if Kind == Compilerˉnumericˉkind.I8 {
+        if Negative { return Low <= 128u32; }
+        return Low <= 127u32;
+    }
+    if Kind == Compilerˉnumericˉkind.I16 {
+        if Negative { return Low <= 32768u32; }
+        return Low <= 32767u32;
+    }
+    if Kind == Compilerˉnumericˉkind.I32 {
+        if Negative { return Low <= 2147483648u32; }
+        return Low <= 2147483647u32;
+    }
+    return false;
+}
+
+export fn Compilerˉsourceˉnumericˉkindˉfromˉtoken(
+    Kind: Compilerˉtokenˉkind
+) -> Compilerˉnumericˉkind {
+    if Kind == Compilerˉtokenˉkind.I8 { return Compilerˉnumericˉkind.I8; }
+    if Kind == Compilerˉtokenˉkind.I16 { return Compilerˉnumericˉkind.I16; }
+    if Kind == Compilerˉtokenˉkind.I32 { return Compilerˉnumericˉkind.I32; }
+    if Kind == Compilerˉtokenˉkind.I64 { return Compilerˉnumericˉkind.I64; }
+    if Kind == Compilerˉtokenˉkind.U8 { return Compilerˉnumericˉkind.U8; }
+    if Kind == Compilerˉtokenˉkind.U16 { return Compilerˉnumericˉkind.U16; }
+    if Kind == Compilerˉtokenˉkind.U32 { return Compilerˉnumericˉkind.U32; }
+    if Kind == Compilerˉtokenˉkind.U64 { return Compilerˉnumericˉkind.U64; }
+    return Compilerˉnumericˉkind.None;
+}
+
 fn Compilerˉsourceˉsignedˉadd(
     Left: Compilerˉsourceˉsignedˉmagnitude,
     Right: Compilerˉsourceˉsignedˉmagnitude
@@ -1576,7 +1624,7 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                 if Shortˉsuffix != Compilerˉnumericˉkind.None &&
                     Compilerˉsourceˉidentifierˉpartˉlengthˉafterˉscan(
                         Input, Shortˉfollowing, Total
-                    ) == 0u32 {
+                ) == 0u32 {
                     Numericˉkind = Shortˉsuffix;
                     Cursor = Shortˉfollowing;
                     Column = Column + 2u32;
@@ -1615,12 +1663,43 @@ export fn Compilerˉlexˉnextˉafterˉscan(
             let Parsed: Compilerˉsourceˉwideˉparse = Compilerˉsourceˉwideˉdecimalˉparse(
                 Input, Tokenˉstart, Digitˉend - Tokenˉstart
             );
+            if Cursor == Digitˉend {
+                var Contextualˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
+                if !Parsed.Valid {
+                    Contextualˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
+                }
+                if Parsed.Valid && Parsed.High == 0u32 {
+                    return Compilerˉsourceˉtokenˉmake(
+                        Contextualˉstatus, Compilerˉtokenˉkind.Integer,
+                        Tokenˉstart, Cursor, Tokenˉline, Tokenˉcolumn,
+                        Line, Column, Numericˉkind, Parsed.Low,
+                        Tokenˉstart, Tokenˉline, Tokenˉcolumn
+                    );
+                }
+                return Compilerˉsourceˉtokenˉmakeˉwide(
+                    Contextualˉstatus,
+                    Compilerˉtokenˉkind.Integer,
+                    Tokenˉstart,
+                    Cursor,
+                    Tokenˉline,
+                    Tokenˉcolumn,
+                    Line,
+                    Column,
+                    Numericˉkind,
+                    Parsed.Low,
+                    Parsed.High,
+                    Tokenˉstart,
+                    Tokenˉline,
+                    Tokenˉcolumn
+                );
+            }
             if Numericˉkind == Compilerˉnumericˉkind.I64 ||
                 Numericˉkind == Compilerˉnumericˉkind.U64 {
                 var Wideˉstatus: Compilerˉlexˉstatus = Compilerˉlexˉstatus.Valid;
                 if !Parsed.Valid { Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange; }
                 if Numericˉkind == Compilerˉnumericˉkind.I64 {
-                    if Parsed.High > 2147483647u32 {
+                    if Parsed.High > 2147483648u32 ||
+                        (Parsed.High == 2147483648u32 && Parsed.Low != 0u32) {
                         Wideˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                     }
                 }
@@ -1646,7 +1725,7 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                 Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
             }
             if Numericˉkind == Compilerˉnumericˉkind.I32 {
-                if Parsed.Low > 2147483647u32 {
+                if Parsed.Low > 2147483648u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
@@ -1656,12 +1735,12 @@ export fn Compilerˉlexˉnextˉafterˉscan(
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.I8 {
-                if Parsed.Low > 127u32 {
+                if Parsed.Low > 128u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }
             if Numericˉkind == Compilerˉnumericˉkind.I16 {
-                if Parsed.Low > 32767u32 {
+                if Parsed.Low > 32768u32 {
                     Numericˉstatus = Compilerˉlexˉstatus.Integerˉoutˉofˉrange;
                 }
             }

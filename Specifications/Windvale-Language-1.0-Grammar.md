@@ -398,7 +398,10 @@ Enumˉmember ::= [ Documentation ] Identifier "=" [ "-" ] Integerˉliteral ";"
 ~~~
 
 An enum has at least one member. Its tags must be exact literals of its declared
-integer type after contextual typing.
+integer type after contextual typing. An explicit suffix must equal the declared
+backing type; an unsuffixed literal receives that one exact context. `-` is a
+separate token and is valid only with a signed backing. Signed minima are
+admitted, no literal may wrap, and duplicate comparison normalizes `-0` to `0`.
 
 ### Variants
 

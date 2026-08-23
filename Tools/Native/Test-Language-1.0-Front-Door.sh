@@ -90,6 +90,35 @@ expect_profiled_analysis_failure() {
         "source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=$expected_status" ]]
 }
 
+expect_profiled_symbol_failure() {
+    local fixture=$1
+    local prefix=$2
+    local expected_status=$3
+    local analysis_exit
+    local -a analysis_lines
+    "$work/Admitter.elf" \
+        --source-input-lock "$source_lock" "$source_lock_hash" \
+        --source-profile "$source_profile" \
+        "$fixture" "$work/$prefix.wvss" \
+        >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
+    [[ ! -s $work/$prefix-admission.err ]] || return 1
+    if "$work/Analyzer.elf" --admitted-source-set \
+        "$work/$prefix.wvss" "$work/$prefix.wvss" \
+        "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
+        >"$work/$prefix.out" 2>"$work/$prefix.err"; then
+        return 1
+    else
+        analysis_exit=$?
+    fi
+    [[ $analysis_exit -eq 1 && ! -s $work/$prefix.out ]] || return 1
+    [[ ! -e $work/$prefix.wvca && ! -e $work/$prefix.wvlb && \
+        ! -e $work/$prefix.wvir ]] || return 1
+    mapfile -t analysis_lines <"$work/$prefix.err"
+    [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
+    [[ ${analysis_lines[0]} == \
+        "source analysis status=Sourceˉsymbols symbol-status=$expected_status binding-status=Sourceˉsymbols wir-status=Sourceˉbindings" ]]
+}
+
 expect_profiled_analysis_failure_with_dependencies() {
     local fixture=$1
     local prefix=$2
@@ -196,11 +225,17 @@ cmp -s -- "$work/Expected-Value-Front-End.out" \
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj" \
     "$work/Generic-Calls.wvb" >/dev/null || exit $?
-"$script_directory/Run-Wvb.sh" "$work/Generic-Calls.wvb" \
-    >"$work/Generic-Calls.out" 2>"$work/Generic-Calls.err" || exit $?
-[[ ! -s $work/Generic-Calls.err ]] || exit 1
-cmp -s -- "$work/Expected-Value-Front-End.out" \
-    "$work/Generic-Calls.out" || exit 1
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 1 \
+    "$work/Generic-Calls.wvb" "$work/Generic-Calls.elf" \
+    --development-cache \
+    >"$work/Generic-Calls-Package.out" \
+    2>"$work/Generic-Calls-Package.err" || exit $?
+[[ ! -s $work/Generic-Calls-Package.err ]] || exit 1
+"$work/Generic-Calls.elf" \
+    >"$work/Generic-Calls.out" 2>"$work/Generic-Calls.err"
+generic_calls_result=$?
+[[ $generic_calls_result -eq 42 ]] || exit 1
+[[ ! -s $work/Generic-Calls.out && ! -s $work/Generic-Calls.err ]] || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Resolution.wvproj" \
     "$work/Generic-Resolution.wvb" >/dev/null || exit $?
@@ -277,9 +312,9 @@ printf '%s  %s\n' \
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1114218 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1132570 ]] || exit 1
 printf '%s  %s\n' \
-    640ba1a9714979927433fa4936c73fa164b83f33ad22c794e86092ee8e17faa8 \
+    e3eef9e462f47cb88d4de174eb1e714106b346137538d9e6b396361b834d8471 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -357,14 +392,83 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1029551 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1046456 ]] || exit 1
 printf '%s  %s\n' \
-    a3bdffe028b2d4268358324a9b9a13aba2841730dd8f7334c4512a4f312827eb \
+    92fa90b0d942cbe5a74861af49f680efe3c69b19466a237893e21ad0dff3cd66 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     emitter "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
+echo 'START language 1 front door step=enum-backing'
+"$work/Admitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-All.wv" \
+    "$work/Enum-Backing-All.wvss" \
+    >"$work/Enum-Backing-All-Admission.out" \
+    2>"$work/Enum-Backing-All-Admission.err" || exit $?
+[[ ! -s $work/Enum-Backing-All-Admission.err ]] || exit 1
+"$work/Analyzer.elf" --admitted-source-set \
+    "$work/Enum-Backing-All.wvss" "$work/Enum-Backing-All.wvss" \
+    "$work/Enum-Backing-All.wvca" "$work/Enum-Backing-All.wvlb" \
+    "$work/Enum-Backing-All.wvir" \
+    >"$work/Enum-Backing-All-Analysis.out" \
+    2>"$work/Enum-Backing-All-Analysis.err" || exit $?
+[[ ! -s $work/Enum-Backing-All-Analysis.err ]] || exit 1
+grep -q '^source analysis status=Published ' \
+    "$work/Enum-Backing-All-Analysis.out" || exit 1
+if "$work/Emitter.elf" \
+    "$work/Enum-Backing-All.wvss" "$work/Enum-Backing-All.wvca" \
+    "$work/Enum-Backing-All.wvlb" "$work/Enum-Backing-All.wvir" \
+    "$work/Enum-Backing-All.wvb" \
+    >"$work/Enum-Backing-All-Emission.out" \
+    2>"$work/Enum-Backing-All-Emission.err"; then
+    exit 1
+else
+    enum_backing_emission_exit=$?
+fi
+[[ $enum_backing_emission_exit -eq 1 && \
+    ! -e $work/Enum-Backing-All.wvb && \
+    ! -s $work/Enum-Backing-All-Emission.out ]] || exit 1
+mapfile -t enum_backing_emission_lines <"$work/Enum-Backing-All-Emission.err"
+[[ ${#enum_backing_emission_lines[@]} -eq 1 && \
+    ${enum_backing_emission_lines[0]} == \
+    'source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape' ]] || exit 1
+expect_profiled_symbol_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-Duplicate-Signed.wv" \
+    Enum-Backing-Duplicate-Signed Duplicateˉenumˉvalue || exit 1
+expect_profiled_symbol_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-Mismatched-Suffix.wv" \
+    Enum-Backing-Mismatched-Suffix Invalidˉenumˉvalue || exit 1
+expect_profiled_symbol_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-Out-Of-Range.wv" \
+    Enum-Backing-Out-Of-Range Invalidˉenumˉvalue || exit 1
+expect_profiled_symbol_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-Unsigned-Negative.wv" \
+    Enum-Backing-Unsigned-Negative Invalidˉenumˉvalue || exit 1
+expect_profiled_symbol_failure \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-Missing-Backing.wv" \
+    Enum-Missing-Backing Missingˉenumˉbacking || exit 1
+node "$script_directory/Run-Split-Compiler.mjs" \
+    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Enum-I32-Negative-Main.wv" \
+    "$work/Enum-I32-Negative-Main.wvb" \
+    >"$work/Enum-I32-Negative-Main.out" \
+    2>"$work/Enum-I32-Negative-Main.err" || exit $?
+[[ ! -s $work/Enum-I32-Negative-Main.err ]] || exit 1
+"$script_directory/Run-Wvb.sh" "$work/Enum-I32-Negative-Main.wvb" \
+    >"$work/Enum-I32-Negative-Main-Run.out" \
+    2>"$work/Enum-I32-Negative-Main-Run.err" || exit $?
+[[ ! -s $work/Enum-I32-Negative-Main-Run.err ]] || exit 1
+printf 'Result: 42\n' >"$work/Expected-Enum-I32.out"
+cmp -s -- "$work/Expected-Enum-I32.out" \
+    "$work/Enum-I32-Negative-Main-Run.out" || exit 1
+enum_i32_wvb_bytes=$(wc -c < "$work/Enum-I32-Negative-Main.wvb")
+[[ $enum_i32_wvb_bytes -eq 427 ]] || exit 1
+echo 'PASS  language 1 front door step=enum-backing cases=9 analysis=all-fixed-widths wvb=i32-only execution=42'
 echo 'START language 1 front door step=borrow-call-semantics'
 "$work/Analyzer.elf" \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv" \
@@ -381,13 +485,14 @@ echo 'START language 1 front door step=borrow-call-semantics'
     2>"$work/Borrow-Call-Emission.err" || exit $?
 [[ ! -s $work/Borrow-Call-Emission.err ]] || exit 1
 "$script_directory/Verify-Wvb.sh" "$work/Borrow-Call.wvb" || exit $?
-"$script_directory/Run-Wvb.sh" "$work/Borrow-Call.wvb" \
-    >"$work/Borrow-Call-Run.out" \
-    2>"$work/Borrow-Call-Run.err" || exit $?
+node "$script_directory/Run-WebAssembly-Scalar-Wvb.mjs" \
+    "$repository_root/Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm" \
+    "$work/Borrow-Call.wvb" 42 \
+    >"$work/Borrow-Call-Run.out" 2>"$work/Borrow-Call-Run.err" || exit $?
 [[ ! -s $work/Borrow-Call-Run.err ]] || exit 1
-printf 'Result: 42\n' >"$work/Expected-Borrow-Call.out"
-cmp -s -- "$work/Expected-Borrow-Call.out" \
+grep -Fq 'webassembly scalar status=Valid result=42' \
     "$work/Borrow-Call-Run.out" || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics item=execution result=42 engine=webassembly'
 expect_analysis_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Missing-Explicit.wv" \
     Borrow-Missing-Explicit Invalidˉborrow || exit 1
@@ -406,6 +511,7 @@ expect_analysis_failure \
 expect_analysis_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv" \
     Borrow-Owned-Read-Through Invalidˉborrow || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics item=direct-rejections cases=6'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -422,6 +528,7 @@ expect_analysis_failure \
     >"$work/Borrow-Sequence.out" 2>"$work/Borrow-Sequence.err" || exit $?
 [[ ! -s $work/Borrow-Sequence.err ]] || exit 1
 grep -Fq 'source analysis status=Published' "$work/Borrow-Sequence.out" || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics item=sequence ownership=Shared'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -443,6 +550,7 @@ fi
 [[ $borrow_vector_exit -eq 1 && ! -s $work/Borrow-Vector.out ]] || exit 1
 [[ ! -e $work/Borrow-Vector.wvir ]] || exit 1
 grep -Fq 'wir-status=Invalidˉborrow' "$work/Borrow-Vector.err" || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics item=vector ownership=Owned rejection=Invalid-borrow'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -478,6 +586,7 @@ mapfile -t memory_budget_emission_lines <"$work/Memory-Budget-Emission.err"
 [[ ${#memory_budget_emission_lines[@]} -eq 1 && \
     ${memory_budget_emission_lines[0]} == \
     'source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape' ]] || exit 1
+echo 'PASS  language 1 front door step=borrow-call-semantics item=memory-budget identity=Owned-WVIR wvb=Unsupported-shape'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Memory-Budget-Owned-Read-Through.wv" \
     Memory-Budget-Owned-Read-Through Invalidˉborrow \
@@ -490,6 +599,7 @@ expect_profiled_symbol_failure_with_dependency \
     "$repository_root/Tests/Fixtures/Language-1.0/Memory-Budget-Lookalike-Module.wv" \
     Memory-Budget-Lookalike-Module Unknownˉtype \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Lookalike.wv" || exit $?
+echo 'PASS  language 1 front door step=borrow-call-semantics item=memory-rejections cases=3'
 echo 'PASS  language 1 front door step=borrow-call-semantics cases=14 execution=42 vector=Owned sequence=Shared memory-budget=Owned-WVIR'
 echo 'START language 1 front door step=generic-nominal-variant'
 "$work/Admitter.elf" \
@@ -620,9 +730,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
 cmp -s -- "$work/Generic-Wir-A.wvb" "$work/Generic-Wir-B.wvb" || exit 1
-[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1257466 ]] || exit 1
+[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1295691 ]] || exit 1
 printf '%s  %s\n' \
-    d170b8bcf3c41c746d25e623e5253e6c4232275119cec9ffe13091276db697dd \
+    6afc2f4574158d5b151c7d4c0ec85eca132e26f88187f8d5fda8b2c866be9e6b \
     "$work/Generic-Wir-A.wvb" | sha256sum --check --strict --quiet || exit $?
 generic_wir_wvb_bytes=$(wc -c < "$work/Generic-Wir-A.wvb")
 printf 'INFO  language 1 front door step=generic-wir-split wvb-bytes=%s verification=pending-current-native\n' \
@@ -947,6 +1057,13 @@ expect_rejection \
 "$script_directory/Package-Hosted-Wvb.sh" 2 \
     "$work/Verifier.wvb" "$work/Verifier.elf" linux \
     >"$work/Verifier-Package.out" 2>"$work/Verifier-Package.err" || exit $?
+"$work/Verifier.elf" "$work/Enum-I32-Negative-Main.wvb" \
+    >"$work/Verify-Enum-I32.out" \
+    2>"$work/Verify-Enum-I32.err" || exit $?
+[[ ! -s $work/Verify-Enum-I32.err ]] || exit 1
+grep -Fq 'wvb status=Valid profile=compiler-aligned' \
+    "$work/Verify-Enum-I32.out" || exit 1
+echo 'PASS  language 1 front door step=enum-backing-verifier cases=1 verification=current-native'
 if ! "$work/Verifier.elf" "$work/Generic-Wir-A.wvb" \
     >"$work/Verify-Generic-Wir.out" \
     2>"$work/Verify-Generic-Wir.err"; then
@@ -1267,34 +1384,42 @@ fi
 [[ ! -e $work/Vector-Freeze-Use-After.wvb ]] || exit 1
 [[ $(<"$work/Vector-Freeze-Use-After.err") == \
     'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir' ]] || exit 1
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=1/8 case=use-after'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Wrong-Borrow.wv" \
     Vector-Freeze-Wrong-Borrow Invalidˉborrow \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=2/8 case=wrong-borrow'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Parameter.wv" \
     Vector-Read-Parameter Invalidˉcollection \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=3/8 case=parameter'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Unsupported-Element.wv" \
     Vector-Read-Unsupported-Element Invalidˉcollection \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=4/8 case=unsupported-element'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Wrong-Borrow.wv" \
     Vector-Read-Wrong-Borrow Invalidˉborrow \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=5/8 case=read-wrong-borrow'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Inferred-Result.wv" \
     Vector-Freeze-Inferred-Result Invalidˉcollection \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=6/8 case=inferred-result'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Mismatched-Result.wv" \
     Vector-Freeze-Mismatched-Result Invalidˉcollection \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=7/8 case=mismatched-result'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Mismatched-Argument.wv" \
     Vector-Freeze-Mismatched-Argument Invalidˉcollection \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=8/8 case=mismatched-argument'
 vector_sequence_types_wvb_bytes=$(wc -c < "$work/Vector-Sequence-Types.wvb")
 sequence_read_wvb_bytes=$(wc -c < "$work/Sequence-Read.wvb")
 vector_read_freeze_wvb_bytes=$(wc -c < "$work/Vector-Read-Freeze.wvb")
@@ -1557,4 +1682,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=417 frozen-inputs=251 source-fixtures=92 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 borrow-cases=14 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=427 frozen-inputs=251 source-fixtures=99 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=10 borrow-cases=14 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

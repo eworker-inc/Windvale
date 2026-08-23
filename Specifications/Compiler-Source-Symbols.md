@@ -46,6 +46,9 @@ enum Compilerˉsourceˉsymbolˉstatus {
     Duplicateˉvariantˉcase = 33;
     Invalidˉvariantˉpayload = 34;
     Invalidˉcollectionˉelement = 35;
+    Missingˉenumˉbacking = 36;
+    Invalidˉenumˉbacking = 37;
+    Invalidˉenumˉvalue = 38;
 }
 
 record Compilerˉsourceˉsymbolˉsummary {
@@ -83,7 +86,23 @@ Capability names, value names, nominal type names, and function names each form 
 
 Capabilities must belong to the implemented catalog. A portable-profile module may not declare capabilities. The aggregate bounds are 32 capabilities, 4,096 data declarations, 4,096 constants, 1,024 nominal types, and 4,096 functions.
 
-Records and enums are nonempty. Field names are unique within a record. Enum member names and explicit values are each unique within an enum. Parameter names are unique within a function. These rules apply after complete syntax validation, so the symbol phase operates only on qualified declaration and body spans.
+Records and enums are nonempty. Field names are unique within a record. Enum
+member names and explicit values are each unique within an enum. Edition 1
+requires one explicit `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, or `u64`
+backing after the enum name. Each tag is checked against that exact backing: an
+unsuffixed literal is contextual, an explicit suffix must match, negative tags
+require a signed backing, and every signed minimum is admitted without wrap.
+Duplicate comparison uses the complete low/high magnitude and sign and
+normalizes `-0` to `0`. `Missingˉenumˉbacking`, `Invalidˉenumˉbacking`, and
+`Invalidˉenumˉvalue` distinguish these failures without renumbering retained
+statuses. Parameter names are unique within a function. These rules apply after
+complete syntax validation, so the symbol phase operates only on qualified
+declaration and body spans.
+
+Descriptorless Seed source retains its historical implicit nonnegative `i32`
+enum contract. That compatibility path has a compact declaration-local
+duplicate scan; it cannot admit negative, suffixed non-`i32`, or out-of-range
+tags and it does not define edition-1 semantics.
 
 Generic record, variant, and function declarations share one bounded declaration-parameter descriptor. Record and variant type/constant parameter names are unique in one namespace. A generic record field or variant payload may be one of its declared type parameters. A constant parameter in type position and a builder stored in a record remain rejected. Parameters nested inside collection or nominal type syntax are deferred to the recursive type-use binder rather than partially admitted here. Phantom parameters are valid because concrete identity retains the complete ordered argument list even when a field does not mention one.
 

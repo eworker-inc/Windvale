@@ -1802,8 +1802,36 @@ export fn Compilerˉparseˉenumˉdeclaration(
     let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Afterˉkeyword.Nextˉoffset, Afterˉkeyword.Nextˉline, Afterˉkeyword.Nextˉcolumn);
     let Afterˉname: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Afterˉkeyword.Nextˉoffset, Afterˉkeyword.Nextˉline, Afterˉkeyword.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
     if Afterˉname.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉname, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
-    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn);
-    let Afterˉbrace: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace);
+    var Braceˉoffset: u32 = Afterˉname.Nextˉoffset;
+    var Braceˉline: u32 = Afterˉname.Nextˉline;
+    var Braceˉcolumn: u32 = Afterˉname.Nextˉcolumn;
+    let Afterˉnameˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Input, Braceˉoffset, Braceˉline, Braceˉcolumn
+    );
+    var Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Afterˉnameˉtoken;
+    if Afterˉnameˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+        let Backing: Compilerˉparseˉstep = Compilerˉparseˉtype(
+            Input, Afterˉnameˉtoken.Nextˉoffset,
+            Afterˉnameˉtoken.Nextˉline, Afterˉnameˉtoken.Nextˉcolumn,
+            false, false
+        );
+        if Backing.Status != Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉdeclarationˉfailure(
+                Backing, Compilerˉsourceˉdeclarationˉkind.Enum,
+                false, Token.Offset, Name.Offset, Name.Length
+            );
+        }
+        Braceˉoffset = Backing.Nextˉoffset;
+        Braceˉline = Backing.Nextˉline;
+        Braceˉcolumn = Backing.Nextˉcolumn;
+        Bodyˉstart = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Braceˉoffset, Braceˉline, Braceˉcolumn
+        );
+    }
+    let Afterˉbrace: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Braceˉoffset, Braceˉline, Braceˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace
+    );
     if Afterˉbrace.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉbrace, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
     var Cursor: u32 = Afterˉbrace.Nextˉoffset;
     var Currentˉline: u32 = Afterˉbrace.Nextˉline;
@@ -1819,13 +1847,22 @@ export fn Compilerˉparseˉenumˉdeclaration(
             if Memberˉname.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Memberˉname, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
             let Memberˉequals: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Memberˉname.Nextˉoffset, Memberˉname.Nextˉline, Memberˉname.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Equals);
             if Memberˉequals.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Memberˉequals, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
-            let Memberˉvalue: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Memberˉequals.Nextˉoffset, Memberˉequals.Nextˉline, Memberˉequals.Nextˉcolumn);
-            let Afterˉvalue: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Memberˉequals.Nextˉoffset, Memberˉequals.Nextˉline, Memberˉequals.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Integer);
-            if Afterˉvalue.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉvalue, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
-            if Memberˉvalue.Numericˉkind != Sourceˉlexer.Compilerˉnumericˉkind.I32 {
-                let Invalidˉmember: Compilerˉparseˉstep = Compilerˉparseˉstepˉfromˉtoken(Compilerˉparseˉstatus.Invalidˉliteral, Memberˉvalue, Sourceˉlexer.Compilerˉtokenˉkind.Integer);
-                return Compilerˉsourceˉdeclarationˉfailure(Invalidˉmember, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length);
+            var Memberˉvalue: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Input, Memberˉequals.Nextˉoffset,
+                    Memberˉequals.Nextˉline, Memberˉequals.Nextˉcolumn
+                );
+            if Memberˉvalue.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+                Memberˉvalue = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Input, Memberˉvalue.Nextˉoffset,
+                    Memberˉvalue.Nextˉline, Memberˉvalue.Nextˉcolumn
+                );
             }
+            let Afterˉvalue: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+                Input, Memberˉvalue.Offset, Memberˉvalue.Line,
+                Memberˉvalue.Column, Sourceˉlexer.Compilerˉtokenˉkind.Integer
+            );
+            if Afterˉvalue.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Afterˉvalue, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
             let Memberˉend: Compilerˉparseˉstep = Compilerˉparseˉconsume(Input, Afterˉvalue.Nextˉoffset, Afterˉvalue.Nextˉline, Afterˉvalue.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Semicolon);
             if Memberˉend.Status != Compilerˉparseˉstatus.Valid { return Compilerˉsourceˉdeclarationˉfailure(Memberˉend, Compilerˉsourceˉdeclarationˉkind.Enum, false, Token.Offset, Name.Offset, Name.Length); }
             Members = Members + 1u32;

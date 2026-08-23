@@ -2498,6 +2498,32 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
     let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration = Compilerˉsourceˉwvbˉdeclaration(
         Source, Header, Symbols, Entry
     );
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Nameˉoffset, 1u32, 1u32
+        );
+    let Afterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    var Backingˉkind: Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind =
+        Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32;
+    if Afterˉname.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+        let Backing: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Afterˉname.Nextˉoffset,
+                Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn
+            );
+        Backingˉkind = Sourceˉdeclarations.Compilerˉsourceˉtypeˉkindˉfromˉtoken(
+            Backing.Kind
+        );
+    }
+    if Backingˉkind != Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.I32 {
+        return Compilerˉsourceˉwvbˉtypeˉencoding(
+            Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+            Compilerˉsourceˉwvbˉempty(Source), 0u32
+        );
+    }
     var Payload: bytes = Bytesˉfromˉu8(2u8);
     Payload = Bytesˉconcat(
         Payload,
@@ -2520,13 +2546,24 @@ export fn Compilerˉsourceˉwvbˉencodeˉenumˉtype(
         let Equals: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Member.Nextˉoffset, Member.Nextˉline, Member.Nextˉcolumn
         );
-        let Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        var Value: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Equals.Nextˉoffset, Equals.Nextˉline, Equals.Nextˉcolumn
         );
+        var Negative: bool = false;
+        if Value.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Minus {
+            Negative = true;
+            Value = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
+            );
+        }
         Payload = Bytesˉconcat(
             Payload, Compilerˉsourceˉwvbˉstring(Source, Member.Offset, Member.Length)
         );
-        Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Value.Numericˉvalue));
+        var Encodedˉvalue: u32 = Value.Numericˉvalue;
+        if Negative && Encodedˉvalue != 0u32 {
+            Encodedˉvalue = 4294967295u32 - Encodedˉvalue + 1u32;
+        }
+        Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Encodedˉvalue));
         let End: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Value.Nextˉoffset, Value.Nextˉline, Value.Nextˉcolumn
         );

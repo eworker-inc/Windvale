@@ -2146,3 +2146,91 @@ registry advances from 5,196 to 5,201 declared cases at SHA-256
 fixed-shape validity and ownership checks. The later maintainability refactor
 should extract a named phase with type/ownership or collection-lowering
 invariants rather than numbered file fragments.
+
+## Slice 4 exact enum-backing and bounded compiler-capacity checkpoint
+
+Decision 0833 implements the frozen edition-1 enum header and tag rules. An enum
+must name one of the eight fixed signed or unsigned integer backings. The lexer
+retains an exact two-limb nonnegative magnitude; the symbol pass owns suffix,
+sign, range, signed-minimum, and normalized duplicate checks. The three appended
+statuses are `Missingˉenumˉbacking`, `Invalidˉenumˉbacking`, and
+`Invalidˉenumˉvalue`; the retained `Duplicateˉenumˉmember` and
+`Duplicateˉenumˉvalue` statuses continue to own uniqueness failures. Existing
+descriptorless compiler source retains its
+implicit nonnegative `i32` compatibility form without becoming Language 1.0
+syntax.
+
+WIR carries a nominal enum and its declaration-order member identity rather than
+a possibly truncated numeric tag. The current WVB 1.20 output contract emits
+only exact signed `i32` backing, including negative tags as canonical
+two's-complement bits. Any enum with one of the other seven backings reaches
+valid source/WIR analysis and then returns `Unsupportedˉshape` without output.
+This is an explicit output-format boundary, not an implicit conversion.
+
+The all-width fixture publishes 848 WVSS bytes, 96 WVLB bytes, and 544 WVIR
+bytes before exercising that boundary. Five negative cases cover missing
+backing, mismatched suffix, out-of-range magnitude, unsigned negative, and a
+duplicate signed value. `Enum-I32-Negative-Main.wv` produces a 427-byte WVB;
+the current compiler-aligned verifier accepts it and the runtime returns `42`.
+
+`Foundationˉmemory` now uses the frozen declarations directly:
+`Allocationˉreason: u8` has `Budgetˉexhausted = 1u8`,
+`Targetˉunaddressable = 2u8`, `Providerˉunavailable = 3u8`, and
+`Fragmented = 4u8`; `Allocationˉfailure` carries that reason plus exact
+`Requestedˉbytes: u64` and `Availableˉbytes: u64`. Runtime allocation authority,
+budget transfer, effects, and fallible Vector construction remain later
+connected work.
+
+The enlarged compiler exposed a bootstrap execution-capacity boundary. Exact
+profile-7 probes exhausted instructions through 120,259,084,288 and reached
+text-arena exhaustion at 124,554,051,584. Profile 7 therefore advances to the
+finite `2^37` instruction limit and 224 MiB text/byte arena while retaining its
+1 MiB name stride. Profiles 1 through 6 remain unchanged. This is a measured
+migration unblocker; broad optimization remains deferred until the Language 1.0
+compiler becomes the active seed.
+
+The exact self-emission accepts a 1,953,683-byte compiler source set and produces
+104 manifest bytes, 293,664 binding bytes, 3,902,856 WIR bytes, and a
+1,046,456-byte WVB with 552 functions and 869,476 code bytes at SHA-256
+`92fa90b0d942cbe5a74861af49f680efe3c69b19466a237893e21ad0dff3cd66`.
+The independent native WVB verifier accepts it. The maintained analyzer is
+1,132,570 bytes at SHA-256
+`e3eef9e462f47cb88d4de174eb1e714106b346137538d9e6b396361b834d8471`
+and packages to 35,597,824 Windows bytes at SHA-256
+`21d6ace08354a2b4154d8356ca9255fd288d2ae5c7c7d0292b0c90538270705a`.
+The emitter package is 22,945,280 bytes at SHA-256
+`51980614da75ef5e8e33cdd33fef91fa0cf74d7ee02cf1d978e2e14cf05f3701`.
+
+The profile geometry change rebuilds the complete 72-entry hosted-container
+candidate. Its 6,927-byte inventory has SHA-256
+`40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239`.
+The publisher applications retain their immutable atomic-publication shell and
+were reconstructed in an isolated, digest-verified checkout of
+`stage0-recovery-e5a1a7473c57`; only binary products return to `main`. The
+Language 1.0 owner advances from 417 to 427 cases, and the 108-owner registry
+advances from 5,201 to 5,211 cases at SHA-256
+`39df2841962a0efa20541c5b2b2ecf5e15ec514d709756107f8bd5c8c5ef899b`.
+The accepted source identity advances without rewriting the prior freeze:
+the 3,778-byte 0833 amendment manifest has SHA-256
+`1a48d58136e5200cdb6f5ae1e15638f554854a3764f61ce1f0d2222d9d8e0c13`
+and binds the same 251 inputs, now totaling 1,728,883 bytes at aggregate
+entry-stream SHA-256
+`a6e6bf3617049a987b545a78e5f3fcef28b24a3fc2b82c45d620e58baed73fc9`.
+The generic-call parser self-test already exceeded the retained scalar runner's
+fixed one-million guest-instruction budget before this slice. The owner keeps
+that global bound and executes the same compiler-aligned WVB through the
+existing bounded three-fragment profile-1 native route, which returns `42`.
+The borrow-call fixture likewise retains independent WVB verification. Its WVB
+1.20 ownership operations are newer than the last promoted native scalar-runner
+application, so the owner executes it through the bounded import-free
+WebAssembly scalar interpreter. The module returns `42` in 93 guest instructions.
+The generic-WIR closure grows deterministically to 1,295,691 WVB bytes at
+SHA-256 `6afc2f4574158d5b151c7d4c0ec85eca132e26f88187f8d5fda8b2c866be9e6b`;
+two independent productions are byte-identical.
+
+The settled Windows `language-1-front-door` owner passes all 427 declared cases
+in 648,030 ms. Its long negative groups now publish bounded item progress. The
+Windows batch sources retain required CRLF, and macron-bearing diagnostics use
+exact one-line comparisons rather than code-page-sensitive `findstr` patterns.
+The independent verification planner passes 31 general and 194 native routing
+cases, including explicit coverage of this 0833 amendment manifest.

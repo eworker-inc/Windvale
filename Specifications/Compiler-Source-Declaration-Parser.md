@@ -17,7 +17,8 @@ The pass recognizes:
 - optional export, name, explicit type, and bounded initializer span for `const` declarations;
 - record names, optional bounded generic parameters, fields, and
   non-void/non-array field types, including `i64` and `u64`;
-- enum names, members, and unsuffixed nonnegative integer token shape;
+- enum names, the edition-1 required `:` plus fixed-integer backing token,
+  members, and optionally negated suffixed or unsuffixed integer token shape;
 - variant names, optional bounded generic parameters, and zero-through-64
   uniquely shaped case-field declarations; and
 - optional function export, name, optional bounded generic parameters,
@@ -37,6 +38,12 @@ identifier names an in-scope constant generic parameter. Source symbols own
 that decision, the exact fixed-integer width, and the collection bound.
 
 Function-body tokens are balanced through the matching outer brace, including nested blocks. A constant initializer is retained as the declaration's body span from its first expression token through the token before the required semicolon; the later symbol phase owns expression grammar, typing, evaluation, and diagnostics. Function statement and expression grammar is deliberately outside this declaration pass.
+
+The declaration pass records enum syntax but does not decide whether a backing
+token is a fixed integer, a suffix matches it, a signed value fits, or two tags
+are equal. Source Symbols owns those exact type/range/duplicate rules. A
+descriptorless Seed declaration may omit the backing for compatibility; an
+edition-1 declaration cannot.
 
 ## Streaming records
 

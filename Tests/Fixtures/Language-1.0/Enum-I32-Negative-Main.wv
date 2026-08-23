@@ -1,0 +1,22 @@
+#!wv/1 en@1
+module Enumˉi32ˉnegativeˉmain;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Ordering: i32 {
+    Less = -1i32;
+    Equal = 0i32;
+    Greater = 1i32;
+}
+
+fn Read() -> Ordering {
+    return Ordering.Less;
+}
+
+export fn Main() -> i32 {
+    if Read() == Ordering.Less {
+        return 42;
+    }
+    return 1;
+}

@@ -296,7 +296,7 @@ prefix. When templates exist, the backend builds bounded record and variant
 target maps, omits every template, compacts concrete declarations, and remaps all
 downstream shapes and operation targets before serialization.
 
-Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve their exact nonnegative `i32` bit pattern. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
+Each Types entry carries its existing WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. Enum member values preserve the exact signed `i32` value as its canonical two's-complement 32-bit pattern, including `-2147483648`. Descriptorless Seed declarations continue to supply their historical nonnegative `i32` subset. An edition-1 enum backed by `i8`, `i16`, `i64`, `u8`, `u16`, `u32`, or `u64` is valid source-analysis evidence but makes the current WVB 1.20 writer return `Unsupportedˉshape` before it publishes a partial module; it is never narrowed to `i32`. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
 
 Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `i64` and `u64` value tags `9` and `10`; shapes `9` and `10` encode WVB 1.15 `unit` and `never` tags `20` and `21`; shapes `11`, `12`, and `13` encode WVB 1.12 tags `14`, `15`, and `16` for `i8`, `i16`, and `u16`; shapes `14` and `15` encode WVB 1.14 tags `18` and `19` for `f32` and `f64`; and shape `16` encodes WVB 1.13 tag `17` for `rune`. Record shapes encode byte `7` plus their planned WVB Types index; enum shapes encode byte `8` plus their planned index. `never` is restricted to a function result; the remaining encodings apply uniformly wherever their source types are admitted.
 
@@ -339,7 +339,7 @@ ordinary `__WvY` Types index. The materialized case and field order and each
 substituted field shape are the runtime contract; the source template, its type
 arguments, and the private WIR shape are absent from WVB.
 
-WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR.
+WVIR operations `17` through `22` lower to the established WVB record construction/field and enum constant/equality/inequality/name opcodes. Their target and auxiliary fields are already canonical type and field/member identities validated by WVIR. For operation `19`, the auxiliary is the member identity; the Types entry supplies the exact signed `i32` tag. This keeps WIR nominal and prevents declaration-order indices from being mistaken for source enum values.
 
 WVIR operations `126` and `127` lower to WVB opcodes `BD` and `BE` for `Bytesˉreadˉu64ˉlittle` and `Bytesˉfromˉu64ˉlittle`. They are ordinary members of the canonical WVB 1.11 vocabulary; the backend does not select another minor version when they occur.
 

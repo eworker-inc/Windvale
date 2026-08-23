@@ -1,0 +1,10 @@
+#!wv/1 en@1
+module Enumˉbackingˉduplicateˉsigned;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+enum Wrong: i8 {
+    First = 0i8;
+    Second = -0i8;
+}

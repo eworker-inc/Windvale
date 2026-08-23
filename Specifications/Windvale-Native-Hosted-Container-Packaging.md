@@ -11,7 +11,7 @@ admission decision, digest, segment, and publication transaction.
 
 The ordinary compiler-family candidate accepts a WVB whose lowered native fragment fits in one
 nonempty resource of at most 4 MiB. The explicit image-input mode accepts one
-through eight canonical fragments, with every nonfinal fragment exactly 4 MiB,
+through sixteen canonical fragments, with every nonfinal fragment exactly 4 MiB,
 plus a validated decimal entry. Both modes support the seven compiler-family
 hosted profiles `1` through `7`; they do not alias the separately specified
 read-only verifier profiles. Both modes construct the established ten-service
@@ -21,10 +21,18 @@ script to decode a Windvale format.
 
 Profiles `1` through `6` retain the 64,000,000,000-instruction execution
 ceiling. Profile `7`, used by the split analyzer and emitter reconstruction,
-has an 80,000,000,000-instruction ceiling. The higher bound is profile-scoped:
-the measured 1.73 MiB emitter source closure exhausted 64,000,000,000 during
-analysis, while ordinary hosted tools have no measured reason to inherit that
-capacity or change their established application bytes.
+has a 137,438,953,472-instruction (`2^37`) ceiling and a
+234,881,024-byte (224 MiB) dynamic text/byte arena. Unlike profiles `2` and `6`,
+profile `7` retains the 1 MiB per-name stride required by the compiler source
+closure rather than selecting their compact 8 KiB stride.
+The higher bounds are profile-scoped:
+the earlier measured 1.73 MiB emitter source closure exhausted 64,000,000,000
+during analysis; the 1,931,188-byte compiler closure subsequently left no
+usable headroom under 80,000,000,000; and the exact enum-backing compiler
+closure exhausted 120,259,084,288 instructions before reaching text-arena
+exhaustion under a later 124,554,051,584-instruction probe. Ordinary hosted
+tools have no measured reason to inherit either capacity or change their
+established application bytes.
 
 ## Commands
 
@@ -76,7 +84,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 6,927 | `7f323dabafff6ef6c158ad1ad45c40474c60c282fda3baba3928b4d7cac8a2e4` |
+| `SHA256SUMS` | 6,927 | `40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
@@ -84,6 +92,18 @@ door. The 72 tool artifacts themselves retain explicit Stage 0 recovery
 provenance until this complete toolset is promoted. Their digest-bound native
 processes now construct either target container without calling that recovery
 path.
+
+Decision 0833 rebuilds the nine compiler-family WVBs and both target application
+families after the profile-7 geometry change. Eight application families use
+the ordinary retained native path. `wvhostpublish` is intentionally different:
+its Windvale WVB is the read-only admission core, while its platform application
+also contains the immutable atomic-publication shell. That application was
+reconstructed in an isolated checkout of immutable release
+`stage0-recovery-e5a1a7473c57`, after verifying commit
+`e5a1a7473c57935c5dfcf09b78b18c3c099e70ef`, tree
+`9950150f14cd4864b06c853ab6a716fa6e04495a`, and the release manifests. Only the
+resulting Windows/Linux binary products enter this candidate; no managed source,
+direct `dotnet` entry point, or recovery workspace returns to `main`.
 
 The separate segmented-toolset constructor builds the staging producer,
 compiler-image staging, and canonical transport WVBs through the native source

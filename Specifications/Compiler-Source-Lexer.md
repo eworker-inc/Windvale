@@ -69,11 +69,16 @@ Keyword classification uses exact byte length and first ASCII byte to select onl
 ## Numeric, string, and rune rules
 
 `Compilerˉnumericˉkind` distinguishes `None`, `I32`, `U8`, `U32`, `I64`,
-`U64`, `I8`, `I16`, and `U16`. Unsuffixed decimal digits are `I32` and cannot
-exceed 2,147,483,647. The exact suffixes `i8`, `i16`, `u8`, `u16`, `u32`,
-`i64`, and `u64` require a non-identifier boundary and enforce 127, 32,767,
-255, 65,535, 4,294,967,295, 9,223,372,036,854,775,807, and
-18,446,744,073,709,551,615 respectively. A preceding unary minus is separate
+`U64`, `I8`, `I16`, and `U16`. An unsuffixed decimal token retains `I32` as
+its contextual-kind marker but may carry any magnitude through
+18,446,744,073,709,551,615; the consuming semantic context selects one exact
+integer type and applies its range. The exact suffixes `i8`, `i16`, `i32`,
+`i64`, `u8`, `u16`, `u32`, and `u64` require a non-identifier boundary.
+Unsigned suffixes enforce their ordinary maxima. Signed suffixes admit the
+positive maximum plus the one extra minimum magnitude (128, 32,768,
+2,147,483,648, or 9,223,372,036,854,775,808) so the following semantic unary-
+minus check can represent each signed minimum; the same magnitude without
+unary minus is rejected before publication. A preceding unary minus is separate
 syntax, not part of the token. Narrow values use `Numericˉvalue` with
 `Numericˉhigh` zero; wide values use the two fields as a little-endian low/high
 `u32` pair. One bounded two-limb decimal accumulator parses every integer

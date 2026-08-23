@@ -191,6 +191,16 @@ directory-version change is introduced.
 
 A constant read resolves its WVSD 1.1 entry, reevaluates the validated root declaration under the source-symbol contract, and emits the matching scalar, Boolean, or enum constant operation, including `I64ˉconstant`, `U64ˉconstant`, and `Fixedˉintegerˉconstant`. Wide values carry exact low/high `u32` limbs; fixed signed values carry their exact named-width two's-complement bits in the operation target. No data identity, local slot, or runtime lookup is introduced.
 
+An enum operation carries the exact nominal enum shape and the zero-based source
+member identity, not a narrowed copy of the declared integer tag. The symbol
+phase has already validated that member against its explicit Language 1.0
+backing type. This representation lets matching, equality, and name lookup stay
+nominal and lossless for every admitted fixed-integer backing while each output
+contract decides which backing representations it can serialize. The current
+WVB 1.20 writer accepts exact `i32`-backed enums only and rejects a module that
+contains any other enum backing before publishing bytecode; WIR does not
+truncate a wider or unsigned tag to fit that boundary.
+
 A named record literal resolves one accessible record, lowers each field expression left to right in source order, rejects unknown, duplicate, missing, or mismatched fields, and places the resulting temporary IDs into declaration-order operands before emitting the existing `Recordˉcreate = 17` operation. For an applied generic record target, typed lowering admits the complete type through the paired WVGT catalog, reconstructs and independently validates its substituted record layout, and gives the operation that private shape as both result and target; `Auxiliary` retains the template's WVSD declaration identity. A field read from that value emits the existing `Recordˉfield = 18` with the private receiver shape as target and the zero-based substituted field identity in `Auxiliary`. Its result is the field's exact substituted shape. Validation requires the private instance, declaration, record kind, layout, operand arity, field identity, and result shape to agree with the paired catalog.
 
 A Language 1.0 record update first lowers its exact same-nominal base once, lowers each uniquely named replacement left to right, extracts every unreplaced declaration-order field from that one base temporary with `Recordˉfield = 18`, and emits the same `Recordˉcreate = 17` operation. Field extraction is storage-only and occurs after the source-ordered replacement evaluations; it adds no user-visible evaluation. No new WVIR operation, value representation, or WVB opcode is introduced. Recursive `else if` lowers through the existing conditional blocks and terminators.

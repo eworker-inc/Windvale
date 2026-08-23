@@ -536,6 +536,20 @@ fixed-width integer tags. The tag type is declared. Duplicate tags are invalid.
 Converting a tag to an enum validates that it names a member; serialization uses
 a separately versioned format contract.
 
+The declared tag type is exactly one of `i8`, `i16`, `i32`, `i64`, `u8`,
+`u16`, `u32`, or `u64`. Every member uses one explicit literal. An unsuffixed
+literal is contextually checked against that declared type; a suffixed literal
+must name the same type. A leading `-` is admitted only for a signed tag type,
+and the signed minimum of each width is valid. Tags are compared as exact
+mathematical values, so `0` and `-0` are the same duplicate tag. No tag wraps,
+narrows, widens, changes signedness, or converts implicitly to or from its enum.
+
+The backing width is part of the enum's source type and serialized-format
+contract, but it is not an invitation to observe an implementation address or
+storage layout. A target may reject an otherwise valid enum before artifact
+publication when its selected bytecode or ABI version cannot preserve that
+exact backing; it cannot silently encode the enum as `i32`.
+
 ### Variants
 
 A variant is a closed nominal sum. Each case has zero or more uniquely named
