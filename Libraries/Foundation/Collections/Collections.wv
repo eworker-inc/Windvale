@@ -6,4 +6,6 @@ authority library;
 
 // Array<T, N>, Vector<T>, and Sequence<T> are compiler-supplied Foundation
 // intrinsics. This source module owns their canonical import identities without
-// introducing forgeable constructible records.
+// introducing forgeable constructible records. Vectorˉconstructˉreserved has
+// an exact source and typed WVIR identity; executable allocation leases and
+// public append remain later connected migration checkpoints.

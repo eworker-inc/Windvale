@@ -210,12 +210,13 @@ One combined full pass constructs local evidence and binds body references. The 
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 
-Before ambient intrinsic lookup, a qualified call may select four
+Before ambient intrinsic lookup, a qualified call may select five
 compiler-supplied collection operations only through the exact Foundation
 collection module query. Binding records `Sequenceˉlength` as a one-argument
 intrinsic with WVIR operation identity 167, `Sequenceˉat` as a two-argument
 intrinsic with identity 168, `Vectorˉlength` as a one-argument intrinsic with
-identity 169, and `Vectorˉfreeze` as a one-argument intrinsic with identity 170.
+identity 169, `Vectorˉfreeze` as a one-argument intrinsic with identity 170,
+and `Vectorˉconstructˉreserved` as a two-argument intrinsic with identity 172.
 A lookalike module falls through to ordinary callable lookup and cannot obtain
 any synthetic match. Element-dependent parameter and result shapes are resolved
 later from the validated WVGT catalog; WVLB does not serialize a guessed generic
@@ -229,6 +230,14 @@ function return, or parameter of a selected non-generic fixed-signature call.
 context. Missing, inferred, or mismatched contexts reject before publication;
 generic argument solving remains argument-derived or explicit and never uses
 the result context.
+
+`Vectorˉconstructˉreserved::<T>` requires its one explicit type argument at
+typed-WVIR construction even though binding already fixes its canonical call
+identity and arity. Typed construction also requires the exact contextual
+`Result<Vector<T>, Allocationˉfailure>` identity, one directly named
+`Memoryˉbudget` local, and an exact `u64` maximum. Binding never selects this
+operation from the result context and never grants a lookalike collection or
+memory module the intrinsic identity.
 
 The real nine-module compiler closure must complete below the fixed 4,000,000,000-instruction ceiling. Raising that ceiling is not an accepted substitute for correcting repeated materialization or rescan work.
 

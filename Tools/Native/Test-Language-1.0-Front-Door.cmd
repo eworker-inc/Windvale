@@ -113,12 +113,12 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Admitter.wvb") do echo INFO  language 1 admitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Admitter.wvb" SHA256
-for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="82924" goto :cleanup
-certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"7a7da249ff51647e2c279a9d06c05897f071683991aca0748ad6f40e02887512" >nul || goto :cleanup
+for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83055" goto :cleanup
+certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1144757" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"384cb966d9b8718fda0c2e7bf3863ae168ce7d9fcb911d076b87d5e33400b0e3" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1165611" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"351368e34169c8f4c92992f924df0d39bab13168b012e92e943130cd93b80010" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -199,8 +199,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1078300" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"215034c1149ee898ae4a9980bbe82326cb0d2a82fe7939e6191af64972a9af50" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1101122" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"b0b4f7cd12e7ef90abf61b125c53a05dd13af26eba6b93b13313b599aca35046" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -519,6 +519,102 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
 echo PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.5 valid=1 wvb-boundary=1 malformed=7 source-rejections=4
+set "FailureStep=compiler-vector-construct-reserved"
+echo START language 1 front door step=vector-construct-reserved
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wir.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
+    "%Work%\Vector-Construct-Reserved-Admitted.wvss" ^
+    >"%Work%\Vector-Construct-Reserved-Admission.out" ^
+    2>"%Work%\Vector-Construct-Reserved-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Vector-Construct-Reserved-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Vector-Construct-Reserved-Admitted.wvss" ^
+    "%Work%\Vector-Construct-Reserved.wvss" ^
+    "%Work%\Vector-Construct-Reserved.wvca" ^
+    "%Work%\Vector-Construct-Reserved.wvlb" ^
+    "%Work%\Vector-Construct-Reserved.wvir" ^
+    >"%Work%\Vector-Construct-Reserved-Analysis.out" ^
+    2>"%Work%\Vector-Construct-Reserved-Analysis.err" || goto :cleanup
+for %%F in ("%Work%\Vector-Construct-Reserved-Analysis.err") do if not "%%~zF"=="0" goto :cleanup
+findstr /b /c:"source analysis status=Published " ^
+    "%Work%\Vector-Construct-Reserved-Analysis.out" >nul || goto :cleanup
+mkdir "%Work%\Vector-Construct-Reserved-Malformed" || goto :cleanup
+node "%Native%\Verify-Language-1.0-Vector-Construct-Reserved-Wir.mjs" ^
+    "%Work%\Emitter.exe" ^
+    "%Work%\Vector-Construct-Reserved.wvss" ^
+    "%Work%\Vector-Construct-Reserved.wvca" ^
+    "%Work%\Vector-Construct-Reserved.wvlb" ^
+    "%Work%\Vector-Construct-Reserved.wvir" ^
+    "%Work%\Vector-Construct-Reserved-Malformed" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Inferred.wv" ^
+    "Vector-Construct-Reserved-Inferred" "Genericˉresolution" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Maximum.wv" ^
+    "Vector-Construct-Reserved-Wrong-Maximum" "Invalidˉargument" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Result.wv" ^
+    "Vector-Construct-Reserved-Wrong-Result" "Genericˉresolution" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Budget.wv" ^
+    "Vector-Construct-Reserved-Wrong-Budget" "Invalidˉargument" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+call :expect_profiled_analysis_failure_with_dependencies ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Allocation-Failure.wv" ^
+    "Vector-Construct-Reserved-Wrong-Allocation-Failure" "Genericˉresolution" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+"%Work%\Admitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Use-After.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
+    "%Work%\Vector-Construct-Reserved-Use-After-Admitted.wvss" ^
+    >"%Work%\Vector-Construct-Reserved-Use-After-Admission.out" ^
+    2>"%Work%\Vector-Construct-Reserved-Use-After-Admission.err" || goto :cleanup
+for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Analyzer.exe" --admitted-source-set ^
+    "%Work%\Vector-Construct-Reserved-Use-After-Admitted.wvss" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvss" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvca" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvlb" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvir" ^
+    >"%Work%\Vector-Construct-Reserved-Use-After-Analysis.out" ^
+    2>"%Work%\Vector-Construct-Reserved-Use-After-Analysis.err" || goto :cleanup
+for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Analysis.err") do if not "%%~zF"=="0" goto :cleanup
+"%Work%\Emitter.exe" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvss" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvca" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvlb" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvir" ^
+    "%Work%\Vector-Construct-Reserved-Use-After.wvb" ^
+    >"%Work%\Vector-Construct-Reserved-Use-After-Emission.out" ^
+    2>"%Work%\Vector-Construct-Reserved-Use-After-Emission.err"
+if not "%ERRORLEVEL%"=="1" goto :cleanup
+for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Emission.out") do if not "%%~zF"=="0" goto :cleanup
+findstr /x /c:"source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0" ^
+    "%Work%\Vector-Construct-Reserved-Use-After-Emission.err" >nul || goto :cleanup
+if exist "%Work%\Vector-Construct-Reserved-Use-After.wvb" goto :cleanup
+echo PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.5 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
 "%Work%\Admitter.exe" ^
@@ -1679,7 +1775,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=462 frozen-inputs=251 source-fixtures=107 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=478 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-wir-wvb-bytes=%GenericWirWvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :expect_profiled_emission_failure
@@ -1767,11 +1863,17 @@ if "%~5"=="" (
         --source-profile "%SourceProfile%" ^
         "%~f1" "%~f4" "%Work%\%~2.wvss" ^
         >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
-) else (
+) else if "%~6"=="" (
     "%Work%\Admitter.exe" ^
         --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
         --source-profile "%SourceProfile%" ^
         "%~f1" "%~f4" "%~f5" "%Work%\%~2.wvss" ^
+        >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
+) else (
+    "%Work%\Admitter.exe" ^
+        --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+        --source-profile "%SourceProfile%" ^
+        "%~f1" "%~f4" "%~f5" "%~f6" "%Work%\%~2.wvss" ^
         >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 )
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1

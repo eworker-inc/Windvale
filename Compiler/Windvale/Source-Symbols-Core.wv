@@ -1442,7 +1442,8 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
     if Intrinsic == 7u32 { Expectedˉname = "Vectorˉfreeze"; }
     if Intrinsic == 8u32 { Expectedˉname = "Memoryˉbudget"; }
     if Intrinsic == 9u32 { Expectedˉname = "Split"; }
-    if Intrinsic < 1u32 || Intrinsic > 9u32 ||
+    if Intrinsic == 10u32 { Expectedˉname = "Vectorˉconstructˉreserved"; }
+    if Intrinsic < 1u32 || Intrinsic > 10u32 ||
         !Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
         ) {

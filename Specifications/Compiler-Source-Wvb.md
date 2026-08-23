@@ -654,6 +654,17 @@ runner returns `42` for both provider outcomes. Allocation effects and leases,
 general owned arguments/returns, fallible Vector construction, and direct
 native/browser/OS execution remain later connected checkpoints.
 
+Typed WVIR 1.5/1.6 operation
+`Foundationˉvectorˉconstructˉreserved = 172` is admitted and independently
+validated but is not yet executable WVB. The operation carries one exact `u64`
+maximum-items operand, consumes the direct `Memoryˉbudget` local named by
+`Target`, names the canonical Foundation memory module in `Auxiliary`, and
+produces exact `Result<Vector<T>, Allocationˉfailure>`. The current emitter
+returns `Unsupportedˉoperation` and publishes no WVB. Executable lowering waits
+for one versioned allocation-lease and Vector-owner representation with atomic
+debit/refusal/teardown behavior; the typed operation does not freeze either
+implementation strategy.
+
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause
 presence, byte span, and identity count under fixed 32-identity,

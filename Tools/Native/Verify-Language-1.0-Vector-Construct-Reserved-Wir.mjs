@@ -14,7 +14,7 @@ const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 
 if (process.argv.length !== 8) {
     process.stderr.write(
-        'Usage: node Tools/Native/Verify-Language-1.0-Memory-Budget-Split-Wir.mjs ' +
+        'Usage: node Tools/Native/Verify-Language-1.0-Vector-Construct-Reserved-Wir.mjs ' +
         '<emitter> <source.wvss> <manifest.wvca> <bindings.wvlb> ' +
         '<valid.wvir> <work-directory>\n',
     );
@@ -42,11 +42,11 @@ const Invalidˉanalysis =
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 const Unsupportedˉwvb =
     'source emission status=Valid analysis-status=Valid ' +
-    'wvb-status=Unsupportedˉshape function=2 operation=6 source-line=0\n';
+    'wvb-status=Unsupportedˉoperation function=0 operation=1 source-line=0\n';
 const Cases = [
     {
         name: 'old-minor',
-        mutate: Candidate => Candidate.writeUInt16LE(3, 6),
+        mutate: Candidate => Candidate.writeUInt16LE(4, 6),
     },
     {
         name: 'unknown-operation',
@@ -55,37 +55,40 @@ const Cases = [
         ),
     },
     {
-        name: 'primitive-result',
+        name: 'vector-not-result',
         mutate: Candidate => Candidate.writeUInt32LE(
-            25, Layout.operation + 8,
+            0x80000000, Layout.operation + 8,
         ),
     },
     {
-        name: 'missing-limit-operand',
+        name: 'missing-maximum-operand',
         mutate: Candidate => Candidate.writeUInt32LE(
-            1, Layout.operation + 20,
+            0, Layout.operation + 20,
         ),
     },
     {
-        name: 'consumed-parent-slot',
+        name: 'non-budget-target',
         mutate: Candidate => Candidate.writeUInt32LE(
-            0, Layout.operation + 24,
+            1, Layout.operation + 24,
         ),
     },
     {
-        name: 'wrong-memory-module',
+        name: 'collections-not-memory-module',
         mutate: Candidate => Candidate.writeUInt32LE(
-            2, Layout.operation + 28,
+            1, Layout.operation + 28,
         ),
     },
     {
-        name: 'swapped-limits',
-        mutate: Candidate => {
-            const First = Candidate.readUInt32LE(Layout.firstOperand);
-            const Second = Candidate.readUInt32LE(Layout.firstOperand + 4);
-            Candidate.writeUInt32LE(Second, Layout.firstOperand);
-            Candidate.writeUInt32LE(First, Layout.firstOperand + 4);
-        },
+        name: 'u32-maximum',
+        mutate: Candidate => Candidate.writeUInt32LE(
+            3, Layout.maximumTemporary,
+        ),
+    },
+    {
+        name: 'result-as-maximum',
+        mutate: Candidate => Candidate.writeUInt32LE(
+            1, Layout.firstOperand,
+        ),
     },
 ];
 
@@ -111,7 +114,7 @@ try {
         );
     }
     process.stdout.write(
-        'language 1 memory budget split WVIR status=Passed ' +
+        'language 1 Vector construct reserved WVIR status=Passed ' +
         `valid-boundary=1 malformed=${Cases.length} ` +
         `wvir-bytes=${Valid.length}\n`,
     );
@@ -124,15 +127,15 @@ try {
 }
 
 function Inspectˉvalidˉlayout(Input) {
-    if (Input.length !== 568 ||
+    if (Input.length !== 456 ||
         Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
         Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 5 ||
         Input.readUInt32LE(8) !== 5 || Input.readUInt32LE(12) !== 48 ||
         Input.readUInt32LE(16) !== 2 || Input.readUInt32LE(20) !== 28 ||
-        Input.readUInt32LE(24) !== 6 || Input.readUInt32LE(28) !== 32 ||
-        Input.readUInt32LE(32) !== 5 || Input.readUInt32LE(36) !== 4 ||
-        Input.readUInt32LE(40) !== 3 || Input.readUInt32LE(44) !== 4) {
-        Reject('The valid Memoryˉbudget.Split fixture is not exact WVIR 1.5.');
+        Input.readUInt32LE(24) !== 3 || Input.readUInt32LE(28) !== 32 ||
+        Input.readUInt32LE(32) !== 3 || Input.readUInt32LE(36) !== 4 ||
+        Input.readUInt32LE(40) !== 1 || Input.readUInt32LE(44) !== 4) {
+        Reject('The valid Vector constructor fixture is not exact WVIR 1.5.');
     }
     const Blocksˉoffset = 48 + Input.readUInt32LE(8) * 48;
     const Operationsˉoffset = Blocksˉoffset + Input.readUInt32LE(16) * 28;
@@ -146,26 +149,27 @@ function Inspectˉvalidˉlayout(Input) {
     const Matches = [];
     for (let Index = 0; Index < Input.readUInt32LE(24); Index += 1) {
         const Entry = Operationsˉoffset + Index * 32;
-        if (Input.readUInt32LE(Entry + 4) === 171) Matches.push(Entry);
+        if (Input.readUInt32LE(Entry + 4) === 172) Matches.push(Entry);
     }
     if (Matches.length !== 1) {
-        Reject('The valid WVIR must contain exactly one operation 171.');
+        Reject('The valid WVIR must contain exactly one operation 172.');
     }
     const Operation = Matches[0];
     const Firstˉoperand = Input.readUInt32LE(Operation + 16);
-    if (Input.readUInt32LE(Operation + 8) !== 2_147_483_648 ||
-        Input.readUInt32LE(Operation + 20) !== 2 ||
-        Input.readUInt32LE(Operation + 24) !== 1 ||
-        Input.readUInt32LE(Operation + 28) !== 1 || Firstˉoperand !== 1 ||
-        Input.readUInt32LE(Temporariesˉoffset + 4) !== 8 ||
-        Input.readUInt32LE(Temporariesˉoffset + 8) !== 3 ||
-        Input.readUInt32LE(Operandsˉoffset + Firstˉoperand * 4) !== 1 ||
-        Input.readUInt32LE(Operandsˉoffset + (Firstˉoperand + 1) * 4) !== 2) {
-        Reject('The exact Memoryˉbudget.Split operation evidence differs.');
+    if (Input.readUInt32LE(Operation + 8) !== 0x80000001 ||
+        Input.readUInt32LE(Operation + 20) !== 1 ||
+        Input.readUInt32LE(Operation + 24) !== 0 ||
+        Input.readUInt32LE(Operation + 28) !== 2 ||
+        Firstˉoperand !== 0 ||
+        Input.readUInt32LE(Temporariesˉoffset) !== 8 ||
+        Input.readUInt32LE(Temporariesˉoffset + 4) !== 0x80000001 ||
+        Input.readUInt32LE(Operandsˉoffset) !== 0) {
+        Reject('The exact Vector constructor operation evidence differs.');
     }
     return {
         operation: Operation,
-        firstOperand: Operandsˉoffset + Firstˉoperand * 4,
+        maximumTemporary: Temporariesˉoffset,
+        firstOperand: Operandsˉoffset,
     };
 }
 

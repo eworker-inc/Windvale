@@ -2600,3 +2600,48 @@ append, general owned calls and control-flow joins, semantic `using`, reverse
 successful-acquisition release, and one real hosted resource consumer remain
 before Slice 5 is complete. Canonical effect resolution, inference, function
 values, and capture enforcement remain Slice 6 work.
+
+## Fallible Vector-construction typed-WVIR evidence
+
+[Decision 0840](../Decisions/0840-Bind-Fallible-Vector-Construction-In-Wvir.md)
+adds the first public fallible Vector-construction compiler boundary without
+claiming executable allocation. The canonical
+`Foundationˉcollections.Vectorˉconstructˉreserved::<i32>` fixture is admitted
+with exact Foundation Collections, Memory, and Result dependencies. The current
+split analyzer publishes:
+
+```text
+source analysis status=Published source-bytes=2085 manifest-bytes=104 binding-bytes=284 wir-bytes=456
+```
+
+The directory is exact WVIR 1.5: five function entries, two blocks, three
+operations, three temporaries, and one operand. Exactly one operation is 172.
+Its result is the private `Result<Vector<i32>, Allocationˉfailure>` instance,
+its sole operand is exact `u64`, its target is budget slot zero, and its
+auxiliary is the canonical Foundation Memory module. The present emitter proves
+the closed executable boundary:
+
+```text
+source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉoperation function=0 operation=1 source-line=0
+```
+
+The independent verifier accepts that one boundary and rejects eight exact
+mutations: WVIR 1.4, unknown operation 173, Vector instead of Result, no maximum
+operand, a non-budget target, the Collections module instead of Memory, a `u32`
+maximum, and the result temporary used as its own maximum. Five source programs
+reject inferred generic arguments, wrong maximum width, wrong result, wrong
+budget, and a lookalike allocation-failure declaration. A use-after source
+program publishes provisional analysis, but independent ownership validation
+rejects its second operation 172 and no WVB is created.
+
+The maintained products are the 83,055-byte admitter at SHA-256
+`aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04`,
+1,165,611-byte analyzer at SHA-256
+`351368e34169c8f4c92992f924df0d39bab13168b012e92e943130cd93b80010`,
+and 1,101,122-byte emitter at SHA-256
+`b0b4f7cd12e7ef90abf61b125c53a05dd13af26eba6b93b13313b599aca35046`.
+The front-door contract advances to 478 cases and 114 source fixtures. The
+112-owner registry contains 5,332 cases at SHA-256
+`ae29842cedcd3eda416b8008cf77e03b9346faba5bf0779d4ebacc7468be51f0`.
+Focused Windows evidence is present; the complete front-door rerun and paired
+Linux execution remain the later qualification gate.

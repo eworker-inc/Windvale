@@ -1129,6 +1129,8 @@ function Add-Native-Tool-Suite {
         'Verify-Language-1.0-Vector-Sequence-Runtime',
         'Verify-Language-1.0-Sequence-Reads',
         'Verify-Language-1.0-Vector-Reads-Freeze',
+        'Verify-Language-1.0-Memory-Budget-Split-Wir',
+        'Verify-Language-1.0-Vector-Construct-Reserved-Wir',
         'Verify-Language-1.0-U8-Enums',
         'Run-WebAssembly-Scalar-Wvb',
         'Verify-Generic-Nominal-Main-Pipeline',

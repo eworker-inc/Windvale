@@ -360,6 +360,39 @@ Optimized implementations keep a simple semantic oracle. Performance work must
 not weaken deterministic output, bounds, malformed-input rejection, or
 portability.
 
+## Current Slice 5 fallible Vector-construction checkpoint
+
+[Decision 0840](../Decisions/0840-Bind-Fallible-Vector-Construction-In-Wvir.md)
+connects the frozen public `Vectorˉconstructˉreserved::<T>` call to exact source
+binding and typed WVIR operation 172. The call accepts one directly named
+available `Memoryˉbudget`, consumes that owner, evaluates an exact `u64`
+maximum-items value, and produces only the canonical
+`Result<Vector<T>, Allocationˉfailure>` for the same explicit scalar `T`.
+
+The persisted operation contains no pointer, capacity buffer, heap identity, or
+lease-table representation. It carries the maximum temporary, consumed budget
+slot, and canonical Memory module needed to reconstruct and independently
+verify the complete public contract. WVIR 1.5/1.6 now represents operation 171
+or 172. The existing bounded ownership dataflow rejects an unavailable budget
+and a second consumption.
+
+The current WVB boundary is intentionally closed: a valid 456-byte WVIR reaches
+the emitter and returns exact `Unsupportedˉoperation` without publication. This
+keeps allocation leases, provider debit/refusal, Vector representation, and
+teardown as one later executable checkpoint instead of freezing a partial
+runtime design. Eight malformed directories, five typed source failures, and
+one use-after-consumption case protect the boundary.
+
+The front-door summary advances to 478 cases and 114 source fixtures. The
+registry remains 112 owners and advances to 5,332 cases at SHA-256
+`ae29842cedcd3eda416b8008cf77e03b9346faba5bf0779d4ebacc7468be51f0`.
+Executable construction, allocation-lease accounting, recoverable append,
+semantic effect enforcement, general owned calls, `using`, reverse release,
+and a real hosted resource consumer remain before Slice 5 completes. Internal
+compiler micro-optimization remains deferred until Language 1.0 becomes the
+seed; exact semantics, bounded verification, and workflow-blocker fixes remain
+appropriate during migration.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

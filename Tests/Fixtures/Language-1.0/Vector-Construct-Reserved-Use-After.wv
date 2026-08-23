@@ -1,0 +1,24 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉconstructˉreservedˉuseˉafter;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+export fn Invalid(
+    Budget: Memory.Memoryˉbudget
+) -> Resultˉvalues.Result<
+    Collections.Vector<i32>,
+    Memory.Allocationˉfailure
+> {
+    let First: Resultˉvalues.Result<
+        Collections.Vector<i32>,
+        Memory.Allocationˉfailure
+    > = Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return Collections.Vectorˉconstructˉreserved::<i32>(Budget, 8u64);
+}
+
+export fn Main() -> i32 { return 42; }

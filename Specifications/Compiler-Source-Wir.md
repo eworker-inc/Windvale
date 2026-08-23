@@ -53,7 +53,7 @@ The catalog selects the even WVIR minor in the current `1.3` through `1.6`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.3 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.4 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.5 is the corresponding non-specialized directory when operation `171` is present; WVIR 1.6 combines that operation with the 1.4 specialization envelope. WVIR 1.1/1.2 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.3 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.4 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.5 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.6 combines either operation with the 1.4 specialization envelope. WVIR 1.1/1.2 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -77,17 +77,19 @@ All integers are unsigned little-endian and the directory contains no padding.
 
 Sections follow in that exact order.
 
-Source without an admitted generic instance or `Foundationˉmemory.Split` uses
-that exact 48-byte WVIR 1.3 header. Specialized source without Split publishes
-WVIR 1.4. Split without specialization publishes WVIR 1.5 with the same 48-byte
-header and section positions as 1.3. A module containing both features publishes
+Source without an admitted generic instance, `Foundationˉmemory.Split`, or
+`Foundationˉcollections.Vectorˉconstructˉreserved` uses
+that exact 48-byte WVIR 1.3 header. Specialized source without either memory
+operation publishes WVIR 1.4. Either memory operation without specialization publishes WVIR 1.5
+with the same 48-byte header and section positions as 1.3. A module containing
+specialization and either memory operation publishes
 WVIR 1.6 with the specialization envelope of 1.4. The even versions append the
 specialization count at offset 48 and specialization-layout version `1` at offset
 52, and begin the function section at offset 56. Their function-entry count is
 exactly `WvsdEntryCount + SpecializationCount`; the count must equal the valid
 WVGC instance count embedded in the paired WVLB 1.2. All section entry layouts
-remain unchanged. A 1.5/1.6 directory must contain operation `171`, and a
-directory containing that operation must select 1.5/1.6.
+remain unchanged. A 1.5/1.6 directory must contain operation `171` or `172`,
+and a directory containing either operation must select 1.5/1.6.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -104,7 +106,7 @@ The temporary section is a sequence of result shapes. The operand section is a s
 
 ## Operation families
 
-Operation values `1` through `63` retain the prior constants, storage, Foundation, nominal, scalar, and call contract. `Valueˉphi = 64` joins two exact same-shape values selected by control flow; its earlier Boolean short-circuit use remains the shape-`4` specialization. Values `65` through `67` are variant create/test/legacy one-field payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Values `151` through `162` are the `f32`/`f64` constant, arithmetic, negation, and comparison family. Value `163` is `Unitˉconstant`: it has shape `9`, no operands, and zero target and auxiliary fields. Value `164` is `Variantˉfield`: it consumes one exact nominal variant, stores the canonical variant index in `Target`, packs `case * 64 + field` in `Auxiliary`, and produces that field's exact shape. Values `165` through `170` retain the fixed-array and exact Foundation Sequence/Vector operations. Value `171` is `Foundationˉmemoryˉsplit`, defined below. Value `0` is invalid in published evidence.
+Operation values `1` through `63` retain the prior constants, storage, Foundation, nominal, scalar, and call contract. `Valueˉphi = 64` joins two exact same-shape values selected by control flow; its earlier Boolean short-circuit use remains the shape-`4` specialization. Values `65` through `67` are variant create/test/legacy one-field payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Values `151` through `162` are the `f32`/`f64` constant, arithmetic, negation, and comparison family. Value `163` is `Unitˉconstant`: it has shape `9`, no operands, and zero target and auxiliary fields. Value `164` is `Variantˉfield`: it consumes one exact nominal variant, stores the canonical variant index in `Target`, packs `case * 64 + field` in `Auxiliary`, and produces that field's exact shape. Values `165` through `170` retain the fixed-array and exact Foundation Sequence/Vector operations. Value `171` is `Foundationˉmemoryˉsplit`; value `172` is `Foundationˉvectorˉconstructˉreserved`. Both are defined below. Value `0` is invalid in published evidence.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -290,13 +292,32 @@ Result instance. Its two operands are the already-evaluated `u64` and `u32`
 limit temporaries. `Target` is the borrowed parent budget's direct local slot;
 `Auxiliary` is the canonical Foundation memory module index. Independent
 validation reconstructs the result/failure layout, validates the module and
-numeric operand shapes, and performs a conservative affine proof for every
-function containing Split. The current proof admits one basic block only,
-tracks live budget parameters/locals and moved budget temporaries, rejects
-duplicate ownership and use after move, and requires all temporary budget
-owners to be consumed. Control-flow ownership joins, allocation effects,
-leases, provider accounting, and executable Split lowering remain later Slice 5
-work; unsupported WVB emission is closed without partial output.
+numeric operand shapes, and performs bounded forward-control affine analysis
+over at most 64 blocks and 64 owned slots. It tracks live budget
+parameters/locals and moved budget temporaries, intersects availability at
+joins, rejects duplicate ownership and use after move, requires temporary
+owners to be consumed, and keeps backward control closed. WVB 1.23 executes
+Split through its separately verified provider accounting contract.
+
+The exact
+`Foundationˉcollections.Vectorˉconstructˉreserved::<T>(Budget, Maximumˉitems)`
+call requires one explicit type argument and two arguments. `T` must be in the
+currently executable resource-free scalar collection subset. `Budget` must be
+one directly named available local of exact private `Memoryˉbudget` shape, and
+`Maximumˉitems` must be exact `u64`. The expected result must be the canonical
+materialized `Foundationˉresult.Result<Foundationˉcollections.Vector<T>,
+Foundationˉmemory.Allocationˉfailure>`; neither result-context inference nor a
+lookalike failure record is accepted.
+
+Lowering emits `Foundationˉvectorˉconstructˉreserved = 172`. Its result is that
+exact private Result instance. Its sole operand is the already evaluated `u64`
+maximum-items temporary, `Target` is the consumed budget local slot, and
+`Auxiliary` is the canonical Foundation memory module index that owns
+`Allocationˉfailure`. Independent validation reconstructs the Result, Vector,
+element, and failure identities and consumes the available budget slot in the
+same bounded ownership proof used by Split. WVB emission deliberately returns
+`Unsupportedˉoperation` without output until allocation leases, provider debit,
+failure atomicity, and representation-independent Vector ownership are joined.
 
 Exact Foundation Sequence reads reuse that catalog proof. Operation 167
 `Foundationˉsequenceˉlength` consumes one temporary whose shape is the target

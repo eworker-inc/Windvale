@@ -8,6 +8,12 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Bound the frozen fallible `Vectorˉconstructˉreserved::<T>` contract through
+  exact Foundation identity, explicit generic/result checking, typed WVIR
+  operation 172, and affine budget consumption. The independent boundary
+  accepts one exact 456-byte WVIR, rejects eight malformed forms plus typed
+  source and use-after-consumption cases, and keeps WVB closed until allocation
+  leases, failure-atomic provider accounting, and Vector teardown are joined.
 - Admitted the exact Language 1.0 `using Name = Expression { ... }` statement
   at the source front end. Edition 1 now has appended token identity 103 and
   statement kind 14, retained binding/acquisition/body spans, existing bounded

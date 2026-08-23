@@ -147,6 +147,13 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Floating-Program.wv',
             'Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv',
             'Tests/Fixtures/Language-1.0/Named-Variant-Field.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Inferred.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Maximum.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Result.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Budget.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Allocation-Failure.wv',
+            'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Use-After.wv',
             'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj',
             'Projects/Tests/Windvale-Native-Test-Wvb-Rune-Runtime.wvproj',
             'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
@@ -159,6 +166,8 @@ $NativeCases = @(
             'Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs',
             'Tools/Native/Verify-Language-1.0-Sequence-Reads.mjs',
             'Tools/Native/Verify-Language-1.0-Vector-Reads-Freeze.mjs',
+            'Tools/Native/Verify-Language-1.0-Memory-Budget-Split-Wir.mjs',
+            'Tools/Native/Verify-Language-1.0-Vector-Construct-Reserved-Wir.mjs',
             'Tools/Native/Verify-Language-1.0-U8-Enums.mjs',
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
             'Tools/Native/Test-Language-1.0-Front-Door.cmd',
@@ -3580,7 +3589,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5316 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5332 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
