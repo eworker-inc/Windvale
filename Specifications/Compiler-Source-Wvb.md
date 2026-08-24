@@ -702,6 +702,17 @@ Vector owner, length, contents, and backing, and produces exact
 `Capacityˉexhausted(Maximumˉitems)` plus the original item. No allocation or
 budget transition occurs during append.
 
+The paired WVIR validator now proves exact kind-11 Vector moves through
+ordinary by-value and borrowed function calls, owned results and returns, and
+forward joins. This does not add a WVB 1.26 format. WVB 1.25 `call` does not
+carry parameter transfer modes, and the current function contract does not yet
+encode deterministic callee cleanup for a transferred owner. The emitter
+therefore rejects an otherwise valid by-value Vector call with exact
+`Unsupportedˉshape` before publication. It rejects borrow-after-move,
+duplicate transfer, or asymmetric-join WVIR earlier as `Invalidˉanalysis` with
+`Invalidˉwir`. No borrow handle, owner bit, source slot, or cleanup plan is
+silently inferred into bytecode.
+
 `Vector-Append-Executable.wv` deterministically emits a 3,096-byte WVB 1.25
 module at SHA-256
 `6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f`.

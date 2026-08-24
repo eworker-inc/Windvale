@@ -2753,3 +2753,37 @@ The runner envelope now accepts the already specified ordinary variant shape
 `11` in record fields, matching its decoder and the compiler-aligned verifier.
 This is current-Windows development evidence. Paired Linux execution remains
 required before cross-host conformance is claimed.
+
+## Owned Vector calls and forward-join evidence
+
+[Decision 0844](../Decisions/0844-Prove-Owned-Vector-Calls-And-Forward-Joins-In-Wvir.md)
+extends independent WVIR validation from specialized affine intrinsics to exact
+kind-11 Vector parameters, locals, temporaries, ordinary calls, results,
+returns, and forward joins. The proof tracks unavailable, owned, and borrowed
+slot states within 64 blocks, 64 slots, and 4,096 operations. A by-value call
+consumes its temporary and originating slot; a borrowed call preserves the
+source owner; a join keeps availability only when all incoming states agree.
+
+`Owned-Vector-Calls-And-Joins-Wir.wv` publishes bounded WVIR 1.5 with exactly
+six ordinary calls and two branches. It proves borrow-then-transfer, owned
+results and returns, and equal moves on two paths. The emitter independently
+validates that evidence, then refuses WVB publication with exact
+`Unsupportedˉshape` because WVB 1.25 has no parameter-transfer or deterministic
+callee-cleanup contract.
+
+The use-after, duplicate-transfer, and asymmetric-join fixtures also publish
+provisional analyzer products. The emitter rejects each with exact
+`Invalidˉanalysis`, `Invalidˉwir`, and no WVB product. This preserves the
+intentional analyzer-product versus executable-validation separation.
+
+The combined owner reports:
+
+```text
+native language 1 memory budget and vector execution status=Passed cases=51 valid=6 malformed=31 owned-call-cases=4 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9ba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f
+```
+
+The native registry remains 112 owners and advances to 5,380 cases. Its 17,078
+LF-only bytes have SHA-256
+`832449b3d8cce925d5cd34ef6c0e478ce7b0d95aa8603a63f60df08c3d1e3b0c`.
+This is current-Windows development evidence; paired Linux execution remains
+required before cross-host conformance is claimed.

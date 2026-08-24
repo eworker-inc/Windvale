@@ -1,0 +1,34 @@
+#!wv/1 en@1
+module Languageˉoneˉownedˉvectorˉcallˉasymmetricˉjoin;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+fn Release(Value: Collections.Vector<i32>) -> unit {
+    return;
+}
+
+fn Invalid(Value: Collections.Vector<i32>) -> i32 {
+    if true {
+        Release(Value);
+    }
+    Release(Value);
+    return 42;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Resultˉvalues.Result<
+        Collections.Vector<i32>,
+        Memory.Allocationˉfailure
+    > = Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Outcome {
+        case Resultˉvalues.Result.Valid { Value: Values } {
+            Invalid(Values)
+        }
+        case Resultˉvalues.Result.Failure { Error: Failure } { 1 }
+    };
+}

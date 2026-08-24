@@ -1118,6 +1118,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
+    if ($Stem -eq 'Verify-Language-1.0-Owned-Vector-Calls-Wir') {
+        Add-Suite 'language-1-memory-budget-split-execution'
+        return
+    }
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
         'Verify-Language-1.0-Fixed-Integers',
@@ -1596,6 +1600,10 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Calls-And-Joins-Wir.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Use-After.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Duplicate.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Asymmetric-Join.wv',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'

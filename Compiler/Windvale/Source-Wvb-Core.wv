@@ -3041,6 +3041,78 @@ fn Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
     ) == 11u32;
 }
 
+fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
+    Shape: u32,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+    let Entry: u32 = Compilerˉsourceˉwvbˉgenericˉnominalˉentry(
+        Shape, Orders
+    );
+    return Entry != 4294967295u32 && Bytesˉreadˉu32ˉlittle(
+        Orders.Genericˉnominalˉentries, Entry + 8u32
+    ) == 11u32;
+}
+
+fn Compilerˉsourceˉwvbˉunserializedˉownedˉcall(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
+    Wir: bytes,
+    Function: u32
+) -> u32 {
+    let Functionˉentry: u32 =
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
+            Function * 48u32;
+    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 12u32
+    );
+    let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 16u32
+    );
+    let Firstˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 20u32
+    );
+    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
+    let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+    var Index: u32 = 0u32;
+    while Index < Operationˉcount {
+        let Globalˉoperation: u32 = Firstˉoperation + Index;
+        let Entry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
+        if Bytesˉreadˉu32ˉlittle(Wir, Entry + 4u32) == 62u32 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 24u32);
+            let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Entry + 16u32
+            );
+            let Operands: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
+            var Operand: u32 = 0u32;
+            while Operand < Operands {
+                let Temporary: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Operandsˉoffset + (Firstˉoperand + Operand) * 4u32
+                );
+                let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir,
+                    Temporariesˉoffset +
+                        (Firstˉtemporary + Temporary) * 4u32
+                );
+                if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
+                        Shape, Orders
+                    ) &&
+                    Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                        Input, Scan, Symbols, Bindings, Target, Operand
+                    ) == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+                    return Globalˉoperation;
+                }
+                Operand = Operand + 1u32;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
 export fn Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir: bytes) -> u32 {
     return Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
         Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 32u32;
@@ -4188,6 +4260,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 36u32);
     let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
     let Returnˉshape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 44u32);
+    let Unserializedˉownedˉcall: u32 =
+        Compilerˉsourceˉwvbˉunserializedˉownedˉcall(
+            Input, Scan, Symbols, Bindings, Orders, Wir, Function
+        );
+    if Unserializedˉownedˉcall != 4294967295u32 {
+        return Compilerˉsourceˉwvbˉfunctionˉfailure(
+            Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+            Unserializedˉownedˉcall
+        );
+    }
     let Functionˉname: bytes = Compilerˉsourceˉwvbˉfunctionˉname(
         Input, Scan, Symbols, Function
     );

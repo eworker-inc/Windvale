@@ -129,6 +129,11 @@ try {
     Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,
     ]);
+    Runˉnode(
+        'owned-vector-calls-and-joins-wir',
+        'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
+        [Admitter, Analyzer, Emitter, Work],
+    );
 
     const Successˉa = path.join(Work, 'Success-A.wvb');
     const Successˉb = path.join(Work, 'Success-B.wvb');
@@ -339,10 +344,10 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget and vector execution status=Passed ' +
-        `cases=47 valid=6 malformed=${
+        `cases=51 valid=6 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length
-        } ` +
+        } owned-call-cases=4 ` +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +

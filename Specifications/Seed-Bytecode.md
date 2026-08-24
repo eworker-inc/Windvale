@@ -670,6 +670,12 @@ intersects availability at joins, and rejects backward control until a loop
 ownership fixed point is specified. General owned arguments and returns,
 and loop ownership remain later checkpoints.
 
+Typed WVIR may independently validate exact Vector transfer through ordinary
+calls and returns before that transfer is serializable. This does not broaden
+the WVB rule above: a by-value Vector call still fails closed during emission
+until parameter transfer modes and deterministic callee cleanup are represented
+and verified by a later WVB contract.
+
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
 

@@ -170,10 +170,12 @@ parameter already declared `borrow mut`. A standalone borrow expression cannot
 be stored or returned and fails with `Invalidˉborrow`; borrow formation is
 accepted only while compiling one call argument. Borrowed result signatures are
 parsed but rejected until the one-owner provenance rule is represented and
-validated. This checkpoint does not yet claim move invalidation, overlapping-
-borrow lifetime analysis, aggregate-derived ownership, resource cleanup, or the
-complete Slice 5 checker. It adds no WVIR operation, WVB opcode, runtime object,
-or serialized borrow record.
+validated. That call-scoped checkpoint by itself did not claim move
+invalidation, overlapping-borrow lifetime analysis, aggregate-derived
+ownership, resource cleanup, or the complete Slice 5 checker. It added no WVIR
+operation, WVB opcode, runtime object, or serialized borrow record. The exact
+owned-Vector checkpoint below now adds one bounded move proof without changing
+those representation decisions.
 
 A concrete generic-function specialization may use one applied generic nominal
 whose arguments are direct function type or constant parameters. Signature,
@@ -274,6 +276,35 @@ therefore satisfy a by-value read-through position without consuming its shared
 backing, while a borrowed vector cannot satisfy a consuming by-value position.
 The classification consumes the validated generic-type catalog; a private shape
 without matching evidence is not inferred from its numeric range.
+
+Independent WVIR validation now applies a second bounded ownership proof to
+every function containing an exact kind-11 `Vector<T>` parameter, local, or
+temporary. Owned parameters begin available, borrowed parameters begin
+non-owning, and explicit Vector locals begin unavailable until one unique value
+is stored. A local load records its exact source-slot provenance. A by-value
+ordinary call, unique local store, or owned return consumes the temporary and
+its source slot; an immutable or mutable borrowed call observes the value
+without consuming that slot. Formal modes are reconstructed from the validated
+source declaration and bindings because call-scoped borrow syntax remains
+erased from WVIR.
+
+The proof admits at most 64 blocks, 64 parameter/local slots, and 4,096
+operations. Vector temporaries cannot escape their producing block, a Vector
+`Valueˉphi` is not yet admitted, and only forward control is accepted. A join
+retains an owned or borrowed slot state only when every incoming state is
+identical; an asymmetric move therefore makes the slot unavailable. This
+rejects borrow-after-move, duplicate transfer, and post-join reuse while
+admitting borrow-then-transfer, owned results and returns, and equal transfers
+on both forward paths.
+
+This checkpoint classifies exact Vector values, not ownership recursively
+nested inside a record, variant, Result, fixed array, or other aggregate.
+Aggregate field provenance, loops, owned phis, semantic `using`, deterministic
+reverse release, and general resource classification remain later Slice 5
+work. The analyzer may publish provisional WVIR evidence; the emitter performs
+the independent directory validation. Valid by-value Vector calls currently
+reach that boundary and fail closed with `Unsupportedˉshape`, because WVB does
+not yet serialize parameter transfer modes or deterministic callee cleanup.
 
 The private compiler shape `805306368` represents only the exact edition-1
 `Foundationˉmemory.Memoryˉbudget` identity and is classified as owned. An

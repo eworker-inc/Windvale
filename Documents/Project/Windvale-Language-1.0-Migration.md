@@ -487,6 +487,45 @@ hosted resource consumer remain in Slice 5. Seed-specific micro-tuning remains
 deferred until self-hosting; the canonical ordering, bounded ownership, failure
 semantics, and focused verification completed here survive that transition.
 
+## Current Slice 5 owned Vector calls and forward joins checkpoint
+
+[Decision 0844](../Decisions/0844-Prove-Owned-Vector-Calls-And-Forward-Joins-In-Wvir.md)
+adds an independent bounded ownership proof for exact kind-11 `Vector<T>`
+parameters, locals, temporaries, ordinary calls, results, returns, and forward
+joins. By-value calls consume their source owner, borrowed calls preserve it,
+and joins retain availability only when every incoming state agrees. The proof
+is limited to 64 blocks, 64 slots, and 4,096 operations; Vector phis, backward
+control, and temporary escape remain closed.
+
+The analyzer continues to publish provisional WVIR evidence, while the emitter
+is the independent trust boundary. One positive fixture reaches exact
+`Unsupportedˉshape` because WVB 1.25 does not yet encode parameter transfer
+modes or deterministic callee cleanup. Three negative fixtures reach exact
+`Invalidˉanalysis` / `Invalidˉwir` for borrow-after-move, duplicate transfer,
+and asymmetric-join reuse. No WVB version or existing golden product changes.
+
+The combined focused owner passes 51 cases and preserves the existing 752-byte
+Split, 1,107-byte Vector-construction, and 3,096-byte Vector-append identities.
+The registry remains 112 owners and advances to 5,380 cases; its 17,078 LF-only
+bytes have SHA-256
+`832449b3d8cce925d5cd34ef6c0e478ce7b0d95aa8603a63f60df08c3d1e3b0c`.
+
+Aggregate-owned fields, loop fixed points, WVB call transfer and callee cleanup,
+semantic `using`, reverse-order release, one hosted resource consumer, and the
+fallible elastic budget and Vector-growth path below remain before Slice 5
+completes. These ownership and validation boundaries survive self-hosting;
+Seed-specific micro-tuning remains deferred.
+
+The required next memory implementation checkpoint will retain fixed reserved
+construction while adding an explicit fallible elastic path for applications
+whose demand changes at runtime. “Use what the OS can provide” will mean a
+rights-limited provider may extend an application's budget under current policy;
+it will not mean an unbounded or infallible allocation promise. Vector growth
+must name the budget, publish exact new capacity only on success, and preserve
+the original Vector and budget on refusal. Implementation follows call transfer,
+deterministic release, and semantic `using` so every old/new backing and failure
+path has one provable owner.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

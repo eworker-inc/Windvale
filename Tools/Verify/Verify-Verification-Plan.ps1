@@ -121,9 +121,14 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Calls-And-Joins-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Use-After.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Duplicate.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Asymmetric-Join.wv',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
-            'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'
+            'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
+            'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs'
         )
         Suites = @('language-1-memory-budget-split-execution')
         Gaps = @()
@@ -3624,7 +3629,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5376 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5380 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

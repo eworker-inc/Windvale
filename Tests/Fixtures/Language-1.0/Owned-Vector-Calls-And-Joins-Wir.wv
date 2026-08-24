@@ -1,0 +1,59 @@
+#!wv/1 en@1
+module Languageˉoneˉownedˉvectorˉcallsˉandˉjoins;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+fn Forward(Value: Collections.Vector<i32>) -> Collections.Vector<i32> {
+    return Value;
+}
+
+fn Observe(Value: borrow Collections.Vector<i32>) -> unit {
+    return;
+}
+
+fn Release(Value: Collections.Vector<i32>) -> unit {
+    let Local: Collections.Vector<i32> = Value;
+    let Published: Collections.Sequence<i32> =
+        Collections.Vectorˉfreeze(Local);
+    return;
+}
+
+fn Borrowˉthenˉforward(
+    Value: Collections.Vector<i32>
+) -> Collections.Vector<i32> {
+    Observe(borrow Value);
+    return Forward(Value);
+}
+
+fn Consumeˉonˉbothˉpaths(
+    Value: Collections.Vector<i32>,
+    Select: bool
+) -> unit {
+    if Select {
+        Release(Value);
+    } else {
+        Release(Value);
+    }
+    return;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Resultˉvalues.Result<
+        Collections.Vector<i32>,
+        Memory.Allocationˉfailure
+    > = Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Outcome {
+        case Resultˉvalues.Result.Valid { Value: Values } {
+            let Forwarded: Collections.Vector<i32> =
+                Borrowˉthenˉforward(Values);
+            Consumeˉonˉbothˉpaths(Forwarded, true);
+            42
+        }
+        case Resultˉvalues.Result.Failure { Error: Failure } { 1 }
+    };
+}
