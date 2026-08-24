@@ -131,7 +131,7 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.9 through 1.14 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.9 through 1.16 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;
@@ -288,19 +288,20 @@ backing, while a borrowed vector cannot satisfy a consuming by-value position.
 The classification consumes the validated generic-type catalog; a private shape
 without matching evidence is not inferred from its numeric range.
 
-Independent WVIR validation now applies a second bounded ownership proof to
-every function containing an exact kind-11 `Vector<T>` parameter, local, or
-temporary. Owned parameters begin available, borrowed parameters begin
-non-owning, and explicit Vector locals begin unavailable until one unique value
-is stored. A local load records its exact source-slot provenance. A by-value
-ordinary call, unique local store, or owned return consumes the temporary and
-its source slot; an immutable or mutable borrowed call observes the value
-without consuming that slot. Formal modes are reconstructed from the validated
-source declaration and bindings because call-scoped borrow syntax remains
-erased from WVIR.
+Independent WVIR validation applies a second bounded ownership proof to every
+function containing an exact kind-11 `Vector<T>` or a record, variant, or fixed
+array that recursively contains one. Owned parameters begin available,
+borrowed parameters begin non-owning, and explicit owned locals begin
+unavailable until one unique value is stored. A local load records its exact
+source-slot provenance. A by-value ordinary call, unique local store, or owned
+return consumes the temporary and its source slot; an immutable or mutable
+borrowed call observes the value without consuming that slot. Aggregate
+construction consumes every owned field or element. Formal modes are
+reconstructed from the validated source declaration and bindings because
+call-scoped borrow syntax remains erased from WVIR.
 
 The proof admits at most 64 blocks, 64 parameter/local slots, and 4,096
-operations. Vector temporaries cannot escape their producing block and a Vector
+operations. Owned temporaries cannot escape their producing block and an owned
 `Valueˉphi` is not yet admitted. A forward join retains an owned or borrowed
 slot state only when every incoming state is identical; an asymmetric move
 therefore makes the slot unavailable. A backward edge is accepted only when
@@ -310,16 +311,31 @@ borrow-after-move, duplicate transfer, and post-join reuse while admitting
 borrow-then-transfer, owned results and returns, equal transfers on forward
 paths, and ownership-invariant loops.
 
-This checkpoint classifies exact Vector values, not ownership recursively
-nested inside a record, variant, Result, fixed array, or other aggregate.
-Aggregate field provenance, owned phis, deterministic aggregate destruction,
-and general resource classification remain later work. The analyzer may
-publish provisional WVIR evidence; the emitter
-performs the independent directory validation. WVB 1.26 now serializes exact
+Recursive aggregate classification follows exact validated nominal layouts and
+is bounded to 64 ancestor types. It covers concrete and specialized generic
+records and variants plus fixed arrays; the source nominal contract remains
+bounded and acyclic, and malformed layout evidence rejects independently. The dedicated affine
+`Result<Memoryˉbudget, ...>` and `Result<Vector<T>, ...>` paths produced by
+operations `171` and `172` retain their existing proof instead of becoming a
+second overlapping aggregate owner.
+
+Reading a field or array element observes the parent aggregate and creates
+borrowed temporary evidence; it does not move the parent. If the selected field
+itself is owned, that result remains non-owning and cannot satisfy a by-value
+consumer. An explicit mutable field borrow is accepted only when the parent is
+a directly resolved mutable binding. Moving a field out of an owned aggregate,
+updating an aggregate while ownership could remain hidden in its old value, or
+using the parent after a whole-value move rejects before publication. The first
+profile does not admit borrowed aggregate parameters, borrowed aggregate
+results, owned phis, or user-defined destruction.
+
+The analyzer may publish provisional WVIR evidence; the emitter independently
+reconstructs the recursive ownership classification. WVB 1.26 serializes exact
 Vector parameter modes as value shape `23`, immutable-borrow shape `26`, or
-mutable-borrow shape `27`, and the scalar runner performs deterministic
-reverse-slot callee cleanup. The WVIR proof remains the source-slot provenance
-authority; WVB does not add a source slot or borrow handle.
+mutable-borrow shape `27`. WVB 1.28 keeps whole aggregate parameter and result
+shapes ordinary and uses local-only borrowed view shapes for field and element
+observation. The WVIR proof remains the source-slot provenance authority; WVB
+does not add a source slot, pointer, or borrow handle.
 
 The private compiler shape `805306368` represents only the exact edition-1
 `Foundationˉmemory.Memoryˉbudget` identity and is classified as owned. An

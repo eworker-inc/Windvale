@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-reserved Vector growth through WVB 1.27 but has not repinned the paired
+Vector-containing aggregate ownership through WVB 1.28 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.27. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.28. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,7 +124,7 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.27 supplies one fresh
+WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.28 supplies one fresh
 opaque root-budget token to the sole parameter of exported
 `Main(Memoryˉbudget) -> i32`. The
 interpreter validates that exact
@@ -196,6 +196,25 @@ budget state unchanged. A non-increasing maximum traps with `WVR3008`, and the
 2,047-cell target bound remains a profile limit. No provider acquisition,
 partial growth, or backing address becomes visible.
 
+WVB 1.28 recursively treats records, variants, and fixed arrays containing a
+Vector as owned values. Whole aggregates move through construction, locals,
+ordinary calls, and returns. Generated field and element observation uses
+local-only borrowed-view shapes `28`, `29`, and `30`; function-directory
+decoding validates those shapes only in 1.28 and normalizes their runtime cells
+to the ordinary aggregate representation. The compiler-aligned verifier confines
+each view to one exact store/load/observer sequence, so the runtime receives no
+general borrow handle, pointer, or independently storable alias.
+
+Aggregate construction retains descriptor-bearing fields. At ordinary return,
+the bounded aggregate mark/sweep root set includes the remaining operand stack,
+the returned aggregate, and caller frames, but excludes departing locals.
+Unreachable aggregate cells are swept in deterministic arena order and release
+nested Vector descriptors and their allocation leases. The same bounded sweep
+runs before top-level budget teardown. This extends the existing 768-cell arena
+and 64 KiB descriptor heap without adding unbounded tracing or host allocation.
+Borrowed aggregate parameters/results, resource-bearing Vector elements, and
+user-defined destruction remain outside this profile.
+
 The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
 SHA-256
 `ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
@@ -210,9 +229,9 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 328,812-byte WVB at SHA-256
-`b6fd4502012c4d7a7317cf8f25b28cf0acf25da4a90de6aee4075dcc1c5cf91d`.
-It contains 153 functions and 295,749 code bytes. Cohesive directory, request,
+The current Windows development build is a 336,214-byte WVB at SHA-256
+`e5ecddf54f743ee38c07d83d34a421984d48138ea046669a9b29e42c48d73686`.
+It contains 156 functions and 302,459 code bytes. Cohesive directory, request,
 data/local/bytes, collection, aggregate, and extended-operation helpers keep
 every source-built function below the existing bytecode and 2,048 native
 physical-cell limits; neither limit was raised.
@@ -280,6 +299,16 @@ returns `42`. Fifteen exact version, opcode, local, result, allocation-layout,
 and truncated-width mutations reject. The exact 88-case focused owner passes on
 Windows and Linux with identical portable fixture identities; the promoted
 paired-host runner inventory remains unrepinned.
+
+The executable aggregate fixture is deterministic 1,538-byte WVB 1.28 at
+SHA-256
+`b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395`.
+It observes mutable and immutable fields of
+`Workˉqueue<Vector<i32>>`, transfers the whole record through an ordinary call,
+releases its nested Vector exactly once, and returns `42`. Six exact
+version/view/local/take mutations reject before execution. The combined focused
+owner's paired-host result is recorded in the Language 1.0 migration evidence;
+the promoted runner inventory remains unrepinned.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

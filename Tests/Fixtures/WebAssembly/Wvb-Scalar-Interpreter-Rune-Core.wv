@@ -13,7 +13,7 @@ export fn Scanˉrune(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if (Minor < 13u32 || Minor > 27u32) || Remaining < 2u32 {
+    if (Minor < 13u32 || Minor > 28u32) || Remaining < 2u32 {
         return 0u32;
     }
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));

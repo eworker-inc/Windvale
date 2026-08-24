@@ -2978,3 +2978,46 @@ The exact 88-case summary above passes on both Windows and Linux with identical
 portable WVB sizes and SHA-256 values. This is paired-host focused development
 evidence for the WVB 1.27 checkpoint; it is not the repository-wide
 Qualification gate or promoted runner-candidate repinning.
+
+## Aggregate-owned-field evidence
+
+[Decision 0850](../Decisions/0850-Own-Vector-Containing-Aggregates-As-Wvb-1.28.md)
+extends the bounded ownership proof recursively through concrete and
+materialized generic records, variants, and fixed arrays containing an exact
+Foundation Vector. Whole aggregate construction, local storage, ordinary
+by-value calls, and returns consume one owner. Field and element observation
+borrows the parent, a mutable field borrow requires a mutable parent binding,
+and partial moves or updates that could leave hidden ownership reject.
+
+WVB 1.28 uses ordinary nominal shapes for complete owners. Its shapes `28`,
+`29`, and `30` are local-only record, variant, and fixed-array views confined by
+the verifier to one exact load/store/load/observer sequence. The verifier uses
+bounded recursive Types classification and non-serialized transfer tags; the
+runtime normalizes views to ordinary aggregate cells and performs deterministic
+bounded mark/sweep plus nested descriptor/lease release at return and top-level
+teardown.
+
+Two independent compilations of
+`Owned-Aggregate-Vector-Executable.wv` produce identical 1,538-byte WVB 1.28 at
+SHA-256
+`b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395`.
+The fixture materializes `Workˉqueue<Vector<i32>>`, observes its scalar and
+Vector fields, transfers the whole record through an ordinary call, and returns
+`42`. The four negative source fixtures reject use after move, duplicate move,
+owned-field extraction by value, and mutable borrow from an immutable parent.
+Six byte-level mutations reject version downgrade, a borrowed aggregate
+parameter, wrong view identity, owner-to-view substitution, take before view,
+and taking the borrowed view.
+
+The paired Windows/Linux owner reports:
+
+```text
+native language 1 memory budget, Vector, and using execution status=Passed cases=101 valid=13 malformed=59 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257
+```
+
+The registry remains 112 owners and advances to 5,430 cases. Its 17,601 LF-only
+bytes have SHA-256
+`5e9d388aa6c744f1f865af15386ae0c652bb1768b3c7e8b434fcd555dc3acd87`.
+Exact portable WVB sizes and SHA-256 identities match on both hosts. This is paired-
+host focused development evidence for WVB 1.28, not the broad repository
+Qualification gate or promoted runner-candidate repinning.

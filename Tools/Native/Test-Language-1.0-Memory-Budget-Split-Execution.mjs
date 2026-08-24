@@ -33,6 +33,8 @@ const EXPECTED_GROW_SUCCESS_SHA256 =
     '30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59';
 const EXPECTED_OWNED_CALL_SUCCESS_SHA256 =
     'ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387';
+const EXPECTED_OWNED_AGGREGATE_SUCCESS_SHA256 =
+    'b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395';
 const EXPECTED_USING_FALLTHROUGH_SHA256 =
     'f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257';
 const EXPECTED_USING_NESTED_SHA256 =
@@ -110,6 +112,9 @@ try {
     const Emitter = path.join(Work, `Emitter${Executableˉsuffix}`);
     const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
     const Emitterˉidentity = path.join(Work, 'Emitter.identity');
+    const Ownedˉaggregateˉsuccessˉa = path.join(
+        Work, 'Owned-Aggregate-Success-A.wvb',
+    );
 
     Runˉnative('bootstrap-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Bootstrapˉanalyzerˉwvb, Bootstrapˉanalyzer, '--development-cache',
@@ -163,7 +168,7 @@ try {
     Runˉnode(
         'owned-vector-calls-and-joins-wir',
         'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
-        [Admitter, Analyzer, Emitter, Work],
+        [Admitter, Analyzer, Emitter, Work, Ownedˉaggregateˉsuccessˉa],
     );
     Runˉnode(
         'using-semantics-wir',
@@ -184,6 +189,9 @@ try {
     const Growˉsuccessˉb = path.join(Work, 'Grow-Success-B.wvb');
     const Ownedˉcallˉsuccessˉa = path.join(Work, 'Owned-Call-Success-A.wvb');
     const Ownedˉcallˉsuccessˉb = path.join(Work, 'Owned-Call-Success-B.wvb');
+    const Ownedˉaggregateˉsuccessˉb = path.join(
+        Work, 'Owned-Aggregate-Success-B.wvb',
+    );
     const Usingˉfallthrough = path.join(Work, 'Using-Fallthrough.wvb');
     const Usingˉnested = path.join(Work, 'Using-Nested.wvb');
     const Usingˉtry = path.join(Work, 'Using-Try.wvb');
@@ -214,6 +222,10 @@ try {
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉa);
     Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉb);
+    Compileˉvector(
+        'owned-aggregate-success-b-compile', Admitter, Analyzer, Emitter,
+        'Owned-Aggregate-Vector-Executable.wv', Ownedˉaggregateˉsuccessˉb,
+    );
     Compileˉvector('using-fallthrough-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Fallthrough-Wir.wv', Usingˉfallthrough);
     Compileˉvector('using-nested-compile', Admitter, Analyzer, Emitter,
@@ -279,6 +291,24 @@ try {
     if (Ownedˉcallˉsha256 !== EXPECTED_OWNED_CALL_SUCCESS_SHA256) {
         Reject(`The executable owned Vector call fixture digest differs: ${Ownedˉcallˉsha256}.`);
     }
+    const Ownedˉaggregateˉsuccessˉbytes = readFileSync(
+        Ownedˉaggregateˉsuccessˉa,
+    );
+    if (!Ownedˉaggregateˉsuccessˉbytes.equals(
+        readFileSync(Ownedˉaggregateˉsuccessˉb),
+    )) {
+        Reject('The executable owned aggregate fixture is not deterministic.');
+    }
+    const Ownedˉaggregateˉlayout = Inspectˉownedˉaggregateˉmodule(
+        Ownedˉaggregateˉsuccessˉbytes,
+    );
+    const Ownedˉaggregateˉsha256 = Digest(Ownedˉaggregateˉsuccessˉbytes);
+    if (Ownedˉaggregateˉsha256 !== EXPECTED_OWNED_AGGREGATE_SUCCESS_SHA256) {
+        Reject(
+            'The executable owned aggregate fixture digest differs: ' +
+            `${Ownedˉaggregateˉsha256}.`,
+        );
+    }
     const Usingˉfallthroughˉbytes = readFileSync(Usingˉfallthrough);
     const Usingˉnestedˉbytes = readFileSync(Usingˉnested);
     const Usingˉtryˉbytes = readFileSync(Usingˉtry);
@@ -316,6 +346,9 @@ try {
     Requireˉvalid(Verifier, Appendˉsuccessˉa, 'Vector append module');
     Requireˉvalid(Verifier, Growˉsuccessˉa, 'Vector growth module');
     Requireˉvalid(Verifier, Ownedˉcallˉsuccessˉa, 'owned Vector call module');
+    Requireˉvalid(
+        Verifier, Ownedˉaggregateˉsuccessˉa, 'owned aggregate module',
+    );
     Requireˉvalid(Verifier, Usingˉfallthrough, 'using fallthrough module');
     Requireˉvalid(Verifier, Usingˉnested, 'using nested-return module');
     Requireˉvalid(Verifier, Usingˉtry, 'using try-propagation module');
@@ -509,6 +542,33 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Ownedˉaggregateˉmalformedˉcases = [
+        ['owned-aggregate-version-downgrade', Bytes => {
+            Bytes.writeUInt16LE(27, 6);
+        }],
+        ['owned-aggregate-borrowed-parameter', Bytes => {
+            Bytes[Ownedˉaggregateˉlayout.ownerParameter] = 28;
+        }],
+        ['owned-aggregate-wrong-view-nominal', Bytes => {
+            Bytes.writeUInt32LE(0, Ownedˉaggregateˉlayout.borrowedLocal + 1);
+        }],
+        ['owned-aggregate-view-owner-local', Bytes => {
+            Bytes[Ownedˉaggregateˉlayout.ownerLocal] = 28;
+        }],
+        ['owned-aggregate-take-before-view', Bytes => {
+            Bytes[Ownedˉaggregateˉlayout.ownerLoadOpcode] = 205;
+        }],
+        ['owned-aggregate-take-borrowed-view', Bytes => {
+            Bytes[Ownedˉaggregateˉlayout.borrowedLoadOpcode] = 205;
+        }],
+    ];
+    for (const [Name, Mutate] of Ownedˉaggregateˉmalformedˉcases) {
+        const Candidate = Buffer.from(Ownedˉaggregateˉsuccessˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
     const Usingˉloopˉmismatch = Buffer.from(Usingˉloopˉbytes);
     Usingˉloopˉmismatch[Usingˉloopˉlayout.backedgeRelease] = 4;
     const Usingˉloopˉmismatchˉpath = path.join(
@@ -548,16 +608,22 @@ try {
         Runner, Ownedˉcallˉsuccessˉa, 'owned Vector call execution',
     );
     Requireˉresultˉ42(
+        Runner, Ownedˉaggregateˉsuccessˉa, 'owned aggregate execution',
+    );
+    Requireˉresultˉ42(
         Runner, Usingˉfallthrough, 'using fallthrough release execution',
     );
 
     process.stdout.write(
         'native language 1 memory budget, Vector, and using execution status=Passed ' +
-        `cases=${73 + Growˉmalformedˉcases.length} valid=12 malformed=${
+        `cases=${80 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=13 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
-            Ownedˉcallˉmalformedˉcases.length + 1
-        } owned-call-cases=4 using-cases=12 using-releases=7 ` +
+            Ownedˉcallˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length + 1
+        } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
+        'using-cases=12 using-releases=7 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -568,6 +634,8 @@ try {
         `grow-sha256=${Growˉsha256} ` +
         `owned-call-wvb-bytes=${Ownedˉcallˉsuccessˉbytes.length} ` +
         `owned-call-sha256=${Ownedˉcallˉsha256} ` +
+        `owned-aggregate-wvb-bytes=${Ownedˉaggregateˉsuccessˉbytes.length} ` +
+        `owned-aggregate-sha256=${Ownedˉaggregateˉsha256} ` +
         `using-fallthrough-wvb-bytes=${Usingˉfallthroughˉbytes.length} ` +
         `using-fallthrough-sha256=${Digest(Usingˉfallthroughˉbytes)}\n`,
     );
@@ -1039,6 +1107,153 @@ function Inspectˉownedˉcallˉmodule(Bytes) {
     };
 }
 
+function Inspectˉownedˉaggregateˉmodule(Bytes) {
+    if (Bytes.length !== 1538 ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 28 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The executable owned aggregate fixture is not exact WVB 1.28.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Functionˉsection = Sections[4];
+    const Codeˉsection = Sections[5];
+    const Count = Bytes.readUInt32LE(Functionˉsection.payload);
+    if (Count !== 4) {
+        Reject(`The owned aggregate function count differs: ${Count}.`);
+    }
+    let Cursor = Functionˉsection.payload + 4;
+    const Entries = [];
+    for (let Index = 0; Index < Count; Index += 1) {
+        const Name = Readˉstring(Bytes, Cursor);
+        Cursor = Name.end;
+        const Parameterˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Parameterˉcount > 64) {
+            Reject('The owned aggregate parameter count exceeds its bound.');
+        }
+        const Parameterˉshapes = [];
+        for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
+            const Shape = Readˉshape(Bytes, Cursor);
+            Parameterˉshapes.push(Shape);
+            Cursor = Shape.end;
+        }
+        const Return = Readˉshape(Bytes, Cursor);
+        Cursor = Return.end;
+        const Localˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Localˉcount > 2048) {
+            Reject('The owned aggregate local count exceeds its bound.');
+        }
+        const Localˉshapes = [];
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            const Shape = Readˉshape(Bytes, Cursor);
+            Localˉshapes.push(Shape);
+            Cursor = Shape.end;
+        }
+        if (Cursor + 12 > Functionˉsection.payload + Functionˉsection.length) {
+            Reject('The owned aggregate function entry is truncated.');
+        }
+        const Codeˉoffset = Bytes.readUInt32LE(Cursor);
+        const Codeˉlength = Bytes.readUInt32LE(Cursor + 4);
+        Cursor += 12;
+        Entries.push({
+            name: Name.value,
+            parameterShapes: Parameterˉshapes,
+            returnShape: Return,
+            localShapes: Localˉshapes,
+            codeOffset: Codeˉoffset,
+            codeLength: Codeˉlength,
+        });
+    }
+    if (Cursor !== Functionˉsection.payload + Functionˉsection.length) {
+        Reject('The owned aggregate function directory has trailing bytes.');
+    }
+    const Types = Parseˉtypes(Bytes, Sections[7]);
+    if (Types.length < 2 || Types[1].kind !== 1 ||
+        Types[1].fields.length !== 2 ||
+        Types[1].fields[0].shape !== 23 ||
+        Types[1].fields[0].typeIndex !== 5 ||
+        Types[1].fields[1].shape !== 1) {
+        Reject('The owned aggregate record layout differs.');
+    }
+    const Ownerˉparameter = Entries.flatMap(Entry => Entry.parameterShapes)
+        .find(Shape => Shape.shape === 7 && Shape.typeIndex === 1);
+    const Ownerˉlocal = Entries.flatMap(Entry => Entry.localShapes)
+        .find(Shape => Shape.shape === 7 && Shape.typeIndex === 1);
+    const Borrowedˉlocal = Entries.flatMap(Entry => Entry.localShapes)
+        .find(Shape => Shape.shape === 28 && Shape.typeIndex === 1);
+    if (Ownerˉparameter === undefined || Ownerˉlocal === undefined ||
+        Borrowedˉlocal === undefined) {
+        Reject('The owned aggregate owner/view shapes differ.');
+    }
+    const Viewˉsequences = [];
+    for (const Entry of Entries) {
+        const Localˉspace = [
+            ...Entry.parameterShapes,
+            ...Entry.localShapes,
+        ];
+        const Codeˉstart = Codeˉsection.payload + Entry.codeOffset;
+        const Codeˉend = Codeˉstart + Entry.codeLength;
+        if (Codeˉstart < Codeˉsection.payload ||
+            Codeˉend > Codeˉsection.payload + Codeˉsection.length) {
+            Reject(`The owned aggregate ${Entry.name} code range differs.`);
+        }
+        const Instructions = [];
+        let Codeˉcursor = Codeˉstart;
+        while (Codeˉcursor < Codeˉend) {
+            const Opcode = Bytes[Codeˉcursor];
+            const Width = Wvbˉinstructionˉwidth(Opcode);
+            if (Width > Codeˉend - Codeˉcursor) {
+                Reject(`The owned aggregate ${Entry.name} code is truncated.`);
+            }
+            Instructions.push({ absolute: Codeˉcursor, opcode: Opcode });
+            Codeˉcursor += Width;
+        }
+        if (Codeˉcursor !== Codeˉend) {
+            Reject(`The owned aggregate ${Entry.name} code length differs.`);
+        }
+        for (let Position = 0; Position + 3 < Instructions.length; Position += 1) {
+            const Loadˉowner = Instructions[Position];
+            const Storeˉview = Instructions[Position + 1];
+            const Loadˉview = Instructions[Position + 2];
+            const Observeˉfield = Instructions[Position + 3];
+            if (Loadˉowner.opcode !== 4 || Storeˉview.opcode !== 5 ||
+                Loadˉview.opcode !== 4 || Observeˉfield.opcode !== 105) {
+                continue;
+            }
+            const Ownerˉindex = Bytes.readUInt32LE(Loadˉowner.absolute + 1);
+            const Storedˉviewˉindex = Bytes.readUInt32LE(
+                Storeˉview.absolute + 1,
+            );
+            const Loadedˉviewˉindex = Bytes.readUInt32LE(
+                Loadˉview.absolute + 1,
+            );
+            const Ownerˉshape = Localˉspace[Ownerˉindex];
+            const Viewˉshape = Localˉspace[Storedˉviewˉindex];
+            if (Storedˉviewˉindex === Loadedˉviewˉindex &&
+                Ownerˉshape?.shape === 7 && Ownerˉshape.typeIndex === 1 &&
+                Viewˉshape?.shape === 28 && Viewˉshape.typeIndex === 1) {
+                Viewˉsequences.push({
+                    ownerLoad: Loadˉowner.absolute,
+                    viewLoad: Loadˉview.absolute,
+                });
+            }
+        }
+    }
+    if (Viewˉsequences.length !== 2) {
+        Reject(
+            `The owned aggregate view sequence count differs: ${Viewˉsequences.length}.`,
+        );
+    }
+    return {
+        ownerParameter: Ownerˉparameter.shapeOffset,
+        ownerLocal: Ownerˉlocal.shapeOffset,
+        borrowedLocal: Borrowedˉlocal.shapeOffset,
+        ownerLoadOpcode: Viewˉsequences[0].ownerLoad,
+        borrowedLoadOpcode: Viewˉsequences[0].viewLoad,
+    };
+}
+
 function Requireˉusingˉidentity(
     Bytes,
     Expectedˉbytes,
@@ -1288,7 +1503,8 @@ function Readˉstring(Bytes, Offset) {
 
 function Readˉshape(Bytes, Offset) {
     const Shape = Bytes[Offset];
-    const Nominal = [7, 8, 11, 22, 23, 24, 26, 27].includes(Shape);
+    const Nominal = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30]
+        .includes(Shape);
     return {
         shape: Shape,
         shapeOffset: Offset,

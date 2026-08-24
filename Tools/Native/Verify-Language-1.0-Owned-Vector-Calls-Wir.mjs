@@ -19,10 +19,11 @@ const INVALID_WIR =
     'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir ' +
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 
-if (process.argv.length !== 6) {
+if (process.argv.length !== 6 && process.argv.length !== 7) {
     process.stderr.write(
         'Usage: node Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs ' +
-        '<admitter> <analyzer> <emitter> <work-directory>\n',
+        '<admitter> <analyzer> <emitter> <work-directory> ' +
+        '[owned-aggregate-output.wvb]\n',
     );
     process.exit(64);
 }
@@ -31,6 +32,9 @@ const Admitter = path.resolve(process.argv[2]);
 const Analyzer = path.resolve(process.argv[3]);
 const Emitter = path.resolve(process.argv[4]);
 const Work = path.resolve(process.argv[5]);
+const Aggregateˉoutput = process.argv.length === 7
+    ? path.resolve(process.argv[6])
+    : null;
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
 const Profileˉroot = path.join(
@@ -62,6 +66,12 @@ Requireˉordinaryˉfile(Emitter, MAXIMUM_TOOL_BYTES, 'emitter');
 Requireˉordinaryˉfile(Sourceˉlock, MAXIMUM_INPUT_BYTES, 'source lock');
 Requireˉordinaryˉfile(Sourceˉprofile, MAXIMUM_INPUT_BYTES, 'source profile');
 Requireˉordinaryˉdirectory(Work, 'work directory');
+if (Aggregateˉoutput !== null &&
+    (!Sameˉpath(path.dirname(Aggregateˉoutput), Work) ||
+        path.extname(Aggregateˉoutput).toLowerCase() !== '.wvb' ||
+        Exists(Aggregateˉoutput))) {
+    Reject(`The aggregate evidence output is not a fresh child of work: ${Aggregateˉoutput}.`);
+}
 for (const Dependency of Dependencies) {
     Requireˉordinaryˉfile(Dependency, MAXIMUM_INPUT_BYTES, 'source dependency');
 }
@@ -97,6 +107,33 @@ const Cases = [
         fixture: 'Owned-Vector-Loop-State-Mismatch.wv',
         valid: false,
     },
+    {
+        name: 'owned-aggregate-vector',
+        fixture: 'Owned-Aggregate-Vector-Executable.wv',
+        valid: true,
+    },
+    {
+        name: 'owned-aggregate-use-after-move',
+        fixture: 'Owned-Aggregate-Use-After-Move.wv',
+        valid: false,
+    },
+    {
+        name: 'owned-aggregate-duplicate-move',
+        fixture: 'Owned-Aggregate-Duplicate-Move.wv',
+        valid: false,
+    },
+    {
+        name: 'owned-aggregate-field-move',
+        fixture: 'Owned-Aggregate-Field-Move.wv',
+        valid: false,
+    },
+    {
+        name: 'owned-aggregate-mutable-borrow-from-let',
+        fixture: 'Owned-Aggregate-Mutable-Borrow-From-Let.wv',
+        analysisInvalid:
+            'source analysis status=Sourceˉwir symbol-status=Valid ' +
+            'binding-status=Valid wir-status=Invalidˉborrow\n',
+    },
 ];
 
 const Created = [];
@@ -105,6 +142,8 @@ try {
     let Positiveˉwvbˉbytes = 0;
     let Positiveˉwvbˉsha256 = '';
     let Positiveˉcalls = 0;
+    let Aggregateˉwvbˉbytes = 0;
+    let Aggregateˉwvbˉsha256 = '';
     for (const Case of Cases) {
         const Fixture = path.join(Fixtureˉroot, Case.fixture);
         const Prefix = path.join(Work, Case.name);
@@ -112,8 +151,11 @@ try {
         const Manifest = `${Prefix}.wvca`;
         const Bindings = `${Prefix}.wvlb`;
         const Wir = `${Prefix}.wvir`;
-        const Product = `${Prefix}.wvb`;
-        Created.push(Source, Manifest, Bindings, Wir, Product);
+        const Persistˉaggregate = Case.name === 'owned-aggregate-vector' &&
+            Aggregateˉoutput !== null;
+        const Product = Persistˉaggregate ? Aggregateˉoutput : `${Prefix}.wvb`;
+        Created.push(Source, Manifest, Bindings, Wir);
+        if (!Persistˉaggregate) Created.push(Product);
         Requireˉordinaryˉfile(Fixture, MAXIMUM_INPUT_BYTES, Case.fixture);
 
         Requireˉsuccess(
@@ -129,6 +171,13 @@ try {
             '--admitted-source-set', Source,
             Source, Manifest, Bindings, Wir,
         ]);
+        if (Case.analysisInvalid !== undefined) {
+            Requireˉrejection(
+                Analysis, Case.analysisInvalid,
+                `${Case.name} analysis`, Product,
+            );
+            continue;
+        }
         Requireˉsuccess(
             Analysis, 'source analysis status=Published ',
             `${Case.name} analysis`,
@@ -162,13 +211,21 @@ try {
             Positiveˉwvbˉsha256 = createHash('sha256')
                 .update(Productˉbytes).digest('hex');
         }
+        if (Case.name === 'owned-aggregate-vector') {
+            Inspectˉownedˉaggregateˉwvb(Productˉbytes);
+            Aggregateˉwvbˉbytes = Productˉbytes.length;
+            Aggregateˉwvbˉsha256 = createHash('sha256')
+                .update(Productˉbytes).digest('hex');
+        }
     }
     process.stdout.write(
         'language 1 owned Vector calls and joins WVIR status=Passed ' +
         `cases=${Cases.length} calls=${Positiveˉcalls} ` +
         `wvir-bytes=${Positiveˉwvirˉbytes} ` +
         `wvb-bytes=${Positiveˉwvbˉbytes} ` +
-        `wvb-sha256=${Positiveˉwvbˉsha256}\n`,
+        `wvb-sha256=${Positiveˉwvbˉsha256} ` +
+        `aggregate-wvb-bytes=${Aggregateˉwvbˉbytes} ` +
+        `aggregate-wvb-sha256=${Aggregateˉwvbˉsha256}\n`,
     );
 } finally {
     for (const Candidate of Created) {
@@ -326,6 +383,69 @@ function Inspectˉownedˉcallˉwvb(Input) {
     }
 }
 
+function Inspectˉownedˉaggregateˉwvb(Input) {
+    if (Input.length < 64 || Input.length > MAXIMUM_INPUT_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 28) {
+        Reject('The owned aggregate product is not bounded WVB 1.28.');
+    }
+    let Cursor = 12;
+    let Functions = null;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor + 8 > Input.length || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject(`The owned aggregate product has no canonical section ${Kind}.`);
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Payload = Cursor + 8;
+        if (Payload + Length > Input.length) {
+            Reject('The owned aggregate product contains a truncated section.');
+        }
+        if (Kind === 4) Functions = { payload: Payload, end: Payload + Length };
+        Cursor = Payload + Length;
+    }
+    if (Cursor !== Input.length || Functions === null) {
+        Reject('The owned aggregate product has non-canonical trailing bytes.');
+    }
+    const Count = Input.readUInt32LE(Functions.payload);
+    Cursor = Functions.payload + 4;
+    let Ownedˉparameters = 0;
+    let Borrowedˉlocals = 0;
+    for (let Index = 0; Index < Count; Index += 1) {
+        Cursor = Readˉwvbˉstring(Input, Cursor, Functions.end).end;
+        const Parameterˉcount = Input.readUInt32LE(Cursor);
+        Cursor += 4;
+        for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
+            const Shape = Readˉwvbˉshape(Input, Cursor, Functions.end);
+            if (Shape.kind === 7 || Shape.kind === 11 || Shape.kind === 22) {
+                Ownedˉparameters += 1;
+            }
+            Cursor = Shape.end;
+        }
+        Cursor = Readˉwvbˉshape(Input, Cursor, Functions.end).end;
+        const Localˉcount = Input.readUInt32LE(Cursor);
+        Cursor += 4;
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            const Shape = Readˉwvbˉshape(Input, Cursor, Functions.end);
+            if (Shape.kind === 28 || Shape.kind === 29 || Shape.kind === 30) {
+                Borrowedˉlocals += 1;
+            }
+            Cursor = Shape.end;
+        }
+        if (Cursor + 12 > Functions.end) {
+            Reject('The owned aggregate function metadata is truncated.');
+        }
+        Cursor += 12;
+    }
+    if (Cursor !== Functions.end || Ownedˉparameters === 0 ||
+        Borrowedˉlocals === 0) {
+        Reject(
+            `The owned aggregate evidence differs: parameters=${Ownedˉparameters} ` +
+            `borrowed-locals=${Borrowedˉlocals}.`,
+        );
+    }
+}
+
 function Readˉwvbˉstring(Input, Cursor, End) {
     if (Cursor + 4 > End) Reject('A WVB string length is truncated.');
     const Length = Input.readUInt32LE(Cursor);
@@ -342,7 +462,7 @@ function Readˉwvbˉshape(Input, Cursor, End) {
     if (Cursor >= End) Reject('A WVB shape is truncated.');
     const Kind = Input[Cursor];
     let Next = Cursor + 1;
-    if ([7, 8, 11, 22, 23, 24, 26, 27].includes(Kind)) Next += 4;
+    if ([7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30].includes(Kind)) Next += 4;
     if (Next > End) Reject('A WVB nominal shape is truncated.');
     return { kind: Kind, end: Next };
 }

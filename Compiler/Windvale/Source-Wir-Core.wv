@@ -417,6 +417,11 @@ record Compilerˉsourceˉwirˉvalue {
     Temporary: u32;
 }
 
+record Compilerˉsourceˉwirˉownedˉshapeˉcache {
+    Entries: bytes;
+    Owned: bool;
+}
+
 export record Compilerˉsourceˉwirˉsummary {
     Status: Compilerˉsourceˉwirˉstatus;
     Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus;
@@ -739,6 +744,18 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape: u32) -> bool {
     return Shape < 1610612736u32;
 }
 
+fn Compilerˉsourceˉwirˉvalueˉclassˉpathˉcontains(
+    Path: bytes,
+    Shape: u32
+) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Path) {
+        if Bytesˉreadˉu32ˉlittle(Path, Cursor) == Shape { return true; }
+        Cursor = Cursor + 4u32;
+    }
+    return false;
+}
+
 fn Compilerˉsourceˉwirˉvalueˉclassify(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -786,6 +803,183 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
         return WIR_VALUE_CLASS_OWNED;
     }
     return WIR_VALUE_CLASS_UNKNOWN;
+}
+
+fn Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Shape: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Path: bytes,
+    Depth: u32
+) -> bool {
+    if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+        Shape, Typeˉcatalog
+    ) { return true; }
+    var Possibleˉaggregate: bool = Shape >= 65536u32 && Shape < 131072u32;
+    if Shape >= 196608u32 + Symbols.Records + Symbols.Enums &&
+        Shape < 196608u32 + Symbols.Records + Symbols.Enums +
+            Symbols.Variants {
+        Possibleˉaggregate = true;
+    }
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        let Possibleˉinstance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+        if Possibleˉinstance <
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                    Typeˉcatalog
+                ) {
+            let Possibleˉkind: u32 =
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                    Typeˉcatalog, Possibleˉinstance
+                );
+            Possibleˉaggregate = Possibleˉkind == 4u32 ||
+                Possibleˉkind == 8u32 || Possibleˉkind == 10u32;
+        }
+    }
+    if !Possibleˉaggregate { return false; }
+    if Depth >= 64u32 ||
+        Compilerˉsourceˉwirˉvalueˉclassˉpathˉcontains(Path, Shape) {
+        return false;
+    }
+    let Nextˉpath: bytes = Bytesˉconcat(
+        Path, Bytesˉfromˉu32ˉlittle(Shape)
+    );
+    var Genericˉkind: u32 = 0u32;
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        let Instance: u32 =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+        if Instance >=
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                    Typeˉcatalog
+                ) {
+            return false;
+        }
+        Genericˉkind =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉkind(
+                Typeˉcatalog, Instance
+            );
+        if Genericˉkind == 10u32 {
+            return Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+                Input, Scan,
+                Compilerˉsourceˉwirˉfixedˉarrayˉelementˉshape(
+                    Shape, Typeˉcatalog
+                ),
+                Symbols, Typeˉcatalog, Nextˉpath, Depth + 1u32
+            );
+        }
+        if Genericˉkind == 4u32 || Genericˉkind == 8u32 {
+            let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+                Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+                    Input, Scan, Symbols, Typeˉcatalog, Instance
+                );
+            if Layout.Shape != Shape || Layout.Fields > 64u32 ||
+                Bytesˉlength(Layout.Fieldˉevidence) !=
+                    Layout.Fields * 16u32 ||
+                !Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+                    Input, Scan, Symbols, Layout
+                ) {
+                return false;
+            }
+            var Genericˉfield: u32 = 0u32;
+            while Genericˉfield < Layout.Fields {
+                if Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+                    Input, Scan,
+                    Bytesˉreadˉu32ˉlittle(
+                        Layout.Fieldˉevidence, Genericˉfield * 16u32 + 8u32
+                    ),
+                    Symbols, Typeˉcatalog, Nextˉpath, Depth + 1u32
+                ) { return true; }
+                Genericˉfield = Genericˉfield + 1u32;
+            }
+        }
+        return false;
+    }
+    if Shape >= 65536u32 && Shape < 131072u32 {
+        let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                Input, Scan, Symbols, Shape
+            );
+        if !Nominal.Found { return false; }
+        let Entry: u32 = 16u32 + Nominal.Directoryˉindex * 24u32;
+        let Fields: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Entry + 20u32
+        );
+        if Fields > 64u32 { return false; }
+        let Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingˉmatch(
+                true, true,
+                Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Record,
+                Nominal.Module, Fields, Nominal.Directoryˉindex
+            );
+        var Field: u32 = 0u32;
+        while Field < Fields {
+            let Signature: Compilerˉsourceˉwirˉsignature =
+                Compilerˉsourceˉwirˉrecordˉsignature(
+                    Input, Scan, Symbols, Callable, Field
+                );
+            if Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+                Input, Scan, Signature.Parameterˉshape,
+                Symbols, Typeˉcatalog, Nextˉpath, Depth + 1u32
+            ) { return true; }
+            Field = Field + 1u32;
+        }
+        return false;
+    }
+    if Shape >= 196608u32 + Symbols.Records + Symbols.Enums &&
+        Shape < 196608u32 + Symbols.Records + Symbols.Enums +
+            Symbols.Variants {
+        let Variantˉnominal: u32 = Shape - 196608u32;
+        let Directoryˉentry: u32 =
+            Compilerˉsourceˉwirˉnominalˉdirectoryˉentry(
+                Symbols, Variantˉnominal, 8u32
+            );
+        if Directoryˉentry == Compilerˉsourceˉwirˉsentinel() {
+            return false;
+        }
+        let Cases: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, 16u32 + Directoryˉentry * 24u32 + 20u32
+        );
+        if Cases > 64u32 { return false; }
+        var Case: u32 = 0u32;
+        while Case < Cases {
+            let View: Compilerˉsourceˉwirˉvariantˉcaseˉview =
+                Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
+                    Input, Scan, Symbols, Typeˉcatalog, Variantˉnominal, Case
+                );
+            if !View.Found || View.Fields > 64u32 { return false; }
+            var Variantˉfield: u32 = 0u32;
+            while Variantˉfield < View.Fields {
+                let Member: Compilerˉsourceˉwirˉmember =
+                    Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
+                        Input, Scan, Symbols, Typeˉcatalog,
+                        Variantˉnominal, Case, Variantˉfield
+                    );
+                if !Member.Found { return false; }
+                if Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+                    Input, Scan, Member.Shape, Symbols, Typeˉcatalog,
+                    Nextˉpath, Depth + 1u32
+                ) { return true; }
+                Variantˉfield = Variantˉfield + 1u32;
+            }
+            Case = Case + 1u32;
+        }
+    }
+    return false;
+}
+
+export fn Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvector(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Shape: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    return Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
+        Input, Scan, Shape, Symbols, Typeˉcatalog,
+        Compilerˉsourceˉwirˉempty(Input), 0u32
+    );
 }
 
 export fn Compilerˉsourceˉwirˉshapeˉisˉfixedˉarray(
@@ -6405,13 +6599,19 @@ fn Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
     Source: bytes,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression
 ) -> bool {
-    if Expression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
+    var Nameˉoffset: u32 = Expression.Valueˉoffset;
+    var Nameˉlength: u32 = Expression.Valueˉlength;
+    if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Field {
+        Nameˉoffset = Expression.Firstˉoffset;
+        Nameˉlength = Expression.Firstˉlength;
+    } else if Expression.Kind !=
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name {
         return false;
     }
     let Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
         Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
             Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Expression.Valueˉoffset, Expression.Valueˉlength,
+            Nameˉoffset, Nameˉlength,
             Expression.Offset
         );
     if !Local.Found { return false; }
@@ -13083,6 +13283,69 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
     return true;
 }
 
+fn Compilerˉsourceˉwirˉshapeˉisˉaffineˉresult(
+    Directory: bytes,
+    Shape: u32
+) -> bool {
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Offset: u32 = Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
+        Functions * 48u32 + Blocks * 28u32;
+    var Operation: u32 = 0u32;
+    while Operation < Operations {
+        let Entry: u32 = Offset + Operation * 28u32;
+        let Kind: u32 = Bytesˉreadˉu16ˉlittle(
+            Directory, Entry + 4u32
+        );
+        if (Kind == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
+                Kind == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED) &&
+            Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32) == Shape {
+            return true;
+        }
+        Operation = Operation + 1u32;
+    }
+    return false;
+}
+
+fn Compilerˉsourceˉwirˉownedˉshapeˉcacheˉlookup(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Shape: u32,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Entries: bytes
+) -> Compilerˉsourceˉwirˉownedˉshapeˉcache {
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Entries) {
+        if Bytesˉreadˉu32ˉlittle(Entries, Cursor) == Shape {
+            return Compilerˉsourceˉwirˉownedˉshapeˉcache {
+                Entries: Entries,
+                Owned: Bytesˉreadˉu8(Entries, Cursor + 4u32) == 1u8
+            };
+        }
+        Cursor = Cursor + 5u32;
+    }
+    let Owned: bool = Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvector(
+        Input, Scan, Shape, Symbols, Typeˉcatalog
+    );
+    var Result: bytes = Entries;
+    if Bytesˉlength(Result) < 1280u32 {
+        var Marker: u8 = 0u8;
+        if Owned { Marker = 1u8; }
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Shape), Bytesˉfromˉu8(Marker)
+            )
+        );
+    }
+    return Compilerˉsourceˉwirˉownedˉshapeˉcache {
+        Entries: Result,
+        Owned: Owned
+    };
+}
+
 fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -13109,30 +13372,58 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     let Slotˉcount: u32 = Range.Parameters + Range.Locals;
 
     var Hasˉvector: bool = false;
+    var Ownedˉshapeˉcache: bytes = Compilerˉsourceˉwirˉempty(Directory);
+    var Slotˉownedˉshapes: bytes = Compilerˉsourceˉwirˉempty(Directory);
     var Slot: u32 = 0u32;
     while Slot < Slotˉcount {
-        if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-            Compilerˉsourceˉwirˉbindingˉshape(
-                Bindings, Symbolˉentries, Function, Slot
-            ),
-            Typeˉcatalog
-        ) {
+        let Slotˉshape: u32 = Compilerˉsourceˉwirˉbindingˉshape(
+            Bindings, Symbolˉentries, Function, Slot
+        );
+        let Slotˉcache: Compilerˉsourceˉwirˉownedˉshapeˉcache =
+            Compilerˉsourceˉwirˉownedˉshapeˉcacheˉlookup(
+            Input, Scan, Slotˉshape,
+            Symbols, Typeˉcatalog, Ownedˉshapeˉcache
+        );
+        Ownedˉshapeˉcache = Slotˉcache.Entries;
+        var Slotˉownedˉmarker: u8 = 0u8;
+        if Slotˉcache.Owned && !Compilerˉsourceˉwirˉshapeˉisˉaffineˉresult(
+                Directory, Slotˉshape
+            ) {
             Hasˉvector = true;
+            Slotˉownedˉmarker = 1u8;
         }
+        Slotˉownedˉshapes = Bytesˉconcat(
+            Slotˉownedˉshapes, Bytesˉfromˉu8(Slotˉownedˉmarker)
+        );
         Slot = Slot + 1u32;
     }
+    var Temporaryˉownedˉshapes: bytes =
+        Compilerˉsourceˉwirˉempty(Directory);
     var Temporary: u32 = 0u32;
     while Temporary < Range.Temporaryˉcount {
-        if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-            Bytesˉreadˉu32ˉlittle(
-                Directory,
-                Temporariesˉoffset +
-                    (Range.Firstˉtemporary + Temporary) * 4u32
-            ),
-            Typeˉcatalog
-        ) {
+        let Temporaryˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory,
+            Temporariesˉoffset +
+                (Range.Firstˉtemporary + Temporary) * 4u32
+        );
+        let Temporaryˉcache: Compilerˉsourceˉwirˉownedˉshapeˉcache =
+            Compilerˉsourceˉwirˉownedˉshapeˉcacheˉlookup(
+            Input, Scan,
+            Temporaryˉshape, Symbols, Typeˉcatalog, Ownedˉshapeˉcache
+        );
+        Ownedˉshapeˉcache = Temporaryˉcache.Entries;
+        var Temporaryˉownedˉmarker: u8 = 0u8;
+        if Temporaryˉcache.Owned &&
+            !Compilerˉsourceˉwirˉshapeˉisˉaffineˉresult(
+                Directory, Temporaryˉshape
+            ) {
             Hasˉvector = true;
+            Temporaryˉownedˉmarker = 1u8;
         }
+        Temporaryˉownedˉshapes = Bytesˉconcat(
+            Temporaryˉownedˉshapes,
+            Bytesˉfromˉu8(Temporaryˉownedˉmarker)
+        );
         Temporary = Temporary + 1u32;
     }
     if !Hasˉvector { return true; }
@@ -13158,12 +13449,7 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     );
     Slot = 0u32;
     while Slot < Range.Parameters {
-        let Parameterˉshape: u32 = Compilerˉsourceˉwirˉbindingˉshape(
-            Bindings, Symbolˉentries, Function, Slot
-        );
-        if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                Parameterˉshape, Typeˉcatalog
-            ) {
+        if Bytesˉreadˉu8(Slotˉownedˉshapes, Slot) == 1u8 {
             let Parameterˉmode: u32 =
                 Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
                     Input, Scan, Symbols, Bindings, Function, Slot
@@ -13220,10 +13506,36 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
                 Directory, Operationˉentry + 20u32
             );
-            let Producesˉvector: bool =
-                Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                    Operationˉshape, Typeˉcatalog
+            let Operationˉcache: Compilerˉsourceˉwirˉownedˉshapeˉcache =
+                Compilerˉsourceˉwirˉownedˉshapeˉcacheˉlookup(
+                    Input, Scan, Operationˉshape, Symbols, Typeˉcatalog,
+                    Ownedˉshapeˉcache
                 );
+            Ownedˉshapeˉcache = Operationˉcache.Entries;
+            let Producesˉvector: bool = Operationˉcache.Owned &&
+                !Compilerˉsourceˉwirˉshapeˉisˉaffineˉresult(
+                    Directory, Operationˉshape
+                );
+            var Borrowsˉownedˉaggregate: bool = false;
+            if Operandˉcount > 0u32 &&
+                (Operationˉkind == WIR_OPERATION_RECORD_FIELD ||
+                    Operationˉkind == WIR_OPERATION_VARIANT_FIELD ||
+                    Operationˉkind == WIR_OPERATION_ARRAY_ELEMENT) {
+                let Aggregateˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+                    Directory, Operandsˉoffset + Firstˉoperand * 4u32
+                );
+                let Aggregateˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                    Directory,
+                    Temporariesˉoffset +
+                        (Range.Firstˉtemporary + Aggregateˉtemporary) * 4u32
+                );
+                Borrowsˉownedˉaggregate = Aggregateˉtemporary <
+                    Range.Temporaryˉcount && Bytesˉreadˉu8(
+                        Temporaryˉownedˉshapes, Aggregateˉtemporary
+                    ) == 1u8 && !Compilerˉsourceˉwirˉshapeˉisˉaffineˉresult(
+                        Directory, Aggregateˉshape
+                    );
+            }
             if Operationˉkind == WIR_OPERATION_VALUE_PHI && Producesˉvector {
                 return false;
             }
@@ -13232,15 +13544,12 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                 var Producedˉorigin: u32 = Compilerˉsourceˉwirˉsentinel();
                 if Producesˉvector {
                     Producedˉstate = 1u8;
+                    if Borrowsˉownedˉaggregate { Producedˉstate = 2u8; }
                     if Operationˉkind == WIR_OPERATION_LOAD_LOCAL {
                         if Operationˉtarget >= Slotˉcount ||
-                            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                                Compilerˉsourceˉwirˉbindingˉshape(
-                                    Bindings, Symbolˉentries, Function,
-                                    Operationˉtarget
-                                ),
-                                Typeˉcatalog
-                            ) {
+                            Bytesˉreadˉu8(
+                                Slotˉownedˉshapes, Operationˉtarget
+                            ) != 1u8 {
                             return false;
                         }
                         Producedˉstate = Bytesˉreadˉu8(
@@ -13266,7 +13575,7 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             }
 
             var Operandˉindex: u32 = 0u32;
-            var Firstˉoperandˉshape: u32 = 0u32;
+            var Firstˉoperandˉowned: bool = false;
             while Operandˉindex < Operandˉcount {
                 let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
                     Directory,
@@ -13278,11 +13587,15 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                         (Range.Firstˉtemporary + Operandˉtemporary) * 4u32
                 );
                 if Operandˉindex == 0u32 {
-                    Firstˉoperandˉshape = Operandˉshape;
+                    Firstˉoperandˉowned = Operandˉtemporary <
+                        Range.Temporaryˉcount && Bytesˉreadˉu8(
+                            Temporaryˉownedˉshapes, Operandˉtemporary
+                        ) == 1u8;
                 }
-                if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                        Operandˉshape, Typeˉcatalog
-                    ) {
+                if Operandˉtemporary < Range.Temporaryˉcount &&
+                    Bytesˉreadˉu8(
+                        Temporaryˉownedˉshapes, Operandˉtemporary
+                    ) == 1u8 {
                     if Operandˉtemporary >= Bytesˉlength(Temporaryˉstate) ||
                         Bytesˉreadˉu32ˉlittle(
                             Temporaryˉblock, Operandˉtemporary * 4u32
@@ -13316,6 +13629,11 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                         Operationˉkind == WIR_OPERATION_ARRAY_CREATE {
                         Consumes = true;
                     }
+                    if Operationˉkind == WIR_OPERATION_RECORD_FIELD ||
+                        Operationˉkind == WIR_OPERATION_VARIANT_FIELD ||
+                        Operationˉkind == WIR_OPERATION_ARRAY_ELEMENT {
+                        Borrows = true;
+                    }
                     if !Consumes && !Borrows { return false; }
                     if (Consumes && Currentˉstate != 1u8) ||
                         (Borrows && Currentˉstate == 0u8) {
@@ -13346,20 +13664,14 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             }
 
             if Operationˉkind == WIR_OPERATION_STORE_LOCAL &&
-                Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                    Firstˉoperandˉshape, Typeˉcatalog
-                ) {
+                Firstˉoperandˉowned {
                 if Operationˉtarget < Range.Parameters ||
                     Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
                         Slotˉstate, Operationˉtarget
                     ) != 0u8 ||
-                    !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                        Compilerˉsourceˉwirˉbindingˉshape(
-                            Bindings, Symbolˉentries, Function,
-                            Operationˉtarget
-                        ),
-                        Typeˉcatalog
-                    ) {
+                    Bytesˉreadˉu8(
+                        Slotˉownedˉshapes, Operationˉtarget
+                    ) != 1u8 {
                     return false;
                 }
                 Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
@@ -13404,14 +13716,9 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
         );
         if Terminator == 3u32 &&
             Terminatorˉvalue != Compilerˉsourceˉwirˉsentinel() {
-            let Returnˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory,
-                Temporariesˉoffset +
-                    (Range.Firstˉtemporary + Terminatorˉvalue) * 4u32
-            );
-            if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                    Returnˉshape, Typeˉcatalog
-                ) {
+            if Terminatorˉvalue < Range.Temporaryˉcount && Bytesˉreadˉu8(
+                    Temporaryˉownedˉshapes, Terminatorˉvalue
+                ) == 1u8 {
                 if Terminatorˉvalue >= Bytesˉlength(Temporaryˉstate) ||
                     Bytesˉreadˉu8(
                         Temporaryˉstate, Terminatorˉvalue

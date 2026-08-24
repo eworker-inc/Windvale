@@ -357,7 +357,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 27u32) ||
+                if (Moduleˉminor < 21u32 || Moduleˉminor > 28u32) ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -369,7 +369,8 @@ fn Readˉfunctionˉdirectory(
                 return Invalidˉfunctionˉdirectory(Module);
             }
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
-                Shapeˉkind == 21u32 {
+                Shapeˉkind == 21u32 || Shapeˉkind == 28u32 ||
+                Shapeˉkind == 29u32 || Shapeˉkind == 30u32 {
                 return Invalidˉfunctionˉdirectory(Module);
             }
             var Parameterˉmode: u8 = 0u8;
@@ -418,7 +419,8 @@ fn Readˉfunctionˉdirectory(
         ));
         if !Fixed.Shapeˉisˉsupported(Returnˉkind, Moduleˉminor) ||
             Returnˉkind == 25u32 || Returnˉkind == 26u32 ||
-            Returnˉkind == 27u32 {
+            Returnˉkind == 27u32 || Returnˉkind == 28u32 ||
+            Returnˉkind == 29u32 || Returnˉkind == 30u32 {
             return Invalidˉfunctionˉdirectory(Module);
         }
         Functionˉcursor = Functionˉcursor + 1u32;
@@ -449,7 +451,7 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 27u32) ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 28u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -458,7 +460,9 @@ fn Readˉfunctionˉdirectory(
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+                Shapeˉkind == 28u32 || Shapeˉkind == 29u32 ||
+                Shapeˉkind == 30u32 {
                 Nominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module, Functionˉcursor
                 );
@@ -642,7 +646,8 @@ fn Localˉaggregateˉroots(
     var Offset: u32 = 0u32;
     while Offset < Length {
         let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset);
-        if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 {
+        if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 ||
+            Kind == 28u32 || Kind == 29u32 || Kind == 30u32 {
             Roots = Bytesˉconcat(
                 Roots,
                 Bytesˉslice(Values, Valueˉoffset + Offset, 8u32)
@@ -712,7 +717,9 @@ fn Aggregateˉselectedˉfieldˉvalues(
             Cursor = Cursor + 4u32;
         }
         var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
-        if Descriptors { Selected = Kind == 3u32 || Kind == 6u32; }
+        if Descriptors {
+            Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+        }
         if Selected {
             Result = Bytesˉconcat(
                 Result,
@@ -743,7 +750,9 @@ fn Aggregateˉselectedˉownerˉvalues(
             Shape = Shape + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Shape);
             let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
             var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
-            if Descriptors { Selected = Kind == 3u32 || Kind == 6u32; }
+            if Descriptors {
+                Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+            }
             var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
             if Selected {
                 var Index: u32 = 0u32;
@@ -885,6 +894,57 @@ fn Sweepˉaggregates(
         Slot = Slot + 1u32;
     }
     return Bytesˉconcat(Nextˉmetadata, Released);
+}
+
+record Aggregateˉcollection {
+    Valid: bool;
+    Metadata: bytes;
+    Releasedˉdescriptors: bytes;
+}
+
+fn Collectˉunreachableˉaggregates(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Initialˉmetadata: bytes,
+    Roots: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉcollection {
+    let Empty: bytes = Bytesˉslice(Initialˉmetadata, 0u32, 0u32);
+    let Capacity: u32 = 768u32;
+    let Metadataˉlength: u32 = Capacity * 8u32;
+    if Bytesˉlength(Initialˉmetadata) != Metadataˉlength ||
+        Bytesˉlength(Roots) % 8u32 != 0u32 {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    var Zeroˉmarks: bytes = Empty;
+    var Markˉslot: u32 = 0u32;
+    while Markˉslot < Capacity {
+        Zeroˉmarks = Bytesˉconcat(Zeroˉmarks, Bytesˉfromˉu8(0u8));
+        Markˉslot = Markˉslot + 1u32;
+    }
+    let Marks: bytes = Markˉaggregateˉroots(
+        Module, Typeˉoffsets, Records, Initialˉmetadata,
+        Capacity, Zeroˉmarks, Roots
+    );
+    if Bytesˉlength(Marks) != Capacity {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    let Swept: bytes = Sweepˉaggregates(
+        Module, Typeˉoffsets, Records, Initialˉmetadata,
+        Marks, Capacity, Zeroˉcell
+    );
+    if Bytesˉlength(Swept) < Metadataˉlength {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    return Aggregateˉcollection(
+        true,
+        Bytesˉslice(Swept, 0u32, Metadataˉlength),
+        Bytesˉslice(
+            Swept, Metadataˉlength,
+            Bytesˉlength(Swept) - Metadataˉlength
+        )
+    );
 }
 
 fn Aggregateˉcreation(
@@ -3005,13 +3065,15 @@ fn Executeˉlocal(
         var Value: bytes = Bytesˉslice(Locals, Localˉindex * 8u32, 8u32);
         if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
             Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+            Shapeˉkind == 28u32 || Shapeˉkind == 29u32 ||
+            Shapeˉkind == 30u32 {
             let Nominalˉtoken: u32 = Bytesˉreadˉu32ˉlittle(
                 Localˉshapes, Shapeˉoffset + 4u32
             );
             if Bytesˉreadˉu32ˉlittle(Value, 0u32) == 0u32 &&
                 Bytesˉreadˉu32ˉlittle(Value, 4u32) == 0u32 {
-                if Shapeˉkind == 7u32 {
+                if Shapeˉkind == 7u32 || Shapeˉkind == 28u32 {
                     Value = Bytesˉconcat(
                         Bytesˉfromˉu32ˉlittle(4294967295u32),
                         Bytesˉfromˉu32ˉlittle(Nominalˉtoken)
@@ -3028,7 +3090,7 @@ fn Executeˉlocal(
                         Bytesˉfromˉu32ˉlittle(Nominalˉtoken)
                     );
                 }
-                if Shapeˉkind == 11u32 {
+                if Shapeˉkind == 11u32 || Shapeˉkind == 29u32 {
                     Value = Bytesˉconcat(
                         Bytesˉfromˉu32ˉlittle(4294967295u32),
                         Bytesˉfromˉu32ˉlittle(
@@ -3036,7 +3098,7 @@ fn Executeˉlocal(
                         )
                     );
                 }
-                if Shapeˉkind == 22u32 {
+                if Shapeˉkind == 22u32 || Shapeˉkind == 30u32 {
                     Value = Bytesˉconcat(
                         Bytesˉfromˉu32ˉlittle(4294967295u32),
                         Bytesˉfromˉu32ˉlittle(Nominalˉtoken)
@@ -3065,7 +3127,8 @@ fn Executeˉlocal(
             Heapˉallocations = Retained;
         }
         if Shapeˉkind == 7u32 || Shapeˉkind == 11u32 ||
-            Shapeˉkind == 22u32 {
+            Shapeˉkind == 22u32 || Shapeˉkind == 28u32 ||
+            Shapeˉkind == 29u32 || Shapeˉkind == 30u32 {
             Producedˉkind = 2u32;
         }
         Stack = Bytesˉconcat(Stack, Value);
@@ -3859,15 +3922,19 @@ fn Executeˉcollection(
         let Takenˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
             Functionˉframeˉmetadata, Functionˉindex * 8u32
         );
-        if Takenˉshapeˉkind != 23u32 &&
+        let Takenˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
+        let Takenˉisˉaggregate: bool = Takenˉminor == 28u32 &&
+            (Takenˉshapeˉkind == 7u32 || Takenˉshapeˉkind == 11u32 ||
+                Takenˉshapeˉkind == 22u32);
+        if Takenˉshapeˉkind != 23u32 && !Takenˉisˉaggregate &&
             ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 27u32) ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
         }
         if Takenˉlocalˉindex < Takenˉparameterˉcount &&
-            Takenˉshapeˉkind != 25u32 {
+            Takenˉshapeˉkind != 25u32 && !Takenˉisˉaggregate {
             if Takenˉshapeˉkind != 23u32 ||
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) < 26u32 ||
                 U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -3908,7 +3975,10 @@ fn Executeˉcollection(
         Stackˉconsumed = 0u32;
         Stackˉproduced = true;
         Stackˉproducedˉkind = 0u32;
-        if Takenˉshapeˉkind == 11u32 { Stackˉproducedˉkind = 2u32; }
+        if Takenˉshapeˉkind == 7u32 || Takenˉshapeˉkind == 11u32 ||
+            Takenˉshapeˉkind == 22u32 {
+            Stackˉproducedˉkind = 2u32;
+        }
         if Takenˉshapeˉkind == 23u32 { Stackˉproducedˉkind = 3u32; }
         Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
         Mainˉfound = true;
@@ -4352,7 +4422,12 @@ fn Executeˉaggregate(
         );
         Stackˉconsumed = 1u32;
         Stackˉproduced = true;
-        if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
+        let Fieldˉrequiresˉretain: bool =
+            Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 ||
+            (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 28u32 &&
+                Selectedˉfieldˉkind == 23u32 &&
+                Payloadˉlength != 153u32);
+        if Fieldˉrequiresˉretain {
             Stackˉproducedˉkind = 1u32;
         }
         if Selectedˉfieldˉkind == 7u32 || Selectedˉfieldˉkind == 11u32 ||
@@ -4362,7 +4437,7 @@ fn Executeˉaggregate(
         if Selectedˉfieldˉkind == 23u32 {
             Stackˉproducedˉkind = 3u32;
         }
-        if Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 {
+        if Fieldˉrequiresˉretain {
             let Retainedˉallocations: bytes = Retainˉdescriptor(
                 Heapˉallocations,
                 Heapˉallocationˉcount,
@@ -4454,8 +4529,13 @@ fn Executeˉaggregate(
             Arrayˉelementˉkind == 22u32 {
             Stackˉproducedˉkind = 2u32;
         }
+        if Arrayˉelementˉkind == 23u32 {
+            Stackˉproducedˉkind = 3u32;
+        }
         if Sectionˉkind == 0u32 {
-            if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 {
+            if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 ||
+                (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 28u32 &&
+                    Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
                     Retainˉdescriptor(
                         Heapˉallocations,
@@ -4635,7 +4715,7 @@ fn Executeˉextended(
 
     if Payloadˉlength == 207u32 {
         let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 27u32) ||
+        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 28u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -4666,7 +4746,7 @@ fn Executeˉextended(
 
     if Payloadˉlength == 208u32 {
         if (Bytesˉreadˉu16ˉlittle(Module, 6u32) < 25u32 ||
-            Bytesˉreadˉu16ˉlittle(Module, 6u32) > 27u32) ||
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -4689,7 +4769,8 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 209u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 27u32 ||
+        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) < 27u32 ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -5161,6 +5242,86 @@ fn Executeˉextended(
         Stackˉproduced,
         Stackˉproducedˉkind,
         Aggregateˉinstructions
+    );
+}
+
+fn Returningˉlocalˉdescriptors(
+    Moduleˉminor: u32,
+    Functionˉindex: u32,
+    Functionˉcursor: u32,
+    Functionˉshapeˉoffsets: bytes,
+    Localˉshapes: bytes,
+    Locals: bytes,
+    Records: bytes,
+    Heapˉallocations: bytes,
+    Heapˉallocationˉcount: u32,
+    Allocationˉleases: bytes
+) -> bytes {
+    var Released: bytes = Bytesˉslice(Locals, 0u32, 0u32);
+    let Shapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Functionˉshapeˉoffsets, Functionˉindex * 4u32
+    );
+    var Localˉoffset: u32 = Functionˉcursor;
+    while Localˉoffset > 0u32 {
+        Localˉoffset = Localˉoffset - 8u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+            Localˉshapes, Shapeˉoffset + Localˉoffset
+        );
+        if Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32 {
+            Released = Bytesˉconcat(
+                Released, Bytesˉslice(Locals, Localˉoffset, 8u32)
+            );
+        }
+        if Kind == 11u32 && Moduleˉminor < 28u32 {
+            Released = Bytesˉconcat(
+                Released,
+                Leasedˉdescriptorˉfromˉrecord(
+                    Records, Heapˉallocations, Heapˉallocationˉcount,
+                    Allocationˉleases,
+                    Bytesˉslice(Locals, Localˉoffset, 8u32)
+                )
+            );
+        }
+    }
+    return Released;
+}
+
+fn Returningˉaggregateˉcollection(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Recordˉmetadata: bytes,
+    Stack: bytes,
+    Stackˉrecordˉflagsˉlow: u32,
+    Stackˉrecordˉflagsˉhigh: u32,
+    Returnˉisˉrecord: bool,
+    Returnˉresult: bytes,
+    Frames: bytes,
+    Functionˉcount: u32,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉshapeˉoffsets: bytes,
+    Localˉshapes: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉcollection {
+    var Roots: bytes = Stackˉaggregateˉroots(
+        Stack, Stackˉrecordˉflagsˉlow, Stackˉrecordˉflagsˉhigh
+    );
+    if Returnˉisˉrecord { Roots = Bytesˉconcat(Roots, Returnˉresult); }
+    let Frameˉroots: bytes = Frameˉaggregateˉroots(
+        Frames, Functionˉcount, Functionˉframeˉmetadata,
+        Functionˉshapeˉoffsets, Localˉshapes
+    );
+    if Bytesˉlength(Frameˉroots) == 0u32 {
+        return Aggregateˉcollection(
+            false, Recordˉmetadata, Bytesˉslice(Module, 0u32, 0u32)
+        );
+    }
+    Roots = Bytesˉconcat(
+        Roots,
+        Bytesˉslice(Frameˉroots, 1u32, Bytesˉlength(Frameˉroots) - 1u32)
+    );
+    return Collectˉunreachableˉaggregates(
+        Module, Typeˉoffsets, Records, Recordˉmetadata, Roots, Zeroˉcell
     );
 }
 
@@ -5943,7 +6104,47 @@ export fn Main(Request: bytes) -> bytes {
                 Returnˉstackˉlength - 8u32
             );
             var Framesˉlength: u32 = Bytesˉlength(Frames);
+            Releasedˉdescriptors = Bytesˉconcat(
+                Releasedˉdescriptors,
+                Returningˉlocalˉdescriptors(
+                    Moduleˉminor, Functionˉindex, Functionˉcursor,
+                    Functionˉshapeˉoffsets, Localˉshapes, Locals, Records,
+                    Heapˉallocations, Heapˉallocationˉcount,
+                    Allocationˉleases
+                )
+            );
+            if Moduleˉminor == 28u32 {
+                let Returnˉcollection: Aggregateˉcollection =
+                    Returningˉaggregateˉcollection(
+                        Module, Typeˉoffsets, Records, Recordˉmetadata,
+                        Stack, Stackˉrecordˉflagsˉlow,
+                        Stackˉrecordˉflagsˉhigh, Returnˉisˉrecord,
+                        Returnˉresult, Frames, Functionˉcount,
+                        Functionˉframeˉmetadata, Functionˉshapeˉoffsets,
+                        Localˉshapes,
+                        Zeroˉcell
+                    );
+                if !Returnˉcollection.Valid { return Invalid; }
+                Recordˉmetadata = Returnˉcollection.Metadata;
+                Releasedˉdescriptors = Bytesˉconcat(
+                    Releasedˉdescriptors,
+                    Returnˉcollection.Releasedˉdescriptors
+                );
+            }
             if Framesˉlength == 0u32 {
+                let Topˉrelease: Descriptorˉreleaseˉexecution =
+                    Releaseˉdescriptorsˉandˉleases(
+                        Memoryˉbudgetˉstate,
+                        Heapˉallocations,
+                        Heapˉallocationˉcount,
+                        Allocationˉleases,
+                        Releasedˉdescriptors,
+                        Zeroˉlease
+                    );
+                if !Topˉrelease.Valid { return Invalid; }
+                Memoryˉbudgetˉstate = Topˉrelease.State;
+                Heapˉallocations = Topˉrelease.Allocations;
+                Allocationˉleases = Topˉrelease.Leases;
                 if Mainˉhasˉmemoryˉbudget {
                     let Teardown: Budgets.Memoryˉbudgetˉreleaseˉresult =
                         Budgets.Teardownˉmemoryˉbudgets(Memoryˉbudgetˉstate);
@@ -6034,41 +6235,6 @@ export fn Main(Request: bytes) -> bytes {
                     return Bytesˉconcat(Success, Stack);
                 }
                 return Success;
-            }
-            let Returningˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Functionˉshapeˉoffsets,
-                Functionˉindex * 4u32
-            );
-            var Returningˉlocalˉoffset: u32 = Functionˉcursor;
-            while Returningˉlocalˉoffset > 0u32 {
-                Returningˉlocalˉoffset = Returningˉlocalˉoffset - 8u32;
-                let Returningˉlocalˉkind: u32 = Bytesˉreadˉu32ˉlittle(
-                    Localˉshapes,
-                    Returningˉshapeˉoffset + Returningˉlocalˉoffset
-                );
-                if Returningˉlocalˉkind == 3u32 ||
-                    Returningˉlocalˉkind == 6u32 ||
-                    Returningˉlocalˉkind == 23u32 ||
-                    Returningˉlocalˉkind == 24u32 {
-                    Releasedˉdescriptors = Bytesˉconcat(
-                        Releasedˉdescriptors,
-                        Bytesˉslice(Locals, Returningˉlocalˉoffset, 8u32)
-                    );
-                }
-                if Returningˉlocalˉkind == 11u32 {
-                    let Returningˉleasedˉdescriptor: bytes =
-                        Leasedˉdescriptorˉfromˉrecord(
-                            Records, Heapˉallocations,
-                            Heapˉallocationˉcount, Allocationˉleases,
-                            Bytesˉslice(
-                                Locals, Returningˉlocalˉoffset, 8u32
-                            )
-                        );
-                    Releasedˉdescriptors = Bytesˉconcat(
-                        Releasedˉdescriptors,
-                        Returningˉleasedˉdescriptor
-                    );
-                }
             }
             Functionˉindex = Bytesˉreadˉu32ˉlittle(
                 Frames,

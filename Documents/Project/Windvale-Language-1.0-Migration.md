@@ -616,16 +616,49 @@ The deterministic fixture is 3,628-byte WVB 1.27 at SHA-256
 `30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59`.
 It first proves exact 40-byte refusal against 24 available bytes and unchanged
 length `1`; it then grows to maximum `2`, appends the second item, and returns
-`42`. Fifteen byte-level mutations reject. The combined focused owner passes
+`42`. Fifteen byte-level mutations reject. The combined focused owner passed
 the exact same 88 cases on Windows and Linux: 12 valid modules and 53 malformed
 modules plus the retained owned-call and semantic-`using` evidence. Portable
-WVB sizes and SHA-256 identities match across both hosts.
+WVB sizes and SHA-256 identities matched across both hosts.
 
 “Use what the OS can provide” remains a separate rights-limited hosted provider
 operation that may extend an application's budget under current policy. It will
 not mean an unbounded or infallible allocation promise, and Core `D1` cannot
-acquire that authority ambiently. Aggregate-owned fields and one hosted
-resource consumer remain before Slice 5 completes.
+acquire that authority ambiently.
+
+## Current Slice 5 aggregate-owned-field checkpoint
+
+[Decision 0850](../Decisions/0850-Own-Vector-Containing-Aggregates-As-Wvb-1.28.md)
+closes the copyability gap around records, variants, and fixed arrays that
+recursively contain a Vector. Construction, local storage, by-value calls, and
+returns move the complete aggregate. Field and element observation preserves
+the parent, owned-field extraction by value rejects, and an explicit mutable
+field borrow requires a mutable parent binding. The bounded WVIR proof still
+rejects duplicate transfer, use after move, asymmetric joins, and owned phis.
+
+WVB 1.28 retains ordinary shapes for whole owned aggregates and introduces only
+three verifier-confined temporary-local views: shape `28` for record, `29` for
+variant, and `30` for fixed array. Each view must appear in the exact generated
+load/store/load/observer sequence and cannot be taken, passed, returned, or
+otherwise escape. The scalar runtime uses the existing fixed arena and heap,
+then deterministically traces surviving roots and releases nested Vector
+descriptors and leases during return and top-level teardown.
+
+The positive generic fixture emits a deterministic 1,538-byte WVB 1.28 module
+at SHA-256
+`b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395`
+and returns `42`. Four source failures cover use after move, duplicate move,
+partial owned-field move, and mutable borrow from `let`; six byte corruptions
+cover version, borrowed parameter, view identity, owner/view substitution, and
+illegal takes. The combined focused owner passes 101 cases with 13 valid and 59
+malformed modules on both permanent hosts with identical portable identities.
+The registry remains 112 owners and advances to 5,430 cases; its 17,601 LF-only
+bytes have SHA-256
+`5e9d388aa6c744f1f865af15386ae0c652bb1768b3c7e8b434fcd555dc3acd87`.
+
+One rights-limited hosted resource consumer remains before Slice 5 completes.
+Borrowed aggregate signatures, partial moves, owned phis, user-defined
+destruction, and resource-bearing Vector elements remain deliberately closed.
 
 ## Removal checkpoint
 

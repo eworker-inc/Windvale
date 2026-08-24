@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.27 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.28 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.27, including the current
+For the execution subset through WVB 1.28, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -782,6 +782,37 @@ and preservation of length `1`; its second request grows maximum `1` to `2`,
 appends the second item, and returns `42`. The compiler-aligned verifier accepts
 the exact module and rejects fifteen version, opcode, Vector-local,
 budget-local, Result, allocation-layout, and truncated-width mutations.
+
+WVB 1.28 recursively extends owned transfer from exact Vector values to
+records, variants, and fixed arrays that contain a Vector. Classification uses
+the canonical concrete or materialized generic layouts, follows at most 64
+ancestor types, and leaves the specialized affine Result paths from operations
+`171` and `172` under their existing proof. A constructor uses `local.take` for
+every owned field or element. Whole-value stores, by-value calls, and returns
+also take the owner; borrowed calls preserve it. Borrowed aggregate parameters
+and results remain unsupported in this first executable profile.
+
+A field or element observation must preserve its parent. The emitter therefore
+keeps identity temporary allocation for affected functions and gives the
+generated observation temporary one local-only shape: `28` for record, `29`
+for variant, or `30` for fixed array. It emits exactly `local.load owner`,
+`local.store view`, `local.load view`, then the matching observer instruction.
+The compiler-aligned verifier reconstructs recursive ownership from Types,
+requires the matching nominal identity and exact sequence, and rejects taking,
+calling, returning, storing elsewhere, or otherwise escaping the view. Internal
+transfer tags used by verification are not serialized WVB shapes.
+
+`Owned-Aggregate-Vector-Executable.wv` deterministically emits a 1,538-byte
+WVB 1.28 module at SHA-256
+`b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395`.
+It materializes `Workˉqueue<Vector<i32>>`, performs immutable and mutable field
+observation, and transfers the whole record through an ordinary call before the
+source-built scalar runner returns `42`. The verifier accepts the exact product
+and rejects version downgrade, a borrowed aggregate parameter, mismatched view
+identity, replacing the owner local with a view, taking before observation, and
+taking the borrowed view. Four source fixtures reject use after whole-value
+move, duplicate move, owned-field extraction by value, and mutable borrow from
+an immutable parent.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause

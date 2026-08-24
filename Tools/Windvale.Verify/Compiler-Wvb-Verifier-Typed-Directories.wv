@@ -42,7 +42,8 @@ export fn Hˉlocalˉshapes(
         var Localˉnominal: u32 = 0u32;
         if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
             Localˉkind == 22u8 || Localˉkind == 23u8 ||
-            Localˉkind == 24u8 {
+            Localˉkind == 24u8 || Localˉkind == 28u8 ||
+            Localˉkind == 29u8 || Localˉkind == 30u8 {
             Localˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -55,7 +56,8 @@ export fn Hˉlocalˉshapes(
         Cursor = Cursor + 1u32;
         if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
             Localˉkind == 22u8 || Localˉkind == 23u8 ||
-            Localˉkind == 24u8 {
+            Localˉkind == 24u8 || Localˉkind == 28u8 ||
+            Localˉkind == 29u8 || Localˉkind == 30u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;

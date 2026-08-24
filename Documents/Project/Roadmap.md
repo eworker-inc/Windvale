@@ -166,8 +166,11 @@ cleanup. [Decision 0847](../Decisions/0847-Lower-Semantic-Using-And-Prove-Loop-O
 lowers semantic `using`, reverse nested cleanup, and exact loop-ownership fixed
 points. [Decision 0848](../Decisions/0848-Execute-Transactional-Vector-Growth-As-Wvb-1.27.md)
 then executes explicit reserved Vector growth as a strong transaction through
-WVB 1.27. The combined owner now passes 88 cases. The next connected Slice 5
-results are aggregate-owned fields and one hosted resource consumer. Acquiring
+WVB 1.27. [Decision 0850](../Decisions/0850-Own-Vector-Containing-Aggregates-As-Wvb-1.28.md)
+then recursively moves records, variants, and fixed arrays containing Vector,
+confines field/element views, and deterministically releases nested descriptors
+through WVB 1.28. The combined owner now passes 101 cases. The final connected
+Slice 5 result is one hosted resource consumer. Acquiring
 additional budget authority from a provider remains an explicit later hosted
 capability rather than ambient allocation. Canonical effect resolution, call
 enforcement, function values, and captures follow in Slice 6.
