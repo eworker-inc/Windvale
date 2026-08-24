@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
     lstatSync,
     readFileSync,
@@ -91,6 +92,8 @@ const Cases = [
 const Created = [];
 try {
     let Positiveˉwvirˉbytes = 0;
+    let Positiveˉwvbˉbytes = 0;
+    let Positiveˉwvbˉsha256 = '';
     let Positiveˉcalls = 0;
     for (const Case of Cases) {
         const Fixture = path.join(Fixtureˉroot, Case.fixture);
@@ -136,14 +139,21 @@ try {
         const Evidence = Inspectˉownedˉcallˉwvir(readFileSync(Wir));
         Positiveˉwvirˉbytes = Evidence.bytes;
         Positiveˉcalls = Evidence.calls;
-        Requireˉownedˉcallˉboundary(
+        Requireˉownedˉcallˉproduct(
             Run(Emitter, [Source, Manifest, Bindings, Wir, Product]), Product,
         );
+        const Productˉbytes = readFileSync(Product);
+        Inspectˉownedˉcallˉwvb(Productˉbytes);
+        Positiveˉwvbˉbytes = Productˉbytes.length;
+        Positiveˉwvbˉsha256 = createHash('sha256')
+            .update(Productˉbytes).digest('hex');
     }
     process.stdout.write(
         'language 1 owned Vector calls and joins WVIR status=Passed ' +
         `cases=${Cases.length} calls=${Positiveˉcalls} ` +
-        `wvir-bytes=${Positiveˉwvirˉbytes}\n`,
+        `wvir-bytes=${Positiveˉwvirˉbytes} ` +
+        `wvb-bytes=${Positiveˉwvbˉbytes} ` +
+        `wvb-sha256=${Positiveˉwvbˉsha256}\n`,
     );
 } finally {
     for (const Candidate of Created) {
@@ -205,19 +215,143 @@ function Inspectˉownedˉcallˉwvir(Input) {
     return { bytes: Input.length, calls: Calls };
 }
 
-function Requireˉownedˉcallˉboundary(Result, Product) {
-    const Diagnostic = Normalize(Result.stderr);
-    if (Result.error !== undefined || Result.status !== 1 ||
-        Result.stdout.length !== 0 || Exists(Product) ||
-        !/^source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉshape function=\d+ operation=\d+ source-line=0\n$/.test(
-            Diagnostic,
-        )) {
+function Requireˉownedˉcallˉproduct(Result, Product) {
+    if (Result.error !== undefined || Result.status !== 0 ||
+        Result.stderr.length !== 0 || !Exists(Product)) {
         Reject(
-            `The owned-call WVB boundary differs: status=${Result.status} ` +
+            `The owned-call WVB publication differs: status=${Result.status} ` +
             `stdout=${JSON.stringify(Result.stdout)} ` +
-            `stderr=${JSON.stringify(Diagnostic)}.`,
+            `stderr=${JSON.stringify(Normalize(Result.stderr))}.`,
         );
     }
+}
+
+function Inspectˉownedˉcallˉwvb(Input) {
+    if (Input.length < 64 || Input.length > MAXIMUM_INPUT_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 26) {
+        Reject('The owned-call product is not bounded WVB 1.26.');
+    }
+    let Cursor = 12;
+    let Functions = null;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor + 8 > Input.length || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject(`The owned-call product has no canonical section ${Kind}.`);
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Payload = Cursor + 8;
+        if (Payload + Length > Input.length) {
+            Reject('The owned-call product contains a truncated section.');
+        }
+        if (Kind === 4) Functions = { payload: Payload, end: Payload + Length };
+        Cursor = Payload + Length;
+    }
+    if (Cursor !== Input.length || Functions === null) {
+        Reject('The owned-call product has non-canonical trailing bytes.');
+    }
+    const Count = Input.readUInt32LE(Functions.payload);
+    if (Count < 6 || Count > 256) {
+        Reject(`The owned-call function count is outside its bound: ${Count}.`);
+    }
+    Cursor = Functions.payload + 4;
+    const Entries = [];
+    let Totalˉparameters = 0;
+    for (let Index = 0; Index < Count; Index += 1) {
+        const Name = Readˉwvbˉstring(Input, Cursor, Functions.end);
+        Cursor = Name.end;
+        if (Cursor + 4 > Functions.end) Reject('A function entry is truncated.');
+        const Parameterˉcount = Input.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Parameterˉcount > 64 || Totalˉparameters > 1_048_576 - Parameterˉcount) {
+            Reject('The owned-call parameter directory is outside its bound.');
+        }
+        const Parameterˉoffset = Totalˉparameters;
+        Totalˉparameters += Parameterˉcount;
+        const Parameterˉshapes = [];
+        for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
+            const Shape = Readˉwvbˉshape(Input, Cursor, Functions.end);
+            Parameterˉshapes.push(Shape.kind);
+            Cursor = Shape.end;
+        }
+        Cursor = Readˉwvbˉshape(Input, Cursor, Functions.end).end;
+        if (Cursor + 4 > Functions.end) Reject('A local directory is truncated.');
+        const Localˉcount = Input.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Localˉcount > 2048) Reject('A local directory is outside its bound.');
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            Cursor = Readˉwvbˉshape(Input, Cursor, Functions.end).end;
+        }
+        if (Cursor + 12 > Functions.end) Reject('Function code metadata is truncated.');
+        Cursor += 12;
+        Entries.push({
+            name: Name.value,
+            parameterOffset: Parameterˉoffset,
+            parameterShapes: Parameterˉshapes,
+        });
+    }
+    if (Cursor + 4 > Functions.end ||
+        Input.readUInt32LE(Cursor) !== Totalˉparameters ||
+        Cursor + 4 + Totalˉparameters !== Functions.end) {
+        Reject('The WVB 1.26 parameter-mode trailer is inconsistent.');
+    }
+    const Modes = Input.subarray(Cursor + 4, Functions.end);
+    if ([...Modes].some(Mode => Mode > 2)) {
+        Reject('The WVB 1.26 parameter-mode trailer contains an unknown mode.');
+    }
+    const Expected = [
+        { name: 'Forward', shapes: [23], modes: [0] },
+        { name: 'Observe', shapes: [23], modes: [1] },
+        { name: 'Release', shapes: [23], modes: [0] },
+        { name: 'Borrowˉthenˉforward', shapes: [23], modes: [0] },
+        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2], modes: [0, 0] },
+        { name: 'Main', shapes: [25], modes: [0] },
+    ];
+    for (const Expectation of Expected) {
+        const Entry = Entries.find(
+            Candidate => Candidate.name === Expectation.name,
+        );
+        if (Entry === undefined ||
+            Entry.parameterShapes.length !== Expectation.shapes.length ||
+            Expectation.shapes.some(
+                (Shape, Index) => Entry.parameterShapes[Index] !== Shape,
+            )) {
+            Reject(`The ${Expectation.name} WVB parameter shapes differ.`);
+        }
+        const Actualˉmodes = [...Modes.subarray(
+            Entry.parameterOffset,
+            Entry.parameterOffset + Entry.parameterShapes.length,
+        )];
+        if (Actualˉmodes.some(
+            (Mode, Index) => Mode !== Expectation.modes[Index],
+        )) {
+            Reject(
+                `The ${Expectation.name} WVB parameter modes differ: ` +
+                `${JSON.stringify(Actualˉmodes)}.`,
+            );
+        }
+    }
+}
+
+function Readˉwvbˉstring(Input, Cursor, End) {
+    if (Cursor + 4 > End) Reject('A WVB string length is truncated.');
+    const Length = Input.readUInt32LE(Cursor);
+    if (Length > 16_384 || Cursor + 4 + Length > End) {
+        Reject('A WVB string is outside its bound.');
+    }
+    return {
+        value: Input.subarray(Cursor + 4, Cursor + 4 + Length).toString('utf8'),
+        end: Cursor + 4 + Length,
+    };
+}
+
+function Readˉwvbˉshape(Input, Cursor, End) {
+    if (Cursor >= End) Reject('A WVB shape is truncated.');
+    const Kind = Input[Cursor];
+    let Next = Cursor + 1;
+    if ([7, 8, 11, 22, 23, 24].includes(Kind)) Next += 4;
+    if (Next > End) Reject('A WVB nominal shape is truncated.');
+    return { kind: Kind, end: Next };
 }
 
 function Requireˉsuccess(Result, Prefix, Label) {

@@ -282,6 +282,8 @@ record Functionˉdirectory {
     Codeˉlengths: bytes;
     Shapeˉoffsets: bytes;
     Localˉshapes: bytes;
+    Parameterˉmodeˉoffsets: bytes;
+    Parameterˉmodes: bytes;
     Mainˉhasˉmemoryˉbudget: bool;
 }
 
@@ -289,7 +291,7 @@ fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     return Functionˉdirectory(
         false, 0u32, 0u32, 0u32,
-        Empty, Empty, Empty, Empty, Empty, false
+        Empty, Empty, Empty, Empty, Empty, Empty, Empty, false
     );
 }
 
@@ -316,6 +318,9 @@ fn Readˉfunctionˉdirectory(
     var Codeˉlengths: bytes = Empty;
     var Shapeˉoffsets: bytes = Empty;
     var Localˉshapes: bytes = Empty;
+    var Parameterˉmodeˉoffsets: bytes = Empty;
+    var Parameterˉmodes: bytes = Empty;
+    var Totalˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
     while Functionˉindex < Functionˉcount {
         Functionˉcursor = Functionˉcursor + 4u32
@@ -326,6 +331,14 @@ fn Readˉfunctionˉdirectory(
         if Parameterˉcount > 64u32 {
             return Invalidˉfunctionˉdirectory(Module);
         }
+        if Totalˉparameterˉcount > 1048576u32 - Parameterˉcount {
+            return Invalidˉfunctionˉdirectory(Module);
+        }
+        Parameterˉmodeˉoffsets = Bytesˉconcat(
+            Parameterˉmodeˉoffsets,
+            Bytesˉfromˉu32ˉlittle(Totalˉparameterˉcount)
+        );
+        Totalˉparameterˉcount = Totalˉparameterˉcount + Parameterˉcount;
         Frameˉmetadata = Bytesˉconcat(
             Frameˉmetadata,
             Bytesˉfromˉu32ˉlittle(Parameterˉcount)
@@ -343,7 +356,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 25u32) ||
+                if (Moduleˉminor < 21u32 || Moduleˉminor > 26u32) ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -415,7 +428,7 @@ fn Readˉfunctionˉdirectory(
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
                 Shapeˉkind == 21u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 25u32) ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 26u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -503,7 +516,41 @@ fn Readˉfunctionˉdirectory(
         Aggregateˉinstructions = Aggregateˉinstructions + Scanned;
         Functionˉindex = Functionˉindex + 1u32;
     }
-    if Functionˉcursor != Functionsˉend {
+    if Moduleˉminor == 26u32 {
+        if Functionˉcursor > Functionsˉend ||
+            Functionsˉend - Functionˉcursor < 4u32 {
+            return Invalidˉfunctionˉdirectory(Module);
+        }
+        let Serializedˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Functionˉcursor
+        );
+        if Serializedˉparameterˉcount != Totalˉparameterˉcount ||
+            Functionsˉend - Functionˉcursor !=
+                4u32 + Totalˉparameterˉcount {
+            return Invalidˉfunctionˉdirectory(Module);
+        }
+        Parameterˉmodes = Bytesˉslice(
+            Module, Functionˉcursor + 4u32, Totalˉparameterˉcount
+        );
+        var Parameterˉmodeˉindex: u32 = 0u32;
+        while Parameterˉmodeˉindex < Totalˉparameterˉcount {
+            if U32ˉfromˉu8(Bytesˉreadˉu8(
+                Parameterˉmodes, Parameterˉmodeˉindex
+            )) > 2u32 {
+                return Invalidˉfunctionˉdirectory(Module);
+            }
+            Parameterˉmodeˉindex = Parameterˉmodeˉindex + 1u32;
+        }
+        if Mainˉhasˉmemoryˉbudget && U32ˉfromˉu8(Bytesˉreadˉu8(
+            Parameterˉmodes,
+            Bytesˉreadˉu32ˉlittle(
+                Parameterˉmodeˉoffsets, Mainˉindex * 4u32
+            )
+        )) != 0u32 {
+            return Invalidˉfunctionˉdirectory(Module);
+        }
+        Functionˉcursor = Functionsˉend;
+    } else if Functionˉcursor != Functionsˉend {
         return Invalidˉfunctionˉdirectory(Module);
     }
     return Functionˉdirectory(
@@ -516,6 +563,8 @@ fn Readˉfunctionˉdirectory(
         Codeˉlengths,
         Shapeˉoffsets,
         Localˉshapes,
+        Parameterˉmodeˉoffsets,
+        Parameterˉmodes,
         Mainˉhasˉmemoryˉbudget
     );
 }
@@ -3256,6 +3305,8 @@ fn Executeˉcollection(
     Stackˉvectorˉflagsˉlow: u32,
     Stackˉvectorˉflagsˉhigh: u32,
     Functionˉshapeˉoffsets: bytes,
+    Functionˉparameterˉmodeˉoffsets: bytes,
+    Functionˉparameterˉmodes: bytes,
     Functionˉindex: u32,
     Initialˉlocals: bytes,
     Localˉshapes: bytes,
@@ -3590,14 +3641,24 @@ fn Executeˉcollection(
         );
         if Takenˉshapeˉkind != 23u32 &&
             ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 25u32) ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 26u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
         }
         if Takenˉlocalˉindex < Takenˉparameterˉcount &&
             Takenˉshapeˉkind != 25u32 {
-            return Invalid;
+            if Takenˉshapeˉkind != 23u32 ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) != 26u32 ||
+                U32ˉfromˉu8(Bytesˉreadˉu8(
+                    Functionˉparameterˉmodes,
+                    Bytesˉreadˉu32ˉlittle(
+                        Functionˉparameterˉmodeˉoffsets,
+                        Functionˉindex * 4u32
+                    ) + Takenˉlocalˉindex
+                )) != 0u32 {
+                return Invalid;
+            }
         }
         let Takenˉvalue: bytes = Bytesˉslice(
             Locals, Takenˉlocalˉoffset, 8u32
@@ -3668,6 +3729,8 @@ fn Executeˉaggregate(
     Stackˉvectorˉflagsˉlow: u32,
     Stackˉvectorˉflagsˉhigh: u32,
     Functionˉshapeˉoffsets: bytes,
+    Functionˉparameterˉmodeˉoffsets: bytes,
+    Functionˉparameterˉmodes: bytes,
     Functionˉindex: u32,
     Initialˉlocals: bytes,
     Localˉshapes: bytes,
@@ -4216,6 +4279,8 @@ fn Executeˉaggregate(
         Stackˉvectorˉflagsˉlow,
         Stackˉvectorˉflagsˉhigh,
         Functionˉshapeˉoffsets,
+        Functionˉparameterˉmodeˉoffsets,
+        Functionˉparameterˉmodes,
         Functionˉindex,
         Locals,
         Localˉshapes,
@@ -4277,6 +4342,8 @@ fn Executeˉextended(
     Stackˉvectorˉflagsˉlow: u32,
     Stackˉvectorˉflagsˉhigh: u32,
     Functionˉshapeˉoffsets: bytes,
+    Functionˉparameterˉmodeˉoffsets: bytes,
+    Functionˉparameterˉmodes: bytes,
     Functionˉindex: u32,
     Mainˉindex: u32,
     Mainˉhasˉmemoryˉbudget: bool,
@@ -4348,7 +4415,7 @@ fn Executeˉextended(
 
     if Payloadˉlength == 207u32 {
         let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 25u32) ||
+        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 26u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -4378,7 +4445,8 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 208u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 25u32 ||
+        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) < 25u32 ||
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) > 26u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -4469,6 +4537,8 @@ fn Executeˉextended(
         Stackˉvectorˉflagsˉlow,
         Stackˉvectorˉflagsˉhigh,
         Functionˉshapeˉoffsets,
+        Functionˉparameterˉmodeˉoffsets,
+        Functionˉparameterˉmodes,
         Functionˉindex,
         Locals,
         Localˉshapes,
@@ -4911,6 +4981,9 @@ export fn Main(Request: bytes) -> bytes {
     let Functionˉcodeˉlengths: bytes = Directory.Codeˉlengths;
     let Functionˉshapeˉoffsets: bytes = Directory.Shapeˉoffsets;
     let Localˉshapes: bytes = Directory.Localˉshapes;
+    let Functionˉparameterˉmodeˉoffsets: bytes =
+        Directory.Parameterˉmodeˉoffsets;
+    let Functionˉparameterˉmodes: bytes = Directory.Parameterˉmodes;
     let Mainˉhasˉmemoryˉbudget: bool =
         Directory.Mainˉhasˉmemoryˉbudget;
 
@@ -5178,6 +5251,8 @@ export fn Main(Request: bytes) -> bytes {
             Stackˉvectorˉflagsˉlow,
             Stackˉvectorˉflagsˉhigh,
             Functionˉshapeˉoffsets,
+            Functionˉparameterˉmodeˉoffsets,
+            Functionˉparameterˉmodes,
             Functionˉindex,
             Mainˉindex,
             Mainˉhasˉmemoryˉbudget,
@@ -5714,8 +5789,9 @@ export fn Main(Request: bytes) -> bytes {
                 Functionˉshapeˉoffsets,
                 Functionˉindex * 4u32
             );
-            var Returningˉlocalˉoffset: u32 = 0u32;
-            while Returningˉlocalˉoffset < Functionˉcursor {
+            var Returningˉlocalˉoffset: u32 = Functionˉcursor;
+            while Returningˉlocalˉoffset > 0u32 {
+                Returningˉlocalˉoffset = Returningˉlocalˉoffset - 8u32;
                 let Returningˉlocalˉkind: u32 = Bytesˉreadˉu32ˉlittle(
                     Localˉshapes,
                     Returningˉshapeˉoffset + Returningˉlocalˉoffset
@@ -5743,7 +5819,6 @@ export fn Main(Request: bytes) -> bytes {
                         Returningˉleasedˉdescriptor
                     );
                 }
-                Returningˉlocalˉoffset = Returningˉlocalˉoffset + 8u32;
             }
             Functionˉindex = Bytesˉreadˉu32ˉlittle(
                 Frames,

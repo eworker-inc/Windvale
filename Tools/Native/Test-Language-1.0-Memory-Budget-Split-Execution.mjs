@@ -144,6 +144,8 @@ try {
     const Vectorˉzero = path.join(Work, 'Vector-Zero.wvb');
     const Appendˉsuccessˉa = path.join(Work, 'Append-Success-A.wvb');
     const Appendˉsuccessˉb = path.join(Work, 'Append-Success-B.wvb');
+    const Ownedˉcallˉsuccessˉa = path.join(Work, 'Owned-Call-Success-A.wvb');
+    const Ownedˉcallˉsuccessˉb = path.join(Work, 'Owned-Call-Success-B.wvb');
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
@@ -162,6 +164,10 @@ try {
         'Vector-Append-Executable.wv', Appendˉsuccessˉa);
     Compileˉvector('vector-append-success-b-compile', Admitter, Analyzer, Emitter,
         'Vector-Append-Executable.wv', Appendˉsuccessˉb);
+    Compileˉvector('owned-call-success-a-compile', Admitter, Analyzer, Emitter,
+        'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉa);
+    Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
+        'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉb);
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
     if (!Successˉbytes.equals(Successˉbˉbytes)) {
@@ -199,6 +205,14 @@ try {
         Reject(`The executable Vector append fixture digest differs: ${Appendˉsha256}.`);
     }
     const Appendˉlayout = Inspectˉexactˉappendˉmodule(Appendˉsuccessˉbytes);
+    const Ownedˉcallˉsuccessˉbytes = readFileSync(Ownedˉcallˉsuccessˉa);
+    if (!Ownedˉcallˉsuccessˉbytes.equals(readFileSync(Ownedˉcallˉsuccessˉb))) {
+        Reject('The executable owned Vector call fixture is not deterministic.');
+    }
+    const Ownedˉcallˉlayout = Inspectˉownedˉcallˉmodule(
+        Ownedˉcallˉsuccessˉbytes,
+    );
+    const Ownedˉcallˉsha256 = Digest(Ownedˉcallˉsuccessˉbytes);
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -214,6 +228,7 @@ try {
     Requireˉvalid(Verifier, Vectorˉfailure, 'refused Vector module');
     Requireˉvalid(Verifier, Vectorˉzero, 'zero-maximum Vector module');
     Requireˉvalid(Verifier, Appendˉsuccessˉa, 'Vector append module');
+    Requireˉvalid(Verifier, Ownedˉcallˉsuccessˉa, 'owned Vector call module');
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -319,6 +334,38 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Ownedˉcallˉmalformedˉcases = [
+        ['owned-call-version-downgrade', Bytes => {
+            Bytes.writeUInt16LE(25, 6);
+            return Bytes;
+        }],
+        ['owned-call-trailer-count', Bytes => {
+            Bytes.writeUInt32LE(
+                Ownedˉcallˉlayout.parameterCount + 1,
+                Ownedˉcallˉlayout.parameterCountOffset,
+            );
+            return Bytes;
+        }],
+        ['owned-call-invalid-mode', Bytes => {
+            Bytes[Ownedˉcallˉlayout.modesOffset] = 3;
+            return Bytes;
+        }],
+        ['owned-call-value-mode-borrowed', Bytes => {
+            Bytes[Ownedˉcallˉlayout.forwardMode] = 1;
+            return Bytes;
+        }],
+        ['owned-call-borrow-mode-value', Bytes => {
+            Bytes[Ownedˉcallˉlayout.observeMode] = 0;
+            return Bytes;
+        }],
+        ['owned-call-truncated-trailer', Bytes => Bytes.subarray(0, Bytes.length - 1)],
+    ];
+    for (const [Name, Mutate] of Ownedˉcallˉmalformedˉcases) {
+        const Candidate = Mutate(Buffer.from(Ownedˉcallˉsuccessˉbytes));
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
 
     const Runnerˉwvb = path.join(Work, 'Runner.wvb');
     const Runner = path.join(Work, `Runner${Executableˉsuffix}`);
@@ -341,19 +388,24 @@ try {
         Runner, Vectorˉzero, 3008, 'zero-maximum Vector construction execution',
     );
     Requireˉresultˉ42(Runner, Appendˉsuccessˉa, 'Vector append execution');
+    Requireˉresultˉ42(
+        Runner, Ownedˉcallˉsuccessˉa, 'owned Vector call execution',
+    );
 
     process.stdout.write(
         'native language 1 memory budget and vector execution status=Passed ' +
-        `cases=51 valid=6 malformed=${
+        `cases=58 valid=7 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
-            Appendˉmalformedˉcases.length
+            Appendˉmalformedˉcases.length + Ownedˉcallˉmalformedˉcases.length
         } owned-call-cases=4 ` +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
         `vector-sha256=${Vectorˉsha256} ` +
         `append-wvb-bytes=${Appendˉsuccessˉbytes.length} ` +
-        `append-sha256=${Appendˉsha256}\n`,
+        `append-sha256=${Appendˉsha256} ` +
+        `owned-call-wvb-bytes=${Ownedˉcallˉsuccessˉbytes.length} ` +
+        `owned-call-sha256=${Ownedˉcallˉsha256}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -657,6 +709,106 @@ function Inspectˉexactˉappendˉmodule(Bytes) {
         failureValueShape: Types[1].fields[1].shapeOffset,
         validPayloadShape: Types[5].cases[0].fields[0].shapeOffset,
         resultFailureType: Types[5].cases[1].fields[0].shapeOffset + 1,
+    };
+}
+
+function Inspectˉownedˉcallˉmodule(Bytes) {
+    if (Bytes.length < 64 || Bytes.length > MAXIMUM_WVB_BYTES ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 26 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The executable owned Vector call fixture is not WVB 1.26.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Section = Sections[4];
+    const Count = Bytes.readUInt32LE(Section.payload);
+    if (Count < 6 || Count > 256) {
+        Reject(`The owned Vector call function count differs: ${Count}.`);
+    }
+    let Cursor = Section.payload + 4;
+    let Parameterˉcount = 0;
+    const Entries = [];
+    for (let Index = 0; Index < Count; Index += 1) {
+        const Name = Readˉstring(Bytes, Cursor);
+        Cursor = Name.end;
+        const Entryˉparameterˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Entryˉparameterˉcount > 64 ||
+            Parameterˉcount > 1_048_576 - Entryˉparameterˉcount) {
+            Reject('The owned Vector call parameter count exceeds its bound.');
+        }
+        const Modeˉoffset = Parameterˉcount;
+        Parameterˉcount += Entryˉparameterˉcount;
+        const Parameterˉshapes = [];
+        for (let Parameter = 0; Parameter < Entryˉparameterˉcount; Parameter += 1) {
+            const Shape = Readˉshape(Bytes, Cursor);
+            Parameterˉshapes.push(Shape.shape);
+            Cursor = Shape.end;
+        }
+        Cursor = Readˉshape(Bytes, Cursor).end;
+        const Localˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Localˉcount > 2048) {
+            Reject('The owned Vector call local count exceeds its bound.');
+        }
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            Cursor = Readˉshape(Bytes, Cursor).end;
+        }
+        if (Cursor + 12 > Section.payload + Section.length) {
+            Reject('The owned Vector call function entry is truncated.');
+        }
+        const Codeˉoffset = Bytes.readUInt32LE(Cursor);
+        const Codeˉlength = Bytes.readUInt32LE(Cursor + 4);
+        Cursor += 12;
+        Entries.push({
+            name: Name.value,
+            parameterShapes: Parameterˉshapes,
+            modeOffset: Modeˉoffset,
+            codeOffset: Codeˉoffset,
+            codeLength: Codeˉlength,
+        });
+    }
+    const Parameterˉcountˉoffset = Cursor;
+    if (Cursor + 4 > Section.payload + Section.length ||
+        Bytes.readUInt32LE(Cursor) !== Parameterˉcount ||
+        Cursor + 4 + Parameterˉcount !== Section.payload + Section.length) {
+        Reject('The owned Vector call parameter-mode trailer differs.');
+    }
+    const Modesˉoffset = Cursor + 4;
+    const Modes = Bytes.subarray(Modesˉoffset, Modesˉoffset + Parameterˉcount);
+    if ([...Modes].some(Mode => Mode > 2)) {
+        Reject('The owned Vector call parameter-mode trailer has an unknown mode.');
+    }
+    const Expected = [
+        { name: 'Forward', shapes: [23], modes: [0] },
+        { name: 'Observe', shapes: [23], modes: [1] },
+        { name: 'Release', shapes: [23], modes: [0] },
+        { name: 'Borrowˉthenˉforward', shapes: [23], modes: [0] },
+        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2], modes: [0, 0] },
+        { name: 'Main', shapes: [25], modes: [0] },
+    ];
+    for (const Expectation of Expected) {
+        const Entry = Entries.find(
+            Candidate => Candidate.name === Expectation.name,
+        );
+        if (Entry === undefined ||
+            Entry.parameterShapes.length !== Expectation.shapes.length ||
+            Expectation.shapes.some(
+                (Shape, Index) => Entry.parameterShapes[Index] !== Shape,
+            ) || Expectation.modes.some(
+                (Mode, Index) => Modes[Entry.modeOffset + Index] !== Mode,
+            )) {
+            Reject(`The ${Expectation.name} owned-call contract differs.`);
+        }
+    }
+    const Forward = Entries.find(Entry => Entry.name === 'Forward');
+    const Observe = Entries.find(Entry => Entry.name === 'Observe');
+    return {
+        parameterCount: Parameterˉcount,
+        parameterCountOffset: Parameterˉcountˉoffset,
+        modesOffset: Modesˉoffset,
+        forwardMode: Modesˉoffset + Forward.modeOffset,
+        observeMode: Modesˉoffset + Observe.modeOffset,
     };
 }
 
