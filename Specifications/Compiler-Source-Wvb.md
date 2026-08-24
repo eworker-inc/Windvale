@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.24 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.25 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.24, including the current
+For the execution subset through WVB 1.25, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -297,10 +297,11 @@ widening the one-byte native nominal-type encoding.
 
 WVSD assigns canonical source nominal indices independently of source order or
 module ownership: records sorted by ordinal name first, then enums, then
-variants. For source without generic templates this is already the declared WVB
-prefix. When templates exist, the backend builds bounded record and variant
-target maps, omits every template, compacts concrete declarations, and remaps all
-downstream shapes and operation targets before serialization.
+variants. WVB extends that category order with fixed arrays, Vectors, and
+Sequences. Within every category, retained concrete and compiler-materialized
+names are strictly ordinal. When templates exist, the backend builds bounded
+target maps, omits every template, compacts concrete declarations, and remaps
+all downstream shapes and operation targets before serialization.
 
 Each Types entry carries its exact WVB kind tag and name. Record fields and enum members retain source declaration order. Record field types are rebound through the validated symbol evidence so enum fields carry the exact canonical Types index. An `i32`-backed enum retains kind `2`; its member values preserve the exact signed value as the canonical two's-complement 32-bit pattern, including `-2147483648`. Descriptorless Seed declarations continue to supply their historical nonnegative `i32` subset. A `u8`-backed edition-1 enum emits WVB 1.22 kind `7`, exact source backing identity byte `6`, and one exact member byte. Both kinds remain in one name-sorted enum category and both use ordinary enum shape `8`. An edition-1 enum backed by `i8`, `i16`, `i64`, `u16`, `u32`, or `u64` remains valid source-analysis evidence but makes the current writer return `Unsupportedˉshape` before it publishes a partial module whenever executable WVIR actually requires nominal Types; it is never narrowed to `i32` or `u8`. A program whose entire nominal declaration family is unused may instead take the zero-count optimized Types path above. Private WVGT kind-11 Vector shapes encode byte `23` plus their planned kind-5 index; kind-12 Sequence shapes encode byte `24` plus their planned kind-6 index.
 
@@ -309,25 +310,30 @@ Primitive value shapes occupy one byte. Internal shapes `7` and `8` encode WVB `
 The main backend gives the generic serializer one independently validated
 materialization plan plus the exact source-to-WVB target maps. It emits each
 retained instance—including Foundation `Option<T>` and `Result<T, E>`—as an
-ordinary concrete record or variant entry immediately after concrete declared
-nominal types. Catalog order is canonical; private
-fixed-width names are `__WvY0000` through `__WvY1023`. Nested materialized
-record and variant shapes refer to their final ordinary Types indices. Generic
-templates are not runtime entries, and no Foundation-only private-name or type
-suffix exists.
+ordinary concrete record or variant entry. Dependency/materialization order is
+internal evidence only. Before any shape is encoded, the backend constructs a
+separate canonical WVB entry map: concrete and generic records, all enums,
+concrete and generic variants, arrays, Vectors, then Sequences, with ordinal
+name order inside each category. Private fixed-width names are `__WvY0000`
+through `__WvY1023`, so they sort after legal capitalized source names. Nested
+materialized shapes refer to these final ordinary Types indices, including
+forward references. Generic templates are not runtime entries, and no
+Foundation-only private-name or type suffix exists.
 
-The serializer requires its first output index to equal
-`Concrete-records + Enums + Concrete-variants`, admits at most 1,024 total Types
-entries, and bounds its emitted entry payload to 4 MiB. It rejects an invalid
+The serializer records the byte boundary between its generic-record and
+generic-variant payloads so the main Types writer can insert each group in its
+canonical category. It admits at most 1,024 total Types entries and bounds its
+emitted entry payload to 4 MiB. It rejects an invalid
 materialization, an unsupported shape, an inconsistent nested nominal kind, or
 a type or evidence limit without returning partial output. It preserves the existing
 record/variant metadata and WVB feature bits, including multi-field marker `2`;
 it adds no WVB version or runtime generic representation.
 
-Main Source WVB now extracts WVGT from WVLB, reconstructs this plan, inserts its
-Types entries, and remaps private function, field, temporary, and nominal
-operation identities. Public reachability analysis constructs the same evidence
-instead of using template-bearing source indices. `Box<Point>` produces a
+Main Source WVB extracts WVGT from WVLB, reconstructs both the dependency plan
+and canonical output map, inserts each Types entry in the category/name order,
+and remaps private function, field, temporary, and nominal operation identities.
+Public reachability analysis constructs the same canonical evidence instead of
+using template-bearing source indices. `Box<Point>` produces a
 concrete private `__WvY0000` record whose field targets the compacted `Point`
 entry; the source `Box<T>` template is absent. This proves deterministic main
 WVB metadata and target translation. A `Recordˉcreate = 17` or
@@ -673,13 +679,37 @@ therefore emits Result before Vector and lets Result's Valid payload point
 forward to the later Vector descriptor; dependency discovery order is not a
 serialized ordering rule.
 
-`Vector-Construct-Reserved-Executable.wv` deterministically emits a 747-byte
+`Vector-Construct-Reserved-Executable.wv` deterministically emits a 1,107-byte
 WVB 1.24 module at SHA-256
-`e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1`.
+`881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5`.
 The compiler-aligned verifier accepts success, target-unaddressable refusal,
 and zero-precondition modules, rejects ten exact opcode/local/type/layout
 mutations, and the source-built runner returns `42` for both Result paths. Zero
 traps with `WVR3008` after four guest instructions.
+
+Typed WVIR 1.7/1.8 operation `Foundationˉvectorˉappend = 173` lowers to WVB
+1.25 opcode `D0`. The instruction carries one direct non-parameter
+`Vector<T>` local and the exact
+`Result<unit, Vectorˉappendˉfailure<T>>` type as immediates; the already
+evaluated exact `T` is its sole stack operand. The verifier reconstructs the
+Vector element, unit Valid payload, failure record, canonical Collection
+failure, and returned item. The mutable borrow remains source/WVIR evidence;
+WVB names the local without serializing a borrow handle or pointer.
+
+The runner mutates the reserved backing only when capacity remains. Success
+consumes the item and returns canonical unit. Capacity refusal preserves the
+Vector owner, length, contents, and backing, and produces exact
+`Capacityˉexhausted(Maximumˉitems)` plus the original item. No allocation or
+budget transition occurs during append.
+
+`Vector-Append-Executable.wv` deterministically emits a 3,096-byte WVB 1.25
+module at SHA-256
+`6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f`.
+The compiler-aligned verifier accepts the executable success/capacity fixture
+and rejects twelve append version, opcode, local, result, unit, failure,
+element, and canonical-type mutations. The source-built runner appends `7`,
+refuses the attempted `9` at capacity, checks the returned `9` and exact maximum
+`1`, and returns `42`.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause

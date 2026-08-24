@@ -241,6 +241,7 @@ const WIR_OPERATION_FOUNDATION_VECTOR_LENGTH: u32 = 169u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_FREEZE: u32 = 170u32;
 const WIR_OPERATION_FOUNDATION_MEMORY_SPLIT: u32 = 171u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED: u32 = 172u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_APPEND: u32 = 173u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -4083,6 +4084,195 @@ fn Compilerˉsourceˉwirˉisˉfoundationˉallocationˉfailure(
         );
 }
 
+fn Compilerˉsourceˉwirˉcollectionˉfailureˉcaseˉname(Index: u32) -> bytes {
+    if Index == 0u32 { return Textˉtoˉutf8("Invalidˉlimit"); }
+    if Index == 1u32 { return Textˉtoˉutf8("Allocation"); }
+    if Index == 2u32 { return Textˉtoˉutf8("Capacityˉexhausted"); }
+    if Index == 3u32 { return Textˉtoˉutf8("Duplicate"); }
+    if Index == 4u32 { return Textˉtoˉutf8("Comparisonˉlimit"); }
+    if Index == 5u32 { return Textˉtoˉutf8("Wrongˉarena"); }
+    if Index == 6u32 { return Textˉtoˉutf8("Slotˉoutˉofˉrange"); }
+    if Index == 7u32 { return Textˉtoˉutf8("Vacant"); }
+    if Index == 8u32 { return Textˉtoˉutf8("Staleˉgeneration"); }
+    return Textˉtoˉutf8("Retired");
+}
+
+fn Compilerˉsourceˉwirˉcollectionˉfailureˉcaseˉfields(Index: u32) -> u32 {
+    if Index == 0u32 { return 4u32; }
+    if Index == 3u32 || Index == 5u32 { return 0u32; }
+    if Index == 6u32 || Index == 8u32 { return 2u32; }
+    return 1u32;
+}
+
+fn Compilerˉsourceˉwirˉisˉfoundationˉcollectionˉfailure(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32,
+    Module: u32
+) -> bool {
+    if Shape < 196608u32 || Shape >= 262144u32 || Module >= Scan.Modules {
+        return false;
+    }
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Compilerˉsourceˉwirˉnominalˉbyˉshape(
+            Input, Scan, Symbols, Shape
+        );
+    if !Nominal.Found || Nominal.Module != Module || Nominal.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant {
+        return false;
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+    if View.Edition != 1u32 { return false; }
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉcollections"
+        ) ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Collectionˉfailure"
+        ) {
+        return false;
+    }
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            View.Source, Nominal.Declarationˉoffset, 1u32, 1u32, true
+        );
+    if Declaration.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
+        Declaration.Items != 10u32 {
+        return false;
+    }
+
+    var Caseˉindex: u32 = 0u32;
+    while Caseˉindex < 10u32 {
+        let Expectedˉname: bytes =
+            Compilerˉsourceˉwirˉcollectionˉfailureˉcaseˉname(Caseˉindex);
+        let Namedˉcase: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉnominalˉmember(
+                Input, Scan, Symbols, Nominal,
+                Expectedˉname, 0u32, Bytesˉlength(Expectedˉname)
+            );
+        let Caseˉview: Compilerˉsourceˉwirˉvariantˉcaseˉview =
+            Compilerˉsourceˉwirˉvariantˉcaseˉviewˉbyˉindex(
+                Input, Scan, Symbols, Typeˉcatalog,
+                Shape - 196608u32, Caseˉindex
+            );
+        let Expectedˉfields: u32 =
+            Compilerˉsourceˉwirˉcollectionˉfailureˉcaseˉfields(Caseˉindex);
+        if !Namedˉcase.Found || Namedˉcase.Index != Caseˉindex ||
+            !Caseˉview.Found || Caseˉview.Fields != Expectedˉfields {
+            return false;
+        }
+        var Caseˉfieldˉindex: u32 = 0u32;
+        while Caseˉfieldˉindex < Expectedˉfields {
+            let Caseˉfield: Compilerˉsourceˉwirˉmember =
+                Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
+                    Input, Scan, Symbols, Typeˉcatalog,
+                    Shape - 196608u32,
+                    Caseˉindex, Caseˉfieldˉindex
+                );
+            if !Caseˉfield.Found { return false; }
+            if Caseˉindex == 1u32 {
+                let Allocationˉnominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+                    Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                        Input, Scan, Symbols, Caseˉfield.Shape
+                    );
+                if !Allocationˉnominal.Found ||
+                    !Compilerˉsourceˉwirˉisˉfoundationˉallocationˉfailure(
+                        Input, Scan, Symbols,
+                        Caseˉfield.Shape, Allocationˉnominal.Module
+                    ) {
+                    return false;
+                }
+            } else {
+                var Expectedˉshape: u32 = 8u32;
+                if Caseˉindex == 0u32 && Caseˉfieldˉindex == 0u32 {
+                    Expectedˉshape = 3u32;
+                }
+                if Caseˉfield.Shape != Expectedˉshape { return false; }
+            }
+            Caseˉfieldˉindex = Caseˉfieldˉindex + 1u32;
+        }
+        Caseˉindex = Caseˉindex + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉwirˉvectorˉappendˉfailureˉelement(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32
+) -> u32 {
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Shape
+        ) {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+    let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Typeˉcatalog, Instance
+        );
+    if Layout.Shape != Shape || Layout.Module >= Scan.Modules ||
+        Layout.Items != 2u32 ||
+        Layout.Fields != 2u32 || Layout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record ||
+        !Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Layout
+        ) {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules, Layout.Declaration
+        );
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Layout.Module);
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if View.Edition != 1u32 || !Nominal.Found ||
+        Nominal.Module != Layout.Module ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉcollections"
+        ) ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Vectorˉappendˉfailure"
+        ) {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Error: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Layout, 0u32
+        );
+    let Value: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Layout, 1u32
+        );
+    if !Error.Found || !Value.Found ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Error.Nameˉoffset, Error.Nameˉlength, "Error"
+        ) ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Value.Nameˉoffset, Value.Nameˉlength, "Value"
+        ) ||
+        !Compilerˉsourceˉwirˉisˉfoundationˉcollectionˉfailure(
+            Input, Scan, Symbols, Typeˉcatalog, Error.Shape, Layout.Module
+        ) {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    return Value.Shape;
+}
+
 fn Compilerˉsourceˉwirˉpropagateˉtry(
     Operand: Compilerˉsourceˉwirˉvalue,
     Returnˉshape: u32,
@@ -6319,6 +6509,181 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Expression.Offset, Expression.Length
         );
     }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
+        let Appendˉcatalog:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence);
+        let Appendˉresultˉlayout: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Appendˉcatalog, Expectedˉshape
+        );
+        if !Appendˉresultˉlayout.Found ||
+            Appendˉresultˉlayout.Index != 9u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
+        let Appendˉelement: u32 =
+            Compilerˉsourceˉwirˉvectorˉappendˉfailureˉelement(
+                Input, Scan, Symbols, Appendˉcatalog,
+                Appendˉresultˉlayout.Shape
+            );
+        if Appendˉelement == Compilerˉsourceˉwirˉsentinel() ||
+            !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+                Appendˉelement, Symbols
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
+        let Appendˉvectorˉposition:
+            Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line, Expression.Column,
+                Expression.Itemsˉoffset
+            );
+        let Appendˉvectorˉargument:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Expression.Itemsˉoffset,
+                Appendˉvectorˉposition.Line,
+                Appendˉvectorˉposition.Column,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        if Appendˉvectorˉargument.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unary ||
+            Appendˉvectorˉargument.Operator !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Borrow ||
+            !Appendˉvectorˉargument.Booleanˉvalue {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module,
+                Appendˉvectorˉargument.Offset,
+                Appendˉvectorˉargument.Line,
+                Appendˉvectorˉargument.Column
+            );
+        }
+        let Appendˉborrowedˉposition:
+            Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source,
+                Appendˉvectorˉargument.Offset,
+                Appendˉvectorˉargument.Line,
+                Appendˉvectorˉargument.Column,
+                Appendˉvectorˉargument.Firstˉoffset
+            );
+        let Appendˉvectorˉexpression:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Appendˉvectorˉargument.Firstˉoffset,
+                Appendˉborrowedˉposition.Line,
+                Appendˉborrowedˉposition.Column,
+                Appendˉvectorˉargument.Firstˉoffset +
+                    Appendˉvectorˉargument.Firstˉlength,
+                0u32, 0u32
+            );
+        if Appendˉvectorˉexpression.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name ||
+            !Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Appendˉvectorˉexpression
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module,
+                Appendˉvectorˉexpression.Offset,
+                Appendˉvectorˉexpression.Line,
+                Appendˉvectorˉexpression.Column
+            );
+        }
+        let Appendˉvector: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Appendˉvectorˉexpression.Valueˉoffset,
+                Appendˉvectorˉexpression.Valueˉlength,
+                Appendˉvectorˉexpression.Offset
+            );
+        if !Appendˉvector.Found || Appendˉvector.Kind ==
+                Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter ||
+            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                Appendˉvector.Shape, Appendˉcatalog
+            ) ||
+            Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+                Appendˉvector.Shape, Appendˉcatalog
+            ) != Appendˉelement {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
+                Callable.Module,
+                Appendˉvectorˉexpression.Offset,
+                Appendˉvectorˉexpression.Line,
+                Appendˉvectorˉexpression.Column
+            );
+        }
+        let Appendˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source,
+                Appendˉvectorˉargument.Nextˉoffset,
+                Appendˉvectorˉargument.Nextˉline,
+                Appendˉvectorˉargument.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        if Appendˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module,
+                Appendˉseparator.Offset,
+                Appendˉseparator.Line,
+                Appendˉseparator.Column
+            );
+        }
+        let Appendˉvalueˉexpression:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Appendˉseparator.Nextˉoffset,
+                Appendˉseparator.Nextˉline,
+                Appendˉseparator.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        let Appendˉvalue: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
+                Input, Scan, Symbols,
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source,
+                Appendˉvalueˉexpression.Offset,
+                Appendˉvalueˉexpression.Line,
+                Appendˉvalueˉexpression.Column,
+                Appendˉvalueˉexpression.Offset +
+                    Appendˉvalueˉexpression.Length,
+                Appendˉelement, Build
+            );
+        if Appendˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
+            return Appendˉvalue;
+        }
+        if Appendˉvalue.Shape != Appendˉelement {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Appendˉvalue),
+                Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module,
+                Appendˉvalueˉexpression.Offset,
+                Appendˉvalueˉexpression.Line,
+                Appendˉvalueˉexpression.Column
+            );
+        }
+        return Compilerˉsourceˉwirˉemit(
+            Compilerˉsourceˉwirˉvalueˉbuild(Appendˉvalue),
+            WIR_OPERATION_FOUNDATION_VECTOR_APPEND,
+            Expectedˉshape,
+            Compilerˉsourceˉwirˉoneˉoperand(Appendˉvalue.Temporary),
+            Appendˉvector.Slot, Appendˉvector.Shape,
+            Expression.Offset, Expression.Length
+        );
+    }
     let Position: Sourceˉbodies.Compilerˉsourceˉposition =
         Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source, Expression.Offset, Expression.Line, Expression.Column,
@@ -6748,7 +7113,9 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Callable.Directoryˉentry ==
                 WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
             Callable.Directoryˉentry ==
-                WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED) {
+                WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED ||
+            Callable.Directoryˉentry ==
+                WIR_OPERATION_FOUNDATION_VECTOR_APPEND) {
         Foundationˉvectorˉoperation = Callable.Directoryˉentry;
     }
     if Foundationˉvectorˉoperation != 0u32 {
@@ -9788,20 +10155,28 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     let Instances: u32 =
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
     var Hasˉmemoryˉsplit: bool = false;
+    var Hasˉvectorˉappend: bool = false;
     var Operationˉindex: u32 = 0u32;
     while Operationˉindex < Build.Operations {
-        if Bytesˉreadˉu32ˉlittle(
-                Build.Operationˉpayload, Operationˉindex * 32u32 + 4u32
-            ) == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT || Bytesˉreadˉu32ˉlittle(
-                Build.Operationˉpayload, Operationˉindex * 32u32 + 4u32
-            ) == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
+        let Headerˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Build.Operationˉpayload, Operationˉindex * 32u32 + 4u32
+        );
+        if Headerˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
+            Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
             Hasˉmemoryˉsplit = true;
+        }
+        if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
+            Hasˉvectorˉappend = true;
         }
         Operationˉindex = Operationˉindex + 1u32;
     }
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    if Hasˉmemoryˉsplit && Instances > 0u32 {
+    if Hasˉvectorˉappend && Instances > 0u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(8u32));
+    } else if Hasˉvectorˉappend {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(7u32));
+    } else if Hasˉmemoryˉsplit && Instances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(6u32));
     } else if Hasˉmemoryˉsplit {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(5u32));
@@ -9830,7 +10205,8 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
 export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 &&
         (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 4u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 6u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 6u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 8u32) {
         return 56u32;
     }
     return 48u32;
@@ -9992,6 +10368,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 170u32 { return Shape != 0u32; }
     if Operation == 171u32 { return Shape != 0u32; }
     if Operation == 172u32 { return Shape != 0u32; }
+    if Operation == 173u32 { return Shape != 0u32; }
     return false;
 }
 
@@ -10100,6 +10477,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 169u32 || Operation == 170u32 { return Count == 0u32; }
     if Operation == 171u32 { return Count == 2u32; }
     if Operation == 172u32 { return Count == 1u32; }
+    if Operation == 173u32 { return Count == 1u32; }
     return false;
 }
 
@@ -10262,6 +10640,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
         return Shape == 3u32;
     }
     if Operation == 172u32 { return Index == 0u32 && Shape == 8u32; }
+    if Operation == 173u32 { return Index == 0u32 && Shape != 0u32; }
     return true;
 }
 
@@ -11349,6 +11728,17 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
         if Index == 0u32 { return Target; }
         return 8u32;
     }
+    if Operation == 173u32 {
+        if Index != 0u32 ||
+            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                Auxiliary, Typeˉcatalog
+            ) {
+            return 0u32;
+        }
+        return Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+            Auxiliary, Typeˉcatalog
+        );
+    }
     if Operation == 62u32 {
         if Target >= Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
             Bindings.Directory
@@ -11443,6 +11833,35 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
                 Vectorˉresultˉlayout.Index, Typeˉcatalog
             ), Symbols
         );
+    }
+    if Operation == 173u32 {
+        if Operandˉcount != 1u32 ||
+            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                Auxiliary, Typeˉcatalog
+            ) {
+            return false;
+        }
+        let Appendˉvectorˉelement: u32 =
+            Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+                Auxiliary, Typeˉcatalog
+            );
+        if !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+                Appendˉvectorˉelement, Symbols
+            ) {
+            return false;
+        }
+        let Appendˉresultˉlayout: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Typeˉcatalog, Shape
+        );
+        if !Appendˉresultˉlayout.Found ||
+            Appendˉresultˉlayout.Index != 9u32 {
+            return false;
+        }
+        return Compilerˉsourceˉwirˉvectorˉappendˉfailureˉelement(
+                Input, Scan, Symbols, Typeˉcatalog,
+                Appendˉresultˉlayout.Shape
+            ) == Appendˉvectorˉelement;
     }
     if Operation == 169u32 || Operation == 170u32 {
         if Operandˉcount != 0u32 ||
@@ -12055,7 +12474,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 172u32 { return false; }
+        if Operationˉkind > 173u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
             Operationˉshape, Symbols, Typeˉcatalog, true
         ) {
@@ -12121,6 +12540,16 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                         Operationˉtarget, Operationˉauxiliary, Operandˉindex
                     );
                 if Operandˉshape != Arrayˉoperandˉshape { return false; }
+            }
+            if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
+                let Appendˉoperandˉshape: u32 =
+                    Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
+                        Input, Scan, Symbols, Bindings, Operationˉkind,
+                        Operationˉtarget, Operationˉauxiliary, Operandˉindex
+                    );
+                if Operandˉshape != Appendˉoperandˉshape {
+                    return false;
+                }
             }
             if Operationˉkind == 167u32 || Operationˉkind == 168u32 {
                 var Collectionˉoperandˉshape: u32 = Operationˉtarget;
@@ -12230,7 +12659,8 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             if Firstˉoperandˉshape != Storedˉshape { return false; }
             if Operationˉauxiliary != 0u32 { return false; }
         }
-        if Operationˉkind == 169u32 || Operationˉkind == 170u32 {
+        if Operationˉkind == 169u32 || Operationˉkind == 170u32 ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
             if Operationˉtarget < Range.Parameters ||
                 Operationˉtarget >= Range.Parameters + Range.Locals {
                 return false;
@@ -12246,7 +12676,8 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             Consumedˉvectorˉslot = Compilerˉsourceˉwirˉsentinel();
         }
         if Operationˉkind == 7u32 ||
-            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH {
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
             if Operationˉtarget == Consumedˉvectorˉslot { return false; }
         }
         if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
@@ -12542,8 +12973,9 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 3u32 || Minor > 6u32 { return false; }
-    if (Minor == 4u32 || Minor == 6u32) && Directoryˉlength < 56u32 {
+    if Minor < 3u32 || Minor > 8u32 { return false; }
+    if (Minor == 4u32 || Minor == 6u32 || Minor == 8u32) &&
+        Directoryˉlength < 56u32 {
         return false;
     }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
@@ -12560,7 +12992,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
     var Instances: u32 = 0u32;
-    if Minor == 3u32 || Minor == 5u32 {
+    if Minor == 3u32 || Minor == 5u32 || Minor == 7u32 {
         if Functionˉentries != Symbolˉentries { return false; }
     } else {
         Instances = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
@@ -12601,19 +13033,25 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     let Expectedˉlength: u32 = Operandsˉoffset + Operands * 4u32;
     if Directoryˉlength != Expectedˉlength { return false; }
     var Hasˉmemoryˉsplit: bool = false;
+    var Hasˉvectorˉappend: bool = false;
     var Operationˉscan: u32 = 0u32;
     while Operationˉscan < Operations {
-        if Bytesˉreadˉu32ˉlittle(
-                Directory, Operationsˉoffset + Operationˉscan * 32u32 + 4u32
-            ) == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
-            Bytesˉreadˉu32ˉlittle(
-                Directory, Operationsˉoffset + Operationˉscan * 32u32 + 4u32
-            ) == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
+        let Scannedˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Operationsˉoffset + Operationˉscan * 32u32 + 4u32
+        );
+        if Scannedˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
+            Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
             Hasˉmemoryˉsplit = true;
+        }
+        if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
+            Hasˉvectorˉappend = true;
         }
         Operationˉscan = Operationˉscan + 1u32;
     }
-    if (Minor >= 5u32) != Hasˉmemoryˉsplit { return false; }
+    if Minor < 5u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+    if Minor >= 5u32 && Minor <= 6u32 &&
+        (!Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+    if Minor >= 7u32 && !Hasˉvectorˉappend { return false; }
     var Function: u32 = 0u32;
     var Expectedˉblock: u32 = 0u32;
     var Expectedˉoperation: u32 = 0u32;

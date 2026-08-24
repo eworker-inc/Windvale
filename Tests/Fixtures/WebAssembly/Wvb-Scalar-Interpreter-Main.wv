@@ -343,7 +343,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 24u32) ||
+                if (Moduleˉminor < 21u32 || Moduleˉminor > 25u32) ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -415,7 +415,7 @@ fn Readˉfunctionˉdirectory(
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
                 Shapeˉkind == 21u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 24u32) ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 25u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -1322,6 +1322,152 @@ fn Executeˉvectorˉconstructˉreserved(
         Locals, State, Resultˉallocation.Metadata,
         Resultˉallocation.Values, Heap, Heapˉallocations,
         Heapˉallocationˉcount, Allocationˉleases
+    );
+}
+
+record Vectorˉappendˉexecution {
+    Valid: bool;
+    Stack: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Heap: bytes;
+}
+
+fn Executeˉvectorˉappend(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Locals: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Initialˉheap: bytes,
+    Heapˉallocations: bytes,
+    Heapˉallocationˉcount: u32,
+    Zeroˉcell: bytes
+) -> Vectorˉappendˉexecution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Vectorˉappendˉexecution = Vectorˉappendˉexecution(
+        false, Empty, Initialˉmetadata, Initialˉrecords, Initialˉheap
+    );
+    let Stackˉlength: u32 = Bytesˉlength(Initialˉstack);
+    if Stackˉlength < 8u32 { return Invalid; }
+    let Vectorˉlocal: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+    if Vectorˉlocal >= Bytesˉlength(Locals) / 8u32 ||
+        Resultˉtype >= Typeˉcount {
+        return Invalid;
+    }
+    let Vector: bytes = Bytesˉslice(Locals, Vectorˉlocal * 8u32, 8u32);
+    if !Collections.Collectionˉbackingˉvalid(
+        Initialˉheap, Heapˉallocations, Heapˉallocationˉcount, Vector
+    ) {
+        return Invalid;
+    }
+    let Value: bytes = Bytesˉslice(
+        Initialˉstack, Stackˉlength - 8u32, 8u32
+    );
+    let Vectorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Vector, 0u32);
+    let Vectorˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Initialˉheap, Vectorˉoffset
+    );
+    let Vectorˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
+        Initialˉheap, Vectorˉoffset + 4u32
+    );
+    var Metadata: bytes = Initialˉmetadata;
+    var Records: bytes = Initialˉrecords;
+    var Heap: bytes = Initialˉheap;
+    var Resultˉcase: u32 = 0u32;
+    var Resultˉfields: bytes = Zeroˉcell;
+
+    if Vectorˉcount < Vectorˉmaximum {
+        Heap = Collections.Collectionˉappend(
+            Initialˉheap, Vector, Value
+        );
+        if Bytesˉlength(Heap) == 0u32 { return Invalid; }
+    } else {
+        Resultˉcase = 1u32;
+        let Resultˉfailureˉcase: bytes = Variantˉcaseˉfields(
+            Module, Typeˉoffsets, Resultˉtype, 1u32
+        );
+        if Bytesˉlength(Resultˉfailureˉcase) != 8u32 ||
+            Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 0u32) != 1u32 {
+            return Invalid;
+        }
+        let Appendˉfailureˉshape: u32 = Fieldˉshapeˉat(
+            Module,
+            Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 4u32),
+            0u32
+        );
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Appendˉfailureˉshape)) !=
+            7u32 {
+            return Invalid;
+        }
+        let Appendˉfailureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Appendˉfailureˉshape + 1u32
+        );
+        let Appendˉfailureˉowner: u32 = Appendˉfailureˉtype + 1u32;
+        let Appendˉfailureˉdirectory: bytes = Aggregateˉfieldˉdirectory(
+            Module, Typeˉoffsets, Appendˉfailureˉowner
+        );
+        if Bytesˉlength(Appendˉfailureˉdirectory) != 8u32 ||
+            Bytesˉreadˉu32ˉlittle(
+                Appendˉfailureˉdirectory, 0u32
+            ) != 2u32 {
+            return Invalid;
+        }
+        let Collectionˉfailureˉshape: u32 = Fieldˉshapeˉat(
+            Module,
+            Bytesˉreadˉu32ˉlittle(Appendˉfailureˉdirectory, 4u32),
+            0u32
+        );
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Collectionˉfailureˉshape)) !=
+            11u32 {
+            return Invalid;
+        }
+        let Collectionˉfailureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Collectionˉfailureˉshape + 1u32
+        );
+        let Collectionˉfailureˉowner: u32 = 2147483648u32 +
+            (Collectionˉfailureˉtype + 1u32) * 256u32 + 2u32;
+        let Collectionˉfailureˉallocation: Aggregateˉallocation =
+            Allocateˉaggregateˉwithoutˉcollection(
+                Collectionˉfailureˉowner,
+                Bytesˉfromˉu64ˉlittle(U64ˉfromˉu32(Vectorˉmaximum)),
+                Metadata, Records, Zeroˉcell
+            );
+        if !Collectionˉfailureˉallocation.Valid { return Invalid; }
+        let Appendˉfailureˉallocation: Aggregateˉallocation =
+            Allocateˉaggregateˉwithoutˉcollection(
+                Appendˉfailureˉowner,
+                Bytesˉconcat(Collectionˉfailureˉallocation.Handle, Value),
+                Collectionˉfailureˉallocation.Metadata,
+                Collectionˉfailureˉallocation.Values,
+                Zeroˉcell
+            );
+        if !Appendˉfailureˉallocation.Valid { return Invalid; }
+        Resultˉfields = Appendˉfailureˉallocation.Handle;
+        Metadata = Appendˉfailureˉallocation.Metadata;
+        Records = Appendˉfailureˉallocation.Values;
+    }
+
+    let Resultˉowner: u32 = 2147483648u32 +
+        (Resultˉtype + 1u32) * 256u32 + Resultˉcase;
+    let Resultˉallocation: Aggregateˉallocation =
+        Allocateˉaggregateˉwithoutˉcollection(
+            Resultˉowner, Resultˉfields, Metadata, Records, Zeroˉcell
+        );
+    if !Resultˉallocation.Valid { return Invalid; }
+    return Vectorˉappendˉexecution(
+        true,
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉstack, 0u32, Stackˉlength - 8u32),
+            Resultˉallocation.Handle
+        ),
+        Resultˉallocation.Metadata,
+        Resultˉallocation.Values,
+        Heap
     );
 }
 
@@ -3444,7 +3590,7 @@ fn Executeˉcollection(
         );
         if Takenˉshapeˉkind != 23u32 &&
             ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 24u32) ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 25u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
@@ -4201,7 +4347,8 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 207u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 24u32 ||
+        let Vectorˉmoduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
+        if (Vectorˉmoduleˉminor < 24u32 || Vectorˉmoduleˉminor > 25u32) ||
             !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
             return Invalid;
         }
@@ -4225,6 +4372,29 @@ fn Executeˉextended(
         Allocationˉleases = Vectorˉresult.Allocationˉleases;
         Stackˉconsumed = 1u32;
         Stackˉproduced = Sectionˉkind == 0u32;
+        Stackˉproducedˉkind = 2u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
+        Mainˉfound = true;
+    }
+
+    if Payloadˉlength == 208u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 25u32 ||
+            !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
+            return Invalid;
+        }
+        let Appendˉresult: Vectorˉappendˉexecution =
+            Executeˉvectorˉappend(
+                Module, Typeˉoffsets, Typeˉcount, Payload, Stack, Locals,
+                Recordˉmetadata, Records, Heap, Heapˉallocations,
+                Heapˉallocationˉcount, Zeroˉcell
+            );
+        if !Appendˉresult.Valid { return Invalid; }
+        Stack = Appendˉresult.Stack;
+        Recordˉmetadata = Appendˉresult.Metadata;
+        Records = Appendˉresult.Records;
+        Heap = Appendˉresult.Heap;
+        Stackˉconsumed = 1u32;
+        Stackˉproduced = true;
         Stackˉproducedˉkind = 2u32;
         Aggregateˉinstructions = Aggregateˉinstructions + 9u32;
         Mainˉfound = true;

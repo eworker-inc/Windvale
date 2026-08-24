@@ -1,8 +1,14 @@
 # Decision 0814: Connect generic nominal materialization to main WVB
 
-- Status: Accepted with current-Windows development evidence; independent Linux qualification pending
+- Status: Accepted with current-Windows development evidence; serialized Types
+  insertion order superseded by Decision 0843; independent Linux qualification
+  pending
 - Date: 2026-08-21
 - Advances: [generic type evidence](../../Specifications/Compiler-Source-Generic-Types.md), [source WVB](../../Specifications/Compiler-Source-Wvb.md), and [Decision 0812](0812-Thread-Generic-Nominal-Evidence-Through-Main-Analysis.md)
+
+Decision 0843 retains the main materialization connection and private-identity
+mapping but replaces the declared-prefix/catalog-suffix ordering in item 2 with
+canonical WVB semantic-category/name order.
 
 ## Context
 

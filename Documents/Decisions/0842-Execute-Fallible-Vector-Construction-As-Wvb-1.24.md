@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted on 2026-08-23. Recoverable append, general owned calls and joins,
-semantic `using`, reverse-order release, paired-host conformance, and a real
-hosted resource consumer remain pending within Slice 5.
+Accepted on 2026-08-23. Recoverable append was completed by Decision 0843,
+which also supersedes item 8's serialized-order wording. General owned calls
+and joins, semantic `using`, reverse-order release, paired-host conformance, and
+a real hosted resource consumer remain pending within Slice 5.
 
 ## Context
 

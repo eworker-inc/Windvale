@@ -22,6 +22,9 @@ export record Compilerˉsourceˉwvbˉgenericˉnominalˉencoding {
     Payload: bytes;
     Features: u32;
     Failureˉinstance: u32;
+    Canonicalˉentries: bytes;
+    Recordˉentries: u32;
+    Recordˉpayloadˉbytes: u32;
 }
 
 record Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
@@ -46,7 +49,9 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
     return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
         Status, 0u32,
         Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
-        0u32, Instance
+        0u32, Instance,
+        Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input),
+        0u32, 0u32
     );
 }
 
@@ -152,10 +157,110 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉkindˉrank(Kind: u32) -> u32 {
     return 4294967295u32;
 }
 
+export fn Compilerˉsourceˉwvbˉgenericˉnominalˉcanonicalˉentries(
+    Input: bytes,
+    Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Concreteˉrecords: u32,
+    Enums: u32,
+    Concreteˉvariants: u32
+) -> bytes {
+    let Empty: bytes = Compilerˉsourceˉwvbˉgenericˉnominalˉempty(Input);
+    if Plan.Status !=
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Bytesˉlength(Plan.Entryˉevidence) != Plan.Instances * 36u32 {
+        return Empty;
+    }
+    var Arrays: u32 = 0u32;
+    var Vectors: u32 = 0u32;
+    var Sequences: u32 = 0u32;
+    var Instance: u32 = 0u32;
+    while Instance < Plan.Instances {
+        let Countˉkind: u32 =
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
+                Plan, Instance, 2u32
+            );
+        if Countˉkind == 10u32 {
+            Arrays = Arrays + 1u32;
+        } else if Countˉkind == 11u32 {
+            Vectors = Vectors + 1u32;
+        } else if Countˉkind == 12u32 {
+            Sequences = Sequences + 1u32;
+        } else if Countˉkind != 4u32 && Countˉkind != 8u32 {
+            return Empty;
+        }
+        Instance = Instance + 1u32;
+    }
+    if Plan.Records > Plan.Instances ||
+        Plan.Variants > Plan.Instances - Plan.Records ||
+        Arrays > Plan.Instances - Plan.Records - Plan.Variants ||
+        Vectors > Plan.Instances - Plan.Records - Plan.Variants - Arrays ||
+        Sequences !=
+            Plan.Instances - Plan.Records - Plan.Variants - Arrays - Vectors {
+        return Empty;
+    }
+    let Recordˉbase: u32 = Concreteˉrecords;
+    let Variantˉbase: u32 = Recordˉbase + Plan.Records + Enums +
+        Concreteˉvariants;
+    let Arrayˉbase: u32 = Variantˉbase + Plan.Variants;
+    let Vectorˉbase: u32 = Arrayˉbase + Arrays;
+    let Sequenceˉbase: u32 = Vectorˉbase + Vectors;
+    if Sequenceˉbase > 1024u32 || Sequences > 1024u32 - Sequenceˉbase {
+        return Empty;
+    }
+
+    var Recordˉrank: u32 = 0u32;
+    var Variantˉrank: u32 = 0u32;
+    var Arrayˉrank: u32 = 0u32;
+    var Vectorˉrank: u32 = 0u32;
+    var Sequenceˉrank: u32 = 0u32;
+    var Result: bytes = Empty;
+    Instance = 0u32;
+    while Instance < Plan.Instances {
+        let Entryˉkind: u32 =
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
+                Plan, Instance, 2u32
+            );
+        var Target: u32 = 4294967295u32;
+        if Entryˉkind == 4u32 {
+            Target = Recordˉbase + Recordˉrank;
+            Recordˉrank = Recordˉrank + 1u32;
+        }
+        if Entryˉkind == 8u32 {
+            Target = Variantˉbase + Variantˉrank;
+            Variantˉrank = Variantˉrank + 1u32;
+        }
+        if Entryˉkind == 10u32 {
+            Target = Arrayˉbase + Arrayˉrank;
+            Arrayˉrank = Arrayˉrank + 1u32;
+        }
+        if Entryˉkind == 11u32 {
+            Target = Vectorˉbase + Vectorˉrank;
+            Vectorˉrank = Vectorˉrank + 1u32;
+        }
+        if Entryˉkind == 12u32 {
+            Target = Sequenceˉbase + Sequenceˉrank;
+            Sequenceˉrank = Sequenceˉrank + 1u32;
+        }
+        var Word: u32 = 0u32;
+        while Word < 9u32 {
+            var Value: u32 =
+                Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
+                    Plan, Instance, Word
+                );
+            if Word == 1u32 { Value = Target; }
+            Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+            Word = Word + 1u32;
+        }
+        Instance = Instance + 1u32;
+    }
+    return Result;
+}
+
 fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
     Input: bytes,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Canonicalˉentries: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -165,8 +270,8 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         let Privateˉinstance: u32 =
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
         let Privateˉoutput: u32 =
-            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
-                Plan, Privateˉinstance, 1u32
+            Bytesˉreadˉu32ˉlittle(
+                Canonicalˉentries, Privateˉinstance * 36u32 + 4u32
             );
         let Privateˉkind: u32 =
             Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
@@ -233,7 +338,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
         let Encodedˉelement:
             Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
-                Input, Symbols, Plan,
+                Input, Symbols, Plan, Canonicalˉentries,
                 Recordˉtargets, Variantˉtargets, Concreteˉrecords, Element
             );
         if Encodedˉelement.Status !=
@@ -300,6 +405,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
                 Bytesˉfromˉu8(8u8),
                 Bytesˉfromˉu32ˉlittle(
                     Concreteˉrecords + Shape - 131072u32 - Symbols.Records
+                        + Plan.Records
                 )
             ), 0u32
         );
@@ -320,7 +426,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
             Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
             Bytesˉconcat(
                 Bytesˉfromˉu8(11u8),
-                Bytesˉfromˉu32ˉlittle(Variantˉtarget)
+                Bytesˉfromˉu32ˉlittle(Variantˉtarget + Plan.Records)
             ), 0u32
         );
     }
@@ -333,6 +439,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
     Input: bytes,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Canonicalˉentries: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -351,7 +458,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
     }
     let Shape: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
         Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
-            Input, Symbols, Plan,
+            Input, Symbols, Plan, Canonicalˉentries,
             Recordˉtargets, Variantˉtargets, Concreteˉrecords, Field.Shape
         );
     if Shape.Status !=
@@ -379,6 +486,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Plan: Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialization,
+    Canonicalˉentries: bytes,
     Recordˉtargets: bytes,
     Variantˉtargets: bytes,
     Concreteˉrecords: u32,
@@ -386,8 +494,8 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
     Expectedˉoutput: u32
 ) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
     let Typeˉoutput: u32 =
-        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
-            Plan, Instance, 1u32
+        Bytesˉreadˉu32ˉlittle(
+            Canonicalˉentries, Instance * 36u32 + 4u32
         );
     let Typeˉkind: u32 =
         Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉtypeˉword(
@@ -459,7 +567,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
         let Descriptorˉshape:
             Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
             Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
-                Input, Symbols, Plan,
+                Input, Symbols, Plan, Canonicalˉentries,
                 Recordˉtargets, Variantˉtargets,
                 Concreteˉrecords, Descriptorˉelement.Low
             );
@@ -538,7 +646,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
             let Encodedˉfield:
                 Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
                 Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
-                    Input, Symbols, Plan,
+                    Input, Symbols, Plan, Canonicalˉentries,
                     Recordˉtargets, Variantˉtargets, Concreteˉrecords, View.Source,
                     Typeˉfirstˉfield + Fieldˉrank
                 );
@@ -613,7 +721,7 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
                 let Encodedˉcaseˉfield:
                     Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
                     Compilerˉsourceˉwvbˉgenericˉnominalˉfield(
-                        Input, Symbols, Plan,
+                        Input, Symbols, Plan, Canonicalˉentries,
                         Recordˉtargets, Variantˉtargets, Concreteˉrecords,
                         View.Source, Caseˉfirstˉfield + Caseˉfield
                     );
@@ -725,9 +833,23 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
             Sentinel
         );
     }
+    let Concreteˉvariants: u32 =
+        Concreteˉdeclaredˉtypes - Concreteˉrecords - Symbols.Enums;
+    let Canonicalˉentries: bytes =
+        Compilerˉsourceˉwvbˉgenericˉnominalˉcanonicalˉentries(
+            Input, Plan, Concreteˉrecords, Symbols.Enums, Concreteˉvariants
+        );
+    if Bytesˉlength(Canonicalˉentries) != Plan.Instances * 36u32 {
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉfailure(
+            Input,
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Invalidˉmaterialization,
+            Sentinel
+        );
+    }
     var Result: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
         Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉempty(Input);
     var Encodedˉentries: u32 = 0u32;
+    var Recordˉpayloadˉbytes: u32 = 0u32;
     var Kindˉrank: u32 = 0u32;
     while Kindˉrank < 5u32 {
         var Instance: u32 = 0u32;
@@ -740,9 +862,11 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
                     Kindˉrank {
                 let Encoded: Compilerˉsourceˉwvbˉgenericˉnominalˉpart =
                     Compilerˉsourceˉwvbˉgenericˉnominalˉtype(
-                        Input, Scan, Symbols, Plan,
+                        Input, Scan, Symbols, Plan, Canonicalˉentries,
                         Recordˉtargets, Variantˉtargets, Concreteˉrecords,
-                        Instance, Typeˉbase + Encodedˉentries
+                        Instance, Bytesˉreadˉu32ˉlittle(
+                            Canonicalˉentries, Instance * 36u32 + 4u32
+                        )
                     );
                 if Encoded.Status !=
                         Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid {
@@ -766,6 +890,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
             }
             Instance = Instance + 1u32;
         }
+        if Kindˉrank == 0u32 {
+            Recordˉpayloadˉbytes = Bytesˉlength(Result.Payload);
+        }
         Kindˉrank = Kindˉrank + 1u32;
     }
     if Encodedˉentries != Plan.Instances {
@@ -777,6 +904,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉgenericˉnominalˉtypes(
     }
     return Compilerˉsourceˉwvbˉgenericˉnominalˉencoding(
         Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid, Plan.Instances,
-        Result.Payload, Result.Features, Sentinel
+        Result.Payload, Result.Features, Sentinel,
+        Canonicalˉentries, Plan.Records, Recordˉpayloadˉbytes
     );
 }

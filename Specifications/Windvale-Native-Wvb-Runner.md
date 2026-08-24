@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-fallible Vector construction through WVB 1.24 but has not repinned the paired
+recoverable Vector append through WVB 1.25 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.24. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.25. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,7 +124,7 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21, WVB 1.22 with shape `25`, WVB 1.23, or WVB 1.24 supplies one fresh
+WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.25 supplies one fresh
 opaque root-budget token to the sole parameter of exported
 `Main(Memoryˉbudget) -> i32`. The
 interpreter validates that exact
@@ -164,15 +164,23 @@ Allocation metadata reuses inactive entries and first-fits released spans.
 Text, bytes, aggregates, and nested collection elements remain outside this
 checkpoint because their element-owned destruction and tracing are not yet
 implemented.
+WVB 1.25 adds exact opcode `D0`. Its two immediates select one direct mutable
+non-parameter `Vector<T>` local and exact
+`Result<unit, Vectorˉappendˉfailure<T>>`; its sole stack operand is exact `T`.
+The current scalar profile appends atomically when capacity remains. At the
+reserved maximum it leaves the backing unchanged and returns exact
+`Capacityˉexhausted(Maximumˉitems)` plus the original item. Append neither
+allocates nor changes the allocation lease. The same resource-free scalar
+element restriction remains until element-owned destruction and tracing land.
 The same bounded scalar path executes the `u64` constant, arithmetic,
 comparison, bitwise, shift, `bytes.from_u64_little`, and `u64.from_u32`
 operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 282,833-byte WVB at SHA-256
-`2e37fc47eb61b8420bc9d30d24385a9427815f55c735d76adaff51ebb68e0f95`.
-It contains 131 functions and 255,391 code bytes. Cohesive directory, request,
+The current Windows development build is a 313,144-byte WVB at SHA-256
+`e6d305a38921c9d4278ffce47fafe9423bd72e6de16828261b00f9c90a07ac5c`.
+It contains 150 functions and 281,735 code bytes. Cohesive directory, request,
 data/local/bytes, collection, aggregate, and extended-operation helpers keep
 every source-built function below the existing bytecode and 2,048 native
 physical-cell limits; neither limit was raised.

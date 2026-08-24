@@ -451,11 +451,41 @@ and the zero trap. The registry remains 112 owners and advances to 5,361 cases
 at SHA-256
 `7da8ebac77d31f21554b198e9ee90598280c31c72cf65c1c7344835eddc4b8a4`.
 
-Recoverable append, general owned calls and joins, semantic `using`, reverse-
-order release, and one hosted resource consumer remain in Slice 5. Broad
+At that checkpoint recoverable append, general owned calls and joins, semantic
+`using`, reverse-order release, and one hosted resource consumer remained in
+Slice 5. Broad
 transitional-compiler micro-optimization remains deferred until self-hosting;
 measured packaging/cache waste and correctness blockers remain appropriate
 current work.
+
+## Current Slice 4/5 recoverable Vector-append checkpoint
+
+[Decision 0843](../Decisions/0843-Execute-Recoverable-Vector-Append-As-Wvb-1.25.md)
+connects the frozen public `Vectorˉappend::<T>` contract to WVIR 1.7/1.8
+operation 173 and WVB 1.25 opcode `D0`. The first executable profile requires a
+direct mutable non-parameter Vector local and resource-free scalar element. It
+does not weaken the source contract: success consumes one item and appends
+atomically; capacity refusal leaves the Vector unchanged and returns the item
+with exact `Capacityˉexhausted(Maximumˉitems)` evidence.
+
+The compiler now separates generic dependency planning from serialized type
+identity. Final WVB Types are grouped as records, enums, variants, arrays,
+Vectors, and Sequences, sorted by ordinal name inside each category, and every
+nominal reference is remapped to that order. This keeps byte identity stable
+when the future self-hosting compiler changes its internal discovery algorithm.
+
+The deterministic fixture is 3,096-byte WVB 1.25 at SHA-256
+`6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f`.
+The focused owner passes 47 cases: six valid modules, 31 malformed mutations,
+deterministic publication, construction and append success/refusal, and the
+construction precondition trap. The registry remains 112 owners and advances
+to 5,376 cases at SHA-256
+`cf78e39ec42551a9fc1715e4582a1a0971aeb35ad2e547a1f7587c0d72da267d`.
+
+General owned calls and joins, semantic `using`, reverse-order release, and one
+hosted resource consumer remain in Slice 5. Seed-specific micro-tuning remains
+deferred until self-hosting; the canonical ordering, bounded ownership, failure
+semantics, and focused verification completed here survive that transition.
 
 ## Removal checkpoint
 

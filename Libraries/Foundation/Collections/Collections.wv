@@ -4,8 +4,33 @@ profile core;
 platform linux, windows, windvale;
 authority library;
 
+import Foundationˉmemory as Memory;
+
 // Array<T, N>, Vector<T>, and Sequence<T> are compiler-supplied Foundation
 // intrinsics. This source module owns their canonical import identities without
-// introducing forgeable constructible records. Vectorˉconstructˉreserved has
-// an exact source and typed WVIR identity; executable allocation leases and
-// public append remain later connected migration checkpoints.
+// introducing forgeable constructible collection records. The public failure
+// values below are ordinary immutable values with the exact Language 1.0
+// layouts; they do not expose or permit construction of a collection backing.
+
+export variant Collectionˉfailure {
+    Invalidˉlimit(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Memory.Allocationˉfailure);
+    Capacityˉexhausted(Maximum: u64);
+    Duplicate;
+    Comparisonˉlimit(Maximum: u64);
+    Wrongˉarena;
+    Slotˉoutˉofˉrange(Slot: u64, Maximum: u64);
+    Vacant(Slot: u64);
+    Staleˉgeneration(Expected: u64, Observed: u64);
+    Retired(Slot: u64);
+}
+
+export record Vectorˉappendˉfailure<T> {
+    Error: Collectionˉfailure;
+    Value: T;
+}

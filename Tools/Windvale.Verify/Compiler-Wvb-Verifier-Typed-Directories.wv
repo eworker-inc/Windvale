@@ -89,7 +89,8 @@ export fn Iˉcontrolˉdirectory(
         }
         if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
             (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
-            Opcode == 201u32 || Opcode == 206u32 || Opcode == 207u32 {
+            Opcode == 201u32 || Opcode == 206u32 || Opcode == 207u32 ||
+            Opcode == 208u32 {
             Width = 9u32;
         }
         if Opcode == 192u32 {

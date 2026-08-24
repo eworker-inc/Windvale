@@ -1,7 +1,12 @@
 # Decision 0811: Serialize materialized generic nominals as ordinary WVB Types
 
-- Status: Accepted; Foundation suffix superseded by Decision 0819
+- Status: Accepted; Foundation suffix superseded by Decision 0819; serialized
+  output-range ordering superseded by Decision 0843
 - Date: 2026-08-21
+
+Decision 0843 retains dependency-ordered materialization but remaps every entry
+to canonical WVB semantic-category/name order. Items 2 and 4 below describe the
+historical focused serializer checkpoint, not the current serialized order.
 
 ## Context
 

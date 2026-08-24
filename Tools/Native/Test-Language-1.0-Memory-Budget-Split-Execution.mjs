@@ -24,7 +24,9 @@ const BOOTSTRAP_EMITTER_SHA256 =
 const EXPECTED_SUCCESS_SHA256 =
     '5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53';
 const EXPECTED_VECTOR_SUCCESS_SHA256 =
-    'e25ff63b466d3e4a219afdc03a64c2ff53418dffc9039fea0678ff3328d2dcd1';
+    '881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5';
+const EXPECTED_APPEND_SUCCESS_SHA256 =
+    '6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -135,6 +137,8 @@ try {
     const Vectorˉsuccessˉb = path.join(Work, 'Vector-Success-B.wvb');
     const Vectorˉfailure = path.join(Work, 'Vector-Failure.wvb');
     const Vectorˉzero = path.join(Work, 'Vector-Zero.wvb');
+    const Appendˉsuccessˉa = path.join(Work, 'Append-Success-A.wvb');
+    const Appendˉsuccessˉb = path.join(Work, 'Append-Success-B.wvb');
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
@@ -149,6 +153,10 @@ try {
         'Vector-Construct-Reserved-Failure-Executable.wv', Vectorˉfailure);
     Compileˉvector('vector-zero-compile', Admitter, Analyzer, Emitter,
         'Vector-Construct-Reserved-Zero-Executable.wv', Vectorˉzero);
+    Compileˉvector('vector-append-success-a-compile', Admitter, Analyzer, Emitter,
+        'Vector-Append-Executable.wv', Appendˉsuccessˉa);
+    Compileˉvector('vector-append-success-b-compile', Admitter, Analyzer, Emitter,
+        'Vector-Append-Executable.wv', Appendˉsuccessˉb);
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
     if (!Successˉbytes.equals(Successˉbˉbytes)) {
@@ -174,6 +182,18 @@ try {
     const Vectorˉlayout = Inspectˉexactˉvectorˉmodule(Vectorˉsuccessˉbytes);
     Inspectˉexactˉvectorˉmodule(readFileSync(Vectorˉfailure), false);
     Inspectˉexactˉvectorˉmodule(readFileSync(Vectorˉzero), false);
+    const Appendˉsuccessˉbytes = readFileSync(Appendˉsuccessˉa);
+    if (!Appendˉsuccessˉbytes.equals(readFileSync(Appendˉsuccessˉb))) {
+        Reject('The executable Vector append fixture is not deterministic.');
+    }
+    if (Appendˉsuccessˉbytes.readUInt16LE(6) !== 25) {
+        Reject('The executable Vector append fixture is not WVB 1.25.');
+    }
+    const Appendˉsha256 = Digest(Appendˉsuccessˉbytes);
+    if (Appendˉsha256 !== EXPECTED_APPEND_SUCCESS_SHA256) {
+        Reject(`The executable Vector append fixture digest differs: ${Appendˉsha256}.`);
+    }
+    const Appendˉlayout = Inspectˉexactˉappendˉmodule(Appendˉsuccessˉbytes);
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -188,6 +208,7 @@ try {
     Requireˉvalid(Verifier, Vectorˉsuccessˉa, 'successful Vector module');
     Requireˉvalid(Verifier, Vectorˉfailure, 'refused Vector module');
     Requireˉvalid(Verifier, Vectorˉzero, 'zero-maximum Vector module');
+    Requireˉvalid(Verifier, Appendˉsuccessˉa, 'Vector append module');
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -225,7 +246,7 @@ try {
             Bytes.writeUInt32LE(4, Vectorˉlayout.opcode + 1);
         }],
         ['vector-missing-result-type', Bytes => {
-            Bytes.writeUInt32LE(4, Vectorˉlayout.opcode + 5);
+            Bytes.writeUInt32LE(99, Vectorˉlayout.opcode + 5);
         }],
         ['vector-record-result-type', Bytes => {
             Bytes.writeUInt32LE(0, Vectorˉlayout.opcode + 5);
@@ -245,6 +266,49 @@ try {
     ];
     for (const [Name, Mutate] of Vectorˉmalformedˉcases) {
         const Candidate = Buffer.from(Vectorˉsuccessˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
+    const Appendˉmalformedˉcases = [
+        ['append-version-downgrade', Bytes => Bytes.writeUInt16LE(24, 6)],
+        ['append-unknown-opcode', Bytes => {
+            Bytes[Appendˉlayout.opcodes[0]] = 207;
+        }],
+        ['append-parameter-local', Bytes => {
+            Bytes.writeUInt32LE(0, Appendˉlayout.opcodes[0] + 1);
+        }],
+        ['append-non-vector-local', Bytes => {
+            Bytes.writeUInt32LE(2, Appendˉlayout.opcodes[0] + 1);
+        }],
+        ['append-missing-local', Bytes => {
+            Bytes.writeUInt32LE(99, Appendˉlayout.opcodes[0] + 1);
+        }],
+        ['append-missing-result-type', Bytes => {
+            Bytes.writeUInt32LE(99, Appendˉlayout.opcodes[0] + 5);
+        }],
+        ['append-record-result-type', Bytes => {
+            Bytes.writeUInt32LE(0, Appendˉlayout.opcodes[0] + 5);
+        }],
+        ['append-non-unit-valid-payload', Bytes => {
+            Bytes[Appendˉlayout.validPayloadShape] = 1;
+        }],
+        ['append-wrong-result-failure-type', Bytes => {
+            Bytes.writeUInt32LE(0, Appendˉlayout.resultFailureType);
+        }],
+        ['append-primitive-failure-error', Bytes => {
+            Bytes[Appendˉlayout.failureErrorShape] = 1;
+        }],
+        ['append-wrong-failure-value', Bytes => {
+            Bytes[Appendˉlayout.failureValueShape] = 2;
+        }],
+        ['append-wrong-capacity-field', Bytes => {
+            Bytes[Appendˉlayout.capacityMaximumShape] = 5;
+        }],
+    ];
+    for (const [Name, Mutate] of Appendˉmalformedˉcases) {
+        const Candidate = Buffer.from(Appendˉsuccessˉbytes);
         Mutate(Candidate);
         const Candidateˉpath = path.join(Work, `${Name}.wvb`);
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
@@ -271,16 +335,20 @@ try {
     Requireˉruntimeˉfailure(
         Runner, Vectorˉzero, 3008, 'zero-maximum Vector construction execution',
     );
+    Requireˉresultˉ42(Runner, Appendˉsuccessˉa, 'Vector append execution');
 
     process.stdout.write(
         'native language 1 memory budget and vector execution status=Passed ' +
-        `cases=32 valid=5 malformed=${
-            Malformedˉcases.length + Vectorˉmalformedˉcases.length
+        `cases=47 valid=6 malformed=${
+            Malformedˉcases.length + Vectorˉmalformedˉcases.length +
+            Appendˉmalformedˉcases.length
         } ` +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
-        `vector-sha256=${Vectorˉsha256}\n`,
+        `vector-sha256=${Vectorˉsha256} ` +
+        `append-wvb-bytes=${Appendˉsuccessˉbytes.length} ` +
+        `append-sha256=${Appendˉsha256}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -458,7 +526,7 @@ function Inspectˉexactˉmodule(Bytes, Requireˉsuccessˉsize = true) {
 }
 
 function Inspectˉexactˉvectorˉmodule(Bytes, Requireˉsuccessˉsize = true) {
-    if ((Requireˉsuccessˉsize && Bytes.length !== 747) ||
+    if ((Requireˉsuccessˉsize && Bytes.length !== 1107) ||
         Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
         Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 24 ||
         Bytes.readUInt32LE(8) !== 7) {
@@ -474,15 +542,23 @@ function Inspectˉexactˉvectorˉmodule(Bytes, Requireˉsuccessˉsize = true) {
         Expectedˉlocalˉshapes.some(
             (Shape, Index) => Function.localShapes[Index] !== Shape,
         ) ||
-        Types.length !== 4 || Types[0].kind !== 1 || Types[1].kind !== 7 ||
-        Types[2].kind !== 3 || Types[2].cases.length !== 2 ||
-        Types[2].cases[0].fields.length !== 1 ||
-        Types[2].cases[0].fields[0].shape !== 23 ||
-        Types[2].cases[0].fields[0].typeIndex !== 3 ||
+        Types.length !== 5 || Types[0].kind !== 1 || Types[1].kind !== 7 ||
+        Types[2].kind !== 3 || Types[2].cases.length !== 10 ||
+        Types[2].cases[0].fields.length !== 4 ||
+        Types[2].cases[0].fields[0].shape !== 5 ||
         Types[2].cases[1].fields.length !== 1 ||
         Types[2].cases[1].fields[0].shape !== 7 ||
         Types[2].cases[1].fields[0].typeIndex !== 0 ||
-        Types[3].kind !== 5 || Types[3].element.shape !== 1 ||
+        Types[2].cases[2].fields.length !== 1 ||
+        Types[2].cases[2].fields[0].shape !== 10 ||
+        Types[3].kind !== 3 || Types[3].cases.length !== 2 ||
+        Types[3].cases[0].fields.length !== 1 ||
+        Types[3].cases[0].fields[0].shape !== 23 ||
+        Types[3].cases[0].fields[0].typeIndex !== 4 ||
+        Types[3].cases[1].fields.length !== 1 ||
+        Types[3].cases[1].fields[0].shape !== 7 ||
+        Types[3].cases[1].fields[0].typeIndex !== 0 ||
+        Types[4].kind !== 5 || Types[4].element.shape !== 1 ||
         Types[0].fields.length !== 3 || Types[0].fields[1].shape !== 10) {
         Reject(
             'The executable Vector fixture nominal layout differs: ' +
@@ -496,14 +572,86 @@ function Inspectˉexactˉvectorˉmodule(Bytes, Requireˉsuccessˉsize = true) {
         if (Bytes[Cursor] === 207) Matches.push(Cursor);
     }
     if (Matches.length !== 1 || Bytes.readUInt32LE(Matches[0] + 1) !== 0 ||
-        Bytes.readUInt32LE(Matches[0] + 5) !== 2) {
+        Bytes.readUInt32LE(Matches[0] + 5) !== 3) {
         Reject('The executable Vector fixture opcode differs.');
     }
     return {
         opcode: Matches[0],
-        validPayloadShape: Types[2].cases[0].fields[0].shapeOffset,
+        validPayloadShape: Types[3].cases[0].fields[0].shapeOffset,
         requestedBytesShape: Types[0].fields[1].shapeOffset,
         availableBytesShape: Types[0].fields[2].shapeOffset,
+    };
+}
+
+function Inspectˉexactˉappendˉmodule(Bytes) {
+    if (Bytes.length !== 3096 ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 25 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The executable Vector append fixture is not exact WVB 1.25.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Function = Parseˉmain(Bytes, Sections[4]);
+    const Types = Parseˉtypes(Bytes, Sections[7]);
+    const Expectedˉcollectionˉfields = [4, 1, 1, 0, 1, 0, 2, 1, 2, 1];
+    if (Function.parameterCount !== 1 || Function.parameterShape !== 25 ||
+        Function.parameterTypeIndices[0] !== null || Function.returnShape !== 1 ||
+        Function.localShapes.length !== 37 || Function.localShapes[1] !== 23 ||
+        Function.localTypeIndices[1] !== 6 || Function.localShapes[2] !== 23 ||
+        Function.localTypeIndices[2] !== 6 ||
+        Types.length !== 7 || Types[0].kind !== 1 || Types[1].kind !== 1 ||
+        Types[2].kind !== 7 || Types[3].kind !== 3 || Types[4].kind !== 3 ||
+        Types[5].kind !== 3 || Types[6].kind !== 5 ||
+        Types[0].fields.length !== 3 || Types[0].fields[0].shape !== 8 ||
+        Types[0].fields[0].typeIndex !== 2 ||
+        Types[0].fields[1].shape !== 10 || Types[0].fields[2].shape !== 10 ||
+        Types[1].fields.length !== 2 || Types[1].fields[0].shape !== 11 ||
+        Types[1].fields[0].typeIndex !== 3 || Types[1].fields[1].shape !== 1 ||
+        Types[3].cases.length !== Expectedˉcollectionˉfields.length ||
+        Expectedˉcollectionˉfields.some(
+            (Fields, Index) => Types[3].cases[Index].fields.length !== Fields,
+        ) || Types[3].cases[0].fields[0].shape !== 5 ||
+        Types[3].cases[1].fields[0].shape !== 7 ||
+        Types[3].cases[1].fields[0].typeIndex !== 0 ||
+        Types[3].cases[2].fields[0].shape !== 10 ||
+        Types[4].cases.length !== 2 ||
+        Types[4].cases[0].fields.length !== 1 ||
+        Types[4].cases[0].fields[0].shape !== 23 ||
+        Types[4].cases[0].fields[0].typeIndex !== 6 ||
+        Types[4].cases[1].fields.length !== 1 ||
+        Types[4].cases[1].fields[0].shape !== 7 ||
+        Types[4].cases[1].fields[0].typeIndex !== 0 ||
+        Types[5].cases.length !== 2 ||
+        Types[5].cases[0].fields.length !== 1 ||
+        Types[5].cases[0].fields[0].shape !== 20 ||
+        Types[5].cases[1].fields.length !== 1 ||
+        Types[5].cases[1].fields[0].shape !== 7 ||
+        Types[5].cases[1].fields[0].typeIndex !== 1 ||
+        Types[6].element.shape !== 1) {
+        Reject(
+            'The executable Vector append fixture nominal layout differs: ' +
+            `function=${JSON.stringify(Function)} types=${JSON.stringify(Types)}.`,
+        );
+    }
+    const Codeˉstart = Sections[5].payload + Function.codeOffset;
+    const Codeˉend = Codeˉstart + Function.codeLength;
+    const Matches = [];
+    for (let Cursor = Codeˉstart; Cursor < Codeˉend; Cursor += 1) {
+        if (Bytes[Cursor] === 208) Matches.push(Cursor);
+    }
+    if (Matches.length !== 2 || Matches.some(
+        Offset => Bytes.readUInt32LE(Offset + 1) !== 3 ||
+            Bytes.readUInt32LE(Offset + 5) !== 5,
+    )) {
+        Reject('The executable Vector append fixture opcode differs.');
+    }
+    return {
+        opcodes: Matches,
+        capacityMaximumShape: Types[3].cases[2].fields[0].shapeOffset,
+        failureErrorShape: Types[1].fields[0].shapeOffset,
+        failureValueShape: Types[1].fields[1].shapeOffset,
+        validPayloadShape: Types[5].cases[0].fields[0].shapeOffset,
+        resultFailureType: Types[5].cases[1].fields[0].shapeOffset + 1,
     };
 }
 
@@ -526,6 +674,10 @@ function Parseˉsections(Bytes) {
 }
 
 function Parseˉmain(Bytes, Section) {
+    return Parseˉfunction(Bytes, Section, 'Main');
+}
+
+function Parseˉfunction(Bytes, Section, Wanted) {
     const Count = Bytes.readUInt32LE(Section.payload);
     let Cursor = Section.payload + 4;
     for (let Index = 0; Index < Count; Index += 1) {
@@ -534,9 +686,11 @@ function Parseˉmain(Bytes, Section) {
         const Parameterˉcount = Bytes.readUInt32LE(Cursor);
         Cursor += 4;
         const Parameters = [];
+        const Parameterˉtypes = [];
         for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
             const Parsed = Readˉshape(Bytes, Cursor);
             Parameters.push(Parsed.shape);
+            Parameterˉtypes.push(Parsed.typeIndex);
             Cursor = Parsed.end;
         }
         const Return = Readˉshape(Bytes, Cursor);
@@ -544,26 +698,30 @@ function Parseˉmain(Bytes, Section) {
         const Localˉcount = Bytes.readUInt32LE(Cursor);
         Cursor += 4;
         const Locals = [];
+        const Localˉtypes = [];
         for (let Local = 0; Local < Localˉcount; Local += 1) {
             const Parsed = Readˉshape(Bytes, Cursor);
             Locals.push(Parsed.shape);
+            Localˉtypes.push(Parsed.typeIndex);
             Cursor = Parsed.end;
         }
         const Codeˉoffset = Bytes.readUInt32LE(Cursor);
         const Codeˉlength = Bytes.readUInt32LE(Cursor + 4);
         Cursor += 12;
-        if (Name.value === 'Main') {
+        if (Name.value === Wanted) {
             return {
                 parameterCount: Parameterˉcount,
                 parameterShape: Parameters[0],
+                parameterTypeIndices: Parameterˉtypes,
                 returnShape: Return.shape,
                 localShapes: Locals,
+                localTypeIndices: Localˉtypes,
                 codeOffset: Codeˉoffset,
                 codeLength: Codeˉlength,
             };
         }
     }
-    Reject('The module has no Main function.');
+    Reject(`The module has no ${Wanted} function.`);
 }
 
 function Parseˉtypes(Bytes, Section) {

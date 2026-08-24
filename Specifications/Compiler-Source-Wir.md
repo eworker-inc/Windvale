@@ -49,11 +49,11 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.3` through `1.6`
+   The catalog selects the even WVIR minor in the current `1.3` through `1.8`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.3 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.4 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.5 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.6 combines either operation with the 1.4 specialization envelope. WVIR 1.1/1.2 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.3 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.4 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.5 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.6 combines either operation with the 1.4 specialization envelope. WVIR 1.7 is the non-specialized directory when operation `173` is present, and WVIR 1.8 combines append with the specialization envelope. WVIR 1.1/1.2 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -63,7 +63,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `3`, `4`, `5`, or `6` selected by the features below |
+| 6 | 2 | Minor version `3` through `8` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -77,19 +77,22 @@ All integers are unsigned little-endian and the directory contains no padding.
 
 Sections follow in that exact order.
 
-Source without an admitted generic instance, `Foundationˉmemory.Split`, or
-`Foundationˉcollections.Vectorˉconstructˉreserved` uses
+Source without an admitted generic instance, `Foundationˉmemory.Split`,
+`Foundationˉcollections.Vectorˉconstructˉreserved`, or
+`Foundationˉcollections.Vectorˉappend` uses
 that exact 48-byte WVIR 1.3 header. Specialized source without either memory
 operation publishes WVIR 1.4. Either memory operation without specialization publishes WVIR 1.5
 with the same 48-byte header and section positions as 1.3. A module containing
 specialization and either memory operation publishes
-WVIR 1.6 with the specialization envelope of 1.4. The even versions append the
+WVIR 1.6 with the specialization envelope of 1.4. Append without specialization
+publishes WVIR 1.7; append with specialization publishes WVIR 1.8. The even
+versions append the
 specialization count at offset 48 and specialization-layout version `1` at offset
 52, and begin the function section at offset 56. Their function-entry count is
 exactly `WvsdEntryCount + SpecializationCount`; the count must equal the valid
 WVGC instance count embedded in the paired WVLB 1.2. All section entry layouts
-remain unchanged. A 1.5/1.6 directory must contain operation `171` or `172`,
-and a directory containing either operation must select 1.5/1.6.
+remain unchanged. A 1.5/1.6 directory must contain operation `171` or `172` and
+must not contain `173`. A 1.7/1.8 directory must contain operation `173`.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -108,13 +111,16 @@ The temporary section is a sequence of result shapes. The operand section is a s
 
 Operation values `1` through `63` retain the prior constants, storage, Foundation, nominal, scalar, and call contract. `Valueˉphi = 64` joins two exact same-shape values selected by control flow; its earlier Boolean short-circuit use remains the shape-`4` specialization. Values `65` through `67` are variant create/test/legacy one-field payload. Values `68` through `72` are builder create/push/freeze and sequence length/element. Values `73` through `92` cover `i32`/`u8`/`u32`, text, and bytes operations. Values `93` and `94` are `i64` and `u64` constants; `95` and `96` are their formatting intrinsics; values `97` through `119` are wide arithmetic, comparison, division, and remainder; values `120` through `125` are `u64` bitwise, complement, and shift operations; values `126` and `127` are exact little-endian `u64` byte read and construction; value `128` is lossless `u32` to `u64` conversion; and values `129` through `147` are the typed fixed-integer constant, checked arithmetic, comparison, signed negation, `u16` bitwise, and `u16` shift family. The operation's shape selects exactly `i8`, `i16`, or `u16`; comparisons produce `bool` while retaining the operand shape in `Target`, and shifts require a `u32` right operand. Values `148`, `149`, and `150` are rune constant, equality, and inequality. A rune constant has shape `16`, no operands, and its exact scalar in `Target`; comparisons consume two shape-`16` values and produce `bool`. Values `151` through `162` are the `f32`/`f64` constant, arithmetic, negation, and comparison family. Value `163` is `Unitˉconstant`: it has shape `9`, no operands, and zero target and auxiliary fields. Value `164` is `Variantˉfield`: it consumes one exact nominal variant, stores the canonical variant index in `Target`, packs `case * 64 + field` in `Auxiliary`, and produces that field's exact shape. Values `165` through `170` retain the fixed-array and exact Foundation Sequence/Vector operations. Value `171` is `Foundationˉmemoryˉsplit`; value `172` is `Foundationˉvectorˉconstructˉreserved`. Both are defined below. Value `0` is invalid in published evidence.
 
+Value `173` is `Foundationˉvectorˉappend`, defined below with the same exact
+Foundation identity discipline. It is the last currently admitted operation.
+
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
 ## Independent validation
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.3/1.4/1.5/1.6 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.3 through 1.8 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;
@@ -320,6 +326,28 @@ opcode `CF`, which carries the consumed budget-local index and exact Result
 type. The maximum remains the sole stack operand. The bytecode verifier derives
 the Vector type from the Result Valid payload and never serializes the private
 lease, provider generation, heap address, or backing representation.
+
+The exact `Foundationˉcollections.Vectorˉappend::<T>(Vector, Value)` call
+requires one explicit type argument and two arguments. `T` must be in the
+currently executable resource-free scalar collection subset. The first
+argument must be `borrow mut` of one directly named mutable non-parameter local
+whose exact private shape is `Vector<T>`; the borrow is compile-time evidence
+and is not serialized. The second argument is evaluated once as exact `T`. The
+expected result must be the canonical materialized
+`Foundationˉresult.Result<unit,
+Foundationˉcollections.Vectorˉappendˉfailure<T>>`. That failure record has
+exact declaration-order fields `Error: Collectionˉfailure` and `Value: T`.
+
+Lowering emits `Foundationˉvectorˉappend = 173`. Its result is that exact
+private Result instance, its sole operand is the already evaluated item
+temporary, `Target` is the borrowed Vector local slot, and `Auxiliary` is the
+exact private `Vector<T>` shape. Independent validation reconstructs the
+Vector, element, Result, failure record, and canonical Collection failure
+identity. The operation preserves the Vector owner; it neither consumes the
+local nor creates a second owner. WVB 1.25 lowers it to opcode `D0`, which
+carries the Vector-local and Result-type indices. Capacity refusal is an
+ordinary exact Result path that leaves the Vector unchanged and returns the
+item; it is not a trap or a partial append.
 
 Exact Foundation Sequence reads reuse that catalog proof. Operation 167
 `Foundationˉsequenceˉlength` consumes one temporary whose shape is the target

@@ -2713,3 +2713,43 @@ that bound instead of widening it. The registry remains 112 owners and contains
 `7da8ebac77d31f21554b198e9ee90598280c31c72cf65c1c7344835eddc4b8a4`.
 Paired Linux execution and promoted-runner repinning remain required before a
 cross-host conformance claim.
+
+## Executable recoverable Vector-append evidence
+
+[Decision 0843](../Decisions/0843-Execute-Recoverable-Vector-Append-As-Wvb-1.25.md)
+connects the frozen all-or-nothing Foundation append contract to typed WVIR
+operation 173 and exact WVB 1.25 opcode `D0`. The instruction's first immediate
+is one direct mutable non-parameter `Vector<i32>` local; its second is exact
+`Result<unit, Vectorˉappendˉfailure<i32>>`; its sole stack operand is the item.
+The verifier reconstructs the unit Valid payload, returned-item failure record,
+canonical Collection failure, Vector identity, and exact scalar element.
+
+This checkpoint also corrects generic nominal serialization. Dependency order
+remains compiler planning evidence, while the final Types directory is grouped
+by semantic category and ordinal name. The append fixture therefore contains a
+concrete record, a generic record, one enum, three variants, and one Vector in
+canonical category order; all generic and public nominal references are remapped
+to those final indices. No private shape or template enters WVB.
+
+The 5,553-byte source publishes 5,704-byte typed WVIR 1.8. Two independent
+compilations produce identical 3,096-byte WVB 1.25 at SHA-256
+`6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f`.
+The source-built runner appends `7`, refuses the attempted `9` at capacity,
+returns that `9` with exact `Capacityˉexhausted` maximum `1`, and returns `42`.
+The compiler-aligned
+verifier accepts the module and rejects twelve append-specific version, opcode,
+local, type, payload, failure, element, and canonical-order corruptions.
+
+The combined focused owner preserves the Split and fallible-construction
+oracles and reports:
+
+```text
+native language 1 memory budget and vector execution status=Passed cases=47 valid=6 malformed=31 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f
+```
+
+The native registry remains 112 owners and advances to 5,376 cases at SHA-256
+`cf78e39ec42551a9fc1715e4582a1a0971aeb35ad2e547a1f7587c0d72da267d`.
+The runner envelope now accepts the already specified ordinary variant shape
+`11` in record fields, matching its decoder and the compiler-aligned verifier.
+This is current-Windows development evidence. Paired Linux execution remains
+required before cross-host conformance is claimed.
