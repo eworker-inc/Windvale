@@ -18,7 +18,10 @@ The statement concerns the combined project scope, not priority for an operating
 - a compiler and both portable verified bytecode/runtime and native paths;
 - an assembler, structured object model, and linker owned as distinct contracts;
 - a reusable foundation library and a planned or implemented operating system using the same stack;
-- repository-wide AI implementation and documentation authorship under human direction and review; and
+- repository-wide AI implementation and documentation authorship through the
+  AI-led research model under human direction and accountable stewardship
+  defined by [Decision 0849](../Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md);
+  this does not claim that a human inspected every generated line; and
 - public source publication as one coherent project developed from an empty starting repository.
 
 The word “known” limits the statement to reasonably discoverable public evidence as of the review date. “Among the earliest” deliberately permits earlier and contemporaneous efforts and makes no exact ranking claim.

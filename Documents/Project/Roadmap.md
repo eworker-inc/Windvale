@@ -23,6 +23,12 @@ Windows and Linux remain permanent hosts. Windvale OS remains the vertical
 integration target. Portable WVB remains the shared distribution contract, and
 native execution remains a derived form over the same verified semantics.
 
+The [cross-border product assurance and standardization strategy](Cross-Border-Product-Assurance-And-Standardization.md)
+is a long-term product and ecosystem direction, not an added Windvale 1.0 gate.
+Its first evidence should reuse existing package, release, conformance, OS, and
+AI-workload boundaries. A normative assurance format, external standardization
+submission, or certification claim requires a later decision.
+
 [Decision 0751](../Decisions/0751-Accept-Windvale-Language-1.0-Direction.md)
 starts a horizontal Language 1.0 specification track, and
 [Decision 0752](../Decisions/0752-Complete-Language-1.0-Collection-And-Package-Data-Boundaries.md)
@@ -565,6 +571,14 @@ digital-subconscious support plane. The companion
 work from deterministic records and transitions through hosted model invocation,
 durable continuity, retrieval, governed action, and eventual supervised service
 placement. The
+[verified AI workload and agent-aware inference proposal](Verified-AI-Workloads-And-Agent-Aware-Inference-Proposal.md)
+keeps that durable agent above replaceable local and remote inference providers,
+including eligible NVIDIA Dynamo, vLLM, SGLang, TensorRT-LLM, llama.cpp, and
+other integrations. Agent-aware scheduling is an active upstream field;
+Windvale's proposed differentiation is exact workload identity, authority,
+provider-neutral continuity, and execution/effect evidence rather than a
+competing provider cache format. These systems are candidate integration targets;
+this proposed lane does not claim that the integrations are implemented. The
 [persistent-self governance architecture](../Architecture/Persistent-Self-Ownership-And-Governance.md)
 adds a named E-Worker development/test authority for early fixtures and a later
 constitutional-stewardship profile for advanced operation.

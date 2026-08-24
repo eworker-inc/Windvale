@@ -117,6 +117,13 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Changed
 
+- Defined Windvale's AI-led research and development model without implying
+  exhaustive human source review, separated machine, AI, human, reproduction,
+  and external review evidence, expanded the project vision around cross-border
+  product assurance and independently implementable specifications, and updated
+  the verified-AI-workload proposal to interoperate with upstream agent-aware
+  infrastructure such as NVIDIA Dynamo while preserving provider-neutral
+  Windvale semantics.
 - Made the Windows native WVB build wrapper retry temporary-directory creation
   atomically with a 32-attempt bound, removing the observed parallel-build race
   caused by identical `%RANDOM%` candidates.

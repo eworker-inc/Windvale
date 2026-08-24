@@ -23,7 +23,7 @@ Do not include secrets or personal data that are unnecessary to reproduce the is
 
 ## Response and disclosure
 
-[E-Worker Inc](https://eworker.ca) will acknowledge a valid channel when reasonably possible, assess the report, and coordinate remediation and disclosure according to severity and available maintainer capacity. Windvale is an experimental source-available project and does not promise a service-level or response-time guarantee.
+[E-Worker Inc](https://eworker.ca) will acknowledge a valid channel when reasonably possible, assess the report, and coordinate remediation and disclosure according to severity and available maintainer capacity. Windvale is an active pre-1.0 source-available research and development project and does not promise a service-level or response-time guarantee.
 
 Please allow reasonable time for investigation before public disclosure. The project may create a private fix, request additional evidence, reject a report that is not a vulnerability, or publish an advisory after affected users have a practical mitigation.
 

@@ -2,11 +2,44 @@
 
 ## Purpose
 
-Windvale explores whether AI systems, working under human direction and review, can construct a small, coherent, verifiable computing stack from low-level development tools through useful applications.
+Windvale is an AI-led research and development project building a small,
+coherent computing and assurance stack from low-level development tools through
+useful applications, AI workloads, firmware-facing systems, and an operating
+system. It investigates how much of that stack can remain independently
+inspectable, reproducible, and verifiable under explicit resource and authority
+contracts.
 
-The intended result is not an AI-generated novelty kernel. Windvale should be understandable enough to study, structured enough to extend, and useful in stages before its operating system is complete.
+The intended result is not an AI-generated novelty kernel. Windvale should be
+understandable enough to study, structured enough to extend, useful in stages
+before its operating system is complete, and capable of carrying evidence from
+source and immutable inputs through build, execution, and externally visible
+effects.
 
-Windvale is an [E-Worker Inc](https://eworker.ca) project whose code and documentation are authored entirely by AI systems under human direction and review. AI systems produce the source and prose; humans define objectives, direct the work, review and test results, decide what the project accepts and publishes, and remain responsible for publication. Windvale is model- and vendor-neutral: any AI system may contribute, and a system or provider is recorded only when technically, legally, or operationally material. Such a record does not imply sponsorship, affiliation, endorsement, or ownership by its provider. “Author” is descriptive project attribution, not a claim that an AI system is a legal person or copyright holder.
+Windvale began with a feasibility question: whether AI systems under human
+direction could construct a coherent, reviewable computing stack from an empty
+project. The signed `v0.1.0` preview completed that initial experimental phase by
+publishing an installable, qualified native-only product preview. Windvale is now
+in full research and development. Individual proposals, prototypes, profiles,
+and measurements may remain experimental, but the project itself is not
+described as an experiment.
+
+Windvale is an [E-Worker Inc](https://eworker.ca) project whose code and project
+documentation are authored entirely by AI systems. AI systems perform most
+research, design, implementation, documentation, test construction, diagnosis,
+and technical review. Humans establish purpose and constraints, direct the
+research, review selected and risk-sensitive results, accept consequential
+decisions, authorize publication, and retain institutional and legal
+responsibility. Acceptance does not imply that a human inspected every generated
+line. [Decision 0849](../Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md)
+defines the exact division of work and review-evidence classes.
+
+Windvale is model- and vendor-neutral: any AI system may contribute, and a
+system or provider is recorded only when technically, legally, or operationally
+material. Such a record does not imply sponsorship, affiliation, endorsement,
+ownership, or partnership by its provider. “Author” is descriptive project
+attribution, not a claim that an AI system is a legal person or copyright
+holder. **Frontier model** is a dated comparative description rather than a
+permanent project role.
 
 As of July 2026, Windvale is among the earliest known publicly developed efforts to build its own language, compiler, verified bytecode, runtime, assembler, object model, linker, native path, Foundation library, and operating system as one coherent AI-authored stack from an empty project. Earlier AI-authored operating systems and language/toolchain projects exist; the claim is deliberately limited to this combined scope and supported by the dated [earliest-known claim evidence](Earliest-Known-Claim-Evidence.md). Windvale must also distinguish qualified evidence from future scope: its distinctive value is not priority alone, but reproducible evidence carried from one layer to the next.
 
@@ -28,11 +61,48 @@ Platform libraries -------> versioned capability requirements
                               |-- Linux providers
                               `-- Windvale OS providers and services
 Platform extensions ------> explicit target-scoped providers
+
+Agent/workload identity ---> bounded cognitive operations
+                               |-- local CPU or accelerator provider
+                               |-- admitted inference infrastructure
+                               `-- separately authorized remote model
 ```
 
 The umbrella project is named **Windvale**. Its major tools should initially use clear descriptive names such as Windvale Compiler, Windvale Assembler, Windvale Linker, Windvale Runtime, and Windvale OS.
 
 [Decision 0179](../Decisions/0179-Language-Application-And-Capability-Metadata-Direction.md) defines the product character behind this stack: Windvale is a deterministic, capability-oriented language for applications and systems. “Code and data together” means that canonical code may be packaged with typed immutable data, resources, manifests, identities, and declared authority; it does not make self-modifying code, ambient files, or mutable databases part of the language model. [Decision 0184](../Decisions/0184-Language-Syntax-And-Operator-Evolution.md) and the [language-design guide](../Architecture/Language-Design.md) keep future syntax approachable while retaining explicit mutation, checked same-type operators, exhaustive results, bounded collections, and visible resource ownership.
+
+## Assurance and standardization ambition
+
+Windvale's long-term product proposition is broader than one language or
+operating system:
+
+> A producer should be able to publish source, firmware and software artifacts,
+> immutable dependencies, build and tool identities, declared authority,
+> conformance results, and signed provenance so that a recipient can inspect and
+> independently verify the exact claims that cross an organizational or national
+> boundary.
+
+One Windvale stack means one coherent assurance path across the layers Windvale
+controls. It does not mean that bytecode verification proves application intent,
+that reproducibility proves source correctness, or that Windvale automatically
+verifies silicon, microcode, third-party device firmware, host kernels, external
+models, or opaque providers. Every assurance statement names its subject,
+property, verifier, trust root, environment, evidence, and remaining non-claims.
+
+Windvale aims to mature into independently implementable specifications backed
+by a reference stack, conformance suites, hostile-input corpora, reproducible
+artifacts, and machine-readable assurance evidence. It is not presently a
+formal, national, or international standard. Formal standardization would
+require stable scopes, independent implementations, external stakeholders,
+interoperability, consensus governance, and an explicit specification, patent,
+trademark, conformance, and licensing policy.
+
+The [cross-border product assurance and standardization strategy](Cross-Border-Product-Assurance-And-Standardization.md)
+owns this product thesis, its claim vocabulary, ecosystem relationships, first
+use cases, and decision gates. It treats established provenance, bill-of-
+materials, update, firmware-resilience, and evaluation standards as
+interoperability inputs rather than renaming them as Windvale inventions.
 
 ## Success principles
 
@@ -47,11 +117,19 @@ The umbrella project is named **Windvale**. Its major tools should initially use
 - Reuse compiler, assembler, object, and linker infrastructure instead of building parallel pipelines.
 - Reach self-hosting through documented stages rather than obscuring existing-tool dependencies.
 - Measure AI contribution through completed specifications, tests, reproducibility, understandable changes, and defects found—not line-count claims.
+- Keep reviewability, AI review, machine verification, human inspection,
+  independent reproduction, and external audit or certification as distinct
+  claims.
 - Keep each layer independently testable and replaceable through explicit contracts.
 - Keep packages immutable and content-addressed, dependency and authority selection locked, and time, entropy, networking, diagnostics, and updates behind explicit contracts rather than ambient host behavior.
 - Keep physical pages, memory objects, virtual mappings, and aggregate resource-domain charges separate; reserve complete capacity and validate privately before publishing a process or service resource.
 - Keep authentication, identity, authorization, and capability grants separate. Neither a TLS peer identity nor a package/release signature grants runtime authority.
 - Implement standard Internet protocols behind a capability-oriented user-space network service and isolated device drivers; keep packet parsing, DNS, routing, TCP, and secure-transport policy outside the kernel.
+- Treat existing inference engines and orchestration systems as eligible
+  rights-limited providers. Use explicit adapters without making one vendor's
+  model, API, cache, scheduler, or device policy Windvale semantics.
+- Prefer interoperable provenance, bill-of-materials, attestation, update, and
+  evaluation records over an isolated Windvale-only assurance vocabulary.
 
 ## First convincing system
 
@@ -93,4 +171,4 @@ The accepted native execution and retirement direction is defined by [Decision 0
 
 ## Community-source licensing
 
-Windvale-owned work is source-available under the Windvale Community Source License 1.0 with a copyright notice naming E-Worker Inc and Windvale contributors. The license preserves free personal, noncommercial, evaluation, and qualifying small-organization use while requiring separate commercial terms for large-organization production use and Windvale-as-a-product offerings. Independent applications belong to their creators and may use terms of their choice; third-party components remain under their separately identified licenses. E-Worker Inc initiated and stewards the project. [Decision 0114](../Decisions/0114-Community-Source-Licensing-And-Commercial-Stewardship.md) defines the licensing and contributor-rights foundation, [Decision 0031](../Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) defines vendor-neutral AI authorship, and [Decision 0032](../Decisions/0032-Public-Contribution-And-Governance-Foundation.md) defines the remaining contribution, security, governance, support, conduct, and project-identity policy. The official repository is public at [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale), with [info@eworker.ca](mailto:info@eworker.ca) as the public business contact.
+Windvale-owned work is source-available under the Windvale Community Source License 1.0 with a copyright notice naming E-Worker Inc and Windvale contributors. The license preserves free personal, noncommercial, evaluation, and qualifying small-organization use while requiring separate commercial terms for large-organization production use and Windvale-as-a-product offerings. Independent applications belong to their creators and may use terms of their choice; third-party components remain under their separately identified licenses. E-Worker Inc initiated and stewards the project. [Decision 0114](../Decisions/0114-Community-Source-Licensing-And-Commercial-Stewardship.md) defines the licensing and contributor-rights foundation, [Decision 0031](../Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) defines vendor-neutral AI authorship, [Decision 0849](../Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) defines AI-led research and review evidence, and [Decision 0032](../Decisions/0032-Public-Contribution-And-Governance-Foundation.md) defines the remaining contribution, security, governance, support, conduct, and project-identity policy. The official repository is public at [`eworker-inc/Windvale`](https://github.com/eworker-inc/Windvale), with [info@eworker.ca](mailto:info@eworker.ca) as the public business contact.

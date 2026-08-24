@@ -1,7 +1,8 @@
 # Verified AI workloads and agent-aware inference proposal
 
-> Status: Exploratory product and systems proposal, 2026-08-22. This document
-> records positioning, current external evidence, candidate responsibility
+> Status: Exploratory product and systems proposal, first recorded 2026-08-22
+> and updated with agent-aware inference evidence on 2026-08-24. This document
+> records positioning, dated external evidence, candidate responsibility
 > boundaries, and experiments. It is not an accepted architecture, normative
 > capability or serialized-format contract, implementation plan, provider
 > support claim, performance claim, or statement that the proposed behavior
@@ -92,7 +93,7 @@ formats to portable code.
 
 ## Current landscape and strategic boundary
 
-The following snapshot is evidence reviewed on 2026-08-22. It is deliberately
+The following snapshot is evidence reviewed through 2026-08-24. It is deliberately
 qualitative. Repository direction must not depend on mutable star counts,
 subjective maturity scores, or undocumented implementation details.
 
@@ -101,6 +102,7 @@ subjective maturity scores, or undocumented implementation details.
 | Local inference engines | [llama.cpp](https://github.com/ggml-org/llama.cpp) | Model loading, quantized CPU/GPU inference, broad hardware support, prompt caching, and an embeddable/server execution base. | Use as an admitted provider before considering replacement of measured components. Do not redefine GGUF or its cache layout as Windvale semantics. |
 | Local model service | [Ollama](https://docs.ollama.com/faq) | Operational model distribution and service, CPU/GPU placement, model retention controls, concurrency, and configurable KV-cache quantization. | Treat it as a convenient provider option, not as the durable agent or capability boundary. |
 | High-throughput serving | [vLLM](https://docs.vllm.ai/en/latest/) | Continuous serving, batching, prefix caching, and provider-managed KV offload to CPU and secondary tiers. | Reuse its scheduling and cache machinery; test whether agent lifecycle hints improve results above its native policies. |
+| Agent-aware inference orchestration | [NVIDIA Dynamo agentic inference](https://docs.nvidia.com/dynamo/dev/digest/agentic-inference) and the experimental [ThunderAgent program scheduler](https://docs.dynamo.nvidia.com/dynamo/dev/agents/thunder-agent-program-scheduler) | KV-aware placement, agent hints, priority scheduling, speculative prefill, cache-lifecycle controls, and program-level tool-boundary pause/resume over engines including vLLM, SGLang, and TensorRT-LLM. | Treat agent-aware scheduling as an active upstream field rather than a Windvale novelty claim. Prefer a rights-limited integration and evidence mapping before creating a competing scheduler. |
 | Remote model APIs | OpenAI, Anthropic, Google, and others | Frontier models, specialized modalities, hosted scaling, and vendor-specific reasoning or continuation controls. | Keep exact adapters behind the existing provider-neutral model boundary; expose uncertainty and placement changes rather than claiming identical semantics. |
 | Agent frameworks | Model- and application-specific coordinators | Rapid tool-loop composition, retrieval, memory integrations, and application-facing SDKs. | Compete on verified execution, authority, portability, and evidence rather than on the number of convenience integrations. |
 | Generic workload isolation | Processes, containers, VMs, and restricted runtimes | Mature CPU, memory, network, filesystem, and lifecycle isolation. | Reuse host mechanisms while giving AI operations more exact semantic capabilities and evidence. |
@@ -111,6 +113,31 @@ batching, hardware, and cache problems. Windvale should first make them
 replaceable, rights-limited providers. Selective native replacement becomes
 rational only when measurement identifies a missing semantic guarantee,
 portability boundary, safety property, or material performance opportunity.
+
+NVIDIA Dynamo demonstrates that an agent harness can already communicate
+lifecycle and priority information to an inference orchestrator, and that an
+orchestrator can combine it with KV-aware routing and provider-owned cache
+policy. This strengthens the case for an agent/inference seam while narrowing
+Windvale's novelty claim. Windvale should differentiate through durable agent
+identity, exact authority, provider-neutral placement, reproducible workload
+identity, and execution/effect evidence—not by claiming to have originated
+agent-aware cache scheduling.
+
+### Provider interoperability
+
+The Windvale agent should work with existing inference infrastructure rather
+than require a Windvale-native inference engine. NVIDIA Dynamo, vLLM, SGLang,
+TensorRT-LLM, llama.cpp, Ollama, and future systems are eligible provider or
+orchestration mechanisms when an adapter can preserve the required bounds,
+identity, isolation, cancellation, teardown, and evidence semantics.
+
+For NVIDIA infrastructure, a candidate integration would map a Windvale
+cognitive-operation envelope into the supported Dynamo request extensions and
+provider profiles, then translate observable route, model, cache, resource,
+completion, and failure results back into Windvale evidence. Provider-specific
+session, KV, routing, and device state remains outside portable agent identity.
+An application may deliberately select an NVIDIA-scoped optimized profile
+without making that profile a portable requirement.
 
 ## Proposed differentiation
 
@@ -159,10 +186,14 @@ host memory, retain an admitted provider-specific artifact, discard it, or
 recompute it later. The provider reports the actual disposition at the evidence
 level it supports.
 
-This is the proposal's main technical hypothesis: an agent coordinator may know
-more about future reuse than a request-local cache policy. The claim remains
-unproven until a representative workload beats an engine's native policy under
-bounded memory without weakening correctness, isolation, or teardown.
+Existing systems now demonstrate that an agent harness can expose lifecycle
+information unavailable to a request-local cache policy. Windvale's narrower
+technical hypothesis is that its durable intentions, wake conditions, tool
+boundaries, authority, sensitivity, and evidence model can map into one or more
+provider hint mechanisms and produce measurable value without becoming vendor
+semantics. The Windvale-specific claim remains unproven until a representative
+workload beats or materially improves an upstream baseline under bounded memory
+without weakening correctness, isolation, portability, or teardown.
 
 ### Exact evidence rather than an oversized claim
 
@@ -391,9 +422,9 @@ rate alone.
 
 ### Question
 
-Does a bounded resumption forecast from the Windvale agent coordinator improve
-a representative hybrid agent workload beyond an inference engine's native
-cache and offload policy?
+Does bounded Windvale agent-lifecycle evidence improve a representative hybrid
+agent workload beyond or alongside the selected infrastructure's native and
+agent-aware cache, routing, and offload policies?
 
 ### Workload
 
@@ -406,10 +437,10 @@ Use one coding agent that alternates among:
 5. concurrent pressure from several isolated agent episodes; and
 6. clean cancellation, provider restart, resource pressure, and teardown.
 
-The first implementation should use an existing local engine through an
-isolated provider. A remote provider may supply a separately admitted frontier
-operation, but live spending and network variability must not be part of the
-deterministic performance oracle.
+The first implementation should use an existing local engine or orchestration
+stack through an isolated provider. A remote provider may supply a separately
+admitted frontier operation, but live spending and network variability must not
+be part of the deterministic performance oracle.
 
 ### Baselines
 
@@ -417,9 +448,12 @@ Compare at least:
 
 - stateless reconstruction or recomputation;
 - the selected engine's native cache, LRU, and offload policy without Windvale
-  forecasts; and
-- the same engine with bounded Windvale resumption forecasts translated by the
-  provider.
+  forecasts;
+- an available upstream agent-aware policy, such as Dynamo agent hints or the
+  experimental ThunderAgent program scheduler, when the selected provider
+  supports it; and
+- the same infrastructure with bounded Windvale lifecycle and resumption
+  evidence translated by the provider.
 
 ### Measurements
 
@@ -453,10 +487,12 @@ contracts. Do not add source directories, APIs, or manifests.
 
 ### Stage 1: provider and workload measurement
 
-Select one existing engine and one small representative model. Establish CPU,
-GPU, memory, tokenization, model-load, prefix-cache, and tool-wait baselines on
-Windows and Linux without claiming cross-host equivalence where hardware
-differs.
+Select one existing engine or orchestration stack and one small representative
+model. An NVIDIA/Dynamo path is eligible when accessible, but the experiment
+must retain a provider-neutral workload and at least one simpler comparison
+route. Establish CPU, GPU, memory, tokenization, model-load, prefix-cache, and
+tool-wait baselines on Windows and Linux without claiming cross-host equivalence
+where hardware differs.
 
 ### Stage 2: first local model provider
 
@@ -476,9 +512,10 @@ as portable memory.
 
 ### Stage 4: semantic-residency experiment
 
-Implement resumption forecasts only inside the experimental coordinator/provider
-boundary. Compare them with native provider policy under the first experiment.
-Do not expose a public capability or serialized format merely to complete the
+Implement lifecycle mappings or resumption forecasts only inside the
+experimental coordinator/provider boundary. Compare them with native and
+available upstream agent-aware policies under the first experiment. Do not
+expose a public capability or serialized format merely to complete the
 experiment.
 
 ### Stage 5: decision
@@ -522,6 +559,11 @@ This proposal does not accept or promise:
   provider exactly, or does local execution require separate resource evidence?
 - Which quality, latency, cost, privacy, and effort controls are portable enough
   to standardize without hiding provider differences?
+- Which parts of the candidate cognitive-operation envelope map exactly to
+  Dynamo agent hints, priority, speculative prefill, and program identity, and
+  which Windvale authority or evidence fields must remain outside the provider?
+- Would a direct Dynamo integration, a lower-level vLLM/SGLang/TensorRT-LLM
+  adapter, or a simpler local engine create the smallest honest first proof?
 - Can useful reuse be expressed with an advisory forecast, or would any public
   hint overfit one family of autoregressive transformers?
 - Is prefix identity sufficient for the first experiment, or is provider-owned
@@ -557,7 +599,7 @@ exist.
 
 ## Evidence snapshot
 
-The 2026-08-22 review used the following primary project sources:
+The review through 2026-08-24 used the following primary project sources:
 
 - [llama.cpp server documentation](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)
   for prompt-cache, slot, and server controls;
@@ -566,6 +608,12 @@ The 2026-08-22 review used the following primary project sources:
 - [vLLM KV-offloading documentation](https://docs.vllm.ai/en/latest/features/kv_offloading_usage/)
   and [cache configuration](https://docs.vllm.ai/en/latest/api/vllm/config/cache/)
   for CPU and secondary-tier provider-managed cache behavior;
+- [NVIDIA Dynamo agentic-inference documentation](https://docs.nvidia.com/dynamo/dev/digest/agentic-inference)
+  for the harness/orchestrator/runtime split, agent hints, KV-aware routing,
+  priority, speculative prefill, and provider-owned cache policy;
+- the experimental
+  [ThunderAgent program scheduler](https://docs.dynamo.nvidia.com/dynamo/dev/agents/thunder-agent-program-scheduler)
+  for program-level accounting and tool-boundary pause/resume over Dynamo;
 - [NVIDIA CUDA Unified Memory documentation](https://docs.nvidia.com/cuda/cuda-programming-guide/04-special-topics/unified-memory.html)
   and [Grace memory-placement guidance](https://docs.nvidia.com/dccpu/grace-perf-tuning-guide/os-settings.html)
   for distinctions among coherent address spaces, memory locality, and
@@ -582,11 +630,13 @@ without reproduction against a pinned version.
 
 ## Immediate recommendation
 
-Preserve **verified AI workload** as the product thesis and
-**agent-aware inference residency** as the primary research hypothesis. Build
-the first practical path above existing providers: CPU-hosted durable agent and
-tool coordination, one admitted local model engine, an optional separately
-authorized remote model, and exact execution/effect evidence. Measure native
-cache policy before adding semantic forecasts. Keep physical model and KV state
+Preserve **verified AI workload** as the product thesis and treat **agent-aware
+inference integration** as an important research lane rather than an exclusive
+novelty claim. Build the first practical path above existing providers:
+CPU-hosted durable agent and tool coordination, one admitted local inference
+stack, an optional separately authorized remote model, and exact execution and
+effect evidence. Prefer mapping onto an established agent-aware platform such as
+NVIDIA Dynamo when it can preserve the contract. Measure the upstream policy
+before adding Windvale-specific forecasts. Keep physical model and KV state
 provider-owned, keep AI policy out of the kernel, and require a dated decision
 before the experiment becomes public architecture.

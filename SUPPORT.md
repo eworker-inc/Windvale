@@ -1,6 +1,6 @@
 # Windvale support
 
-Windvale is an experimental project without a support service-level agreement.
+Windvale is an active pre-1.0 research and development project without a support service-level agreement.
 
 For reproducible bugs, use the repository bug-report form. For design proposals, use the proposal form. For usage and development questions, use the question form or GitHub Discussions if discussions are enabled. Search existing documentation and reports first.
 

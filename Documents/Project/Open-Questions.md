@@ -223,6 +223,10 @@ fixed corpus can measure them:
   model request/result contract, and which agent-specific role, context,
   placement, cancellation, usage, truncation, malformed-output, and response-
   fingerprint evidence must remain outside the general model protocol?
+- Which candidate agent-lifecycle fields map exactly to NVIDIA Dynamo or another
+  upstream provider's agent hints, priority, speculative-prefill, routing, and
+  program identity, and which authority, privacy, continuity, and evidence
+  fields must remain Windvale-owned and provider-neutral?
 - Which first action capability demonstrates lease-bound governed effect without
   making model output executable authority or retrying an indeterminate mutation?
 - Which retention, deletion, legal-hold, backup/restore, quota, telemetry,
@@ -321,6 +325,37 @@ define a product direction, not final answers to these choices:
 - What real cross-organization problem would justify Windvale Constellation
   research, and which disclosure, trust, revocation, provenance, and consensus
   boundaries must be frozen before federation begins?
+
+## Cross-border assurance and standardization questions
+
+The
+[cross-border product assurance and standardization strategy](Cross-Border-Product-Assurance-And-Standardization.md)
+defines a product thesis but deliberately leaves these choices open:
+
+- Which first producer and independent recipient can exercise a real offline
+  evidence exchange rather than another repository-local self-check?
+- Which existing package, lock, release, provenance, conformance, and execution
+  records already form a sufficient first assurance bundle, and what exact
+  missing consumer would justify a new envelope?
+- Which independent verifier or second implementation can consume only the
+  published specification and agree on canonical bytes and rejection behavior?
+- Which first firmware-facing product has a finite, publishable inventory of
+  silicon, microcode, boot firmware, device firmware, host, and toolchain trust
+  boundaries?
+- Which SLSA, CycloneDX, TUF, NIST firmware-resilience, Common Criteria, or
+  sector-specific fields map exactly to Windvale evidence, and where would a
+  translation overstate either contract?
+- Which normative specifications and conformance assets must be independently
+  implementable under terms different from the current reference-stack license?
+- Which patent, trademark, compatibility, errata, governance, and certification
+  rules are required before an external organization can rely on a Windvale
+  standard rather than an E-Worker-controlled implementation?
+- What demonstrated external need and stakeholder group would justify a public
+  project standard, industry consortium, national proposal, Ecma submission,
+  ISO/IEC work item, or another venue?
+- Which independent implementation or evaluation should first test the proposed
+  cross-border assurance boundary, and what evidence would make the result
+  useful to another organization?
 
 ## Later architecture questions
 

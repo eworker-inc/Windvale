@@ -13,7 +13,11 @@ Windvale-owned work is source-available under the [Windvale Community Source Lic
 - **Contributors:** people or organizations submitting changes under the contribution policy.
 - **AI systems:** implementation and documentation authors in the descriptive project sense. AI systems do not hold governance roles, repository credentials, legal responsibility, or licensing authority.
 
-One participant may direct several AI systems, but acceptance still depends on the same specifications, review, tests, and evidence.
+One participant may direct several AI systems, but acceptance still depends on
+the same specifications, proportionate review and verification evidence, tests,
+and accountable publication authority. Acceptance does not imply that a human
+inspected every generated line; [Decision 0849](Documents/Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md)
+defines the evidence classes and division of work.
 
 ## Decisions
 

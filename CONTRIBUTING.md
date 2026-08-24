@@ -1,12 +1,12 @@
 # Contributing to Windvale
 
-Windvale welcomes careful contributions that strengthen its specifications, implementation, tests, documentation, reproducibility, or security. The project is experimental: acceptance depends on evidence and architectural coherence, not on the size or speed of a change.
+Windvale welcomes careful contributions that strengthen its specifications, implementation, tests, documentation, reproducibility, or security. The project is in active research and development: acceptance depends on evidence and architectural coherence, not on the size or speed of a change.
 
 ## Development model
 
-Windvale's code and project documentation are authored by AI systems under human direction and review. Substantive contributions are expected to follow that model. The person or organization submitting a contribution defines the intent, reviews the generated result, and accepts responsibility for proposing it.
+Windvale is an AI-led research and development project under human direction and accountable stewardship. AI systems perform most research, design, implementation, documentation, test construction, diagnosis, and technical review. The person or organization submitting a contribution defines its intent, reviews its evidence and risk-sensitive results in proportion to the change, and accepts responsibility for proposing it. Acceptance does not imply that a human inspected every generated line.
 
-Any AI system may contribute. Do not add a model or provider label to every file or commit. Record the system, version, prompt, or generation procedure only when it is technically material to reproducibility, qualification, diagnosis, attribution, or a third-party obligation. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md).
+Any AI system may contribute. Do not add a model or provider label to every file or commit. Record the system, version, prompt, or generation procedure only when it is technically material to reproducibility, qualification, diagnosis, attribution, or a third-party obligation. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for attribution and [Decision 0849](Documents/Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) for the division of work and review-evidence classes.
 
 Small mechanical actions such as resolving merge conflicts, applying formatting, or correcting metadata do not alter the repository-wide attribution. They must not be used to conceal substantive human-authored or third-party content.
 
@@ -29,6 +29,8 @@ Every contribution must state:
 - Documentation or decisions changed with the implementation.
 - Any incorporated third-party source, data, generated asset, or license obligation.
 - Specific AI provenance only when required by the project-wide policy.
+- The exact machine, AI, human, reproduction, or external review evidence relied
+  upon, without implying a broader review class than occurred.
 
 Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require one proportional local verifier. For focused work, use:
 

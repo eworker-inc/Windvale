@@ -1,7 +1,7 @@
 # Decision 0031: AI authorship and vendor neutrality
 
 - Date: 2026-07-30
-- Status: Accepted and implemented; licensing references superseded on 2026-08-02 by [Decision 0114](0114-Community-Source-Licensing-And-Commercial-Stewardship.md), while the attribution policy remains current
+- Status: Accepted and implemented; licensing references superseded on 2026-08-02 by [Decision 0114](0114-Community-Source-Licensing-And-Commercial-Stewardship.md), and the human-review wording amended on 2026-08-24 by [Decision 0849](0849-Define-AI-Led-Research-And-Review-Evidence.md), while the vendor-neutral attribution policy remains current
 
 ## Context
 

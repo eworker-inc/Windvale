@@ -91,7 +91,7 @@ This follow-up remains open. The initial publication baseline identifies one exa
 4. Record what passed, what was not run, and any known limitations without presenting planned layers as implemented.
 5. Record whether GitHub's `main` still points at the verified baseline commit; later development may legitimately have advanced beyond it.
 
-This is a publication snapshot, not a final project verification. Windvale remains experimental and development continues after the repository becomes public.
+This is a publication snapshot, not a final project verification. Windvale remains under active research and development after the repository becomes public.
 
 ## 7. Public visibility completed
 

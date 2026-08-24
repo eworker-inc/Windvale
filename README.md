@@ -1,16 +1,18 @@
 # Windvale
 
-Windvale is a source-available [E-Worker Inc](https://eworker.ca) experiment to build an entire, understandable computing stack from the ground up. Its code and documentation are authored entirely by AI systems under human direction and review.
+Windvale is a source-available [E-Worker Inc](https://eworker.ca) AI-led research and development project building a coherent computing and assurance stack from the ground up. The stack is designed to remain understandable, independently inspectable, reproducible, and useful at each layer.
 
-AI systems produce the source and prose. Humans define the objectives, direct the work, review and test the results, decide what the project accepts and publishes, and remain responsible for publication. [E-Worker Inc](https://eworker.ca) provides project stewardship.
+AI systems perform most research, design, implementation, documentation, test construction, diagnosis, and technical review. Humans establish purpose and constraints, direct the work, review selected and risk-sensitive results, decide what the project accepts and publishes, and remain responsible for stewardship and publication. Acceptance does not imply that a human inspected every generated line; Windvale records exact review and verification evidence instead. [Decision 0849](Documents/Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) defines this operating model.
 
 At its center is a **new programming language**, together with its compiler, portable bytecode, verified runtime, assembler, object model, linker, and Foundation library. The long-term integration goal is a **new small operating system** capable of loading and running the same verified Windvale programs that run on Windows and Linux. The language and tools remain independently useful before the operating system is complete.
+
+The longer-term ambition is an independently implementable specification and reference stack through which software—including firmware and AI workloads—can carry evidence from source and immutable inputs through build, execution, and externally visible effects. Windvale aims to make every declared Windvale-controlled layer verifiable while identifying external hardware, firmware, model, and provider trust boundaries. This is a standardization and assurance direction, not a claim that Windvale is already an established standard, that every product behavior is formally proven, or that third-party components are inherently trustworthy.
 
 **[Visit windvale.ca](https://windvale.ca/)** · **[Try the browser playground](https://windvale.ca/playground/)** · **[Support Windvale](https://windvale.ca/support/)**
 
 ## Project status
 
-Windvale Seed is experimental and not production-stable. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
+Windvale Seed is under active pre-1.0 development and is not production-stable. The signed `v0.1.0` preview completed the project's initial feasibility phase; Windvale is now in full research and development. This README is the stable public overview; changing implementation detail belongs in the documents that own it:
 
 - [Progress dashboard](Documents/Project/Progress.md) — authoritative current implementation and qualification snapshot
 - [Development roadmap](Documents/Project/Roadmap.md) — forward product workstreams, dependencies, and completion gates
@@ -179,16 +181,21 @@ export fn Main() -> i32 {
 - [Proposed next integrated defaults](Documents/Decisions/0198-Next-Integrated-Architecture-Defaults.md) connect the next resource-domain, process, console, network, trust, package, and language contracts for product review without claiming implementation.
 - The frozen Stage 0 implementation remains in an immutable qualified release for recovery and historical differential work.
 - Bootstrap dependencies and AI contributions must be documented honestly and reproducibly.
+- Reviewability, AI review, machine verification, human inspection, independent
+  reproduction, and external certification are separate evidence claims.
+- Existing model and inference systems remain eligible rights-limited providers;
+  Windvale agent identity, authority, durable state, and evidence do not depend
+  on one provider.
 
 ## Documentation
 
-Start with the [documentation guide](Documents/README.md). It separates current status, enduring architecture, specifications, accepted decisions, historical evidence, and operational records.
+Start with the [project vision](Documents/Project/Project-Vision.md), the [cross-border assurance and standardization strategy](Documents/Project/Cross-Border-Product-Assurance-And-Standardization.md), and the [documentation guide](Documents/README.md). They separate purpose and strategy from current status, enduring architecture, specifications, accepted decisions, historical evidence, and operational records.
 
 ## License, stewardship, and participation
 
 Windvale-owned work is source-available under the [Windvale Community Source License 1.0](LICENSE.md). Personal, noncommercial, evaluation, and qualifying small-organization uses are free; large-organization production use and Windvale-as-a-product use require a separate commercial agreement with [E-Worker Inc](https://eworker.ca). Independent applications created with Windvale belong to their creators and may use terms of their choice. Third-party components remain under their [separate licenses](THIRD-PARTY-NOTICES.md).
 
-Copyright © 2026 E-Worker Inc and Windvale contributors. “Author” and “authored” describe how the project was produced; they do not assert that an AI system is a legal person or copyright holder. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for the project-wide attribution policy and [Decision 0114](Documents/Decisions/0114-Community-Source-Licensing-And-Commercial-Stewardship.md) for the licensing decision.
+Copyright © 2026 E-Worker Inc and Windvale contributors. “Author” and “authored” describe how the project was produced; they do not assert that an AI system is a legal person or copyright holder. See [Decision 0031](Documents/Decisions/0031-AI-Authorship-And-Vendor-Neutrality.md) for vendor-neutral attribution, [Decision 0849](Documents/Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) for the AI-led development and review model, and [Decision 0114](Documents/Decisions/0114-Community-Source-Licensing-And-Commercial-Stewardship.md) for the licensing decision.
 
 - [Contributing](CONTRIBUTING.md)
 - [Contributor License Agreement](CONTRIBUTOR-LICENSE-AGREEMENT.md)

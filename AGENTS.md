@@ -4,7 +4,9 @@
 
 This document gives people and AI agents the durable rules needed to develop Windvale safely and coherently.
 
-Windvale is a source-available experiment in constructing a small computing stack: language, compiler, bytecode, runtime, assembler, object model, linker, foundation library, tools, and operating system. The goal is not merely to generate code with AI. The result must be understandable, testable, reproducible, and useful independently at each layer.
+Windvale is a source-available AI-led research and development project constructing a small computing stack: language, compiler, bytecode, runtime, assembler, object model, linker, foundation library, tools, and operating system. The goal is not merely to generate code with AI. The result must be understandable, testable, reproducible, and useful independently at each layer.
+
+The signed `v0.1.0` preview completed Windvale's initial feasibility phase. Do not describe the project as an experiment. Individual proposals, prototypes, profiles, or measurements may still be experimental when their exact status and limits are stated.
 
 ## Quick start
 
