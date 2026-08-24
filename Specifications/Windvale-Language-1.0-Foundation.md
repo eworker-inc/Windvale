@@ -274,6 +274,13 @@ offer a separately named `Reserveˉcommitted` operation that guarantees later
 growth within the committed amount; its initial result must prove the reserved
 capacity.
 
+An edition-1 budget's maximum authority never expands implicitly. A hosted
+provider may later expose a separately named, capability-bound operation for
+requesting additional authority, with explicit provider-unavailable,
+revocation, and retry behavior. Collection growth in Core consumes only the
+authority already present in the supplied budget and never reaches ambient OS
+memory.
+
 Releasing a collection releases its lease and credits retained accounting
 locally. Provider loss cannot make local handle invalidation fallible.
 
@@ -587,15 +594,19 @@ The edition-1 registry fixes this deliberately small operation family:
 
 - immutable and exclusive mutable indexed borrow;
 - all-or-nothing append of one item;
+- explicit all-or-nothing replacement growth under a separately borrowed
+  budget;
 - remove or replace with exact ownership return;
 - immutable slice creation;
 - exclusive mutable slice creation; and
 - consuming freeze.
 
-Construction reserves the complete admitted item maximum, so edition 1 has no
-second reserve call and no prefix-admitting vector append. A later bulk API may
-be added under a different signature-set identity after its exact ownership and
-partial-progress contract is selected.
+Construction reserves the complete initially admitted item maximum. Append
+never grows implicitly. The separately named growth operation replaces the
+complete backing under an explicit budget; edition 1 still has no
+prefix-admitting vector append. A later bulk API may be added under a different
+signature-set identity after its exact ownership and partial-progress contract
+is selected.
 
 An all-or-nothing rejected append returns the original owned item and leaves
 length, contents, capacity, and iteration unchanged. A successful append accepts
@@ -619,6 +630,13 @@ export fn Vectorˉappend<T>(
     Vector: borrow mut Vector<T>,
     Value: T,
 ) -> Result<unit, Vectorˉappendˉfailure<T>> effects();
+
+export fn Vectorˉgrowˉreserved<T>(
+    Vector: borrow mut Vector<T>,
+    Budget: borrow mut Memoryˉbudget,
+    Newˉmaximumˉitems: u64,
+) -> Result<unit, Allocationˉfailure>
+    effects(memory.allocate);
 
 export fn Vectorˉlength<T>(
     Vector: borrow Vector<T>,
@@ -660,6 +678,19 @@ returns `Allocationˉfailure` with reason `Targetˉunaddressable`; it does not
 silently narrow the maximum. Requested-byte evidence is saturated at `u64`
 rather than wrapped. A target's smaller executable allocation profile is not a
 portable Language maximum.
+
+Growth requires `Newˉmaximumˉitems` to be greater than the Vector's current
+maximum; violation traps before allocation. It reserves the complete
+replacement representation against the supplied budget while the old backing
+remains live, then copies the initialized prefix and commits one atomic backing
+and lease swap. Success preserves length and element order. Any target, budget,
+provider, fragmentation, or allocation refusal before that swap returns exact
+`Allocationˉfailure` and leaves the Vector's owner, length, contents,
+capacity, maximum, and the supplied budget's accounting/generation unchanged.
+The temporary peak can therefore include both old and replacement allocations.
+This explicit strong-transaction cost is preferable to hidden partial growth;
+an implementation must not silently fall back to in-place prefix progress.
+
 Length reports accepted items. Both borrow calls, replacement, and removal
 require `Index < Vectorˉlength` and trap before access on a violated proved
 precondition. Replacement accepts the new value once and returns the prior

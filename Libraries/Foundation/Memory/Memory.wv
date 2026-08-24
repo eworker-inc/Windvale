@@ -8,9 +8,12 @@ authority library;
 // Foundation identity. Core source can receive it from an admitted launcher or
 // parent domain but cannot construct one from ambient memory. Split has exact
 // source, WVIR, and WVB identities. A bounded generation-safe allocation-lease
-// accounting oracle now exists, while public Vector allocation and provider
-// connection remain later migration checkpoints. This module does not publish
-// forgeable record substitutes or the oracle's private token representation.
+// accounting oracle now exists. Reserved Vector construction consumes one
+// budget. Explicit Vector growth instead borrows a separately named mutable
+// budget and publishes neither accounting nor capacity changes on refusal. A
+// provider-backed budget may request rights-limited extension under current
+// policy; fixed budgets refuse deterministically. This module does not publish
+// forgeable record substitutes or private token/lease representations.
 
 export enum Allocationˉreason: u8 {
     Budgetˉexhausted = 1u8;

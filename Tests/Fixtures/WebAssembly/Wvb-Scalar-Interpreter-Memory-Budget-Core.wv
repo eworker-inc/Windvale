@@ -575,6 +575,52 @@ export fn Constructˉallocationˉlease(
     );
 }
 
+export fn Constructˉchildˉallocationˉlease(
+    State: bytes,
+    Parentˉtoken: bytes,
+    Maximumˉretainedˉbytes: u64,
+    Currentˉretainedˉbytes: u64,
+    Alignmentˉceiling: u32
+) -> Allocationˉleaseˉresult {
+    let Invalid: Allocationˉleaseˉresult = Allocationˉleaseˉinvalid(
+        State, Maximumˉretainedˉbytes, Maximumˉretainedˉbytes,
+        Currentˉretainedˉbytes, Alignmentˉceiling
+    );
+    if !Memoryˉbudgetˉstateˉisˉvalid(State) ||
+        !Tokenˉownsˉbudget(State, Parentˉtoken) ||
+        Maximumˉretainedˉbytes == 0u64 ||
+        Currentˉretainedˉbytes > Maximumˉretainedˉbytes ||
+        !Alignmentˉisˉvalid(Alignmentˉceiling) {
+        return Invalid;
+    }
+    let Split: Memoryˉbudgetˉsplitˉresult = Splitˉmemoryˉbudget(
+        State, Parentˉtoken, Maximumˉretainedˉbytes, 0u32
+    );
+    if !Split.Valid { return Invalid; }
+    if !Split.Succeeded {
+        return Allocationˉleaseˉresult(
+            true, false, Split.Reason, Maximumˉretainedˉbytes,
+            Split.Availableˉbytes, Maximumˉretainedˉbytes,
+            Currentˉretainedˉbytes, Alignmentˉceiling,
+            Empty(State), State
+        );
+    }
+    let Lease: Allocationˉleaseˉresult = Constructˉallocationˉlease(
+        Split.State, Split.Token, Maximumˉretainedˉbytes,
+        Currentˉretainedˉbytes, Alignmentˉceiling
+    );
+    if !Lease.Valid { return Invalid; }
+    if !Lease.Succeeded {
+        return Allocationˉleaseˉresult(
+            true, false, Lease.Reason, Maximumˉretainedˉbytes,
+            Lease.Availableˉbytes, Maximumˉretainedˉbytes,
+            Currentˉretainedˉbytes, Alignmentˉceiling,
+            Empty(State), State
+        );
+    }
+    return Lease;
+}
+
 export fn Allocationˉleaseˉisˉvalid(
     State: bytes,
     Leaseˉtoken: bytes,

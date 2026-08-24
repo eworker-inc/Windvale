@@ -8,9 +8,11 @@ import Foundationˉmemory as Memory;
 
 // Array<T, N>, Vector<T>, and Sequence<T> are compiler-supplied Foundation
 // intrinsics. This source module owns their canonical import identities without
-// introducing forgeable constructible collection records. The public failure
-// values below are ordinary immutable values with the exact Language 1.0
-// layouts; they do not expose or permit construction of a collection backing.
+// introducing forgeable constructible collection records. Vector growth names
+// both the exclusive Vector borrow and a mutable Memoryˉbudget borrow; refusal
+// preserves both inputs exactly. The public failure values below are ordinary
+// immutable values with the exact Language 1.0 layouts; they do not expose or
+// permit construction of a collection backing.
 
 export variant Collectionˉfailure {
     Invalidˉlimit(

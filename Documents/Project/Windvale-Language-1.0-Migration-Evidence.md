@@ -2927,3 +2927,54 @@ The exact 70-case summary above passed on both Windows and Linux with identical
 portable WVB sizes and SHA-256 values. This is paired-host focused development
 evidence for the compact WVIR, owned-call, loop-ownership, and exact-Vector
 `using` checkpoint; it is not the repository-wide Qualification gate.
+
+## Transactional reserved Vector-growth evidence
+
+[Decision 0848](../Decisions/0848-Execute-Transactional-Vector-Growth-As-Wvb-1.27.md)
+adds the explicit Foundation operation
+`Vectorˉgrowˉreserved::<T>(borrow mut Vector<T>, borrow mut Memoryˉbudget,
+u64) -> Result<unit, Allocationˉfailure>`. Source binding 12 lowers to typed
+WVIR operation 175. WVIR 1.15 carries the unspecialized operation and WVIR 1.16
+carries its exact generic specialization. WVB 1.27 encodes that operation as
+the 13-byte `D1` instruction with exact Vector-local, budget-local, and result
+type identities.
+
+Growth is a strong transaction. The runtime reserves the full replacement
+allocation while the old Vector lease remains live, copies only the initialized
+prefix, attaches the new lease, and only then releases the old descriptor and
+swaps the local. A refusal preserves the Vector owner, length, contents,
+capacity, and maximum together with the supplied budget's accounting and
+generation. A non-increasing maximum traps before allocation; an unsupported
+target size returns exact `Targetˉunaddressable`. The initial scalar-element
+profile is bounded to 2,047 cells. This operation spends authority already held
+by the explicit budget; obtaining more authority from a hosted provider remains
+a separate future capability.
+
+The executable fixture first attempts a 40-byte replacement while only 24 bytes
+remain and observes typed `Budgetˉexhausted` without mutation. It then performs
+a successful 24-byte replacement, appends another element, and returns `42`.
+The resulting 3,628-byte WVB 1.27 module has SHA-256
+`30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59`.
+The verifier rejects 15 focused corruptions covering version downgrade,
+instruction width, missing or mismatched locals, aliasing the two mutable local
+operands, wrong result/variant shapes, and malformed allocation-failure fields.
+
+The rebuilt compiler-aligned verifier is 296,490 bytes with SHA-256
+`6a7dd769402e1613734e8c118460b923f6ff5d49255b0e257fb53c3fd2281a4d`.
+Its Vector-growth validation is isolated in a focused helper so the native
+compiler remains below its 2,048-frame-slot bound. The current source-built
+runner is 328,812 bytes with SHA-256
+`b6fd4502012c4d7a7317cf8f25b28cf0acf25da4a90de6aee4075dcc1c5cf91d`.
+The canonical Windows owner reports:
+
+```text
+native language 1 memory budget, Vector, and using execution status=Passed cases=88 valid=12 malformed=53 owned-call-cases=4 using-cases=12 using-releases=7 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257
+```
+
+The registry remains 112 owners and advances to 5,417 cases. Its 17,448
+LF-only bytes have SHA-256
+`df799e1aa719e601891e2fe8997526b49abbc7ba0f4dddae4decf8384b26e682`.
+The exact 88-case summary above passes on both Windows and Linux with identical
+portable WVB sizes and SHA-256 values. This is paired-host focused development
+evidence for the WVB 1.27 checkpoint; it is not the repository-wide
+Qualification gate or promoted runner-candidate repinning.

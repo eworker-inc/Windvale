@@ -55,7 +55,7 @@ There are no declarations outside the listed blocks in Foundation major 1.
 | `Foundationˉnumeric` | 1 | Core | `4ca030c3c5d7dd53575094dc6c176de7a60ec14991e5b70cfb8cf772da9638aa` |
 | `Foundationˉordering` | 1 | Core | `6194f9674195aa96d84d85b017ec86e6d7548ae3d184b2cbbac590820e129a4d` |
 | `Foundationˉmemory` | 1 | Core | `aa9537df1ec92a8a6fae0e5a7517ac23589c4aa71e6e130dfdf87019d18a187f` |
-| `Foundationˉcollections` | 1 | Core | `3cbcc436bc30c774db1b1214b3e82629bf20a67f05bd09fed7d2ec1b2f742234` |
+| `Foundationˉcollections` | 1 | Core | `a8774998cc252ff8d02887bd921b578f79977dde3b88ed8e631a2df0e7b6f24c` |
 | `Foundationˉbytes` | 1 | Core | `8dd5cd3b1bc4cd5c877ab6c2b73b3ca4c67740b9ce8e1ea13772cd4975fff64b` |
 | `Foundationˉtext` | 1 | Core | `67b0329dc3242c245a0c3be9dccbe1c73263745173d7eced450ee8f5018e753f` |
 | `Foundationˉresource` | 1 | Core | `74a7e0a64b9df8a43bd6c9fea23d7bd8ed6ed8222a630b6e323ea2f99c27bc8a` |
@@ -193,6 +193,7 @@ export record Arenaˉreplaceˉfailure<T> { Error: Collectionˉfailure; Value: T;
 export protocol Iterator<Self, T> { fn Maximumˉremaining(Value: borrow Self) -> u64 effects(); fn Next(Value: borrow mut Self) -> Foundationˉoption.Option<T> effects(); }
 export fn Vectorˉconstructˉreserved<T>(Budget: Foundationˉmemory.Memoryˉbudget, Maximumˉitems: u64) -> Foundationˉresult.Result<Vector<T>, Foundationˉmemory.Allocationˉfailure> effects(memory.allocate);
 export fn Vectorˉappend<T>(Vector: borrow mut Vector<T>, Value: T) -> Foundationˉresult.Result<unit, Vectorˉappendˉfailure<T>> effects();
+export fn Vectorˉgrowˉreserved<T>(Vector: borrow mut Vector<T>, Budget: borrow mut Foundationˉmemory.Memoryˉbudget, Newˉmaximumˉitems: u64) -> Foundationˉresult.Result<unit, Foundationˉmemory.Allocationˉfailure> effects(memory.allocate);
 export fn Vectorˉlength<T>(Vector: borrow Vector<T>) -> u64 effects();
 export fn Vectorˉborrowˉat<T>(Vector: borrow Vector<T>, Index: u64) -> borrow T effects();
 export fn Vectorˉborrowˉatˉmut<T>(Vector: borrow mut Vector<T>, Index: u64) -> borrow mut T effects();

@@ -244,6 +244,7 @@ const WIR_OPERATION_FOUNDATION_MEMORY_SPLIT: u32 = 171u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED: u32 = 172u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_APPEND: u32 = 173u32;
 const WIR_OPERATION_RELEASE_LOCAL: u32 = 174u32;
+const WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED: u32 = 175u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -6448,6 +6449,324 @@ fn Compilerˉsourceˉwirˉdirectˉborrowˉmode(
     return Compilerˉsourceˉwirˉparameterˉborrowˉmode(Source, Local);
 }
 
+fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingˉpayload: bytes,
+    Bindingˉfirst: u32,
+    Bindingˉentries: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
+    Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch,
+    Operation: u32,
+    Expectedˉshape: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉvalue {
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+        if Expression.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall ||
+            Expression.Numericˉvalue != 1u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module, Expression.Offset, Expression.Line,
+                Expression.Column
+            );
+        }
+        let Growˉtypeˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line,
+                Expression.Column, Expression.Firstˉoffset
+            );
+        let Growˉexplicitˉtype:
+            Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                Input, Scan, Symbols.Directory, Symbols.Lookup,
+                Symbols.Visibility, Build.Currentˉmodule, Source,
+                Expression.Firstˉoffset,
+                Growˉtypeˉposition.Line, Growˉtypeˉposition.Column,
+                Symbols.Records, Symbols.Enums, false
+            );
+        if Growˉexplicitˉtype.Status !=
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Growˉexplicitˉtype.Nextˉoffset !=
+                Expression.Firstˉoffset + Expression.Firstˉlength {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module, Expression.Firstˉoffset,
+                Growˉtypeˉposition.Line, Growˉtypeˉposition.Column
+            );
+        }
+        let Growˉelement: u32 =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉtypeˉshape(
+                Growˉexplicitˉtype
+            );
+        let Growˉcatalog:
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                Build.Genericˉevidence
+            );
+        let Growˉresultˉlayout: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Growˉcatalog, Expectedˉshape
+            );
+        if !Growˉresultˉlayout.Found ||
+            Growˉresultˉlayout.Index != 9u32 ||
+            !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+                Growˉelement, Symbols
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module, Expression.Offset, Expression.Line,
+                Expression.Column
+            );
+        }
+        let Growˉfailure:
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                Input, Scan, Symbols, Growˉresultˉlayout.Shape
+            );
+        if !Growˉfailure.Found ||
+            !Compilerˉsourceˉwirˉisˉfoundationˉallocationˉfailure(
+                Input, Scan, Symbols,
+                Growˉresultˉlayout.Shape, Growˉfailure.Module
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Genericˉresolution,
+                Callable.Module, Expression.Offset, Expression.Line,
+                Expression.Column
+            );
+        }
+
+        let Growˉvectorˉposition:
+            Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line,
+                Expression.Column, Expression.Itemsˉoffset
+            );
+        let Growˉvectorˉargument:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Expression.Itemsˉoffset,
+                Growˉvectorˉposition.Line,
+                Growˉvectorˉposition.Column,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        if Growˉvectorˉargument.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unary ||
+            Growˉvectorˉargument.Operator !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Borrow ||
+            !Growˉvectorˉargument.Booleanˉvalue {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module, Growˉvectorˉargument.Offset,
+                Growˉvectorˉargument.Line,
+                Growˉvectorˉargument.Column
+            );
+        }
+        let Growˉvectorˉborrowedˉposition:
+            Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Growˉvectorˉargument.Offset,
+                Growˉvectorˉargument.Line,
+                Growˉvectorˉargument.Column,
+                Growˉvectorˉargument.Firstˉoffset
+            );
+        let Growˉvectorˉexpression:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Growˉvectorˉargument.Firstˉoffset,
+                Growˉvectorˉborrowedˉposition.Line,
+                Growˉvectorˉborrowedˉposition.Column,
+                Growˉvectorˉargument.Firstˉoffset +
+                    Growˉvectorˉargument.Firstˉlength,
+                0u32, 0u32
+            );
+        if Growˉvectorˉexpression.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name ||
+            !Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Growˉvectorˉexpression
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module, Growˉvectorˉexpression.Offset,
+                Growˉvectorˉexpression.Line,
+                Growˉvectorˉexpression.Column
+            );
+        }
+        let Growˉvector: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Growˉvectorˉexpression.Valueˉoffset,
+                Growˉvectorˉexpression.Valueˉlength,
+                Growˉvectorˉexpression.Offset
+            );
+        if !Growˉvector.Found || Growˉvector.Kind ==
+                Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Parameter ||
+            !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                Growˉvector.Shape, Growˉcatalog
+            ) ||
+            Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+                Growˉvector.Shape, Growˉcatalog
+            ) != Growˉelement {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
+                Callable.Module, Growˉvectorˉexpression.Offset,
+                Growˉvectorˉexpression.Line,
+                Growˉvectorˉexpression.Column
+            );
+        }
+
+        let Growˉfirstˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Growˉvectorˉargument.Nextˉoffset,
+                Growˉvectorˉargument.Nextˉline,
+                Growˉvectorˉargument.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        if Growˉfirstˉseparator.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Growˉfirstˉseparator.Offset,
+                Growˉfirstˉseparator.Line,
+                Growˉfirstˉseparator.Column
+            );
+        }
+        let Growˉbudgetˉargument:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Growˉfirstˉseparator.Nextˉoffset,
+                Growˉfirstˉseparator.Nextˉline,
+                Growˉfirstˉseparator.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        if Growˉbudgetˉargument.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unary ||
+            Growˉbudgetˉargument.Operator !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Borrow ||
+            !Growˉbudgetˉargument.Booleanˉvalue {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module, Growˉbudgetˉargument.Offset,
+                Growˉbudgetˉargument.Line,
+                Growˉbudgetˉargument.Column
+            );
+        }
+        let Growˉbudgetˉborrowedˉposition:
+            Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Growˉbudgetˉargument.Offset,
+                Growˉbudgetˉargument.Line,
+                Growˉbudgetˉargument.Column,
+                Growˉbudgetˉargument.Firstˉoffset
+            );
+        let Growˉbudgetˉexpression:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Growˉbudgetˉargument.Firstˉoffset,
+                Growˉbudgetˉborrowedˉposition.Line,
+                Growˉbudgetˉborrowedˉposition.Column,
+                Growˉbudgetˉargument.Firstˉoffset +
+                    Growˉbudgetˉargument.Firstˉlength,
+                0u32, 0u32
+            );
+        if Growˉbudgetˉexpression.Kind !=
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Name ||
+            !Compilerˉsourceˉwirˉmutableˉborrowˉoriginˉisˉvalid(
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Growˉbudgetˉexpression
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉborrow,
+                Callable.Module, Growˉbudgetˉexpression.Offset,
+                Growˉbudgetˉexpression.Line,
+                Growˉbudgetˉexpression.Column
+            );
+        }
+        let Growˉbudget: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Growˉbudgetˉexpression.Valueˉoffset,
+                Growˉbudgetˉexpression.Valueˉlength,
+                Growˉbudgetˉexpression.Offset
+            );
+        if !Growˉbudget.Found || Growˉbudget.Shape != 805306368u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Growˉbudgetˉexpression.Offset,
+                Growˉbudgetˉexpression.Line,
+                Growˉbudgetˉexpression.Column
+            );
+        }
+
+        let Growˉsecondˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Growˉbudgetˉargument.Nextˉoffset,
+                Growˉbudgetˉargument.Nextˉline,
+                Growˉbudgetˉargument.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        if Growˉsecondˉseparator.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Growˉsecondˉseparator.Offset,
+                Growˉsecondˉseparator.Line,
+                Growˉsecondˉseparator.Column
+            );
+        }
+        let Growˉmaximumˉexpression:
+            Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Growˉsecondˉseparator.Nextˉoffset,
+                Growˉsecondˉseparator.Nextˉline,
+                Growˉsecondˉseparator.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        let Growˉmaximum: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
+                Input, Scan, Symbols,
+                Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                Source, Growˉmaximumˉexpression.Offset,
+                Growˉmaximumˉexpression.Line,
+                Growˉmaximumˉexpression.Column,
+                Growˉmaximumˉexpression.Offset +
+                    Growˉmaximumˉexpression.Length,
+                8u32, Build
+            );
+        if Growˉmaximum.Status != Compilerˉsourceˉwirˉstatus.Valid {
+            return Growˉmaximum;
+        }
+        if Growˉmaximum.Shape != 8u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Growˉmaximum),
+                Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                Callable.Module, Growˉmaximumˉexpression.Offset,
+                Growˉmaximumˉexpression.Line,
+                Growˉmaximumˉexpression.Column
+            );
+        }
+        return Compilerˉsourceˉwirˉemit(
+            Compilerˉsourceˉwirˉvalueˉbuild(Growˉmaximum),
+            WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED,
+            Expectedˉshape,
+            Compilerˉsourceˉwirˉoneˉoperand(Growˉmaximum.Temporary),
+            Growˉvector.Slot, Growˉbudget.Slot,
+            Expression.Offset, Expression.Length
+        );
+    }
+    return Compilerˉsourceˉwirˉfailureˉvalue(
+        Build, Compilerˉsourceˉwirˉstatus.Invalidˉcollection,
+        Callable.Module, Expression.Offset, Expression.Line,
+        Expression.Column
+    );
+}
+
 fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -6462,6 +6781,13 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
     Expectedˉshape: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+        return Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉgrowˉcall(
+            Input, Scan, Symbols,
+            Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Source, Expression, Callable, Operation, Expectedˉshape, Build
+        );
+    }
     if Operation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
         if Expression.Kind !=
                 Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall ||
@@ -7228,7 +7554,9 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Callable.Directoryˉentry ==
                 WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED ||
             Callable.Directoryˉentry ==
-                WIR_OPERATION_FOUNDATION_VECTOR_APPEND) {
+                WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+            Callable.Directoryˉentry ==
+                WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED) {
         Foundationˉvectorˉoperation = Callable.Directoryˉentry;
     }
     if Foundationˉvectorˉoperation != 0u32 {
@@ -10449,6 +10777,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
     var Hasˉmemoryˉsplit: bool = false;
     var Hasˉvectorˉappend: bool = false;
+    var Hasˉvectorˉgrow: bool = false;
     var Operationˉindex: u32 = 0u32;
     while Operationˉindex < Build.Operations {
         let Headerˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
@@ -10461,11 +10790,18 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
         if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
             Hasˉvectorˉappend = true;
         }
+        if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+            Hasˉvectorˉgrow = true;
+        }
         Operationˉindex = Operationˉindex + 1u32;
     }
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    if Hasˉvectorˉappend && Instances > 0u32 {
+    if Hasˉvectorˉgrow && Instances > 0u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(16u32));
+    } else if Hasˉvectorˉgrow {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(15u32));
+    } else if Hasˉvectorˉappend && Instances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(14u32));
     } else if Hasˉvectorˉappend {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(13u32));
@@ -10499,7 +10835,8 @@ export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 &&
         (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 10u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 12u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 16u32) {
         return 56u32;
     }
     return 48u32;
@@ -10663,6 +11000,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 172u32 { return Shape != 0u32; }
     if Operation == 173u32 { return Shape != 0u32; }
     if Operation == 174u32 { return Shape == 0u32; }
+    if Operation == 175u32 { return Shape != 0u32; }
     return false;
 }
 
@@ -10773,6 +11111,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 172u32 { return Count == 1u32; }
     if Operation == 173u32 { return Count == 1u32; }
     if Operation == 174u32 { return Count == 0u32; }
+    if Operation == 175u32 { return Count == 1u32; }
     return false;
 }
 
@@ -10936,6 +11275,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
     }
     if Operation == 172u32 { return Index == 0u32 && Shape == 8u32; }
     if Operation == 173u32 { return Index == 0u32 && Shape != 0u32; }
+    if Operation == 175u32 { return Index == 0u32 && Shape == 8u32; }
     return true;
 }
 
@@ -12132,6 +12472,27 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
             ), Symbols
         );
     }
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+        if Operandˉcount != 1u32 { return false; }
+        let Growˉresultˉlayout: Compilerˉsourceˉwirˉmember =
+            Compilerˉsourceˉwirˉgenericˉfoundationˉresultˉlayout(
+                Input, Scan, Symbols, Typeˉcatalog, Shape
+            );
+        if !Growˉresultˉlayout.Found ||
+            Growˉresultˉlayout.Index != 9u32 {
+            return false;
+        }
+        let Growˉfailure:
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+            Compilerˉsourceˉwirˉnominalˉbyˉshape(
+                Input, Scan, Symbols, Growˉresultˉlayout.Shape
+            );
+        return Growˉfailure.Found &&
+            Compilerˉsourceˉwirˉisˉfoundationˉallocationˉfailure(
+                Input, Scan, Symbols,
+                Growˉresultˉlayout.Shape, Growˉfailure.Module
+            );
+    }
     if Operation == 173u32 {
         if Operandˉcount != 1u32 ||
             !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
@@ -12465,7 +12826,9 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
         if Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
                 WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
             Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
-                WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
+                WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED ||
+            Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
+                WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
             Hasˉmemoryˉsplit = true;
         }
         Scanˉindex = Scanˉindex + 1u32;
@@ -12539,6 +12902,9 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
                 Directory, Operationˉentry + 20u32
             );
+            let Operationˉauxiliary: u32 = Bytesˉreadˉu32ˉlittle(
+                Directory, Operationˉentry + 24u32
+            );
             if Operationˉshape != 0u32 {
                 var Temporaryˉlive: u8 = 0u8;
                 if Operationˉshape == 805306368u32 {
@@ -12609,6 +12975,17 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                         Bindings, Symbolˉentries, Function, Operationˉtarget
                     ) != 805306368u32 || Bytesˉreadˉu8(
                         Slotˉstate, Operationˉtarget
+                    ) != 1u8 {
+                    return false;
+                }
+            }
+            if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+                if Operationˉauxiliary >= Slotˉcount ||
+                    Compilerˉsourceˉwirˉbindingˉshape(
+                        Bindings, Symbolˉentries, Function,
+                        Operationˉauxiliary
+                    ) != 805306368u32 || Bytesˉreadˉu8(
+                        Slotˉstate, Operationˉauxiliary
                     ) != 1u8 {
                     return false;
                 }
@@ -12991,6 +13368,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             }
             if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+                Operationˉkind ==
+                    WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
                 if Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
                         Slotˉstate, Operationˉtarget
@@ -13136,6 +13515,42 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     return true;
 }
 
+fn Compilerˉsourceˉwirˉvectorˉgrowˉoperationˉisˉvalid(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Symbolˉentries: u32,
+    Function: u32,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Firstˉlocal: u32,
+    Slotˉcount: u32,
+    Target: u32,
+    Auxiliary: u32
+) -> bool {
+    if Target < Firstˉlocal || Target >= Slotˉcount ||
+        Auxiliary >= Slotˉcount || Target == Auxiliary {
+        return false;
+    }
+    let Vectorˉshape: u32 = Compilerˉsourceˉwirˉbindingˉshape(
+        Bindings, Symbolˉentries, Function, Target
+    );
+    if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+        Vectorˉshape, Typeˉcatalog
+    ) {
+        return false;
+    }
+    if !Compilerˉsourceˉwirˉfoundationˉcollectionˉscalarˉisˉsupported(
+        Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
+            Vectorˉshape, Typeˉcatalog
+        ),
+        Symbols
+    ) {
+        return false;
+    }
+    return Compilerˉsourceˉwirˉbindingˉshape(
+        Bindings, Symbolˉentries, Function, Auxiliary
+    ) == 805306368u32;
+}
+
 export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -13208,7 +13623,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 174u32 { return false; }
+        if Operationˉkind > 175u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
             Operationˉshape, Symbols, Typeˉcatalog, true
         ) {
@@ -13405,13 +13820,23 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                 );
             if Vectorˉlocalˉshape != Operationˉauxiliary { return false; }
         }
+        if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+            if !Compilerˉsourceˉwirˉvectorˉgrowˉoperationˉisˉvalid(
+                Symbols, Bindings, Symbolˉentries, Function, Typeˉcatalog,
+                Range.Parameters, Range.Parameters + Range.Locals,
+                Operationˉtarget, Operationˉauxiliary
+            ) {
+                return false;
+            }
+        }
         if Operationˉkind == 8u32 &&
             Operationˉtarget == Consumedˉvectorˉslot {
             Consumedˉvectorˉslot = Compilerˉsourceˉwirˉsentinel();
         }
         if Operationˉkind == 7u32 ||
             Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
-            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
+            Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
             if Operationˉtarget == Consumedˉvectorˉslot { return false; }
         }
         if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
@@ -13725,8 +14150,9 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 14u32 { return false; }
-    if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32) &&
+    if Minor < 9u32 || Minor > 16u32 { return false; }
+    if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32 ||
+            Minor == 16u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
@@ -13744,7 +14170,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
     var Instances: u32 = 0u32;
-    if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 {
+    if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 ||
+        Minor == 15u32 {
         if Functionˉentries != Symbolˉentries { return false; }
     } else {
         Instances = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
@@ -13786,6 +14213,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     if Directoryˉlength != Expectedˉlength { return false; }
     var Hasˉmemoryˉsplit: bool = false;
     var Hasˉvectorˉappend: bool = false;
+    var Hasˉvectorˉgrow: bool = false;
     var Operationˉscan: u32 = 0u32;
     while Operationˉscan < Operations {
         let Scannedˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
@@ -13798,12 +14226,25 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         if Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_APPEND {
             Hasˉvectorˉappend = true;
         }
+        if Scannedˉoperation ==
+                WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
+            Hasˉvectorˉgrow = true;
+        }
         Operationˉscan = Operationˉscan + 1u32;
     }
-    if Minor < 11u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+    if Minor < 11u32 &&
+        (Hasˉmemoryˉsplit || Hasˉvectorˉappend || Hasˉvectorˉgrow) {
+        return false;
+    }
     if Minor >= 11u32 && Minor <= 12u32 &&
-        (!Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
-    if Minor >= 13u32 && !Hasˉvectorˉappend { return false; }
+        (!Hasˉmemoryˉsplit || Hasˉvectorˉappend || Hasˉvectorˉgrow) {
+        return false;
+    }
+    if Minor >= 13u32 && Minor <= 14u32 &&
+        (!Hasˉvectorˉappend || Hasˉvectorˉgrow) {
+        return false;
+    }
+    if Minor >= 15u32 && !Hasˉvectorˉgrow { return false; }
     var Function: u32 = 0u32;
     var Expectedˉblock: u32 = 0u32;
     var Expectedˉoperation: u32 = 0u32;

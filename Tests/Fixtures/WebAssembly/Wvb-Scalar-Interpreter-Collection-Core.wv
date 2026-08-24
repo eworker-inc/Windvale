@@ -133,6 +133,51 @@ export fn Collectionˉappend(
     return Result;
 }
 
+export fn Collectionˉgrownˉbacking(
+    Heap: bytes,
+    Value: bytes,
+    Newˉmaximum: u32,
+    Zeroˉcell: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Heap, 0u32, 0u32);
+    if Bytesˉlength(Value) != 8u32 || Bytesˉlength(Zeroˉcell) != 8u32 ||
+        Newˉmaximum == 0u32 || Newˉmaximum > 2047u32 {
+        return Empty;
+    }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Offset > Bytesˉlength(Heap) || Length > Bytesˉlength(Heap) - Offset ||
+        Length < 16u32 || Length % 8u32 != 0u32 {
+        return Empty;
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset);
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Heap, Offset + 4u32);
+    if Maximum == 0u32 || Maximum > 2047u32 || Count > Maximum ||
+        Newˉmaximum <= Maximum || Length != (Maximum + 1u32) * 8u32 {
+        return Empty;
+    }
+    var Cells: bytes = Bytesˉslice(
+        Heap, Offset + 8u32, Count * 8u32
+    );
+    let Requiredˉcellˉbytes: u32 = Newˉmaximum * 8u32;
+    while Bytesˉlength(Cells) < Requiredˉcellˉbytes {
+        let Remaining: u32 = Requiredˉcellˉbytes - Bytesˉlength(Cells);
+        var Addition: bytes = Cells;
+        if Bytesˉlength(Addition) == 0u32 { Addition = Zeroˉcell; }
+        if Bytesˉlength(Addition) > Remaining {
+            Addition = Bytesˉslice(Addition, 0u32, Remaining);
+        }
+        Cells = Bytesˉconcat(Cells, Addition);
+    }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Count),
+            Bytesˉfromˉu32ˉlittle(Newˉmaximum)
+        ),
+        Cells
+    );
+}
+
 export fn Collectionˉelement(
     Heap: bytes,
     Value: bytes,

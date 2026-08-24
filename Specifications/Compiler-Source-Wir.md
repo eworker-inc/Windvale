@@ -49,11 +49,11 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.14`
+The catalog selects the even WVIR minor in the current `1.9` through `1.16`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -63,7 +63,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `14` selected by the features below |
+| 6 | 2 | Minor version `9` through `16` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -79,20 +79,25 @@ Sections follow in that exact order.
 
 Source without an admitted generic instance, `Foundationˉmemory.Split`,
 `Foundationˉcollections.Vectorˉconstructˉreserved`, or
-`Foundationˉcollections.Vectorˉappend` uses
+`Foundationˉcollections.Vectorˉappend`, or
+`Foundationˉcollections.Vectorˉgrowˉreserved` uses
 that exact 48-byte WVIR 1.9 header. Specialized source without either memory
 operation publishes WVIR 1.10. Either memory operation without specialization publishes WVIR 1.11
 with the same 48-byte header and section positions as 1.9. A module containing
 specialization and either memory operation publishes
 WVIR 1.12 with the specialization envelope of 1.10. Append without specialization
-publishes WVIR 1.13; append with specialization publishes WVIR 1.14. The even
+publishes WVIR 1.13; append with specialization publishes WVIR 1.14. Growth
+without specialization publishes WVIR 1.15; growth with specialization
+publishes WVIR 1.16. The even
 versions append the
 specialization count at offset 48 and specialization-layout version `1` at offset
 52, and begin the function section at offset 56. Their function-entry count is
 exactly `WvsdEntryCount + SpecializationCount`; the count must equal the valid
 WVGC instance count embedded in the paired WVLB 1.2. All section entry layouts
 remain unchanged. A 1.11/1.12 directory must contain operation `171` or `172` and
-must not contain `173`. A 1.13/1.14 directory must contain operation `173`.
+must not contain `173` or `175`. A 1.13/1.14 directory must contain operation
+`173` and must not contain `175`. A 1.15/1.16 directory must contain operation
+`175`.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -116,8 +121,9 @@ Operation values `1` through `63` retain the prior constants, storage, Foundatio
 
 Value `173` is `Foundationˉvectorˉappend`, defined below with the same exact
 Foundation identity discipline. Value `174` is `Releaseˉlocal`, the explicit
-compiler boundary for semantic resource cleanup defined below. It is the last
-currently admitted operation.
+compiler boundary for semantic resource cleanup defined below. Value `175` is
+`Foundationˉvectorˉgrowˉreserved`, defined below. It is the last currently
+admitted operation.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -388,6 +394,29 @@ local nor creates a second owner. WVB 1.25 lowers it to opcode `D0`, which
 carries the Vector-local and Result-type indices. Capacity refusal is an
 ordinary exact Result path that leaves the Vector unchanged and returns the
 item; it is not a trap or a partial append.
+
+The exact
+`Foundationˉcollections.Vectorˉgrowˉreserved::<T>(Vector, Budget,
+Newˉmaximumˉitems)` call requires one explicit type argument and three
+arguments. The first is `borrow mut` of one directly named mutable
+non-parameter `Vector<T>` local. The second is `borrow mut` of a distinct,
+available exact `Memoryˉbudget` parameter or local. The third evaluates once
+as exact `u64`. The expected result is the canonical materialized
+`Foundationˉresult.Result<unit,
+Foundationˉmemory.Allocationˉfailure>`. The current executable checkpoint
+admits only the resource-free scalar Vector element subset.
+
+Lowering emits `Foundationˉvectorˉgrowˉreserved = 175`. Its sole operand is
+the evaluated new-maximum temporary, `Target` is the Vector local slot, and
+`Auxiliary` is the budget slot. Independent validation reconstructs the exact
+Vector element, Result, unit payload, and Allocation-failure identity; proves
+both slots available; and preserves both owners. A successful runtime operation
+replaces the backing and its lease but does not create a second observable
+Vector owner. Refusal leaves the Vector and supplied budget state unchanged.
+WVB 1.27 lowers the operation to opcode `D1`, carrying Vector-local,
+budget-local, and Result-type indices. A requested maximum that is not greater
+than the current maximum violates the operation precondition and traps before
+allocation rather than returning a misleading success.
 
 Exact Foundation Sequence reads reuse that catalog proof. Operation 167
 `Foundationˉsequenceˉlength` consumes one temporary whose shape is the target

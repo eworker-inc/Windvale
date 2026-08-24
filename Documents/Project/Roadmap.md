@@ -156,10 +156,15 @@ adds exact recoverable append, [Decision 0844](../Decisions/0844-Prove-Owned-Vec
 proves general Vector calls and forward joins in WVIR, and
 [Decision 0845](../Decisions/0845-Execute-Owned-Vector-Calls-As-Wvb-1.26.md)
 executes them with signature-encoded transfer modes and reverse-slot callee
-cleanup. The combined owner now passes 58 cases. The next connected Slice 5
-results are semantic `using`, nested-resource destruction, one hosted consumer,
-and the fallible elastic budget/Vector-growth path. Canonical effect resolution,
-call enforcement, function values, and captures follow in Slice 6.
+cleanup. [Decision 0847](../Decisions/0847-Lower-Semantic-Using-And-Prove-Loop-Ownership.md)
+lowers semantic `using`, reverse nested cleanup, and exact loop-ownership fixed
+points. [Decision 0848](../Decisions/0848-Execute-Transactional-Vector-Growth-As-Wvb-1.27.md)
+then executes explicit reserved Vector growth as a strong transaction through
+WVB 1.27. The combined owner now passes 88 cases. The next connected Slice 5
+results are aggregate-owned fields and one hosted resource consumer. Acquiring
+additional budget authority from a provider remains an explicit later hosted
+capability rather than ambient allocation. Canonical effect resolution, call
+enforcement, function values, and captures follow in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

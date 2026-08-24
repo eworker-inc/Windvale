@@ -29,6 +29,8 @@ const EXPECTED_VECTOR_SUCCESS_SHA256 =
     '881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5';
 const EXPECTED_APPEND_SUCCESS_SHA256 =
     '6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f';
+const EXPECTED_GROW_SUCCESS_SHA256 =
+    '30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59';
 const EXPECTED_OWNED_CALL_SUCCESS_SHA256 =
     'ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387';
 const EXPECTED_USING_FALLTHROUGH_SHA256 =
@@ -178,6 +180,8 @@ try {
     const Vectorˉzero = path.join(Work, 'Vector-Zero.wvb');
     const Appendˉsuccessˉa = path.join(Work, 'Append-Success-A.wvb');
     const Appendˉsuccessˉb = path.join(Work, 'Append-Success-B.wvb');
+    const Growˉsuccessˉa = path.join(Work, 'Grow-Success-A.wvb');
+    const Growˉsuccessˉb = path.join(Work, 'Grow-Success-B.wvb');
     const Ownedˉcallˉsuccessˉa = path.join(Work, 'Owned-Call-Success-A.wvb');
     const Ownedˉcallˉsuccessˉb = path.join(Work, 'Owned-Call-Success-B.wvb');
     const Usingˉfallthrough = path.join(Work, 'Using-Fallthrough.wvb');
@@ -202,6 +206,10 @@ try {
         'Vector-Append-Executable.wv', Appendˉsuccessˉa);
     Compileˉvector('vector-append-success-b-compile', Admitter, Analyzer, Emitter,
         'Vector-Append-Executable.wv', Appendˉsuccessˉb);
+    Compileˉvector('vector-grow-success-a-compile', Admitter, Analyzer, Emitter,
+        'Vector-Grow-Reserved-Executable.wv', Growˉsuccessˉa);
+    Compileˉvector('vector-grow-success-b-compile', Admitter, Analyzer, Emitter,
+        'Vector-Grow-Reserved-Executable.wv', Growˉsuccessˉb);
     Compileˉvector('owned-call-success-a-compile', Admitter, Analyzer, Emitter,
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉa);
     Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
@@ -251,6 +259,15 @@ try {
         Reject(`The executable Vector append fixture digest differs: ${Appendˉsha256}.`);
     }
     const Appendˉlayout = Inspectˉexactˉappendˉmodule(Appendˉsuccessˉbytes);
+    const Growˉsuccessˉbytes = readFileSync(Growˉsuccessˉa);
+    if (!Growˉsuccessˉbytes.equals(readFileSync(Growˉsuccessˉb))) {
+        Reject('The executable Vector growth fixture is not deterministic.');
+    }
+    const Growˉsha256 = Digest(Growˉsuccessˉbytes);
+    if (Growˉsha256 !== EXPECTED_GROW_SUCCESS_SHA256) {
+        Reject(`The executable Vector growth fixture digest differs: ${Growˉsha256}.`);
+    }
+    const Growˉlayout = Inspectˉexactˉgrowˉmodule(Growˉsuccessˉbytes);
     const Ownedˉcallˉsuccessˉbytes = readFileSync(Ownedˉcallˉsuccessˉa);
     if (!Ownedˉcallˉsuccessˉbytes.equals(readFileSync(Ownedˉcallˉsuccessˉb))) {
         Reject('The executable owned Vector call fixture is not deterministic.');
@@ -297,6 +314,7 @@ try {
     Requireˉvalid(Verifier, Vectorˉfailure, 'refused Vector module');
     Requireˉvalid(Verifier, Vectorˉzero, 'zero-maximum Vector module');
     Requireˉvalid(Verifier, Appendˉsuccessˉa, 'Vector append module');
+    Requireˉvalid(Verifier, Growˉsuccessˉa, 'Vector growth module');
     Requireˉvalid(Verifier, Ownedˉcallˉsuccessˉa, 'owned Vector call module');
     Requireˉvalid(Verifier, Usingˉfallthrough, 'using fallthrough module');
     Requireˉvalid(Verifier, Usingˉnested, 'using nested-return module');
@@ -407,6 +425,58 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Growˉmalformedˉcases = [
+        ['grow-version-downgrade', Bytes => Bytes.writeUInt16LE(26, 6)],
+        ['grow-unknown-opcode', Bytes => {
+            Bytes[Growˉlayout.opcodes[0]] = 210;
+        }],
+        ['grow-vector-parameter', Bytes => {
+            Bytes.writeUInt32LE(0, Growˉlayout.opcodes[0] + 1);
+        }],
+        ['grow-vector-non-vector', Bytes => {
+            Bytes.writeUInt32LE(6, Growˉlayout.opcodes[0] + 1);
+        }],
+        ['grow-vector-missing', Bytes => {
+            Bytes.writeUInt32LE(999, Growˉlayout.opcodes[0] + 1);
+        }],
+        ['grow-budget-non-budget', Bytes => {
+            Bytes.writeUInt32LE(13, Growˉlayout.opcodes[0] + 5);
+        }],
+        ['grow-budget-missing', Bytes => {
+            Bytes.writeUInt32LE(999, Growˉlayout.opcodes[0] + 5);
+        }],
+        ['grow-same-vector-budget', Bytes => {
+            Bytes.writeUInt32LE(12, Growˉlayout.opcodes[0] + 5);
+        }],
+        ['grow-result-missing', Bytes => {
+            Bytes.writeUInt32LE(99, Growˉlayout.opcodes[0] + 9);
+        }],
+        ['grow-result-record', Bytes => {
+            Bytes.writeUInt32LE(0, Growˉlayout.opcodes[0] + 9);
+        }],
+        ['grow-non-unit-valid-payload', Bytes => {
+            Bytes[Growˉlayout.validPayloadShape] = 1;
+        }],
+        ['grow-wrong-result-failure-type', Bytes => {
+            Bytes.writeUInt32LE(1, Growˉlayout.resultFailureType);
+        }],
+        ['grow-budget-in-failure-record', Bytes => {
+            Bytes[Growˉlayout.requestedBytesShape] = 25;
+        }],
+        ['grow-wrong-allocation-field', Bytes => {
+            Bytes[Growˉlayout.availableBytesShape] = 5;
+        }],
+        ['grow-truncated-instruction', Bytes => {
+            Bytes[Growˉlayout.lastInstruction] = 209;
+        }],
+    ];
+    for (const [Name, Mutate] of Growˉmalformedˉcases) {
+        const Candidate = Buffer.from(Growˉsuccessˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
     const Ownedˉcallˉmalformedˉcases = [
         ['owned-call-version-downgrade', Bytes => {
             Bytes.writeUInt16LE(25, 6);
@@ -473,6 +543,7 @@ try {
         Runner, Vectorˉzero, 3008, 'zero-maximum Vector construction execution',
     );
     Requireˉresultˉ42(Runner, Appendˉsuccessˉa, 'Vector append execution');
+    Requireˉresultˉ42(Runner, Growˉsuccessˉa, 'Vector growth execution');
     Requireˉresultˉ42(
         Runner, Ownedˉcallˉsuccessˉa, 'owned Vector call execution',
     );
@@ -482,9 +553,10 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, and using execution status=Passed ' +
-        `cases=70 valid=11 malformed=${
+        `cases=${73 + Growˉmalformedˉcases.length} valid=12 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
-            Appendˉmalformedˉcases.length + Ownedˉcallˉmalformedˉcases.length + 1
+            Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
+            Ownedˉcallˉmalformedˉcases.length + 1
         } owned-call-cases=4 using-cases=12 using-releases=7 ` +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -492,6 +564,8 @@ try {
         `vector-sha256=${Vectorˉsha256} ` +
         `append-wvb-bytes=${Appendˉsuccessˉbytes.length} ` +
         `append-sha256=${Appendˉsha256} ` +
+        `grow-wvb-bytes=${Growˉsuccessˉbytes.length} ` +
+        `grow-sha256=${Growˉsha256} ` +
         `owned-call-wvb-bytes=${Ownedˉcallˉsuccessˉbytes.length} ` +
         `owned-call-sha256=${Ownedˉcallˉsha256} ` +
         `using-fallthrough-wvb-bytes=${Usingˉfallthroughˉbytes.length} ` +
@@ -802,6 +876,71 @@ function Inspectˉexactˉappendˉmodule(Bytes) {
     };
 }
 
+function Inspectˉexactˉgrowˉmodule(Bytes) {
+    if (Bytes.length !== 3628 ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 27 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The executable Vector growth fixture is not exact WVB 1.27.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Function = Parseˉmain(Bytes, Sections[4]);
+    const Types = Parseˉtypes(Bytes, Sections[7]);
+    if (Function.parameterCount !== 1 || Function.parameterShape !== 25 ||
+        Function.returnShape !== 1 || Function.localShapes.length !== 128 ||
+        Function.localShapes[4] !== 25 ||
+        Function.localShapes[11] !== 23 ||
+        Function.localTypeIndices[11] !== 8 ||
+        Types.length !== 9 || Types[0].kind !== 1 ||
+        Types[0].fields.length !== 3 || Types[0].fields[0].shape !== 8 ||
+        Types[0].fields[0].typeIndex !== 2 ||
+        Types[0].fields[1].shape !== 10 || Types[0].fields[2].shape !== 10 ||
+        Types[2].kind !== 7 || Types[2].cases.length !== 4 ||
+        Types[7].kind !== 3 || Types[7].cases.length !== 2 ||
+        Types[7].cases[0].fields.length !== 1 ||
+        Types[7].cases[0].fields[0].shape !== 20 ||
+        Types[7].cases[1].fields.length !== 1 ||
+        Types[7].cases[1].fields[0].shape !== 7 ||
+        Types[7].cases[1].fields[0].typeIndex !== 0 ||
+        Types[8].kind !== 5 || Types[8].element.shape !== 1) {
+        Reject(
+            'The executable Vector growth fixture nominal layout differs: ' +
+            `function=${JSON.stringify(Function)} types=${JSON.stringify(Types)}.`,
+        );
+    }
+    const Codeˉstart = Sections[5].payload + Function.codeOffset;
+    const Codeˉend = Codeˉstart + Function.codeLength;
+    const Matches = [];
+    let Lastˉinstruction = null;
+    let Cursor = Codeˉstart;
+    while (Cursor < Codeˉend) {
+        Lastˉinstruction = Cursor;
+        const Opcode = Bytes[Cursor];
+        const Width = Wvbˉinstructionˉwidth(Opcode);
+        if (Width > Codeˉend - Cursor) {
+            Reject('The executable Vector growth instruction stream is truncated.');
+        }
+        if (Opcode === 209) Matches.push(Cursor);
+        Cursor += Width;
+    }
+    if (Cursor !== Codeˉend || Lastˉinstruction === null ||
+        Matches.length !== 2 || Matches.some(
+            Offset => Bytes.readUInt32LE(Offset + 1) !== 12 ||
+                Bytes.readUInt32LE(Offset + 5) !== 5 ||
+                Bytes.readUInt32LE(Offset + 9) !== 7,
+        )) {
+        Reject('The executable Vector growth opcode layout differs.');
+    }
+    return {
+        opcodes: Matches,
+        lastInstruction: Lastˉinstruction,
+        requestedBytesShape: Types[0].fields[1].shapeOffset,
+        availableBytesShape: Types[0].fields[2].shapeOffset,
+        validPayloadShape: Types[7].cases[0].fields[0].shapeOffset,
+        resultFailureType: Types[7].cases[1].fields[0].shapeOffset + 1,
+    };
+}
+
 function Inspectˉownedˉcallˉmodule(Bytes) {
     if (Bytes.length < 64 || Bytes.length > MAXIMUM_WVB_BYTES ||
         Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
@@ -1004,6 +1143,7 @@ function Wvbˉinstructionˉwidth(Opcode) {
         Opcode === 201 || (Opcode >= 206 && Opcode <= 208)) {
         return 9;
     }
+    if (Opcode === 209) return 13;
     return 1;
 }
 
@@ -1104,7 +1244,8 @@ function Parseˉtypes(Bytes, Section) {
             Cursor += 4;
             for (let Member = 0; Member < Memberˉcount; Member += 1) {
                 const Memberˉname = Readˉstring(Bytes, Cursor);
-                Cursor = Memberˉname.end + 1;
+                Cursor = Memberˉname.end;
+                Entry.cases.push({ fields: [], value: Bytes[Cursor++] });
             }
         } else if (Kind === 3) {
             const Caseˉcount = Bytes.readUInt32LE(Cursor);

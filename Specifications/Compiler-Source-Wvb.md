@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.26 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.27 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.26, including the current
+For the execution subset through WVB 1.27, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -751,6 +751,37 @@ and rejects twelve append version, opcode, local, result, unit, failure,
 element, and canonical-type mutations. The source-built runner appends `7`,
 refuses the attempted `9` at capacity, checks the returned `9` and exact maximum
 `1`, and returns `42`.
+
+Typed WVIR 1.15/1.16 operation
+`Foundationˉvectorˉgrowˉreserved = 175` lowers to the thirteen-byte WVB
+1.27 opcode `D1`. Its three `u32` immediates select one direct non-parameter
+`Vector<T>` local, one distinct available `Memoryˉbudget` slot, and the exact
+`Result<unit, Allocationˉfailure>` type. The new maximum is the sole exact
+`u64` stack operand. The verifier reconstructs the scalar Vector element,
+unit payload, and canonical allocation record; validates both local indices;
+and preserves both owner states.
+
+The scalar runner implements growth as a strong transaction. It first reserves
+the complete replacement lease under the supplied budget while the old backing
+remains live, allocates and zero-initializes the replacement, copies exactly the
+initialized prefix, attaches the new lease, then releases the old descriptor
+and swaps the local. Any budget, target, provider, fragmentation, lease, or
+allocation refusal before the swap returns exact `Allocationˉfailure` while
+leaving Vector length, contents, capacity, owner identity, and supplied-budget
+accounting/generation unchanged. The temporary full replacement means a grow
+can refuse even when the final post-swap retained total would fit; callers that
+need a lower peak must select a separately specified future operation rather
+than receive hidden in-place partial progress. A new maximum less than or equal
+to the existing maximum traps as precondition `WVR3008`.
+
+`Vector-Grow-Reserved-Executable.wv` deterministically emits a 3,628-byte WVB
+1.27 module at SHA-256
+`30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59`.
+Its first request proves exact budget refusal (`40` requested, `24` available)
+and preservation of length `1`; its second request grows maximum `1` to `2`,
+appends the second item, and returns `42`. The compiler-aligned verifier accepts
+the exact module and rejects fifteen version, opcode, Vector-local,
+budget-local, Result, allocation-layout, and truncated-width mutations.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause

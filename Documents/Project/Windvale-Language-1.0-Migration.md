@@ -585,18 +585,47 @@ malformed modules, four retained owned-call cases, 12 `using` cases, and seven
 release sites. The registry remains 112 owners and advances to 5,399 cases; its
 17,351 LF-only bytes have SHA-256
 `75683af614bde5f4d6b8aa4c7439bf7c1a0b7df5c3160553900ab2173af5f6e7`.
-Aggregate-owned fields, one hosted resource consumer, and the explicit fallible
-elastic budget and Vector-growth path remain before Slice 5 completes.
+Aggregate-owned fields and one hosted resource consumer remain before Slice 5
+completes. Provider-backed expansion of a budget's authority is a later hosted
+capability checkpoint, distinct from Core Vector growth under already-held
+authority.
 
-The required next memory implementation checkpoint will retain fixed reserved
-construction while adding an explicit fallible elastic path for applications
-whose demand changes at runtime. “Use what the OS can provide” will mean a
-rights-limited provider may extend an application's budget under current policy;
-it will not mean an unbounded or infallible allocation promise. Vector growth
-must name the budget, publish exact new capacity only on success, and preserve
-the original Vector and budget on refusal. Implementation follows call transfer,
-deterministic release, and semantic `using` so every old/new backing and failure
-path has one provable owner.
+## Current Slice 5 transactional Vector-growth checkpoint
+
+[Decision 0848](../Decisions/0848-Execute-Transactional-Vector-Growth-As-Wvb-1.27.md)
+adds the explicit Core path for applications whose bounded demand changes at
+runtime. The Foundation call names both exclusive mutable owners and returns
+typed allocation refusal:
+
+```text
+Vectorˉgrowˉreserved::<T>(
+    borrow mut Vector,
+    borrow mut Budget,
+    Newˉmaximumˉitems,
+) -> Result<unit, Allocationˉfailure>
+```
+
+WVIR 1.15/1.16 operation 175 carries the Vector and budget slots separately.
+WVB 1.27 opcode `D1` carries those slots plus the exact Result type in thirteen
+bytes. The scalar runtime reserves the complete replacement while the old
+backing is live, copies only initialized cells, then releases and swaps exactly
+once. Ordinary refusal preserves the original Vector and supplied budget;
+non-increasing growth is a precondition trap.
+
+The deterministic fixture is 3,628-byte WVB 1.27 at SHA-256
+`30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59`.
+It first proves exact 40-byte refusal against 24 available bytes and unchanged
+length `1`; it then grows to maximum `2`, appends the second item, and returns
+`42`. Fifteen byte-level mutations reject. The combined focused owner passes
+the exact same 88 cases on Windows and Linux: 12 valid modules and 53 malformed
+modules plus the retained owned-call and semantic-`using` evidence. Portable
+WVB sizes and SHA-256 identities match across both hosts.
+
+“Use what the OS can provide” remains a separate rights-limited hosted provider
+operation that may extend an application's budget under current policy. It will
+not mean an unbounded or infallible allocation promise, and Core `D1` cannot
+acquire that authority ambiently. Aggregate-owned fields and one hosted
+resource consumer remain before Slice 5 completes.
 
 ## Removal checkpoint
 

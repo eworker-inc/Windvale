@@ -634,11 +634,12 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
     if Operation == 171u32 { return Compilerˉsourceˉwvbˉlowˉbyte(206u32); }
     if Operation == 172u32 { return Compilerˉsourceˉwvbˉlowˉbyte(207u32); }
     if Operation == 173u32 { return Compilerˉsourceˉwvbˉlowˉbyte(208u32); }
+    if Operation == 175u32 { return Compilerˉsourceˉwvbˉlowˉbyte(209u32); }
     return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 174u32 { return true; }
+        if Operation <= 175u32 { return true; }
     }
     return false;
 }
@@ -689,6 +690,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
         Opcodeˉbytes = 9u32;
     }
     if Operation == 174u32 { Opcodeˉbytes = 6u32; }
+    if Operation == 175u32 { Opcodeˉbytes = 13u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -3255,6 +3257,30 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
+            if Operation == 175u32 {
+                let Plannedˉgrowˉresult: u32 =
+                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                        Shape, Symbols, Orders
+                    );
+                let Plannedˉgrowˉvector: u32 =
+                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                        Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+                            Wir, Function, Target
+                        ), Symbols, Orders
+                    );
+                if Target < Parameters || Target >= Parameters + Locals ||
+                    Auxiliary >= Parameters + Locals ||
+                    Target == Auxiliary || Operands != 1u32 ||
+                    Plannedˉgrowˉresult < 196608u32 ||
+                    Plannedˉgrowˉresult >= 262144u32 ||
+                    Plannedˉgrowˉvector < 327680u32 ||
+                    Plannedˉgrowˉvector >= 393216u32 {
+                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                        Globalˉoperation
+                    );
+                }
+            }
             if Operation != 171u32 && Operation != 172u32 &&
                 Operation != 173u32 &&
                 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
@@ -3903,6 +3929,19 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
         );
         Result = Bytesˉconcat(Result, Bytesˉfromˉu8(80u8));
     }
+    if Operation == 175u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(209u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                    Shape, Symbols, Orders
+                ) - 196608u32
+            )
+        );
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -4537,6 +4576,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 }
                 if Operationˉkind == 173u32 {
                     Features = Features | 16384u32;
+                }
+                if Operationˉkind == 175u32 {
+                    Features = Features | 65536u32;
                 }
                 if Operationˉkind == 8u32 {
                     let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
@@ -5342,6 +5384,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if (Features & 8192u32) != 0u32 { Wvbˉminor = 24u32; }
     if (Features & 16384u32) != 0u32 { Wvbˉminor = 25u32; }
     if (Features & 32768u32) != 0u32 { Wvbˉminor = 26u32; }
+    if (Features & 65536u32) != 0u32 { Wvbˉminor = 27u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

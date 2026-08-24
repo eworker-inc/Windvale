@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-owned Vector calls through WVB 1.26 but has not repinned the paired
+reserved Vector growth through WVB 1.27 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.26. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.27. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -124,7 +124,7 @@ transfers the unique-Vector flag without changing the allocation reference
 count. Parameter slots are rejected until calls transfer unique evidence. The
 verifier rejects out-of-range, uninitialized, and repeated takes before
 execution.
-WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.26 supplies one fresh
+WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.27 supplies one fresh
 opaque root-budget token to the sole parameter of exported
 `Main(Memoryˉbudget) -> i32`. The
 interpreter validates that exact
@@ -185,6 +185,17 @@ without releasing the caller's preserved owner. A trap tears down the bounded
 invocation domain. No raw pointer, source slot, borrow handle, or mode trailer
 enters the runtime representation.
 
+WVB 1.27 adds exact opcode `D1`. Its three immediates select one direct
+non-parameter `Vector<T>` local, one distinct available `Memoryˉbudget` slot,
+and exact `Result<unit, Allocationˉfailure>`; its sole stack operand is the
+new `u64` maximum. The current resource-free scalar profile reserves and
+allocates the full replacement before releasing the old descriptor. It copies
+the initialized prefix, attaches the new lease, then swaps the local exactly
+once. Target or budget refusal returns exact failure and leaves Vector plus
+budget state unchanged. A non-increasing maximum traps with `WVR3008`, and the
+2,047-cell target bound remains a profile limit. No provider acquisition,
+partial growth, or backing address becomes visible.
+
 The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
 SHA-256
 `ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
@@ -199,9 +210,9 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 316,365-byte WVB at SHA-256
-`f836c7d0e005b48ac6ad57b096c354864d0ee7972f3306e6317236a8b47c3536`.
-It contains 150 functions and 284,706 code bytes. Cohesive directory, request,
+The current Windows development build is a 328,812-byte WVB at SHA-256
+`b6fd4502012c4d7a7317cf8f25b28cf0acf25da4a90de6aee4075dcc1c5cf91d`.
+It contains 153 functions and 295,749 code bytes. Cohesive directory, request,
 data/local/bytes, collection, aggregate, and extended-operation helpers keep
 every source-built function below the existing bytecode and 2,048 native
 physical-cell limits; neither limit was raised.
@@ -260,6 +271,15 @@ target-unaddressable refusal; zero fails with `WVR3008` after four guest
 instructions. Ten exact version, opcode, local, Result, Vector, and failure-
 layout mutations reject. This is current Windows development evidence; paired-
 host reconstruction and promoted-candidate repinning remain separate gates.
+
+The executable growth fixture is deterministic 3,628-byte WVB 1.27 at SHA-256
+`30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59`.
+It proves a 40-byte request refuses against 24 available bytes without changing
+length `1`, then a 24-byte replacement succeeds, accepts a second item, and
+returns `42`. Fifteen exact version, opcode, local, result, allocation-layout,
+and truncated-width mutations reject. The exact 88-case focused owner passes on
+Windows and Linux with identical portable fixture identities; the promoted
+paired-host runner inventory remains unrepinned.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

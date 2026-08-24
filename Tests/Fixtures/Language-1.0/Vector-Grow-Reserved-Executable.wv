@@ -1,0 +1,152 @@
+#!wv/1 en@1
+module Languageˉoneˉvectorˉgrowˉreservedˉexecutable;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    var Root: Memory.Memoryˉbudget = Budget;
+    let Parentˉoutcome: Resultˉvalues.Result<
+        Memory.Memoryˉbudget,
+        Memory.Allocationˉfailure
+    > = Memory.Split(borrow mut Root, 40u64, 2u32);
+    return match Parentˉoutcome {
+        case Resultˉvalues.Result.Failure { Error: Parentˉfailure } { 1 }
+        case Resultˉvalues.Result.Valid { Value: Parentˉvalue } {
+            var Parent: Memory.Memoryˉbudget = Parentˉvalue;
+            let Vectorˉbudgetˉoutcome: Resultˉvalues.Result<
+                Memory.Memoryˉbudget,
+                Memory.Allocationˉfailure
+            > = Memory.Split(borrow mut Parent, 16u64, 0u32);
+            match Vectorˉbudgetˉoutcome {
+                case Resultˉvalues.Result.Failure {
+                    Error: Vectorˉbudgetˉfailure,
+                } { 2 }
+                case Resultˉvalues.Result.Valid { Value: Vectorˉbudget } {
+                    let Constructˉoutcome: Resultˉvalues.Result<
+                        Collections.Vector<i32>,
+                        Memory.Allocationˉfailure
+                    > = Collections.Vectorˉconstructˉreserved::<i32>(
+                        Vectorˉbudget,
+                        1u64
+                    );
+                    match Constructˉoutcome {
+                        case Resultˉvalues.Result.Failure {
+                            Error: Constructˉfailure,
+                        } { 3 }
+                        case Resultˉvalues.Result.Valid {
+                            Value: Constructedˉvalues,
+                        } {
+                            var Values: Collections.Vector<i32> =
+                                Constructedˉvalues;
+                            let Firstˉappend: Resultˉvalues.Result<
+                                unit,
+                                Collections.Vectorˉappendˉfailure<i32>
+                            > = Collections.Vectorˉappend::<i32>(
+                                borrow mut Values,
+                                7
+                            );
+                            match Firstˉappend {
+                                case Resultˉvalues.Result.Failure {
+                                    Error: Firstˉappendˉfailure,
+                                } { 4 }
+                                case Resultˉvalues.Result.Valid {
+                                    Value: Firstˉaccepted,
+                                } {
+                                    let Refusedˉgrow:
+                                        Resultˉvalues.Result<
+                                            unit,
+                                            Memory.Allocationˉfailure
+                                        > = Collections.Vectorˉgrowˉreserved::<i32>(
+                                            borrow mut Values,
+                                            borrow mut Parent,
+                                            4u64
+                                        );
+                                    match Refusedˉgrow {
+                                        case Resultˉvalues.Result.Valid {
+                                            Value: Unexpectedˉgrowth,
+                                        } { 5 }
+                                        case Resultˉvalues.Result.Failure {
+                                            Error: Expectedˉrefusal,
+                                        } {
+                                            let Refusalˉisˉbudget: bool =
+                                                match Expectedˉrefusal.Reason {
+                                                    case Memory.Allocationˉreason.Budgetˉexhausted {
+                                                        true
+                                                    }
+                                                    case Memory.Allocationˉreason.Targetˉunaddressable {
+                                                        false
+                                                    }
+                                                    case Memory.Allocationˉreason.Providerˉunavailable {
+                                                        false
+                                                    }
+                                                    case Memory.Allocationˉreason.Fragmented {
+                                                        false
+                                                    }
+                                                };
+                                            if !Refusalˉisˉbudget ||
+                                                Expectedˉrefusal.Requestedˉbytes != 40u64 ||
+                                                Expectedˉrefusal.Availableˉbytes != 24u64 ||
+                                                Collections.Vectorˉlength(
+                                                    borrow Values
+                                                ) != 1u64 {
+                                                6
+                                            } else {
+                                                let Acceptedˉgrow:
+                                                    Resultˉvalues.Result<
+                                                        unit,
+                                                        Memory.Allocationˉfailure
+                                                    > = Collections.Vectorˉgrowˉreserved::<i32>(
+                                                        borrow mut Values,
+                                                        borrow mut Parent,
+                                                        2u64
+                                                    );
+                                                match Acceptedˉgrow {
+                                                    case Resultˉvalues.Result.Failure {
+                                                        Error: Growthˉfailure,
+                                                    } { 7 }
+                                                    case Resultˉvalues.Result.Valid {
+                                                        Value: Growthˉaccepted,
+                                                    } {
+                                                        let Secondˉappend:
+                                                            Resultˉvalues.Result<
+                                                                unit,
+                                                                Collections.Vectorˉappendˉfailure<i32>
+                                                            > = Collections.Vectorˉappend::<i32>(
+                                                                borrow mut Values,
+                                                                9
+                                                            );
+                                                        match Secondˉappend {
+                                                            case Resultˉvalues.Result.Failure {
+                                                                Error: Secondˉappendˉfailure,
+                                                            } { 8 }
+                                                            case Resultˉvalues.Result.Valid {
+                                                                Value: Secondˉaccepted,
+                                                            } {
+                                                                if Collections.Vectorˉlength(
+                                                                    borrow Values
+                                                                ) == 2u64 {
+                                                                    42
+                                                                } else {
+                                                                    9
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+}
