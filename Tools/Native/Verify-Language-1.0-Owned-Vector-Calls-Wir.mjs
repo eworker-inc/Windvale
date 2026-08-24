@@ -256,18 +256,15 @@ function Inspectˉownedˉcallˉwvb(Input) {
     }
     Cursor = Functions.payload + 4;
     const Entries = [];
-    let Totalˉparameters = 0;
     for (let Index = 0; Index < Count; Index += 1) {
         const Name = Readˉwvbˉstring(Input, Cursor, Functions.end);
         Cursor = Name.end;
         if (Cursor + 4 > Functions.end) Reject('A function entry is truncated.');
         const Parameterˉcount = Input.readUInt32LE(Cursor);
         Cursor += 4;
-        if (Parameterˉcount > 64 || Totalˉparameters > 1_048_576 - Parameterˉcount) {
+        if (Parameterˉcount > 64) {
             Reject('The owned-call parameter directory is outside its bound.');
         }
-        const Parameterˉoffset = Totalˉparameters;
-        Totalˉparameters += Parameterˉcount;
         const Parameterˉshapes = [];
         for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
             const Shape = Readˉwvbˉshape(Input, Cursor, Functions.end);
@@ -286,26 +283,19 @@ function Inspectˉownedˉcallˉwvb(Input) {
         Cursor += 12;
         Entries.push({
             name: Name.value,
-            parameterOffset: Parameterˉoffset,
             parameterShapes: Parameterˉshapes,
         });
     }
-    if (Cursor + 4 > Functions.end ||
-        Input.readUInt32LE(Cursor) !== Totalˉparameters ||
-        Cursor + 4 + Totalˉparameters !== Functions.end) {
-        Reject('The WVB 1.26 parameter-mode trailer is inconsistent.');
-    }
-    const Modes = Input.subarray(Cursor + 4, Functions.end);
-    if ([...Modes].some(Mode => Mode > 2)) {
-        Reject('The WVB 1.26 parameter-mode trailer contains an unknown mode.');
+    if (Cursor !== Functions.end) {
+        Reject('The WVB 1.26 function directory contains trailing bytes.');
     }
     const Expected = [
-        { name: 'Forward', shapes: [23], modes: [0] },
-        { name: 'Observe', shapes: [23], modes: [1] },
-        { name: 'Release', shapes: [23], modes: [0] },
-        { name: 'Borrowˉthenˉforward', shapes: [23], modes: [0] },
-        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2], modes: [0, 0] },
-        { name: 'Main', shapes: [25], modes: [0] },
+        { name: 'Forward', shapes: [23] },
+        { name: 'Observe', shapes: [26] },
+        { name: 'Release', shapes: [23] },
+        { name: 'Borrowˉthenˉforward', shapes: [23] },
+        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2] },
+        { name: 'Main', shapes: [25] },
     ];
     for (const Expectation of Expected) {
         const Entry = Entries.find(
@@ -317,18 +307,6 @@ function Inspectˉownedˉcallˉwvb(Input) {
                 (Shape, Index) => Entry.parameterShapes[Index] !== Shape,
             )) {
             Reject(`The ${Expectation.name} WVB parameter shapes differ.`);
-        }
-        const Actualˉmodes = [...Modes.subarray(
-            Entry.parameterOffset,
-            Entry.parameterOffset + Entry.parameterShapes.length,
-        )];
-        if (Actualˉmodes.some(
-            (Mode, Index) => Mode !== Expectation.modes[Index],
-        )) {
-            Reject(
-                `The ${Expectation.name} WVB parameter modes differ: ` +
-                `${JSON.stringify(Actualˉmodes)}.`,
-            );
         }
     }
 }
@@ -349,7 +327,7 @@ function Readˉwvbˉshape(Input, Cursor, End) {
     if (Cursor >= End) Reject('A WVB shape is truncated.');
     const Kind = Input[Cursor];
     let Next = Cursor + 1;
-    if ([7, 8, 11, 22, 23, 24].includes(Kind)) Next += 4;
+    if ([7, 8, 11, 22, 23, 24, 26, 27].includes(Kind)) Next += 4;
     if (Next > End) Reject('A WVB nominal shape is truncated.');
     return { kind: Kind, end: Next };
 }

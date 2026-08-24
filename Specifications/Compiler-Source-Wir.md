@@ -300,11 +300,13 @@ on both forward paths.
 This checkpoint classifies exact Vector values, not ownership recursively
 nested inside a record, variant, Result, fixed array, or other aggregate.
 Aggregate field provenance, loops, owned phis, semantic `using`, deterministic
-reverse release, and general resource classification remain later Slice 5
-work. The analyzer may publish provisional WVIR evidence; the emitter performs
-the independent directory validation. Valid by-value Vector calls currently
-reach that boundary and fail closed with `Unsupportedˉshape`, because WVB does
-not yet serialize parameter transfer modes or deterministic callee cleanup.
+aggregate destruction, and general resource classification remain later Slice
+5 work. The analyzer may publish provisional WVIR evidence; the emitter
+performs the independent directory validation. WVB 1.26 now serializes exact
+Vector parameter modes as value shape `23`, immutable-borrow shape `26`, or
+mutable-borrow shape `27`, and the scalar runner performs deterministic
+reverse-slot callee cleanup. The WVIR proof remains the source-slot provenance
+authority; WVB does not add a source slot or borrow handle.
 
 The private compiler shape `805306368` represents only the exact edition-1
 `Foundationˉmemory.Memoryˉbudget` identity and is classified as owned. An

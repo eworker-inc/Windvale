@@ -27,6 +27,8 @@ const EXPECTED_VECTOR_SUCCESS_SHA256 =
     '881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5';
 const EXPECTED_APPEND_SUCCESS_SHA256 =
     '6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f';
+const EXPECTED_OWNED_CALL_SUCCESS_SHA256 =
+    'ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -213,6 +215,9 @@ try {
         Ownedˉcallˉsuccessˉbytes,
     );
     const Ownedˉcallˉsha256 = Digest(Ownedˉcallˉsuccessˉbytes);
+    if (Ownedˉcallˉsha256 !== EXPECTED_OWNED_CALL_SUCCESS_SHA256) {
+        Reject(`The executable owned Vector call fixture digest differs: ${Ownedˉcallˉsha256}.`);
+    }
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -339,26 +344,26 @@ try {
             Bytes.writeUInt16LE(25, 6);
             return Bytes;
         }],
-        ['owned-call-trailer-count', Bytes => {
-            Bytes.writeUInt32LE(
-                Ownedˉcallˉlayout.parameterCount + 1,
-                Ownedˉcallˉlayout.parameterCountOffset,
-            );
-            return Bytes;
-        }],
-        ['owned-call-invalid-mode', Bytes => {
-            Bytes[Ownedˉcallˉlayout.modesOffset] = 3;
+        ['owned-call-invalid-borrowed-shape', Bytes => {
+            Bytes[Ownedˉcallˉlayout.observeParameter] = 28;
             return Bytes;
         }],
         ['owned-call-value-mode-borrowed', Bytes => {
-            Bytes[Ownedˉcallˉlayout.forwardMode] = 1;
+            Bytes[Ownedˉcallˉlayout.forwardParameter] = 26;
             return Bytes;
         }],
         ['owned-call-borrow-mode-value', Bytes => {
-            Bytes[Ownedˉcallˉlayout.observeMode] = 0;
+            Bytes[Ownedˉcallˉlayout.observeParameter] = 23;
             return Bytes;
         }],
-        ['owned-call-truncated-trailer', Bytes => Bytes.subarray(0, Bytes.length - 1)],
+        ['owned-call-borrowed-return', Bytes => {
+            Bytes[Ownedˉcallˉlayout.forwardReturn] = 26;
+            return Bytes;
+        }],
+        ['owned-call-borrowed-local', Bytes => {
+            Bytes[Ownedˉcallˉlayout.vectorLocal] = 27;
+            return Bytes;
+        }],
     ];
     for (const [Name, Mutate] of Ownedˉcallˉmalformedˉcases) {
         const Candidate = Mutate(Buffer.from(Ownedˉcallˉsuccessˉbytes));
@@ -737,22 +742,25 @@ function Inspectˉownedˉcallˉmodule(Bytes) {
             Parameterˉcount > 1_048_576 - Entryˉparameterˉcount) {
             Reject('The owned Vector call parameter count exceeds its bound.');
         }
-        const Modeˉoffset = Parameterˉcount;
         Parameterˉcount += Entryˉparameterˉcount;
         const Parameterˉshapes = [];
         for (let Parameter = 0; Parameter < Entryˉparameterˉcount; Parameter += 1) {
             const Shape = Readˉshape(Bytes, Cursor);
-            Parameterˉshapes.push(Shape.shape);
+            Parameterˉshapes.push(Shape);
             Cursor = Shape.end;
         }
-        Cursor = Readˉshape(Bytes, Cursor).end;
+        const Return = Readˉshape(Bytes, Cursor);
+        Cursor = Return.end;
         const Localˉcount = Bytes.readUInt32LE(Cursor);
         Cursor += 4;
         if (Localˉcount > 2048) {
             Reject('The owned Vector call local count exceeds its bound.');
         }
+        const Localˉshapes = [];
         for (let Local = 0; Local < Localˉcount; Local += 1) {
-            Cursor = Readˉshape(Bytes, Cursor).end;
+            const Shape = Readˉshape(Bytes, Cursor);
+            Localˉshapes.push(Shape);
+            Cursor = Shape.end;
         }
         if (Cursor + 12 > Section.payload + Section.length) {
             Reject('The owned Vector call function entry is truncated.');
@@ -763,29 +771,22 @@ function Inspectˉownedˉcallˉmodule(Bytes) {
         Entries.push({
             name: Name.value,
             parameterShapes: Parameterˉshapes,
-            modeOffset: Modeˉoffset,
+            returnShape: Return,
+            localShapes: Localˉshapes,
             codeOffset: Codeˉoffset,
             codeLength: Codeˉlength,
         });
     }
-    const Parameterˉcountˉoffset = Cursor;
-    if (Cursor + 4 > Section.payload + Section.length ||
-        Bytes.readUInt32LE(Cursor) !== Parameterˉcount ||
-        Cursor + 4 + Parameterˉcount !== Section.payload + Section.length) {
-        Reject('The owned Vector call parameter-mode trailer differs.');
-    }
-    const Modesˉoffset = Cursor + 4;
-    const Modes = Bytes.subarray(Modesˉoffset, Modesˉoffset + Parameterˉcount);
-    if ([...Modes].some(Mode => Mode > 2)) {
-        Reject('The owned Vector call parameter-mode trailer has an unknown mode.');
+    if (Cursor !== Section.payload + Section.length) {
+        Reject('The owned Vector call function directory has trailing bytes.');
     }
     const Expected = [
-        { name: 'Forward', shapes: [23], modes: [0] },
-        { name: 'Observe', shapes: [23], modes: [1] },
-        { name: 'Release', shapes: [23], modes: [0] },
-        { name: 'Borrowˉthenˉforward', shapes: [23], modes: [0] },
-        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2], modes: [0, 0] },
-        { name: 'Main', shapes: [25], modes: [0] },
+        { name: 'Forward', shapes: [23] },
+        { name: 'Observe', shapes: [26] },
+        { name: 'Release', shapes: [23] },
+        { name: 'Borrowˉthenˉforward', shapes: [23] },
+        { name: 'Consumeˉonˉbothˉpaths', shapes: [23, 2] },
+        { name: 'Main', shapes: [25] },
     ];
     for (const Expectation of Expected) {
         const Entry = Entries.find(
@@ -794,21 +795,23 @@ function Inspectˉownedˉcallˉmodule(Bytes) {
         if (Entry === undefined ||
             Entry.parameterShapes.length !== Expectation.shapes.length ||
             Expectation.shapes.some(
-                (Shape, Index) => Entry.parameterShapes[Index] !== Shape,
-            ) || Expectation.modes.some(
-                (Mode, Index) => Modes[Entry.modeOffset + Index] !== Mode,
+                (Shape, Index) => Entry.parameterShapes[Index].shape !== Shape,
             )) {
             Reject(`The ${Expectation.name} owned-call contract differs.`);
         }
     }
     const Forward = Entries.find(Entry => Entry.name === 'Forward');
     const Observe = Entries.find(Entry => Entry.name === 'Observe');
+    const Vectorˉlocal = Entries.flatMap(Entry => Entry.localShapes)
+        .find(Shape => Shape.shape === 23);
+    if (Vectorˉlocal === undefined) {
+        Reject('The owned Vector call fixture has no Vector local evidence.');
+    }
     return {
-        parameterCount: Parameterˉcount,
-        parameterCountOffset: Parameterˉcountˉoffset,
-        modesOffset: Modesˉoffset,
-        forwardMode: Modesˉoffset + Forward.modeOffset,
-        observeMode: Modesˉoffset + Observe.modeOffset,
+        forwardParameter: Forward.parameterShapes[0].shapeOffset,
+        observeParameter: Observe.parameterShapes[0].shapeOffset,
+        forwardReturn: Forward.returnShape.shapeOffset,
+        vectorLocal: Vectorˉlocal.shapeOffset,
     };
 }
 
@@ -952,7 +955,7 @@ function Readˉstring(Bytes, Offset) {
 
 function Readˉshape(Bytes, Offset) {
     const Shape = Bytes[Offset];
-    const Nominal = [7, 8, 11, 22, 23, 24].includes(Shape);
+    const Nominal = [7, 8, 11, 22, 23, 24, 26, 27].includes(Shape);
     return {
         shape: Shape,
         shapeOffset: Offset,

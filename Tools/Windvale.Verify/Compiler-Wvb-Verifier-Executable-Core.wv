@@ -14,90 +14,10 @@ record Hˉoperationˉstate {
 fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
     if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
-        Kind == 23u32 || Kind == 24u32 {
+        Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 {
         return 5u32;
     }
     return 1u32;
-}
-
-fn Hˉfunctionˉentryˉend(Input: bytes, Cursor: u32) -> u32 {
-    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
-    var Next: u32 = Cursor + 4u32 + Nameˉlength;
-    let Parameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
-    Next = Next + 4u32;
-    var Shape: u32 = 0u32;
-    while Shape < Parameterˉcount + 1u32 {
-        Next = Next + Hˉshapeˉwidth(Input, Next);
-        Shape = Shape + 1u32;
-    }
-    let Localˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Next);
-    Next = Next + 4u32;
-    Shape = 0u32;
-    while Shape < Localˉcount {
-        Next = Next + Hˉshapeˉwidth(Input, Next);
-        Shape = Shape + 1u32;
-    }
-    return Next + 12u32;
-}
-
-fn Hˉfunctionˉentriesˉend(
-    Input: bytes,
-    Functions: u32,
-    Functionˉcount: u32
-) -> u32 {
-    var Cursor: u32 = Functions + 4u32;
-    var Function: u32 = 0u32;
-    while Function < Functionˉcount {
-        Cursor = Hˉfunctionˉentryˉend(Input, Cursor);
-        Function = Function + 1u32;
-    }
-    return Cursor;
-}
-
-fn Hˉcallˉtransfersˉownedˉvector(
-    Input: bytes,
-    Functionˉcode: u32,
-    Cursor: u32,
-    Functions: u32,
-    Parameterˉmodes: u32
-) -> bool {
-    let Target: u32 = Bytesˉreadˉu32ˉlittle(
-        Input, Functionˉcode + Cursor + 1u32
-    );
-    var Targetˉcursor: u32 = Functions + 4u32;
-    var Modeˉbase: u32 = 0u32;
-    var Function: u32 = 0u32;
-    while Function < Target {
-        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
-        let Countˉcursor: u32 = Targetˉcursor + 4u32 + Nameˉlength;
-        Modeˉbase = Modeˉbase + Bytesˉreadˉu32ˉlittle(
-            Input, Countˉcursor
-        );
-        Targetˉcursor = Hˉfunctionˉentryˉend(Input, Targetˉcursor);
-        Function = Function + 1u32;
-    }
-    let Targetˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-        Input, Targetˉcursor
-    );
-    Targetˉcursor = Targetˉcursor + 4u32 + Targetˉnameˉlength;
-    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Input, Targetˉcursor);
-    Targetˉcursor = Targetˉcursor + 4u32;
-    var Parameter: u32 = 0u32;
-    while Parameter < Parameters {
-        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
-            Input, Targetˉcursor
-        ));
-        if Kind == 23u32 && U32ˉfromˉu8(Bytesˉreadˉu8(
-            Input, Parameterˉmodes + Modeˉbase + Parameter
-        )) == 0u32 {
-            return true;
-        }
-        Targetˉcursor = Targetˉcursor + Hˉshapeˉwidth(
-            Input, Targetˉcursor
-        );
-        Parameter = Parameter + 1u32;
-    }
-    return false;
 }
 
 fn Hˉvariantˉcaseˉend(Input: bytes, Cursor: u32) -> u32 {
@@ -502,18 +422,8 @@ fn Iˉtrackedˉownedˉlocalˉshape(
     Typeˉcount: u32,
     Localˉshapes: bytes,
     Slot: u32,
-    Minor: u32,
-    Parameterˉcount: u32,
-    Parameterˉmodes: u32,
-    Parameterˉmodeˉbase: u32
+    Minor: u32
 ) -> bool {
-    if Slot < Parameterˉcount && Minor == 26u32 &&
-        U32ˉfromˉu8(Bytesˉreadˉu8(Localˉshapes, Slot * 5u32)) == 23u32 &&
-        U32ˉfromˉu8(Bytesˉreadˉu8(
-            Input, Parameterˉmodes + Parameterˉmodeˉbase + Slot
-        )) != 0u32 {
-        return false;
-    }
     return Hˉownedˉlocalˉshape(
         Input, Types, Typeˉcount, Localˉshapes, Slot, Minor
     );
@@ -1180,7 +1090,6 @@ export fn Hˉcall(
     Functionˉcode: u32,
     Cursor: u32,
     Functions: u32,
-    Parameterˉmodes: u32,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -1190,7 +1099,6 @@ export fn Hˉcall(
     );
     var Targetˉcursor: u32 = Functions + 4u32;
     var Currentˉfunction: u32 = 0u32;
-    var Targetˉmodeˉbase: u32 = 0u32;
     var Nameˉlength: u32 = 0u32;
     var Shapeˉindex: u32 = 0u32;
     var Shapeˉkind: u32 = 0u32;
@@ -1201,8 +1109,6 @@ export fn Hˉcall(
             Input,
             Targetˉcursor
         );
-        Targetˉmodeˉbase = Targetˉmodeˉbase +
-            Skippedˉtargetˉparameters;
         Targetˉcursor = Targetˉcursor + 4u32;
         Shapeˉindex = 0u32;
         while Shapeˉindex < Skippedˉtargetˉparameters + 1u32 {
@@ -1210,7 +1116,8 @@ export fn Hˉcall(
             Targetˉcursor = Targetˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
                 Targetˉcursor = Targetˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1251,7 +1158,8 @@ export fn Hˉcall(
             Argumentˉcursor = Argumentˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
                 Argumentˉcursor = Argumentˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1260,17 +1168,17 @@ export fn Hˉcall(
             Input, Argumentˉcursor
         ));
         var Expectedˉkind: u32 = Declaredˉkind;
-        if Minor == 26u32 && Declaredˉkind == 23u32 &&
-            U32ˉfromˉu8(Bytesˉreadˉu8(
-                Input,
-                Parameterˉmodes + Targetˉmodeˉbase + Wantedˉparameter
-            )) == 0u32 {
-            Expectedˉkind = 26u32;
+        if Minor == 26u32 {
+            if Declaredˉkind == 23u32 { Expectedˉkind = 26u32; }
+            if Declaredˉkind == 26u32 || Declaredˉkind == 27u32 {
+                Expectedˉkind = 23u32;
+            }
         }
         var Expectedˉnominal: u32 = 0u32;
         if Declaredˉkind == 7u32 || Declaredˉkind == 8u32 ||
             Declaredˉkind == 11u32 || Declaredˉkind == 22u32 ||
-            Declaredˉkind == 23u32 || Declaredˉkind == 24u32 {
+            Declaredˉkind == 23u32 || Declaredˉkind == 24u32 ||
+            Declaredˉkind == 26u32 || Declaredˉkind == 27u32 {
             Expectedˉnominal = Bytesˉreadˉu32ˉlittle(Input, Argumentˉcursor + 1u32);
         }
         let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
@@ -1292,7 +1200,8 @@ export fn Hˉcall(
         Targetˉreturn = Targetˉreturn + 1u32;
         if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
             Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+            Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+            Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
             Targetˉreturn = Targetˉreturn + 4u32;
         }
         Shapeˉindex = Shapeˉindex + 1u32;
@@ -1301,7 +1210,6 @@ export fn Hˉcall(
         Input, Targetˉreturn
     ));
     let Declaredˉpushˉkind: u32 = Pushˉkind;
-    if Minor == 26u32 && Pushˉkind == 23u32 { Pushˉkind = 26u32; }
     var Pushˉnominal: u32 = 0u32;
     if Declaredˉpushˉkind == 7u32 || Declaredˉpushˉkind == 8u32 ||
         Declaredˉpushˉkind == 11u32 || Declaredˉpushˉkind == 22u32 ||
@@ -1421,8 +1329,6 @@ fn Hˉlocalˉoperation(
     Localˉshapes: bytes,
     Parameterˉcount: u32,
     Localˉcount: u32,
-    Parameterˉmodes: u32,
-    Parameterˉmodeˉbase: u32,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -1462,8 +1368,18 @@ fn Hˉlocalˉoperation(
                 return Hˉoperationˉfailure(Stack, Depth);
             }
         }
+        var Loadedˉkind: u32 = Localˉkind;
+        if Localˉkind == 26u32 || Localˉkind == 27u32 {
+            Loadedˉkind = 23u32;
+        } else if Minor == 26u32 && Localˉkind == 23u32 &&
+            Cursor + 5u32 < Functionˉcodeˉlength &&
+            U32ˉfromˉu8(Bytesˉreadˉu8(
+                Input, Functionˉcode + Cursor + 5u32
+            )) == 5u32 {
+            Loadedˉkind = 26u32;
+        }
         return Hˉoperationˉstate(
-            true, Stack, Depth, true, Localˉkind, Localˉnominal
+            true, Stack, Depth, true, Loadedˉkind, Localˉnominal
         );
     }
 
@@ -1481,10 +1397,7 @@ fn Hˉlocalˉoperation(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         if Localˉindex < Parameterˉcount && Localˉkind == 23u32 &&
-            (Minor != 26u32 || U32ˉfromˉu8(Bytesˉreadˉu8(
-                Input,
-                Parameterˉmodes + Parameterˉmodeˉbase + Localˉindex
-            )) != 0u32) {
+            Minor != 26u32 {
             return Hˉoperationˉfailure(Stack, Depth);
         }
         var Takenˉpushˉkind: u32 = 26u32;
@@ -1504,6 +1417,10 @@ fn Hˉlocalˉoperation(
     var Pushˉkind: u32 = 0u32;
     var Pushˉnominal: u32 = 0u32;
     if Opcode == 5u32 {
+        if Localˉindex < Parameterˉcount &&
+            (Localˉkind == 26u32 || Localˉkind == 27u32) {
+            return Hˉoperationˉfailure(Stack, Depth);
+        }
         if Firstˉkind == 23u32 && Minor >= 20u32 { Firstˉkind = 26u32; }
         if Minor >= 23u32 && Minor <= 26u32 && Firstˉkind == 25u32 {
             Firstˉkind = 27u32;
@@ -1700,19 +1617,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
     let Functionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Functions);
     if Functionˉcount > 4096u32 { return Invalid; }
     if Codeˉlength > 4194304u32 { return Invalid; }
-    let Functionˉentriesˉend: u32 = Hˉfunctionˉentriesˉend(
-        Input, Functions, Functionˉcount
-    );
-    var Parameterˉmodes: u32 = 0u32;
-    if Minor == 26u32 {
-        Parameterˉmodes = Functionˉentriesˉend + 4u32;
-    }
-
     var Functionˉindex: u32 = 0u32;
     var Functionˉcursor: u32 = Functions + 4u32;
     var Aggregateˉinstructions: u32 = 0u32;
-    var Parameterˉmodeˉbase: u32 = 0u32;
-    var Ownedˉvectorˉcalls: u32 = 0u32;
     while Functionˉindex < Functionˉcount {
         var Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Functionˉcursor);
         Functionˉcursor = Functionˉcursor + 4u32 + Nameˉlength;
@@ -1729,7 +1636,8 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
                 Functionˉcursor = Functionˉcursor + 4u32;
             }
             Shapeˉindex = Shapeˉindex + 1u32;
@@ -1945,8 +1853,6 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Localˉshapes,
                     Parameterˉcount,
                     Localˉcount,
-                    Parameterˉmodes,
-                    Parameterˉmodeˉbase,
                     Stack,
                     Depth
                 );
@@ -2177,20 +2083,12 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             }
 
             if Opcode == 64u32 {
-                if Minor == 26u32 && Hˉcallˉtransfersˉownedˉvector(
-                    Input, Functionˉcode, Cursor, Functions,
-                    Parameterˉmodes
-                ) {
-                    Ownedˉvectorˉcalls = Ownedˉvectorˉcalls + 1u32;
-                    if Ownedˉvectorˉcalls > 4096u32 { return Invalid; }
-                }
                 let Callˉstate: Hˉoperationˉstate = Hˉcall(
                     Input,
                     Minor,
                     Functionˉcode,
                     Cursor,
                     Functions,
-                    Parameterˉmodes,
                     Stack,
                     Depth
                 );
@@ -2316,20 +2214,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         }
         if Depth != 0u32 { return Invalid; }
         if Maximum != Declaredˉmaximum { return Invalid; }
-        Parameterˉmodeˉbase = Parameterˉmodeˉbase + Parameterˉcount;
         Functionˉindex = Functionˉindex + 1u32;
     }
-    if Functionˉcursor != Functionˉentriesˉend { return Invalid; }
-    if Minor == 26u32 {
-        if Functionˉentriesˉend + 4u32 + Parameterˉmodeˉbase !=
-                Functionsˉend || Bytesˉreadˉu32ˉlittle(
-                    Input, Functionˉentriesˉend
-                ) != Parameterˉmodeˉbase || Ownedˉvectorˉcalls == 0u32 {
-            return Invalid;
-        }
-    } else if Functionˉcursor != Functionsˉend {
-        return Invalid;
-    }
+    if Functionˉcursor != Functionsˉend { return Invalid; }
     if Typesˉend > Total { return Invalid; }
     return Input;
 }
@@ -2342,9 +2229,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
     Functionˉcodeˉlength: u32,
     Localˉslots: u32,
     Parameterˉcount: u32,
-    Localˉshapes: bytes,
-    Parameterˉmodes: u32,
-    Parameterˉmodeˉbase: u32
+    Localˉshapes: bytes
 ) -> bool {
     var Ownedˉvectorˉcount: u32 = 0u32;
     var Ownedˉavailableˉlow: u32 = 0u32;
@@ -2353,8 +2238,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
     while Ownedˉslot < Localˉslots {
         if Iˉtrackedˉownedˉlocalˉshape(
             Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
-            Localˉshapes, Ownedˉslot, Minor, Parameterˉcount,
-            Parameterˉmodes, Parameterˉmodeˉbase
+            Localˉshapes, Ownedˉslot, Minor
         ) {
             if Ownedˉvectorˉcount >= 64u32 { return false; }
             if Ownedˉslot < Parameterˉcount {
@@ -2416,8 +2300,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             var Ownedˉrank: u32 = 4294967295u32;
             if Ownedˉlocal < Localˉslots && Iˉtrackedˉownedˉlocalˉshape(
                 Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
-                Localˉshapes, Ownedˉlocal, Minor, Parameterˉcount,
-                Parameterˉmodes, Parameterˉmodeˉbase
+                Localˉshapes, Ownedˉlocal, Minor
             ) {
                 Ownedˉrank = 0u32;
                 var Ownedˉearlier: u32 = 0u32;
@@ -2425,9 +2308,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
                     if Iˉtrackedˉownedˉlocalˉshape(
                         Input, Types,
                         Bytesˉreadˉu32ˉlittle(Input, Types),
-                        Localˉshapes, Ownedˉearlier, Minor,
-                        Parameterˉcount, Parameterˉmodes,
-                        Parameterˉmodeˉbase
+                        Localˉshapes, Ownedˉearlier, Minor
                     ) { Ownedˉrank = Ownedˉrank + 1u32; }
                     Ownedˉearlier = Ownedˉearlier + 1u32;
                 }
@@ -2491,8 +2372,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             if Ownedˉparent >= Localˉslots ||
                 !Iˉtrackedˉownedˉlocalˉshape(
                 Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
-                Localˉshapes, Ownedˉparent, Minor, Parameterˉcount,
-                Parameterˉmodes, Parameterˉmodeˉbase
+                Localˉshapes, Ownedˉparent, Minor
             ) || U32ˉfromˉu8(Bytesˉreadˉu8(
                 Localˉshapes, Ownedˉparent * 5u32
             )) != Ownedˉparentˉkind { return false; }
@@ -2501,9 +2381,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
             while Ownedˉparentˉearlier < Ownedˉparent {
                 if Iˉtrackedˉownedˉlocalˉshape(
                     Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
-                    Localˉshapes, Ownedˉparentˉearlier, Minor,
-                    Parameterˉcount, Parameterˉmodes,
-                    Parameterˉmodeˉbase
+                    Localˉshapes, Ownedˉparentˉearlier, Minor
                 ) { Ownedˉparentˉrank = Ownedˉparentˉrank + 1u32; }
                 Ownedˉparentˉearlier = Ownedˉparentˉearlier + 1u32;
             }
@@ -2585,18 +2463,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     );
     if Controlˉfunctionˉcount > 4096u32 { return Controlˉinvalid; }
     if Controlˉcodeˉlength > 4194304u32 { return Controlˉinvalid; }
-    let Controlˉfunctionˉentriesˉend: u32 = Hˉfunctionˉentriesˉend(
-        Input, Controlˉfunctions, Controlˉfunctionˉcount
-    );
-    var Controlˉparameterˉmodes: u32 = 0u32;
-    if Minor == 26u32 {
-        Controlˉparameterˉmodes = Controlˉfunctionˉentriesˉend + 4u32;
-    }
-
     var Controlˉfunctionˉindex: u32 = 0u32;
     var Controlˉfunctionˉcursor: u32 = Controlˉfunctions + 4u32;
     var Controlˉaggregateˉinstructions: u32 = 0u32;
-    var Controlˉparameterˉmodeˉbase: u32 = 0u32;
     while Controlˉfunctionˉindex < Controlˉfunctionˉcount {
         let Controlˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
             Input,
@@ -2621,7 +2490,8 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
             Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
             if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
                 Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
-                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 {
+                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 ||
+                Controlˉshapeˉkind == 26u32 || Controlˉshapeˉkind == 27u32 {
                 Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
             }
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
@@ -2771,29 +2641,14 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                     Controlˉfunctionˉcodeˉlength,
                     Controlˉlocalˉslots,
                     Controlˉparameterˉcount,
-                    Controlˉlocalˉshapes,
-                    Controlˉparameterˉmodes,
-                    Controlˉparameterˉmodeˉbase
+                    Controlˉlocalˉshapes
                 ) {
                 return Controlˉinvalid;
             }
         }
-        Controlˉparameterˉmodeˉbase = Controlˉparameterˉmodeˉbase +
-            Controlˉparameterˉcount;
         Controlˉfunctionˉindex = Controlˉfunctionˉindex + 1u32;
     }
-    if Controlˉfunctionˉcursor != Controlˉfunctionˉentriesˉend {
-        return Controlˉinvalid;
-    }
-    if Minor == 26u32 {
-        if Controlˉfunctionˉentriesˉend + 4u32 +
-                Controlˉparameterˉmodeˉbase != Controlˉfunctionsˉend ||
-            Bytesˉreadˉu32ˉlittle(
-                Input, Controlˉfunctionˉentriesˉend
-            ) != Controlˉparameterˉmodeˉbase {
-            return Controlˉinvalid;
-        }
-    } else if Controlˉfunctionˉcursor != Controlˉfunctionsˉend {
+    if Controlˉfunctionˉcursor != Controlˉfunctionsˉend {
         return Controlˉinvalid;
     }
     if Controlˉenvelope > Controlˉtotal { return Controlˉinvalid; }

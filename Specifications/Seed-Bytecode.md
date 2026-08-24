@@ -11,8 +11,8 @@ extension, the WVB 1.19 scalar Vector/Sequence execution extension, and the
 WVB 1.20 owned-Vector local-transfer extension, the WVB 1.21 launcher-owned
 memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    the WVB 1.23 executable memory-budget Split extension, the WVB 1.24
-   fallible reserved-Vector-construction extension, and the WVB 1.25
-   recoverable Vector-append extension.
+   fallible reserved-Vector-construction extension, the WVB 1.25 recoverable
+   Vector-append extension, and the WVB 1.26 owned-Vector-call extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -49,6 +49,9 @@ Vector descriptor without exposing a lease or target heap representation.
 WVB 1.25 adds exact all-or-nothing append through one exclusive mutable Vector
 local. Success consumes the item and produces `Valid(unit)`; capacity refusal
 preserves the Vector and returns the item in the exact typed failure value.
+WVB 1.26 encodes exact Vector parameter transfer modes in the parameter shape,
+executes ordinary by-value and borrowed calls, and releases callee-owned and
+temporarily retained descriptors in deterministic reverse slot order.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -60,8 +63,9 @@ exact launcher-owned memory-budget entry. WVB 1.22 is selected for any kind-7
 `u8` enum descriptor, including a module that also carries the budget entry.
 WVB 1.23 is selected when `memory_budget.split` is present. WVB 1.24 is selected
 when `vector.construct_reserved_fallible` is present, and WVB 1.25 when
-`vector.append_fallible` is present. A WVB 1.25-capable reader accepts all
-fifteen versions and never admits an
+`vector.append_fallible` is present. WVB 1.26 is selected when any function has
+an exact Vector parameter. A WVB 1.26-capable reader accepts all sixteen
+versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
@@ -83,7 +87,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, or 25
+u16      minor version: 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, or 26
 u32      section count: 7
 ```
 
@@ -221,7 +225,7 @@ exactly one exported `Main(Memoryˉbudget) -> i32`; the launcher transfers one
 fresh root-budget token into that parameter before the first instruction. WVB
 1.22 uses the ordinary zero-parameter entry unless shape `25` is present. When
 it is present, the same exact one-parameter transfer rule applies.
-WVB 1.23 through WVB 1.25 require the same exact one-parameter entry because
+WVB 1.23 through WVB 1.26 require the same exact one-parameter entry because
 the currently admitted recoverable append profile begins with fallible Vector
 construction from a launcher-owned root budget.
 Future native object formats must define an ASCII-safe external symbol mapping
@@ -331,7 +335,9 @@ capacity, allocator, or authority.
 22 fixed array followed by u32 nominal-type index (WVB 1.17 only)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
-25 Memoryˉbudget opaque owner (WVB 1.21 through 1.25 entry; WVB 1.23 through 1.25 Main locals)
+25 Memoryˉbudget opaque owner (WVB 1.21 through 1.26 entry; WVB 1.23 through 1.26 Main locals)
+26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 only)
+27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -352,6 +358,14 @@ Nominal identity and collection kind/element/maximum are exact. Enum shape byte
 `8` accepts either kind `2` or kind `7`; the Types index retains the backing
 distinction without introducing a second runtime enum value shape.
 
+WVB 1.26 additionally permits shape `26` or `27` in a function parameter list
+only. Shape `26` is one immutable borrow and shape `27` is one exclusive mutable
+borrow; each is followed by a kind-5 Vector Types index exactly like shape
+`23`. Shape `23` in a parameter list remains a by-value transfer. Shapes `26`
+and `27` are invalid as results, non-parameter locals, fields, payloads,
+collection elements, or Types entries. No parameter-mode trailer follows the
+function directory.
+
 Shape `25` is not a general value shape. In WVB 1.21 or 1.22 it occurs at most
 once: as parameter zero of the one-parameter function named `Main`. WVB 1.21
 requires that occurrence; WVB 1.22 permits it only when the module also needs
@@ -364,7 +378,7 @@ encoding makes launcher transfer and deterministic top-level release
 executable without exposing representation or claiming allocation leases or
 collection allocation.
 
-WVB 1.23 through WVB 1.25 retain that exact entry parameter and additionally permit shape
+WVB 1.23 through WVB 1.26 retain that exact entry parameter and additionally permit shape
 `25` in non-parameter locals of `Main` only. These locals are affine: they are
 initialized only by `local.take` from another available budget local or by the
 Valid payload of the exact Split result, cannot be read with `local.load`, and
@@ -383,14 +397,16 @@ before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
 1.19, opcode `CD` is invalid before WVB 1.20, opcode `CE` is invalid before
-WVB 1.23, opcode `CF` is valid in WVB 1.24 and 1.25, and opcode `D0` is valid
-only in WVB 1.25. Shape byte `25` is valid only under the WVB
-1.21-through-1.25 rules
+WVB 1.23, opcode `CF` is valid in WVB 1.24 through 1.26, and opcode `D0` is
+valid in WVB 1.25 and 1.26. Shape byte `25` is valid only under the WVB
+1.21-through-1.26 rules
 above. Type kind `7` is valid in WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
 published under an unnecessarily high version. Every WVB 1.23 module contains
 at least one opcode `CE`, every WVB 1.24 module contains at least one opcode
 `CF`, and every WVB 1.25 module contains at least one opcode `D0`.
+Every WVB 1.26 module contains at least one exact Vector parameter using shape
+`23`, `26`, or `27`.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
@@ -607,14 +623,14 @@ uses `local.take`; backward branches in such a function are rejected until the
 loop ownership fixed-point is implemented. These are verifier limits, not
 portable source collection limits.
 
-In WVB 1.23 through WVB 1.25, `local.take` also transfers an available shape-25
+In WVB 1.23 through WVB 1.26, `local.take` also transfers an available shape-25
 budget local or exact affine Result variant. A budget take clears the source
 cell and pushes the same opaque owner. A Split-result take may transfer the
 Valid child budget exactly once. A WVB 1.24 constructor-result take may transfer
-the Valid Vector exactly once; WVB 1.25 retains that rule. Ordinary loads never
+the Valid Vector exactly once; WVB 1.25 and 1.26 retain that rule. Ordinary loads never
 copy any affine value.
 
-WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.25 transfers one opaque
+WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.26 transfers one opaque
 launcher-owned root-budget token into `Main`'s parameter-zero cell. The current scalar profile
 represents the token as an
 identity plus provider generation and keeps its byte maximum and accounting
@@ -661,20 +677,31 @@ capacity, iteration, and the Vector owner unchanged and returns Failure with
 No prefix success, hidden reallocation, budget acquisition, implicit element
 copy, or trap represents ordinary capacity refusal. The first executable
 profile admits only resource-free scalar `T` and at most 64 append instructions
-per function; broader element destruction and general borrowed parameters are
-later profiles rather than different source semantics.
+per function; broader element destruction remains a later profile rather than
+different source semantics.
 
-Functions using budget/result affine operations admit at most 64 owned slots
+WVB 1.26 ordinary calls interpret an exact Vector parameter shape as its
+transfer contract. Shape `23` consumes unique evidence produced by
+`local.take`; shape `26` or `27` consumes one retaining shared load and
+preserves the caller's originating owner. The callee owns a shape-23 parameter
+and releases it if it survives to return. A borrowed parameter owns only the
+temporary retain introduced for the call; reverse-order callee cleanup releases
+that retain without consuming the caller's owner. A value/borrow mismatch is a
+typed-verification failure. Mutable borrow remains exclusive in the validated
+source/WVIR ownership proof; bytecode does not expose a pointer, source slot, or
+borrow handle. Every ordinary return releases surviving descriptor-owning
+parameters and locals in reverse slot order before restoring the caller frame.
+
+Functions using budget/result affine or owned-call operations admit at most 64 owned slots
 and 4,096 instructions. Their first control proof accepts forward branches,
 intersects availability at joins, and rejects backward control until a loop
-ownership fixed point is specified. General owned arguments and returns,
-and loop ownership remain later checkpoints.
+ownership fixed point is specified. Aggregate-contained ownership and loop
+ownership remain later checkpoints.
 
-Typed WVIR may independently validate exact Vector transfer through ordinary
-calls and returns before that transfer is serializable. This does not broaden
-the WVB rule above: a by-value Vector call still fails closed during emission
-until parameter transfer modes and deterministic callee cleanup are represented
-and verified by a later WVB contract.
+Typed WVIR independently validates exact Vector transfer through ordinary calls
+and returns before WVB publication. WVB 1.26 serializes those validated
+parameter modes; it does not weaken the earlier source-slot provenance or
+forward-join proof.
 
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
@@ -786,7 +813,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.25 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.25 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, and recoverable Vector append requires exactly 1.25.
+- The version is WVB 1.11 through 1.26 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.26 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, and an exact Vector parameter requires 1.26.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -798,11 +825,12 @@ Verification is required before execution and rejects a module unless:
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
 - WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join; functions using `local.take` satisfy its explicit instruction, Vector-local, and acyclic-control limits.
-- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token. WVB 1.22 applies the same rule if shape `25` is present; otherwise its exported entry is ordinary `Main() -> i32`. WVB 1.23 through WVB 1.25 retain the exact entry and permit affine budget/result locals only in `Main` under the bounded forward-control ownership proof.
-- Every WVB 1.22-or-later kind-7 descriptor has exact backing identity `6`, 1 through 256 uniquely named members, unique one-byte values, and participates in the same canonical enum ordering and shape-8 identity as kind `2`; WVB 1.22 contains at least one kind-7 descriptor, WVB 1.23 contains at least one exact opcode `CE`, WVB 1.24 contains at least one exact opcode `CF`, and WVB 1.25 contains at least one exact opcode `D0`.
+- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token. WVB 1.22 applies the same rule if shape `25` is present; otherwise its exported entry is ordinary `Main() -> i32`. WVB 1.23 through WVB 1.26 retain the exact entry and permit affine budget/result locals only in `Main` under the bounded forward-control ownership proof.
+- Every WVB 1.22-or-later kind-7 descriptor has exact backing identity `6`, 1 through 256 uniquely named members, unique one-byte values, and participates in the same canonical enum ordering and shape-8 identity as kind `2`; WVB 1.22 contains at least one kind-7 descriptor, WVB 1.23 contains at least one exact opcode `CE`, WVB 1.24 contains at least one exact opcode `CF`, WVB 1.25 contains at least one exact opcode `D0`, and WVB 1.26 contains at least one exact Vector parameter.
 - Every opcode `CE` references an available shape-25 parent local and the exact structurally validated Split Result type, consumes `u64` then `u32`, preserves failure atomicity, and produces one affine result owner.
 - Every opcode `CF` references an available shape-25 budget local and exact structurally validated Vector Result type, consumes one `u64`, consumes the budget on every ordinary Result path, and produces one affine result owner whose Valid payload transfers one exact Vector.
 - Every opcode `D0` references a direct non-parameter exact Vector local and exact structurally validated append Result type, consumes one matching scalar item, preserves the Vector and returns that item on capacity refusal, and mutates the Vector exactly once only on success.
+- Every WVB 1.26 Vector parameter uses exact shape `23`, `26`, or `27` with a matching kind-5 nominal index; borrowed shapes occur nowhere else; calls supply unique evidence to shape `23` and retaining evidence to shapes `26` and `27`; and reverse-order callee cleanup cannot release the caller's preserved owner.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return

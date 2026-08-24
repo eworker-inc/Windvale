@@ -321,6 +321,7 @@ fn Readˉfunctionˉdirectory(
     var Parameterˉmodeˉoffsets: bytes = Empty;
     var Parameterˉmodes: bytes = Empty;
     var Totalˉparameterˉcount: u32 = 0u32;
+    var Vectorˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
     while Functionˉindex < Functionˉcount {
         Functionˉcursor = Functionˉcursor + 4u32
@@ -371,11 +372,29 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 {
                 return Invalidˉfunctionˉdirectory(Module);
             }
+            var Parameterˉmode: u8 = 0u8;
+            var Localˉshapeˉkind: u32 = Shapeˉkind;
+            if Shapeˉkind == 23u32 || Shapeˉkind == 26u32 ||
+                Shapeˉkind == 27u32 {
+                Vectorˉparameterˉcount = Vectorˉparameterˉcount + 1u32;
+            }
+            if Shapeˉkind == 26u32 {
+                Parameterˉmode = 1u8;
+                Localˉshapeˉkind = 23u32;
+            }
+            if Shapeˉkind == 27u32 {
+                Parameterˉmode = 2u8;
+                Localˉshapeˉkind = 23u32;
+            }
+            Parameterˉmodes = Bytesˉconcat(
+                Parameterˉmodes, Bytesˉfromˉu8(Parameterˉmode)
+            );
             Nominalˉtoken = 0u32;
             Functionˉcursor = Functionˉcursor + 1u32;
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
-                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
+                Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
                 Nominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module, Functionˉcursor
                 );
@@ -388,7 +407,7 @@ fn Readˉfunctionˉdirectory(
             Localˉshapes = Bytesˉconcat(
                 Localˉshapes,
                 Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Shapeˉkind),
+                    Bytesˉfromˉu32ˉlittle(Localˉshapeˉkind),
                     Bytesˉfromˉu32ˉlittle(Nominalˉtoken)
                 )
             );
@@ -398,7 +417,8 @@ fn Readˉfunctionˉdirectory(
             Module, Functionˉcursor
         ));
         if !Fixed.Shapeˉisˉsupported(Returnˉkind, Moduleˉminor) ||
-            Returnˉkind == 25u32 {
+            Returnˉkind == 25u32 || Returnˉkind == 26u32 ||
+            Returnˉkind == 27u32 {
             return Invalidˉfunctionˉdirectory(Module);
         }
         Functionˉcursor = Functionˉcursor + 1u32;
@@ -427,6 +447,7 @@ fn Readˉfunctionˉdirectory(
             ));
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
                 Shapeˉkind == 21u32 ||
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
                     ((Moduleˉminor < 23u32 || Moduleˉminor > 26u32) ||
                         Functionˉindex != Mainˉindex ||
@@ -516,41 +537,9 @@ fn Readˉfunctionˉdirectory(
         Aggregateˉinstructions = Aggregateˉinstructions + Scanned;
         Functionˉindex = Functionˉindex + 1u32;
     }
-    if Moduleˉminor == 26u32 {
-        if Functionˉcursor > Functionsˉend ||
-            Functionsˉend - Functionˉcursor < 4u32 {
-            return Invalidˉfunctionˉdirectory(Module);
-        }
-        let Serializedˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-            Module, Functionˉcursor
-        );
-        if Serializedˉparameterˉcount != Totalˉparameterˉcount ||
-            Functionsˉend - Functionˉcursor !=
-                4u32 + Totalˉparameterˉcount {
-            return Invalidˉfunctionˉdirectory(Module);
-        }
-        Parameterˉmodes = Bytesˉslice(
-            Module, Functionˉcursor + 4u32, Totalˉparameterˉcount
-        );
-        var Parameterˉmodeˉindex: u32 = 0u32;
-        while Parameterˉmodeˉindex < Totalˉparameterˉcount {
-            if U32ˉfromˉu8(Bytesˉreadˉu8(
-                Parameterˉmodes, Parameterˉmodeˉindex
-            )) > 2u32 {
-                return Invalidˉfunctionˉdirectory(Module);
-            }
-            Parameterˉmodeˉindex = Parameterˉmodeˉindex + 1u32;
-        }
-        if Mainˉhasˉmemoryˉbudget && U32ˉfromˉu8(Bytesˉreadˉu8(
-            Parameterˉmodes,
-            Bytesˉreadˉu32ˉlittle(
-                Parameterˉmodeˉoffsets, Mainˉindex * 4u32
-            )
-        )) != 0u32 {
-            return Invalidˉfunctionˉdirectory(Module);
-        }
-        Functionˉcursor = Functionsˉend;
-    } else if Functionˉcursor != Functionsˉend {
+    if Functionˉcursor != Functionsˉend ||
+        Bytesˉlength(Parameterˉmodes) != Totalˉparameterˉcount ||
+        (Moduleˉminor == 26u32 && Vectorˉparameterˉcount == 0u32) {
         return Invalidˉfunctionˉdirectory(Module);
     }
     return Functionˉdirectory(

@@ -70,17 +70,9 @@ record Compilerˉsourceˉwvbˉanalysis {
 record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Status: Compilerˉsourceˉwvbˉstatus;
     Metadata: bytes;
-    Parameterˉmodes: bytes;
     Code: bytes;
     Failureˉoperation: u32;
     Features: u32;
-}
-
-record Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering {
-    Status: Compilerˉsourceˉwvbˉstatus;
-    Origins: bytes;
-    Ownedˉcalls: u32;
-    Failureˉoperation: u32;
 }
 
 record Compilerˉsourceˉwvbˉsymbolˉorder {
@@ -871,29 +863,6 @@ export fn Compilerˉsourceˉwvbˉsymbolˉrank(
         Candidate = Candidate + 1u32;
     }
     return Rank;
-}
-
-export fn Compilerˉsourceˉwvbˉsymbolˉbyˉrank(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Kind: u32,
-    Rank: u32
-) -> u32 {
-    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32);
-    var Entry: u32 = 0u32;
-    while Entry < Entries {
-        let Entryˉoffset: u32 = 16u32 + Entry * 24u32;
-        if Bytesˉreadˉu32ˉlittle(
-            Symbols.Directory, Entryˉoffset + 4u32
-        ) == Kind {
-            if Compilerˉsourceˉwvbˉsymbolˉrank(
-                Input, Scan, Symbols, Entry, Kind
-            ) == Rank { return Entry; }
-        }
-        Entry = Entry + 1u32;
-    }
-    return Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
 }
 
 export fn Compilerˉsourceˉwvbˉbuildˉsymbolˉorder(
@@ -3061,209 +3030,6 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
     ) == 11u32;
 }
 
-fn Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-    Wir: bytes,
-    Status: Compilerˉsourceˉwvbˉstatus,
-    Operation: u32
-) -> Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering {
-    return Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering(
-        Status, Compilerˉsourceˉwvbˉempty(Wir), 0u32, Operation
-    );
-}
-
-fn Compilerˉsourceˉwvbˉplanˉborrowedˉvectorˉlowering(
-    Input: bytes,
-    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
-    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
-    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
-    Wir: bytes,
-    Function: u32
-) -> u32 {
-    let Functionˉentry: u32 =
-        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
-            Function * 48u32;
-    let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 12u32
-    );
-    let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 16u32
-    );
-    let Firstˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 20u32
-    );
-    let Temporaryˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 24u32
-    );
-    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 36u32
-    );
-    let Locals: u32 = Bytesˉreadˉu32ˉlittle(
-        Wir, Functionˉentry + 40u32
-    );
-    let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
-    let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
-    let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
-    let Emptyˉorigins: Byteˉconstruction.Foundationˉbytesˉresult =
-        Byteˉconstruction.Foundationˉbytesˉrepeat(
-            255u8, Temporaryˉcount * 4u32
-        );
-    if !Emptyˉorigins.Valid {
-        return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-            Wir, Compilerˉsourceˉwvbˉstatus.Bytecodeˉlimit,
-            Firstˉoperation
-        );
-    }
-    var Loadˉorigins: bytes = Emptyˉorigins.Value;
-    var Origins: bytes = Emptyˉorigins.Value;
-    var Index: u32 = 0u32;
-    while Index < Operationˉcount {
-        let Globalˉoperation: u32 = Firstˉoperation + Index;
-        let Entry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
-        if Bytesˉreadˉu32ˉlittle(Wir, Entry + 4u32) == 7u32 &&
-            Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
-                Bytesˉreadˉu32ˉlittle(Wir, Entry + 8u32), Orders
-            ) {
-            let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 12u32);
-            let Origin: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 24u32);
-            if Temporary >= Temporaryˉcount || Origin >= Parameters + Locals {
-                return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                    Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                    Globalˉoperation
-                );
-            }
-            let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
-                Byteˉconstruction.Foundationˉbytesˉreplace(
-                    Loadˉorigins, Temporary * 4u32, 4u32,
-                    Bytesˉfromˉu32ˉlittle(Origin)
-                );
-            if !Replaced.Valid {
-                return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                    Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                    Globalˉoperation
-                );
-            }
-            Loadˉorigins = Replaced.Value;
-        }
-        Index = Index + 1u32;
-    }
-
-    var Ownedˉcalls: u32 = 0u32;
-    Index = 0u32;
-    while Index < Operationˉcount {
-        let Globalˉoperation: u32 = Firstˉoperation + Index;
-        let Entry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
-        if Bytesˉreadˉu32ˉlittle(Wir, Entry + 4u32) == 62u32 {
-            let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 24u32);
-            let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Entry + 16u32
-            );
-            let Operands: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
-            var Operand: u32 = 0u32;
-            while Operand < Operands {
-                let Temporary: u32 = Bytesˉreadˉu32ˉlittle(
-                    Wir, Operandsˉoffset + (Firstˉoperand + Operand) * 4u32
-                );
-                let Shape: u32 = Bytesˉreadˉu32ˉlittle(
-                    Wir,
-                    Temporariesˉoffset +
-                        (Firstˉtemporary + Temporary) * 4u32
-                );
-                if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
-                        Shape, Orders
-                    ) {
-                    let Mode: u32 =
-                        Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-                        Input, Scan, Symbols, Bindings, Target, Operand
-                    );
-                    if Mode > Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
-                        return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                            Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                            Globalˉoperation
-                        );
-                    }
-                    if Mode == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
-                        Ownedˉcalls = Ownedˉcalls + 1u32;
-                    } else {
-                        if Temporary >= Temporaryˉcount {
-                            return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                                Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                                Globalˉoperation
-                            );
-                        }
-                        let Origin: u32 = Bytesˉreadˉu32ˉlittle(
-                            Loadˉorigins, Temporary * 4u32
-                        );
-                        if Origin == 4294967295u32 {
-                            return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                                Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                                Globalˉoperation
-                            );
-                        }
-                        var Earlier: u32 = 0u32;
-                        while Earlier < Operand {
-                            let Earlierˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
-                                Wir,
-                                Operandsˉoffset +
-                                    (Firstˉoperand + Earlier) * 4u32
-                            );
-                            let Earlierˉshape: u32 = Bytesˉreadˉu32ˉlittle(
-                                Wir,
-                                Temporariesˉoffset +
-                                    (Firstˉtemporary + Earlierˉtemporary) * 4u32
-                            );
-                            if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
-                                    Earlierˉshape, Orders
-                                ) {
-                                let Earlierˉmode: u32 =
-                                    Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-                                        Input, Scan, Symbols, Bindings,
-                                        Target, Earlier
-                                    );
-                                if Earlierˉmode !=
-                                        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
-                                    Earlierˉtemporary < Temporaryˉcount &&
-                                    Bytesˉreadˉu32ˉlittle(
-                                        Loadˉorigins, Earlierˉtemporary * 4u32
-                                    ) == Origin &&
-                                    (Mode ==
-                                        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE ||
-                                        Earlierˉmode ==
-                                        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE) {
-                                    return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                                        Wir,
-                                        Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
-                                        Globalˉoperation
-                                    );
-                                }
-                            }
-                            Earlier = Earlier + 1u32;
-                        }
-                        let Replaced: Byteˉconstruction.Foundationˉbytesˉresult =
-                            Byteˉconstruction.Foundationˉbytesˉreplace(
-                                Origins, Temporary * 4u32, 4u32,
-                                Bytesˉfromˉu32ˉlittle(Origin)
-                            );
-                        if !Replaced.Valid {
-                            return Compilerˉsourceˉwvbˉborrowedˉvectorˉloweringˉfailure(
-                                Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                                Globalˉoperation
-                            );
-                        }
-                        Origins = Replaced.Value;
-                    }
-                }
-                Operand = Operand + 1u32;
-            }
-        }
-        Index = Index + 1u32;
-    }
-    return Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering(
-        Compilerˉsourceˉwvbˉstatus.Valid,
-        Origins, Ownedˉcalls, Firstˉoperation + Operationˉcount
-    );
-}
-
 export fn Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir: bytes) -> u32 {
     return Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
         Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 32u32;
@@ -3310,8 +3076,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
     Wir: bytes,
     Function: u32,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
-    Borrowedˉorigins: bytes
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> Compilerˉsourceˉwvbˉanalysis {
     let Functionˉentry: u32 =
         Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
@@ -3339,9 +3104,6 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
             let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
             let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
             let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
-            let Temporary: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operationˉentry + 12u32
-            );
             let Target: u32 = Bytesˉreadˉu32ˉlittle(
                 Wir, Operationˉentry + 24u32
             );
@@ -3488,11 +3250,6 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     Globalˉoperation
                 );
             }
-            let Elidedˉborrowedˉload: bool = Operation == 7u32 &&
-                Temporary * 4u32 + 4u32 <= Bytesˉlength(Borrowedˉorigins) &&
-                Bytesˉreadˉu32ˉlittle(
-                    Borrowedˉorigins, Temporary * 4u32
-                ) != 4294967295u32;
             var Operationˉstack: u32 = Operands;
             if Operation == 64u32 { Operationˉstack = 0u32; }
             if Operation == 167u32 { Operationˉstack = 2u32; }
@@ -3501,14 +3258,11 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
             if Shape != 0u32 {
                 if Operationˉstack == 0u32 { Operationˉstack = 1u32; }
             }
-            if Elidedˉborrowedˉload { Operationˉstack = 0u32; }
             if Operationˉstack > Maximumˉstack { Maximumˉstack = Operationˉstack; }
-            var Added: u32 = Compilerˉsourceˉwvbˉoperationˉlength(
+            let Added: u32 = Compilerˉsourceˉwvbˉoperationˉlength(
                 Operation, Shape, Operands
             );
-            if Elidedˉborrowedˉload { Added = 0u32; }
-            if Added == 0u32 && Operation != 64u32 &&
-                !Elidedˉborrowedˉload {
+            if Added == 0u32 && Operation != 64u32 {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
                     Globalˉoperation
@@ -3604,6 +3358,46 @@ export fn Compilerˉsourceˉwvbˉloadˉtemporary(
     );
 }
 
+fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wir: bytes,
+    Start: u32,
+    End: u32,
+    Temporary: u32
+) -> bool {
+    let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+    var Operation: u32 = Start;
+    while Operation < End {
+        if Bytesˉreadˉu32ˉlittle(Wir, Operation + 4u32) == 62u32 {
+            let First: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Operation + 16u32
+            );
+            let Count: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Operation + 20u32
+            );
+            var Operand: u32 = 0u32;
+            while Operand < Count {
+                if Bytesˉreadˉu32ˉlittle(
+                        Wir, Operands + (First + Operand) * 4u32
+                    ) == Temporary &&
+                    Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                        Input, Scan, Symbols, Bindings,
+                        Bytesˉreadˉu32ˉlittle(Wir, Operation + 24u32),
+                        Operand
+                    ) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+                    return true;
+                }
+                Operand = Operand + 1u32;
+            }
+        }
+        Operation = Operation + 32u32;
+    }
+    return false;
+}
+
 export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -3614,11 +3408,11 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Plan: Compilerˉsourceˉwvbˉtextˉplan,
     Wir: bytes,
     Operationˉentry: u32,
+    Operationˉend: u32,
     Parameters: u32,
     Locals: u32,
     Firstˉtemporary: u32,
-    Temporaryˉmapping: bytes,
-    Borrowedˉorigins: bytes
+    Temporaryˉmapping: bytes
 ) -> bytes {
     let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
     let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
@@ -3631,12 +3425,6 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
     var Result: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     if Operation == 64u32 { return Result; }
-    if Operation == 7u32 && Temporary * 4u32 + 4u32 <=
-            Bytesˉlength(Borrowedˉorigins) && Bytesˉreadˉu32ˉlittle(
-                Borrowedˉorigins, Temporary * 4u32
-            ) != 4294967295u32 {
-        return Result;
-    }
     var Operand: u32 = 0u32;
     while Operand < Operandˉcount {
         let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
@@ -3664,13 +3452,6 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
                     Compilerˉsourceˉwvbˉtemporaryˉslot(
                         Operandˉtemporary, Parameters, Locals,
                         Temporaryˉmapping
-                    )
-                );
-            } else {
-                Operandˉload = Compilerˉsourceˉwvbˉinstructionˉu32(
-                    4u8,
-                    Bytesˉreadˉu32ˉlittle(
-                        Borrowedˉorigins, Operandˉtemporary * 4u32
                     )
                 );
             }
@@ -3753,7 +3534,12 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     }
     if Operation == 7u32 {
         var Loadˉopcode: u8 = 4u8;
-        if Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(Wir, Shape, Orders) {
+        if Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
+                Wir, Shape, Orders
+            ) && !Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                Input, Scan, Symbols, Bindings, Wir,
+                Operationˉentry + 32u32, Operationˉend, Temporary
+            ) {
             Loadˉopcode = 205u8;
         }
         Result = Bytesˉconcat(
@@ -4250,7 +4036,7 @@ export fn Compilerˉsourceˉwvbˉfunctionˉfailure(
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
-        Status, Empty, Empty, Empty, Operation, 0u32
+        Status, Empty, Empty, Operation, 0u32
     );
 }
 
@@ -4431,29 +4217,18 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     Codeˉoffset: u32,
     Emitˉcode: bool
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
-    let Functionˉentry: u32 =
-        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
-            Function * 48u32;
-    let Borrowedˉlowering:
-        Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering =
-        Compilerˉsourceˉwvbˉplanˉborrowedˉvectorˉlowering(
-            Input, Scan, Symbols, Bindings, Orders, Wir, Function
-        );
-    if Borrowedˉlowering.Status != Compilerˉsourceˉwvbˉstatus.Valid {
-        return Compilerˉsourceˉwvbˉfunctionˉfailure(
-            Wir, Borrowedˉlowering.Status,
-            Borrowedˉlowering.Failureˉoperation
-        );
-    }
     let Analysis: Compilerˉsourceˉwvbˉanalysis =
         Compilerˉsourceˉwvbˉanalyzeˉfunction(
-            Wir, Function, Symbols, Orders, Borrowedˉlowering.Origins
+            Wir, Function, Symbols, Orders
         );
     if Analysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
         return Compilerˉsourceˉwvbˉfunctionˉfailure(
             Wir, Analysis.Status, Analysis.Failureˉoperation
         );
     }
+    let Functionˉentry: u32 =
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
+            Function * 48u32;
     let Firstˉblock: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 4u32);
     let Blockˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 8u32);
     let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
@@ -4490,9 +4265,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         Isˉexportedˉroot &&
         Parameters == 1u32 && Returnˉshape == 1u32;
     var Features: u32 = Compilerˉsourceˉwvbˉshapeˉfeatures(Returnˉshape);
-    if Borrowedˉlowering.Ownedˉcalls > 0u32 {
-        Features = Features | 32768u32;
-    }
     let Plannedˉreturnˉshape: u32 =
         Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
             Returnˉshape, Symbols, Orders
@@ -4562,7 +4334,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         );
     var Metadata: bytes = Compilerˉsourceˉwvbˉencodedˉstring(Functionˉname);
     Metadata = Bytesˉconcat(Metadata, Bytesˉfromˉu32ˉlittle(Parameters));
-    var Parameterˉmodes: bytes = Compilerˉsourceˉwvbˉempty(Wir);
     var Index: u32 = 0u32;
     while Index < Parameters {
         let Parameterˉshape: u32 = Bytesˉreadˉu32ˉlittle(
@@ -4582,27 +4353,43 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             );
         }
         Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Parameterˉshape);
-        let Parameterˉmode: u32 =
-            Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-                Input, Scan, Symbols, Bindings, Function, Index
-            );
-        if Parameterˉmode >
-                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
-            return Compilerˉsourceˉwvbˉfunctionˉfailure(
-                Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
-                Analysis.Failureˉoperation
-            );
-        }
-        Parameterˉmodes = Bytesˉconcat(
-            Parameterˉmodes,
-            Bytesˉslice(
-                Bytesˉfromˉu32ˉlittle(Parameterˉmode), 0u32, 1u32
-            )
-        );
-        Metadata = Bytesˉconcat(
-            Metadata, Compilerˉsourceˉwvbˉplannedˉshape(
+        var Plannedˉparameter: bytes =
+            Compilerˉsourceˉwvbˉplannedˉshape(
                 Parameterˉshape, Symbols, Orders
-            )
+            );
+        if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
+            Parameterˉshape, Orders
+        ) {
+            Features = Features | 32768u32;
+            let Parameterˉmode: u32 =
+                Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                    Input, Scan, Symbols, Bindings, Function, Index
+                );
+            if Parameterˉmode >
+                    Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
+                return Compilerˉsourceˉwvbˉfunctionˉfailure(
+                    Wir, Compilerˉsourceˉwvbˉstatus.Invalidˉdata,
+                    Analysis.Failureˉoperation
+                );
+            }
+            if Parameterˉmode !=
+                    Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+                var Borrowedˉkind: u8 = 26u8;
+                if Parameterˉmode ==
+                        Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
+                    Borrowedˉkind = 27u8;
+                }
+                Plannedˉparameter = Bytesˉconcat(
+                    Bytesˉfromˉu8(Borrowedˉkind),
+                    Bytesˉslice(
+                        Plannedˉparameter, 1u32,
+                        Bytesˉlength(Plannedˉparameter) - 1u32
+                    )
+                );
+            }
+        }
+        Metadata = Bytesˉconcat(
+            Metadata, Plannedˉparameter
         );
         Index = Index + 1u32;
     }
@@ -4756,10 +4543,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                     Compilerˉsourceˉwvbˉemitˉoperation(
                         Input, Scan, Source, Symbols, Bindings, Orders,
                         Plan, Wir,
-                        Operationˉentry, Parameters, Locals,
+                        Operationˉentry,
+                        Operationsˉoffset +
+                            (Firstˉoperation + Operationˉcount) * 32u32,
+                        Parameters, Locals,
                         Firstˉtemporary,
-                        Temporaryˉallocation.Mapping,
-                        Borrowedˉlowering.Origins
+                        Temporaryˉallocation.Mapping
                     )
                 );
                 Inˉblock = Inˉblock + 1u32;
@@ -4785,7 +4574,6 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     return Compilerˉsourceˉwvbˉfunctionˉencoding(
         Compilerˉsourceˉwvbˉstatus.Valid,
         Metadata,
-        Parameterˉmodes,
         Code,
         Analysis.Failureˉoperation,
         Features
@@ -4796,7 +4584,6 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
     Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Analyze: bool
@@ -4871,27 +4658,9 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
             Queue, Queueˉindex * 4u32
         );
         if Analyze {
-            let Reachableˉborrows:
-                Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering =
-                Compilerˉsourceˉwvbˉplanˉborrowedˉvectorˉlowering(
-                    Input, Scan, Symbols, Bindings, Orders,
-                    Wir, Reachableˉfunction
-                );
-            if Reachableˉborrows.Status !=
-                    Compilerˉsourceˉwvbˉstatus.Valid {
-                return Compilerˉsourceˉwvbˉreachabilityˉfailure(
-                    Input, Reachableˉborrows.Status,
-                    Wirˉsummary.Status,
-                    Compilerˉsourceˉwvbˉorderedˉrank(
-                        Functionˉorder, Reachableˉfunction
-                    ),
-                    Reachableˉborrows.Failureˉoperation
-                );
-            }
             let Reachableˉanalysis: Compilerˉsourceˉwvbˉanalysis =
                 Compilerˉsourceˉwvbˉanalyzeˉfunction(
-                    Wir, Reachableˉfunction, Symbols, Orders,
-                    Reachableˉborrows.Origins
+                    Wir, Reachableˉfunction, Symbols, Orders
                 );
             if Reachableˉanalysis.Status != Compilerˉsourceˉwvbˉstatus.Valid {
                 return Compilerˉsourceˉwvbˉreachabilityˉfailure(
@@ -4989,24 +4758,9 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
             Functionˉorder, Functionˉrank
         );
         if Analyze && Bytesˉreadˉu8(Map, Unreachableˉfunction) == 0u8 {
-            let Unreachableˉborrows:
-                Compilerˉsourceˉwvbˉborrowedˉvectorˉlowering =
-                Compilerˉsourceˉwvbˉplanˉborrowedˉvectorˉlowering(
-                    Input, Scan, Symbols, Bindings, Orders,
-                    Wir, Unreachableˉfunction
-                );
-            if Unreachableˉborrows.Status !=
-                    Compilerˉsourceˉwvbˉstatus.Valid {
-                return Compilerˉsourceˉwvbˉreachabilityˉfailure(
-                    Input, Unreachableˉborrows.Status,
-                    Wirˉsummary.Status, Functionˉrank,
-                    Unreachableˉborrows.Failureˉoperation
-                );
-            }
             let Unreachableˉanalysis: Compilerˉsourceˉwvbˉanalysis =
                 Compilerˉsourceˉwvbˉanalyzeˉfunction(
-                    Wir, Unreachableˉfunction, Symbols, Orders,
-                    Unreachableˉborrows.Origins
+                    Wir, Unreachableˉfunction, Symbols, Orders
                 );
             if Unreachableˉanalysis.Status !=
                 Compilerˉsourceˉwvbˉstatus.Valid {
@@ -5102,12 +4856,11 @@ export fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
     Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> Compilerˉsourceˉwvbˉreachability {
     return Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
-        Input, Scan, Symbols, Bindings, Wirˉsummary, Orders, true
+        Input, Scan, Symbols, Wirˉsummary, Orders, true
     );
 }
 
@@ -5194,7 +4947,7 @@ export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Canonicalˉentries, Materialization.Instances
         );
     return Compilerˉsourceˉwvbˉreachabilityˉwithˉevidence(
-        Input, Scan, Symbols, Bindings, Wirˉsummary, Orders
+        Input, Scan, Symbols, Wirˉsummary, Orders
     );
 }
 
@@ -5292,7 +5045,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if Optimize {
         let Pruning: Compilerˉsourceˉwvbˉreachability =
             Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
-                Input, Scan, Symbols, Bindings, Wirˉsummary, Orders, false
+                Input, Scan, Symbols, Wirˉsummary, Orders, false
             );
         if Pruning.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -5449,7 +5202,6 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     }
 
     var Functionˉpayload: bytes = Bytesˉfromˉu32ˉlittle(Emissionˉfunctions);
-    var Functionˉparameterˉmodes: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Codeˉpayload: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Exportˉentries: bytes = Compilerˉsourceˉwvbˉempty(Input);
     var Exportˉcount: u32 = 0u32;
@@ -5490,9 +5242,6 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         }
         Features = Features | Encoded.Features;
         Functionˉpayload = Bytesˉconcat(Functionˉpayload, Encoded.Metadata);
-        Functionˉparameterˉmodes = Bytesˉconcat(
-            Functionˉparameterˉmodes, Encoded.Parameterˉmodes
-        );
         Codeˉpayload = Bytesˉconcat(Codeˉpayload, Encoded.Code);
         if Functionˉentry == Functionˉdeclaration && Functionˉowner == 0u32 {
             if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(
@@ -5518,16 +5267,6 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         Codeˉoffset = Codeˉoffset + Bytesˉlength(Encoded.Code);
         Functionˉrank = Functionˉrank + 1u32;
     }
-    if (Features & 32768u32) != 0u32 {
-        Functionˉpayload = Bytesˉconcat(
-            Functionˉpayload,
-            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Functionˉparameterˉmodes))
-        );
-        Functionˉpayload = Bytesˉconcat(
-            Functionˉpayload, Functionˉparameterˉmodes
-        );
-    }
-
     let Moduleˉmetadata: Compilerˉsourceˉwvbˉdataˉencoding =
         Compilerˉsourceˉwvbˉmoduleˉmetadata(Root.Source);
     if Moduleˉmetadata.Status != Compilerˉsourceˉwvbˉstatus.Valid {

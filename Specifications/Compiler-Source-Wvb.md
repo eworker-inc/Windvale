@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.25 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.26 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.25, including the current
+For the execution subset through WVB 1.26, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -702,16 +702,33 @@ Vector owner, length, contents, and backing, and produces exact
 `Capacityˉexhausted(Maximumˉitems)` plus the original item. No allocation or
 budget transition occurs during append.
 
-The paired WVIR validator now proves exact kind-11 Vector moves through
-ordinary by-value and borrowed function calls, owned results and returns, and
-forward joins. This does not add a WVB 1.26 format. WVB 1.25 `call` does not
-carry parameter transfer modes, and the current function contract does not yet
-encode deterministic callee cleanup for a transferred owner. The emitter
-therefore rejects an otherwise valid by-value Vector call with exact
-`Unsupportedˉshape` before publication. It rejects borrow-after-move,
-duplicate transfer, or asymmetric-join WVIR earlier as `Invalidˉanalysis` with
-`Invalidˉwir`. No borrow handle, owner bit, source slot, or cleanup plan is
-silently inferred into bytecode.
+The paired WVIR validator proves exact kind-11 Vector moves through ordinary
+by-value and borrowed function calls, owned results and returns, and forward
+joins. WVB 1.26 publishes that proof by encoding the transfer mode directly in
+each exact Vector parameter shape: `23` for value, `26` for immutable borrow,
+and `27` for mutable borrow. Borrowed shapes are invalid outside parameter
+lists, and no trailer, pointer, borrow handle, owner bit, or source slot is
+serialized.
+
+The emitter uses `local.take` for a value argument and a retaining load for a
+borrowed argument. When the same source owner is first borrowed and later
+transferred, the first source load remains non-destructive and the later load
+performs the take. The verifier reconstructs the callee signature at each call
+and rejects value/borrow mismatches. Runtime parameter-directory decoding
+retains the mode while normalizing both borrowed tags to the ordinary Vector
+cell representation; deterministic reverse-slot teardown releases either the
+transferred value owner or the borrow's temporary retain. The caller's owner is
+therefore preserved by a borrow and invalidated by a value transfer exactly as
+the WVIR proof requires.
+
+`Owned-Vector-Calls-And-Joins-Wir.wv` deterministically emits a 1,733-byte WVB
+1.26 module at SHA-256
+`ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
+The compiler-aligned verifier accepts it and rejects six exact version,
+parameter-mode, return, and local-shape corruptions. The source-built scalar
+runner returns `42`. Borrow-after-move, duplicate transfer, and asymmetric-join
+fixtures still fail closed as `Invalidˉanalysis` / `Invalidˉwir` before WVB
+publication.
 
 `Vector-Append-Executable.wv` deterministically emits a 3,096-byte WVB 1.25
 module at SHA-256

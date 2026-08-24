@@ -51,6 +51,7 @@ export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
         (Kind == 23u32 || Kind == 24u32) {
         return true;
     }
+    if Minor == 26u32 && (Kind == 26u32 || Kind == 27u32) { return true; }
     return Minor >= 21u32 && Minor <= 26u32 && Kind == 25u32;
 }
 

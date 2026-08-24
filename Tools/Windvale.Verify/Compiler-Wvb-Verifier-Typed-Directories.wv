@@ -20,7 +20,7 @@ export fn Hˉlocalˉshapes(
         let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
         var Nominal: u32 = 0u32;
         if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
-            Kind == 23u8 || Kind == 24u8 {
+            Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 {
             Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -29,7 +29,7 @@ export fn Hˉlocalˉshapes(
         );
         Cursor = Cursor + 1u32;
         if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
-            Kind == 23u8 || Kind == 24u8 {
+            Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;

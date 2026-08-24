@@ -149,12 +149,17 @@ proves generation-safe budget-to-lease transfer, and
 [Decision 0842](../Decisions/0842-Execute-Fallible-Vector-Construction-As-Wvb-1.24.md)
 connects the operation to canonical WVB 1.24, compiler-aligned verification,
 typed target refusal, physical scalar backing, and descriptor-owned release.
-The combined 32-case owner retains Split and adds the executable Vector success,
-failure, zero-precondition, and malformed-module matrix. The next connected
-Slice 5 results are recoverable append, general owned calls and control-flow
-joins, semantic cleanup lowering, reverse-order release, and one hosted
-consumer. Canonical effect resolution, call enforcement, function values, and
-captures follow in Slice 6.
+The combined owner retains Split and adds the executable Vector success,
+failure, zero-precondition, and malformed-module matrix.
+[Decision 0843](../Decisions/0843-Execute-Recoverable-Vector-Append-As-Wvb-1.25.md)
+adds exact recoverable append, [Decision 0844](../Decisions/0844-Prove-Owned-Vector-Calls-And-Forward-Joins-In-Wvir.md)
+proves general Vector calls and forward joins in WVIR, and
+[Decision 0845](../Decisions/0845-Execute-Owned-Vector-Calls-As-Wvb-1.26.md)
+executes them with signature-encoded transfer modes and reverse-slot callee
+cleanup. The combined owner now passes 58 cases. The next connected Slice 5
+results are semantic `using`, nested-resource destruction, one hosted consumer,
+and the fallible elastic budget/Vector-growth path. Canonical effect resolution,
+call enforcement, function values, and captures follow in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

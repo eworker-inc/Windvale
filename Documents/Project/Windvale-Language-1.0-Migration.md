@@ -516,6 +516,40 @@ fallible elastic budget and Vector-growth path below remain before Slice 5
 completes. These ownership and validation boundaries survive self-hosting;
 Seed-specific micro-tuning remains deferred.
 
+## Current Slice 5 executable owned Vector call checkpoint
+
+[Decision 0845](../Decisions/0845-Execute-Owned-Vector-Calls-As-Wvb-1.26.md)
+connects the validated WVIR call proof to WVB 1.26 without a new opcode or
+mode trailer. An exact Vector parameter shape is `23` for value, `26` for
+immutable borrow, or `27` for mutable borrow; borrowed tags are illegal in
+returns, non-parameter locals, fields, payloads, collections, and Types
+entries. Any Vector parameter selects 1.26, while modules without one retain
+their prior lowest version and exact bytes.
+
+The emitter uses `local.take` for by-value transfer and retaining loads for
+borrows. The verifier reconstructs each target signature and rejects mode
+mismatches. The scalar runner retains one bounded internal mode byte per
+parameter, normalizes borrowed cells to ordinary Vector representation, and
+releases surviving descriptors in reverse slot order. A borrow therefore
+balances only its temporary retain; a value call transfers and eventually
+releases the owner.
+
+The positive fixture deterministically emits a 1,733-byte WVB 1.26 module at
+SHA-256
+`ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
+The combined focused owner passes 58 cases with seven valid modules, 37
+malformed modules, four owned-call WVIR cases, and result `42`. Six new byte
+corruptions cover version downgrade, invalid or substituted parameter modes,
+a borrowed return, and a borrowed local. The three earlier source ownership
+failures still reject before WVB publication.
+
+The registry remains 112 owners and advances to 5,387 cases; its 17,187
+LF-only bytes have SHA-256
+`d482947c65e6c10dcb3b192c57d5f7bcb19fde0fe45cec71d5be92908ce3909b`.
+Aggregate-owned fields, loop fixed points, semantic `using`, nested-resource
+destruction, one hosted resource consumer, and the fallible elastic budget and
+Vector-growth path remain before Slice 5 completes.
+
 The required next memory implementation checkpoint will retain fixed reserved
 construction while adding an explicit fallible elastic path for applications
 whose demand changes at runtime. “Use what the OS can provide” will mean a
