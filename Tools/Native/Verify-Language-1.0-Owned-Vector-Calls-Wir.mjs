@@ -87,6 +87,16 @@ const Cases = [
         fixture: 'Owned-Vector-Call-Asymmetric-Join.wv',
         valid: false,
     },
+    {
+        name: 'owned-vector-loop-invariant',
+        fixture: 'Owned-Vector-Loop-Invariant-Wir.wv',
+        valid: true,
+    },
+    {
+        name: 'owned-vector-loop-state-mismatch',
+        fixture: 'Owned-Vector-Loop-State-Mismatch.wv',
+        valid: false,
+    },
 ];
 
 const Created = [];
@@ -136,17 +146,22 @@ try {
             );
             continue;
         }
-        const Evidence = Inspectˉownedˉcallˉwvir(readFileSync(Wir));
-        Positiveˉwvirˉbytes = Evidence.bytes;
-        Positiveˉcalls = Evidence.calls;
+        const Wirˉbytes = readFileSync(Wir);
+        if (Case.name === 'owned-vector-calls-and-joins') {
+            const Evidence = Inspectˉownedˉcallˉwvir(Wirˉbytes);
+            Positiveˉwvirˉbytes = Evidence.bytes;
+            Positiveˉcalls = Evidence.calls;
+        }
         Requireˉownedˉcallˉproduct(
             Run(Emitter, [Source, Manifest, Bindings, Wir, Product]), Product,
         );
         const Productˉbytes = readFileSync(Product);
-        Inspectˉownedˉcallˉwvb(Productˉbytes);
-        Positiveˉwvbˉbytes = Productˉbytes.length;
-        Positiveˉwvbˉsha256 = createHash('sha256')
-            .update(Productˉbytes).digest('hex');
+        if (Case.name === 'owned-vector-calls-and-joins') {
+            Inspectˉownedˉcallˉwvb(Productˉbytes);
+            Positiveˉwvbˉbytes = Productˉbytes.length;
+            Positiveˉwvbˉsha256 = createHash('sha256')
+                .update(Productˉbytes).digest('hex');
+        }
     }
     process.stdout.write(
         'language 1 owned Vector calls and joins WVIR status=Passed ' +
@@ -169,8 +184,8 @@ try {
 function Inspectˉownedˉcallˉwvir(Input) {
     if (Input.length < 48 || Input.length > MAXIMUM_INPUT_BYTES ||
         Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 5) {
-        Reject('The owned-call fixture is not bounded WVIR 1.5.');
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 11) {
+        Reject('The owned-call fixture is not bounded WVIR 1.11.');
     }
     const Functions = Input.readUInt32LE(8);
     const Functionˉbytes = Input.readUInt32LE(12);
@@ -184,7 +199,7 @@ function Inspectˉownedˉcallˉwvir(Input) {
     const Operandˉbytes = Input.readUInt32LE(44);
     if (Functions < 7 || Functions > 64 || Functionˉbytes !== 48 ||
         Blocks < 9 || Blocks > 128 || Blockˉbytes !== 28 ||
-        Operations < 20 || Operations > 512 || Operationˉbytes !== 32 ||
+        Operations < 20 || Operations > 512 || Operationˉbytes !== 28 ||
         Temporaries < 10 || Temporaries > 512 || Temporaryˉbytes !== 4 ||
         Operands < 5 || Operands > 512 || Operandˉbytes !== 4) {
         Reject('The bounded owned-call WVIR directory shape differs.');
@@ -200,7 +215,7 @@ function Inspectˉownedˉcallˉwvir(Input) {
     let Branches = 0;
     for (let Index = 0; Index < Operations; Index += 1) {
         const Entry = Operationsˉoffset + Index * Operationˉbytes;
-        if (Input.readUInt32LE(Entry + 4) === 62) Calls += 1;
+        if (Input.readUInt16LE(Entry + 4) === 62) Calls += 1;
     }
     for (let Index = 0; Index < Blocks; Index += 1) {
         const Entry = Blocksˉoffset + Index * Blockˉbytes;

@@ -1,0 +1,29 @@
+#!wv/1 en@1
+module Languageˉoneˉusingˉvectorˉfallthrough;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+fn Observe(Value: borrow Collections.Vector<i32>) -> unit {
+    return;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    let Outcome: Resultˉvalues.Result<
+        Collections.Vector<i32>,
+        Memory.Allocationˉfailure
+    > = Collections.Vectorˉconstructˉreserved::<i32>(Budget, 4u64);
+    return match Outcome {
+        case Resultˉvalues.Result.Valid { Value: Values } {
+            using Resource = Values {
+                Observe(borrow Resource);
+            }
+            42
+        }
+        case Resultˉvalues.Result.Failure { Error: Failure } { 1 }
+    };
+}

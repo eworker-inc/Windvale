@@ -1,0 +1,26 @@
+#!wv/1 en@1
+module Languageˉoneˉusingˉvectorˉmovedˉbeforeˉrelease;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+fn Consume(
+    Value: Collections.Vector<i32>
+) -> Collections.Vector<i32> {
+    return Value;
+}
+
+fn Exercise(Value: Collections.Vector<i32>) -> unit {
+    using Resource = Value {
+        let Moved: Collections.Vector<i32> = Consume(Resource);
+    }
+    return;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    return 42;
+}

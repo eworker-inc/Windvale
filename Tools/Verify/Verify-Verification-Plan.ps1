@@ -125,10 +125,19 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Use-After.wv',
             'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Duplicate.wv',
             'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Asymmetric-Join.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-Invariant-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-State-Mismatch.wv',
+            'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
+            'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Using-Vector-Loop-Exits-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Using-Vector-Moved-Before-Release.wv',
+            'Tests/Fixtures/Language-1.0/Using-Vector-Nested-Return-Wir.wv',
+            'Tests/Fixtures/Language-1.0/Using-Vector-Try-Propagation-Wir.wv',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
-            'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs'
+            'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
+            'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
         Suites = @('language-1-memory-budget-split-execution')
         Gaps = @()
@@ -3629,7 +3638,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5387 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5399 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

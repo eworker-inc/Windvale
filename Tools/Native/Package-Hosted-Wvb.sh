@@ -178,7 +178,7 @@ enum_source_index=$((fragment_count + 6))
 "$host/wvhostbundlerequest.elf" "$temporary_directory/Publication.wvpq" "$temporary_directory/Bundle-Sources.wvsg" "$bundle_sources" count >"$temporary_directory/Bundle-Count.txt" || exit $?
 bundle_count=$(sed -n 's/^hosted service-bundle request status=Valid segments=//p' "$temporary_directory/Bundle-Count.txt")
 case "$bundle_count" in
-    [1-9]) ;;
+    [1-9]|1[0-7]) ;;
     *) echo 'The native service-bundle count is invalid.' >&2; exit 1 ;;
 esac
 index=0

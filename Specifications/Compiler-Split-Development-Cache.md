@@ -79,18 +79,23 @@ rename clears the temporary path and is preserved.
 
 ## Development bootstrap bridge
 
-The Language 1.0 front door retains a portable 992,412-byte analyzer and
-895,787-byte target-aware emitter under
+The Language 1.0 front door retains a portable 992,412-byte analyzer,
+895,787-byte target-aware emitter, and 1,146,083-byte WVIR 1.9 bridge emitter
+under
 `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/`. Their manifest binds
-the Decision 0813 cache family and complete cache keys, both current Project 2
-closures, producer, sizes, and digests. The active gate reconstructs and
-packages the current analyzer, assigns it a normal role-specific version-2
-identity, and uses that analyzer with the validated/packageable checkpoint
-emitter to reconstruct the current target-aware emitter byte for byte.
+the Decision 0813 checkpoint and Decision 0846 transition, complete cache keys,
+Project 2 closures, source identities, sizes, and digests. The active gate uses
+the original pair to reconstruct and package the current analyzer, assigns it a
+normal role-specific version-2 identity, and then uses that analyzer with the
+validated bridge emitter to reconstruct the current target-aware emitter.
 
 The checkpoint is not another compiler source tree, native executable, release
-artifact, or qualification claim. The obsolete historical analyzer and emitter
-cannot consume the current WVIR version and are no longer on the active path.
+artifact, or qualification claim. The bridge contains the reader side of the
+atomic 28-byte WVIR transition only; it does not retain an old-format decoder
+in current compiler source. Remove it after a promoted compiler checkpoint can
+consume current WVIR without the transition. The obsolete historical analyzer
+and emitter cannot consume the current WVIR version directly and are no longer
+the final-emission producer.
 The gate also omits the former monolithic compiler-source-set build because its
 result was never consumed; compiler-scale evidence comes from the current split
 analyzer/emitter reconstruction and fixed point.

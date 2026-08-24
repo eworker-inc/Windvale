@@ -34,6 +34,7 @@ export enum Compilerˉsourceˉbindingˉkind {
     Parameter = 1;
     Let = 2;
     Var = 3;
+    Using = 4;
 }
 
 export enum Compilerˉsourceˉcallableˉkind {
@@ -218,6 +219,7 @@ export fn Compilerˉsourceˉbindingsˉkindˉvalue(
     if Kind == Compilerˉsourceˉbindingˉkind.Parameter { return 1u32; }
     if Kind == Compilerˉsourceˉbindingˉkind.Let { return 2u32; }
     if Kind == Compilerˉsourceˉbindingˉkind.Var { return 3u32; }
+    if Kind == Compilerˉsourceˉbindingˉkind.Using { return 4u32; }
     return 0u32;
 }
 
@@ -225,6 +227,7 @@ export fn Compilerˉsourceˉbindingsˉkind(Value: u32) -> Compilerˉsourceˉbind
     if Value == 1u32 { return Compilerˉsourceˉbindingˉkind.Parameter; }
     if Value == 2u32 { return Compilerˉsourceˉbindingˉkind.Let; }
     if Value == 3u32 { return Compilerˉsourceˉbindingˉkind.Var; }
+    if Value == 4u32 { return Compilerˉsourceˉbindingˉkind.Using; }
     return Compilerˉsourceˉbindingˉkind.None;
 }
 
@@ -503,6 +506,11 @@ export fn Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
     }
     var Kind: Compilerˉsourceˉbindingˉkind = Compilerˉsourceˉbindingˉkind.Let;
     if Statement.Isˉmutable { Kind = Compilerˉsourceˉbindingˉkind.Var; }
+    var Scopeˉstart: u32 = Statement.Nextˉoffset;
+    if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Using {
+        Kind = Compilerˉsourceˉbindingˉkind.Using;
+        Scopeˉstart = Statement.Firstˉblockˉoffset;
+    }
     let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
         Module,
         Function,
@@ -511,7 +519,7 @@ export fn Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
         Statement.Nameˉoffset,
         Statement.Nameˉlength,
         Shape,
-        Statement.Nextˉoffset,
+        Scopeˉstart,
         Scopeˉend
     );
     return Compilerˉsourceˉbindingsˉappend(Build, Entry, false);
@@ -892,7 +900,7 @@ fn Compilerˉsourceˉbindingsˉentriesˉareˉvalid(
         let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 28u32);
         let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 32u32);
         if Module >= Scan.Modules || Entryˉfunction >= Ranges ||
-            Kind == 0u32 || Kind > 3u32 || Slot >= 4096u32 {
+            Kind == 0u32 || Kind > 4u32 || Slot >= 4096u32 {
             return false;
         }
         if !Compilerˉsourceˉbindingsˉshapeˉisˉvalid(Symbols, Kind, Shape) {

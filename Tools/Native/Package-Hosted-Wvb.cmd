@@ -181,7 +181,7 @@ if errorlevel 1 goto :cleanup
 set "BundleCount="
 for /f "tokens=3 delims==" %%N in ('findstr /b /c:"hosted service-bundle request status=Valid segments=" "%TemporaryDirectory%\Bundle-Count.txt"') do set "BundleCount=%%N"
 if not defined BundleCount goto :cleanup
-echo(%BundleCount%| findstr /r /x "[1-9]" >nul || goto :cleanup
+echo(%BundleCount%| findstr /r /x "[1-9] 1[0-7]" >nul || goto :cleanup
 set /a BundleLast=BundleCount-1
 for /l %%N in (0,1,%BundleLast%) do (
     "%Toolset%\windows-x64\wvhostbundlerequest.exe" "%TemporaryDirectory%\Publication.wvpq" "%TemporaryDirectory%\Bundle-Sources.wvsg" "%BundleSources%" %%N "%BundleSegments%.request-%%N"

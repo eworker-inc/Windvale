@@ -2256,6 +2256,7 @@ fn Iˉownedˉcontrolˉisˉvalid(
     }
 
     var Ownedˉbranches: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Ownedˉentries: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Ownedˉcursor: u32 = 0u32;
     var Ownedˉreachable: bool = true;
     while Ownedˉcursor < Functionˉcodeˉlength {
@@ -2284,6 +2285,17 @@ fn Iˉownedˉcontrolˉisˉvalid(
             Ownedˉbranch = Ownedˉbranch + 12u32;
         }
         if !Ownedˉreachable { return false; }
+
+        Ownedˉentries = Bytesˉconcat(
+            Ownedˉentries,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Ownedˉcursor),
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉlow),
+                    Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉhigh)
+                )
+            )
+        );
 
         let Ownedˉopcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
             Input, Functionˉcode + Ownedˉcursor
@@ -2405,18 +2417,45 @@ fn Iˉownedˉcontrolˉisˉvalid(
             }
         }
         if Ownedˉopcode == 48u32 || Ownedˉopcode == 49u32 {
-            Ownedˉbranches = Bytesˉconcat(
-                Ownedˉbranches,
-                Bytesˉconcat(
-                    Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(
-                        Input, Functionˉcode + Ownedˉcursor + 1u32
-                    )),
-                    Bytesˉconcat(
-                        Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉlow),
-                        Bytesˉfromˉu32ˉlittle(Ownedˉavailableˉhigh)
-                    )
-                )
+            let Ownedˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Functionˉcode + Ownedˉcursor + 1u32
             );
+            if Ownedˉtarget > Ownedˉcursor {
+                Ownedˉbranches = Bytesˉconcat(
+                    Ownedˉbranches,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Ownedˉtarget),
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(
+                                Ownedˉavailableˉlow
+                            ),
+                            Bytesˉfromˉu32ˉlittle(
+                                Ownedˉavailableˉhigh
+                            )
+                        )
+                    )
+                );
+            } else {
+                var Ownedˉentry: u32 = 0u32;
+                var Ownedˉentryˉfound: bool = false;
+                while Ownedˉentry < Bytesˉlength(Ownedˉentries) {
+                    if Bytesˉreadˉu32ˉlittle(
+                        Ownedˉentries, Ownedˉentry
+                    ) == Ownedˉtarget {
+                        if Bytesˉreadˉu32ˉlittle(
+                            Ownedˉentries, Ownedˉentry + 4u32
+                        ) != Ownedˉavailableˉlow ||
+                            Bytesˉreadˉu32ˉlittle(
+                                Ownedˉentries, Ownedˉentry + 8u32
+                            ) != Ownedˉavailableˉhigh {
+                            return false;
+                        }
+                        Ownedˉentryˉfound = true;
+                    }
+                    Ownedˉentry = Ownedˉentry + 12u32;
+                }
+                if !Ownedˉentryˉfound { return false; }
+            }
             if Ownedˉopcode == 48u32 { Ownedˉreachable = false; }
         }
         if Ownedˉopcode == 81u32 { Ownedˉreachable = false; }
@@ -2558,7 +2597,6 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         var Controlˉpreviousˉopcode: u32 = 0u32;
         var Controlˉfunctionˉinstructions: u32 = 0u32;
         var Controlˉhasˉtake: bool = false;
-        var Controlˉhasˉbackwardˉcontrol: bool = false;
         while Controlˉcursor < Controlˉfunctionˉcodeˉlength {
             if Controlˉcursor > 0u32 {
                 var Controlˉneedsˉpredecessor: bool = false;
@@ -2610,9 +2648,6 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 if Controlˉtarget >= Controlˉfunctionˉcodeˉlength {
                     return Controlˉinvalid;
                 }
-                if Controlˉtarget <= Controlˉcursor {
-                    Controlˉhasˉbackwardˉcontrol = true;
-                }
                 if Controlˉtarget != 0u32 && Bytesˉreadˉu8(
                     Controlˉdirectory.Boundaries,
                     Controlˉtarget
@@ -2633,7 +2668,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         }
         if Controlˉhasˉtake {
             if Controlˉfunctionˉinstructions > 4096u32 ||
-                Controlˉhasˉbackwardˉcontrol || !Iˉownedˉcontrolˉisˉvalid(
+                !Iˉownedˉcontrolˉisˉvalid(
                     Input,
                     Minor,
                     Types,

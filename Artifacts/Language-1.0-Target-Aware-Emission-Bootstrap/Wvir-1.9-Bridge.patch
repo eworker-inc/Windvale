@@ -1,0 +1,519 @@
+diff --git a/Compiler/Windvale/Source-Wir-Core.wv b/Compiler/Windvale/Source-Wir-Core.wv
+index 6b82b942..0f7b048c 100644
+--- a/Compiler/Windvale/Source-Wir-Core.wv
++++ b/Compiler/Windvale/Source-Wir-Core.wv
+@@ -10250,9 +10250,9 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) ->
+ 
+ export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
+     if Bytesˉlength(Directory) >= 56u32 &&
+-        (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 4u32 ||
+-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 6u32 ||
+-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 8u32) {
++        (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 10u32 ||
++         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 12u32 ||
++         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32) {
+         return 56u32;
+     }
+     return 48u32;
+@@ -11018,7 +11018,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉblocksˉareˉvalid(
+         while Blockˉoperationˉindex < Blockˉoperationˉcount {
+             let Ownedˉoperationˉentry: u32 = Operationsˉoffset + (
+                 Blockˉfirstˉoperation + Blockˉoperationˉindex
+-            ) * 32u32;
++            ) * 28u32;
+             if Bytesˉreadˉu32ˉlittle(
+                 Directory, Ownedˉoperationˉentry
+             ) != Blockˉidentifier { return false; }
+@@ -12202,17 +12202,17 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
+     let Blocksˉoffset: u32 = Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
+         Functionˉentries * 48u32;
+     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
++    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
+     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
+ 
+     var Hasˉmemoryˉsplit: bool = false;
+     var Scanˉindex: u32 = 0u32;
+     while Scanˉindex < Range.Operationˉcount {
+         let Scanˉentry: u32 = Operationsˉoffset +
+-            (Range.Firstˉoperation + Scanˉindex) * 32u32;
+-        if Bytesˉreadˉu32ˉlittle(Directory, Scanˉentry + 4u32) ==
++            (Range.Firstˉoperation + Scanˉindex) * 28u32;
++        if Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
+                 WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
+-            Bytesˉreadˉu32ˉlittle(Directory, Scanˉentry + 4u32) ==
++            Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
+                 WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
+             Hasˉmemoryˉsplit = true;
+         }
+@@ -12271,8 +12271,8 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
+         var Blockˉoperation: u32 = 0u32;
+         while Blockˉoperation < Blockˉoperationˉcount {
+             let Operationˉentry: u32 = Operationsˉoffset +
+-                (Blockˉfirstˉoperation + Blockˉoperation) * 32u32;
+-            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
++                (Blockˉfirstˉoperation + Blockˉoperation) * 28u32;
++            let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
+                 Directory, Operationˉentry + 4u32
+             );
+             let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+@@ -12281,11 +12281,11 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
+             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                 Directory, Operationˉentry + 16u32
+             );
+-            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+-                Directory, Operationˉentry + 20u32
++            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
++                Directory, Operationˉentry + 6u32
+             );
+             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+-                Directory, Operationˉentry + 24u32
++                Directory, Operationˉentry + 20u32
+             );
+             if Operationˉshape != 0u32 {
+                 var Temporaryˉlive: u8 = 0u8;
+@@ -12465,7 +12465,7 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
+     let Blocksˉoffset: u32 = Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
+         Functionˉentries * 48u32;
+     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
++    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
+     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
+     let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+         Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
+@@ -12569,8 +12569,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
+         var Inˉblock: u32 = 0u32;
+         while Inˉblock < Operationˉcount {
+             let Operationˉentry: u32 = Operationsˉoffset +
+-                (Firstˉoperation + Inˉblock) * 32u32;
+-            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
++                (Firstˉoperation + Inˉblock) * 28u32;
++            let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
+                 Directory, Operationˉentry + 4u32
+             );
+             let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+@@ -12579,11 +12579,11 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
+             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                 Directory, Operationˉentry + 16u32
+             );
+-            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+-                Directory, Operationˉentry + 20u32
++            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
++                Directory, Operationˉentry + 6u32
+             );
+             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+-                Directory, Operationˉentry + 24u32
++                Directory, Operationˉentry + 20u32
+             );
+             let Producesˉvector: bool =
+                 Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+@@ -12904,7 +12904,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
+     var Consumedˉvectorˉslot: u32 = Compilerˉsourceˉwirˉsentinel();
+     while Operationˉindex < Range.Operationˉcount {
+         let Globalˉoperation: u32 = Range.Firstˉoperation + Operationˉindex;
+-        let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
++        let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 28u32;
+         let Operationˉblock: u32 = Bytesˉreadˉu32ˉlittle(
+             Directory, Operationˉentry
+         );
+@@ -12918,15 +12918,15 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
+         let Ownerˉblockˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+             Directory, Ownerˉblockˉentry + 8u32
+         );
+-        let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 4u32);
++        let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(Directory, Operationˉentry + 4u32);
+         let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 8u32);
+         let Operationˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+             Directory, Operationˉentry + 12u32
+         );
+         let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 16u32);
+-        let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 20u32);
+-        let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 24u32);
+-        let Operationˉauxiliary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 28u32);
++        let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(Directory, Operationˉentry + 6u32);
++        let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 20u32);
++        let Operationˉauxiliary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 24u32);
+         if Bytesˉreadˉu32ˉlittle(Directory, Ownerˉblockˉentry) != Operationˉblock {
+             return false;
+         }
+@@ -13438,8 +13438,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+     ) { return false; }
+     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
+     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+-    if Minor < 3u32 || Minor > 8u32 { return false; }
+-    if (Minor == 4u32 || Minor == 6u32 || Minor == 8u32) &&
++    if Minor < 9u32 || Minor > 14u32 { return false; }
++    if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32) &&
+         Directoryˉlength < 56u32 {
+         return false;
+     }
+@@ -13448,7 +13448,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+     let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+     if Bytesˉreadˉu32ˉlittle(Directory, 20u32) != 28u32 { return false; }
+     let Operations: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+-    if Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 32u32 { return false; }
++    if Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 28u32 { return false; }
+     let Temporaries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
+     if Bytesˉreadˉu32ˉlittle(Directory, 36u32) != 4u32 { return false; }
+     let Operands: u32 = Bytesˉreadˉu32ˉlittle(Directory, 40u32);
+@@ -13457,7 +13457,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+     var Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
+         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
+     var Instances: u32 = 0u32;
+-    if Minor == 3u32 || Minor == 5u32 || Minor == 7u32 {
++    if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 {
+         if Functionˉentries != Symbolˉentries { return false; }
+     } else {
+         Instances = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
+@@ -13493,7 +13493,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+         Compilerˉsourceˉwirˉfunctionsˉoffset(Directory) +
+             Functionˉentries * 48u32;
+     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
++    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
+     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
+     let Expectedˉlength: u32 = Operandsˉoffset + Operands * 4u32;
+     if Directoryˉlength != Expectedˉlength { return false; }
+@@ -13501,8 +13501,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+     var Hasˉvectorˉappend: bool = false;
+     var Operationˉscan: u32 = 0u32;
+     while Operationˉscan < Operations {
+-        let Scannedˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+-            Directory, Operationsˉoffset + Operationˉscan * 32u32 + 4u32
++        let Scannedˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
++            Directory, Operationsˉoffset + Operationˉscan * 28u32 + 4u32
+         );
+         if Scannedˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
+             Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
+@@ -13513,10 +13513,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+         }
+         Operationˉscan = Operationˉscan + 1u32;
+     }
+-    if Minor < 5u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+-    if Minor >= 5u32 && Minor <= 6u32 &&
++    if Minor < 11u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
++    if Minor >= 11u32 && Minor <= 12u32 &&
+         (!Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+-    if Minor >= 7u32 && !Hasˉvectorˉappend { return false; }
++    if Minor >= 13u32 && !Hasˉvectorˉappend { return false; }
+     var Function: u32 = 0u32;
+     var Expectedˉblock: u32 = 0u32;
+     var Expectedˉoperation: u32 = 0u32;
+diff --git a/Compiler/Windvale/Source-Wvb-Core.wv b/Compiler/Windvale/Source-Wvb-Core.wv
+index 94a49123..883a3036 100644
+--- a/Compiler/Windvale/Source-Wvb-Core.wv
++++ b/Compiler/Windvale/Source-Wvb-Core.wv
+@@ -1281,12 +1281,12 @@ export fn Compilerˉsourceˉwvbˉreachableˉdataˉorder(
+         var Inˉfunction: u32 = 0u32;
+         while Inˉfunction < Operationˉcount {
+             let Operationˉentry: u32 = Operationsˉoffset +
+-                (Firstˉoperation + Inˉfunction) * 32u32;
+-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(
++                (Firstˉoperation + Inˉfunction) * 28u32;
++            let Operation: u32 = Bytesˉreadˉu16ˉlittle(
+                 Wir, Operationˉentry + 4u32
+             );
+             let Target: u32 = Bytesˉreadˉu32ˉlittle(
+-                Wir, Operationˉentry + 24u32
++                Wir, Operationˉentry + 20u32
+             );
+             var Referenced: u32 = Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
+             if Operation == 6u32 || Operation == 9u32 || Operation == 10u32 {
+@@ -1294,7 +1294,7 @@ export fn Compilerˉsourceˉwvbˉreachableˉdataˉorder(
+             }
+             if Operation == 5u32 {
+                 let Textˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+-                    Wir, Operationˉentry + 28u32
++                    Wir, Operationˉentry + 24u32
+                 );
+                 if Textˉlength == 0u32 {
+                     Referenced = Target;
+@@ -2045,14 +2045,14 @@ fn Compilerˉsourceˉwvbˉcollectˉtextˉplanˉmode(
+         var Index: u32 = 0u32;
+         while Index < Operationˉcount {
+             let Operationˉentry: u32 = Operationsˉoffset +
+-                (Firstˉoperation + Index) * 32u32;
+-            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) == 5u32 {
++                (Firstˉoperation + Index) * 28u32;
++            if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) == 5u32 {
+                 let Length: u32 = Bytesˉreadˉu32ˉlittle(
+-                    Wir, Operationˉentry + 28u32
++                    Wir, Operationˉentry + 24u32
+                 );
+                 if Length != 0u32 {
+                     let Offset: u32 = Bytesˉreadˉu32ˉlittle(
+-                        Wir, Operationˉentry + 24u32
++                        Wir, Operationˉentry + 20u32
+                     );
+                     let Decoded: Compilerˉsourceˉwvbˉtextˉvalue =
+                         Compilerˉsourceˉwvbˉdecodeˉtext(
+@@ -2942,8 +2942,8 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
+     Wir: bytes,
+     Operationˉentry: u32
+ ) -> u32 {
+-    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+-    let Length: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32);
++    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
++    let Length: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+     if Length == 0u32 {
+         return Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
+             Input, Scan, Symbols, Plan, Order, Target
+@@ -2990,8 +2990,8 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(
+     let Offset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+     var Index: u32 = 0u32;
+     while Index < Operations {
+-        let Entry: u32 = Offset + Index * 32u32;
+-        let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 4u32);
++        let Entry: u32 = Offset + Index * 28u32;
++        let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
+         if (Operation == 171u32 || Operation == 172u32) &&
+             Bytesˉreadˉu32ˉlittle(Wir, Entry + 8u32) == Shape {
+             return true;
+@@ -3032,7 +3032,7 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
+ 
+ export fn Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir: bytes) -> u32 {
+     return Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+-        Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 32u32;
++        Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 28u32;
+ }
+ 
+ export fn Compilerˉsourceˉwvbˉoperandsˉoffset(Wir: bytes) -> u32 {
+@@ -3061,12 +3061,12 @@ export fn Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
+     if Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 8u32) == 0u32 { return 0u32; }
+     let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 4u32);
+     let Operationˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+-        Firstˉoperation * 32u32;
+-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) != 64u32 { return 0u32; }
+-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Predecessor {
++        Firstˉoperation * 28u32;
++    if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) != 64u32 { return 0u32; }
++    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32) == Predecessor {
+         return 10u32;
+     }
+-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32) == Predecessor {
++    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Predecessor {
+         return 10u32;
+     }
+     return 0u32;
+@@ -3101,16 +3101,16 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
+         var Inˉblock: u32 = 0u32;
+         while Inˉblock < Operationˉcount {
+             let Globalˉoperation: u32 = Firstˉoperation + Inˉblock;
+-            let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
+-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
++            let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 28u32;
++            let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
+             let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
+             let Target: u32 = Bytesˉreadˉu32ˉlittle(
+-                Wir, Operationˉentry + 24u32
++                Wir, Operationˉentry + 20u32
+             );
+             let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(
+-                Wir, Operationˉentry + 28u32
++                Wir, Operationˉentry + 24u32
+             );
+-            let Operands: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
++            let Operands: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
+             if !Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation) {
+                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
+@@ -3371,12 +3371,12 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+     let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+     var Operation: u32 = Start;
+     while Operation < End {
+-        if Bytesˉreadˉu32ˉlittle(Wir, Operation + 4u32) == 62u32 {
++        if Bytesˉreadˉu16ˉlittle(Wir, Operation + 4u32) == 62u32 {
+             let First: u32 = Bytesˉreadˉu32ˉlittle(
+                 Wir, Operation + 16u32
+             );
+-            let Count: u32 = Bytesˉreadˉu32ˉlittle(
+-                Wir, Operation + 20u32
++            let Count: u32 = Bytesˉreadˉu16ˉlittle(
++                Wir, Operation + 6u32
+             );
+             var Operand: u32 = 0u32;
+             while Operand < Count {
+@@ -3385,7 +3385,7 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                     ) == Temporary &&
+                     Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                         Input, Scan, Symbols, Bindings,
+-                        Bytesˉreadˉu32ˉlittle(Wir, Operation + 24u32),
++                        Bytesˉreadˉu32ˉlittle(Wir, Operation + 20u32),
+                         Operand
+                     ) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+                     return true;
+@@ -3393,7 +3393,7 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                 Operand = Operand + 1u32;
+             }
+         }
+-        Operation = Operation + 32u32;
++        Operation = Operation + 28u32;
+     }
+     return false;
+ }
+@@ -3414,13 +3414,13 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
+     Firstˉtemporary: u32,
+     Temporaryˉmapping: bytes
+ ) -> bytes {
+-    let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
++    let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
+     let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
+     let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
+     let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 16u32);
+-    let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+-    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+-    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32);
++    let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
++    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
++    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
+     let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+     let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
+     var Result: bytes = Compilerˉsourceˉwvbˉempty(Wir);
+@@ -3538,7 +3538,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
+                 Wir, Shape, Orders
+             ) && !Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                 Input, Scan, Symbols, Bindings, Wir,
+-                Operationˉentry + 32u32, Operationˉend, Temporary
++                Operationˉentry + 28u32, Operationˉend, Temporary
+             ) {
+             Loadˉopcode = 205u8;
+         }
+@@ -3937,10 +3937,10 @@ export fn Compilerˉsourceˉwvbˉemitˉphiˉprelude(
+         (Firstˉblock + Targetˉblock) * 28u32;
+     let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 4u32);
+     let Phiˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+-        Firstˉoperation * 32u32;
++        Firstˉoperation * 28u32;
+     let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 16u32);
+     var Operandˉindex: u32 = 0u32;
+-    if Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 28u32) == Predecessor {
++    if Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 24u32) == Predecessor {
+         Operandˉindex = 1u32;
+     }
+     let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+@@ -4064,9 +4064,9 @@ export fn Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+     while Index < Operationˉcount {
+         let Operationˉentry: u32 = Operationsˉoffset + (
+             Firstˉoperation + Index
+-        ) * 32u32;
+-        if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) == 8u32 {
+-            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Slot {
++        ) * 28u32;
++        if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) == 8u32 {
++            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32) == Slot {
+                 let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                     Wir, Operationˉentry + 16u32
+                 );
+@@ -4162,8 +4162,8 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
+         var Index: u32 = 0u32;
+         while Index < Operations {
+             let Operationˉentry: u32 = Operationˉoffset +
+-                (Firstˉoperation + Index) * 32u32;
+-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(
++                (Firstˉoperation + Index) * 28u32;
++            let Operation: u32 = Bytesˉreadˉu16ˉlittle(
+                 Wir, Operationˉentry + 4u32
+             );
+             if Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
+@@ -4181,7 +4181,7 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
+                     Operation == 167u32 || Operation == 168u32) &&
+                 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
+                     Bytesˉreadˉu32ˉlittle(
+-                        Wir, Operationˉentry + 24u32
++                        Wir, Operationˉentry + 20u32
+                     ),
+                     Symbols
+                 ) {
+@@ -4190,7 +4190,7 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
+             if (Operation == 169u32 || Operation == 170u32) &&
+                 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
+                     Bytesˉreadˉu32ˉlittle(
+-                        Wir, Operationˉentry + 28u32
++                        Wir, Operationˉentry + 24u32
+                     ),
+                     Symbols
+                 ) {
+@@ -4479,8 +4479,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
+             var Inˉblock: u32 = 0u32;
+             while Inˉblock < Blockˉoperationˉcount {
+                 let Operationˉentry: u32 = Operationsˉoffset +
+-                    (Blockˉfirstˉoperation + Inˉblock) * 32u32;
+-                let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
++                    (Blockˉfirstˉoperation + Inˉblock) * 28u32;
++                let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
+                     Wir, Operationˉentry + 4u32
+                 );
+                 if Operationˉkind >= 129u32 && Operationˉkind <= 147u32 {
+@@ -4545,7 +4545,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
+                         Plan, Wir,
+                         Operationˉentry,
+                         Operationsˉoffset +
+-                            (Firstˉoperation + Operationˉcount) * 32u32,
++                            (Firstˉoperation + Operationˉcount) * 28u32,
+                         Parameters, Locals,
+                         Firstˉtemporary,
+                         Temporaryˉallocation.Mapping
+@@ -4711,13 +4711,13 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
+             var Reachableˉinˉblock: u32 = 0u32;
+             while Reachableˉinˉblock < Reachableˉoperationˉcount {
+                 let Reachableˉoperationˉentry: u32 = Operationsˉoffset +
+-                    (Reachableˉfirstˉoperation + Reachableˉinˉblock) * 32u32;
+-                if Bytesˉreadˉu32ˉlittle(
++                    (Reachableˉfirstˉoperation + Reachableˉinˉblock) * 28u32;
++                if Bytesˉreadˉu16ˉlittle(
+                     Wir, Reachableˉoperationˉentry + 4u32
+                 ) == 62u32 {
+                     Reachableˉcalls = Reachableˉcalls + 1u32;
+                     let Reachableˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+-                        Wir, Reachableˉoperationˉentry + 24u32
++                        Wir, Reachableˉoperationˉentry + 20u32
+                     );
+                     if Bytesˉreadˉu8(Map, Reachableˉtarget) == 0u8 {
+                         let Reachableˉmarked: Byteˉconstruction.Foundationˉbytesˉresult =
+@@ -4810,8 +4810,8 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
+                 while Unreachableˉinˉblock < Unreachableˉoperationˉcount {
+                     let Unreachableˉoperationˉentry: u32 = Operationsˉoffset +
+                         (Unreachableˉfirstˉoperation + Unreachableˉinˉblock) *
+-                        32u32;
+-                    if Bytesˉreadˉu32ˉlittle(
++                        28u32;
++                    if Bytesˉreadˉu16ˉlittle(
+                         Wir, Unreachableˉoperationˉentry + 4u32
+                     ) == 62u32 {
+                         Unreachableˉcalls = Unreachableˉcalls + 1u32;
+diff --git a/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv b/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv
+index 71020c6b..aa5b4a67 100644
+--- a/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv
++++ b/Compiler/Windvale/Source-Wvb-Temporary-Slots.wv
+@@ -83,12 +83,12 @@ fn Findˉlifetime(
+     while Operation < Operationˉcount {
+         if Definition == 4294967295u32 {
+             let Definitionˉentry: u32 = Operationsˉoffset +
+-                (Firstˉoperation + Operation) * 32u32;
++                (Firstˉoperation + Operation) * 28u32;
+             if Bytesˉreadˉu32ˉlittle(
+                 Wir, Definitionˉentry + 12u32
+             ) == Temporary {
+                 Definition = Operation;
+-                Kind = Bytesˉreadˉu32ˉlittle(
++                Kind = Bytesˉreadˉu16ˉlittle(
+                     Wir, Definitionˉentry + 4u32
+                 );
+             }
+@@ -120,12 +120,12 @@ fn Findˉlifetime(
+         while Reverse > Definition {
+             let Useˉoperation: u32 = Reverse - 1u32;
+             let Useˉentry: u32 = Operationsˉoffset +
+-                (Firstˉoperation + Useˉoperation) * 32u32;
++                (Firstˉoperation + Useˉoperation) * 28u32;
+             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+                 Wir, Useˉentry + 16u32
+             );
+-            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+-                Wir, Useˉentry + 20u32
++            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
++                Wir, Useˉentry + 6u32
+             );
+             var Operand: u32 = 0u32;
+             var Found: bool = false;
+

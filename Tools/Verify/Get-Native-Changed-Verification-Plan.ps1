@@ -1118,7 +1118,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
-    if ($Stem -eq 'Verify-Language-1.0-Owned-Vector-Calls-Wir') {
+    if ($Stem -in @(
+        'Verify-Language-1.0-Owned-Vector-Calls-Wir',
+        'Verify-Language-1.0-Using-Wir'
+    )) {
         Add-Suite 'language-1-memory-budget-split-execution'
         return
     }
@@ -1604,9 +1607,18 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Use-After.wv',
         'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Duplicate.wv',
         'Tests/Fixtures/Language-1.0/Owned-Vector-Call-Asymmetric-Join.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-Invariant-Wir.wv',
+        'Tests/Fixtures/Language-1.0/Owned-Vector-Loop-State-Mismatch.wv',
+        'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
+        'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
+        'Tests/Fixtures/Language-1.0/Using-Vector-Loop-Exits-Wir.wv',
+        'Tests/Fixtures/Language-1.0/Using-Vector-Moved-Before-Release.wv',
+        'Tests/Fixtures/Language-1.0/Using-Vector-Nested-Return-Wir.wv',
+        'Tests/Fixtures/Language-1.0/Using-Vector-Try-Propagation-Wir.wv',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
-        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh'
+        'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
+        'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path.StartsWith('Tests/Fixtures/Language-1.0/', [StringComparison]::Ordinal) -or

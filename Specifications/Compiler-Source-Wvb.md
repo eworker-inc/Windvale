@@ -201,7 +201,7 @@ The backend accepts:
 - capability calls with their validated catalog parameter and result shapes;
 - the implemented Foundation byte, text, formatting, conversion, and SHA-256 intrinsics, including exact little-endian `u64` read and construction plus lossless `u32` to `u64` widening;
 - checked `i8`/`i16`/`i32`/`i64`/`u16`/`u32`/`u64` arithmetic including division and remainder; `u8`/`u16`/`u32`/`u64` bitwise and shift operations; exact text/bytes equality; full admitted scalar comparison, signed negation, invariant formatting, Boolean negation, short-circuit Boolean conjunction/disjunction, and mutable-local compound assignment; and
-- variant and collection operations plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, exact `try` propagation, `while`, `for`, `break`, and `continue`.
+- variant and collection operations, semantic `using` cleanup, plus explicit jump, branch, and return terminators produced by `if`, `else if`, `else`, `match`, exact `try` propagation, `while`, `for`, `break`, and `continue`.
 
 `try` is source-only control-flow sugar. WVIR presents only its existing variant
 case test, field extraction, construction, branch, and return, so canonical WVB
@@ -213,7 +213,7 @@ The root owns the emitted module name, profile, capabilities, static data, and e
 
 WVSD entries are source-declaration identities. WVIR preserves those identities for function calls and data references. WVB instead numbers its function and data sections in strict ordinal name order.
 
-For specialized WVIR 1.4, ordinary reachable source functions retain that
+For specialized WVIR 1.10, ordinary reachable source functions retain that
 ordinal-name rule. An all-zero generic declaration placeholder is not emitted.
 Concrete specializations are appended to the function order in WVGC instance
 order, use bounded private names `__Generic_000000` onward, and are never
@@ -643,13 +643,14 @@ budget local, budget local-load, budget local-store, and missing-export
 mutations. The source-built runner transfers one fresh opaque token, releases it
 once on completed top-level return, and produces `42`.
 
-Typed WVIR 1.5/1.6 operation `Foundationˉmemoryˉsplit = 171` lowers to WVB
+Typed WVIR 1.11/1.12 operation `Foundationˉmemoryˉsplit = 171` lowers to WVB
 1.23 opcode `CE` with the parent local and exact materialized Result type as
 its two immediates. The emitter maps the private budget to shape `25`, requires
 `u64` and `u32` operands, and uses `local.take` for affine budget and Split
-Result locals. A bounded forward-control proof tracks at most 64 owned slots
-across at most 64 blocks and intersects availability at joins; backward control
-remains rejected in this first executable ownership profile.
+Result locals. A bounded proof tracks at most 64 owned slots across at most 64
+blocks, intersects availability at forward joins, and accepts a backward edge
+only when its complete ownership state exactly matches the saved loop-header
+state.
 
 `Memory-Budget-Split-Executable.wv` deterministically emits a 752-byte WVB
 1.23 module at SHA-256
@@ -660,7 +661,7 @@ runner returns `42` for both provider outcomes. General owned arguments/returns
 and direct
 native/browser/OS execution remain later connected checkpoints.
 
-Typed WVIR 1.5/1.6 operation
+Typed WVIR 1.11/1.12 operation
 `Foundationˉvectorˉconstructˉreserved = 172` lowers to WVB 1.24 opcode `CF`.
 The instruction carries the consumed `Memoryˉbudget` local and exact
 `Result<Vector<T>, Allocationˉfailure>` type as immediates; the exact `u64`
@@ -687,7 +688,7 @@ and zero-precondition modules, rejects ten exact opcode/local/type/layout
 mutations, and the source-built runner returns `42` for both Result paths. Zero
 traps with `WVR3008` after four guest instructions.
 
-Typed WVIR 1.7/1.8 operation `Foundationˉvectorˉappend = 173` lowers to WVB
+Typed WVIR 1.13/1.14 operation `Foundationˉvectorˉappend = 173` lowers to WVB
 1.25 opcode `D0`. The instruction carries one direct non-parameter
 `Vector<T>` local and the exact
 `Result<unit, Vectorˉappendˉfailure<T>>` type as immediates; the already
@@ -703,8 +704,9 @@ Vector owner, length, contents, and backing, and produces exact
 budget transition occurs during append.
 
 The paired WVIR validator proves exact kind-11 Vector moves through ordinary
-by-value and borrowed function calls, owned results and returns, and forward
-joins. WVB 1.26 publishes that proof by encoding the transfer mode directly in
+by-value and borrowed function calls, owned results and returns, forward joins,
+and ownership-invariant loops. WVB 1.26 publishes that proof by encoding the
+transfer mode directly in
 each exact Vector parameter shape: `23` for value, `26` for immutable borrow,
 and `27` for mutable borrow. Borrowed shapes are invalid outside parameter
 lists, and no trailer, pointer, borrow handle, owner bit, or source slot is
@@ -729,6 +731,17 @@ parameter-mode, return, and local-shape corruptions. The source-built scalar
 runner returns `42`. Borrow-after-move, duplicate transfer, and asymmetric-join
 fixtures still fail closed as `Invalidˉanalysis` / `Invalidˉwir` before WVB
 publication.
+
+WVIR operation `Releaseˉlocal = 174` lowers without advancing WVB beyond the
+minor otherwise required by the function. It has no operands or result and
+names one direct non-parameter exact-Vector local. The emitter writes the
+existing six-byte sequence `local.take <slot>; pop`: `local.take` removes the
+unique owner from the local, and `pop` performs the runtime's ordinary
+descriptor release. The verifier sees the same ownership transition as an
+explicit take and therefore rejects a release after move, a missing release on
+a loop edge, and any backedge whose complete owned-slot state differs from the
+saved header state. No destructor name, hidden call target, pointer, cleanup
+table, new WVB opcode, or new bytecode version is serialized.
 
 `Vector-Append-Executable.wv` deterministically emits a 3,096-byte WVB 1.25
 module at SHA-256

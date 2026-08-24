@@ -2815,14 +2815,115 @@ executes the valid module and returns `42`. The use-after, duplicate-transfer,
 and asymmetric-join source cases still reject at the emitter's independent
 WVIR boundary.
 
-The combined owner reports:
+The combined owner originally reported:
 
 ```text
 native language 1 memory budget and vector execution status=Passed cases=58 valid=7 malformed=37 owned-call-cases=4 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387
 ```
 
-The native registry remains 112 owners and advances to 5,387 cases. Its 17,187
-LF-only bytes have SHA-256
+At that checkpoint the native registry remained 112 owners and advanced to
+5,387 cases. Its 17,187 LF-only bytes had SHA-256
 `d482947c65e6c10dcb3b192c57d5f7bcb19fde0fe45cec71d5be92908ce3909b`.
-This is current-Windows development evidence; paired Linux execution remains
-required before cross-host conformance is claimed.
+The later 70-case paired-host owner below subsumes this executable checkpoint.
+
+
+## Compact WVIR operation-record evidence
+
+[Decision 0846](../Decisions/0846-Compact-Wvir-Operation-Records.md) advances
+the active typed directory atomically to WVIR 1.9 through 1.14 and reduces every
+persisted operation from 32 to 28 bytes. The operation kind at offset 4 and
+operand count at offset 6 are `u16`; all six remaining fields retain their
+canonical `u32` identities. The independent validator requires entry size 28,
+the exact feature-to-minor pairing, bounded kind and arity, canonical ranges,
+and exact total length. It rejects WVIR 1.1 through 1.8 rather than carrying an
+obsolete decoder.
+
+The current compiler source graph publishes 3,853,556 WVIR bytes under the
+unchanged 4,194,304-byte ceiling, leaving 340,748 bytes. Representative generic
+pipeline evidence moved as follows while preserving exact WVB output:
+
+| Fixture | WVIR | WVB |
+| --- | ---: | ---: |
+| Generic nominal main pipeline | 604 bytes, 1.9 | 441 bytes, 1.11 |
+| Generic nominal function body | 980 bytes, 1.10 | 600 bytes, 1.11 |
+| Generic nominal declaration dependency | 1,100 bytes, 1.10 | 668 bytes, 1.11 |
+| Generic nominal variant | 1,708 bytes, 1.9 | 947 bytes, 1.16 |
+
+The function-body WVIR has SHA-256
+`d4becfc3b5d68038202ee4c0627d6a9dc983576b206bbf8f542304e6e7380a34`;
+the declaration-dependency WVIR has SHA-256
+`223ac5b2db03f6b950d144c8e218f283b752e8a10f23c5580bf36a617edca918`.
+The rebuilt split products used by the paired Windows/Linux oracle are the
+1,192,526-byte analyzer WVB at SHA-256
+`175851de53aa06ce600e4478ddf36a2a3f6eb666c1a000f7a84e00747d30e543`
+and the 1,149,175-byte emitter WVB at SHA-256
+`fdbf640bb0677b1b4e05058ffef6c6b435460507f940b7794b65a53c7a928fa9`.
+
+Because the operation-record replacement is intentionally incompatible,
+self-hosting uses one digest-pinned portable bridge emitter instead of adding
+an old-format decoder to current compiler source. The bridge was reconstructed
+from baseline `269294c0` with only the compact reader side applied. Its
+old-layout analysis measured 4,193,520 bytes, and its verified WVB 1.11 product
+is 1,146,083 bytes with SHA-256
+`0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb`.
+The original bootstrap pair builds the current analyzer; that analyzer and the
+bridge then build the current emitter. A promoted current-format checkpoint
+retires the bridge.
+
+## Semantic using and exact loop-ownership evidence
+
+[Decision 0847](../Decisions/0847-Lower-Semantic-Using-And-Prove-Loop-Ownership.md)
+adds immutable binding kind 4 and typed operation 174. Four valid fixtures prove
+the exact release sites:
+
+- fallthrough: block 1 releases slot 3;
+- nested return: block 0 releases slot 3, then slot 2;
+- failed `try` propagation: block 2 and block 1 each release slot 2; and
+- loop exits: block 4 and block 5 each release slot 1 for the scopes exited by
+  `continue` and `break`.
+
+The direct typed-WVIR oracle reports:
+
+```text
+language 1 using semantics WVIR status=Passed cases=6 valid=4 rejected=2 releases=7
+```
+
+The two rejected sources distinguish the front and trust boundaries. A scalar
+initializer reports exact `Invalidˉresource`. Moving the Vector owner before the
+implicit release lets the analyzer publish diagnostic evidence, but the emitter
+rejects exact `Invalidˉanalysis` / `Invalidˉwir` and writes no WVB.
+
+The four valid WVB identities are:
+
+| Exit family | Bytes | WVB | SHA-256 |
+| --- | ---: | ---: | --- |
+| Fallthrough | 1,211 | 1.26 | `f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257` |
+| Nested return | 945 | 1.26 | `90338b833c21ea3142ccc29ab402111176d7cab71f5dfa9393062b9d8c03e715` |
+| Failed `try` | 1,100 | 1.26 | `6b1bf113428f2f130f551196ac3562cff7f10652a2c21ba9051bc02432b18ad1` |
+| Loop exits | 1,027 | 1.22 | `ad44bd9eef0daf17d8dab0952b6af223e17395557de6844f56757285ec3bf0fe` |
+
+Operation 174 uses the existing `local.take <slot>; pop` encoding, so these
+minor versions are selected by other features. The rebuilt 289,710-byte
+compiler-aligned verifier WVB has SHA-256
+`8ac050c047e2ac9dc4daa5a5d8bcb34bcfdd5b2a74248700246340f0af53494a`;
+the 316,365-byte scalar runner WVB has SHA-256
+`f836c7d0e005b48ac6ad57b096c354864d0ee7972f3306e6317236a8b47c3536`.
+The fallthrough product executes cleanup and returns `42`.
+
+The owned-call oracle additionally advances from four to six cases: its valid
+fixture is now 2,112-byte WVIR under the compact layout, an ownership-invariant
+loop is accepted, and a loop with a mismatched backedge state rejects. The WVB
+verifier corruption oracle changes the release instruction before a backedge to
+a non-consuming instruction and requires rejection. The combined owner reports:
+
+```text
+native language 1 memory budget, Vector, and using execution status=Passed cases=70 valid=11 malformed=38 owned-call-cases=4 using-cases=12 using-releases=7 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9ba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257
+```
+
+The registry remains 112 owners and advances to 5,399 cases. Its 17,351 LF-only
+bytes have SHA-256
+`75683af614bde5f4d6b8aa4c7439bf7c1a0b7df5c3160553900ab2173af5f6e7`.
+The exact 70-case summary above passed on both Windows and Linux with identical
+portable WVB sizes and SHA-256 values. This is paired-host focused development
+evidence for the compact WVIR, owned-call, loop-ownership, and exact-Vector
+`using` checkpoint; it is not the repository-wide Qualification gate.

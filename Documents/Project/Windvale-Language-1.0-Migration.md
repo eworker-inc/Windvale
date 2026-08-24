@@ -458,7 +458,7 @@ transitional-compiler micro-optimization remains deferred until self-hosting;
 measured packaging/cache waste and correctness blockers remain appropriate
 current work.
 
-## Current Slice 4/5 recoverable Vector-append checkpoint
+## Slice 4/5 recoverable Vector-append checkpoint
 
 [Decision 0843](../Decisions/0843-Execute-Recoverable-Vector-Append-As-Wvb-1.25.md)
 connects the frozen public `Vectorˉappend::<T>` contract to WVIR 1.7/1.8
@@ -487,7 +487,7 @@ hosted resource consumer remain in Slice 5. Seed-specific micro-tuning remains
 deferred until self-hosting; the canonical ordering, bounded ownership, failure
 semantics, and focused verification completed here survive that transition.
 
-## Current Slice 5 owned Vector calls and forward joins checkpoint
+## Slice 5 owned Vector calls and forward joins checkpoint
 
 [Decision 0844](../Decisions/0844-Prove-Owned-Vector-Calls-And-Forward-Joins-In-Wvir.md)
 adds an independent bounded ownership proof for exact kind-11 `Vector<T>`
@@ -516,7 +516,7 @@ fallible elastic budget and Vector-growth path below remain before Slice 5
 completes. These ownership and validation boundaries survive self-hosting;
 Seed-specific micro-tuning remains deferred.
 
-## Current Slice 5 executable owned Vector call checkpoint
+## Slice 5 executable owned Vector call checkpoint
 
 [Decision 0845](../Decisions/0845-Execute-Owned-Vector-Calls-As-Wvb-1.26.md)
 connects the validated WVIR call proof to WVB 1.26 without a new opcode or
@@ -546,9 +546,47 @@ failures still reject before WVB publication.
 The registry remains 112 owners and advances to 5,387 cases; its 17,187
 LF-only bytes have SHA-256
 `d482947c65e6c10dcb3b192c57d5f7bcb19fde0fe45cec71d5be92908ce3909b`.
-Aggregate-owned fields, loop fixed points, semantic `using`, nested-resource
-destruction, one hosted resource consumer, and the fallible elastic budget and
-Vector-growth path remain before Slice 5 completes.
+That checkpoint still left loop fixed points, semantic `using`, nested-resource
+destruction, aggregate-owned fields, one hosted resource consumer, and the
+fallible elastic budget and Vector-growth path before Slice 5 completes.
+
+## Current Slice 5 compact WVIR and semantic using checkpoint
+
+[Decision 0846](../Decisions/0846-Compact-Wvir-Operation-Records.md) replaces
+the internal 32-byte WVIR operation record with a 28-byte form: kind and operand
+count are independently bounded `u16` fields, while owning block, shape,
+temporary, first operand, target, and auxiliary retain `u32`. Ordinary,
+specialized, memory, and append directories advance atomically to WVIR 1.9
+through 1.14. Versions 1.1 through 1.8 are rejected rather than preserved by a
+parallel decoder. The 4 MiB ceiling is unchanged; the current compiler source
+graph now uses 3,853,556 bytes and leaves 340,748 bytes of real headroom.
+
+[Decision 0847](../Decisions/0847-Lower-Semantic-Using-And-Prove-Loop-Ownership.md)
+connects the already frozen `using` syntax to exact owned-Vector cleanup. The
+initializer is evaluated before its immutable binding-kind-4 name exists. The
+name is visible only inside its body. Typed WVIR operation 174 releases the
+direct local on fallthrough, return, failed `try` propagation, `break`, and
+`continue`, emitting only scopes actually exited and ordering nested releases
+from innermost to outermost. A non-Vector resource rejects as
+`Invalidˉresource`; moving the Vector before cleanup rejects at the independent
+ownership boundary.
+
+The same checkpoint opens bounded ownership-invariant loops. Forward joins
+retain their conservative agreement rule, while every backedge must match the
+saved loop-header state exactly. Operation 174 lowers to existing
+`local.take <slot>; pop`, so WVB needs no new opcode or minor version. Four
+positive fixtures contain seven releases, and the executable fallthrough case
+is a deterministic 1,211-byte WVB at SHA-256
+`f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257`
+that returns `42`.
+
+The combined focused owner advances to 70 cases: 11 valid products, 38
+malformed modules, four retained owned-call cases, 12 `using` cases, and seven
+release sites. The registry remains 112 owners and advances to 5,399 cases; its
+17,351 LF-only bytes have SHA-256
+`75683af614bde5f4d6b8aa4c7439bf7c1a0b7df5c3160553900ab2173af5f6e7`.
+Aggregate-owned fields, one hosted resource consumer, and the explicit fallible
+elastic budget and Vector-growth path remain before Slice 5 completes.
 
 The required next memory implementation checkpoint will retain fixed reserved
 construction while adding an explicit fallible elastic path for applications

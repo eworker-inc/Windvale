@@ -82,7 +82,7 @@ Requireˉvalue(Manifest.readUInt32LE(16), Bindings.length, 'manifest binding byt
 Requireˉvalue(Manifest.readUInt32LE(20), Wir.length, 'manifest WIR bytes');
 Requireˉhash(
     Manifest,
-    'efaaf04d4676ceadaab35b1b3269cf7b1bb71e7835e3fe7c52b2d0a6a5308202',
+    '38cc644f40f2dd3dfcb4f4a4d81550d801b61b710ea4b23cafbd0ec78364f05d',
     'analysis manifest',
 );
 
@@ -167,8 +167,8 @@ Requireˉhash(
 );
 
 Requireˉmagic(Wir, 'WVIR', 'WIR directory');
-Requireˉvalue(Wir.length, 1_040, 'WIR bytes');
-Requireˉvalue(Wir.readUInt16LE(6), 4, 'WIR minor version');
+Requireˉvalue(Wir.length, 980, 'WIR bytes');
+Requireˉvalue(Wir.readUInt16LE(6), 10, 'WIR minor version');
 Requireˉarray(
     [8, 16, 24, 32, 40, 48, 52].map(Offset => Wir.readUInt32LE(Offset)),
     [7, 3, 15, 12, 9, 2, 1],
@@ -201,7 +201,7 @@ Requireˉarray(
 const Operationˉoffset = Functionˉoffset + 7 * 48 + 3 * 28;
 const Operationˉkinds = Array.from(
     { length: 15 },
-    (_, Index) => Wir.readUInt32LE(Operationˉoffset + Index * 32 + 4),
+    (_, Index) => Wir.readUInt16LE(Operationˉoffset + Index * 28 + 4),
 );
 Requireˉarray(
     Operationˉkinds,
@@ -210,29 +210,29 @@ Requireˉarray(
 );
 Requireˉarray(
     [2, 4, 10, 12, 13, 14].map(Index =>
-        Wir.readUInt32LE(Operationˉoffset + Index * 32 + 8)),
+        Wir.readUInt32LE(Operationˉoffset + Index * 28 + 8)),
     [PRIVATE_TYPE_SHAPE, PRIVATE_TYPE_SHAPE, PRIVATE_TYPE_SHAPE,
         PRIVATE_TYPE_SHAPE, PRIVATE_TYPE_SHAPE, 65_537],
     'generic nominal WIR result shapes',
 );
 Requireˉarray(
-    [2, 5].map(Index => Wir.readUInt32LE(Operationˉoffset + Index * 32 + 24)),
+    [2, 5].map(Index => Wir.readUInt32LE(Operationˉoffset + Index * 28 + 20)),
     [5, 6],
     'specialized WIR call targets',
 );
 Requireˉvalue(
-    Wir.readUInt32LE(Operationˉoffset + 10 * 32 + 24),
+    Wir.readUInt32LE(Operationˉoffset + 10 * 28 + 20),
     PRIVATE_TYPE_SHAPE,
     'Wrap Box construction target',
 );
 Requireˉvalue(
-    Wir.readUInt32LE(Operationˉoffset + 14 * 32 + 24),
+    Wir.readUInt32LE(Operationˉoffset + 14 * 28 + 20),
     PRIVATE_TYPE_SHAPE,
     'Read Box field target',
 );
 Requireˉhash(
     Wir,
-    'df23d2a64848c9f21bbfc92d6ae1ac41b859449fd09b8353705d0b6b6486d3ea',
+    'd4becfc3b5d68038202ee4c0627d6a9dc983576b206bbf8f542304e6e7380a34',
     'WIR directory',
 );
 
@@ -350,6 +350,6 @@ Requireˉvalue(Typeˉcursor, Sections[7].Payload + Sections[7].Length, 'type dir
 
 process.stdout.write(
     'generic nominal function body status=Passed cases=28 ' +
-    'wvlb-bytes=504 wvir-bytes=1040 wvb-bytes=600 ' +
+    'wvlb-bytes=504 wvir-bytes=980 wvb-bytes=600 ' +
     'function-specializations=2 generic-types=1 template-types=0 execution=42\n',
 );

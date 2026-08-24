@@ -90,19 +90,19 @@ Requireˉvalue(Bindings.readUInt32LE(Bindingˉentries + 72 + 24), 65_536, 'Item 
 Requireˉvalue(Bindings.readUInt32LE(Bindingˉentries + 108 + 24), 3, 'Code binding shape');
 
 Requireˉmagic(Wir, 'WVIR', 'WIR directory');
-Requireˉvalue(Wir.length, 1_828, 'WIR bytes');
-Requireˉvalue(Wir.readUInt16LE(6), 3, 'WIR minor version');
+Requireˉvalue(Wir.length, 1_708, 'WIR bytes');
+Requireˉvalue(Wir.readUInt16LE(6), 9, 'WIR minor version');
 Requireˉvalue(Wir.readUInt32LE(8), 4, 'WIR function entries');
 Requireˉvalue(Wir.readUInt32LE(16), 15, 'WIR blocks');
 Requireˉvalue(Wir.readUInt32LE(24), 30, 'WIR operations');
 
 const Operations = 48 + Wir.readUInt32LE(8) * 48 + Wir.readUInt32LE(16) * 28;
 function Requireˉoperation(Index, Operation, Shape, Target, Auxiliary, Label) {
-    const Entry = Operations + Index * 32;
-    Requireˉvalue(Wir.readUInt32LE(Entry + 4), Operation, `${Label} operation`);
+    const Entry = Operations + Index * 28;
+    Requireˉvalue(Wir.readUInt16LE(Entry + 4), Operation, `${Label} operation`);
     Requireˉvalue(Wir.readUInt32LE(Entry + 8), Shape, `${Label} shape`);
-    Requireˉvalue(Wir.readUInt32LE(Entry + 24), Target, `${Label} target`);
-    Requireˉvalue(Wir.readUInt32LE(Entry + 28), Auxiliary, `${Label} selector`);
+    Requireˉvalue(Wir.readUInt32LE(Entry + 20), Target, `${Label} target`);
+    Requireˉvalue(Wir.readUInt32LE(Entry + 24), Auxiliary, `${Label} selector`);
 }
 Requireˉoperation(1, 66, 4, PRIVATE_TYPE_SHAPE, 0, 'Value case test');
 Requireˉoperation(2, 164, 3, PRIVATE_TYPE_SHAPE, 1, 'Attempts field');

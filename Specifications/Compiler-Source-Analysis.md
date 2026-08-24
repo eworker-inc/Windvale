@@ -9,7 +9,8 @@ individually bounded values:
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
   specialization-evidence `WVLB 1.3` binding directory; and
-- one canonical `WVIR 1.3` or specialized `WVIR 1.4` typed source directory.
+- one canonical `WVIR 1.9` through `WVIR 1.14` typed source directory, with the
+  exact ordinary/specialized and memory/append feature pairing defined by WVIR.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
 is not a package or distribution format, and does not create another source
@@ -45,10 +46,11 @@ source count, validates the complete WVLB directory against that source model,
 compares the WVIR header counts, and independently validates the complete WVIR
 directory against WVSS, symbols, and WVLB.
 
-The 1.2 pair is selected only when at least one generic function instance is
-admitted. WVLB retains the bounded WVGC catalog and declaration mapping; WVIR
-retains matching appended concrete function entries. The validator requires
-both artifacts to select the same versioned specialization count and rejects a
+The specialized pair is selected only when at least one generic function
+instance is admitted. WVLB 1.2 or 1.3 retains the bounded WVGC catalog and
+declaration mapping; the matching even WVIR minor retains appended concrete
+function entries. The validator requires both artifacts to select the same
+versioned specialization count and rejects a
 missing, reordered, malformed, or mismatched catalog/body pair before emission.
 WVCA remains version 1.0 because its existing byte lengths and WVIR function
 count already bind either valid minor-version product without changing a field

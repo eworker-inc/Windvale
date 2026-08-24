@@ -1,7 +1,7 @@
 {
-  "format": "windvale-language-1-target-aware-emission-bootstrap-2",
+  "format": "windvale-language-1-target-aware-emission-bootstrap-3",
   "status": "development-bootstrap",
-  "sourceDecision": "0813",
+  "sourceDecisions": ["0813", "0846"],
   "construction": {
     "family": "project-split-wvb-optimized-v2",
     "analyzerCacheKey": "31f5613563989a799e97f61b379f62d85eae0d7fd04a315124a9d6898778e2ef",
@@ -46,5 +46,26 @@
     "functions": 470,
     "codeBytes": 742026,
     "target": "portable-wvb-optimized-v1"
+  },
+  "wvir19BridgeSource": {
+    "baseCommit": "269294c0a3030bab60160b1c9ad43518430827f6",
+    "construction": "reader-only compact-WVIR transition; the baseline writer still emits 32-byte records",
+    "patchPath": "Wvir-1.9-Bridge.patch",
+    "patchBytes": 29164,
+    "patchSha256": "7e2022e9a8984bdd6ad4e5ec797b27f23eb6527868e1a874d7d04cefe5194a01",
+    "sourceWirCoreSha256": "0c774b9d91ad0222def31ef0cc23a1fcd36af62b20f2df7cb96ece386c522ee7",
+    "sourceWvbCoreSha256": "ee4af71b8e84f8238f1fa8fc9f8b7ce30ebb9b7010fc7ce3bb9725ac3e7d99c9",
+    "sourceWvbTemporarySlotsSha256": "bea5234e68808edec695317713596a20ea0687deff65dfbfae037338c8975fcb"
+  },
+  "wvir19BridgeWvb": {
+    "path": "Wvb/wvemit-wvir-1.9-bridge.wvb",
+    "analysisCacheKey": "707d6728120c1c5223e6dcf09e1e1a4572c8d6e4d08d376b3b41a691239381c0",
+    "emissionCacheKey": "cd19fe3619e5b5f5c2c195e90068c1f4684b25345429cb4ec316fcbafa6dd86b",
+    "bytes": 1146083,
+    "sha256": "0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb",
+    "functions": 578,
+    "codeBytes": 956835,
+    "target": "portable-wvb-optimized-v1",
+    "wvbVersion": "1.11"
   }
 }

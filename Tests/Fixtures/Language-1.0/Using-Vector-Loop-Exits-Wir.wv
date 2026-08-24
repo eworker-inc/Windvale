@@ -1,0 +1,30 @@
+#!wv/1 en@1
+module Languageˉoneˉusingˉvectorˉloopˉexits;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Resultˉvalues;
+
+fn Acquire() -> Collections.Vector<i32> {
+    return Acquire();
+}
+
+export fn Exercise(Repeat: bool) -> unit {
+    while Repeat {
+        using Values = Acquire() {
+            if Repeat {
+                continue;
+            } else {
+                break;
+            }
+        }
+    }
+    return;
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
+    return 42;
+}

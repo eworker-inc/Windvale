@@ -84,7 +84,7 @@ Requireˉarray(
 );
 Requireˉhash(
     Manifest,
-    '68c4ef6602a34498c7912f4c51e714e3aa1f8c33fb8cc3665ce249d4be9072e3',
+    '9dc7b02597a847b2118c910139b69dd24a8b2abddecd5623e4bf96459b58b68c',
     'analysis manifest',
 );
 
@@ -184,8 +184,8 @@ Requireˉhash(
 );
 
 Requireˉmagic(Wir, 'WVIR', 'WIR directory');
-Requireˉvalue(Wir.length, 1_168, 'WIR bytes');
-Requireˉvalue(Wir.readUInt16LE(6), 4, 'WIR minor version');
+Requireˉvalue(Wir.length, 1_100, 'WIR bytes');
+Requireˉvalue(Wir.readUInt16LE(6), 10, 'WIR minor version');
 Requireˉarray(
     [8, 16, 24, 32, 40, 48, 52].map(Offset => Wir.readUInt32LE(Offset)),
     [8, 3, 17, 14, 11, 2, 1],
@@ -217,20 +217,20 @@ Requireˉarray(
 const Operationˉoffset = Functionˉoffset + 8 * 48 + 3 * 28;
 Requireˉarray(
     Array.from({ length: 17 }, (_, Index) =>
-        Wir.readUInt32LE(Operationˉoffset + Index * 32 + 4)),
+        Wir.readUInt16LE(Operationˉoffset + Index * 28 + 4)),
     [1, 17, 62, 8, 7, 62, 8, 7, 18, 7, 17, 8, 7, 17, 7, 18, 18],
     'WIR operation kinds',
 );
 Requireˉarray(
     [10, 13, 15, 16].map(Index =>
-        Wir.readUInt32LE(Operationˉoffset + Index * 32 + 24)),
+        Wir.readUInt32LE(Operationˉoffset + Index * 28 + 20)),
     [PRIVATE_TYPE_SHAPE, PRIVATE_TYPE_SHAPE + 1,
         PRIVATE_TYPE_SHAPE + 1, PRIVATE_TYPE_SHAPE],
     'dependency-ordered WIR nominal targets',
 );
 Requireˉhash(
     Wir,
-    '2676ecdbc4e9f930a1d4a467f9b3bbd8460705a60952950b5e77ae0d5ca826f3',
+    '223ac5b2db03f6b950d144c8e218f283b752e8a10f23c5580bf36a617edca918',
     'WIR directory',
 );
 
@@ -365,6 +365,6 @@ Requireˉvalue(
 
 process.stdout.write(
     'generic nominal declaration dependency status=Passed cases=32 ' +
-    'wvlb-bytes=564 wvir-bytes=1168 wvb-bytes=668 ' +
+    'wvlb-bytes=564 wvir-bytes=1100 wvb-bytes=668 ' +
     'generic-types=2 materialized-types=3 execution=42\n',
 );

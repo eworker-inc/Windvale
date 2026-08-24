@@ -21,6 +21,8 @@ const BOOTSTRAP_ANALYZER_SHA256 =
     '26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120';
 const BOOTSTRAP_EMITTER_SHA256 =
     'ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94';
+const WVIR_1_9_BRIDGE_EMITTER_SHA256 =
+    '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb';
 const EXPECTED_SUCCESS_SHA256 =
     '5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53';
 const EXPECTED_VECTOR_SUCCESS_SHA256 =
@@ -29,6 +31,14 @@ const EXPECTED_APPEND_SUCCESS_SHA256 =
     '6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f';
 const EXPECTED_OWNED_CALL_SUCCESS_SHA256 =
     'ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387';
+const EXPECTED_USING_FALLTHROUGH_SHA256 =
+    'f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257';
+const EXPECTED_USING_NESTED_SHA256 =
+    '90338b833c21ea3142ccc29ab402111176d7cab71f5dfa9393062b9d8c03e715';
+const EXPECTED_USING_TRY_SHA256 =
+    '6b1bf113428f2f130f551196ac3562cff7f10652a2c21ba9051bc02432b18ad1';
+const EXPECTED_USING_LOOP_SHA256 =
+    'ad44bd9eef0daf17d8dab0952b6af223e17395557de6844f56757285ec3bf0fe';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -57,6 +67,10 @@ const Bootstrapˉemitterˉwvb = path.join(
     Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
     'Wvb', 'wvemit.wvb',
 );
+const Bridgeˉemitterˉwvb = path.join(
+    Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
+    'Wvb', 'wvemit-wvir-1.9-bridge.wvb',
+);
 const Work = mkdtempSync(path.join(
     os.tmpdir(), 'windvale-memory-budget-split-execution-',
 ));
@@ -73,13 +87,19 @@ try {
         Bootstrapˉemitterˉwvb, 895_787, BOOTSTRAP_EMITTER_SHA256,
         'bootstrap emitter',
     );
+    Requireˉexactˉfile(
+        Bridgeˉemitterˉwvb, 1_146_083, WVIR_1_9_BRIDGE_EMITTER_SHA256,
+        'WVIR 1.9 bridge emitter',
+    );
 
     const Executableˉsuffix = process.platform === 'win32' ? '.exe' : '.elf';
     const Target = process.platform === 'win32' ? 'windows' : 'linux';
     const Bootstrapˉanalyzer = path.join(Work, `Bootstrap-Analyzer${Executableˉsuffix}`);
     const Bootstrapˉemitter = path.join(Work, `Bootstrap-Emitter${Executableˉsuffix}`);
+    const Bridgeˉemitter = path.join(Work, `Bridge-Emitter${Executableˉsuffix}`);
     const Bootstrapˉanalyzerˉidentity = path.join(Work, 'Bootstrap-Analyzer.identity');
     const Bootstrapˉemitterˉidentity = path.join(Work, 'Bootstrap-Emitter.identity');
+    const Bridgeˉemitterˉidentity = path.join(Work, 'Bridge-Emitter.identity');
     const Admitterˉwvb = path.join(Work, 'Admitter.wvb');
     const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
     const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
@@ -101,6 +121,13 @@ try {
     Runˉnode('bootstrap-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
     ]);
+    Runˉnative('wvir-1.9-bridge-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Bridgeˉemitterˉwvb, Bridgeˉemitter, '--development-cache',
+    ]);
+    Runˉnode('wvir-1.9-bridge-emitter-identity',
+        'Write-Split-Compiler-Producer-Identity.mjs', [
+            'emitter', Bridgeˉemitter, Bridgeˉemitterˉidentity,
+        ]);
     Runˉnode('current-admitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Admission-Driver.wvproj'), Admitterˉwvb,
         Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
@@ -123,7 +150,7 @@ try {
     Runˉnode('current-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Emission-Driver.wvproj'), Emitterˉwvb,
         Analyzer, Analyzerˉidentity,
-        Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+        Bridgeˉemitter, Bridgeˉemitterˉidentity,
     ]);
     Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Emitterˉwvb, Emitter, '--development-cache',
@@ -134,6 +161,11 @@ try {
     Runˉnode(
         'owned-vector-calls-and-joins-wir',
         'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
+        [Admitter, Analyzer, Emitter, Work],
+    );
+    Runˉnode(
+        'using-semantics-wir',
+        'Verify-Language-1.0-Using-Wir.mjs',
         [Admitter, Analyzer, Emitter, Work],
     );
 
@@ -148,6 +180,10 @@ try {
     const Appendˉsuccessˉb = path.join(Work, 'Append-Success-B.wvb');
     const Ownedˉcallˉsuccessˉa = path.join(Work, 'Owned-Call-Success-A.wvb');
     const Ownedˉcallˉsuccessˉb = path.join(Work, 'Owned-Call-Success-B.wvb');
+    const Usingˉfallthrough = path.join(Work, 'Using-Fallthrough.wvb');
+    const Usingˉnested = path.join(Work, 'Using-Nested.wvb');
+    const Usingˉtry = path.join(Work, 'Using-Try.wvb');
+    const Usingˉloop = path.join(Work, 'Using-Loop.wvb');
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
@@ -170,6 +206,14 @@ try {
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉa);
     Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉb);
+    Compileˉvector('using-fallthrough-compile', Admitter, Analyzer, Emitter,
+        'Using-Vector-Fallthrough-Wir.wv', Usingˉfallthrough);
+    Compileˉvector('using-nested-compile', Admitter, Analyzer, Emitter,
+        'Using-Vector-Nested-Return-Wir.wv', Usingˉnested);
+    Compileˉvector('using-try-compile', Admitter, Analyzer, Emitter,
+        'Using-Vector-Try-Propagation-Wir.wv', Usingˉtry);
+    Compileˉvector('using-loop-compile', Admitter, Analyzer, Emitter,
+        'Using-Vector-Loop-Exits-Wir.wv', Usingˉloop);
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
     if (!Successˉbytes.equals(Successˉbˉbytes)) {
@@ -218,6 +262,26 @@ try {
     if (Ownedˉcallˉsha256 !== EXPECTED_OWNED_CALL_SUCCESS_SHA256) {
         Reject(`The executable owned Vector call fixture digest differs: ${Ownedˉcallˉsha256}.`);
     }
+    const Usingˉfallthroughˉbytes = readFileSync(Usingˉfallthrough);
+    const Usingˉnestedˉbytes = readFileSync(Usingˉnested);
+    const Usingˉtryˉbytes = readFileSync(Usingˉtry);
+    const Usingˉloopˉbytes = readFileSync(Usingˉloop);
+    Requireˉusingˉidentity(
+        Usingˉfallthroughˉbytes, 1211, EXPECTED_USING_FALLTHROUGH_SHA256,
+        'Main', [3], 'fallthrough',
+    );
+    Requireˉusingˉidentity(
+        Usingˉnestedˉbytes, 945, EXPECTED_USING_NESTED_SHA256,
+        'Exercise', [3, 2], 'nested return',
+    );
+    Requireˉusingˉidentity(
+        Usingˉtryˉbytes, 1100, EXPECTED_USING_TRY_SHA256,
+        'Exercise', [2, 2], 'try propagation',
+    );
+    const Usingˉloopˉlayout = Requireˉusingˉidentity(
+        Usingˉloopˉbytes, 1027, EXPECTED_USING_LOOP_SHA256,
+        'Exercise', [1, 1], 'loop exits', 2,
+    );
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -234,6 +298,10 @@ try {
     Requireˉvalid(Verifier, Vectorˉzero, 'zero-maximum Vector module');
     Requireˉvalid(Verifier, Appendˉsuccessˉa, 'Vector append module');
     Requireˉvalid(Verifier, Ownedˉcallˉsuccessˉa, 'owned Vector call module');
+    Requireˉvalid(Verifier, Usingˉfallthrough, 'using fallthrough module');
+    Requireˉvalid(Verifier, Usingˉnested, 'using nested-return module');
+    Requireˉvalid(Verifier, Usingˉtry, 'using try-propagation module');
+    Requireˉvalid(Verifier, Usingˉloop, 'using loop-exit module');
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -371,6 +439,18 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Usingˉloopˉmismatch = Buffer.from(Usingˉloopˉbytes);
+    Usingˉloopˉmismatch[Usingˉloopˉlayout.backedgeRelease] = 4;
+    const Usingˉloopˉmismatchˉpath = path.join(
+        Work, 'using-loop-backedge-state-mismatch.wvb',
+    );
+    writeFileSync(
+        Usingˉloopˉmismatchˉpath, Usingˉloopˉmismatch, { flag: 'wx' },
+    );
+    Requireˉinvalid(
+        Verifier, Usingˉloopˉmismatchˉpath,
+        'using loop backedge ownership mismatch',
+    );
 
     const Runnerˉwvb = path.join(Work, 'Runner.wvb');
     const Runner = path.join(Work, `Runner${Executableˉsuffix}`);
@@ -396,13 +476,16 @@ try {
     Requireˉresultˉ42(
         Runner, Ownedˉcallˉsuccessˉa, 'owned Vector call execution',
     );
+    Requireˉresultˉ42(
+        Runner, Usingˉfallthrough, 'using fallthrough release execution',
+    );
 
     process.stdout.write(
-        'native language 1 memory budget and vector execution status=Passed ' +
-        `cases=58 valid=7 malformed=${
+        'native language 1 memory budget, Vector, and using execution status=Passed ' +
+        `cases=70 valid=11 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
-            Appendˉmalformedˉcases.length + Ownedˉcallˉmalformedˉcases.length
-        } owned-call-cases=4 ` +
+            Appendˉmalformedˉcases.length + Ownedˉcallˉmalformedˉcases.length + 1
+        } owned-call-cases=4 using-cases=12 using-releases=7 ` +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -410,7 +493,9 @@ try {
         `append-wvb-bytes=${Appendˉsuccessˉbytes.length} ` +
         `append-sha256=${Appendˉsha256} ` +
         `owned-call-wvb-bytes=${Ownedˉcallˉsuccessˉbytes.length} ` +
-        `owned-call-sha256=${Ownedˉcallˉsha256}\n`,
+        `owned-call-sha256=${Ownedˉcallˉsha256} ` +
+        `using-fallthrough-wvb-bytes=${Usingˉfallthroughˉbytes.length} ` +
+        `using-fallthrough-sha256=${Digest(Usingˉfallthroughˉbytes)}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -813,6 +898,113 @@ function Inspectˉownedˉcallˉmodule(Bytes) {
         forwardReturn: Forward.returnShape.shapeOffset,
         vectorLocal: Vectorˉlocal.shapeOffset,
     };
+}
+
+function Requireˉusingˉidentity(
+    Bytes,
+    Expectedˉbytes,
+    Expectedˉsha256,
+    Functionˉname,
+    Expectedˉtargets,
+    Label,
+    Expectedˉbackedgeˉreleases = 0,
+) {
+    if (Bytes.length !== Expectedˉbytes ||
+        Digest(Bytes) !== Expectedˉsha256 ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 ||
+        (Bytes.readUInt16LE(6) !== 22 && Bytes.readUInt16LE(6) !== 26) ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject(`The using ${Label} WVB identity differs.`);
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Function = Parseˉfunction(Bytes, Sections[4], Functionˉname);
+    const Codeˉstart = Sections[5].payload + Function.codeOffset;
+    const Codeˉend = Codeˉstart + Function.codeLength;
+    if (Codeˉstart < Sections[5].payload ||
+        Codeˉend > Sections[5].payload + Sections[5].length) {
+        Reject(`The using ${Label} code range differs.`);
+    }
+    const Instructions = [];
+    let Cursor = Codeˉstart;
+    while (Cursor < Codeˉend) {
+        const Opcode = Bytes[Cursor];
+        const Width = Wvbˉinstructionˉwidth(Opcode);
+        if (Cursor + Width > Codeˉend) {
+            Reject(`The using ${Label} instruction stream is truncated.`);
+        }
+        Instructions.push({
+            absolute: Cursor,
+            relative: Cursor - Codeˉstart,
+            opcode: Opcode,
+            width: Width,
+        });
+        Cursor += Width;
+    }
+    if (Cursor !== Codeˉend) {
+        Reject(`The using ${Label} instruction stream has trailing bytes.`);
+    }
+    const Releases = [];
+    for (let Index = 0; Index + 1 < Instructions.length; Index += 1) {
+        const Instruction = Instructions[Index];
+        const Next = Instructions[Index + 1];
+        if (Instruction.opcode === 205 && Next.opcode === 80 &&
+            Next.relative === Instruction.relative + 5) {
+            Releases.push({
+                index: Index,
+                offset: Instruction.absolute,
+                target: Bytes.readUInt32LE(Instruction.absolute + 1),
+            });
+        }
+    }
+    if (Releases.length !== Expectedˉtargets.length ||
+        Expectedˉtargets.some(
+            (Target, Index) => Releases[Index].target !== Target,
+        )) {
+        Reject(
+            `The using ${Label} release sequence differs: ` +
+            `${JSON.stringify(Releases.map(Release => Release.target))}.`,
+        );
+    }
+    const Backedgeˉreleases = [];
+    for (const Release of Releases) {
+        for (let Index = Release.index + 2; Index < Instructions.length; Index += 1) {
+            const Instruction = Instructions[Index];
+            if (Instruction.opcode === 48 || Instruction.opcode === 49) {
+                const Target = Bytes.readUInt32LE(Instruction.absolute + 1);
+                if (Target <= Instruction.relative) {
+                    Backedgeˉreleases.push(Release.offset);
+                    break;
+                }
+                if (Instruction.opcode === 48) break;
+            }
+            if (Instruction.opcode === 81) break;
+        }
+    }
+    if (Backedgeˉreleases.length !== Expectedˉbackedgeˉreleases) {
+        Reject(
+            `The using ${Label} backedge release count differs: ` +
+            `${Backedgeˉreleases.length}.`,
+        );
+    }
+    return { backedgeRelease: Backedgeˉreleases[0] ?? null };
+}
+
+function Wvbˉinstructionˉwidth(Opcode) {
+    if (Opcode === 1 || (Opcode >= 3 && Opcode <= 7) ||
+        Opcode === 9 || Opcode === 10 || Opcode === 48 || Opcode === 49 ||
+        Opcode === 64 || Opcode === 65 || Opcode === 104 || Opcode === 105 ||
+        Opcode === 197 || Opcode === 199 || Opcode === 200 ||
+        (Opcode >= 202 && Opcode <= 205)) {
+        return 5;
+    }
+    if (Opcode === 2 || Opcode === 8) return 2;
+    if (Opcode === 106 || Opcode === 128 || Opcode === 129 ||
+        (Opcode >= 151 && Opcode <= 154) || Opcode === 196 ||
+        Opcode === 201 || (Opcode >= 206 && Opcode <= 208)) {
+        return 9;
+    }
+    return 1;
 }
 
 function Parseˉsections(Bytes) {

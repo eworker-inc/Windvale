@@ -2,10 +2,9 @@
 
 ## Status
 
-Accepted on 2026-08-24 with current-Windows development evidence. Paired Linux
-execution remains pending before a cross-host conformance claim. This is a
-bounded Slice 5 checkpoint, not completion of aggregate ownership, loop
-ownership, semantic `using`, or the hosted resource migration.
+Accepted on 2026-08-24 with paired Windows/Linux focused development evidence.
+This is a bounded Slice 5 checkpoint, not completion of aggregate ownership,
+loop ownership, semantic `using`, or the hosted resource migration.
 
 ## Context
 

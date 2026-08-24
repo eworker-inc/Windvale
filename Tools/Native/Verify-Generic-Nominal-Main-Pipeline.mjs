@@ -114,12 +114,12 @@ Requireˉvalue(
 );
 
 Requireˉmagic(Wir, 'WVIR', 'WIR directory');
-Requireˉvalue(Wir.length, 640, 'WIR bytes');
-Requireˉvalue(Wir.readUInt16LE(6), 3, 'WIR minor version');
+Requireˉvalue(Wir.length, 604, 'WIR bytes');
+Requireˉvalue(Wir.readUInt16LE(6), 9, 'WIR minor version');
 Requireˉvalue(Wir.readUInt32LE(8), 4, 'WIR function entries');
 Requireˉvalue(Wir.readUInt32LE(16), 2, 'WIR blocks');
 Requireˉvalue(Wir.readUInt32LE(24), 9, 'WIR operations');
-Requireˉvalue(Wir.readUInt32LE(28), 32, 'WIR operation entry bytes');
+Requireˉvalue(Wir.readUInt32LE(28), 28, 'WIR operation entry bytes');
 Requireˉvalue(Wir.readUInt32LE(32), 8, 'WIR temporaries');
 Requireˉvalue(Wir.readUInt32LE(40), 6, 'WIR operands');
 
@@ -135,57 +135,57 @@ Requireˉvalue(Wir.readUInt32LE(Mainˉfunction + 44), 1, 'main return shape');
 
 const Operationˉoffset = 48 + 4 * 48 + 2 * 28;
 Requireˉvalue(Wir.readUInt32LE(Operationˉoffset), 0, 'parameter-load block');
-Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 4), 7, 'parameter-load operation');
+Requireˉvalue(Wir.readUInt16LE(Operationˉoffset + 4), 7, 'parameter-load operation');
 Requireˉvalue(
     Wir.readUInt32LE(Operationˉoffset + 8),
     PRIVATE_TYPE_SHAPE,
     'parameter-load shape'
 );
-Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 32 + 4), 1, 'constant operation');
-Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 32 + 8), 1, 'constant shape');
-Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 32 + 24), 42, 'constant value');
+Requireˉvalue(Wir.readUInt16LE(Operationˉoffset + 28 + 4), 1, 'constant operation');
+Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 28 + 8), 1, 'constant shape');
+Requireˉvalue(Wir.readUInt32LE(Operationˉoffset + 28 + 20), 42, 'constant value');
 
-const Pointˉconstruction = Operationˉoffset + 2 * 32;
-Requireˉvalue(Wir.readUInt32LE(Pointˉconstruction + 4), 17, 'Point construction');
+const Pointˉconstruction = Operationˉoffset + 2 * 28;
+Requireˉvalue(Wir.readUInt16LE(Pointˉconstruction + 4), 17, 'Point construction');
 Requireˉvalue(Wir.readUInt32LE(Pointˉconstruction + 8), 65_537, 'Point result shape');
-Requireˉvalue(Wir.readUInt32LE(Pointˉconstruction + 24), 1, 'Point nominal target');
+Requireˉvalue(Wir.readUInt32LE(Pointˉconstruction + 20), 1, 'Point nominal target');
 
-const Boxˉconstruction = Operationˉoffset + 3 * 32;
-Requireˉvalue(Wir.readUInt32LE(Boxˉconstruction + 4), 17, 'Box construction');
+const Boxˉconstruction = Operationˉoffset + 3 * 28;
+Requireˉvalue(Wir.readUInt16LE(Boxˉconstruction + 4), 17, 'Box construction');
 Requireˉvalue(
     Wir.readUInt32LE(Boxˉconstruction + 8),
     PRIVATE_TYPE_SHAPE,
     'Box result shape'
 );
 Requireˉvalue(
-    Wir.readUInt32LE(Boxˉconstruction + 24),
+    Wir.readUInt32LE(Boxˉconstruction + 20),
     PRIVATE_TYPE_SHAPE,
     'Box private target'
 );
-Requireˉvalue(Wir.readUInt32LE(Boxˉconstruction + 28), 1, 'Box declaration');
+Requireˉvalue(Wir.readUInt32LE(Boxˉconstruction + 24), 1, 'Box declaration');
 
-const Identityˉcall = Operationˉoffset + 4 * 32;
-Requireˉvalue(Wir.readUInt32LE(Identityˉcall + 4), 62, 'Identity call');
+const Identityˉcall = Operationˉoffset + 4 * 28;
+Requireˉvalue(Wir.readUInt16LE(Identityˉcall + 4), 62, 'Identity call');
 Requireˉvalue(
     Wir.readUInt32LE(Identityˉcall + 8),
     PRIVATE_TYPE_SHAPE,
     'Identity call result shape'
 );
-Requireˉvalue(Wir.readUInt32LE(Identityˉcall + 24), 2, 'Identity call target');
+Requireˉvalue(Wir.readUInt32LE(Identityˉcall + 20), 2, 'Identity call target');
 
-const Boxˉfield = Operationˉoffset + 7 * 32;
-Requireˉvalue(Wir.readUInt32LE(Boxˉfield + 4), 18, 'Box field operation');
+const Boxˉfield = Operationˉoffset + 7 * 28;
+Requireˉvalue(Wir.readUInt16LE(Boxˉfield + 4), 18, 'Box field operation');
 Requireˉvalue(Wir.readUInt32LE(Boxˉfield + 8), 65_537, 'Box.Value result shape');
 Requireˉvalue(
-    Wir.readUInt32LE(Boxˉfield + 24),
+    Wir.readUInt32LE(Boxˉfield + 20),
     PRIVATE_TYPE_SHAPE,
     'Box.Value private target'
 );
 
-const Pointˉfield = Operationˉoffset + 8 * 32;
-Requireˉvalue(Wir.readUInt32LE(Pointˉfield + 4), 18, 'Point field operation');
+const Pointˉfield = Operationˉoffset + 8 * 28;
+Requireˉvalue(Wir.readUInt16LE(Pointˉfield + 4), 18, 'Point field operation');
 Requireˉvalue(Wir.readUInt32LE(Pointˉfield + 8), 1, 'Point.X result shape');
-Requireˉvalue(Wir.readUInt32LE(Pointˉfield + 24), 1, 'Point.X nominal target');
+Requireˉvalue(Wir.readUInt32LE(Pointˉfield + 20), 1, 'Point.X nominal target');
 
 Requireˉmagic(Wvb, 'WVB1', 'WVB');
 Requireˉvalue(Wvb.length, 441, 'WVB bytes');
@@ -270,6 +270,6 @@ Requireˉvalue(
 
 process.stdout.write(
     'generic nominal main pipeline status=Passed cases=20 ' +
-    'wvlb-bytes=244 wvir-bytes=640 wvb-bytes=441 ' +
+    'wvlb-bytes=244 wvir-bytes=604 wvb-bytes=441 ' +
     'types=2 template-types=0 private-shape=0x80000000\n'
 );

@@ -57,13 +57,29 @@ Success returns aggregate body counts, a valid WVLB directory, both failure modu
 
 ## Local binding rules
 
-Function parameters receive slots first in declaration order. `let` and `var` locals then receive monotonically increasing slots in statement traversal order. A function may contain at most 4,096 parameter/local bindings.
+Function parameters receive slots first in declaration order. `let`, `var`, and
+`using` locals then receive monotonically increasing slots in statement
+traversal order. A function may contain at most 4,096 parameter/local bindings.
 
-Parameter scope is the complete function body. A local initializer is bound before the local is declared, so a local cannot read itself. A local becomes visible at the end of its declaration statement and remains visible through the end of its containing block. A nested-block local becomes inactive when that block ends.
+Parameter scope is the complete function body. A local initializer is bound
+before the local is declared, so a local cannot read itself. A `let` or `var`
+local becomes visible at the end of its declaration statement and remains
+visible through the end of its containing block. A `using` name becomes visible
+only at the start of its owned body and remains visible through that body's
+closing brace. A nested-block local becomes inactive when that block ends.
 
 Parameter and local names are unique across the complete function. Shadowing is deliberately unavailable in this stage: an inner declaration cannot reuse a parameter or earlier local name, even when the earlier binding is inactive. This keeps slots and diagnostics stable and matches Windvale's current explicit-name convention.
 
-Parameters and `let` locals are immutable. Only a visible `var` local may be an assignment target. Ordinary `=` contributes one assignment occurrence. `+=`, `-=`, and `*=` bind the same simple mutable-local target as one read followed by one assignment before traversing the right operand; the exact operator and value types remain WVIR responsibilities. Local type annotations accept primitive types, visible record/enum types, or an exact required root capability-reference type under the qualified source-symbol rules. An omitted local annotation is recorded as unresolved inference evidence; complete expression typing remains owned by WVIR.
+Parameters, `let` locals, and `using` locals are immutable. Only a visible `var`
+local may be an assignment target. Ordinary `=` contributes one assignment
+occurrence. `+=`, `-=`, and `*=` bind the same simple mutable-local target as one
+read followed by one assignment before traversing the right operand; the exact
+operator and value types remain WVIR responsibilities. Local type annotations
+accept primitive types, visible record/enum types, or an exact required root
+capability-reference type under the qualified source-symbol rules. An omitted
+local annotation, including the fixed annotation-free `using` form, is recorded
+as unresolved inference evidence; complete expression typing and resource
+admission remain owned by WVIR.
 
 A function parameter or result may carry the edition-1 `borrow` or `borrow mut`
 prefix. Source Symbols and this phase skip that prefix before binding the exact
@@ -100,7 +116,7 @@ The Language 1.0 unit literal `()` is a leaf with no name, call, local, or
 runtime-storage binding evidence. Its edition and result-shape rules remain typed
 WVIR responsibilities.
 
-A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. An applied target such as `Box<Point> { ... }` retains its complete type application for WVGT-aware typed resolution; the bare `Box` template is not assigned a concrete ordinary shape. A Language 1.0 record update binds its base once, then its replacement values left to right, before applying the same target-resolution and constructor-call evidence. Field existence, uniqueness, completeness or preservation, exact base/value types, generic admission, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
+A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. An applied target such as `Box<Point> { ... }` retains its complete type application for WVGT-aware typed resolution; the bare `Box` template is not assigned a concrete ordinary shape. A Language 1.0 record update binds its base once, then its replacement values left to right, before applying the same target-resolution and constructor-call evidence. Field existence, uniqueness, completeness or preservation, exact base/value types, generic admission, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. A `using` statement binds its initializer before publishing its immutable body-local name; resource classification, ownership, and every cleanup edge are proved by WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
 ## WVLB 1.1, 1.2, and 1.3 binding directories
 
@@ -179,9 +195,26 @@ source set contains either a generic nominal declaration or the exact
 function return—such as `Sequence<i32>` returned by `Vectorˉfreeze`—has a real
 WVGT entry rather than an out-of-catalog private shape.
 
-Each 36-byte binding entry contains nine `u32` fields in this order: module index, WVSD function-entry index, binding-kind value, slot, name byte offset, name byte length, shape, scope-start byte offset, and exclusive scope-end byte offset.
+Each 36-byte binding entry contains nine `u32` fields in this order: module
+index, WVSD function-entry index, binding-kind value, slot, name byte offset,
+name byte length, shape, scope-start byte offset, and exclusive scope-end byte
+offset. Binding kinds are `1 = Parameter`, `2 = Let`, `3 = Var`, and
+`4 = Using`; value `0` and values above `4` are invalid.
 
-Shape `0` is permitted only on a `let` or `var` entry whose source type is inferred and means “resolve from typed initializer evidence.” Parameter shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`, `u32`, `bool`, `text`, `bytes`, `i64`, and `u64`; values `9` and `10` represent `unit` and `never`; values `11`, `12`, and `13` represent `i8`, `i16`, and `u16`; values `14` and `15` represent `f32` and `f64`; and value `16` represents `rune`. `unit` is concrete binding evidence. `never` is valid only as the later typed-WVIR result shape and is rejected for parameters and locals. A record shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`. Slice 3 additionally carries the exact private compact Foundation Option and Result shapes defined by the source-symbol contract. An exact singleton capability-reference shape is `268435456 + RootCapabilityDirectoryEntry` and is valid only when that entry is a required module-zero capability. Nominal indices are the canonical WVSD identities.
+Shape `0` is permitted only on a `let`, `var`, or `using` entry whose source type
+is inferred and means “resolve from typed initializer evidence.” Parameter
+shapes are always concrete. Shape values `1` through `8` represent `i32`, `u8`,
+`u32`, `bool`, `text`, `bytes`, `i64`, and `u64`; values `9` and `10` represent
+`unit` and `never`; values `11`, `12`, and `13` represent `i8`, `i16`, and
+`u16`; values `14` and `15` represent `f32` and `f64`; and value `16` represents
+`rune`. `unit` is concrete binding evidence. `never` is valid only as the later
+typed-WVIR result shape and is rejected for parameters and locals. A record
+shape is `65536 + NominalIndex`; an enum shape is `131072 + NominalIndex`.
+Slice 3 additionally carries the exact private compact Foundation Option and
+Result shapes defined by the source-symbol contract. An exact singleton
+capability-reference shape is `268435456 + RootCapabilityDirectoryEntry` and is
+valid only when that entry is a required module-zero capability. Nominal indices
+are the canonical WVSD identities.
 
 An admitted function specialization publishes only concrete binding shapes.
 For the bounded generic-collection checkpoint, the ordinary private sequence or

@@ -46,12 +46,12 @@ const Unsupportedˉwvb =
 const Cases = [
     {
         name: 'old-minor',
-        mutate: Candidate => Candidate.writeUInt16LE(3, 6),
+        mutate: Candidate => Candidate.writeUInt16LE(10, 6),
     },
     {
         name: 'unknown-operation',
-        mutate: Candidate => Candidate.writeUInt32LE(
-            173, Layout.operation + 4,
+        mutate: Candidate => Candidate.writeUInt16LE(
+            65_535, Layout.operation + 4,
         ),
     },
     {
@@ -62,20 +62,20 @@ const Cases = [
     },
     {
         name: 'missing-limit-operand',
-        mutate: Candidate => Candidate.writeUInt32LE(
-            1, Layout.operation + 20,
+        mutate: Candidate => Candidate.writeUInt16LE(
+            1, Layout.operation + 6,
         ),
     },
     {
         name: 'consumed-parent-slot',
         mutate: Candidate => Candidate.writeUInt32LE(
-            0, Layout.operation + 24,
+            0, Layout.operation + 20,
         ),
     },
     {
         name: 'wrong-memory-module',
         mutate: Candidate => Candidate.writeUInt32LE(
-            2, Layout.operation + 28,
+            2, Layout.operation + 24,
         ),
     },
     {
@@ -124,20 +124,20 @@ try {
 }
 
 function Inspectˉvalidˉlayout(Input) {
-    if (Input.length !== 568 ||
+    if (Input.length !== 544 ||
         Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 5 ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 11 ||
         Input.readUInt32LE(8) !== 5 || Input.readUInt32LE(12) !== 48 ||
         Input.readUInt32LE(16) !== 2 || Input.readUInt32LE(20) !== 28 ||
-        Input.readUInt32LE(24) !== 6 || Input.readUInt32LE(28) !== 32 ||
+        Input.readUInt32LE(24) !== 6 || Input.readUInt32LE(28) !== 28 ||
         Input.readUInt32LE(32) !== 5 || Input.readUInt32LE(36) !== 4 ||
         Input.readUInt32LE(40) !== 3 || Input.readUInt32LE(44) !== 4) {
-        Reject('The valid Memoryˉbudget.Split fixture is not exact WVIR 1.5.');
+        Reject('The valid Memoryˉbudget.Split fixture is not exact WVIR 1.11.');
     }
     const Blocksˉoffset = 48 + Input.readUInt32LE(8) * 48;
     const Operationsˉoffset = Blocksˉoffset + Input.readUInt32LE(16) * 28;
     const Temporariesˉoffset = Operationsˉoffset +
-        Input.readUInt32LE(24) * 32;
+        Input.readUInt32LE(24) * 28;
     const Operandsˉoffset = Temporariesˉoffset +
         Input.readUInt32LE(32) * 4;
     if (Operandsˉoffset + Input.readUInt32LE(40) * 4 !== Input.length) {
@@ -145,8 +145,8 @@ function Inspectˉvalidˉlayout(Input) {
     }
     const Matches = [];
     for (let Index = 0; Index < Input.readUInt32LE(24); Index += 1) {
-        const Entry = Operationsˉoffset + Index * 32;
-        if (Input.readUInt32LE(Entry + 4) === 171) Matches.push(Entry);
+        const Entry = Operationsˉoffset + Index * 28;
+        if (Input.readUInt16LE(Entry + 4) === 171) Matches.push(Entry);
     }
     if (Matches.length !== 1) {
         Reject('The valid WVIR must contain exactly one operation 171.');
@@ -154,9 +154,9 @@ function Inspectˉvalidˉlayout(Input) {
     const Operation = Matches[0];
     const Firstˉoperand = Input.readUInt32LE(Operation + 16);
     if (Input.readUInt32LE(Operation + 8) !== 2_147_483_648 ||
-        Input.readUInt32LE(Operation + 20) !== 2 ||
-        Input.readUInt32LE(Operation + 24) !== 1 ||
-        Input.readUInt32LE(Operation + 28) !== 1 || Firstˉoperand !== 1 ||
+        Input.readUInt16LE(Operation + 6) !== 2 ||
+        Input.readUInt32LE(Operation + 20) !== 1 ||
+        Input.readUInt32LE(Operation + 24) !== 1 || Firstˉoperand !== 1 ||
         Input.readUInt32LE(Temporariesˉoffset + 4) !== 8 ||
         Input.readUInt32LE(Temporariesˉoffset + 8) !== 3 ||
         Input.readUInt32LE(Operandsˉoffset + Firstˉoperand * 4) !== 1 ||

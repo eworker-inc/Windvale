@@ -617,11 +617,11 @@ but cannot be taken; Vector locals begin unavailable. A unique store makes the
 target available; a load requires it to be available without consuming it; a
 take requires it and then makes it unavailable. Forward control-flow joins
 intersect availability so a local is usable only when every incoming path owns
-it. The initial bounded profile
-admits at most 64 Vector local slots and 4,096 instructions in a function that
-uses `local.take`; backward branches in such a function are rejected until the
-loop ownership fixed-point is implemented. These are verifier limits, not
-portable source collection limits.
+it. A backward branch is accepted only when the complete owned-slot state at the
+edge exactly equals the previously established target-header state. The bounded
+profile admits at most 64 Vector local slots and 4,096 instructions in a
+function that uses `local.take`. These are verifier limits, not portable source
+collection limits.
 
 In WVB 1.23 through WVB 1.26, `local.take` also transfers an available shape-25
 budget local or exact affine Result variant. A budget take clears the source
@@ -692,16 +692,17 @@ source/WVIR ownership proof; bytecode does not expose a pointer, source slot, or
 borrow handle. Every ordinary return releases surviving descriptor-owning
 parameters and locals in reverse slot order before restoring the caller frame.
 
-Functions using budget/result affine or owned-call operations admit at most 64 owned slots
-and 4,096 instructions. Their first control proof accepts forward branches,
-intersects availability at joins, and rejects backward control until a loop
-ownership fixed point is specified. Aggregate-contained ownership and loop
-ownership remain later checkpoints.
+Functions using budget/result affine or owned-call operations admit at most 64
+owned slots and 4,096 instructions. Their control proof intersects availability
+at forward joins and requires exact equality with the saved target state at
+every backedge. This is the bounded loop ownership fixed point: ownership may
+flow through a loop but cannot appear, disappear, or change class per
+iteration. Aggregate-contained ownership remains a later checkpoint.
 
 Typed WVIR independently validates exact Vector transfer through ordinary calls
 and returns before WVB publication. WVB 1.26 serializes those validated
-parameter modes; it does not weaken the earlier source-slot provenance or
-forward-join proof.
+parameter modes; it does not weaken the earlier source-slot provenance,
+forward-join, or exact-backedge proof.
 
 The `C0` type tag is exactly `14` (`i8`), `15` (`i16`), or `16` (`u16`). Its
 operation byte is:
@@ -824,8 +825,8 @@ Verification is required before execution and rejects a module unless:
 - Every byte-data declaration is bounded and every byte intrinsic receives exactly the required operand types.
 - Strict UTF-8 decoding and encoding, safe quoting, signed and `u64` little-endian reads, fixed-width byte construction, byte concatenation, SHA-256 identity, and explicit `u8` to `u32` conversion receive and produce their exact declared types.
 - Operand-stack types and depths agree at control-flow merges.
-- WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join; functions using `local.take` satisfy its explicit instruction, Vector-local, and acyclic-control limits.
-- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token. WVB 1.22 applies the same rule if shape `25` is present; otherwise its exported entry is ordinary `Main() -> i32`. WVB 1.23 through WVB 1.26 retain the exact entry and permit affine budget/result locals only in `Main` under the bounded forward-control ownership proof.
+- WVB 1.20 Vector local stores, loads, and takes preserve definite unique-owner availability at every forward control-flow join and exact owned-slot equality at every backedge; functions using `local.take` satisfy its explicit instruction, Vector-local, 64-owner, and 4,096-instruction limits.
+- WVB 1.21 contains exactly one shape-25 token in the sole parameter of exported `Main`, returns `i32`, and has no instruction that reads, stores, copies, returns, embeds, or constructs that token. WVB 1.22 applies the same rule if shape `25` is present; otherwise its exported entry is ordinary `Main() -> i32`. WVB 1.23 through WVB 1.26 retain the exact entry and permit affine budget/result locals only in `Main` under the bounded forward-join and exact-backedge ownership proof.
 - Every WVB 1.22-or-later kind-7 descriptor has exact backing identity `6`, 1 through 256 uniquely named members, unique one-byte values, and participates in the same canonical enum ordering and shape-8 identity as kind `2`; WVB 1.22 contains at least one kind-7 descriptor, WVB 1.23 contains at least one exact opcode `CE`, WVB 1.24 contains at least one exact opcode `CF`, WVB 1.25 contains at least one exact opcode `D0`, and WVB 1.26 contains at least one exact Vector parameter.
 - Every opcode `CE` references an available shape-25 parent local and the exact structurally validated Split Result type, consumes `u64` then `u32`, preserves failure atomicity, and produces one affine result owner.
 - Every opcode `CF` references an available shape-25 budget local and exact structurally validated Vector Result type, consumes one `u64`, consumes the budget on every ordinary Result path, and produces one affine result owner whose Valid payload transfers one exact Vector.

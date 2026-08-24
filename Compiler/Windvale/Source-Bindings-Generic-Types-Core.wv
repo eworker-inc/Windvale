@@ -410,7 +410,7 @@ fn Compilerˉsourceˉbindingsˉgenericˉtypesˉentriesˉareˉvalid(
             Directory, Entry + 32u32
         );
         if Module >= Scan.Modules || Entryˉfunction >= Ranges ||
-            Kind == 0u32 || Kind > 3u32 || Slot >= 4096u32 ||
+            Kind == 0u32 || Kind > 4u32 || Slot >= 4096u32 ||
             !Compilerˉsourceˉbindingsˉgenericˉtypesˉshapeˉisˉvalid(
                 Symbols, Typeˉcatalog, Kind, Shape
             ) {

@@ -638,7 +638,7 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 173u32 { return true; }
+        if Operation <= 174u32 { return true; }
     }
     return false;
 }
@@ -688,6 +688,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     if Operation == 171u32 || Operation == 172u32 || Operation == 173u32 {
         Opcodeˉbytes = 9u32;
     }
+    if Operation == 174u32 { Opcodeˉbytes = 6u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -1281,12 +1282,12 @@ export fn Compilerˉsourceˉwvbˉreachableˉdataˉorder(
         var Inˉfunction: u32 = 0u32;
         while Inˉfunction < Operationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Inˉfunction) * 32u32;
-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(
+                (Firstˉoperation + Inˉfunction) * 28u32;
+            let Operation: u32 = Bytesˉreadˉu16ˉlittle(
                 Wir, Operationˉentry + 4u32
             );
             let Target: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operationˉentry + 24u32
+                Wir, Operationˉentry + 20u32
             );
             var Referenced: u32 = Sourceˉwir.Compilerˉsourceˉwirˉsentinel();
             if Operation == 6u32 || Operation == 9u32 || Operation == 10u32 {
@@ -1294,7 +1295,7 @@ export fn Compilerˉsourceˉwvbˉreachableˉdataˉorder(
             }
             if Operation == 5u32 {
                 let Textˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-                    Wir, Operationˉentry + 28u32
+                    Wir, Operationˉentry + 24u32
                 );
                 if Textˉlength == 0u32 {
                     Referenced = Target;
@@ -2045,14 +2046,14 @@ fn Compilerˉsourceˉwvbˉcollectˉtextˉplanˉmode(
         var Index: u32 = 0u32;
         while Index < Operationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Index) * 32u32;
-            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) == 5u32 {
+                (Firstˉoperation + Index) * 28u32;
+            if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) == 5u32 {
                 let Length: u32 = Bytesˉreadˉu32ˉlittle(
-                    Wir, Operationˉentry + 28u32
+                    Wir, Operationˉentry + 24u32
                 );
                 if Length != 0u32 {
                     let Offset: u32 = Bytesˉreadˉu32ˉlittle(
-                        Wir, Operationˉentry + 24u32
+                        Wir, Operationˉentry + 20u32
                     );
                     let Decoded: Compilerˉsourceˉwvbˉtextˉvalue =
                         Compilerˉsourceˉwvbˉdecodeˉtext(
@@ -2942,8 +2943,8 @@ export fn Compilerˉsourceˉwvbˉtextˉoperationˉdataˉindex(
     Wir: bytes,
     Operationˉentry: u32
 ) -> u32 {
-    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
-    let Length: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32);
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
     if Length == 0u32 {
         return Compilerˉsourceˉwvbˉexplicitˉdataˉindex(
             Input, Scan, Symbols, Plan, Order, Target
@@ -2990,8 +2991,8 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(
     let Offset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     var Index: u32 = 0u32;
     while Index < Operations {
-        let Entry: u32 = Offset + Index * 32u32;
-        let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 4u32);
+        let Entry: u32 = Offset + Index * 28u32;
+        let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
         if (Operation == 171u32 || Operation == 172u32) &&
             Bytesˉreadˉu32ˉlittle(Wir, Entry + 8u32) == Shape {
             return true;
@@ -3032,7 +3033,7 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
 
 export fn Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir: bytes) -> u32 {
     return Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
-        Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 32u32;
+        Bytesˉreadˉu32ˉlittle(Wir, 24u32) * 28u32;
 }
 
 export fn Compilerˉsourceˉwvbˉoperandsˉoffset(Wir: bytes) -> u32 {
@@ -3061,12 +3062,12 @@ export fn Compilerˉsourceˉwvbˉphiˉpreludeˉlength(
     if Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 8u32) == 0u32 { return 0u32; }
     let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 4u32);
     let Operationˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
-        Firstˉoperation * 32u32;
-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) != 64u32 { return 0u32; }
-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Predecessor {
+        Firstˉoperation * 28u32;
+    if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) != 64u32 { return 0u32; }
+    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32) == Predecessor {
         return 10u32;
     }
-    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32) == Predecessor {
+    if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Predecessor {
         return 10u32;
     }
     return 0u32;
@@ -3101,16 +3102,16 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
         var Inˉblock: u32 = 0u32;
         while Inˉblock < Operationˉcount {
             let Globalˉoperation: u32 = Firstˉoperation + Inˉblock;
-            let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
+            let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 28u32;
+            let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
             let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
             let Target: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operationˉentry + 24u32
+                Wir, Operationˉentry + 20u32
             );
             let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operationˉentry + 28u32
+                Wir, Operationˉentry + 24u32
             );
-            let Operands: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+            let Operands: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
             if !Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation) {
                 return Compilerˉsourceˉwvbˉanalysisˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
@@ -3237,6 +3238,23 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
+            if Operation == 174u32 {
+                let Plannedˉreleasedˉvector: u32 =
+                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                        Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
+                            Wir, Function, Target
+                        ), Symbols, Orders
+                    );
+                if Target < Parameters || Target >= Parameters + Locals ||
+                    Operands != 0u32 || Shape != 0u32 || Auxiliary != 0u32 ||
+                    Plannedˉreleasedˉvector < 327680u32 ||
+                    Plannedˉreleasedˉvector >= 393216u32 {
+                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                        Globalˉoperation
+                    );
+                }
+            }
             if Operation != 171u32 && Operation != 172u32 &&
                 Operation != 173u32 &&
                 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
@@ -3255,6 +3273,7 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
             if Operation == 167u32 { Operationˉstack = 2u32; }
             if Operation == 169u32 { Operationˉstack = 2u32; }
             if Operation == 170u32 { Operationˉstack = 1u32; }
+            if Operation == 174u32 { Operationˉstack = 1u32; }
             if Shape != 0u32 {
                 if Operationˉstack == 0u32 { Operationˉstack = 1u32; }
             }
@@ -3371,12 +3390,12 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
     let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
     var Operation: u32 = Start;
     while Operation < End {
-        if Bytesˉreadˉu32ˉlittle(Wir, Operation + 4u32) == 62u32 {
+        if Bytesˉreadˉu16ˉlittle(Wir, Operation + 4u32) == 62u32 {
             let First: u32 = Bytesˉreadˉu32ˉlittle(
                 Wir, Operation + 16u32
             );
-            let Count: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operation + 20u32
+            let Count: u32 = Bytesˉreadˉu16ˉlittle(
+                Wir, Operation + 6u32
             );
             var Operand: u32 = 0u32;
             while Operand < Count {
@@ -3385,7 +3404,7 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
                     ) == Temporary &&
                     Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
                         Input, Scan, Symbols, Bindings,
-                        Bytesˉreadˉu32ˉlittle(Wir, Operation + 24u32),
+                        Bytesˉreadˉu32ˉlittle(Wir, Operation + 20u32),
                         Operand
                     ) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
                     return true;
@@ -3393,7 +3412,7 @@ fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
                 Operand = Operand + 1u32;
             }
         }
-        Operation = Operation + 32u32;
+        Operation = Operation + 28u32;
     }
     return false;
 }
@@ -3414,13 +3433,13 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Firstˉtemporary: u32,
     Temporaryˉmapping: bytes
 ) -> bytes {
-    let Operation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32);
+    let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
     let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
     let Temporary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 12u32);
     let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 16u32);
-    let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
-    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
-    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 28u32);
+    let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 6u32);
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32);
+    let Auxiliary: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32);
     let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
     let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
     var Result: bytes = Compilerˉsourceˉwvbˉempty(Wir);
@@ -3538,7 +3557,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
                 Wir, Shape, Orders
             ) && !Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
                 Input, Scan, Symbols, Bindings, Wir,
-                Operationˉentry + 32u32, Operationˉend, Temporary
+                Operationˉentry + 28u32, Operationˉend, Temporary
             ) {
             Loadˉopcode = 205u8;
         }
@@ -3878,6 +3897,12 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             )
         );
     }
+    if Operation == 174u32 {
+        Result = Bytesˉconcat(
+            Result, Compilerˉsourceˉwvbˉinstructionˉu32(205u8, Target)
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(80u8));
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -3937,10 +3962,10 @@ export fn Compilerˉsourceˉwvbˉemitˉphiˉprelude(
         (Firstˉblock + Targetˉblock) * 28u32;
     let Firstˉoperation: u32 = Bytesˉreadˉu32ˉlittle(Wir, Targetˉentry + 4u32);
     let Phiˉentry: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
-        Firstˉoperation * 32u32;
+        Firstˉoperation * 28u32;
     let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 16u32);
     var Operandˉindex: u32 = 0u32;
-    if Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 28u32) == Predecessor {
+    if Bytesˉreadˉu32ˉlittle(Wir, Phiˉentry + 24u32) == Predecessor {
         Operandˉindex = 1u32;
     }
     let Operandˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
@@ -4064,9 +4089,9 @@ export fn Compilerˉsourceˉwvbˉinferredˉlocalˉshape(
     while Index < Operationˉcount {
         let Operationˉentry: u32 = Operationsˉoffset + (
             Firstˉoperation + Index
-        ) * 32u32;
-        if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 4u32) == 8u32 {
-            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 24u32) == Slot {
+        ) * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32) == 8u32 {
+            if Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 20u32) == Slot {
                 let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
                     Wir, Operationˉentry + 16u32
                 );
@@ -4162,8 +4187,8 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
         var Index: u32 = 0u32;
         while Index < Operations {
             let Operationˉentry: u32 = Operationˉoffset +
-                (Firstˉoperation + Index) * 32u32;
-            let Operation: u32 = Bytesˉreadˉu32ˉlittle(
+                (Firstˉoperation + Index) * 28u32;
+            let Operation: u32 = Bytesˉreadˉu16ˉlittle(
                 Wir, Operationˉentry + 4u32
             );
             if Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
@@ -4181,7 +4206,7 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
                     Operation == 167u32 || Operation == 168u32) &&
                 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
                     Bytesˉreadˉu32ˉlittle(
-                        Wir, Operationˉentry + 24u32
+                        Wir, Operationˉentry + 20u32
                     ),
                     Symbols
                 ) {
@@ -4190,7 +4215,7 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
             if (Operation == 169u32 || Operation == 170u32) &&
                 Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
                     Bytesˉreadˉu32ˉlittle(
-                        Wir, Operationˉentry + 28u32
+                        Wir, Operationˉentry + 24u32
                     ),
                     Symbols
                 ) {
@@ -4479,8 +4504,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             var Inˉblock: u32 = 0u32;
             while Inˉblock < Blockˉoperationˉcount {
                 let Operationˉentry: u32 = Operationsˉoffset +
-                    (Blockˉfirstˉoperation + Inˉblock) * 32u32;
-                let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                    (Blockˉfirstˉoperation + Inˉblock) * 28u32;
+                let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
                     Wir, Operationˉentry + 4u32
                 );
                 if Operationˉkind >= 129u32 && Operationˉkind <= 147u32 {
@@ -4545,7 +4570,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                         Plan, Wir,
                         Operationˉentry,
                         Operationsˉoffset +
-                            (Firstˉoperation + Operationˉcount) * 32u32,
+                            (Firstˉoperation + Operationˉcount) * 28u32,
                         Parameters, Locals,
                         Firstˉtemporary,
                         Temporaryˉallocation.Mapping
@@ -4711,13 +4736,13 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
             var Reachableˉinˉblock: u32 = 0u32;
             while Reachableˉinˉblock < Reachableˉoperationˉcount {
                 let Reachableˉoperationˉentry: u32 = Operationsˉoffset +
-                    (Reachableˉfirstˉoperation + Reachableˉinˉblock) * 32u32;
-                if Bytesˉreadˉu32ˉlittle(
+                    (Reachableˉfirstˉoperation + Reachableˉinˉblock) * 28u32;
+                if Bytesˉreadˉu16ˉlittle(
                     Wir, Reachableˉoperationˉentry + 4u32
                 ) == 62u32 {
                     Reachableˉcalls = Reachableˉcalls + 1u32;
                     let Reachableˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
-                        Wir, Reachableˉoperationˉentry + 24u32
+                        Wir, Reachableˉoperationˉentry + 20u32
                     );
                     if Bytesˉreadˉu8(Map, Reachableˉtarget) == 0u8 {
                         let Reachableˉmarked: Byteˉconstruction.Foundationˉbytesˉresult =
@@ -4810,8 +4835,8 @@ fn Compilerˉsourceˉwvbˉreachabilityˉwithˉevidenceˉmode(
                 while Unreachableˉinˉblock < Unreachableˉoperationˉcount {
                     let Unreachableˉoperationˉentry: u32 = Operationsˉoffset +
                         (Unreachableˉfirstˉoperation + Unreachableˉinˉblock) *
-                        32u32;
-                    if Bytesˉreadˉu32ˉlittle(
+                        28u32;
+                    if Bytesˉreadˉu16ˉlittle(
                         Wir, Unreachableˉoperationˉentry + 4u32
                     ) == 62u32 {
                         Unreachableˉcalls = Unreachableˉcalls + 1u32;

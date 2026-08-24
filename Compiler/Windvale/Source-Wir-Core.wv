@@ -58,6 +58,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Genericˉiterationˉlimit = 41;
     Invalidˉarray = 42;
     Invalidˉborrow = 43;
+    Invalidˉresource = 44;
 }
 
 
@@ -242,6 +243,7 @@ const WIR_OPERATION_FOUNDATION_VECTOR_FREEZE: u32 = 170u32;
 const WIR_OPERATION_FOUNDATION_MEMORY_SPLIT: u32 = 171u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED: u32 = 172u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_APPEND: u32 = 173u32;
+const WIR_OPERATION_RELEASE_LOCAL: u32 = 174u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -1437,7 +1439,7 @@ export fn Compilerˉsourceˉwirˉemit(
     Offset: u32,
     Length: u32
 ) -> Compilerˉsourceˉwirˉvalue {
-    if Bytesˉlength(Build.Operationˉpayload) > 4194272u32 {
+    if Bytesˉlength(Build.Operationˉpayload) > 4194276u32 {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Build.Currentˉmodule, Offset, 0u32, 0u32
@@ -1469,6 +1471,12 @@ export fn Compilerˉsourceˉwirˉemit(
         Operandˉremaining = Operandˉremaining - 4u32;
         Operandˉcount = Operandˉcount + 1u32;
     }
+    if Operation > 65535u32 || Operandˉcount > 65535u32 {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
+            Build.Currentˉmodule, Offset, 0u32, 0u32
+        );
+    }
     let Firstˉoperand: u32 = Build.Operands;
     var Temporary: u32 = Compilerˉsourceˉwirˉsentinel();
     var Temporaryˉpayload: bytes = Build.Temporaryˉpayload;
@@ -1479,11 +1487,11 @@ export fn Compilerˉsourceˉwirˉemit(
         Temporaries = Temporaries + 1u32;
     }
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(Build.Currentˉblock);
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Operation));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(Operation));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(Operandˉcount));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Shape));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Temporary));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Firstˉoperand));
-    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Operandˉcount));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Target));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Auxiliary));
     let Result: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉbuild(
@@ -4319,6 +4327,61 @@ fn Compilerˉsourceˉwirˉvectorˉappendˉfailureˉelement(
     return Value.Shape;
 }
 
+fn Compilerˉsourceˉwirˉreleaseˉusingˉforˉexit(
+    Build: Compilerˉsourceˉwirˉbuild,
+    Useˉoffset: u32,
+    Exitˉoffset: u32
+) -> Compilerˉsourceˉwirˉbuild {
+    var Result: Compilerˉsourceˉwirˉbuild = Build;
+    var Remaining: u32 = Build.Bindingˉentries;
+    while Remaining > 0u32 {
+        Remaining = Remaining - 1u32;
+        let Entry: u32 = Remaining * 36u32;
+        if Bytesˉreadˉu32ˉlittle(Build.Bindingˉpayload, Entry) ==
+                Build.Currentˉmodule &&
+            Bytesˉreadˉu32ˉlittle(Build.Bindingˉpayload, Entry + 4u32) ==
+                Build.Currentˉfunction &&
+            Bytesˉreadˉu32ˉlittle(Build.Bindingˉpayload, Entry + 8u32) == 4u32 {
+            let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(
+                Build.Bindingˉpayload, Entry + 28u32
+            );
+            let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(
+                Build.Bindingˉpayload, Entry + 32u32
+            );
+            if Useˉoffset >= Scopeˉstart && Useˉoffset < Scopeˉend &&
+                (Exitˉoffset == Compilerˉsourceˉwirˉsentinel() ||
+                    Exitˉoffset < Scopeˉstart || Exitˉoffset >= Scopeˉend) {
+                Result = Compilerˉsourceˉwirˉvalueˉbuild(
+                    Compilerˉsourceˉwirˉemit(
+                        Result, WIR_OPERATION_RELEASE_LOCAL, 0u32,
+                        Compilerˉsourceˉwirˉempty(Build.Bindingˉpayload),
+                        Bytesˉreadˉu32ˉlittle(
+                            Build.Bindingˉpayload, Entry + 12u32
+                        ), 0u32, Useˉoffset, 0u32
+                    )
+                );
+            }
+        }
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉwirˉreturnˉafterˉreleasing(
+    Build: Compilerˉsourceˉwirˉbuild,
+    Offset: u32,
+    Value: u32
+) -> Compilerˉsourceˉwirˉbuild {
+    let Released: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉreleaseˉusingˉforˉexit(
+            Build, Offset, Compilerˉsourceˉwirˉsentinel()
+        );
+    return Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
+        Released, Compilerˉsourceˉwirˉterminator.Return, Value,
+        Compilerˉsourceˉwirˉsentinel(),
+        Compilerˉsourceˉwirˉsentinel()
+    );
+}
+
 fn Compilerˉsourceˉwirˉpropagateˉtry(
     Operand: Compilerˉsourceˉwirˉvalue,
     Returnˉshape: u32,
@@ -4372,9 +4435,8 @@ fn Compilerˉsourceˉwirˉpropagateˉtry(
         Result = Compilerˉsourceˉwirˉvalueˉbuild(Propagatedˉfailure);
         Failureˉtemporary = Propagatedˉfailure.Temporary;
     }
-    Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
-        Result, Compilerˉsourceˉwirˉterminator.Return, Failureˉtemporary,
-        Compilerˉsourceˉwirˉsentinel(), Compilerˉsourceˉwirˉsentinel()
+    Result = Compilerˉsourceˉwirˉreturnˉafterˉreleasing(
+        Result, Offset, Failureˉtemporary
     );
     return Compilerˉsourceˉwirˉbeginˉreservedˉblock(Result, Successˉblock);
 }
@@ -4550,6 +4612,7 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉblock(
     Returnˉshape: u32,
     Continueˉtarget: u32,
     Breakˉtarget: u32,
+    Loopˉscopeˉoffset: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     if Block.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid {
@@ -4586,6 +4649,7 @@ fn Compilerˉsourceˉwirˉcompileˉvalueˉblock(
             Returnˉshape,
             Continueˉtarget,
             Breakˉtarget,
+            Loopˉscopeˉoffset,
             Result
         );
         if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -4814,6 +4878,7 @@ fn Compilerˉsourceˉwirˉcompileˉifˉelseˉbranch(
             ),
             Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉsentinel(),
+            Compilerˉsourceˉwirˉsentinel(),
             Elseˉstart
         );
     }
@@ -4876,6 +4941,7 @@ fn Compilerˉsourceˉwirˉcompileˉifˉthenˉbranch(
             Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
                 Input, Scan, Symbols, Source, Branch
             ),
+            Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉbeginˉreservedˉblock(Branch, Thenˉblock)
@@ -5407,6 +5473,7 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
             Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
                 Input, Scan, Symbols, Source, Build
             ),
+            Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉsentinel(),
             Compilerˉsourceˉwirˉsentinel(),
             Build
@@ -7935,6 +8002,7 @@ fn Compilerˉsourceˉwirˉcompileˉfor(
         Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
         Statement.Firstˉblockˉoffset + Statement.Firstˉblockˉlength,
         Returnˉshape, Collectionˉforˉincrement, Collectionˉforˉafter,
+        Statement.Offset,
         Compilerˉsourceˉwirˉvalueˉbuild(Collectionˉforˉelementˉstored)
     );
     if Collectionˉforˉbodyˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -8084,6 +8152,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
     Returnˉshape: u32,
     Continueˉtarget: u32,
     Breakˉtarget: u32,
+    Loopˉscopeˉoffset: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
@@ -8584,6 +8653,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
                     Returnˉshape,
                     Continueˉtarget,
                     Breakˉtarget,
+                    Loopˉscopeˉoffset,
                     Bodyˉcaseˉstart
                 );
             if Bodyˉcaseˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -8625,6 +8695,7 @@ fn Compilerˉsourceˉwirˉcompileˉmatch(
                     Returnˉshape,
                     Continueˉtarget,
                     Breakˉtarget,
+                    Loopˉscopeˉoffset,
                     Bodyˉcaseˉstart
                 );
             if Bodyˉcaseˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -8875,6 +8946,7 @@ fn Compilerˉsourceˉwirˉcompileˉwhile(
             Returnˉshape,
             Headerˉblock,
             Afterˉblock,
+            Statement.Offset,
             Result
         );
     if Bodyˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -8940,6 +9012,321 @@ fn Compilerˉsourceˉwirˉcompileˉwhile(
     return Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindingˉphase);
 }
 
+fn Compilerˉsourceˉwirˉcompileˉreturn(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase,
+    Source: bytes,
+    Statement: Sourceˉbodies.Compilerˉsourceˉstatement,
+    Returnˉshape: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉbuild {
+    var Result: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉfusedˉfrom(Build, Bindings);
+    let Bindingˉbuild: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindings);
+    let Bindingˉpayload: bytes = Bindingˉbuild.Payload;
+    let Bindingˉfirst: u32 = Bindingˉbuild.Entries - Bindingˉbuild.Nextˉslot;
+    let Bindingˉentries: u32 = Bindingˉbuild.Entries;
+    if Returnˉshape == 9u32 && Statement.Expressionˉlength == 0u32 {
+        let Unitˉreturnˉvalue: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉemit(
+                Result,
+                WIR_OPERATION_UNIT_CONSTANT,
+                9u32,
+                Compilerˉsourceˉwirˉempty(Source),
+                0u32,
+                0u32,
+                Statement.Offset,
+                Statement.Length
+            );
+        return Compilerˉsourceˉwirˉreturnˉafterˉreleasing(
+            Compilerˉsourceˉwirˉvalueˉbuild(Unitˉreturnˉvalue),
+            Statement.Offset, Unitˉreturnˉvalue.Temporary
+        );
+    }
+    if Returnˉshape == 0u32 {
+        if Statement.Expressionˉlength > 0u32 {
+            let Voidˉreturnˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+                Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                    Source, Statement.Offset, Statement.Line, Statement.Column,
+                    Statement.Expressionˉoffset
+                );
+            let Voidˉreturnˉvalue: Compilerˉsourceˉwirˉvalue =
+                Compilerˉsourceˉwirˉcompileˉexpression(
+                    Input, Scan, Symbols,
+                    Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+                    Source,
+                    Statement.Expressionˉoffset,
+                    Voidˉreturnˉposition.Line,
+                    Voidˉreturnˉposition.Column,
+                    Statement.Expressionˉoffset + Statement.Expressionˉlength,
+                    Result
+                );
+            if Voidˉreturnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                return Compilerˉsourceˉwirˉfusedˉfrom(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
+                    Bindings
+                );
+            }
+            let Returnˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                    Input, Scan, Result.Currentˉmodule
+                );
+            if Returnˉview.Edition != 1u32 || Voidˉreturnˉvalue.Shape != 0u32 {
+                return Compilerˉsourceˉwirˉfusedˉfrom(
+                    Compilerˉsourceˉwirˉbuildˉfailure(
+                        Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
+                        Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
+                        Result.Currentˉmodule, Result.Currentˉmodule,
+                        Result.Currentˉfunction, Statement.Expressionˉoffset,
+                        Voidˉreturnˉposition.Line,
+                        Voidˉreturnˉposition.Column
+                    ),
+                    Bindings
+                );
+            }
+            Result = Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue);
+        }
+        return Compilerˉsourceˉwirˉreturnˉafterˉreleasing(
+            Result, Statement.Offset, Compilerˉsourceˉwirˉsentinel()
+        );
+    }
+    if Statement.Expressionˉlength == 0u32 {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉbuildˉfailure(
+                Result,
+                Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
+                Result.Currentˉmodule, Result.Currentˉmodule,
+                Result.Currentˉfunction, Statement.Offset,
+                Statement.Line, Statement.Column
+            ),
+            Bindings
+        );
+    }
+    let Returnˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Statement.Offset, Statement.Line, Statement.Column,
+            Statement.Expressionˉoffset
+        );
+    let Returnˉvalue: Compilerˉsourceˉwirˉvalue =
+        Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
+            Input, Scan, Symbols,
+            Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
+            Source,
+            Statement.Expressionˉoffset,
+            Returnˉposition.Line, Returnˉposition.Column,
+            Statement.Expressionˉoffset + Statement.Expressionˉlength,
+            Returnˉshape, Result
+        );
+    if Returnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue), Bindings
+        );
+    }
+    if Returnˉvalue.Shape == 10u32 {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue), Bindings
+        );
+    }
+    if Returnˉvalue.Shape != Returnˉshape {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉbuildˉfailure(
+                Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
+                Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
+                Result.Currentˉmodule, Result.Currentˉmodule,
+                Result.Currentˉfunction, Statement.Expressionˉoffset,
+                Returnˉposition.Line, Returnˉposition.Column
+            ),
+            Bindings
+        );
+    }
+    return Compilerˉsourceˉwirˉreturnˉafterˉreleasing(
+        Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
+        Statement.Offset, Returnˉvalue.Temporary
+    );
+}
+
+fn Compilerˉsourceˉwirˉstoreˉdeclaredˉlocal(
+    Input: bytes,
+    Source: bytes,
+    Statement: Sourceˉbodies.Compilerˉsourceˉstatement,
+    Scopeˉend: u32,
+    Declaredˉshape: u32,
+    Value: Compilerˉsourceˉwirˉvalue,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase
+) -> Compilerˉsourceˉwirˉbuild {
+    let Valueˉbuild: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉvalueˉbuild(Value);
+    var Bindingˉphase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
+            Bindings,
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
+                Valueˉbuild.Currentˉmodule, Valueˉbuild.Currentˉfunction,
+                Source, Statement, Scopeˉend, Declaredˉshape,
+                Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(
+                    Compilerˉsourceˉwirˉbuildˉbindings(Input, Valueˉbuild)
+                )
+            )
+        );
+    if Bindingˉphase.Buildˉstatus !=
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉwirˉbuildˉfailure(
+            Valueˉbuild,
+            Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            Bindingˉphase.Buildˉfailureˉmodule,
+            Compilerˉsourceˉwirˉbindingˉfailureˉrelated(
+                Bindingˉphase.Buildˉstatus,
+                Bindingˉphase.Buildˉfailureˉrelatedˉmodule
+            ),
+            Bindingˉphase.Buildˉfailureˉfunction,
+            Bindingˉphase.Buildˉfailureˉoffset,
+            Bindingˉphase.Buildˉfailureˉline,
+            Bindingˉphase.Buildˉfailureˉcolumn
+        );
+    }
+    let Localˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(
+            Bindingˉphase
+        );
+    var Useˉoffset: u32 = Statement.Nextˉoffset;
+    var Expectedˉkind: Sourceˉbindings.Compilerˉsourceˉbindingˉkind =
+        Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Let;
+    var Failureˉstatus: Compilerˉsourceˉwirˉstatus =
+        Compilerˉsourceˉwirˉstatus.Typeˉmismatch;
+    if Statement.Isˉmutable {
+        Expectedˉkind = Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Var;
+    }
+    if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Using {
+        Useˉoffset = Statement.Firstˉblockˉoffset + 1u32;
+        Expectedˉkind = Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Using;
+        Failureˉstatus = Compilerˉsourceˉwirˉstatus.Invalidˉresource;
+    }
+    let Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+            Source, Localˉbindings.Payload,
+            Localˉbindings.Entries - Localˉbindings.Nextˉslot,
+            Localˉbindings.Entries,
+            Statement.Nameˉoffset, Statement.Nameˉlength, Useˉoffset
+        );
+    if !Local.Found || Local.Kind != Expectedˉkind ||
+        Local.Shape != Value.Shape {
+        let Failureˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Statement.Offset, Statement.Line, Statement.Column,
+                Statement.Expressionˉoffset
+            );
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉbuildˉfailure(
+                Valueˉbuild, Failureˉstatus,
+                Valueˉbuild.Currentˉmodule, Valueˉbuild.Currentˉmodule,
+                Valueˉbuild.Currentˉfunction, Statement.Expressionˉoffset,
+                Failureˉposition.Line, Failureˉposition.Column
+            ),
+            Bindingˉphase
+        );
+    }
+    let Stored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
+        Valueˉbuild,
+        WIR_OPERATION_STORE_LOCAL, 0u32,
+        Compilerˉsourceˉwirˉoneˉoperand(Value.Temporary),
+        Local.Slot, 0u32, Statement.Offset, Statement.Length
+    );
+    return Compilerˉsourceˉwirˉfusedˉfrom(
+        Compilerˉsourceˉwirˉvalueˉbuild(Stored), Bindingˉphase
+    );
+}
+
+fn Compilerˉsourceˉwirˉcompileˉusing(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase,
+    Source: bytes,
+    Statement: Sourceˉbodies.Compilerˉsourceˉstatement,
+    Returnˉshape: u32,
+    Continueˉtarget: u32,
+    Breakˉtarget: u32,
+    Loopˉscopeˉoffset: u32,
+    Build: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉbuild {
+    let Bindingˉbuild: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindings);
+    let Resourceˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Statement.Offset, Statement.Line, Statement.Column,
+            Statement.Expressionˉoffset
+        );
+    let Resource: Compilerˉsourceˉwirˉvalue =
+        Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
+            Input, Scan, Symbols,
+            Bindingˉbuild.Payload,
+            Bindingˉbuild.Entries - Bindingˉbuild.Nextˉslot,
+            Bindingˉbuild.Entries,
+            Source, Statement.Expressionˉoffset,
+            Resourceˉposition.Line, Resourceˉposition.Column,
+            Statement.Expressionˉoffset + Statement.Expressionˉlength,
+            0u32, Compilerˉsourceˉwirˉfusedˉfrom(Build, Bindings)
+        );
+    if Resource.Status != Compilerˉsourceˉwirˉstatus.Valid ||
+        Resource.Shape == 10u32 {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉvalueˉbuild(Resource), Bindings
+        );
+    }
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Resource.Genericˉevidence);
+    if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+            Resource.Shape, Typeˉcatalog
+        ) {
+        return Compilerˉsourceˉwirˉfusedˉfrom(
+            Compilerˉsourceˉwirˉbuildˉfailure(
+                Compilerˉsourceˉwirˉvalueˉbuild(Resource),
+                Compilerˉsourceˉwirˉstatus.Invalidˉresource,
+                Build.Currentˉmodule, Build.Currentˉmodule,
+                Build.Currentˉfunction, Statement.Expressionˉoffset,
+                Resourceˉposition.Line, Resourceˉposition.Column
+            ), Bindings
+        );
+    }
+    let Scopeˉend: u32 = Statement.Firstˉblockˉoffset +
+        Statement.Firstˉblockˉlength;
+    var Result: Compilerˉsourceˉwirˉbuild =
+        Compilerˉsourceˉwirˉstoreˉdeclaredˉlocal(
+            Input, Source, Statement, Scopeˉend, Resource.Shape,
+            Resource, Bindings
+        );
+    if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        return Result;
+    }
+    let Bindingˉphase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
+    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Statement.Offset, Statement.Line, Statement.Column,
+            Statement.Firstˉblockˉoffset
+        );
+    Result = Compilerˉsourceˉwirˉcompileˉblock(
+        Input, Scan, Symbols, Bindingˉphase, Source,
+        Statement.Firstˉblockˉoffset,
+        Bodyˉposition.Line, Bodyˉposition.Column,
+        Scopeˉend, Scopeˉend, Returnˉshape,
+        Continueˉtarget, Breakˉtarget,
+        Loopˉscopeˉoffset,
+        Result
+    );
+    if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+        return Result;
+    }
+    if Result.Hasˉcurrentˉblock {
+        Result = Compilerˉsourceˉwirˉreleaseˉusingˉforˉexit(
+            Result, Scopeˉend - 1u32, Scopeˉend
+        );
+    }
+    return Result;
+}
+
 export fn Compilerˉsourceˉwirˉcompileˉblock(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -8954,6 +9341,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
     Returnˉshape: u32,
     Continueˉtarget: u32,
     Breakˉtarget: u32,
+    Loopˉscopeˉoffset: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉbuild {
     let Start: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉbodies.Compilerˉbodyˉtoken(
@@ -9100,65 +9488,15 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     }
                     Declaredˉshape = Localˉvalue.Shape;
                 }
-                var Localˉbuild: Compilerˉsourceˉwirˉbuild =
-                    Compilerˉsourceˉwirˉvalueˉbuild(Localˉvalue);
-                Bindingˉphase = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
-                    Bindingˉphase,
-                    Sourceˉbindings.Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
-                        Result.Currentˉmodule, Result.Currentˉfunction,
-                        Source, Statement, Scopeˉendˉoffset, Declaredˉshape,
-                        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(
-                            Compilerˉsourceˉwirˉbuildˉbindings(
-                                Input, Localˉbuild
-                            )
-                        )
-                    )
+                Result = Compilerˉsourceˉwirˉstoreˉdeclaredˉlocal(
+                    Input, Source, Statement, Scopeˉendˉoffset,
+                    Declaredˉshape, Localˉvalue, Bindingˉphase
                 );
-                if Bindingˉphase.Buildˉstatus != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
-                    return Compilerˉsourceˉwirˉbuildˉfailure(
-                        Localˉbuild,
-                        Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
-                        Bindingˉphase.Buildˉfailureˉmodule,
-                        Compilerˉsourceˉwirˉbindingˉfailureˉrelated(
-                            Bindingˉphase.Buildˉstatus,
-                            Bindingˉphase.Buildˉfailureˉrelatedˉmodule
-                        ),
-                        Bindingˉphase.Buildˉfailureˉfunction,
-                        Bindingˉphase.Buildˉfailureˉoffset,
-                        Bindingˉphase.Buildˉfailureˉline,
-                        Bindingˉphase.Buildˉfailureˉcolumn
-                    );
+                if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Result;
                 }
-                let Localˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
-                    Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Bindingˉphase);
-                let Localˉbinding: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch = Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
-                    Source, Localˉbindings.Payload,
-                    Localˉbindings.Entries - Localˉbindings.Nextˉslot,
-                    Localˉbindings.Entries,
-                    Statement.Nameˉoffset, Statement.Nameˉlength, Statement.Nextˉoffset
-                );
-                if Localˉvalue.Shape != Localˉbinding.Shape {
-                    return Compilerˉsourceˉwirˉfusedˉfrom(
-                        Compilerˉsourceˉwirˉbuildˉfailure(
-                            Localˉbuild,
-                            Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                            Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                            Statement.Expressionˉoffset, Localˉposition.Line, Localˉposition.Column
-                        ),
-                        Bindingˉphase
-                    );
-                }
-                let Localˉstored: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉemit(
-                    Localˉbuild,
-                    WIR_OPERATION_STORE_LOCAL,
-                    0u32,
-                    Compilerˉsourceˉwirˉoneˉoperand(Localˉvalue.Temporary),
-                    Localˉbinding.Slot, 0u32,
-                    Statement.Offset, Statement.Length
-                );
-                Result = Compilerˉsourceˉwirˉfusedˉfrom(
-                    Compilerˉsourceˉwirˉvalueˉbuild(Localˉstored), Bindingˉphase
-                );
+                Bindingˉphase =
+                    Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
                 }
             }
             if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Assignment {
@@ -9347,6 +9685,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         Bindingˉphase
                     );
                 }
+                Result = Compilerˉsourceˉwirˉreleaseˉusingˉforˉexit(
+                    Result, Statement.Offset, Loopˉscopeˉoffset
+                );
                 Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
                     Result,
                     Compilerˉsourceˉwirˉterminator.Jump,
@@ -9367,6 +9708,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         Bindingˉphase
                     );
                 }
+                Result = Compilerˉsourceˉwirˉreleaseˉusingˉforˉexit(
+                    Result, Statement.Offset, Loopˉscopeˉoffset
+                );
                 Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
                     Result,
                     Compilerˉsourceˉwirˉterminator.Jump,
@@ -9376,127 +9720,12 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                 );
             }
             if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Return {
-                if Returnˉshape == 9u32 && Statement.Expressionˉlength == 0u32 {
-                    let Unitˉreturnˉvalue: Compilerˉsourceˉwirˉvalue =
-                        Compilerˉsourceˉwirˉemit(
-                            Result,
-                            WIR_OPERATION_UNIT_CONSTANT,
-                            9u32,
-                            Compilerˉsourceˉwirˉempty(Source),
-                            0u32,
-                            0u32,
-                            Statement.Offset,
-                            Statement.Length
-                        );
-                    Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
-                        Compilerˉsourceˉwirˉvalueˉbuild(Unitˉreturnˉvalue),
-                        Compilerˉsourceˉwirˉterminator.Return,
-                        Unitˉreturnˉvalue.Temporary,
-                        Compilerˉsourceˉwirˉsentinel(),
-                        Compilerˉsourceˉwirˉsentinel()
-                    );
-                } else if Returnˉshape == 0u32 {
-                    if Statement.Expressionˉlength > 0u32 {
-                        let Voidˉreturnˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-                            Source, Statement.Offset, Statement.Line, Statement.Column,
-                            Statement.Expressionˉoffset
-                        );
-                        let Voidˉreturnˉvalue: Compilerˉsourceˉwirˉvalue = Compilerˉsourceˉwirˉcompileˉexpression(
-                            Input, Scan, Symbols,
-                            Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                            Source,
-                            Statement.Expressionˉoffset, Voidˉreturnˉposition.Line, Voidˉreturnˉposition.Column,
-                            Statement.Expressionˉoffset + Statement.Expressionˉlength,
-                            Result
-                        );
-                        if Voidˉreturnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                            return Compilerˉsourceˉwirˉfusedˉfrom(
-                                Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
-                                Bindingˉphase
-                            );
-                        }
-                        let Returnˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
-                            Sourceˉset.Compilerˉsourceˉsetˉmodule(
-                                Input, Scan, Result.Currentˉmodule
-                            );
-                        if Returnˉview.Edition != 1u32 ||
-                            Voidˉreturnˉvalue.Shape != 0u32 {
-                            return Compilerˉsourceˉwirˉfusedˉfrom(
-                                Compilerˉsourceˉwirˉbuildˉfailure(
-                                    Compilerˉsourceˉwirˉvalueˉbuild(Voidˉreturnˉvalue),
-                                    Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
-                                    Result.Currentˉmodule, Result.Currentˉmodule,
-                                    Result.Currentˉfunction,
-                                    Statement.Expressionˉoffset,
-                                    Voidˉreturnˉposition.Line,
-                                    Voidˉreturnˉposition.Column
-                                ),
-                                Bindingˉphase
-                            );
-                        }
-                        Result = Compilerˉsourceˉwirˉvalueˉbuild(
-                            Voidˉreturnˉvalue
-                        );
-                    }
-                    Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
-                        Result,
-                        Compilerˉsourceˉwirˉterminator.Return,
-                        Compilerˉsourceˉwirˉsentinel(),
-                        Compilerˉsourceˉwirˉsentinel(),
-                        Compilerˉsourceˉwirˉsentinel()
-                    );
-                } else {
-                    if Statement.Expressionˉlength == 0u32 {
-                        return Compilerˉsourceˉwirˉfusedˉfrom(
-                            Compilerˉsourceˉwirˉbuildˉfailure(
-                                Result,
-                                Compilerˉsourceˉwirˉstatus.Invalidˉreturn,
-                                Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                                Statement.Offset, Statement.Line, Statement.Column
-                            ),
-                            Bindingˉphase
-                        );
-                    }
-                    let Returnˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
-                        Source, Statement.Offset, Statement.Line, Statement.Column,
-                        Statement.Expressionˉoffset
-                    );
-                    let Returnˉvalue: Compilerˉsourceˉwirˉvalue =
-                        Compilerˉsourceˉwirˉcompileˉcontextualˉexpression(
-                        Input, Scan, Symbols,
-                        Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-                        Source,
-                        Statement.Expressionˉoffset, Returnˉposition.Line, Returnˉposition.Column,
-                        Statement.Expressionˉoffset + Statement.Expressionˉlength,
-                        Returnˉshape, Result
-                    );
-                    if Returnˉvalue.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                        return Compilerˉsourceˉwirˉfusedˉfrom(
-                            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue), Bindingˉphase
-                        );
-                    }
-                    if Returnˉvalue.Shape == 10u32 {
-                        Result = Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue);
-                    } else {
-                        if Returnˉvalue.Shape != Returnˉshape {
-                            return Compilerˉsourceˉwirˉfusedˉfrom(
-                                Compilerˉsourceˉwirˉbuildˉfailure(
-                                    Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
-                                    Compilerˉsourceˉwirˉstatus.Typeˉmismatch,
-                                    Result.Currentˉmodule, Result.Currentˉmodule, Result.Currentˉfunction,
-                                    Statement.Expressionˉoffset, Returnˉposition.Line, Returnˉposition.Column
-                                ),
-                                Bindingˉphase
-                            );
-                        }
-                        Result = Compilerˉsourceˉwirˉcloseˉcurrentˉblock(
-                            Compilerˉsourceˉwirˉvalueˉbuild(Returnˉvalue),
-                            Compilerˉsourceˉwirˉterminator.Return,
-                            Returnˉvalue.Temporary,
-                            Compilerˉsourceˉwirˉsentinel(),
-                            Compilerˉsourceˉwirˉsentinel()
-                        );
-                    }
+                Result = Compilerˉsourceˉwirˉcompileˉreturn(
+                    Input, Scan, Symbols, Bindingˉphase, Source,
+                    Statement, Returnˉshape, Result
+                );
+                if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Result;
                 }
             }
             if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.If {
@@ -9562,6 +9791,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Returnˉshape,
                     Continueˉtarget,
                     Breakˉtarget,
+                    Loopˉscopeˉoffset,
                     Thenˉstart
                 );
                 if Thenˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -9593,6 +9823,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                             Returnˉshape,
                             Continueˉtarget,
                             Breakˉtarget,
+                            Loopˉscopeˉoffset,
                             Elseˉresult
                         );
                     if Elseˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -9662,7 +9893,9 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                         Input, Scan, Symbols, Source,
                         Statementˉmatch,
                         false,
-                        Returnˉshape, Continueˉtarget, Breakˉtarget, Result
+                        Returnˉshape, Continueˉtarget, Breakˉtarget,
+                        Loopˉscopeˉoffset,
+                        Result
                     )
                 );
                 if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -9673,6 +9906,18 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
             if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Try {
                 Result = Compilerˉsourceˉwirˉcompileˉtry(
                     Input, Scan, Symbols, Bindingˉphase, Source, Statement,
+                    Result
+                );
+                if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                    return Result;
+                }
+                Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
+            }
+            if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Using {
+                Result = Compilerˉsourceˉwirˉcompileˉusing(
+                    Input, Scan, Symbols, Bindingˉphase, Source, Statement,
+                    Returnˉshape, Continueˉtarget, Breakˉtarget,
+                    Loopˉscopeˉoffset,
                     Result
                 );
                 if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -9716,6 +9961,7 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Returnˉshape,
                     Continueˉtarget,
                     Breakˉtarget,
+                    Loopˉscopeˉoffset,
                     Result
                 );
                 if Nestedˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
@@ -9951,6 +10197,7 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
         Declaration.Bodyˉoffset + Declaration.Bodyˉlength,
         Declaration.Bodyˉoffset + Declaration.Bodyˉlength,
         Signature.Returnˉshape,
+        Compilerˉsourceˉwirˉsentinel(),
         Compilerˉsourceˉwirˉsentinel(),
         Compilerˉsourceˉwirˉsentinel(),
         Result
@@ -10204,8 +10451,8 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Hasˉvectorˉappend: bool = false;
     var Operationˉindex: u32 = 0u32;
     while Operationˉindex < Build.Operations {
-        let Headerˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
-            Build.Operationˉpayload, Operationˉindex * 32u32 + 4u32
+        let Headerˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
+            Build.Operationˉpayload, Operationˉindex * 28u32 + 4u32
         );
         if Headerˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
             Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
@@ -10219,24 +10466,24 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
     if Hasˉvectorˉappend && Instances > 0u32 {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(8u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(14u32));
     } else if Hasˉvectorˉappend {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(7u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(13u32));
     } else if Hasˉmemoryˉsplit && Instances > 0u32 {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(6u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(12u32));
     } else if Hasˉmemoryˉsplit {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(5u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(11u32));
     } else if Instances > 0u32 {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(4u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(10u32));
     } else {
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(3u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(9u32));
     }
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Build.Functionˉentries));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(48u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Build.Blocks));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(28u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Build.Operations));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(32u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(28u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Build.Temporaries));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(4u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Build.Operands));
@@ -10250,9 +10497,9 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
 
 export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 &&
-        (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 4u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 6u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 8u32) {
+        (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 10u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 12u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32) {
         return 56u32;
     }
     return 48u32;
@@ -10415,6 +10662,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 171u32 { return Shape != 0u32; }
     if Operation == 172u32 { return Shape != 0u32; }
     if Operation == 173u32 { return Shape != 0u32; }
+    if Operation == 174u32 { return Shape == 0u32; }
     return false;
 }
 
@@ -10524,6 +10772,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 171u32 { return Count == 2u32; }
     if Operation == 172u32 { return Count == 1u32; }
     if Operation == 173u32 { return Count == 1u32; }
+    if Operation == 174u32 { return Count == 0u32; }
     return false;
 }
 
@@ -11018,7 +11267,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉblocksˉareˉvalid(
         while Blockˉoperationˉindex < Blockˉoperationˉcount {
             let Ownedˉoperationˉentry: u32 = Operationsˉoffset + (
                 Blockˉfirstˉoperation + Blockˉoperationˉindex
-            ) * 32u32;
+            ) * 28u32;
             if Bytesˉreadˉu32ˉlittle(
                 Directory, Ownedˉoperationˉentry
             ) != Blockˉidentifier { return false; }
@@ -11844,6 +12093,9 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
         Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
             Bindings.Directory
         );
+    if Operation == 174u32 {
+        return Shape == 0u32 && Operandˉcount == 0u32 && Auxiliary == 0u32;
+    }
     if Operation == 171u32 {
         if Operandˉcount != 2u32 || Auxiliary >= Scan.Modules {
             return false;
@@ -12202,17 +12454,17 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
     let Blocksˉoffset: u32 = Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
         Functionˉentries * 48u32;
     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
 
     var Hasˉmemoryˉsplit: bool = false;
     var Scanˉindex: u32 = 0u32;
     while Scanˉindex < Range.Operationˉcount {
         let Scanˉentry: u32 = Operationsˉoffset +
-            (Range.Firstˉoperation + Scanˉindex) * 32u32;
-        if Bytesˉreadˉu32ˉlittle(Directory, Scanˉentry + 4u32) ==
+            (Range.Firstˉoperation + Scanˉindex) * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
                 WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
-            Bytesˉreadˉu32ˉlittle(Directory, Scanˉentry + 4u32) ==
+            Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
                 WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
             Hasˉmemoryˉsplit = true;
         }
@@ -12271,8 +12523,8 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
         var Blockˉoperation: u32 = 0u32;
         while Blockˉoperation < Blockˉoperationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
-                (Blockˉfirstˉoperation + Blockˉoperation) * 32u32;
-            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                (Blockˉfirstˉoperation + Blockˉoperation) * 28u32;
+            let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
                 Directory, Operationˉentry + 4u32
             );
             let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
@@ -12281,11 +12533,11 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
                 Directory, Operationˉentry + 16u32
             );
-            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory, Operationˉentry + 20u32
+            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
+                Directory, Operationˉentry + 6u32
             );
             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory, Operationˉentry + 24u32
+                Directory, Operationˉentry + 20u32
             );
             if Operationˉshape != 0u32 {
                 var Temporaryˉlive: u8 = 0u8;
@@ -12405,10 +12657,16 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                     Directory, Blockˉentry + 24u32
                 );
             }
-            if Target <= Blockˉindex || Target >= Range.Blockˉcount {
+            if Target >= Range.Blockˉcount {
                 return false;
             }
             let Targetˉoffset: u32 = Target * Slotˉcount;
+            if Target <= Blockˉindex {
+                if !Sourceˉset.Compilerˉsourceˉspansˉequal(
+                    Blockˉstates, Targetˉoffset, Slotˉcount,
+                    Slotˉstate, 0u32, Slotˉcount
+                ) { return false; }
+            }
             var Targetˉstate: bytes = Slotˉstate;
             if Bytesˉreadˉu8(Reachable, Target) == 1u8 {
                 Targetˉstate = Compilerˉsourceˉwirˉempty(Directory);
@@ -12465,7 +12723,7 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     let Blocksˉoffset: u32 = Compilerˉsourceˉwirˉheaderˉbytes(Directory) +
         Functionˉentries * 48u32;
     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
     let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
         Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
@@ -12569,8 +12827,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
         var Inˉblock: u32 = 0u32;
         while Inˉblock < Operationˉcount {
             let Operationˉentry: u32 = Operationsˉoffset +
-                (Firstˉoperation + Inˉblock) * 32u32;
-            let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                (Firstˉoperation + Inˉblock) * 28u32;
+            let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(
                 Directory, Operationˉentry + 4u32
             );
             let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(
@@ -12579,11 +12837,11 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
                 Directory, Operationˉentry + 16u32
             );
-            let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory, Operationˉentry + 20u32
+            let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
+                Directory, Operationˉentry + 6u32
             );
             let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory, Operationˉentry + 24u32
+                Directory, Operationˉentry + 20u32
             );
             let Producesˉvector: bool =
                 Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
@@ -12745,6 +13003,17 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                     );
                 }
             }
+            if Operationˉkind == WIR_OPERATION_RELEASE_LOCAL {
+                if Operationˉtarget < Range.Parameters ||
+                    Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
+                        Slotˉstate, Operationˉtarget
+                    ) != 1u8 {
+                    return false;
+                }
+                Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                    Slotˉstate, Operationˉtarget, 0u8
+                );
+            }
             Inˉblock = Inˉblock + 1u32;
         }
 
@@ -12819,10 +13088,16 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                     Directory, Blockˉentry + 24u32
                 );
             }
-            if Target <= Blockˉindex || Target >= Range.Blockˉcount {
+            if Target >= Range.Blockˉcount {
                 return false;
             }
             let Targetˉoffset: u32 = Target * Slotˉcount;
+            if Target <= Blockˉindex {
+                if !Sourceˉset.Compilerˉsourceˉspansˉequal(
+                    Blockˉstates, Targetˉoffset, Slotˉcount,
+                    Slotˉstate, 0u32, Slotˉcount
+                ) { return false; }
+            }
             var Targetˉstate: bytes = Slotˉstate;
             if Bytesˉreadˉu8(Reachable, Target) == 1u8 {
                 Targetˉstate = Compilerˉsourceˉwirˉempty(Directory);
@@ -12904,7 +13179,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
     var Consumedˉvectorˉslot: u32 = Compilerˉsourceˉwirˉsentinel();
     while Operationˉindex < Range.Operationˉcount {
         let Globalˉoperation: u32 = Range.Firstˉoperation + Operationˉindex;
-        let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 32u32;
+        let Operationˉentry: u32 = Operationsˉoffset + Globalˉoperation * 28u32;
         let Operationˉblock: u32 = Bytesˉreadˉu32ˉlittle(
             Directory, Operationˉentry
         );
@@ -12918,22 +13193,22 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         let Ownerˉblockˉcount: u32 = Bytesˉreadˉu32ˉlittle(
             Directory, Ownerˉblockˉentry + 8u32
         );
-        let Operationˉkind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 4u32);
+        let Operationˉkind: u32 = Bytesˉreadˉu16ˉlittle(Directory, Operationˉentry + 4u32);
         let Operationˉshape: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 8u32);
         let Operationˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
             Directory, Operationˉentry + 12u32
         );
         let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 16u32);
-        let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 20u32);
-        let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 24u32);
-        let Operationˉauxiliary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 28u32);
+        let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(Directory, Operationˉentry + 6u32);
+        let Operationˉtarget: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 20u32);
+        let Operationˉauxiliary: u32 = Bytesˉreadˉu32ˉlittle(Directory, Operationˉentry + 24u32);
         if Bytesˉreadˉu32ˉlittle(Directory, Ownerˉblockˉentry) != Operationˉblock {
             return false;
         }
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 173u32 { return false; }
+        if Operationˉkind > 174u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
             Operationˉshape, Symbols, Typeˉcatalog, true
         ) {
@@ -13285,6 +13560,18 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             Operationˉkind, Operationˉshape, Operandˉcount,
             Operationˉtarget, Operationˉauxiliary
         ) { return false; }
+        if Operationˉkind == WIR_OPERATION_RELEASE_LOCAL {
+            if Operationˉtarget < Range.Parameters ||
+                Operationˉtarget >= Range.Parameters + Range.Locals ||
+                Operationˉauxiliary != 0u32 ||
+                !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                    Compilerˉsourceˉwirˉbindingˉshape(
+                        Bindings, Symbolˉentries, Function, Operationˉtarget
+                    ), Typeˉcatalog
+                ) {
+                return false;
+            }
+        }
         if Operationˉkind >= 11u32 {
             if Operationˉkind <= 16u32 {
                 if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }
@@ -13438,8 +13725,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 3u32 || Minor > 8u32 { return false; }
-    if (Minor == 4u32 || Minor == 6u32 || Minor == 8u32) &&
+    if Minor < 9u32 || Minor > 14u32 { return false; }
+    if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
@@ -13448,7 +13735,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 20u32) != 28u32 { return false; }
     let Operations: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
-    if Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 32u32 { return false; }
+    if Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 28u32 { return false; }
     let Temporaries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 36u32) != 4u32 { return false; }
     let Operands: u32 = Bytesˉreadˉu32ˉlittle(Directory, 40u32);
@@ -13457,7 +13744,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
     var Instances: u32 = 0u32;
-    if Minor == 3u32 || Minor == 5u32 || Minor == 7u32 {
+    if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 {
         if Functionˉentries != Symbolˉentries { return false; }
     } else {
         Instances = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
@@ -13493,7 +13780,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Compilerˉsourceˉwirˉfunctionsˉoffset(Directory) +
             Functionˉentries * 48u32;
     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
-    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 32u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
     let Expectedˉlength: u32 = Operandsˉoffset + Operands * 4u32;
     if Directoryˉlength != Expectedˉlength { return false; }
@@ -13501,8 +13788,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Hasˉvectorˉappend: bool = false;
     var Operationˉscan: u32 = 0u32;
     while Operationˉscan < Operations {
-        let Scannedˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Operationsˉoffset + Operationˉscan * 32u32 + 4u32
+        let Scannedˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
+            Directory, Operationsˉoffset + Operationˉscan * 28u32 + 4u32
         );
         if Scannedˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
             Scannedˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
@@ -13513,10 +13800,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         }
         Operationˉscan = Operationˉscan + 1u32;
     }
-    if Minor < 5u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
-    if Minor >= 5u32 && Minor <= 6u32 &&
+    if Minor < 11u32 && (Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
+    if Minor >= 11u32 && Minor <= 12u32 &&
         (!Hasˉmemoryˉsplit || Hasˉvectorˉappend) { return false; }
-    if Minor >= 7u32 && !Hasˉvectorˉappend { return false; }
+    if Minor >= 13u32 && !Hasˉvectorˉappend { return false; }
     var Function: u32 = 0u32;
     var Expectedˉblock: u32 = 0u32;
     var Expectedˉoperation: u32 = 0u32;

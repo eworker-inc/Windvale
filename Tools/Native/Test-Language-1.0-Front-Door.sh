@@ -14,6 +14,7 @@ source_profile="$profile_root/En-Source-Profile.wvsp"
 source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e
 bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
 bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
+bridge_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit-wvir-1.9-bridge.wvb"
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
 cleanup() {
@@ -314,11 +315,18 @@ printf '%s  %s\n' \
 printf '%s  %s\n' \
     ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94 \
     "$bootstrap_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
+[[ $(wc -c < "$bridge_emitter_wvb") -eq 1146083 ]] || exit 1
+printf '%s  %s\n' \
+    0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb \
+    "$bridge_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$bootstrap_analyzer_wvb" "$work/Bootstrap-Analyzer.elf" \
     --development-cache || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$bootstrap_emitter_wvb" "$work/Bootstrap-Emitter.elf" \
+    --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+    "$bridge_emitter_wvb" "$work/Bridge-Emitter.elf" \
     --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     analyzer "$work/Bootstrap-Analyzer.elf" \
@@ -326,6 +334,9 @@ node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     emitter "$work/Bootstrap-Emitter.elf" \
     "$work/Bootstrap-Emitter.identity" || exit $?
+node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
+    emitter "$work/Bridge-Emitter.elf" \
+    "$work/Bridge-Emitter.identity" || exit $?
 node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj" \
     "$work/Admitter.wvb" \
@@ -339,16 +350,16 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 admitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Admitter.wvb")" \
     "$(sha256sum -- "$work/Admitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Admitter.wvb") -eq 82924 ]] || exit 1
+[[ $(wc -c < "$work/Admitter.wvb") -eq 83055 ]] || exit 1
 printf '%s  %s\n' \
-    7a7da249ff51647e2c279a9d06c05897f071683991aca0748ad6f40e02887512 \
+    aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04 \
     "$work/Admitter.wvb" | sha256sum --check --strict --quiet || exit $?
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1144757 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1192526 ]] || exit 1
 printf '%s  %s\n' \
-    384cb966d9b8718fda0c2e7bf3863ae168ce7d9fcb911d076b87d5e33400b0e3 \
+    175851de53aa06ce600e4478ddf36a2a3f6eb666c1a000f7a84e00747d30e543 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -422,13 +433,13 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj" \
     "$work/Emitter.wvb" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
-    "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
+    "$work/Bridge-Emitter.elf" "$work/Bridge-Emitter.identity" || exit $?
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1078300 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1149175 ]] || exit 1
 printf '%s  %s\n' \
-    215034c1149ee898ae4a9980bbe82326cb0d2a82fe7939e6191af64972a9af50 \
+    fdbf640bb0677b1b4e05058ffef6c6b435460507f940b7794b65a53c7a928fa9 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
@@ -744,7 +755,7 @@ expect_profiled_analysis_failure_with_dependencies \
     Memory-Budget-Split-Wrong-Allocation-Failure Genericˉresolution \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Wrong-Allocation-Failure.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
-echo 'PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.5 valid=1 wvb-boundary=1 malformed=7 source-rejections=4'
+echo 'PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.11 valid=1 wvb-boundary=1 malformed=7 source-rejections=4'
 echo 'START language 1 front door step=generic-nominal-variant'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \

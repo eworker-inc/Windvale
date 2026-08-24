@@ -350,7 +350,7 @@ checkpoints.
 
 `Generic-Nominal-Main-Pipeline.wv` now covers the complete executable
 analysis-to-WVB path. Its 20-case inspector requires exact 377-byte WVSS,
-104-byte WVCA, 244-byte WVLB 1.3, 640-byte WVIR 1.3, and 441-byte WVB 1.11
+104-byte WVCA, 244-byte WVLB 1.3, 604-byte WVIR 1.9, and 441-byte WVB 1.11
 products. It constructs `Box<Point>`, passes it through an exact generic-record
 function boundary, and reads `Wrapped.Value.X`. The colliding ordinary source
 and generic output targets are both one. WVB retains concrete `Point` at index

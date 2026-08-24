@@ -1907,7 +1907,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                     if Boundaryˉopcode == 199u32 ||
                         Boundaryˉopcode == 200u32 ||
                         (Boundaryˉopcode >= 202u32 &&
-                            Boundaryˉopcode <= 204u32) {
+                            Boundaryˉopcode <= 205u32) {
                         Boundaryˉwidth = 5u32;
                     }
                     if Boundaryˉopcode == 201u32 {

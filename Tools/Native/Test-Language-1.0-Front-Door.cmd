@@ -15,6 +15,7 @@ set "SourceProfile=%ProfileRoot%\En-Source-Profile.wvsp"
 set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
 set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
 set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
+set "BridgeEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit-wvir-1.9-bridge.wvb"
 
 :allocate
 set "Work=%TEMP%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -92,14 +93,20 @@ for %%F in ("%BootstrapAnalyzerWvb%") do if not "%%~zF"=="992412" goto :cleanup
 certutil -hashfile "%BootstrapAnalyzerWvb%" SHA256 | findstr /I /C:"26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120" >nul || goto :cleanup
 for %%F in ("%BootstrapEmitterWvb%") do if not "%%~zF"=="895787" goto :cleanup
 certutil -hashfile "%BootstrapEmitterWvb%" SHA256 | findstr /I /C:"ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94" >nul || goto :cleanup
+for %%F in ("%BridgeEmitterWvb%") do if not "%%~zF"=="1146083" goto :cleanup
+certutil -hashfile "%BridgeEmitterWvb%" SHA256 | findstr /I /C:"0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%BootstrapAnalyzerWvb%" "%Work%\Bootstrap-Analyzer.exe" --development-cache || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%BootstrapEmitterWvb%" "%Work%\Bootstrap-Emitter.exe" --development-cache || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+    "%BridgeEmitterWvb%" "%Work%\Bridge-Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     analyzer "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     emitter "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
+    emitter "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
 set "FailureStep=compiler-split-source-sets"
 node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Admission-Driver.wvproj" ^
@@ -117,8 +124,8 @@ for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83055" goto :cleanup
 certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1165611" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"351368e34169c8f4c92992f924df0d39bab13168b012e92e943130cd93b80010" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1192526" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"175851de53aa06ce600e4478ddf36a2a3f6eb666c1a000f7a84e00747d30e543" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -196,11 +203,11 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Emission-Driver.wvproj" ^
     "%Work%\Emitter.wvb" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
-    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+    "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1101122" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"b0b4f7cd12e7ef90abf61b125c53a05dd13af26eba6b93b13313b599aca35046" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1149175" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"fdbf640bb0677b1b4e05058ffef6c6b435460507f940b7794b65a53c7a928fa9" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -518,7 +525,7 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     "Memory-Budget-Split-Wrong-Allocation-Failure" "Genericˉresolution" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
-echo PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.5 valid=1 wvb-boundary=1 malformed=7 source-rejections=4
+echo PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.11 valid=1 wvb-boundary=1 malformed=7 source-rejections=4
 set "FailureStep=compiler-vector-construct-reserved"
 echo START language 1 front door step=vector-construct-reserved
 "%Work%\Admitter.exe" ^
@@ -614,7 +621,7 @@ for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Emission.out") do if not
 findstr /x /c:"source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0" ^
     "%Work%\Vector-Construct-Reserved-Use-After-Emission.err" >nul || goto :cleanup
 if exist "%Work%\Vector-Construct-Reserved-Use-After.wvb" goto :cleanup
-echo PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.5 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1
+echo PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.11 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
 "%Work%\Admitter.exe" ^
