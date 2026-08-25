@@ -604,6 +604,15 @@ export fn Compilerˉsourceˉeffectsˉfunctionˉisˉexplicit(
         EFFECT_ENTRY_IS_EXPLICIT) != 0u32;
 }
 
+export fn Compilerˉsourceˉeffectsˉentryˉisˉfunction(
+    Directory: bytes,
+    Function: u32
+) -> bool {
+    let Entry: u32 = Compilerˉsourceˉeffectsˉentry(Directory, Function);
+    return (Bytesˉreadˉu32ˉlittle(Directory, Entry) &
+        EFFECT_ENTRY_IS_FUNCTION) != 0u32;
+}
+
 export fn Compilerˉsourceˉeffectsˉfunctionˉlanguage(
     Directory: bytes,
     Function: u32

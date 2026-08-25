@@ -5,6 +5,7 @@ import Compilerˉsourceˉeffects as Effects;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
+import Languageˉoneˉcallableˉtypeˉcatalogˉselfˉtest as Callableˉcatalog;
 
 capability process.argument;
 capability process.argument_count;
@@ -459,5 +460,8 @@ export fn Main() -> i32 {
     if Selected == 107u32 { return Unknownˉidentityˉprobe(); }
     if Selected == 108u32 { return Recursiveˉinferenceˉprobe(); }
     if Selected == 109u32 { return Directoryˉboundsˉprobe(); }
+    if Selected == 110u32 {
+        return Callableˉcatalog.Callableˉtypeˉcatalogˉprobe();
+    }
     return 64;
 }

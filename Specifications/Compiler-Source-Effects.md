@@ -84,9 +84,10 @@ The maintained self-test covers exact empty and nonempty clauses, real binding
 evidence, direct language and capability effects, allocation operations,
 missing and extra effects, local and transitive inference, exported-clause
 requirements, duplicate and unknown identities, recursive fixed points, and
-valid versus oversized WVEF directory counts. It is part of the focused
-callable-semantics owner; paired-host execution remains a separate qualification
-claim.
+valid versus oversized WVEF directory counts. The same packaged executable now
+owns the post-effect WVCF catalog case, avoiding a redundant sixth
+compiler-sized native package. It is part of the focused callable-semantics
+owner; paired-host execution remains a separate qualification claim.
 
 Closure declarations currently resolve their declared effect identities with
 this registry. Comparing those declarations with an executable lowered closure

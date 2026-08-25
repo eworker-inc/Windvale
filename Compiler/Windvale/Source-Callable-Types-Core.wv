@@ -1,0 +1,969 @@
+module Compilerˉsourceˉcallableˉtypes profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉeffects as Sourceˉeffects;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export enum Compilerˉsourceˉcallableˉtypeˉstatus {
+    Valid = 0;
+    Sourceˉsymbols = 1;
+    Sourceˉbindings = 2;
+    Sourceˉwir = 3;
+    Sourceˉeffects = 4;
+    Invalidˉfunction = 5;
+    Invalidˉsignature = 6;
+    Functionˉtype = 7;
+    Retainedˉlimit = 8;
+    Invalidˉdirectory = 9;
+}
+
+export enum Compilerˉsourceˉcallableˉdisposition {
+    Nonˉfunction = 0;
+    Genericˉtemplate = 1;
+    Legacyˉvoid = 2;
+    Borrowedˉresult = 3;
+    Callable = 4;
+}
+
+export record Compilerˉsourceˉcallableˉtypeˉsummary {
+    Status: Compilerˉsourceˉcallableˉtypeˉstatus;
+    Functionˉtypeˉstatus:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus;
+    Functions: u32;
+    Callableˉfunctions: u32;
+    Genericˉtemplates: u32;
+    Legacyˉvoidˉfunctions: u32;
+    Borrowedˉresultˉfunctions: u32;
+    Instances: u32;
+    Directory: bytes;
+    Failureˉfunction: u32;
+    Inputˉbytes: u32;
+}
+
+record Compilerˉsourceˉcallableˉsignature {
+    Valid: bool;
+    Parameters: bytes;
+    Resultˉmode: u32;
+}
+
+const CALLABLE_TYPE_HEADER_BYTES: u32 = 32u32;
+const CALLABLE_TYPE_ENTRY_BYTES: u32 = 8u32;
+const CALLABLE_TYPE_FUNCTION_LIMIT: u32 = 87380u32;
+const CALLABLE_TYPE_RETAINED_LIMIT: u32 = 2097152u32;
+const CALLABLE_TYPE_ESTIMATED_LIMIT: u32 = 16777216u32;
+const CALLABLE_TYPE_INSTANCE_SENTINEL: u32 = 4294967295u32;
+
+fn Compilerˉsourceˉcallableˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉcallableˉsummaryˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉcallableˉtypeˉstatus,
+    Functionˉtypeˉstatus:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus,
+    Functions: u32,
+    Function: u32
+) -> Compilerˉsourceˉcallableˉtypeˉsummary {
+    return Compilerˉsourceˉcallableˉtypeˉsummary(
+        Status, Functionˉtypeˉstatus,
+        Functions, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Compilerˉsourceˉcallableˉempty(Input),
+        Function, Bytesˉlength(Input)
+    );
+}
+
+fn Compilerˉsourceˉcallableˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉcallableˉheader(
+    Functions: u32,
+    Catalogˉbytes: u32
+) -> bytes {
+    let Catalogˉoffset: u32 = CALLABLE_TYPE_HEADER_BYTES +
+        Functions * CALLABLE_TYPE_ENTRY_BYTES;
+    var Result: bytes = Textˉtoˉutf8("WVCF");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Compilerˉsourceˉcallableˉappendˉu32(Result, Functions);
+    Result = Compilerˉsourceˉcallableˉappendˉu32(
+        Result, CALLABLE_TYPE_ENTRY_BYTES
+    );
+    Result = Compilerˉsourceˉcallableˉappendˉu32(Result, Catalogˉbytes);
+    Result = Compilerˉsourceˉcallableˉappendˉu32(
+        Result, CALLABLE_TYPE_HEADER_BYTES
+    );
+    Result = Compilerˉsourceˉcallableˉappendˉu32(Result, Catalogˉoffset);
+    return Compilerˉsourceˉcallableˉappendˉu32(
+        Result, Catalogˉoffset + Catalogˉbytes
+    );
+}
+
+fn Compilerˉsourceˉcallableˉentry(
+    Disposition: Compilerˉsourceˉcallableˉdisposition,
+    Instance: u32
+) -> bytes {
+    var Value: u32 = 0u32;
+    if Disposition ==
+        Compilerˉsourceˉcallableˉdisposition.Genericˉtemplate {
+        Value = 1u32;
+    }
+    if Disposition == Compilerˉsourceˉcallableˉdisposition.Legacyˉvoid {
+        Value = 2u32;
+    }
+    if Disposition == Compilerˉsourceˉcallableˉdisposition.Borrowedˉresult {
+        Value = 3u32;
+    }
+    if Disposition == Compilerˉsourceˉcallableˉdisposition.Callable {
+        Value = 4u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Value),
+        Bytesˉfromˉu32ˉlittle(Instance)
+    );
+}
+
+fn Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
+    if Bytesˉlength(Directory) >= 56u32 {
+        let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+        if Minor == 10u32 || Minor == 12u32 ||
+            Minor == 14u32 || Minor == 16u32 {
+            return 56u32;
+        }
+    }
+    return 48u32;
+}
+
+fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
+    Directory: bytes,
+    Expectedˉfunctions: u32
+) -> bool {
+    let Length: u32 = Bytesˉlength(Directory);
+    if Length < 48u32 || Length > 4194304u32 { return false; }
+    if Bytesˉreadˉu8(Directory, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Directory, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Directory, 2u32) != 73u8 ||
+        Bytesˉreadˉu8(Directory, 3u32) != 82u8 {
+        return false;
+    }
+    if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+    if Minor < 9u32 || Minor > 16u32 { return false; }
+    let Headerˉbytes: u32 =
+        Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory);
+    if Length < Headerˉbytes { return false; }
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    if Functions != Expectedˉfunctions ||
+        Functions > CALLABLE_TYPE_FUNCTION_LIMIT ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 48u32 {
+        return false;
+    }
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Temporaries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
+    let Operands: u32 = Bytesˉreadˉu32ˉlittle(Directory, 40u32);
+    if Bytesˉreadˉu32ˉlittle(Directory, 20u32) != 28u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 28u32) != 28u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 36u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 44u32) != 4u32 ||
+        Blocks > 149796u32 || Operations > 104857u32 ||
+        Temporaries > 1048564u32 || Operands > 1048564u32 {
+        return false;
+    }
+    if Headerˉbytes == 56u32 {
+        let Instances: u32 = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
+        if Instances == 0u32 || Instances > 256u32 ||
+            Bytesˉreadˉu32ˉlittle(Directory, 52u32) != 1u32 {
+            return false;
+        }
+    }
+    let Blocksˉoffset: u32 = Headerˉbytes + Functions * 48u32;
+    let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+    let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
+    let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
+    if Length != Operandsˉoffset + Operands * 4u32 { return false; }
+    var Expectedˉblock: u32 = 0u32;
+    var Expectedˉoperation: u32 = 0u32;
+    var Expectedˉtemporary: u32 = 0u32;
+    var Expectedˉoperand: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Functions {
+        let Entry: u32 = Headerˉbytes + Function * 48u32;
+        if Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) !=
+                Expectedˉblock ||
+            Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32) !=
+                Expectedˉoperation ||
+            Bytesˉreadˉu32ˉlittle(Directory, Entry + 20u32) !=
+                Expectedˉtemporary ||
+            Bytesˉreadˉu32ˉlittle(Directory, Entry + 28u32) !=
+                Expectedˉoperand ||
+            Bytesˉreadˉu32ˉlittle(Directory, Entry + 36u32) > 64u32 {
+            return false;
+        }
+        let Blockˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 8u32
+        );
+        let Operationˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 16u32
+        );
+        let Temporaryˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 24u32
+        );
+        let Operandˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 32u32
+        );
+        if Blockˉcount > Blocks - Expectedˉblock ||
+            Operationˉcount > Operations - Expectedˉoperation ||
+            Temporaryˉcount > Temporaries - Expectedˉtemporary ||
+            Operandˉcount > Operands - Expectedˉoperand {
+            return false;
+        }
+        Expectedˉblock = Expectedˉblock + Blockˉcount;
+        Expectedˉoperation = Expectedˉoperation + Operationˉcount;
+        Expectedˉtemporary = Expectedˉtemporary + Temporaryˉcount;
+        Expectedˉoperand = Expectedˉoperand + Operandˉcount;
+        Function = Function + 1u32;
+    }
+    return Expectedˉblock == Blocks &&
+        Expectedˉoperation == Operations &&
+        Expectedˉtemporary == Temporaries &&
+        Expectedˉoperand == Operands;
+}
+
+fn Compilerˉsourceˉcallableˉfunctionˉentry(
+    Wir: bytes,
+    Function: u32
+) -> u32 {
+    return Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Wir) +
+        Function * 48u32;
+}
+
+fn Compilerˉsourceˉcallableˉprofile(
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader
+) -> u32 {
+    if Header.Profile ==
+        Sourceˉdeclarations.Compilerˉsourceˉprofile.Portable {
+        return 1u32;
+    }
+    if Header.Profile ==
+        Sourceˉdeclarations.Compilerˉsourceˉprofile.Hosted {
+        return 2u32;
+    }
+    if Header.Profile ==
+        Sourceˉdeclarations.Compilerˉsourceˉprofile.System {
+        return 3u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉcallableˉprofiles(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan
+) -> bytes {
+    var Profiles: bytes = Compilerˉsourceˉcallableˉempty(Input);
+    var Module: u32 = 0u32;
+    while Module < Scan.Modules {
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+        let Profile: u32 = Compilerˉsourceˉcallableˉprofile(Header);
+        if Profile == 0u32 {
+            return Compilerˉsourceˉcallableˉempty(Input);
+        }
+        Profiles = Compilerˉsourceˉcallableˉappendˉu32(
+            Profiles, Profile
+        );
+        Module = Module + 1u32;
+    }
+    return Profiles;
+}
+
+fn Compilerˉsourceˉcallableˉfunctionˉflags(
+    Source: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
+) -> u32 {
+    var Current: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Declarationˉoffset, 1u32, 1u32
+        );
+    if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+        Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Current.Nextˉoffset,
+            Current.Nextˉline, Current.Nextˉcolumn
+        );
+    }
+    var Flags: u32 = 0u32;
+    if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+        Flags = Flags | 2u32;
+        Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Current.Nextˉoffset,
+            Current.Nextˉline, Current.Nextˉcolumn
+        );
+    }
+    if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        Flags = Flags | 1u32;
+    }
+    return Flags;
+}
+
+fn Compilerˉsourceˉcallableˉisˉgenericˉtemplate(
+    Source: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
+    Function: u32,
+    Symbolˉentries: u32
+) -> bool {
+    if Function >= Symbolˉentries { return false; }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Nameˉoffset, 1u32, 1u32
+        );
+    let Next: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+        );
+    return Next.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less;
+}
+
+fn Compilerˉsourceˉcallableˉsignatureˉfailure(
+    Source: bytes
+) -> Compilerˉsourceˉcallableˉsignature {
+    return Compilerˉsourceˉcallableˉsignature(
+        false, Compilerˉsourceˉcallableˉempty(Source), 0u32
+    );
+}
+
+fn Compilerˉsourceˉcallableˉsignatureˉevidence(
+    Source: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration,
+    Bindingˉdirectory: bytes,
+    Function: u32,
+    Parameters: u32
+) -> Compilerˉsourceˉcallableˉsignature {
+    if Declaration.Items != Parameters {
+        return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+    }
+    let Range: u32 = Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+        Bindingˉdirectory, Function
+    );
+    let First: u32 = Bytesˉreadˉu32ˉlittle(Bindingˉdirectory, Range);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindingˉdirectory, Range + 4u32
+    );
+    if Count < Parameters {
+        return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+    }
+    let Entries: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
+            Bindingˉdirectory
+        );
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Nameˉoffset, 1u32, 1u32
+        );
+    var Cursor: u32 = Name.Nextˉoffset;
+    var Line: u32 = Name.Nextˉline;
+    var Column: u32 = Name.Nextˉcolumn;
+    let Maybeˉgeneric: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Cursor, Line, Column
+        );
+    if Maybeˉgeneric.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Less {
+        let Generic: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉgenericˉparameters(
+                Source, Cursor, Line, Column
+            );
+        if Generic.Status !=
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        Cursor = Generic.Nextˉoffset;
+        Line = Generic.Nextˉline;
+        Column = Generic.Nextˉcolumn;
+    }
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Cursor, Line, Column
+        );
+    if Left.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
+        return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+    }
+    Cursor = Left.Nextˉoffset;
+    Line = Left.Nextˉline;
+    Column = Left.Nextˉcolumn;
+    var Evidence: bytes = Compilerˉsourceˉcallableˉempty(Source);
+    var Parameter: u32 = 0u32;
+    var Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Cursor, Line, Column
+        );
+    while Parameter < Parameters {
+        let Parameterˉname: Sourceˉlexer.Compilerˉsourceˉtoken = Separator;
+        if Parameterˉname.Kind !=
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Parameterˉname.Nextˉoffset,
+                Parameterˉname.Nextˉline, Parameterˉname.Nextˉcolumn
+            );
+        if Colon.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        let Mode: u32 =
+            Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+                Source, Colon.Nextˉoffset,
+                Colon.Nextˉline, Colon.Nextˉcolumn
+            );
+        let Type: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                Source, Colon.Nextˉoffset,
+                Colon.Nextˉline, Colon.Nextˉcolumn, false
+            );
+        if Type.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        let Binding: u32 = Entries + (First + Parameter) * 36u32;
+        if Bytesˉreadˉu32ˉlittle(Bindingˉdirectory, Binding + 4u32) !=
+                Function ||
+            Bytesˉreadˉu32ˉlittle(Bindingˉdirectory, Binding + 8u32) !=
+                1u32 ||
+            Bytesˉreadˉu32ˉlittle(Bindingˉdirectory, Binding + 12u32) !=
+                Parameter {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+            Bindingˉdirectory, Binding + 24u32
+        );
+        if Shape == 0u32 {
+            return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+        }
+        Evidence =
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+                Evidence, Shape, Mode
+            );
+        Separator = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Type.Nextˉoffset, Type.Nextˉline, Type.Nextˉcolumn
+        );
+        Parameter = Parameter + 1u32;
+        if Parameter < Parameters {
+            if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+            }
+            Separator = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Separator.Nextˉoffset,
+                Separator.Nextˉline, Separator.Nextˉcolumn
+            );
+        }
+    }
+    if Parameters == 0u32 {
+        Separator = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Cursor, Line, Column
+        );
+    } else if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+        Separator = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Separator.Nextˉoffset,
+            Separator.Nextˉline, Separator.Nextˉcolumn
+        );
+    }
+    if Separator.Kind !=
+        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+        return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+    }
+    let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Separator.Nextˉoffset,
+            Separator.Nextˉline, Separator.Nextˉcolumn
+        );
+    if Arrow.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Arrow {
+        return Compilerˉsourceˉcallableˉsignatureˉfailure(Source);
+    }
+    return Compilerˉsourceˉcallableˉsignature(
+        true, Evidence,
+        Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn
+        )
+    );
+}
+
+export fn Compilerˉsourceˉcallableˉdirectoryˉfunctions(
+    Directory: bytes
+) -> u32 {
+    if Bytesˉlength(Directory) < CALLABLE_TYPE_HEADER_BYTES { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+}
+
+export fn Compilerˉsourceˉcallableˉdirectoryˉcatalog(
+    Directory: bytes
+) -> Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog {
+    if Bytesˉlength(Directory) < CALLABLE_TYPE_HEADER_BYTES {
+        return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Compilerˉsourceˉcallableˉempty(Directory)
+        );
+    }
+    let Offset: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    if Offset > Bytesˉlength(Directory) ||
+        Length > Bytesˉlength(Directory) - Offset {
+        return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Compilerˉsourceˉcallableˉempty(Directory)
+        );
+    }
+    return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+        Bytesˉslice(Directory, Offset, Length)
+    );
+}
+
+export fn Compilerˉsourceˉcallableˉfunctionˉdisposition(
+    Directory: bytes,
+    Function: u32
+) -> Compilerˉsourceˉcallableˉdisposition {
+    let Functions: u32 = Compilerˉsourceˉcallableˉdirectoryˉfunctions(
+        Directory
+    );
+    let Length: u32 = Bytesˉlength(Directory);
+    if Function >= Functions ||
+        Length < CALLABLE_TYPE_HEADER_BYTES + CALLABLE_TYPE_ENTRY_BYTES ||
+        Function > (Length - CALLABLE_TYPE_HEADER_BYTES -
+            CALLABLE_TYPE_ENTRY_BYTES) / CALLABLE_TYPE_ENTRY_BYTES {
+        return Compilerˉsourceˉcallableˉdisposition.Nonˉfunction;
+    }
+    let Value: u32 = Bytesˉreadˉu32ˉlittle(
+        Directory,
+        CALLABLE_TYPE_HEADER_BYTES + Function * CALLABLE_TYPE_ENTRY_BYTES
+    );
+    if Value == 1u32 {
+        return Compilerˉsourceˉcallableˉdisposition.Genericˉtemplate;
+    }
+    if Value == 2u32 {
+        return Compilerˉsourceˉcallableˉdisposition.Legacyˉvoid;
+    }
+    if Value == 3u32 {
+        return Compilerˉsourceˉcallableˉdisposition.Borrowedˉresult;
+    }
+    if Value == 4u32 {
+        return Compilerˉsourceˉcallableˉdisposition.Callable;
+    }
+    return Compilerˉsourceˉcallableˉdisposition.Nonˉfunction;
+}
+
+export fn Compilerˉsourceˉcallableˉfunctionˉinstance(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    let Functions: u32 = Compilerˉsourceˉcallableˉdirectoryˉfunctions(
+        Directory
+    );
+    let Length: u32 = Bytesˉlength(Directory);
+    if Function >= Functions ||
+        Length < CALLABLE_TYPE_HEADER_BYTES + CALLABLE_TYPE_ENTRY_BYTES ||
+        Function > (Length - CALLABLE_TYPE_HEADER_BYTES -
+            CALLABLE_TYPE_ENTRY_BYTES) / CALLABLE_TYPE_ENTRY_BYTES {
+        return CALLABLE_TYPE_INSTANCE_SENTINEL;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Directory,
+        CALLABLE_TYPE_HEADER_BYTES +
+            Function * CALLABLE_TYPE_ENTRY_BYTES + 4u32
+    );
+}
+
+export fn Compilerˉsourceˉcallableˉfunctionˉshape(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    if Compilerˉsourceˉcallableˉfunctionˉdisposition(
+            Directory, Function
+        ) != Compilerˉsourceˉcallableˉdisposition.Callable {
+        return 0u32;
+    }
+    return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshape(
+        Compilerˉsourceˉcallableˉfunctionˉinstance(Directory, Function)
+    );
+}
+
+export fn Compilerˉsourceˉcallableˉdirectoryˉisˉvalid(
+    Directory: bytes,
+    Functions: u32
+) -> bool {
+    let Length: u32 = Bytesˉlength(Directory);
+    if Functions > CALLABLE_TYPE_FUNCTION_LIMIT ||
+        Length < CALLABLE_TYPE_HEADER_BYTES ||
+        Length > CALLABLE_TYPE_RETAINED_LIMIT {
+        return false;
+    }
+    if Bytesˉreadˉu8(Directory, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Directory, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Directory, 2u32) != 67u8 ||
+        Bytesˉreadˉu8(Directory, 3u32) != 70u8 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 8u32) != Functions ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) !=
+            CALLABLE_TYPE_ENTRY_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Directory, 20u32) !=
+            CALLABLE_TYPE_HEADER_BYTES {
+        return false;
+    }
+    if Functions >
+        (Length - CALLABLE_TYPE_HEADER_BYTES) / CALLABLE_TYPE_ENTRY_BYTES {
+        return false;
+    }
+    let Catalogˉoffset: u32 = CALLABLE_TYPE_HEADER_BYTES +
+        Functions * CALLABLE_TYPE_ENTRY_BYTES;
+    let Catalogˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    if Bytesˉreadˉu32ˉlittle(Directory, 24u32) != Catalogˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Directory, 28u32) != Length ||
+        Catalogˉoffset > Length || Catalogˉbytes != Length - Catalogˉoffset {
+        return false;
+    }
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Compilerˉsourceˉcallableˉdirectoryˉcatalog(Directory);
+    if !Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) {
+        return false;
+    }
+    let Instances: u32 =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+            Catalog
+        );
+    var Nextˉinstance: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Functions {
+        let Entry: u32 = CALLABLE_TYPE_HEADER_BYTES +
+            Function * CALLABLE_TYPE_ENTRY_BYTES;
+        let Disposition: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+        let Instance: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
+        if Disposition > 4u32 { return false; }
+        if Disposition != 4u32 {
+            if Instance != CALLABLE_TYPE_INSTANCE_SENTINEL { return false; }
+        } else {
+            if Instance >= Instances || Instance > Nextˉinstance {
+                return false;
+            }
+            if Instance == Nextˉinstance { Nextˉinstance = Nextˉinstance + 1u32; }
+        }
+        Function = Function + 1u32;
+    }
+    return Nextˉinstance == Instances;
+}
+
+export fn Compilerˉanalyzeˉpreparedˉsourceˉcallableˉtypes(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wir: bytes,
+    Effects: Sourceˉeffects.Compilerˉsourceˉeffectˉsummary
+) -> Compilerˉsourceˉcallableˉtypeˉsummary {
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Sourceˉsymbols,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Symbols.Functions, Symbols.Functions
+        );
+    }
+    let Functions: u32 = Bindings.Functions;
+    if Bindings.Status !=
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        !Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
+            Input, Scan, Symbols, Bindings.Directory
+        ) ||
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
+            Bindings.Directory
+        ) != Functions {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Sourceˉbindings,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+    if !Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
+            Wir, Functions
+        ) {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Sourceˉwir,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+    if Effects.Status !=
+            Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Effects.Functions != Functions ||
+        Effects.Capabilities != Symbols.Capabilities ||
+        !Sourceˉeffects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Effects.Directory, Functions, Symbols.Capabilities
+        ) {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Sourceˉeffects,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+    if Functions > CALLABLE_TYPE_FUNCTION_LIMIT {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Retainedˉlimit,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    let Profiles: bytes = Compilerˉsourceˉcallableˉprofiles(Input, Scan);
+    if Bytesˉlength(Profiles) != Scan.Modules * 4u32 {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉsignature,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉprofile,
+            Functions, Functions
+        );
+    }
+    var Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty();
+    var Entries: bytes = Compilerˉsourceˉcallableˉempty(Input);
+    var Callableˉfunctions: u32 = 0u32;
+    var Genericˉtemplates: u32 = 0u32;
+    var Legacyˉvoidˉfunctions: u32 = 0u32;
+    var Borrowedˉresultˉfunctions: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Functions {
+        if !Sourceˉeffects.Compilerˉsourceˉeffectsˉentryˉisˉfunction(
+                Effects.Directory, Function
+            ) {
+            Entries = Bytesˉconcat(
+                Entries,
+                Compilerˉsourceˉcallableˉentry(
+                    Compilerˉsourceˉcallableˉdisposition.Nonˉfunction,
+                    CALLABLE_TYPE_INSTANCE_SENTINEL
+                )
+            );
+            Function = Function + 1u32;
+        } else {
+            let Declarationˉentry: u32 =
+                Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉdeclaration(
+                    Bindings.Directory, Function
+                );
+            if Declarationˉentry >= Symbolˉentries {
+                return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                    Input,
+                    Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉfunction,
+                    Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                    Functions, Function
+                );
+            }
+            let Symbolˉentry: u32 = 16u32 + Declarationˉentry * 24u32;
+            if Bytesˉreadˉu32ˉlittle(
+                    Symbols.Directory, Symbolˉentry + 4u32
+                ) != 6u32 {
+                return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                    Input,
+                    Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉfunction,
+                    Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                    Functions, Function
+                );
+            }
+            let Module: u32 = Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Symbolˉentry
+            );
+            if Module >= Scan.Modules {
+                return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                    Input,
+                    Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉfunction,
+                    Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                    Functions, Function
+                );
+            }
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+            let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+                    View.Source,
+                    Bytesˉreadˉu32ˉlittle(
+                        Symbols.Directory, Symbolˉentry + 8u32
+                    ),
+                    1u32, 1u32, true
+                );
+            if Declaration.Status !=
+                    Sourceˉdeclarations.Compilerˉparseˉstatus.Valid ||
+                Declaration.Kind !=
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Function {
+                return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                    Input,
+                    Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉfunction,
+                    Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                    Functions, Function
+                );
+            }
+            if Compilerˉsourceˉcallableˉisˉgenericˉtemplate(
+                    View.Source, Declaration, Function, Symbolˉentries
+                ) {
+                Entries = Bytesˉconcat(
+                    Entries,
+                    Compilerˉsourceˉcallableˉentry(
+                        Compilerˉsourceˉcallableˉdisposition.Genericˉtemplate,
+                        CALLABLE_TYPE_INSTANCE_SENTINEL
+                    )
+                );
+                Genericˉtemplates = Genericˉtemplates + 1u32;
+                Function = Function + 1u32;
+            } else {
+                let Wirˉentry: u32 =
+                        Compilerˉsourceˉcallableˉfunctionˉentry(
+                        Wir, Function
+                    );
+                let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Wirˉentry + 36u32
+                );
+                let Resultˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+                    Wir, Wirˉentry + 44u32
+                );
+                if Resultˉshape == 0u32 {
+                    Entries = Bytesˉconcat(
+                        Entries,
+                        Compilerˉsourceˉcallableˉentry(
+                            Compilerˉsourceˉcallableˉdisposition.Legacyˉvoid,
+                            CALLABLE_TYPE_INSTANCE_SENTINEL
+                        )
+                    );
+                    Legacyˉvoidˉfunctions = Legacyˉvoidˉfunctions + 1u32;
+                    Function = Function + 1u32;
+                } else {
+                    let Signature: Compilerˉsourceˉcallableˉsignature =
+                        Compilerˉsourceˉcallableˉsignatureˉevidence(
+                            View.Source, Declaration,
+                            Bindings.Directory, Function, Parameters
+                        );
+                    if !Signature.Valid {
+                        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                            Input,
+                            Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉsignature,
+                            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                            Functions, Function
+                        );
+                    }
+                    if Signature.Resultˉmode != 0u32 {
+                        Entries = Bytesˉconcat(
+                            Entries,
+                            Compilerˉsourceˉcallableˉentry(
+                                Compilerˉsourceˉcallableˉdisposition.Borrowedˉresult,
+                                CALLABLE_TYPE_INSTANCE_SENTINEL
+                            )
+                        );
+                        Borrowedˉresultˉfunctions =
+                            Borrowedˉresultˉfunctions + 1u32;
+                        Function = Function + 1u32;
+                    } else {
+                        let Profile: u32 = Bytesˉreadˉu32ˉlittle(
+                            Profiles, Module * 4u32
+                        );
+                        let Operations: u32 = Bytesˉreadˉu32ˉlittle(
+                            Wir, Wirˉentry + 16u32
+                        );
+                        let Parameterˉbytes: u32 = Parameters * 8u32;
+                        if Parameterˉbytes >
+                                CALLABLE_TYPE_ESTIMATED_LIMIT - 32u32 ||
+                            Operations >
+                                (CALLABLE_TYPE_ESTIMATED_LIMIT - 32u32 -
+                                    Parameterˉbytes) / 28u32 {
+                            return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                                Input,
+                                Compilerˉsourceˉcallableˉtypeˉstatus.Functionˉtype,
+                                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Estimatedˉlimit,
+                                Functions, Function
+                            );
+                        }
+                        let Admission:
+                            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+                            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+                                Catalog,
+                                Compilerˉsourceˉcallableˉfunctionˉflags(
+                                    View.Source, Declaration
+                                ),
+                                Profile, Resultˉshape, 0u32,
+                                Sourceˉeffects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+                                    Effects.Directory, Function
+                                ),
+                                Sourceˉeffects.Compilerˉsourceˉeffectsˉfunctionˉcapabilities(
+                                    Effects.Directory, Function
+                                ),
+                                Signature.Parameters,
+                                32u32 + Parameterˉbytes + Operations * 28u32
+                            );
+                        if Admission.Status !=
+                            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid {
+                            return Compilerˉsourceˉcallableˉsummaryˉfailure(
+                                Input,
+                                Compilerˉsourceˉcallableˉtypeˉstatus.Functionˉtype,
+                                Admission.Status, Functions, Function
+                            );
+                        }
+                        Catalog = Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+                            Admission
+                        );
+                        Entries = Bytesˉconcat(
+                            Entries,
+                            Compilerˉsourceˉcallableˉentry(
+                                Compilerˉsourceˉcallableˉdisposition.Callable,
+                                Admission.Instance
+                            )
+                        );
+                        Callableˉfunctions = Callableˉfunctions + 1u32;
+                        Function = Function + 1u32;
+                    }
+                }
+            }
+        }
+    }
+    let Catalogˉbytes: u32 = Bytesˉlength(Catalog.Evidence);
+    if Bytesˉlength(Entries) >
+            CALLABLE_TYPE_RETAINED_LIMIT - CALLABLE_TYPE_HEADER_BYTES ||
+        Catalogˉbytes > CALLABLE_TYPE_RETAINED_LIMIT -
+            CALLABLE_TYPE_HEADER_BYTES - Bytesˉlength(Entries) {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Retainedˉlimit,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Retainedˉlimit,
+            Functions, Functions
+        );
+    }
+    let Directory: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Compilerˉsourceˉcallableˉheader(Functions, Catalogˉbytes),
+            Entries
+        ),
+        Catalog.Evidence
+    );
+    if !Compilerˉsourceˉcallableˉdirectoryˉisˉvalid(
+            Directory, Functions
+        ) {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input, Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉdirectory,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+    return Compilerˉsourceˉcallableˉtypeˉsummary(
+        Compilerˉsourceˉcallableˉtypeˉstatus.Valid,
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+        Functions, Callableˉfunctions, Genericˉtemplates,
+        Legacyˉvoidˉfunctions, Borrowedˉresultˉfunctions,
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+            Catalog
+        ),
+        Directory, Functions, Bytesˉlength(Input)
+    );
+}

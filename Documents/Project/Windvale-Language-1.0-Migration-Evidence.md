@@ -3074,6 +3074,8 @@ and
 [Decision 0853](../Decisions/0853-Validate-Explicit-Closure-Captures-Before-Lowering.md)
 and
 [Decision 0854](../Decisions/0854-Bound-Exact-Transitive-Effect-Analysis.md)
+and
+[Decision 0855](../Decisions/0855-Catalog-Concrete-Callable-Functions-After-Effects.md)
 establish the first Slice 6 checkpoint without claiming executable function
 values. Edition 1 recognizes `async`, `unsafe`, `copy`, and `move`; the body
 parser admits exact structural function types, explicit closure capture lists,
@@ -3089,6 +3091,16 @@ publication. The effect analyzer resolves the canonical language and capability
 registries, computes exact transitive effects through bounded call-graph
 closure, and rejects missing, extra, duplicate, or unknown declarations.
 
+WVCF 1.0 now joins those two phase results. Every prepared WVIR ordinal is
+classified as non-function, unspecialized generic template, legacy `void`,
+borrowed result, or concrete callable. A concrete callable receives the exact
+WVFT identity derived from binding shapes, source transfer modes, result shape,
+flags, module profile, and resolved WVEF masks; equal complete signatures reuse
+their first identity. Module profiles are parsed once per source module. The
+phase checks the structural WVIR envelope it reads without rerunning the full
+operation-level semantic validator over immutable preceding-phase evidence.
+WVCF remains compiler-private and cannot enter WVB.
+
 Closure capture analysis gives each closure a private binding phase containing
 only its explicit captures and parameters. `copy`, `move`, `borrow`, and
 `borrow mut` have distinct validation; mutable borrow requires an outer `var`,
@@ -3098,16 +3110,16 @@ copy classifier deliberately admits only proven shareable immutable shapes and
 rejects unproven aggregate classes.
 
 The focused Windows owner builds and packages each maintained compiler-scale
-artifact once, reuses the target-aware development cache, and executes 30
+artifact once, reuses the target-aware development cache, and executes 31
 semantic cases:
 
 ```text
-native language 1 callable semantics status=Passed cases=30 result=42 modules=5 wvb-bytes=3162538 evidence-sha256=b2494bb3d5d7867ccc2b3e183b350364fe4c5dd1a4668a2ef6e32a19cad5b4cb
+native language 1 callable semantics status=Passed cases=31 result=42 modules=5 wvb-bytes=3243802 evidence-sha256=f58c7cfe1b856f462b059f0416675732b821b085d4ca2c073f0e0dcd31b9b52f
 ```
 
-The registry advances to 113 owners and 5,472 cases. Its 17,993 LF-only bytes
-have SHA-256
-`911cebd1ac264e6bdc104ebefd17f24f257c3b1f69abd574790cf2db3bdb7e19`.
+The registry remains 113 owners and advances to 5,473 cases. Its 17,993
+LF-only bytes have SHA-256
+`400967ff5b8c15b085b8efac2ba27cbb95393f8bc3213f2eab0645a1ed97d77e`.
 This is a focused Windows development checkpoint. Independent Linux execution
 remains required before cross-host conformance is claimed. Slice 6 still needs
 typed WVIR/WVB callable values, indirect calls, closure environment lowering,

@@ -382,9 +382,11 @@ $NativeCases = @(
         Name = 'Language 1.0 callable semantics routing'
         Paths = @(
             'Compiler/Windvale/Source-Closure-Captures-Core.wv',
+            'Compiler/Windvale/Source-Callable-Types-Core.wv',
             'Compiler/Windvale/Source-Effects-Core.wv',
             'Compiler/Windvale/Source-Function-Type-Lowering-Core.wv',
             'Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj',
+            'Projects/Compiler/Windvale-Source-Callable-Types-Core.wvproj',
             'Projects/Compiler/Windvale-Source-Effects-Core.wvproj',
             'Projects/Compiler/Windvale-Source-Function-Type-Lowering-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
@@ -393,9 +395,11 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Function-Value-Front-End.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Named-Argument-Semantics.wvproj',
             'Specifications/Compiler-Source-Closure-Captures.md',
+            'Specifications/Compiler-Source-Callable-Types.md',
             'Specifications/Compiler-Source-Effects.md',
             'Specifications/Compiler-Source-Function-Types.md',
             'Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Callable-Type-Catalog-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Function-Value-Front-End-Self-Test.wv',
@@ -3679,7 +3683,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5472 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5473 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

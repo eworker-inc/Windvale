@@ -9,11 +9,13 @@ an arbitrary signature into one `u32`, conflating it with a generic nominal
 type, or exposing a compiler-private identity as a WVB runtime type.
 
 The catalog format, immutable admission, accessors, and independent validation
-are implemented and execute through the maintained native path. Connecting
-source type uses, named function values, closures, captures, WVIR, and the
-selected closed runtime representation is separate work in Language 1.0 Slice
-6. This representation checkpoint does not make those consumers appear
-implemented.
+are implemented and execute through the maintained native path. The post-effect
+[WVCF catalog](Compiler-Source-Callable-Types.md) now maps each concrete named
+source function to one exact WVFT instance or an explicit unsupported
+disposition. Connecting source value expressions, closures, captures,
+callable-aware WVIR, and the selected closed runtime representation remains
+separate work in Language 1.0 Slice 6. This compiler-evidence checkpoint does
+not make those consumers appear implemented.
 
 Every integer is unsigned little-endian. Lengths are exact. Admission returns a
 replacement catalog and never publishes a partially appended entry.

@@ -1,9 +1,8 @@
 windvale-project 2
-root "Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv"
+root "Compiler/Windvale/Source-Callable-Types-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
-source "Compiler/Windvale/Source-Callable-Types-Core.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"
 source "Compiler/Windvale/Source-Effects-Core.wv"
@@ -16,5 +15,4 @@ source "Compiler/Windvale/Source-Lexer-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
 source "Compiler/Windvale/Source-Symbols-Core.wv"
 source "Foundation/Byte-Construction.wv"
-source "Tests/Fixtures/Language-1.0/Callable-Type-Catalog-Self-Test.wv"
 emit wvb
