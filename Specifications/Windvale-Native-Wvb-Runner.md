@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-the rights-limited source snapshot through WVB 1.29 but has not repinned the paired
+exact noncapturing callable values through WVB 1.30 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.29. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.30. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -233,6 +233,16 @@ and the current generation before pushing `u64`. Stale or malformed runtime
 state fails closed. There is no byte-reading opcode, path conversion, provider
 acquisition, retry, or ambient filesystem authority in this checkpoint.
 
+WVB 1.30 adds representation-hidden noncapturing callable values. Opcode `D3`
+stores the verified function index in the low `u32` of the ordinary eight-byte
+scalar cell and the exact kind-`8` callable Types index plus one in the high
+`u32`. Opcode `D4` requires that encoded type identity, validates the target
+function against the descriptor again at execution, removes the callable and
+its exact arguments, and enters the existing bounded call-frame path. The
+value is not a host pointer and the cell layout is not a portable ABI promise.
+Call depth, instruction budget, local count, stack depth, and frame-storage
+bounds remain unchanged.
+
 The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
 SHA-256
 `ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
@@ -337,6 +347,19 @@ The source-built runner returns `42` for a 42-byte snapshot and `1` for a
 target, and transfer mutations reject before execution. This is focused Windows
 development evidence; independent Linux reproduction and promoted-candidate
 repinning remain separate gates.
+
+The executable callable fixture is deterministic 400-byte WVB 1.30 at SHA-256
+`30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`.
+It creates one exact named function reference, invokes it indirectly with one
+`i32` argument, returns `42`, and reports 24 guest instructions. The
+compiler-aligned verifier accepts the exact product and rejects five version,
+target-signature, reference-type, call-type, and descriptor-kind mutations.
+The current development runner WVB contains 166 functions in 360,679 bytes at
+SHA-256
+`8ea9c8dd900f684bc32e24fb8a37309f91b9df002c866c3c6eba99200492dd37`.
+This is focused Windows development evidence; independent Linux reproduction,
+the broader Qualification gate, and promoted-candidate repinning remain
+separate.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

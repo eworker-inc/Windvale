@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module Languageˉoneˉcallableˉindirectˉexecution;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+fn Addˉone(Value: i32) -> i32 effects() {
+    return Value + 1;
+}
+
+export fn Main() -> i32 effects() {
+    let Callback = Addˉone;
+    return Callback(41);
+}

@@ -1,6 +1,7 @@
 module Languageˉoneˉgenericˉwirˉselfˉtest profile portable;
 
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉchecked as Sourceˉwirˉchecked;
 
 fn Sourceˉset(Source: text) -> bytes {
     let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
@@ -21,7 +22,7 @@ export fn Main() -> i32 {
         "module Genericˉidentity profile portable; fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Initial: i32 = 42; let Inferred: i32 = Identity(Initial); return Identity::<i32>(Inferred); }"
     );
     let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(Input);
     if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
         return 1;
     }

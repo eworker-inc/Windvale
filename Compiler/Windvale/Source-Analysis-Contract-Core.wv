@@ -1,0 +1,10 @@
+module Compilerˉsourceˉanalysisˉcontract profile portable;
+
+export enum Compilerˉsourceˉanalysisˉstatus {
+    Valid = 0;
+    Invalidˉmanifest = 1;
+    Sourceˉsymbols = 2;
+    Sourceˉwir = 3;
+    Invalidˉbindings = 4;
+    Invalidˉwir = 5;
+}

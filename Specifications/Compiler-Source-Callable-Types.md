@@ -113,9 +113,13 @@ trapping.
 ## Runtime separation
 
 WVCF answers which exact callable type a concrete named function can inhabit;
-it does not create a runtime value. A later callable-aware lowering phase must
-select an explicit representation, prove captures and escapes, encode typed
-indirect calls, replace every compiler-private WVFT shape, and preserve exact
-effects and ownership through WVB verification and execution. Until that
-boundary is specified and implemented, named functions remain direct-call
-targets only.
+it does not itself create a runtime value. WVIR 1.17/1.18 now consumes that
+answer for the closed noncapturing, effect-free, by-value profile, embeds reduced
+WVIC evidence, and lowers named-function references plus exact local indirect
+calls. WVB 1.30 replaces every private WVFT shape with a kind-8 Types descriptor
+and shape `35`, and its verifier/runtime own the portable value representation.
+
+This does not make WVCF a serialized format or a runtime address directory.
+Capturing closures, environments, borrowed callable signatures, nonempty
+effects, flags, escape ownership, and native callable ABI lowering still require
+later explicit representations and proofs.

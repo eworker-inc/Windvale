@@ -296,6 +296,16 @@ fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     );
 }
 
+fn Callableˉshapeˉwidth(Module: bytes, Cursor: u32) -> u32 {
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+        Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 ||
+        Kind == 28u32 || Kind == 29u32 || Kind == 30u32 || Kind == 35u32 {
+        return 5u32;
+    }
+    return 1u32;
+}
+
 fn Readˉfunctionˉdirectory(
     Module: bytes,
     Functions: u32,
@@ -359,7 +369,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 28u32) ||
+                if (Moduleˉminor < 21u32 || Moduleˉminor > 30u32) ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -367,7 +377,7 @@ fn Readˉfunctionˉdirectory(
                 Mainˉhasˉmemoryˉbudget = true;
             }
             if Shapeˉkind == 34u32 {
-                if Moduleˉminor != 29u32 ||
+                if (Moduleˉminor != 29u32 && Moduleˉminor != 30u32) ||
                     Functionˉindex != Mainˉindex || Requestˉmajor != 5u32 ||
                     Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                     Mainˉhasˉsourceˉfile {
@@ -406,7 +416,8 @@ fn Readˉfunctionˉdirectory(
             if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
                 Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
-                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 {
+                Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
+                Shapeˉkind == 35u32 {
                 Nominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module, Functionˉcursor
                 );
@@ -438,7 +449,8 @@ fn Readˉfunctionˉdirectory(
         Functionˉcursor = Functionˉcursor + 1u32;
         if Returnˉkind == 7u32 || Returnˉkind == 8u32 ||
             Returnˉkind == 11u32 || Returnˉkind == 22u32 ||
-            Returnˉkind == 23u32 || Returnˉkind == 24u32 {
+            Returnˉkind == 23u32 || Returnˉkind == 24u32 ||
+            Returnˉkind == 35u32 {
             if Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor) >= Typeˉcount {
                 return Invalidˉfunctionˉdirectory(Module);
             }
@@ -463,11 +475,11 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 28u32) ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 30u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) ||
                 (Shapeˉkind == 34u32 &&
-                    (Moduleˉminor != 29u32 ||
+                    ((Moduleˉminor != 29u32 && Moduleˉminor != 30u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉsourceˉfile)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -478,7 +490,7 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
                 Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
                 Shapeˉkind == 28u32 || Shapeˉkind == 29u32 ||
-                Shapeˉkind == 30u32 {
+                Shapeˉkind == 30u32 || Shapeˉkind == 35u32 {
                 Nominalˉtoken = Bytesˉreadˉu32ˉlittle(
                     Module, Functionˉcursor
                 );
@@ -3968,7 +3980,7 @@ fn Executeˉcollection(
         );
         let Takenˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
         let Takenˉisˉaggregate: bool = Takenˉminor >= 28u32 &&
-            Takenˉminor <= 29u32 &&
+            Takenˉminor <= 30u32 &&
             (Takenˉshapeˉkind == 7u32 || Takenˉshapeˉkind == 11u32 ||
                 Takenˉshapeˉkind == 22u32);
         let Takenˉisˉsourceˉfile: bool = Takenˉminor == 29u32 &&
@@ -3976,7 +3988,7 @@ fn Executeˉcollection(
         if Takenˉshapeˉkind != 23u32 && !Takenˉisˉaggregate &&
             !Takenˉisˉsourceˉfile &&
             ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 29u32) ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 30u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
@@ -4474,7 +4486,7 @@ fn Executeˉaggregate(
         let Fieldˉrequiresˉretain: bool =
             Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 ||
             (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 29u32 &&
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 30u32 &&
                 Selectedˉfieldˉkind == 23u32 &&
                 Payloadˉlength != 153u32);
         if Fieldˉrequiresˉretain {
@@ -4585,7 +4597,7 @@ fn Executeˉaggregate(
         if Sectionˉkind == 0u32 {
             if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 ||
                 (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
-                    Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 29u32 &&
+                    Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 30u32 &&
                     Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
                     Retainˉdescriptor(
@@ -4739,7 +4751,8 @@ fn Executeˉextended(
     var Mainˉfound: bool = false;
 
     if Payloadˉlength == 210u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 29u32 ||
+        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 29u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 30u32) ||
             !Mainˉhasˉsourceˉfile || Functionˉindex != Mainˉindex ||
             Sourceˉproviderˉgeneration == 0u32 {
             return Invalid;
@@ -5450,6 +5463,198 @@ fn Initializeˉsourceˉfileˉlocals(
     );
 }
 
+record Callˉexecution {
+    Valid: bool;
+    Handled: bool;
+    Stack: bytes;
+    Consumed: u32;
+    Produced: bool;
+    Producedˉkind: u32;
+    Instructions: u32;
+    Functionˉindex: u32;
+    Functionˉcursor: u32;
+    Codeˉoffset: u32;
+    Codeˉlength: u32;
+    Locals: bytes;
+    Frames: bytes;
+    Depth: u32;
+    Status: u32;
+}
+
+fn Executeˉcall(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Functionˉcount: u32,
+    Payload: u32,
+    Opcode: u32,
+    Initialˉstack: bytes,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉcodeˉoffsets: bytes,
+    Functionˉcodeˉlengths: bytes,
+    Instructions: u32,
+    Initialˉfunction: u32,
+    Initialˉlocals: bytes,
+    Initialˉframes: bytes,
+    Zeroˉlocals: bytes,
+    Depth: u32,
+    Maximumˉdepth: u32
+) -> Callˉexecution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Callˉexecution = Callˉexecution(
+        false, false, Empty, 0u32, false, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, Empty, Empty, 0u32, 0u32
+    );
+    if Opcode == 211u32 {
+        let Declaredˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Payload + 1u32
+        );
+        let Declaredˉcallableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Payload + 5u32
+        );
+        if Declaredˉtarget >= Functionˉcount ||
+            Declaredˉcallableˉtype >= Typeˉcount {
+            return Invalid;
+        }
+        let Declaredˉdescriptor: u32 = Bytesˉreadˉu32ˉlittle(
+            Typeˉoffsets, Declaredˉcallableˉtype * 4u32
+        );
+        if U32ˉfromˉu8(
+            Bytesˉreadˉu8(Module, Declaredˉdescriptor)
+        ) != 8u32 {
+            return Invalid;
+        }
+        let Declaredˉstack: bytes = Bytesˉconcat(
+            Initialˉstack,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Declaredˉtarget),
+                Bytesˉfromˉu32ˉlittle(
+                    Declaredˉcallableˉtype + 1u32
+                )
+            )
+        );
+        return Callˉexecution(
+            true, true, Declaredˉstack, 0u32, true, 0u32,
+            Instructions + 9u32,
+            Initialˉfunction, 0u32, 0u32, 0u32,
+            Initialˉlocals, Initialˉframes, Depth, 0u32
+        );
+    }
+    if Opcode != 64u32 && Opcode != 212u32 {
+        return Callˉexecution(
+            true, false, Initialˉstack, 0u32, false, 0u32, Instructions,
+            Initialˉfunction, 0u32, 0u32, 0u32,
+            Initialˉlocals, Initialˉframes, Depth, 0u32
+        );
+    }
+    if Depth >= Maximumˉdepth {
+        return Callˉexecution(
+            true, true, Initialˉstack, 0u32, false, 0u32, Instructions,
+            Initialˉfunction, 0u32, 0u32, 0u32,
+            Initialˉlocals, Initialˉframes, Depth, 3004u32
+        );
+    }
+    var Target: u32 = 0u32;
+    var Parameters: u32 = 0u32;
+    var Prefixˉlength: u32 = 0u32;
+    var Consumed: u32 = 0u32;
+    if Opcode == 64u32 {
+        Target = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+        if Target >= Functionˉcount { return Invalid; }
+        Parameters = Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Target * 8u32
+        );
+        if Bytesˉlength(Initialˉstack) / 8u32 < Parameters {
+            return Invalid;
+        }
+        Prefixˉlength = Bytesˉlength(Initialˉstack) -
+            Parameters * 8u32;
+        Consumed = Parameters;
+    }
+    if Opcode == 212u32 {
+        let Callableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Payload + 1u32
+        );
+        if Callableˉtype >= Typeˉcount { return Invalid; }
+        let Descriptor: u32 = Bytesˉreadˉu32ˉlittle(
+            Typeˉoffsets, Callableˉtype * 4u32
+        );
+        if U32ˉfromˉu8(
+            Bytesˉreadˉu8(Module, Descriptor)
+        ) != 8u32 {
+            return Invalid;
+        }
+        var Descriptorˉcursor: u32 = Descriptor + 2u32;
+        Descriptorˉcursor = Descriptorˉcursor +
+            Callableˉshapeˉwidth(Module, Descriptorˉcursor);
+        Parameters = Bytesˉreadˉu32ˉlittle(
+            Module, Descriptorˉcursor
+        );
+        if Bytesˉlength(Initialˉstack) / 8u32 < Parameters + 1u32 {
+            return Invalid;
+        }
+        Prefixˉlength = Bytesˉlength(Initialˉstack) -
+            (Parameters + 1u32) * 8u32;
+        Target = Bytesˉreadˉu32ˉlittle(
+            Initialˉstack, Prefixˉlength
+        );
+        if Bytesˉreadˉu32ˉlittle(
+                Initialˉstack, Prefixˉlength + 4u32
+            ) != Callableˉtype + 1u32 || Target >= Functionˉcount ||
+            Bytesˉreadˉu32ˉlittle(
+                Functionˉframeˉmetadata, Target * 8u32
+            ) != Parameters {
+            return Invalid;
+        }
+        Consumed = Parameters + 1u32;
+    }
+    var Frame: bytes = Bytesˉfromˉu32ˉlittle(Instructions + 5u32);
+    Frame = Bytesˉconcat(Frame, Initialˉlocals);
+    Frame = Bytesˉconcat(
+        Frame, Bytesˉfromˉu32ˉlittle(Initialˉfunction)
+    );
+    let Frames: bytes = Bytesˉconcat(Initialˉframes, Frame);
+    let Functionˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Functionˉframeˉmetadata, Target * 8u32 + 4u32
+    );
+    var Locals: bytes = Bytesˉslice(Zeroˉlocals, 0u32, Functionˉcursor);
+    var Stack: bytes = Initialˉstack;
+    var Argument: u32 = Parameters;
+    while Argument > 0u32 {
+        Argument = Argument - 1u32;
+        let Stackˉlength: u32 = Bytesˉlength(Stack);
+        let Value: bytes = Bytesˉslice(Stack, Stackˉlength - 8u32, 8u32);
+        Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
+        let Localˉoffset: u32 = Argument * 8u32;
+        Locals = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Locals, 0u32, Localˉoffset), Value
+            ),
+            Bytesˉslice(
+                Locals, Localˉoffset + 8u32,
+                Functionˉcursor - 8u32 - Localˉoffset
+            )
+        );
+    }
+    if Opcode == 212u32 && (Bytesˉlength(Stack) < 8u32 ||
+        Bytesˉlength(Stack) - 8u32 != Prefixˉlength) {
+        return Invalid;
+    }
+    if Opcode == 212u32 {
+        Stack = Bytesˉslice(Stack, 0u32, Prefixˉlength);
+    }
+    if Opcode == 64u32 && Bytesˉlength(Stack) != Prefixˉlength {
+        return Invalid;
+    }
+    return Callˉexecution(
+        true, true, Stack, Consumed, false, 0u32, 0u32,
+        Target, Functionˉcursor,
+        Bytesˉreadˉu32ˉlittle(Functionˉcodeˉoffsets, Target * 4u32),
+        Bytesˉreadˉu32ˉlittle(Functionˉcodeˉlengths, Target * 4u32),
+        Locals, Frames, Depth + 1u32, 0u32
+    );
+}
+
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Parsed: Executionˉrequest = Readˉexecutionˉrequest(Request);
@@ -5945,82 +6150,33 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        if Payloadˉlength == 64u32 {
-            if Exportˉindex >= Maximumˉcallˉdepth {
-                Sectionˉkind = 3004u32;
-                Mainˉfound = true;
-            } else {
-            let Target: u32 = Bytesˉreadˉu32ˉlittle(
-                Module,
-                Payload + 1u32
+        if Payloadˉlength == 64u32 || Payloadˉlength == 211u32 ||
+            Payloadˉlength == 212u32 {
+            let Call: Callˉexecution = Executeˉcall(
+                Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+                Payload, Payloadˉlength, Stack,
+                Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
+                Functionˉcodeˉlengths, Aggregateˉinstructions,
+                Functionˉindex, Locals, Frames, Zeroˉlocals,
+                Exportˉindex, Maximumˉcallˉdepth
             );
-            let Targetˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
-                Functionˉframeˉmetadata,
-                Target * 8u32
-            );
-            Stackˉconsumed = Targetˉparameterˉcount;
-            var Frame: bytes = Bytesˉfromˉu32ˉlittle(Aggregateˉinstructions + 5u32);
-            Frame = Bytesˉconcat(Frame, Locals);
-            Frame = Bytesˉconcat(
-                Frame,
-                Bytesˉfromˉu32ˉlittle(Functionˉindex)
-            );
-            Frames = Bytesˉconcat(Frames, Frame);
-            Functionˉcursor = Bytesˉreadˉu32ˉlittle(
-                Functionˉframeˉmetadata,
-                Target * 8u32 + 4u32
-            );
-
-            var Nextˉlocals: bytes = Bytesˉslice(
-                Zeroˉlocals,
-                0u32,
-                Functionˉcursor
-            );
-            var Argumentˉindex: u32 = Targetˉparameterˉcount;
-            while Argumentˉindex > 0u32 {
-                Argumentˉindex = Argumentˉindex - 1u32;
-                let Argumentˉstackˉlength: u32 = Bytesˉlength(Stack);
-                let Argumentˉvalue: bytes = Bytesˉslice(
-                    Stack,
-                    Argumentˉstackˉlength - 8u32,
-                    8u32
-                );
-                Stack = Bytesˉslice(
-                    Stack,
-                    0u32,
-                    Argumentˉstackˉlength - 8u32
-                );
-                let Argumentˉlocalˉoffset: u32 = Argumentˉindex * 8u32;
-                let Argumentˉprefix: bytes = Bytesˉslice(
-                    Nextˉlocals,
-                    0u32,
-                    Argumentˉlocalˉoffset
-                );
-                let Argumentˉsuffix: bytes = Bytesˉslice(
-                    Nextˉlocals,
-                    Argumentˉlocalˉoffset + 8u32,
-                    Functionˉcursor - 8u32 - Argumentˉlocalˉoffset
-                );
-                Nextˉlocals = Bytesˉconcat(
-                    Bytesˉconcat(Argumentˉprefix, Argumentˉvalue),
-                    Argumentˉsuffix
-                );
+            if !Call.Valid { return Invalid; }
+            Stack = Call.Stack;
+            Stackˉconsumed = Call.Consumed;
+            Stackˉproduced = Call.Produced;
+            Stackˉproducedˉkind = Call.Producedˉkind;
+            Aggregateˉinstructions = Call.Instructions;
+            Functionˉindex = Call.Functionˉindex;
+            if Payloadˉlength != 211u32 && Call.Status == 0u32 {
+                Functionˉcursor = Call.Functionˉcursor;
+                Mainˉcodeˉoffset = Call.Codeˉoffset;
+                Mainˉcodeˉlength = Call.Codeˉlength;
+                Locals = Call.Locals;
+                Frames = Call.Frames;
+                Exportˉindex = Call.Depth;
             }
-
-            Functionˉindex = Target;
-            Mainˉcodeˉoffset = Bytesˉreadˉu32ˉlittle(
-                Functionˉcodeˉoffsets,
-                Target * 4u32
-            );
-            Mainˉcodeˉlength = Bytesˉreadˉu32ˉlittle(
-                Functionˉcodeˉlengths,
-                Target * 4u32
-            );
-            Aggregateˉinstructions = 0u32;
-            Locals = Nextˉlocals;
-            Exportˉindex = Exportˉindex + 1u32;
-            Mainˉfound = true;
-            }
+            Sectionˉkind = Call.Status;
+            Mainˉfound = Call.Handled;
         }
 
         if Payloadˉlength == 65u32 {
@@ -6251,7 +6407,7 @@ export fn Main(Request: bytes) -> bytes {
                     Allocationˉleases
                 )
             );
-            if Moduleˉminor >= 28u32 && Moduleˉminor <= 29u32 {
+            if Moduleˉminor >= 28u32 && Moduleˉminor <= 30u32 {
                 let Returnˉcollection: Aggregateˉcollection =
                     Returningˉaggregateˉcollection(
                         Module, Typeˉoffsets, Records, Recordˉmetadata,

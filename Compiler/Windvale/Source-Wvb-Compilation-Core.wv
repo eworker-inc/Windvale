@@ -5,6 +5,8 @@ import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉchecked as Sourceˉwirˉchecked;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 export record Compilerˉsourceˉwvbˉprofileˉcompilation {
@@ -16,7 +18,7 @@ export record Compilerˉsourceˉwvbˉprofileˉcompilation {
 fn Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
     Input: bytes,
     Status: Sourceˉwvb.Compilerˉsourceˉwvbˉstatus,
-    Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus,
+    Wirˉstatus: Wirˉconsumer.Compilerˉsourceˉwirˉstatus,
     Function: u32,
     Operation: u32,
     Line: u32
@@ -33,6 +35,172 @@ fn Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
     );
 }
 
+fn Compilerˉsourceˉwvbˉconsumerˉstatus(
+    Status: Sourceˉwir.Compilerˉsourceˉwirˉstatus
+) -> Wirˉconsumer.Compilerˉsourceˉwirˉstatus {
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Valid;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Sourceˉbindings;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Evidenceˉlimit {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Evidenceˉlimit;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Typeˉmismatch {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Typeˉmismatch;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉcondition {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉcondition;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉreturn {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉreturn;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Missingˉreturn {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Missingˉreturn;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Unreachableˉstatement {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Unreachableˉstatement;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdataˉuse {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉdataˉuse;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉindex {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉindex;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉfieldˉtarget;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Unknownˉfield {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Unknownˉfield;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Unknownˉenumˉmember {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Unknownˉenumˉmember;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉoperator {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉoperator;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉargument {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉargument;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉinference {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉinference;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉconstant {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉconstant;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉliteral {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉliteral;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Duplicateˉrecordˉfield {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Duplicateˉrecordˉfield;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Missingˉrecordˉfield;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉbreak {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉbreak;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉcontinue {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉcontinue;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉmatch {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉmatch;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Matchˉenumˉmismatch {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Matchˉenumˉmismatch;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Duplicateˉmatchˉcase {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Duplicateˉmatchˉcase;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Missingˉmatchˉcase {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Missingˉmatchˉcase;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Unknownˉvariantˉcase {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Unknownˉvariantˉcase;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Matchˉvariantˉmismatch {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Matchˉvariantˉmismatch;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉbinding {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉbinding;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉcollection {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉcollection;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉbuilder {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉbuilder;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉtry {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉtry;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉunit {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉunit;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉupdate {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉrecordˉupdate;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉvariantˉliteral;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Duplicateˉvariantˉfield {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Duplicateˉvariantˉfield;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Missingˉvariantˉfield {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Missingˉvariantˉfield;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉvalueˉblock {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉvalueˉblock;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉresolution {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Genericˉresolution;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉspecialization {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Genericˉspecialization;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Genericˉiterationˉlimit {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Genericˉiterationˉlimit;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉarray {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉarray;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉborrow {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉborrow;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉresource {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉresource;
+    }
+    if Status == Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉcallable {
+        return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉcallable;
+    }
+    return Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+}
+
+fn Compilerˉsourceˉwvbˉconsumerˉsummary(
+    Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary
+) -> Wirˉconsumer.Compilerˉsourceˉwirˉsummary {
+    return Wirˉconsumer.Compilerˉsourceˉwirˉsummary(
+        Compilerˉsourceˉwvbˉconsumerˉstatus(Summary.Status),
+        Summary.Bindingˉstatus,
+        Summary.Modules,
+        Summary.Functions,
+        Summary.Blocks,
+        Summary.Operations,
+        Summary.Temporaries,
+        Summary.Operands,
+        Summary.Directory,
+        Summary.Failureˉmodule,
+        Summary.Failureˉrelatedˉmodule,
+        Summary.Failureˉfunction,
+        Summary.Failureˉoffset,
+        Summary.Failureˉline,
+        Summary.Failureˉcolumn
+    );
+}
+
 export fn Compilerˉsourceˉwvbˉcompile(
     Input: bytes,
     Optimize: bool
@@ -42,7 +210,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+        Sourceˉwirˉchecked.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
             Input, Scan, Symbols
         );
     let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
@@ -51,7 +219,7 @@ export fn Compilerˉsourceˉwvbˉcompile(
         return Compilerˉsourceˉwvbˉcompilationˉfailureˉat(
             Input,
             Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Wirˉsummary.Status,
+            Compilerˉsourceˉwvbˉconsumerˉstatus(Wirˉsummary.Status),
             Wirˉsummary.Failureˉfunction,
             0u32,
             Wirˉsummary.Failureˉline
@@ -62,7 +230,45 @@ export fn Compilerˉsourceˉwvbˉcompile(
             Symbols, Wirˉcompilation
         );
     return Sourceˉwvb.Compilerˉemitˉpreparedˉsourceˉwvb(
-        Input, Scan, Symbols, Bindings, Wirˉsummary, Optimize
+        Input, Scan, Symbols, Bindings,
+        Compilerˉsourceˉwvbˉconsumerˉsummary(Wirˉsummary), Optimize
+    );
+}
+
+export fn Compilerˉanalyzeˉsourceˉwvbˉreachability(
+    Input: bytes
+) -> Sourceˉwvb.Compilerˉsourceˉwvbˉreachability {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Wirˉcompilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwirˉchecked.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    let Wirˉsummary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(Wirˉcompilation);
+    let Consumerˉstatus: Wirˉconsumer.Compilerˉsourceˉwirˉstatus =
+        Compilerˉsourceˉwvbˉconsumerˉstatus(Wirˉsummary.Status);
+    if Wirˉsummary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Sourceˉwvb.Compilerˉsourceˉwvbˉreachabilityˉfailure(
+            Input,
+            Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
+            Consumerˉstatus,
+            Wirˉsummary.Failureˉfunction,
+            0u32
+        );
+    }
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Wirˉcompilation
+        );
+    return Sourceˉwvb.Compilerˉanalyzeˉpreparedˉsourceˉwvbˉreachability(
+        Input,
+        Scan,
+        Symbols,
+        Bindings,
+        Compilerˉsourceˉwvbˉconsumerˉsummary(Wirˉsummary)
     );
 }
 
@@ -75,7 +281,7 @@ export fn Compilerˉcompileˉsourceˉwvb(
         return Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
             Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
             0u32,
             0u32
         );
@@ -92,7 +298,7 @@ export fn Compilerˉcompileˉsourceˉwvbˉoptimized(
         return Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
             Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
             0u32,
             0u32
         );
@@ -111,7 +317,7 @@ fn Compilerˉsourceˉwvbˉprofileˉfailure(
         Sourceˉwvb.Compilerˉsourceˉwvbˉsummaryˉfailure(
             Input,
             Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Unsupportedˉprofile,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
+            Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Sourceˉbindings,
             0u32,
             0u32
         )

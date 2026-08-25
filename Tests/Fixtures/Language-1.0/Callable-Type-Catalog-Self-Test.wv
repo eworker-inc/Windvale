@@ -37,17 +37,22 @@ fn Legacyˉsourceˉsetˉfrom(Source: bytes) -> bytes {
 
 fn Wirˉentry(
     Firstˉblock: u32,
+    Firstˉoperation: u32,
+    Operations: u32,
+    Firstˉtemporary: u32,
+    Temporaries: u32,
     Parameters: u32,
     Resultˉshape: u32
 ) -> bytes {
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     Entry = Appendˉu32(Entry, Firstˉblock);
     Entry = Appendˉu32(Entry, 1u32);
-    var Range: u32 = 0u32;
-    while Range < 6u32 {
-        Entry = Appendˉu32(Entry, 0u32);
-        Range = Range + 1u32;
-    }
+    Entry = Appendˉu32(Entry, Firstˉoperation);
+    Entry = Appendˉu32(Entry, Operations);
+    Entry = Appendˉu32(Entry, Firstˉtemporary);
+    Entry = Appendˉu32(Entry, Temporaries);
+    Entry = Appendˉu32(Entry, 0u32);
+    Entry = Appendˉu32(Entry, 0u32);
     Entry = Appendˉu32(Entry, Parameters);
     Entry = Appendˉu32(Entry, 0u32);
     return Appendˉu32(Entry, Resultˉshape);
@@ -63,30 +68,63 @@ fn Wirˉblock() -> bytes {
     return Block;
 }
 
-fn Wir() -> bytes {
+fn Wirˉwithˉresult(Catalogˉresultˉshape: u32) -> bytes {
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(9u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(17u32));
     Result = Appendˉu32(Result, 4u32);
     Result = Appendˉu32(Result, 48u32);
     Result = Appendˉu32(Result, 4u32);
     Result = Appendˉu32(Result, 28u32);
-    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 1u32);
     Result = Appendˉu32(Result, 28u32);
-    Result = Appendˉu32(Result, 0u32);
+    Result = Appendˉu32(Result, 1u32);
     Result = Appendˉu32(Result, 4u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 4u32);
-    Result = Bytesˉconcat(Result, Wirˉentry(0u32, 1u32, 3u32));
-    Result = Bytesˉconcat(Result, Wirˉentry(1u32, 1u32, 3u32));
-    Result = Bytesˉconcat(Result, Wirˉentry(2u32, 1u32, 0u32));
-    Result = Bytesˉconcat(Result, Wirˉentry(3u32, 1u32, 3u32));
+    Result = Appendˉu32(Result, 32u32);
+    Result = Appendˉu32(Result, 1u32);
+    Result = Bytesˉconcat(
+        Result, Wirˉentry(0u32, 0u32, 1u32, 0u32, 1u32, 1u32, 3u32)
+    );
+    Result = Bytesˉconcat(
+        Result, Wirˉentry(1u32, 1u32, 0u32, 1u32, 0u32, 1u32, 3u32)
+    );
+    Result = Bytesˉconcat(
+        Result, Wirˉentry(2u32, 1u32, 0u32, 1u32, 0u32, 1u32, 0u32)
+    );
+    Result = Bytesˉconcat(
+        Result, Wirˉentry(3u32, 1u32, 0u32, 1u32, 0u32, 1u32, 3u32)
+    );
     var Block: u32 = 0u32;
     while Block < 4u32 {
         Result = Bytesˉconcat(Result, Wirˉblock());
         Block = Block + 1u32;
     }
-    return Result;
+    var Reference: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Reference = Bytesˉconcat(
+        Reference, Bytesˉfromˉu16ˉlittle(177u32)
+    );
+    Reference = Bytesˉconcat(
+        Reference, Bytesˉfromˉu16ˉlittle(0u32)
+    );
+    Reference = Appendˉu32(Reference, 2147483904u32);
+    Reference = Appendˉu32(Reference, 0u32);
+    Reference = Appendˉu32(Reference, 0u32);
+    Reference = Appendˉu32(Reference, 0u32);
+    Reference = Appendˉu32(Reference, 0u32);
+    Result = Bytesˉconcat(Result, Reference);
+    Result = Appendˉu32(Result, 2147483904u32);
+    var Catalog: bytes = Textˉtoˉutf8("WVIC");
+    Catalog = Bytesˉconcat(Catalog, Bytesˉfromˉu16ˉlittle(1u32));
+    Catalog = Bytesˉconcat(Catalog, Bytesˉfromˉu16ˉlittle(0u32));
+    Catalog = Appendˉu32(Catalog, 1u32);
+    Catalog = Appendˉu32(Catalog, 32u32);
+    Catalog = Appendˉu32(Catalog, 1u32);
+    Catalog = Appendˉu32(Catalog, Catalogˉresultˉshape);
+    Catalog = Appendˉu32(Catalog, 1u32);
+    Catalog = Appendˉu32(Catalog, 3u32);
+    return Bytesˉconcat(Result, Catalog);
 }
 
 fn Legacyˉwir() -> bytes {
@@ -103,11 +141,15 @@ fn Legacyˉwir() -> bytes {
     Result = Appendˉu32(Result, 4u32);
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu32(Result, 4u32);
-    Result = Bytesˉconcat(Result, Wirˉentry(0u32, 0u32, 0u32));
+    Result = Bytesˉconcat(
+        Result, Wirˉentry(0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32)
+    );
     return Bytesˉconcat(Result, Wirˉblock());
 }
 
-fn Analyze() -> Callables.Compilerˉsourceˉcallableˉtypeˉsummary {
+fn Analyze(
+    Catalogˉresultˉshape: u32
+) -> Callables.Compilerˉsourceˉcallableˉtypeˉsummary {
     let Source: bytes = Textˉtoˉutf8(
         "module Callableˉcatalogˉprobe; profile core; platform linux, windows, windvale; authority application; fn First(Value: u32) -> u32 effects() { return Value; } fn Second(Value: u32) -> u32 effects() { return Value; } fn Generic<T>(Value: T) -> T effects() { return Value; } fn Borrowed(Value: borrow i32) -> borrow i32 effects() { return Value; }"
     );
@@ -118,7 +160,9 @@ fn Analyze() -> Callables.Compilerˉsourceˉcallableˉtypeˉsummary {
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
         Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
-    let Wirˉevidence: bytes = Wir();
+    let Wirˉevidence: bytes = Wirˉwithˉresult(
+        Catalogˉresultˉshape
+    );
     let Effectˉsummary: Effects.Compilerˉsourceˉeffectˉsummary =
         Effects.Compilerˉanalyzeˉpreparedˉsourceˉeffects(
             Input, Scan, Symbolˉsummary, Bindingˉsummary, Wirˉevidence
@@ -151,7 +195,8 @@ fn Analyzeˉlegacy() -> Callables.Compilerˉsourceˉcallableˉtypeˉsummary {
 }
 
 fn Validˉprobe() -> i32 {
-    let Summary: Callables.Compilerˉsourceˉcallableˉtypeˉsummary = Analyze();
+    let Summary: Callables.Compilerˉsourceˉcallableˉtypeˉsummary =
+        Analyze(3u32);
     if Summary.Status ==
         Callables.Compilerˉsourceˉcallableˉtypeˉstatus.Sourceˉsymbols {
         return 31;
@@ -228,7 +273,8 @@ fn Legacyˉprobe() -> i32 {
 }
 
 fn Malformedˉprobe() -> i32 {
-    let Summary: Callables.Compilerˉsourceˉcallableˉtypeˉsummary = Analyze();
+    let Summary: Callables.Compilerˉsourceˉcallableˉtypeˉsummary =
+        Analyze(3u32);
     if Summary.Status !=
         Callables.Compilerˉsourceˉcallableˉtypeˉstatus.Valid {
         return 24;
@@ -245,10 +291,16 @@ fn Malformedˉprobe() -> i32 {
         ) != 4294967295u32 {
         return 25;
     }
+    let Mismatched: Callables.Compilerˉsourceˉcallableˉtypeˉsummary =
+        Analyze(1u32);
+    if Mismatched.Status !=
+        Callables.Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉsignature {
+        return 27;
+    }
     return 42;
 }
 
-export fn Callableˉtypeˉcatalogˉprobe() -> i32 {
+fn Callableˉtypeˉcatalogˉprobe() -> i32 {
     let Valid: i32 = Validˉprobe();
     if Valid != 42 { return Valid; }
     let Legacy: i32 = Legacyˉprobe();

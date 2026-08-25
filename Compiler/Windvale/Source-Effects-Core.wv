@@ -519,11 +519,23 @@ fn Compilerˉsourceˉeffectsˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 {
         let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
         if Minor == 10u32 || Minor == 12u32 ||
-            Minor == 14u32 || Minor == 16u32 {
+            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 {
             return 56u32;
+        }
+        if Minor == 18u32 && Bytesˉlength(Directory) >= 64u32 {
+            return 64u32;
         }
     }
     return 48u32;
+}
+
+fn Compilerˉsourceˉeffectsˉwirˉfunctionˉtypeˉbytes(
+    Directory: bytes
+) -> u32 {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+    if Minor == 17u32 { return Bytesˉreadˉu32ˉlittle(Directory, 48u32); }
+    if Minor == 18u32 { return Bytesˉreadˉu32ˉlittle(Directory, 56u32); }
+    return 0u32;
 }
 
 fn Compilerˉsourceˉeffectsˉwirˉisˉsupported(Directory: bytes) -> bool {
@@ -537,7 +549,7 @@ fn Compilerˉsourceˉeffectsˉwirˉisˉsupported(Directory: bytes) -> bool {
         return false;
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 16u32 { return false; }
+    if Minor < 9u32 || Minor > 18u32 { return false; }
     let Headerˉbytes: u32 =
         Compilerˉsourceˉeffectsˉwirˉheaderˉbytes(Directory);
     if Length < Headerˉbytes ||
@@ -567,7 +579,24 @@ fn Compilerˉsourceˉeffectsˉwirˉisˉsupported(Directory: bytes) -> bool {
     if Temporaries > (Length - Afterˉoperations) / 4u32 { return false; }
     let Afterˉtemporaries: u32 = Afterˉoperations + Temporaries * 4u32;
     if Operands > (Length - Afterˉtemporaries) / 4u32 { return false; }
-    if Afterˉtemporaries + Operands * 4u32 != Length { return false; }
+    let Afterˉoperands: u32 = Afterˉtemporaries + Operands * 4u32;
+    let Functionˉtypeˉbytes: u32 =
+        Compilerˉsourceˉeffectsˉwirˉfunctionˉtypeˉbytes(Directory);
+    if Functionˉtypeˉbytes > Length - Afterˉoperands ||
+        Afterˉoperands + Functionˉtypeˉbytes != Length {
+        return false;
+    }
+    if Minor >= 17u32 {
+        var Functionˉtypeˉheader: u32 = 48u32;
+        if Minor == 18u32 { Functionˉtypeˉheader = 56u32; }
+        if Functionˉtypeˉbytes < 28u32 ||
+            Functionˉtypeˉbytes > 131072u32 ||
+            Bytesˉreadˉu32ˉlittle(
+                Directory, Functionˉtypeˉheader + 4u32
+            ) != 1u32 {
+            return false;
+        }
+    }
     var Functionˉindex: u32 = 0u32;
     while Functionˉindex < Functions {
         let Functionˉentry: u32 =

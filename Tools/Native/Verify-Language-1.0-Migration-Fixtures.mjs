@@ -14,11 +14,11 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "..", "..");
 const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt";
 const INVENTORY_PATH = "Tests/Native/Language-1.0-Fixture-Inventory.txt";
 const FREEZE_BYTES = 3778;
-const FREEZE_SHA256 = "1a48d58136e5200cdb6f5ae1e15638f554854a3764f61ce1f0d2222d9d8e0c13";
+const FREEZE_SHA256 = "14784669274ace656a182bc608ee27b9d06f22bad52d2c10487d82ae574b9fd6";
 const COMPLETE_COUNT = 251;
-const COMPLETE_BYTES = 1728883;
+const COMPLETE_BYTES = 1751765;
 const COMPLETE_STREAM_BYTES = 46260;
-const COMPLETE_SHA256 = "a6e6bf3617049a987b545a78e5f3fcef28b24a3fc2b82c45d620e58baed73fc9";
+const COMPLETE_SHA256 = "dc079746e07eae0f614cc8a0143a80ea27eaef289468f244aca54487b5797db3";
 
 function Fail(message) {
     throw new Error(message);

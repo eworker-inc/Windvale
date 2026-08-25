@@ -390,6 +390,7 @@ $NativeCases = @(
             'Projects/Compiler/Windvale-Source-Effects-Core.wvproj',
             'Projects/Compiler/Windvale-Source-Function-Type-Lowering-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Callable-Type-Catalog.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Semantics.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Function-Type-Catalog.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Function-Value-Front-End.wvproj',
@@ -399,6 +400,7 @@ $NativeCases = @(
             'Specifications/Compiler-Source-Effects.md',
             'Specifications/Compiler-Source-Function-Types.md',
             'Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Callable-Indirect-Execution.wv',
             'Tests/Fixtures/Language-1.0/Callable-Type-Catalog-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv',
@@ -584,7 +586,9 @@ $NativeCases = @(
             'Compiler/Windvale/Source-Graph-Core.wv',
             'Compiler/Windvale/Source-Symbols-Core.wv',
             'Compiler/Windvale/Source-Bindings-Core.wv',
+            'Compiler/Windvale/Source-Wir-Consumer-Core.wv',
             'Compiler/Windvale/Source-Wir-Core.wv',
+            'Compiler/Windvale/Source-Wvb-Compilation-Core.wv',
             'Compiler/Windvale/Source-Wvb-Core.wv',
             'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
             'Examples/Compiler/Source-Lexer-Demo.wv',
@@ -1080,10 +1084,10 @@ $NativeCases = @(
         Suites = @(
             'seed',
             'wvb-to-wvo-reconstruction',
-            'wvb-inspector-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
             'language-1-front-door',
+            'language-1-callable-semantics',
             'language-1-memory-budget-split-execution',
             'model-provider',
             'file-read-application',
@@ -1185,7 +1189,7 @@ $NativeCases = @(
             'Tools/Native/Compile-Compiler-Source-Set.cmd',
             'Tools/Native/Compile-Compiler-Source-Set.sh'
         )
-        Suites = @('language-1-front-door')
+        Suites = @('language-1-front-door', 'language-1-callable-semantics')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2122,7 +2126,7 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'WebAssembly scalar runner allocation execution owner'
+        Name = 'native scalar runner allocation execution owner'
         Paths = @(
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
@@ -2132,11 +2136,12 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-front-door',
+            'language-1-callable-semantics',
             'language-1-memory-budget-split-execution'
         )
         Gaps = @()
         VerifyPlan = $false
-        VerifyWebAssembly = $true
+        VerifyWebAssembly = $false
     },
     @{
         Name = 'WebAssembly engine checkpoint owner'
@@ -3683,7 +3688,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5473 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5480 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

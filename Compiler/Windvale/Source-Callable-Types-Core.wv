@@ -136,11 +136,23 @@ fn Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 {
         let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
         if Minor == 10u32 || Minor == 12u32 ||
-            Minor == 14u32 || Minor == 16u32 {
+            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 {
             return 56u32;
+        }
+        if Minor == 18u32 && Bytesˉlength(Directory) >= 64u32 {
+            return 64u32;
         }
     }
     return 48u32;
+}
+
+fn Compilerˉsourceˉcallableˉwirˉfunctionˉtypeˉbytes(
+    Directory: bytes
+) -> u32 {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
+    if Minor == 17u32 { return Bytesˉreadˉu32ˉlittle(Directory, 48u32); }
+    if Minor == 18u32 { return Bytesˉreadˉu32ˉlittle(Directory, 56u32); }
+    return 0u32;
 }
 
 fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
@@ -157,7 +169,7 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
     }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 16u32 { return false; }
+    if Minor < 9u32 || Minor > 18u32 { return false; }
     let Headerˉbytes: u32 =
         Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory);
     if Length < Headerˉbytes { return false; }
@@ -179,7 +191,8 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
         Temporaries > 1048564u32 || Operands > 1048564u32 {
         return false;
     }
-    if Headerˉbytes == 56u32 {
+    if Minor == 10u32 || Minor == 12u32 ||
+        Minor == 14u32 || Minor == 16u32 || Minor == 18u32 {
         let Instances: u32 = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
         if Instances == 0u32 || Instances > 256u32 ||
             Bytesˉreadˉu32ˉlittle(Directory, 52u32) != 1u32 {
@@ -190,7 +203,25 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
     let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
     let Temporariesˉoffset: u32 = Operationsˉoffset + Operations * 28u32;
     let Operandsˉoffset: u32 = Temporariesˉoffset + Temporaries * 4u32;
-    if Length != Operandsˉoffset + Operands * 4u32 { return false; }
+    let Afterˉoperands: u32 = Operandsˉoffset + Operands * 4u32;
+    let Functionˉtypeˉbytes: u32 =
+        Compilerˉsourceˉcallableˉwirˉfunctionˉtypeˉbytes(Directory);
+    if Afterˉoperands > Length ||
+        Functionˉtypeˉbytes > Length - Afterˉoperands ||
+        Afterˉoperands + Functionˉtypeˉbytes != Length {
+        return false;
+    }
+    if Minor >= 17u32 {
+        var Functionˉtypeˉheader: u32 = 48u32;
+        if Minor == 18u32 { Functionˉtypeˉheader = 56u32; }
+        if Functionˉtypeˉbytes < 28u32 ||
+            Functionˉtypeˉbytes > 131072u32 ||
+            Bytesˉreadˉu32ˉlittle(
+                Directory, Functionˉtypeˉheader + 4u32
+            ) != 1u32 {
+            return false;
+        }
+    }
     var Expectedˉblock: u32 = 0u32;
     var Expectedˉoperation: u32 = 0u32;
     var Expectedˉtemporary: u32 = 0u32;
@@ -237,6 +268,165 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
         Expectedˉoperation == Operations &&
         Expectedˉtemporary == Temporaries &&
         Expectedˉoperand == Operands;
+}
+
+fn Compilerˉsourceˉcallableˉwirˉmatchesˉdirectory(
+    Wir: bytes,
+    Directory: bytes,
+    Functions: u32
+) -> bool {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Wir, 6u32);
+    if Minor < 17u32 { return true; }
+    if Minor > 18u32 ||
+        !Compilerˉsourceˉcallableˉdirectoryˉisˉvalid(
+            Directory, Functions
+        ) {
+        return false;
+    }
+    let Headerˉbytes: u32 =
+        Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Wir);
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Wir, 16u32);
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Wir, 24u32);
+    let Temporaries: u32 = Bytesˉreadˉu32ˉlittle(Wir, 32u32);
+    let Operands: u32 = Bytesˉreadˉu32ˉlittle(Wir, 40u32);
+    let Operationsˉoffset: u32 = Headerˉbytes + Functions * 48u32 +
+        Blocks * 28u32;
+    let Catalogˉoffset: u32 = Operationsˉoffset + Operations * 28u32 +
+        Temporaries * 4u32 + Operands * 4u32;
+    let Catalogˉbytes: u32 =
+        Compilerˉsourceˉcallableˉwirˉfunctionˉtypeˉbytes(Wir);
+    if Catalogˉbytes < 28u32 || Catalogˉbytes > 131072u32 ||
+        Catalogˉoffset > Bytesˉlength(Wir) ||
+        Catalogˉbytes != Bytesˉlength(Wir) - Catalogˉoffset ||
+        Bytesˉreadˉu8(Wir, Catalogˉoffset) != 87u8 ||
+        Bytesˉreadˉu8(Wir, Catalogˉoffset + 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Wir, Catalogˉoffset + 2u32) != 73u8 ||
+        Bytesˉreadˉu8(Wir, Catalogˉoffset + 3u32) != 67u8 ||
+        Bytesˉreadˉu16ˉlittle(Wir, Catalogˉoffset + 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Wir, Catalogˉoffset + 6u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Wir, Catalogˉoffset + 12u32) !=
+            Catalogˉbytes {
+        return false;
+    }
+    let Instances: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Catalogˉoffset + 8u32
+    );
+    if Instances == 0u32 || Instances > 256u32 { return false; }
+    var Cursors: bytes = Compilerˉsourceˉcallableˉempty(Wir);
+    var Cursor: u32 = Catalogˉoffset + 16u32;
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        if Cursor > Bytesˉlength(Wir) ||
+            Bytesˉlength(Wir) - Cursor < 12u32 {
+            return false;
+        }
+        let Preliminaryˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir, Cursor + 8u32
+        );
+        if Preliminaryˉparameters > 64u32 ||
+            Preliminaryˉparameters * 4u32 >
+            Bytesˉlength(Wir) - Cursor - 12u32 {
+            return false;
+        }
+        Cursors = Bytesˉconcat(Cursors, Bytesˉfromˉu32ˉlittle(Cursor));
+        Cursor = Cursor + 12u32 + Preliminaryˉparameters * 4u32;
+        Instance = Instance + 1u32;
+    }
+    if Cursor != Bytesˉlength(Wir) { return false; }
+
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Compilerˉsourceˉcallableˉdirectoryˉcatalog(Directory);
+    var Mappings: bytes = Compilerˉsourceˉcallableˉempty(Wir);
+    var Nextˉinstance: u32 = 0u32;
+    var Operation: u32 = 0u32;
+    while Operation < Operations {
+        let Entry: u32 = Operationsˉoffset + Operation * 28u32;
+        let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
+        if Kind == 177u32 {
+            let Preliminary: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Entry + 24u32
+            );
+            let Function: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
+            if Preliminary >= Instances || Function >= Functions ||
+                Preliminary > Nextˉinstance ||
+                Compilerˉsourceˉcallableˉfunctionˉdisposition(
+                    Directory, Function
+                ) != Compilerˉsourceˉcallableˉdisposition.Callable {
+                return false;
+            }
+            let Authoritative: u32 =
+                Compilerˉsourceˉcallableˉfunctionˉinstance(
+                    Directory, Function
+                );
+            if Authoritative >=
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+                    Catalog
+                ) {
+                return false;
+            }
+            if Preliminary < Nextˉinstance {
+                if Bytesˉreadˉu32ˉlittle(
+                        Mappings, Preliminary * 4u32
+                    ) != Authoritative {
+                    return false;
+                }
+            } else {
+                Mappings = Bytesˉconcat(
+                    Mappings, Bytesˉfromˉu32ˉlittle(Authoritative)
+                );
+                Nextˉinstance = Nextˉinstance + 1u32;
+            }
+            let Preliminaryˉentry: u32 = Bytesˉreadˉu32ˉlittle(
+                Cursors, Preliminary * 4u32
+            );
+            let Referencedˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Preliminaryˉentry + 8u32
+            );
+            if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉflags(
+                    Catalog, Authoritative
+                ) != 0u32 ||
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉprofile(
+                    Catalog, Authoritative
+                ) != Bytesˉreadˉu32ˉlittle(Wir, Preliminaryˉentry) ||
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉresultˉshape(
+                    Catalog, Authoritative
+                ) != Bytesˉreadˉu32ˉlittle(
+                    Wir, Preliminaryˉentry + 4u32
+                ) ||
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
+                    Catalog, Authoritative
+                ) != 0u32 ||
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcapabilityˉeffects(
+                    Catalog, Authoritative
+                ) != 0u32 ||
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameters(
+                    Catalog, Authoritative
+                ) != Referencedˉparameters {
+                return false;
+            }
+            var Parameter: u32 = 0u32;
+            while Parameter < Referencedˉparameters {
+                if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameterˉshape(
+                        Catalog, Authoritative, Parameter
+                    ) != Bytesˉreadˉu32ˉlittle(
+                        Wir, Preliminaryˉentry + 12u32 + Parameter * 4u32
+                    ) ||
+                    Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameterˉmode(
+                        Catalog, Authoritative, Parameter
+                    ) != 0u32 {
+                    return false;
+                }
+                Parameter = Parameter + 1u32;
+            }
+        }
+        if Kind == 178u32 && Bytesˉreadˉu32ˉlittle(
+                Wir, Entry + 20u32
+            ) >= Nextˉinstance {
+            return false;
+        }
+        Operation = Operation + 1u32;
+    }
+    return Nextˉinstance == Instances;
 }
 
 fn Compilerˉsourceˉcallableˉfunctionˉentry(
@@ -952,6 +1142,16 @@ export fn Compilerˉanalyzeˉpreparedˉsourceˉcallableˉtypes(
         ) {
         return Compilerˉsourceˉcallableˉsummaryˉfailure(
             Input, Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉdirectory,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Functions, Functions
+        );
+    }
+    if !Compilerˉsourceˉcallableˉwirˉmatchesˉdirectory(
+            Wir, Directory, Functions
+        ) {
+        return Compilerˉsourceˉcallableˉsummaryˉfailure(
+            Input,
+            Compilerˉsourceˉcallableˉtypeˉstatus.Invalidˉsignature,
             Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
             Functions, Functions
         );

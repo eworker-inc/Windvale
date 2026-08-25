@@ -1,8 +1,9 @@
 module Compilerˉsourceˉemission profile portable;
 
-import Compilerˉsourceˉanalysis as Sourceˉanalysis;
+import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
+import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
-import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 export enum Compilerˉsourceˉemissionˉstatus {
@@ -12,20 +13,20 @@ export enum Compilerˉsourceˉemissionˉstatus {
 
 export record Compilerˉsourceˉemission {
     Status: Compilerˉsourceˉemissionˉstatus;
-    Analysisˉstatus: Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus;
+    Analysisˉstatus: Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus;
     Compilation: Sourceˉwvb.Compilerˉsourceˉwvbˉsummary;
 }
 
 fn Compilerˉsourceˉemissionˉfailure(
     Input: bytes,
-    Status: Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus
+    Status: Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus
 ) -> Compilerˉsourceˉemission {
     return Compilerˉsourceˉemission(
         Compilerˉsourceˉemissionˉstatus.Invalidˉanalysis,
         Status,
         Sourceˉwvb.Compilerˉsourceˉwvbˉsummary(
             Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir,
-            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+            Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
             0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
             0u32, 0u32, 0u32
@@ -40,20 +41,21 @@ export fn Compilerˉemitˉsourceˉanalysis(
     Wirˉdirectory: bytes,
     Optimize: bool
 ) -> Compilerˉsourceˉemission {
-    let Analysis: Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidation =
-        Sourceˉanalysis.Compilerˉvalidateˉsourceˉanalysis(
+    let Analysis:
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
+        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
             Input, Manifest, Bindingˉdirectory, Wirˉdirectory
         );
     if Analysis.Status !=
-        Sourceˉanalysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
         return Compilerˉsourceˉemissionˉfailure(Input, Analysis.Status);
     }
     let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidatedˉbindings(
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidatedˉbindings(
             Input, Manifest, Bindingˉdirectory, Analysis.Symbols
         );
-    let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉanalysis.Compilerˉsourceˉanalysisˉvalidatedˉwir(
+    let Wir: Wirˉconsumer.Compilerˉsourceˉwirˉsummary =
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidatedˉwir(
             Input, Manifest, Wirˉdirectory, Bindings, Analysis.Symbols
         );
     return Compilerˉsourceˉemission(

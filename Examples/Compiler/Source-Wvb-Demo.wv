@@ -1,6 +1,6 @@
 module Compilerˉsourceˉwvbˉdemo profile portable;
 
-import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉconsumer as Wirˉconsumer;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 
@@ -69,7 +69,7 @@ export fn Main() -> i32 {
         )
     );
     if Valid.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid { return 1; }
-    if Valid.Wirˉstatus != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid { return 2; }
+    if Valid.Wirˉstatus != Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Valid { return 2; }
     if Valid.Functions != 2u32 { return 3; }
     if Bytesˉlength(Valid.Bytecode) == 0u32 { return 4; }
     if Bytesˉreadˉu8(Valid.Bytecode, 0u32) != 87u8 { return 5; }
@@ -115,7 +115,7 @@ export fn Main() -> i32 {
         "module Wvbˉreachability profile portable; fn Dead() -> i32 { return 0; } fn Leaf() -> i32 { return 42; } fn Middle() -> i32 { return Leaf(); } export fn Main() -> i32 { return Middle(); }"
     );
     let Reachability: Sourceˉwvb.Compilerˉsourceˉwvbˉreachability =
-        Sourceˉwvb.Compilerˉanalyzeˉsourceˉwvbˉreachability(
+        Sourceˉcompilation.Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Reachabilityˉinput
         );
     if Reachability.Status != Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Valid {
@@ -141,7 +141,7 @@ export fn Main() -> i32 {
     }
     if Reachability.Unreachableˉcodeˉbytes == 0u32 { return 24; }
     let Multipleˉroots: Sourceˉwvb.Compilerˉsourceˉwvbˉreachability =
-        Sourceˉwvb.Compilerˉanalyzeˉsourceˉwvbˉreachability(
+        Sourceˉcompilation.Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Compilerˉsourceˉwvbˉdemoˉinput(
                 "module Wvbˉroots profile portable; fn Dead() -> i32 { return 0; } fn Used() -> i32 { return 1; } export fn Main() -> i32 { return Used(); } export fn Public() -> i32 { return 2; }"
             )
@@ -152,7 +152,7 @@ export fn Main() -> i32 {
         return 25;
     }
     let Cyclic: Sourceˉwvb.Compilerˉsourceˉwvbˉreachability =
-        Sourceˉwvb.Compilerˉanalyzeˉsourceˉwvbˉreachability(
+        Sourceˉcompilation.Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Compilerˉsourceˉwvbˉdemoˉinput(
                 "module Wvbˉcycle profile portable; fn Cycle() -> i32 { return Main(); } export fn Main() -> i32 { return Cycle(); }"
             )
@@ -163,7 +163,7 @@ export fn Main() -> i32 {
         return 26;
     }
     let Invalidˉreachability: Sourceˉwvb.Compilerˉsourceˉwvbˉreachability =
-        Sourceˉwvb.Compilerˉanalyzeˉsourceˉwvbˉreachability(
+        Sourceˉcompilation.Compilerˉanalyzeˉsourceˉwvbˉreachability(
             Compilerˉsourceˉwvbˉdemoˉinput(
                 "module Wvbˉinvalid profile portable; export fn Main() -> i32 { return Missing(); }"
             )
@@ -171,7 +171,7 @@ export fn Main() -> i32 {
     if Invalidˉreachability.Status !=
         Sourceˉwvb.Compilerˉsourceˉwvbˉstatus.Sourceˉwir ||
         Invalidˉreachability.Wirˉstatus !=
-        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings ||
+        Wirˉconsumer.Compilerˉsourceˉwirˉstatus.Sourceˉbindings ||
         Bytesˉlength(Invalidˉreachability.Map) != 0u32 {
         return 27;
     }

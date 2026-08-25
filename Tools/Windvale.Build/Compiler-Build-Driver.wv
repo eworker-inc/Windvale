@@ -4,6 +4,7 @@ import Compilerˉsourceˉwvb as Sourceˉwvb;
 import Compilerˉsourceˉwvbˉcompilation as Sourceˉcompilation;
 import Compilerˉsourceˉprofile as Sourceˉprofile;
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉchecked as Sourceˉwirˉchecked;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉset as Sourceˉset;
 import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
@@ -275,7 +276,7 @@ fn Compilerˉbuildˉdriverˉcompileˉfailure(
     let Sourceˉsetˉsummary: Sourceˉset.Compilerˉsourceˉsetˉsummary =
         Sourceˉset.Compilerˉvalidateˉsourceˉset(Input);
     let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉvalidateˉsourceˉwir(Input);
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(Input);
     let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
         Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     var Report: text = "build status=Compileˉrejected source-status=";

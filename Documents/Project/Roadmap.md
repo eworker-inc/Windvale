@@ -175,8 +175,16 @@ through exact `Main(Sourceˉfile) -> i32`, WVB 1.29 shape `34`, opcode `D2`,
 generation validation, and deterministic `using` release. The combined owner
 now passes 113 cases. Acquiring additional budget authority from a provider
 remains an explicit later hosted capability rather than ambient allocation.
-Canonical effect resolution, call enforcement, function values, and captures
-are the next connected work in Slice 6.
+[Decisions 0852](../Decisions/0852-Represent-Exact-Structural-Function-Types-With-Wvft.md)
+through
+[0856](../Decisions/0856-Execute-Noncapturing-Callable-Values-As-Wvb-1.30.md)
+begin Slice 6 with exact structural function types, explicit capture checking,
+bounded transitive effects, concrete callable cataloging, WVIR 1.17/1.18
+function-reference and indirect-call operations, and WVB 1.30 verified scalar
+execution. The current executable subset is named, non-generic, noncapturing,
+empty-effect, flag-free, and by value. Closure environments, captured move and
+escape enforcement, effectful callable values, and native callable ABI
+lowering are the next connected work in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

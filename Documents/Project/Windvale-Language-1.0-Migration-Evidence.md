@@ -3125,3 +3125,80 @@ remains required before cross-host conformance is claimed. Slice 6 still needs
 typed WVIR/WVB callable values, indirect calls, closure environment lowering,
 move invalidation and escape enforcement, verifier rules, and runtime/native
 execution; none of those are implied by this checkpoint.
+
+## Executable noncapturing-callable checkpoint
+
+[Decision 0856](../Decisions/0856-Execute-Noncapturing-Callable-Values-As-Wvb-1.30.md)
+advances the preceding static checkpoint through portable execution without
+claiming general closures. Exact named, non-generic, noncapturing functions
+with explicit empty `effects()`, no flags, by-value parameters, and a non-unit,
+non-never value result may now become first-class callable values.
+
+WVIR 1.17 operation `177` constructs a function reference and WVIR 1.18
+operation `178` performs an exact indirect call. The private WVIC catalog holds
+profile/result/parameter identities. WVB 1.30 serializes those identities as
+terminal Types kind `8`, value shape `35`, opcode `D3 function.reference`, and
+opcode `D4 call.indirect`. The verifier checks the target and descriptor
+exactly, reconstructs the callable-before-arguments stack contract, and
+preserves all existing reachability, stack, call, ownership, and resource
+bounds.
+
+The source-built scalar runner keeps the value representation hidden, rechecks
+the carried function and type identities, and enters its existing bounded frame
+path. There is no host function pointer, implicit overload choice, hidden
+capture, effect grant, or second runtime path. Capturing closures, nonempty
+effects, flags, borrowed callable signatures, environment escape/lifetime
+proof, and native/browser/OS callable execution remain later work.
+
+Two independent compilations of
+`Callable-Indirect-Execution.wv` produce identical 400-byte WVB 1.30 at
+SHA-256
+`30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`.
+The source-built scalar runner returns `42` in exactly 24 guest instructions.
+The compiler-aligned verifier accepts the oracle and rejects five exact
+version, target-signature, reference-type, invocation-type, and descriptor-kind
+mutations.
+
+The focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=38 result=42 modules=7 wvb-bytes=4168987 evidence-sha256=d3f04b28ea1c76150cf8a1219fa25c7587969ddf4072af1cf2baeaf8828c5fe0
+```
+
+The registry remains 113 owners and advances to 5,480 cases. Its 17,993
+LF-only bytes have SHA-256
+`b4daa862406dd5b066c918f596dc96ab6d058687588297e2ec282983611e33d8`.
+This is exact focused Windows development evidence. Independent Linux
+reproduction, repository-wide Qualification, direct-native/browser/OS
+execution, and promoted runner repinning remain separate claims.
+
+## Compiler phase-closure performance evidence
+
+The Slice 6 compiler-scale build exposed two independent capacity problems in
+the former emitter closure: the current analyzer exhausted the fixed profile-7
+instruction budget while analyzing 2,247,669 source bytes, and the first
+producer/validator split then exceeded the native staging envelope with 629
+functions plus 175 data symbols. Neither failure was repaired by increasing a
+timeout, instruction allowance, or native symbol limit.
+
+Source analysis now separates shared status records, construction, validation,
+immutable WVIR consumption, and the checked one-shot adapter. The persisted
+emitter path links the analysis and WVIR validators but no WVIR producer. Its
+source closure is 1,717,569 bytes, 23.6 percent smaller than the former closure.
+The emitted compiler contains 591 functions and 174 data symbols, 765 total,
+in a 1,236,952-byte WVB at SHA-256
+`8a14266f401d6174a146926492bff3bc334d72cefa0d3c068841f44da15a57fd`.
+The unchanged native envelope accepts it and packages seven canonical image
+fragments.
+
+The focused Windows memory/Vector/resource owner rebuilds the split compiler
+producers in a clean temporary workspace, packages the current emitter, then
+runs its full valid and malformed matrix:
+
+```text
+native language 1 memory budget, Vector, using, and resource execution status=Passed cases=113 valid=14 malformed=65 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9ba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05
+```
+
+The owner passed all 113 cases in 724,350 milliseconds. This is exact focused
+Windows development evidence. Independent Linux reproduction and the broad
+Qualification gate remain separate claims.

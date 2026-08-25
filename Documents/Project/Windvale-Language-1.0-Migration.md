@@ -160,7 +160,7 @@ changes require semantic review.
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
 | Checked slices, byte views, strict slice decode, and decimal byte formatting | Foundation collections/bytes/text, ownership analysis, optional intrinsics | Ordinary borrow and builder lowering; no new opcode by default. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
-| Function values and closures | Type checker, capture analysis, WIR, runtime/native calling convention | Likely requires versioned callable-value representation. |
+| Function values and closures | WVCF/WVIC catalog, WVIR, WVB 1.30 verifier and scalar runtime; closure environment and native ABI remain | Named noncapturing empty-effect function values execute through exact structural descriptors; captures remain explicit later work. |
 | Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
 | Opaque operation contexts and exact stream progress | Hosted operation/network providers, launcher, capability runtime, generation verifier | Prefer ordinary opaque values and capability calls; no language opcode. |
@@ -683,9 +683,30 @@ Independent Linux reproduction remains the next paired-host integration gate.
 
 Slice 5 is complete. Borrowed aggregate signatures, partial moves, owned phis,
 user-defined destruction, and resource-bearing Vector elements remain
-deliberately closed. Slice 6 next owns canonical effect resolution and call
-enforcement, function values, and capture checking; broader asynchronous file
-operations wait for those semantics.
+deliberately closed. Slice 6 owns canonical effect resolution, call enforcement,
+function values, and capture checking; broader asynchronous file operations
+wait for those semantics.
+
+## Active Slice 6 callable checkpoint
+
+Decisions 0852 through 0856 now connect exact structural function types,
+explicit capture validation, bounded transitive effect analysis, concrete
+callable cataloging, WVIR function references/indirect calls, WVB 1.30
+verification, and source-built scalar execution. The executable subset is
+deliberately exact: named non-generic functions, no captures, explicit empty
+effects, no async/unsafe flag, by-value parameters, and a value result other
+than unit or never.
+
+The deterministic 400-byte callable fixture has SHA-256
+`30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`
+and returns `42` in 24 guest instructions. The focused owner passes 38 cases;
+five byte mutations prove that the verifier rejects version, target, reference,
+call, and descriptor mismatches.
+
+Slice 6 is not yet closed. It still owns closure-environment lowering, captured
+move invalidation, borrow lifetime and escape proof, effectful and flag-bearing
+callables, and the selected native callable ABI. The WVB 1.30 checkpoint does
+not imply those later semantics or direct-native/browser/OS execution.
 
 ## Removal checkpoint
 

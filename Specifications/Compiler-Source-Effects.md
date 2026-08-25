@@ -90,5 +90,7 @@ compiler-sized native package. It is part of the focused callable-semantics
 owner; paired-host execution remains a separate qualification claim.
 
 Closure declarations currently resolve their declared effect identities with
-this registry. Comparing those declarations with an executable lowered closure
-body remains part of the later callable WVIR/WVB integration checkpoint.
+this registry. The WVB 1.30 checkpoint executes only noncapturing callable
+values whose exact transitive masks are empty. Comparing a nonempty declaration
+with an executable captured closure body remains part of the later closure-
+environment checkpoint.

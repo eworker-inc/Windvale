@@ -1,0 +1,81 @@
+module Compilerˉsourceˉwirˉchecked profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉvalidation as Wirˉvalidation;
+
+fn Compilerˉsourceˉwirˉinvalidˉcompilation(
+    Input: bytes,
+    Product: Sourceˉwir.Compilerˉsourceˉwirˉcompilation
+) -> Sourceˉwir.Compilerˉsourceˉwirˉcompilation {
+    return Sourceˉwir.Compilerˉsourceˉwirˉcompilation(
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory,
+        Product.Bindingˉstatus,
+        Product.Modules,
+        Product.Functions,
+        Product.Blocks,
+        Product.Operations,
+        Product.Temporaries,
+        Product.Operands,
+        Bytesˉslice(Input, 0u32, 0u32),
+        Product.Modules,
+        Product.Modules,
+        Product.Functions,
+        Bytesˉlength(Input),
+        0u32,
+        0u32,
+        Product.Bindingˉparameters,
+        Product.Bindingˉlocals,
+        Product.Bindingˉreads,
+        Product.Bindingˉassignments,
+        Product.Bindingˉcalls,
+        Product.Bindingˉdirectory
+    );
+}
+
+export fn Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> Sourceˉwir.Compilerˉsourceˉwirˉcompilation {
+    let Product: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(
+            Input, Scan, Symbols
+        );
+    if Product.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return Product;
+    }
+    let Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbols, Product
+        );
+    if !Wirˉvalidation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+            Input, Scan, Symbols, Bindings, Product.Directory
+        ) {
+        return Compilerˉsourceˉwirˉinvalidˉcompilation(Input, Product);
+    }
+    return Product;
+}
+
+export fn Compilerˉvalidateˉsourceˉwir(
+    Input: bytes
+) -> Sourceˉwir.Compilerˉsourceˉwirˉsummary {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        let Failedˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉsymbols(
+                Input, Symbols
+            );
+        return Sourceˉwir.Compilerˉsourceˉwirˉsummaryˉfromˉbindings(
+            Input, Failedˉbindings
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    return Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(
+        Compilerˉprepareˉsourceˉwirˉwithˉsymbols(Input, Scan, Symbols)
+    );
+}

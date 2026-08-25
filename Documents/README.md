@@ -272,6 +272,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Accepted decisions](Decisions/) — dated architecture and policy records; later decisions can amend earlier ones
 - [AI-led research and review evidence](Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) — exact division of AI work, human stewardship, and machine, AI, human, reproduction, and external review claims
 - [Rights-limited source-file transfer](Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md) — completed Language 1.0 Slice 5 resource transfer, WVB 1.29 confinement, and bounded launcher snapshot
+- [Executable noncapturing callable values](Decisions/0856-Execute-Noncapturing-Callable-Values-As-Wvb-1.30.md) — connects exact structural callable evidence to WVIR 1.17/1.18, WVB 1.30 verification, and bounded scalar execution
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations

@@ -1,6 +1,8 @@
 windvale-project 2
 root "Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv"
+source "Compiler/Windvale/Source-Analysis-Contract-Core.wv"
 source "Compiler/Windvale/Source-Analysis-Core.wv"
+source "Compiler/Windvale/Source-Analysis-Validation-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
@@ -15,5 +17,7 @@ source "Compiler/Windvale/Source-Lexer-Core.wv"
 source "Compiler/Windvale/Source-Set-Core.wv"
 source "Compiler/Windvale/Source-Symbols-Core.wv"
 source "Compiler/Windvale/Source-Wir-Core.wv"
+source "Compiler/Windvale/Source-Wir-Consumer-Core.wv"
+source "Compiler/Windvale/Source-Wir-Validation-Core.wv"
 source "Foundation/Byte-Construction.wv"
 emit wvb

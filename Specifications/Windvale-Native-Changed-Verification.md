@@ -124,6 +124,15 @@ broad engine and probe matrix. Complete construction subsumes the engine
 checkpoint, so the planner never runs both for one source state. No managed or
 unfiltered fallback is permitted.
 
+The shared scalar-interpreter source retains several historical paths under
+`Tests/Fixtures/WebAssembly`, but its non-browser envelope, main driver, and
+fixed-integer, floating, and rune cores are inputs only to maintained native
+runner/runtime projects. Those exact paths select the Language 1.0 front-door,
+callable, and memory/resource owners and do not select complete WebAssembly
+construction merely because of their directory name. Browser-prefixed inputs,
+actual WebAssembly projects/backends/tools, and broad WebAssembly fixtures keep
+their WebAssembly owners.
+
 The main GitHub workflow and its focused static verifier select one explicit
 `RunGitHubQualificationVerification` owner. That owner requires the exact six
 native qualification jobs, their pinned host/action dependencies, their native

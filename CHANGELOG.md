@@ -8,6 +8,14 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Began Language 1.0 Migration Slice 6 with exact structural function types,
+  explicit capture validation, bounded transitive effect analysis, concrete
+  callable cataloging, and a first executable noncapturing callable profile.
+  WVIR 1.17/1.18 operations 177/178 lower through WVB 1.30 kind `8`, shape
+  `35`, and opcodes `D3`/`D4`; the compiler-aligned verifier and source-built
+  scalar runner execute the deterministic 400-byte oracle as result `42` in 24
+  guest instructions. Capturing closures and effectful/native callable
+  execution remain explicit later checkpoints.
 - Completed Language 1.0 Migration Slice 5 with one rights-limited hosted
   resource consumer. Exact `Main(Sourceˉfile) -> i32` receives a launcher-
   admitted immutable snapshot, `Sourceˉlength` lowers through WVB 1.29, and

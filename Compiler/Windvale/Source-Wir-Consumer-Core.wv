@@ -1,0 +1,314 @@
+module Compilerˉsourceˉwirˉconsumer profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export enum Compilerˉsourceˉwirˉstatus {
+    Valid = 0;
+    Sourceˉbindings = 1;
+    Evidenceˉlimit = 2;
+    Invalidˉdirectory = 3;
+    Typeˉmismatch = 4;
+    Invalidˉcondition = 5;
+    Invalidˉreturn = 6;
+    Missingˉreturn = 7;
+    Unreachableˉstatement = 8;
+    Invalidˉdataˉuse = 9;
+    Invalidˉindex = 10;
+    Invalidˉfieldˉtarget = 11;
+    Unknownˉfield = 12;
+    Unknownˉenumˉmember = 13;
+    Invalidˉoperator = 14;
+    Invalidˉargument = 15;
+    Invalidˉinference = 16;
+    Invalidˉconstant = 17;
+    Invalidˉrecordˉliteral = 18;
+    Duplicateˉrecordˉfield = 19;
+    Missingˉrecordˉfield = 20;
+    Invalidˉbreak = 21;
+    Invalidˉcontinue = 22;
+    Invalidˉmatch = 23;
+    Matchˉenumˉmismatch = 24;
+    Duplicateˉmatchˉcase = 25;
+    Missingˉmatchˉcase = 26;
+    Unknownˉvariantˉcase = 27;
+    Matchˉvariantˉmismatch = 28;
+    Invalidˉvariantˉbinding = 29;
+    Invalidˉcollection = 30;
+    Invalidˉbuilder = 31;
+    Invalidˉtry = 32;
+    Invalidˉunit = 33;
+    Invalidˉrecordˉupdate = 34;
+    Invalidˉvariantˉliteral = 35;
+    Duplicateˉvariantˉfield = 36;
+    Missingˉvariantˉfield = 37;
+    Invalidˉvalueˉblock = 38;
+    Genericˉresolution = 39;
+    Genericˉspecialization = 40;
+    Genericˉiterationˉlimit = 41;
+    Invalidˉarray = 42;
+    Invalidˉborrow = 43;
+    Invalidˉresource = 44;
+    Invalidˉcallable = 45;
+}
+
+export record Compilerˉsourceˉwirˉsummary {
+    Status: Compilerˉsourceˉwirˉstatus;
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus;
+    Modules: u32;
+    Functions: u32;
+    Blocks: u32;
+    Operations: u32;
+    Temporaries: u32;
+    Operands: u32;
+    Directory: bytes;
+    Failureˉmodule: u32;
+    Failureˉrelatedˉmodule: u32;
+    Failureˉfunction: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+export fn Compilerˉsourceˉwirˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
+    if Bytesˉlength(Directory) >= 64u32 &&
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 18u32 {
+        return 64u32;
+    }
+    if Bytesˉlength(Directory) >= 56u32 &&
+        (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 10u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 12u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 16u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 17u32) {
+        return 56u32;
+    }
+    return 48u32;
+}
+
+export fn Compilerˉsourceˉwirˉfunctionsˉoffset(Directory: bytes) -> u32 {
+    return Compilerˉsourceˉwirˉheaderˉbytes(Directory);
+}
+
+export fn Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape: u32) -> bool {
+    return Shape >= 1073741824u32 && Shape < 1342177280u32;
+}
+
+export fn Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape: u32) -> bool {
+    return Shape >= 1342177280u32 && Shape < 1610612736u32;
+}
+
+export fn Compilerˉsourceˉwirˉcollectionˉelementˉshape(
+    Shape: u32
+) -> u32 {
+    let Element: u32 = Bytesˉreadˉu16ˉlittle(
+        Bytesˉfromˉu32ˉlittle(Shape), 0u32
+    );
+    if Element < 4096u32 { return Element; }
+    if Element < 8192u32 { return 65536u32 + Element - 4096u32; }
+    if Element < 12288u32 { return 131072u32 + Element - 8192u32; }
+    return 196608u32 + Element - 12288u32;
+}
+
+export fn Compilerˉsourceˉwirˉcollectionˉmaximum(Shape: u32) -> u32 {
+    let Upper: u32 = Bytesˉreadˉu16ˉlittle(
+        Bytesˉfromˉu32ˉlittle(Shape), 2u32
+    );
+    if Compilerˉsourceˉwirˉshapeˉisˉsequence(Shape) {
+        return Upper - 16384u32;
+    }
+    return Upper - 20480u32;
+}
+
+export fn Compilerˉsourceˉwirˉbindingˉshape(
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Symbolˉentries: u32,
+    Function: u32,
+    Slot: u32
+) -> u32 {
+    let Range: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Bindings.Directory, Function
+        );
+    let First: u32 = Bytesˉreadˉu32ˉlittle(Bindings.Directory, Range);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindings.Directory, Range + 4u32
+    );
+    if Slot >= Count { return 0u32; }
+    let Entries: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
+            Bindings.Directory
+        );
+    let Entry: u32 = Entries + (First + Slot) * 36u32;
+    if Bytesˉreadˉu32ˉlittle(Bindings.Directory, Entry + 12u32) != Slot {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Bindings.Directory, Entry + 24u32);
+}
+
+export fn Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Function: u32,
+    Parameter: u32
+) -> u32 {
+    if Function >=
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
+                Bindings.Directory
+            ) {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Declaration: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉdeclaration(
+            Bindings.Directory, Function
+        );
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Declaration >= Symbolˉentries {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Symbolˉentry: u32 = 16u32 + Declaration * 24u32;
+    if Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Symbolˉentry + 4u32
+        ) != 6u32 {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Module: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Symbolˉentry
+    );
+    if Module >= Scan.Modules {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Symbolˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Symbolˉentry + 20u32
+    );
+    if Parameter >= Symbolˉparameters {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Range: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Bindings.Directory, Function
+        );
+    let First: u32 = Bytesˉreadˉu32ˉlittle(Bindings.Directory, Range);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindings.Directory, Range + 4u32
+    );
+    if Parameter >= Count {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let Entries: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
+            Bindings.Directory
+        );
+    let Entry: u32 = Entries + (First + Parameter) * 36u32;
+    if Bytesˉreadˉu32ˉlittle(Bindings.Directory, Entry + 8u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Bindings.Directory, Entry + 12u32) !=
+            Parameter {
+        return Compilerˉsourceˉwirˉsentinel();
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source,
+            Bytesˉreadˉu32ˉlittle(Bindings.Directory, Entry + 16u32),
+            1u32, 1u32
+        );
+    let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Name.Nextˉoffset,
+            Name.Nextˉline, Name.Nextˉcolumn
+        );
+    return Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+        View.Source, Colon.Nextˉoffset,
+        Colon.Nextˉline, Colon.Nextˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
+    Source: bytes,
+    Offset: u32,
+    Length: u32,
+    Index: u32
+) -> u32 {
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "file.write_bytes"
+        ) {
+        if Index == 0u32 { return 5u32; }
+        return 6u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "filesystem.directory_read_v1"
+        ) {
+        if Index == 0u32 { return 5u32; }
+        return 3u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "model.catalog_v1"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "model.inference_v1"
+        ) {
+        return 6u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "standard_output.write_v1"
+        ) {
+        return 6u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "process.argument"
+        ) {
+        return 3u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "storage.random_access_v1"
+        ) {
+        if Index == 1u32 || Index == 2u32 { return 8u32; }
+        if Index == 4u32 { return 6u32; }
+        return 3u32;
+    }
+    return 5u32;
+}
+
+export fn Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
+    Source: bytes,
+    Offset: u32,
+    Length: u32
+) -> u32 {
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "file.read_bytes"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "filesystem.directory_read_v1"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "model.catalog_v1"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "model.inference_v1"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "standard_output.write_v1"
+        ) || Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "storage.random_access_v1"
+        ) {
+        return 6u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "process.argument"
+        ) {
+        return 5u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Offset, Length, "process.argument_count"
+        ) {
+        return 3u32;
+    }
+    return 0u32;
+}

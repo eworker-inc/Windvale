@@ -1867,6 +1867,21 @@ export fn Compilerˉsourceˉbindingsˉbindˉname(
             Module, Constant.Module, Function, Nameˉoffset, Line, Column
         );
     }
+    let Namedˉfunction: Compilerˉsourceˉbindingˉmatch =
+        Compilerˉsourceˉbindingsˉfindˉcallable(
+            Input, Scan, Symbols, Module, Source, Nameˉoffset, Nameˉlength
+        );
+    if Namedˉfunction.Found &&
+        Namedˉfunction.Kind == Compilerˉsourceˉcallableˉkind.Function {
+        if Namedˉfunction.Accessible {
+            return Compilerˉsourceˉbindingsˉbodyˉcounts(1u32, 0u32, 0u32);
+        }
+        return Compilerˉsourceˉbindingsˉbodyˉfailure(
+            Compilerˉsourceˉbindingsˉbodyˉempty(),
+            Compilerˉsourceˉbindingˉstatus.Inaccessibleˉname,
+            Module, Namedˉfunction.Module, Function, Nameˉoffset, Line, Column
+        );
+    }
     let Capability: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉcallable(
         Input, Scan, Symbols, 0u32, Source, Nameˉoffset, Nameˉlength
     );
@@ -2369,6 +2384,22 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
         let Callˉnameˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source, Expression.Offset, Expression.Line, Expression.Column, Expression.Valueˉoffset
         );
+        let Functionˉlocal: Compilerˉsourceˉlocalˉmatch =
+            Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Payload, Bindingˉfirst, Bindingˉentries,
+                Expression.Valueˉoffset, Expression.Valueˉlength,
+                Expression.Offset
+            );
+        if Functionˉlocal.Found &&
+            Expression.Kind ==
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Call &&
+            !Namedˉcall {
+            return Compilerˉsourceˉbindingsˉbodyˉcounts(
+                Arguments.Reads + 1u32,
+                Arguments.Assignments,
+                Arguments.Calls + 1u32
+            );
+        }
         let Capabilityˉlocal: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
             Input, Scan, Symbols, Payload, Bindingˉfirst, Bindingˉentries, Source,
             Expression.Valueˉoffset, Expression.Valueˉlength, Expression.Offset

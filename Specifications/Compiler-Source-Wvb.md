@@ -2,10 +2,10 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.29 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.30 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.29, including the current
-Vector/Sequence and launcher-budget checkpoints, the implementation proves
+For the execution subset through WVB 1.30, including the current
+Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
 and code → WVB → verifier → source-built scalar runtime path. Every accepted
@@ -841,14 +841,65 @@ parameter transfer, and copying instead of moving the parameter. WVB carries
 no host path, handle, source bytes, provider object, or ambient filesystem
 grant.
 
+WVIR 1.17 operation `Functionˉreference = 177` lowers to the nine-byte WVB
+1.30 opcode `D3`, followed by the emitted function rank and the exact callable
+Types index. WVIR 1.18 operation `Callˉindirect = 178` lowers to the five-byte
+opcode `D4`, followed by that same callable Types index. The WVB producer maps
+the compiler-private WVIC instance to one terminal kind-`8` descriptor after
+all nominal Types entries:
+
+```text
+u8      kind: 8
+u8      profile: 1 portable, 2 hosted, 3 system
+shape   result
+u32     parameter count
+shape[] parameters in declaration order
+```
+
+There are at most 256 callable descriptors, and each has at most 64
+parameters. Serialized value shape `35` followed by the descriptor's `u32`
+Types index carries the exact callable identity through signatures, locals,
+and the verifier stack. The producer interns complete descriptor identities in
+deterministic WVIC order; it never relies on source names or host pointers.
+
+`D3` proves that the target function's profile, parameter shapes, and result
+shape exactly equal the referenced kind-`8` descriptor, then pushes one
+shape-`35` value. For `D4`, the callable value precedes its arguments on the
+operand stack. The verifier consumes the arguments in reverse declaration
+order, then requires the remaining callable value to name the instruction's
+exact descriptor. Execution performs one ordinary bounded frame call to the
+function carried by the value and preserves the existing call-depth,
+instruction, local, and stack limits. The current scalar runner stores the
+function index in the low `u32` and the callable type index plus one in the high
+`u32` of its eight-byte value cell. That cell layout is an implementation
+detail, not a portable WVB or native ABI promise.
+
+WVB 1.30 must contain at least one `D3` or `D4`; each opcode is limited to
+65,536 occurrences. This first executable profile admits only named,
+non-generic, noncapturing functions with explicit empty `effects()`, no
+`async` or `unsafe` flag, by-value parameters, and a value result other than
+`unit` or `never`. Capturing closures, effectful or flag-bearing callable
+values, borrowed callable signatures, callable native ABI lowering, and
+environment lifetime rules remain later work.
+
+`Callable-Indirect-Execution.wv` deterministically emits a 400-byte WVB 1.30
+module at SHA-256
+`30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`.
+The source-built scalar runner executes its function reference and indirect
+call, returns `42`, and reports 24 guest instructions. The compiler-aligned
+verifier accepts the exact module and rejects version downgrade, target
+signature mismatch, reference-type mismatch, invocation-type mismatch, and a
+non-callable descriptor kind.
+
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause
 presence, byte span, and identity count under fixed 32-identity,
 16-segment-per-identity, 128-canonical-byte, and 16,384-source-byte limits.
-This checkpoint does not change WVIR or WVB: canonical identity resolution,
-local inference, exported-signature enforcement, call compatibility, and
-serialized effect evidence remain required before an effect is executable
-compiler evidence.
+That initial syntax checkpoint did not change WVIR or WVB. The current WVEF and
+WVCF phases now resolve canonical identities, infer exact transitive effects,
+enforce declaration equality, and catalog concrete signatures. WVB 1.30 admits
+only the empty-effect callable subset above; serialized nonempty effect masks
+remain required before an effectful callable value can execute.
 
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.

@@ -1,6 +1,8 @@
 module Languageˉoneˉsourceˉanalysisˉselfˉtest profile portable;
 
 import Compilerˉsourceˉanalysis as Analysis;
+import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
+import Compilerˉsourceˉanalysisˉvalidation as Analysisˉvalidation;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 fn One(Source: text) -> bytes {
@@ -51,9 +53,10 @@ fn Status(
     Manifest: bytes,
     Bindings: bytes,
     Wir: bytes
-) -> Analysis.Compilerˉsourceˉanalysisˉstatus {
-    let Checked: Analysis.Compilerˉsourceˉanalysisˉvalidation =
-        Analysis.Compilerˉvalidateˉsourceˉanalysis(
+) -> Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus {
+    let Checked:
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
+        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
             Input, Manifest, Bindings, Wir
         );
     return Checked.Status;
@@ -66,7 +69,8 @@ export fn Main() -> i32 {
     ));
     let Prepared: Analysis.Compilerˉsourceˉanalysis =
         Analysis.Compilerˉprepareˉsourceˉanalysis(Input);
-    if Prepared.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+    if Prepared.Status !=
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
         return 1;
     }
     if Bytesˉlength(Prepared.Manifest) != 104u32 ||
@@ -81,60 +85,62 @@ export fn Main() -> i32 {
         !Bytesˉequal(Prepared.Wir, Repeated.Wir) {
         return 3;
     }
-    let Checked: Analysis.Compilerˉsourceˉanalysisˉvalidation =
-        Analysis.Compilerˉvalidateˉsourceˉanalysis(
+    let Checked:
+        Analysisˉvalidation.Compilerˉsourceˉanalysisˉvalidation =
+        Analysisˉvalidation.Compilerˉvalidateˉsourceˉanalysis(
             Input, Prepared.Manifest, Prepared.Bindings, Prepared.Wir
         );
-    if Checked.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+    if Checked.Status !=
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
         return 4;
     }
     if Status(
         Input,
         Bytesˉslice(Prepared.Manifest, 0u32, 103u32),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
         return 5;
     }
     if Status(
         Input, Replaceˉu8(Prepared.Manifest, 0u32, 0u8),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
         return 6;
     }
     if Status(
         Input, Replaceˉu32(Prepared.Manifest, 12u32, 0u32),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
         return 7;
     }
     if Status(
         Input, Replaceˉu32(Prepared.Manifest, 48u32, 0u32),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
         return 8;
     }
     if Status(
         Input, Replaceˉu32(Prepared.Manifest, 100u32, 1u32),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉmanifest {
         return 9;
     }
     if Status(
         Input, Prepared.Manifest,
         Replaceˉu8(Prepared.Bindings, 0u32, 0u8), Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings {
         return 10;
     }
     if Status(
         Input, Prepared.Manifest, Prepared.Bindings,
         Replaceˉu8(Prepared.Wir, 0u32, 0u8)
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
         return 11;
     }
     if Status(
         Input, Replaceˉu32(Prepared.Manifest, 80u32, 0u32),
         Prepared.Bindings, Prepared.Wir
-    ) != Analysis.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
+    ) != Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉwir {
         return 12;
     }
     return 0;

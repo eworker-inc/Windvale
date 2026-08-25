@@ -9,9 +9,9 @@ individually bounded values:
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
   specialization-evidence `WVLB 1.3` binding directory; and
-- one canonical `WVIR 1.9` through `WVIR 1.16` typed source directory, with the
-  exact ordinary/specialized and memory/append/growth feature pairing defined
-  by WVIR.
+- one canonical `WVIR 1.9` through `WVIR 1.18` typed source directory, with the
+  exact ordinary/specialized, memory/append/growth, and callable feature pairing
+  defined by WVIR.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
 is not a package or distribution format, and does not create another source
@@ -40,6 +40,16 @@ Preparation validates source symbols once, constructs binding and WIR evidence
 through the fused typed-lowering pass, and publishes no artifact unless all
 phases succeed. Repeated preparation of the same input produces byte-identical
 manifest, WVLB, and WVIR values.
+
+The implementation keeps phase ownership explicit. The analysis-contract
+module owns only shared statuses. The analyzer links the analysis producer and
+the WVIR producer; it does not retain the independent readers needed only after
+serialization. The emitter links the analysis validator, the independent WVIR
+validator, and the immutable WVIR consumer helpers; it does not retain source
+WIR construction. The one-shot public source-to-WIR adapter composes the WVIR
+producer and validator through the checked adapter. This is one semantic
+pipeline with smaller executable closures, not separate compilers or a trusted
+cache shortcut.
 
 Validation does not trust the manifest as semantic evidence. It rescans WVSS,
 reconstructs and validates the source-symbol model, compares every persisted

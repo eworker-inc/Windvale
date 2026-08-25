@@ -1514,6 +1514,12 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv'
     )) {
         Add-Suite 'language-1-front-door'
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Emission-Core.wv',
+            'Projects/Compiler/Windvale-Source-Emission-Core.wvproj'
+        )) {
+            Add-Suite 'language-1-callable-semantics'
+        }
     } elseif ($Path -in @(
         'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
         'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
@@ -1532,6 +1538,7 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Effects-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Function-Type-Lowering-Core.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Callable-Type-Catalog.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Semantics.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Function-Type-Catalog.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Function-Value-Front-End.wvproj',
@@ -1541,6 +1548,7 @@ foreach ($Path in $Paths) {
         'Specifications/Compiler-Source-Effects.md',
         'Specifications/Compiler-Source-Function-Types.md',
         'Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Callable-Indirect-Execution.wv',
         'Tests/Fixtures/Language-1.0/Callable-Type-Catalog-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv',
@@ -1620,6 +1628,18 @@ foreach ($Path in $Paths) {
             'language-1-memory-budget-split-execution'
         )
     } elseif ($Path -in @(
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv'
+    )) {
+        Add-Suite @(
+            'language-1-front-door',
+            'language-1-callable-semantics',
+            'language-1-memory-budget-split-execution'
+        )
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Accounting-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Accounting.cmd',
@@ -1674,7 +1694,6 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
-        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
         'Tests/Native/Language-1.0-Fixture-Inventory.txt'
     )) {
@@ -1759,15 +1778,6 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Artifacts/webassembly-verification/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/WebAssembly/', [StringComparison]::Ordinal)) {
         Add-WebAssemblyVerification
-        if ($Path -in @(
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv',
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
-            'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv'
-        )) {
-            Add-Suite 'language-1-memory-budget-split-execution'
-        }
     } elseif ($Path.StartsWith(
         'Tests/Fixtures/Scripting/',
         [StringComparison]::Ordinal) -or
@@ -1935,17 +1945,10 @@ foreach ($Path in $Paths) {
             'libraries',
             'model-provider',
             'file-read-application',
-            'wvb-inspector-reconstruction',
             'language-1-front-door',
+            'language-1-callable-semantics',
             'language-1-memory-budget-split-execution'
         )
-        if ($Path -in @(
-            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
-            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
-            'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
-        )) {
-            Add-Suite 'wvb-to-wvo-reconstruction'
-        }
     } elseif ($Path -in @(
         'Libraries/Foundation/Operations/Bounded-Operation-Core.wv',
         'Projects/Libraries/Windvale-Library-Bounded-Operation-Core.wvproj',
@@ -2697,7 +2700,9 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Graph-Core.wv',
         'Compiler/Windvale/Source-Symbols-Core.wv',
         'Compiler/Windvale/Source-Bindings-Core.wv',
+        'Compiler/Windvale/Source-Wir-Consumer-Core.wv',
         'Compiler/Windvale/Source-Wir-Core.wv',
+        'Compiler/Windvale/Source-Wvb-Compilation-Core.wv',
         'Compiler/Windvale/Source-Wvb-Core.wv',
         'Compiler/Windvale/Source-Wvb-Temporary-Slots.wv',
         'Examples/Compiler/Source-Lexer-Demo.wv',
@@ -2800,7 +2805,12 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Compiler/Windvale/Source-Wvb-Core.wv') {
             Add-Suite 'language-1-memory-budget-split-execution'
         }
-        if ($Path -eq 'Compiler/Windvale/Source-Wir-Core.wv') {
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Wir-Consumer-Core.wv',
+            'Compiler/Windvale/Source-Wir-Core.wv',
+            'Compiler/Windvale/Source-Wvb-Compilation-Core.wv',
+            'Compiler/Windvale/Source-Wvb-Core.wv'
+        )) {
             Add-Suite 'language-1-callable-semantics'
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
@@ -3489,7 +3499,6 @@ foreach ($Path in $Paths) {
             'Specifications/Windvale-Native-Wvb-To-Wvo-Rejection-Tests.md') {
             Add-Suite 'lowerer-rejections'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Runner.md') {
-            Add-Suite 'wvb-runner-reconstruction'
             Add-Suite 'seed-native-front-door'
             Add-Suite 'language-1-memory-budget-split-execution'
         } elseif ($Path -in @(

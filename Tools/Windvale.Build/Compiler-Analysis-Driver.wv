@@ -1,6 +1,7 @@
 module Windvaleˉcompilerˉanalysisˉdriver profile hosted;
 
 import Compilerˉsourceˉanalysis as Analysis;
+import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -99,7 +100,8 @@ fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
     }
     let Prepared: Analysis.Compilerˉsourceˉanalysis =
         Analysis.Compilerˉprepareˉsourceˉanalysis(Sourceˉset);
-    if Prepared.Status != Analysis.Compilerˉsourceˉanalysisˉstatus.Valid {
+    if Prepared.Status !=
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
         diagnostic.write_line(Failure(Prepared));
         return 1;
     }

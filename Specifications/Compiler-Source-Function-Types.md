@@ -10,12 +10,12 @@ type, or exposing a compiler-private identity as a WVB runtime type.
 
 The catalog format, immutable admission, accessors, and independent validation
 are implemented and execute through the maintained native path. The post-effect
-[WVCF catalog](Compiler-Source-Callable-Types.md) now maps each concrete named
+[WVCF catalog](Compiler-Source-Callable-Types.md) maps each concrete named
 source function to one exact WVFT instance or an explicit unsupported
-disposition. Connecting source value expressions, closures, captures,
-callable-aware WVIR, and the selected closed runtime representation remains
-separate work in Language 1.0 Slice 6. This compiler-evidence checkpoint does
-not make those consumers appear implemented.
+disposition. WVIR 1.17/1.18 and WVB 1.30 now execute the closed noncapturing,
+effect-free, by-value subset. Capturing closures, borrowed callable signatures,
+nonempty effects, flags, escape ownership, and native callable ABI lowering
+remain separate work; this bounded subset does not imply those consumers.
 
 Every integer is unsigned little-endian. Lengths are exact. Admission returns a
 replacement catalog and never publishes a partially appended entry.
@@ -52,8 +52,10 @@ resolved masks; it does not independently assign a meaning to an unknown bit.
 Within compiler evidence only, catalog instance `i` has shape
 `0x80000100 + i`, for `i` from zero through 255. The preceding
 `0x80000000..0x800000ff` range remains owned by WVGT concrete generic types.
-WVFT shapes never enter WVB. A later phase must replace every retained WVFT
-shape with the selected public callable representation or reject publication.
+WVFT shapes never enter WVB. WVIR replaces every admitted executable instance
+with reduced WVIC evidence, and WVB publication remaps that evidence to one
+kind-8 Types descriptor plus shape `35`. Any WVFT identity outside the closed
+executable subset rejects before publication.
 
 An entry may refer to an ordinary nonzero source shape, any valid WVGT private
 shape, or an earlier WVFT instance. It may not refer to itself, a later WVFT
@@ -123,8 +125,8 @@ independently revalidated before it is returned.
 
 WVFT is neither a pointer, function address, symbol spelling, ABI record, WVB
 type entry, nor closure environment. It provides stable compiler reasoning
-only. The source compiler may use it to prove assignments, arguments, returns,
-effect compatibility, and indirect-call signatures. WVB publication must use a
-separately specified portable representation whose verifier checks the same
-signature and ownership facts. Native addresses remain backend details and can
-never become portable source semantics.
+only. The source compiler uses it to prove assignments, arguments, returns,
+effect compatibility, and indirect-call signatures, then emits the separately
+specified WVB 1.30 portable representation. The verifier reconstructs the exact
+target signature and typed stack independently. Native addresses remain backend
+details and can never become portable source semantics.

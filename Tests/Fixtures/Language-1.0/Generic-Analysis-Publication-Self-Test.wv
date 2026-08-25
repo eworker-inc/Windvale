@@ -4,6 +4,8 @@ import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
+import Compilerˉsourceˉwirˉchecked as Sourceˉwirˉchecked;
+import Compilerˉsourceˉwirˉvalidation as Sourceˉwirˉvalidation;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 capability file.write_bytes;
@@ -80,7 +82,7 @@ fn Manifest(
 
 fn Wirˉstatus(Source: text) -> Sourceˉwir.Compilerˉsourceˉwirˉstatus {
     let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
-        Sourceˉwir.Compilerˉvalidateˉsourceˉwir(
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
             Sourceˉsetˉfrom(Source)
         );
     return Summary.Status;
@@ -114,7 +116,7 @@ export fn Main() -> i32 {
     let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     let Compilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
-        Sourceˉwir.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
+        Sourceˉwirˉchecked.Compilerˉprepareˉsourceˉwirˉwithˉsymbols(
             Input, Scan, Symbols
         );
     let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
@@ -140,7 +142,7 @@ export fn Main() -> i32 {
     ) {
         return 7;
     }
-    if Sourceˉwir.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
+    if Sourceˉwirˉvalidation.Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         Input, Scan, Symbols, Bindings,
         Replaceˉu32(Wir.Directory, 48u32, 1u32)
     ) {
