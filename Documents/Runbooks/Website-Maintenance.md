@@ -52,12 +52,19 @@ until one exact replacement commit has passed its required verification.
 
 ## Restore the website
 
-1. Push the complete replacement website and require its exact `Verification
-   gate` to pass.
+1. Push the complete replacement website and normally require its exact
+   `Verification gate` to pass. During the bounded compiler 0.1-to-1.0
+   migration only, an operator may instead use the manual
+   `allow_unverified_compiler_migration=true` input when the known failing
+   evidence belongs to that migration. This exception does not qualify the
+   compiler and does not bypass the website, playground, or WebAssembly
+   publication checks.
 2. Set `WINDVALE_WEBSITE_MODE` to `live` immediately before publication. The
    ordinary workflow treats an absent value or any value other than
    `maintenance` as live for backward compatibility.
-3. Dispatch `Deploy verified website snapshot` with `force=true`.
+3. Dispatch `Deploy verified website snapshot` with `force=true`. Set
+   `allow_unverified_compiler_migration=true` only for the migration exception
+   described above; scheduled runs never use it.
 4. Require `/deployment.json` to name the intended commit. Probe the home,
    documents, source, support, playground, not-found, and supporter API routes.
 5. If publication or probing fails, restore the exact `maintenance` value and

@@ -11,6 +11,11 @@ on:
         required: false
         default: false
         type: boolean
+      allow_unverified_compiler_migration:
+        description: Publish after website checks while the compiler 0.1-to-1.0 migration gate is expected to fail
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   actions: read
@@ -33,6 +38,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           FORCE_DEPLOY: ${{ inputs.force || false }}
+          ALLOW_UNVERIFIED_COMPILER_MIGRATION: ${{ inputs.allow_unverified_compiler_migration || false }}
         run: |
           set -euo pipefail
           api_headers=(
@@ -59,10 +65,13 @@ jobs:
               <<<"$verification"
           )"
           if [[ "$verified_count" -eq 0 ]]; then
-            echo "deploy=false" >> "$GITHUB_OUTPUT"
-            echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
-            echo "The current main commit has not completed verification successfully; keeping the existing deployment."
-            exit 0
+            if [[ "$GITHUB_EVENT_NAME" != "workflow_dispatch" || "$ALLOW_UNVERIFIED_COMPILER_MIGRATION" != "true" ]]; then
+              echo "deploy=false" >> "$GITHUB_OUTPUT"
+              echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+              echo "The current main commit has not completed verification successfully; keeping the existing deployment."
+              exit 0
+            fi
+            echo "::warning title=Compiler migration publication::Publishing the current main snapshot without an aggregate Verify success. Website, playground, and WebAssembly publication checks remain mandatory."
           fi
 
           deployed_sha="$({
