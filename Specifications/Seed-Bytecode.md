@@ -13,8 +13,9 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    the WVB 1.23 executable memory-budget Split extension, the WVB 1.24
    fallible reserved-Vector-construction extension, the WVB 1.25 recoverable
    Vector-append extension, the WVB 1.26 owned-Vector-call extension, the
-   WVB 1.27 reserved-Vector-growth extension, and the WVB 1.28
-   Vector-containing-aggregate ownership extension.
+   WVB 1.27 reserved-Vector-growth extension, the WVB 1.28
+   Vector-containing-aggregate ownership extension, and the WVB 1.29
+   rights-limited source-file snapshot extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -61,6 +62,10 @@ WVB 1.28 recursively classifies records, variants, and fixed arrays that contain
 an owned Vector. Whole values move through construction, local storage, calls,
 and returns; field and element observation uses a verifier-confined borrowed
 view; and runtime teardown releases nested Vector descriptors deterministically.
+WVB 1.29 adds one representation-hidden source-file owner supplied by the
+launcher as an immutable snapshot. The exact source entry may move that owner
+to a local and observe its bounded byte length without exposing a host path,
+handle, byte pointer, provider object, or ambient filesystem authority.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -75,8 +80,9 @@ when `vector.construct_reserved_fallible` is present, and WVB 1.25 when
 `vector.append_fallible` is present. WVB 1.26 is selected when any function has
 an exact Vector parameter. WVB 1.27 is selected when
 `vector.grow_reserved_fallible` is present. WVB 1.28 is selected when a
-record, variant, or fixed array recursively contains an owned Vector. A WVB
-1.28-capable reader accepts all eighteen
+record, variant, or fixed array recursively contains an owned Vector. WVB 1.29
+is selected when the exact source-file entry, shape `34`, or `source.length`
+operation is present. A WVB 1.29-capable reader accepts all nineteen
 versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
@@ -99,7 +105,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 through 28
+u16      minor version: 11 through 29
 u32      section count: 7
 ```
 
@@ -240,6 +246,9 @@ it is present, the same exact one-parameter transfer rule applies.
 WVB 1.23 through WVB 1.28 require the same exact one-parameter entry because
 the currently admitted recoverable construction, append, and growth profile
 begins with a launcher-owned root budget.
+WVB 1.29 instead requires exactly one exported
+`Main(Platformˉfile.Sourceˉfile) -> i32`; the launcher transfers one admitted
+immutable source snapshot into that parameter before the first instruction.
 Future native object formats must define an ASCII-safe external symbol mapping
 separately.
 
@@ -309,8 +318,8 @@ Variants contain 1 through 256 unique ordered
 cases and zero through 64 uniquely named fields per case. Encoding `0` is
 canonical for no fields, encoding `1` is canonical for exactly one field and
 preserves all earlier WVB bytes, and encoding `2` is canonical only for two
-through 64 fields in WVB 1.16 and later. A fixed-array descriptor exists only in
-WVB 1.17, contains one exact non-`never` value shape plus its length, and has no
+through 64 fields in WVB 1.16 and later. A fixed-array descriptor exists in
+WVB 1.17 and later, contains one exact non-`never` value shape plus its length, and has no
 field names or capacity. Its compiler-generated private name identifies the
 concrete source `Array<T, N>` instance. Field and element shapes obey the
 bounded, acyclic source restrictions. Vector and Sequence descriptors exist
@@ -350,9 +359,10 @@ capacity, allocator, or authority.
 25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 entry; WVB 1.23 through 1.28 Main locals)
 26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
-28 borrowed record view followed by u32 nominal-type index (WVB 1.28 local only)
-29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 local only)
-30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 local only)
+28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.29 local only)
+29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.29 local only)
+30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.29 local only)
+34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 exact entry and Main locals only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -408,6 +418,15 @@ Valid payload of the exact Split result, cannot be read with `local.load`, and
 cannot overwrite an available owner. Shape `25` remains invalid in every other
 function, return, nominal payload, collection element, or Types entry.
 
+Shape `34` is not a general value shape. WVB 1.29 requires it exactly once as
+parameter zero of the one-parameter function named `Main`; that function
+returns `i32` and is exported under the same name. Shape `34` may additionally
+occur in non-parameter locals of that `Main` only. It is invalid in every other
+function, result, nominal payload, collection element, or Types entry. It is
+move-only: `local.take` transfers its available ownership evidence, ordinary
+loads never copy it, and a store cannot overwrite an available owner. Source
+cannot construct it or expose its representation.
+
 `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64` are ordinary scalar
 shapes. They do not
 widen counts, indices, lengths, code offsets, enum backing values, or existing
@@ -420,9 +439,12 @@ before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
 1.19, opcode `CD` is invalid before WVB 1.20, opcode `CE` is invalid before
-WVB 1.23, opcode `CF` is valid in WVB 1.24 through 1.28, opcode `D0` is
-valid in WVB 1.25 through 1.28, and opcode `D1` is valid in WVB 1.27 through
-1.28. Shape byte `25` is valid only under the WVB 1.21-through-1.28 rules
+WVB 1.23, opcode `CF` is recognized in WVB 1.24 through 1.29, opcode `D0` is
+recognized in WVB 1.25 through 1.29, and opcode `D1` is recognized in WVB 1.27
+through 1.29. Their budget-entry ownership preconditions remain exact, so the
+WVB 1.29 source-file entry cannot execute them. Opcode `D2` and shape byte `34`
+are valid only in WVB 1.29. Shape byte `25` is valid only under the WVB
+1.21-through-1.28 rules
 above. Type kind `7` is valid in WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
 published under an unnecessarily high version. Every WVB 1.23 module contains
@@ -432,7 +454,8 @@ Every WVB 1.26 module contains at least one exact Vector parameter using shape
 `23`, `26`, or `27`.
 Every WVB 1.27 module contains at least one opcode `D1`. Every WVB 1.28 module
 contains at least one record, variant, or fixed array that recursively contains
-an owned Vector.
+an owned Vector. Every WVB 1.29 module contains the exact source-file entry and
+at least one opcode `D2`.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
@@ -588,6 +611,7 @@ CE memory_budget.split u32 parent-local index, u32 Result-type index; consumes u
 CF vector.construct_reserved_fallible u32 budget-local index, u32 Result-type index; consumes u64 maximum items and the budget owner, produces exact affine Result<Vector<T>, Allocation_failure>
 D0 vector.append_fallible u32 Vector-local index, u32 Result-type index; consumes exact T, mutates the named Vector only on success, produces exact Result<unit, Vector_append_failure<T>>
 D1 vector.grow_reserved_fallible u32 Vector-local index, u32 budget-local index, u32 Result-type index; consumes u64 new maximum, atomically replaces the named Vector backing only on success, produces exact Result<unit, Allocation_failure>
+D2 source.length    u32 Sourceˉfile local index; observes one live immutable source snapshot and produces u64 byte length
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -654,8 +678,9 @@ In WVB 1.23 through WVB 1.28, `local.take` also transfers an available shape-25
 budget local or exact affine Result variant. A budget take clears the source
 cell and pushes the same opaque owner. A Split-result take may transfer the
 Valid child budget exactly once. A WVB 1.24 constructor-result take may transfer
-the Valid Vector exactly once; WVB 1.25 through 1.28 retain that rule. Ordinary loads never
-copy any affine value.
+the Valid Vector exactly once; WVB 1.25 through 1.29 retain that rule. WVB 1.29
+also permits `local.take` to transfer the exact source-file parameter or local.
+Ordinary loads never copy any affine value.
 
 WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.28 transfers one opaque
 launcher-owned root-budget token into `Main`'s parameter-zero cell. The current scalar profile
@@ -665,6 +690,20 @@ state outside bytecode. A completed top-level return
 validates the token, clears its cell, and releases the root exactly once before
 publishing the `i32` result. Rejection, trap, or provider teardown invalidates
 the invocation domain without making the token available to bytecode.
+
+WVB 1.29 transfers one rights-limited source-file owner into `Main`'s
+parameter-zero cell. The public `wvrun --source-file` mode reads the named host
+file once before guest execution, rejects a snapshot larger than 1 MiB, and
+passes only immutable bytes, one read right, and matching nonzero provider and
+resource generations. The runtime cell retains only the bounded length and
+generation. Return, rejection, trap, and teardown invalidate and release the
+owner exactly once; no host path or handle enters bytecode.
+
+`source.length` is a five-byte WVB 1.29 instruction. Its immediate must identify
+one available non-parameter shape-34 local in the exact source-file `Main`.
+Execution checks the live resource generation and 1 MiB snapshot bound, then
+produces the exact `u64` byte length without consuming or mutating the owner.
+At most 64 `source.length` instructions are admitted in one module.
 
 `memory_budget.split` is a nine-byte WVB 1.23 instruction. The immediate parent
 index must identify one available shape-25 `Main` local, and the immediate type
@@ -748,7 +787,7 @@ every backedge. This is the bounded loop ownership fixed point: ownership may
 flow through a loop but cannot appear, disappear, or change class per
 iteration.
 
-WVB 1.28 extends the same availability proof to records, variants, and fixed
+WVB 1.28 and WVB 1.29 extend the same availability proof to records, variants, and fixed
 arrays that recursively contain a Vector. Construction consumes every owned
 field or element. A whole-value `local.store`, by-value call, or return consumes
 the aggregate, and `local.take` is the only instruction that removes an
@@ -888,7 +927,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.28 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, and a Vector-containing aggregate requires exactly 1.28.
+- The version is WVB 1.11 through 1.29 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, a Vector-containing aggregate requires at least 1.28, and shape `34` or `source.length` requires exactly 1.29.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -907,7 +946,8 @@ Verification is required before execution and rejects a module unless:
 - Every opcode `D0` references a direct non-parameter exact Vector local and exact structurally validated append Result type, consumes one matching scalar item, preserves the Vector and returns that item on capacity refusal, and mutates the Vector exactly once only on success.
 - Every opcode `D1` references a direct non-parameter exact Vector local, a distinct available shape-25 budget slot, and exact structurally validated `Result<unit, Allocationˉfailure>`; consumes one `u64` maximum; preserves both owners on refusal; and swaps the complete backing and lease only on success.
 - Every WVB 1.26-or-later Vector parameter uses exact shape `23`, `26`, or `27` with a matching kind-5 nominal index; borrowed shapes occur nowhere else; calls supply unique evidence to shape `23` and retaining evidence to shapes `26` and `27`; and reverse-order callee cleanup cannot release the caller's preserved owner.
-- Every WVB 1.28 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once.
+- Every WVB 1.28 or WVB 1.29 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once.
+- Every WVB 1.29 module contains exactly one exported `Main(Platformˉfile.Sourceˉfile) -> i32`, admits shape `34` only in that parameter and its move-owned locals, contains 1 through 64 exact `source.length` instructions over available non-parameter source locals, and cannot construct, copy, return, embed, or expose the source owner.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return
@@ -920,6 +960,7 @@ Verification is required before execution and rejects a module unless:
 ## Implementation limits
 
 - Module bytes: 16 MiB
+- Source-file snapshot: 1 MiB before guest execution
 - Sections: exactly 7
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
