@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv"
+source "Compiler/Windvale/Source-Function-Type-Lowering-Core.wv"
+emit wvb

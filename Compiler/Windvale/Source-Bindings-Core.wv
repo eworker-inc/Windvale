@@ -55,6 +55,12 @@ export record Compilerˉsourceˉbindingˉmatch {
     Directoryˉentry: u32;
 }
 
+export record Compilerˉsourceˉparameterˉmatch {
+    Found: bool;
+    Supported: bool;
+    Index: u32;
+}
+
 record Compilerˉsourceˉbindingˉquery {
     Qualified: bool;
     Aliasˉfound: bool;
@@ -1627,6 +1633,81 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
     );
 }
 
+export fn Compilerˉsourceˉbindingsˉcallableˉparameter(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Callable: Compilerˉsourceˉbindingˉmatch,
+    Labelˉsource: bytes,
+    Labelˉoffset: u32,
+    Labelˉlength: u32
+) -> Compilerˉsourceˉparameterˉmatch {
+    if Callable.Kind != Compilerˉsourceˉcallableˉkind.Function {
+        return Compilerˉsourceˉparameterˉmatch(
+            false, false, Callable.Items
+        );
+    }
+    let Entry: u32 = 16u32 + Callable.Directoryˉentry * 24u32;
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(
+            Input, Scan, Callable.Module
+        );
+    let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Entry + 8u32
+    );
+    let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+        Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            View.Source, Declarationˉoffset, 1u32, 1u32, true
+        );
+    let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            View.Source, Declaration, 1u32, 1u32
+        );
+    let Left: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Generic.Signatureˉoffset,
+            Generic.Signatureˉline, Generic.Signatureˉcolumn
+        );
+    var Cursor: u32 = Left.Nextˉoffset;
+    var Currentˉline: u32 = Left.Nextˉline;
+    var Currentˉcolumn: u32 = Left.Nextˉcolumn;
+    var Index: u32 = 0u32;
+    while Index < Declaration.Items {
+        let Parameter: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        if Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Labelˉsource, Labelˉoffset, Labelˉlength,
+            View.Source, Parameter.Offset, Parameter.Length
+        ) {
+            return Compilerˉsourceˉparameterˉmatch(true, true, Index);
+        }
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Parameter.Nextˉoffset,
+                Parameter.Nextˉline, Parameter.Nextˉcolumn
+            );
+        let Type: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                View.Source, Colon.Nextˉoffset,
+                Colon.Nextˉline, Colon.Nextˉcolumn, false
+            );
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                View.Source, Type.Nextˉoffset,
+                Type.Nextˉline, Type.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Currentˉline = Separator.Nextˉline;
+        Currentˉcolumn = Separator.Nextˉcolumn;
+        Index = Index + 1u32;
+    }
+    return Compilerˉsourceˉparameterˉmatch(
+        false, true, Callable.Items
+    );
+}
+
 export fn Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -2229,12 +2310,35 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
     if Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Call ||
         Expression.Kind == Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall {
         var Arguments: Compilerˉsourceˉbindingˉbody = Compilerˉsourceˉbindingsˉbodyˉempty();
+        let Namedˉcall: bool = Expression.Operator ==
+            Sourceˉlexer.Compilerˉtokenˉkind.Colon;
         var Cursor: u32 = Expression.Itemsˉoffset;
         var Currentˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
             Source, Expression.Offset, Expression.Line, Expression.Column, Expression.Itemsˉoffset
         );
         var Item: u32 = 0u32;
         while Item < Expression.Items {
+            if Namedˉcall {
+                let Argumentˉlabel: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉbodies.Compilerˉbodyˉtoken(
+                        Source, Cursor,
+                        Currentˉposition.Line, Currentˉposition.Column,
+                        Expression.Itemsˉoffset + Expression.Itemsˉlength
+                    );
+                let Argumentˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                    Sourceˉbodies.Compilerˉbodyˉtoken(
+                        Source, Argumentˉlabel.Nextˉoffset,
+                        Argumentˉlabel.Nextˉline,
+                        Argumentˉlabel.Nextˉcolumn,
+                        Expression.Itemsˉoffset + Expression.Itemsˉlength
+                    );
+                Cursor = Argumentˉcolon.Nextˉoffset;
+                Currentˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
+                    Argumentˉcolon.Nextˉoffset,
+                    Argumentˉcolon.Nextˉline,
+                    Argumentˉcolon.Nextˉcolumn
+                );
+            }
             let Argument: Sourceˉbodies.Compilerˉsourceˉexpression = Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
                 Source, Cursor, Currentˉposition.Line, Currentˉposition.Column,
                 Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
@@ -3155,6 +3259,43 @@ export fn Compilerˉsourceˉbindingsˉappendˉparameter(
         Bodyˉoffset, Bodyˉoffset + Bodyˉlength
     );
     return Compilerˉsourceˉbindingsˉappend(Build, Entry, true);
+}
+
+export fn Compilerˉsourceˉbindingsˉappendˉcapture(
+    Module: u32,
+    Function: u32,
+    Capture: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Bodyˉoffset: u32,
+    Bodyˉlength: u32,
+    Shape: u32,
+    Isˉmutable: bool,
+    Build: Compilerˉsourceˉbindingˉbuild
+) -> Compilerˉsourceˉbindingˉbuild {
+    if Build.Nextˉslot >= 4096u32 {
+        return Compilerˉsourceˉbindingsˉbuildˉfailure(
+            Build,
+            Compilerˉsourceˉbindingˉstatus.Bindingˉlimit,
+            Module, Module, Function,
+            Capture.Offset, Capture.Line, Capture.Column
+        );
+    }
+    if Bytesˉlength(Build.Payload) > 4194252u32 {
+        return Compilerˉsourceˉbindingsˉbuildˉfailure(
+            Build,
+            Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
+            Module, Module, Function,
+            Capture.Offset, Capture.Line, Capture.Column
+        );
+    }
+    var Kind: Compilerˉsourceˉbindingˉkind =
+        Compilerˉsourceˉbindingˉkind.Let;
+    if Isˉmutable { Kind = Compilerˉsourceˉbindingˉkind.Var; }
+    let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
+        Module, Function, Kind, Build.Nextˉslot,
+        Capture.Offset, Capture.Length, Shape,
+        Bodyˉoffset, Bodyˉoffset + Bodyˉlength
+    );
+    return Compilerˉsourceˉbindingsˉappend(Build, Entry, false);
 }
 
 export fn Compilerˉsourceˉbindingsˉphaseˉparametersˉconcrete(

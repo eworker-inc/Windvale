@@ -1,0 +1,722 @@
+module Compilerˉsourceˉclosureˉcaptures profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉeffects as Sourceˉeffects;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+export enum Compilerˉsourceˉclosureˉcaptureˉstatus {
+    Valid = 0;
+    Invalidˉexpression = 1;
+    Invalidˉbindingˉevidence = 2;
+    Missingˉcapture = 3;
+    Duplicateˉcapture = 4;
+    Invalidˉcaptureˉmode = 5;
+    Invalidˉcaptureˉclass = 6;
+    Invalidˉparameter = 7;
+    Duplicateˉparameter = 8;
+    Borrowedˉasync = 9;
+    Bodyˉbinding = 10;
+    Invalidˉeffects = 11;
+    Evidenceˉlimit = 12;
+}
+
+export record Compilerˉsourceˉclosureˉcaptureˉsummary {
+    Status: Compilerˉsourceˉclosureˉcaptureˉstatus;
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus;
+    Effectˉstatus: Sourceˉeffects.Compilerˉsourceˉeffectˉstatus;
+    Captures: u32;
+    Parameters: u32;
+    Reads: u32;
+    Assignments: u32;
+    Calls: u32;
+    Languageˉeffects: u32;
+    Capabilityˉeffects: u32;
+    Evidence: bytes;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+}
+
+const CLOSURE_CAPTURE_ENTRY_BYTES: u32 = 24u32;
+const CLOSURE_CAPTURE_LIMIT: u32 = 64u32;
+const CLOSURE_CAPTURE_EVIDENCE_LIMIT: u32 = 1536u32;
+
+fn Compilerˉsourceˉclosureˉcaptureˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉsummaryˉvalue(
+    Status: Compilerˉsourceˉclosureˉcaptureˉstatus,
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
+    Effectˉstatus: Sourceˉeffects.Compilerˉsourceˉeffectˉstatus,
+    Captures: u32,
+    Parameters: u32,
+    Reads: u32,
+    Assignments: u32,
+    Calls: u32,
+    Languageˉeffects: u32,
+    Capabilityˉeffects: u32,
+    Evidence: bytes,
+    Failureˉoffset: u32,
+    Failureˉline: u32,
+    Failureˉcolumn: u32
+) -> Compilerˉsourceˉclosureˉcaptureˉsummary {
+    return Compilerˉsourceˉclosureˉcaptureˉsummary(
+        Status, Bindingˉstatus, Effectˉstatus,
+        Captures, Parameters, Reads, Assignments, Calls,
+        Languageˉeffects, Capabilityˉeffects, Evidence,
+        Failureˉoffset, Failureˉline, Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉclosureˉcaptureˉstatus,
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
+    Effectˉstatus: Sourceˉeffects.Compilerˉsourceˉeffectˉstatus,
+    Captures: u32,
+    Parameters: u32,
+    Evidence: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉclosureˉcaptureˉsummary {
+    return Compilerˉsourceˉclosureˉcaptureˉsummaryˉvalue(
+        Status, Bindingˉstatus, Effectˉstatus,
+        Captures, Parameters, 0u32, 0u32, 0u32,
+        0u32, 0u32,
+        Bytesˉslice(Evidence, 0u32, Bytesˉlength(Evidence)),
+        Offset, Line, Column
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉmode(
+    Mode: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> u32 {
+    if Mode.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Copy { return 0u32; }
+    if Mode.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Move { return 1u32; }
+    if Mode.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+        if Maybeˉmutable.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+            return 3u32;
+        }
+        return 2u32;
+    }
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉshapeˉisˉcopyable(
+    Shape: u32
+) -> bool {
+    if Shape >= 1u32 && Shape <= 16u32 && Shape != 10u32 {
+        return true;
+    }
+    return Shape >= 131072u32 && Shape < 196608u32;
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉentry(
+    Mode: u32,
+    Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch,
+    Name: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Mode);
+    Result = Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+        Result, Local.Slot
+    );
+    Result = Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+        Result, Local.Shape
+    );
+    Result = Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+        Result, Local.Declarationˉoffset
+    );
+    Result = Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+        Result, Name.Offset
+    );
+    return Compilerˉsourceˉclosureˉcaptureˉappendˉu32(
+        Result, Name.Length
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉparentˉpayload(
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary
+) -> bytes {
+    let Offset: u32 =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
+            Bindings.Directory
+        );
+    return Bytesˉslice(
+        Bindings.Directory, Offset,
+        Bytesˉreadˉu32ˉlittle(Bindings.Directory, 8u32) * 36u32
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉparentˉfirst(
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Bindings.Directory,
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Bindings.Directory, Function
+        )
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉparentˉentries(
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Function: u32
+) -> u32 {
+    return Bytesˉreadˉu32ˉlittle(
+        Bindings.Directory,
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Bindings.Directory, Function
+        ) + 4u32
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉphaseˉappendˉparameter(
+    Module: u32,
+    Function: u32,
+    Name: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Bodyˉoffset: u32,
+    Bodyˉlength: u32,
+    Shape: u32,
+    Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase
+) -> Sourceˉbindings.Compilerˉsourceˉbindingˉphase {
+    let Build: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉappendˉparameter(
+            Module, Function, Name, Bodyˉoffset, Bodyˉlength, Shape,
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(
+                Phase
+            )
+        );
+    return Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
+        Phase, Build
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉphaseˉappendˉcapture(
+    Module: u32,
+    Function: u32,
+    Name: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Bodyˉoffset: u32,
+    Bodyˉlength: u32,
+    Shape: u32,
+    Isˉmutable: bool,
+    Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase
+) -> Sourceˉbindings.Compilerˉsourceˉbindingˉphase {
+    let Build: Sourceˉbindings.Compilerˉsourceˉbindingˉbuild =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉappendˉcapture(
+            Module, Function, Name, Bodyˉoffset, Bodyˉlength, Shape,
+            Isˉmutable,
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(
+                Phase
+            )
+        );
+    return Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉbuild(
+        Phase, Build
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉtypeˉstart(
+    Source: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Sourceˉlexer.Compilerˉsourceˉtoken {
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Offset, Line, Column
+        );
+    if First.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+        return First;
+    }
+    let Next: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
+        );
+    if Next.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+        return Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Next.Nextˉoffset, Next.Nextˉline, Next.Nextˉcolumn
+        );
+    }
+    return Next;
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉeffects(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Sourceˉeffects.Compilerˉsourceˉeffectˉset {
+    let Parameterˉendˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength
+        );
+    let Parameterˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength,
+            Parameterˉendˉposition.Line, Parameterˉendˉposition.Column
+        );
+    let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Parameterˉend.Nextˉoffset,
+            Parameterˉend.Nextˉline, Parameterˉend.Nextˉcolumn
+        );
+    let Result: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉtype(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            true, false
+        );
+    let Maybeˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Result.Nextˉoffset, Result.Nextˉline, Result.Nextˉcolumn
+        );
+    let Hasˉclause: bool = Maybeˉeffects.Kind ==
+        Sourceˉlexer.Compilerˉtokenˉkind.Effects;
+    return Sourceˉeffects.Compilerˉsourceˉeffectsˉresolveˉclause(
+        Input, Scan, Symbols, Source, Hasˉclause,
+        Maybeˉeffects.Offset, Maybeˉeffects.Line, Maybeˉeffects.Column,
+        Expression.Offset
+    );
+}
+
+export fn Compilerˉsourceˉclosureˉcapturesˉvalidate(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Compilerˉsourceˉclosureˉcaptureˉsummary {
+    if Expression.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure ||
+        Expression.Items > CLOSURE_CAPTURE_LIMIT ||
+        Expression.Numericˉvalue > CLOSURE_CAPTURE_LIMIT ||
+        Expression.Secondˉoffset > Bytesˉlength(Source) ||
+        Expression.Secondˉlength >
+            Bytesˉlength(Source) - Expression.Secondˉoffset {
+        return Compilerˉsourceˉclosureˉcaptureˉfailure(
+            Input,
+            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
+            Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            0u32, 0u32, Compilerˉsourceˉclosureˉcaptureˉempty(Input),
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
+    var Symbolˉdirectoryˉvalid: bool = false;
+    if Scan.Status == Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid &&
+        Module < Scan.Modules && Bytesˉlength(Symbols.Directory) >= 16u32 {
+        Symbolˉdirectoryˉvalid =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+                Input, Scan, Symbols.Directory,
+                Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32)
+            );
+    }
+    var Sourceˉvalid: bool = false;
+    if Scan.Status == Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid &&
+        Module < Scan.Modules {
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        if View.Status == Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid &&
+            Bytesˉlength(View.Source) == Bytesˉlength(Source) {
+            Sourceˉvalid = Sourceˉset.Compilerˉsourceˉspansˉequal(
+                View.Source, 0u32, Bytesˉlength(View.Source),
+                Source, 0u32, Bytesˉlength(Source)
+            );
+        }
+    }
+    var Bindingˉdirectoryˉvalid: bool = false;
+    if Symbolˉdirectoryˉvalid {
+        Bindingˉdirectoryˉvalid =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid(
+                Input, Scan, Symbols, Bindings.Directory
+            );
+    }
+    if Symbols.Status !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        !Symbolˉdirectoryˉvalid || !Sourceˉvalid ||
+        Bindings.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        !Bindingˉdirectoryˉvalid ||
+        Function >=
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉrangesˉcount(
+                Bindings.Directory
+            ) {
+        var Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus =
+            Bindings.Status;
+        if Symbols.Status !=
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            Bindingˉstatus =
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Sourceˉsymbols;
+        }
+        return Compilerˉsourceˉclosureˉcaptureˉfailure(
+            Input,
+            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence,
+            Bindingˉstatus,
+            Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+            0u32, 0u32, Compilerˉsourceˉclosureˉcaptureˉempty(Input),
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
+    let Parentˉpayload: bytes =
+        Compilerˉsourceˉclosureˉcaptureˉparentˉpayload(Bindings);
+    let Parentˉfirst: u32 =
+        Compilerˉsourceˉclosureˉcaptureˉparentˉfirst(Bindings, Function);
+    let Parentˉentries: u32 =
+        Compilerˉsourceˉclosureˉcaptureˉparentˉentries(Bindings, Function);
+    var Phase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Source);
+    var Evidence: bytes = Compilerˉsourceˉclosureˉcaptureˉempty(Input);
+    let Captureˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Firstˉoffset
+        );
+    var Cursor: u32 = Expression.Firstˉoffset;
+    var Currentˉline: u32 = Captureˉposition.Line;
+    var Currentˉcolumn: u32 = Captureˉposition.Column;
+    var Capture: u32 = 0u32;
+    while Capture < Expression.Items {
+        let Modeˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Modeˉtoken.Nextˉoffset,
+                Modeˉtoken.Nextˉline, Modeˉtoken.Nextˉcolumn
+            );
+        let Mode: u32 = Compilerˉsourceˉclosureˉcaptureˉmode(
+            Modeˉtoken, Maybeˉmutable
+        );
+        var Name: Sourceˉlexer.Compilerˉsourceˉtoken = Maybeˉmutable;
+        if Mode == 3u32 {
+            Name = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Maybeˉmutable.Nextˉoffset,
+                Maybeˉmutable.Nextˉline, Maybeˉmutable.Nextˉcolumn
+            );
+        }
+        if Mode == 4294967295u32 ||
+            Name.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉcaptureˉmode,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Modeˉtoken.Offset, Modeˉtoken.Line, Modeˉtoken.Column
+            );
+        }
+        let Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Parentˉpayload,
+                Parentˉfirst, Parentˉfirst + Parentˉentries,
+                Name.Offset, Name.Length, Expression.Offset
+            );
+        if !Local.Found {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Missingˉcapture,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Unknownˉname,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Name.Offset, Name.Line, Name.Column
+            );
+        }
+        if Sourceˉbindings.Compilerˉsourceˉbindingsˉpriorˉlocal(
+            Source, Phase.Payload, 0u32, Phase.Entries,
+            Module, Function, Name.Offset, Name.Length
+        ) {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉcapture,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Duplicateˉlocal,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Name.Offset, Name.Line, Name.Column
+            );
+        }
+        if (Mode == 0u32 &&
+                !Compilerˉsourceˉclosureˉcaptureˉshapeˉisˉcopyable(
+                    Local.Shape
+                )) ||
+            (Mode == 3u32 && Local.Kind !=
+                Sourceˉbindings.Compilerˉsourceˉbindingˉkind.Var) {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉcaptureˉclass,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Name.Offset, Name.Line, Name.Column
+            );
+        }
+        if Expression.Booleanˉvalue && (Mode == 2u32 || Mode == 3u32) {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Borrowedˉasync,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Name.Offset, Name.Line, Name.Column
+            );
+        }
+        if Bytesˉlength(Evidence) > CLOSURE_CAPTURE_EVIDENCE_LIMIT -
+                CLOSURE_CAPTURE_ENTRY_BYTES {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Evidenceˉlimit,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, 0u32, Evidence,
+                Name.Offset, Name.Line, Name.Column
+            );
+        }
+        Evidence = Bytesˉconcat(
+            Evidence,
+            Compilerˉsourceˉclosureˉcaptureˉentry(Mode, Local, Name)
+        );
+        Phase = Compilerˉsourceˉclosureˉcaptureˉphaseˉappendˉcapture(
+            Module, Function, Name,
+            Expression.Secondˉoffset, Expression.Secondˉlength,
+            Local.Shape, Mode == 3u32, Phase
+        );
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn
+            );
+        Cursor = Separator.Nextˉoffset;
+        Currentˉline = Separator.Nextˉline;
+        Currentˉcolumn = Separator.Nextˉcolumn;
+        Capture = Capture + 1u32;
+    }
+    let Parameterˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset
+        );
+    Cursor = Expression.Itemsˉoffset;
+    Currentˉline = Parameterˉposition.Line;
+    Currentˉcolumn = Parameterˉposition.Column;
+    var Parameter: u32 = 0u32;
+    while Parameter < Expression.Numericˉvalue {
+        let Parameterˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Parameterˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Parameterˉname.Nextˉoffset,
+                Parameterˉname.Nextˉline, Parameterˉname.Nextˉcolumn
+            );
+        let Parameterˉtypeˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉsourceˉclosureˉcaptureˉtypeˉstart(
+                Source, Parameterˉcolon.Nextˉoffset,
+                Parameterˉcolon.Nextˉline, Parameterˉcolon.Nextˉcolumn
+            );
+        let Parameterˉtype: Sourceˉsymbols.Compilerˉsourceˉtypeˉbinding =
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉtype(
+                Input, Scan, Symbols.Directory, Symbols.Lookup,
+                Symbols.Visibility, Module, Source,
+                Parameterˉtypeˉtoken.Offset,
+                Parameterˉtypeˉtoken.Line, Parameterˉtypeˉtoken.Column,
+                Symbols.Records, Symbols.Enums, false
+            );
+        let Parameterˉparsed: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                Source, Parameterˉcolon.Nextˉoffset,
+                Parameterˉcolon.Nextˉline,
+                Parameterˉcolon.Nextˉcolumn, false
+            );
+        let Parameterˉshape: u32 =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉshape(Parameterˉtype);
+        if Parameterˉname.Kind !=
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier ||
+            Parameterˉcolon.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Colon ||
+            Parameterˉtype.Status !=
+                Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Parameterˉparsed.Status !=
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid ||
+            Parameterˉshape == 0u32 {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉparameter,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Unknownˉtype,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, Parameter, Evidence,
+                Parameterˉtypeˉtoken.Offset,
+                Parameterˉtypeˉtoken.Line, Parameterˉtypeˉtoken.Column
+            );
+        }
+        if Sourceˉbindings.Compilerˉsourceˉbindingsˉpriorˉlocal(
+            Source, Phase.Payload, 0u32, Phase.Entries,
+            Module, Function, Parameterˉname.Offset, Parameterˉname.Length
+        ) {
+            return Compilerˉsourceˉclosureˉcaptureˉfailure(
+                Input,
+                Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉparameter,
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Duplicateˉlocal,
+                Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+                Capture, Parameter, Evidence,
+                Parameterˉname.Offset,
+                Parameterˉname.Line, Parameterˉname.Column
+            );
+        }
+        Phase = Compilerˉsourceˉclosureˉcaptureˉphaseˉappendˉparameter(
+            Module, Function, Parameterˉname,
+            Expression.Secondˉoffset, Expression.Secondˉlength,
+            Parameterˉshape, Phase
+        );
+        let Parameterˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Parameterˉparsed.Nextˉoffset,
+                Parameterˉparsed.Nextˉline,
+                Parameterˉparsed.Nextˉcolumn
+            );
+        Cursor = Parameterˉseparator.Nextˉoffset;
+        Currentˉline = Parameterˉseparator.Nextˉline;
+        Currentˉcolumn = Parameterˉseparator.Nextˉcolumn;
+        Parameter = Parameter + 1u32;
+    }
+    if Phase.Buildˉstatus !=
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉclosureˉcaptureˉfailure(
+            Input,
+            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉparameter,
+            Phase.Buildˉstatus,
+            Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+            Capture, Parameter, Evidence,
+            Phase.Buildˉfailureˉoffset,
+            Phase.Buildˉfailureˉline,
+            Phase.Buildˉfailureˉcolumn
+        );
+    }
+    let Bodyˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Secondˉoffset
+        );
+    Phase = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉblock(
+        Input, Scan, Symbols, Module, Function, Source,
+        Expression.Secondˉoffset,
+        Bodyˉposition.Line, Bodyˉposition.Column,
+        Expression.Secondˉoffset + Expression.Secondˉlength,
+        true, Phase
+    );
+    if Phase.Buildˉstatus !=
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        Phase.Bodyˉstatus !=
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        let Failureˉoffset: u32 = Phase.Bodyˉfailureˉoffset;
+        let Failureˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Source, Failureˉoffset,
+                Phase.Bodyˉfailureˉline, Phase.Bodyˉfailureˉcolumn
+            );
+        let Outer: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch =
+            Sourceˉbindings.Compilerˉsourceˉbindingsˉfindˉlocal(
+                Source, Parentˉpayload,
+                Parentˉfirst, Parentˉfirst + Parentˉentries,
+                Failureˉtoken.Offset, Failureˉtoken.Length,
+                Expression.Offset
+            );
+        var Status: Compilerˉsourceˉclosureˉcaptureˉstatus =
+            Compilerˉsourceˉclosureˉcaptureˉstatus.Bodyˉbinding;
+        if Phase.Bodyˉstatus ==
+                Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Unknownˉname &&
+            Outer.Found {
+            Status = Compilerˉsourceˉclosureˉcaptureˉstatus.Missingˉcapture;
+        }
+        return Compilerˉsourceˉclosureˉcaptureˉfailure(
+            Input, Status, Phase.Bodyˉstatus,
+            Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+            Capture, Parameter, Evidence,
+            Failureˉoffset,
+            Phase.Bodyˉfailureˉline,
+            Phase.Bodyˉfailureˉcolumn
+        );
+    }
+    let Effects: Sourceˉeffects.Compilerˉsourceˉeffectˉset =
+        Compilerˉsourceˉclosureˉcaptureˉeffects(
+            Input, Scan, Symbols, Source, Expression
+        );
+    if Effects.Status != Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Effects.Count != Expression.Numericˉhigh {
+        return Compilerˉsourceˉclosureˉcaptureˉfailure(
+            Input,
+            Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉeffects,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Effects.Status, Capture, Parameter, Evidence,
+            Effects.Failureˉoffset, Expression.Line, Expression.Column
+        );
+    }
+    return Compilerˉsourceˉclosureˉcaptureˉsummaryˉvalue(
+        Compilerˉsourceˉclosureˉcaptureˉstatus.Valid,
+        Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+        Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid,
+        Capture, Parameter, Phase.Reads, Phase.Assignments, Phase.Calls,
+        Effects.Language, Effects.Capabilities, Evidence,
+        Expression.Nextˉoffset, Expression.Nextˉline, Expression.Nextˉcolumn
+    );
+}
+
+export fn Compilerˉsourceˉclosureˉcaptureˉmodeˉat(
+    Summary: Compilerˉsourceˉclosureˉcaptureˉsummary,
+    Capture: u32
+) -> u32 {
+    if Capture >= Summary.Captures ||
+        Bytesˉlength(Summary.Evidence) !=
+            Summary.Captures * CLOSURE_CAPTURE_ENTRY_BYTES {
+        return 4294967295u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Evidence, Capture * CLOSURE_CAPTURE_ENTRY_BYTES
+    );
+}
+
+export fn Compilerˉsourceˉclosureˉcaptureˉslotˉat(
+    Summary: Compilerˉsourceˉclosureˉcaptureˉsummary,
+    Capture: u32
+) -> u32 {
+    if Capture >= Summary.Captures ||
+        Bytesˉlength(Summary.Evidence) !=
+            Summary.Captures * CLOSURE_CAPTURE_ENTRY_BYTES {
+        return 4294967295u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Evidence,
+        Capture * CLOSURE_CAPTURE_ENTRY_BYTES + 4u32
+    );
+}
+
+export fn Compilerˉsourceˉclosureˉcaptureˉshapeˉat(
+    Summary: Compilerˉsourceˉclosureˉcaptureˉsummary,
+    Capture: u32
+) -> u32 {
+    if Capture >= Summary.Captures ||
+        Bytesˉlength(Summary.Evidence) !=
+            Summary.Captures * CLOSURE_CAPTURE_ENTRY_BYTES {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Summary.Evidence,
+        Capture * CLOSURE_CAPTURE_ENTRY_BYTES + 8u32
+    );
+}

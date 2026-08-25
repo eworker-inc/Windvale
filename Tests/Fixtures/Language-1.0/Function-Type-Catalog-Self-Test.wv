@@ -1,0 +1,300 @@
+module Languageˉoneˉfunctionˉtypeˉcatalogˉselfˉtest profile portable;
+
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
+
+fn Parameters() -> bytes {
+    var Result: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+            Textˉtoˉutf8("")
+        );
+    Result = Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+        Result, 1u32, 0u32
+    );
+    return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+        Result, 2u32, 1u32
+    );
+}
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Baseˉadmission(
+) -> Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission {
+    return Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(),
+        0u32, 1u32, 3u32, 0u32, 0u32, 0u32, Parameters(), 16u32
+    );
+}
+
+fn Emptyˉprobe() -> i32 {
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty();
+    if !Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+            Catalog
+        ) != 0u32 {
+        return 21;
+    }
+    return 42;
+}
+
+fn Identityˉprobe() -> i32 {
+    let Admission: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Baseˉadmission();
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Admission
+        );
+    if Admission.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Admission.Reused || Admission.Instance != 0u32 ||
+        !Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Catalog
+        ) ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshape(0u32) !=
+            2147483904u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉflags(Catalog, 0u32) !=
+            0u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉprofile(
+            Catalog, 0u32
+        ) != 1u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉresultˉshape(
+            Catalog, 0u32
+        ) != 3u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameters(
+            Catalog, 0u32
+        ) != 2u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameterˉshape(
+            Catalog, 0u32, 1u32
+        ) != 2u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparameterˉmode(
+            Catalog, 0u32, 1u32
+        ) != 1u32 {
+        return 22;
+    }
+    let Repeated: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Parameters(), 4294967295u32
+        );
+    if Repeated.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        !Repeated.Reused || Repeated.Instance != 0u32 ||
+        Bytesˉlength(Repeated.Catalogˉevidence) !=
+            Bytesˉlength(Catalog.Evidence) {
+        return 23;
+    }
+    return 42;
+}
+
+fn Exactˉsignatureˉprobe() -> i32 {
+    let First: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Baseˉadmission();
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            First
+        );
+    let Distinct: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 1u32, 2u32, 3u32, 0u32,
+            4u32, 8u32, Parameters(), 32u32
+        );
+    let Result: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Distinct
+        );
+    if Distinct.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Distinct.Reused || Distinct.Instance != 1u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+            Result
+        ) != 2u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉflags(Result, 1u32) !=
+            1u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
+            Result, 1u32
+        ) != 4u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcapabilityˉeffects(
+            Result, 1u32
+        ) != 8u32 {
+        return 24;
+    }
+    return 42;
+}
+
+fn Nestedˉprobe() -> i32 {
+    let First: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Baseˉadmission();
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            First
+        );
+    let Nestedˉparameters: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+                Textˉtoˉutf8("")
+            ),
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshape(0u32), 2u32
+        );
+    let Nested: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Nestedˉparameters, 24u32
+        );
+    let Forwardˉparameters: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+                Textˉtoˉutf8("")
+            ),
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshape(3u32), 0u32
+        );
+    let Forward: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Forwardˉparameters, 24u32
+        );
+    if Nested.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Nested.Instance != 1u32 || Nested.Reused ||
+        Forward.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉshape {
+        return 25;
+    }
+    return 42;
+}
+
+fn Invalidˉinputˉprobe() -> i32 {
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty();
+    let Tooˉmany: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+            Parameters(), 1u32, 3u32
+        );
+    let Invalidˉmode:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Tooˉmany, 1u32
+        );
+    let Invalidˉprofile:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 4u32, 3u32, 0u32,
+            0u32, 0u32, Parameters(), 1u32
+        );
+    let Invalidˉresult:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 0u32, 0u32,
+            0u32, 0u32, Parameters(), 1u32
+        );
+    let Excessive:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Parameters(), 4294967295u32
+        );
+    var Excessˉparameters: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+            Textˉtoˉutf8("")
+        );
+    var Parameter: u32 = 0u32;
+    while Parameter < 65u32 {
+        Excessˉparameters =
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+                Excessˉparameters, 1u32, 0u32
+            );
+        Parameter = Parameter + 1u32;
+    }
+    let Excessˉarity:
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            0u32, 0u32, Excessˉparameters, 1u32
+        );
+    if Invalidˉmode.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉmode ||
+        Invalidˉprofile.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉprofile ||
+        Invalidˉresult.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉshape ||
+        Excessive.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Estimatedˉlimit ||
+        Excessˉarity.Status !=
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Parameterˉlimit {
+        return 26;
+    }
+    return 42;
+}
+
+fn Malformedˉprobe() -> i32 {
+    let Admission: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Baseˉadmission();
+    let Valid: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Admission
+        );
+    let Truncated: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Bytesˉslice(Valid.Evidence, 0u32, 24u32)
+        );
+    let Badˉmagic: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Bytesˉconcat(
+                Textˉtoˉutf8("BAD!"),
+                Bytesˉslice(
+                    Valid.Evidence, 4u32, Bytesˉlength(Valid.Evidence) - 4u32
+                )
+            )
+        );
+    let Entry: bytes = Bytesˉslice(Valid.Evidence, 24u32, 48u32);
+    var Duplicateˉevidence: bytes = Textˉtoˉutf8("WVFT");
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(1u32)
+    );
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(0u32)
+    );
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 120u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 32u32);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    let Duplicate: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Duplicateˉevidence
+        );
+    if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Truncated
+        ) ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Badˉmagic
+        ) ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Duplicate
+        ) {
+        return 27;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    let Empty: i32 = Emptyˉprobe();
+    if Empty != 42 { return Empty; }
+    let Identity: i32 = Identityˉprobe();
+    if Identity != 42 { return Identity; }
+    let Exact: i32 = Exactˉsignatureˉprobe();
+    if Exact != 42 { return Exact; }
+    let Nested: i32 = Nestedˉprobe();
+    if Nested != 42 { return Nested; }
+    let Invalid: i32 = Invalidˉinputˉprobe();
+    if Invalid != 42 { return Invalid; }
+    return Malformedˉprobe();
+}

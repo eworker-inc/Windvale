@@ -105,6 +105,10 @@ export enum Compilerˉtokenˉkind {
     Mut = 101;
     Effects = 102;
     Using = 103;
+    Async = 104;
+    Unsafe = 105;
+    Copy = 106;
+    Move = 107;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -432,6 +436,10 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 99u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "case") { return Compilerˉtokenˉkind.Case; }
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "copy") { return Compilerˉtokenˉkind.Copy; }
+        }
+        if First == 109u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "move") { return Compilerˉtokenˉkind.Move; }
         }
         if First == 112u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "push") { return Compilerˉtokenˉkind.Push; }
@@ -452,6 +460,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 5u32 {
+        if First == 97u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "async") { return Compilerˉtokenˉkind.Async; }
+        }
         if First == 98u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "break") { return Compilerˉtokenˉkind.Break; }
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "bytes") { return Compilerˉtokenˉkind.Bytes; }
@@ -504,6 +515,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 115u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "system") { return Compilerˉtokenˉkind.System; }
+        }
+        if First == 117u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "unsafe") { return Compilerˉtokenˉkind.Unsafe; }
         }
         return Compilerˉtokenˉkind.Identifier;
     }

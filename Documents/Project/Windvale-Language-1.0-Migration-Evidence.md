@@ -3066,3 +3066,50 @@ This is exact focused Windows development evidence. Independent Linux
 reproduction, the repository-wide Qualification gate, and promoted runner
 repinning remain separate. General open/read APIs and effect enforcement remain
 later slices rather than implied behavior.
+
+## Callable front-end and static-semantics checkpoint
+
+[Decision 0852](../Decisions/0852-Represent-Exact-Structural-Function-Types-With-Wvft.md)
+and
+[Decision 0853](../Decisions/0853-Validate-Explicit-Closure-Captures-Before-Lowering.md)
+and
+[Decision 0854](../Decisions/0854-Bound-Exact-Transitive-Effect-Analysis.md)
+establish the first Slice 6 checkpoint without claiming executable function
+values. Edition 1 recognizes `async`, `unsafe`, `copy`, and `move`; the body
+parser admits exact structural function types, explicit closure capture lists,
+and named call arguments. Named arguments bind by declared parameter identity
+and reject unknown, duplicate, positional-after-named, and unsupported-callable
+forms.
+
+WVFT 1.0 interns exact function signatures by parameter mode and shape, result
+shape, async/unsafe flags, and canonical effect identity. Its bounded catalog
+rejects malformed headers, duplicate records, unsupported modes or profiles,
+unknown shapes, excessive arity, and excessive estimated evidence before
+publication. The effect analyzer resolves the canonical language and capability
+registries, computes exact transitive effects through bounded call-graph
+closure, and rejects missing, extra, duplicate, or unknown declarations.
+
+Closure capture analysis gives each closure a private binding phase containing
+only its explicit captures and parameters. `copy`, `move`, `borrow`, and
+`borrow mut` have distinct validation; mutable borrow requires an outer `var`,
+borrowed async captures reject, duplicate or missing captures reject, and
+module capability roots remain effects rather than captured values. The current
+copy classifier deliberately admits only proven shareable immutable shapes and
+rejects unproven aggregate classes.
+
+The focused Windows owner builds and packages each maintained compiler-scale
+artifact once, reuses the target-aware development cache, and executes 30
+semantic cases:
+
+```text
+native language 1 callable semantics status=Passed cases=30 result=42 modules=5 wvb-bytes=3162538 evidence-sha256=b2494bb3d5d7867ccc2b3e183b350364fe4c5dd1a4668a2ef6e32a19cad5b4cb
+```
+
+The registry advances to 113 owners and 5,472 cases. Its 17,993 LF-only bytes
+have SHA-256
+`911cebd1ac264e6bdc104ebefd17f24f257c3b1f69abd574790cf2db3bdb7e19`.
+This is a focused Windows development checkpoint. Independent Linux execution
+remains required before cross-host conformance is claimed. Slice 6 still needs
+typed WVIR/WVB callable values, indirect calls, closure environment lowering,
+move invalidation and escape enforcement, verifier rules, and runtime/native
+execution; none of those are implied by this checkpoint.

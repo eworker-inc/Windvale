@@ -379,6 +379,36 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 callable semantics routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Closure-Captures-Core.wv',
+            'Compiler/Windvale/Source-Effects-Core.wv',
+            'Compiler/Windvale/Source-Function-Type-Lowering-Core.wv',
+            'Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj',
+            'Projects/Compiler/Windvale-Source-Effects-Core.wvproj',
+            'Projects/Compiler/Windvale-Source-Function-Type-Lowering-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Semantics.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Function-Type-Catalog.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Function-Value-Front-End.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Named-Argument-Semantics.wvproj',
+            'Specifications/Compiler-Source-Closure-Captures.md',
+            'Specifications/Compiler-Source-Effects.md',
+            'Specifications/Compiler-Source-Function-Types.md',
+            'Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Function-Value-Front-End-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Callable-Semantics.cmd',
+            'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs',
+            'Tools/Native/Test-Language-1.0-Callable-Semantics.sh'
+        )
+        Suites = @('language-1-callable-semantics')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 effect clause front-end routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Clause-Front-End.wvproj',
@@ -441,7 +471,8 @@ $NativeCases = @(
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
             'language-1-front-door',
-            'language-1-effect-clause-front-end'
+            'language-1-effect-clause-front-end',
+            'language-1-callable-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -456,7 +487,8 @@ $NativeCases = @(
             'generic-nominal-type-materialization',
             'generic-nominal-wvlb-carrier',
             'language-1-front-door',
-            'language-1-using-front-end'
+            'language-1-using-front-end',
+            'language-1-callable-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -616,6 +648,7 @@ $NativeCases = @(
             'language-1-front-door',
             'language-1-effect-clause-front-end',
             'language-1-using-front-end',
+            'language-1-callable-semantics',
             'language-1-memory-budget-split-execution',
             'lowerer-rejections',
             'console-packager-source-reconstruction'
@@ -3606,9 +3639,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 113 -or
+if ($VerificationOwnerLines.Count -ne 114 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 112-owner inventory differs.'
+    throw 'The native verification-owner header or exact 113-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3646,7 +3679,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5442 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5472 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -55,6 +55,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Explicitˉgenericˉcall = 18;
     Genericˉnamedˉrecord = 19;
     Array = 20;
+    Closure = 21;
 }
 
 export record Compilerˉsourceˉposition {
@@ -1247,7 +1248,11 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
     Endˉoffset: u32,
     Nesting: u32,
     Line: u32,
-    Column: u32
+    Column: u32,
+    Kind: Compilerˉsourceˉexpressionˉkind,
+    Typeˉargumentsˉoffset: u32,
+    Typeˉargumentsˉlength: u32,
+    Typeˉarguments: u32
 ) -> Compilerˉsourceˉexpression {
     if Nesting >= 64u32 {
         return Compilerˉbodyˉexpressionˉfailure(
@@ -1264,6 +1269,8 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
     var Items: u32 = 0u32;
     var Nodes: u32 = 1u32;
     var Depth: u32 = 1u32;
+    var Argumentˉmodeˉselected: bool = false;
+    var Namedˉarguments: bool = false;
     var Reading: bool = true;
     while Reading {
         let Current: Sourceˉlexer.Compilerˉsourceˉtoken =
@@ -1283,14 +1290,21 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
             if Callˉend.Status != Compilerˉbodyˉparseˉstatus.Valid {
                 return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Callˉend);
             }
+            var Callˉoperator: Sourceˉlexer.Compilerˉtokenˉkind =
+                Sourceˉlexer.Compilerˉtokenˉkind.End;
+            if Namedˉarguments {
+                Callˉoperator = Sourceˉlexer.Compilerˉtokenˉkind.Colon;
+            }
             return Compilerˉbodyˉexpressionˉmake(
-                Compilerˉsourceˉexpressionˉkind.Call,
-                Sourceˉlexer.Compilerˉtokenˉkind.End,
+                Kind,
+                Callˉoperator,
                 Name.Offset, Callˉend.Nextˉoffset, Line, Column,
                 Name.Offset, Name.Length,
-                Name.Offset, 0u32, Name.Offset, 0u32,
+                Typeˉargumentsˉoffset, Typeˉargumentsˉlength,
+                Name.Offset, 0u32,
                 Itemsˉoffset, Itemsˉend, Items,
-                Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false,
+                Sourceˉlexer.Compilerˉnumericˉkind.None,
+                Typeˉarguments, false,
                 Callˉend.Nextˉoffset, Callˉend.Nextˉline,
                 Callˉend.Nextˉcolumn, Nodes, Depth
             );
@@ -1302,6 +1316,30 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
                 Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
             );
         }
+        var Argumentˉoffset: u32 = Current.Offset;
+        let Afterˉargumentˉname: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(
+                Input, Current.Nextˉoffset, Current.Nextˉline,
+                Current.Nextˉcolumn, Endˉoffset
+            );
+        let Isˉnamed: bool =
+            Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier &&
+            Afterˉargumentˉname.Kind ==
+                Sourceˉlexer.Compilerˉtokenˉkind.Colon;
+        if !Argumentˉmodeˉselected {
+            Argumentˉmodeˉselected = true;
+            Namedˉarguments = Isˉnamed;
+        } else if Namedˉarguments != Isˉnamed {
+            return Compilerˉbodyˉexpressionˉfailure(
+                Compilerˉbodyˉparseˉstatus.Expectedˉexpression,
+                Current, Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            );
+        }
+        if Isˉnamed {
+            Cursor = Afterˉargumentˉname.Nextˉoffset;
+            Currentˉline = Afterˉargumentˉname.Nextˉline;
+            Currentˉcolumn = Afterˉargumentˉname.Nextˉcolumn;
+        }
         let Argument: Compilerˉsourceˉexpression =
             Compilerˉparseˉexpressionˉvalidated(
                 Input, Cursor, Currentˉline, Currentˉcolumn,
@@ -1310,7 +1348,7 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
         if Argument.Status != Compilerˉbodyˉparseˉstatus.Valid {
             return Argument;
         }
-        if Items == 0u32 { Itemsˉoffset = Argument.Offset; }
+        if Items == 0u32 { Itemsˉoffset = Argumentˉoffset; }
         Itemsˉend = Argument.Offset + Argument.Length;
         Items = Items + 1u32;
         Nodes = Nodes + Argument.Nodes;
@@ -1349,6 +1387,396 @@ fn Compilerˉbodyˉparseˉcallˉexpression(
     );
 }
 
+fn Compilerˉbodyˉparseˉclosureˉcaptures(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Endˉoffset: u32
+) -> Compilerˉbodyˉparseˉstep {
+    let Left: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Offset, Line, Column, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbracket
+    );
+    if Left.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Left;
+    }
+    var Cursor: u32 = Left.Nextˉoffset;
+    var Currentˉline: u32 = Left.Nextˉline;
+    var Currentˉcolumn: u32 = Left.Nextˉcolumn;
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+    );
+    var Itemsˉend: u32 = First.Offset;
+    var Items: u32 = 0u32;
+    var Reading: bool = true;
+    while Reading {
+        let Mode: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+        );
+        if Mode.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket {
+            Reading = false;
+        } else {
+            if Items >= 64u32 {
+                let Limited: Compilerˉbodyˉparseˉstep =
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Itemˉlimit, Mode,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket
+                    );
+                return Limited;
+            }
+            if Mode.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Copy &&
+                Mode.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Move &&
+                Mode.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Borrow {
+                let Invalid: Compilerˉbodyˉparseˉstep =
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Expectedˉtoken, Mode,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Copy
+                    );
+                return Invalid;
+            }
+            Cursor = Mode.Nextˉoffset;
+            Currentˉline = Mode.Nextˉline;
+            Currentˉcolumn = Mode.Nextˉcolumn;
+            let Maybeˉmutable: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Compilerˉbodyˉtoken(
+                    Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+                );
+            if Mode.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Borrow &&
+                Maybeˉmutable.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Mut {
+                Cursor = Maybeˉmutable.Nextˉoffset;
+                Currentˉline = Maybeˉmutable.Nextˉline;
+                Currentˉcolumn = Maybeˉmutable.Nextˉcolumn;
+            }
+            let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+                Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+            );
+            let Afterˉname: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+                Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            );
+            if Afterˉname.Status != Compilerˉbodyˉparseˉstatus.Valid {
+                return Afterˉname;
+            }
+            Items = Items + 1u32;
+            Itemsˉend = Name.Nextˉoffset;
+            Cursor = Afterˉname.Nextˉoffset;
+            Currentˉline = Afterˉname.Nextˉline;
+            Currentˉcolumn = Afterˉname.Nextˉcolumn;
+            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Compilerˉbodyˉtoken(
+                    Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+                );
+            if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                Cursor = Separator.Nextˉoffset;
+                Currentˉline = Separator.Nextˉline;
+                Currentˉcolumn = Separator.Nextˉcolumn;
+            } else if Separator.Kind !=
+                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket {
+                let Invalidˉseparator: Compilerˉbodyˉparseˉstep =
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Expectedˉtoken, Separator,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket
+                    );
+                return Invalidˉseparator;
+            }
+        }
+    }
+    let Right: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbracket
+    );
+    if Right.Status != Compilerˉbodyˉparseˉstatus.Valid { return Right; }
+    return Compilerˉbodyˉstepˉvalid(
+        Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn,
+        0u32, Items, 0u32, Itemsˉend
+    );
+}
+
+fn Compilerˉbodyˉparseˉclosureˉparameters(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Endˉoffset: u32
+) -> Compilerˉbodyˉparseˉstep {
+    let Left: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Offset, Line, Column, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis
+    );
+    if Left.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Left;
+    }
+    var Cursor: u32 = Left.Nextˉoffset;
+    var Currentˉline: u32 = Left.Nextˉline;
+    var Currentˉcolumn: u32 = Left.Nextˉcolumn;
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+    );
+    var Itemsˉend: u32 = First.Offset;
+    var Items: u32 = 0u32;
+    var Reading: bool = true;
+    while Reading {
+        let Name: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+            Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+        );
+        if Name.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+            Reading = false;
+        } else {
+            if Items >= 64u32 {
+                let Limited: Compilerˉbodyˉparseˉstep =
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Itemˉlimit, Name,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+                    );
+                return Limited;
+            }
+            let Afterˉname: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+                Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            );
+            if Afterˉname.Status != Compilerˉbodyˉparseˉstatus.Valid {
+                return Afterˉname;
+            }
+            let Colon: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+                Input, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline,
+                Afterˉname.Nextˉcolumn, Endˉoffset,
+                Sourceˉlexer.Compilerˉtokenˉkind.Colon
+            );
+            if Colon.Status != Compilerˉbodyˉparseˉstatus.Valid {
+                return Colon;
+            }
+            let Type: Sourceˉdeclarations.Compilerˉparseˉstep =
+                Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
+                    Input, Colon.Nextˉoffset, Colon.Nextˉline,
+                    Colon.Nextˉcolumn, false
+                );
+            if Type.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+                return Compilerˉbodyˉstepˉfromˉdeclarationˉstep(Type);
+            }
+            Items = Items + 1u32;
+            Itemsˉend = Type.Nextˉoffset;
+            Cursor = Type.Nextˉoffset;
+            Currentˉline = Type.Nextˉline;
+            Currentˉcolumn = Type.Nextˉcolumn;
+            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Compilerˉbodyˉtoken(
+                    Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+                );
+            if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+                Cursor = Separator.Nextˉoffset;
+                Currentˉline = Separator.Nextˉline;
+                Currentˉcolumn = Separator.Nextˉcolumn;
+            } else if Separator.Kind !=
+                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
+                let Invalid: Compilerˉbodyˉparseˉstep =
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Expectedˉtoken, Separator,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+                    );
+                return Invalid;
+            }
+        }
+    }
+    let Right: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+    );
+    if Right.Status != Compilerˉbodyˉparseˉstatus.Valid { return Right; }
+    return Compilerˉbodyˉstepˉvalid(
+        Right.Nextˉoffset, Right.Nextˉline, Right.Nextˉcolumn,
+        0u32, Items, 0u32, Itemsˉend
+    );
+}
+
+fn Compilerˉbodyˉclosureˉexpressionˉmake(
+    Start: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Captureˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Captures: Compilerˉbodyˉparseˉstep,
+    Parameterˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Parameters: Compilerˉbodyˉparseˉstep,
+    Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Body: Sourceˉdeclarations.Compilerˉparseˉstep,
+    Effectˉoperator: Sourceˉlexer.Compilerˉtokenˉkind,
+    Effects: u32,
+    Isˉasync: bool
+) -> Compilerˉsourceˉexpression {
+    return Compilerˉsourceˉexpression(
+        Compilerˉbodyˉparseˉstatus.Valid,
+        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+        Compilerˉsourceˉexpressionˉkind.Closure,
+        Effectˉoperator,
+        Start.Offset,
+        Body.Nextˉoffset - Start.Offset,
+        Start.Line,
+        Start.Column,
+        Start.Offset,
+        Bodyˉstart.Offset - Start.Offset,
+        Captureˉfirst.Offset,
+        Captures.Maximumˉexpressionˉdepth - Captureˉfirst.Offset,
+        Bodyˉstart.Offset,
+        Body.Nextˉoffset - Bodyˉstart.Offset,
+        Parameterˉfirst.Offset,
+        Parameters.Maximumˉexpressionˉdepth - Parameterˉfirst.Offset,
+        Captures.Expressions,
+        Sourceˉlexer.Compilerˉnumericˉkind.None,
+        Parameters.Expressions,
+        Effects,
+        Isˉasync,
+        Body.Nextˉoffset,
+        Body.Nextˉline,
+        Body.Nextˉcolumn,
+        1u32,
+        1u32,
+        Body.Nextˉoffset,
+        Body.Nextˉline,
+        Body.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Sourceˉlexer.Compilerˉtokenˉkind.End
+    );
+}
+
+fn Compilerˉbodyˉparseˉclosureˉexpression(
+    Input: bytes,
+    Start: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Endˉoffset: u32,
+    Nesting: u32
+) -> Compilerˉsourceˉexpression {
+    if Nesting >= 64u32 {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Nestingˉlimit, Start,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    var Isˉasync: bool = false;
+    var Cursor: u32 = Start.Offset;
+    var Currentˉline: u32 = Start.Line;
+    var Currentˉcolumn: u32 = Start.Column;
+    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        Isˉasync = true;
+        Cursor = Start.Nextˉoffset;
+        Currentˉline = Start.Nextˉline;
+        Currentˉcolumn = Start.Nextˉcolumn;
+    }
+    let Afterˉfn: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Fn
+    );
+    if Afterˉfn.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Afterˉfn);
+    }
+    let Captureˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Afterˉfn.Nextˉoffset, Afterˉfn.Nextˉline,
+            Afterˉfn.Nextˉcolumn, Endˉoffset
+        );
+    let Captureˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Captureˉstart.Nextˉoffset, Captureˉstart.Nextˉline,
+            Captureˉstart.Nextˉcolumn, Endˉoffset
+        );
+    let Captures: Compilerˉbodyˉparseˉstep =
+        Compilerˉbodyˉparseˉclosureˉcaptures(
+            Input, Afterˉfn.Nextˉoffset, Afterˉfn.Nextˉline,
+            Afterˉfn.Nextˉcolumn, Endˉoffset
+        );
+    if Captures.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Captures);
+    }
+    let Parameterˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Captures.Nextˉoffset, Captures.Nextˉline,
+            Captures.Nextˉcolumn, Endˉoffset
+        );
+    let Parameterˉfirst: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Parameterˉstart.Nextˉoffset, Parameterˉstart.Nextˉline,
+            Parameterˉstart.Nextˉcolumn, Endˉoffset
+        );
+    let Parameters: Compilerˉbodyˉparseˉstep =
+        Compilerˉbodyˉparseˉclosureˉparameters(
+            Input, Captures.Nextˉoffset, Captures.Nextˉline,
+            Captures.Nextˉcolumn, Endˉoffset
+        );
+    if Parameters.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Parameters);
+    }
+    let Arrow: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
+        Input, Parameters.Nextˉoffset, Parameters.Nextˉline,
+        Parameters.Nextˉcolumn, Endˉoffset,
+        Sourceˉlexer.Compilerˉtokenˉkind.Arrow
+    );
+    if Arrow.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Arrow);
+    }
+    let Result: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉtype(
+            Input, Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            true, false
+        );
+    if Result.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(
+            Compilerˉbodyˉstepˉfromˉdeclarationˉstep(Result)
+        );
+    }
+    var Headerˉoffset: u32 = Result.Nextˉoffset;
+    var Headerˉline: u32 = Result.Nextˉline;
+    var Headerˉcolumn: u32 = Result.Nextˉcolumn;
+    var Effectˉoperator: Sourceˉlexer.Compilerˉtokenˉkind =
+        Sourceˉlexer.Compilerˉtokenˉkind.End;
+    var Effects: u32 = 0u32;
+    let Maybeˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Headerˉoffset, Headerˉline, Headerˉcolumn, Endˉoffset
+        );
+    if Maybeˉeffects.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Effects {
+        let Clause: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉeffectˉclause(
+                Input, Headerˉoffset, Headerˉline, Headerˉcolumn
+            );
+        if Clause.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(
+                Compilerˉbodyˉstepˉfromˉdeclarationˉstep(Clause)
+            );
+        }
+        Effectˉoperator = Sourceˉlexer.Compilerˉtokenˉkind.Effects;
+        Effects = Clause.Items;
+        Headerˉoffset = Clause.Nextˉoffset;
+        Headerˉline = Clause.Nextˉline;
+        Headerˉcolumn = Clause.Nextˉcolumn;
+    }
+    let Bodyˉstart: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
+        Input, Headerˉoffset, Headerˉline, Headerˉcolumn, Endˉoffset
+    );
+    let Body: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉskipˉblockˉafterˉscan(
+            Input, Headerˉoffset, Headerˉline, Headerˉcolumn
+        );
+    if Body.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(
+            Compilerˉbodyˉstepˉfromˉdeclarationˉstep(Body)
+        );
+    }
+    if Body.Nextˉoffset > Endˉoffset {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Expectedˉtoken, Bodyˉstart,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    if Captures.Maximumˉexpressionˉdepth < Captureˉfirst.Offset ||
+        Parameters.Maximumˉexpressionˉdepth < Parameterˉfirst.Offset ||
+        Body.Nextˉoffset < Bodyˉstart.Offset {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Invalidˉspan, Bodyˉstart,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    return Compilerˉbodyˉclosureˉexpressionˉmake(
+        Start, Captureˉfirst, Captures, Parameterˉfirst, Parameters,
+        Bodyˉstart, Body, Effectˉoperator, Effects, Isˉasync
+    );
+}
+
 export fn Compilerˉbodyˉparseˉprimary(
     Input: bytes,
     Offset: u32,
@@ -1360,6 +1788,12 @@ export fn Compilerˉbodyˉparseˉprimary(
     let Token: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Input, Offset, Line, Column, Endˉoffset);
     if Token.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid {
         return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Lexicalˉerror, Token, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Fn ||
+        Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        return Compilerˉbodyˉparseˉclosureˉexpression(
+            Input, Token, Endˉoffset, Nesting
+        );
     }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Integer {
         return Compilerˉbodyˉexpressionˉmakeˉwide(
@@ -1842,81 +2276,26 @@ export fn Compilerˉbodyˉparseˉprimary(
         if Callˉleft.Status != Compilerˉbodyˉparseˉstatus.Valid {
             return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Callˉleft);
         }
-        if Nesting >= 64u32 {
-            return Compilerˉbodyˉexpressionˉfailure(
-                Compilerˉbodyˉparseˉstatus.Nestingˉlimit,
-                Typeˉright, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
+        let Genericˉcallˉleft: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(
+                Input, Typeˉright.Nextˉoffset,
+                Typeˉright.Nextˉline, Typeˉright.Nextˉcolumn,
+                Endˉoffset
             );
-        }
-        var Genericˉcallˉcursor: u32 = Callˉleft.Nextˉoffset;
-        var Genericˉcallˉline: u32 = Callˉleft.Nextˉline;
-        var Genericˉcallˉcolumn: u32 = Callˉleft.Nextˉcolumn;
-        var Genericˉcallˉitemsˉoffset: u32 = Genericˉcallˉcursor;
-        var Genericˉcallˉitemsˉend: u32 = Genericˉcallˉcursor;
-        var Genericˉcallˉitems: u32 = 0u32;
-        var Genericˉcallˉnodes: u32 = 1u32;
-        var Genericˉcallˉdepth: u32 = 1u32;
-        var Readingˉgenericˉcall: bool = true;
-        while Readingˉgenericˉcall {
-            let Genericˉcallˉcurrent: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(
-                Input, Genericˉcallˉcursor, Genericˉcallˉline,
-                Genericˉcallˉcolumn, Endˉoffset
-            );
-            if Genericˉcallˉcurrent.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-                Readingˉgenericˉcall = false;
-                if Genericˉcallˉitems == 0u32 {
-                    Genericˉcallˉitemsˉoffset = Genericˉcallˉcurrent.Offset;
-                }
-                let Genericˉcallˉend: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉconsume(
-                    Input, Genericˉcallˉcursor, Genericˉcallˉline,
-                    Genericˉcallˉcolumn, Endˉoffset,
-                    Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis
-                );
-                if Genericˉcallˉend.Status != Compilerˉbodyˉparseˉstatus.Valid { return Compilerˉbodyˉexpressionˉfailureˉfromˉstep(Genericˉcallˉend); }
-                return Compilerˉbodyˉexpressionˉmake(
-                    Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall,
-                    Sourceˉlexer.Compilerˉtokenˉkind.End,
-                    Name.Offset, Genericˉcallˉend.Nextˉoffset, Line, Column,
-                    Name.Offset, Name.Length,
-                    Typeˉargumentsˉoffset,
-                    Typeˉargumentsˉend - Typeˉargumentsˉoffset,
-                    Name.Offset, 0u32,
-                    Genericˉcallˉitemsˉoffset,
-                    Genericˉcallˉitemsˉend,
-                    Genericˉcallˉitems,
-                    Sourceˉlexer.Compilerˉnumericˉkind.None,
-                    Typeˉarguments, false,
-                    Genericˉcallˉend.Nextˉoffset,
-                    Genericˉcallˉend.Nextˉline,
-                    Genericˉcallˉend.Nextˉcolumn,
-                    Genericˉcallˉnodes, Genericˉcallˉdepth
-                );
-            }
-            if Genericˉcallˉitems >= 64u32 { return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Itemˉlimit, Genericˉcallˉcurrent, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis); }
-            let Genericˉcallˉargument: Compilerˉsourceˉexpression = Compilerˉparseˉexpressionˉvalidated(Input, Genericˉcallˉcursor, Genericˉcallˉline, Genericˉcallˉcolumn, Endˉoffset, 0u32, Nesting + 1u32);
-            if Genericˉcallˉargument.Status != Compilerˉbodyˉparseˉstatus.Valid { return Genericˉcallˉargument; }
-            if Genericˉcallˉitems == 0u32 { Genericˉcallˉitemsˉoffset = Genericˉcallˉargument.Offset; }
-            Genericˉcallˉitemsˉend = Genericˉcallˉargument.Offset + Genericˉcallˉargument.Length;
-            Genericˉcallˉitems = Genericˉcallˉitems + 1u32;
-            Genericˉcallˉnodes = Genericˉcallˉnodes + Genericˉcallˉargument.Nodes;
-            Genericˉcallˉdepth = Compilerˉbodyˉmaximum(Genericˉcallˉdepth, Genericˉcallˉargument.Depth + 1u32);
-            if Genericˉcallˉnodes > 4096u32 { return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Itemˉlimit, Genericˉcallˉcurrent, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis); }
-            Genericˉcallˉcursor = Genericˉcallˉargument.Nextˉoffset;
-            Genericˉcallˉline = Genericˉcallˉargument.Nextˉline;
-            Genericˉcallˉcolumn = Genericˉcallˉargument.Nextˉcolumn;
-            let Genericˉcallˉseparator: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Input, Genericˉcallˉcursor, Genericˉcallˉline, Genericˉcallˉcolumn, Endˉoffset);
-            if Genericˉcallˉseparator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-                Genericˉcallˉcursor = Genericˉcallˉseparator.Nextˉoffset;
-                Genericˉcallˉline = Genericˉcallˉseparator.Nextˉline;
-                Genericˉcallˉcolumn = Genericˉcallˉseparator.Nextˉcolumn;
-            } else if Genericˉcallˉseparator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis {
-                return Compilerˉbodyˉexpressionˉfailure(Compilerˉbodyˉparseˉstatus.Expectedˉtoken, Genericˉcallˉseparator, Sourceˉlexer.Compilerˉtokenˉkind.Rightˉparenthesis);
-            }
-        }
+        return Compilerˉbodyˉparseˉcallˉexpression(
+            Input, Name, Genericˉcallˉleft,
+            Endˉoffset, Nesting, Line, Column,
+            Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall,
+            Typeˉargumentsˉoffset,
+            Typeˉargumentsˉend - Typeˉargumentsˉoffset,
+            Typeˉarguments
+        );
     }
     if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉparenthesis {
         return Compilerˉbodyˉparseˉcallˉexpression(
-            Input, Name, Postfix, Endˉoffset, Nesting, Line, Column
+            Input, Name, Postfix, Endˉoffset, Nesting, Line, Column,
+            Compilerˉsourceˉexpressionˉkind.Call,
+            Name.Offset, 0u32, 0u32
         );
     }
     if Postfix.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbracket {
@@ -1933,7 +2312,7 @@ export fn Compilerˉbodyˉparseˉprimary(
     return Compilerˉbodyˉexpressionˉmake(Compilerˉsourceˉexpressionˉkind.Name, Sourceˉlexer.Compilerˉtokenˉkind.End, Name.Offset, Name.Offset + Name.Length, Line, Column, Name.Offset, Name.Length, Name.Offset, 0u32, Name.Offset, 0u32, Name.Offset, Name.Offset, 0u32, Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn, 1u32, 1u32);
 }
 
-export fn Compilerˉparseˉexpressionˉvalidated(
+fn Compilerˉbodyˉparseˉexpressionˉnested(
     Input: bytes,
     Offset: u32,
     Line: u32,
@@ -1957,6 +2336,12 @@ export fn Compilerˉparseˉexpressionˉvalidated(
     }
 
     let First: Sourceˉlexer.Compilerˉsourceˉtoken = Compilerˉbodyˉtoken(Input, Offset, Line, Column, Endˉoffset);
+    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Fn ||
+        First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        return Compilerˉbodyˉparseˉclosureˉexpression(
+            Input, First, Endˉoffset, Nesting
+        );
+    }
     if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.If {
         return Compilerˉbodyˉparseˉifˉexpression(
             Input, First, Endˉoffset, Nesting
@@ -2072,6 +2457,45 @@ export fn Compilerˉparseˉexpressionˉvalidated(
         }
     }
     return Left;
+}
+
+export fn Compilerˉparseˉexpressionˉvalidated(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Endˉoffset: u32,
+    Parentˉprecedence: u32,
+    Nesting: u32
+) -> Compilerˉsourceˉexpression {
+    let Total: u32 = Bytesˉlength(Input);
+    if Offset > Endˉoffset || Endˉoffset > Total {
+        let Invalidˉspan: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(Input, Total, Line, Column, Total);
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Invalidˉspan, Invalidˉspan,
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+        );
+    }
+    if Nesting > 64u32 {
+        let Invalidˉnesting: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(Input, Offset, Line, Column, Endˉoffset);
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Nestingˉlimit, Invalidˉnesting,
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+        );
+    }
+    let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(Input, Offset, Line, Column, Endˉoffset);
+    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Fn ||
+        First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        return Compilerˉbodyˉparseˉclosureˉexpression(
+            Input, First, Endˉoffset, Nesting
+        );
+    }
+    return Compilerˉbodyˉparseˉexpressionˉnested(
+        Input, Offset, Line, Column, Endˉoffset, Parentˉprecedence, Nesting
+    );
 }
 
 export fn Compilerˉparseˉexpressionˉspan(

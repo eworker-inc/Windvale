@@ -92,6 +92,14 @@ The transient local match also exposes the declaration offset already present
 in WVLB so typed analysis can recover one parameter's mode without rescanning
 the complete function signature. This adds no serialized field or version.
 
+The Slice 6 closure analyzer reuses the same binding entry and body traversal
+through a function-private isolated phase. Explicit captures are appended as
+closure-scope locals rather than ordinary parameters: copy, move, and immutable
+borrow are immutable `let` bindings, while only `borrow mut` is a mutable `var`
+binding. Closure parameters remain ordinary immutable parameters. This private
+phase is described by [source closure-capture analysis](Compiler-Source-Closure-Captures.md)
+and does not change the published WVLB directory format.
+
 ## Name and call binding
 
 A name expression resolves first to an active local/parameter and then to an accessible global data or constant declaration. A root constant is storage-free: binding recognizes its value-namespace declaration but creates no parameter/local WVLB entry or runtime data slot. Typed WVIR reparses its already validated declaration and substitutes the exact value. Constants in imported modules are rejected by the preceding symbol phase. A field expression currently proves that its base is an active local/parameter or an accessible nominal declaration; field ownership and result type are deferred to typed expression binding. Indexed data names must resolve to accessible global data.

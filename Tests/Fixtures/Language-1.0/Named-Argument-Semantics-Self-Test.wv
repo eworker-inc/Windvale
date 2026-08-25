@@ -1,0 +1,173 @@
+module Languageˉoneˉnamedˉargumentˉsemanticsˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+fn Sourceˉsetˉfrom(Source: text) -> bytes {
+    let Body: bytes = Textˉtoˉutf8(Source);
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(20u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(36u32));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Program() -> text {
+    return "module Namedˉargumentˉprogram; profile core; platform linux, windows, windvale; authority application; fn Difference(Left: i32, Right: i32) -> i32 { return Left - Right; } export fn Main() -> i32 effects() { return Difference(Right: 1, Left: 43); }";
+}
+
+fn Parse(Source: text) -> Bodies.Compilerˉsourceˉexpression {
+    let Input: bytes = Textˉtoˉutf8(Source);
+    return Bodies.Compilerˉparseˉexpressionˉvalidated(
+        Input, 0u32, 1u32, 1u32, Bytesˉlength(Input), 0u32, 0u32
+    );
+}
+
+fn Namedˉparseˉprobe() -> i32 {
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Parse("Difference(Right: 1, Left: 43)");
+    if Expression.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Call ||
+        Expression.Operator != Lexer.Compilerˉtokenˉkind.Colon ||
+        Expression.Items != 2u32 || Expression.Itemsˉoffset != 11u32 {
+        return 21;
+    }
+    return 42;
+}
+
+fn Positionalˉparseˉprobe() -> i32 {
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Parse("Difference(43, 1)");
+    if Expression.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Call ||
+        Expression.Operator != Lexer.Compilerˉtokenˉkind.End ||
+        Expression.Items != 2u32 {
+        return 22;
+    }
+    return 42;
+}
+
+fn Mixedˉparseˉprobe() -> i32 {
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Parse("Difference(Right: 1, 43)");
+    if Expression.Status !=
+            Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉexpression {
+        return 23;
+    }
+    return 42;
+}
+
+fn Genericˉparseˉprobe() -> i32 {
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Parse("Identity::<i32>(Value: 42)");
+    if Expression.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind !=
+            Bodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall ||
+        Expression.Operator != Lexer.Compilerˉtokenˉkind.Colon ||
+        Expression.Items != 1u32 || Expression.Numericˉvalue != 1u32 {
+        return 24;
+    }
+    return 42;
+}
+
+fn Bindingˉprobe() -> i32 {
+    let Input: bytes = Sourceˉsetˉfrom(Program());
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
+    if Symbolˉsummary.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Bindingˉsummary.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return 25;
+    }
+    let Name: bytes = Textˉtoˉutf8("Difference");
+    let Callable: Bindings.Compilerˉsourceˉbindingˉmatch =
+        Bindings.Compilerˉsourceˉbindingsˉfindˉcallable(
+            Input, Scan, Symbolˉsummary, 0u32,
+            Name, 0u32, Bytesˉlength(Name)
+        );
+    if !Callable.Found || !Callable.Accessible ||
+        Callable.Kind != Bindings.Compilerˉsourceˉcallableˉkind.Function ||
+        Callable.Items != 2u32 {
+        return 26;
+    }
+    let Leftˉname: bytes = Textˉtoˉutf8("Left");
+    let Rightˉname: bytes = Textˉtoˉutf8("Right");
+    let Unknownˉname: bytes = Textˉtoˉutf8("Unknown");
+    let Left: Bindings.Compilerˉsourceˉparameterˉmatch =
+        Bindings.Compilerˉsourceˉbindingsˉcallableˉparameter(
+            Input, Scan, Symbolˉsummary, Callable,
+            Leftˉname, 0u32, Bytesˉlength(Leftˉname)
+        );
+    let Right: Bindings.Compilerˉsourceˉparameterˉmatch =
+        Bindings.Compilerˉsourceˉbindingsˉcallableˉparameter(
+            Input, Scan, Symbolˉsummary, Callable,
+            Rightˉname, 0u32, Bytesˉlength(Rightˉname)
+        );
+    let Unknown: Bindings.Compilerˉsourceˉparameterˉmatch =
+        Bindings.Compilerˉsourceˉbindingsˉcallableˉparameter(
+            Input, Scan, Symbolˉsummary, Callable,
+            Unknownˉname, 0u32, Bytesˉlength(Unknownˉname)
+        );
+    if !Left.Found || !Left.Supported || Left.Index != 0u32 ||
+        !Right.Found || !Right.Supported || Right.Index != 1u32 ||
+        Unknown.Found || !Unknown.Supported {
+        return 27;
+    }
+    return 42;
+}
+
+fn Unsupportedˉcallableˉprobe() -> i32 {
+    let Input: bytes = Sourceˉsetˉfrom(Program());
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Label: bytes = Textˉtoˉutf8("Value");
+    let Match: Bindings.Compilerˉsourceˉparameterˉmatch =
+        Bindings.Compilerˉsourceˉbindingsˉcallableˉparameter(
+            Input, Scan, Symbolˉsummary,
+            Bindings.Compilerˉsourceˉbindingˉmatch(
+                true, true,
+                Bindings.Compilerˉsourceˉcallableˉkind.Capability,
+                0u32, 1u32, 0u32
+            ),
+            Label, 0u32, Bytesˉlength(Label)
+        );
+    if Match.Found || Match.Supported { return 28; }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 { return Namedˉparseˉprobe(); }
+    if Selected == 98u32 { return Positionalˉparseˉprobe(); }
+    if Selected == 99u32 { return Mixedˉparseˉprobe(); }
+    if Selected == 100u32 { return Genericˉparseˉprobe(); }
+    if Selected == 101u32 { return Bindingˉprobe(); }
+    if Selected == 102u32 { return Unsupportedˉcallableˉprobe(); }
+    return 64;
+}

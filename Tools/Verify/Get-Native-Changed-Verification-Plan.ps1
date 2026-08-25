@@ -1523,6 +1523,31 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'compiler-split-development'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Closure-Captures-Core.wv',
+        'Compiler/Windvale/Source-Effects-Core.wv',
+        'Compiler/Windvale/Source-Function-Type-Lowering-Core.wv',
+        'Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj',
+        'Projects/Compiler/Windvale-Source-Effects-Core.wvproj',
+        'Projects/Compiler/Windvale-Source-Function-Type-Lowering-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Semantics.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Function-Type-Catalog.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Function-Value-Front-End.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Named-Argument-Semantics.wvproj',
+        'Specifications/Compiler-Source-Closure-Captures.md',
+        'Specifications/Compiler-Source-Effects.md',
+        'Specifications/Compiler-Source-Function-Types.md',
+        'Tests/Fixtures/Language-1.0/Closure-Capture-Semantics-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Effect-Semantics-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Function-Type-Catalog-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Function-Value-Front-End-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Named-Argument-Semantics-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Callable-Semantics.cmd',
+        'Tools/Native/Test-Language-1.0-Callable-Semantics.mjs',
+        'Tools/Native/Test-Language-1.0-Callable-Semantics.sh'
+    )) {
+        Add-Suite 'language-1-callable-semantics'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Effect-Clause-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Effect-Clause-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Effect-Clause-Front-End.cmd',
@@ -2650,6 +2675,15 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'language-1-using-front-end'
         }
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Declaration-Parser.wv',
+            'Compiler/Windvale/Source-Body-Parser.wv',
+            'Compiler/Windvale/Source-Set-Core.wv',
+            'Compiler/Windvale/Source-Bindings-Core.wv'
+        )) {
+            Add-Suite 'language-1-callable-semantics'
+        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Lexer-Core.wv',
         'Compiler/Windvale/Source-Declaration-Parser.wv',
@@ -2761,6 +2795,9 @@ foreach ($Path in $Paths) {
         }
         if ($Path -eq 'Compiler/Windvale/Source-Wvb-Core.wv') {
             Add-Suite 'language-1-memory-budget-split-execution'
+        }
+        if ($Path -eq 'Compiler/Windvale/Source-Wir-Core.wv') {
+            Add-Suite 'language-1-callable-semantics'
         }
     } elseif ($Path.StartsWith('Compiler/Windvale/', [StringComparison]::Ordinal)) {
         Add-Compiler-Suites

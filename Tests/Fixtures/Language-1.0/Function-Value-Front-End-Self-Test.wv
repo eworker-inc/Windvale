@@ -1,0 +1,161 @@
+module Languageˉoneˉfunctionˉvalueˉfrontˉendˉselfˉtest profile portable;
+
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+fn Checkˉkeywords() -> i32 {
+    let Async: bytes = Textˉtoˉutf8("async");
+    let Unsafe: bytes = Textˉtoˉutf8("unsafe");
+    let Copy: bytes = Textˉtoˉutf8("copy");
+    let Move: bytes = Textˉtoˉutf8("move");
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Async, 0u32, Bytesˉlength(Async)
+    ) != Lexer.Compilerˉtokenˉkind.Async { return 11; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Unsafe, 0u32, Bytesˉlength(Unsafe)
+    ) != Lexer.Compilerˉtokenˉkind.Unsafe { return 12; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Copy, 0u32, Bytesˉlength(Copy)
+    ) != Lexer.Compilerˉtokenˉkind.Copy { return 13; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Move, 0u32, Bytesˉlength(Move)
+    ) != Lexer.Compilerˉtokenˉkind.Move { return 14; }
+    if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        1u32, Lexer.Compilerˉtokenˉkind.Copy
+    ) { return 15; }
+    if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        0u32, Lexer.Compilerˉtokenˉkind.Copy
+    ) { return 16; }
+    return 42;
+}
+
+fn Checkˉtypes() -> bool {
+    let Simpleˉsource: bytes = Textˉtoˉutf8(
+        "fn (i32, borrow text) -> bool effects()"
+    );
+    let Simple: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉtype(
+            Simpleˉsource, 0u32, 1u32, 1u32, true, false
+        );
+    if Simple.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Simple.Typeˉkind != Declarations.Compilerˉsourceˉtypeˉkind.Function ||
+        Simple.Items != 2u32 ||
+        Simple.Nextˉoffset != Bytesˉlength(Simpleˉsource) {
+        return false;
+    }
+    let Nestedˉsource: bytes = Textˉtoˉutf8(
+        "unsafe async fn (fn () -> unit effects(), borrow mut bytes) -> bool effects(unsafe.address)"
+    );
+    let Nested: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉtype(
+            Nestedˉsource, 0u32, 1u32, 1u32, true, false
+        );
+    if Nested.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Nested.Typeˉkind != Declarations.Compilerˉsourceˉtypeˉkind.Function ||
+        Nested.Items != 2u32 ||
+        Nested.Nextˉoffset != Bytesˉlength(Nestedˉsource) {
+        return false;
+    }
+    let Invalidˉsource: bytes = Textˉtoˉutf8(
+        "async unsafe fn () -> unit"
+    );
+    let Invalid: Declarations.Compilerˉparseˉstep =
+        Declarations.Compilerˉparseˉtype(
+            Invalidˉsource, 0u32, 1u32, 1u32, true, false
+        );
+    return Invalid.Status != Declarations.Compilerˉparseˉstatus.Valid &&
+        Invalid.Expected == Lexer.Compilerˉtokenˉkind.Fn &&
+        Invalid.Found == Lexer.Compilerˉtokenˉkind.Unsafe;
+}
+
+fn Checkˉclosures() -> bool {
+    let Simpleˉsource: bytes = Textˉtoˉutf8(
+        "fn [] (Value: i32) -> i32 effects() { return Value; }"
+    );
+    let Simple: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Simpleˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Simpleˉsource), 0u32, 0u32
+        );
+    if Simple.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Simple.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Closure ||
+        Simple.Items != 0u32 || Simple.Numericˉvalue != 1u32 ||
+        Simple.Numericˉhigh != 0u32 || Simple.Booleanˉvalue ||
+        Simple.Operator != Lexer.Compilerˉtokenˉkind.Effects {
+        return false;
+    }
+    let Captureˉsource: bytes = Textˉtoˉutf8(
+        "fn [copy A, move B, borrow C, borrow mut D,] () -> unit { return; }"
+    );
+    let Capture: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Captureˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Captureˉsource), 0u32, 0u32
+        );
+    if Capture.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Capture.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Closure ||
+        Capture.Items != 4u32 || Capture.Firstˉlength == 0u32 ||
+        Capture.Numericˉvalue != 0u32 || Capture.Secondˉlength == 0u32 {
+        return false;
+    }
+    let Asyncˉsource: bytes = Textˉtoˉutf8(
+        "async fn [] () -> unit effects(task.suspend) { return; }"
+    );
+    let Async: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Asyncˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Asyncˉsource), 0u32, 0u32
+        );
+    if Async.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        !Async.Booleanˉvalue || Async.Numericˉhigh != 1u32 ||
+        Async.Operator != Lexer.Compilerˉtokenˉkind.Effects {
+        return false;
+    }
+    let Missingˉsource: bytes = Textˉtoˉutf8(
+        "fn (Value: i32) -> i32 { return Value; }"
+    );
+    let Missing: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Missingˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Missingˉsource), 0u32, 0u32
+        );
+    return Missing.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid &&
+        Missing.Expected == Lexer.Compilerˉtokenˉkind.Leftˉbracket;
+}
+
+fn Checkˉdeclarations() -> bool {
+    let Validˉsource: bytes = Textˉtoˉutf8(
+        "export unsafe async fn Work() -> unit effects(unsafe.address) { return; }"
+    );
+    let Valid: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Validˉsource, 0u32, 1u32, 1u32, false
+        );
+    if Valid.Status != Declarations.Compilerˉparseˉstatus.Valid ||
+        Valid.Kind != Declarations.Compilerˉsourceˉdeclarationˉkind.Function ||
+        !Valid.Isˉexported || !Valid.Hasˉeffectˉclause ||
+        Valid.Effects != 1u32 {
+        return false;
+    }
+    let Invalidˉsource: bytes = Textˉtoˉutf8(
+        "async unsafe fn Work() -> unit { return; }"
+    );
+    let Invalid: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Invalidˉsource, 0u32, 1u32, 1u32, false
+        );
+    return Invalid.Status != Declarations.Compilerˉparseˉstatus.Valid &&
+        Invalid.Expected == Lexer.Compilerˉtokenˉkind.Fn &&
+        Invalid.Found == Lexer.Compilerˉtokenˉkind.Unsafe;
+}
+
+export fn Main() -> i32 {
+    let Keywords: i32 = Checkˉkeywords();
+    if Keywords != 42 { return Keywords; }
+    if !Checkˉtypes() { return 2; }
+    if !Checkˉclosures() { return 3; }
+    if !Checkˉdeclarations() { return 4; }
+    return 42;
+}

@@ -1,0 +1,333 @@
+module Languageˉoneˉclosureˉcaptureˉsemanticsˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉclosureˉcaptures as Captures;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉeffects as Effects;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+fn Sourceˉsetˉfrom(Source: text) -> bytes {
+    let Body: bytes = Textˉtoˉutf8(Source);
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(20u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(36u32));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Functionˉentry(
+    Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary
+) -> u32 {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉsummary.Directory, 8u32
+    );
+    var Entry: u32 = 0u32;
+    while Entry < Entries {
+        if Bytesˉreadˉu32ˉlittle(
+                Symbolsˉsummary.Directory, 16u32 + Entry * 24u32 + 4u32
+            ) == 6u32 {
+            return Entry;
+        }
+        Entry = Entry + 1u32;
+    }
+    return Entries;
+}
+
+fn Analyzeˉprepared(
+    Source: text,
+    Corruptˉbindingˉdirectory: bool
+) -> Captures.Compilerˉsourceˉclosureˉcaptureˉsummary {
+    let Input: bytes = Sourceˉsetˉfrom(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
+        return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
+            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Bytesˉslice(Input, 0u32, 0u32),
+            Scan.Failureˉoffset, 0u32, 0u32
+        );
+    }
+    if Symbolsˉsummary.Status !=
+            Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
+            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Bytesˉslice(Input, 0u32, 0u32),
+            Symbolsˉsummary.Failureˉoffset,
+            Symbolsˉsummary.Failureˉline,
+            Symbolsˉsummary.Failureˉcolumn
+        );
+    }
+    if Bindingˉsummary.Status !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Bodyˉbinding,
+            Bindingˉsummary.Status,
+            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Bytesˉslice(Input, 0u32, 0u32),
+            Bindingˉsummary.Failureˉoffset,
+            Bindingˉsummary.Failureˉline,
+            Bindingˉsummary.Failureˉcolumn
+        );
+    }
+    let Function: u32 = Functionˉentry(Symbolsˉsummary);
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    let Symbolˉoffset: u32 = 16u32 + Function * 24u32;
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            View.Source,
+            Bytesˉreadˉu32ˉlittle(
+                Symbolsˉsummary.Directory, Symbolˉoffset + 8u32
+            ),
+            1u32, 1u32, true
+        );
+    let Bodyˉstart: Bodies.Compilerˉsourceˉposition =
+        Bodies.Compilerˉbodyˉpositionˉbetween(
+            View.Source, Declaration.Declarationˉoffset,
+            1u32, 1u32, Declaration.Bodyˉoffset
+        );
+    let Left: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Declaration.Bodyˉoffset,
+            Bodyˉstart.Line, Bodyˉstart.Column
+        );
+    let First: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            View.Source, Left.Nextˉoffset, Left.Nextˉline, Left.Nextˉcolumn,
+            Declaration.Bodyˉoffset + Declaration.Bodyˉlength, 0u32
+        );
+    let Second: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            View.Source, First.Nextˉoffset,
+            First.Nextˉline, First.Nextˉcolumn,
+            Declaration.Bodyˉoffset + Declaration.Bodyˉlength, 0u32
+        );
+    let Expressionˉposition: Bodies.Compilerˉsourceˉposition =
+        Bodies.Compilerˉbodyˉpositionˉbetween(
+            View.Source, Second.Offset, Second.Line, Second.Column,
+            Second.Expressionˉoffset
+        );
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            View.Source, Second.Expressionˉoffset,
+            Expressionˉposition.Line, Expressionˉposition.Column,
+            Second.Expressionˉoffset + Second.Expressionˉlength,
+            0u32, 0u32
+        );
+    var Suppliedˉbindings: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindingˉsummary;
+    if Corruptˉbindingˉdirectory {
+        Suppliedˉbindings = Bindings.Compilerˉsourceˉbindingˉsummary(
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Bindingˉsummary.Symbolˉstatus,
+            Bindingˉsummary.Modules, Bindingˉsummary.Functions,
+            Bindingˉsummary.Parameters, Bindingˉsummary.Locals,
+            Bindingˉsummary.Reads, Bindingˉsummary.Assignments,
+            Bindingˉsummary.Calls,
+            Bytesˉslice(Input, 0u32, 0u32),
+            Bindingˉsummary.Failureˉmodule,
+            Bindingˉsummary.Failureˉrelatedˉmodule,
+            Bindingˉsummary.Failureˉfunction,
+            Bindingˉsummary.Failureˉoffset,
+            Bindingˉsummary.Failureˉline,
+            Bindingˉsummary.Failureˉcolumn
+        );
+    }
+    return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidate(
+        Input, Scan, Symbolsˉsummary, Suppliedˉbindings,
+        0u32, Function, View.Source, Expression
+    );
+}
+
+fn Analyze(Source: text) -> Captures.Compilerˉsourceˉclosureˉcaptureˉsummary {
+    return Analyzeˉprepared(Source, false);
+}
+
+fn Copyˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉcopyˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local] (Delta: i32) -> i32 effects() { return Local + Delta; }; return 42; }"
+    );
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression {
+        return 31;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence {
+        return 32;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Bodyˉbinding {
+        return 33;
+    }
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Summary.Captures != 1u32 || Summary.Parameters != 1u32 ||
+        Summary.Languageˉeffects != 0u32 ||
+        Summary.Capabilityˉeffects != 0u32 ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉmodeˉat(
+            Summary, 0u32
+        ) != 0u32 ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉslotˉat(
+            Summary, 0u32
+        ) != 1u32 ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉshapeˉat(
+            Summary, 0u32
+        ) != 1u32 {
+        return 21;
+    }
+    return 42;
+}
+
+fn Transferˉmodeˉprobe() -> i32 {
+    let Move: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉmoveˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [move Local] () -> i32 effects() { return Local; }; return 42; }"
+    );
+    let Borrow: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉborrowˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [borrow Local] () -> i32 effects() { return Local; }; return 42; }"
+    );
+    let Mutable: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉmutableˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { var Local: i32 = 40; let Callback = fn [borrow mut Local] () -> i32 effects() { Local = Local + 1; return Local; }; return 42; }"
+    );
+    if Move.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Borrow.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Mutable.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉmodeˉat(Move, 0u32) !=
+            1u32 ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉmodeˉat(Borrow, 0u32) !=
+            2u32 ||
+        Captures.Compilerˉsourceˉclosureˉcaptureˉmodeˉat(Mutable, 0u32) !=
+            3u32 {
+        return 22;
+    }
+    return 42;
+}
+
+fn Missingˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉmissingˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [] () -> i32 effects() { return Local; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Missingˉcapture {
+        return 23;
+    }
+    return 42;
+}
+
+fn Duplicateˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉduplicateˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local, move Local] () -> i32 effects() { return Local; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉcapture {
+        return 24;
+    }
+    return 42;
+}
+
+fn Classˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉclassˉprogram; profile core; platform linux, windows, windvale; authority application; record Box { Value: i32; } fn Outer(Input: i32) -> i32 { let Local: Box = Box(40); let Callback = fn [copy Local] () -> i32 effects() { return Local.Value; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉcaptureˉclass {
+        return 25;
+    }
+    return 42;
+}
+
+fn Asyncˉborrowˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉasyncˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = async fn [borrow Local] () -> i32 effects(task.suspend) { return Local; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Borrowedˉasync {
+        return 26;
+    }
+    return 42;
+}
+
+fn Capabilityˉrootˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉcapabilityˉprogram; profile hosted; platform linux, windows, windvale; authority application; capability diagnostic.write_line; fn Outer(Input: i32) -> i32 { let Local: i32 = 42; let Callback = fn [copy Local] () -> i32 effects(diagnostic.write_line) { diagnostic.write_line(\"capture\"); return Local; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Summary.Captures != 1u32 || Summary.Capabilityˉeffects != 1u32 ||
+        Summary.Languageˉeffects != 0u32 || Summary.Calls != 1u32 {
+        return 27;
+    }
+    return 42;
+}
+
+fn Duplicateˉparameterˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉparameterˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local] (Local: i32) -> i32 effects() { return Local; }; return 42; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉparameter {
+        return 28;
+    }
+    return 42;
+}
+
+fn Invalidˉevidenceˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary =
+        Analyzeˉprepared(
+            "module Captureˉinvalidˉevidence; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local] () -> i32 effects() { return Local; }; return 42; }",
+            true
+        );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence {
+        return 29;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 { return Copyˉprobe(); }
+    if Selected == 98u32 { return Transferˉmodeˉprobe(); }
+    if Selected == 99u32 { return Missingˉprobe(); }
+    if Selected == 100u32 { return Duplicateˉprobe(); }
+    if Selected == 101u32 { return Classˉprobe(); }
+    if Selected == 102u32 { return Asyncˉborrowˉprobe(); }
+    if Selected == 103u32 { return Capabilityˉrootˉprobe(); }
+    if Selected == 104u32 { return Duplicateˉparameterˉprobe(); }
+    if Selected == 105u32 { return Invalidˉevidenceˉprobe(); }
+    return 64;
+}

@@ -1,0 +1,463 @@
+module Languageˉoneˉeffectˉsemanticsˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉeffects as Effects;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+fn Sourceˉsetˉfrom(Source: text) -> bytes {
+    let Body: bytes = Textˉtoˉutf8(Source);
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(20u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(36u32));
+    Result = Bytesˉconcat(
+        Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body))
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+    return Bytesˉconcat(Result, Body);
+}
+
+fn Zeroes(Count: u32) -> bytes {
+    let Repeated: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(0u8, Count);
+    return Repeated.Value;
+}
+
+fn Bindingˉsummary(
+    Input: bytes,
+    Symbolsˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Functions: u32
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Directory: bytes = Bytesˉconcat(
+        Bindings.Compilerˉsourceˉbindingsˉheader(0u32, Functions),
+        Zeroes(Functions * 8u32)
+    );
+    return Bindings.Compilerˉsourceˉbindingˉsummary(
+        Bindings.Compilerˉsourceˉbindingˉstatus.Valid,
+        Symbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+        1u32, Functions,
+        0u32, 0u32, 0u32, 0u32, 0u32,
+        Directory,
+        1u32, 1u32, Functions, Bytesˉlength(Input), 0u32, 0u32
+    );
+}
+
+fn Wirˉfunction(
+    Firstˉblock: u32,
+    Firstˉoperation: u32,
+    Operations: u32
+) -> bytes {
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Firstˉblock));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Firstˉoperation));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Operations));
+    return Bytesˉconcat(Entry, Zeroes(28u32));
+}
+
+fn Wirˉoperation(Kind: u32, Target: u32) -> bytes {
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(Kind));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu16ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Zeroes(12u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Target));
+    return Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Wirˉdirectory(
+    Functionˉentries: bytes,
+    Blocks: u32,
+    Operationˉentries: bytes
+) -> bytes {
+    let Functions: u32 = Bytesˉlength(Functionˉentries) / 48u32;
+    let Operations: u32 = Bytesˉlength(Operationˉentries) / 28u32;
+    var Header: bytes = Textˉtoˉutf8("WVIR");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(9u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Functions));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(48u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Blocks));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(28u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Operations));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(28u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(4u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(4u32));
+    return Bytesˉconcat(
+        Header,
+        Bytesˉconcat(
+            Functionˉentries,
+            Bytesˉconcat(Zeroes(Blocks * 28u32), Operationˉentries)
+        )
+    );
+}
+
+fn Program(Name: text, Body: text) -> text {
+    return Textˉconcat(
+        Textˉconcat(
+            Textˉconcat(
+                Textˉconcat("module ", Name),
+                "; profile core; platform linux, windows, windvale; authority application; "
+            ),
+            Body
+        ),
+        ""
+    );
+}
+
+fn Pureˉinput(Name: text) -> bytes {
+    return Sourceˉsetˉfrom(
+        Program(
+            Name,
+            "export fn Main() -> i32 effects() { return 42; }"
+        )
+    );
+}
+
+fn Analyze(
+    Source: text,
+    Functionˉentries: bytes,
+    Blocks: u32,
+    Operationˉentries: bytes
+) -> Effects.Compilerˉsourceˉeffectˉsummary {
+    let Input: bytes = Sourceˉsetˉfrom(Source);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Bindingˉvalue: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
+            Input, Scan, Symbolˉsummary
+        );
+    return Effects.Compilerˉanalyzeˉpreparedˉsourceˉeffects(
+        Input, Scan, Symbolˉsummary, Bindingˉvalue,
+        Wirˉdirectory(Functionˉentries, Blocks, Operationˉentries)
+    );
+}
+
+fn Realˉbindingsˉprobe() -> i32 {
+    let Input: bytes = Pureˉinput("Effectˉbindingˉprobe");
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Symbolˉsummary.Status !=
+            Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 31;
+    }
+    let Bindingˉvalue: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
+            Input, Scan, Symbolˉsummary
+        );
+    if Bindingˉvalue.Status !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        Bindings.Compilerˉsourceˉbindingsˉrangesˉcount(
+            Bindingˉvalue.Directory
+        ) != 1u32 {
+        return 21;
+    }
+    return 42;
+}
+
+fn Handcraftedˉeffectˉprobe() -> i32 {
+    let Input: bytes = Pureˉinput("Effectˉhandcraftedˉprobe");
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary =
+        Effects.Compilerˉanalyzeˉpreparedˉsourceˉeffects(
+            Input, Scan, Symbolˉsummary,
+            Bindingˉsummary(Input, Symbolˉsummary, 1u32),
+            Wirˉdirectory(
+                Wirˉfunction(0u32, 0u32, 0u32),
+                1u32, Zeroes(0u32)
+            )
+        );
+    if Prepared.Status == Effects.Compilerˉsourceˉeffectˉstatus.Sourceˉsymbols {
+        return 32;
+    }
+    if Prepared.Status == Effects.Compilerˉsourceˉeffectˉstatus.Sourceˉwir {
+        return 33;
+    }
+    if Prepared.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid { return 34; }
+    return 42;
+}
+
+fn Realˉeffectˉprobe() -> i32 {
+    let Input: bytes = Pureˉinput("Effectˉrealˉprobe");
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Symbolˉsummary.Status !=
+            Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 35;
+    }
+    let Bindingˉvalue: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
+            Input, Scan, Symbolˉsummary
+        );
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary =
+        Effects.Compilerˉanalyzeˉpreparedˉsourceˉeffects(
+            Input, Scan, Symbolˉsummary, Bindingˉvalue,
+            Wirˉdirectory(
+                Wirˉfunction(0u32, 0u32, 0u32),
+                1u32, Zeroes(0u32)
+            )
+        );
+    if Prepared.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid {
+        return 23;
+    }
+    return 42;
+}
+
+fn Allocationˉexactˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉallocationˉexact",
+            "export fn Main() -> i32 effects(memory.allocate) { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 1u32),
+        1u32, Wirˉoperation(171u32, 0u32)
+    );
+    if Prepared.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 0u32
+        ) != 1u32 {
+        return 24;
+    }
+    return 42;
+}
+
+fn Allocationˉmissingˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉallocationˉmissing",
+            "export fn Main() -> i32 effects() { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 1u32),
+        1u32, Wirˉoperation(172u32, 0u32)
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Mismatchedˉeffectˉset {
+        return 25;
+    }
+    return 42;
+}
+
+fn Allocationˉextraˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉallocationˉextra",
+            "export fn Main() -> i32 effects(memory.allocate) { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 0u32),
+        1u32, Zeroes(0u32)
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Mismatchedˉeffectˉset {
+        return 26;
+    }
+    return 42;
+}
+
+fn Localˉinferenceˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉlocalˉinference",
+            "fn Allocate() -> i32 { return 42; } export fn Main() -> i32 effects(memory.allocate) { return Allocate(); }"
+        ),
+        Bytesˉconcat(
+            Wirˉfunction(0u32, 0u32, 1u32),
+            Wirˉfunction(1u32, 1u32, 1u32)
+        ),
+        2u32,
+        Bytesˉconcat(
+            Wirˉoperation(171u32, 0u32),
+            Wirˉoperation(62u32, 0u32)
+        )
+    );
+    if Prepared.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉisˉexplicit(
+            Prepared.Directory, 0u32
+        ) || Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 0u32
+        ) != 1u32 ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 1u32
+        ) != 1u32 {
+        return 27;
+    }
+    return 42;
+}
+
+fn Transitiveˉmissingˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉtransitiveˉmissing",
+            "fn Allocate() -> i32 effects(memory.allocate) { return 42; } export fn Main() -> i32 effects() { return Allocate(); }"
+        ),
+        Bytesˉconcat(
+            Wirˉfunction(0u32, 0u32, 1u32),
+            Wirˉfunction(1u32, 1u32, 1u32)
+        ),
+        2u32,
+        Bytesˉconcat(
+            Wirˉoperation(171u32, 0u32),
+            Wirˉoperation(62u32, 0u32)
+        )
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Mismatchedˉeffectˉset {
+        return 28;
+    }
+    return 42;
+}
+
+fn Exportedˉmissingˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉexportedˉmissing",
+            "export fn Main() -> i32 { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 0u32),
+        1u32, Zeroes(0u32)
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Missingˉeffectˉclause {
+        return 29;
+    }
+    return 42;
+}
+
+fn Duplicateˉidentityˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉduplicateˉidentity",
+            "export fn Main() -> i32 effects(memory.allocate, memory.allocate) { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 0u32),
+        1u32, Zeroes(0u32)
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Duplicateˉidentity {
+        return 30;
+    }
+    return 42;
+}
+
+fn Unknownˉidentityˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉunknownˉidentity",
+            "export fn Main() -> i32 effects(network.unknown) { return 42; }"
+        ),
+        Wirˉfunction(0u32, 0u32, 0u32),
+        1u32, Zeroes(0u32)
+    );
+    if Prepared.Status !=
+        Effects.Compilerˉsourceˉeffectˉstatus.Unknownˉidentity {
+        return 36;
+    }
+    return 42;
+}
+
+fn Recursiveˉinferenceˉprobe() -> i32 {
+    let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
+        Program(
+            "Effectˉrecursiveˉinference",
+            "fn Alpha() -> i32 { return Beta(); } fn Beta() -> i32 { if true { return Alpha(); } return 42; } export fn Main() -> i32 effects(memory.allocate) { return Alpha(); }"
+        ),
+        Bytesˉconcat(
+            Wirˉfunction(0u32, 0u32, 1u32),
+            Bytesˉconcat(
+                Wirˉfunction(1u32, 1u32, 2u32),
+                Wirˉfunction(2u32, 3u32, 1u32)
+            )
+        ),
+        3u32,
+        Bytesˉconcat(
+            Wirˉoperation(62u32, 1u32),
+            Bytesˉconcat(
+                Wirˉoperation(171u32, 0u32),
+                Bytesˉconcat(
+                    Wirˉoperation(62u32, 0u32),
+                    Wirˉoperation(62u32, 0u32)
+                )
+            )
+        )
+    );
+    if Prepared.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 0u32
+        ) != 1u32 ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 1u32
+        ) != 1u32 ||
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Prepared.Directory, 2u32
+        ) != 1u32 {
+        return 37;
+    }
+    return 42;
+}
+
+fn Directoryˉboundsˉprobe() -> i32 {
+    var Directory: bytes = Textˉtoˉutf8("WVEF");
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(0u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(0u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(12u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(0u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(4u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(32u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(32u32));
+    if !Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Directory, 0u32, 0u32
+        ) ||
+        Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Directory, 4294967295u32, 0u32
+        ) ||
+        Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Directory, 0u32, 33u32
+        ) {
+        return 38;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 { return Realˉbindingsˉprobe(); }
+    if Selected == 98u32 { return Handcraftedˉeffectˉprobe(); }
+    if Selected == 99u32 { return Realˉeffectˉprobe(); }
+    if Selected == 100u32 { return Allocationˉexactˉprobe(); }
+    if Selected == 101u32 { return Allocationˉmissingˉprobe(); }
+    if Selected == 102u32 { return Allocationˉextraˉprobe(); }
+    if Selected == 103u32 { return Localˉinferenceˉprobe(); }
+    if Selected == 104u32 { return Transitiveˉmissingˉprobe(); }
+    if Selected == 105u32 { return Exportedˉmissingˉprobe(); }
+    if Selected == 106u32 { return Duplicateˉidentityˉprobe(); }
+    if Selected == 107u32 { return Unknownˉidentityˉprobe(); }
+    if Selected == 108u32 { return Recursiveˉinferenceˉprobe(); }
+    if Selected == 109u32 { return Directoryˉboundsˉprobe(); }
+    return 64;
+}

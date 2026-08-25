@@ -1,0 +1,697 @@
+module Compilerˉsourceˉfunctionˉtypeˉlowering profile portable;
+
+export enum Compilerˉsourceˉfunctionˉtypeˉstatus {
+    Valid = 0;
+    Invalidˉevidence = 1;
+    Instanceˉlimit = 2;
+    Parameterˉlimit = 3;
+    Retainedˉlimit = 4;
+    Estimatedˉlimit = 5;
+    Invalidˉshape = 6;
+    Invalidˉmode = 7;
+    Invalidˉprofile = 8;
+}
+
+export record Compilerˉsourceˉfunctionˉtypeˉcatalog {
+    Status: Compilerˉsourceˉfunctionˉtypeˉstatus;
+    Evidence: bytes;
+}
+
+export record Compilerˉsourceˉfunctionˉtypeˉadmission {
+    Status: Compilerˉsourceˉfunctionˉtypeˉstatus;
+    Catalogˉevidence: bytes;
+    Instance: u32;
+    Reused: bool;
+}
+
+const FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
+const FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
+const FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
+const FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
+const FUNCTION_TYPE_PARAMETER_LIMIT: u32 = 64u32;
+const FUNCTION_TYPE_RETAINED_LIMIT: u32 = 1048576u32;
+const FUNCTION_TYPE_ESTIMATED_LIMIT: u32 = 16777216u32;
+const FUNCTION_TYPE_SHAPE_BASE: u32 = 2147483904u32;
+const GENERIC_TYPE_SHAPE_BASE: u32 = 2147483648u32;
+const GENERIC_TYPE_SHAPE_LIMIT: u32 = 2147483904u32;
+
+fn Compilerˉsourceˉfunctionˉtypeˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉheader(
+    Instances: u32,
+    Maximumˉparameters: u32,
+    Retainedˉbytes: u32,
+    Estimatedˉbytes: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVFT");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(Result, Instances);
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Maximumˉparameters
+    );
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Retainedˉbytes
+    );
+    return Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Estimatedˉbytes
+    );
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉvalue(
+    Status: Compilerˉsourceˉfunctionˉtypeˉstatus,
+    Evidence: bytes
+) -> Compilerˉsourceˉfunctionˉtypeˉcatalog {
+    return Compilerˉsourceˉfunctionˉtypeˉcatalog(Status, Evidence);
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+    Status: Compilerˉsourceˉfunctionˉtypeˉstatus,
+    Evidence: bytes,
+    Instance: u32,
+    Reused: bool
+) -> Compilerˉsourceˉfunctionˉtypeˉadmission {
+    return Compilerˉsourceˉfunctionˉtypeˉadmission(
+        Status, Evidence, Instance, Reused
+    );
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(
+) -> Compilerˉsourceˉfunctionˉtypeˉcatalog {
+    return Compilerˉsourceˉfunctionˉtypeˉcatalogˉvalue(
+        Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+        Compilerˉsourceˉfunctionˉtypeˉheader(
+            0u32, 0u32, FUNCTION_TYPE_HEADER_BYTES, 0u32
+        )
+    );
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog
+) -> u32 {
+    if Bytesˉlength(Catalog.Evidence) < FUNCTION_TYPE_HEADER_BYTES {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, 8u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉshape(Instance: u32) -> u32 {
+    if Instance >= FUNCTION_TYPE_INSTANCE_LIMIT { return 0u32; }
+    return FUNCTION_TYPE_SHAPE_BASE + Instance;
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉprivate(
+    Shape: u32
+) -> bool {
+    return Shape >= FUNCTION_TYPE_SHAPE_BASE &&
+        Shape < FUNCTION_TYPE_SHAPE_BASE + FUNCTION_TYPE_INSTANCE_LIMIT;
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉshapeˉinstance(
+    Shape: u32
+) -> u32 {
+    if !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉprivate(Shape) {
+        return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+    }
+    return Shape - FUNCTION_TYPE_SHAPE_BASE;
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+    Input: bytes
+) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+    Parameters: bytes,
+    Shape: u32,
+    Mode: u32
+) -> bytes {
+    return Bytesˉconcat(
+        Compilerˉsourceˉfunctionˉtypeˉappendˉu32(Parameters, Shape),
+        Bytesˉfromˉu32ˉlittle(Mode)
+    );
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉvalidˉat(
+    Shape: u32,
+    Instance: u32
+) -> bool {
+    if Shape == 0u32 { return false; }
+    if Shape < GENERIC_TYPE_SHAPE_BASE { return true; }
+    if Shape >= GENERIC_TYPE_SHAPE_BASE &&
+        Shape < GENERIC_TYPE_SHAPE_LIMIT {
+        return true;
+    }
+    if !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉprivate(Shape) {
+        return false;
+    }
+    return Compilerˉsourceˉfunctionˉtypeˉshapeˉinstance(Shape) < Instance;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉmodeˉisˉvalid(Mode: u32) -> bool {
+    return Mode <= 2u32;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉentryˉbytes(
+    Parameters: u32
+) -> u32 {
+    return FUNCTION_TYPE_ENTRY_BYTES +
+        Parameters * FUNCTION_TYPE_PARAMETER_BYTES;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Instances: u32 =
+        Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(Catalog);
+    if Instance >= Instances {
+        return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+    }
+    var Cursor: u32 = FUNCTION_TYPE_HEADER_BYTES;
+    var Current: u32 = 0u32;
+    while Current < Instance {
+        let Length: u32 = Bytesˉlength(Catalog.Evidence);
+        if Cursor > Length ||
+            Length - Cursor < FUNCTION_TYPE_ENTRY_BYTES {
+            return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+        }
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        );
+        if Parameters > FUNCTION_TYPE_PARAMETER_LIMIT {
+            return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+        }
+        let Entryˉbytes: u32 =
+            Compilerˉsourceˉfunctionˉtypeˉentryˉbytes(Parameters);
+        if Entryˉbytes > Length - Cursor {
+            return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+        }
+        Cursor = Cursor + Entryˉbytes;
+        Current = Current + 1u32;
+    }
+    return Cursor;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉentryˉequals(
+    Evidence: bytes,
+    Cursor: u32,
+    Flags: u32,
+    Profile: u32,
+    Resultˉshape: u32,
+    Resultˉmode: u32,
+    Languageˉeffects: u32,
+    Capabilityˉeffects: u32,
+    Parameters: bytes
+) -> bool {
+    let Count: u32 = Bytesˉlength(Parameters) /
+        FUNCTION_TYPE_PARAMETER_BYTES;
+    if Bytesˉreadˉu32ˉlittle(Evidence, Cursor) != Flags ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 4u32) != Profile ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 8u32) != Resultˉshape ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 12u32) != Resultˉmode ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 16u32) !=
+            Languageˉeffects ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 20u32) !=
+            Capabilityˉeffects ||
+        Bytesˉreadˉu32ˉlittle(Evidence, Cursor + 24u32) != Count {
+        return false;
+    }
+    var Byte: u32 = 0u32;
+    while Byte < Bytesˉlength(Parameters) {
+        if Bytesˉreadˉu8(
+                Evidence, Cursor + FUNCTION_TYPE_ENTRY_BYTES + Byte
+            ) != Bytesˉreadˉu8(Parameters, Byte) {
+            return false;
+        }
+        Byte = Byte + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog
+) -> bool {
+    let Length: u32 = Bytesˉlength(Catalog.Evidence);
+    if Catalog.Status != Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Length < FUNCTION_TYPE_HEADER_BYTES ||
+        Length > FUNCTION_TYPE_RETAINED_LIMIT {
+        return false;
+    }
+    if Bytesˉreadˉu8(Catalog.Evidence, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 2u32) != 70u8 ||
+        Bytesˉreadˉu8(Catalog.Evidence, 3u32) != 84u8 ||
+        Bytesˉreadˉu16ˉlittle(Catalog.Evidence, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Catalog.Evidence, 6u32) != 0u32 {
+        return false;
+    }
+    let Instances: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 8u32
+    );
+    let Declaredˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 12u32
+    );
+    let Retained: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 16u32
+    );
+    let Declaredˉestimated: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 20u32
+    );
+    if Instances > FUNCTION_TYPE_INSTANCE_LIMIT ||
+        Declaredˉmaximum > FUNCTION_TYPE_PARAMETER_LIMIT ||
+        Retained != Length ||
+        Declaredˉestimated > FUNCTION_TYPE_ESTIMATED_LIMIT {
+        return false;
+    }
+    var Cursor: u32 = FUNCTION_TYPE_HEADER_BYTES;
+    var Maximumˉparameters: u32 = 0u32;
+    var Estimatedˉbytes: u32 = 0u32;
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        if Cursor > Length || Length - Cursor < FUNCTION_TYPE_ENTRY_BYTES {
+            return false;
+        }
+        let Flags: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor
+        );
+        let Profile: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 4u32
+        );
+        let Resultˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 8u32
+        );
+        let Resultˉmode: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 12u32
+        );
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        );
+        let Estimated: u32 = Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 28u32
+        );
+        if (Flags & 4294967292u32) != 0u32 ||
+            Profile == 0u32 || Profile > 3u32 ||
+            !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉvalidˉat(
+                Resultˉshape, Instance
+            ) || Resultˉmode != 0u32 ||
+            Parameters > FUNCTION_TYPE_PARAMETER_LIMIT {
+            return false;
+        }
+        let Entryˉbytes: u32 =
+            Compilerˉsourceˉfunctionˉtypeˉentryˉbytes(Parameters);
+        if Entryˉbytes > Length - Cursor ||
+            Estimated > FUNCTION_TYPE_ESTIMATED_LIMIT ||
+            Estimatedˉbytes > FUNCTION_TYPE_ESTIMATED_LIMIT - Estimated {
+            return false;
+        }
+        var Parameter: u32 = 0u32;
+        while Parameter < Parameters {
+            let Parameterˉentry: u32 = Cursor + FUNCTION_TYPE_ENTRY_BYTES +
+                Parameter * FUNCTION_TYPE_PARAMETER_BYTES;
+            if !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉvalidˉat(
+                    Bytesˉreadˉu32ˉlittle(
+                        Catalog.Evidence, Parameterˉentry
+                    ), Instance
+                ) || !Compilerˉsourceˉfunctionˉtypeˉmodeˉisˉvalid(
+                    Bytesˉreadˉu32ˉlittle(
+                        Catalog.Evidence, Parameterˉentry + 4u32
+                    )
+                ) {
+                return false;
+            }
+            Parameter = Parameter + 1u32;
+        }
+        var Prior: u32 = 0u32;
+        while Prior < Instance {
+            let Priorˉcursor: u32 =
+                Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+                    Catalog, Prior
+                );
+            if Priorˉcursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() {
+                return false;
+            }
+            if Compilerˉsourceˉfunctionˉtypeˉentryˉequals(
+                Catalog.Evidence, Priorˉcursor,
+                Flags, Profile, Resultˉshape, Resultˉmode,
+                Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 16u32),
+                Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 20u32),
+                Bytesˉslice(
+                    Catalog.Evidence, Cursor + FUNCTION_TYPE_ENTRY_BYTES,
+                    Parameters * FUNCTION_TYPE_PARAMETER_BYTES
+                )
+            ) { return false; }
+            Prior = Prior + 1u32;
+        }
+        if Parameters > Maximumˉparameters {
+            Maximumˉparameters = Parameters;
+        }
+        Estimatedˉbytes = Estimatedˉbytes + Estimated;
+        Cursor = Cursor + Entryˉbytes;
+        Instance = Instance + 1u32;
+    }
+    return Cursor == Length && Maximumˉparameters == Declaredˉmaximum &&
+        Estimatedˉbytes == Declaredˉestimated;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉparametersˉstatus(
+    Parameters: bytes,
+    Instance: u32
+) -> Compilerˉsourceˉfunctionˉtypeˉstatus {
+    if Bytesˉlength(Parameters) % FUNCTION_TYPE_PARAMETER_BYTES != 0u32 {
+        return Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence;
+    }
+    let Count: u32 = Bytesˉlength(Parameters) /
+        FUNCTION_TYPE_PARAMETER_BYTES;
+    if Count > FUNCTION_TYPE_PARAMETER_LIMIT {
+        return Compilerˉsourceˉfunctionˉtypeˉstatus.Parameterˉlimit;
+    }
+    var Parameter: u32 = 0u32;
+    while Parameter < Count {
+        let Entry: u32 = Parameter * FUNCTION_TYPE_PARAMETER_BYTES;
+        if !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉvalidˉat(
+            Bytesˉreadˉu32ˉlittle(Parameters, Entry), Instance
+        ) {
+            return Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉshape;
+        }
+        if !Compilerˉsourceˉfunctionˉtypeˉmodeˉisˉvalid(
+            Bytesˉreadˉu32ˉlittle(Parameters, Entry + 4u32)
+        ) {
+            return Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉmode;
+        }
+        Parameter = Parameter + 1u32;
+    }
+    return Compilerˉsourceˉfunctionˉtypeˉstatus.Valid;
+}
+
+fn Compilerˉsourceˉfunctionˉtypeˉentry(
+    Flags: u32,
+    Profile: u32,
+    Resultˉshape: u32,
+    Resultˉmode: u32,
+    Languageˉeffects: u32,
+    Capabilityˉeffects: u32,
+    Parameters: bytes,
+    Estimatedˉbytes: u32
+) -> bytes {
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(Flags);
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(Result, Profile);
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Resultˉshape
+    );
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(Result, Resultˉmode);
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Languageˉeffects
+    );
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Capabilityˉeffects
+    );
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Bytesˉlength(Parameters) / FUNCTION_TYPE_PARAMETER_BYTES
+    );
+    Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+        Result, Estimatedˉbytes
+    );
+    return Bytesˉconcat(Result, Parameters);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Flags: u32,
+    Profile: u32,
+    Resultˉshape: u32,
+    Resultˉmode: u32,
+    Languageˉeffects: u32,
+    Capabilityˉeffects: u32,
+    Parameters: bytes,
+    Estimatedˉbytes: u32
+) -> Compilerˉsourceˉfunctionˉtypeˉadmission {
+    if !Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(Catalog) {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    let Instances: u32 =
+        Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(Catalog);
+    if (Flags & 4294967292u32) != 0u32 {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    if Profile == 0u32 || Profile > 3u32 {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉprofile,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    if !Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉvalidˉat(
+        Resultˉshape, Instances
+    ) {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉshape,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    if Resultˉmode != 0u32 {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉmode,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    let Parameterˉstatus: Compilerˉsourceˉfunctionˉtypeˉstatus =
+        Compilerˉsourceˉfunctionˉtypeˉparametersˉstatus(
+            Parameters, Instances
+        );
+    if Parameterˉstatus != Compilerˉsourceˉfunctionˉtypeˉstatus.Valid {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Parameterˉstatus, Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+            Catalog, Instance
+        );
+        if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() {
+            return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+                Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+                Catalog.Evidence,
+                Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+            );
+        }
+        if Compilerˉsourceˉfunctionˉtypeˉentryˉequals(
+            Catalog.Evidence, Cursor, Flags, Profile,
+            Resultˉshape, Resultˉmode,
+            Languageˉeffects, Capabilityˉeffects, Parameters
+        ) {
+            return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+                Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+                Catalog.Evidence, Instance, true
+            );
+        }
+        Instance = Instance + 1u32;
+    }
+    if Instances >= FUNCTION_TYPE_INSTANCE_LIMIT {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Instanceˉlimit,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    let Entry: bytes = Compilerˉsourceˉfunctionˉtypeˉentry(
+        Flags, Profile, Resultˉshape, Resultˉmode,
+        Languageˉeffects, Capabilityˉeffects,
+        Parameters, Estimatedˉbytes
+    );
+    if Bytesˉlength(Entry) > FUNCTION_TYPE_RETAINED_LIMIT ||
+        Bytesˉlength(Catalog.Evidence) >
+            FUNCTION_TYPE_RETAINED_LIMIT - Bytesˉlength(Entry) {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Retainedˉlimit,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    let Priorˉestimated: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 20u32
+    );
+    if Estimatedˉbytes > FUNCTION_TYPE_ESTIMATED_LIMIT ||
+        Priorˉestimated > FUNCTION_TYPE_ESTIMATED_LIMIT - Estimatedˉbytes {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Estimatedˉlimit,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    let Count: u32 = Bytesˉlength(Parameters) /
+        FUNCTION_TYPE_PARAMETER_BYTES;
+    var Maximumˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence, 12u32
+    );
+    if Count > Maximumˉparameters { Maximumˉparameters = Count; }
+    let Payload: bytes = Bytesˉconcat(
+        Bytesˉslice(
+            Catalog.Evidence, FUNCTION_TYPE_HEADER_BYTES,
+            Bytesˉlength(Catalog.Evidence) - FUNCTION_TYPE_HEADER_BYTES
+        ),
+        Entry
+    );
+    let Evidence: bytes = Bytesˉconcat(
+        Compilerˉsourceˉfunctionˉtypeˉheader(
+            Instances + 1u32,
+            Maximumˉparameters,
+            FUNCTION_TYPE_HEADER_BYTES + Bytesˉlength(Payload),
+            Priorˉestimated + Estimatedˉbytes
+        ),
+        Payload
+    );
+    let Result: Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Compilerˉsourceˉfunctionˉtypeˉcatalogˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Valid, Evidence
+        );
+    if !Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(Result) {
+        return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+            Compilerˉsourceˉfunctionˉtypeˉstatus.Invalidˉevidence,
+            Catalog.Evidence,
+            Compilerˉsourceˉfunctionˉtypeˉsentinel(), false
+        );
+    }
+    return Compilerˉsourceˉfunctionˉtypeˉadmissionˉvalue(
+        Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+        Evidence, Instances, false
+    );
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+    Admission: Compilerˉsourceˉfunctionˉtypeˉadmission
+) -> Compilerˉsourceˉfunctionˉtypeˉcatalog {
+    return Compilerˉsourceˉfunctionˉtypeˉcatalog(
+        Admission.Status, Admission.Catalogˉevidence
+    );
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉflags(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉprofile(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 4u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉresultˉshape(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 8u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 16u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉcapabilityˉeffects(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 20u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉparameters(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() { return 0u32; }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 24u32);
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉparameterˉshape(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32,
+    Parameter: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() ||
+        Parameter >= Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        ) {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence,
+        Cursor + FUNCTION_TYPE_ENTRY_BYTES +
+            Parameter * FUNCTION_TYPE_PARAMETER_BYTES
+    );
+}
+
+export fn Compilerˉsourceˉfunctionˉtypeˉparameterˉmode(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32,
+    Parameter: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() ||
+        Parameter >= Bytesˉreadˉu32ˉlittle(
+            Catalog.Evidence, Cursor + 24u32
+        ) {
+        return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+    }
+    return Bytesˉreadˉu32ˉlittle(
+        Catalog.Evidence,
+        Cursor + FUNCTION_TYPE_ENTRY_BYTES +
+            Parameter * FUNCTION_TYPE_PARAMETER_BYTES + 4u32
+    );
+}

@@ -7636,6 +7636,19 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉmemoryˉsplitˉcall(
     );
 }
 
+fn Compilerˉsourceˉwirˉcallˉoperands(
+    Source: bytes,
+    Items: u32,
+    Named: bool
+) -> bytes {
+    if !Named { return Compilerˉsourceˉwirˉempty(Source); }
+    let Repeated: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉrepeat(
+            255u8, Items * 4u32
+        );
+    return Repeated.Value;
+}
+
 export fn Compilerˉsourceˉwirˉcompileˉcall(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -7953,7 +7966,11 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         }
     }
     var Result: Compilerˉsourceˉwirˉbuild = Build;
-    var Argumentˉoperands: bytes = Compilerˉsourceˉwirˉempty(Source);
+    var Argumentˉoperands: bytes =
+        Compilerˉsourceˉwirˉcallˉoperands(
+            Source, Expression.Items,
+            Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Colon
+        );
     var Cursor: u32 = Expression.Itemsˉoffset;
     var Currentˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
         Source, Expression.Offset, Expression.Line, Expression.Column,
@@ -7961,6 +7978,41 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     );
     var Item: u32 = 0u32;
     while Item < Expression.Items {
+        var Namedˉformal: u32 = Item;
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+            let Callˉlabel: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉbodies.Compilerˉbodyˉtoken(
+                    Source, Cursor,
+                    Currentˉposition.Line, Currentˉposition.Column,
+                    Expression.Itemsˉoffset + Expression.Itemsˉlength
+                );
+            let Callˉparameter:
+                Sourceˉbindings.Compilerˉsourceˉparameterˉmatch =
+                Sourceˉbindings.Compilerˉsourceˉbindingsˉcallableˉparameter(
+                    Input, Scan, Symbols, Callable,
+                    Source, Callˉlabel.Offset, Callˉlabel.Length
+                );
+            if !Callˉparameter.Found || !Callˉparameter.Supported {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Result, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                    Callable.Module,
+                    Callˉlabel.Offset,
+                    Callˉlabel.Line, Callˉlabel.Column
+                );
+            }
+            let Callˉcolon: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉbodies.Compilerˉbodyˉtoken(
+                    Source, Callˉlabel.Nextˉoffset,
+                    Callˉlabel.Nextˉline, Callˉlabel.Nextˉcolumn,
+                    Expression.Itemsˉoffset + Expression.Itemsˉlength
+                );
+            Namedˉformal = Callˉparameter.Index;
+            Cursor = Callˉcolon.Nextˉoffset;
+            Currentˉposition = Sourceˉbodies.Compilerˉsourceˉposition(
+                Callˉcolon.Nextˉoffset,
+                Callˉcolon.Nextˉline, Callˉcolon.Nextˉcolumn
+            );
+        }
         let Callˉargument: Sourceˉbodies.Compilerˉsourceˉexpression = Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
             Source, Cursor, Currentˉposition.Line, Currentˉposition.Column,
             Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
@@ -8004,7 +8056,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
                     Input, Scan, Symbols, Callable,
                     Source, Expression.Valueˉoffset,
-                    Expression.Valueˉlength, Item,
+                    Expression.Valueˉlength, Namedˉformal,
                     Compilerˉsourceˉwirˉgenericˉcatalog(
                         Result.Genericˉevidence
                     ),
@@ -8037,7 +8089,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
                 Input, Scan, Symbols, Callable,
                 Source, Expression.Valueˉoffset,
-                Expression.Valueˉlength, Item,
+                Expression.Valueˉlength, Namedˉformal,
                 Compilerˉsourceˉwirˉgenericˉcatalog(
                     Value.Genericˉevidence
                 ),
@@ -8089,7 +8141,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 let Genericˉargumentˉcontribution:
                     Compilerˉsourceˉwirˉgenericˉcontribution =
                     Compilerˉsourceˉwirˉgenericˉcontributeˉformal(
-                        Input, Scan, Symbols, Callable, Item,
+                        Input, Scan, Symbols, Callable, Namedˉformal,
                         Value.Shape, Item, Callˉargument.Offset,
                         Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
                             Value.Genericˉevidence
@@ -8155,9 +8207,31 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Callˉargument.Line, Callˉargument.Column
             );
         }
-        Argumentˉoperands = Bytesˉconcat(
-            Argumentˉoperands, Bytesˉfromˉu32ˉlittle(Value.Temporary)
-        );
+        if Expression.Operator == Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+            if Bytesˉreadˉu32ˉlittle(
+                    Argumentˉoperands, Namedˉformal * 4u32
+                ) != Compilerˉsourceˉwirˉsentinel() {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                    Callable.Module,
+                    Callˉargument.Offset,
+                    Callˉargument.Line, Callˉargument.Column
+                );
+            }
+            let Namedˉoperandˉresult:
+                Byteˉconstruction.Foundationˉbytesˉresult =
+                Byteˉconstruction.Foundationˉbytesˉreplace(
+                    Argumentˉoperands, Namedˉformal * 4u32, 4u32,
+                    Bytesˉfromˉu32ˉlittle(Value.Temporary)
+                );
+            Argumentˉoperands = Namedˉoperandˉresult.Value;
+        } else {
+            Argumentˉoperands = Bytesˉconcat(
+                Argumentˉoperands,
+                Bytesˉfromˉu32ˉlittle(Value.Temporary)
+            );
+        }
         Result = Compilerˉsourceˉwirˉvalueˉbuild(Value);
         Cursor = Callˉargument.Nextˉoffset;
         Currentˉposition = Sourceˉbodies.Compilerˉsourceˉposition(

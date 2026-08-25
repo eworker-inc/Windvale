@@ -388,6 +388,10 @@ export fn Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Base { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Effects { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Using { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Copy { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Move { return false; }
         return true;
     }
     return false;
