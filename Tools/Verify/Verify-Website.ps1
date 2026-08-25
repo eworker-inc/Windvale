@@ -61,6 +61,7 @@ foreach ($BrowserScript in $BrowserScripts) {
 }
 
 Invoke-External $RepositoryRoot 'node' @('Tools/Website/Verify-Supporters.mjs')
+Invoke-External $RepositoryRoot 'node' @('Tools/Website/Verify-Maintenance-Site.mjs')
 Invoke-External $WebsiteRoot 'npm' @('run', 'build')
 Invoke-External $RepositoryRoot 'node' @('Tools/Website/Verify-Repository-Browser.mjs')
 

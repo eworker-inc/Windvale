@@ -169,6 +169,7 @@ function Test-WebsitePath {
         $Path.StartsWith('Tools/Windvale.Playground/wwwroot/', [StringComparison]::Ordinal) -or
         $Path -in @(
             '.github/workflows/deploy-homepage.yml',
+            '.github/workflows/deploy-maintenance.yml',
             'package.json',
             'package-lock.json',
             'Specifications/Browser-Playground.md',

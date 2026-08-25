@@ -1,0 +1,48 @@
+name: Deploy website maintenance cover
+run-name: Deploy website maintenance cover
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windvale-homepage
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish maintenance cover to windvale.ca
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the persistent maintenance lock
+        shell: bash
+        env:
+          WEBSITE_MODE: ${{ vars.WINDVALE_WEBSITE_MODE }}
+        run: |
+          set -euo pipefail
+          if [[ "$WEBSITE_MODE" != "maintenance" ]]; then
+            echo "Set the WINDVALE_WEBSITE_MODE repository variable to maintenance before deploying the cover." >&2
+            exit 1
+          fi
+
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify the bounded maintenance response
+        run: node Tools/Website/Verify-Maintenance-Site.mjs
+
+      - name: Publish maintenance cover
+        working-directory: Website/Maintenance
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: >-
+          npx --yes wrangler@4.118.0 pages deploy .
+          --project-name windvale-ca
+          --branch main
+          --commit-hash "${GITHUB_SHA}"

@@ -61,7 +61,11 @@ $Cases = @(
     },
     @{
         Name = 'website deployment and function'
-        Paths = @('.github/workflows/deploy-homepage.yml', 'Website/functions/api/supporters.js')
+        Paths = @(
+            '.github/workflows/deploy-homepage.yml',
+            '.github/workflows/deploy-maintenance.yml',
+            'Website/functions/api/supporters.js'
+        )
         Scope = 'website'
         Editor = $false
     },

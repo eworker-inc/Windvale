@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ vars.WINDVALE_WEBSITE_MODE != 'maintenance' }}
     name: Publish windvale.ca
     runs-on: ubuntu-latest
     timeout-minutes: 15

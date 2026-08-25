@@ -115,3 +115,7 @@ The `/playground/` route uses the static, .NET-free source-to-result worker. It 
 Normal deployment copies `Tools/Windvale.Playground/wwwroot` directly after the npm build; it does not install .NET or run `dotnet publish`. Mutable entry points, JavaScript modules, styles, editor bundles, the package manifest, and package artifacts request revalidation, and the Cloudflare zone's Browser Cache TTL remains set to `Respect Existing Headers`. Every fetched compiler artifact is checked against the revalidated manifest's exact byte length and SHA-256 identity before use. A missing or mixed-release asset is a publication or caching fault, not a reason to weaken verification.
 
 Cloudflare credentials remain outside the repository. Automation receives only the scoped API token and account identifier through GitHub Actions secrets.
+
+## Maintenance cover
+
+[`Maintenance/`](Maintenance/) is a bounded, self-contained whole-site cover for periods when no ordinary public surface should remain available. Its advanced-mode Cloudflare Worker returns the same `503 Service Unavailable` response for every method and route, including generated documents, source assets, playground files, and Functions. The repository variable `WINDVALE_WEBSITE_MODE=maintenance` prevents the scheduled ordinary publisher from replacing the cover. Follow the [website maintenance runbook](../Documents/Runbooks/Website-Maintenance.md) to enter, verify, and leave this state; never use a one-time maintenance deployment without the persistent lock.
