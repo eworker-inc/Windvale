@@ -2,9 +2,9 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.28 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.29 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
-For the execution subset through WVB 1.28, including the current
+For the execution subset through WVB 1.29, including the current
 Vector/Sequence and launcher-budget checkpoints, the implementation proves
 the complete source set → symbols/bindings → typed WVIR → canonical
 cross-module identity flattening → static data, nominal and capability metadata,
@@ -813,6 +813,33 @@ identity, replacing the owner local with a view, taking before observation, and
 taking the borrowed view. Four source fixtures reject use after whole-value
 move, duplicate move, owned-field extraction by value, and mutable borrow from
 an immutable parent.
+
+Typed WVIR operation `Platformˉsourceˉlength = 176` lowers to the five-byte
+WVB 1.29 opcode `D2`, followed by one little-endian `u32` local index. The
+private source identity serializes as shape `34`. Shape `34` is valid only as
+the sole by-value parameter of exported `Main(Sourceˉfile) -> i32` and as a
+non-parameter local that receives that owner through `local.take`; it is invalid
+in Types entries, fields, payloads, collections, results, other signatures, and
+ordinary source-declared locals.
+
+Opcode `D2` names only the available non-parameter shape-34 local and pushes
+one `u64` length. It has no stack operand and cannot target the entry parameter.
+The compiler-aligned verifier requires the exact hosted entry, at least one
+`D2`, bounded ownership on all control paths, and the ordinary explicit
+`local.take; pop` cleanup produced by semantic `using`. A WVB 1.29 header
+without that exact source entry and operation rejects; earlier minors cannot
+encode either shape `34` or opcode `D2`.
+
+`Source-File-Snapshot-Executable.wv` deterministically emits a 373-byte WVB
+1.29 module at SHA-256
+`01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05`.
+It moves the launcher-supplied owner into `using`, observes its length through
+an immutable borrow, releases it on each return path, and returns `42` for a
+42-byte snapshot. The verifier accepts the exact product and rejects version
+downgrade, forgeable parameter/local shapes, unknown opcode, observation before
+parameter transfer, and copying instead of moving the parameter. WVB carries
+no host path, handle, source bytes, provider object, or ambient filesystem
+grant.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause

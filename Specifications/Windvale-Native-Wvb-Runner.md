@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-Vector-containing aggregate ownership through WVB 1.28 but has not repinned the paired
+the rights-limited source snapshot through WVB 1.29 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.28. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.29. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -215,6 +215,24 @@ and 64 KiB descriptor heap without adding unbounded tracing or host allocation.
 Borrowed aggregate parameters/results, resource-bearing Vector elements, and
 user-defined destruction remain outside this profile.
 
+WVB 1.29 adds one launcher-supplied `Sourceˉfile` resource. Public mode
+`--source-file <module.wvb> <snapshot-file>` reads an immutable snapshot before
+guest execution and rejects more than 1,048,576 bytes. Request major `5`
+contains the bounded bytes plus exactly one read right, a nonzero provider
+generation, and an equal resource generation. Envelope validation rejects
+wrong rights, zero or stale generations, inconsistent lengths, and oversized
+input before the first guest instruction. The guest receives neither the path
+nor an open host handle.
+
+The runtime represents shape `34` as one fixed cell containing the admitted
+`u32` length and provider generation. The exact exported
+`Main(Sourceˉfile) -> i32` parameter begins as the sole owner, must move into a
+non-parameter local, and is released exactly once through ordinary owned-local
+teardown. Opcode `D2 source.length <local>` validates shape, the 1 MiB bound,
+and the current generation before pushing `u64`. Stale or malformed runtime
+state fails closed. There is no byte-reading opcode, path conversion, provider
+acquisition, retry, or ambient filesystem authority in this checkpoint.
+
 The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
 SHA-256
 `ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
@@ -309,6 +327,16 @@ releases its nested Vector exactly once, and returns `42`. Six exact
 version/view/local/take mutations reject before execution. The combined focused
 owner's paired-host result is recorded in the Language 1.0 migration evidence;
 the promoted runner inventory remains unrepinned.
+
+The executable source-snapshot fixture is deterministic 373-byte WVB 1.29 at
+SHA-256
+`01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05`.
+The source-built runner returns `42` for a 42-byte snapshot and `1` for a
+41-byte snapshot; a 1,048,577-byte input returns command status `64` with
+`wvb run status=Sourceˉsnapshotˉtooˉlarge`. Six exact version, shape, opcode,
+target, and transfer mutations reject before execution. This is focused Windows
+development evidence; independent Linux reproduction and promoted-candidate
+repinning remain separate gates.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

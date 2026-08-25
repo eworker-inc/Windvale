@@ -169,11 +169,14 @@ then executes explicit reserved Vector growth as a strong transaction through
 WVB 1.27. [Decision 0850](../Decisions/0850-Own-Vector-Containing-Aggregates-As-Wvb-1.28.md)
 then recursively moves records, variants, and fixed arrays containing Vector,
 confines field/element views, and deterministically releases nested descriptors
-through WVB 1.28. The combined owner now passes 101 cases. The final connected
-Slice 5 result is one hosted resource consumer. Acquiring
-additional budget authority from a provider remains an explicit later hosted
-capability rather than ambient allocation. Canonical effect resolution, call
-enforcement, function values, and captures follow in Slice 6.
+through WVB 1.28. [Decision 0851](../Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md)
+completes Slice 5 by transferring one immutable, rights-limited source snapshot
+through exact `Main(Sourceˉfile) -> i32`, WVB 1.29 shape `34`, opcode `D2`,
+generation validation, and deterministic `using` release. The combined owner
+now passes 113 cases. Acquiring additional budget authority from a provider
+remains an explicit later hosted capability rather than ambient allocation.
+Canonical effect resolution, call enforcement, function values, and captures
+are the next connected work in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

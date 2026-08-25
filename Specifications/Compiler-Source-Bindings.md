@@ -257,6 +257,15 @@ any synthetic match. Element-dependent parameter and result shapes are resolved
 later from the validated WVGT catalog; WVLB does not serialize a guessed generic
 shape for these calls.
 
+Before ambient lookup, the exact qualified call
+`Platformˉfile.Sourceˉlength` may also select one compiler-supplied intrinsic
+with arity one and WVIR operation identity `176`. The alias must resolve to the
+exact `Platformˉfile` module. Binding records the call identity but does not
+invent a function declaration, provider call, effect, path, or handle. Typed
+WVIR requires an explicit immutable borrow of one live exact `Sourceˉfile`
+local and produces `u64`; direct observation of the entry parameter before its
+move into the local is not admitted by the executable profile.
+
 Binding does not use a call's expected result to select an intrinsic or ordinary
 declaration. During typed WVIR construction, an already selected ordinary call
 may receive one exact contextual shape from a declared local, assignment target,

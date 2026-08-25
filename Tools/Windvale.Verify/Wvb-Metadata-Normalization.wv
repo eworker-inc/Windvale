@@ -255,7 +255,8 @@ fn Readˉmetadata(
     Input: bytes,
     Cursor: u32,
     Limit: u32,
-    Profile: u8
+    Profile: u8,
+    Minor: u32
 ) -> bytes {
     let Invalidˉresult: bytes = Empty(Input);
     let Total: u32 = Bytesˉlength(Input);
@@ -320,7 +321,7 @@ fn Readˉmetadata(
     if Authority == 4u8 {
         Expectedˉprofile = 3u8;
     } else {
-        if Requirementsˉcount(Required) != 0u32 ||
+        if Minor == 29u32 || Requirementsˉcount(Required) != 0u32 ||
             Requirementsˉcount(Optional) != 0u32 {
             Expectedˉprofile = 2u8;
         }
@@ -338,7 +339,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
-        Minor < 11u32 || Minor > 28u32 ||
+        Minor < 11u32 || Minor > 29u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
         return Invalid;
     }
@@ -357,7 +358,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     if Nameˉlength > Moduleˉlength - 6u32 { return Invalid; }
     let Metadataˉoffset: u32 = 25u32 + Nameˉlength;
     let Metadata: bytes = Readˉmetadata(
-        Input, Metadataˉoffset, Moduleˉend, Profile
+        Input, Metadataˉoffset, Moduleˉend, Profile, Minor
     );
     if Bytesˉlength(Metadata) == 0u32 { return Invalid; }
     if Bytesˉreadˉu8(Metadata, 0u32) == 0u8 { return Input; }

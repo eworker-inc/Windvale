@@ -8,6 +8,12 @@ Windvale uses `v0.y.z` tags while public contracts remain experimental. A `0.y` 
 
 ### Added
 
+- Completed Language 1.0 Migration Slice 5 with one rights-limited hosted
+  resource consumer. Exact `Main(Sourceˉfile) -> i32` receives a launcher-
+  admitted immutable snapshot, `Sourceˉlength` lowers through WVB 1.29, and
+  semantic `using` releases the move-only owner exactly once. The 1 MiB request
+  bound, rights/generation checks, and verifier confinement expose no path,
+  handle, or ambient filesystem authority.
 - Added a bounded generation-safe allocation-lease accounting oracle. Budget
   owners use odd generations, successful lease transfer advances atomically to
   an even generation, exact maximum/current/alignment metadata is bound into

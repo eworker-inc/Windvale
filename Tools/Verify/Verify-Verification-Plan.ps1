@@ -132,6 +132,8 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Owned-Aggregate-Mutable-Borrow-From-Let.wv',
             'Tests/Fixtures/Language-1.0/Owned-Aggregate-Use-After-Move.wv',
             'Tests/Fixtures/Language-1.0/Owned-Aggregate-Vector-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Source-File-Snapshot-Executable.wv',
+            'Libraries/Platform/Filesystem/File.wv',
             'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
             'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
             'Tests/Fixtures/Language-1.0/Using-Vector-Loop-Exits-Wir.wv',
@@ -1182,7 +1184,8 @@ $NativeCases = @(
         Suites = @(
             'seed-native-front-door',
             'wvb-runner-reconstruction',
-            'scripting'
+            'scripting',
+            'language-1-memory-budget-split-execution'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -3643,7 +3646,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5430 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5442 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -7,7 +7,7 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 4 are complete and Slice 5 is active. The existing
+Migration Slices 1 through 5 are complete and Slice 6 is next. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -3021,3 +3021,48 @@ bytes have SHA-256
 Exact portable WVB sizes and SHA-256 identities match on both hosts. This is paired-
 host focused development evidence for WVB 1.28, not the broad repository
 Qualification gate or promoted runner-candidate repinning.
+
+## Hosted source-resource evidence
+
+[Decision 0851](../Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md)
+completes Slice 5 with the exact compiler-supplied
+`Platformˉfile.Sourceˉfile` identity. Only exported
+`Main(Sourceˉfile) -> i32` can receive the owner. The source fixture moves it
+into `using`, calls `Sourceˉlength` through an immutable borrow, and relies on
+the compiler's explicit cleanup operation on both return paths. It cannot
+construct the resource, store it in an aggregate, copy it, return it, recover a
+path or handle, or acquire additional filesystem authority.
+
+WVIR operation `176` lowers to WVB 1.29 opcode `D2` and serialized shape `34`.
+The compiler-aligned verifier confines that shape to the exact entry parameter
+and moved local, rejects observation of the parameter before transfer, and
+requires the operation plus complete owned-slot cleanup. Metadata normalization
+permits the hosted module's empty capability-call directory only at minor 29;
+the subsequent semantic gate requires the exact resource entry, so the
+exception cannot admit an arbitrary hosted module.
+
+Runner mode `--source-file <module.wvb> <snapshot-file>` reads one immutable
+snapshot no larger than 1,048,576 bytes before guest execution. Interpreter
+request major `5` carries exactly one read right and matching nonzero
+provider/resource generations. The runtime cell retains only the `u32` length
+and generation; `D2` rechecks both before returning `u64`. The 42-byte case
+returns `42`, the 41-byte case returns `1`, and a 1,048,577-byte case returns
+command status `64` with the exact bounded rejection diagnostic.
+
+Two independent compilations produce identical 373-byte WVB 1.29 at SHA-256
+`01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05`.
+Six byte-level mutations reject version downgrade, forgeable parameter and
+local shapes, unknown opcode, parameter observation, and copied parameter
+transfer. The focused Windows owner reports:
+
+```text
+native language 1 memory budget, Vector, using, and resource execution status=Passed cases=113 valid=14 malformed=65 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9ba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05
+```
+
+The registry remains 112 owners and advances to 5,442 cases. Its 17,742
+LF-only bytes have SHA-256
+`9c966034fedace67e7b7ab32267badf9e8ecfbf814c77fcf1fa8049bea964b22`.
+This is exact focused Windows development evidence. Independent Linux
+reproduction, the repository-wide Qualification gate, and promoted runner
+repinning remain separate. General open/read APIs and effect enforcement remain
+later slices rather than implied behavior.

@@ -271,6 +271,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Specification index](../Specifications/README.md) — current language, format, compiler, runtime, tool, native, and OS contracts
 - [Accepted decisions](Decisions/) — dated architecture and policy records; later decisions can amend earlier ones
 - [AI-led research and review evidence](Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) — exact division of AI work, human stewardship, and machine, AI, human, reproduction, and external review claims
+- [Rights-limited source-file transfer](Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md) — completed Language 1.0 Slice 5 resource transfer, WVB 1.29 confinement, and bounded launcher snapshot
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations

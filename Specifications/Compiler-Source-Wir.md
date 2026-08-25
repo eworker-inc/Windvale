@@ -122,8 +122,9 @@ Operation values `1` through `63` retain the prior constants, storage, Foundatio
 Value `173` is `Foundationˉvectorˉappend`, defined below with the same exact
 Foundation identity discipline. Value `174` is `Releaseˉlocal`, the explicit
 compiler boundary for semantic resource cleanup defined below. Value `175` is
-`Foundationˉvectorˉgrowˉreserved`, defined below. It is the last currently
-admitted operation.
+`Foundationˉvectorˉgrowˉreserved`, defined below. Value `176` is
+`Platformˉsourceˉlength`, the exact hosted source-snapshot observation defined
+below. It is the last currently admitted operation.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -457,13 +458,29 @@ Nested resources are emitted in reverse binding/slot order, so the innermost
 owner is released first.
 
 `Releaseˉlocal` has shape `0`, no result temporary, no operands, a direct
-non-parameter exact-Vector local slot in `Target`, and zero `Auxiliary`. It
-consumes the one available owner. Moving or freezing that Vector before its
+non-parameter exact-Vector or `Sourceˉfile` local slot in `Target`, and zero
+`Auxiliary`. It consumes the one available owner. Moving or freezing a Vector,
+or moving the source resource, before its
 implicit release therefore makes the directory invalid rather than turning the
 cleanup into a no-op or double release. The operation is a typed compiler
 boundary, not a user-callable destructor protocol. WVB lowering uses the
 existing `local.take <slot>` followed by `pop`, so no new bytecode opcode or
 minor version is required.
+
+The private source shape `805306369` belongs only to the exact imported
+`Platformˉfile.Sourceˉfile` identity. It is move-owned and cannot be copied,
+stored in a field or collection, returned, or introduced outside the exact
+exported `Main(Sourceˉfile) -> i32` parameter. The entry parameter must move
+into an inferred semantic-`using` local before use, so every exit retains the
+same explicit release proof as other resources.
+
+`Platformˉsourceˉlength = 176` has result shape `8` (`u64`), no value operands,
+one direct non-parameter live `Sourceˉfile` local in `Target`, and zero
+`Auxiliary`. Source syntax supplies an explicit immutable borrow, but WVIR
+serializes only the checked local identity; no pointer, path, handle, provider,
+capability call, or runtime byte access is represented. The operation is
+accepted within the existing WVIR 1.9 through 1.16 envelope and makes WVB 1.29
+the required executable output feature.
 
 `break` closes the current block with a jump to the nearest enclosing loop's after-block. `continue` closes it with a jump to that loop's condition block. Nested loops replace those targets while their bodies are lowered. Compound assignment emits exactly one local load, lowers the right operand, applies the corresponding checked `i32` or `u32` arithmetic operation, and emits one store; an immutable, missing, mismatched, or unsupported target is rejected before publication.
 

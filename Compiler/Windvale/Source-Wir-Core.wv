@@ -245,6 +245,7 @@ const WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED: u32 = 172u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_APPEND: u32 = 173u32;
 const WIR_OPERATION_RELEASE_LOCAL: u32 = 174u32;
 const WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED: u32 = 175u32;
+const WIR_OPERATION_PLATFORM_SOURCE_LENGTH: u32 = 176u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -709,7 +710,7 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉvalid(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
         Symbols.Directory, Shape
     ) { return true; }
-    if Shape == 805306368u32 { return true; }
+    if Shape == 805306368u32 || Shape == 805306369u32 { return true; }
     if Shape >= 1073741824u32 {
         if Shape < 1610612736u32 { return true; }
     }
@@ -799,7 +800,7 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
     if Compilerˉsourceˉwirˉshapeˉisˉbuilder(Shape) ||
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
             Symbols.Directory, Shape
-        ) || Shape == 805306368u32 {
+        ) || Shape == 805306368u32 || Shape == 805306369u32 {
         return WIR_VALUE_CLASS_OWNED;
     }
     return WIR_VALUE_CLASS_UNKNOWN;
@@ -814,6 +815,7 @@ fn Compilerˉsourceˉwirˉshapeˉcontainsˉownedˉvectorˉat(
     Path: bytes,
     Depth: u32
 ) -> bool {
+    if Shape == 805306369u32 { return true; }
     if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
         Shape, Typeˉcatalog
     ) { return true; }
@@ -7334,7 +7336,8 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Expression.Itemsˉoffset + Expression.Itemsˉlength, 0u32, 0u32
         );
     var Valueˉexpression: Sourceˉbodies.Compilerˉsourceˉexpression = Argument;
-    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH {
+    if Operation == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+        Operation == WIR_OPERATION_PLATFORM_SOURCE_LENGTH {
         if Argument.Kind != Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unary ||
             Argument.Operator != Sourceˉlexer.Compilerˉtokenˉkind.Borrow ||
             Argument.Booleanˉvalue {
@@ -7383,6 +7386,22 @@ fn Compilerˉsourceˉwirˉcompileˉfoundationˉvectorˉcall(
             Callable.Module,
             Valueˉexpression.Offset, Valueˉexpression.Line,
             Valueˉexpression.Column
+        );
+    }
+    if Operation == WIR_OPERATION_PLATFORM_SOURCE_LENGTH {
+        if Local.Shape != 805306369u32 ||
+            (Expectedˉshape != 0u32 &&
+                Expectedˉshape != Compilerˉsourceˉwirˉsentinel() &&
+                Expectedˉshape != 8u32) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉresource,
+                Callable.Module, Valueˉexpression.Offset,
+                Valueˉexpression.Line, Valueˉexpression.Column
+            );
+        }
+        return Compilerˉsourceˉwirˉemit(
+            Build, Operation, 8u32, Compilerˉsourceˉwirˉempty(Source),
+            Local.Slot, 0u32, Expression.Offset, Expression.Length
         );
     }
     let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
@@ -7749,6 +7768,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     if Callable.Kind ==
             Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic &&
         (Callable.Directoryˉentry == WIR_OPERATION_FOUNDATION_VECTOR_LENGTH ||
+            Callable.Directoryˉentry == WIR_OPERATION_PLATFORM_SOURCE_LENGTH ||
             Callable.Directoryˉentry ==
                 WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
             Callable.Directoryˉentry ==
@@ -9807,7 +9827,7 @@ fn Compilerˉsourceˉwirˉcompileˉusing(
         Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Resource.Genericˉevidence);
     if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
             Resource.Shape, Typeˉcatalog
-        ) {
+        ) && Resource.Shape != 805306369u32 {
         return Compilerˉsourceˉwirˉfusedˉfrom(
             Compilerˉsourceˉwirˉbuildˉfailure(
                 Compilerˉsourceˉwirˉvalueˉbuild(Resource),
@@ -11201,6 +11221,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == 173u32 { return Shape != 0u32; }
     if Operation == 174u32 { return Shape == 0u32; }
     if Operation == 175u32 { return Shape != 0u32; }
+    if Operation == 176u32 { return Shape == 8u32; }
     return false;
 }
 
@@ -11312,6 +11333,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == 173u32 { return Count == 1u32; }
     if Operation == 174u32 { return Count == 0u32; }
     if Operation == 175u32 { return Count == 1u32; }
+    if Operation == 176u32 { return Count == 0u32; }
     return false;
 }
 
@@ -13457,6 +13479,12 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
             if Parameterˉmode == Compilerˉsourceˉwirˉsentinel() {
                 return false;
             }
+            if Compilerˉsourceˉwirˉbindingˉshape(
+                    Bindings, Symbolˉentries, Function, Slot
+                ) == 805306369u32 && Parameterˉmode !=
+                    Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+                return false;
+            }
             var Initial: u8 = 1u8;
             if Parameterˉmode !=
                     Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
@@ -13682,7 +13710,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
                 Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_APPEND ||
                 Operationˉkind ==
                     WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
-                Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE {
+                Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_FREEZE ||
+                Operationˉkind == WIR_OPERATION_PLATFORM_SOURCE_LENGTH {
                 if Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
                         Slotˉstate, Operationˉtarget
                     ) != 1u8 {
@@ -13822,7 +13851,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     return true;
 }
 
-fn Compilerˉsourceˉwirˉvectorˉgrowˉoperationˉisˉvalid(
+fn Compilerˉsourceˉwirˉresourceˉoperationˉisˉvalid(
+    Operation: u32,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
     Symbolˉentries: u32,
@@ -13833,6 +13863,25 @@ fn Compilerˉsourceˉwirˉvectorˉgrowˉoperationˉisˉvalid(
     Target: u32,
     Auxiliary: u32
 ) -> bool {
+    if Operation == WIR_OPERATION_PLATFORM_SOURCE_LENGTH {
+        return Target >= Firstˉlocal && Target < Slotˉcount &&
+            Auxiliary == 0u32 && Compilerˉsourceˉwirˉbindingˉshape(
+                Bindings, Symbolˉentries, Function, Target
+            ) == 805306369u32;
+    }
+    if Operation == WIR_OPERATION_RELEASE_LOCAL {
+        if Target < Firstˉlocal || Target >= Slotˉcount ||
+            Auxiliary != 0u32 {
+            return false;
+        }
+        let Releasedˉshape: u32 = Compilerˉsourceˉwirˉbindingˉshape(
+            Bindings, Symbolˉentries, Function, Target
+        );
+        return Releasedˉshape == 805306369u32 ||
+            Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
+                Releasedˉshape, Typeˉcatalog
+            );
+    }
     if Target < Firstˉlocal || Target >= Slotˉcount ||
         Auxiliary >= Slotˉcount || Target == Auxiliary {
         return false;
@@ -13930,7 +13979,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind > 175u32 { return false; }
+        if Operationˉkind > 176u32 { return false; }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
             Operationˉshape, Symbols, Typeˉcatalog, true
         ) {
@@ -14127,9 +14176,12 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                 );
             if Vectorˉlocalˉshape != Operationˉauxiliary { return false; }
         }
-        if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
-            if !Compilerˉsourceˉwirˉvectorˉgrowˉoperationˉisˉvalid(
-                Symbols, Bindings, Symbolˉentries, Function, Typeˉcatalog,
+        if Operationˉkind == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED ||
+            Operationˉkind == WIR_OPERATION_PLATFORM_SOURCE_LENGTH ||
+            Operationˉkind == WIR_OPERATION_RELEASE_LOCAL {
+            if !Compilerˉsourceˉwirˉresourceˉoperationˉisˉvalid(
+                Operationˉkind, Symbols, Bindings, Symbolˉentries,
+                Function, Typeˉcatalog,
                 Range.Parameters, Range.Parameters + Range.Locals,
                 Operationˉtarget, Operationˉauxiliary
             ) {
@@ -14292,18 +14344,6 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
             Operationˉkind, Operationˉshape, Operandˉcount,
             Operationˉtarget, Operationˉauxiliary
         ) { return false; }
-        if Operationˉkind == WIR_OPERATION_RELEASE_LOCAL {
-            if Operationˉtarget < Range.Parameters ||
-                Operationˉtarget >= Range.Parameters + Range.Locals ||
-                Operationˉauxiliary != 0u32 ||
-                !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
-                    Compilerˉsourceˉwirˉbindingˉshape(
-                        Bindings, Symbolˉentries, Function, Operationˉtarget
-                    ), Typeˉcatalog
-                ) {
-                return false;
-            }
-        }
         if Operationˉkind >= 11u32 {
             if Operationˉkind <= 16u32 {
                 if Operationˉtarget != Compilerˉsourceˉwirˉsentinel() { return false; }

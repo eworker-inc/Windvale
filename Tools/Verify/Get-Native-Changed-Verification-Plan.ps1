@@ -1614,6 +1614,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Mutable-Borrow-From-Let.wv',
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Use-After-Move.wv',
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Vector-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Source-File-Snapshot-Executable.wv',
         'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
         'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
         'Tests/Fixtures/Language-1.0/Using-Vector-Loop-Exits-Wir.wv',
@@ -2238,6 +2239,8 @@ foreach ($Path in $Paths) {
             $Path -eq 'Tests/Fixtures/Project/Language-1.0-Project3-Build.wvproj') {
             Add-Suite 'language-1-front-door'
         }
+    } elseif ($Path -eq 'Libraries/Platform/Filesystem/File.wv') {
+        Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Libraries/', [StringComparison]::Ordinal) -or
         $Path.StartsWith('Tests/Fixtures/Models/', [StringComparison]::Ordinal) -or
@@ -3259,7 +3262,11 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite 'hosted-verifier-publisher-files'
     } elseif ($Path -eq 'Tools/Windvale.Run/Wvb-Runner-Tool.wv') {
-        Add-Suite @('wvb-runner-reconstruction', 'scripting')
+        Add-Suite @(
+            'wvb-runner-reconstruction',
+            'scripting',
+            'language-1-memory-budget-split-execution'
+        )
         Add-Suite 'seed-native-front-door'
     } elseif ($Path -eq
         'Tools/Windvale.Verify/Console-Application-Verifier-Tool.wv') {
@@ -3443,6 +3450,7 @@ foreach ($Path in $Paths) {
         } elseif ($Path -eq 'Specifications/Windvale-Native-Wvb-Runner.md') {
             Add-Suite 'wvb-runner-reconstruction'
             Add-Suite 'seed-native-front-door'
+            Add-Suite 'language-1-memory-budget-split-execution'
         } elseif ($Path -in @(
             'Specifications/Windvale-Native-Wv-Linker.md',
             'Specifications/Wv-Linker-Core.md'

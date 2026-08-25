@@ -43,6 +43,8 @@ const EXPECTED_USING_TRY_SHA256 =
     '6b1bf113428f2f130f551196ac3562cff7f10652a2c21ba9051bc02432b18ad1';
 const EXPECTED_USING_LOOP_SHA256 =
     'ad44bd9eef0daf17d8dab0952b6af223e17395557de6844f56757285ec3bf0fe';
+const EXPECTED_SOURCE_FILE_SHA256 =
+    '01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -196,6 +198,8 @@ try {
     const Usingˉnested = path.join(Work, 'Using-Nested.wvb');
     const Usingˉtry = path.join(Work, 'Using-Try.wvb');
     const Usingˉloop = path.join(Work, 'Using-Loop.wvb');
+    const Sourceˉfileˉa = path.join(Work, 'Source-File-A.wvb');
+    const Sourceˉfileˉb = path.join(Work, 'Source-File-B.wvb');
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
@@ -234,6 +238,12 @@ try {
         'Using-Vector-Try-Propagation-Wir.wv', Usingˉtry);
     Compileˉvector('using-loop-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Loop-Exits-Wir.wv', Usingˉloop);
+    Compileˉsourceˉfile(
+        'source-file-a-compile', Admitter, Analyzer, Emitter, Sourceˉfileˉa,
+    );
+    Compileˉsourceˉfile(
+        'source-file-b-compile', Admitter, Analyzer, Emitter, Sourceˉfileˉb,
+    );
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
     if (!Successˉbytes.equals(Successˉbˉbytes)) {
@@ -329,6 +339,20 @@ try {
         Usingˉloopˉbytes, 1027, EXPECTED_USING_LOOP_SHA256,
         'Exercise', [1, 1], 'loop exits', 2,
     );
+    const Sourceˉfileˉbytes = readFileSync(Sourceˉfileˉa);
+    if (!Sourceˉfileˉbytes.equals(readFileSync(Sourceˉfileˉb))) {
+        Reject('The source-file snapshot fixture is not deterministic.');
+    }
+    const Sourceˉfileˉlayout = Inspectˉsourceˉfileˉmodule(
+        Sourceˉfileˉbytes,
+    );
+    const Sourceˉfileˉsha256 = Digest(Sourceˉfileˉbytes);
+    if (Sourceˉfileˉsha256 !== EXPECTED_SOURCE_FILE_SHA256) {
+        Reject(
+            'The source-file snapshot fixture digest differs: ' +
+            `${Sourceˉfileˉsha256}.`,
+        );
+    }
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -353,6 +377,7 @@ try {
     Requireˉvalid(Verifier, Usingˉnested, 'using nested-return module');
     Requireˉvalid(Verifier, Usingˉtry, 'using try-propagation module');
     Requireˉvalid(Verifier, Usingˉloop, 'using loop-exit module');
+    Requireˉvalid(Verifier, Sourceˉfileˉa, 'source-file snapshot module');
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -581,6 +606,33 @@ try {
         Verifier, Usingˉloopˉmismatchˉpath,
         'using loop backedge ownership mismatch',
     );
+    const Sourceˉfileˉmalformedˉcases = [
+        ['source-file-version-downgrade', Bytes => {
+            Bytes.writeUInt16LE(28, 6);
+        }],
+        ['source-file-forgeable-parameter', Bytes => {
+            Bytes[Sourceˉfileˉlayout.parameterShape] = 1;
+        }],
+        ['source-file-forgeable-local', Bytes => {
+            Bytes[Sourceˉfileˉlayout.localShape] = 1;
+        }],
+        ['source-file-unknown-length-opcode', Bytes => {
+            Bytes[Sourceˉfileˉlayout.sourceLengthOpcode] = 211;
+        }],
+        ['source-file-length-from-parameter', Bytes => {
+            Bytes.writeUInt32LE(0, Sourceˉfileˉlayout.sourceLengthOpcode + 1);
+        }],
+        ['source-file-copied-parameter', Bytes => {
+            Bytes[Sourceˉfileˉlayout.parameterTakeOpcode] = 4;
+        }],
+    ];
+    for (const [Name, Mutate] of Sourceˉfileˉmalformedˉcases) {
+        const Candidate = Buffer.from(Sourceˉfileˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
 
     const Runnerˉwvb = path.join(Work, 'Runner.wvb');
     const Runner = path.join(Work, `Runner${Executableˉsuffix}`);
@@ -613,17 +665,40 @@ try {
     Requireˉresultˉ42(
         Runner, Usingˉfallthrough, 'using fallthrough release execution',
     );
+    const Sourceˉsnapshotˉ42 = path.join(Work, 'Source-Snapshot-42.bin');
+    const Sourceˉsnapshotˉ41 = path.join(Work, 'Source-Snapshot-41.bin');
+    const Sourceˉsnapshotˉoversized = path.join(
+        Work, 'Source-Snapshot-Oversized.bin',
+    );
+    writeFileSync(Sourceˉsnapshotˉ42, Buffer.alloc(42, 0x5a), { flag: 'wx' });
+    writeFileSync(Sourceˉsnapshotˉ41, Buffer.alloc(41, 0x5a), { flag: 'wx' });
+    writeFileSync(
+        Sourceˉsnapshotˉoversized, Buffer.alloc(1_048_577, 0x5a),
+        { flag: 'wx' },
+    );
+    Requireˉsourceˉfileˉresult(
+        Runner, Sourceˉfileˉa, Sourceˉsnapshotˉ42, 42,
+        'source-file length-match execution',
+    );
+    Requireˉsourceˉfileˉresult(
+        Runner, Sourceˉfileˉa, Sourceˉsnapshotˉ41, 1,
+        'source-file length-mismatch execution',
+    );
+    Requireˉsourceˉfileˉoversizedˉrejection(
+        Runner, Sourceˉfileˉa, Sourceˉsnapshotˉoversized,
+    );
 
     process.stdout.write(
-        'native language 1 memory budget, Vector, and using execution status=Passed ' +
-        `cases=${80 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=13 malformed=${
+        'native language 1 memory budget, Vector, using, and resource execution status=Passed ' +
+        `cases=${92 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=14 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length + 1
+            Ownedˉaggregateˉmalformedˉcases.length +
+            Sourceˉfileˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
-        'using-cases=12 using-releases=7 ' +
+        'using-cases=12 using-releases=7 source-file-cases=12 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -637,7 +712,9 @@ try {
         `owned-aggregate-wvb-bytes=${Ownedˉaggregateˉsuccessˉbytes.length} ` +
         `owned-aggregate-sha256=${Ownedˉaggregateˉsha256} ` +
         `using-fallthrough-wvb-bytes=${Usingˉfallthroughˉbytes.length} ` +
-        `using-fallthrough-sha256=${Digest(Usingˉfallthroughˉbytes)}\n`,
+        `using-fallthrough-sha256=${Digest(Usingˉfallthroughˉbytes)} ` +
+        `source-file-wvb-bytes=${Sourceˉfileˉbytes.length} ` +
+        `source-file-sha256=${Sourceˉfileˉsha256}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -677,6 +754,22 @@ function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
         ),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
+        Output,
+    ]);
+}
+
+function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
+    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+        Admitter, Analyzer, Emitter,
+        '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+        '--source-profile', Sourceˉprofile,
+        path.join(
+            Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0',
+            'Source-File-Snapshot-Executable.wv',
+        ),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Platform', 'Filesystem', 'File.wv',
+        ),
         Output,
     ]);
 }
@@ -771,6 +864,44 @@ function Requireˉruntimeˉfailure(Runner, Candidate, Status, Label) {
             `wvb run status=Failed code=${Status} instructions=`,
         )) {
         Reject(`The ${Label} failure differed: status=${Result.status}.`);
+    }
+}
+
+function Requireˉsourceˉfileˉresult(
+    Runner, Candidate, Snapshot, Expected, Label,
+) {
+    const Result = spawnSync(
+        Runner, ['--source-file', Candidate, Snapshot],
+        {
+            encoding: 'utf8', windowsHide: true,
+            maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        },
+    );
+    if (Result.error !== undefined || Result.status !== Expected ||
+        Result.stdout.length !== 0 || Result.stderr.length !== 0) {
+        Reject(
+            `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? ''}\n` +
+            `stdout=${Result.stdout}\nstderr=${Result.stderr}`,
+        );
+    }
+}
+
+function Requireˉsourceˉfileˉoversizedˉrejection(
+    Runner, Candidate, Snapshot,
+) {
+    const Result = spawnSync(
+        Runner, ['--source-file', Candidate, Snapshot],
+        {
+            encoding: 'utf8', windowsHide: true,
+            maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        },
+    );
+    if (Result.error !== undefined || Result.status !== 64 ||
+        Result.stdout.length !== 0 ||
+        Normalize(Result.stderr) !==
+            'wvb run status=Sourceˉsnapshotˉtooˉlarge\n') {
+        Reject(`The oversized source-file rejection differed: status=${Result.status}.`);
     }
 }
 
@@ -1344,12 +1475,70 @@ function Requireˉusingˉidentity(
     return { backedgeRelease: Backedgeˉreleases[0] ?? null };
 }
 
+function Inspectˉsourceˉfileˉmodule(Bytes) {
+    if (Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 29 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The source-file fixture is not canonical WVB 1.29.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Main = Parseˉmain(Bytes, Sections[4]);
+    const Sourceˉlocalˉindex = Main.localShapes.indexOf(34);
+    if (Main.parameterCount !== 1 || Main.parameterShape !== 34 ||
+        Main.returnShape !== 1 || Sourceˉlocalˉindex < 0) {
+        Reject('The source-file Main signature or local ownership differs.');
+    }
+    const Codeˉstart = Sections[5].payload + Main.codeOffset;
+    const Codeˉend = Codeˉstart + Main.codeLength;
+    if (Codeˉstart < Sections[5].payload ||
+        Codeˉend > Sections[5].payload + Sections[5].length) {
+        Reject('The source-file Main code range differs.');
+    }
+    let Cursor = Codeˉstart;
+    let Sourceˉlengthˉopcode = -1;
+    let Parameterˉtakeˉopcode = -1;
+    let Releaseˉcount = 0;
+    while (Cursor < Codeˉend) {
+        const Opcode = Bytes[Cursor];
+        const Width = Wvbˉinstructionˉwidth(Opcode);
+        if (Width > Codeˉend - Cursor) {
+            Reject('The source-file Main instruction stream is truncated.');
+        }
+        if (Opcode === 210) {
+            if (Sourceˉlengthˉopcode !== -1 ||
+                Bytes.readUInt32LE(Cursor + 1) !==
+                    Main.parameterCount + Sourceˉlocalˉindex) {
+                Reject('The source-file length observation target differs.');
+            }
+            Sourceˉlengthˉopcode = Cursor;
+        }
+        if (Opcode === 205 && Bytes.readUInt32LE(Cursor + 1) === 0) {
+            Parameterˉtakeˉopcode = Cursor;
+        }
+        if (Opcode === 205 && Cursor + 5 < Codeˉend &&
+            Bytes[Cursor + 5] === 80) {
+            Releaseˉcount += 1;
+        }
+        Cursor += Width;
+    }
+    if (Cursor !== Codeˉend || Sourceˉlengthˉopcode < 0 ||
+        Parameterˉtakeˉopcode < 0 || Releaseˉcount !== 2) {
+        Reject('The source-file move, observation, or release sequence differs.');
+    }
+    return {
+        parameterShape: Main.parameterShapeOffsets[0],
+        localShape: Main.localShapeOffsets[Sourceˉlocalˉindex],
+        sourceLengthOpcode: Sourceˉlengthˉopcode,
+        parameterTakeOpcode: Parameterˉtakeˉopcode,
+    };
+}
+
 function Wvbˉinstructionˉwidth(Opcode) {
     if (Opcode === 1 || (Opcode >= 3 && Opcode <= 7) ||
         Opcode === 9 || Opcode === 10 || Opcode === 48 || Opcode === 49 ||
         Opcode === 64 || Opcode === 65 || Opcode === 104 || Opcode === 105 ||
         Opcode === 197 || Opcode === 199 || Opcode === 200 ||
-        (Opcode >= 202 && Opcode <= 205)) {
+        (Opcode >= 202 && Opcode <= 205) || Opcode === 210) {
         return 5;
     }
     if (Opcode === 2 || Opcode === 8) return 2;
@@ -1394,10 +1583,12 @@ function Parseˉfunction(Bytes, Section, Wanted) {
         Cursor += 4;
         const Parameters = [];
         const Parameterˉtypes = [];
+        const Parameterˉshapeˉoffsets = [];
         for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
             const Parsed = Readˉshape(Bytes, Cursor);
             Parameters.push(Parsed.shape);
             Parameterˉtypes.push(Parsed.typeIndex);
+            Parameterˉshapeˉoffsets.push(Parsed.shapeOffset);
             Cursor = Parsed.end;
         }
         const Return = Readˉshape(Bytes, Cursor);
@@ -1406,10 +1597,12 @@ function Parseˉfunction(Bytes, Section, Wanted) {
         Cursor += 4;
         const Locals = [];
         const Localˉtypes = [];
+        const Localˉshapeˉoffsets = [];
         for (let Local = 0; Local < Localˉcount; Local += 1) {
             const Parsed = Readˉshape(Bytes, Cursor);
             Locals.push(Parsed.shape);
             Localˉtypes.push(Parsed.typeIndex);
+            Localˉshapeˉoffsets.push(Parsed.shapeOffset);
             Cursor = Parsed.end;
         }
         const Codeˉoffset = Bytes.readUInt32LE(Cursor);
@@ -1420,9 +1613,11 @@ function Parseˉfunction(Bytes, Section, Wanted) {
                 parameterCount: Parameterˉcount,
                 parameterShape: Parameters[0],
                 parameterTypeIndices: Parameterˉtypes,
+                parameterShapeOffsets: Parameterˉshapeˉoffsets,
                 returnShape: Return.shape,
                 localShapes: Locals,
                 localTypeIndices: Localˉtypes,
+                localShapeOffsets: Localˉshapeˉoffsets,
                 codeOffset: Codeˉoffset,
                 codeLength: Codeˉlength,
             };

@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module Languageˉoneˉsourceˉfileˉsnapshot;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+import Platformˉfile as File;
+
+export fn Main(Input: File.Sourceˉfile) -> i32 {
+    using Source = Input {
+        let Length: u64 = File.Sourceˉlength(borrow Source);
+        if Length == 42u64 { return 42; }
+        return 1;
+    }
+}

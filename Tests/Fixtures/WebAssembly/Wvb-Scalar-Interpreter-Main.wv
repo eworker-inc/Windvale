@@ -285,13 +285,14 @@ record Functionˉdirectory {
     Parameterˉmodeˉoffsets: bytes;
     Parameterˉmodes: bytes;
     Mainˉhasˉmemoryˉbudget: bool;
+    Mainˉhasˉsourceˉfile: bool;
 }
 
 fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     return Functionˉdirectory(
         false, 0u32, 0u32, 0u32,
-        Empty, Empty, Empty, Empty, Empty, Empty, Empty, false
+        Empty, Empty, Empty, Empty, Empty, Empty, Empty, false, false
     );
 }
 
@@ -323,6 +324,7 @@ fn Readˉfunctionˉdirectory(
     var Totalˉparameterˉcount: u32 = 0u32;
     var Vectorˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
+    var Mainˉhasˉsourceˉfile: bool = false;
     while Functionˉindex < Functionˉcount {
         Functionˉcursor = Functionˉcursor + 4u32
             + Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor);
@@ -363,6 +365,15 @@ fn Readˉfunctionˉdirectory(
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 Mainˉhasˉmemoryˉbudget = true;
+            }
+            if Shapeˉkind == 34u32 {
+                if Moduleˉminor != 29u32 ||
+                    Functionˉindex != Mainˉindex || Requestˉmajor != 5u32 ||
+                    Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
+                    Mainˉhasˉsourceˉfile {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+                Mainˉhasˉsourceˉfile = true;
             }
             if Functionˉindex == Mainˉindex && Requestˉmajor == 2u32 &&
                 Shapeˉindex == 0u32 && Shapeˉkind != 6u32 {
@@ -420,7 +431,8 @@ fn Readˉfunctionˉdirectory(
         if !Fixed.Shapeˉisˉsupported(Returnˉkind, Moduleˉminor) ||
             Returnˉkind == 25u32 || Returnˉkind == 26u32 ||
             Returnˉkind == 27u32 || Returnˉkind == 28u32 ||
-            Returnˉkind == 29u32 || Returnˉkind == 30u32 {
+            Returnˉkind == 29u32 || Returnˉkind == 30u32 ||
+            Returnˉkind == 34u32 {
             return Invalidˉfunctionˉdirectory(Module);
         }
         Functionˉcursor = Functionˉcursor + 1u32;
@@ -453,7 +465,11 @@ fn Readˉfunctionˉdirectory(
                 (Shapeˉkind == 25u32 &&
                     ((Moduleˉminor < 23u32 || Moduleˉminor > 28u32) ||
                         Functionˉindex != Mainˉindex ||
-                        !Mainˉhasˉmemoryˉbudget)) {
+                        !Mainˉhasˉmemoryˉbudget)) ||
+                (Shapeˉkind == 34u32 &&
+                    (Moduleˉminor != 29u32 ||
+                        Functionˉindex != Mainˉindex ||
+                        !Mainˉhasˉsourceˉfile)) {
                 return Invalidˉfunctionˉdirectory(Module);
             }
             Nominalˉtoken = 0u32;
@@ -522,6 +538,11 @@ fn Readˉfunctionˉdirectory(
                 if Parameterˉcount != 1u32 || Returnˉkind != 6u32 {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
+            } else if Requestˉmajor == 5u32 {
+                if Parameterˉcount != 1u32 || Returnˉkind != 1u32 ||
+                    !Mainˉhasˉsourceˉfile {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
             } else if Parameterˉcount != 0u32 || Returnˉkind != 1u32 {
                 return Invalidˉfunctionˉdirectory(Module);
             }
@@ -558,7 +579,8 @@ fn Readˉfunctionˉdirectory(
         Localˉshapes,
         Parameterˉmodeˉoffsets,
         Parameterˉmodes,
-        Mainˉhasˉmemoryˉbudget
+        Mainˉhasˉmemoryˉbudget,
+        Mainˉhasˉsourceˉfile
     );
 }
 
@@ -2593,6 +2615,7 @@ record Executionˉrequest {
     Argumentˉoffsets: bytes;
     Declaredˉcapabilities: u32;
     Capabilityˉkinds: bytes;
+    Sourceˉgeneration: u32;
 }
 
 fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
@@ -2600,7 +2623,8 @@ fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
     return Executionˉrequest(
         false, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty,
-        0u32, 0u32, 0u32, 0u32, 0u32, Empty, 0u32, Empty
+        0u32, 0u32, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
+        0u32
     );
 }
 
@@ -2643,6 +2667,9 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
     var Argumentˉoffsets: bytes = Empty;
     var Declaredˉcapabilities: u32 = 0u32;
     var Capabilityˉkinds: bytes = Empty;
+    var Sourceˉrights: u32 = 0u32;
+    var Sourceˉgeneration: u32 = 0u32;
+    var Sourceˉresourceˉgeneration: u32 = 0u32;
     var Typeˉoffsetsˉoffset: u32 = 64u32;
     if Major == 3u32 {
         if Bytesˉlength(Preflight) < 84u32 {
@@ -2690,6 +2717,23 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
             92u32 + Scriptˉcapabilityˉkindsˉlength,
             Argumentˉcount * 4u32
         );
+    } else if Major == 5u32 {
+        Typeˉoffsetsˉoffset = 76u32;
+        if Bytesˉlength(Preflight)
+            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength {
+            return Invalidˉexecutionˉrequest(Request);
+        }
+        Sourceˉrights = Bytesˉreadˉu32ˉlittle(Preflight, 64u32);
+        Sourceˉgeneration = Bytesˉreadˉu32ˉlittle(
+            Preflight, 68u32
+        );
+        Sourceˉresourceˉgeneration = Bytesˉreadˉu32ˉlittle(
+            Preflight, 72u32
+        );
+        if Sourceˉrights != 1u32 || Sourceˉgeneration == 0u32 ||
+            Sourceˉresourceˉgeneration != Sourceˉgeneration {
+            return Invalidˉexecutionˉrequest(Request);
+        }
     } else if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
         return Invalidˉexecutionˉrequest(Request);
     }
@@ -2702,7 +2746,7 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         Code, Typeˉcount, Functionˉcount, Mainˉindex, Typeˉoffsets,
         Capabilities, Capabilityˉgrants, Standardˉoutputˉlimit,
         Diagnosticˉoutputˉlimit, Argumentˉcount, Argumentˉoffsets,
-        Declaredˉcapabilities, Capabilityˉkinds
+        Declaredˉcapabilities, Capabilityˉkinds, Sourceˉgeneration
     );
 }
 
@@ -2733,7 +2777,7 @@ fn Failureˉresponse(
     Response = Bytesˉconcat(Response, Bytesˉfromˉu32ˉlittle(Status));
     Response = Bytesˉconcat(Response, Bytesˉfromˉu32ˉlittle(Executed));
     Response = Bytesˉconcat(Response, Zero);
-    if Major >= 3u32 {
+    if Major == 3u32 || Major == 4u32 {
         Response = Bytesˉconcat(
             Response,
             Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
@@ -3923,18 +3967,23 @@ fn Executeˉcollection(
             Functionˉframeˉmetadata, Functionˉindex * 8u32
         );
         let Takenˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-        let Takenˉisˉaggregate: bool = Takenˉminor == 28u32 &&
+        let Takenˉisˉaggregate: bool = Takenˉminor >= 28u32 &&
+            Takenˉminor <= 29u32 &&
             (Takenˉshapeˉkind == 7u32 || Takenˉshapeˉkind == 11u32 ||
                 Takenˉshapeˉkind == 22u32);
+        let Takenˉisˉsourceˉfile: bool = Takenˉminor == 29u32 &&
+            Takenˉshapeˉkind == 34u32;
         if Takenˉshapeˉkind != 23u32 && !Takenˉisˉaggregate &&
+            !Takenˉisˉsourceˉfile &&
             ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 28u32) ||
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 29u32) ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
         }
         if Takenˉlocalˉindex < Takenˉparameterˉcount &&
-            Takenˉshapeˉkind != 25u32 && !Takenˉisˉaggregate {
+            Takenˉshapeˉkind != 25u32 && !Takenˉisˉaggregate &&
+            !Takenˉisˉsourceˉfile {
             if Takenˉshapeˉkind != 23u32 ||
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) < 26u32 ||
                 U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -4424,7 +4473,8 @@ fn Executeˉaggregate(
         Stackˉproduced = true;
         let Fieldˉrequiresˉretain: bool =
             Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 ||
-            (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 28u32 &&
+            (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 29u32 &&
                 Selectedˉfieldˉkind == 23u32 &&
                 Payloadˉlength != 153u32);
         if Fieldˉrequiresˉretain {
@@ -4534,7 +4584,8 @@ fn Executeˉaggregate(
         }
         if Sectionˉkind == 0u32 {
             if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 ||
-                (Bytesˉreadˉu16ˉlittle(Module, 6u32) == 28u32 &&
+                (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
+                    Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 29u32 &&
                     Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
                     Retainˉdescriptor(
@@ -4647,6 +4698,8 @@ fn Executeˉextended(
     Functionˉindex: u32,
     Mainˉindex: u32,
     Mainˉhasˉmemoryˉbudget: bool,
+    Mainˉhasˉsourceˉfile: bool,
+    Sourceˉproviderˉgeneration: u32,
     Initialˉlocals: bytes,
     Localˉshapes: bytes,
     Functionˉcursor: u32,
@@ -4684,6 +4737,55 @@ fn Executeˉextended(
     var Stackˉproducedˉkind: u32 = Initialˉproducedˉkind;
     var Aggregateˉinstructions: u32 = 0u32;
     var Mainˉfound: bool = false;
+
+    if Payloadˉlength == 210u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 29u32 ||
+            !Mainˉhasˉsourceˉfile || Functionˉindex != Mainˉindex ||
+            Sourceˉproviderˉgeneration == 0u32 {
+            return Invalid;
+        }
+        let Sourceˉlocalˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Payload + 1u32
+        );
+        let Sourceˉparameterˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Functionˉindex * 8u32
+        );
+        if Sourceˉlocalˉindex < Sourceˉparameterˉcount ||
+            Sourceˉlocalˉindex >= Functionˉcursor / 8u32 {
+            return Invalid;
+        }
+        let Sourceˉlocalˉoffset: u32 = Sourceˉlocalˉindex * 8u32;
+        let Sourceˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Functionˉshapeˉoffsets, Functionˉindex * 4u32
+        ) + Sourceˉlocalˉoffset;
+        if Bytesˉreadˉu32ˉlittle(
+            Localˉshapes, Sourceˉshapeˉoffset
+        ) != 34u32 {
+            return Invalid;
+        }
+        let Sourceˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Locals, Sourceˉlocalˉoffset
+        );
+        let Sourceˉgeneration: u32 = Bytesˉreadˉu32ˉlittle(
+            Locals, Sourceˉlocalˉoffset + 4u32
+        );
+        if Sourceˉlength > 1048576u32 ||
+            Sourceˉgeneration != Sourceˉproviderˉgeneration {
+            return Invalid;
+        }
+        Stack = Bytesˉconcat(
+            Stack,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Sourceˉlength),
+                Bytesˉfromˉu32ˉlittle(0u32)
+            )
+        );
+        Stackˉconsumed = 0u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 0u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 5u32;
+        Mainˉfound = true;
+    }
 
     if Payloadˉlength == 206u32 {
         if !Mainˉhasˉmemoryˉbudget || Functionˉindex != Mainˉindex {
@@ -5325,6 +5427,29 @@ fn Returningˉaggregateˉcollection(
     );
 }
 
+fn Initializeˉsourceˉfileˉlocals(
+    Requestˉmajor: u32,
+    Hasˉsourceˉfile: bool,
+    Generation: u32,
+    Guestˉinput: bytes,
+    Locals: bytes,
+    Functionˉcursor: u32
+) -> bytes {
+    if !Hasˉsourceˉfile { return Locals; }
+    if Requestˉmajor != 5u32 || Functionˉcursor < 8u32 ||
+        Generation == 0u32 ||
+        Bytesˉlength(Guestˉinput) > 1048576u32 {
+        return Bytesˉslice(Locals, 0u32, 0u32);
+    }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Guestˉinput)),
+            Bytesˉfromˉu32ˉlittle(Generation)
+        ),
+        Bytesˉslice(Locals, 8u32, Functionˉcursor - 8u32)
+    );
+}
+
 export fn Main(Request: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Request, 0u32, 0u32);
     let Parsed: Executionˉrequest = Readˉexecutionˉrequest(Request);
@@ -5351,6 +5476,8 @@ export fn Main(Request: bytes) -> bytes {
     let Argumentˉoffsets: bytes = Parsed.Argumentˉoffsets;
     let Declaredˉcapabilities: u32 = Parsed.Declaredˉcapabilities;
     let Capabilityˉkinds: bytes = Parsed.Capabilityˉkinds;
+    let Sourceˉproviderˉgeneration: u32 =
+        Parsed.Sourceˉgeneration;
 
     var Envelope: u32 = 0u32;
     var Sectionˉkind: u32 = 0u32;
@@ -5397,6 +5524,8 @@ export fn Main(Request: bytes) -> bytes {
     let Functionˉparameterˉmodes: bytes = Directory.Parameterˉmodes;
     let Mainˉhasˉmemoryˉbudget: bool =
         Directory.Mainˉhasˉmemoryˉbudget;
+    let Mainˉhasˉsourceˉfile: bool =
+        Directory.Mainˉhasˉsourceˉfile;
 
     var Zeroˉlocals: bytes = Zeroˉcell;
     Functionˉindex = 1u32;
@@ -5430,6 +5559,13 @@ export fn Main(Request: bytes) -> bytes {
             Rootˉmemoryˉbudget,
             Bytesˉslice(Locals, 8u32, Functionˉcursor - 8u32)
         );
+    }
+    Locals = Initializeˉsourceˉfileˉlocals(
+        Requestˉmajor, Mainˉhasˉsourceˉfile,
+        Sourceˉproviderˉgeneration, Guestˉinput, Locals, Functionˉcursor
+    );
+    if Mainˉhasˉsourceˉfile && Bytesˉlength(Locals) == 0u32 {
+        return Invalid;
     }
     var Stack: bytes = Invalid;
     // Keep descriptor identity separate from cell bits so pop never treats a
@@ -5667,6 +5803,8 @@ export fn Main(Request: bytes) -> bytes {
             Functionˉindex,
             Mainˉindex,
             Mainˉhasˉmemoryˉbudget,
+            Mainˉhasˉsourceˉfile,
+            Sourceˉproviderˉgeneration,
             Locals,
             Localˉshapes,
             Functionˉcursor,
@@ -6113,7 +6251,7 @@ export fn Main(Request: bytes) -> bytes {
                     Allocationˉleases
                 )
             );
-            if Moduleˉminor == 28u32 {
+            if Moduleˉminor >= 28u32 && Moduleˉminor <= 29u32 {
                 let Returnˉcollection: Aggregateˉcollection =
                     Returningˉaggregateˉcollection(
                         Module, Typeˉoffsets, Records, Recordˉmetadata,
@@ -6193,7 +6331,7 @@ export fn Main(Request: bytes) -> bytes {
                     Success,
                     Bytesˉslice(Returnˉresult, 0u32, 4u32)
                 );
-                if Requestˉmajor >= 3u32 {
+                if Requestˉmajor == 3u32 || Requestˉmajor == 4u32 {
                     var Streamˉsuccess: bytes = Bytesˉfromˉu32ˉlittle(
                         1331189335u32
                     );

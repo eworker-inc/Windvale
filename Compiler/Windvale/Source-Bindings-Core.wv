@@ -1529,6 +1529,17 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             Vectorˉgrowˉmodule.Index, 3u32, 175u32
         );
     }
+    let Sourceˉlengthˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉplatformˉfileˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, true
+        );
+    if Sourceˉlengthˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Sourceˉlengthˉmodule.Index, 1u32, 176u32
+        );
+    }
     let Intrinsic: Compilerˉsourceˉbindingˉmatch = Compilerˉsourceˉbindingsˉintrinsicˉarity(
         Source, Offset, Length
     );

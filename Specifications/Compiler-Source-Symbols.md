@@ -161,12 +161,28 @@ representation exists. This exact header gate is not package authentication:
 the admitted source set and project source lock remain responsible for choosing
 the trusted Foundation module.
 
+The exact imported identity `Platformˉfile.Sourceˉfile` is the corresponding
+hosted-resource gate. Its alias must resolve to an edition-1 module whose header
+name is exactly `Platformˉfile`; a same-spelled user declaration does not gain
+the identity. The binding uses private shape `805306369`. It is representation
+hidden, move-owned, forbidden in record fields and other aggregate storage, and
+admitted only in the exact root signature `Main(Sourceˉfile) -> i32`. The
+parameter is by value; a borrowed parameter, a result, a second parameter, a
+non-root use, or an unexported entry rejects before symbol evidence publishes.
+The module gate establishes compiler identity, not package authentication or a
+filesystem grant.
+
 The compiler-supplied `Sequenceˉlength` and `Sequenceˉat` call spellings use
 the same exact owner gate. The query must be qualified, its alias must resolve,
 the selected member must match exactly, and the target module header must name
 `Foundationˉcollections`. The symbol phase returns only the owning module
 identity; it does not publish a forgeable function declaration or infer an
 intrinsic from the member name alone.
+
+`Platformˉfile.Sourceˉlength` uses the same qualified-owner rule. It is a
+compiler-supplied one-argument operation only when the selected member and
+module header match exactly. It does not create an ordinary callable
+declaration, open a file, recover a path, or grant a provider.
 
 Nominal indices are deterministic and independent of source order: all records sorted by ordinal name receive the first indices, then all enums sorted by ordinal name. The current global nominal namespace makes identical names unambiguous.
 

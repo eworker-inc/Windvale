@@ -68,6 +68,36 @@ fn Buildˉscriptˉrequest(Module: bytes, Arguments: u32) -> bytes {
     return Bytesˉconcat(Request, Argumentˉpayload);
 }
 
+fn Buildˉsourceˉfileˉrequest(Module: bytes, Snapshot: bytes) -> bytes {
+    let Snapshotˉlength: u32 = Bytesˉlength(Snapshot);
+    let Providerˉgeneration: u32 = 1u32;
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(5u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Module))
+    );
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1u32));
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Providerˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Providerˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu32ˉlittle(Snapshotˉlength)
+    );
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Module);
+    return Bytesˉconcat(Request, Snapshot);
+}
+
 fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
     var Report: text = Textˉconcat(
         "wvb run status=Failed code=",
@@ -95,6 +125,21 @@ fn Isˉreportˉsteps(Input: text) -> bool {
 fn Isˉscriptˉmode(Input: text) -> bool {
     let Actual: bytes = Textˉtoˉutf8(Input);
     let Expected: bytes = Textˉtoˉutf8("--script");
+    let Length: u32 = Bytesˉlength(Actual);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Isˉsourceˉfileˉmode(Input: text) -> bool {
+    let Actual: bytes = Textˉtoˉutf8(Input);
+    let Expected: bytes = Textˉtoˉutf8("--source-file");
     let Length: u32 = Bytesˉlength(Actual);
     if Length != Bytesˉlength(Expected) { return false; }
     var Index: u32 = 0u32;
@@ -201,6 +246,47 @@ fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
     return Result;
 }
 
+fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
+    if Bytesˉlength(Snapshot) > 1048576u32 {
+        diagnostic.write_line("wvb run status=Sourceˉsnapshotˉtooˉlarge");
+        return 64;
+    }
+    let Request: bytes = Buildˉsourceˉfileˉrequest(Module, Snapshot);
+    let Response: bytes = Interpreter.Main(Request);
+    if Bytesˉlength(Response) != 20u32 {
+        var Phase: text = "execution";
+        if Bytesˉlength(Envelopeˉreader.Interpreterˉenvelope(Request))
+            < 64u32 {
+            Phase = "envelope";
+        }
+        diagnostic.write_line(Textˉconcat(
+            "wvb run status=Unsupported profile=source-file-main-i32 phase=",
+            Phase
+        ));
+        return 1;
+    }
+    if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 ||
+        Bytesˉreadˉu16ˉlittle(Response, 4u32) != 5u32 ||
+        Bytesˉreadˉu16ˉlittle(Response, 6u32) != 0u32 {
+        diagnostic.write_line("wvb run status=Invalidˉresponse");
+        return 1;
+    }
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
+    if Status != 0u32 {
+        Reportˉfailure(
+            Status,
+            Bytesˉreadˉu32ˉlittle(Response, 12u32)
+        );
+        return 1;
+    }
+    let Result: i32 = Bytesˉreadˉi32ˉlittle(Response, 16u32);
+    if Result < 0 || Result > 255 {
+        diagnostic.write_line("wvb run status=Invalidˉexitˉstatus");
+        return 1;
+    }
+    return Result;
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
     if Arguments == 0u32 {
@@ -215,6 +301,18 @@ export fn Main() -> i32 {
         return Runˉscript(
             file.read_bytes(process.argument(1u32)),
             Arguments
+        );
+    }
+    if Isˉsourceˉfileˉmode(process.argument(0u32)) {
+        if Arguments != 3u32 {
+            diagnostic.write_line(
+                "Usage: wvrun --source-file <module.wvb> <snapshot-file>"
+            );
+            return 64;
+        }
+        return Runˉsourceˉfile(
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32))
         );
     }
     if Arguments > 2u32 {

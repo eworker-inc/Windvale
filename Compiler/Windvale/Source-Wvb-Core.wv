@@ -265,6 +265,7 @@ fn Compilerˉsourceˉwvbˉshapeˉrequiresˉtypeˉentry(
 
 export fn Compilerˉsourceˉwvbˉshape(Shape: u32) -> bytes {
     if Shape == 805306368u32 { return Bytesˉfromˉu8(25u8); }
+    if Shape == 805306369u32 { return Bytesˉfromˉu8(34u8); }
     var Kind: u8 = 0u8;
     if Shape == 1u32 { Kind = 1u8; }
     if Shape == 2u32 { Kind = 4u8; }
@@ -635,11 +636,12 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
     if Operation == 172u32 { return Compilerˉsourceˉwvbˉlowˉbyte(207u32); }
     if Operation == 173u32 { return Compilerˉsourceˉwvbˉlowˉbyte(208u32); }
     if Operation == 175u32 { return Compilerˉsourceˉwvbˉlowˉbyte(209u32); }
+    if Operation == 176u32 { return Compilerˉsourceˉwvbˉlowˉbyte(210u32); }
     return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 175u32 { return true; }
+        if Operation <= 176u32 { return true; }
     }
     return false;
 }
@@ -691,6 +693,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     }
     if Operation == 174u32 { Opcodeˉbytes = 6u32; }
     if Operation == 175u32 { Opcodeˉbytes = 13u32; }
+    if Operation == 176u32 { Opcodeˉbytes = 5u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -1465,7 +1468,7 @@ fn Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> u32 {
-    if Shape == 805306368u32 { return Shape; }
+    if Shape == 805306368u32 || Shape == 805306369u32 { return Shape; }
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
         let Entry: u32 = Compilerˉsourceˉwvbˉgenericˉnominalˉentry(
             Shape, Orders
@@ -3023,6 +3026,7 @@ fn Compilerˉsourceˉwvbˉshapeˉcontainsˉownedˉvectorˉat(
     Path: bytes,
     Depth: u32
 ) -> bool {
+    if Shape == 805306369u32 { return true; }
     let Entry: u32 = Compilerˉsourceˉwvbˉgenericˉnominalˉentry(
         Shape, Orders
     );
@@ -3125,7 +3129,8 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
 ) -> bool {
     return Compilerˉsourceˉwvbˉshapeˉcontainsˉownedˉvector(
             Wir, Shape, Orders
-        ) && !Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
+        ) && Shape != 805306369u32 &&
+        !Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
             Shape, Orders
         ) && !Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(Wir, Shape);
 }
@@ -3372,8 +3377,9 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 if Target < Parameters || Target >= Parameters + Locals ||
                     Operands != 0u32 || Shape != 0u32 || Auxiliary != 0u32 ||
-                    Plannedˉreleasedˉvector < 327680u32 ||
-                    Plannedˉreleasedˉvector >= 393216u32 {
+                    ((Plannedˉreleasedˉvector < 327680u32 ||
+                        Plannedˉreleasedˉvector >= 393216u32) &&
+                        Plannedˉreleasedˉvector != 805306369u32) {
                     return Compilerˉsourceˉwvbˉanalysisˉfailure(
                         Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                         Globalˉoperation
@@ -4175,6 +4181,11 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             )
         );
     }
+    if Operation == 176u32 {
+        Result = Bytesˉconcat(
+            Result, Compilerˉsourceˉwvbˉinstructionˉu32(210u8, Target)
+        );
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -4498,6 +4509,66 @@ fn Compilerˉsourceˉwvbˉwirˉrequiresˉtypeˉentries(
         Function = Function + 1u32;
     }
     return false;
+}
+
+fn Compilerˉsourceˉwvbˉsourceˉfunctionˉisˉadmitted(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Wir: bytes,
+    Function: u32
+) -> u32 {
+    let Functionˉentry: u32 =
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(Wir) +
+            Function * 48u32;
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Wir, Functionˉentry + 36u32
+    );
+    let Locals: u32 = Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 40u32);
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    var Hasˉsource: bool = false;
+    var Index: u32 = 0u32;
+    while Index < Parameters + Locals {
+        if Sourceˉwir.Compilerˉsourceˉwirˉbindingˉshape(
+                Bindings, Symbolˉentries, Function, Index
+            ) == 805306369u32 {
+            Hasˉsource = true;
+        }
+        Index = Index + 1u32;
+    }
+    if !Hasˉsource { return 0u32; }
+    if Parameters != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Wir, Functionˉentry + 44u32) != 1u32 ||
+        Sourceˉwir.Compilerˉsourceˉwirˉbindingˉshape(
+            Bindings, Symbolˉentries, Function, 0u32
+        ) != 805306369u32 ||
+        Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+            Input, Scan, Symbols, Bindings, Function, 0u32
+        ) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+        return 2u32;
+    }
+    let Name: bytes = Compilerˉsourceˉwvbˉfunctionˉname(
+        Input, Scan, Symbols, Function
+    );
+    let Declaration: u32 = Compilerˉsourceˉwvbˉfunctionˉdeclaration(
+        Symbols, Bindings.Directory, Function
+    );
+    if Bytesˉlength(Name) == 4u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Name, 0u32)) == 77u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Name, 1u32)) == 97u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Name, 2u32)) == 105u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Name, 3u32)) == 110u32 &&
+        Function == Declaration &&
+        Compilerˉsourceˉwvbˉsymbolˉmodule(Symbols, Declaration) == 0u32 &&
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(
+            Symbols.Lookup, Function
+        ) {
+        return 1u32;
+    }
+    return 2u32;
 }
 
 export fn Compilerˉsourceˉwvbˉencodeˉfunction(
@@ -5517,6 +5588,16 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                     Compilerˉsourceˉwvbˉfunctionˉorder(Orders),
                     Validationˉrank
                 );
+            if Compilerˉsourceˉwvbˉsourceˉfunctionˉisˉadmitted(
+                    Input, Scan, Symbols, Bindings,
+                    Wirˉsummary.Directory, Validationˉfunction
+                ) == 2u32 {
+                return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                    Input, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                    Wirˉsummary.Status, Validationˉrank,
+                    Wirˉsummary.Operations
+                );
+            }
             if Bytesˉreadˉu8(Reachableˉmap, Validationˉfunction) == 0u8 {
                 let Validationˉdeclaration: u32 =
                     Compilerˉsourceˉwvbˉfunctionˉdeclaration(
@@ -5565,6 +5646,19 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Functionˉrank
         );
+        let Sourceˉadmission: u32 =
+            Compilerˉsourceˉwvbˉsourceˉfunctionˉisˉadmitted(
+                Input, Scan, Symbols, Bindings,
+                Wirˉsummary.Directory, Functionˉentry
+            );
+        if Sourceˉadmission == 2u32 {
+            return Compilerˉsourceˉwvbˉsummaryˉfailure(
+                Input, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                Wirˉsummary.Status, Functionˉrank,
+                Wirˉsummary.Operations
+            );
+        }
+        if Sourceˉadmission == 1u32 { Features = Features | 262144u32; }
         let Functionˉdeclaration: u32 =
             Compilerˉsourceˉwvbˉfunctionˉdeclaration(
                 Symbols, Bindings.Directory, Functionˉentry
@@ -5672,6 +5766,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     if (Features & 32768u32) != 0u32 { Wvbˉminor = 26u32; }
     if (Features & 65536u32) != 0u32 { Wvbˉminor = 27u32; }
     if (Features & 131072u32) != 0u32 { Wvbˉminor = 28u32; }
+    if (Features & 262144u32) != 0u32 { Wvbˉminor = 29u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

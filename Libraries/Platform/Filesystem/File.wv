@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module Platformˉfile;
+profile hosted;
+platform linux, windows, windvale;
+authority library;
+
+// Sourceˉfile is a compiler-supplied, representation-hidden, move-owned
+// snapshot identity. Only an admitted application Main entry can receive one
+// from its launcher. Source code cannot construct a Sourceˉfile, recover a host
+// path or handle from it, or acquire filesystem authority through this module.
+// Sourceˉlength is a read-only observation over an explicitly borrowed live
+// snapshot. The launcher and runner contract bounds the snapshot to 1 MiB and
+// validates rights and provider/resource generations before guest execution.
+// This checkpoint deliberately publishes no open, read, write, or close API.

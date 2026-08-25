@@ -1514,6 +1514,44 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉsequenceˉmodule(
     );
 }
 
+export fn Compilerˉsourceˉsymbolsˉplatformˉfileˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32,
+    Sourceˉlength: bool
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    let Query: Compilerˉsourceˉsymbolˉquery = Compilerˉsourceˉsymbolsˉquery(
+        Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength
+    );
+    if !Query.Qualified || !Query.Aliasˉfound {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    var Expectedˉname: text = "Sourceˉfile";
+    if Sourceˉlength { Expectedˉname = "Sourceˉlength"; }
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+        Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
+    ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+    if View.Edition != 1u32 {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if !Compilerˉsourceˉsymbolsˉnameˉequals(
+        View.Source, Header.Nameˉoffset, Header.Nameˉlength, "Platformˉfile"
+    ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Query.Target);
+}
+
 export fn Compilerˉsourceˉsymbolsˉdeclarationˉisˉexported(
     Lookup: bytes,
     Match: Compilerˉsourceˉsymbolˉmatch
@@ -2073,8 +2111,9 @@ export fn Compilerˉsourceˉsymbolsˉtypeˉshape(
     if Binding.Kind == Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named &&
         Binding.Nominalˉkind ==
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End &&
-        Binding.Nominalˉindex == 805306368u32 {
-        return 805306368u32;
+        (Binding.Nominalˉindex == 805306368u32 ||
+            Binding.Nominalˉindex == 805306369u32) {
+        return Binding.Nominalˉindex;
     }
     let Primitive: u32 = Compilerˉsourceˉsymbolsˉprimitiveˉshape(Binding.Kind);
     if Primitive != 0u32 { return Primitive; }
@@ -2387,6 +2426,24 @@ export fn Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
                 Qualified.Nextˉcolumn
             );
         }
+        let Sourceˉfileˉmodule:
+            Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+            Compilerˉsourceˉsymbolsˉplatformˉfileˉmodule(
+                Input, Scan, Lookup, Owner, Source,
+                Token.Offset, Qualified.Nextˉoffset - Token.Offset, false
+            );
+        if Sourceˉfileˉmodule.Found {
+            return Compilerˉsourceˉsymbolsˉconcreteˉtypeˉvalue(
+                Compilerˉsourceˉsymbolˉstatus.Valid,
+                805306369u32,
+                Qualified.Nextˉoffset,
+                Qualified.Nextˉline,
+                Qualified.Nextˉcolumn,
+                Qualified.Nextˉoffset,
+                Qualified.Nextˉline,
+                Qualified.Nextˉcolumn
+            );
+        }
         var Collectionˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
             Compilerˉsourceˉsymbolsˉfoundationˉvectorˉmodule(
                 Input, Scan, Lookup, Owner, Source,
@@ -2486,7 +2543,7 @@ export fn Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
     Allowˉnoˉvalue: bool
 ) -> bool {
     if Shape == 0u32 { return Allowˉnoˉvalue; }
-    if Shape == 805306368u32 { return true; }
+    if Shape == 805306368u32 || Shape == 805306369u32 { return true; }
     if Shape <= 9u32 { return true; }
     if Shape == 10u32 { return Allowˉnoˉvalue; }
     if Shape >= 11u32 && Shape <= 16u32 { return true; }
@@ -2606,6 +2663,30 @@ export fn Compilerˉsourceˉsymbolsˉbindˉtype(
             Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
             805306368u32,
             Memoryˉbudgetˉmodule.Index,
+            Token.Offset, Qualifiedˉlength,
+            Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
+        );
+    }
+    let Sourceˉfileˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Compilerˉsourceˉsymbolsˉplatformˉfileˉmodule(
+            Input, Scan, Lookup, Owner, Source,
+            Token.Offset, Qualifiedˉlength, false
+        );
+    if Sourceˉfileˉmodule.Found {
+        if Forˉfield {
+            return Compilerˉsourceˉsymbolsˉtypeˉfailure(
+                Compilerˉsourceˉsymbolˉstatus.Invalidˉfieldˉtype,
+                Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+                805306369u32,
+                Sourceˉfileˉmodule.Index, Token
+            );
+        }
+        return Compilerˉsourceˉsymbolsˉtypeˉvalue(
+            Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+            805306369u32,
+            Sourceˉfileˉmodule.Index,
             Token.Offset, Qualifiedˉlength,
             Qualified.Nextˉoffset, Qualified.Nextˉline, Qualified.Nextˉcolumn
         );

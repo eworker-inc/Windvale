@@ -812,6 +812,16 @@ Candidate capability families are `filesystem.file.read_v1`,
 `filesystem.file.create_v1`, and `filesystem.file.mutate_v1`. An application
 receives only the endpoint kinds it requests and the launcher approves.
 
+The implemented Language 1.0 Slice 5 checkpoint is deliberately smaller than
+the candidate API below. The compiler recognizes the exact
+`Platformˉfile.Sourceˉfile` identity and
+`Sourceˉlength(File: borrow Sourceˉfile) -> u64`; an admitted application may
+receive one immutable snapshot only through exact
+`Main(Sourceˉfile) -> i32`. The current launcher caps it at 1 MiB and transfers
+no path, handle, endpoint, or open/read authority. `Openˉsnapshot`, byte reads,
+mutable resources, asynchronous operations, and their effects remain design
+for later implementation rather than claims about the shipped slice.
+
 ~~~text
 export opaque Fileˉreadˉendpoint Copy;
 export opaque Fileˉcreateˉendpoint Copy;

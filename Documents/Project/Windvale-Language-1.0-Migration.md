@@ -656,9 +656,36 @@ The registry remains 112 owners and advances to 5,430 cases; its 17,601 LF-only
 bytes have SHA-256
 `5e9d388aa6c744f1f865af15386ae0c652bb1768b3c7e8b434fcd555dc3acd87`.
 
-One rights-limited hosted resource consumer remains before Slice 5 completes.
-Borrowed aggregate signatures, partial moves, owned phis, user-defined
-destruction, and resource-bearing Vector elements remain deliberately closed.
+## Completed Slice 5 hosted source-resource checkpoint
+
+[Decision 0851](../Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md)
+closes Slice 5 with one rights-limited hosted resource consumer. The exact
+`Platformˉfile.Sourceˉfile` identity is compiler supplied and move-only; only
+exported `Main(Sourceˉfile) -> i32` can receive it from the launcher. Source
+moves the owner into a semantic `using` scope and may observe only its `u64`
+length through `Platformˉfile.Sourceˉlength(borrow File)`.
+
+WVB 1.29 serializes the unforgeable resource as shape `34` and the length
+observation as opcode `D2`. The runner's `--source-file` mode snapshots at most
+1 MiB before guest execution, transfers one exact read right plus equal nonzero
+provider/resource generations, and exposes no host path, handle, open
+operation, or arbitrary byte read. The verifier confines the shape to the
+exact entry and moved local, and ownership cleanup releases it exactly once.
+
+The deterministic fixture is 373 bytes at SHA-256
+`01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05`.
+The focused Windows owner passes 113 cases with 14 valid and 65 malformed
+modules, 12 source-file cases, and retained budget, Vector, aggregate, call,
+and `using` evidence. The registry remains 112 owners and advances to 5,442
+cases; its 17,742 LF-only bytes have SHA-256
+`9c966034fedace67e7b7ab32267badf9e8ecfbf814c77fcf1fa8049bea964b22`.
+Independent Linux reproduction remains the next paired-host integration gate.
+
+Slice 5 is complete. Borrowed aggregate signatures, partial moves, owned phis,
+user-defined destruction, and resource-bearing Vector elements remain
+deliberately closed. Slice 6 next owns canonical effect resolution and call
+enforcement, function values, and capture checking; broader asynchronous file
+operations wait for those semantics.
 
 ## Removal checkpoint
 
