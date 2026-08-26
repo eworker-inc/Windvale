@@ -318,6 +318,90 @@ fn Invalidˉevidenceˉprobe() -> i32 {
     return 42;
 }
 
+fn Closureˉexpression(
+    Source: bytes,
+    Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Function: u32
+) -> Bodies.Compilerˉsourceˉexpression {
+    let Symbolˉoffset: u32 = 16u32 + Function * 24u32;
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            Source,
+            Bytesˉreadˉu32ˉlittle(
+                Symbolsˉsummary.Directory, Symbolˉoffset + 8u32
+            ),
+            1u32, 1u32, true
+        );
+    let Bodyˉstart: Bodies.Compilerˉsourceˉposition =
+        Bodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Declaration.Declarationˉoffset,
+            1u32, 1u32, Declaration.Bodyˉoffset
+        );
+    let Left: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Declaration.Bodyˉoffset,
+            Bodyˉstart.Line, Bodyˉstart.Column
+        );
+    let First: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            Source, Left.Nextˉoffset, Left.Nextˉline, Left.Nextˉcolumn,
+            Declaration.Bodyˉoffset + Declaration.Bodyˉlength, 0u32
+        );
+    let Second: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            Source, First.Nextˉoffset,
+            First.Nextˉline, First.Nextˉcolumn,
+            Declaration.Bodyˉoffset + Declaration.Bodyˉlength, 0u32
+        );
+    let Expressionˉposition: Bodies.Compilerˉsourceˉposition =
+        Bodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Second.Offset, Second.Line, Second.Column,
+            Second.Expressionˉoffset
+        );
+    return Bodies.Compilerˉparseˉexpressionˉvalidated(
+        Source, Second.Expressionˉoffset,
+        Expressionˉposition.Line, Expressionˉposition.Column,
+        Second.Expressionˉoffset + Second.Expressionˉlength,
+        0u32, 0u32
+    );
+}
+
+fn Reconstructedˉphaseˉprobe() -> i32 {
+    let Program: text =
+        "module Captureˉcopyˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local] (Delta: i32) -> i32 effects() { return Local + Delta; }; return 42; }";
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary =
+        Analyze(Program);
+    let Input: bytes = Sourceˉsetˉfrom(Program);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Function: u32 = Functionˉentry(Symbolsˉsummary);
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    let Expression: Bodies.Compilerˉsourceˉexpression =
+        Closureˉexpression(View.Source, Symbolsˉsummary, Function);
+    let Phase: Bindings.Compilerˉsourceˉbindingˉphase =
+        Captures.Compilerˉsourceˉclosureˉcapturesˉphase(
+            Input, Scan, Symbolsˉsummary,
+            0u32, Function, View.Source, Expression, Summary
+        );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid { return 30; }
+    if Phase.Buildˉstatus !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid { return 31; }
+    if Phase.Bodyˉstatus !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid { return 32; }
+    if Phase.Entries != 2u32 { return 33; }
+    if Phase.Parameters != 1u32 { return 34; }
+    if Phase.Locals != 1u32 { return 35; }
+    if Phase.Nextˉslot != 2u32 { return 36; }
+    if Phase.Reads != 2u32 { return 37; }
+    if Phase.Assignments != 0u32 { return 38; }
+    if Phase.Calls != 0u32 { return 39; }
+    return 42;
+}
+
 export fn Main() -> i32 {
     let Selected: u32 = Selectedˉcase();
     if Selected == 97u32 { return Copyˉprobe(); }
@@ -329,5 +413,6 @@ export fn Main() -> i32 {
     if Selected == 103u32 { return Capabilityˉrootˉprobe(); }
     if Selected == 104u32 { return Duplicateˉparameterˉprobe(); }
     if Selected == 105u32 { return Invalidˉevidenceˉprobe(); }
+    if Selected == 106u32 { return Reconstructedˉphaseˉprobe(); }
     return 64;
 }

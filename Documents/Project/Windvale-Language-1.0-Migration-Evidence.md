@@ -3304,3 +3304,39 @@ LF-only bytes have SHA-256
 The accepted 0857 source identity is unchanged. WVIR/WVB integration,
 synthetic binding publication, captured move and borrow enforcement,
 independent Linux reproduction, and Qualification remain separate claims.
+
+## Reconstructible closure-local binding phase checkpoint
+
+The closure capture analyzer now exposes a bounded phase reconstruction entry
+point for an already-valid capture summary. It replays the exact capture syntax
+and evidence, resolves the declared public parameter shapes, rebuilds the body
+binding phase once, and rejects any mismatch in capture identity or body counts.
+The lowering phase can therefore compile a synthetic body without repeating
+whole-closure capture and effect analysis.
+
+The reconstructed slot order is the executable environment order: captures
+first, then public parameters. The focused fixture proves one copied `i32`
+capture followed by one public `i32` parameter, two reads, no assignment, and
+no call. All ten capture cases execute with result `42`. Attempting to publish
+that phase through ordinary WVLB 1.1 correctly remains invalid because the
+ordinary range derives its parameter prefix from the source declaration. A
+synthetic-function WVLB minor must describe the distinct capture prefix rather
+than weakening the existing validator or pretending that the closure is an
+ordinary source symbol.
+
+The updated capture-analysis component is a 941,054-byte WVB at SHA-256
+`8a094869ab9b9e3dcdc628126ecf294591e89ec21c188a2a8b72fc2a7f292d08`.
+The 957,375-byte focused self-test at SHA-256
+`eaff7ce2dc15cd7c8231964c2993ad53c39d4c5dab715420242f7dd4b91dee85`
+passes all ten executable cases. The focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=51 result=42 modules=9 wvb-bytes=4205880 evidence-sha256=1ca514fbfa7e545b672e01969edc64f4e7dd1bcb1096d7fea395e05e9a8af3ff
+```
+
+The registry remains 113 owners and advances to 5,493 cases. Its 17,993
+LF-only bytes have SHA-256
+`c223b018726413a7b2f279b9cb6f0f277abe0ef7e6940f194e6a91ac56178d5e`.
+WVLB/WVIR publication, source `Closureˉcreate` emission, synthetic body
+compilation, captured move and borrow enforcement, independent Linux
+reproduction, and Qualification remain separate claims.
