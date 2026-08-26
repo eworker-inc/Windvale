@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { compile as Compileˉmonarch } from "../Windvale.Playground/node_modules/monaco-editor/esm/vs/editor/standalone/common/monarch/monarchCompile.js";
 import {
     Createˉworkbenchˉshell,
     Parseˉcommandˉline,
@@ -19,6 +20,56 @@ import {
 
 assert.equal(WINDVALE_LANGUAGE_1_RESERVED_WORDS.length, 76);
 const Windvaleˉprovider = Createˉwindvaleˉtokensˉprovider();
+const Compiledˉwindvaleˉprovider = Compileˉmonarch("windvale", Windvaleˉprovider);
+
+function Readˉfirstˉtoken(Source) {
+    for (const Rule of Compiledˉwindvaleˉprovider.tokenizer.root) {
+        const Match = Rule.regex.exec(Source);
+        if (!Match || Match[0].length === 0) {
+            continue;
+        }
+
+        const Action = typeof Rule.action === "object" && typeof Rule.action.test === "function"
+            ? Rule.action.test(Match[0], Match, "root", Match[0].length === Source.length)
+            : Rule.action;
+        return {
+            Text: Match[0],
+            Token: typeof Action === "string" ? Action : Action?.token,
+        };
+    }
+
+    return undefined;
+}
+
+assert.equal(Compiledˉwindvaleˉprovider.unicode, true,
+    "The Monaco tokenizer must preserve Unicode property escapes.");
+for (const [Word, Expectedˉtoken] of [
+    ["module", "keyword.declaration"],
+    ["task", "keyword.control"],
+    ["scope", "keyword.control"],
+    ["policy", "keyword.control"],
+    ["cancel_join", "keyword.control"],
+    ["await", "keyword.control"],
+    ["borrow", "keyword.storage"],
+    ["mut", "keyword.storage"],
+]) {
+    assert.deepEqual(Readˉfirstˉtoken(Word), { Text: Word, Token: Expectedˉtoken },
+        `Monaco does not classify ${Word} as ${Expectedˉtoken}.`);
+}
+assert.deepEqual(
+    Readˉfirstˉtoken("Δοκιμήˉτιμή"),
+    { Text: "Δοκιμήˉτιμή", Token: "identifier" },
+    "Monaco does not preserve one complete Unicode Windvale identifier.",
+);
+for (const [Source, Opening] of [
+    ["\"text\"", "\""],
+    ["b\"bytes\"", "b\""],
+    ["\"\"\"multiline\"\"\"", "\"\"\""],
+    ["r#\"raw\"#", "r#\""],
+]) {
+    assert.deepEqual(Readˉfirstˉtoken(Source), { Text: Opening, Token: "string.quote" },
+        "Monaco does not recognize the opening delimiter in " + Source + ".");
+}
 const Highlightedˉwords = new Set([
     ...Windvaleˉprovider.declarationKeywords,
     ...Windvaleˉprovider.controlKeywords,

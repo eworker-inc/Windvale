@@ -103468,16 +103468,16 @@ function sCe(e) {
 				bracket: "@close",
 				next: "@pop"
 			}],
-			[/[^\"]+/, "string.raw"],
-			[/\"/, "string.raw"]
+			[/[^"]+/, "string.raw"],
+			[/"/, "string.raw"]
 		], e[a] = [
 			[r, {
 				token: "string.quote",
 				bracket: "@close",
 				next: "@pop"
 			}],
-			[/[^\"]+/, "string.byte.raw"],
-			[/\"/, "string.byte.raw"]
+			[/[^"]+/, "string.byte.raw"],
+			[/"/, "string.byte.raw"]
 		];
 	}
 }
@@ -103489,32 +103489,32 @@ function cCe() {
 			[/\/\/.*$/, "comment"]
 		],
 		multilineText: [
-			[/\"\"\"/, {
+			[/"""/, {
 				token: "string.quote",
 				bracket: "@close",
 				next: "@pop"
 			}],
 			[j9, "string.escape"],
 			[/\\./, "string.escape.invalid"],
-			[/[^\\\"]+/, "string"],
-			[/\"/, "string"]
+			[/[^\\"]+/, "string"],
+			[/"/, "string"]
 		],
 		multilineBytes: [
-			[/\"\"\"/, {
+			[/"""/, {
 				token: "string.quote",
 				bracket: "@close",
 				next: "@pop"
 			}],
 			[M9, "string.escape"],
 			[/\\./, "string.escape.invalid"],
-			[/[^\\\"]+/, "string.byte"],
-			[/\"/, "string.byte"]
+			[/[^\\"]+/, "string.byte"],
+			[/"/, "string.byte"]
 		],
 		text: [
 			[j9, "string.escape"],
 			[/\\./, "string.escape.invalid"],
-			[/[^\\\"\r\n]+/, "string"],
-			[/\"/, {
+			[/[^\\"\r\n]+/, "string"],
+			[/"/, {
 				token: "string.quote",
 				bracket: "@close",
 				next: "@pop"
@@ -103523,8 +103523,8 @@ function cCe() {
 		bytes: [
 			[M9, "string.escape"],
 			[/\\./, "string.escape.invalid"],
-			[/[^\\\"\r\n]+/, "string.byte"],
-			[/\"/, {
+			[/[^\\"\r\n]+/, "string.byte"],
+			[/"/, {
 				token: "string.quote",
 				bracket: "@close",
 				next: "@pop"
@@ -103541,19 +103541,19 @@ function cCe() {
 			}]
 		]
 	};
-	return sCe(e), e.root.push([/b\"\"\"/, {
+	return sCe(e), e.root.push([/b"""/, {
 		token: "string.quote",
 		bracket: "@open",
 		next: "@multilineBytes"
-	}], [/\"\"\"/, {
+	}], [/"""/, {
 		token: "string.quote",
 		bracket: "@open",
 		next: "@multilineText"
-	}], [/b\"/, {
+	}], [/b"/, {
 		token: "string.quote",
 		bracket: "@open",
 		next: "@bytes"
-	}], [/\"/, {
+	}], [/"/, {
 		token: "string.quote",
 		bracket: "@open",
 		next: "@text"
@@ -103571,6 +103571,7 @@ function cCe() {
 		"@default": "identifier"
 	} }], [/::|->|&&|\|\||<<|>>|==|!=|<=|>=|\+=|-=|\*=|\/=|%=|[+\-*/%&|^~!<>=]/, "operator"], [/[{}()[\]]/, "@brackets"], [/[;:,.]/, "delimiter"]), {
 		defaultToken: "",
+		unicode: !0,
 		declarationKeywords: [...b9],
 		controlKeywords: [...x9],
 		storageKeywords: [...S9],

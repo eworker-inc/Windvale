@@ -166,13 +166,13 @@ function Addˉrawˉliteralˉstates(tokenizer) {
         ]);
         tokenizer[Textˉstate] = [
             [Closingˉpattern, { token: "string.quote", bracket: "@close", next: "@pop" }],
-            [/[^\"]+/, "string.raw"],
-            [/\"/, "string.raw"],
+            [/[^"]+/, "string.raw"],
+            [/"/, "string.raw"],
         ];
         tokenizer[Byteˉstate] = [
             [Closingˉpattern, { token: "string.quote", bracket: "@close", next: "@pop" }],
-            [/[^\"]+/, "string.byte.raw"],
-            [/\"/, "string.byte.raw"],
+            [/[^"]+/, "string.byte.raw"],
+            [/"/, "string.byte.raw"],
         ];
     }
 }
@@ -185,30 +185,30 @@ export function Createˉwindvaleˉtokensˉprovider() {
             [/\/\/.*$/, "comment"],
         ],
         multilineText: [
-            [/\"\"\"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
+            [/"""/, { token: "string.quote", bracket: "@close", next: "@pop" }],
             [TEXT_ESCAPE_PATTERN, "string.escape"],
             [/\\./, "string.escape.invalid"],
-            [/[^\\\"]+/, "string"],
-            [/\"/, "string"],
+            [/[^\\"]+/, "string"],
+            [/"/, "string"],
         ],
         multilineBytes: [
-            [/\"\"\"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
+            [/"""/, { token: "string.quote", bracket: "@close", next: "@pop" }],
             [BYTE_ESCAPE_PATTERN, "string.escape"],
             [/\\./, "string.escape.invalid"],
-            [/[^\\\"]+/, "string.byte"],
-            [/\"/, "string.byte"],
+            [/[^\\"]+/, "string.byte"],
+            [/"/, "string.byte"],
         ],
         text: [
             [TEXT_ESCAPE_PATTERN, "string.escape"],
             [/\\./, "string.escape.invalid"],
-            [/[^\\\"\r\n]+/, "string"],
-            [/\"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
+            [/[^\\"\r\n]+/, "string"],
+            [/"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
         ],
         bytes: [
             [BYTE_ESCAPE_PATTERN, "string.escape"],
             [/\\./, "string.escape.invalid"],
-            [/[^\\\"\r\n]+/, "string.byte"],
-            [/\"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
+            [/[^\\"\r\n]+/, "string.byte"],
+            [/"/, { token: "string.quote", bracket: "@close", next: "@pop" }],
         ],
         rune: [
             [TEXT_ESCAPE_PATTERN, "string.escape"],
@@ -220,10 +220,10 @@ export function Createˉwindvaleˉtokensˉprovider() {
 
     Addˉrawˉliteralˉstates(Tokenizer);
     Tokenizer.root.push(
-        [/b\"\"\"/, { token: "string.quote", bracket: "@open", next: "@multilineBytes" }],
-        [/\"\"\"/, { token: "string.quote", bracket: "@open", next: "@multilineText" }],
-        [/b\"/, { token: "string.quote", bracket: "@open", next: "@bytes" }],
-        [/\"/, { token: "string.quote", bracket: "@open", next: "@text" }],
+        [/b"""/, { token: "string.quote", bracket: "@open", next: "@multilineBytes" }],
+        [/"""/, { token: "string.quote", bracket: "@open", next: "@multilineText" }],
+        [/b"/, { token: "string.quote", bracket: "@open", next: "@bytes" }],
+        [/"/, { token: "string.quote", bracket: "@open", next: "@text" }],
         [/'/, { token: "string.quote", bracket: "@open", next: "@rune" }],
         [WINDVALE_HEX_FLOAT_PATTERN, "number.float"],
         [WINDVALE_DECIMAL_FLOAT_PATTERN, "number.float"],
@@ -249,6 +249,7 @@ export function Createˉwindvaleˉtokensˉprovider() {
 
     return {
         defaultToken: "",
+        unicode: true,
         declarationKeywords: [...WINDVALE_DECLARATION_KEYWORDS],
         controlKeywords: [...WINDVALE_CONTROL_KEYWORDS],
         storageKeywords: [...WINDVALE_STORAGE_KEYWORDS],
