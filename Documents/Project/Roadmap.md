@@ -188,8 +188,10 @@ captured move/borrow and escape enforcement, effectful callable values, and
 native callable ABI lowering are the next connected work in Slice 6.
 [Decision 0858](../Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md)
 now supplies bounded deterministic WVCL source-site ordinals for those
-synthetic targets; connecting the catalog to final WVIR functions and bindings
-is the active next checkpoint.
+synthetic targets. [Decision 0859](../Decisions/0859-Publish-Synthetic-Closure-Bindings-As-Wvlb-1.4.md)
+adds WVLB 1.4 physical ranges that separate each synthetic target's capture
+prefix from its public parameters without forging a source symbol. Connecting
+that carrier to final WVIR functions is the active next checkpoint.
 
 Remaining collection
 families, general ownership, localized token execution, direct

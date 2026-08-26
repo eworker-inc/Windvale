@@ -1530,11 +1530,13 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'compiler-split-development'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Bindings-Closures-Core.wv',
         'Compiler/Windvale/Source-Closure-Captures-Core.wv',
         'Compiler/Windvale/Source-Closure-Lowering-Core.wv',
         'Compiler/Windvale/Source-Callable-Types-Core.wv',
         'Compiler/Windvale/Source-Effects-Core.wv',
         'Compiler/Windvale/Source-Function-Type-Lowering-Core.wv',
+        'Projects/Compiler/Windvale-Source-Bindings-Closures-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Closure-Captures-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Closure-Lowering-Core.wvproj',
         'Projects/Compiler/Windvale-Source-Callable-Types-Core.wvproj',

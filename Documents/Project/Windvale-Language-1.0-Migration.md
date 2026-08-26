@@ -689,7 +689,7 @@ wait for those semantics.
 
 ## Active Slice 6 callable checkpoint
 
-Decisions 0852 through 0858 now connect exact structural function types,
+Decisions 0852 through 0859 now connect exact structural function types,
 explicit capture validation, bounded transitive effect analysis, concrete
 callable cataloging, WVIR function references/indirect calls/plain-capture
 environment creation, WVB 1.30/1.31 verification, and source-built scalar
@@ -714,11 +714,13 @@ one execution. WVCL 1.0 now gives each accepted source closure site a
 deterministic synthetic-function ordinal after ordinary functions and final
 generic instances. The capture analyzer can reconstruct the closure-local
 binding phase from its validated evidence without repeating whole-body
-semantic analysis. The combined focused owner passes 51 cases across nine
-deterministic evidence modules.
+semantic analysis. WVLB 1.4 now retains that WVCL catalog and gives every
+synthetic range an exact capture prefix, public-parameter suffix, real parent
+declaration, and inherited generic identity. The combined focused owner passes
+51 cases across nine deterministic evidence modules.
 
 Slice 6 is not yet closed. It still owns source closure-body lowering into the
-new environment operation, a synthetic-function binding-directory minor,
+new environment operation,
 captured move invalidation, borrow lifetime and escape proof, effectful and
 flag-bearing callables, and the selected native callable ABI. The WVB 1.31
 checkpoint does not imply those later semantics or direct-native/browser/OS

@@ -1,0 +1,1040 @@
+module Compilerˉsourceˉbindingsˉclosures profile portable;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉclosureˉlowering as Closures;
+import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+const CLOSURE_BINDING_HEADER_BYTES: u32 = 48u32;
+const CLOSURE_BINDING_RANGE_BYTES: u32 = 32u32;
+const CLOSURE_BINDING_ENTRY_BYTES: u32 = 36u32;
+const CLOSURE_BINDING_DIRECTORY_LIMIT: u32 = 4194304u32;
+const CLOSURE_BINDING_ENTRY_LIMIT: u32 = 116508u32;
+const CLOSURE_BINDING_CATALOG_LIMIT: u32 = 1048576u32;
+
+fn Compilerˉsourceˉbindingsˉclosuresˉsentinel() -> u32 {
+    return 4294967295u32;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉcatalogˉevidence(
+    Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog
+) -> bytes {
+    if Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog) ==
+            0u32 {
+        return Compilerˉsourceˉbindingsˉclosuresˉempty(Catalog.Evidence);
+    }
+    return Catalog.Evidence;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉtypeˉevidence(
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bytes {
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) ==
+            0u32 {
+        return Compilerˉsourceˉbindingsˉclosuresˉempty(Catalog.Evidence);
+    }
+    return Catalog.Evidence;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉheader(
+    Entries: u32,
+    Ranges: u32,
+    Functionˉcatalogˉbytes: u32,
+    Typeˉcatalogˉbytes: u32,
+    Closureˉcatalogˉbytes: u32,
+    Baseˉfunctions: u32
+) -> bytes {
+    var Result: bytes = Textˉtoˉutf8("WVLB");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(4u32));
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, Entries);
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, CLOSURE_BINDING_ENTRY_BYTES
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, Ranges);
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, CLOSURE_BINDING_RANGE_BYTES
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, Functionˉcatalogˉbytes
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, Typeˉcatalogˉbytes
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, Closureˉcatalogˉbytes
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+        Result, Baseˉfunctions
+    );
+    Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, 3u32);
+    return Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, 0u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(
+    Directory: bytes
+) -> u32 {
+    if Bytesˉlength(Directory) >= CLOSURE_BINDING_HEADER_BYTES &&
+        Bytesˉreadˉu16ˉlittle(Directory, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 4u32 {
+        return CLOSURE_BINDING_HEADER_BYTES;
+    }
+    return 0u32;
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉranges(
+    Directory: bytes
+) -> u32 {
+    if Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(Directory) == 0u32 {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions(
+    Directory: bytes
+) -> u32 {
+    if Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(Directory) == 0u32 {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, 36u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    let Length: u32 = Bytesˉlength(Directory);
+    if Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(Directory) == 0u32 {
+        return Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+    }
+    let Ranges: u32 = Compilerˉsourceˉbindingsˉclosuresˉranges(Directory);
+    if Function >= Ranges ||
+        Ranges > (Length - CLOSURE_BINDING_HEADER_BYTES) /
+            CLOSURE_BINDING_RANGE_BYTES {
+        return Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+    }
+    return CLOSURE_BINDING_HEADER_BYTES +
+        Function * CLOSURE_BINDING_RANGE_BYTES;
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉrangeˉdeclaration(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    let Range: u32 = Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+        Directory, Function
+    );
+    if Range == Compilerˉsourceˉbindingsˉclosuresˉsentinel() {
+        return Range;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, Range + 8u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉrangeˉcaptures(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    let Range: u32 = Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+        Directory, Function
+    );
+    if Range == Compilerˉsourceˉbindingsˉclosuresˉsentinel() {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, Range + 20u32);
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉrangeˉparameters(
+    Directory: bytes,
+    Function: u32
+) -> u32 {
+    let Range: u32 = Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+        Directory, Function
+    );
+    if Range == Compilerˉsourceˉbindingsˉclosuresˉsentinel() {
+        return 0u32;
+    }
+    return Bytesˉreadˉu32ˉlittle(Directory, Range + 24u32);
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉcatalogˉoffset(
+    Directory: bytes
+) -> u32 {
+    if Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(Directory) == 0u32 {
+        return Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+    }
+    let Ranges: u32 = Compilerˉsourceˉbindingsˉclosuresˉranges(Directory);
+    if Ranges > (Bytesˉlength(Directory) - CLOSURE_BINDING_HEADER_BYTES) /
+            CLOSURE_BINDING_RANGE_BYTES {
+        return Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+    }
+    return CLOSURE_BINDING_HEADER_BYTES +
+        Ranges * CLOSURE_BINDING_RANGE_BYTES;
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉentriesˉoffset(
+    Directory: bytes
+) -> u32 {
+    let Catalogˉoffset: u32 =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉoffset(Directory);
+    if Catalogˉoffset == Compilerˉsourceˉbindingsˉclosuresˉsentinel() {
+        return 0u32;
+    }
+    let Functionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Typeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    let Closureˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
+    if Functionˉbytes > Bytesˉlength(Directory) - Catalogˉoffset {
+        return 0u32;
+    }
+    let Typeˉoffset: u32 = Catalogˉoffset + Functionˉbytes;
+    if Typeˉbytes > Bytesˉlength(Directory) - Typeˉoffset { return 0u32; }
+    let Closureˉoffset: u32 = Typeˉoffset + Typeˉbytes;
+    if Closureˉbytes > Bytesˉlength(Directory) - Closureˉoffset {
+        return 0u32;
+    }
+    return Closureˉoffset + Closureˉbytes;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog(
+    Directory: bytes
+) -> Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog {
+    let Bytesˉcount: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    if Bytesˉcount == 0u32 {
+        return Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    }
+    let Offset: u32 =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉoffset(Directory);
+    return Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog(
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Bytesˉslice(Directory, Offset, Bytesˉcount)
+    );
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉtypeˉcatalog(
+    Directory: bytes
+) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
+    let Functionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Typeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    if Typeˉbytes == 0u32 {
+        return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    }
+    let Offset: u32 =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉoffset(Directory) +
+        Functionˉbytes;
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉstatus.Valid,
+        Bytesˉslice(Directory, Offset, Typeˉbytes)
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉcatalog(
+    Directory: bytes
+) -> Closures.Compilerˉsourceˉclosureˉcatalog {
+    let Empty: Closures.Compilerˉsourceˉclosureˉcatalog =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉempty();
+    let Catalogˉoffset: u32 =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉoffset(Directory);
+    if Catalogˉoffset == Compilerˉsourceˉbindingsˉclosuresˉsentinel() {
+        return Closures.Compilerˉsourceˉclosureˉcatalog(
+            Closures.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉevidence,
+            Empty.Evidence
+        );
+    }
+    let Functionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Typeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    let Closureˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
+    if Functionˉbytes > Bytesˉlength(Directory) - Catalogˉoffset {
+        return Closures.Compilerˉsourceˉclosureˉcatalog(
+            Closures.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉevidence,
+            Empty.Evidence
+        );
+    }
+    let Typeˉoffset: u32 = Catalogˉoffset + Functionˉbytes;
+    if Typeˉbytes > Bytesˉlength(Directory) - Typeˉoffset {
+        return Closures.Compilerˉsourceˉclosureˉcatalog(
+            Closures.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉevidence,
+            Empty.Evidence
+        );
+    }
+    let Offset: u32 = Typeˉoffset + Typeˉbytes;
+    if Closureˉbytes > Bytesˉlength(Directory) - Offset {
+        return Closures.Compilerˉsourceˉclosureˉcatalog(
+            Closures.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉevidence,
+            Empty.Evidence
+        );
+    }
+    return Closures.Compilerˉsourceˉclosureˉcatalog(
+        Closures.Compilerˉsourceˉclosureˉloweringˉstatus.Valid,
+        Bytesˉslice(Directory, Offset, Closureˉbytes)
+    );
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Function: u32
+) -> u32 {
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Function < Symbolsˉcount { return Function; }
+    return Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstanceˉdeclaration(
+        Functionˉcatalog, Function - Symbolsˉcount
+    );
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉparameters(
+    Build: Bindings.Compilerˉsourceˉbindingˉbuild,
+    First: u32,
+    Count: u32
+) -> u32 {
+    var Result: u32 = 0u32;
+    var Entry: u32 = First;
+    while Entry < First + Count {
+        if Bytesˉreadˉu32ˉlittle(
+                Build.Payload, Entry * CLOSURE_BINDING_ENTRY_BYTES + 8u32
+            ) == 1u32 {
+            Result = Result + 1u32;
+        }
+        Entry = Entry + 1u32;
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉrangesˉvalue(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Build: Bindings.Compilerˉsourceˉbindingˉbuild,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog
+) -> bytes {
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    let Closureˉinstances: u32 =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog);
+    let Functions: u32 = Baseˉfunctions + Closureˉinstances;
+    var Result: bytes = Compilerˉsourceˉbindingsˉclosuresˉempty(
+        Symbols.Directory
+    );
+    var Binding: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Functions {
+        let First: u32 = Binding;
+        var Count: u32 = 0u32;
+        var Reading: bool = true;
+        while Reading {
+            if Binding >= Build.Entries {
+                Reading = false;
+            } else if Bytesˉreadˉu32ˉlittle(
+                    Build.Payload,
+                    Binding * CLOSURE_BINDING_ENTRY_BYTES + 4u32
+                ) != Function {
+                Reading = false;
+            } else {
+                Binding = Binding + 1u32;
+                Count = Count + 1u32;
+            }
+        }
+        var Declaration: u32 = Function;
+        var Genericˉinstance: u32 =
+            Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+        var Closureˉinstance: u32 =
+            Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+        var Captures: u32 = 0u32;
+        var Parameters: u32 = 0u32;
+        var Flags: u32 = 0u32;
+        if Function < Baseˉfunctions {
+            Declaration = Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+                Symbols, Functionˉcatalog, Function
+            );
+            if Function >= Symbolsˉcount {
+                Genericˉinstance = Function - Symbolsˉcount;
+            }
+            Parameters = Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory,
+                16u32 + Declaration * 24u32 + 20u32
+            );
+        } else {
+            Closureˉinstance = Function - Baseˉfunctions;
+            let Parent: u32 =
+                Closures.Compilerˉsourceˉclosureˉcatalogˉparentˉfunction(
+                    Closureˉcatalog, Closureˉinstance
+                );
+            Declaration = Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+                Symbols, Functionˉcatalog, Parent
+            );
+            if Parent >= Symbolsˉcount {
+                Genericˉinstance = Parent - Symbolsˉcount;
+            }
+            Captures = Closures.Compilerˉsourceˉclosureˉcatalogˉcaptures(
+                Closureˉcatalog, Closureˉinstance
+            );
+            Parameters = Compilerˉsourceˉbindingsˉclosuresˉparameters(
+                Build, First, Count
+            );
+            Flags = 1u32;
+        }
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, First);
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, Count);
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+            Result, Declaration
+        );
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+            Result, Genericˉinstance
+        );
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+            Result, Closureˉinstance
+        );
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+            Result, Captures
+        );
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(
+            Result, Parameters
+        );
+        Result = Compilerˉsourceˉbindingsˉclosuresˉappendˉu32(Result, Flags);
+        Function = Function + 1u32;
+    }
+    return Result;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉdirectory(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Build: Bindings.Compilerˉsourceˉbindingˉbuild,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog
+) -> bytes {
+    let Functionˉevidence: bytes =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉevidence(
+            Functionˉcatalog
+        );
+    let Typeˉevidence: bytes =
+        Compilerˉsourceˉbindingsˉclosuresˉtypeˉevidence(Typeˉcatalog);
+    let Closureˉinstances: u32 =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog);
+    let Header: bytes = Compilerˉsourceˉbindingsˉclosuresˉheader(
+        Build.Entries, Baseˉfunctions + Closureˉinstances,
+        Bytesˉlength(Functionˉevidence), Bytesˉlength(Typeˉevidence),
+        Bytesˉlength(Closureˉcatalog.Evidence), Baseˉfunctions
+    );
+    let Ranges: bytes = Compilerˉsourceˉbindingsˉclosuresˉrangesˉvalue(
+        Symbols, Build, Baseˉfunctions, Functionˉcatalog, Closureˉcatalog
+    );
+    var Result: bytes = Bytesˉconcat(Header, Ranges);
+    Result = Bytesˉconcat(Result, Functionˉevidence);
+    Result = Bytesˉconcat(Result, Typeˉevidence);
+    Result = Bytesˉconcat(Result, Closureˉcatalog.Evidence);
+    return Bytesˉconcat(Result, Build.Payload);
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉsitesˉareˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog
+) -> bool {
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    let Instances: u32 =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog);
+    var Instance: u32 = 0u32;
+    while Instance < Instances {
+        let Module: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉmodule(
+            Closureˉcatalog, Instance
+        );
+        let Parent: u32 =
+            Closures.Compilerˉsourceˉclosureˉcatalogˉparentˉfunction(
+                Closureˉcatalog, Instance
+            );
+        if Module >= Scan.Modules || Parent >= Baseˉfunctions {
+            return false;
+        }
+        let Declaration: u32 =
+            Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+                Symbols, Functionˉcatalog, Parent
+            );
+        if Declaration >= Symbolsˉcount {
+            return false;
+        }
+        let Symbolˉentry: u32 = 16u32 + Declaration * 24u32;
+        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry) != Module ||
+            Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Symbolˉentry + 4u32
+            ) != 6u32 {
+            return false;
+        }
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        let Offset: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉoffset(
+            Closureˉcatalog, Instance
+        );
+        let Span: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉlength(
+            Closureˉcatalog, Instance
+        );
+        if View.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+            Offset >= Bytesˉlength(View.Source) ||
+            Span > Bytesˉlength(View.Source) - Offset {
+            return false;
+        }
+        Instance = Instance + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉshapeˉisˉvalid(
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Kind: u32,
+    Shape: u32
+) -> bool {
+    if Shape == 0u32 { return Kind != 1u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
+        Shape, Symbols.Records, Symbols.Enums, Symbols.Variants, false
+    ) { return true; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
+        Symbols.Directory, Shape
+    ) { return true; }
+    if Shape >= 1073741824u32 && Shape < 1610612736u32 { return true; }
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return false;
+    }
+    return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape) <
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Typeˉcatalog
+        );
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉrangesˉareˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Directory: bytes,
+    Entries: u32,
+    Ranges: u32,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog
+) -> bool {
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    var Expectedˉfirst: u32 = 0u32;
+    var Function: u32 = 0u32;
+    while Function < Ranges {
+        let Range: u32 =
+            Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+                Directory, Function
+            );
+        let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 4u32);
+        let Declaration: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 8u32
+        );
+        let Genericˉinstance: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 12u32
+        );
+        let Closureˉinstance: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 16u32
+        );
+        let Captures: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 20u32
+        );
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 24u32
+        );
+        let Flags: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 28u32);
+        if First != Expectedˉfirst || First > Entries ||
+            Count > Entries - First || Declaration >= Symbolsˉcount {
+            return false;
+        }
+        if Function < Baseˉfunctions {
+            var Baseˉgeneric: u32 =
+                Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+            if Function >= Symbolsˉcount {
+                Baseˉgeneric = Function - Symbolsˉcount;
+            }
+            if Flags != 0u32 || Captures != 0u32 ||
+                Closureˉinstance !=
+                    Compilerˉsourceˉbindingsˉclosuresˉsentinel() ||
+                Genericˉinstance != Baseˉgeneric ||
+                Declaration != Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+                    Symbols, Functionˉcatalog, Function
+                ) ||
+                Parameters != Bytesˉreadˉu32ˉlittle(
+                    Symbols.Directory,
+                    16u32 + Declaration * 24u32 + 20u32
+                ) {
+                return false;
+            }
+        } else {
+            let Expectedˉclosure: u32 = Function - Baseˉfunctions;
+            let Parent: u32 =
+                Closures.Compilerˉsourceˉclosureˉcatalogˉparentˉfunction(
+                    Closureˉcatalog, Expectedˉclosure
+                );
+            let Module: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉmodule(
+                Closureˉcatalog, Expectedˉclosure
+            );
+            if Parent >= Baseˉfunctions || Module >= Scan.Modules ||
+                Parameters > 64u32 {
+                return false;
+            }
+            var Parentˉgeneric: u32 =
+                Compilerˉsourceˉbindingsˉclosuresˉsentinel();
+            if Parent >= Symbolsˉcount {
+                Parentˉgeneric = Parent - Symbolsˉcount;
+            }
+            let Offset: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉoffset(
+                Closureˉcatalog, Expectedˉclosure
+            );
+            let Span: u32 = Closures.Compilerˉsourceˉclosureˉcatalogˉlength(
+                Closureˉcatalog, Expectedˉclosure
+            );
+            if Flags != 1u32 || Closureˉinstance != Expectedˉclosure ||
+                Captures !=
+                    Closures.Compilerˉsourceˉclosureˉcatalogˉcaptures(
+                        Closureˉcatalog, Expectedˉclosure
+                    ) ||
+                Genericˉinstance != Parentˉgeneric ||
+                Declaration != Compilerˉsourceˉbindingsˉclosuresˉdeclaration(
+                    Symbols, Functionˉcatalog, Parent
+                ) ||
+                Bytesˉreadˉu32ˉlittle(
+                    Symbols.Directory, 16u32 + Declaration * 24u32
+                ) != Module {
+                return false;
+            }
+            let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+                Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+            if View.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+                Offset >= Bytesˉlength(View.Source) ||
+                Span > Bytesˉlength(View.Source) - Offset {
+                return false;
+            }
+        }
+        let Symbolˉentry: u32 = 16u32 + Declaration * 24u32;
+        if Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Symbolˉentry + 4u32
+            ) != 6u32 && Count != 0u32 {
+            return false;
+        }
+        Expectedˉfirst = First + Count;
+        Function = Function + 1u32;
+    }
+    return Expectedˉfirst == Entries;
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉentriesˉareˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Directory: bytes,
+    Entries: u32,
+    Ranges: u32,
+    Baseˉfunctions: u32,
+    Entriesˉoffset: u32,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> bool {
+    var Index: u32 = 0u32;
+    var Priorˉfunction: u32 = 0u32;
+    var Priorˉslot: u32 = 0u32;
+    while Index < Entries {
+        let Entry: u32 = Entriesˉoffset +
+            Index * CLOSURE_BINDING_ENTRY_BYTES;
+        let Module: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry);
+        let Function: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32);
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 8u32);
+        let Slot: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 12u32);
+        let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 16u32
+        );
+        let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 20u32
+        );
+        let Shape: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 24u32);
+        let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 28u32
+        );
+        let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Entry + 32u32
+        );
+        if Module >= Scan.Modules || Function >= Ranges ||
+            Kind == 0u32 || Kind > 4u32 || Slot >= 4096u32 ||
+            !Compilerˉsourceˉbindingsˉclosuresˉshapeˉisˉvalid(
+                Symbols, Typeˉcatalog, Kind, Shape
+            ) {
+            return false;
+        }
+        let Range: u32 =
+            Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+                Directory, Function
+            );
+        let First: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range);
+        let Count: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 4u32);
+        let Declaration: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 8u32
+        );
+        let Captures: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 20u32
+        );
+        let Parameters: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Range + 24u32
+        );
+        let Flags: u32 = Bytesˉreadˉu32ˉlittle(Directory, Range + 28u32);
+        if Index < First || Index >= First + Count {
+            return false;
+        }
+        if Flags == 0u32 {
+            if (Slot < Parameters && Kind != 1u32) ||
+                (Slot >= Parameters && Kind == 1u32) {
+                return false;
+            }
+        } else {
+            if (Slot < Captures && (Kind < 2u32 || Kind > 3u32)) ||
+                (Slot >= Captures && Slot < Captures + Parameters &&
+                    Kind != 1u32) ||
+                (Slot >= Captures + Parameters && Kind == 1u32) {
+                return false;
+            }
+        }
+        let Symbolˉentry: u32 = 16u32 + Declaration * 24u32;
+        if Bytesˉreadˉu32ˉlittle(Symbols.Directory, Symbolˉentry) != Module ||
+            Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, Symbolˉentry + 4u32
+            ) != 6u32 {
+            return false;
+        }
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+        let Sourceˉlength: u32 = Bytesˉlength(View.Source);
+        if Nameˉoffset >= Sourceˉlength || Nameˉlength == 0u32 ||
+            Nameˉlength > Sourceˉlength - Nameˉoffset ||
+            Scopeˉstart >= Scopeˉend || Scopeˉend > Sourceˉlength ||
+            !Bindings.Compilerˉsourceˉbindingsˉidentifierˉisˉvalid(
+                View.Source, Nameˉoffset, Nameˉlength
+            ) {
+            return false;
+        }
+        if Index == 0u32 {
+            if Slot != 0u32 { return false; }
+        } else if Function == Priorˉfunction {
+            if Slot != Priorˉslot + 1u32 { return false; }
+        } else if Function < Priorˉfunction || Slot != 0u32 {
+            return false;
+        }
+        Priorˉfunction = Function;
+        Priorˉslot = Slot;
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Directory: bytes
+) -> bool {
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Bytesˉlength(Symbols.Directory) < 16u32 {
+        return false;
+    }
+    let Length: u32 = Bytesˉlength(Directory);
+    if Length < CLOSURE_BINDING_HEADER_BYTES ||
+        Length > CLOSURE_BINDING_DIRECTORY_LIMIT ||
+        Bytesˉreadˉu8(Directory, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Directory, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Directory, 2u32) != 76u8 ||
+        Bytesˉreadˉu8(Directory, 3u32) != 66u8 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) !=
+            CLOSURE_BINDING_ENTRY_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Directory, 20u32) !=
+            CLOSURE_BINDING_RANGE_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Directory, 40u32) != 3u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 44u32) != 0u32 {
+        return false;
+    }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    let Ranges: u32 = Bytesˉreadˉu32ˉlittle(Directory, 16u32);
+    let Functionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
+    let Typeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    let Closureˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
+    let Baseˉfunctions: u32 = Bytesˉreadˉu32ˉlittle(Directory, 36u32);
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉshapeˉisˉvalid(
+            Symbols.Directory, Symbolsˉcount
+        ) ||
+        Entries > CLOSURE_BINDING_ENTRY_LIMIT ||
+        Functionˉbytes > CLOSURE_BINDING_CATALOG_LIMIT ||
+        Typeˉbytes > CLOSURE_BINDING_CATALOG_LIMIT ||
+        Closureˉbytes < 24u32 || Closureˉbytes > 8192u32 ||
+        Ranges > (Length - CLOSURE_BINDING_HEADER_BYTES) /
+            CLOSURE_BINDING_RANGE_BYTES {
+        return false;
+    }
+    let Catalogˉoffset: u32 = CLOSURE_BINDING_HEADER_BYTES +
+        Ranges * CLOSURE_BINDING_RANGE_BYTES;
+    if Functionˉbytes > Length - Catalogˉoffset { return false; }
+    let Typeˉoffset: u32 = Catalogˉoffset + Functionˉbytes;
+    if Typeˉbytes > Length - Typeˉoffset { return false; }
+    let Closureˉoffset: u32 = Typeˉoffset + Typeˉbytes;
+    if Closureˉbytes > Length - Closureˉoffset { return false; }
+    let Entriesˉoffset: u32 = Closureˉoffset + Closureˉbytes;
+    if Entries > (Length - Entriesˉoffset) / CLOSURE_BINDING_ENTRY_BYTES ||
+        Length != Entriesˉoffset + Entries * CLOSURE_BINDING_ENTRY_BYTES {
+        return false;
+    }
+    let Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
+        Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog(Directory);
+    let Functionˉinstances: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+            Functionˉcatalog
+        );
+    if !Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(
+            Functionˉcatalog
+        ) ||
+        (Functionˉbytes == 0u32) != (Functionˉinstances == 0u32) ||
+        Symbolsˉcount > 4294967295u32 - Functionˉinstances ||
+        Baseˉfunctions != Symbolsˉcount + Functionˉinstances {
+        return false;
+    }
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉbindingsˉclosuresˉtypeˉcatalog(Directory);
+    let Typeˉinstances: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Typeˉcatalog
+        );
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Typeˉcatalog
+        ) || (Typeˉbytes == 0u32) != (Typeˉinstances == 0u32) {
+        return false;
+    }
+    let Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalog(Directory);
+    let Closureˉinstances: u32 =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog);
+    if !Closures.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(Closureˉcatalog) ||
+        Closureˉinstances == 0u32 ||
+        Baseˉfunctions > 4294967295u32 - Closureˉinstances ||
+        Ranges != Baseˉfunctions + Closureˉinstances {
+        return false;
+    }
+    return Compilerˉsourceˉbindingsˉclosuresˉrangesˉareˉvalid(
+            Input, Scan, Symbols, Directory, Entries, Ranges,
+            Baseˉfunctions, Functionˉcatalog, Closureˉcatalog
+        ) &&
+        Compilerˉsourceˉbindingsˉclosuresˉentriesˉareˉvalid(
+            Input, Scan, Symbols, Directory, Entries, Ranges,
+            Baseˉfunctions, Entriesˉoffset, Typeˉcatalog
+        );
+}
+
+fn Compilerˉsourceˉbindingsˉclosuresˉfailure(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Bindings.Compilerˉsourceˉbindingˉphase,
+    Functions: u32,
+    Status: Bindings.Compilerˉsourceˉbindingˉstatus
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Build: Bindings.Compilerˉsourceˉbindingˉbuild =
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase);
+    let Failed: Bindings.Compilerˉsourceˉbindingˉbuild =
+        Bindings.Compilerˉsourceˉbindingsˉbuildˉfailure(
+            Build, Status,
+            Symbols.Modules, Symbols.Modules, Functions,
+            Bytesˉlength(Input), 0u32, 0u32
+        );
+    return Bindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+        Input, Symbols, Failed
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉfinishˉphaseˉproduct(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Bindings.Compilerˉsourceˉbindingˉphase,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    if Phase.Buildˉstatus != Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Bindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉbuild(
+            Input, Symbols,
+            Bindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase)
+        );
+    }
+    if Phase.Bodyˉstatus != Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Bindings.Compilerˉsourceˉbindingsˉsummaryˉfromˉbody(
+            Input, Symbols,
+            Bindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase),
+            Bindings.Compilerˉsourceˉbindingsˉphaseˉbodyˉvalue(Phase)
+        );
+    }
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        Bytesˉlength(Symbols.Directory) < 16u32 ||
+        !Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉisˉvalid(
+            Functionˉcatalog
+        ) ||
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(
+            Typeˉcatalog
+        ) ||
+        !Closures.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(Closureˉcatalog) {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Baseˉfunctions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory
+        );
+    }
+    let Functionˉinstances: u32 =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+            Functionˉcatalog
+        );
+    let Closureˉinstances: u32 =
+        Closures.Compilerˉsourceˉclosureˉcatalogˉinstances(Closureˉcatalog);
+    let Symbolsˉcount: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉshapeˉisˉvalid(
+            Symbols.Directory, Symbolsˉcount
+        ) ||
+        Closureˉinstances == 0u32 ||
+        Symbolsˉcount > 4294967295u32 - Functionˉinstances ||
+        Baseˉfunctions != Symbolsˉcount + Functionˉinstances ||
+        Baseˉfunctions > 4294967295u32 - Closureˉinstances ||
+        !Compilerˉsourceˉbindingsˉclosuresˉsitesˉareˉvalid(
+            Input, Scan, Symbols, Baseˉfunctions,
+            Functionˉcatalog, Closureˉcatalog
+        ) {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Baseˉfunctions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory
+        );
+    }
+    let Functions: u32 = Baseˉfunctions + Closureˉinstances;
+    let Functionˉevidence: bytes =
+        Compilerˉsourceˉbindingsˉclosuresˉcatalogˉevidence(
+            Functionˉcatalog
+        );
+    let Typeˉevidence: bytes =
+        Compilerˉsourceˉbindingsˉclosuresˉtypeˉevidence(Typeˉcatalog);
+    if Functions > 131070u32 || Phase.Entries > CLOSURE_BINDING_ENTRY_LIMIT {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit
+        );
+    }
+    if Bytesˉlength(Phase.Payload) !=
+            Phase.Entries * CLOSURE_BINDING_ENTRY_BYTES {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory
+        );
+    }
+    let Functionˉbytes: u32 = Bytesˉlength(Functionˉevidence);
+    let Typeˉbytes: u32 = Bytesˉlength(Typeˉevidence);
+    let Closureˉbytes: u32 = Bytesˉlength(Closureˉcatalog.Evidence);
+    var Overhead: u32 = CLOSURE_BINDING_HEADER_BYTES +
+        Functions * CLOSURE_BINDING_RANGE_BYTES;
+    if Functionˉbytes > CLOSURE_BINDING_CATALOG_LIMIT ||
+        Typeˉbytes > CLOSURE_BINDING_CATALOG_LIMIT ||
+        Closureˉbytes < 24u32 || Closureˉbytes > 8192u32 ||
+        Functionˉbytes > CLOSURE_BINDING_DIRECTORY_LIMIT - Overhead {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit
+        );
+    }
+    Overhead = Overhead + Functionˉbytes;
+    if Typeˉbytes > CLOSURE_BINDING_DIRECTORY_LIMIT - Overhead {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit
+        );
+    }
+    Overhead = Overhead + Typeˉbytes;
+    if Closureˉbytes > CLOSURE_BINDING_DIRECTORY_LIMIT - Overhead {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit
+        );
+    }
+    Overhead = Overhead + Closureˉbytes;
+    if Bytesˉlength(Phase.Payload) >
+            CLOSURE_BINDING_DIRECTORY_LIMIT - Overhead {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Evidenceˉlimit
+        );
+    }
+    let Directory: bytes = Compilerˉsourceˉbindingsˉclosuresˉdirectory(
+        Symbols,
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉbuildˉvalue(Phase),
+        Baseˉfunctions, Functionˉcatalog, Typeˉcatalog, Closureˉcatalog
+    );
+    return Bindings.Compilerˉsourceˉbindingˉsummary(
+        Bindings.Compilerˉsourceˉbindingˉstatus.Valid,
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+        Symbols.Modules, Functions,
+        Phase.Parameters, Phase.Locals,
+        Phase.Reads, Phase.Assignments, Phase.Calls,
+        Directory,
+        Symbols.Modules, Symbols.Modules, Functions,
+        Bytesˉlength(Input), 0u32, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉbindingsˉclosuresˉfinishˉphase(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Phase: Bindings.Compilerˉsourceˉbindingˉphase,
+    Baseˉfunctions: u32,
+    Functionˉcatalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog,
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Closureˉcatalog: Closures.Compilerˉsourceˉclosureˉcatalog,
+    Validate: bool
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Compilerˉsourceˉbindingsˉclosuresˉfinishˉphaseˉproduct(
+            Input, Scan, Symbols, Phase, Baseˉfunctions,
+            Functionˉcatalog, Typeˉcatalog, Closureˉcatalog
+        );
+    if Published.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        !Validate {
+        return Published;
+    }
+    if !Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+        Input, Scan, Symbols, Published.Directory
+    ) {
+        return Compilerˉsourceˉbindingsˉclosuresˉfailure(
+            Input, Symbols, Phase, Published.Functions,
+            Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory
+        );
+    }
+    return Published;
+}

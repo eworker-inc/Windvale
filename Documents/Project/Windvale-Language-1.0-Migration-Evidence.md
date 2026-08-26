@@ -3340,3 +3340,39 @@ LF-only bytes have SHA-256
 WVLB/WVIR publication, source `Closureˉcreate` emission, synthetic body
 compilation, captured move and borrow enforcement, independent Linux
 reproduction, and Qualification remain separate claims.
+
+## Synthetic closure binding-directory checkpoint
+
+[Decision 0859](../Decisions/0859-Publish-Synthetic-Closure-Bindings-As-Wvlb-1.4.md)
+publishes the reconstructed closure-local phase through WVLB 1.4. The format
+retains optional WVGC and WVGT evidence plus required WVCL evidence once, then
+uses one 32-byte range per physical function. A synthetic range names its real
+parent declaration and inherited generic instance, its WVCL ordinal, exact
+capture count, exact public parameter count, and flags `1`; it does not forge a
+WVSD entry.
+
+The independent validator proves catalog boundaries, checked target arithmetic,
+real parent/module/source-span ownership, canonical gap-free ranges, contiguous
+slots, a `let`/`var` capture prefix, a `Parameter` public suffix, valid shapes,
+identifier and scope spans, exact total length, and trailing-byte absence. The
+focused fixture publishes one copied `i32` capture plus one public `i32`
+parameter and rejects the directory after its capture count is changed from one
+to two.
+
+The component is a 918,460-byte WVB at SHA-256
+`ebd6876706711f9897d13a1e26cca0370e9efe766c4bfcda987527d43db5e6f5`.
+The 1,006,982-byte self-test at SHA-256
+`cb8f61170a9d9a8b76cb4bf842424e65c09e8a95f9f9e314b19e5bbf7aefe298`
+executes selector `j` with result `42`.
+
+The focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=51 result=42 modules=9 wvb-bytes=4255417 evidence-sha256=1f1d0a180c1276404ff8b4dfaa7518d589f4d169a8678f20e9f0c140215a4bc7
+```
+
+The registry remains 113 owners and 5,493 cases. Its 17,993 LF-only bytes have
+SHA-256
+`abc013565f44f40e9133fb83d417ee9e347def64826c67669a2e594cd473f6ea`.
+Main WVIR/WVB integration, captured move and borrow enforcement, independent
+Linux reproduction, and Qualification remain separate claims.

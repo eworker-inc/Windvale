@@ -97,8 +97,10 @@ through a function-private isolated phase. Explicit captures are appended as
 closure-scope locals rather than ordinary parameters: copy, move, and immutable
 borrow are immutable `let` bindings, while only `borrow mut` is a mutable `var`
 binding. Closure parameters remain ordinary immutable parameters. This private
-phase is described by [source closure-capture analysis](Compiler-Source-Closure-Captures.md)
-and does not change the published WVLB directory format.
+phase is described by [source closure-capture analysis](Compiler-Source-Closure-Captures.md).
+Reconstructing the phase alone changes no published format. Once a non-empty
+WVCL catalog assigns synthetic targets, final publication selects WVLB 1.4 so
+the capture prefix and public-parameter suffix remain independently validated.
 
 ## Name and call binding
 
@@ -126,7 +128,7 @@ WVIR responsibilities.
 
 A named record literal binds every field value left to right before resolving its record target, requires that target to be an accessible record declaration, and contributes one constructor call. An applied target such as `Box<Point> { ... }` retains its complete type application for WVGT-aware typed resolution; the bare `Box` template is not assigned a concrete ordinary shape. A Language 1.0 record update binds its base once, then its replacement values left to right, before applying the same target-resolution and constructor-call evidence. Field existence, uniqueness, completeness or preservation, exact base/value types, generic admission, and declaration-order operand placement are owned by typed WVIR so those failures use the typed semantic status contract. Recursive `else if` spans are traversed as one nested statement and preserve ordinary lexical block behavior. A `try` statement binds its expression exactly as an ordinary expression statement and introduces no local or payload binding; its result shape and propagation contract belong to typed WVIR. A `using` statement binds its initializer before publishing its immutable body-local name; resource classification, ownership, and every cleanup edge are proved by WVIR. `break` and `continue` carry no name-binding evidence; loop ownership and reachability are proved by WVIR.
 
-## WVLB 1.1, 1.2, and 1.3 binding directories
+## WVLB 1.1, 1.2, 1.3, and 1.4 binding directories
 
 All integers are unsigned little-endian. The directory contains no padding.
 
@@ -189,6 +191,48 @@ or variant shape before WVB emission. The validator rejects absent or empty
 WVGT evidence, out-of-catalog private shapes, cross-catalog length confusion,
 nonzero reserved fields, truncation, and trailing bytes.
 
+WVLB 1.4 is selected only when the final WVCL catalog contains at least one
+source closure target. Its 48-byte header retains the common magic, major
+version, binding count, and 36-byte binding-entry size, sets minor version `4`,
+and uses these remaining fields:
+
+| Offset | Size | Field |
+| ---: | ---: | --- |
+| 16 | 4 | Physical function-range count |
+| 20 | 4 | Fixed function-range entry size `32` |
+| 24 | 4 | Optional WVGC byte length |
+| 28 | 4 | Optional WVGT byte length |
+| 32 | 4 | Required non-empty WVCL byte length |
+| 36 | 4 | Base physical function count before closures |
+| 40 | 4 | Combined catalog layout version `3` |
+| 44 | 4 | Reserved zero |
+
+The base count is exactly the WVSD entry count plus the WVGC instance count.
+The total range count is the checked sum of that base and the WVCL instance
+count. After all ranges come optional WVGC evidence, optional WVGT evidence,
+required WVCL evidence, and the ordinary 36-byte binding entries, in that
+exact order.
+
+Each 32-byte range contains eight `u32` values: first binding entry, binding
+count, source WVSD declaration, inherited WVGC instance or sentinel, WVCL
+instance or sentinel, capture count, public parameter count, and flags. An
+ordinary or generic-specialization range has flags `0`, zero captures, the
+closure sentinel, its existing declaration/generic identity, and the exact
+declared parameter count. A synthetic closure range has flags `1`, its WVCL
+ordinal, the real parent declaration, the parent's generic instance or
+sentinel, the exact WVCL capture count, and the exact public parameter count.
+It never invents a WVSD symbol.
+
+Synthetic binding entries are contiguous and slot ordered. The capture prefix
+contains only `let` or `var` entries reconstructed from the validated capture
+summary; the public-parameter suffix contains only `Parameter` entries; no
+parameter may occur after that suffix. All ranges still form one canonical,
+gap-free cover of all entries. Validation additionally proves every WVCL
+parent is a base physical function, maps to a real function declaration in the
+same module, and names a non-empty source span inside that module. Catalog,
+range, entry, arithmetic, and total-directory bounds are checked before any
+publication.
+
 `Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase` is the
 publication path for the combined envelope. It is owned by the focused
 `Compilerˉsourceˉbindingsˉgenericˉtypes` module. An empty WVGT catalog delegates
@@ -202,6 +246,10 @@ source set contains either a generic nominal declaration or the exact
 `Foundationˉcollections` module. This ensures a collection type used only as a
 function return—such as `Sequence<i32>` returned by `Vectorˉfreeze`—has a real
 WVGT entry rather than an out-of-catalog private shape.
+
+`Compilerˉsourceˉbindingsˉclosuresˉfinishˉphase` owns WVLB 1.4 publication.
+It requires valid WVGC, WVGT, and non-empty WVCL inputs and preserves the older
+publishers unchanged when no source closure target exists.
 
 Each 36-byte binding entry contains nine `u32` fields in this order: module
 index, WVSD function-entry index, binding-kind value, slot, name byte offset,
@@ -241,7 +289,7 @@ concrete shape; `_` creates no entry. Pattern syntax does not repeat type
 arguments because the selector's private WVGT identity already selects the one
 concrete instance.
 
-Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and 1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates those versions unchanged and additionally checks WVLB 1.3. Together they check the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
+Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WVLB 1.1 and 1.2. `Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid` delegates those versions unchanged and additionally checks WVLB 1.3. `Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid` independently checks WVLB 1.4. Together they check the complete selected-version header, exact length, canonical ranges, declaration ownership, slot/kind consistency, concrete shape bounds or the local-only inference marker, identifier spans, scope bounds, order, catalog agreement, and trailing data. Identifier validation operates directly over absolute WVSS spans; it does not materialize a source copy or rescan from the start of the module for each binding.
 
 ## Deterministic processing and performance
 

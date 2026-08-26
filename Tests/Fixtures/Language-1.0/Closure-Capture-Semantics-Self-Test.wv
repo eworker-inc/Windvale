@@ -1,13 +1,18 @@
 module Languageˉoneˉclosureˉcaptureˉsemanticsˉselfˉtest profile hosted;
 
 import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbodyˉparser as Bodies;
 import Compilerˉsourceˉclosureˉcaptures as Captures;
+import Compilerˉsourceˉclosureˉlowering as Closureˉlowering;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉeffects as Effects;
+import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
+import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 capability process.argument;
 capability process.argument_count;
@@ -376,6 +381,9 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Baseˉfunctions: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉsummary.Directory, 8u32
+    );
     let Function: u32 = Functionˉentry(Symbolsˉsummary);
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
         Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
@@ -384,7 +392,38 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
     let Phase: Bindings.Compilerˉsourceˉbindingˉphase =
         Captures.Compilerˉsourceˉclosureˉcapturesˉphase(
             Input, Scan, Symbolsˉsummary,
-            0u32, Function, View.Source, Expression, Summary
+            0u32, Baseˉfunctions, View.Source, Expression, Summary
+        );
+    let Ordinaryˉphase: Bindings.Compilerˉsourceˉbindingˉphase =
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbolsˉsummary, true
+        );
+    let Combinedˉphase: Bindings.Compilerˉsourceˉbindingˉphase =
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+            Ordinaryˉphase, Phase
+        );
+    let Emptyˉfunctions: Generics.Compilerˉsourceˉgenericˉcatalog =
+        Generics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    let Emptyˉtypes: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty();
+    let Emptyˉclosures: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty();
+    let Admission: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Emptyˉclosures,
+            Scan.Modules, Baseˉfunctions, Bytesˉlength(View.Source), 1u32,
+            0u32, Function, Expression.Offset, Expression.Length,
+            0u32, Summary.Captures
+        );
+    let Closureˉcatalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+            Admission
+        );
+    let Published: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉfinishˉphase(
+            Input, Scan, Symbolsˉsummary, Combinedˉphase,
+            Baseˉfunctions, Emptyˉfunctions, Emptyˉtypes,
+            Closureˉcatalog, true
         );
     if Summary.Status !=
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid { return 30; }
@@ -399,6 +438,45 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
     if Phase.Reads != 2u32 { return 37; }
     if Phase.Assignments != 0u32 { return 38; }
     if Phase.Calls != 0u32 { return 39; }
+    if Admission.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid {
+        return 40;
+    }
+    if Published.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid ||
+        Published.Functions != Baseˉfunctions + 1u32 ||
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉheaderˉbytes(
+            Published.Directory
+        ) != 48u32 ||
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉranges(
+            Published.Directory
+        ) != Baseˉfunctions + 1u32 ||
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉcaptures(
+            Published.Directory, Baseˉfunctions
+        ) != 1u32 ||
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉparameters(
+            Published.Directory, Baseˉfunctions
+        ) != 1u32 ||
+        !Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+            Input, Scan, Symbolsˉsummary, Published.Directory
+        ) {
+        return 41;
+    }
+    let Captureˉrange: u32 =
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉrangeˉoffset(
+            Published.Directory, Baseˉfunctions
+        );
+    let Corruptˉcapture: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Published.Directory, Captureˉrange + 20u32,
+            4u32,
+            Bytesˉfromˉu32ˉlittle(2u32)
+        );
+    if !Corruptˉcapture.Valid ||
+        Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+            Input, Scan, Symbolsˉsummary, Corruptˉcapture.Value
+        ) {
+        return 43;
+    }
     return 42;
 }
 
