@@ -54,6 +54,11 @@ const TESTS = [
         Name: 'closure-captures',
         Project: 'Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
         Selectors: [...'abcdefghi']
+    },
+    {
+        Name: 'closure-lowering-catalog',
+        Project: 'Windvale-Native-Test-Language-1-Closure-Lowering-Catalog.wvproj',
+        Selectors: [null]
     }
 ];
 

@@ -11,10 +11,12 @@ into a lexical value.
 This phase validates explicit capture lists, closure parameters, the isolated
 closure body, and the declared exact effect clause. WVIR 1.19/1.20 and WVB 1.31
 now define and execute a representation-private environment for copied inline
-scalars and enums. Source closure-body lowering into that operation, move
-invalidation in the enclosing function, escaping-borrow lifetime proof, and
-native execution remain connected Slice 6 work. No WVB serializes the
-compiler-private capture evidence described here.
+scalars and enums. The compiler-private WVCL 1.0 catalog now assigns
+deterministic source-site ordinals for future synthetic physical targets.
+Source closure-body lowering into `Closureˉcreate`, move invalidation in the
+enclosing function, escaping-borrow lifetime proof, and native execution remain
+connected Slice 6 work. No WVB serializes either compiler-private capture or
+WVCL evidence.
 
 ## Capture modes
 

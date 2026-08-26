@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Closure-Lowering-Catalog-Self-Test.wv"
+source "Compiler/Windvale/Source-Closure-Lowering-Core.wv"
+emit wvb

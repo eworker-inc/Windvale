@@ -3270,3 +3270,37 @@ closure-body lowering into a synthetic physical target, captured move and
 borrow enforcement, native callable ABI lowering, independent Linux
 reproduction, repository-wide Qualification, and promoted runner repinning
 remain separate claims.
+
+## Deterministic source closure-target planning checkpoint
+
+[Decision 0858](../Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md)
+adds compiler-private WVCL 1.0 evidence before WVIR publication. One exact
+`(module, parent function, source offset, source length)` site receives one
+first-traversal ordinal and retains its function-type instance and capture
+count. Exact repeated admission reuses the ordinal; conflicting semantics for
+the same site reject. The eventual checked physical target is ordinary symbol
+entries plus final generic instances plus that ordinal, so no closure is
+misrepresented as a WVSD source symbol.
+
+One catalog admits at most 256 sites, 64 captures per site, 8,192 retained
+bytes, and 16,777,216 aggregate source-span bytes. Full uniqueness validation
+is bounded to 32,640 pair comparisons. The self-test covers exact reuse,
+ordering, accessors, checked target arithmetic, every input boundary, the
+instance and aggregate limits, truncation, bad magic, and duplicate evidence.
+
+The component is a 14,524-byte WVB at SHA-256
+`5cf39d57dd9f69cc0e3e90ae20742c907527481cd3d43c77af6ba1c4f672b13d`.
+The 23,078-byte self-test at SHA-256
+`adbb332cd832d69c06660688508d8d45ea981f00f9563497de574790c47d977d`
+executes with result `42`. The focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=50 result=42 modules=9 wvb-bytes=4192390 evidence-sha256=27f585258368122eb2a78e520117d5f1a659614375e527e4e3275185eed8e5ca
+```
+
+The registry remains 113 owners and advances to 5,492 cases. Its 17,993
+LF-only bytes have SHA-256
+`596de9757b2b46b8f5ea7c88d4b4dad437c39716ebcbc39d2de923955ca4752a`.
+The accepted 0857 source identity is unchanged. WVIR/WVB integration,
+synthetic binding publication, captured move and borrow enforcement,
+independent Linux reproduction, and Qualification remain separate claims.

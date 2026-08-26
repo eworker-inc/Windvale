@@ -1,0 +1,3 @@
+windvale-project 2
+root "Compiler/Windvale/Source-Closure-Lowering-Core.wv"
+emit wvb

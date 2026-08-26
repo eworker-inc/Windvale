@@ -1,0 +1,296 @@
+module Languageˉoneˉclosureˉloweringˉcatalogˉselfˉtest profile portable;
+
+import Compilerˉsourceˉclosureˉlowering as Closureˉlowering;
+
+fn Appendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Firstˉadmission(
+) -> Closureˉlowering.Compilerˉsourceˉclosureˉadmission {
+    return Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty(),
+        2u32, 4u32, 100u32, 2u32,
+        1u32, 3u32, 10u32, 20u32, 1u32, 2u32
+    );
+}
+
+fn Emptyˉprobe() -> i32 {
+    let Catalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty();
+    if !Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(
+            Catalog
+        ) ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉinstances(
+            Catalog
+        ) != 0u32 {
+        return 21;
+    }
+    return 42;
+}
+
+fn Identityˉprobe() -> i32 {
+    let First: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Firstˉadmission();
+    let Catalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+            First
+        );
+    let Repeated: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog,
+            2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 10u32, 20u32, 1u32, 2u32
+        );
+    if First.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid ||
+        First.Reused || First.Instance != 0u32 ||
+        Repeated.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid ||
+        !Repeated.Reused || Repeated.Instance != 0u32 ||
+        Bytesˉlength(Repeated.Catalogˉevidence) !=
+            Bytesˉlength(Catalog.Evidence) {
+        return 22;
+    }
+    return 42;
+}
+
+fn Orderingˉprobe() -> i32 {
+    let First: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Firstˉadmission();
+    let Second: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+                First
+            ),
+            2u32, 4u32, 100u32, 2u32,
+            0u32, 2u32, 40u32, 10u32, 0u32, 5u32
+        );
+    let Catalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+            Second
+        );
+    if Second.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid ||
+        Second.Reused || Second.Instance != 1u32 ||
+        !Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(
+            Catalog
+        ) ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉinstances(
+            Catalog
+        ) != 2u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉmodule(
+            Catalog, 0u32
+        ) != 1u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉparentˉfunction(
+            Catalog, 0u32
+        ) != 3u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉoffset(
+            Catalog, 1u32
+        ) != 40u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉlength(
+            Catalog, 1u32
+        ) != 10u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfunctionˉtype(
+            Catalog, 1u32
+        ) != 0u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉcaptures(
+            Catalog, 1u32
+        ) != 5u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉtarget(
+            9u32, 0u32
+        ) != 9u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉtarget(
+            9u32, 1u32
+        ) != 10u32 ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉtarget(
+            4294967295u32, 1u32
+        ) != 4294967295u32 {
+        return 23;
+    }
+    return 42;
+}
+
+fn Invalidˉprobe() -> i32 {
+    let Catalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty();
+    let Badˉmodule: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            2u32, 3u32, 10u32, 20u32, 1u32, 2u32
+        );
+    let Badˉparent: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            1u32, 4u32, 10u32, 20u32, 1u32, 2u32
+        );
+    let Badˉspan: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 90u32, 11u32, 1u32, 2u32
+        );
+    let Badˉtype: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 10u32, 20u32, 2u32, 2u32
+        );
+    let Noˉcaptures: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 10u32, 20u32, 1u32, 0u32
+        );
+    let Excessˉcaptures:
+        Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 10u32, 20u32, 1u32, 65u32
+        );
+    let First: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Firstˉadmission();
+    let Conflicting: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+                First
+            ),
+            2u32, 4u32, 100u32, 2u32,
+            1u32, 3u32, 10u32, 20u32, 0u32, 2u32
+        );
+    if Badˉmodule.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉsite ||
+        Badˉparent.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉsite ||
+        Badˉspan.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉsite ||
+        Badˉtype.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉtype ||
+        Noˉcaptures.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉcaptures ||
+        Excessˉcaptures.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉcaptures ||
+        Conflicting.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Invalidˉsite {
+        return 24;
+    }
+    return 42;
+}
+
+fn Limitˉprobe() -> i32 {
+    var Catalog: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty();
+    var Instance: u32 = 0u32;
+    while Instance < 256u32 {
+        let Admission: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+                Catalog, 1u32, 1u32, 300u32, 1u32,
+                0u32, 0u32, Instance, 1u32, 0u32, 1u32
+            );
+        if Admission.Status !=
+                Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid ||
+            Admission.Instance != Instance || Admission.Reused {
+            return 25;
+        }
+        Catalog =
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+                Admission
+            );
+        Instance = Instance + 1u32;
+    }
+    let Excess: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Catalog, 1u32, 1u32, 300u32, 1u32,
+            0u32, 0u32, 256u32, 1u32, 0u32, 1u32
+        );
+    let Maximum: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉempty(),
+            1u32, 1u32, 16777216u32, 1u32,
+            0u32, 0u32, 0u32, 16777216u32, 0u32, 1u32
+        );
+    let Estimated: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉadmit(
+            Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+                Maximum
+            ),
+            1u32, 1u32, 16777217u32, 1u32,
+            0u32, 0u32, 16777216u32, 1u32, 0u32, 1u32
+        );
+    if Excess.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Instanceˉlimit ||
+        Maximum.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid ||
+        Estimated.Status !=
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Estimatedˉlimit {
+        return 26;
+    }
+    return 42;
+}
+
+fn Malformedˉprobe() -> i32 {
+    let First: Closureˉlowering.Compilerˉsourceˉclosureˉadmission =
+        Firstˉadmission();
+    let Valid: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉfromˉadmission(
+            First
+        );
+    let Truncated: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalog(
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid,
+            Bytesˉslice(Valid.Evidence, 0u32, 24u32)
+        );
+    let Badˉmagic: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalog(
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid,
+            Bytesˉconcat(
+                Textˉtoˉutf8("BAD!"),
+                Bytesˉslice(
+                    Valid.Evidence, 4u32,
+                    Bytesˉlength(Valid.Evidence) - 4u32
+                )
+            )
+        );
+    let Entry: bytes = Bytesˉslice(Valid.Evidence, 24u32, 24u32);
+    var Duplicateˉevidence: bytes = Textˉtoˉutf8("WVCL");
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(1u32)
+    );
+    Duplicateˉevidence = Bytesˉconcat(
+        Duplicateˉevidence, Bytesˉfromˉu16ˉlittle(0u32)
+    );
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 2u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 72u32);
+    Duplicateˉevidence = Appendˉu32(Duplicateˉevidence, 40u32);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    Duplicateˉevidence = Bytesˉconcat(Duplicateˉevidence, Entry);
+    let Duplicate: Closureˉlowering.Compilerˉsourceˉclosureˉcatalog =
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalog(
+            Closureˉlowering.Compilerˉsourceˉclosureˉloweringˉstatus.Valid,
+            Duplicateˉevidence
+        );
+    if Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(
+            Truncated
+        ) ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(
+            Badˉmagic
+        ) ||
+        Closureˉlowering.Compilerˉsourceˉclosureˉcatalogˉisˉvalid(
+            Duplicate
+        ) {
+        return 27;
+    }
+    return 42;
+}
+
+export fn Main() -> i32 {
+    let Empty: i32 = Emptyˉprobe();
+    if Empty != 42 { return Empty; }
+    let Identity: i32 = Identityˉprobe();
+    if Identity != 42 { return Identity; }
+    let Ordering: i32 = Orderingˉprobe();
+    if Ordering != 42 { return Ordering; }
+    let Invalid: i32 = Invalidˉprobe();
+    if Invalid != 42 { return Invalid; }
+    let Limit: i32 = Limitˉprobe();
+    if Limit != 42 { return Limit; }
+    return Malformedˉprobe();
+}

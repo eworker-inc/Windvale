@@ -186,6 +186,11 @@ adds WVIR 1.19/1.20 and WVB 1.31 immutable environments for copied inline
 scalars and enums under a 4 MiB execution bound. Source closure-body lowering,
 captured move/borrow and escape enforcement, effectful callable values, and
 native callable ABI lowering are the next connected work in Slice 6.
+[Decision 0858](../Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md)
+now supplies bounded deterministic WVCL source-site ordinals for those
+synthetic targets; connecting the catalog to final WVIR functions and bindings
+is the active next checkpoint.
+
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain
