@@ -1,0 +1,14 @@
+#!wv/1 en@1
+module Languageˉoneˉclosureˉborrowˉmutable;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 effects() {
+    var Local: i32 = 40;
+    let Callback = fn [borrow mut Local] () -> i32 effects() {
+        Local = Local + 1;
+        return Local;
+    };
+    return Callback();
+}

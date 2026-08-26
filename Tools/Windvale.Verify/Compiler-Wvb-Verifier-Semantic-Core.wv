@@ -2609,6 +2609,7 @@ fn Gˉtypeˉrangesˉread(
 export fn Gˉtypes(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Moduleˉprofile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 20u32));
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
     while Section < 7u32 {
@@ -2678,6 +2679,10 @@ export fn Gˉtypes(Input: bytes) -> bytes {
         Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
         if Kind == 8u32 {
             if Minor != 30u32 && Minor != 31u32 { return Invalid; }
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32)) !=
+                Moduleˉprofile {
+                return Invalid;
+            }
             Cursor = Bˉnextˉtype(Input, Cursor);
             Typeˉindex = Typeˉindex + 1u32;
         } else {

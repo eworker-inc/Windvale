@@ -2,6 +2,7 @@ module Compilerˉsourceˉanalysisˉvalidation profile portable;
 
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉgraph as Sourceˉgraph;
@@ -150,9 +151,21 @@ export fn Compilerˉvalidateˉsourceˉanalysis(
             Symbols.Modules, Symbols.Modules, Symbols.Functions,
             Bytesˉlength(Input), 0u32, 0u32
         );
-    if !Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
-            Input, Scan, Symbols, Bindingˉdirectory
-        ) {
+    var Bindingˉdirectoryˉvalid: bool = false;
+    if Bytesˉlength(Bindingˉdirectory) >= 8u32 &&
+        Bytesˉreadˉu16ˉlittle(Bindingˉdirectory, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Bindingˉdirectory, 6u32) == 4u32 {
+        Bindingˉdirectoryˉvalid =
+            Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉdirectoryˉisˉvalid(
+                Input, Scan, Symbols, Bindingˉdirectory
+            );
+    } else {
+        Bindingˉdirectoryˉvalid =
+            Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉdirectoryˉisˉvalid(
+                Input, Scan, Symbols, Bindingˉdirectory
+            );
+    }
+    if !Bindingˉdirectoryˉvalid {
         return Compilerˉsourceˉanalysisˉvalidationˉfailure(
             Input, Scan,
             Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Invalidˉbindings

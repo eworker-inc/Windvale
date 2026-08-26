@@ -7,11 +7,11 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate"
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 532816 6898f838bdabdd46f0ad65fce875161c942f9e68e0bda2f0b3c834e8d8d7bd26
+call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 567615 d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.exe" 7597568 61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9
+call :check_file "%Candidate%\Wvb-To-Wvo.exe" 8160256 6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.elf" 7598080 a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452
+call :check_file "%Candidate%\Wvb-To-Wvo.elf" 8159232 5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Return-42.wvb" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
 if errorlevel 1 goto :failed

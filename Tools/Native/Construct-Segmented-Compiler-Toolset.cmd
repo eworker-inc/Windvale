@@ -61,11 +61,11 @@ call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 7855104 ec4d0a6f0c4670c
 if errorlevel 1 goto :cleanup
 call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 7856128 8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%ImageStagingWvb%" 75666 b2460134db0bd9810d9d20415ba5cf1807b24a0df71b42e5955cd40851481b46 "compiler-image staging WVB"
+call :verify_file "%ImageStagingWvb%" 75666 ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 854016 ed87716ae3ae805d38bfbe5fcfeee1a74c983f82416e5d36a9695085747de3fe "Windows compiler-image staging application"
+call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 854016 c46534cd0fbbd294d2aa242a3ed26ca3ef663d6b1e054290befe0f4edc426da4 "Windows compiler-image staging application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 856064 8d94c36a58da696caa09d5323c826936373f48d538f404fdc01df3bea9c4d379 "Linux compiler-image staging application"
+call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 856064 360f05b19181f001439a8309f571d0979eef260285f4995d7dcae1f06679a445 "Linux compiler-image staging application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%TransportWvb%" 23836 d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8 "compiler-image transport WVB"
 if errorlevel 1 goto :cleanup

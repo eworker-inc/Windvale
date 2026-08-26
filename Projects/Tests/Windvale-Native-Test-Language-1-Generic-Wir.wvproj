@@ -1,8 +1,11 @@
 windvale-project 2
 root "Tests/Fixtures/Language-1.0/Generic-Wir-Self-Test.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
+source "Compiler/Windvale/Source-Bindings-Closures-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
+source "Compiler/Windvale/Source-Closure-Captures-Core.wv"
+source "Compiler/Windvale/Source-Closure-Lowering-Core.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"
 source "Compiler/Windvale/Source-Generic-Lowering-Core.wv"

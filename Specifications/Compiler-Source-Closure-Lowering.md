@@ -71,13 +71,21 @@ as invalid evidence. An invalid catalog is never partially reused.
 
 ## Integration state
 
-WVCL 1.0 supplies deterministic identities and bounded evidence for the next
-Slice 6 step. The WVIR compiler still needs to admit a site while compiling the
-parent expression, compile catalog entries after ordinary and generic
-functions, publish the matching synthetic binding ranges, and validate the
-catalog at the WVIR/WVB trust boundaries. Captured move invalidation, borrow
-lifetime/escape proof, effectful callables, and the selected native callable
-ABI remain later connected work.
+WVCL 1.0 now supplies deterministic identities to the integrated Slice 6
+lowering. The WVIR compiler admits each site while compiling its parent
+expression, compiles catalog entries after ordinary and generic functions,
+publishes matching WVLB 1.4 synthetic ranges, and validates the catalog,
+capture operands, synthetic targets, move state, and immutable-borrow lifetime
+at the persisted WVIR/WVB boundary.
+
+The current executable profile is deliberately bounded to zero-effect
+callables with copied, moved, or immutably borrowed inline scalar and enum
+captures. The native x86-64 backend lowers that same profile into frame-owned,
+nonescaping callable cells and environments. Effectful closure calls, retained
+descriptor or aggregate captures, mutable write-through borrows, general
+dispatch, and escaping environments remain separately versioned work. Their
+absence cannot silently widen the implemented profile: unsupported source or
+inconsistent evidence rejects before WVB publication.
 
 ## Focused evidence
 

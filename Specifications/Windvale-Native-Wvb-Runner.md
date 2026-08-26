@@ -384,9 +384,9 @@ It captures `i32` value `40`, supplies public argument `2`, returns `42`, and
 reports 11 guest instructions. The compiler-aligned verifier accepts the exact
 module and rejects nine version, target, type, count, capture-shape,
 reference-backed-capture, indirect-call, and descriptor mutations. This is a
-portable scalar-runtime checkpoint; source closure-body lowering, native
-callable ABI lowering, paired-host reconstruction, and candidate promotion
-remain separate gates. The current development runner WVB contains 167
+portable scalar-runtime checkpoint. Source closure-body lowering and the
+selected frame-owned native callable ABI are implemented; paired-host
+reconstruction and candidate promotion remain separate gates. The current development runner WVB contains 167
 functions and 324,568 code bytes in 361,080 module bytes at SHA-256
 `3cbd89599025499f3d5147e50fc94a1de82ff15bc27d19d298087fed401b3acd`.
 Factoring closure creation out of the indirect-call path and removing repeated

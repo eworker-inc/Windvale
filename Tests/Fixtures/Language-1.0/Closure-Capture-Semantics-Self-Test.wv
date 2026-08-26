@@ -3,10 +3,10 @@ module Languageˉoneˉclosureˉcaptureˉsemanticsˉselfˉtest profile hosted;
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉclosureˉcaptureˉeffects as Captureˉeffects;
 import Compilerˉsourceˉclosureˉcaptures as Captures;
 import Compilerˉsourceˉclosureˉlowering as Closureˉlowering;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
-import Compilerˉsourceˉeffects as Effects;
 import Compilerˉsourceˉgenericˉlowering as Generics;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉlexer as Lexer;
@@ -74,7 +74,7 @@ fn Analyzeˉprepared(
         return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression,
             Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
-            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid,
             0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
             Scan.Failureˉoffset, 0u32, 0u32
@@ -85,7 +85,7 @@ fn Analyzeˉprepared(
         return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence,
             Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉdirectory,
-            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid,
             0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
             Symbolsˉsummary.Failureˉoffset,
@@ -98,7 +98,7 @@ fn Analyzeˉprepared(
         return Captures.Compilerˉsourceˉclosureˉcaptureˉsummary(
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Bodyˉbinding,
             Bindingˉsummary.Status,
-            Effects.Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
+            Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid,
             0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
             Bytesˉslice(Input, 0u32, 0u32),
             Bindingˉsummary.Failureˉoffset,
@@ -170,7 +170,7 @@ fn Analyzeˉprepared(
             Bindingˉsummary.Failureˉcolumn
         );
     }
-    return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidate(
+    return Captureˉeffects.Compilerˉsourceˉclosureˉcaptureˉeffectsˉvalidate(
         Input, Scan, Symbolsˉsummary, Suppliedˉbindings,
         0u32, Function, View.Source, Expression
     );
@@ -381,6 +381,8 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
         Sourceˉset.Compilerˉscanˉsourceˉset(Input);
     let Symbolsˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindings.Compilerˉvalidateˉsourceˉbindings(Input);
     let Baseˉfunctions: u32 = Bytesˉreadˉu32ˉlittle(
         Symbolsˉsummary.Directory, 8u32
     );
@@ -389,6 +391,35 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
         Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
     let Expression: Bodies.Compilerˉsourceˉexpression =
         Closureˉexpression(View.Source, Symbolsˉsummary, Function);
+    let Parentˉrange: u32 =
+        Bindings.Compilerˉsourceˉbindingsˉrangeˉoffset(
+            Bindingˉsummary.Directory, Function
+        );
+    let Parentˉfirst: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindingˉsummary.Directory, Parentˉrange
+    );
+    let Parentˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Bindingˉsummary.Directory, Parentˉrange + 4u32
+    );
+    let Parentˉpayload: bytes = Bytesˉslice(
+        Bindingˉsummary.Directory,
+        Bindings.Compilerˉsourceˉbindingsˉentriesˉoffset(
+            Bindingˉsummary.Directory
+        ),
+        Bytesˉreadˉu32ˉlittle(Bindingˉsummary.Directory, 8u32) * 36u32
+    );
+    let Liveˉsummary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary =
+        Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉrange(
+            Input, Scan, Symbolsˉsummary,
+            Parentˉpayload, Parentˉfirst, Parentˉentries,
+            0u32, Function, View.Source, Expression
+        );
+    let Malformedˉrange: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary =
+        Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉrange(
+            Input, Scan, Symbolsˉsummary,
+            Parentˉpayload, Parentˉfirst, Parentˉentries + 1u32,
+            0u32, Function, View.Source, Expression
+        );
     let Phase: Bindings.Compilerˉsourceˉbindingˉphase =
         Captures.Compilerˉsourceˉclosureˉcapturesˉphase(
             Input, Scan, Symbolsˉsummary,
@@ -427,6 +458,12 @@ fn Reconstructedˉphaseˉprobe() -> i32 {
         );
     if Summary.Status !=
             Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid { return 30; }
+    if Liveˉsummary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid ||
+        Malformedˉrange.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence {
+        return 44;
+    }
     if Phase.Buildˉstatus !=
             Bindings.Compilerˉsourceˉbindingˉstatus.Valid { return 31; }
     if Phase.Bodyˉstatus !=

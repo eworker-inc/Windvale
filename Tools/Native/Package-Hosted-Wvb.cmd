@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+set "CompilerScale=0"
 set "ImageMode=0"
 if /I "%~1"=="image" goto :image_arguments
 if "%~3"=="" goto :usage
@@ -32,9 +33,11 @@ set "Target=%~8"
 if not defined Target set "Target=windows"
 
 :arguments_ready
+if "%ImageMode%"=="1" if "%Profile%"=="7" set "CompilerScale=1"
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
+set "CompilerOverlay=%RepositoryRoot%\Artifacts\Native-Hosted-Compiler-Scale-Overlay-Candidate"
 set "EnumRequestCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Enum-Request-Candidate"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 if /I "%Target%"=="windows" goto :windows_target
@@ -88,11 +91,23 @@ for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
     if errorlevel 1 exit /b 1
 )
-call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 42088 ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85 "hosted enum-request WVB"
+set "MetadataRequestTool=%Toolset%\windows-x64\wvhostrequest.exe"
+set "SourceSetTool=%Toolset%\windows-x64\wvhostsources.exe"
+if "%CompilerScale%"=="1" (
+    call :verify_file "%CompilerOverlay%\SHA256SUMS" 380 c41e05e1f3c993537c35671840aff6d57a2e5188ea7e6afba03f6b4928c32a8d "compiler-scale overlay inventory"
+    if errorlevel 1 exit /b 1
+    for /f "usebackq tokens=1,*" %%H in ("%CompilerOverlay%\SHA256SUMS") do (
+        call :verify_digest "%CompilerOverlay%\%%I" %%H "compiler-scale overlay artifact"
+        if errorlevel 1 exit /b 1
+    )
+    set "MetadataRequestTool=%CompilerOverlay%\windows-x64\wvhostrequest.exe"
+    set "SourceSetTool=%CompilerOverlay%\windows-x64\wvhostsources.exe"
+)
+call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe "hosted enum-request WVB"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 461824 1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc "hosted enum-request Windows application"
+call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b "hosted enum-request Windows application"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 462848 01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21 "hosted enum-request Linux application"
+call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 544768 a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31 "hosted enum-request Linux application"
 if errorlevel 1 exit /b 1
 call :verify_file "%ConsoleService%" %ConsoleServiceBytes% %ConsoleServiceSha256% "console service"
 if errorlevel 1 exit /b 1
@@ -163,7 +178,7 @@ if errorlevel 1 goto :cleanup
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostcontrol.exe" metadata %Target% %Profile% %NativeEntry% "%TemporaryDirectory%\Metadata-Input.wvmi"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostrequest.exe" "%TemporaryDirectory%\Metadata-Input.wvmi" "%TemporaryDirectory%\Publication.wvpq" "%TemporaryDirectory%\Evidence.wvhs" "%BundleSources%" "%TemporaryDirectory%\Metadata-Request.wvhq"
+"%MetadataRequestTool%" "%TemporaryDirectory%\Metadata-Input.wvmi" "%TemporaryDirectory%\Publication.wvpq" "%TemporaryDirectory%\Evidence.wvhs" "%BundleSources%" "%TemporaryDirectory%\Metadata-Request.wvhq"
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostmetadata.exe" "%TemporaryDirectory%\Metadata-Request.wvhq" "%TemporaryDirectory%\Metadata.wvhm"
 if errorlevel 1 goto :cleanup
@@ -190,8 +205,11 @@ for /l %%N in (0,1,%BundleLast%) do (
     if errorlevel 1 goto :cleanup
 )
 
-"%Toolset%\windows-x64\wvhostsources.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Platform.wvhb" "%TemporaryDirectory%\Startup.wvsd" "%BundleSegments%" "%TemporaryDirectory%\Runtime.wvhr" "%ApplicationSources%" "%TemporaryDirectory%\Application-Sources.wvsg"
+echo hosted package step=application-sources status=Started
+"%SourceSetTool%" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Platform.wvhb" "%TemporaryDirectory%\Startup.wvsd" "%BundleSegments%" "%TemporaryDirectory%\Runtime.wvhr" "%ApplicationSources%" "%TemporaryDirectory%\Application-Sources.wvsg"
 if errorlevel 1 goto :cleanup
+echo hosted package step=application-sources status=Complete
+echo hosted package step=application-segment-count status=Started
 "%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" count >"%TemporaryDirectory%\Application-Count.txt"
 if errorlevel 1 goto :cleanup
 set "ApplicationCount="
@@ -199,17 +217,24 @@ for /f "tokens=3 delims==" %%N in ('findstr /b /c:"hosted container segment requ
 if not defined ApplicationCount goto :cleanup
 echo(%ApplicationCount%| findstr /r /x "[1-9][0-9]*" >nul || goto :cleanup
 if %ApplicationCount% GTR 31 goto :cleanup
+echo hosted package step=application-segment-count status=Complete segments=%ApplicationCount%
 set /a ApplicationLast=ApplicationCount-1
 for /l %%N in (0,1,%ApplicationLast%) do (
+    echo hosted package step=application-segment item=%%N/%ApplicationLast% status=Started
     "%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" %%N "%ApplicationSegments%.request-%%N"
     if errorlevel 1 goto :cleanup
     "%Toolset%\windows-x64\wvhostsegment.exe" "%ApplicationSegments%.request-%%N" "%ApplicationSegments%.response-%%N"
     if errorlevel 1 goto :cleanup
+    echo hosted package step=application-segment item=%%N/%ApplicationLast% status=Complete
 )
+echo hosted package step=application-manifest status=Started
 "%Toolset%\windows-x64\wvhostsegmentmanifest.exe" "%TemporaryDirectory%\Plan.wvcd" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm"
 if errorlevel 1 goto :cleanup
+echo hosted package step=application-manifest status=Complete
+echo hosted package step=publication status=Started
 "%Toolset%\windows-x64\wvhostpublish.exe" "%TemporaryDirectory%\Plan.wvcd" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm" "%Output%"
 set "Result=%ERRORLEVEL%"
+if "%Result%"=="0" echo hosted package step=publication status=Complete
 
 :cleanup
 del /f /q "%TemporaryDirectory%\*" >nul 2>nul

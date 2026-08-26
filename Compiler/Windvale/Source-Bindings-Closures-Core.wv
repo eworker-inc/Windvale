@@ -208,7 +208,7 @@ export fn Compilerˉsourceˉbindingsˉclosuresˉentriesˉoffset(
     return Closureˉoffset + Closureˉbytes;
 }
 
-fn Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog(
+export fn Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog(
     Directory: bytes
 ) -> Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog {
     let Bytesˉcount: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
@@ -223,7 +223,7 @@ fn Compilerˉsourceˉbindingsˉclosuresˉfunctionˉcatalog(
     );
 }
 
-fn Compilerˉsourceˉbindingsˉclosuresˉtypeˉcatalog(
+export fn Compilerˉsourceˉbindingsˉclosuresˉtypeˉcatalog(
     Directory: bytes
 ) -> Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog {
     let Functionˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Directory, 24u32);
@@ -513,6 +513,7 @@ fn Compilerˉsourceˉbindingsˉclosuresˉshapeˉisˉvalid(
         Symbols.Directory, Shape
     ) { return true; }
     if Shape >= 1073741824u32 && Shape < 1610612736u32 { return true; }
+    if Shape >= 2147483904u32 && Shape < 2147484160u32 { return true; }
     if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
         return false;
     }

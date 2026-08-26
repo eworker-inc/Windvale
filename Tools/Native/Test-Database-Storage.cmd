@@ -124,7 +124,7 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     echo Progress: step=database-storage-tools item=3/4 detail=verify-lowerer
     set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 7597568 61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9
+    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 8160256 6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102
     if errorlevel 1 goto :cleanup
 ) else (
     echo Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb
@@ -143,7 +143,7 @@ if "%Development%"=="1" (
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
         "%LowererProjectResource%" "%TemporaryResource%/Lowerer.wvb" >nul
     if errorlevel 1 goto :cleanup
-    call :verify_file "%LowererWvb%" 532816 6898f838bdabdd46f0ad65fce875161c942f9e68e0bda2f0b3c834e8d8d7bd26
+    call :verify_file "%LowererWvb%" 567615 d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3
     if errorlevel 1 goto :cleanup
     echo Progress: step=database-storage-tools item=4/4 detail=package-lowerer
     call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^

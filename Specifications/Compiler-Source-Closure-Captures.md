@@ -10,13 +10,12 @@ into a lexical value.
 
 This phase validates explicit capture lists, closure parameters, the isolated
 closure body, and the declared exact effect clause. WVIR 1.19/1.20 and WVB 1.31
-now define and execute a representation-private environment for copied inline
-scalars and enums. The compiler-private WVCL 1.0 catalog now assigns
-deterministic source-site ordinals for future synthetic physical targets.
-Source closure-body lowering into `Closureˉcreate`, move invalidation in the
-enclosing function, escaping-borrow lifetime proof, and native execution remain
-connected Slice 6 work. No WVB serializes either compiler-private capture or
-WVCL evidence.
+define and execute a representation-private environment for inline scalar and
+enum captures. The compiler-private WVCL 1.0 catalog assigns deterministic
+source-site ordinals, WVLB 1.4 publishes the matching synthetic binding ranges,
+and WVIR emits one `Closureˉcreate` plus one synthetic physical function per
+admitted site. No WVB serializes either compiler-private capture or WVCL
+evidence.
 
 ## Capture modes
 
@@ -42,11 +41,28 @@ resources, and private compiler shapes reject instead of being copied
 implicitly. `borrow mut` requires a directly mutable outer `var`.
 
 The executable WVB 1.31 subset is intentionally narrower than source-level
-`copy`: it admits only inline scalar and enum cells. In particular, `text` and
-`bytes` remain valid source copies but do not yet enter a runtime environment,
-because doing so requires explicit retain/release and escape rules. Aggregates,
-collections, callable values, resource owners, and borrowed captures are also
-outside this first environment checkpoint.
+capture analysis. It admits `copy`, `move`, and immutable `borrow` only for
+inline scalar and enum cells. In particular, `text` and `bytes` remain valid
+source copies but do not yet enter a runtime environment, because doing so
+requires explicit retain/release and escape rules. Aggregates, collections,
+callable values, resource owners, and `borrow mut` remain outside this
+checkpoint.
+
+`move` transfers the inline value into the closure environment and invalidates
+the outer slot. Persisted WVIR validation follows every reachable control-flow
+path, including joins and loops: a later load rejects, a local store explicitly
+reinitializes the slot, and disagreeing states at a forward join or backward
+edge reject. This proof is independent of the source lowering that produced the
+directory.
+
+Immutable borrow is admitted only from an outer parameter or `let`. For this
+inline immutable profile, the runtime representation is an observationally
+equivalent value snapshot, while persisted WVIR still proves the source borrow
+contract: the created callable has exactly one immutable local destination,
+that local does not outlive the captured owner, and its only loads feed
+`Callˉindirect`. Returning, copying, or otherwise escaping that callable
+rejects. A real write-through representation is required before `borrow mut`
+can enter the executable profile.
 
 An `async` closure rejects both borrowed capture modes. This is deliberately
 stricter than the eventual complete structured-task proof: Slice 7 may admit a
@@ -95,15 +111,18 @@ partial directory.
 
 ## Focused evidence
 
-The maintained native self-test covers copied, moved, immutably borrowed, and
-mutably borrowed locals; exact outer slot and shape retention; missing and
-duplicate captures; conservative Copy rejection; borrowed async rejection;
-module capability roots as effects rather than captures; capture/parameter name
-conflicts; and forged valid-status/empty-directory evidence. All nine selectors
-execute one compiler-scale segmented application and return `42`.
+The maintained native analyzer self-test covers copied, moved, immutably
+borrowed, and mutably borrowed locals; exact outer slot and shape retention;
+missing and duplicate captures; conservative Copy rejection; borrowed async
+rejection; module capability roots as effects rather than captures;
+capture/parameter name conflicts; reconstructed WVLB 1.4 publication; and
+forged valid-status/empty-directory evidence. Its ten selectors reuse one
+compiler-scale segmented application and return `42`.
 
-The exact current Windows development fixture is a 941,148-byte WVB with
-SHA-256 `733fd5313d8de51c79574b577affc46aef901572cfc2ab8a94805015622020b4`.
-The focused owner packages that portable module through the segmented native
-path and reuses one application for all nine selectors. This is current-host
-evidence, not cross-host qualification.
+The front-door compiler-pipeline helper additionally compiles, verifies, and
+executes copied, moved, and immutably borrowed closures, then proves that
+use-after-move and mutable borrow publish no WVB. The three accepted modules are
+451, 451, and 453 bytes and execute to `42` in 31 guest instructions each. Their
+combined five-case development evidence has SHA-256
+`592cb889b647a5eccdf2a3a33a8feb148ca2cad4959200200d0f9f16ad5ec139`.
+This is current-host evidence, not cross-host qualification.

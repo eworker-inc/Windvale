@@ -42,7 +42,7 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'windows-x64-wvlinkstage.exe'),
-            sha256: 'ed87716ae3ae805d38bfbe5fcfeee1a74c983f82416e5d36a9695085747de3fe'
+            sha256: 'c46534cd0fbbd294d2aa242a3ed26ca3ef663d6b1e054290befe0f4edc426da4'
         },
         {
             name: 'compiler-image transport',
@@ -59,7 +59,7 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'linux-x64-wvlinkstage.elf'),
-            sha256: '8d94c36a58da696caa09d5323c826936373f48d538f404fdc01df3bea9c4d379'
+            sha256: '360f05b19181f001439a8309f571d0979eef260285f4995d7dcae1f06679a445'
         },
         {
             name: 'compiler-image transport',

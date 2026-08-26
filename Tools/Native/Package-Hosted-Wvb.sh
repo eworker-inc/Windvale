@@ -29,10 +29,15 @@ case "$target:$output_argument" in
         exit 64
         ;;
 esac
+compiler_scale=0
+if [[ $image_mode -eq 1 && $profile -eq 7 ]]; then
+    compiler_scale=1
+fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 toolset="$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate"
+compiler_overlay="$repository_root/Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate"
 enum_request_candidate="$repository_root/Artifacts/Native-Hosted-Enum-Request-Candidate"
 service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 case "$target" in
@@ -102,9 +107,16 @@ verify_file "$toolset/SHA256SUMS" 6927 40af573f510861b375b1dac5216e5e622b6539656
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
 }
-verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 42088 ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85 'hosted enum-request WVB' || exit 1
-verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 461824 1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc 'hosted enum-request Windows application' || exit 1
-verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 462848 01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21 'hosted enum-request Linux application' || exit 1
+if [[ $compiler_scale -eq 1 ]]; then
+    verify_file "$compiler_overlay/SHA256SUMS" 380 c41e05e1f3c993537c35671840aff6d57a2e5188ea7e6afba03f6b4928c32a8d 'compiler-scale overlay inventory' || exit 1
+    (cd -- "$compiler_overlay" && sha256sum --check --strict --quiet SHA256SUMS) || {
+        echo 'The compiler-scale overlay artifact inventory is invalid.' >&2
+        exit 1
+    }
+fi
+verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe 'hosted enum-request WVB' || exit 1
+verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b 'hosted enum-request Windows application' || exit 1
+verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 544768 a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31 'hosted enum-request Linux application' || exit 1
 verify_file "$console_service" "$console_service_bytes" "$console_service_sha256" 'console service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Count-Service.bin" 5 2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829 'argument-count service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Service.bin" 70 2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1 'argument service' || exit 1
@@ -151,6 +163,12 @@ else
 fi
 
 host="$toolset/linux-x64"
+metadata_request_tool="$host/wvhostrequest.elf"
+source_set_tool="$host/wvhostsources.elf"
+if [[ $compiler_scale -eq 1 ]]; then
+    metadata_request_tool="$compiler_overlay/linux-x64/wvhostrequest.elf"
+    source_set_tool="$compiler_overlay/linux-x64/wvhostsources.elf"
+fi
 "$host/wvhostfixedservices.elf" "$target" "$bundle_sources" "$fragment_count" \
     "$console_service" \
     "$service_root/Native-X64-Argument-Count-Service.bin" \
@@ -168,7 +186,7 @@ enum_source_index=$((fragment_count + 6))
 "$host/wvhostpublicationrequest.elf" "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Publication.wvpq" || exit $?
 "$host/wvhostcontrol.elf" evidence "$temporary_directory/Bundle-Sources.wvsg" "$temporary_directory/Evidence.wvhs" || exit $?
 "$host/wvhostcontrol.elf" metadata "$target" "$profile" "$native_entry" "$temporary_directory/Metadata-Input.wvmi" || exit $?
-"$host/wvhostrequest.elf" "$temporary_directory/Metadata-Input.wvmi" "$temporary_directory/Publication.wvpq" "$temporary_directory/Evidence.wvhs" "$bundle_sources" "$temporary_directory/Metadata-Request.wvhq" || exit $?
+"$metadata_request_tool" "$temporary_directory/Metadata-Input.wvmi" "$temporary_directory/Publication.wvpq" "$temporary_directory/Evidence.wvhs" "$bundle_sources" "$temporary_directory/Metadata-Request.wvhq" || exit $?
 "$host/wvhostmetadata.elf" "$temporary_directory/Metadata-Request.wvhq" "$temporary_directory/Metadata.wvhm" || exit $?
 "$host/wvhostruntime.elf" "$temporary_directory/Metadata.wvhm" "$temporary_directory/Runtime.wvhr" || exit $?
 "$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" || exit $?
@@ -188,7 +206,10 @@ while [[ $index -lt $bundle_count ]]; do
     index=$((index + 1))
 done
 
-"$host/wvhostsources.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Platform.wvhb" "$temporary_directory/Startup.wvsd" "$bundle_segments" "$temporary_directory/Runtime.wvhr" "$application_sources" "$temporary_directory/Application-Sources.wvsg" || exit $?
+echo 'hosted package step=application-sources status=Started'
+"$source_set_tool" "$temporary_directory/Plan.wvcd" "$temporary_directory/Platform.wvhb" "$temporary_directory/Startup.wvsd" "$bundle_segments" "$temporary_directory/Runtime.wvhr" "$application_sources" "$temporary_directory/Application-Sources.wvsg" || exit $?
+echo 'hosted package step=application-sources status=Complete'
+echo 'hosted package step=application-segment-count status=Started'
 "$host/wvhostsegmentrequest.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Application-Sources.wvsg" "$application_sources" count >"$temporary_directory/Application-Count.txt" || exit $?
 application_count=$(sed -n 's/^hosted container segment request status=Valid segments=//p' "$temporary_directory/Application-Count.txt")
 case "$application_count" in
@@ -198,11 +219,18 @@ if [[ $application_count -lt 1 || $application_count -gt 31 ]]; then
     echo 'The native application-segment count is outside the bounded range.' >&2
     exit 1
 fi
+echo "hosted package step=application-segment-count status=Complete segments=$application_count"
 index=0
 while [[ $index -lt $application_count ]]; do
+    echo "hosted package step=application-segment item=$index/$((application_count - 1)) status=Started"
     "$host/wvhostsegmentrequest.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Application-Sources.wvsg" "$application_sources" "$index" "$application_segments.request-$index" || exit $?
     "$host/wvhostsegment.elf" "$application_segments.request-$index" "$application_segments.response-$index" || exit $?
+    echo "hosted package step=application-segment item=$index/$((application_count - 1)) status=Complete"
     index=$((index + 1))
 done
+echo 'hosted package step=application-manifest status=Started'
 "$host/wvhostsegmentmanifest.elf" "$temporary_directory/Plan.wvcd" "$application_segments" "$temporary_directory/Application-Segments.wvhm" || exit $?
-"$host/wvhostpublish.elf" "$temporary_directory/Plan.wvcd" "$application_segments" "$temporary_directory/Application-Segments.wvhm" "$output"
+echo 'hosted package step=application-manifest status=Complete'
+echo 'hosted package step=publication status=Started'
+"$host/wvhostpublish.elf" "$temporary_directory/Plan.wvcd" "$application_segments" "$temporary_directory/Application-Segments.wvhm" "$output" || exit $?
+echo 'hosted package step=publication status=Complete'

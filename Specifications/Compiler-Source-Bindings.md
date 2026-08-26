@@ -233,6 +233,14 @@ same module, and names a non-empty source span inside that module. Catalog,
 range, entry, arithmetic, and total-directory bounds are checked before any
 publication.
 
+WVLB 1.1 through 1.4 may retain a compiler-private WVFT callable shape in the
+bounded range `0x80000100..0x800001ff`. WVLB validates the marker range but
+does not treat it as a runtime type identity. At the persisted-analysis
+boundary, the paired WVIR validator must prove that the zero-based marker
+instance exists in its exact reduced callable catalog and that every use has
+the matching structural signature. Emission rejects the combined products if
+that proof is absent or inconsistent.
+
 `Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphase` is the
 publication path for the combined envelope. It is owned by the focused
 `Compilerˉsourceˉbindingsˉgenericˉtypes` module. An empty WVGT catalog delegates

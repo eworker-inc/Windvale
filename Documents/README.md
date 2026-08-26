@@ -275,6 +275,8 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Executable noncapturing callable values](Decisions/0856-Execute-Noncapturing-Callable-Values-As-Wvb-1.30.md) — connects exact structural callable evidence to WVIR 1.17/1.18, WVB 1.30 verification, and bounded scalar execution
 - [Executable plain-capture closure environments](Decisions/0857-Execute-Plain-Capture-Closure-Environments-As-Wvb-1.31.md) — adds WVIR 1.19/1.20 and WVB 1.31 immutable scalar/enum capture environments under exact signature and 4 MiB execution bounds
 - [Deterministic source closure targets](Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md) — assigns bounded compiler-private WVCL source-site ordinals without fake source symbols or recursive physical-function insertion
+- [Synthetic closure binding directories](Decisions/0859-Publish-Synthetic-Closure-Bindings-As-Wvlb-1.4.md) — publishes exact capture/public-parameter physical ranges without forging source declarations
+- [Frame-owned native callables](Decisions/0860-Lower-Frame-Owned-Callables-Through-The-Native-X64-Abi.md) — completes the selected Slice 6 source-to-native closure path with move/borrow proofs and a checked nonescaping x64 ABI
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations

@@ -12,24 +12,24 @@
       "name": "wvb-to-wvo-tool-wvb",
       "path": "Wvb-To-Wvo.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 532816,
-      "sha256": "6898f838bdabdd46f0ad65fce875161c942f9e68e0bda2f0b3c834e8d8d7bd26",
+      "bytes": 567615,
+      "sha256": "d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3",
       "sourceProject": "Windvale-Native-X64-Lowering-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.exe",
       "target": "windows-x64-wvb-to-wvo-v1",
-      "bytes": 7597568,
-      "sha256": "61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9",
+      "bytes": 8160256,
+      "sha256": "6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {
       "name": "linux-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.elf",
       "target": "linux-x64-wvb-to-wvo-v1",
-      "bytes": 7598080,
-      "sha256": "a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452",
+      "bytes": 8159232,
+      "sha256": "5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {

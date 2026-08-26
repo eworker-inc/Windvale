@@ -53,7 +53,7 @@ worktree_added=1
 verify_file "$work/Build-Driver.wvb" 1121370 ed5bbceaa0f1b4d889a7d17fe1d138d0bd5a01a593f6925ba34023ff0b0960ef || exit 1
 "$native/Package-Segmented-Compiler-Wvb.sh" 2 "$work/Build-Driver.wvb" \
     "$work/Build-Driver.elf" --development-cache >/dev/null || exit 1
-verify_file "$lowerer" 7598080 a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452 || exit 1
+verify_file "$lowerer" 8159232 5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029 || exit 1
 echo 'PASS  native standard byte output phase=tools item=1/4'
 
 echo 'START native standard byte output phase=compile item=2/4'

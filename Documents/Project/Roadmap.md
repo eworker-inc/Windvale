@@ -183,15 +183,18 @@ bounded transitive effects, concrete callable cataloging, WVIR 1.17/1.18
 function-reference and indirect-call operations, and WVB 1.30 verified scalar
 execution. [Decision 0857](../Decisions/0857-Execute-Plain-Capture-Closure-Environments-As-Wvb-1.31.md)
 adds WVIR 1.19/1.20 and WVB 1.31 immutable environments for copied inline
-scalars and enums under a 4 MiB execution bound. Source closure-body lowering,
-captured move/borrow and escape enforcement, effectful callable values, and
-native callable ABI lowering are the next connected work in Slice 6.
+scalars and enums under a 4 MiB execution bound.
 [Decision 0858](../Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md)
 now supplies bounded deterministic WVCL source-site ordinals for those
 synthetic targets. [Decision 0859](../Decisions/0859-Publish-Synthetic-Closure-Bindings-As-Wvlb-1.4.md)
 adds WVLB 1.4 physical ranges that separate each synthetic target's capture
-prefix from its public parameters without forging a source symbol. Connecting
-that carrier to final WVIR functions is the active next checkpoint.
+prefix from its public parameters without forging a source symbol.
+[Decision 0860](../Decisions/0860-Lower-Frame-Owned-Callables-Through-The-Native-X64-Abi.md)
+completes the selected Slice 6 profile: the compiler emits synthetic closure
+bodies, proves move invalidation and confined immutable-borrow use, and the
+native backend executes nonescaping scalar/enum environments through one
+checked 16-byte callable cell. Slice 7 hosted structured concurrency is the
+next language implementation boundary.
 
 Remaining collection
 families, general ownership, localized token execution, direct

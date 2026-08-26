@@ -106,7 +106,7 @@ export fn Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
     if Type == 5u8 || Type == 10u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots + Index;
     }
-    if Type == 6u8 {
+    if Type == 6u8 || Type == 11u8 {
         return Locals + I32ˉslots + Boolˉslots + Textˉslots + U8ˉslots +
             U32ˉslots + Index;
     }

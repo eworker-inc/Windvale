@@ -16,12 +16,12 @@ wvhostenumservice <request.wveq> <service.bin>
 
 `wvhostenumrequest` is sequenced after the full native WVB verifier. Its current
 digest-bound candidate uses the native x64 type reader that admits `u64` record
-fields; those fields still receive zero-member directory entries and do not
-change serialized enum metadata. It
-revalidates the WVB 1.11 envelope with seven exact sections and a hosted-only
-nominal directory reader; it is not a replacement for whole-module semantic
-verification. It supports at most 128 nominal types, with no more than 116
-records, 64 enums, or 64 variants, and the current single complete `WVEQ 2`
+fields and WVB 1.30/1.31 callable descriptors; both receive zero-member
+directory entries and do not change serialized enum metadata. It revalidates
+the WVB 1.11, 1.30, or 1.31 envelope with seven exact sections and a hosted-only
+type directory reader; it is not a replacement for whole-module semantic
+verification. It supports at most 128 types, with no more than 116 records,
+64 enums, 64 variants, or 128 callables within that total, and the current single complete `WVEQ 2`
 group whose request and resulting `WVEN 1` each fit one 4 MiB Windvale byte
 value. Records and variants receive zero-member directory entries; enum values,
 strict source names, and lexical ranks are copied or derived from the verified
@@ -43,9 +43,9 @@ read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 42,088 | `ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85` |
-| Windows enum-request application | 461,824 | `1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc` |
-| Linux enum-request application | 462,848 | `01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21` |
+| Enum-request WVB | 48,791 | `b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe` |
+| Windows enum-request application | 544,256 | `22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b` |
+| Linux enum-request application | 544,768 | `a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31` |
 | Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
 | Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
 | Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |

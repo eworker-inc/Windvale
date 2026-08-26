@@ -1,0 +1,13 @@
+#!wv/1 en@1
+module Languageˉoneˉclosureˉmoveˉuseˉafterˉmove;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+export fn Main() -> i32 effects() {
+    let Local: i32 = 40;
+    let Callback = fn [move Local] () -> i32 effects() {
+        return Local;
+    };
+    return Local + Callback();
+}

@@ -33,7 +33,7 @@ set "LowererProjectResource=%LowererProject:\=/%"
 echo Progress: step=file-read-tools item=3/4 detail=build-lowerer-wvb
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
     "%LowererProjectResource%" "%WorkResource%/Lowerer.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 532816 6898f838bdabdd46f0ad65fce875161c942f9e68e0bda2f0b3c834e8d8d7bd26 "current lowerer WVB" || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 567615 d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3 "current lowerer WVB" || goto :cleanup
 echo Progress: step=file-read-tools item=4/4 detail=package-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 ^
     "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup

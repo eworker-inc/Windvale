@@ -2,9 +2,9 @@
 
 ## Status and scope
 
-`WVHN 1` packages the canonical Windvale-written `Compilerˉnativeˉx64ˉloweringˉtool` as paired Windows x64 and Linux x64 command-line applications. It lowers only the exact metered scalar/control/direct-call and bounded static-data subset defined by the [Windvale-native x86-64 lowering contract](Windvale-Native-X64-Lowering.md). Decision 0304 pins exact candidate artifacts, fixed vectors, and digest-bound launchers; Decision 0308 composes those launchers with native atomic WVO publication; and Decision 0497 reconstructs the current WVB and both target applications through the retained segmented native toolset. This remains neither the complete native backend nor an ordinary front door until independent Linux reconstruction and execution, the grouped Windows/Linux gate, and promotion succeed.
+`WVHN 1` packages the canonical Windvale-written `Compilerˉnativeˉx64ˉloweringˉtool` as paired Windows x64 and Linux x64 command-line applications. It lowers the exact metered scalar/control/direct-call, bounded static-data, and frame-owned callable subset defined by the [Windvale-native x86-64 lowering contract](Windvale-Native-X64-Lowering.md). Decision 0304 pins exact candidate artifacts, fixed vectors, and digest-bound launchers; Decision 0308 composes those launchers with native atomic WVO publication; and Decision 0497 reconstructs the current WVB and both target applications through the retained segmented native toolset. This remains neither the complete native backend nor an ordinary front door until independent Linux reconstruction and execution, the grouped Windows/Linux gate, and promotion succeed.
 
-The portable core owns absent-metadata WVB admission, control and type verification, ABI-22 selection, branch/call measurement and patching, and canonical WVO 1.0 construction. The application owns one bounded independent-metadata admission adapter that validates and normalizes the Module envelope before invoking the unchanged core; it adds no second selector, object writer, or target-specific lowering logic.
+The portable core owns absent-metadata WVB 1.11/1.30/1.31 admission, control and type verification, ABI-22 selection, direct and checked callable-call measurement and patching, and canonical WVO 1.0 construction. The application owns one bounded independent-metadata admission adapter that validates and normalizes the Module envelope before invoking the unchanged core; it adds no second selector, object writer, or target-specific lowering logic.
 
 ## Construction contract
 
@@ -52,16 +52,16 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 532,816 | `6898f838bdabdd46f0ad65fce875161c942f9e68e0bda2f0b3c834e8d8d7bd26` |
-| Windows WVB-to-WVO tool | 7,597,568 | `61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9` |
-| Linux WVB-to-WVO tool | 7,598,080 | `a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452` |
+| WVB-to-WVO tool WVB | 567,615 | `d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3` |
+| Windows WVB-to-WVO tool | 8,160,256 | `6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102` |
+| Linux WVB-to-WVO tool | 8,159,232 | `5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029` |
 
 These pinned candidate applications include Decision 0419's parameterless
 `Main() -> bytes` contract and Decision 0423's compiler-scale admission work.
 Decision 0561 established the prior generation. Decision 0571 uses the current
 Windows native source front door plus the
 retained segmented staging, linking, transport, and hosted-packaging toolset to
-reconstruct this exact 532,816-byte WVB and both exact target applications in a
+reconstruct this exact 567,615-byte WVB and both exact target applications in a
 separate output directory. The constructed Windows application then reproduces
 the fixed WVO below. This removes Stage 0 as the only constructor of the current
 candidate generation, but it consumes an already retained native toolset and

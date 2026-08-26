@@ -928,10 +928,14 @@ the exact product and rejects version downgrade, target/type mismatch, zero or
 65 captures, capture-shape mismatch, a reference-backed capture, indirect-call
 type mismatch, and a non-callable descriptor kind.
 
-Source closure-body lowering, captured move and borrow semantics, escape and
-lifetime enforcement, effectful or flag-bearing callable values, borrowed
-callable signatures, and the callable native ABI remain connected Slice 6
-work.
+The source compiler now lowers one synthetic physical body for every admitted
+closure site. Copy, move, and immutable-borrow captures of inline scalars and
+enums enter the WVB 1.31 environment; move invalidates the outer slot, and an
+immutable-borrow callable is confined to the captured owner's lifetime and an
+immediate local indirect-call use. The native x86-64 backend executes that same
+frame-owned subset. Effectful or flag-bearing callable values, borrowed
+callable signatures, mutable write-through captures, retained captures,
+general dispatch, and escaping environments remain separately versioned work.
 
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause

@@ -160,7 +160,7 @@ changes require semantic review.
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
 | Checked slices, byte views, strict slice decode, and decimal byte formatting | Foundation collections/bytes/text, ownership analysis, optional intrinsics | Ordinary borrow and builder lowering; no new opcode by default. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
-| Function values and closures | WVCF/WVIC catalog, WVIR, WVB 1.30/1.31 verifier and scalar runtime; source closure-body lowering and native ABI remain | Named functions and copied plain-capture environments execute through exact structural descriptors; move/borrow captures remain explicit later work. |
+| Function values and closures | WVCF/WVIC catalog, synthetic WVLB/WVIR lowering, WVB 1.30/1.31 verifier and scalar runtime, and selected native x86-64 ABI | Named functions plus copy, move, and confined immutable-borrow scalar/enum captures execute through exact structural descriptors and frame-owned native environments. |
 | Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
 | Opaque operation contexts and exact stream progress | Hosted operation/network providers, launcher, capability runtime, generation verifier | Prefer ordinary opaque values and capability calls; no language opcode. |
@@ -687,15 +687,16 @@ deliberately closed. Slice 6 owns canonical effect resolution, call enforcement,
 function values, and capture checking; broader asynchronous file operations
 wait for those semantics.
 
-## Active Slice 6 callable checkpoint
+## Completed Slice 6 callable checkpoint
 
-Decisions 0852 through 0859 now connect exact structural function types,
+Decisions 0852 through 0860 now connect exact structural function types,
 explicit capture validation, bounded transitive effect analysis, concrete
 callable cataloging, WVIR function references/indirect calls/plain-capture
 environment creation, WVB 1.30/1.31 verification, and source-built scalar
 execution. The executable subset is deliberately exact: synchronous safe
 nongeneric targets, explicit empty effects, by-value parameters and results,
-and either no captures or a copied prefix of inline scalars and enums.
+and either no captures or a copy, move, or confined immutable-borrow prefix of
+inline scalars and enums.
 
 The deterministic 400-byte callable fixture has SHA-256
 `30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`
@@ -714,17 +715,22 @@ one execution. WVCL 1.0 now gives each accepted source closure site a
 deterministic synthetic-function ordinal after ordinary functions and final
 generic instances. The capture analyzer can reconstruct the closure-local
 binding phase from its validated evidence without repeating whole-body
-semantic analysis. WVLB 1.4 now retains that WVCL catalog and gives every
+semantic analysis. WVLB 1.4 retains that WVCL catalog and gives every
 synthetic range an exact capture prefix, public-parameter suffix, real parent
-declaration, and inherited generic identity. The combined focused owner passes
-51 cases across nine deterministic evidence modules.
+declaration, and inherited generic identity. The integrated compiler emits the
+synthetic body and `Closureˉcreate`, invalidates moved outer slots, confines an
+immutable-borrow callable to its owner's lifetime, and rejects mutable borrow.
 
-Slice 6 is not yet closed. It still owns source closure-body lowering into the
-new environment operation,
-captured move invalidation, borrow lifetime and escape proof, effectful and
-flag-bearing callables, and the selected native callable ABI. The WVB 1.31
-checkpoint does not imply those later semantics or direct-native/browser/OS
-execution.
+The selected native x86-64 ABI represents a callable in one 16-byte frame cell,
+keeps copied capture environments inside the creating frame, revalidates target,
+type, and environment before indirect entry, and reuses the ordinary direct-call
+ABI and meters. The focused owner passes 60 cases across eleven deterministic
+evidence modules, including two current-host native AOT successes and six native
+rejections. Slice 6 is complete for this explicitly bounded Language 1.0
+profile. Nonempty-effect or flag-bearing function values, write-through mutable
+captures, retained captures, general same-signature dispatch, and escaping
+environments remain separately versioned extensions; browser and OS execution,
+paired-host qualification, and candidate promotion remain separate target gates.
 
 ## Removal checkpoint
 

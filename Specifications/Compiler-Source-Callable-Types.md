@@ -116,12 +116,16 @@ WVCF answers which exact callable type a concrete named function can inhabit;
 it does not itself create a runtime value. WVIR 1.17/1.18 consumes that answer
 for the closed noncapturing, effect-free, by-value profile, embeds reduced WVIC
 evidence, and lowers named-function references plus exact local indirect calls.
-WVIR 1.19/1.20 additionally binds a copied plain-capture prefix to the same
-public descriptor. WVB 1.30/1.31 replaces every private WVFT shape with a
-kind-8 Types descriptor and shape `35`, and its verifier/runtime own the
-portable value representation.
+WVIR 1.19/1.20 additionally binds an admitted copy, move, or immutable-borrow
+inline capture prefix to the same public descriptor. WVB 1.30/1.31 replaces
+every private WVFT shape with a kind-8 Types descriptor and shape `35`, and its
+verifier/runtime own the portable value representation. The source compiler
+now constructs the synthetic body, invalidates moved outer slots, and confines
+the current immutable-borrow callable to its owner lifetime.
 
 This does not make WVCF a serialized format or a runtime address directory.
-Source closure-body lowering, move and borrow environments, borrowed callable
-signatures, nonempty effects, flags, escape ownership, and native callable ABI
-lowering still require later explicit representations and proofs.
+The native x86-64 backend implements the same closed profile with frame-owned
+16-byte callable cells and frame-owned scalar/enum environments. Borrowed
+callable signatures, nonempty-effect or flag-bearing function values,
+write-through mutable captures, retained captures, general dispatch, and
+escaping environments still require later explicit representations and proofs.

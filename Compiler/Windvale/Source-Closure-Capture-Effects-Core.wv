@@ -1,0 +1,126 @@
+module Compilerˉsourceˉclosureˉcaptureˉeffects profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
+import Compilerˉsourceˉclosureˉcaptures as Captures;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉeffects as Sourceˉeffects;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉresolve(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Sourceˉeffects.Compilerˉsourceˉeffectˉset {
+    let Parameterˉendˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength
+        );
+    let Parameterˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength,
+            Parameterˉendˉposition.Line, Parameterˉendˉposition.Column
+        );
+    let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Parameterˉend.Nextˉoffset,
+            Parameterˉend.Nextˉline, Parameterˉend.Nextˉcolumn
+        );
+    let Result: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉtype(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            true, false
+        );
+    let Maybeˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Result.Nextˉoffset, Result.Nextˉline, Result.Nextˉcolumn
+        );
+    let Hasˉclause: bool = Maybeˉeffects.Kind ==
+        Sourceˉlexer.Compilerˉtokenˉkind.Effects;
+    return Sourceˉeffects.Compilerˉsourceˉeffectsˉresolveˉclause(
+        Input, Scan, Symbols, Source, Hasˉclause,
+        Maybeˉeffects.Offset, Maybeˉeffects.Line, Maybeˉeffects.Column,
+        Expression.Offset
+    );
+}
+
+fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉstatus(
+    Effects: Sourceˉeffects.Compilerˉsourceˉeffectˉset
+) -> Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus {
+    if Effects.Status == Sourceˉeffects.Compilerˉsourceˉeffectˉstatus.Valid {
+        return Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Valid;
+    }
+    return Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Invalid;
+}
+
+export fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉvalidateˉrange(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Parentˉpayload: bytes,
+    Parentˉfirst: u32,
+    Parentˉentries: u32,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Captures.Compilerˉsourceˉclosureˉcaptureˉsummary {
+    if Expression.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind !=
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure {
+        return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉrange(
+            Input, Scan, Symbols,
+            Parentˉpayload, Parentˉfirst, Parentˉentries,
+            Module, Function, Source, Expression
+        );
+    }
+    let Effects: Sourceˉeffects.Compilerˉsourceˉeffectˉset =
+        Compilerˉsourceˉclosureˉcaptureˉeffectsˉresolve(
+            Input, Scan, Symbols, Source, Expression
+        );
+    return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉrangeˉwithˉeffects(
+        Input, Scan, Symbols,
+        Parentˉpayload, Parentˉfirst, Parentˉentries,
+        Module, Function, Source, Expression,
+        Compilerˉsourceˉclosureˉcaptureˉeffectsˉstatus(Effects),
+        Effects.Count, Effects.Language, Effects.Capabilities,
+        Effects.Failureˉoffset
+    );
+}
+
+export fn Compilerˉsourceˉclosureˉcaptureˉeffectsˉvalidate(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Module: u32,
+    Function: u32,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Captures.Compilerˉsourceˉclosureˉcaptureˉsummary {
+    if Expression.Status != Sourceˉbodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Expression.Kind !=
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure {
+        return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidate(
+            Input, Scan, Symbols, Bindings,
+            Module, Function, Source, Expression
+        );
+    }
+    let Effects: Sourceˉeffects.Compilerˉsourceˉeffectˉset =
+        Compilerˉsourceˉclosureˉcaptureˉeffectsˉresolve(
+            Input, Scan, Symbols, Source, Expression
+        );
+    return Captures.Compilerˉsourceˉclosureˉcapturesˉvalidateˉwithˉeffects(
+        Input, Scan, Symbols, Bindings,
+        Module, Function, Source, Expression,
+        Compilerˉsourceˉclosureˉcaptureˉeffectsˉstatus(Effects),
+        Effects.Count, Effects.Language, Effects.Capabilities,
+        Effects.Failureˉoffset
+    );
+}

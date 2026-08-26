@@ -1512,7 +1512,13 @@ foreach ($Path in $Paths) {
         'Projects/Compiler/Windvale-Source-Emission-Core.wvproj',
         'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
         'Specifications/Compiler-Source-Analysis.md',
-        'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv'
+        'Tests/Fixtures/Language-1.0/Closure-Borrow-Main-Pipeline.wv',
+        'Tests/Fixtures/Language-1.0/Closure-Borrow-Mutable.wv',
+        'Tests/Fixtures/Language-1.0/Closure-Copy-Main-Pipeline.wv',
+        'Tests/Fixtures/Language-1.0/Closure-Move-Main-Pipeline.wv',
+        'Tests/Fixtures/Language-1.0/Closure-Move-Use-After-Move.wv',
+        'Tests/Fixtures/Language-1.0/Source-Analysis-Self-Test.wv',
+        'Tools/Native/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs'
     )) {
         Add-Suite 'language-1-front-door'
         if ($Path -in @(
@@ -1531,6 +1537,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'compiler-split-development'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Bindings-Closures-Core.wv',
+        'Compiler/Windvale/Source-Closure-Capture-Effects-Core.wv',
         'Compiler/Windvale/Source-Closure-Captures-Core.wv',
         'Compiler/Windvale/Source-Closure-Lowering-Core.wv',
         'Compiler/Windvale/Source-Callable-Types-Core.wv',
@@ -2963,6 +2970,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'console-publisher-reconstruction'
         }
     } elseif ($Path -in @(
+        'Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv',
         'Runtime/Windvale/Native-Hosted-Fixed-Services-Tool.wv',
         'Runtime/Windvale/Native-Hosted-Orchestration-Control-Core.wv',
         'Runtime/Windvale/Native-Hosted-Source-Geometry-Tool.wv',
@@ -3230,6 +3238,10 @@ foreach ($Path in $Paths) {
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction'
         )
+    } elseif ($Path.StartsWith(
+        'Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'segmented-compiler-toolset-reconstruction'
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvb-To-Wvo-Candidate/',
         [StringComparison]::Ordinal)) {

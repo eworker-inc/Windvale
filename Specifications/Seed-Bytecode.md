@@ -357,7 +357,9 @@ after all canonically ordered nominal entries, in the producer's deterministic
 first-complete-signature order. There are at most 256. Their parameter and
 result shapes are exact, their parameter modes are by value, and the result is
 neither `void` nor `never` in this first executable profile. The descriptor
-contains no source function identity, serialized closure environment, host
+profile exactly equals the containing WVB module profile; a producer cannot
+retain a narrower imported source profile in this flattened executable
+contract. The descriptor contains no source function identity, serialized closure environment, host
 address, calling-convention selection, or effect mask. WVB 1.30 admits only the
 separately checked empty-effect, noncapturing callable subset. WVB 1.31 retains
 the same descriptor and admits the separately verified plain-capture
@@ -1043,7 +1045,7 @@ Verification is required before execution and rejects a module unless:
 - Every WVB 1.26-or-later Vector parameter uses exact shape `23`, `26`, or `27` with a matching kind-5 nominal index; borrowed shapes occur nowhere else; calls supply unique evidence to shape `23` and retaining evidence to shapes `26` and `27`; and reverse-order callee cleanup cannot release the caller's preserved owner.
 - Every WVB 1.28 through WVB 1.31 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once.
 - Every WVB 1.29 module contains exactly one exported `Main(Platformˉfile.Sourceˉfile) -> i32`, admits shape `34` only in that parameter and its move-owned locals, contains 1 through 64 exact `source.length` instructions over available non-parameter source locals, and cannot construct, copy, return, embed, or expose the source owner.
-- Every kind-`8` descriptor has a valid profile, one exact non-`void`/non-`never` result, at most 64 exact by-value parameters, and a terminal position after all nominal types; every shape `35` names one kind-`8` entry; every `function.reference` target exactly matches its descriptor; every `call.indirect` consumes that exact callable plus the descriptor's exact arguments; every `closure.create` has 1 through 64 plain captures, an exact physical target signature, and no reference-backed or affine capture; source publication separately proves its profile/safe/effect-free/nongeneric restrictions before flattening; every WVB 1.30 module contains at least one `D3` or `D4`; and every WVB 1.31 module contains at least one `D5`.
+- Every kind-`8` descriptor has the containing module's exact profile, one exact non-`void`/non-`never` result, at most 64 exact by-value parameters, and a terminal position after all nominal types; every shape `35` names one kind-`8` entry; every `function.reference` target exactly matches its descriptor; every `call.indirect` consumes that exact callable plus the descriptor's exact arguments; every `closure.create` has 1 through 64 plain captures, an exact physical target signature, and no reference-backed or affine capture; source publication separately proves its safe/effect-free/nongeneric restrictions before flattening; every WVB 1.30 module contains at least one `D3` or `D4`; and every WVB 1.31 module contains at least one `D5`.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return

@@ -260,7 +260,8 @@ function Closureˉwvbˉlayout(Module) {
         Closureˉtype: 251,
         Captureˉcount: 255,
         Callˉtype: 275,
-        Callableˉkind: 317
+        Callableˉkind: 317,
+        Callableˉprofile: 318
     };
 }
 
@@ -313,6 +314,85 @@ async function Requireˉclosureˉexecution(Runner, Module) {
     }
 }
 
+async function Requireˉnativeˉexecution(
+    Lowerer,
+    Checker,
+    Linker,
+    Packager,
+    Name,
+    Module,
+    Work,
+    Target,
+    Executableˉsuffix
+) {
+    const Object = join(Work, `${Name}.wvo`);
+    const Image = join(Work, `${Name}.bin`);
+    const Application = join(Work, `${Name}${Executableˉsuffix}`);
+    const Lower = await Runˉcommand(Lowerer, [Module, Object]);
+    const Lowerˉoutput = Lower.Output.toString('utf8').replaceAll('\r\n', '\n');
+    if (Lower.Exceeded || Lower.Code !== 0 || Lower.Error.length !== 0 ||
+        !/^native x64 status=Valid abi=22 code-bytes=[1-9][0-9]* object-bytes=[1-9][0-9]*\n$/u
+            .test(Lowerˉoutput)) {
+        Reject(
+            `The ${Name} native lowering failed with exit ${Lower.Code}.\n` +
+            Lower.Error.toString('utf8') + Lowerˉoutput
+        );
+    }
+    const Check = await Runˉcommand(Checker, [Object]);
+    if (Check.Exceeded || Check.Code !== 0 || Check.Error.length !== 0) {
+        Reject(
+            `The ${Name} native object check failed with exit ${Check.Code}.\n` +
+            Check.Error.toString('utf8') + Check.Output.toString('utf8')
+        );
+    }
+    const Link = await Runˉcommand(Linker, ['0', 'Main', Image, Object]);
+    const Linkˉoutput = Link.Output.toString('utf8').replaceAll('\r\n', '\n');
+    const Entryˉmatch = /^entry name=Main address=([0-9]+)$/mu.exec(Linkˉoutput);
+    if (Link.Exceeded || Link.Code !== 0 || Link.Error.length !== 0 ||
+        Entryˉmatch === null) {
+        Reject(
+            `The ${Name} native link failed with exit ${Link.Code}.\n` +
+            Link.Error.toString('utf8') + Linkˉoutput
+        );
+    }
+    const Package = await Runˉcommand(
+        Packager, [Target, Image, Entryˉmatch[1], Application]
+    );
+    if (Package.Exceeded || Package.Code !== 0 || Package.Error.length !== 0) {
+        Reject(
+            `The ${Name} native package failed with exit ${Package.Code}.\n` +
+            Package.Error.toString('utf8') + Package.Output.toString('utf8')
+        );
+    }
+    const Run = await Runˉcommand(Application, []);
+    if (Run.Exceeded || Run.Code !== 42 ||
+        Run.Output.length !== 0 || Run.Error.length !== 0) {
+        Reject(
+            `The ${Name} native execution returned ${Run.Code}.\n` +
+            Run.Error.toString('utf8') + Run.Output.toString('utf8')
+        );
+    }
+    const Objectˉbytes = await readFile(Object);
+    return {
+        Bytes: Objectˉbytes.length,
+        Digest: createHash('sha256').update(Objectˉbytes).digest('hex')
+    };
+}
+
+async function Requireˉnativeˉrejection(Lowerer, Name, Module, Work) {
+    const Object = join(Work, `${Name}-rejected.wvo`);
+    const Result = await Runˉcommand(Lowerer, [Module, Object]);
+    const Output = Buffer.concat([Result.Output, Result.Error])
+        .toString('utf8').replaceAll('\r\n', '\n');
+    if (Result.Exceeded || Result.Code === 0 ||
+        !Output.includes('native x64 status=')) {
+        Reject(`The ${Name} native lowering was not rejected.\n${Output}`);
+    }
+    if (await stat(Object).then(() => true, () => false)) {
+        Reject(`The ${Name} native rejection published an object.`);
+    }
+}
+
 async function Runˉcase(Application, Test, Selector, Index) {
     const Argumentsˉvalue = Selector === null ? [] : [Selector];
     const Result = await Runˉcommand(Application, Argumentsˉvalue);
@@ -355,7 +435,7 @@ try {
         SCRIPT_DIRECTORY,
         `Package-Segmented-Compiler-Wvb.${Extension}`
     );
-    const Totalˉitems = TESTS.length * 3 + 6;
+    const Totalˉitems = TESTS.length * 3 + 8;
     var Item = 0;
     for (const Test of TESTS) {
         const Module = join(Work, `${Test.Name}.wvb`);
@@ -460,6 +540,7 @@ try {
     await Requireˉverification(
         Verifier, Callableˉmodule, true, 'callable WVB oracle'
     );
+    const Nativeˉrejections = [];
     const Malformedˉcases = [
         ['callable-version-downgrade', Bytes => {
             Bytes.writeUInt16LE(29, 6);
@@ -483,6 +564,10 @@ try {
         const Candidateˉpath = join(Work, `${Name}.wvb`);
         await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
         await Requireˉverification(Verifier, Candidateˉpath, false, Name);
+        if (Name === 'callable-version-downgrade' ||
+            Name === 'callable-target-signature') {
+            Nativeˉrejections.push([Name, Candidateˉpath]);
+        }
     }
     await Requireˉverification(
         Verifier, Closureˉmodule, true, 'closure WVB oracle'
@@ -514,6 +599,9 @@ try {
         }],
         ['closure-type-kind', Bytes => {
             Bytes[Closureˉlayout.Callableˉkind] = 7;
+        }],
+        ['closure-profile-mismatch', Bytes => {
+            Bytes[Closureˉlayout.Callableˉprofile] = 2;
         }]
     ];
     for (const [Name, Mutate] of Malformedˉclosureˉcases) {
@@ -522,6 +610,12 @@ try {
         const Candidateˉpath = join(Work, `${Name}.wvb`);
         await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
         await Requireˉverification(Verifier, Candidateˉpath, false, Name);
+        if (Name === 'closure-version-downgrade' ||
+            Name === 'closure-target-signature' ||
+            Name === 'closure-capture-shape' ||
+            Name === 'closure-profile-mismatch') {
+            Nativeˉrejections.push([Name, Candidateˉpath]);
+        }
     }
 
     Item += 1;
@@ -556,7 +650,59 @@ try {
     );
     await Requireˉcallableˉexecution(Runner, Callableˉmodule);
     await Requireˉclosureˉexecution(Runner, Closureˉmodule);
-    Completedˉcases += 18;
+    Completedˉcases += 19;
+
+    const Lowerer = join(
+        REPOSITORY_ROOT,
+        'Artifacts',
+        'Native-Wvb-To-Wvo-Candidate',
+        WINDOWS ? 'Wvb-To-Wvo.exe' : 'Wvb-To-Wvo.elf'
+    );
+    const Checker = join(SCRIPT_DIRECTORY, `Check-Wvo.${Extension}`);
+    const Linker = join(SCRIPT_DIRECTORY, `Link-Wvo.${Extension}`);
+    const Consoleˉpackager = join(
+        SCRIPT_DIRECTORY, `Package-Console.${Extension}`
+    );
+    const Consoleˉtarget = WINDOWS
+        ? 'windows-x64-console-v1'
+        : 'linux-x64-console-v1';
+
+    Item += 1;
+    process.stdout.write(
+        `START language 1 callable semantics phase=native-aot ` +
+        `item=${Item}/${Totalˉitems} cases=2\n`
+    );
+    const Callableˉobject = await Requireˉnativeˉexecution(
+        Lowerer, Checker, Linker, Consoleˉpackager,
+        'callable-native', Callableˉmodule, Work,
+        Consoleˉtarget, Executableˉsuffix
+    );
+    const Closureˉobject = await Requireˉnativeˉexecution(
+        Lowerer, Checker, Linker, Consoleˉpackager,
+        'closure-native', Closureˉmodule, Work,
+        Consoleˉtarget, Executableˉsuffix
+    );
+    Completedˉcases += 2;
+
+    Item += 1;
+    process.stdout.write(
+        `START language 1 callable semantics phase=native-rejections ` +
+        `item=${Item}/${Totalˉitems} cases=${Nativeˉrejections.length}\n`
+    );
+    for (const [Name, Module] of Nativeˉrejections) {
+        await Requireˉnativeˉrejection(Lowerer, Name, Module, Work);
+    }
+    Completedˉcases += Nativeˉrejections.length;
+    Evidence.push({
+        Name: 'callable-native-object',
+        Bytes: Callableˉobject.Bytes,
+        Digest: Callableˉobject.Digest
+    });
+    Evidence.push({
+        Name: 'closure-native-object',
+        Bytes: Closureˉobject.Bytes,
+        Digest: Closureˉobject.Digest
+    });
     Passed = true;
 } finally {
     await Removeˉwork(Work, Temporaryˉroot);
@@ -574,6 +720,7 @@ if (Passed) {
     process.stdout.write(
         'native language 1 callable semantics status=Passed ' +
         `cases=${Completedˉcases} result=42 modules=${Evidence.length} ` +
-        `wvb-bytes=${Totalˉbytes} evidence-sha256=${Evidenceˉdigest}\n`
+        `evidence-bytes=${Totalˉbytes} native-aot-cases=8 ` +
+        `evidence-sha256=${Evidenceˉdigest}\n`
     );
 }

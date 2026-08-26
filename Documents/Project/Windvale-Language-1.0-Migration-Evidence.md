@@ -7,7 +7,7 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 5 are complete and Slice 6 is next. The existing
+Migration Slices 1 through 6 are complete and Slice 7 is next. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -3376,3 +3376,67 @@ SHA-256
 `abc013565f44f40e9133fb83d417ee9e347def64826c67669a2e594cd473f6ea`.
 Main WVIR/WVB integration, captured move and borrow enforcement, independent
 Linux reproduction, and Qualification remain separate claims.
+
+## Integrated source closure and native callable checkpoint
+
+[Decision 0860](../Decisions/0860-Lower-Frame-Owned-Callables-Through-The-Native-X64-Abi.md)
+connects the preceding Slice 6 evidence to the real source compiler and shared
+native x86-64 backend. The compiler appends each synthetic closure body after
+ordinary and generic functions, uses the WVLB 1.4 capture/public-parameter
+partition as its physical signature, emits `Closureˉcreate` in the parent, and
+validates the combined persisted products before WVB publication.
+
+The bounded executable environment admits copied, moved, and immutably borrowed
+inline scalars and enums. Move invalidates the outer local across reachable
+control flow. Immutable borrow is limited to an outer parameter or `let`; the
+callable remains one local used by an indirect call before its owner lifetime
+ends. Mutable borrow and escape reject. The split-compiler helper proves three
+accepted programs and two source rejections. The accepted copy, move, and borrow
+modules are 451, 451, and 453 bytes at SHA-256
+`8000144daaab85c10698e6205729f7de6798f866f69ed32861cf1e2c8daafc03`,
+`b95e5bd8e20584f73f55f34ff9de0e5a9fe03ab9118bf48adba70b1078a17cca`,
+and `d8c6632dc52a8337af4fac4711a09c8fd4089174351f278fe8debfc51304f7dd`.
+Each returns `42` in 31 guest instructions.
+
+The selected native ABI stores target `u32`, callable type `u32`, and
+environment address `u64` in one 16-byte frame cell. Noncapturing values retain
+a zero environment. Capturing values point only into the current function's
+bounded environment cells. Indirect entry revalidates all three fields, copies
+the capture prefix to call scratch, and uses the existing direct-call ABI and
+meters. This first subset requires one physical target per callable descriptor,
+one-block callable control flow, at most 64 captures, at most 1,024 environment
+cells, and the unchanged 2,048-cell total frame bound.
+
+The source-produced copy program lowers to a 2,537-byte WVO at SHA-256
+`13b3031377dc0dd81a94cc9dfbacff954cf125b2a49522c0c16420990c87e0cf`
+and exits `42` after linking and current-host packaging. The retained 400-byte
+noncapturing fixture lowers to a 1,972-byte WVO at SHA-256
+`7c89115a1bb3b23e215e5a2780b07a0ddaaa6bbb15f3cfe068dc9d545aa0a6ea`
+and also exits `42`.
+
+The focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=60 result=42 modules=11 evidence-bytes=4270904 native-aot-cases=8 evidence-sha256=287b0fd511d00a0f98356bc2fbf9d75e0c67a2f973a4468d48d965ab030c5613
+```
+
+The owner includes two successful native AOT paths and six native malformed or
+unsupported cases. The compiler-aligned portable verifier now also rejects a
+callable descriptor whose profile differs from its containing WVB module.
+
+The rebuilt lowerer candidate is 567,615 WVB bytes at SHA-256
+`d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3`.
+Its Windows and Linux candidates are 8,160,256 and 8,159,232 bytes at SHA-256
+`6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102`
+and `5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029`.
+Current-host reconstruction and execution do not claim independent Linux
+execution, broad Qualification, or candidate promotion.
+
+The registry advances to 113 owners and 5,507 cases. Its 18,052 LF-only bytes
+have SHA-256
+`b1ca2a737b8174b1d2959e9375275bc6dd6dc225bc1c233f883ea0b8434c08fb`.
+
+This completes the selected Slice 6 implementation profile. Effectful or
+flag-bearing first-class values, mutable write-through or retained captures,
+general same-signature dispatch, escaping environments, and new target
+consumers remain explicit later extensions rather than implicit behavior.

@@ -4,22 +4,22 @@
   "qualification": "pending",
   "construction": "native-project-front-door-and-hosted-package",
   "sourceProject": "Projects/Runtime/Windvale-Native-Hosted-Enum-Request-Tool.wvproj",
-  "admission": "WVB 1.11 nominal metadata including u64 record fields and up to 116 records",
+  "admission": "WVB 1.11, 1.30, or 1.31 nominal metadata including u64 record fields, callable descriptors, and up to 116 records",
   "artifacts": [
     {
       "path": "Wvb/wvhostenumrequest.wvb",
-      "bytes": 42088,
-      "sha256": "ede2310a39e4963d517834ef6bc800b27dcaf91dca7fe9602627dc7567650f85"
+      "bytes": 48791,
+      "sha256": "b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe"
     },
     {
       "path": "windows-x64/wvhostenumrequest.exe",
-      "bytes": 461824,
-      "sha256": "1089a5c07290d1b7707e0b16ca30692c68435defcda51b7b0ace4de280ffddbc"
+      "bytes": 544256,
+      "sha256": "22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b"
     },
     {
       "path": "linux-x64/wvhostenumrequest.elf",
-      "bytes": 462848,
-      "sha256": "01d0d02ce041fd85e7aea537d21ad466600f32da050f41d20bb24c957ae04e21"
+      "bytes": 544768,
+      "sha256": "a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31"
     }
   ]
 }

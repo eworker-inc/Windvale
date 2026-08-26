@@ -739,6 +739,10 @@ export fn Compilerˉsourceˉbindingsˉheaderˉbytes(Directory: bytes) -> u32 {
         Bytesˉlength(Directory) >= 40u32 {
         return 40u32;
     }
+    if Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 4u32 &&
+        Bytesˉlength(Directory) >= 48u32 {
+        return 48u32;
+    }
     return 0u32;
 }
 
@@ -750,7 +754,8 @@ export fn Compilerˉsourceˉbindingsˉrangeˉbytes(Directory: bytes) -> u32 {
 export fn Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory: bytes) -> u32 {
     let Headerˉbytes: u32 =
         Compilerˉsourceˉbindingsˉheaderˉbytes(Directory);
-    if Headerˉbytes != 32u32 && Headerˉbytes != 40u32 {
+    if Headerˉbytes != 32u32 && Headerˉbytes != 40u32 &&
+        Headerˉbytes != 48u32 {
         return 0u32;
     }
     return Bytesˉreadˉu32ˉlittle(Directory, 24u32);
@@ -773,14 +778,18 @@ export fn Compilerˉsourceˉbindingsˉentriesˉoffset(Directory: bytes) -> u32 {
     let Headerˉbytes: u32 =
         Compilerˉsourceˉbindingsˉheaderˉbytes(Directory);
     var Typeˉcatalogˉbytes: u32 = 0u32;
-    if Headerˉbytes == 40u32 {
+    if Headerˉbytes == 40u32 || Headerˉbytes == 48u32 {
         Typeˉcatalogˉbytes = Bytesˉreadˉu32ˉlittle(Directory, 28u32);
+    }
+    var Closureˉcatalogˉbytes: u32 = 0u32;
+    if Headerˉbytes == 48u32 {
+        Closureˉcatalogˉbytes = Bytesˉreadˉu32ˉlittle(Directory, 32u32);
     }
     return Headerˉbytes +
         Compilerˉsourceˉbindingsˉrangesˉcount(Directory) *
             Compilerˉsourceˉbindingsˉrangeˉbytes(Directory) +
         Compilerˉsourceˉbindingsˉcatalogˉbytes(Directory) +
-        Typeˉcatalogˉbytes;
+        Typeˉcatalogˉbytes + Closureˉcatalogˉbytes;
 }
 
 export fn Compilerˉsourceˉbindingsˉrangeˉdeclaration(
@@ -824,6 +833,7 @@ fn Compilerˉsourceˉbindingsˉshapeˉisˉvalid(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
         Symbols.Directory, Shape
     ) { return true; }
+    if Shape >= 2147483904u32 && Shape < 2147484160u32 { return true; }
     return Shape >= 1073741824u32 && Shape < 1610612736u32;
 }
 

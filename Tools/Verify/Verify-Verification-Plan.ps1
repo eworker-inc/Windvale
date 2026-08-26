@@ -189,6 +189,11 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Budget.wv',
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Allocation-Failure.wv',
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Use-After.wv',
+            'Tests/Fixtures/Language-1.0/Closure-Borrow-Main-Pipeline.wv',
+            'Tests/Fixtures/Language-1.0/Closure-Borrow-Mutable.wv',
+            'Tests/Fixtures/Language-1.0/Closure-Copy-Main-Pipeline.wv',
+            'Tests/Fixtures/Language-1.0/Closure-Move-Main-Pipeline.wv',
+            'Tests/Fixtures/Language-1.0/Closure-Move-Use-After-Move.wv',
             'Projects/Tests/Windvale-Native-Test-Wvb-Fixed-Integer-Runtime.wvproj',
             'Projects/Tests/Windvale-Native-Test-Wvb-Rune-Runtime.wvproj',
             'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
@@ -207,6 +212,7 @@ $NativeCases = @(
             'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
             'Tools/Native/Test-Language-1.0-Front-Door.cmd',
             'Tools/Native/Test-Language-1.0-Front-Door.sh',
+            'Tools/Native/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs',
             'Specifications/Windvale-Language-1.0-Grammar.md',
             'Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md',
             'Documents/Project/Language-1.0-Paper-Corpus/01-Command-Line-Application/Source/Inspect-Application.wv'
@@ -382,6 +388,7 @@ $NativeCases = @(
         Name = 'Language 1.0 callable semantics routing'
         Paths = @(
             'Compiler/Windvale/Source-Bindings-Closures-Core.wv',
+            'Compiler/Windvale/Source-Closure-Capture-Effects-Core.wv',
             'Compiler/Windvale/Source-Closure-Captures-Core.wv',
             'Compiler/Windvale/Source-Closure-Lowering-Core.wv',
             'Compiler/Windvale/Source-Callable-Types-Core.wv',
@@ -899,6 +906,7 @@ $NativeCases = @(
             'Tools/Native/Construct-Segmented-Compiler-Toolset.cmd',
             'Tools/Native/Package-Segmented-Compiler-Wvb.cmd',
             'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Manifest.json',
+            'Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate/Manifest.json',
             'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
             'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
             'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj',
@@ -939,6 +947,25 @@ $NativeCases = @(
             'wvo-inspector-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
+            'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'hosted enum request service reader'
+        Paths = @('Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv')
+        Suites = @(
+            'seed',
+            'seed-native-front-door',
+            'wvb-runner-reconstruction',
+            'wvb-inspector-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'unsafe-wvb',
+            'wvb-containment',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files'
         )
@@ -3696,7 +3723,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5493 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5507 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
@@ -3983,7 +4010,7 @@ $OsX64OwnerContracts = @(
             'windows-x64-wvappublish.exe',
             '65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec',
             'b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421',
-            '61a0789f80c7a44e828bfc7bede7725c9c7871b6434c6d464a90fe00347cd9e9',
+            '6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102',
             '76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910',
             'f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0',
             '0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2',
@@ -4030,7 +4057,7 @@ $OsX64OwnerContracts = @(
             'linux-x64-wvappublish.elf',
             'd228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969',
             'b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af',
-            'a58fd44c8c19da19a1699b33392996a673e291f6d9f951eb578f829c4b2b5452',
+            '5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029',
             '2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2',
             '8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a',
             'd399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af',
