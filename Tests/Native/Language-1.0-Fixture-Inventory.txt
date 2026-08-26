@@ -1,5 +1,5 @@
 windvale-language-1-source-fixture-inventory 1
-freeze|Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt|3778|14784669274ace656a182bc608ee27b9d06f22bad52d2c10487d82ae574b9fd6
+freeze|Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt|3730|6d00f33f87dc62f5df55dc5dd5a882c3d4a7984a31bf376d85076ff0fe578e48
 bundle|Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission|2|686|0690d8ecc6874c58dd7843018431843b1e3a8b198e828e962402f9443a4a2cd4|slice-1|identity-only
 bundle|Documents/Project/Language-1.0-Localization-Workloads/02-Simplified-Chinese-Source|2|716|0a69ec4eb2714b2ef321957f7a4b75b63d0677b247675177da4240c3b5750cb9|slice-1|identity-only-draft-language
 bundle|Documents/Project/Language-1.0-Localization-Workloads/03-Conversion-And-Source-Tooling|3|1095|63b0f861e58cb992b7f5c8f0b1289fbda936b6880e9a398fba6238b54d2e2ff9|slice-1|identity-only

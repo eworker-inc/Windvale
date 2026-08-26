@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.30 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.31 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -12,6 +12,11 @@ and code → WVB → verifier → source-built scalar runtime path. Every accept
 compilation emits one self-contained module and does not introduce runtime
 linkage. Direct native lowering, browser packaging, and Windvale OS execution
 retain their separately versioned subsets.
+
+WVIR 1.19/1.20 and WVB 1.31 additionally establish the prepared-evidence and
+portable-runtime substrate for one plain copied-capture environment. Source
+closure-expression lowering into a physical target function is not connected
+yet, so this checkpoint does not claim the complete source-to-WVB closure path.
 
 ## Direct compilation result
 
@@ -878,9 +883,7 @@ WVB 1.30 must contain at least one `D3` or `D4`; each opcode is limited to
 65,536 occurrences. This first executable profile admits only named,
 non-generic, noncapturing functions with explicit empty `effects()`, no
 `async` or `unsafe` flag, by-value parameters, and a value result other than
-`unit` or `never`. Capturing closures, effectful or flag-bearing callable
-values, borrowed callable signatures, callable native ABI lowering, and
-environment lifetime rules remain later work.
+`unit` or `never`.
 
 `Callable-Indirect-Execution.wv` deterministically emits a 400-byte WVB 1.30
 module at SHA-256
@@ -891,14 +894,53 @@ verifier accepts the exact module and rejects version downgrade, target
 signature mismatch, reference-type mismatch, invocation-type mismatch, and a
 non-callable descriptor kind.
 
+WVIR 1.19 operation `Closureˉcreate = 179` lowers to the thirteen-byte WVB
+1.31 opcode `D5`, followed by the emitted target-function rank, public callable
+Types index, and capture count. WVIR 1.20 is the same closure vocabulary plus
+the generic-instance header inherited from WVIR 1.18. The operation has 1
+through 64 capture operands in declaration order and produces the callable
+shape for its WVFT instance. WVB emission loads the captures in that same order
+before `D5`.
+
+The physical target's parameter list is exactly the captured prefix followed
+by the public descriptor parameters; its result is the descriptor result. WVIR
+validation additionally requires an ordinary function declaration with the
+same module profile, explicit empty `effects()`, no generic parameters, no
+`async` or `unsafe` flag, and by-value parameters. The copied prefix is limited
+to inline scalar and enum shapes. Text, bytes, callable values, aggregates,
+collections, resource owners, and borrows reject before WVB publication.
+
+`D5` consumes the captures and publishes one shape-`35` callable. The existing
+`D4` indirect call recognizes the representation-private environment, copies
+the immutable captures into the physical parameter prefix, then appends the
+public arguments and enters the target through the ordinary bounded call-frame
+path. The scalar runner admits at most 1,024 created environments and retains at
+most 536,576 bytes (524 KiB) of environment records for one execution, then
+discards the arena at teardown. A WVB 1.31 module must contain at least one
+`D5`; `D5` is limited to 65,536 occurrences.
+
+The deterministic closure-environment WVB oracle is 325-byte WVB 1.31 at
+SHA-256
+`397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2`.
+It snapshots captured `i32` value `40`, calls the public one-parameter callable
+with `2`, returns `42`, and reports 11 guest instructions. The verifier accepts
+the exact product and rejects version downgrade, target/type mismatch, zero or
+65 captures, capture-shape mismatch, a reference-backed capture, indirect-call
+type mismatch, and a non-callable descriptor kind.
+
+Source closure-body lowering, captured move and borrow semantics, escape and
+lifetime enforcement, effectful or flag-bearing callable values, borrowed
+callable signatures, and the callable native ABI remain connected Slice 6
+work.
+
 The Edition 1 source front end now appends token identity 102 for `effects` and
 parses an optional exact clause after a function return type. It retains clause
 presence, byte span, and identity count under fixed 32-identity,
 16-segment-per-identity, 128-canonical-byte, and 16,384-source-byte limits.
 That initial syntax checkpoint did not change WVIR or WVB. The current WVEF and
 WVCF phases now resolve canonical identities, infer exact transitive effects,
-enforce declaration equality, and catalog concrete signatures. WVB 1.30 admits
-only the empty-effect callable subset above; serialized nonempty effect masks
+enforce declaration equality, and catalog concrete signatures. WVB 1.30 and
+WVB 1.31 admit only the empty-effect callable subsets above; serialized nonempty effect masks
 remain required before an effectful callable value can execute.
 
 The 1,199-byte WVB 1.20 fixture has SHA-256

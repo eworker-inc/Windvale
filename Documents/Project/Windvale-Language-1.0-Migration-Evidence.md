@@ -3202,3 +3202,71 @@ native language 1 memory budget, Vector, using, and resource execution status=Pa
 The owner passed all 113 cases in 724,350 milliseconds. This is exact focused
 Windows development evidence. Independent Linux reproduction and the broad
 Qualification gate remain separate claims.
+
+## Executable plain-capture environment checkpoint
+
+[Decision 0857](../Decisions/0857-Execute-Plain-Capture-Closure-Environments-As-Wvb-1.31.md)
+extends the exact callable substrate without claiming complete source closure
+lowering. WVIR 1.19 operation `179 Closureˉcreate` names a physical target,
+public WVIC callable identity, and 1 through 64 capture operands. WVIR 1.20
+inherits that vocabulary with the generic-instance header. WVB 1.31 lowers the
+operation to `D5 closure.create`; the existing `D4 call.indirect` then supplies
+the immutable capture prefix before the public arguments through the ordinary
+bounded call-frame path.
+
+This first executable environment deliberately accepts only copied inline
+scalars and enums. Text and bytes remain valid source-level `copy` captures but
+cannot enter the environment until their retain/release and escape behavior is
+specified. Aggregates, collections, callable values, resources, move captures,
+and borrows also reject. The physical target must be synchronous, safe,
+nongeneric, effect-free, profile-matched, and entirely by value.
+
+The deterministic oracle is a 325-byte WVB 1.31 module at SHA-256
+`397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2`.
+It captures `i32` value `40`, supplies public argument `2`, returns `42`, and
+reports 11 guest instructions. Nine byte mutations cover version, target
+signature, callable type, zero and excessive capture counts, capture shape,
+reference-backed capture, indirect-call type, and descriptor kind.
+
+The source-built runner keeps the representation private, creates at most 1,024
+environments, and retains at most 536,576 bytes (524 KiB) of immutable
+environment records for one execution. The first
+implementation produced a 366,728-byte runner and crossed the native lowerer's
+unchanged 64-MiB plan bound. Factoring environment creation from indirect-call
+execution and consolidating redundant upper-version checks at the already
+validated module boundary reduced the runner to 167 functions, 324,568 code
+bytes, and 361,080 module bytes at SHA-256
+`3cbd89599025499f3d5147e50fc94a1de82ff15bc27d19d298087fed401b3acd`.
+Building each bounded record before one arena append additionally avoids
+copying the complete retained arena once for every header field. At the exact
+524-byte record and 1,024-creation maxima, cumulative arena-append copying is
+bounded to 274,995,200 bytes. The plan bound was not raised.
+
+The exact focused Windows owner reports:
+
+```text
+native language 1 callable semantics status=Passed cases=49 result=42 modules=8 wvb-bytes=4169312 evidence-sha256=67cf525d6d069bce7adc87936885405ccac1474f11fd1829d481d8abc87ea6b8
+```
+
+Clean reconstruction of the compiler-generic-WIR sentinel exposed stale project
+cache debt: five projects imported `Source-Wir-Consumer-Core.wv` transitively
+without declaring it. After making those dependencies explicit, the 3,690,120-byte
+WVIR 1.9 directory contains 1,209 functions and 87,931 operations. The emitter's
+recursive owned-Vector classification was rescanning that complete operation
+directory for ordinary record stores even though WVIR 1.9 cannot contain an
+admitted generic `Vector<T>` instance and `Sourceˉfile` cannot be aggregated.
+The contract-backed WVIR 1.9 fast path leaves the dedicated `Sourceˉfile` check
+intact, avoids those impossible scans, and keeps profile 7's `2^37` instruction
+bound unchanged. The formerly exhausting input now publishes in 90,161 ms on
+the Windows development host as a deterministic 1,483,465-byte WVB at SHA-256
+`9ecfb19b6521d21d0c9307df3b92e37f329ad46d9dff27584bfe715f7042f3e3`.
+
+The registry remains 113 owners and advances to 5,491 cases. Its 17,993
+LF-only bytes have SHA-256
+`94bb2229c27beece9b1ca95fca0bb62b61e00e732f6032f04390b458e4a5e267`.
+
+This is portable verifier and scalar-runtime development evidence. Source
+closure-body lowering into a synthetic physical target, captured move and
+borrow enforcement, native callable ABI lowering, independent Linux
+reproduction, repository-wide Qualification, and promoted runner repinning
+remain separate claims.

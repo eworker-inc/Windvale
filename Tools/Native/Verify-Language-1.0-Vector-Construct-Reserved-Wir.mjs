@@ -42,7 +42,7 @@ const Invalidˉanalysis =
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 const Unsupportedˉwvb =
     'source emission status=Valid analysis-status=Valid ' +
-    'wvb-status=Unsupportedˉoperation function=0 operation=1 source-line=0\n';
+    'wvb-status=Unsupportedˉshape function=0 operation=3 source-line=0\n';
 const Cases = [
     {
         name: 'old-minor',
@@ -127,10 +127,10 @@ try {
 }
 
 function Inspectˉvalidˉlayout(Input) {
-    if (Input.length !== 444 ||
+    if (Input.length !== 540 ||
         Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
         Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 11 ||
-        Input.readUInt32LE(8) !== 5 || Input.readUInt32LE(12) !== 48 ||
+        Input.readUInt32LE(8) !== 7 || Input.readUInt32LE(12) !== 48 ||
         Input.readUInt32LE(16) !== 2 || Input.readUInt32LE(20) !== 28 ||
         Input.readUInt32LE(24) !== 3 || Input.readUInt32LE(28) !== 28 ||
         Input.readUInt32LE(32) !== 3 || Input.readUInt32LE(36) !== 4 ||

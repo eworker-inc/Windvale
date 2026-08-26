@@ -181,10 +181,11 @@ through
 begin Slice 6 with exact structural function types, explicit capture checking,
 bounded transitive effects, concrete callable cataloging, WVIR 1.17/1.18
 function-reference and indirect-call operations, and WVB 1.30 verified scalar
-execution. The current executable subset is named, non-generic, noncapturing,
-empty-effect, flag-free, and by value. Closure environments, captured move and
-escape enforcement, effectful callable values, and native callable ABI
-lowering are the next connected work in Slice 6.
+execution. [Decision 0857](../Decisions/0857-Execute-Plain-Capture-Closure-Environments-As-Wvb-1.31.md)
+adds WVIR 1.19/1.20 and WVB 1.31 immutable environments for copied inline
+scalars and enums under a 4 MiB execution bound. Source closure-body lowering,
+captured move/borrow and escape enforcement, effectful callable values, and
+native callable ABI lowering are the next connected work in Slice 6.
 Remaining collection
 families, general ownership, localized token execution, direct
 native/browser/OS collection execution, and paired-host conformance remain

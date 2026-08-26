@@ -42,7 +42,7 @@ const Invalidˉanalysis =
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 const Unsupportedˉwvb =
     'source emission status=Valid analysis-status=Valid ' +
-    'wvb-status=Unsupportedˉshape function=2 operation=6 source-line=0\n';
+    'wvb-status=Unsupportedˉshape function=1 operation=6 source-line=0\n';
 const Cases = [
     {
         name: 'old-minor',

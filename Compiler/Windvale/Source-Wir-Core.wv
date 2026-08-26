@@ -248,6 +248,7 @@ const WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED: u32 = 175u32;
 const WIR_OPERATION_PLATFORM_SOURCE_LENGTH: u32 = 176u32;
 const WIR_OPERATION_FUNCTION_REFERENCE: u32 = 177u32;
 const WIR_OPERATION_CALL_INDIRECT: u32 = 178u32;
+const WIR_OPERATION_CLOSURE_CREATE: u32 = 179u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 16u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 12u32;
 const WIR_FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
@@ -11535,6 +11536,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Hasˉmemoryˉsplit: bool = false;
     var Hasˉvectorˉappend: bool = false;
     var Hasˉvectorˉgrow: bool = false;
+    var Hasˉclosureˉenvironment: bool = false;
     var Operationˉindex: u32 = 0u32;
     while Operationˉindex < Build.Operations {
         let Headerˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
@@ -11550,11 +11552,18 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
         if Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_GROW_RESERVED {
             Hasˉvectorˉgrow = true;
         }
+        if Headerˉoperation == WIR_OPERATION_CLOSURE_CREATE {
+            Hasˉclosureˉenvironment = true;
+        }
         Operationˉindex = Operationˉindex + 1u32;
     }
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    if Functionˉtypeˉinstances > 0u32 && Instances > 0u32 {
+    if Hasˉclosureˉenvironment && Instances > 0u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(20u32));
+    } else if Hasˉclosureˉenvironment {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(19u32));
+    } else if Functionˉtypeˉinstances > 0u32 && Instances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(18u32));
     } else if Functionˉtypeˉinstances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(17u32));

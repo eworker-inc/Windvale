@@ -369,7 +369,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if (Moduleˉminor < 21u32 || Moduleˉminor > 30u32) ||
+                if Moduleˉminor < 21u32 || Moduleˉminor > 28u32 ||
                     Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
                     Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
                     return Invalidˉfunctionˉdirectory(Module);
@@ -377,7 +377,7 @@ fn Readˉfunctionˉdirectory(
                 Mainˉhasˉmemoryˉbudget = true;
             }
             if Shapeˉkind == 34u32 {
-                if (Moduleˉminor != 29u32 && Moduleˉminor != 30u32) ||
+                if Moduleˉminor < 29u32 ||
                     Functionˉindex != Mainˉindex || Requestˉmajor != 5u32 ||
                     Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                     Mainˉhasˉsourceˉfile {
@@ -475,11 +475,11 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 30u32) ||
+                    ((Moduleˉminor < 23u32 || Moduleˉminor > 28u32) ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget)) ||
                 (Shapeˉkind == 34u32 &&
-                    ((Moduleˉminor != 29u32 && Moduleˉminor != 30u32) ||
+                    (Moduleˉminor < 29u32 ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉsourceˉfile)) {
                 return Invalidˉfunctionˉdirectory(Module);
@@ -3980,15 +3980,13 @@ fn Executeˉcollection(
         );
         let Takenˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
         let Takenˉisˉaggregate: bool = Takenˉminor >= 28u32 &&
-            Takenˉminor <= 30u32 &&
             (Takenˉshapeˉkind == 7u32 || Takenˉshapeˉkind == 11u32 ||
                 Takenˉshapeˉkind == 22u32);
-        let Takenˉisˉsourceˉfile: bool = Takenˉminor == 29u32 &&
+        let Takenˉisˉsourceˉfile: bool = Takenˉminor >= 29u32 &&
             Takenˉshapeˉkind == 34u32;
         if Takenˉshapeˉkind != 23u32 && !Takenˉisˉaggregate &&
             !Takenˉisˉsourceˉfile &&
-            ((Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) > 30u32) ||
+            (Bytesˉreadˉu16ˉlittle(Module, 6u32) < 23u32 ||
                 (Takenˉshapeˉkind != 25u32 &&
                     Takenˉshapeˉkind != 11u32)) {
             return Invalid;
@@ -4486,7 +4484,6 @@ fn Executeˉaggregate(
         let Fieldˉrequiresˉretain: bool =
             Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 ||
             (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 30u32 &&
                 Selectedˉfieldˉkind == 23u32 &&
                 Payloadˉlength != 153u32);
         if Fieldˉrequiresˉretain {
@@ -4597,7 +4594,6 @@ fn Executeˉaggregate(
         if Sectionˉkind == 0u32 {
             if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 ||
                 (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
-                    Bytesˉreadˉu16ˉlittle(Module, 6u32) <= 30u32 &&
                     Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
                     Retainˉdescriptor(
@@ -4751,8 +4747,7 @@ fn Executeˉextended(
     var Mainˉfound: bool = false;
 
     if Payloadˉlength == 210u32 {
-        if (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 29u32 &&
-            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 30u32) ||
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) < 29u32 ||
             !Mainˉhasˉsourceˉfile || Functionˉindex != Mainˉindex ||
             Sourceˉproviderˉgeneration == 0u32 {
             return Invalid;
@@ -5463,6 +5458,87 @@ fn Initializeˉsourceˉfileˉlocals(
     );
 }
 
+record Closureˉcreation {
+    Valid: bool;
+    Stack: bytes;
+    Consumed: u32;
+    Environments: bytes;
+}
+
+fn Executeˉclosureˉcreation(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Functionˉcount: u32,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉenvironments: bytes,
+    Createdˉenvironments: u32,
+    Functionˉframeˉmetadata: bytes
+) -> Closureˉcreation {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Closureˉcreation = Closureˉcreation(
+        false, Empty, 0u32, Empty
+    );
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Callableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 5u32
+    );
+    let Captures: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 9u32);
+    if Target >= Functionˉcount || Callableˉtype >= Typeˉcount ||
+        Createdˉenvironments >= 1024u32 ||
+        Captures < 1u32 || Captures > 64u32 ||
+        Bytesˉlength(Initialˉstack) / 8u32 < Captures {
+        return Invalid;
+    }
+    let Descriptor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets, Callableˉtype * 4u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Descriptor)) != 8u32 {
+        return Invalid;
+    }
+    var Descriptorˉcursor: u32 = Descriptor + 2u32;
+    Descriptorˉcursor = Descriptorˉcursor +
+        Callableˉshapeˉwidth(Module, Descriptorˉcursor);
+    let Publicˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Descriptorˉcursor
+    );
+    if Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Target * 8u32
+        ) != Captures + Publicˉparameters {
+        return Invalid;
+    }
+    let Environmentˉbytes: u32 = 12u32 + Captures * 8u32;
+    if Bytesˉlength(Initialˉenvironments) >
+            536576u32 - Environmentˉbytes {
+        return Invalid;
+    }
+    let Environmentˉoffset: u32 = Bytesˉlength(Initialˉenvironments);
+    let Captureˉoffset: u32 = Bytesˉlength(Initialˉstack) - Captures * 8u32;
+    var Environment: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Target),
+        Bytesˉfromˉu32ˉlittle(Callableˉtype)
+    );
+    Environment = Bytesˉconcat(
+        Environment, Bytesˉfromˉu32ˉlittle(Captures)
+    );
+    Environment = Bytesˉconcat(
+        Environment,
+        Bytesˉslice(Initialˉstack, Captureˉoffset, Captures * 8u32)
+    );
+    let Environments: bytes = Bytesˉconcat(
+        Initialˉenvironments, Environment
+    );
+    let Stack: bytes = Bytesˉconcat(
+        Bytesˉslice(Initialˉstack, 0u32, Captureˉoffset),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(2147483648u32 + Environmentˉoffset),
+            Bytesˉfromˉu32ˉlittle(Callableˉtype + 1u32)
+        )
+    );
+    return Closureˉcreation(true, Stack, Captures, Environments);
+}
+
 record Callˉexecution {
     Valid: bool;
     Handled: bool;
@@ -5489,6 +5565,7 @@ fn Executeˉcall(
     Payload: u32,
     Opcode: u32,
     Initialˉstack: bytes,
+    Initialˉenvironments: bytes,
     Functionˉframeˉmetadata: bytes,
     Functionˉcodeˉoffsets: bytes,
     Functionˉcodeˉlengths: bytes,
@@ -5558,6 +5635,8 @@ fn Executeˉcall(
     var Parameters: u32 = 0u32;
     var Prefixˉlength: u32 = 0u32;
     var Consumed: u32 = 0u32;
+    var Capturedˉparameters: u32 = 0u32;
+    var Environmentˉcaptures: u32 = 0u32;
     if Opcode == 64u32 {
         Target = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
         if Target >= Functionˉcount { return Invalid; }
@@ -5595,15 +5674,44 @@ fn Executeˉcall(
         }
         Prefixˉlength = Bytesˉlength(Initialˉstack) -
             (Parameters + 1u32) * 8u32;
-        Target = Bytesˉreadˉu32ˉlittle(
+        let Callableˉvalue: u32 = Bytesˉreadˉu32ˉlittle(
             Initialˉstack, Prefixˉlength
         );
         if Bytesˉreadˉu32ˉlittle(
                 Initialˉstack, Prefixˉlength + 4u32
-            ) != Callableˉtype + 1u32 || Target >= Functionˉcount ||
-            Bytesˉreadˉu32ˉlittle(
+            ) != Callableˉtype + 1u32 {
+            return Invalid;
+        }
+        if Callableˉvalue >= 2147483648u32 {
+            let Environmentˉoffset: u32 =
+                Callableˉvalue - 2147483648u32;
+            if Environmentˉoffset > Bytesˉlength(Initialˉenvironments) ||
+                Bytesˉlength(Initialˉenvironments) - Environmentˉoffset < 12u32 {
+                return Invalid;
+            }
+            Target = Bytesˉreadˉu32ˉlittle(
+                Initialˉenvironments, Environmentˉoffset
+            );
+            if Bytesˉreadˉu32ˉlittle(
+                    Initialˉenvironments, Environmentˉoffset + 4u32
+                ) != Callableˉtype {
+                return Invalid;
+            }
+            Capturedˉparameters = Bytesˉreadˉu32ˉlittle(
+                Initialˉenvironments, Environmentˉoffset + 8u32
+            );
+            if Capturedˉparameters < 1u32 || Capturedˉparameters > 64u32 ||
+                Bytesˉlength(Initialˉenvironments) - Environmentˉoffset - 12u32 <
+                    Capturedˉparameters * 8u32 {
+                return Invalid;
+            }
+            Environmentˉcaptures = Environmentˉoffset + 12u32;
+        } else {
+            Target = Callableˉvalue;
+        }
+        if Target >= Functionˉcount || Bytesˉreadˉu32ˉlittle(
                 Functionˉframeˉmetadata, Target * 8u32
-            ) != Parameters {
+            ) != Parameters + Capturedˉparameters {
             return Invalid;
         }
         Consumed = Parameters + 1u32;
@@ -5625,7 +5733,7 @@ fn Executeˉcall(
         let Stackˉlength: u32 = Bytesˉlength(Stack);
         let Value: bytes = Bytesˉslice(Stack, Stackˉlength - 8u32, 8u32);
         Stack = Bytesˉslice(Stack, 0u32, Stackˉlength - 8u32);
-        let Localˉoffset: u32 = Argument * 8u32;
+        let Localˉoffset: u32 = (Capturedˉparameters + Argument) * 8u32;
         Locals = Bytesˉconcat(
             Bytesˉconcat(
                 Bytesˉslice(Locals, 0u32, Localˉoffset), Value
@@ -5635,6 +5743,26 @@ fn Executeˉcall(
                 Functionˉcursor - 8u32 - Localˉoffset
             )
         );
+    }
+    var Capture: u32 = 0u32;
+    while Capture < Capturedˉparameters {
+        let Captureˉlocalˉoffset: u32 = Capture * 8u32;
+        let Captureˉvalue: bytes = Bytesˉslice(
+            Initialˉenvironments,
+            Environmentˉcaptures + Capture * 8u32,
+            8u32
+        );
+        Locals = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Locals, 0u32, Captureˉlocalˉoffset),
+                Captureˉvalue
+            ),
+            Bytesˉslice(
+                Locals, Captureˉlocalˉoffset + 8u32,
+                Functionˉcursor - 8u32 - Captureˉlocalˉoffset
+            )
+        );
+        Capture = Capture + 1u32;
     }
     if Opcode == 212u32 && (Bytesˉlength(Stack) < 8u32 ||
         Bytesˉlength(Stack) - 8u32 != Prefixˉlength) {
@@ -5773,6 +5901,8 @@ export fn Main(Request: bytes) -> bytes {
         return Invalid;
     }
     var Stack: bytes = Invalid;
+    var Closureˉenvironments: bytes = Invalid;
+    var Closureˉenvironmentˉcount: u32 = 0u32;
     // Keep descriptor identity separate from cell bits so pop never treats a
     // scalar with an offset/length-like value as heap ownership.
     var Stackˉdescriptorˉflagsˉlow: u32 = 0u32;
@@ -6150,11 +6280,29 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
+        if Payloadˉlength == 213u32 {
+            let Closure: Closureˉcreation = Executeˉclosureˉcreation(
+                Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+                Payload, Stack, Closureˉenvironments,
+                Closureˉenvironmentˉcount,
+                Functionˉframeˉmetadata
+            );
+            if !Closure.Valid { return Invalid; }
+            Stack = Closure.Stack;
+            Stackˉconsumed = Closure.Consumed;
+            Stackˉproduced = true;
+            Stackˉproducedˉkind = 0u32;
+            Closureˉenvironments = Closure.Environments;
+            Closureˉenvironmentˉcount = Closureˉenvironmentˉcount + 1u32;
+            Aggregateˉinstructions = Aggregateˉinstructions + 13u32;
+            Mainˉfound = true;
+        }
+
         if Payloadˉlength == 64u32 || Payloadˉlength == 211u32 ||
             Payloadˉlength == 212u32 {
             let Call: Callˉexecution = Executeˉcall(
                 Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
-                Payload, Payloadˉlength, Stack,
+                Payload, Payloadˉlength, Stack, Closureˉenvironments,
                 Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
                 Functionˉcodeˉlengths, Aggregateˉinstructions,
                 Functionˉindex, Locals, Frames, Zeroˉlocals,
@@ -6407,7 +6555,7 @@ export fn Main(Request: bytes) -> bytes {
                     Allocationˉleases
                 )
             );
-            if Moduleˉminor >= 28u32 && Moduleˉminor <= 30u32 {
+            if Moduleˉminor >= 28u32 {
                 let Returnˉcollection: Aggregateˉcollection =
                     Returningˉaggregateˉcollection(
                         Module, Typeˉoffsets, Records, Recordˉmetadata,

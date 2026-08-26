@@ -3414,6 +3414,7 @@ $NativeCases = @(
             'Specifications/Windvale-Language-1.0-Foundation-Registry.md',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0815-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
+            'Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
@@ -3688,7 +3689,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5480 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5491 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

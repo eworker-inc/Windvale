@@ -160,7 +160,7 @@ changes require semantic review.
 | Foundation collections and arenas | Libraries, allocation runtime, optional intrinsics | Only for justified bulk primitives or verified handles. |
 | Checked slices, byte views, strict slice decode, and decimal byte formatting | Foundation collections/bytes/text, ownership analysis, optional intrinsics | Ordinary borrow and builder lowering; no new opcode by default. |
 | Option, Result, and `try` | Foundation identity, parser, type checker, WIR lowering | Prefer existing variant and branch operations. |
-| Function values and closures | WVCF/WVIC catalog, WVIR, WVB 1.30 verifier and scalar runtime; closure environment and native ABI remain | Named noncapturing empty-effect function values execute through exact structural descriptors; captures remain explicit later work. |
+| Function values and closures | WVCF/WVIC catalog, WVIR, WVB 1.30/1.31 verifier and scalar runtime; source closure-body lowering and native ABI remain | Named functions and copied plain-capture environments execute through exact structural descriptors; move/borrow captures remain explicit later work. |
 | Application entry and root binding | Package/build plan, launcher profile, capability catalog, runtime resource domain | Entry selection remains metadata; no special source function or ambient allocator. |
 | Resources and `using` | Ownership analysis, cleanup lowering, capability runtime | May need owned instance and generation representation. |
 | Opaque operation contexts and exact stream progress | Hosted operation/network providers, launcher, capability runtime, generation verifier | Prefer ordinary opaque values and capability calls; no language opcode. |
@@ -689,13 +689,13 @@ wait for those semantics.
 
 ## Active Slice 6 callable checkpoint
 
-Decisions 0852 through 0856 now connect exact structural function types,
+Decisions 0852 through 0857 now connect exact structural function types,
 explicit capture validation, bounded transitive effect analysis, concrete
-callable cataloging, WVIR function references/indirect calls, WVB 1.30
-verification, and source-built scalar execution. The executable subset is
-deliberately exact: named non-generic functions, no captures, explicit empty
-effects, no async/unsafe flag, by-value parameters, and a value result other
-than unit or never.
+callable cataloging, WVIR function references/indirect calls/plain-capture
+environment creation, WVB 1.30/1.31 verification, and source-built scalar
+execution. The executable subset is deliberately exact: synchronous safe
+nongeneric targets, explicit empty effects, by-value parameters and results,
+and either no captures or a copied prefix of inline scalars and enums.
 
 The deterministic 400-byte callable fixture has SHA-256
 `30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf`
@@ -703,10 +703,21 @@ and returns `42` in 24 guest instructions. The focused owner passes 38 cases;
 five byte mutations prove that the verifier rejects version, target, reference,
 call, and descriptor mismatches.
 
-Slice 6 is not yet closed. It still owns closure-environment lowering, captured
-move invalidation, borrow lifetime and escape proof, effectful and flag-bearing
-callables, and the selected native callable ABI. The WVB 1.30 checkpoint does
-not imply those later semantics or direct-native/browser/OS execution.
+The deterministic 325-byte closure-environment oracle has SHA-256
+`397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2`.
+It captures `40`, supplies public argument `2`, and returns `42` through WVB
+1.31 `D5` followed by the existing `D4`. Nine mutations prove version, target,
+type, count, capture-shape, reference-backed-capture, indirect-call, and
+descriptor rejection. The runtime creates at most 1,024 environments and
+retains at most 536,576 bytes (524 KiB) of immutable environment records for
+one execution. The combined focused owner passes 49 cases across eight
+deterministic evidence modules.
+
+Slice 6 is not yet closed. It still owns source closure-body lowering into the
+new environment operation, captured move invalidation, borrow lifetime and
+escape proof, effectful and flag-bearing callables, and the selected native
+callable ABI. The WVB 1.31 checkpoint does not imply those later semantics or
+direct-native/browser/OS execution.
 
 ## Removal checkpoint
 

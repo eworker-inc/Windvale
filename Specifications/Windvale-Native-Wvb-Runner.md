@@ -22,7 +22,7 @@ Project 1 semantics.
 
 The following table is the last promoted profile-5 runner candidate. The current
 source development checkpoint described below advances portable execution to
-exact noncapturing callable values through WVB 1.30 but has not repinned the paired
+plain-capture closure environments through WVB 1.31 but has not repinned the paired
 reconstruction inventory.
 
 | Artifact | Bytes | SHA-256 |
@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.30. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.31. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -243,6 +243,22 @@ value is not a host pointer and the cell layout is not a portable ABI promise.
 Call depth, instruction budget, local count, stack depth, and frame-storage
 bounds remain unchanged.
 
+WVB 1.31 adds opcode `D5`, which consumes 1 through 64 verified inline scalar
+or enum captures and publishes the same exact shape-`35` callable identity.
+The low cell word is tagged as an offset into a representation-private
+environment arena; the high word remains the callable Types index plus one.
+`D4` recognizes the tag, validates the stored target, type, capture count, and
+physical arity, copies the immutable capture prefix into callee locals, and
+then installs the public arguments through the ordinary frame path. Direct
+function references retain their WVB 1.30 representation.
+
+One invocation creates at most 1,024 environments and retains at most 536,576
+bytes (524 KiB) of environment records, each containing a target, callable
+type, capture count, and exact captured cells. The complete arena is discarded on invocation
+teardown. Text, bytes, aggregates,
+collections, callables, resource owners, and borrows cannot enter it, so this
+checkpoint adds no hidden tracing, reference counting, or lifetime behavior.
+
 The owned-call fixture is a deterministic 1,733-byte WVB 1.26 module at
 SHA-256
 `ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387`.
@@ -360,6 +376,24 @@ SHA-256
 This is focused Windows development evidence; independent Linux reproduction,
 the broader Qualification gate, and promoted-candidate repinning remain
 separate.
+
+The executable closure-environment oracle is deterministic 325-byte WVB 1.31
+at SHA-256
+`397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2`.
+It captures `i32` value `40`, supplies public argument `2`, returns `42`, and
+reports 11 guest instructions. The compiler-aligned verifier accepts the exact
+module and rejects nine version, target, type, count, capture-shape,
+reference-backed-capture, indirect-call, and descriptor mutations. This is a
+portable scalar-runtime checkpoint; source closure-body lowering, native
+callable ABI lowering, paired-host reconstruction, and candidate promotion
+remain separate gates. The current development runner WVB contains 167
+functions and 324,568 code bytes in 361,080 module bytes at SHA-256
+`3cbd89599025499f3d5147e50fc94a1de82ff15bc27d19d298087fed401b3acd`.
+Factoring closure creation out of the indirect-call path and removing repeated
+upper-version tests reduced the first 366,728-byte implementation without
+raising the unchanged 64-MiB native lowering plan limit. Each bounded closure
+record is also assembled before one arena append, so a creation does not copy
+the complete retained arena once per header field.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

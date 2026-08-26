@@ -20,6 +20,10 @@ const CALLABLE_WVB_BASE64 =
     'V1ZCMQEAHgAHAAAAAQAAAGAAAAABLAAAAExhbmd1YWdly4lvbmXLiWNhbGxhYmxly4lpbmRpcmVjdMuJZXhlY3V0aW9uAQECAwAAAAUAAABsaW51eAcAAAB3aW5kb3dzCAAAAHdpbmR2YWxlAAAAAAAAAAACAAAABAAAAAAAAAADAAAABAAAAAAAAAAEAAAAVwAAAAIAAAAIAAAAQWRky4lvbmUBAAAAAQEDAAAAAQEBAAAAACoAAAACAAAABAAAAE1haW4AAAAAAQUAAAAjAAAAACMAAAAAIwAAAAABASoAAABGAAAAAgAAAAUAAABwAAAABAAAAAAFAQAAAAEBAAAABQIAAAAEAQAAAAQCAAAAEAUDAAAABAMAAABR0wAAAAAAAAAABQEAAAAEAQAAAAUAAAAABAAAAAAFAgAAAAEpAAAABQMAAAAEAgAAAAQDAAAA1AAAAAAFBAAAAAQEAAAAUQYAAAARAAAAAQAAAAQAAABNYWluAQEAAAAHAAAADAAAAAEAAAAIAQEBAAAAAQ==';
 const CALLABLE_WVB_SHA256 =
     '30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf';
+const CLOSURE_WVB_BASE64 =
+    'V1ZCMQEAHwAHAAAAAQAAAGAAAAABLAAAAExhbmd1YWdly4lvbmXLiWNhbGxhYmxly4lpbmRpcmVjdMuJZXhlY3V0aW9uAQECAwAAAAUAAABsaW51eAcAAAB3aW5kb3dzCAAAAHdpbmR2YWxlAAAAAAAAAAACAAAABAAAAAAAAAADAAAABAAAAAAAAAAEAAAASQAAAAIAAAAIAAAAQWRky4lvbmUCAAAAAQEBAAAAAAAAAAAMAAAAAgAAAAQAAABNYWluAAAAAAEBAAAAIwAAAAAMAAAAJwAAAAIAAAAFAAAAMwAAAAQAAAAABAEAAAAQUQEoAAAA1QAAAAAAAAAAAQAAAAUAAAAABAAAAAABAgAAANQAAAAAUQYAAAARAAAAAQAAAAQAAABNYWluAQEAAAAHAAAADAAAAAEAAAAIAQEBAAAAAQ==';
+const CLOSURE_WVB_SHA256 =
+    '397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2';
 const TESTS = [
     {
         Name: 'named-arguments',
@@ -235,6 +239,26 @@ function Callableˉwvbˉlayout(Module) {
     };
 }
 
+function Closureˉwvbˉlayout(Module) {
+    if (Module.length !== 325 ||
+        createHash('sha256').update(Module).digest('hex') !==
+            CLOSURE_WVB_SHA256 ||
+        Module.toString('ascii', 0, 4) !== 'WVB1' ||
+        Module.readUInt16LE(4) !== 1 || Module.readUInt16LE(6) !== 31 ||
+        Module.readUInt32LE(8) !== 7 || Module[246] !== 213 ||
+        Module[274] !== 212 || Module[317] !== 8) {
+        Reject('The closure WVB oracle identity is invalid.');
+    }
+    return {
+        Captureˉparameterˉshape: 168,
+        Closureˉtarget: 247,
+        Closureˉtype: 251,
+        Captureˉcount: 255,
+        Callˉtype: 275,
+        Callableˉkind: 317
+    };
+}
+
 async function Requireˉverification(Verifier, Module, Valid, Name) {
     const Result = await Runˉcommand(Verifier, [Module]);
     if (Result.Exceeded) {
@@ -264,6 +288,21 @@ async function Requireˉcallableˉexecution(Runner, Module) {
         Output !== 'Result: 42\nInstructions: 24\n') {
         Reject(
             `The callable execution failed with exit ${Result.Code}.\n` +
+            Result.Error.toString('utf8') + Output
+        );
+    }
+}
+
+async function Requireˉclosureˉexecution(Runner, Module) {
+    const Result = await Runˉcommand(Runner, [Module, '--report-steps']);
+    if (Result.Exceeded) {
+        Reject('The closure execution exceeded the output limit.');
+    }
+    const Output = Result.Output.toString('utf8').replaceAll('\r\n', '\n');
+    if (Result.Code !== 0 || Result.Error.length !== 0 ||
+        Output !== 'Result: 42\nInstructions: 11\n') {
+        Reject(
+            `The closure execution failed with exit ${Result.Code}.\n` +
             Result.Error.toString('utf8') + Output
         );
     }
@@ -363,6 +402,15 @@ try {
         Bytes: Callableˉbytes.length,
         Digest: CALLABLE_WVB_SHA256
     });
+    const Closureˉmodule = join(Work, 'closure-environment-execution.wvb');
+    const Closureˉbytes = Buffer.from(CLOSURE_WVB_BASE64, 'base64');
+    const Closureˉlayout = Closureˉwvbˉlayout(Closureˉbytes);
+    await writeFile(Closureˉmodule, Closureˉbytes, { flag: 'wx' });
+    Evidence.push({
+        Name: 'closure-environment-execution',
+        Bytes: Closureˉbytes.length,
+        Digest: CLOSURE_WVB_SHA256
+    });
 
     const Hostedˉpackager = join(
         SCRIPT_DIRECTORY, `Package-Hosted-Wvb.${Extension}`
@@ -402,7 +450,7 @@ try {
     Item += 1;
     process.stdout.write(
         `START language 1 callable semantics phase=verify ` +
-        `item=${Item}/${Totalˉitems} cases=6\n`
+        `item=${Item}/${Totalˉitems} cases=16\n`
     );
     await Requireˉverification(
         Verifier, Callableˉmodule, true, 'callable WVB oracle'
@@ -426,6 +474,45 @@ try {
     ];
     for (const [Name, Mutate] of Malformedˉcases) {
         const Candidate = Buffer.from(Callableˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = join(Work, `${Name}.wvb`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉverification(Verifier, Candidateˉpath, false, Name);
+    }
+    await Requireˉverification(
+        Verifier, Closureˉmodule, true, 'closure WVB oracle'
+    );
+    const Malformedˉclosureˉcases = [
+        ['closure-version-downgrade', Bytes => {
+            Bytes.writeUInt16LE(30, 6);
+        }],
+        ['closure-target-signature', Bytes => {
+            Bytes.writeUInt32LE(1, Closureˉlayout.Closureˉtarget);
+        }],
+        ['closure-reference-type', Bytes => {
+            Bytes.writeUInt32LE(1, Closureˉlayout.Closureˉtype);
+        }],
+        ['closure-zero-captures', Bytes => {
+            Bytes.writeUInt32LE(0, Closureˉlayout.Captureˉcount);
+        }],
+        ['closure-capture-limit', Bytes => {
+            Bytes.writeUInt32LE(65, Closureˉlayout.Captureˉcount);
+        }],
+        ['closure-capture-shape', Bytes => {
+            Bytes[Closureˉlayout.Captureˉparameterˉshape] = 2;
+        }],
+        ['closure-reference-backed-capture', Bytes => {
+            Bytes[Closureˉlayout.Captureˉparameterˉshape] = 3;
+        }],
+        ['closure-invocation-type', Bytes => {
+            Bytes.writeUInt32LE(1, Closureˉlayout.Callˉtype);
+        }],
+        ['closure-type-kind', Bytes => {
+            Bytes[Closureˉlayout.Callableˉkind] = 7;
+        }]
+    ];
+    for (const [Name, Mutate] of Malformedˉclosureˉcases) {
+        const Candidate = Buffer.from(Closureˉbytes);
         Mutate(Candidate);
         const Candidateˉpath = join(Work, `${Name}.wvb`);
         await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
@@ -460,10 +547,11 @@ try {
     Item += 1;
     process.stdout.write(
         `START language 1 callable semantics phase=execute ` +
-        `item=${Item}/${Totalˉitems} cases=1\n`
+        `item=${Item}/${Totalˉitems} cases=2\n`
     );
     await Requireˉcallableˉexecution(Runner, Callableˉmodule);
-    Completedˉcases += 7;
+    await Requireˉclosureˉexecution(Runner, Closureˉmodule);
+    Completedˉcases += 18;
     Passed = true;
 } finally {
     await Removeˉwork(Work, Temporaryˉroot);

@@ -12,10 +12,12 @@ The catalog format, immutable admission, accessors, and independent validation
 are implemented and execute through the maintained native path. The post-effect
 [WVCF catalog](Compiler-Source-Callable-Types.md) maps each concrete named
 source function to one exact WVFT instance or an explicit unsupported
-disposition. WVIR 1.17/1.18 and WVB 1.30 now execute the closed noncapturing,
-effect-free, by-value subset. Capturing closures, borrowed callable signatures,
+disposition. WVIR 1.17/1.18 and WVB 1.30 execute the closed noncapturing,
+effect-free, by-value subset. WVIR 1.19/1.20 and WVB 1.31 additionally execute
+one bounded environment of copied inline scalars and enums. Source closure-body
+lowering, move and borrow capture lifetimes, borrowed callable signatures,
 nonempty effects, flags, escape ownership, and native callable ABI lowering
-remain separate work; this bounded subset does not imply those consumers.
+remain separate work; these bounded subsets do not imply those consumers.
 
 Every integer is unsigned little-endian. Lengths are exact. Admission returns a
 replacement catalog and never publishes a partially appended entry.
@@ -127,6 +129,6 @@ WVFT is neither a pointer, function address, symbol spelling, ABI record, WVB
 type entry, nor closure environment. It provides stable compiler reasoning
 only. The source compiler uses it to prove assignments, arguments, returns,
 effect compatibility, and indirect-call signatures, then emits the separately
-specified WVB 1.30 portable representation. The verifier reconstructs the exact
+specified WVB 1.30/1.31 portable representation. The verifier reconstructs the exact
 target signature and typed stack independently. Native addresses remain backend
 details and can never become portable source semantics.

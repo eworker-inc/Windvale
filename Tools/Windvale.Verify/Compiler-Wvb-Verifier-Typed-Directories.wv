@@ -98,7 +98,7 @@ export fn Iˉcontrolˉdirectory(
             Opcode == 208u32 || Opcode == 211u32 {
             Width = 9u32;
         }
-        if Opcode == 209u32 { Width = 13u32; }
+        if Opcode == 209u32 || Opcode == 213u32 { Width = 13u32; }
         if Opcode == 192u32 {
             Width = 3u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(

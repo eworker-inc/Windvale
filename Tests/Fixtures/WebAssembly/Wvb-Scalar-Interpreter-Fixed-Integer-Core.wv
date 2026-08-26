@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 30u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 31u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -35,28 +35,28 @@ export fn Scanˉfixedˉinteger(
 
 export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Kind >= 1u32 && Kind <= 10u32 { return true; }
-    if Minor >= 11u32 && Minor <= 30u32 && Kind == 11u32 { return true; }
-    if Minor >= 12u32 && Minor <= 30u32 && Kind >= 14u32 && Kind <= 16u32 {
+    if Minor >= 11u32 && Kind == 11u32 { return true; }
+    if Minor >= 12u32 && Kind >= 14u32 && Kind <= 16u32 {
         return true;
     }
-    if Minor >= 13u32 && Minor <= 30u32 && Kind == 17u32 { return true; }
-    if Minor >= 14u32 && Minor <= 30u32 && Kind >= 18u32 && Kind <= 19u32 {
+    if Minor >= 13u32 && Kind == 17u32 { return true; }
+    if Minor >= 14u32 && Kind >= 18u32 && Kind <= 19u32 {
         return true;
     }
-    if Minor >= 15u32 && Minor <= 30u32 && Kind >= 20u32 && Kind <= 21u32 {
+    if Minor >= 15u32 && Kind >= 20u32 && Kind <= 21u32 {
         return true;
     }
-    if Minor >= 17u32 && Minor <= 30u32 && Kind == 22u32 { return true; }
-    if Minor >= 18u32 && Minor <= 30u32 &&
+    if Minor >= 17u32 && Kind == 22u32 { return true; }
+    if Minor >= 18u32 &&
         (Kind == 23u32 || Kind == 24u32) {
         return true;
     }
     if Minor >= 26u32 && (Kind == 26u32 || Kind == 27u32) { return true; }
-    if Minor >= 28u32 && Minor <= 30u32 &&
+    if Minor >= 28u32 &&
         Kind >= 28u32 && Kind <= 30u32 { return true; }
-    if (Minor == 29u32 || Minor == 30u32) && Kind == 34u32 { return true; }
-    if Minor == 30u32 && Kind == 35u32 { return true; }
-    return Minor >= 21u32 && Minor <= 30u32 && Kind == 25u32;
+    if Minor >= 29u32 && Kind == 34u32 { return true; }
+    if Minor >= 30u32 && Kind == 35u32 { return true; }
+    return Minor >= 21u32 && Minor <= 28u32 && Kind == 25u32;
 }
 
 export fn Scanˉfunction(
@@ -66,6 +66,7 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
+    if Minor < 11u32 || Minor > 31u32 { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
     while Cursor < Length {
@@ -140,74 +141,79 @@ export fn Scanˉfunction(
             Supported = true;
         }
         if Opcode == 195u32 {
-            if Minor < 15u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 15u32 { return 0u32; }
             Supported = true;
         }
         if Opcode == 196u32 {
-            if Minor < 16u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 16u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 197u32 {
-            if Minor < 17u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 17u32 { return 0u32; }
             Width = 5u32;
             Supported = true;
         }
         if Opcode == 198u32 {
-            if Minor < 17u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 17u32 { return 0u32; }
             Supported = true;
         }
         if Opcode == 199u32 || Opcode == 200u32 ||
             (Opcode >= 202u32 && Opcode <= 204u32) {
-            if Minor < 19u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 19u32 { return 0u32; }
             Width = 5u32;
             Supported = true;
         }
         if Opcode == 201u32 {
-            if Minor < 19u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 19u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 205u32 {
-            if Minor < 20u32 || Minor > 30u32 {
+            if Minor < 20u32 {
                 return 0u32;
             }
             Width = 5u32;
             Supported = true;
         }
         if Opcode == 206u32 {
-            if Minor < 23u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 23u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 207u32 {
-            if Minor < 24u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 24u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 208u32 {
-            if Minor < 25u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 25u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 209u32 {
-            if Minor < 27u32 || Minor > 30u32 { return 0u32; }
+            if Minor < 27u32 { return 0u32; }
             Width = 13u32;
             Supported = true;
         }
         if Opcode == 210u32 {
-            if Minor != 29u32 && Minor != 30u32 { return 0u32; }
+            if Minor < 29u32 { return 0u32; }
             Width = 5u32;
             Supported = true;
         }
         if Opcode == 211u32 {
-            if Minor != 30u32 { return 0u32; }
+            if Minor < 30u32 { return 0u32; }
             Width = 9u32;
             Supported = true;
         }
         if Opcode == 212u32 {
-            if Minor != 30u32 { return 0u32; }
+            if Minor < 30u32 { return 0u32; }
             Width = 5u32;
+            Supported = true;
+        }
+        if Opcode == 213u32 {
+            if Minor < 31u32 { return 0u32; }
+            Width = 13u32;
             Supported = true;
         }
         if !Supported || Width > Length - Cursor { return 0u32; }

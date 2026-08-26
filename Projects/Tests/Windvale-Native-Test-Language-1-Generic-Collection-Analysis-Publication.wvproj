@@ -15,6 +15,7 @@ source "Compiler/Windvale/Source-Set-Core.wv"
 source "Compiler/Windvale/Source-Symbols-Core.wv"
 source "Compiler/Windvale/Source-Wir-Core.wv"
 source "Compiler/Windvale/Source-Wir-Checked-Core.wv"
+source "Compiler/Windvale/Source-Wir-Consumer-Core.wv"
 source "Compiler/Windvale/Source-Wir-Validation-Core.wv"
 source "Foundation/Byte-Construction.wv"
 emit wvb

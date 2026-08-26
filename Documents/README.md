@@ -273,6 +273,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [AI-led research and review evidence](Decisions/0849-Define-AI-Led-Research-And-Review-Evidence.md) — exact division of AI work, human stewardship, and machine, AI, human, reproduction, and external review claims
 - [Rights-limited source-file transfer](Decisions/0851-Transfer-A-Rights-Limited-Source-File-As-Wvb-1.29.md) — completed Language 1.0 Slice 5 resource transfer, WVB 1.29 confinement, and bounded launcher snapshot
 - [Executable noncapturing callable values](Decisions/0856-Execute-Noncapturing-Callable-Values-As-Wvb-1.30.md) — connects exact structural callable evidence to WVIR 1.17/1.18, WVB 1.30 verification, and bounded scalar execution
+- [Executable plain-capture closure environments](Decisions/0857-Execute-Plain-Capture-Closure-Environments-As-Wvb-1.31.md) — adds WVIR 1.19/1.20 and WVB 1.31 immutable scalar/enum capture environments under exact signature and 4 MiB execution bounds
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations

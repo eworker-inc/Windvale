@@ -120,12 +120,12 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Admitter.wvb") do echo INFO  language 1 admitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Admitter.wvb" SHA256
-for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83055" goto :cleanup
-certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04" >nul || goto :cleanup
+for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83137" goto :cleanup
+certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"fb6031540a05fe2429926d6003d27889a32027edb95aa197dc03c85e2e922163" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1192526" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"175851de53aa06ce600e4478ddf36a2a3f6eb666c1a000f7a84e00747d30e543" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1261208" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"c3feb0dfcf543c8f6c4286515d81cbb764ae71847d90a36bdb1ee45eb665fbba" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -206,8 +206,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1149175" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"fdbf640bb0677b1b4e05058ffef6c6b435460507f940b7794b65a53c7a928fa9" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1248392" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"0bbaa77391ecbe8b0168d12055245a9bbf18799da6b553ff7387cc6954a0dacc" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -353,6 +353,7 @@ echo PASS  language 1 front door step=borrow-call-semantics item=direct-rejectio
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Sequence-Read-Through.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Borrow-Sequence-Admitted.wvss" ^
     >"%Work%\Borrow-Sequence-Admission.out" ^
     2>"%Work%\Borrow-Sequence-Admission.err" || goto :cleanup
@@ -370,6 +371,7 @@ echo PASS  language 1 front door step=borrow-call-semantics item=sequence owners
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Vector-Owned-Read-Through.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Borrow-Vector-Admitted.wvss" ^
     >"%Work%\Borrow-Vector-Admission.out" ^
     2>"%Work%\Borrow-Vector-Admission.err" || goto :cleanup
@@ -558,36 +560,42 @@ node "%Native%\Verify-Language-1.0-Vector-Construct-Reserved-Wir.mjs" ^
     "%Work%\Vector-Construct-Reserved.wvlb" ^
     "%Work%\Vector-Construct-Reserved.wvir" ^
     "%Work%\Vector-Construct-Reserved-Malformed" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=source-rejection case=inferred
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Inferred.wv" ^
     "Vector-Construct-Reserved-Inferred" "Genericˉresolution" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-maximum
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Maximum.wv" ^
     "Vector-Construct-Reserved-Wrong-Maximum" "Invalidˉargument" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-result
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Result.wv" ^
     "Vector-Construct-Reserved-Wrong-Result" "Genericˉresolution" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-budget
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Budget.wv" ^
     "Vector-Construct-Reserved-Wrong-Budget" "Invalidˉargument" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-allocation-failure
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wrong-Allocation-Failure.wv" ^
     "Vector-Construct-Reserved-Wrong-Allocation-Failure" "Genericˉresolution" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
+echo START language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after
 "%Work%\Admitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
@@ -599,6 +607,7 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     >"%Work%\Vector-Construct-Reserved-Use-After-Admission.out" ^
     2>"%Work%\Vector-Construct-Reserved-Use-After-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Admission.err") do if not "%%~zF"=="0" goto :cleanup
+echo PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=admission
 "%Work%\Analyzer.exe" --admitted-source-set ^
     "%Work%\Vector-Construct-Reserved-Use-After-Admitted.wvss" ^
     "%Work%\Vector-Construct-Reserved-Use-After.wvss" ^
@@ -608,6 +617,7 @@ for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Admission.err") do if no
     >"%Work%\Vector-Construct-Reserved-Use-After-Analysis.out" ^
     2>"%Work%\Vector-Construct-Reserved-Use-After-Analysis.err" || goto :cleanup
 for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Analysis.err") do if not "%%~zF"=="0" goto :cleanup
+echo PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=analysis
 "%Work%\Emitter.exe" ^
     "%Work%\Vector-Construct-Reserved-Use-After.wvss" ^
     "%Work%\Vector-Construct-Reserved-Use-After.wvca" ^
@@ -616,11 +626,21 @@ for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Analysis.err") do if not
     "%Work%\Vector-Construct-Reserved-Use-After.wvb" ^
     >"%Work%\Vector-Construct-Reserved-Use-After-Emission.out" ^
     2>"%Work%\Vector-Construct-Reserved-Use-After-Emission.err"
-if not "%ERRORLEVEL%"=="1" goto :cleanup
+set "VectorUseAfterEmissionExit=%ERRORLEVEL%"
+echo INFO  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=emission exit=%VectorUseAfterEmissionExit%
+type "%Work%\Vector-Construct-Reserved-Use-After-Emission.err"
+if not "%VectorUseAfterEmissionExit%"=="1" goto :cleanup
 for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Emission.out") do if not "%%~zF"=="0" goto :cleanup
-findstr /x /c:"source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0" ^
-    "%Work%\Vector-Construct-Reserved-Use-After-Emission.err" >nul || goto :cleanup
+set "VectorUseAfterEmissionLine="
+set /a VectorUseAfterEmissionLines=0
+for /f "usebackq delims=" %%L in ("%Work%\Vector-Construct-Reserved-Use-After-Emission.err") do (
+    set "VectorUseAfterEmissionLine=%%L"
+    set /a VectorUseAfterEmissionLines+=1 >nul
+)
+if not "%VectorUseAfterEmissionLines%"=="1" goto :cleanup
+if not "%VectorUseAfterEmissionLine%"=="source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0" goto :cleanup
 if exist "%Work%\Vector-Construct-Reserved-Use-After.wvb" goto :cleanup
+echo PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=evidence
 echo PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.11 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
@@ -746,8 +766,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
     "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
 fc /b "%Work%\Generic-Wir-A.wvb" "%Work%\Generic-Wir-B.wvb" >nul || goto :cleanup
-for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1315395" goto :cleanup
-certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"1da34176e4e17f395fadccfff9fe4f7f5e346ec2c919658744915ca86b7d6c19" >nul || goto :cleanup
+for %%F in ("%Work%\Generic-Wir-A.wvb") do if not "%%~zF"=="1483465" goto :cleanup
+certutil -hashfile "%Work%\Generic-Wir-A.wvb" SHA256 | findstr /I /C:"9ecfb19b6521d21d0c9307df3b92e37f329ad46d9dff27584bfe715f7042f3e3" >nul || goto :cleanup
 for %%F in ("%Work%\Generic-Wir-A.wvb") do set "GenericWirWvbBytes=%%~zF"
 echo INFO  language 1 front door step=generic-wir-split wvb-bytes=%GenericWirWvbBytes% verification=pending-current-native
 set "FailureStep=compiler-minimum-a"
@@ -1267,6 +1287,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Fixed-Array-A.wvb" ^
     >"%Work%\Fixed-Array-A.out" 2>"%Work%\Fixed-Array-A.err" || goto :cleanup
 set "FailureStep=fixed-array-compile-b"
@@ -1275,6 +1296,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Fixed-Array-B.wvb" ^
     >"%Work%\Fixed-Array-B.out" 2>"%Work%\Fixed-Array-B.err" || goto :cleanup
 set "FailureStep=fixed-array-determinism"
@@ -1296,6 +1318,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Sequence-Wvb-Types.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Vector-Sequence-Types.wvb" ^
     >"%Work%\Vector-Sequence-Types.out" ^
     2>"%Work%\Vector-Sequence-Types.err" || goto :cleanup
@@ -1314,6 +1337,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Sequence-Read.wvb" ^
     >"%Work%\Sequence-Read.out" 2>"%Work%\Sequence-Read.err" || goto :cleanup
 for %%F in ("%Work%\Sequence-Read.err") do if not "%%~zF"=="0" goto :cleanup
@@ -1327,6 +1351,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Freeze-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Vector-Read-Freeze.wvb" ^
     >"%Work%\Vector-Read-Freeze.out" 2>"%Work%\Vector-Read-Freeze.err" || goto :cleanup
 for %%F in ("%Work%\Vector-Read-Freeze.err") do if not "%%~zF"=="0" goto :cleanup
@@ -1338,19 +1363,23 @@ set "FailureStep=sequence-reads-rejections"
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Wrong-Owner.wv" ^
     "Sequence-Read-Wrong-Owner" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Wrong-Index.wv" ^
     "Sequence-Read-Wrong-Index" "Invalidˉargument" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Unsupported-Element.wv" ^
     "Sequence-Read-Unsupported-Element" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Lookalike.wv" ^
     "Sequence-Read-Lookalike" "Invalidˉargument" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Lookalike-Module.wv" || goto :cleanup
 set "FailureStep=vector-reads-freeze-rejections"
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
@@ -1358,6 +1387,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.ex
     --source-profile "%SourceProfile%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Use-After.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Vector-Freeze-Use-After.wvb" ^
     >"%Work%\Vector-Freeze-Use-After.out" 2>"%Work%\Vector-Freeze-Use-After.err"
 if not errorlevel 1 goto :cleanup
@@ -1374,37 +1404,44 @@ echo PASS  language 1 front door step=vector-reads-freeze-rejections item=1/8 ca
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Wrong-Borrow.wv" ^
     "Vector-Freeze-Wrong-Borrow" "Invalidˉborrow" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=2/8 case=wrong-borrow
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Parameter.wv" ^
     "Vector-Read-Parameter" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=3/8 case=parameter
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Unsupported-Element.wv" ^
     "Vector-Read-Unsupported-Element" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=4/8 case=unsupported-element
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Wrong-Borrow.wv" ^
     "Vector-Read-Wrong-Borrow" "Invalidˉborrow" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=5/8 case=read-wrong-borrow
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Inferred-Result.wv" ^
     "Vector-Freeze-Inferred-Result" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=6/8 case=inferred-result
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Mismatched-Result.wv" ^
     "Vector-Freeze-Mismatched-Result" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=7/8 case=mismatched-result
 call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Mismatched-Argument.wv" ^
     "Vector-Freeze-Mismatched-Argument" "Invalidˉcollection" ^
-    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" || goto :cleanup
+    "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
+    "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" || goto :cleanup
 echo PASS  language 1 front door step=vector-reads-freeze-rejections item=8/8 case=mismatched-argument
 for %%F in ("%Work%\Vector-Sequence-Types.wvb") do set "VectorSequenceTypesWvbBytes=%%~zF"
 for %%F in ("%Work%\Sequence-Read.wvb") do set "SequenceReadWvbBytes=%%~zF"

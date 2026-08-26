@@ -15,8 +15,9 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    Vector-append extension, the WVB 1.26 owned-Vector-call extension, the
    WVB 1.27 reserved-Vector-growth extension, the WVB 1.28
    Vector-containing-aggregate ownership extension, the WVB 1.29
-   rights-limited source-file snapshot extension, and the WVB 1.30 exact
-   noncapturing-callable extension.
+   rights-limited source-file snapshot extension, the WVB 1.30 exact
+   noncapturing-callable extension, and the WVB 1.31 plain-capture closure
+   environment extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -71,6 +72,10 @@ WVB 1.30 adds exact first-class references to named noncapturing functions and
 typed indirect calls. Callable identity is structural and portable: it contains
 the module profile, result shape, and ordered parameter shapes, never a host
 address, source spelling, or native ABI layout.
+WVB 1.31 adds one bounded immutable closure environment for copied inline
+scalars and enums. The environment is created explicitly, remains private to
+the runtime, and prepends its captured values to the target's physical
+parameters when the existing typed indirect call executes.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -88,8 +93,9 @@ an exact Vector parameter. WVB 1.27 is selected when
 record, variant, or fixed array recursively contains an owned Vector. WVB 1.29
 is selected when the exact source-file entry, shape `34`, or `source.length`
 operation is present. WVB 1.30 is selected when a callable descriptor,
-shape `35`, `function.reference`, or `call.indirect` is present. A WVB
-1.30-capable reader accepts all twenty
+shape `35`, `function.reference`, or `call.indirect` is present without a
+closure environment. WVB 1.31 is selected when `closure.create` is present. A
+WVB 1.31-capable reader accepts all twenty-one
 versions and never admits an
 extension under an earlier header. The compiler-aligned verifier and the
 source-built native scalar runner implement that transition. Other native,
@@ -112,7 +118,7 @@ slices land.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 through 30
+u16      minor version: 11 through 31
 u32      section count: 7
 ```
 
@@ -256,7 +262,8 @@ begins with a launcher-owned root budget.
 WVB 1.29 instead requires exactly one exported
 `Main(Platformˉfile.Sourceˉfile) -> i32`; the launcher transfers one admitted
 immutable source snapshot into that parameter before the first instruction.
-WVB 1.30 uses the ordinary exported `Main() -> i32` entry unless it also carries
+WVB 1.30 and WVB 1.31 use the ordinary exported `Main() -> i32` entry unless
+either also carries
 the inherited shape-`34` source profile; when shape `34` is present, its entry
 and ownership confinement remain exact.
 Future native object formats must define an ASCII-safe external symbol mapping
@@ -270,7 +277,7 @@ repeat:
   u8     kind: 1 record, 2 i32-backed enum, 3 variant,
                4 fixed array, 5 Vector, 6 Sequence,
                7 u8-backed enum (WVB 1.22 and later),
-               8 callable descriptor (WVB 1.30)
+               8 callable descriptor (WVB 1.30 and WVB 1.31)
   if kind 1 through 7:
     string nominal type name
   if record:
@@ -345,14 +352,16 @@ compiler-generated private name identifying the concrete `Vector<T>` or
 `Sequence<T>` instance. Neither descriptor contains a source maximum, backing
 capacity, allocator, or authority.
 
-Kind `8` exists only in WVB 1.30. Callable descriptors are unnamed and occur
+Kind `8` exists only in WVB 1.30 and WVB 1.31. Callable descriptors are unnamed and occur
 after all canonically ordered nominal entries, in the producer's deterministic
 first-complete-signature order. There are at most 256. Their parameter and
 result shapes are exact, their parameter modes are by value, and the result is
 neither `void` nor `never` in this first executable profile. The descriptor
-contains no source function identity, closure environment, host address,
-calling-convention selection, or effect mask. WVB 1.30 therefore admits only
-the separately checked empty-effect, noncapturing callable subset.
+contains no source function identity, serialized closure environment, host
+address, calling-convention selection, or effect mask. WVB 1.30 admits only the
+separately checked empty-effect, noncapturing callable subset. WVB 1.31 retains
+the same descriptor and admits the separately verified plain-capture
+environment subset; the environment itself is never serialized in Types.
 
 ## Value types
 
@@ -385,11 +394,11 @@ the separately checked empty-effect, noncapturing callable subset.
 25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 entry; WVB 1.23 through 1.28 Main locals)
 26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
-28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.30 local only)
-29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.30 local only)
-30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.30 local only)
-34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 and 1.30 exact entry and Main locals only)
-35 callable value followed by u32 kind-8 callable-type index (WVB 1.30)
+28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.31 local only)
+29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.31 local only)
+30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.31 local only)
+34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.31 exact entry and Main locals only)
+35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 and WVB 1.31)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -411,7 +420,8 @@ Nominal identity and collection kind/element/maximum are exact. Enum shape byte
 distinction without introducing a second runtime enum value shape.
 
 Shape `35` is followed by one exact kind-`8` Types index. It is an ordinary
-copyable typed cell for a noncapturing function reference and may occur wherever
+copyable typed cell for a function reference or admitted plain-capture closure
+and may occur wherever
 an ordinary value shape is admitted. Equality, ordering, arithmetic,
 reinterpretation, construction from an integer, and representation inspection
 are not defined. A call consumes the exact shape identity named by its
@@ -460,7 +470,7 @@ function, result, nominal payload, collection element, or Types entry. It is
 move-only: `local.take` transfers its available ownership evidence, ordinary
 loads never copy it, and a store cannot overwrite an available owner. Source
 cannot construct it or expose its representation.
-WVB 1.30 retains those confinement rules whenever shape `34` is present.
+WVB 1.30 and WVB 1.31 retain those confinement rules whenever shape `34` is present.
 
 `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64` are ordinary scalar
 shapes. They do not
@@ -474,12 +484,13 @@ before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
 1.19, opcode `CD` is invalid before WVB 1.20, opcode `CE` is invalid before
-WVB 1.23, opcode `CF` is recognized in WVB 1.24 through 1.30, opcode `D0` is
-recognized in WVB 1.25 through 1.30, and opcode `D1` is recognized in WVB 1.27
-through 1.30. Their budget-entry ownership preconditions remain exact, so the
+WVB 1.23, opcode `CF` is recognized in WVB 1.24 through 1.31, opcode `D0` is
+recognized in WVB 1.25 through 1.31, and opcode `D1` is recognized in WVB 1.27
+through 1.31. Their budget-entry ownership preconditions remain exact, so the
 WVB 1.29 source-file entry cannot execute them. Opcode `D2` and shape byte `34`
-are valid in WVB 1.29 and 1.30. Type kind `8`, shape byte `35`, and opcodes
-`D3` and `D4` are valid only in WVB 1.30. Shape byte `25` is valid only under the WVB
+are valid in WVB 1.29 through 1.31. Type kind `8`, shape byte `35`, and opcodes
+`D3` and `D4` are valid only in WVB 1.30 and WVB 1.31. Opcode `D5` is valid
+only in WVB 1.31. Shape byte `25` is valid only under the WVB
 1.21-through-1.28 rules
 above. Type kind `7` is valid in WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
@@ -492,7 +503,7 @@ Every WVB 1.27 module contains at least one opcode `D1`. Every WVB 1.28 module
 contains at least one record, variant, or fixed array that recursively contains
 an owned Vector. Every WVB 1.29 module contains the exact source-file entry and
 at least one opcode `D2`. Every WVB 1.30 module contains at least one opcode
-`D3` or `D4`.
+`D3` or `D4`. Every WVB 1.31 module contains at least one opcode `D5`.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
@@ -651,6 +662,7 @@ D1 vector.grow_reserved_fallible u32 Vector-local index, u32 budget-local index,
 D2 source.length    u32 Sourceˉfile local index; observes one live immutable source snapshot and produces u64 byte length
 D3 function.reference u32 function index, u32 callable-type index; produces one exact callable value
 D4 call.indirect    u32 callable-type index; consumes one exact callable followed by its exact arguments and produces its result
+D5 closure.create  u32 function index, u32 callable-type index, u32 capture count; consumes captures in declaration order and produces one exact callable value
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -717,8 +729,9 @@ In WVB 1.23 through WVB 1.28, `local.take` also transfers an available shape-25
 budget local or exact affine Result variant. A budget take clears the source
 cell and pushes the same opaque owner. A Split-result take may transfer the
 Valid child budget exactly once. A WVB 1.24 constructor-result take may transfer
-the Valid Vector exactly once; WVB 1.25 through 1.30 retain that rule. WVB 1.29
-and WVB 1.30 also permit `local.take` to transfer the exact source-file parameter or local.
+the Valid Vector exactly once; WVB 1.25 through 1.31 retain that rule. WVB 1.29
+through WVB 1.31 also permit `local.take` to transfer the exact source-file
+parameter or local.
 Ordinary loads never copy any affine value.
 
 WVB 1.21, WVB 1.22 with shape `25`, or WVB 1.23 through WVB 1.28 transfers one opaque
@@ -744,14 +757,16 @@ Execution checks the live resource generation and 1 MiB snapshot bound, then
 produces the exact `u64` byte length without consuming or mutating the owner.
 At most 64 `source.length` instructions are admitted in one module.
 
-`function.reference` is a nine-byte WVB 1.30 instruction. Its first immediate
-identifies a named function whose profile, ordered by-value parameter shapes,
+`function.reference` is a nine-byte WVB 1.30-or-1.31 instruction. Its first
+immediate identifies a named function whose ordered by-value parameter shapes
 and result shape exactly equal the kind-`8` descriptor named by its second
-immediate. It produces shape `35` with that descriptor identity. The function
-reference is representation-hidden and noncapturing; it grants no capability
-and carries no host pointer.
+immediate. Before flattening, the source producer separately proves that the
+target's owning source-module profile equals the descriptor profile. It
+produces shape `35` with that descriptor identity. The function reference is
+representation-hidden and noncapturing; it grants no capability and carries no
+host pointer.
 
-`call.indirect` is a five-byte WVB 1.30 instruction. Its immediate identifies
+`call.indirect` is a five-byte WVB 1.30-or-1.31 instruction. Its immediate identifies
 one kind-`8` descriptor. Before the call, the operand stack contains the exact
 shape-`35` callable followed by the declared arguments in source order. The
 call consumes arguments in reverse order, then the callable, creates one
@@ -760,6 +775,30 @@ exact result. The runtime checks that the value's function identity and type
 identity remain valid even after bytecode verification. At most 65,536
 `function.reference` and 65,536 `call.indirect` instructions are admitted per
 module.
+
+`closure.create` is a thirteen-byte WVB 1.31 instruction. Its first immediate
+identifies the physical target function, its second identifies the public
+kind-`8` callable descriptor, and its third is a capture count from 1 through
+64. The stack contains those captures in declaration order; creation consumes
+them and produces the same exact shape-`35` identity used by
+`call.indirect`. The target's physical parameters are exactly the captured
+prefix followed by the descriptor's public parameters, and its result exactly
+matches the descriptor. Every physical parameter is by value. The source
+compiler additionally proves that the descriptor profile matches the target's
+owning source-module profile and publishes only synchronous, safe, nongeneric,
+effect-free targets. Those source-only properties are not reconstructed from a
+flattened WVB function record.
+
+This first environment profile admits only inline scalar cells and enum values:
+`i32`, `bool`, `u8`, `u32`, `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`,
+`f64`, and exact nominal enums. Text, bytes, callable values, records, variants,
+fixed arrays, collections, budgets, source files, owned values, and borrowed
+values are rejected. The runner stores immutable snapshots in one
+representation-private per-execution arena bounded to 536,576 bytes (524 KiB)
+and 1,024 created records; it is discarded as a unit when execution ends. This
+deliberately avoids hidden
+retain/release, borrow, escape, or tracing behavior. At most 65,536
+`closure.create` instructions are admitted per module.
 
 `memory_budget.split` is a nine-byte WVB 1.23 instruction. The immediate parent
 index must identify one available shape-25 `Main` local, and the immediate type
@@ -983,7 +1022,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.30 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, a Vector-containing aggregate requires at least 1.28, shape `34` or `source.length` requires 1.29 or 1.30, and kind `8`, shape `35`, `function.reference`, or `call.indirect` requires exactly 1.30.
+- The version is WVB 1.11 through 1.31 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28 under its exact profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, a Vector-containing aggregate requires at least 1.28, shape `34` or `source.length` requires 1.29 through 1.31, kind `8`, shape `35`, `function.reference`, or `call.indirect` requires 1.30 or 1.31, and `closure.create` requires exactly 1.31.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -1002,9 +1041,9 @@ Verification is required before execution and rejects a module unless:
 - Every opcode `D0` references a direct non-parameter exact Vector local and exact structurally validated append Result type, consumes one matching scalar item, preserves the Vector and returns that item on capacity refusal, and mutates the Vector exactly once only on success.
 - Every opcode `D1` references a direct non-parameter exact Vector local, a distinct available shape-25 budget slot, and exact structurally validated `Result<unit, Allocationˉfailure>`; consumes one `u64` maximum; preserves both owners on refusal; and swaps the complete backing and lease only on success.
 - Every WVB 1.26-or-later Vector parameter uses exact shape `23`, `26`, or `27` with a matching kind-5 nominal index; borrowed shapes occur nowhere else; calls supply unique evidence to shape `23` and retaining evidence to shapes `26` and `27`; and reverse-order callee cleanup cannot release the caller's preserved owner.
-- Every WVB 1.28 through WVB 1.30 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once.
+- Every WVB 1.28 through WVB 1.31 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once.
 - Every WVB 1.29 module contains exactly one exported `Main(Platformˉfile.Sourceˉfile) -> i32`, admits shape `34` only in that parameter and its move-owned locals, contains 1 through 64 exact `source.length` instructions over available non-parameter source locals, and cannot construct, copy, return, embed, or expose the source owner.
-- Every kind-`8` descriptor has a valid profile, one exact non-`void`/non-`never` result, at most 64 exact by-value parameters, and a terminal position after all nominal types; every shape `35` names one kind-`8` entry; every `function.reference` target exactly matches its descriptor; every `call.indirect` consumes that exact callable plus the descriptor's exact arguments; and every WVB 1.30 module contains at least one of those two callable instructions.
+- Every kind-`8` descriptor has a valid profile, one exact non-`void`/non-`never` result, at most 64 exact by-value parameters, and a terminal position after all nominal types; every shape `35` names one kind-`8` entry; every `function.reference` target exactly matches its descriptor; every `call.indirect` consumes that exact callable plus the descriptor's exact arguments; every `closure.create` has 1 through 64 plain captures, an exact physical target signature, and no reference-backed or affine capture; source publication separately proves its profile/safe/effect-free/nongeneric restrictions before flattening; every WVB 1.30 module contains at least one `D3` or `D4`; and every WVB 1.31 module contains at least one `D5`.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return
@@ -1033,6 +1072,9 @@ Verification is required before execution and rejects a module unless:
 - Parameters per callable descriptor: 64
 - `function.reference` instructions per module: 65,536
 - `call.indirect` instructions per module: 65,536
+- `closure.create` instructions per module: 65,536
+- Created closure environments per runtime execution: 1,024
+- Runtime closure-environment arena per execution: 536,576 bytes (524 KiB)
 - Fields per record: 64
 - Members per enum: 256
 - Parameters plus locals per function: 8,192

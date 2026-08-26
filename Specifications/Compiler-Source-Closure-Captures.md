@@ -8,12 +8,13 @@ WVSS, WVSD, and WVLB evidence plus the owning module and function identity. It
 does not infer a capture, retain ambient state, or turn a module capability root
 into a lexical value.
 
-This checkpoint validates explicit capture lists, closure parameters, the
-isolated closure body, and the declared exact effect clause. Source-WIR
-lowering, move invalidation in the enclosing function, escaping-borrow lifetime
-proof, closure environment publication, indirect calls, WVB representation,
-and runtime/native execution remain connected Slice 6 work. No current
-published WVB contains the compiler-private capture evidence described here.
+This phase validates explicit capture lists, closure parameters, the isolated
+closure body, and the declared exact effect clause. WVIR 1.19/1.20 and WVB 1.31
+now define and execute a representation-private environment for copied inline
+scalars and enums. Source closure-body lowering into that operation, move
+invalidation in the enclosing function, escaping-borrow lifetime proof, and
+native execution remain connected Slice 6 work. No WVB serializes the
+compiler-private capture evidence described here.
 
 ## Capture modes
 
@@ -37,6 +38,13 @@ shape. The current proof admits primitive value shapes except `never`, all
 enums, `text`, and `bytes`. Unproven records, variants, collections, builders,
 resources, and private compiler shapes reject instead of being copied
 implicitly. `borrow mut` requires a directly mutable outer `var`.
+
+The executable WVB 1.31 subset is intentionally narrower than source-level
+`copy`: it admits only inline scalar and enum cells. In particular, `text` and
+`bytes` remain valid source copies but do not yet enter a runtime environment,
+because doing so requires explicit retain/release and escape rules. Aggregates,
+collections, callable values, resource owners, and borrowed captures are also
+outside this first environment checkpoint.
 
 An `async` closure rejects both borrowed capture modes. This is deliberately
 stricter than the eventual complete structured-task proof: Slice 7 may admit a

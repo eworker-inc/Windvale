@@ -10,8 +10,8 @@ the exact WVFT catalog used by all concrete callable entries.
 
 WVCF is post-effect compiler evidence. It is not a function value, closure
 environment, code address, WVB type, import, export, or authority grant. Source
-value expressions, indirect-call WVIR, the closed WVB representation, verifier
-rules, and runtime/native execution remain separate Slice 6 work.
+value expressions, WVIR operations, the closed WVB representation, verifier
+rules, and runtime/native execution remain separate consumers of this catalog.
 
 Every integer is unsigned little-endian. Every length and offset is exact. No
 partial directory is published.
@@ -113,13 +113,15 @@ trapping.
 ## Runtime separation
 
 WVCF answers which exact callable type a concrete named function can inhabit;
-it does not itself create a runtime value. WVIR 1.17/1.18 now consumes that
-answer for the closed noncapturing, effect-free, by-value profile, embeds reduced
-WVIC evidence, and lowers named-function references plus exact local indirect
-calls. WVB 1.30 replaces every private WVFT shape with a kind-8 Types descriptor
-and shape `35`, and its verifier/runtime own the portable value representation.
+it does not itself create a runtime value. WVIR 1.17/1.18 consumes that answer
+for the closed noncapturing, effect-free, by-value profile, embeds reduced WVIC
+evidence, and lowers named-function references plus exact local indirect calls.
+WVIR 1.19/1.20 additionally binds a copied plain-capture prefix to the same
+public descriptor. WVB 1.30/1.31 replaces every private WVFT shape with a
+kind-8 Types descriptor and shape `35`, and its verifier/runtime own the
+portable value representation.
 
 This does not make WVCF a serialized format or a runtime address directory.
-Capturing closures, environments, borrowed callable signatures, nonempty
-effects, flags, escape ownership, and native callable ABI lowering still require
-later explicit representations and proofs.
+Source closure-body lowering, move and borrow environments, borrowed callable
+signatures, nonempty effects, flags, escape ownership, and native callable ABI
+lowering still require later explicit representations and proofs.
