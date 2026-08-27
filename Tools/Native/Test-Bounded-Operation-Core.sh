@@ -44,7 +44,7 @@ lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 echo 'START native bounded operation phase=tools item=1/4'
 "$script_directory/Build-Wvb.sh" "$build_project" "$work/Build-Driver.wvb" >/dev/null || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 "$work/Build-Driver.wvb" "$work/Build-Driver.elf" >/dev/null || exit $?
-verify_file "$lowerer" 8159232 5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029 || exit $?
+verify_file "$lowerer" 8159232 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
 echo 'PASS  native bounded operation phase=tools item=1/4'
 
 echo 'START native bounded operation phase=compile item=2/4'

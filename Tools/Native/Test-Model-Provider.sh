@@ -49,7 +49,7 @@ echo 'Progress: step=model-provider-tools item=2/4 detail=package-build-driver'
 echo 'Progress: step=model-provider-tools item=3/4 detail=build-lowerer-wvb'
 "$work/Build-Driver.elf" --workspace "$workspace" --project "$lowerer_project" "$work/Lowerer.wvb" >/dev/null || exit $?
 verify_file "$work/Lowerer.wvb" 567615 \
-    d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3 || exit 1
+    77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || exit 1
 echo 'Progress: step=model-provider-tools item=4/4 detail=package-lowerer'
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" --development-cache >/dev/null || exit $?

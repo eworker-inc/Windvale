@@ -3534,3 +3534,20 @@ self-reconstruction passes four cases in 297 seconds and reproduces both
 launchers at the same bytes before staging the fixed bootstrap analyzer into
 31,736,596 object bytes across 41 chunks. Pushed Windows and Linux evidence is
 still required before this repair is a cross-host claim or Slice 7 work resumes.
+
+The first repair run, GitHub Actions run `33079270556`, passed the new stream
+owner and the segmented compiler-toolset reconstruction on both hosts. Both
+hosts then reached the independent WVB-to-WVO reconstruction and rejected its
+stale lowerer-family identity. Current-source reconstruction changes only that
+family:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB-to-WVO WVB | 567,615 | `77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60` |
+| Windows WVB-to-WVO application | 8,160,256 | `f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad` |
+| Linux WVB-to-WVO application | 8,159,232 | `1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185` |
+
+The focused Windows reconstruction owner passes six cases. Both independent
+input WVBs and both produced WVO objects remain byte-identical. A second pushed
+paired-host run remains required before Decision 0862 becomes a cross-host
+repair claim.

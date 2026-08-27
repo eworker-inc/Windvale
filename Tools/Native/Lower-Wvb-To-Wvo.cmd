@@ -18,7 +18,7 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 set "PublisherLauncher=%RepositoryRoot%\Tools\Native\Publish-Wvo.cmd"
 
-certutil -hashfile "%Lowerer%" SHA256 | findstr /I /C:"6a33f19d38f689e35776a7d3d88f09c2f06046312d8eeb629e669245e3333102" >nul
+certutil -hashfile "%Lowerer%" SHA256 | findstr /I /C:"f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB-to-WVO lowerer artifact digest is invalid.
     exit /b 1

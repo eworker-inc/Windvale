@@ -127,7 +127,7 @@ packager=$work/Console-Packager.elf
 console_publisher=$work/wvappublish.elf
 if ! verify_tool "$build_driver" d228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969 ||
     ! verify_tool "$wvb_publisher" b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af ||
-    ! verify_tool "$lowerer" 5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029 ||
+    ! verify_tool "$lowerer" 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 ||
     ! verify_tool "$wvo_publisher" 2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2 ||
     ! verify_tool "$linker" 8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a ||
     ! verify_tool "$packager" d399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af ||

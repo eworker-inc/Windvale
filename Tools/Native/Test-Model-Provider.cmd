@@ -35,7 +35,7 @@ echo Progress: step=model-provider-tools item=2/4 detail=package-build-driver
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
 echo Progress: step=model-provider-tools item=3/4 detail=build-lowerer-wvb
 "%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LowererProjectResource%" "%Work%/Lowerer.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 567615 d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3 || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || goto :cleanup
 echo Progress: step=model-provider-tools item=4/4 detail=package-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
 echo PASS  native model provider phase=tools item=1/4

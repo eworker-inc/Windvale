@@ -315,7 +315,7 @@ if ((development == 1)); then
     echo 'Progress: step=database-storage-tools item=3/4 detail=verify-lowerer'
     lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
     verify_file "$lowerer" 8159232 \
-        5cb17d2e6fd8a02721bd2249623bff65891f4ac6149cc44e60a5849c51774029 || exit $?
+        1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
 else
     echo 'Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb'
     "$script_directory/Build-Current-Wvb.sh" \
@@ -332,7 +332,7 @@ else
         "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
         "$lowerer_wvb" >/dev/null || exit $?
     verify_file "$lowerer_wvb" 567615 \
-        d6831ce5145cb3bbe5b607293762f220829d77586ad96fedcec9f8c7b57719a3 || exit $?
+        77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || exit $?
     echo 'Progress: step=database-storage-tools item=4/4 detail=package-lowerer'
     "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
         6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
