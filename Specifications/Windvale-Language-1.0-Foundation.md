@@ -1841,6 +1841,20 @@ A rejected spawn returns the exact closure, including every moved capture, so
 the caller again owns it. Once spawn returns a task handle, the child owns the
 captures and a later task failure never rolls them back.
 
+`Maximumˉretainedˉbytes` bounds scope-owned scheduler, continuation, and
+terminal-outcome state. Spawn computes the selected runtime profile's exact
+reservation before accepting `Work`. If the reservation exceeds the remaining
+scope limit, spawn returns `Memoryˉfailure` with
+`Allocationˉreason.Budgetˉexhausted`, exact requested and available byte
+counts, and the unchanged owned `Work`. Completion does not release the
+reservation; consuming the handle or bounded scope teardown does.
+
+Owned allocations reachable through captures or task outcomes remain charged
+to their explicit `Memoryˉbudget` or `Allocationˉlease`. The scope keeps those
+values live while required but does not double-charge their allocation bytes as
+scheduler state. A runtime profile must publish its exact scheduler-state
+accounting formula and preserve the same accept-or-return ownership boundary.
+
 Join ordering for join-all is child creation order, not scheduler completion
 order. An explicitly named completion-order operation may exist only with a
 bounded completion queue and stable child identities.

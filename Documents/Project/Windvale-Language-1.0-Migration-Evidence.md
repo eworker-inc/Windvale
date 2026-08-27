@@ -3654,3 +3654,56 @@ verification gate. Paired-host reconstruction and scripting integration are
 therefore complete; later Slice 7 cancellation, deadline, runtime-generation,
 deterministic parallel-observation, promotion, and broad Qualification gates
 remain pending.
+
+## Slice 7 retained-memory admission checkpoint
+
+[Decision 0865](../Decisions/0865-Reserve-Structured-Task-Retained-Memory-Before-Spawn.md)
+connects the previously validated `Maximumˉretainedˉbytes` scope limit to exact
+spawn-time admission. The sequential profile reserves 40 continuation bytes,
+8 terminal-result bytes, the child local frame, and the newly suspended parent
+frame before work ownership moves. Insufficient capacity leaves task state
+unchanged and returns `Memoryˉfailure(Budgetˉexhausted)` with exact requested
+and available bytes plus the original owned work.
+
+The private task-state model advances to version 2 and 10,000 bounded bytes.
+Every active 56-byte task record stores its exact 64-bit reservation. Completion
+retains that charge; consuming the affine handle or tearing down the scope
+releases it. The validator independently sums all active reservations. Heap
+allocations reachable through captures or outcomes remain charged to their
+explicit memory budget rather than being charged twice.
+
+The new exact source fixture uses a one-byte retained limit, matches the nested
+typed failure, recovers the original work, and returns `42`. Its 4,755-byte WVB
+has SHA-256
+`92c1c521d4bd1a3198ff01dd54a97fb5153170afe009b6c0111ce06aba51fb64`.
+The task-state self-test adds the complementary lifecycle boundary and now
+passes 38 cases. The full focused owner passes 134 cases, including 21 valid,
+69 malformed, 19 structured-task, and two callable-runner cases.
+
+The source-visible nested failure also exposed a latent aggregate shape-walk
+error: callable shape kind 35 was not skipped while scanning earlier variant
+cases. One shared nominal-shape width routine now owns callable parsing,
+aggregate traversal, variant case traversal, array element directories, and
+field selection. The exact nested failure executes normally after that repair.
+
+The local candidate is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB runner | 446,532 | `56b208d1f892f4bdd1d9c309bb6d4d46257d533a76d79d22efc8f83f27896fbe` |
+| Windows runner | 5,366,784 | `063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519` |
+| Linux runner | 5,365,760 | `6e18c9c9480df40814b81244b3dcd039c8851ded646a240134d4e2969b9c2e71` |
+
+It contains 213 functions and 399,144 code bytes. Staging emits 5,357,511
+object bytes in 12 chunks. The 5,348,533-byte linked image enters at offset
+105,270, uses eight link chunks, and transports in two canonical chunks. The
+local three-case reconstruction owner rebuilds all artifacts exactly and
+passes current-host execution and rejection. The
+repinned local distribution passes eight installer lifecycle cases and twelve
+selective installer-repository cases.
+
+The verification registry remains 114 owners and advances to 5,531 cases. Its
+18,379 LF-only bytes have SHA-256
+`e204915df4a1674a404222e0577531116bf96559635507c9335ac878c50a8216`.
+Independent Windows and Linux reconstruction and affected-owner integration
+remain pending before this newest candidate becomes paired-host evidence.

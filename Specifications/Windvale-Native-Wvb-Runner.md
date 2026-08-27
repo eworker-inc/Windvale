@@ -26,12 +26,12 @@ field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 445,516 | `366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e` |
-| Windows application | 5,329,920 | `0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258` |
-| Linux application | 5,328,896 | `22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed` |
+| WVB runner | 446,532 | `56b208d1f892f4bdd1d9c309bb6d4d46257d533a76d79d22efc8f83f27896fbe` |
+| Windows application | 5,366,784 | `063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519` |
+| Linux application | 5,365,760 | `6e18c9c9480df40814b81244b3dcd039c8851ded646a240134d4e2969b9c2e71` |
 
-Segmented staging emits 5,320,819 object bytes across 12 chunks. Linking emits a
-5,311,909-byte native image with entry offset 105,270; canonical transport
+Segmented staging emits 5,357,511 object bytes across 12 chunks. Linking emits a
+5,348,533-byte native image with entry offset 105,270; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
@@ -399,12 +399,20 @@ same verified source semantics. The launcher supplies the exact root memory
 budget and operation context. Opcodes `D6` through `DB` construct one lexical
 scope, derive its context, transfer accepted async work, consume handles at
 await, request cancellation idempotently, and join/consume the scope. The
-runtime stores fixed task records in one 8,976-byte state value and admits at
+runtime stores fixed task records in one 10,000-byte version-2 state value and admits at
 most 64 accepted/runnable/retained children under the lower application limit.
 Every accepted live child reserves one completion position. A full runnable or
 completion bound rejects spawn before work ownership moves; completion retains
 the reservation until the exact affine handle is awaited or the scope tears
 down.
+
+Each accepted child also reserves its exact sequential scheduler footprint
+before ownership moves: one 40-byte pending continuation, one 8-byte completion
+cell, the child locals, and the newly suspended parent frame. A reservation
+larger than the scope's remaining retained-byte limit returns the original
+closure as typed `Memoryˉfailure(Budgetˉexhausted)` with exact requested and
+available bytes. Completion keeps the reservation; await or scope teardown
+releases it.
 
 One child work unit is one dispatched verified WVB instruction after the spawn
 baseline. Exhaustion is observed by the parent as
@@ -425,15 +433,16 @@ creates both launcher-owned values. Request major `5` remains reserved for
 execution preserves the ordinary CLI contract: `Result: <i32>` on standard
 output and process exit zero.
 
-The current Windows development runner contains 211 functions and 398,423 code
-bytes in a 445,516-byte WVB at SHA-256
-`366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e`.
-It packages to a 5,329,920-byte hosted application at SHA-256
-`0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258`.
+The current Windows development runner contains 213 functions and 399,144 code
+bytes in a 446,532-byte WVB at SHA-256
+`56b208d1f892f4bdd1d9c309bb6d4d46257d533a76d79d22efc8f83f27896fbe`.
+It packages to a 5,366,784-byte hosted application at SHA-256
+`063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519`.
 The 4,231-byte success
 fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
-fixture, call-depth-one fixture, and 37-case task-state self-test all return
-`42`. These are focused sequential development results. The candidate is
+fixture, call-depth-one fixture, retained-memory refusal fixture, and 38-case
+task-state self-test all return `42`. The complete focused owner passes 134
+cases. These are focused sequential development results. The candidate is
 repinned in the table above; parallel-capable paired-host evidence remains
 pending.
 

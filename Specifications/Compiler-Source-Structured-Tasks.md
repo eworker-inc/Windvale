@@ -129,6 +129,27 @@ Every retained aggregate value is included in garbage-collection roots until
 state, completion count, and retained bytes remain bounded independently of the
 ordinary aggregate arena.
 
+Before accepting a spawn, the sequential WVB 1.32 profile reserves the exact
+maximum scheduler state that the child can retain in this implementation:
+
+- the 40-byte pending-continuation record;
+- the 8-byte terminal-result cell;
+- the complete child local frame; and
+- the newly suspended parent frame, including its resume and function words.
+
+The reservation is checked before work ownership moves. If it exceeds the
+scope's remaining `Maximumˉretainedˉbytes`, spawn leaves task state unchanged
+and returns `Memoryˉfailure` with `Allocationˉreason.Budgetˉexhausted`, the
+exact requested and available byte counts, and the original work value. An
+accepted reservation remains charged across completion and is released only
+when `Await` consumes the handle or bounded scope teardown removes it.
+
+This limit accounts task-runtime continuation and outcome state. Heap storage
+reachable through a capture or outcome remains charged to its explicit memory
+budget and is kept live by the task root; it is not charged a second time to
+the scope's scheduler-state limit. The internal fixed task-state encoding is
+version 2 and stores one exact 64-bit reservation in every active task record.
+
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer
 or diagnostic, so both counters remain zero in this profile. Later operations

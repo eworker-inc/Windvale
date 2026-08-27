@@ -64,13 +64,7 @@ fn Variantˉcaseˉfields(
         var Fieldˉindex: u32 = 0u32;
         while Fieldˉindex < Fieldˉcount {
             Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-            let Fieldˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-            Cursor = Cursor + 1u32;
-            if Fieldˉkind == 7u32 || Fieldˉkind == 8u32 ||
-                Fieldˉkind == 11u32 || Fieldˉkind == 22u32 ||
-                Fieldˉkind == 23u32 || Fieldˉkind == 24u32 {
-                Cursor = Cursor + 4u32;
-            }
+            Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
             Fieldˉindex = Fieldˉindex + 1u32;
         }
         if Caseˉindex == Case {
@@ -299,7 +293,7 @@ fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     );
 }
 
-fn Callableˉshapeˉwidth(Module: bytes, Cursor: u32) -> u32 {
+fn Shapeˉwidthˉat(Module: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
     if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
         Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 ||
@@ -653,15 +647,7 @@ fn Aggregateˉfieldˉdirectory(
     Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
     if Kind == 4u32 {
         let Elementˉshape: u32 = Cursor;
-        Cursor = Cursor + 1u32;
-        let Elementˉkind: u32 = U32ˉfromˉu8(
-            Bytesˉreadˉu8(Module, Elementˉshape)
-        );
-        if Elementˉkind == 7u32 || Elementˉkind == 8u32 ||
-            Elementˉkind == 11u32 || Elementˉkind == 22u32 ||
-            Elementˉkind == 23u32 || Elementˉkind == 24u32 {
-            Cursor = Cursor + 4u32;
-        }
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Elementˉshape);
         return Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Module, Cursor)),
             Bytesˉfromˉu32ˉlittle(Elementˉshape)
@@ -803,11 +789,7 @@ fn Aggregateˉselectedˉfieldˉvalues(
     while Index < Fieldˉcount {
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-        Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
-            Kind == 23u32 || Kind == 24u32 {
-            Cursor = Cursor + 4u32;
-        }
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
         var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
         if Descriptors {
             Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
@@ -1175,10 +1157,10 @@ record Memoryˉbudgetˉexecution {
     Records: bytes;
 }
 
-fn Allocateˉallocationˉfailure(
+fn Allocateˉexactˉallocationˉfailure(
     Module: bytes,
     Typeˉoffsets: bytes,
-    Resultˉtype: u32,
+    Failureˉtype: u32,
     Reason: u8,
     Requestedˉbytes: u64,
     Availableˉbytes: u64,
@@ -1189,22 +1171,6 @@ fn Allocateˉallocationˉfailure(
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Aggregateˉallocation = Aggregateˉallocation(
         false, Empty, Metadata, Records
-    );
-    let Failureˉcase: bytes = Variantˉcaseˉfields(
-        Module, Typeˉoffsets, Resultˉtype, 1u32
-    );
-    if Bytesˉlength(Failureˉcase) != 8u32 ||
-        Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 {
-        return Invalid;
-    }
-    let Failureˉshape: u32 = Fieldˉshapeˉat(
-        Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
-    );
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 7u32 {
-        return Invalid;
-    }
-    let Failureˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-        Module, Failureˉshape + 1u32
     );
     let Failureˉowner: u32 = Failureˉtype + 1u32;
     let Failureˉdirectory: bytes = Aggregateˉfieldˉdirectory(
@@ -1235,6 +1201,42 @@ fn Allocateˉallocationˉfailure(
     );
     return Allocateˉaggregateˉwithoutˉcollection(
         Failureˉowner, Failureˉfields, Metadata, Records, Zeroˉcell
+    );
+}
+
+fn Allocateˉallocationˉfailure(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Resultˉtype: u32,
+    Reason: u8,
+    Requestedˉbytes: u64,
+    Availableˉbytes: u64,
+    Metadata: bytes,
+    Records: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉallocation {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Aggregateˉallocation = Aggregateˉallocation(
+        false, Empty, Metadata, Records
+    );
+    let Failureˉcase: bytes = Variantˉcaseˉfields(
+        Module, Typeˉoffsets, Resultˉtype, 1u32
+    );
+    if Bytesˉlength(Failureˉcase) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 {
+        return Invalid;
+    }
+    let Failureˉshape: u32 = Fieldˉshapeˉat(
+        Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
+    );
+    if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 7u32 {
+        return Invalid;
+    }
+    return Allocateˉexactˉallocationˉfailure(
+        Module, Typeˉoffsets,
+        Bytesˉreadˉu32ˉlittle(Module, Failureˉshape + 1u32),
+        Reason, Requestedˉbytes, Availableˉbytes,
+        Metadata, Records, Zeroˉcell
     );
 }
 
@@ -1902,11 +1904,7 @@ fn Fieldˉshapeˉat(
     while Index < Field {
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-        Cursor = Cursor + 1u32;
-        if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
-            Kind == 23u32 || Kind == 24u32 {
-            Cursor = Cursor + 4u32;
-        }
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
         Index = Index + 1u32;
     }
     return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
@@ -5644,7 +5642,7 @@ fn Executeˉclosureˉcreation(
     }
     var Descriptorˉcursor: u32 = Descriptor + 2u32;
     Descriptorˉcursor = Descriptorˉcursor +
-        Callableˉshapeˉwidth(Module, Descriptorˉcursor);
+        Shapeˉwidthˉat(Module, Descriptorˉcursor);
     let Publicˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
         Module, Descriptorˉcursor
     );
@@ -5820,7 +5818,7 @@ fn Executeˉcall(
         }
         var Descriptorˉcursor: u32 = Descriptor + 2u32;
         Descriptorˉcursor = Descriptorˉcursor +
-            Callableˉshapeˉwidth(Module, Descriptorˉcursor);
+            Shapeˉwidthˉat(Module, Descriptorˉcursor);
         Parameters = Bytesˉreadˉu32ˉlittle(
             Module, Descriptorˉcursor
         );
@@ -5975,24 +5973,39 @@ fn Taskˉrecordˉfields(
     return Bytesˉslice(Records, Slot * 8u32, Expectedˉfields * 8u32);
 }
 
+fn Taskˉvariantˉfieldˉnominalˉat(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Type: u32,
+    Case: u32,
+    Field: u32,
+    Expectedˉfields: u32
+) -> u32 {
+    let Directory: bytes = Variantˉcaseˉfields(
+        Module, Typeˉoffsets, Type, Case
+    );
+    if Bytesˉlength(Directory) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 0u32) != Expectedˉfields ||
+        Field >= Expectedˉfields {
+        return 4294967295u32;
+    }
+    let Shape: u32 = Fieldˉshapeˉat(
+        Module, Bytesˉreadˉu32ˉlittle(Directory, 4u32), Field
+    );
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+    if Kind != 7u32 && Kind != 11u32 { return 4294967295u32; }
+    return Bytesˉreadˉu32ˉlittle(Module, Shape + 1u32);
+}
+
 fn Taskˉvariantˉfieldˉnominal(
     Module: bytes,
     Typeˉoffsets: bytes,
     Type: u32,
     Case: u32
 ) -> u32 {
-    let Directory: bytes = Variantˉcaseˉfields(
-        Module, Typeˉoffsets, Type, Case
+    return Taskˉvariantˉfieldˉnominalˉat(
+        Module, Typeˉoffsets, Type, Case, 0u32, 1u32
     );
-    if Bytesˉlength(Directory) != 8u32 ||
-        Bytesˉreadˉu32ˉlittle(Directory, 0u32) != 1u32 {
-        return 4294967295u32;
-    }
-    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(Directory, 4u32);
-    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-    if Kind != 7u32 && Kind != 11u32 { return 4294967295u32; }
-    return Bytesˉreadˉu32ˉlittle(Module, Cursor + 1u32);
 }
 
 fn Allocateˉtaskˉvalue(
@@ -6522,22 +6535,28 @@ fn Executeˉtaskˉspawn(
         Initialˉmetadata, Initialˉrecords
     );
     if Bytesˉlength(Scope) != 8u32 { return Invalid; }
+    let Call: Callˉexecution = Executeˉcall(
+        Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+        Payload, 216u32, Initialˉstack, Closureˉenvironments,
+        Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
+        Functionˉcodeˉlengths, Instructions, Functionˉindex,
+        Initialˉlocals, Initialˉframes, Zeroˉlocals,
+        Depth, Maximumˉdepth
+    );
+    if !Call.Valid || Call.Status != 0u32 || !Call.Handled ||
+        Bytesˉlength(Call.Frames) < Bytesˉlength(Initialˉframes) {
+        return Invalid;
+    }
+    let Retainedˉbytes: u64 = U64ˉfromˉu32(TASK_PENDING_BYTES + 8u32) +
+        U64ˉfromˉu32(Bytesˉlength(Call.Locals)) +
+        U64ˉfromˉu32(
+            Bytesˉlength(Call.Frames) - Bytesˉlength(Initialˉframes)
+        );
     let Begun: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
-        Initialˉtaskˉstate, Scope
+        Initialˉtaskˉstate, Scope, Retainedˉbytes
     );
     if !Begun.Valid { return Invalid; }
     if Begun.Accepted {
-        let Call: Callˉexecution = Executeˉcall(
-            Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
-            Payload, 216u32, Initialˉstack, Closureˉenvironments,
-            Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
-            Functionˉcodeˉlengths, Instructions, Functionˉindex,
-            Initialˉlocals, Initialˉframes, Zeroˉlocals,
-            Depth, Maximumˉdepth
-        );
-        if !Call.Valid || Call.Status != 0u32 || !Call.Handled {
-            return Invalid;
-        }
         var Pending: bytes = Bytesˉfromˉu32ˉlittle(Call.Depth);
         Pending = Bytesˉconcat(Pending, Begun.Token);
         Pending = Bytesˉconcat(
@@ -6571,15 +6590,35 @@ fn Executeˉtaskˉspawn(
     let Failureˉtype: u32 = Taskˉvariantˉfieldˉnominal(
         Module, Typeˉoffsets, Spawnˉresultˉtype, 1u32
     );
-    if Failureˉtype == 4294967295u32 || Begun.Reason > 2u32 {
+    if Failureˉtype == 4294967295u32 || Begun.Reason > 3u32 {
         return Invalid;
     }
     let Workˉoffset: u32 = Bytesˉlength(Initialˉstack) - 8u32;
     let Work: bytes = Bytesˉslice(Initialˉstack, Workˉoffset, 8u32);
+    var Metadata: bytes = Initialˉmetadata;
+    var Records: bytes = Initialˉrecords;
+    var Failureˉfields: bytes = Work;
+    if Begun.Reason == 3u32 {
+        let Allocationˉfailureˉtype: u32 =
+            Taskˉvariantˉfieldˉnominalˉat(
+                Module, Typeˉoffsets, Failureˉtype, 3u32, 0u32, 2u32
+            );
+        if Allocationˉfailureˉtype == 4294967295u32 { return Invalid; }
+        let Allocationˉfailure: Aggregateˉallocation =
+            Allocateˉexactˉallocationˉfailure(
+                Module, Typeˉoffsets, Allocationˉfailureˉtype,
+                1u8, Begun.Requestedˉbytes, Begun.Availableˉbytes,
+                Metadata, Records, Zeroˉcell
+            );
+        if !Allocationˉfailure.Valid { return Invalid; }
+        Failureˉfields = Bytesˉconcat(Allocationˉfailure.Handle, Work);
+        Metadata = Allocationˉfailure.Metadata;
+        Records = Allocationˉfailure.Values;
+    }
     let Failureˉowner: u32 = 2147483648u32 +
         (Failureˉtype + 1u32) * 256u32 + Begun.Reason;
     let Failure: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
-        Failureˉowner, Work, Initialˉmetadata, Initialˉrecords, Zeroˉcell
+        Failureˉowner, Failureˉfields, Metadata, Records, Zeroˉcell
     );
     if !Failure.Valid { return Invalid; }
     let Resultˉowner: u32 = 2147483648u32 +

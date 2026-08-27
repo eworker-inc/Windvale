@@ -55,6 +55,8 @@ const EXPECTED_STRUCTURED_TASK_WORK_LIMIT_SHA256 =
     'b15cc21926e43b048fc4fe79d28febb7778bbacaf6dbbaa84c2855fb1cff10a2';
 const EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256 =
     '3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351';
+const EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256 =
+    '92c1c521d4bd1a3198ff01dd54a97fb5153170afe009b6c0111ce06aba51fb64';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -222,6 +224,9 @@ try {
     const Structuredˉtaskˉcallˉdepthˉlimit = path.join(
         Work, 'Structured-Task-Call-Depth-Limit.wvb',
     );
+    const Structuredˉtaskˉmemoryˉlimit = path.join(
+        Work, 'Structured-Task-Memory-Limit.wvb',
+    );
     const Structuredˉtaskˉruntimeˉselfˉtest = path.join(
         Work, 'Structured-Task-Runtime-Self-Test.wvb',
     );
@@ -302,6 +307,12 @@ try {
         Admitter, Analyzer, Emitter,
         'Structured-Task-Call-Depth-Limit-Executable.wv',
         Structuredˉtaskˉcallˉdepthˉlimit,
+    );
+    Compileˉtask(
+        'structured-task-memory-limit-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Memory-Limit-Executable.wv',
+        Structuredˉtaskˉmemoryˉlimit,
     );
     Runˉnode(
         'structured-task-runtime-self-test-build',
@@ -469,6 +480,11 @@ try {
         EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256,
         'structured-task call-depth-limit fixture',
     );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉmemoryˉlimit),
+        EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256,
+        'structured-task memory-limit fixture',
+    );
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -509,6 +525,10 @@ try {
     Requireˉvalid(
         Verifier, Structuredˉtaskˉcallˉdepthˉlimit,
         'structured-task call-depth-limit module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉmemoryˉlimit,
+        'structured-task memory-limit module',
     );
     Requireˉvalid(
         Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
@@ -901,6 +921,10 @@ try {
         Runner, Structuredˉtaskˉcallˉdepthˉlimit,
         'structured-task call-depth-limit execution',
     );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉmemoryˉlimit,
+        'structured-task memory-limit execution',
+    );
     const Sourceˉsnapshotˉ42 = path.join(Work, 'Source-Snapshot-42.bin');
     const Sourceˉsnapshotˉ41 = path.join(Work, 'Source-Snapshot-41.bin');
     const Sourceˉsnapshotˉoversized = path.join(
@@ -926,8 +950,8 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${111 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=20 malformed=${
+        `cases=${113 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=21 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
@@ -936,7 +960,7 @@ try {
             Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
-        'structured-task-cases=17 structured-task-runtime-cases=37 ' +
+        'structured-task-cases=19 structured-task-runtime-cases=38 ' +
         'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +

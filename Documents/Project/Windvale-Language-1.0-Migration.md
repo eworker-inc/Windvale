@@ -751,10 +751,15 @@ major `6`, admits at most 64 children and 1 MiB of retained task state, charges
 one work unit per dispatched verified WVB instruction, retains completed
 aggregate results until await or teardown, and reports exact child traps and
 call-depth/work exhaustion as typed outcomes. Request major `5` remains the
-independent source-file snapshot contract. The task-state core also has a
-standalone 37-case native self-test, while executable source fixtures cover
-success, child trap, retained-result pressure, work exhaustion, and call-depth
-exhaustion through the interpreter.
+independent source-file snapshot contract. [Decision 0864](../Decisions/0864-Reserve-Structured-Task-Completion-Slots-Before-Spawn.md)
+reserves one outcome position per accepted live child. [Decision 0865](../Decisions/0865-Reserve-Structured-Task-Retained-Memory-Before-Spawn.md)
+also reserves the exact pending continuation, terminal cell, child locals, and
+newly suspended parent frame before capture acceptance. Insufficient retained
+capacity returns exact typed memory failure and the original work without state
+mutation. The task-state core has a standalone 38-case native self-test, while
+executable source fixtures cover success, child trap, retained-result pressure,
+work exhaustion, call-depth exhaustion, and retained-memory refusal through the
+interpreter.
 
 This completes the sequential implementation checkpoint, not the whole Slice 7
 qualification promise. A parallel-capable Windows host and a parallel-capable

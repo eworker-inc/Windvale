@@ -1,12 +1,12 @@
 module WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore profile portable;
 
 const TASK_STATE_MAGIC: u32 = 1414746967u32;
-const TASK_STATE_VERSION: u32 = 1u32;
+const TASK_STATE_VERSION: u32 = 2u32;
 const TASK_SCOPE_CAPACITY: u32 = 32u32;
 const TASK_CAPACITY: u32 = 128u32;
 const TASK_HEADER_BYTES: u32 = 16u32;
 const TASK_SCOPE_BYTES: u32 = 88u32;
-const TASK_ENTRY_BYTES: u32 = 48u32;
+const TASK_ENTRY_BYTES: u32 = 56u32;
 const TASK_SCOPES_BYTES: u32 = TASK_SCOPE_CAPACITY * TASK_SCOPE_BYTES;
 const TASK_STATE_BYTES: u32 = TASK_HEADER_BYTES + TASK_SCOPES_BYTES +
     TASK_CAPACITY * TASK_ENTRY_BYTES;
@@ -30,6 +30,8 @@ export record Spawnˉbegin {
     State: bytes;
     Remainingˉwork: u64;
     Maximumˉcallˉdepth: u32;
+    Requestedˉbytes: u64;
+    Availableˉbytes: u64;
 }
 
 export record Taskˉcompletion {
@@ -152,6 +154,14 @@ fn Summarizeˉscopeˉtasks(
                 Status < 1u32 || Status > 2u32 || Terminalˉkind > 5u32 {
                 return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
             }
+            let Taskˉretained: u64 = Bytesˉreadˉu64ˉlittle(
+                State, Entry + 48u32
+            );
+            if Taskˉretained == 0u64 ||
+                Taskˉretained > 1048576u64 - Retained {
+                return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
+            }
+            Retained = Retained + Taskˉretained;
             if Status == 1u32 {
                 if Terminalˉkind != 0u32 ||
                     Bytesˉreadˉu64ˉlittle(State, Entry + 20u32) != 0u64 ||
@@ -167,7 +177,6 @@ fn Summarizeˉscopeˉtasks(
                     return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
                 }
                 Completed = Completed + 1u32;
-                if Terminalˉkind == 0u32 { Retained = Retained + 8u64; }
             }
             Live = Live + 1u32;
         }
@@ -452,18 +461,24 @@ export fn Constructˉscope(
     );
 }
 
-export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
+export fn Beginˉspawn(
+    State: bytes,
+    Scope: bytes,
+    Retainedˉbytes: u64
+) -> Spawnˉbegin {
     let Emptyˉvalue: bytes = Empty(State);
     let Scopeˉslot: u32 = Scopeˉindex(State, Scope);
     if Scopeˉslot == TASK_SCOPE_CAPACITY {
         return Spawnˉbegin(
-            false, false, 0u32, Emptyˉvalue, State, 0u64, 0u32
+            false, false, 0u32, Emptyˉvalue, State, 0u64, 0u32,
+            0u64, 0u64
         );
     }
     let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉslot);
     if Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 8u32) != 0u32 {
         return Spawnˉbegin(
-            true, false, 0u32, Emptyˉvalue, State, 0u64, 0u32
+            true, false, 0u32, Emptyˉvalue, State, 0u64, 0u32,
+            0u64, 0u64
         );
     }
     let Maximumˉwork: u64 = Bytesˉreadˉu64ˉlittle(
@@ -475,7 +490,8 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
     if Workˉused >= Maximumˉwork {
         return Spawnˉbegin(
             true, false, 1u32, Emptyˉvalue, State, 0u64,
-            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+            0u64, 0u64
         );
     }
     let Accepted: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 12u32);
@@ -483,7 +499,8 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
         return Spawnˉbegin(
             true, false, 1u32, Emptyˉvalue, State,
             Maximumˉwork - Workˉused,
-            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+            0u64, 0u64
         );
     }
     let Live: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 16u32);
@@ -493,7 +510,30 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
         return Spawnˉbegin(
             true, false, 2u32, Emptyˉvalue, State,
             Maximumˉwork - Workˉused,
-            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+            0u64, 0u64
+        );
+    }
+    let Summary: Scopeˉtaskˉsummary = Summarizeˉscopeˉtasks(
+        State, Scopeˉslot + 1u32,
+        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry)
+    );
+    if !Summary.Valid || Retainedˉbytes == 0u64 {
+        return Spawnˉbegin(
+            false, false, 0u32, Emptyˉvalue, State, 0u64, 0u32,
+            0u64, 0u64
+        );
+    }
+    let Maximumˉretained: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Scopeˉentry + 40u32
+    );
+    let Availableˉretained: u64 = Maximumˉretained - Summary.Retained;
+    if Retainedˉbytes > Availableˉretained {
+        return Spawnˉbegin(
+            true, false, 3u32, Emptyˉvalue, State,
+            Maximumˉwork - Workˉused,
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+            Retainedˉbytes, Availableˉretained
         );
     }
     var Taskˉslot: u32 = 0u32;
@@ -506,7 +546,8 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
         return Spawnˉbegin(
             true, false, 2u32, Emptyˉvalue, State,
             Maximumˉwork - Workˉused,
-            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+            0u64, 0u64
         );
     }
     let Taskˉentry: u32 = Taskˉoffset(Taskˉslot);
@@ -528,12 +569,16 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(0u64));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(0u64));
+    Entry = Bytesˉconcat(
+        Entry, Bytesˉfromˉu64ˉlittle(Retainedˉbytes)
+    );
     Updated = Replace(Updated, Taskˉentry, Entry);
     return Spawnˉbegin(
         Stateˉisˉvalid(Updated), true, 0u32,
         Token(Taskˉslot + 1u32, Generation), Updated,
         Maximumˉwork - Workˉused,
-        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32),
+        0u64, Availableˉretained
     );
 }
 

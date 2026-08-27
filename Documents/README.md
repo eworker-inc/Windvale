@@ -277,6 +277,9 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Deterministic source closure targets](Decisions/0858-Catalog-Deterministic-Source-Closure-Targets.md) — assigns bounded compiler-private WVCL source-site ordinals without fake source symbols or recursive physical-function insertion
 - [Synthetic closure binding directories](Decisions/0859-Publish-Synthetic-Closure-Bindings-As-Wvlb-1.4.md) — publishes exact capture/public-parameter physical ranges without forging source declarations
 - [Frame-owned native callables](Decisions/0860-Lower-Frame-Owned-Callables-Through-The-Native-X64-Abi.md) — completes the selected Slice 6 source-to-native closure path with move/borrow proofs and a checked nonescaping x64 ABI
+- [Sequential WVB structured tasks](Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md) — connects exact lexical task scopes, consuming await, cancellation, teardown, and typed outcomes to WVB 1.32
+- [Structured-task completion admission](Decisions/0864-Reserve-Structured-Task-Completion-Slots-Before-Spawn.md) — reserves one bounded outcome position for every accepted live child before captures move
+- [Structured-task retained-memory admission](Decisions/0865-Reserve-Structured-Task-Retained-Memory-Before-Spawn.md) — reserves exact continuation, child-local, parent-frame, and outcome state or returns typed exact memory failure with the original work
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations
