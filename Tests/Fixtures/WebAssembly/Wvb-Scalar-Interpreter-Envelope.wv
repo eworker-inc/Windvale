@@ -49,7 +49,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     }
     let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
     if Requestˉmajor < 1u32 { return Invalid; }
-    if Requestˉmajor > 5u32 { return Invalid; }
+    if Requestˉmajor > 6u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
@@ -175,7 +175,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 31u32 { return Invalid; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 32u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -348,7 +348,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 Scriptˉcapabilityˉindex = Scriptˉcapabilityˉindex + 1u32;
             }
         }
-    } else if Requestˉmajor == 5u32 {
+    } else if Requestˉmajor == 5u32 || Requestˉmajor == 6u32 {
         if Moduleˉprofile != 2u32 || Capabilityˉcount != 0u32 {
             return Invalid;
         }
@@ -493,6 +493,10 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                             Fieldˉshapeˉkind == 24u32) {
                         Extendedˉfieldˉshape = true;
                     }
+                    if Moduleˉminor >= 30u32 &&
+                        Fieldˉshapeˉkind == 35u32 {
+                        Extendedˉfieldˉshape = true;
+                    }
                     if !Extendedˉfieldˉshape {
                         return Invalid;
                     }
@@ -500,7 +504,8 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 Typeˉcursor = Typeˉcursor + 1u32;
                 if Fieldˉshapeˉkind == 7u32 || Fieldˉshapeˉkind == 8u32 ||
                     Fieldˉshapeˉkind == 11u32 || Fieldˉshapeˉkind == 22u32 ||
-                    Fieldˉshapeˉkind == 23u32 || Fieldˉshapeˉkind == 24u32 {
+                    Fieldˉshapeˉkind == 23u32 || Fieldˉshapeˉkind == 24u32 ||
+                    Fieldˉshapeˉkind == 35u32 {
                     if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor) >= Typeˉcount {
                         return Invalid;
                     }
@@ -544,9 +549,12 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                     if Variantˉfieldˉshape < 1u32 { return Invalid; }
                     if Variantˉfieldˉshape > 10u32 {
                         var Extendedˉvariantˉshape: bool =
-                            Moduleˉminor >= 12u32 &&
+                            Variantˉfieldˉshape == 11u32;
+                        if Moduleˉminor >= 12u32 &&
                             Variantˉfieldˉshape >= 14u32 &&
-                            Variantˉfieldˉshape <= 16u32;
+                            Variantˉfieldˉshape <= 16u32 {
+                            Extendedˉvariantˉshape = true;
+                        }
                         if Moduleˉminor >= 13u32 &&
                             Variantˉfieldˉshape == 17u32 {
                             Extendedˉvariantˉshape = true;
@@ -576,14 +584,20 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                             Variantˉfieldˉshape == 25u32 {
                             Extendedˉvariantˉshape = true;
                         }
+                        if Moduleˉminor >= 30u32 &&
+                            Variantˉfieldˉshape == 35u32 {
+                            Extendedˉvariantˉshape = true;
+                        }
                         if !Extendedˉvariantˉshape { return Invalid; }
                     }
                     Typeˉcursor = Typeˉcursor + 1u32;
                     if Variantˉfieldˉshape == 7u32 ||
                         Variantˉfieldˉshape == 8u32 ||
+                        Variantˉfieldˉshape == 11u32 ||
                         Variantˉfieldˉshape == 22u32 ||
                         Variantˉfieldˉshape == 23u32 ||
-                        Variantˉfieldˉshape == 24u32 {
+                        Variantˉfieldˉshape == 24u32 ||
+                        Variantˉfieldˉshape == 35u32 {
                         if Bytesˉreadˉu32ˉlittle(Module, Typeˉcursor)
                             >= Typeˉcount {
                             return Invalid;

@@ -1,0 +1,7 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Structured-Task-Retained-Result-Executable.wv"
+source "Libraries/Foundation/Memory/Memory.wv"
+source "Libraries/Foundation/Operations/Operation.wv"
+source "Libraries/Foundation/Values/Result.wv"
+source "Libraries/Foundation/Tasks/Task.wv"
+emit wvb

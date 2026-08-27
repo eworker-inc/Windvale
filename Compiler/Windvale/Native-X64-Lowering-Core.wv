@@ -3259,7 +3259,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcontrolˉcode(
         Storage.Persistentˉfields + Storage.Scratchˉfields +
         Compilerˉnativeˉx64ˉhiddenˉresultˉslots(Function.Returnˉtype) +
         Callableˉenvironmentˉslots + Callableˉcaptureˉslots >
-        2048u32 {
+        4096u32 {
         return Compilerˉnativeˉx64ˉfailureˉcontrolˉanalysis(Input, 11u32);
     }
     return Compilerˉnativeˉx64ˉcontrolˉanalysis(

@@ -63,7 +63,7 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.31. Its shared scalar
+The current source-built runner accepts WVB 1.11 through 1.32. Its shared scalar
 interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
@@ -394,6 +394,44 @@ upper-version tests reduced the first 366,728-byte implementation without
 raising the unchanged 64-MiB native lowering plan limit. Each bounded closure
 record is also assembled before one arena append, so a creation does not copy
 the complete retained arena once per header field.
+
+WVB 1.32 adds a deterministic sequential structured-task scheduler beneath the
+same verified source semantics. The launcher supplies the exact root memory
+budget and operation context. Opcodes `D6` through `DB` construct one lexical
+scope, derive its context, transfer accepted async work, consume handles at
+await, request cancellation idempotently, and join/consume the scope. The
+runtime stores fixed task records in one 8,976-byte state value and admits at
+most 64 accepted/runnable/retained children under the lower application limit.
+
+One child work unit is one dispatched verified WVB instruction after the spawn
+baseline. Exhaustion is observed by the parent as
+`Taskˉoutcome.Trapped(3011)`. Child-relative call depth counts the root as one;
+excess is `Taskˉoutcome.Trapped(3004)`. Completed aggregates remain explicit
+garbage-collection roots until await or scope teardown, preventing a retained
+completion from being reclaimed while unrelated aggregate pressure runs.
+Timer and diagnostic limits are validated but remain at zero use because the
+first task opcode family creates neither resource.
+
+The public one-module command recognizes the canonical hosted WVB 1.32 profile
+and selects execution-request major `6`. That request uses the bounded
+16-byte magic/version/instruction/depth header followed by the module. Envelope
+validation requires hosted profile `2`, no declared capabilities, WVB 1.32,
+and exact `Main(Memoryˉbudget, Operationˉcontext) -> i32`; execution then
+creates both launcher-owned values. Request major `5` remains reserved for
+`--source-file` and cannot be reused as a task envelope. Successful task
+execution preserves the ordinary CLI contract: `Result: <i32>` on standard
+output and process exit zero.
+
+The current Windows development runner contains 211 functions and 398,123 code
+bytes in a 445,196-byte WVB at SHA-256
+`4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67`.
+It packages to a 5,327,872-byte hosted application at SHA-256
+`7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0`.
+The 4,231-byte success
+fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
+fixture, call-depth-one fixture, and 37-case task-state self-test all return
+`42`. These are focused sequential development results; parallel-capable paired
+host evidence and promoted-candidate repinning remain pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

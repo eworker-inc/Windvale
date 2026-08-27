@@ -59,7 +59,8 @@ There are no declarations outside the listed blocks in Foundation major 1.
 | `Foundationˉbytes` | 1 | Core | `8dd5cd3b1bc4cd5c877ab6c2b73b3ca4c67740b9ce8e1ea13772cd4975fff64b` |
 | `Foundationˉtext` | 1 | Core | `67b0329dc3242c245a0c3be9dccbe1c73263745173d7eced450ee8f5018e753f` |
 | `Foundationˉresource` | 1 | Core | `74a7e0a64b9df8a43bd6c9fea23d7bd8ed6ed8222a630b6e323ea2f99c27bc8a` |
-| `Foundationˉtask` | 1 | Hosted | `453090ee631482c1b83c2016a32726f79abff79f936484e4315969f29ca9af84` |
+| `Foundationˉoperation` | 1 | Hosted | `e25487d2e669583ede8e072b0d2807d4faf8d4080a894dc0c6b5384dcf3519bc` |
+| `Foundationˉtask` | 1 | Hosted | `5b3e11e97843ae18e953a2d0bac962e9536b3871815929614354f2c6f0c8c665` |
 | `Foundationˉunsafe` | 1 | System | `461263f6041122ff7dca5401f1e778382c0699c35fc557c8c27565a5192ce8df` |
 
 The hashes are candidate identities until the explicit Language 1.0
@@ -315,11 +316,18 @@ export variant Mutationˉoutcome<E> { Rejected(Error: E); Acceptedˉpartial(Comp
 end module;
 ~~~
 
+## Foundation operation
+
+~~~windvale-foundation-signatures
+module Foundationˉoperation major 1;
+opaque copy type Operationˉcontext;
+end module;
+~~~
+
 ## Foundation task
 
 ~~~windvale-foundation-signatures
 module Foundationˉtask major 1;
-opaque copy type Operationˉcontext;
 opaque owned type Taskˉscope;
 opaque owned type Task<T, E>;
 export record Taskˉlimits { Maximumˉchildren: u32; Maximumˉrunnable: u32; Maximumˉcompleted: u32; Maximumˉretainedˉbytes: u64; Maximumˉworkˉunits: u64; Maximumˉcallˉdepth: u32; Maximumˉtimers: u32; Maximumˉdiagnostics: u32; }
@@ -327,8 +335,8 @@ export variant Taskˉscopeˉfailure { Invalidˉlimits(Field: u32, Observed: u64,
 export variant Taskˉoutcome<T, E> { Valid(Value: T); Failure(Error: E); Cancelled; Deadlineˉreached; Runtimeˉlost(Expectedˉgeneration: u64, Observedˉgeneration: u64); Runtimeˉrestarted(Expectedˉgeneration: u64, Observedˉgeneration: u64); Trapped(Identity: u32); }
 export variant Spawnˉfailure<W> { Scopeˉclosing(Work: W); Taskˉlimit(Work: W); Queueˉlimit(Work: W); Memoryˉfailure(Error: Foundationˉmemory.Allocationˉfailure, Work: W); }
 export variant Cancelˉrequestˉoutcome { Requested(Liveˉchildren: u32); Alreadyˉrequested(Liveˉchildren: u32); }
-export fn Construct(Budget: Foundationˉmemory.Memoryˉbudget, Limits: Taskˉlimits, Parentˉcontext: borrow Operationˉcontext) -> Foundationˉresult.Result<Taskˉscope, Taskˉscopeˉfailure> effects(memory.allocate, resource.acquire);
-export fn Operationˉcontext(Scope: borrow Taskˉscope) -> Operationˉcontext effects();
+export fn Construct(Budget: Foundationˉmemory.Memoryˉbudget, Limits: Taskˉlimits, Parentˉcontext: borrow Foundationˉoperation.Operationˉcontext) -> Foundationˉresult.Result<Taskˉscope, Taskˉscopeˉfailure> effects(memory.allocate, resource.acquire);
+export fn Operationˉcontext(Scope: borrow Taskˉscope) -> Foundationˉoperation.Operationˉcontext effects();
 family Spawnˉclosureˉrelation {
     For exact W = async fn() -> Foundationˉresult.Result<T, E> effects(F):
     export fn Spawn(Scope: borrow mut Taskˉscope, Work: W) -> Foundationˉresult.Result<Task<T, E>, Spawnˉfailure<W>> effects(memory.allocate, task.spawn);

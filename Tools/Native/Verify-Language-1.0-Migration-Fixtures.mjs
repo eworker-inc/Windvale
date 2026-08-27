@@ -11,14 +11,14 @@ import { TextDecoder } from "node:util";
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "..", "..");
-const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt";
+const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt";
 const INVENTORY_PATH = "Tests/Native/Language-1.0-Fixture-Inventory.txt";
-const FREEZE_BYTES = 3730;
-const FREEZE_SHA256 = "6d00f33f87dc62f5df55dc5dd5a882c3d4a7984a31bf376d85076ff0fe578e48";
+const FREEZE_BYTES = 3885;
+const FREEZE_SHA256 = "edb0840333d34bbedc8e47bce5bad279ee9de832e4ce119b93b273a981521436";
 const COMPLETE_COUNT = 251;
-const COMPLETE_BYTES = 1752500;
+const COMPLETE_BYTES = 1755950;
 const COMPLETE_STREAM_BYTES = 46260;
-const COMPLETE_SHA256 = "57c37c700e311e7bfb8bd384f3f3fc4c88ff7c78ef23187b245ae739b24d13ad";
+const COMPLETE_SHA256 = "aab0f4f1570b853a683a07112bfa0e5058d9355f17eb47cc98d04eb26dfd93a1";
 
 function Fail(message) {
     throw new Error(message);
@@ -190,3 +190,9 @@ for (const line of inventoryLines) {
     sourceBytes += bytes;
 }
 if (sourceCount !== 72 || sourceBytes !== 482325) Fail("Complete source fixture inventory differs");
+
+process.stdout.write(
+    `language 1 migration fixture identity status=Passed ` +
+    `freeze-bytes=${FREEZE_BYTES} inputs=${COMPLETE_COUNT} ` +
+    `source-fixtures=${sourceCount}\n`,
+);

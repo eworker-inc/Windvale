@@ -6,22 +6,24 @@ import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉcollectionˉcore as Collections;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉmemoryˉbudgetˉcore as Budgets;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore as Tasks;
 
 const PORTABLE_ROOT_MEMORY_BUDGET_BYTES: u64 = 98304u64;
 const PORTABLE_ROOT_MEMORY_BUDGET_CHILDREN: u32 = 64u32;
+const TASK_PENDING_BYTES: u32 = 40u32;
 
 data Stackˉeffects: bytes = [
     0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
     6, 6, 6, 5, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     6, 6, 6, 6, 6, 6, 6, 6, 5, 0, 0, 0, 0, 0, 0, 0,
     0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 6, 4, 5, 4, 4, 0, 0, 0, 0, 0,
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 4, 6, 6, 13, 13, 13,
     13, 14, 6, 5, 13, 13, 5, 14, 13, 13, 13, 13, 13, 13, 0, 0,
     0, 4, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 6,
-    6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
+    6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6,
+    6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
     5, 6, 6, 6, 6, 6, 5, 6, 6, 0, 0, 0, 0, 0, 13, 5,
     4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -286,13 +288,14 @@ record Functionˉdirectory {
     Parameterˉmodes: bytes;
     Mainˉhasˉmemoryˉbudget: bool;
     Mainˉhasˉsourceˉfile: bool;
+    Mainˉhasˉoperationˉcontext: bool;
 }
 
 fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     return Functionˉdirectory(
         false, 0u32, 0u32, 0u32,
-        Empty, Empty, Empty, Empty, Empty, Empty, Empty, false, false
+        Empty, Empty, Empty, Empty, Empty, Empty, Empty, false, false, false
     );
 }
 
@@ -335,6 +338,7 @@ fn Readˉfunctionˉdirectory(
     var Vectorˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
     var Mainˉhasˉsourceˉfile: bool = false;
+    var Mainˉhasˉoperationˉcontext: bool = false;
     while Functionˉindex < Functionˉcount {
         Functionˉcursor = Functionˉcursor + 4u32
             + Bytesˉreadˉu32ˉlittle(Module, Functionˉcursor);
@@ -369,12 +373,28 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if Moduleˉminor < 21u32 || Moduleˉminor > 28u32 ||
-                    Functionˉindex != Mainˉindex || Parameterˉcount != 1u32 ||
-                    Shapeˉindex != 0u32 || Mainˉhasˉmemoryˉbudget {
-                    return Invalidˉfunctionˉdirectory(Module);
+                if Moduleˉminor == 32u32 {
+                    if Functionˉindex == Mainˉindex {
+                        if Parameterˉcount != 2u32 || Shapeˉindex != 0u32 ||
+                            Mainˉhasˉmemoryˉbudget {
+                            return Invalidˉfunctionˉdirectory(Module);
+                        }
+                        Mainˉhasˉmemoryˉbudget = true;
+                    }
+                } else {
+                    if Moduleˉminor < 21u32 || Moduleˉminor > 28u32 ||
+                        Functionˉindex != Mainˉindex ||
+                        Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
+                        Mainˉhasˉmemoryˉbudget {
+                        return Invalidˉfunctionˉdirectory(Module);
+                    }
+                    Mainˉhasˉmemoryˉbudget = true;
                 }
-                Mainˉhasˉmemoryˉbudget = true;
+            }
+            if Moduleˉminor == 32u32 &&
+                Functionˉindex == Mainˉindex && Parameterˉcount == 2u32 &&
+                Shapeˉindex == 1u32 && Shapeˉkind == 7u32 {
+                Mainˉhasˉoperationˉcontext = true;
             }
             if Shapeˉkind == 34u32 {
                 if Moduleˉminor < 29u32 ||
@@ -475,9 +495,10 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
-                    ((Moduleˉminor < 23u32 || Moduleˉminor > 28u32) ||
+                    (Moduleˉminor != 32u32 &&
+                        (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
-                        !Mainˉhasˉmemoryˉbudget)) ||
+                        !Mainˉhasˉmemoryˉbudget))) ||
                 (Shapeˉkind == 34u32 &&
                     (Moduleˉminor < 29u32 ||
                         Functionˉindex != Mainˉindex ||
@@ -537,7 +558,9 @@ fn Readˉfunctionˉdirectory(
                     return Invalidˉfunctionˉdirectory(Module);
                 }
                 if Mainˉhasˉmemoryˉbudget {
-                    if Parameterˉcount != 1u32 {
+                    if Parameterˉcount != 1u32 &&
+                        !(Moduleˉminor == 32u32 && Parameterˉcount == 2u32 &&
+                            Mainˉhasˉoperationˉcontext) {
                         return Invalidˉfunctionˉdirectory(Module);
                     }
                 } else if Parameterˉcount != 0u32 {
@@ -553,6 +576,16 @@ fn Readˉfunctionˉdirectory(
             } else if Requestˉmajor == 5u32 {
                 if Parameterˉcount != 1u32 || Returnˉkind != 1u32 ||
                     !Mainˉhasˉsourceˉfile {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+            } else if Requestˉmajor == 6u32 && Moduleˉminor == 32u32 &&
+                Mainˉhasˉmemoryˉbudget && Mainˉhasˉoperationˉcontext {
+                if Parameterˉcount != 2u32 || Returnˉkind != 1u32 {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+            } else if Requestˉmajor == 4u32 && Moduleˉminor == 32u32 &&
+                Mainˉhasˉmemoryˉbudget && Mainˉhasˉoperationˉcontext {
+                if Parameterˉcount != 2u32 || Returnˉkind != 1u32 {
                     return Invalidˉfunctionˉdirectory(Module);
                 }
             } else if Parameterˉcount != 0u32 || Returnˉkind != 1u32 {
@@ -592,7 +625,8 @@ fn Readˉfunctionˉdirectory(
         Parameterˉmodeˉoffsets,
         Parameterˉmodes,
         Mainˉhasˉmemoryˉbudget,
-        Mainˉhasˉsourceˉfile
+        Mainˉhasˉsourceˉfile,
+        Mainˉhasˉoperationˉcontext
     );
 }
 
@@ -667,6 +701,30 @@ fn Stackˉflagˉset(Low: u32, High: u32, Index: u32) -> bool {
     if Index < 32u32 { return ((Low >> Index) & 1u32) != 0u32; }
     if Index < 64u32 { return ((High >> (Index - 32u32)) & 1u32) != 0u32; }
     return false;
+}
+
+fn Stackˉdescriptorˉrootsˉafter(
+    Stack: bytes,
+    Lowˉflags: u32,
+    Highˉflags: u32,
+    Firstˉcell: u32
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Stack, 0u32, 0u32);
+    let Cells: u32 = Bytesˉlength(Stack) / 8u32;
+    if Bytesˉlength(Stack) != Cells * 8u32 || Firstˉcell > Cells {
+        return Empty;
+    }
+    var Roots: bytes = Empty;
+    var Cell: u32 = Firstˉcell;
+    while Cell < Cells {
+        if Stackˉflagˉset(Lowˉflags, Highˉflags, Cell) {
+            Roots = Bytesˉconcat(
+                Roots, Bytesˉslice(Stack, Cell * 8u32, 8u32)
+            );
+        }
+        Cell = Cell + 1u32;
+    }
+    return Roots;
 }
 
 fn Localˉaggregateˉroots(
@@ -2473,9 +2531,43 @@ fn Evaluateˉu32ˉextended(
     );
 }
 
+fn Evaluateˉi32ˉdivision(Left: u32, Right: u32) -> bytes {
+    if Right == 0u32 ||
+        (Left == 2147483648u32 && Right == 4294967295u32) {
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(3007u32),
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(0u32),
+                Bytesˉfromˉu32ˉlittle(0u32)
+            )
+        );
+    }
+    let Leftˉnegative: bool = Left >= 2147483648u32;
+    let Rightˉnegative: bool = Right >= 2147483648u32;
+    var Dividend: u32 = Left;
+    var Divisor: u32 = Right;
+    if Leftˉnegative { Dividend = (~Left) + 1u32; }
+    if Rightˉnegative { Divisor = (~Right) + 1u32; }
+    var Quotient: u32 = Dividend / Divisor;
+    var Remainder: u32 = Dividend % Divisor;
+    if Leftˉnegative != Rightˉnegative && Quotient != 0u32 {
+        Quotient = (~Quotient) + 1u32;
+    }
+    if Leftˉnegative && Remainder != 0u32 {
+        Remainder = (~Remainder) + 1u32;
+    }
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Quotient),
+            Bytesˉfromˉu32ˉlittle(Remainder)
+        )
+    );
+}
+
 fn Isˉbaseˉnumeric(Opcode: u32) -> bool {
     if Opcode >= 16u32 && Opcode <= 22u32 { return true; }
-    if Opcode == 161u32 || Opcode == 162u32 { return true; }
+    if Opcode >= 159u32 && Opcode <= 162u32 { return true; }
     return Opcode >= 173u32 && Opcode <= 178u32;
 }
 
@@ -2528,6 +2620,16 @@ fn Executeˉbaseˉnumeric(
     if Opcode >= 20u32 && Opcode <= 22u32 {
         Value = Evaluateˉu32ˉbasic(Opcode, Leftˉraw, Rightˉraw);
     }
+    if Opcode == 159u32 || Opcode == 160u32 {
+        let Division: bytes = Evaluateˉi32ˉdivision(
+            Leftˉraw, Rightˉraw
+        );
+        Status = Bytesˉreadˉu32ˉlittle(Division, 0u32);
+        Value = Bytesˉreadˉu32ˉlittle(Division, 4u32);
+        if Opcode == 160u32 {
+            Value = Bytesˉreadˉu32ˉlittle(Division, 8u32);
+        }
+    }
     if Opcode == 161u32 || Opcode == 162u32 ||
         (Opcode >= 173u32 && Opcode <= 175u32) ||
         Opcode == 177u32 || Opcode == 178u32 {
@@ -2545,6 +2647,40 @@ fn Executeˉbaseˉnumeric(
         );
     }
     return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Status), Stack);
+}
+
+record Numericˉinstructionˉexecution {
+    Valid: bool;
+    Handled: bool;
+    Status: u32;
+    Stack: bytes;
+}
+
+fn Executeˉhighˉnumericˉinstruction(
+    Opcode: u32,
+    Inputˉstack: bytes,
+    Zeroˉvalue: bytes
+) -> Numericˉinstructionˉexecution {
+    let Handled: bool = Isˉbaseˉnumeric(Opcode);
+    if !Handled {
+        return Numericˉinstructionˉexecution(
+            true, false, 0u32, Inputˉstack
+        );
+    }
+    let Result: bytes = Executeˉbaseˉnumeric(
+        Opcode, Inputˉstack, Zeroˉvalue
+    );
+    if Bytesˉlength(Result) < 4u32 {
+        return Numericˉinstructionˉexecution(
+            false, true, 0u32, Inputˉstack
+        );
+    }
+    return Numericˉinstructionˉexecution(
+        true,
+        true,
+        Bytesˉreadˉu32ˉlittle(Result, 0u32),
+        Bytesˉslice(Result, 4u32, Bytesˉlength(Result) - 4u32)
+    );
 }
 
 fn Executeˉbaseˉcomparison(
@@ -4069,6 +4205,7 @@ fn Executeˉaggregate(
     Heapˉallocationˉcount: u32,
     Initialˉrecordˉmetadata: bytes,
     Initialˉrecords: bytes,
+    Taskˉstate: bytes,
     Stackˉdescriptorˉflagsˉlow: u32,
     Stackˉdescriptorˉflagsˉhigh: u32,
     Stackˉrecordˉflagsˉlow: u32,
@@ -4265,6 +4402,10 @@ fn Executeˉaggregate(
                                     1u32,
                                     Bytesˉlength(Recordˉframeˉroots) - 1u32
                                 )
+                            );
+                            Recordˉreachableˉvalues = Bytesˉconcat(
+                                Recordˉreachableˉvalues,
+                                Tasks.Retainedˉroots(Taskˉstate)
                             );
                             let Recordˉmarkˉscan: bytes =
                                 Markˉaggregateˉroots(
@@ -4692,6 +4833,7 @@ fn Executeˉextended(
     Initialˉallocationˉleases: bytes,
     Initialˉrecordˉmetadata: bytes,
     Initialˉrecords: bytes,
+    Initialˉtaskˉstate: bytes,
     Stackˉdescriptorˉflagsˉlow: u32,
     Stackˉdescriptorˉflagsˉhigh: u32,
     Stackˉrecordˉflagsˉlow: u32,
@@ -4969,6 +5111,7 @@ fn Executeˉextended(
         Heapˉallocationˉcount,
         Recordˉmetadata,
         Records,
+        Initialˉtaskˉstate,
         Stackˉdescriptorˉflagsˉlow,
         Stackˉdescriptorˉflagsˉhigh,
         Stackˉrecordˉflagsˉlow,
@@ -5411,6 +5554,7 @@ fn Returningˉaggregateˉcollection(
     Functionˉframeˉmetadata: bytes,
     Functionˉshapeˉoffsets: bytes,
     Localˉshapes: bytes,
+    Taskˉstate: bytes,
     Zeroˉcell: bytes
 ) -> Aggregateˉcollection {
     var Roots: bytes = Stackˉaggregateˉroots(
@@ -5430,6 +5574,7 @@ fn Returningˉaggregateˉcollection(
         Roots,
         Bytesˉslice(Frameˉroots, 1u32, Bytesˉlength(Frameˉroots) - 1u32)
     );
+    Roots = Bytesˉconcat(Roots, Tasks.Retainedˉroots(Taskˉstate));
     return Collectˉunreachableˉaggregates(
         Module, Typeˉoffsets, Records, Recordˉmetadata, Roots, Zeroˉcell
     );
@@ -5617,7 +5762,7 @@ fn Executeˉcall(
             Initialˉlocals, Initialˉframes, Depth, 0u32
         );
     }
-    if Opcode != 64u32 && Opcode != 212u32 {
+    if Opcode != 64u32 && Opcode != 212u32 && Opcode != 216u32 {
         return Callˉexecution(
             true, false, Initialˉstack, 0u32, false, 0u32, Instructions,
             Initialˉfunction, 0u32, 0u32, 0u32,
@@ -5650,10 +5795,20 @@ fn Executeˉcall(
             Parameters * 8u32;
         Consumed = Parameters;
     }
-    if Opcode == 212u32 {
-        let Callableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-            Module, Payload + 1u32
-        );
+    if Opcode == 212u32 || Opcode == 216u32 {
+        var Callableˉtype: u32 = 0u32;
+        if Opcode == 212u32 {
+            Callableˉtype = Bytesˉreadˉu32ˉlittle(
+                Module, Payload + 1u32
+            );
+        } else {
+            if Bytesˉlength(Initialˉstack) < 8u32 { return Invalid; }
+            let Encodedˉcallableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Initialˉstack, Bytesˉlength(Initialˉstack) - 4u32
+            );
+            if Encodedˉcallableˉtype == 0u32 { return Invalid; }
+            Callableˉtype = Encodedˉcallableˉtype - 1u32;
+        }
         if Callableˉtype >= Typeˉcount { return Invalid; }
         let Descriptor: u32 = Bytesˉreadˉu32ˉlittle(
             Typeˉoffsets, Callableˉtype * 4u32
@@ -5669,6 +5824,7 @@ fn Executeˉcall(
         Parameters = Bytesˉreadˉu32ˉlittle(
             Module, Descriptorˉcursor
         );
+        if Opcode == 216u32 && Parameters != 0u32 { return Invalid; }
         if Bytesˉlength(Initialˉstack) / 8u32 < Parameters + 1u32 {
             return Invalid;
         }
@@ -5716,7 +5872,11 @@ fn Executeˉcall(
         }
         Consumed = Parameters + 1u32;
     }
-    var Frame: bytes = Bytesˉfromˉu32ˉlittle(Instructions + 5u32);
+    var Resumeˉwidth: u32 = 5u32;
+    if Opcode == 216u32 { Resumeˉwidth = 13u32; }
+    var Frame: bytes = Bytesˉfromˉu32ˉlittle(
+        Instructions + Resumeˉwidth
+    );
     Frame = Bytesˉconcat(Frame, Initialˉlocals);
     Frame = Bytesˉconcat(
         Frame, Bytesˉfromˉu32ˉlittle(Initialˉfunction)
@@ -5764,11 +5924,12 @@ fn Executeˉcall(
         );
         Capture = Capture + 1u32;
     }
-    if Opcode == 212u32 && (Bytesˉlength(Stack) < 8u32 ||
+    if (Opcode == 212u32 || Opcode == 216u32) &&
+        (Bytesˉlength(Stack) < 8u32 ||
         Bytesˉlength(Stack) - 8u32 != Prefixˉlength) {
         return Invalid;
     }
-    if Opcode == 212u32 {
+    if Opcode == 212u32 || Opcode == 216u32 {
         Stack = Bytesˉslice(Stack, 0u32, Prefixˉlength);
     }
     if Opcode == 64u32 && Bytesˉlength(Stack) != Prefixˉlength {
@@ -5780,6 +5941,1086 @@ fn Executeˉcall(
         Bytesˉreadˉu32ˉlittle(Functionˉcodeˉoffsets, Target * 4u32),
         Bytesˉreadˉu32ˉlittle(Functionˉcodeˉlengths, Target * 4u32),
         Locals, Frames, Depth + 1u32, 0u32
+    );
+}
+
+record Taskˉvalueˉallocation {
+    Valid: bool;
+    Value: bytes;
+    Metadata: bytes;
+    Records: bytes;
+}
+
+fn Taskˉrecordˉfields(
+    Value: bytes,
+    Expectedˉowner: u32,
+    Expectedˉfields: u32,
+    Metadata: bytes,
+    Records: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    if Bytesˉlength(Value) != 8u32 { return Empty; }
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    let Owner: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Slot == 4294967295u32 || Owner != Expectedˉowner ||
+        Slot >= 768u32 || Expectedˉfields == 0u32 ||
+        Expectedˉfields > 768u32 - Slot ||
+        Bytesˉreadˉu32ˉlittle(Metadata, Slot * 8u32) != Owner ||
+        Bytesˉreadˉu32ˉlittle(Metadata, Slot * 8u32 + 4u32) !=
+            Expectedˉfields ||
+        Slot * 8u32 > Bytesˉlength(Records) ||
+        Expectedˉfields * 8u32 > Bytesˉlength(Records) - Slot * 8u32 {
+        return Empty;
+    }
+    return Bytesˉslice(Records, Slot * 8u32, Expectedˉfields * 8u32);
+}
+
+fn Taskˉvariantˉfieldˉnominal(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Type: u32,
+    Case: u32
+) -> u32 {
+    let Directory: bytes = Variantˉcaseˉfields(
+        Module, Typeˉoffsets, Type, Case
+    );
+    if Bytesˉlength(Directory) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 0u32) != 1u32 {
+        return 4294967295u32;
+    }
+    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(Directory, 4u32);
+    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+    if Kind != 7u32 && Kind != 11u32 { return 4294967295u32; }
+    return Bytesˉreadˉu32ˉlittle(Module, Cursor + 1u32);
+}
+
+fn Allocateˉtaskˉvalue(
+    Owner: u32,
+    Fields: bytes,
+    Metadata: bytes,
+    Records: bytes,
+    Zeroˉcell: bytes
+) -> Taskˉvalueˉallocation {
+    let Allocated: Aggregateˉallocation =
+        Allocateˉaggregateˉwithoutˉcollection(
+            Owner, Fields, Metadata, Records, Zeroˉcell
+        );
+    return Taskˉvalueˉallocation(
+        Allocated.Valid, Allocated.Handle, Allocated.Metadata, Allocated.Values
+    );
+}
+
+fn Taskˉtokenˉfromˉvalue(
+    Value: bytes,
+    Expectedˉowner: u32,
+    Metadata: bytes,
+    Records: bytes
+) -> bytes {
+    return Taskˉrecordˉfields(
+        Value, Expectedˉowner, 1u32, Metadata, Records
+    );
+}
+
+record Taskˉoperation {
+    Valid: bool;
+    Handled: bool;
+    Stack: bytes;
+    Locals: bytes;
+    Taskˉstate: bytes;
+    Memoryˉbudgetˉstate: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Consumed: u32;
+    Produced: bool;
+    Producedˉkind: u32;
+    Instructions: u32;
+}
+
+fn Executeˉtaskˉawait(
+    Module: bytes,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Functionˉcursor: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmemoryˉbudgetˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Records: bytes,
+    Zeroˉcell: bytes
+) -> Taskˉoperation {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Taskˉoperation = Taskˉoperation(
+        false, false, Empty, Empty, Empty, Empty, Empty, Empty,
+        0u32, false, 0u32, 0u32
+    );
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Origin: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+    if Local * 8u32 >= Functionˉcursor || Origin * 8u32 >= Functionˉcursor {
+        return Invalid;
+    }
+    let Handleˉvalue: bytes = Bytesˉslice(
+        Initialˉlocals, Local * 8u32, 8u32
+    );
+    let Scopeˉvalue: bytes = Bytesˉslice(
+        Initialˉlocals, Origin * 8u32, 8u32
+    );
+    let Handleˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+        Handleˉvalue, Bytesˉreadˉu32ˉlittle(Handleˉvalue, 4u32),
+        Initialˉmetadata, Records
+    );
+    let Scopeˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+        Scopeˉvalue, Bytesˉreadˉu32ˉlittle(Scopeˉvalue, 4u32),
+        Initialˉmetadata, Records
+    );
+    if Bytesˉlength(Handleˉtoken) != 8u32 ||
+        Bytesˉlength(Scopeˉtoken) != 8u32 {
+        return Invalid;
+    }
+    let Awaited: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        Initialˉtaskˉstate, Handleˉtoken, Scopeˉtoken
+    );
+    if !Awaited.Valid || !Awaited.Found { return Invalid; }
+    let Outcomeˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 9u32);
+    var Metadata: bytes = Initialˉmetadata;
+    var Updatedˉrecords: bytes = Records;
+    var Outcomeˉvalue: bytes = Empty;
+    if Awaited.Terminalˉkind == 0u32 {
+        let Resultˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+            Awaited.Result, 0u32
+        );
+        let Resultˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+            Awaited.Result, 4u32
+        );
+        if Resultˉslot == 4294967295u32 ||
+            Resultˉowner < 2147483648u32 {
+            return Invalid;
+        }
+        let Resultˉcase: u32 =
+            (Resultˉowner - 2147483648u32) % 256u32;
+        if Resultˉcase > 1u32 { return Invalid; }
+        let Resultˉoutcomeˉowner: u32 = 2147483648u32 +
+            (Outcomeˉtype + 1u32) * 256u32 + Resultˉcase;
+        Metadata = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Metadata, 0u32, Resultˉslot * 8u32),
+                Bytesˉfromˉu32ˉlittle(Resultˉoutcomeˉowner)
+            ),
+            Bytesˉslice(
+                Metadata, Resultˉslot * 8u32 + 4u32,
+                Bytesˉlength(Metadata) - Resultˉslot * 8u32 - 4u32
+            )
+        );
+        Outcomeˉvalue = Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Resultˉslot),
+            Bytesˉfromˉu32ˉlittle(Resultˉoutcomeˉowner)
+        );
+    } else {
+        let Outcomeˉcase: u32 = Awaited.Terminalˉkind + 1u32;
+        let Terminalˉoutcomeˉowner: u32 = 2147483648u32 +
+            (Outcomeˉtype + 1u32) * 256u32 + Outcomeˉcase;
+        if Awaited.Terminalˉkind <= 2u32 {
+            Outcomeˉvalue = Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(4294967295u32),
+                Bytesˉfromˉu32ˉlittle(Terminalˉoutcomeˉowner)
+            );
+        } else {
+            var Outcomeˉfields: bytes = Bytesˉfromˉu64ˉlittle(
+                Awaited.Firstˉevidence
+            );
+            if Awaited.Terminalˉkind < 5u32 {
+                Outcomeˉfields = Bytesˉconcat(
+                    Outcomeˉfields,
+                    Bytesˉfromˉu64ˉlittle(Awaited.Secondˉevidence)
+                );
+            }
+            let Outcomeˉallocation: Taskˉvalueˉallocation =
+                Allocateˉtaskˉvalue(
+                    Terminalˉoutcomeˉowner, Outcomeˉfields,
+                    Metadata, Updatedˉrecords, Zeroˉcell
+                );
+            if !Outcomeˉallocation.Valid { return Invalid; }
+            Outcomeˉvalue = Outcomeˉallocation.Value;
+            Metadata = Outcomeˉallocation.Metadata;
+            Updatedˉrecords = Outcomeˉallocation.Records;
+        }
+    }
+    let Stack: bytes = Bytesˉconcat(Initialˉstack, Outcomeˉvalue);
+    let Locals: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉlocals, 0u32, Local * 8u32), Zeroˉcell
+        ),
+        Bytesˉslice(
+            Initialˉlocals, Local * 8u32 + 8u32,
+            Functionˉcursor - Local * 8u32 - 8u32
+        )
+    );
+    return Taskˉoperation(
+        true, true, Stack, Locals, Awaited.State,
+        Initialˉmemoryˉbudgetˉstate, Metadata, Updatedˉrecords,
+        0u32, true, 2u32, 13u32
+    );
+}
+
+fn Executeˉtaskˉoperation(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Payload: u32,
+    Opcode: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Functionˉcursor: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmemoryˉbudgetˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Zeroˉcell: bytes
+) -> Taskˉoperation {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Taskˉoperation = Taskˉoperation(
+        false, false, Empty, Empty, Empty, Empty, Empty, Empty,
+        0u32, false, 0u32, 0u32
+    );
+    if Opcode < 214u32 || Opcode > 219u32 || Opcode == 216u32 {
+        return Taskˉoperation(
+            true, false, Initialˉstack, Initialˉlocals,
+            Initialˉtaskˉstate, Initialˉmemoryˉbudgetˉstate,
+            Initialˉmetadata, Initialˉrecords,
+            0u32, false, 0u32, 0u32
+        );
+    }
+    if Opcode == 217u32 {
+        return Executeˉtaskˉawait(
+            Module, Payload, Initialˉstack, Initialˉlocals,
+            Functionˉcursor, Initialˉtaskˉstate,
+            Initialˉmemoryˉbudgetˉstate, Initialˉmetadata,
+            Initialˉrecords, Zeroˉcell
+        );
+    }
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    if Local * 8u32 >= Functionˉcursor { return Invalid; }
+    var Stack: bytes = Initialˉstack;
+    var Locals: bytes = Initialˉlocals;
+    var Taskˉstate: bytes = Initialˉtaskˉstate;
+    var Memoryˉbudgetˉstate: bytes = Initialˉmemoryˉbudgetˉstate;
+    var Metadata: bytes = Initialˉmetadata;
+    var Records: bytes = Initialˉrecords;
+    var Consumed: u32 = 0u32;
+    var Produced: bool = false;
+    var Producedˉkind: u32 = 0u32;
+    var Instructions: u32 = 0u32;
+
+    if Opcode == 214u32 {
+        if Bytesˉlength(Stack) < 16u32 { return Invalid; }
+        let Stackˉlength: u32 = Bytesˉlength(Stack);
+        let Limitsˉvalue: bytes = Bytesˉslice(Stack, Stackˉlength - 16u32, 8u32);
+        let Contextˉvalue: bytes = Bytesˉslice(Stack, Stackˉlength - 8u32, 8u32);
+        let Limitsˉowner: u32 = Bytesˉreadˉu32ˉlittle(Limitsˉvalue, 4u32);
+        let Contextˉowner: u32 = Bytesˉreadˉu32ˉlittle(Contextˉvalue, 4u32);
+        let Limits: bytes = Taskˉrecordˉfields(
+            Limitsˉvalue, Limitsˉowner, 8u32, Metadata, Records
+        );
+        let Context: bytes = Taskˉtokenˉfromˉvalue(
+            Contextˉvalue, Contextˉowner, Metadata, Records
+        );
+        if Bytesˉlength(Limits) != 64u32 || Bytesˉlength(Context) != 8u32 {
+            return Invalid;
+        }
+        let Budget: bytes = Bytesˉslice(Locals, Local * 8u32, 8u32);
+        let Constructed: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
+            Taskˉstate, Budget, Limits, Context
+        );
+        if !Constructed.Valid { return Invalid; }
+        Taskˉstate = Constructed.State;
+        let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+        var Resultˉcase: u32 = 0u32;
+        var Resultˉfield: bytes = Empty;
+        if Constructed.Accepted {
+            let Scopeˉtype: u32 = Taskˉvariantˉfieldˉnominal(
+                Module, Typeˉoffsets, Resultˉtype, 0u32
+            );
+            if Scopeˉtype == 4294967295u32 { return Invalid; }
+            let Scopeˉallocation: Taskˉvalueˉallocation =
+                Allocateˉtaskˉvalue(
+                    Scopeˉtype + 1u32, Constructed.Token,
+                    Metadata, Records, Zeroˉcell
+                );
+            if !Scopeˉallocation.Valid { return Invalid; }
+            Resultˉfield = Scopeˉallocation.Value;
+            Metadata = Scopeˉallocation.Metadata;
+            Records = Scopeˉallocation.Records;
+        } else {
+            Resultˉcase = 1u32;
+            let Failureˉtype: u32 = Taskˉvariantˉfieldˉnominal(
+                Module, Typeˉoffsets, Resultˉtype, 1u32
+            );
+            if Failureˉtype == 4294967295u32 { return Invalid; }
+            var Failureˉfields: bytes = Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Constructed.Field),
+                Bytesˉfromˉu32ˉlittle(0u32)
+            );
+            Failureˉfields = Bytesˉconcat(
+                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Observed)
+            );
+            Failureˉfields = Bytesˉconcat(
+                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Minimum)
+            );
+            Failureˉfields = Bytesˉconcat(
+                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Maximum)
+            );
+            let Failureˉowner: u32 = 2147483648u32 +
+                (Failureˉtype + 1u32) * 256u32;
+            let Failureˉallocation: Taskˉvalueˉallocation =
+                Allocateˉtaskˉvalue(
+                    Failureˉowner, Failureˉfields,
+                    Metadata, Records, Zeroˉcell
+                );
+            if !Failureˉallocation.Valid { return Invalid; }
+            Resultˉfield = Failureˉallocation.Value;
+            Metadata = Failureˉallocation.Metadata;
+            Records = Failureˉallocation.Records;
+            let Released: Budgets.Memoryˉbudgetˉreleaseˉresult =
+                Budgets.Releaseˉmemoryˉbudget(Memoryˉbudgetˉstate, Budget);
+            if !Released.Valid { return Invalid; }
+            Memoryˉbudgetˉstate = Released.State;
+        }
+        let Resultˉowner: u32 = 2147483648u32 +
+            (Resultˉtype + 1u32) * 256u32 + Resultˉcase;
+        let Resultˉallocation: Taskˉvalueˉallocation =
+            Allocateˉtaskˉvalue(
+                Resultˉowner, Resultˉfield, Metadata, Records, Zeroˉcell
+            );
+        if !Resultˉallocation.Valid { return Invalid; }
+        Metadata = Resultˉallocation.Metadata;
+        Records = Resultˉallocation.Records;
+        Stack = Bytesˉconcat(
+            Bytesˉslice(Stack, 0u32, Stackˉlength - 16u32),
+            Resultˉallocation.Value
+        );
+        Locals = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Locals, 0u32, Local * 8u32), Zeroˉcell
+            ),
+            Bytesˉslice(
+                Locals, Local * 8u32 + 8u32,
+                Functionˉcursor - Local * 8u32 - 8u32
+            )
+        );
+        Consumed = 2u32;
+        Produced = true;
+        Producedˉkind = 2u32;
+        Instructions = 9u32;
+    }
+
+    if Opcode == 215u32 {
+        let Contextˉscopeˉvalue: bytes = Bytesˉslice(
+            Locals, Local * 8u32, 8u32
+        );
+        let Scopeˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+            Contextˉscopeˉvalue, 4u32
+        );
+        let Contextˉscopeˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+            Contextˉscopeˉvalue, Scopeˉowner, Metadata, Records
+        );
+        if Bytesˉlength(Contextˉscopeˉtoken) != 8u32 { return Invalid; }
+        let Contextˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+        let Derivedˉcontext: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+            Contextˉtype + 1u32, Contextˉscopeˉtoken,
+            Metadata, Records, Zeroˉcell
+        );
+        if !Derivedˉcontext.Valid { return Invalid; }
+        Stack = Bytesˉconcat(Stack, Derivedˉcontext.Value);
+        Metadata = Derivedˉcontext.Metadata;
+        Records = Derivedˉcontext.Records;
+        Produced = true;
+        Producedˉkind = 2u32;
+        Instructions = 9u32;
+    }
+
+    if Opcode == 218u32 {
+        let Cancelˉscopeˉvalue: bytes = Bytesˉslice(
+            Locals, Local * 8u32, 8u32
+        );
+        let Cancelˉscopeˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+            Cancelˉscopeˉvalue,
+            Bytesˉreadˉu32ˉlittle(Cancelˉscopeˉvalue, 4u32),
+            Metadata, Records
+        );
+        if Bytesˉlength(Cancelˉscopeˉtoken) != 8u32 { return Invalid; }
+        let Cancelled: Tasks.Cancelˉresult = Tasks.Requestˉcancel(
+            Taskˉstate, Cancelˉscopeˉtoken
+        );
+        if !Cancelled.Valid { return Invalid; }
+        Taskˉstate = Cancelled.State;
+        let Cancelˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+        var Case: u32 = 0u32;
+        if Cancelled.Alreadyˉrequested { Case = 1u32; }
+        let Cancelˉowner: u32 = 2147483648u32 +
+            (Cancelˉtype + 1u32) * 256u32 + Case;
+        let Cancelˉfields: bytes = Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Cancelled.Liveˉchildren),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+        let Cancelˉallocation: Taskˉvalueˉallocation =
+            Allocateˉtaskˉvalue(
+                Cancelˉowner, Cancelˉfields,
+                Metadata, Records, Zeroˉcell
+            );
+        if !Cancelˉallocation.Valid { return Invalid; }
+        Stack = Bytesˉconcat(Stack, Cancelˉallocation.Value);
+        Metadata = Cancelˉallocation.Metadata;
+        Records = Cancelˉallocation.Records;
+        Produced = true;
+        Producedˉkind = 2u32;
+        Instructions = 9u32;
+    }
+
+    if Opcode == 219u32 {
+        let Exitˉscopeˉvalue: bytes = Bytesˉslice(
+            Locals, Local * 8u32, 8u32
+        );
+        let Exitˉscopeˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+            Exitˉscopeˉvalue,
+            Bytesˉreadˉu32ˉlittle(Exitˉscopeˉvalue, 4u32),
+            Metadata, Records
+        );
+        if Bytesˉlength(Exitˉscopeˉtoken) != 8u32 { return Invalid; }
+        let Exited: Tasks.Scopeˉexit = Tasks.Exitˉscope(
+            Taskˉstate, Exitˉscopeˉtoken,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload + 5u32))
+        );
+        if !Exited.Valid { return Invalid; }
+        let Exitˉbudgetˉrelease: Budgets.Memoryˉbudgetˉreleaseˉresult =
+            Budgets.Releaseˉmemoryˉbudget(
+                Memoryˉbudgetˉstate, Exited.Budget
+            );
+        if !Exitˉbudgetˉrelease.Valid { return Invalid; }
+        Taskˉstate = Exited.State;
+        Memoryˉbudgetˉstate = Exitˉbudgetˉrelease.State;
+        Locals = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Locals, 0u32, Local * 8u32), Zeroˉcell
+            ),
+            Bytesˉslice(
+                Locals, Local * 8u32 + 8u32,
+                Functionˉcursor - Local * 8u32 - 8u32
+            )
+        );
+        Instructions = 6u32;
+    }
+    return Taskˉoperation(
+        true, true, Stack, Locals, Taskˉstate, Memoryˉbudgetˉstate,
+        Metadata, Records, Consumed, Produced, Producedˉkind, Instructions
+    );
+}
+
+record Taskˉspawnˉexecution {
+    Valid: bool;
+    Stack: bytes;
+    Locals: bytes;
+    Taskˉstate: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Consumed: u32;
+    Produced: bool;
+    Producedˉkind: u32;
+    Instructions: u32;
+    Functionˉindex: u32;
+    Functionˉcursor: u32;
+    Codeˉoffset: u32;
+    Codeˉlength: u32;
+    Frames: bytes;
+    Depth: u32;
+    Pending: bytes;
+}
+
+record Taskˉworkˉobservation {
+    Valid: bool;
+    Exhausted: bool;
+}
+
+fn Observeˉtaskˉwork(Pending: bytes, Executed: u32) -> Taskˉworkˉobservation {
+    let Length: u32 = Bytesˉlength(Pending);
+    if Length == 0u32 { return Taskˉworkˉobservation(true, false); }
+    if Length % TASK_PENDING_BYTES != 0u32 {
+        return Taskˉworkˉobservation(false, false);
+    }
+    let Offset: u32 = Length - TASK_PENDING_BYTES;
+    let Started: u32 = Bytesˉreadˉu32ˉlittle(Pending, Offset + 24u32);
+    let Maximum: u64 = Bytesˉreadˉu64ˉlittle(Pending, Offset + 28u32);
+    if Started > Executed || Maximum == 0u64 || Maximum > 1000000u64 {
+        return Taskˉworkˉobservation(false, false);
+    }
+    return Taskˉworkˉobservation(
+        true, U64ˉfromˉu32(Executed - Started) >= Maximum
+    );
+}
+
+fn Effectiveˉtaskˉcallˉdepth(Pending: bytes, Maximum: u32) -> u32 {
+    let Length: u32 = Bytesˉlength(Pending);
+    if Length == 0u32 { return Maximum; }
+    if Length % TASK_PENDING_BYTES != 0u32 { return 0u32; }
+    let Offset: u32 = Length - TASK_PENDING_BYTES;
+    let Rootˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Pending, Offset);
+    let Taskˉmaximum: u32 = Bytesˉreadˉu32ˉlittle(
+        Pending, Offset + 36u32
+    );
+    if Rootˉdepth == 0u32 || Taskˉmaximum == 0u32 ||
+        Rootˉdepth > 64u32 || Taskˉmaximum > 64u32 {
+        return 0u32;
+    }
+    let Taskˉabsoluteˉmaximum: u32 = Rootˉdepth + Taskˉmaximum - 1u32;
+    if Taskˉabsoluteˉmaximum < Maximum { return Taskˉabsoluteˉmaximum; }
+    return Maximum;
+}
+
+fn Executeˉtaskˉspawn(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Functionˉcount: u32,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Functionˉcursor: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Zeroˉcell: bytes,
+    Closureˉenvironments: bytes,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉcodeˉoffsets: bytes,
+    Functionˉcodeˉlengths: bytes,
+    Instructions: u32,
+    Executed: u32,
+    Functionˉindex: u32,
+    Initialˉframes: bytes,
+    Zeroˉlocals: bytes,
+    Depth: u32,
+    Maximumˉdepth: u32,
+    Initialˉpending: bytes
+) -> Taskˉspawnˉexecution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Taskˉspawnˉexecution = Taskˉspawnˉexecution(
+        false, Empty, Empty, Empty, Empty, Empty,
+        0u32, false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Empty, 0u32, Empty
+    );
+    let Scopeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 1u32
+    );
+    if Scopeˉlocal * 8u32 >= Functionˉcursor ||
+        Bytesˉlength(Initialˉstack) < 8u32 {
+        return Invalid;
+    }
+    let Scopeˉvalue: bytes = Bytesˉslice(
+        Initialˉlocals, Scopeˉlocal * 8u32, 8u32
+    );
+    let Scope: bytes = Taskˉtokenˉfromˉvalue(
+        Scopeˉvalue,
+        Bytesˉreadˉu32ˉlittle(Scopeˉvalue, 4u32),
+        Initialˉmetadata, Initialˉrecords
+    );
+    if Bytesˉlength(Scope) != 8u32 { return Invalid; }
+    let Begun: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        Initialˉtaskˉstate, Scope
+    );
+    if !Begun.Valid { return Invalid; }
+    if Begun.Accepted {
+        let Call: Callˉexecution = Executeˉcall(
+            Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+            Payload, 216u32, Initialˉstack, Closureˉenvironments,
+            Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
+            Functionˉcodeˉlengths, Instructions, Functionˉindex,
+            Initialˉlocals, Initialˉframes, Zeroˉlocals,
+            Depth, Maximumˉdepth
+        );
+        if !Call.Valid || Call.Status != 0u32 || !Call.Handled {
+            return Invalid;
+        }
+        var Pending: bytes = Bytesˉfromˉu32ˉlittle(Call.Depth);
+        Pending = Bytesˉconcat(Pending, Begun.Token);
+        Pending = Bytesˉconcat(
+            Pending, Bytesˉslice(Module, Payload + 5u32, 8u32)
+        );
+        Pending = Bytesˉconcat(
+            Pending,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Call.Stack) / 8u32)
+        );
+        Pending = Bytesˉconcat(
+            Pending, Bytesˉfromˉu32ˉlittle(Executed)
+        );
+        Pending = Bytesˉconcat(
+            Pending, Bytesˉfromˉu64ˉlittle(Begun.Remainingˉwork)
+        );
+        Pending = Bytesˉconcat(
+            Pending, Bytesˉfromˉu32ˉlittle(Begun.Maximumˉcallˉdepth)
+        );
+        return Taskˉspawnˉexecution(
+            true, Call.Stack, Call.Locals, Begun.State,
+            Initialˉmetadata, Initialˉrecords,
+            Call.Consumed, false, 0u32, Call.Instructions,
+            Call.Functionˉindex, Call.Functionˉcursor,
+            Call.Codeˉoffset, Call.Codeˉlength, Call.Frames, Call.Depth,
+            Bytesˉconcat(Initialˉpending, Pending)
+        );
+    }
+    let Spawnˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 5u32
+    );
+    let Failureˉtype: u32 = Taskˉvariantˉfieldˉnominal(
+        Module, Typeˉoffsets, Spawnˉresultˉtype, 1u32
+    );
+    if Failureˉtype == 4294967295u32 || Begun.Reason > 2u32 {
+        return Invalid;
+    }
+    let Workˉoffset: u32 = Bytesˉlength(Initialˉstack) - 8u32;
+    let Work: bytes = Bytesˉslice(Initialˉstack, Workˉoffset, 8u32);
+    let Failureˉowner: u32 = 2147483648u32 +
+        (Failureˉtype + 1u32) * 256u32 + Begun.Reason;
+    let Failure: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+        Failureˉowner, Work, Initialˉmetadata, Initialˉrecords, Zeroˉcell
+    );
+    if !Failure.Valid { return Invalid; }
+    let Resultˉowner: u32 = 2147483648u32 +
+        (Spawnˉresultˉtype + 1u32) * 256u32 + 1u32;
+    let Result: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+        Resultˉowner, Failure.Value, Failure.Metadata, Failure.Records, Zeroˉcell
+    );
+    if !Result.Valid { return Invalid; }
+    return Taskˉspawnˉexecution(
+        true,
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉstack, 0u32, Workˉoffset), Result.Value
+        ),
+        Initialˉlocals, Begun.State, Result.Metadata, Result.Records,
+        1u32, true, 2u32, Instructions + 13u32,
+        Functionˉindex, Functionˉcursor,
+        0u32, 0u32, Initialˉframes, Depth, Initialˉpending
+    );
+}
+
+record Taskˉreturnˉcompletion {
+    Valid: bool;
+    Handled: bool;
+    Result: bytes;
+    Taskˉstate: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Pending: bytes;
+    Parentˉstackˉcells: u32;
+}
+
+fn Completeˉspawnedˉtask(
+    Taskˉpending: bytes,
+    Depth: u32,
+    Executed: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉresult: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Zeroˉcell: bytes,
+    Terminalˉkind: u32,
+    Firstˉevidence: u64,
+    Secondˉevidence: u64
+) -> Taskˉreturnˉcompletion {
+    let Length: u32 = Bytesˉlength(Taskˉpending);
+    if Length < TASK_PENDING_BYTES || Length % TASK_PENDING_BYTES != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Taskˉpending, Length - TASK_PENDING_BYTES
+        ) != Depth {
+        return Taskˉreturnˉcompletion(
+            true, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    let Pendingˉoffset: u32 = Length - TASK_PENDING_BYTES;
+    let Taskˉtoken: bytes = Bytesˉslice(
+        Taskˉpending, Pendingˉoffset + 4u32, 8u32
+    );
+    let Spawnˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Taskˉpending, Pendingˉoffset + 12u32
+    );
+    let Taskˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Taskˉpending, Pendingˉoffset + 16u32
+    );
+    let Parentˉstackˉcells: u32 = Bytesˉreadˉu32ˉlittle(
+        Taskˉpending, Pendingˉoffset + 20u32
+    );
+    let Started: u32 = Bytesˉreadˉu32ˉlittle(
+        Taskˉpending, Pendingˉoffset + 24u32
+    );
+    if Executed < Started {
+        return Taskˉreturnˉcompletion(
+            false, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    let Charged: Tasks.Workˉcharge = Tasks.Chargeˉwork(
+        Initialˉtaskˉstate, Taskˉtoken, Executed - Started
+    );
+    if !Charged.Valid {
+        return Taskˉreturnˉcompletion(
+            false, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    var Completed: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
+        Charged.State, Taskˉtoken, Initialˉresult
+    );
+    if Terminalˉkind != 0u32 {
+        Completed = Tasks.Completeˉterminal(
+            Charged.State, Taskˉtoken, Terminalˉkind,
+            Firstˉevidence, Secondˉevidence
+        );
+    }
+    if !Completed.Valid {
+        return Taskˉreturnˉcompletion(
+            false, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    let Handle: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+        Taskˉtype + 1u32, Taskˉtoken,
+        Initialˉmetadata, Initialˉrecords, Zeroˉcell
+    );
+    if !Handle.Valid {
+        return Taskˉreturnˉcompletion(
+            false, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    let Spawnˉowner: u32 = 2147483648u32 +
+        (Spawnˉresultˉtype + 1u32) * 256u32;
+    let Spawned: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+        Spawnˉowner, Handle.Value, Handle.Metadata, Handle.Records, Zeroˉcell
+    );
+    if !Spawned.Valid {
+        return Taskˉreturnˉcompletion(
+            false, false, Initialˉresult, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
+        );
+    }
+    return Taskˉreturnˉcompletion(
+        true, true, Spawned.Value, Completed.State,
+        Spawned.Metadata, Spawned.Records,
+        Bytesˉslice(Taskˉpending, 0u32, Pendingˉoffset),
+        Parentˉstackˉcells
+    );
+}
+
+record Taskˉtrapˉexecution {
+    Valid: bool;
+    Handled: bool;
+    Stack: bytes;
+    Locals: bytes;
+    Taskˉstate: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Frames: bytes;
+    Pending: bytes;
+    Releasedˉdescriptors: bytes;
+    Functionˉindex: u32;
+    Functionˉcursor: u32;
+    Codeˉoffset: u32;
+    Codeˉlength: u32;
+    Instructions: u32;
+    Depth: u32;
+}
+
+fn Executeˉspawnedˉtrap(
+    Moduleˉminor: u32,
+    Trapˉidentity: u32,
+    Initialˉstack: bytes,
+    Stackˉdescriptorˉcount: u32,
+    Stackˉdescriptorˉflagsˉlow: u32,
+    Stackˉdescriptorˉflagsˉhigh: u32,
+    Initialˉlocals: bytes,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Initialˉframes: bytes,
+    Initialˉpending: bytes,
+    Initialˉreleasedˉdescriptors: bytes,
+    Functionˉshapeˉoffsets: bytes,
+    Localˉshapes: bytes,
+    Heapˉallocations: bytes,
+    Heapˉallocationˉcount: u32,
+    Allocationˉleases: bytes,
+    Functionˉcount: u32,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉcodeˉoffsets: bytes,
+    Functionˉcodeˉlengths: bytes,
+    Initialˉfunctionˉindex: u32,
+    Initialˉfunctionˉcursor: u32,
+    Initialˉcodeˉoffset: u32,
+    Initialˉcodeˉlength: u32,
+    Initialˉinstructions: u32,
+    Initialˉexecuted: u32,
+    Initialˉdepth: u32,
+    Zeroˉcell: bytes
+) -> Taskˉtrapˉexecution {
+    let Completion: Taskˉreturnˉcompletion = Completeˉspawnedˉtask(
+        Initialˉpending, Initialˉdepth, Initialˉexecuted,
+        Initialˉtaskˉstate,
+        Zeroˉcell, Initialˉmetadata, Initialˉrecords, Zeroˉcell,
+        5u32, U64ˉfromˉu32(Trapˉidentity), 0u64
+    );
+    if !Completion.Valid || (Completion.Handled &&
+        (Completion.Parentˉstackˉcells > Stackˉdescriptorˉcount ||
+        Completion.Parentˉstackˉcells * 8u32 > Bytesˉlength(Initialˉstack))) {
+        return Taskˉtrapˉexecution(
+            false, false, Initialˉstack, Initialˉlocals,
+            Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+            Initialˉframes, Initialˉpending, Initialˉreleasedˉdescriptors,
+            Initialˉfunctionˉindex, Initialˉfunctionˉcursor,
+            Initialˉcodeˉoffset, Initialˉcodeˉlength,
+            Initialˉinstructions, Initialˉdepth
+        );
+    }
+    if !Completion.Handled {
+        return Taskˉtrapˉexecution(
+            true, false, Initialˉstack, Initialˉlocals,
+            Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+            Initialˉframes, Initialˉpending, Initialˉreleasedˉdescriptors,
+            Initialˉfunctionˉindex, Initialˉfunctionˉcursor,
+            Initialˉcodeˉoffset, Initialˉcodeˉlength,
+            Initialˉinstructions, Initialˉdepth
+        );
+    }
+    var Released: bytes = Bytesˉconcat(
+        Initialˉreleasedˉdescriptors,
+        Returningˉlocalˉdescriptors(
+            Moduleˉminor, Initialˉfunctionˉindex,
+            Initialˉfunctionˉcursor, Functionˉshapeˉoffsets,
+            Localˉshapes, Initialˉlocals, Initialˉrecords,
+            Heapˉallocations, Heapˉallocationˉcount, Allocationˉleases
+        )
+    );
+    Released = Bytesˉconcat(
+        Released,
+        Stackˉdescriptorˉrootsˉafter(
+            Initialˉstack, Stackˉdescriptorˉflagsˉlow,
+            Stackˉdescriptorˉflagsˉhigh,
+            Completion.Parentˉstackˉcells
+        )
+    );
+    let Framesˉlength: u32 = Bytesˉlength(Initialˉframes);
+    if Framesˉlength < 8u32 { return Taskˉtrapˉexecution(
+        false, false, Initialˉstack, Initialˉlocals,
+        Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+        Initialˉframes, Initialˉpending, Released,
+        Initialˉfunctionˉindex, Initialˉfunctionˉcursor,
+        Initialˉcodeˉoffset, Initialˉcodeˉlength,
+        Initialˉinstructions, Initialˉdepth
+    ); }
+    let Parentˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+        Initialˉframes, Framesˉlength - 4u32
+    );
+    if Parentˉfunction >= Functionˉcount { return Taskˉtrapˉexecution(
+        false, false, Initialˉstack, Initialˉlocals,
+        Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+        Initialˉframes, Initialˉpending, Released,
+        Initialˉfunctionˉindex, Initialˉfunctionˉcursor,
+        Initialˉcodeˉoffset, Initialˉcodeˉlength,
+        Initialˉinstructions, Initialˉdepth
+    ); }
+    let Parentˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Functionˉframeˉmetadata, Parentˉfunction * 8u32 + 4u32
+    );
+    if Parentˉcursor > Framesˉlength - 8u32 {
+        return Taskˉtrapˉexecution(
+            false, false, Initialˉstack, Initialˉlocals,
+            Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+            Initialˉframes, Initialˉpending, Released,
+            Initialˉfunctionˉindex, Initialˉfunctionˉcursor,
+            Initialˉcodeˉoffset, Initialˉcodeˉlength,
+            Initialˉinstructions, Initialˉdepth
+        );
+    }
+    let Frameˉoffset: u32 = Framesˉlength - 8u32 - Parentˉcursor;
+    return Taskˉtrapˉexecution(
+        true, true,
+        Bytesˉconcat(
+            Bytesˉslice(
+                Initialˉstack, 0u32, Completion.Parentˉstackˉcells * 8u32
+            ),
+            Completion.Result
+        ),
+        Bytesˉslice(Initialˉframes, Frameˉoffset + 4u32, Parentˉcursor),
+        Completion.Taskˉstate, Completion.Metadata, Completion.Records,
+        Bytesˉslice(Initialˉframes, 0u32, Frameˉoffset),
+        Completion.Pending, Released, Parentˉfunction, Parentˉcursor,
+        Bytesˉreadˉu32ˉlittle(
+            Functionˉcodeˉoffsets, Parentˉfunction * 4u32
+        ),
+        Bytesˉreadˉu32ˉlittle(
+            Functionˉcodeˉlengths, Parentˉfunction * 4u32
+        ),
+        Bytesˉreadˉu32ˉlittle(Initialˉframes, Frameˉoffset),
+        Initialˉdepth - 1u32
+    );
+}
+
+record Taskˉruntimeˉinitialization {
+    Valid: bool;
+    Locals: bytes;
+    State: bytes;
+    Metadata: bytes;
+    Records: bytes;
+}
+
+fn Initializeˉtaskˉruntime(
+    Hasˉoperationˉcontext: bool,
+    Hasˉmemoryˉbudget: bool,
+    Functionˉcursor: u32,
+    Functionˉshapeˉoffsets: bytes,
+    Mainˉindex: u32,
+    Localˉshapes: bytes,
+    Initialˉlocals: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Zeroˉcell: bytes
+) -> Taskˉruntimeˉinitialization {
+    let Empty: bytes = Bytesˉslice(Initialˉlocals, 0u32, 0u32);
+    let State: bytes = Tasks.Constructˉstate(Empty);
+    if Bytesˉlength(State) == 0u32 {
+        return Taskˉruntimeˉinitialization(
+            false, Empty, Empty, Empty, Empty
+        );
+    }
+    if !Hasˉoperationˉcontext {
+        return Taskˉruntimeˉinitialization(
+            true, Initialˉlocals, State, Initialˉmetadata, Initialˉrecords
+        );
+    }
+    if !Hasˉmemoryˉbudget || Functionˉcursor < 16u32 {
+        return Taskˉruntimeˉinitialization(
+            false, Empty, Empty, Empty, Empty
+        );
+    }
+    let Shapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Functionˉshapeˉoffsets, Mainˉindex * 4u32
+    );
+    let Contextˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+        Localˉshapes, Shapeˉoffset + 12u32
+    );
+    if Contextˉowner == 0u32 {
+        return Taskˉruntimeˉinitialization(
+            false, Empty, Empty, Empty, Empty
+        );
+    }
+    let Rootˉcontextˉtoken: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉfromˉu32ˉlittle(1u32)
+    );
+    let Rootˉcontext: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+        Contextˉowner, Rootˉcontextˉtoken,
+        Initialˉmetadata, Initialˉrecords, Zeroˉcell
+    );
+    if !Rootˉcontext.Valid {
+        return Taskˉruntimeˉinitialization(
+            false, Empty, Empty, Empty, Empty
+        );
+    }
+    let Locals: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉlocals, 0u32, 8u32), Rootˉcontext.Value
+        ),
+        Bytesˉslice(Initialˉlocals, 16u32, Functionˉcursor - 16u32)
+    );
+    return Taskˉruntimeˉinitialization(
+        true, Locals, State, Rootˉcontext.Metadata, Rootˉcontext.Records
+    );
+}
+
+record Taskˉinstructionˉexecution {
+    Valid: bool;
+    Handled: bool;
+    Enteredˉcall: bool;
+    Stack: bytes;
+    Locals: bytes;
+    Taskˉstate: bytes;
+    Memoryˉbudgetˉstate: bytes;
+    Metadata: bytes;
+    Records: bytes;
+    Consumed: u32;
+    Produced: bool;
+    Producedˉkind: u32;
+    Instructions: u32;
+    Functionˉindex: u32;
+    Functionˉcursor: u32;
+    Codeˉoffset: u32;
+    Codeˉlength: u32;
+    Frames: bytes;
+    Depth: u32;
+    Pending: bytes;
+}
+
+fn Executeˉtaskˉinstruction(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Functionˉcount: u32,
+    Payload: u32,
+    Opcode: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Functionˉcursor: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmemoryˉbudgetˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Zeroˉcell: bytes,
+    Closureˉenvironments: bytes,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉcodeˉoffsets: bytes,
+    Functionˉcodeˉlengths: bytes,
+    Instructions: u32,
+    Executed: u32,
+    Functionˉindex: u32,
+    Initialˉframes: bytes,
+    Zeroˉlocals: bytes,
+    Depth: u32,
+    Maximumˉdepth: u32,
+    Initialˉpending: bytes
+) -> Taskˉinstructionˉexecution {
+    if Opcode == 216u32 {
+        let Spawned: Taskˉspawnˉexecution = Executeˉtaskˉspawn(
+            Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+            Payload, Initialˉstack, Initialˉlocals, Functionˉcursor,
+            Initialˉtaskˉstate, Initialˉmetadata, Initialˉrecords,
+            Zeroˉcell, Closureˉenvironments, Functionˉframeˉmetadata,
+            Functionˉcodeˉoffsets, Functionˉcodeˉlengths,
+            Instructions, Executed, Functionˉindex,
+            Initialˉframes, Zeroˉlocals,
+            Depth, Maximumˉdepth, Initialˉpending
+        );
+        return Taskˉinstructionˉexecution(
+            Spawned.Valid, Spawned.Valid, Spawned.Depth != Depth,
+            Spawned.Stack, Spawned.Locals, Spawned.Taskˉstate,
+            Initialˉmemoryˉbudgetˉstate, Spawned.Metadata,
+            Spawned.Records, Spawned.Consumed, Spawned.Produced,
+            Spawned.Producedˉkind, Spawned.Instructions,
+            Spawned.Functionˉindex, Spawned.Functionˉcursor,
+            Spawned.Codeˉoffset, Spawned.Codeˉlength, Spawned.Frames,
+            Spawned.Depth, Spawned.Pending
+        );
+    }
+    let Operation: Taskˉoperation = Executeˉtaskˉoperation(
+        Module, Typeˉoffsets, Payload, Opcode, Initialˉstack,
+        Initialˉlocals, Functionˉcursor, Initialˉtaskˉstate,
+        Initialˉmemoryˉbudgetˉstate, Initialˉmetadata,
+        Initialˉrecords, Zeroˉcell
+    );
+    return Taskˉinstructionˉexecution(
+        Operation.Valid, Operation.Handled, false,
+        Operation.Stack, Operation.Locals, Operation.Taskˉstate,
+        Operation.Memoryˉbudgetˉstate, Operation.Metadata,
+        Operation.Records, Operation.Consumed, Operation.Produced,
+        Operation.Producedˉkind, Instructions + Operation.Instructions,
+        Functionˉindex, Functionˉcursor, 0u32, 0u32,
+        Initialˉframes, Depth, Initialˉpending
     );
 }
 
@@ -5859,6 +7100,8 @@ export fn Main(Request: bytes) -> bytes {
         Directory.Mainˉhasˉmemoryˉbudget;
     let Mainˉhasˉsourceˉfile: bool =
         Directory.Mainˉhasˉsourceˉfile;
+    let Mainˉhasˉoperationˉcontext: bool =
+        Directory.Mainˉhasˉoperationˉcontext;
 
     var Zeroˉlocals: bytes = Zeroˉcell;
     Functionˉindex = 1u32;
@@ -5963,6 +7206,18 @@ export fn Main(Request: bytes) -> bytes {
         Recordˉcapacity
     );
     var Records: bytes = Invalid;
+    let Taskˉruntime: Taskˉruntimeˉinitialization =
+        Initializeˉtaskˉruntime(
+            Mainˉhasˉoperationˉcontext, Mainˉhasˉmemoryˉbudget,
+            Functionˉcursor, Functionˉshapeˉoffsets, Mainˉindex,
+            Localˉshapes, Locals, Recordˉmetadata, Records, Zeroˉcell
+        );
+    if !Taskˉruntime.Valid { return Invalid; }
+    Locals = Taskˉruntime.Locals;
+    var Taskˉstate: bytes = Taskˉruntime.State;
+    Recordˉmetadata = Taskˉruntime.Metadata;
+    Records = Taskˉruntime.Records;
+    var Taskˉpending: bytes = Invalid;
     // Reuse completed-preflight slots as execution state: Functionˉindex is the
     // current function, Aggregateˉinstructions is PC, Exportˉindex is depth,
     // Envelope is executed count, Sectionˉkind is guest status, Payload is the
@@ -5972,23 +7227,39 @@ export fn Main(Request: bytes) -> bytes {
     Sectionˉkind = 0u32;
     var Running: bool = true;
     while Running {
+        let Taskˉwork: Taskˉworkˉobservation = Observeˉtaskˉwork(
+            Taskˉpending, Envelope
+        );
+        if !Taskˉwork.Valid { return Invalid; }
+        let Taskˉworkˉexhausted: bool = Taskˉwork.Exhausted;
         if Envelope >= Maximumˉinstructions {
             Sectionˉkind = 3011u32;
+        } else {
+        let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
+        var Stackˉconsumed: u32 = 0u32;
+        var Stackˉproduced: bool = false;
+        var Stackˉproducedˉkind: u32 = 0u32;
+        var Releasedˉdescriptors: bytes = Invalid;
+        var Heapˉallocationˉrequested: bool = false;
+        var Heapˉallocationˉvalue: bytes = Invalid;
+        if Taskˉworkˉexhausted {
+            Sectionˉkind = 3011u32;
+            Mainˉfound = true;
         } else {
         Envelope = Envelope + 1u32;
         Payload = Code + Mainˉcodeˉoffset + Aggregateˉinstructions;
         Payloadˉlength = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Payload));
         Mainˉfound = false;
-        let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
+        let Effectiveˉcallˉdepth: u32 = Effectiveˉtaskˉcallˉdepth(
+            Taskˉpending, Maximumˉcallˉdepth
+        );
+        if Effectiveˉcallˉdepth == 0u32 { return Invalid; }
         let Stackˉeffect: u32 = U32ˉfromˉu8(
             Bytesˉreadˉu8(Stackˉeffects, Payloadˉlength)
         );
-        var Stackˉconsumed: u32 = Stackˉeffect & 3u32;
-        var Stackˉproduced: bool = (Stackˉeffect & 4u32) != 0u32;
-        var Stackˉproducedˉkind: u32 = (Stackˉeffect >> 3u32) & 1u32;
-        var Releasedˉdescriptors: bytes = Invalid;
-        var Heapˉallocationˉrequested: bool = false;
-        var Heapˉallocationˉvalue: bytes = Invalid;
+        Stackˉconsumed = Stackˉeffect & 3u32;
+        Stackˉproduced = (Stackˉeffect & 4u32) != 0u32;
+        Stackˉproducedˉkind = (Stackˉeffect >> 3u32) & 1u32;
 
         if Payloadˉlength <= 22u32 {
         if Payloadˉlength == 1u32 || Payloadˉlength == 9u32 {
@@ -6096,6 +7367,18 @@ export fn Main(Request: bytes) -> bytes {
         }
 
         else {
+        let Highˉnumeric: Numericˉinstructionˉexecution =
+            Executeˉhighˉnumericˉinstruction(
+                Payloadˉlength, Stack, Zeroˉvalue
+            );
+        if !Highˉnumeric.Valid { return Invalid; }
+        if Highˉnumeric.Handled {
+            Sectionˉkind = Highˉnumeric.Status;
+            Stack = Highˉnumeric.Stack;
+            Aggregateˉinstructions = Aggregateˉinstructions + 1u32;
+            Mainˉfound = true;
+        }
+
         if Payloadˉlength >= 32u32 && Payloadˉlength <= 40u32 {
             Stack = Executeˉbaseˉcomparison(
                 Payloadˉlength, Stack, Zeroˉvalue
@@ -6124,6 +7407,7 @@ export fn Main(Request: bytes) -> bytes {
             Allocationˉleases,
             Recordˉmetadata,
             Records,
+            Taskˉstate,
             Stackˉdescriptorˉflagsˉlow,
             Stackˉdescriptorˉflagsˉhigh,
             Stackˉrecordˉflagsˉlow,
@@ -6170,6 +7454,41 @@ export fn Main(Request: bytes) -> bytes {
             Stackˉproducedˉkind = Extended.Producedˉkind;
             Aggregateˉinstructions =
                 Aggregateˉinstructions + Extended.Instructions;
+            Mainˉfound = true;
+        }
+
+        let Taskˉinstruction: Taskˉinstructionˉexecution =
+            Executeˉtaskˉinstruction(
+                Module, Typeˉoffsets, Typeˉcount, Functionˉcount,
+                Payload, Payloadˉlength, Stack, Locals, Functionˉcursor,
+                Taskˉstate, Memoryˉbudgetˉstate, Recordˉmetadata,
+                Records, Zeroˉcell, Closureˉenvironments,
+                Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
+                Functionˉcodeˉlengths, Aggregateˉinstructions,
+                Envelope, Functionˉindex, Frames, Zeroˉlocals,
+                Exportˉindex, Effectiveˉcallˉdepth, Taskˉpending
+            );
+        if !Taskˉinstruction.Valid { return Invalid; }
+        if Taskˉinstruction.Handled {
+            Stack = Taskˉinstruction.Stack;
+            Locals = Taskˉinstruction.Locals;
+            Taskˉstate = Taskˉinstruction.Taskˉstate;
+            Memoryˉbudgetˉstate = Taskˉinstruction.Memoryˉbudgetˉstate;
+            Recordˉmetadata = Taskˉinstruction.Metadata;
+            Records = Taskˉinstruction.Records;
+            Stackˉconsumed = Taskˉinstruction.Consumed;
+            Stackˉproduced = Taskˉinstruction.Produced;
+            Stackˉproducedˉkind = Taskˉinstruction.Producedˉkind;
+            Aggregateˉinstructions = Taskˉinstruction.Instructions;
+            Frames = Taskˉinstruction.Frames;
+            Taskˉpending = Taskˉinstruction.Pending;
+            if Taskˉinstruction.Enteredˉcall {
+                Functionˉindex = Taskˉinstruction.Functionˉindex;
+                Functionˉcursor = Taskˉinstruction.Functionˉcursor;
+                Mainˉcodeˉoffset = Taskˉinstruction.Codeˉoffset;
+                Mainˉcodeˉlength = Taskˉinstruction.Codeˉlength;
+                Exportˉindex = Taskˉinstruction.Depth;
+            }
             Mainˉfound = true;
         }
 
@@ -6306,7 +7625,7 @@ export fn Main(Request: bytes) -> bytes {
                 Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
                 Functionˉcodeˉlengths, Aggregateˉinstructions,
                 Functionˉindex, Locals, Frames, Zeroˉlocals,
-                Exportˉindex, Maximumˉcallˉdepth
+                Exportˉindex, Effectiveˉcallˉdepth
             );
             if !Call.Valid { return Invalid; }
             Stack = Call.Stack;
@@ -6514,7 +7833,7 @@ export fn Main(Request: bytes) -> bytes {
             if Returnˉisˉdescriptor {
                 Stackˉproducedˉkind = 1u32;
             }
-            let Returnˉisˉrecord: bool = Stackˉflagˉset(
+            var Returnˉisˉrecord: bool = Stackˉflagˉset(
                 Stackˉrecordˉflagsˉlow,
                 Stackˉrecordˉflagsˉhigh,
                 Stackˉdescriptorˉcount - 1u32
@@ -6564,6 +7883,7 @@ export fn Main(Request: bytes) -> bytes {
                         Returnˉresult, Frames, Functionˉcount,
                         Functionˉframeˉmetadata, Functionˉshapeˉoffsets,
                         Localˉshapes,
+                        Taskˉstate,
                         Zeroˉcell
                     );
                 if !Returnˉcollection.Valid { return Invalid; }
@@ -6572,6 +7892,22 @@ export fn Main(Request: bytes) -> bytes {
                     Releasedˉdescriptors,
                     Returnˉcollection.Releasedˉdescriptors
                 );
+            }
+            let Taskˉcompletion: Taskˉreturnˉcompletion =
+                Completeˉspawnedˉtask(
+                    Taskˉpending, Exportˉindex, Envelope, Taskˉstate,
+                    Returnˉresult, Recordˉmetadata, Records, Zeroˉcell,
+                    0u32, 0u64, 0u64
+                );
+            if !Taskˉcompletion.Valid { return Invalid; }
+            if Taskˉcompletion.Handled {
+                Returnˉresult = Taskˉcompletion.Result;
+                Taskˉstate = Taskˉcompletion.Taskˉstate;
+                Recordˉmetadata = Taskˉcompletion.Metadata;
+                Records = Taskˉcompletion.Records;
+                Taskˉpending = Taskˉcompletion.Pending;
+                Returnˉisˉrecord = true;
+                Stackˉproducedˉkind = 2u32;
             }
             if Framesˉlength == 0u32 {
                 let Topˉrelease: Descriptorˉreleaseˉexecution =
@@ -6712,6 +8048,45 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         } else {
             return Invalid;
+        }
+        }
+        if Sectionˉkind != 0u32 && Bytesˉlength(Taskˉpending) > 0u32 {
+            let Trapped: Taskˉtrapˉexecution = Executeˉspawnedˉtrap(
+                Moduleˉminor, Sectionˉkind, Stack, Stackˉdescriptorˉcount,
+                Stackˉdescriptorˉflagsˉlow, Stackˉdescriptorˉflagsˉhigh,
+                Locals, Taskˉstate, Recordˉmetadata, Records, Frames,
+                Taskˉpending, Releasedˉdescriptors, Functionˉshapeˉoffsets,
+                Localˉshapes, Heapˉallocations, Heapˉallocationˉcount,
+                Allocationˉleases, Functionˉcount, Functionˉframeˉmetadata,
+                Functionˉcodeˉoffsets, Functionˉcodeˉlengths,
+                Functionˉindex, Functionˉcursor, Mainˉcodeˉoffset,
+                Mainˉcodeˉlength, Aggregateˉinstructions, Envelope,
+                Exportˉindex,
+                Zeroˉcell
+            );
+            if !Trapped.Valid {
+                return Invalid;
+            } else if Trapped.Handled {
+                Stackˉconsumed = Stackˉdescriptorˉcount -
+                    (Bytesˉlength(Trapped.Stack) / 8u32 - 1u32);
+                Stackˉproduced = true;
+                Stackˉproducedˉkind = 2u32;
+                Stack = Trapped.Stack;
+                Locals = Trapped.Locals;
+                Taskˉstate = Trapped.Taskˉstate;
+                Recordˉmetadata = Trapped.Metadata;
+                Records = Trapped.Records;
+                Frames = Trapped.Frames;
+                Taskˉpending = Trapped.Pending;
+                Releasedˉdescriptors = Trapped.Releasedˉdescriptors;
+                Functionˉindex = Trapped.Functionˉindex;
+                Functionˉcursor = Trapped.Functionˉcursor;
+                Mainˉcodeˉoffset = Trapped.Codeˉoffset;
+                Mainˉcodeˉlength = Trapped.Codeˉlength;
+                Aggregateˉinstructions = Trapped.Instructions;
+                Exportˉindex = Trapped.Depth;
+                Sectionˉkind = 0u32;
+            }
         }
         // Copy operation results first, release consumed owners second, and
         // only then reuse a free span for the pending immutable result.

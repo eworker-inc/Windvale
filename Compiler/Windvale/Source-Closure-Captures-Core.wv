@@ -298,7 +298,7 @@ fn Compilerˉsourceˉclosureˉcaptureˉparentˉrangeˉisˉvalid(
         );
         if Bytesˉreadˉu32ˉlittle(Parentˉpayload, Entry) != Module ||
             Bytesˉreadˉu32ˉlittle(Parentˉpayload, Entry + 4u32) != Function ||
-            Kind == 0u32 || Kind > 4u32 || Slot != Index ||
+            Kind == 0u32 || Kind > 7u32 || Slot != Index ||
             Nameˉoffset >= Bytesˉlength(Source) || Nameˉlength == 0u32 ||
             Nameˉlength > Bytesˉlength(Source) - Nameˉoffset ||
             Scopeˉstart >= Scopeˉend || Scopeˉend > Bytesˉlength(Source) ||

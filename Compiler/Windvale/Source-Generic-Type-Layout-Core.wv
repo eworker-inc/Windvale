@@ -197,6 +197,9 @@ fn Compilerˉsourceˉgenericˉtypeˉshapeˉisˉvalid(
         Compilerˉsourceˉgenericˉtypeˉshapeˉisˉbuilder(Shape) {
         return true;
     }
+    if Shape >= 2147483904u32 && Shape < 2147484160u32 {
+        return true;
+    }
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
             Shape
         ) {
@@ -343,9 +346,7 @@ fn Compilerˉsourceˉgenericˉtypeˉvariantˉpayloadˉisˉvalid(
         return false;
     }
     return Substitution.Nominalˉkind !=
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability &&
-        Substitution.Nominalˉkind !=
-            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant;
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability;
 }
 
 fn Compilerˉsourceˉgenericˉtypeˉlayoutˉparametersˉmatch(

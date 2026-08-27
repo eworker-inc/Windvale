@@ -286,6 +286,76 @@ fn Asyncˉborrowˉprobe() -> i32 {
     return 42;
 }
 
+fn Asyncˉcopyˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉasyncˉcopyˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = async fn [copy Local] () -> i32 effects(task.suspend) { return Local; }; return 42; }"
+    );
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉexpression {
+        return 45;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉbindingˉevidence {
+        return 46;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Missingˉcapture {
+        return 47;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉcapture {
+        return 48;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉcaptureˉmode {
+        return 49;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉcaptureˉclass {
+        return 50;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉparameter {
+        return 51;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Duplicateˉparameter {
+        return 52;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Borrowedˉasync {
+        return 53;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Bodyˉbinding {
+        return 54;
+    }
+    if Summary.Status ==
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Invalidˉeffects {
+        return 55;
+    }
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Valid { return 56; }
+    if Summary.Effectˉstatus !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉeffectˉstatus.Valid {
+        return 57;
+    }
+    if Summary.Captures != 1u32 { return 58; }
+    if Summary.Parameters != 0u32 { return 59; }
+    if Summary.Languageˉeffects != 64u32 { return 60; }
+    if Summary.Capabilityˉeffects != 0u32 { return 61; }
+    if Captures.Compilerˉsourceˉclosureˉcaptureˉmodeˉat(
+            Summary, 0u32
+        ) != 0u32 { return 62; }
+    if Captures.Compilerˉsourceˉclosureˉcaptureˉslotˉat(
+            Summary, 0u32
+        ) != 1u32 { return 63; }
+    if Captures.Compilerˉsourceˉclosureˉcaptureˉshapeˉat(
+            Summary, 0u32
+        ) != 1u32 { return 65; }
+    return 42;
+}
+
 fn Capabilityˉrootˉprobe() -> i32 {
     let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
         "module Captureˉcapabilityˉprogram; profile hosted; platform linux, windows, windvale; authority application; capability diagnostic.write_line; fn Outer(Input: i32) -> i32 { let Local: i32 = 42; let Callback = fn [copy Local] () -> i32 effects(diagnostic.write_line) { diagnostic.write_line(\"capture\"); return Local; }; return 42; }"
@@ -529,5 +599,6 @@ export fn Main() -> i32 {
     if Selected == 104u32 { return Duplicateˉparameterˉprobe(); }
     if Selected == 105u32 { return Invalidˉevidenceˉprobe(); }
     if Selected == 106u32 { return Reconstructedˉphaseˉprobe(); }
+    if Selected == 107u32 { return Asyncˉcopyˉprobe(); }
     return 64;
 }

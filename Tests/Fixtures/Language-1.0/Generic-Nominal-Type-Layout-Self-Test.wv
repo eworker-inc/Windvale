@@ -96,6 +96,14 @@ export fn Main() -> i32 {
         Source,
         "variant Choice<T, E> { Empty; Left(Value: T); Right(Error: E); Both(Value: T, Error: E,); }\n"
     );
+    Source = Textˉconcat(
+        Source,
+        "variant DirectInner { Value(Value: i32); }\n"
+    );
+    Source = Textˉconcat(
+        Source,
+        "variant DirectOuter { Value(Value: DirectInner); }\n"
+    );
     Source = Textˉconcat(Source, "record Slot<T> { Value: T; }\n");
     Source = Textˉconcat(
         Source, "record ConstantBox<const Maximum: u32> { Value: i32; }\n"
@@ -333,8 +341,21 @@ export fn Main() -> i32 {
         Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
             Input, Scan, Symbols, Catalog, 5u32
         );
+    let Outerˉvariantˉvalue:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉvariantˉfield(
+            Input, Scan, Symbols, Outerˉvariant, 1u32, 0u32
+        );
     if Outerˉvariant.Symbolˉstatus !=
-        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉvariantˉpayload {
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+        !Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Outerˉvariant
+        ) ||
+        !Outerˉvariantˉvalue.Found ||
+        Outerˉvariantˉvalue.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(4u32) ||
+        Outerˉvariantˉvalue.Nominalˉkind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(8u32) {
         return 13;
     }
 

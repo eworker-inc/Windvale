@@ -11,19 +11,17 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+    CALLABLE_WVB_BASE64,
+    CALLABLE_WVB_SHA256,
+    CLOSURE_WVB_BASE64,
+    CLOSURE_WVB_SHA256
+} from './Language-1.0-Callable-Wvb-Fixtures.mjs';
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
-const CALLABLE_WVB_BASE64 =
-    'V1ZCMQEAHgAHAAAAAQAAAGAAAAABLAAAAExhbmd1YWdly4lvbmXLiWNhbGxhYmxly4lpbmRpcmVjdMuJZXhlY3V0aW9uAQECAwAAAAUAAABsaW51eAcAAAB3aW5kb3dzCAAAAHdpbmR2YWxlAAAAAAAAAAACAAAABAAAAAAAAAADAAAABAAAAAAAAAAEAAAAVwAAAAIAAAAIAAAAQWRky4lvbmUBAAAAAQEDAAAAAQEBAAAAACoAAAACAAAABAAAAE1haW4AAAAAAQUAAAAjAAAAACMAAAAAIwAAAAABASoAAABGAAAAAgAAAAUAAABwAAAABAAAAAAFAQAAAAEBAAAABQIAAAAEAQAAAAQCAAAAEAUDAAAABAMAAABR0wAAAAAAAAAABQEAAAAEAQAAAAUAAAAABAAAAAAFAgAAAAEpAAAABQMAAAAEAgAAAAQDAAAA1AAAAAAFBAAAAAQEAAAAUQYAAAARAAAAAQAAAAQAAABNYWluAQEAAAAHAAAADAAAAAEAAAAIAQEBAAAAAQ==';
-const CALLABLE_WVB_SHA256 =
-    '30eab353a6187ead317438d2c63a2bd6aa53d9ec682bc5c59d9d3b82530edfaf';
-const CLOSURE_WVB_BASE64 =
-    'V1ZCMQEAHwAHAAAAAQAAAGAAAAABLAAAAExhbmd1YWdly4lvbmXLiWNhbGxhYmxly4lpbmRpcmVjdMuJZXhlY3V0aW9uAQECAwAAAAUAAABsaW51eAcAAAB3aW5kb3dzCAAAAHdpbmR2YWxlAAAAAAAAAAACAAAABAAAAAAAAAADAAAABAAAAAAAAAAEAAAASQAAAAIAAAAIAAAAQWRky4lvbmUCAAAAAQEBAAAAAAAAAAAMAAAAAgAAAAQAAABNYWluAAAAAAEBAAAAIwAAAAAMAAAAJwAAAAIAAAAFAAAAMwAAAAQAAAAABAEAAAAQUQEoAAAA1QAAAAAAAAAAAQAAAAUAAAAABAAAAAABAgAAANQAAAAAUQYAAAARAAAAAQAAAAQAAABNYWluAQEAAAAHAAAADAAAAAEAAAAIAQEBAAAAAQ==';
-const CLOSURE_WVB_SHA256 =
-    '397f716af132192697c77d9f4f03e72c937e188aca78cf0474c9faaa2234e0e2';
 const TESTS = [
     {
         Name: 'named-arguments',
@@ -53,7 +51,7 @@ const TESTS = [
     {
         Name: 'closure-captures',
         Project: 'Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
-        Selectors: [...'abcdefghij']
+        Selectors: [...'abcdefghijk']
     },
     {
         Name: 'closure-lowering-catalog',
@@ -284,36 +282,6 @@ async function Requireˉverification(Verifier, Module, Valid, Name) {
     }
 }
 
-async function Requireˉcallableˉexecution(Runner, Module) {
-    const Result = await Runˉcommand(Runner, [Module, '--report-steps']);
-    if (Result.Exceeded) {
-        Reject('The callable execution exceeded the output limit.');
-    }
-    const Output = Result.Output.toString('utf8').replaceAll('\r\n', '\n');
-    if (Result.Code !== 0 || Result.Error.length !== 0 ||
-        Output !== 'Result: 42\nInstructions: 24\n') {
-        Reject(
-            `The callable execution failed with exit ${Result.Code}.\n` +
-            Result.Error.toString('utf8') + Output
-        );
-    }
-}
-
-async function Requireˉclosureˉexecution(Runner, Module) {
-    const Result = await Runˉcommand(Runner, [Module, '--report-steps']);
-    if (Result.Exceeded) {
-        Reject('The closure execution exceeded the output limit.');
-    }
-    const Output = Result.Output.toString('utf8').replaceAll('\r\n', '\n');
-    if (Result.Code !== 0 || Result.Error.length !== 0 ||
-        Output !== 'Result: 42\nInstructions: 11\n') {
-        Reject(
-            `The closure execution failed with exit ${Result.Code}.\n` +
-            Result.Error.toString('utf8') + Output
-        );
-    }
-}
-
 async function Requireˉnativeˉexecution(
     Lowerer,
     Checker,
@@ -435,7 +403,7 @@ try {
         SCRIPT_DIRECTORY,
         `Package-Segmented-Compiler-Wvb.${Extension}`
     );
-    const Totalˉitems = TESTS.length * 3 + 8;
+    const Totalˉitems = TESTS.length * 3 + 5;
     var Item = 0;
     for (const Test of TESTS) {
         const Module = join(Work, `${Test.Name}.wvb`);
@@ -504,8 +472,6 @@ try {
     const Target = WINDOWS ? 'windows' : 'linux';
     const Verifierˉmodule = join(Work, 'verifier.wvb');
     const Verifier = join(Work, `verifier${Executableˉsuffix}`);
-    const Runnerˉmodule = join(Work, 'runner.wvb');
-    const Runner = join(Work, `runner${Executableˉsuffix}`);
 
     Item += 1;
     process.stdout.write(
@@ -535,7 +501,7 @@ try {
     Item += 1;
     process.stdout.write(
         `START language 1 callable semantics phase=verify ` +
-        `item=${Item}/${Totalˉitems} cases=16\n`
+        `item=${Item}/${Totalˉitems} cases=17\n`
     );
     await Requireˉverification(
         Verifier, Callableˉmodule, true, 'callable WVB oracle'
@@ -618,39 +584,7 @@ try {
         }
     }
 
-    Item += 1;
-    process.stdout.write(
-        `START language 1 callable semantics phase=runner-build ` +
-        `item=${Item}/${Totalˉitems}\n`
-    );
-    await Requireˉprojectˉbuild(
-        Build,
-        'callable runner',
-        join(
-            REPOSITORY_ROOT, 'Projects', 'Tools',
-            'Windvale-Wvb-Runner.wvproj'
-        ),
-        Runnerˉmodule
-    );
-
-    Item += 1;
-    process.stdout.write(
-        `START language 1 callable semantics phase=runner-package ` +
-        `item=${Item}/${Totalˉitems}\n`
-    );
-    await Requireˉhostedˉpackage(
-        Hostedˉpackager, 'callable runner', '5',
-        Runnerˉmodule, Runner, Target
-    );
-
-    Item += 1;
-    process.stdout.write(
-        `START language 1 callable semantics phase=execute ` +
-        `item=${Item}/${Totalˉitems} cases=2\n`
-    );
-    await Requireˉcallableˉexecution(Runner, Callableˉmodule);
-    await Requireˉclosureˉexecution(Runner, Closureˉmodule);
-    Completedˉcases += 19;
+    Completedˉcases += 17;
 
     const Lowerer = join(
         REPOSITORY_ROOT,

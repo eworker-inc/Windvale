@@ -1,0 +1,134 @@
+#!wv/1 en@1
+module Languageˉoneˉstructuredˉtaskˉtrapˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    );
+}
+
+async fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<i32, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire, task.spawn, task.suspend) {
+    let Zero: i32 = 0;
+    let Work: async fn () -> Result.Result<i32, u32>
+        effects(task.suspend) =
+        async fn [copy Zero] ()
+            -> Result.Result<i32, u32> effects(task.suspend) {
+        let Trappedˉvalue: i32 = 1 / Zero;
+        return Result.Result.Valid<i32, u32> { Value: Trappedˉvalue };
+    };
+    let Limits = Task.Taskˉlimits {
+        Maximumˉchildren: 1u32,
+        Maximumˉrunnable: 1u32,
+        Maximumˉcompleted: 1u32,
+        Maximumˉretainedˉbytes: 4096u64,
+        Maximumˉworkˉunits: 256u64,
+        Maximumˉcallˉdepth: 16u32,
+        Maximumˉtimers: 1u32,
+        Maximumˉdiagnostics: 16u32,
+    };
+    task scope Scope = try Constructˉscope(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) policy join {
+        let Spawned: Result.Result<
+            Task.Task<i32, u32>,
+            Task.Spawnˉfailure<
+                async fn () -> Result.Result<i32, u32>
+                    effects(task.suspend)
+            >
+        > = Task.Spawn(Scope: borrow mut Scope, Work: Work);
+        return match Spawned {
+            case Result.Result.Valid { Value: Handle } {
+                let Outcome: Task.Taskˉoutcome<i32, u32> =
+                    await Task.Await(Handle: Handle);
+                match Outcome {
+                    case Task.Taskˉoutcome.Valid { Value: _ } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -1,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Failure { Error: _ } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -2,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Cancelled {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -3,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Deadlineˉreached {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -4,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Runtimeˉlost {
+                        Expectedˉgeneration: _, Observedˉgeneration: _,
+                    } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -5,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Runtimeˉrestarted {
+                        Expectedˉgeneration: _, Observedˉgeneration: _,
+                    } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: -6,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Trapped { Identity: Identity } {
+                        if Identity == 3007u32 {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: 42 }
+                        } else {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: -7 }
+                        }
+                    }
+                }
+            }
+            case Result.Result.Failure { Error: _ } {
+                Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                    Value: -8,
+                }
+            }
+        };
+    }
+}
+
+export async fn Main(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> i32 effects(
+    memory.allocate,
+    resource.acquire,
+    task.spawn,
+    task.suspend,
+) {
+    return match Run(Budget: Budget, Parentˉcontext: Parentˉcontext) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: _ } { -9 }
+    };
+}

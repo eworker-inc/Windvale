@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Structured-Task-Runtime-Self-Test.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Task-Core.wv"
+emit wvb

@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 31u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 32u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -56,7 +56,8 @@ export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
         Kind >= 28u32 && Kind <= 30u32 { return true; }
     if Minor >= 29u32 && Kind == 34u32 { return true; }
     if Minor >= 30u32 && Kind == 35u32 { return true; }
-    return Minor >= 21u32 && Minor <= 28u32 && Kind == 25u32;
+    return ((Minor >= 21u32 && Minor <= 28u32) || Minor == 32u32) &&
+        Kind == 25u32;
 }
 
 export fn Scanˉfunction(
@@ -66,7 +67,7 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
-    if Minor < 11u32 || Minor > 31u32 { return 0u32; }
+    if Minor < 11u32 || Minor > 32u32 { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
     while Cursor < Length {
@@ -115,7 +116,7 @@ export fn Scanˉfunction(
             Width = 9u32;
             Supported = true;
         }
-        if Opcode == 161u32 || Opcode == 162u32 { Supported = true; }
+        if Opcode >= 159u32 && Opcode <= 162u32 { Supported = true; }
         if Opcode >= 173u32 && Opcode <= 178u32 { Supported = true; }
         if Opcode >= 179u32 && Opcode <= 184u32 { Supported = true; }
         if Opcode == 190u32 || Opcode == 191u32 { Supported = true; }
@@ -214,6 +215,21 @@ export fn Scanˉfunction(
         if Opcode == 213u32 {
             if Minor < 31u32 { return 0u32; }
             Width = 13u32;
+            Supported = true;
+        }
+        if Opcode == 214u32 || Opcode == 215u32 || Opcode == 218u32 {
+            if Minor < 32u32 { return 0u32; }
+            Width = 9u32;
+            Supported = true;
+        }
+        if Opcode == 216u32 || Opcode == 217u32 {
+            if Minor < 32u32 { return 0u32; }
+            Width = 13u32;
+            Supported = true;
+        }
+        if Opcode == 219u32 {
+            if Minor < 32u32 { return 0u32; }
+            Width = 6u32;
             Supported = true;
         }
         if !Supported || Width > Length - Cursor { return 0u32; }

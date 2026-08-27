@@ -219,6 +219,18 @@ export fn Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
             Source, First.Nextˉoffset, First.Nextˉline, First.Nextˉcolumn
         );
     }
+    if Functionˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+        Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Functionˉtoken.Nextˉoffset,
+            Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
+        );
+    }
+    if Functionˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+        Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Functionˉtoken.Nextˉoffset,
+            Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
+        );
+    }
     let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
         Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
             Source, Functionˉtoken.Nextˉoffset,
@@ -1468,6 +1480,56 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
         View.Source, Header.Nameˉoffset, Header.Nameˉlength, Expectedˉmodule
     ) {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
+    }
+    return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Query.Target);
+}
+
+export fn Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Lookup: bytes,
+    Owner: u32,
+    Source: bytes,
+    Nameˉoffset: u32,
+    Nameˉlength: u32,
+    Intrinsic: u32
+) -> Sourceˉgraph.Compilerˉsourceˉgraphˉmatch {
+    let Query: Compilerˉsourceˉsymbolˉquery =
+        Compilerˉsourceˉsymbolsˉquery(
+            Input, Scan, Lookup, Owner, Source, Nameˉoffset, Nameˉlength
+        );
+    if !Query.Qualified || !Query.Aliasˉfound {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(
+            false, Scan.Modules
+        );
+    }
+    var Expectedˉname: text = "";
+    if Intrinsic == 1u32 { Expectedˉname = "Construct"; }
+    if Intrinsic == 2u32 { Expectedˉname = "Operationˉcontext"; }
+    if Intrinsic == 3u32 { Expectedˉname = "Spawn"; }
+    if Intrinsic == 4u32 { Expectedˉname = "Await"; }
+    if Intrinsic == 5u32 { Expectedˉname = "Requestˉcancel"; }
+    if Intrinsic < 1u32 || Intrinsic > 5u32 ||
+        !Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength, Expectedˉname
+        ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(
+            false, Scan.Modules
+        );
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if View.Edition != 1u32 || Header.Profile !=
+            Sourceˉdeclarations.Compilerˉsourceˉprofile.Hosted ||
+        !Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉtask"
+        ) {
+        return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(
+            false, Scan.Modules
+        );
     }
     return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Query.Target);
 }
@@ -5774,8 +5836,6 @@ export fn Compilerˉsourceˉsymbolsˉvalidateˉvariant(
                     );
                 }
                 if Payloadˉtype.Nominalˉkind ==
-                        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Variant ||
-                    Payloadˉtype.Nominalˉkind ==
                         Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Capability {
                     return Compilerˉsourceˉsymbolsˉfailureˉfromˉsummary(
                         Input, Counts,

@@ -22,6 +22,12 @@ fn Compilerˉsourceˉgenericˉtypeˉshapeˉbase() -> u32 {
     return 2147483648u32;
 }
 
+fn Compilerˉsourceˉgenericˉtypeˉshapeˉisˉcallable(
+    Shape: u32
+) -> bool {
+    return Shape >= 2147483904u32 && Shape < 2147484160u32;
+}
+
 fn Compilerˉsourceˉgenericˉtypeˉappendˉu32(
     Input: bytes,
     Value: u32
@@ -434,8 +440,7 @@ fn Compilerˉsourceˉgenericˉtypeˉcatalogˉcandidateˉdepth(
             let Shape: u32 = Bytesˉreadˉu32ˉlittle(
                 Solution.Evidence, Entry + 8u32
             );
-            if Shape >= Base {
-                if Shape >= Base + 256u32 { return 0u32; }
+            if Shape >= Base && Shape < Base + 256u32 {
                 let Nested: u32 = Shape - Base;
                 if Nested >= Instances { return 0u32; }
                 let Nestedˉdepth: u32 =
@@ -448,6 +453,9 @@ fn Compilerˉsourceˉgenericˉtypeˉcatalogˉcandidateˉdepth(
                 if Nestedˉdepth + 1u32 > Depth {
                     Depth = Nestedˉdepth + 1u32;
                 }
+            } else if Shape >= Base &&
+                !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉcallable(Shape) {
+                return 0u32;
             }
         }
         Parameter = Parameter + 1u32;
@@ -506,7 +514,8 @@ fn Compilerˉsourceˉgenericˉtypeˉcatalogˉentryˉisˉvalid(
             if Shape != 0u32 || Low == 0u32 || High != 0u32 {
                 return false;
             }
-            if Low >= Base {
+            if Low >= Base &&
+                !Compilerˉsourceˉgenericˉtypeˉshapeˉisˉcallable(Low) {
                 if Low >= Base + 256u32 { return false; }
                 let Nested: u32 = Low - Base;
                 if Nested >= Instance { return false; }

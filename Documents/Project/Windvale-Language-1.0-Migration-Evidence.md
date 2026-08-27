@@ -7,7 +7,10 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 6 are complete and Slice 7 is next. The existing
+Migration Slices 1 through 6 are complete. Slice 7 now has a completed bounded
+sequential implementation checkpoint; parallel-capable Windows/Linux evidence
+and the remaining accepted scheduler observations are still pending before the
+slice closes. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -3440,3 +3443,69 @@ This completes the selected Slice 6 implementation profile. Effectful or
 flag-bearing first-class values, mutable write-through or retained captures,
 general same-signature dispatch, escaping environments, and new target
 consumers remain explicit later extensions rather than implicit behavior.
+
+## Slice 7 sequential structured-task checkpoint
+
+[Decision 0861](../Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
+connects canonical `Foundationˉoperation` and `Foundationˉtask` declarations to
+edition-1 source admission, WVIR 1.21, WVB 1.32, the compiler-aligned verifier,
+and the source-built scalar runner. The compiler recognizes the exact lexical
+task-scope statement and semantic construction, operation-context, spawn,
+consuming-await, cancellation, and scope-exit calls. WVB callable descriptors
+carry exact async, effect, result-mode, and parameter-mode evidence. The
+verifier rejects noncanonical Foundation layouts, forged or copied affine
+values, mismatched scope origins and outcomes, illegal policies, missing exits,
+and ownership disagreement at control-flow joins.
+
+The scalar correctness oracle uses execution-request major `6` for exact hosted
+WVB 1.32 `Main(Memoryˉbudget, Operationˉcontext) -> i32`. The request carries
+only the fixed bounded header and module; request major `5` remains the
+independent source-file snapshot contract. The sequential scheduler admits at
+most 64 accepted, runnable, or retained children and 1 MiB of retained task
+state. One child work unit is one dispatched verified WVB instruction. Exact
+child trap, work exhaustion, call-depth exhaustion, and retained aggregate
+completion roots are observed as typed task outcomes.
+
+The executable evidence modules are:
+
+| Case | WVB bytes | SHA-256 |
+| --- | ---: | --- |
+| success | 4,231 | `11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8` |
+| child trap | 3,978 | `bba9d62f5b4999d9648a4ecba527c881877a765c41a886c22f2da5ae716a5f5b` |
+| retained aggregate result | 4,048 | `d6f941feaccfbc8a4aaa694d0c746f1850051da5251ce8204731735ee6695c94` |
+| one-work-unit exhaustion | 3,935 | `b15cc21926e43b048fc4fe79d28febb7778bbacaf6dbbaa84c2855fb1cff10a2` |
+| call-depth-one exhaustion | 4,007 | `3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351` |
+| 37-case task runtime core | 58,977 | `7396c192fde306a2e1091d667645d4aa768a687ad91d7b31f988ae69c4e492db` |
+
+The current runner contains 211 functions and 398,123 code bytes in a
+445,196-byte WVB at SHA-256
+`4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67`.
+The current Windows package is 5,327,872 bytes at SHA-256
+`7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0`.
+All five executable task modules produce ordinary `Result: 42` output through
+that runner; the separately packaged runtime-core self-test exits `42`.
+
+The two portable callable and closure checks now reuse this same current runner
+package instead of rebuilding and repackaging it in the callable owner. The
+callable owner therefore retains its compiler, verifier, and native AOT evidence
+while reporting 59 cases at evidence SHA-256
+`b7d2f028747c3653efc5525ebc054cff801d0e047cbee74d148ed15e05d36119`;
+the execution owner reports the two transferred compatibility cases below. This
+consolidation removes one redundant full runner construction from a combined
+changed-file verification without weakening either assertion.
+
+The focused owner reports:
+
+```text
+native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed cases=132 valid=20 malformed=69 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 structured-task-cases=17 structured-task-runtime-cases=37 callable-runner-cases=2 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05 structured-task-wvb-bytes=4231 structured-task-sha256=11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8
+```
+
+This proves the sequential implementation checkpoint, not the final Slice 7
+qualification. A parallel-capable Windows host and a parallel-capable Linux
+host must still preserve the same canonical observations under different child
+completion order. Cancellation/deadline/provider-loss workloads, paired-host
+reconstruction, candidate promotion, and broad Qualification remain pending.
+
+The verification registry remains 113 owners and advances to 5,525 cases. Its
+18,270 LF-only bytes have SHA-256
+`680f8047ab04f66328d6684126bbb0a84bffd3ef85f6d25abe0fff10d8432ee8`.

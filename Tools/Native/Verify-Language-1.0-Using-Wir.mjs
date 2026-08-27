@@ -19,7 +19,9 @@ const INVALID_WIR =
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 const INVALID_RESOURCE =
     'source analysis status=Sourceˉwir symbol-status=Valid ' +
-    'binding-status=Valid wir-status=Invalidˉresource\n';
+    'binding-status=Valid wir-status=Invalidˉresource ' +
+    'failure-module=0 related-module=0 function=0 offset=291 ' +
+    'line=12 column=20\n';
 
 if (process.argv.length !== 6) {
     process.stderr.write(

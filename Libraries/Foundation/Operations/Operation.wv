@@ -1,0 +1,15 @@
+#!wv/1 en@1
+module Foundationˉoperation;
+profile hosted;
+platform linux, windows, windvale;
+authority library;
+
+// Operationˉcontext is a compiler-recognized, representation-hidden, shared
+// immutable Foundation identity. Its identity field is serialized type evidence,
+// not a source-visible constructor or member: semantic analysis rejects direct
+// construction or observation outside this canonical module. A launcher
+// supplies one root context and a task scope derives child contexts.
+
+export record Operationˉcontext {
+    Contextˉtokenˉidentity: u64;
+}

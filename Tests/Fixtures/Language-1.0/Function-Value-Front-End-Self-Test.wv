@@ -10,6 +10,13 @@ fn Checkˉkeywords() -> i32 {
     let Unsafe: bytes = Textˉtoˉutf8("unsafe");
     let Copy: bytes = Textˉtoˉutf8("copy");
     let Move: bytes = Textˉtoˉutf8("move");
+    let Await: bytes = Textˉtoˉutf8("await");
+    let Task: bytes = Textˉtoˉutf8("task");
+    let Scope: bytes = Textˉtoˉutf8("scope");
+    let Policy: bytes = Textˉtoˉutf8("policy");
+    let Join: bytes = Textˉtoˉutf8("join");
+    let Cancelˉjoin: bytes = Textˉtoˉutf8("cancel_join");
+    let Failˉjoin: bytes = Textˉtoˉutf8("fail_join");
     if Lexer.Compilerˉsourceˉkeywordˉkind(
         Async, 0u32, Bytesˉlength(Async)
     ) != Lexer.Compilerˉtokenˉkind.Async { return 11; }
@@ -22,13 +29,90 @@ fn Checkˉkeywords() -> i32 {
     if Lexer.Compilerˉsourceˉkeywordˉkind(
         Move, 0u32, Bytesˉlength(Move)
     ) != Lexer.Compilerˉtokenˉkind.Move { return 14; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Await, 0u32, Bytesˉlength(Await)
+    ) != Lexer.Compilerˉtokenˉkind.Await { return 17; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Task, 0u32, Bytesˉlength(Task)
+    ) != Lexer.Compilerˉtokenˉkind.Task { return 18; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Scope, 0u32, Bytesˉlength(Scope)
+    ) != Lexer.Compilerˉtokenˉkind.Scope { return 19; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Policy, 0u32, Bytesˉlength(Policy)
+    ) != Lexer.Compilerˉtokenˉkind.Policy { return 20; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Join, 0u32, Bytesˉlength(Join)
+    ) != Lexer.Compilerˉtokenˉkind.Join { return 21; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Cancelˉjoin, 0u32, Bytesˉlength(Cancelˉjoin)
+    ) != Lexer.Compilerˉtokenˉkind.Cancelˉjoin { return 22; }
+    if Lexer.Compilerˉsourceˉkeywordˉkind(
+        Failˉjoin, 0u32, Bytesˉlength(Failˉjoin)
+    ) != Lexer.Compilerˉtokenˉkind.Failˉjoin { return 23; }
     if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         1u32, Lexer.Compilerˉtokenˉkind.Copy
     ) { return 15; }
     if Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         0u32, Lexer.Compilerˉtokenˉkind.Copy
     ) { return 16; }
+    if !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        1u32, Lexer.Compilerˉtokenˉkind.Task
+    ) || Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+        0u32, Lexer.Compilerˉtokenˉkind.Task
+    ) { return 24; }
     return 42;
+}
+
+fn Checkˉtasks() -> bool {
+    let Source: bytes = Textˉtoˉutf8(
+        "task scope Scope = Construct() policy cancel_join { let Value = await Await(Handle); }"
+    );
+    let Statement: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            Source, 0u32, 1u32, 1u32, Bytesˉlength(Source), 0u32
+        );
+    let Scopeˉname: bytes = Textˉtoˉutf8("Scope");
+    let Policyˉname: bytes = Textˉtoˉutf8("cancel_join");
+    if Statement.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Statement.Kind != Bodies.Compilerˉsourceˉstatementˉkind.Taskˉscope ||
+        Statement.Expressionˉlength == 0u32 ||
+        Statement.Firstˉblockˉlength == 0u32 ||
+        Statement.Nextˉoffset != Bytesˉlength(Source) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Statement.Nameˉoffset, Statement.Nameˉlength,
+            Scopeˉname, 0u32, Bytesˉlength(Scopeˉname)
+        ) ||
+        !Sourceˉset.Compilerˉsourceˉspansˉequal(
+            Source, Statement.Typeˉoffset, Statement.Typeˉlength,
+            Policyˉname, 0u32, Bytesˉlength(Policyˉname)
+        ) {
+        return false;
+    }
+    let Awaitˉsource: bytes = Textˉtoˉutf8("await Await(Handle)");
+    let Awaitˉexpression: Bodies.Compilerˉsourceˉexpression =
+        Bodies.Compilerˉparseˉexpressionˉvalidated(
+            Awaitˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Awaitˉsource), 0u32, 0u32
+        );
+    if Awaitˉexpression.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+        Awaitˉexpression.Kind !=
+            Bodies.Compilerˉsourceˉexpressionˉkind.Unary ||
+        Awaitˉexpression.Operator != Lexer.Compilerˉtokenˉkind.Await ||
+        Awaitˉexpression.Firstˉlength == 0u32 {
+        return false;
+    }
+    let Invalidˉsource: bytes = Textˉtoˉutf8(
+        "task scope Scope = Construct() policy detach { }"
+    );
+    let Invalid: Bodies.Compilerˉsourceˉstatement =
+        Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+            Invalidˉsource, 0u32, 1u32, 1u32,
+            Bytesˉlength(Invalidˉsource), 0u32
+        );
+    return Invalid.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid &&
+        Invalid.Expected == Lexer.Compilerˉtokenˉkind.Join &&
+        Invalid.Found == Lexer.Compilerˉtokenˉkind.Identifier;
 }
 
 fn Checkˉtypes() -> bool {
@@ -157,5 +241,6 @@ export fn Main() -> i32 {
     if !Checkˉtypes() { return 2; }
     if !Checkˉclosures() { return 3; }
     if !Checkˉdeclarations() { return 4; }
+    if !Checkˉtasks() { return 5; }
     return 42;
 }

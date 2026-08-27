@@ -406,9 +406,20 @@ export fn Main() -> i32 {
         Materialization.Compilerˉsourceˉgenericˉtypeˉmaterialize(
             Input, Scan, Symbols, Bindingˉcatalog(Variantˉbinding), 0u32
         );
+    let Nestedˉvariantˉfield:
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉfield =
+        Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉfield(
+            Variantˉplan, 13u32
+        );
     if Variantˉplan.Status !=
-            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Invalidˉlayout ||
-        Variantˉplan.Failureˉinstance != 5u32 {
+            Materialization.Compilerˉsourceˉgenericˉtypeˉmaterializationˉstatus.Valid ||
+        Variantˉplan.Instances != 6u32 || Variantˉplan.Records != 3u32 ||
+        Variantˉplan.Variants != 3u32 || Variantˉplan.Cases != 12u32 ||
+        Variantˉplan.Fields != 17u32 || !Nestedˉvariantˉfield.Found ||
+        Nestedˉvariantˉfield.Shape !=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(4u32) ||
+        Nestedˉvariantˉfield.Nominalˉkind !=
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(8u32) {
         return 17;
     }
 

@@ -35,6 +35,9 @@ export enum Compilerˉsourceˉbindingˉkind {
     Let = 2;
     Var = 3;
     Using = 4;
+    Taskˉjoin = 5;
+    Taskˉcancelˉjoin = 6;
+    Taskˉfailˉjoin = 7;
 }
 
 export enum Compilerˉsourceˉcallableˉkind {
@@ -226,6 +229,9 @@ export fn Compilerˉsourceˉbindingsˉkindˉvalue(
     if Kind == Compilerˉsourceˉbindingˉkind.Let { return 2u32; }
     if Kind == Compilerˉsourceˉbindingˉkind.Var { return 3u32; }
     if Kind == Compilerˉsourceˉbindingˉkind.Using { return 4u32; }
+    if Kind == Compilerˉsourceˉbindingˉkind.Taskˉjoin { return 5u32; }
+    if Kind == Compilerˉsourceˉbindingˉkind.Taskˉcancelˉjoin { return 6u32; }
+    if Kind == Compilerˉsourceˉbindingˉkind.Taskˉfailˉjoin { return 7u32; }
     return 0u32;
 }
 
@@ -234,6 +240,9 @@ export fn Compilerˉsourceˉbindingsˉkind(Value: u32) -> Compilerˉsourceˉbind
     if Value == 2u32 { return Compilerˉsourceˉbindingˉkind.Let; }
     if Value == 3u32 { return Compilerˉsourceˉbindingˉkind.Var; }
     if Value == 4u32 { return Compilerˉsourceˉbindingˉkind.Using; }
+    if Value == 5u32 { return Compilerˉsourceˉbindingˉkind.Taskˉjoin; }
+    if Value == 6u32 { return Compilerˉsourceˉbindingˉkind.Taskˉcancelˉjoin; }
+    if Value == 7u32 { return Compilerˉsourceˉbindingˉkind.Taskˉfailˉjoin; }
     return Compilerˉsourceˉbindingˉkind.None;
 }
 
@@ -515,6 +524,23 @@ export fn Compilerˉsourceˉbindingsˉcollectˉlocalˉshape(
     var Scopeˉstart: u32 = Statement.Nextˉoffset;
     if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Using {
         Kind = Compilerˉsourceˉbindingˉkind.Using;
+        Scopeˉstart = Statement.Firstˉblockˉoffset;
+    }
+    if Statement.Kind ==
+            Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Taskˉscope {
+        Kind = Compilerˉsourceˉbindingˉkind.Taskˉjoin;
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Source, Statement.Typeˉoffset, Statement.Typeˉlength,
+                "cancel_join"
+            ) {
+            Kind = Compilerˉsourceˉbindingˉkind.Taskˉcancelˉjoin;
+        }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Source, Statement.Typeˉoffset, Statement.Typeˉlength,
+                "fail_join"
+            ) {
+            Kind = Compilerˉsourceˉbindingˉkind.Taskˉfailˉjoin;
+        }
         Scopeˉstart = Statement.Firstˉblockˉoffset;
     }
     let Entry: bytes = Compilerˉsourceˉbindingsˉentry(
@@ -916,7 +942,7 @@ fn Compilerˉsourceˉbindingsˉentriesˉareˉvalid(
         let Scopeˉstart: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 28u32);
         let Scopeˉend: u32 = Bytesˉreadˉu32ˉlittle(Directory, Entry + 32u32);
         if Module >= Scan.Modules || Entryˉfunction >= Ranges ||
-            Kind == 0u32 || Kind > 4u32 || Slot >= 4096u32 {
+            Kind == 0u32 || Kind > 7u32 || Slot >= 4096u32 {
             return false;
         }
         if !Compilerˉsourceˉbindingsˉshapeˉisˉvalid(Symbols, Kind, Shape) {
@@ -1457,6 +1483,66 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
     Offset: u32,
     Length: u32
 ) -> Compilerˉsourceˉbindingˉmatch {
+    let Taskˉconstructˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 1u32
+        );
+    if Taskˉconstructˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Taskˉconstructˉmodule.Index, 3u32, 180u32
+        );
+    }
+    let Taskˉcontextˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 2u32
+        );
+    if Taskˉcontextˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Taskˉcontextˉmodule.Index, 1u32, 181u32
+        );
+    }
+    let Taskˉspawnˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 3u32
+        );
+    if Taskˉspawnˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Taskˉspawnˉmodule.Index, 2u32, 182u32
+        );
+    }
+    let Taskˉawaitˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 4u32
+        );
+    if Taskˉawaitˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Taskˉawaitˉmodule.Index, 1u32, 183u32
+        );
+    }
+    let Taskˉcancelˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉtaskˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 5u32
+        );
+    if Taskˉcancelˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Taskˉcancelˉmodule.Index, 1u32, 184u32
+        );
+    }
     let Sequenceˉlengthˉmodule: Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉcollectionˉmodule(
             Input, Scan, Symbols.Lookup, Owner,

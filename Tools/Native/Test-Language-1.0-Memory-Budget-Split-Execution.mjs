@@ -38,13 +38,23 @@ const EXPECTED_OWNED_AGGREGATE_SUCCESS_SHA256 =
 const EXPECTED_USING_FALLTHROUGH_SHA256 =
     'f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257';
 const EXPECTED_USING_NESTED_SHA256 =
-    '90338b833c21ea3142ccc29ab402111176d7cab71f5dfa9393062b9d8c03e715';
+    'e0c6bc8e2d31b9322dbbfd23c9b88fe5cb2ba820423c7fdb7a447a8e43380a1c';
 const EXPECTED_USING_TRY_SHA256 =
-    '6b1bf113428f2f130f551196ac3562cff7f10652a2c21ba9051bc02432b18ad1';
+    '7ac802bc273d671672a25b28281294ee43c7af935b1fd9fa736292e695bdd192';
 const EXPECTED_USING_LOOP_SHA256 =
     'ad44bd9eef0daf17d8dab0952b6af223e17395557de6844f56757285ec3bf0fe';
 const EXPECTED_SOURCE_FILE_SHA256 =
     '01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05';
+const EXPECTED_STRUCTURED_TASK_SHA256 =
+    '11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8';
+const EXPECTED_STRUCTURED_TASK_TRAP_SHA256 =
+    'bba9d62f5b4999d9648a4ecba527c881877a765c41a886c22f2da5ae716a5f5b';
+const EXPECTED_STRUCTURED_TASK_RETAINED_RESULT_SHA256 =
+    'd6f941feaccfbc8a4aaa694d0c746f1850051da5251ce8204731735ee6695c94';
+const EXPECTED_STRUCTURED_TASK_WORK_LIMIT_SHA256 =
+    'b15cc21926e43b048fc4fe79d28febb7778bbacaf6dbbaa84c2855fb1cff10a2';
+const EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256 =
+    '3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351';
 
 if (process.argv.length !== 2) {
     process.stderr.write(
@@ -200,6 +210,27 @@ try {
     const Usingˉloop = path.join(Work, 'Using-Loop.wvb');
     const Sourceˉfileˉa = path.join(Work, 'Source-File-A.wvb');
     const Sourceˉfileˉb = path.join(Work, 'Source-File-B.wvb');
+    const Structuredˉtaskˉa = path.join(Work, 'Structured-Task-A.wvb');
+    const Structuredˉtaskˉb = path.join(Work, 'Structured-Task-B.wvb');
+    const Structuredˉtaskˉtrap = path.join(Work, 'Structured-Task-Trap.wvb');
+    const Structuredˉtaskˉretainedˉresult = path.join(
+        Work, 'Structured-Task-Retained-Result.wvb',
+    );
+    const Structuredˉtaskˉworkˉlimit = path.join(
+        Work, 'Structured-Task-Work-Limit.wvb',
+    );
+    const Structuredˉtaskˉcallˉdepthˉlimit = path.join(
+        Work, 'Structured-Task-Call-Depth-Limit.wvb',
+    );
+    const Structuredˉtaskˉruntimeˉselfˉtest = path.join(
+        Work, 'Structured-Task-Runtime-Self-Test.wvb',
+    );
+    const Structuredˉtaskˉruntimeˉselfˉtestˉexecutable = path.join(
+        Work,
+        process.platform === 'win32'
+            ? 'Structured-Task-Runtime-Self-Test.exe'
+            : 'Structured-Task-Runtime-Self-Test',
+    );
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
     Compile('success-b-compile', Admitter, Analyzer, Emitter,
@@ -243,6 +274,60 @@ try {
     );
     Compileˉsourceˉfile(
         'source-file-b-compile', Admitter, Analyzer, Emitter, Sourceˉfileˉb,
+    );
+    Compileˉtask(
+        'structured-task-a-compile', Admitter, Analyzer, Emitter,
+        'Structured-Tasks-Executable.wv', Structuredˉtaskˉa,
+    );
+    Compileˉtask(
+        'structured-task-b-compile', Admitter, Analyzer, Emitter,
+        'Structured-Tasks-Executable.wv', Structuredˉtaskˉb,
+    );
+    Compileˉtask(
+        'structured-task-trap-compile', Admitter, Analyzer, Emitter,
+        'Structured-Task-Trap-Executable.wv', Structuredˉtaskˉtrap,
+    );
+    Compileˉtask(
+        'structured-task-retained-result-compile', Admitter, Analyzer, Emitter,
+        'Structured-Task-Retained-Result-Executable.wv',
+        Structuredˉtaskˉretainedˉresult,
+    );
+    Compileˉtask(
+        'structured-task-work-limit-compile', Admitter, Analyzer, Emitter,
+        'Structured-Task-Work-Limit-Executable.wv',
+        Structuredˉtaskˉworkˉlimit,
+    );
+    Compileˉtask(
+        'structured-task-call-depth-limit-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Call-Depth-Limit-Executable.wv',
+        Structuredˉtaskˉcallˉdepthˉlimit,
+    );
+    Runˉnode(
+        'structured-task-runtime-self-test-build',
+        'Build-Cached-Split-Project-Wvb.mjs',
+        [
+            Testˉproject(
+                'Windvale-Native-Test-Language-1-Structured-Task-Runtime.wvproj',
+            ),
+            Structuredˉtaskˉruntimeˉselfˉtest,
+            Analyzer, Analyzerˉidentity,
+            Emitter, Emitterˉidentity,
+        ],
+    );
+    Runˉnative(
+        'structured-task-runtime-self-test-package',
+        'Package-Hosted-Wvb',
+        [
+            '1',
+            Structuredˉtaskˉruntimeˉselfˉtest,
+            Structuredˉtaskˉruntimeˉselfˉtestˉexecutable,
+            Target,
+        ],
+    );
+    Requireˉexitˉ42(
+        Structuredˉtaskˉruntimeˉselfˉtestˉexecutable,
+        'structured-task runtime core self-test',
     );
     const Successˉbytes = readFileSync(Successˉa);
     const Successˉbˉbytes = readFileSync(Successˉb);
@@ -353,6 +438,37 @@ try {
             `${Sourceˉfileˉsha256}.`,
         );
     }
+    const Structuredˉtaskˉbytes = readFileSync(Structuredˉtaskˉa);
+    if (!Structuredˉtaskˉbytes.equals(readFileSync(Structuredˉtaskˉb))) {
+        Reject('The structured-task fixture is not deterministic.');
+    }
+    const Structuredˉtaskˉlayout = Inspectˉstructuredˉtaskˉmodule(
+        Structuredˉtaskˉbytes,
+    );
+    Requireˉexactˉdigest(
+        Structuredˉtaskˉbytes, EXPECTED_STRUCTURED_TASK_SHA256,
+        'structured-task fixture',
+    );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉtrap),
+        EXPECTED_STRUCTURED_TASK_TRAP_SHA256,
+        'structured-task trap fixture',
+    );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉretainedˉresult),
+        EXPECTED_STRUCTURED_TASK_RETAINED_RESULT_SHA256,
+        'structured-task retained-result fixture',
+    );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉworkˉlimit),
+        EXPECTED_STRUCTURED_TASK_WORK_LIMIT_SHA256,
+        'structured-task work-limit fixture',
+    );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉcallˉdepthˉlimit),
+        EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256,
+        'structured-task call-depth-limit fixture',
+    );
 
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
@@ -378,6 +494,26 @@ try {
     Requireˉvalid(Verifier, Usingˉtry, 'using try-propagation module');
     Requireˉvalid(Verifier, Usingˉloop, 'using loop-exit module');
     Requireˉvalid(Verifier, Sourceˉfileˉa, 'source-file snapshot module');
+    Requireˉvalid(Verifier, Structuredˉtaskˉa, 'structured-task module');
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉtrap, 'structured-task trap module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉretainedˉresult,
+        'structured-task retained-result module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉworkˉlimit,
+        'structured-task work-limit module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉcallˉdepthˉlimit,
+        'structured-task call-depth-limit module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
+        'structured-task runtime self-test module',
+    );
 
     const Malformedˉcases = [
         ['version-downgrade', Bytes => Bytes.writeUInt16LE(22, 6)],
@@ -633,16 +769,98 @@ try {
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
     }
+    const Structuredˉtaskˉmalformedˉcases = [
+        ['structured-task-version-downgrade', Bytes => {
+            Bytes.writeUInt16LE(31, 6);
+        }],
+        ['structured-task-spawn-task-type-mismatch', Bytes => {
+            Bytes.writeUInt32LE(0, Structuredˉtaskˉlayout.spawn + 9);
+        }],
+        ['structured-task-await-origin-is-handle', Bytes => {
+            Bytes.writeUInt32LE(
+                Bytes.readUInt32LE(Structuredˉtaskˉlayout.await + 1),
+                Structuredˉtaskˉlayout.await + 5,
+            );
+        }],
+        ['structured-task-invalid-exit-policy', Bytes => {
+            Bytes[Structuredˉtaskˉlayout.exit + 5] = 3;
+        }],
+    ];
+    for (const [Name, Mutate] of Structuredˉtaskˉmalformedˉcases) {
+        const Candidate = Buffer.from(Structuredˉtaskˉbytes);
+        Mutate(Candidate);
+        const Candidateˉpath = path.join(Work, `${Name}.wvb`);
+        writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉinvalid(Verifier, Candidateˉpath, Name);
+    }
 
     const Runnerˉwvb = path.join(Work, 'Runner.wvb');
     const Runner = path.join(Work, `Runner${Executableˉsuffix}`);
+    const Runnerˉstagerˉwvb = path.join(Work, 'Runner-Stager.wvb');
+    const Runnerˉstager = path.join(
+        Work, `Runner-Stager${Executableˉsuffix}`,
+    );
+    const Runnerˉobjectˉprefix = path.join(Work, 'Runner-Object');
+    const Runnerˉobjectˉmanifest = path.join(Work, 'Runner-Object.wvop');
+    const Runnerˉimageˉprefix = path.join(Work, 'Runner-Image');
+    const Runnerˉimageˉmanifest = path.join(Work, 'Runner-Image.wvli');
+    const Runnerˉcanonicalˉprefix = path.join(Work, 'Runner-Canonical');
+    const Runnerˉcanonicalˉmanifest = path.join(Work, 'Runner-Canonical.wvli');
     Runˉnode('runner-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Wvb-Runner.wvproj'), Runnerˉwvb,
         Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
     ]);
-    Runˉnative('runner-package', 'Package-Hosted-Wvb', [
-        '5', Runnerˉwvb, Runner, Target,
+    Runˉnode('runner-stager-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+        path.join(
+            Repositoryˉroot, 'Projects', 'Compiler',
+            'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
+        ),
+        Runnerˉstagerˉwvb,
+        Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
     ]);
+    Runˉnative('runner-stager-package', 'Package-Segmented-Compiler-Wvb', [
+        '6', Runnerˉstagerˉwvb, Runnerˉstager, '--development-cache',
+    ]);
+    Run('runner-stage', Runnerˉstager, [
+        Runnerˉwvb, Runnerˉobjectˉprefix, Runnerˉobjectˉmanifest,
+    ]);
+    Runˉnative('runner-link', 'Link-Staged-Compiler-Wvo', [
+        Runnerˉobjectˉprefix, Runnerˉobjectˉmanifest,
+        Runnerˉimageˉprefix, Runnerˉimageˉmanifest,
+    ]);
+    const Runnerˉtransportˉreport = Runˉnative(
+        'runner-transport', 'Transport-Compiler-Image', [
+            Runnerˉimageˉprefix, Runnerˉimageˉmanifest,
+            Runnerˉcanonicalˉprefix, Runnerˉcanonicalˉmanifest,
+        ],
+    );
+    const Runnerˉtransportˉline = Normalize(Runnerˉtransportˉreport)
+        .trimEnd().split('\n').find(Line =>
+            Line.startsWith('compiler image transport status=Complete '),
+        );
+    const Runnerˉtransportˉmatch = Runnerˉtransportˉline?.match(
+        / entry-offset=([0-9]+) chunks=([0-9]+) manifest-bytes=/,
+    );
+    if (Runnerˉtransportˉmatch === undefined) {
+        Reject('The runner compiler-image transport report differs.');
+    }
+    const Runnerˉentry = Number(Runnerˉtransportˉmatch[1]);
+    const Runnerˉfragments = Number(Runnerˉtransportˉmatch[2]);
+    if (!Number.isSafeInteger(Runnerˉentry) || Runnerˉentry < 0 ||
+        Runnerˉentry > 0xffff_ffff ||
+        !Number.isSafeInteger(Runnerˉfragments) ||
+        Runnerˉfragments < 1 || Runnerˉfragments > 16) {
+        Reject('The runner compiler-image transport bounds differ.');
+    }
+    Runˉnative('runner-package', 'Package-Hosted-Wvb', [
+        'image', '5', Runnerˉwvb, Runnerˉcanonicalˉprefix,
+        String(Runnerˉfragments), String(Runnerˉentry), Runner, Target,
+    ]);
+    Runˉnode(
+        'callable-runner-compatibility',
+        'Verify-Language-1.0-Callable-Runner.mjs',
+        [Runner],
+    );
     Requireˉresultˉ42(Runner, Successˉa, 'successful Split execution');
     Requireˉresultˉ42(Runner, Failure, 'refused Split execution');
     Requireˉresultˉ42(
@@ -664,6 +882,24 @@ try {
     );
     Requireˉresultˉ42(
         Runner, Usingˉfallthrough, 'using fallthrough release execution',
+    );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉa, 'structured-task success execution',
+    );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉtrap, 'structured-task trap observation',
+    );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉretainedˉresult,
+        'structured-task retained-result execution',
+    );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉworkˉlimit,
+        'structured-task work-limit execution',
+    );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉcallˉdepthˉlimit,
+        'structured-task call-depth-limit execution',
     );
     const Sourceˉsnapshotˉ42 = path.join(Work, 'Source-Snapshot-42.bin');
     const Sourceˉsnapshotˉ41 = path.join(Work, 'Source-Snapshot-41.bin');
@@ -689,16 +925,19 @@ try {
     );
 
     process.stdout.write(
-        'native language 1 memory budget, Vector, using, and resource execution status=Passed ' +
-        `cases=${92 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=14 malformed=${
+        'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
+        `cases=${111 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=20 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length +
-            Sourceˉfileˉmalformedˉcases.length + 1
+            Sourceˉfileˉmalformedˉcases.length +
+            Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
+        'structured-task-cases=17 structured-task-runtime-cases=37 ' +
+        'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -714,7 +953,9 @@ try {
         `using-fallthrough-wvb-bytes=${Usingˉfallthroughˉbytes.length} ` +
         `using-fallthrough-sha256=${Digest(Usingˉfallthroughˉbytes)} ` +
         `source-file-wvb-bytes=${Sourceˉfileˉbytes.length} ` +
-        `source-file-sha256=${Sourceˉfileˉsha256}\n`,
+        `source-file-sha256=${Sourceˉfileˉsha256} ` +
+        `structured-task-wvb-bytes=${Structuredˉtaskˉbytes.length} ` +
+        `structured-task-sha256=${Digest(Structuredˉtaskˉbytes)}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -728,6 +969,10 @@ try {
 
 function Project(Name) {
     return path.join(Repositoryˉroot, 'Projects', 'Tools', Name);
+}
+
+function Testˉproject(Name) {
+    return path.join(Repositoryˉroot, 'Projects', 'Tests', Name);
 }
 
 function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
@@ -774,17 +1019,35 @@ function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
     ]);
 }
 
+function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
+    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+        Admitter, Analyzer, Emitter,
+        '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+        '--source-profile', Sourceˉprofile,
+        path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
+        path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Foundation', 'Operations',
+            'Operation.wv',
+        ),
+        path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Foundation', 'Tasks', 'Task.wv',
+        ),
+        Output,
+    ]);
+}
+
 function Runˉnative(Label, Name, Arguments) {
     const Extension = process.platform === 'win32' ? '.cmd' : '.sh';
     const Script = path.join(Scriptˉdirectory, `${Name}${Extension}`);
     Requireˉordinaryˉfile(Script, 4_194_304, `${Name} script`);
     if (process.platform === 'win32') {
-        Run(Label, process.env.ComSpec ?? 'cmd.exe', [
+        return Run(Label, process.env.ComSpec ?? 'cmd.exe', [
             '/d', '/c', 'call', Script, ...Arguments,
         ]);
-    } else {
-        Run(Label, 'bash', [Script, ...Arguments]);
     }
+    return Run(Label, 'bash', [Script, ...Arguments]);
 }
 
 function Runˉnode(Label, Name, Arguments) {
@@ -849,8 +1112,37 @@ function Requireˉresultˉ42(Runner, Candidate, Label) {
     });
     if (Result.error !== undefined || Result.status !== 0 ||
         Normalize(Result.stdout) !== 'Result: 42\n' || Result.stderr.length !== 0) {
-        Reject(`The ${Label} differed: status=${Result.status}.`);
+        Reject(
+            `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? 'none'}\n` +
+            `stdout=${Normalize(Result.stdout)}\n` +
+            `stderr=${Normalize(Result.stderr)}`,
+        );
     }
+}
+
+function Requireˉexitˉ42(Executable, Label) {
+    Step += 1;
+    process.stdout.write(
+        `START language 1 memory budget split execution step=${Step} phase=${Label}\n`,
+    );
+    const Result = spawnSync(Executable, [], {
+        encoding: 'utf8', windowsHide: true,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: TOOL_TIMEOUT_MILLISECONDS,
+    });
+    if (Result.error !== undefined || Result.status !== 42 ||
+        Result.stdout.length !== 0 || Result.stderr.length !== 0) {
+        Reject(
+            `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? 'none'}\n` +
+            `stdout=${Normalize(Result.stdout)}\n` +
+            `stderr=${Normalize(Result.stderr)}`,
+        );
+    }
+    process.stdout.write(
+        `PASS  language 1 memory budget split execution step=${Step} phase=${Label}\n`,
+    );
 }
 
 function Requireˉruntimeˉfailure(Runner, Candidate, Status, Label) {
@@ -1533,6 +1825,114 @@ function Inspectˉsourceˉfileˉmodule(Bytes) {
     };
 }
 
+function Inspectˉstructuredˉtaskˉmodule(Bytes) {
+    if (Bytes.length < 64 || Bytes.length > MAXIMUM_WVB_BYTES ||
+        Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 32 ||
+        Bytes.readUInt32LE(8) !== 7) {
+        Reject('The structured-task fixture is not canonical WVB 1.32.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Entries = Parseˉfunctionˉentries(Bytes, Sections[4]);
+    const Matches = new Map([
+        [214, []], [215, []], [216, []],
+        [217, []], [218, []], [219, []],
+    ]);
+    for (const Entry of Entries) {
+        const Codeˉstart = Sections[5].payload + Entry.codeOffset;
+        const Codeˉend = Codeˉstart + Entry.codeLength;
+        if (Codeˉstart < Sections[5].payload ||
+            Codeˉend > Sections[5].payload + Sections[5].length) {
+            Reject(`The structured-task ${Entry.name} code range differs.`);
+        }
+        let Cursor = Codeˉstart;
+        while (Cursor < Codeˉend) {
+            const Opcode = Bytes[Cursor];
+            const Width = Wvbˉinstructionˉwidthˉat(Bytes, Cursor);
+            if (Width > Codeˉend - Cursor) {
+                Reject(`The structured-task ${Entry.name} code is truncated.`);
+            }
+            if (Matches.has(Opcode)) Matches.get(Opcode).push(Cursor);
+            Cursor += Width;
+        }
+        if (Cursor !== Codeˉend) {
+            Reject(`The structured-task ${Entry.name} code length differs.`);
+        }
+    }
+    const Expected = new Map([
+        [214, 1], [215, 1], [216, 1],
+        [217, 1], [218, 0], [219, 1],
+    ]);
+    for (const [Opcode, Count] of Expected) {
+        if (Matches.get(Opcode).length !== Count) {
+            Reject(
+                `The structured-task opcode ${Opcode} count differs: ` +
+                `${Matches.get(Opcode).length}.`,
+            );
+        }
+    }
+    return {
+        construct: Matches.get(214)[0],
+        context: Matches.get(215)[0],
+        spawn: Matches.get(216)[0],
+        await: Matches.get(217)[0],
+        exit: Matches.get(219)[0],
+    };
+}
+
+function Parseˉfunctionˉentries(Bytes, Section) {
+    const Count = Bytes.readUInt32LE(Section.payload);
+    if (Count < 1 || Count > 65_536) {
+        Reject(`The function count exceeds its bound: ${Count}.`);
+    }
+    const Result = [];
+    let Cursor = Section.payload + 4;
+    for (let Index = 0; Index < Count; Index += 1) {
+        const Name = Readˉstring(Bytes, Cursor);
+        Cursor = Name.end;
+        const Parameterˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Parameterˉcount > 64) Reject('A function has too many parameters.');
+        for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
+            Cursor = Readˉshape(Bytes, Cursor).end;
+        }
+        Cursor = Readˉshape(Bytes, Cursor).end;
+        const Localˉcount = Bytes.readUInt32LE(Cursor);
+        Cursor += 4;
+        if (Localˉcount > 2048) Reject('A function has too many locals.');
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            Cursor = Readˉshape(Bytes, Cursor).end;
+        }
+        if (Cursor + 12 > Section.payload + Section.length) {
+            Reject('A function directory entry is truncated.');
+        }
+        Result.push({
+            name: Name.value,
+            codeOffset: Bytes.readUInt32LE(Cursor),
+            codeLength: Bytes.readUInt32LE(Cursor + 4),
+        });
+        Cursor += 12;
+    }
+    if (Cursor !== Section.payload + Section.length) {
+        Reject('The function directory length differs.');
+    }
+    return Result;
+}
+
+function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {
+    const Opcode = Bytes[Cursor];
+    if (Opcode === 192) return Bytes[Cursor + 2] === 0 ? 5 : 3;
+    if (Opcode === 193) return Bytes[Cursor + 1] === 0 ? 6 : 2;
+    if (Opcode === 194) {
+        if (Bytes[Cursor + 2] !== 0) return 3;
+        return Bytes[Cursor + 1] === 19 ? 11 : 7;
+    }
+    if (Opcode === 214 || Opcode === 215 || Opcode === 218) return 9;
+    if (Opcode === 216 || Opcode === 217) return 13;
+    if (Opcode === 219) return 6;
+    return Wvbˉinstructionˉwidth(Opcode);
+}
+
 function Wvbˉinstructionˉwidth(Opcode) {
     if (Opcode === 1 || (Opcode >= 3 && Opcode <= 7) ||
         Opcode === 9 || Opcode === 10 || Opcode === 48 || Opcode === 49 ||
@@ -1698,7 +2098,7 @@ function Readˉstring(Bytes, Offset) {
 
 function Readˉshape(Bytes, Offset) {
     const Shape = Bytes[Offset];
-    const Nominal = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30]
+    const Nominal = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35]
         .includes(Shape);
     return {
         shape: Shape,
@@ -1706,6 +2106,13 @@ function Readˉshape(Bytes, Offset) {
         typeIndex: Nominal ? Bytes.readUInt32LE(Offset + 1) : null,
         end: Offset + (Nominal ? 5 : 1),
     };
+}
+
+function Requireˉexactˉdigest(Bytes, Sha256, Label) {
+    if (Bytes.length < 1 || Bytes.length > MAXIMUM_WVB_BYTES ||
+        Digest(Bytes) !== Sha256) {
+        Reject(`The ${Label} digest differs: ${Digest(Bytes)}.`);
+    }
 }
 
 function Requireˉexactˉfile(Candidate, Size, Sha256, Label) {

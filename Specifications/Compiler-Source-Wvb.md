@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.31 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -13,10 +13,13 @@ compilation emits one self-contained module and does not introduce runtime
 linkage. Direct native lowering, browser packaging, and Windvale OS execution
 retain their separately versioned subsets.
 
-WVIR 1.19/1.20 and WVB 1.31 additionally establish the prepared-evidence and
-portable-runtime substrate for one plain copied-capture environment. Source
-closure-expression lowering into a physical target function is not connected
-yet, so this checkpoint does not claim the complete source-to-WVB closure path.
+WVIR 1.19/1.20 and WVB 1.31 establish the prepared-evidence and portable-runtime
+substrate for frame-owned plain captures. WVIR 1.21 and WVB 1.32 add the exact
+structured-task lowering selected by
+[Decision 0861](../Documents/Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md).
+The task extension preserves async and effect evidence, affine scope/handle
+ownership, exact generic outcome identities, and runtime bounds without
+exposing a scheduler in source.
 
 ## Direct compilation result
 
@@ -944,8 +947,26 @@ presence, byte span, and identity count under fixed 32-identity,
 That initial syntax checkpoint did not change WVIR or WVB. The current WVEF and
 WVCF phases now resolve canonical identities, infer exact transitive effects,
 enforce declaration equality, and catalog concrete signatures. WVB 1.30 and
-WVB 1.31 admit only the empty-effect callable subsets above; serialized nonempty effect masks
-remain required before an effectful callable value can execute.
+WVB 1.31 admit only the empty-effect callable subsets above. WVB 1.32 appends
+the exact flags, result mode, language-effect mask, capability-effect bitmap,
+and parameter modes to every callable descriptor in that module.
+
+WVIR 1.21 operations 180 through 185 lower in order to WVB opcodes `D6` through
+`DB`. The writer remaps all scope, handle, construction, spawn, and outcome
+types into the canonical Types directory and writes exact local/type immediates.
+The verifier reconstructs the canonical `Foundationˉtask` and
+`Foundationˉoperation` layouts, proves scope and handle availability at every
+edge, consumes a handle at its sole await, and requires an immutable exit policy
+before control leaves the lexical scope.
+
+The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
+SHA-256
+`11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8`.
+It contains one scope construction, derived context, spawn, await, and scope
+exit, and returns `42` through the source-built sequential runner. Separate
+fixtures preserve a completed aggregate across garbage collection and observe
+stable child trap, work-limit, and call-depth-limit identities. Version,
+spawn-result, await-origin, and exit-policy corruptions reject before execution.
 
 The 1,199-byte WVB 1.20 fixture has SHA-256
 `c73f2e77aa4208a74385046a27beba7dea42e4cece730bfd9ac0ac61ca7a77bc`.

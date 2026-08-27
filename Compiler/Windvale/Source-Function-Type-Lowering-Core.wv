@@ -621,6 +621,19 @@ export fn Compilerˉsourceˉfunctionˉtypeˉresultˉshape(
     return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 8u32);
 }
 
+export fn Compilerˉsourceˉfunctionˉtypeˉresultˉmode(
+    Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
+    Instance: u32
+) -> u32 {
+    let Cursor: u32 = Compilerˉsourceˉfunctionˉtypeˉentryˉcursor(
+        Catalog, Instance
+    );
+    if Cursor == Compilerˉsourceˉfunctionˉtypeˉsentinel() {
+        return Compilerˉsourceˉfunctionˉtypeˉsentinel();
+    }
+    return Bytesˉreadˉu32ˉlittle(Catalog.Evidence, Cursor + 12u32);
+}
+
 export fn Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
     Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog,
     Instance: u32

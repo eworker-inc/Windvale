@@ -93,6 +93,7 @@ The candidate required modules are:
 | `Foundationˉbytes` | Core | Immutable bytes, codecs, and bounded byte construction. |
 | `Foundationˉtext` | Core | Unicode text, rune iteration, formatting, and bounded text construction. |
 | `Foundationˉresource` | Core | Local-release protocol and owned-resource outcomes. |
+| `Foundationˉoperation` | Hosted | Shared deadline and cancellation observation context. |
 | `Foundationˉtask` | Hosted | Task scopes, task handles, cancellation, and join outcomes. |
 | `Foundationˉunsafe` | System | Raw address and foreign boundary primitives. |
 
@@ -1658,7 +1659,8 @@ without a specified idempotency key or recovery protocol.
 
 ## Hosted operation context
 
-`Operationˉcontext` is a shared immutable opaque Hosted value. A launcher-created
+`Foundationˉoperation.Operationˉcontext` is a shared immutable opaque Hosted
+value. A launcher-created
 root binds a nonzero monotonic clock identity and generation, one absolute
 deadline, a nonzero cancellation-view identity and generation, and the already
 admitted provider deadline span. Source cannot construct it, inspect civil time

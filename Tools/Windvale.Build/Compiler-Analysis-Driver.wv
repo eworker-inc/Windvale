@@ -2,6 +2,9 @@ module Windvaleˉcompilerˉanalysisˉdriver profile hosted;
 
 import Compilerˉsourceˉanalysis as Analysis;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
+import Compilerˉsourceˉset as Sourceˉsets;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉwir as Sourceˉwir;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -53,6 +56,7 @@ fn Buildˉsourceˉset(Modules: u32) -> bytes {
 }
 
 fn Failure(
+    Sourceˉset: bytes,
     Prepared: Analysis.Compilerˉsourceˉanalysis
 ) -> text {
     var Report: text = "source analysis status=";
@@ -62,7 +66,58 @@ fn Failure(
     Report = Textˉconcat(Report, " binding-status=");
     Report = Textˉconcat(Report, Enumˉname(Prepared.Bindingˉstatus));
     Report = Textˉconcat(Report, " wir-status=");
-    return Textˉconcat(Report, Enumˉname(Prepared.Wirˉstatus));
+    Report = Textˉconcat(Report, Enumˉname(Prepared.Wirˉstatus));
+    if Prepared.Status ==
+            Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols {
+        let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+            Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
+        Report = Textˉconcat(Report, " graph-status=");
+        Report = Textˉconcat(Report, Enumˉname(Symbols.Graphˉstatus));
+        Report = Textˉconcat(Report, " failure-module=");
+        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉmodule));
+        Report = Textˉconcat(Report, " related-module=");
+        Report = Textˉconcat(
+            Report, U32ˉformat(Symbols.Failureˉrelatedˉmodule)
+        );
+        Report = Textˉconcat(Report, " declaration-kind=");
+        Report = Textˉconcat(Report, Enumˉname(Symbols.Failureˉkind));
+        Report = Textˉconcat(Report, " offset=");
+        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉoffset));
+        Report = Textˉconcat(Report, " line=");
+        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉline));
+        Report = Textˉconcat(Report, " column=");
+        Report = Textˉconcat(Report, U32ˉformat(Symbols.Failureˉcolumn));
+    }
+    if Prepared.Status ==
+            Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉwir {
+        let Wirˉsymbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+            Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
+        let Scan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
+            Sourceˉsets.Compilerˉscanˉsourceˉset(Sourceˉset);
+        let Compilation: Sourceˉwir.Compilerˉsourceˉwirˉcompilation =
+            Sourceˉwir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(
+                Sourceˉset, Scan, Wirˉsymbols
+            );
+        let Wir: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+            Sourceˉwir.Compilerˉsourceˉwirˉcompilationˉsummary(
+                Compilation
+            );
+        Report = Textˉconcat(Report, " failure-module=");
+        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉmodule));
+        Report = Textˉconcat(Report, " related-module=");
+        Report = Textˉconcat(
+            Report, U32ˉformat(Wir.Failureˉrelatedˉmodule)
+        );
+        Report = Textˉconcat(Report, " function=");
+        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉfunction));
+        Report = Textˉconcat(Report, " offset=");
+        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉoffset));
+        Report = Textˉconcat(Report, " line=");
+        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉline));
+        Report = Textˉconcat(Report, " column=");
+        Report = Textˉconcat(Report, U32ˉformat(Wir.Failureˉcolumn));
+    }
+    return Report;
 }
 
 fn Success(
@@ -102,7 +157,7 @@ fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
         Analysis.Compilerˉprepareˉsourceˉanalysis(Sourceˉset);
     if Prepared.Status !=
         Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
-        diagnostic.write_line(Failure(Prepared));
+        diagnostic.write_line(Failure(Sourceˉset, Prepared));
         return 1;
     }
     file.write_bytes(process.argument(Outputˉindex), Sourceˉset);

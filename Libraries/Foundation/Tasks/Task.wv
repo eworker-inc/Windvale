@@ -1,0 +1,82 @@
+#!wv/1 en@1
+module Foundationˉtask;
+profile hosted;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+
+// Taskˉscope and Task<T, E> are compiler-recognized,
+// representation-hidden, move-owned Foundation identities. Their identity fields
+// are serialized type evidence, not source-visible constructors or members:
+// semantic analysis rejects direct construction or observation outside this
+// canonical module. Construct, Operationˉcontext, Spawn, Await, and
+// Requestˉcancel are semantic compiler operations.
+
+export record Taskˉscope {
+    Scopeˉtokenˉidentity: u64;
+}
+
+export record Task<T, E> {
+    Taskˉtokenˉidentity: u64;
+}
+
+export record Taskˉlimits {
+    Maximumˉchildren: u32;
+    Maximumˉrunnable: u32;
+    Maximumˉcompleted: u32;
+    Maximumˉretainedˉbytes: u64;
+    Maximumˉworkˉunits: u64;
+    Maximumˉcallˉdepth: u32;
+    Maximumˉtimers: u32;
+    Maximumˉdiagnostics: u32;
+}
+
+export variant Taskˉscopeˉfailure {
+    Invalidˉlimits(
+        Field: u32,
+        Observed: u64,
+        Minimum: u64,
+        Maximum: u64,
+    );
+    Allocation(Error: Memory.Allocationˉfailure);
+    Parentˉcontextˉstale(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Runtimeˉunavailable(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+}
+
+export variant Spawnˉfailure<W> {
+    Scopeˉclosing(Work: W);
+    Taskˉlimit(Work: W);
+    Queueˉlimit(Work: W);
+    Memoryˉfailure(
+        Error: Memory.Allocationˉfailure,
+        Work: W,
+    );
+}
+
+export variant Taskˉoutcome<T, E> {
+    Valid(Value: T);
+    Failure(Error: E);
+    Cancelled;
+    Deadlineˉreached;
+    Runtimeˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Runtimeˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+    );
+    Trapped(Identity: u32);
+}
+
+export variant Cancelˉrequestˉoutcome {
+    Requested(Liveˉchildren: u32);
+    Alreadyˉrequested(Liveˉchildren: u32);
+}

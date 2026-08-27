@@ -80,7 +80,8 @@ export fn Compilerˉsourceˉwirˉsentinel() -> u32 {
 export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 64u32 &&
         (Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 18u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 20u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 20u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 22u32) {
         return 64u32;
     }
     if Bytesˉlength(Directory) >= 56u32 &&
@@ -89,7 +90,8 @@ export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 14u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 16u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 17u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 19u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 19u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 21u32) {
         return 56u32;
     }
     return 48u32;

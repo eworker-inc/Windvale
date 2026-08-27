@@ -44,6 +44,7 @@ conformance claims:
 - [Generic resolution and specialization evidence](Compiler-Source-Generic-Resolution.md)
 - [Generic nominal type evidence](Compiler-Source-Generic-Types.md)
 - [Typed source IR](Compiler-Source-Wir.md)
+- [Structured-task source lowering](Compiler-Source-Structured-Tasks.md)
 - [Source-analysis phase artifact](Compiler-Source-Analysis.md)
 - [Split-compiler development cache](Compiler-Split-Development-Cache.md)
 - [Source-to-WVB backend](Compiler-Source-Wvb.md)

@@ -1,6 +1,7 @@
 module Compilerˉsourceˉeffects profile portable;
 
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -256,6 +257,14 @@ fn Compilerˉsourceˉeffectsˉidentityˉfailure(
     );
 }
 
+fn Compilerˉsourceˉeffectsˉrootˉisˉcanonical(
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> bool {
+    return Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier ||
+        Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Task ||
+        Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe;
+}
+
 fn Compilerˉsourceˉeffectsˉnextˉidentity(
     Source: bytes,
     Offset: u32,
@@ -275,7 +284,7 @@ fn Compilerˉsourceˉeffectsˉnextˉidentity(
         );
     }
     if First.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid ||
-        First.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Identifier {
+        !Compilerˉsourceˉeffectsˉrootˉisˉcanonical(First) {
         return Compilerˉsourceˉeffectsˉidentityˉfailure(
             Source, Compilerˉsourceˉeffectˉstatus.Invalidˉdirectory,
             First.Offset
@@ -437,6 +446,47 @@ export fn Compilerˉsourceˉeffectsˉresolveˉclause(
         Compilerˉsourceˉeffectˉstatus.Valid,
         Language, Capabilities, Count,
         Clauseˉoffset
+    );
+}
+
+export fn Compilerˉsourceˉeffectsˉresolveˉclosure(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> Compilerˉsourceˉeffectˉset {
+    let Parameterˉendˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength
+        );
+    let Parameterˉend: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source,
+            Expression.Itemsˉoffset + Expression.Itemsˉlength,
+            Parameterˉendˉposition.Line, Parameterˉendˉposition.Column
+        );
+    let Arrow: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Parameterˉend.Nextˉoffset,
+            Parameterˉend.Nextˉline, Parameterˉend.Nextˉcolumn
+        );
+    let Result: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉtype(
+            Source, Arrow.Nextˉoffset, Arrow.Nextˉline, Arrow.Nextˉcolumn,
+            true, false
+        );
+    let Maybeˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, Result.Nextˉoffset, Result.Nextˉline, Result.Nextˉcolumn
+        );
+    let Hasˉclause: bool = Maybeˉeffects.Kind ==
+        Sourceˉlexer.Compilerˉtokenˉkind.Effects;
+    return Compilerˉsourceˉeffectsˉresolveˉclause(
+        Input, Scan, Symbols, Source, Hasˉclause,
+        Maybeˉeffects.Offset, Maybeˉeffects.Line, Maybeˉeffects.Column,
+        Expression.Offset
     );
 }
 
@@ -667,6 +717,13 @@ fn Compilerˉsourceˉeffectsˉoperationˉlanguage(Operation: u32) -> u32 {
         return EFFECT_MEMORY_ALLOCATE;
     }
     if Operation == 174u32 { return EFFECT_RESOURCE_RELEASE; }
+    if Operation == 180u32 {
+        return EFFECT_MEMORY_ALLOCATE | EFFECT_RESOURCE_ACQUIRE;
+    }
+    if Operation == 182u32 { return EFFECT_MEMORY_ALLOCATE | EFFECT_TASK_SPAWN; }
+    if Operation == 183u32 { return EFFECT_TASK_SUSPEND; }
+    if Operation == 184u32 { return EFFECT_TASK_CANCEL; }
+    if Operation == 185u32 { return EFFECT_RESOURCE_RELEASE; }
     return 0u32;
 }
 

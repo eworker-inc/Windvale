@@ -114,6 +114,9 @@ fn Compilerˉsourceˉgenericˉtypeˉmaterializationˉoutputˉshape(
     Shape: u32
 ) -> u32 {
     if Shape < 2147483648u32 { return Shape; }
+    if Shape >= 2147483904u32 && Shape < 2147484160u32 {
+        return Shape;
+    }
     let Reference: u32 = Shape - 2147483648u32;
     if Reference >= Instance { return 0u32; }
     let Kind: u32 =

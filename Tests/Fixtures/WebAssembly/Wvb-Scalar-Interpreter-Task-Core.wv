@@ -1,0 +1,765 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore profile portable;
+
+const TASK_STATE_MAGIC: u32 = 1414746967u32;
+const TASK_STATE_VERSION: u32 = 1u32;
+const TASK_SCOPE_CAPACITY: u32 = 32u32;
+const TASK_CAPACITY: u32 = 128u32;
+const TASK_HEADER_BYTES: u32 = 16u32;
+const TASK_SCOPE_BYTES: u32 = 88u32;
+const TASK_ENTRY_BYTES: u32 = 48u32;
+const TASK_SCOPES_BYTES: u32 = TASK_SCOPE_CAPACITY * TASK_SCOPE_BYTES;
+const TASK_STATE_BYTES: u32 = TASK_HEADER_BYTES + TASK_SCOPES_BYTES +
+    TASK_CAPACITY * TASK_ENTRY_BYTES;
+
+export record Scopeˉconstruction {
+    Valid: bool;
+    Accepted: bool;
+    Field: u32;
+    Observed: u64;
+    Minimum: u64;
+    Maximum: u64;
+    Token: bytes;
+    State: bytes;
+}
+
+export record Spawnˉbegin {
+    Valid: bool;
+    Accepted: bool;
+    Reason: u32;
+    Token: bytes;
+    State: bytes;
+    Remainingˉwork: u64;
+    Maximumˉcallˉdepth: u32;
+}
+
+export record Taskˉcompletion {
+    Valid: bool;
+    State: bytes;
+}
+
+export record Workˉcharge {
+    Valid: bool;
+    State: bytes;
+}
+
+export record Awaitˉresult {
+    Valid: bool;
+    Found: bool;
+    Result: bytes;
+    Terminalˉkind: u32;
+    Firstˉevidence: u64;
+    Secondˉevidence: u64;
+    State: bytes;
+}
+
+export record Cancelˉresult {
+    Valid: bool;
+    Alreadyˉrequested: bool;
+    Liveˉchildren: u32;
+    State: bytes;
+}
+
+export record Scopeˉexit {
+    Valid: bool;
+    Budget: bytes;
+    State: bytes;
+}
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Scopeˉoffset(Index: u32) -> u32 {
+    return TASK_HEADER_BYTES + Index * TASK_SCOPE_BYTES;
+}
+
+fn Taskˉoffset(Index: u32) -> u32 {
+    return TASK_HEADER_BYTES + TASK_SCOPES_BYTES + Index * TASK_ENTRY_BYTES;
+}
+
+fn Replace(State: bytes, Offset: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(State, 0u32, Offset), Value),
+        Bytesˉslice(
+            State,
+            Offset + Bytesˉlength(Value),
+            TASK_STATE_BYTES - Offset - Bytesˉlength(Value)
+        )
+    );
+}
+
+fn Replaceˉu32(State: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(State, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+record Scopeˉtaskˉsummary {
+    Valid: bool;
+    Live: u32;
+    Runnable: u32;
+    Completed: u32;
+    Retained: u64;
+}
+
+fn Completedˉtaskˉterminalˉisˉvalid(
+    State: bytes,
+    Entry: u32,
+    Terminalˉkind: u32
+) -> bool {
+    let Firstˉevidence: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Entry + 32u32
+    );
+    let Secondˉevidence: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Entry + 40u32
+    );
+    if Terminalˉkind == 0u32 {
+        return Firstˉevidence == 0u64 && Secondˉevidence == 0u64;
+    }
+    if Bytesˉreadˉu64ˉlittle(State, Entry + 20u32) != 0u64 {
+        return false;
+    }
+    if Terminalˉkind == 1u32 || Terminalˉkind == 2u32 {
+        return Firstˉevidence == 0u64 && Secondˉevidence == 0u64;
+    }
+    if Terminalˉkind == 3u32 { return Firstˉevidence != 0u64; }
+    if Terminalˉkind == 4u32 {
+        return Firstˉevidence != 0u64 && Secondˉevidence != 0u64 &&
+            Firstˉevidence != Secondˉevidence;
+    }
+    return Terminalˉkind == 5u32 && Firstˉevidence != 0u64 &&
+        Firstˉevidence <= 4294967295u64 && Secondˉevidence == 0u64;
+}
+
+fn Summarizeˉscopeˉtasks(
+    State: bytes,
+    Scopeˉidentity: u32,
+    Scopeˉgeneration: u32
+) -> Scopeˉtaskˉsummary {
+    var Live: u32 = 0u32;
+    var Runnable: u32 = 0u32;
+    var Completed: u32 = 0u32;
+    var Retained: u64 = 0u64;
+    var Index: u32 = 0u32;
+    while Index < TASK_CAPACITY {
+        let Entry: u32 = Taskˉoffset(Index);
+        if Bytesˉreadˉu32ˉlittle(State, Entry + 4u32) == 1u32 &&
+            Bytesˉreadˉu32ˉlittle(State, Entry + 8u32) == Scopeˉidentity &&
+            Bytesˉreadˉu32ˉlittle(State, Entry + 12u32) == Scopeˉgeneration {
+            let Status: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 16u32);
+            let Terminalˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+                State, Entry + 28u32
+            );
+            if Bytesˉreadˉu32ˉlittle(State, Entry) == 0u32 ||
+                Status < 1u32 || Status > 2u32 || Terminalˉkind > 5u32 {
+                return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
+            }
+            if Status == 1u32 {
+                if Terminalˉkind != 0u32 ||
+                    Bytesˉreadˉu64ˉlittle(State, Entry + 20u32) != 0u64 ||
+                    Bytesˉreadˉu64ˉlittle(State, Entry + 32u32) != 0u64 ||
+                    Bytesˉreadˉu64ˉlittle(State, Entry + 40u32) != 0u64 {
+                    return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
+                }
+                Runnable = Runnable + 1u32;
+            } else {
+                if !Completedˉtaskˉterminalˉisˉvalid(
+                        State, Entry, Terminalˉkind
+                    ) {
+                    return Scopeˉtaskˉsummary(false, 0u32, 0u32, 0u32, 0u64);
+                }
+                Completed = Completed + 1u32;
+                if Terminalˉkind == 0u32 { Retained = Retained + 8u64; }
+            }
+            Live = Live + 1u32;
+        }
+        Index = Index + 1u32;
+    }
+    return Scopeˉtaskˉsummary(true, Live, Runnable, Completed, Retained);
+}
+
+fn Activeˉscopeˉisˉvalid(State: bytes, Index: u32) -> bool {
+    let Entry: u32 = Scopeˉoffset(Index);
+    let Generation: u32 = Bytesˉreadˉu32ˉlittle(State, Entry);
+    let Accepted: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 12u32);
+    let Live: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 16u32);
+    let Runnable: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 20u32);
+    let Completed: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 24u32);
+    let Maximumˉchildren: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 28u32);
+    let Maximumˉrunnable: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 32u32);
+    let Maximumˉcompleted: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 36u32);
+    let Maximumˉretained: u64 = Bytesˉreadˉu64ˉlittle(State, Entry + 40u32);
+    let Maximumˉwork: u64 = Bytesˉreadˉu64ˉlittle(State, Entry + 48u32);
+    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 56u32);
+    let Maximumˉtimers: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 60u32);
+    let Maximumˉdiagnostics: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 64u32);
+    let Workˉused: u64 = Bytesˉreadˉu64ˉlittle(State, Entry + 76u32);
+    if Generation == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 8u32) > 1u32 ||
+        Maximumˉchildren == 0u32 || Maximumˉchildren > 64u32 ||
+        Maximumˉrunnable == 0u32 || Maximumˉrunnable > Maximumˉchildren ||
+        Maximumˉcompleted == 0u32 || Maximumˉcompleted > Maximumˉchildren ||
+        Maximumˉretained == 0u64 || Maximumˉretained > 1048576u64 ||
+        Maximumˉwork == 0u64 || Maximumˉwork > 1000000u64 ||
+        Maximumˉcallˉdepth == 0u32 || Maximumˉcallˉdepth > 64u32 ||
+        Maximumˉtimers == 0u32 || Maximumˉtimers > 64u32 ||
+        Maximumˉdiagnostics == 0u32 || Maximumˉdiagnostics > 256u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 68u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 72u32) == 0u32 ||
+        Workˉused > Maximumˉwork ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 84u32) != 0u32 ||
+        Accepted > Maximumˉchildren || Live > Accepted ||
+        Runnable > Maximumˉrunnable || Completed > Maximumˉcompleted ||
+        Runnable + Completed != Live {
+        return false;
+    }
+    let Summary: Scopeˉtaskˉsummary = Summarizeˉscopeˉtasks(
+        State, Index + 1u32, Generation
+    );
+    return Summary.Valid && Summary.Live == Live &&
+        Summary.Runnable == Runnable && Summary.Completed == Completed &&
+        Summary.Retained <= Maximumˉretained;
+}
+
+fn Activeˉtaskˉhasˉvalidˉscope(State: bytes, Entry: u32) -> bool {
+    let Scopeˉidentity: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 8u32);
+    if Scopeˉidentity == 0u32 || Scopeˉidentity > TASK_SCOPE_CAPACITY {
+        return false;
+    }
+    let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉidentity - 1u32);
+    return Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 4u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry) ==
+            Bytesˉreadˉu32ˉlittle(State, Entry + 12u32);
+}
+
+fn Stateˉisˉvalid(State: bytes) -> bool {
+    if Bytesˉlength(State) != TASK_STATE_BYTES ||
+        Bytesˉreadˉu32ˉlittle(State, 0u32) != TASK_STATE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(State, 4u32) != TASK_STATE_VERSION ||
+        Bytesˉreadˉu32ˉlittle(State, 8u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(State, 12u32) != 0u32 {
+        return false;
+    }
+    var Scopeˉscan: u32 = 0u32;
+    while Scopeˉscan < TASK_SCOPE_CAPACITY {
+        let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉscan);
+        let Scopeˉactive: u32 = Bytesˉreadˉu32ˉlittle(
+            State, Scopeˉentry + 4u32
+        );
+        if Scopeˉactive > 1u32 || (Scopeˉactive == 1u32 &&
+            !Activeˉscopeˉisˉvalid(State, Scopeˉscan)) {
+            return false;
+        }
+        Scopeˉscan = Scopeˉscan + 1u32;
+    }
+    var Taskˉscan: u32 = 0u32;
+    while Taskˉscan < TASK_CAPACITY {
+        let Taskˉentry: u32 = Taskˉoffset(Taskˉscan);
+        let Taskˉactive: u32 = Bytesˉreadˉu32ˉlittle(
+            State, Taskˉentry + 4u32
+        );
+        if Taskˉactive > 1u32 || (Taskˉactive == 1u32 &&
+            !Activeˉtaskˉhasˉvalidˉscope(State, Taskˉentry)) {
+            return false;
+        }
+        Taskˉscan = Taskˉscan + 1u32;
+    }
+    return true;
+}
+
+fn Token(Identity: u32, Generation: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Identity),
+        Bytesˉfromˉu32ˉlittle(Generation)
+    );
+}
+
+fn Nextˉgeneration(Value: u32) -> u32 {
+    if Value == 4294967295u32 { return 1u32; }
+    return Value + 1u32;
+}
+
+fn Scopeˉindex(State: bytes, Value: bytes) -> u32 {
+    if !Stateˉisˉvalid(State) || Bytesˉlength(Value) != 8u32 {
+        return TASK_SCOPE_CAPACITY;
+    }
+    let Identity: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    if Identity == 0u32 || Identity > TASK_SCOPE_CAPACITY {
+        return TASK_SCOPE_CAPACITY;
+    }
+    let Index: u32 = Identity - 1u32;
+    let Offset: u32 = Scopeˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Offset + 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Offset) !=
+            Bytesˉreadˉu32ˉlittle(Value, 4u32) {
+        return TASK_SCOPE_CAPACITY;
+    }
+    return Index;
+}
+
+fn Taskˉindex(State: bytes, Value: bytes) -> u32 {
+    if !Stateˉisˉvalid(State) || Bytesˉlength(Value) != 8u32 {
+        return TASK_CAPACITY;
+    }
+    let Identity: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+    if Identity == 0u32 || Identity > TASK_CAPACITY {
+        return TASK_CAPACITY;
+    }
+    let Index: u32 = Identity - 1u32;
+    let Offset: u32 = Taskˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Offset + 4u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Offset) !=
+            Bytesˉreadˉu32ˉlittle(Value, 4u32) {
+        return TASK_CAPACITY;
+    }
+    return Index;
+}
+
+fn Invalidˉconstruction(State: bytes) -> Scopeˉconstruction {
+    return Scopeˉconstruction(
+        false, false, 0u32, 0u64, 0u64, 0u64, Empty(State), State
+    );
+}
+
+fn Refusedˉconstruction(
+    State: bytes,
+    Field: u32,
+    Observed: u64,
+    Minimum: u64,
+    Maximum: u64
+) -> Scopeˉconstruction {
+    return Scopeˉconstruction(
+        true, false, Field, Observed, Minimum, Maximum, Empty(State), State
+    );
+}
+
+export fn Constructˉstate(Seed: bytes) -> bytes {
+    var State: bytes = Bytesˉfromˉu32ˉlittle(TASK_STATE_MAGIC);
+    State = Bytesˉconcat(
+        State, Bytesˉfromˉu32ˉlittle(TASK_STATE_VERSION)
+    );
+    State = Bytesˉconcat(State, Bytesˉfromˉu32ˉlittle(0u32));
+    State = Bytesˉconcat(State, Bytesˉfromˉu32ˉlittle(0u32));
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    while Bytesˉlength(State) < TASK_STATE_BYTES {
+        State = Bytesˉconcat(State, Zero);
+    }
+    if !Stateˉisˉvalid(State) { return Empty(Seed); }
+    return State;
+}
+
+export fn Constructˉscope(
+    State: bytes,
+    Budget: bytes,
+    Limits: bytes,
+    Parentˉcontext: bytes
+) -> Scopeˉconstruction {
+    if !Stateˉisˉvalid(State) || Bytesˉlength(Budget) != 8u32 ||
+        Bytesˉlength(Limits) != 64u32 ||
+        Bytesˉlength(Parentˉcontext) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Parentˉcontext, 0u32) == 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Parentˉcontext, 4u32) == 0u32 {
+        return Invalidˉconstruction(State);
+    }
+    let Maximumˉchildren: u32 = Bytesˉreadˉu32ˉlittle(Limits, 0u32);
+    let Maximumˉrunnable: u32 = Bytesˉreadˉu32ˉlittle(Limits, 8u32);
+    let Maximumˉcompleted: u32 = Bytesˉreadˉu32ˉlittle(Limits, 16u32);
+    let Maximumˉretainedˉbytes: u64 = Bytesˉreadˉu64ˉlittle(Limits, 24u32);
+    let Maximumˉworkˉunits: u64 = Bytesˉreadˉu64ˉlittle(Limits, 32u32);
+    let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Limits, 40u32);
+    let Maximumˉtimers: u32 = Bytesˉreadˉu32ˉlittle(Limits, 48u32);
+    let Maximumˉdiagnostics: u32 = Bytesˉreadˉu32ˉlittle(Limits, 56u32);
+    if Maximumˉchildren == 0u32 || Maximumˉchildren > 64u32 {
+        return Refusedˉconstruction(
+            State, 0u32, U64ˉfromˉu32(Maximumˉchildren), 1u64, 64u64
+        );
+    }
+    if Maximumˉrunnable == 0u32 ||
+        Maximumˉrunnable > Maximumˉchildren {
+        return Refusedˉconstruction(
+            State, 1u32, U64ˉfromˉu32(Maximumˉrunnable), 1u64,
+            U64ˉfromˉu32(Maximumˉchildren)
+        );
+    }
+    if Maximumˉcompleted == 0u32 ||
+        Maximumˉcompleted > Maximumˉchildren {
+        return Refusedˉconstruction(
+            State, 2u32, U64ˉfromˉu32(Maximumˉcompleted), 1u64,
+            U64ˉfromˉu32(Maximumˉchildren)
+        );
+    }
+    if Maximumˉretainedˉbytes == 0u64 ||
+        Maximumˉretainedˉbytes > 1048576u64 {
+        return Refusedˉconstruction(
+            State, 3u32, Maximumˉretainedˉbytes, 1u64, 1048576u64
+        );
+    }
+    if Maximumˉworkˉunits == 0u64 ||
+        Maximumˉworkˉunits > 1000000u64 {
+        return Refusedˉconstruction(
+            State, 4u32, Maximumˉworkˉunits, 1u64, 1000000u64
+        );
+    }
+    if Maximumˉcallˉdepth == 0u32 || Maximumˉcallˉdepth > 64u32 {
+        return Refusedˉconstruction(
+            State, 5u32, U64ˉfromˉu32(Maximumˉcallˉdepth), 1u64, 64u64
+        );
+    }
+    if Maximumˉtimers == 0u32 || Maximumˉtimers > 64u32 {
+        return Refusedˉconstruction(
+            State, 6u32, U64ˉfromˉu32(Maximumˉtimers), 1u64, 64u64
+        );
+    }
+    if Maximumˉdiagnostics == 0u32 || Maximumˉdiagnostics > 256u32 {
+        return Refusedˉconstruction(
+            State, 7u32, U64ˉfromˉu32(Maximumˉdiagnostics), 1u64, 256u64
+        );
+    }
+    var Index: u32 = 0u32;
+    while Index < TASK_SCOPE_CAPACITY && Bytesˉreadˉu32ˉlittle(
+            State, Scopeˉoffset(Index) + 4u32
+        ) != 0u32 {
+        Index = Index + 1u32;
+    }
+    if Index == TASK_SCOPE_CAPACITY {
+        return Refusedˉconstruction(State, 0u32, 65u64, 1u64, 64u64);
+    }
+    let Offset: u32 = Scopeˉoffset(Index);
+    let Generation: u32 = Nextˉgeneration(
+        Bytesˉreadˉu32ˉlittle(State, Offset)
+    );
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Generation);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉchildren));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉrunnable));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉcompleted));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(Maximumˉretainedˉbytes));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(Maximumˉworkˉunits));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉcallˉdepth));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉtimers));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Maximumˉdiagnostics));
+    Entry = Bytesˉconcat(Entry, Budget);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(0u64));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    let Updated: bytes = Replace(State, Offset, Entry);
+    return Scopeˉconstruction(
+        Stateˉisˉvalid(Updated), true, 0u32, 0u64, 0u64, 0u64,
+        Token(Index + 1u32, Generation), Updated
+    );
+}
+
+export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
+    let Emptyˉvalue: bytes = Empty(State);
+    let Scopeˉslot: u32 = Scopeˉindex(State, Scope);
+    if Scopeˉslot == TASK_SCOPE_CAPACITY {
+        return Spawnˉbegin(
+            false, false, 0u32, Emptyˉvalue, State, 0u64, 0u32
+        );
+    }
+    let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉslot);
+    if Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 8u32) != 0u32 {
+        return Spawnˉbegin(
+            true, false, 0u32, Emptyˉvalue, State, 0u64, 0u32
+        );
+    }
+    let Maximumˉwork: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Scopeˉentry + 48u32
+    );
+    let Workˉused: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Scopeˉentry + 76u32
+    );
+    if Workˉused >= Maximumˉwork {
+        return Spawnˉbegin(
+            true, false, 1u32, Emptyˉvalue, State, 0u64,
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+        );
+    }
+    let Accepted: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 12u32);
+    if Accepted >= Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 28u32) {
+        return Spawnˉbegin(
+            true, false, 1u32, Emptyˉvalue, State,
+            Maximumˉwork - Workˉused,
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+        );
+    }
+    let Runnable: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 20u32);
+    if Runnable >= Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 32u32) {
+        return Spawnˉbegin(
+            true, false, 2u32, Emptyˉvalue, State,
+            Maximumˉwork - Workˉused,
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+        );
+    }
+    var Taskˉslot: u32 = 0u32;
+    while Taskˉslot < TASK_CAPACITY && Bytesˉreadˉu32ˉlittle(
+            State, Taskˉoffset(Taskˉslot) + 4u32
+        ) != 0u32 {
+        Taskˉslot = Taskˉslot + 1u32;
+    }
+    if Taskˉslot == TASK_CAPACITY {
+        return Spawnˉbegin(
+            true, false, 2u32, Emptyˉvalue, State,
+            Maximumˉwork - Workˉused,
+            Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+        );
+    }
+    let Taskˉentry: u32 = Taskˉoffset(Taskˉslot);
+    let Generation: u32 = Nextˉgeneration(
+        Bytesˉreadˉu32ˉlittle(State, Taskˉentry)
+    );
+    var Updated: bytes = Replaceˉu32(State, Scopeˉentry + 12u32, Accepted + 1u32);
+    Updated = Replaceˉu32(
+        Updated, Scopeˉentry + 16u32,
+        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 16u32) + 1u32
+    );
+    Updated = Replaceˉu32(Updated, Scopeˉentry + 20u32, Runnable + 1u32);
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(Generation);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Scope);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(0u64));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu64ˉlittle(0u64));
+    Updated = Replace(Updated, Taskˉentry, Entry);
+    return Spawnˉbegin(
+        Stateˉisˉvalid(Updated), true, 0u32,
+        Token(Taskˉslot + 1u32, Generation), Updated,
+        Maximumˉwork - Workˉused,
+        Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
+    );
+}
+
+export fn Chargeˉwork(
+    State: bytes,
+    Task: bytes,
+    Units: u32
+) -> Workˉcharge {
+    let Index: u32 = Taskˉindex(State, Task);
+    if Index == TASK_CAPACITY {
+        return Workˉcharge(false, State);
+    }
+    let Entry: u32 = Taskˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Entry + 16u32) != 1u32 {
+        return Workˉcharge(false, State);
+    }
+    let Scope: bytes = Bytesˉslice(State, Entry + 8u32, 8u32);
+    let Scopeˉslot: u32 = Scopeˉindex(State, Scope);
+    if Scopeˉslot == TASK_SCOPE_CAPACITY {
+        return Workˉcharge(false, State);
+    }
+    let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉslot);
+    let Maximum: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Scopeˉentry + 48u32
+    );
+    let Used: u64 = Bytesˉreadˉu64ˉlittle(
+        State, Scopeˉentry + 76u32
+    );
+    let Requested: u64 = U64ˉfromˉu32(Units);
+    if Requested > Maximum - Used {
+        return Workˉcharge(false, State);
+    }
+    let Updated: bytes = Replace(
+        State, Scopeˉentry + 76u32,
+        Bytesˉfromˉu64ˉlittle(Used + Requested)
+    );
+    return Workˉcharge(Stateˉisˉvalid(Updated), Updated);
+}
+
+export fn Completeˉtask(
+    State: bytes,
+    Task: bytes,
+    Result: bytes
+) -> Taskˉcompletion {
+    if Bytesˉlength(Result) != 8u32 {
+        return Taskˉcompletion(false, State);
+    }
+    return Completeˉtaskˉterminal(
+        State, Task, Result, 0u32, 0u64, 0u64
+    );
+}
+
+fn Completeˉtaskˉterminal(
+    State: bytes,
+    Task: bytes,
+    Result: bytes,
+    Terminalˉkind: u32,
+    Firstˉevidence: u64,
+    Secondˉevidence: u64
+) -> Taskˉcompletion {
+    let Index: u32 = Taskˉindex(State, Task);
+    if Index == TASK_CAPACITY || Bytesˉlength(Result) != 8u32 ||
+        Terminalˉkind > 5u32 {
+        return Taskˉcompletion(false, State);
+    }
+    let Entry: u32 = Taskˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Entry + 16u32) != 1u32 {
+        return Taskˉcompletion(false, State);
+    }
+    let Scope: bytes = Bytesˉslice(State, Entry + 8u32, 8u32);
+    let Scopeˉslot: u32 = Scopeˉindex(State, Scope);
+    if Scopeˉslot == TASK_SCOPE_CAPACITY {
+        return Taskˉcompletion(false, State);
+    }
+    let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉslot);
+    let Runnable: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 20u32);
+    let Completed: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 24u32);
+    if Runnable == 0u32 || Completed >= Bytesˉreadˉu32ˉlittle(
+            State, Scopeˉentry + 36u32
+        ) {
+        return Taskˉcompletion(false, State);
+    }
+    var Updated: bytes = Replaceˉu32(State, Entry + 16u32, 2u32);
+    Updated = Replace(Updated, Entry + 20u32, Result);
+    Updated = Replaceˉu32(Updated, Entry + 28u32, Terminalˉkind);
+    Updated = Replace(
+        Updated, Entry + 32u32, Bytesˉfromˉu64ˉlittle(Firstˉevidence)
+    );
+    Updated = Replace(
+        Updated, Entry + 40u32, Bytesˉfromˉu64ˉlittle(Secondˉevidence)
+    );
+    Updated = Replaceˉu32(Updated, Scopeˉentry + 20u32, Runnable - 1u32);
+    Updated = Replaceˉu32(Updated, Scopeˉentry + 24u32, Completed + 1u32);
+    return Taskˉcompletion(Stateˉisˉvalid(Updated), Updated);
+}
+
+export fn Completeˉterminal(
+    State: bytes,
+    Task: bytes,
+    Terminalˉkind: u32,
+    Firstˉevidence: u64,
+    Secondˉevidence: u64
+) -> Taskˉcompletion {
+    if Terminalˉkind < 1u32 || Terminalˉkind > 5u32 {
+        return Taskˉcompletion(false, State);
+    }
+    if (Terminalˉkind == 1u32 || Terminalˉkind == 2u32) &&
+        (Firstˉevidence != 0u64 || Secondˉevidence != 0u64) {
+        return Taskˉcompletion(false, State);
+    }
+    if Terminalˉkind == 3u32 && Firstˉevidence == 0u64 {
+        return Taskˉcompletion(false, State);
+    }
+    if Terminalˉkind == 4u32 &&
+        (Firstˉevidence == 0u64 || Secondˉevidence == 0u64 ||
+            Firstˉevidence == Secondˉevidence) {
+        return Taskˉcompletion(false, State);
+    }
+    if Terminalˉkind == 5u32 &&
+        (Firstˉevidence == 0u64 || Firstˉevidence > 4294967295u64 ||
+            Secondˉevidence != 0u64) {
+        return Taskˉcompletion(false, State);
+    }
+    let Emptyˉresult: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32)
+    );
+    return Completeˉtaskˉterminal(
+        State, Task, Emptyˉresult, Terminalˉkind,
+        Firstˉevidence, Secondˉevidence
+    );
+}
+
+export fn Awaitˉtask(State: bytes, Task: bytes, Scope: bytes) -> Awaitˉresult {
+    let Emptyˉvalue: bytes = Empty(State);
+    let Index: u32 = Taskˉindex(State, Task);
+    if Index == TASK_CAPACITY {
+        return Awaitˉresult(
+            false, false, Emptyˉvalue, 0u32, 0u64, 0u64, State
+        );
+    }
+    let Entry: u32 = Taskˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Entry + 16u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 8u32) !=
+            Bytesˉreadˉu32ˉlittle(Scope, 0u32) ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 12u32) !=
+            Bytesˉreadˉu32ˉlittle(Scope, 4u32) {
+        return Awaitˉresult(
+            false, false, Emptyˉvalue, 0u32, 0u64, 0u64, State
+        );
+    }
+    let Scopeˉslot: u32 = Scopeˉindex(State, Scope);
+    if Scopeˉslot == TASK_SCOPE_CAPACITY {
+        return Awaitˉresult(
+            false, false, Emptyˉvalue, 0u32, 0u64, 0u64, State
+        );
+    }
+    let Scopeˉentry: u32 = Scopeˉoffset(Scopeˉslot);
+    let Live: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 16u32);
+    let Completed: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 24u32);
+    if Live == 0u32 || Completed == 0u32 {
+        return Awaitˉresult(
+            false, false, Emptyˉvalue, 0u32, 0u64, 0u64, State
+        );
+    }
+    let Result: bytes = Bytesˉslice(State, Entry + 20u32, 8u32);
+    let Terminalˉkind: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 28u32);
+    let Firstˉevidence: u64 = Bytesˉreadˉu64ˉlittle(State, Entry + 32u32);
+    let Secondˉevidence: u64 = Bytesˉreadˉu64ˉlittle(State, Entry + 40u32);
+    if Terminalˉkind > 5u32 {
+        return Awaitˉresult(
+            false, false, Emptyˉvalue, 0u32, 0u64, 0u64, State
+        );
+    }
+    var Updated: bytes = Replaceˉu32(State, Entry + 4u32, 0u32);
+    Updated = Replaceˉu32(Updated, Entry + 16u32, 0u32);
+    Updated = Replaceˉu32(Updated, Scopeˉentry + 16u32, Live - 1u32);
+    Updated = Replaceˉu32(Updated, Scopeˉentry + 24u32, Completed - 1u32);
+    return Awaitˉresult(
+        true, true, Result, Terminalˉkind,
+        Firstˉevidence, Secondˉevidence, Updated
+    );
+}
+
+export fn Requestˉcancel(State: bytes, Scope: bytes) -> Cancelˉresult {
+    let Index: u32 = Scopeˉindex(State, Scope);
+    if Index == TASK_SCOPE_CAPACITY {
+        return Cancelˉresult(false, false, 0u32, State);
+    }
+    let Offset: u32 = Scopeˉoffset(Index);
+    let Already: bool = Bytesˉreadˉu32ˉlittle(State, Offset + 8u32) != 0u32;
+    var Updated: bytes = State;
+    if !Already { Updated = Replaceˉu32(State, Offset + 8u32, 1u32); }
+    return Cancelˉresult(
+        true, Already, Bytesˉreadˉu32ˉlittle(State, Offset + 16u32),
+        Updated
+    );
+}
+
+export fn Exitˉscope(State: bytes, Scope: bytes, Policy: u32) -> Scopeˉexit {
+    let Emptyˉvalue: bytes = Empty(State);
+    let Index: u32 = Scopeˉindex(State, Scope);
+    if Index == TASK_SCOPE_CAPACITY || Policy > 2u32 {
+        return Scopeˉexit(false, Emptyˉvalue, State);
+    }
+    let Offset: u32 = Scopeˉoffset(Index);
+    if Bytesˉreadˉu32ˉlittle(State, Offset + 16u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Offset + 20u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(State, Offset + 24u32) != 0u32 {
+        return Scopeˉexit(false, Emptyˉvalue, State);
+    }
+    let Budget: bytes = Bytesˉslice(State, Offset + 68u32, 8u32);
+    var Updated: bytes = Replaceˉu32(State, Offset + 4u32, 0u32);
+    Updated = Replaceˉu32(Updated, Offset + 8u32, 0u32);
+    return Scopeˉexit(true, Budget, Updated);
+}
+
+export fn Retainedˉroots(State: bytes) -> bytes {
+    let Emptyˉvalue: bytes = Empty(State);
+    if !Stateˉisˉvalid(State) { return Emptyˉvalue; }
+    var Roots: bytes = Emptyˉvalue;
+    var Index: u32 = 0u32;
+    while Index < TASK_CAPACITY {
+        let Offset: u32 = Taskˉoffset(Index);
+        if Bytesˉreadˉu32ˉlittle(State, Offset + 4u32) == 1u32 &&
+            Bytesˉreadˉu32ˉlittle(State, Offset + 16u32) == 2u32 &&
+            Bytesˉreadˉu32ˉlittle(State, Offset + 28u32) == 0u32 {
+            Roots = Bytesˉconcat(Roots, Bytesˉslice(State, Offset + 20u32, 8u32));
+        }
+        Index = Index + 1u32;
+    }
+    return Roots;
+}

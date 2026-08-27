@@ -732,6 +732,37 @@ captures, retained captures, general same-signature dispatch, and escaping
 environments remain separately versioned extensions; browser and OS execution,
 paired-host qualification, and candidate promotion remain separate target gates.
 
+## Current Slice 7 sequential structured-task checkpoint
+
+[Decision 0861](../Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
+connects the accepted lexical task surface to the real edition-1 compiler,
+WVIR 1.21, WVB 1.32, compiler-aligned verifier, and source-built scalar runner.
+The compiler recognizes only canonical Foundation task identities, records the
+exact async/effect/mode descriptor evidence, and lowers construction, context
+derivation, spawn, consuming await, cancellation, and policy-bound scope exit.
+Fallthrough, return, propagation, break, and continue emit scope teardown before
+outer resource release. Affine scope and handle state must agree at every
+control-flow join; work, context, and handles cannot escape their admitted
+lifetime or be silently copied.
+
+The current correctness oracle is one bounded sequential scheduler. It supplies
+the root memory budget and operation context through dedicated execution-request
+major `6`, admits at most 64 children and 1 MiB of retained task state, charges
+one work unit per dispatched verified WVB instruction, retains completed
+aggregate results until await or teardown, and reports exact child traps and
+call-depth/work exhaustion as typed outcomes. Request major `5` remains the
+independent source-file snapshot contract. The task-state core also has a
+standalone 37-case native self-test, while executable source fixtures cover
+success, child trap, retained-result pressure, work exhaustion, and call-depth
+exhaustion through the interpreter.
+
+This completes the sequential implementation checkpoint, not the whole Slice 7
+qualification promise. A parallel-capable Windows host and a parallel-capable
+Linux host must still prove the same canonical observations under different
+completion order before Slice 7 is closed. Cancellation/deadline/provider-loss
+workload coverage, paired-host reconstruction, candidate promotion, and broad
+Qualification remain explicit final Slice 7 gates rather than per-edit tests.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

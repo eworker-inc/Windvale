@@ -392,6 +392,13 @@ export fn Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Copy { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Move { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Await { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Task { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Scope { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Policy { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Join { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Cancelˉjoin { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Failˉjoin { return false; }
         return true;
     }
     return false;

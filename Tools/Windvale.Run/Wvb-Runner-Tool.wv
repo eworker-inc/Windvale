@@ -98,6 +98,15 @@ fn Buildˉsourceˉfileˉrequest(Module: bytes, Snapshot: bytes) -> bytes {
     return Bytesˉconcat(Request, Snapshot);
 }
 
+fn Buildˉstructuredˉtaskˉrequest(Module: bytes) -> bytes {
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(6u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
+    return Bytesˉconcat(Request, Module);
+}
+
 fn Reportˉfailure(Status: u32, Instructions: u32) -> void {
     var Report: text = Textˉconcat(
         "wvb run status=Failed code=",
@@ -186,7 +195,15 @@ fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
     }
     let Response: bytes = Interpreter.Main(Request);
     if Bytesˉlength(Response) < 28u32 {
-        diagnostic.write_line("wvb run status=Unsupported profile=script-main-i32");
+        var Phase: text = "execution";
+        if Bytesˉlength(Envelopeˉreader.Interpreterˉenvelope(Request))
+            < 64u32 {
+            Phase = "envelope";
+        }
+        diagnostic.write_line(Textˉconcat(
+            "wvb run status=Unsupported profile=script-main-i32 phase=",
+            Phase
+        ));
         return 1;
     }
     if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 ||
@@ -246,12 +263,12 @@ fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
     return Result;
 }
 
-fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
-    if Bytesˉlength(Snapshot) > 1048576u32 {
-        diagnostic.write_line("wvb run status=Sourceˉsnapshotˉtooˉlarge");
-        return 64;
-    }
-    let Request: bytes = Buildˉsourceˉfileˉrequest(Module, Snapshot);
+fn Runˉcontextˉentry(
+    Request: bytes,
+    Profile: text,
+    Responseˉmajor: u32,
+    Reportˉresult: bool
+) -> i32 {
     let Response: bytes = Interpreter.Main(Request);
     if Bytesˉlength(Response) != 20u32 {
         var Phase: text = "execution";
@@ -260,13 +277,13 @@ fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
             Phase = "envelope";
         }
         diagnostic.write_line(Textˉconcat(
-            "wvb run status=Unsupported profile=source-file-main-i32 phase=",
-            Phase
+            Textˉconcat("wvb run status=Unsupported profile=", Profile),
+            Textˉconcat(" phase=", Phase)
         ));
         return 1;
     }
     if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 ||
-        Bytesˉreadˉu16ˉlittle(Response, 4u32) != 5u32 ||
+        Bytesˉreadˉu16ˉlittle(Response, 4u32) != Responseˉmajor ||
         Bytesˉreadˉu16ˉlittle(Response, 6u32) != 0u32 {
         diagnostic.write_line("wvb run status=Invalidˉresponse");
         return 1;
@@ -284,7 +301,54 @@ fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
         diagnostic.write_line("wvb run status=Invalidˉexitˉstatus");
         return 1;
     }
+    if Reportˉresult {
+        console.write_line(Textˉconcat(
+            "Result: ",
+            Textˉfromˉutf8(Formatting.Interpreterˉformatˉinteger(
+                Bytesˉconcat(
+                    Bytesˉfromˉu8(1u8),
+                    Bytesˉconcat(
+                        Bytesˉslice(Response, 16u32, 4u32),
+                        Bytesˉfromˉu32ˉlittle(0u32)
+                    )
+                )
+            ))
+        ));
+        return 0;
+    }
     return Result;
+}
+
+fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
+    if Bytesˉlength(Snapshot) > 1048576u32 {
+        diagnostic.write_line("wvb run status=Sourceˉsnapshotˉtooˉlarge");
+        return 64;
+    }
+    return Runˉcontextˉentry(
+        Buildˉsourceˉfileˉrequest(Module, Snapshot),
+        "source-file-main-i32",
+        5u32,
+        false
+    );
+}
+
+fn Runˉstructuredˉtask(Module: bytes) -> i32 {
+    return Runˉcontextˉentry(
+        Buildˉstructuredˉtaskˉrequest(Module),
+        "structured-task-main-i32",
+        6u32,
+        true
+    );
+}
+
+fn Isˉstructuredˉtaskˉmodule(Module: bytes) -> bool {
+    return Bytesˉlength(Module) >= 21u32 &&
+        Bytesˉreadˉu16ˉlittle(Module, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 32u32 &&
+        Bytesˉreadˉu32ˉlittle(Module, 8u32) == 7u32 &&
+        Bytesˉreadˉu32ˉlittle(Module, 12u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Module, 16u32) >= 1u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) == 2u32;
 }
 
 export fn Main() -> i32 {
@@ -329,6 +393,9 @@ export fn Main() -> i32 {
     }
 
     let Module: bytes = file.read_bytes(process.argument(0u32));
+    if Isˉstructuredˉtaskˉmodule(Module) {
+        return Runˉstructuredˉtask(Module);
+    }
     let Request: bytes = Buildˉrequest(Module);
     let Response: bytes = Interpreter.Main(Request);
     if Bytesˉlength(Response) != 20u32 {

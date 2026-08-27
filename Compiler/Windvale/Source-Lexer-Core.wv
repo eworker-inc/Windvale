@@ -109,6 +109,13 @@ export enum Compilerˉtokenˉkind {
     Unsafe = 105;
     Copy = 106;
     Move = 107;
+    Await = 108;
+    Task = 109;
+    Scope = 110;
+    Policy = 111;
+    Join = 112;
+    Cancelˉjoin = 113;
+    Failˉjoin = 114;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -373,7 +380,7 @@ export fn Compilerˉsourceˉkeywordˉkind(
     Length: u32
 ) -> Compilerˉtokenˉkind {
     if Length < 2u32 { return Compilerˉtokenˉkind.Identifier; }
-    if Length > 10u32 { return Compilerˉtokenˉkind.Identifier; }
+    if Length > 11u32 { return Compilerˉtokenˉkind.Identifier; }
     let First: u8 = Bytesˉreadˉu8(Input, Offset);
     if Length == 2u32 {
         if First == 97u8 {
@@ -441,6 +448,12 @@ export fn Compilerˉsourceˉkeywordˉkind(
         if First == 109u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "move") { return Compilerˉtokenˉkind.Move; }
         }
+        if First == 106u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "join") { return Compilerˉtokenˉkind.Join; }
+        }
+        if First == 116u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "task") { return Compilerˉtokenˉkind.Task; }
+        }
         if First == 112u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "push") { return Compilerˉtokenˉkind.Push; }
         }
@@ -462,6 +475,7 @@ export fn Compilerˉsourceˉkeywordˉkind(
     if Length == 5u32 {
         if First == 97u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "async") { return Compilerˉtokenˉkind.Async; }
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "await") { return Compilerˉtokenˉkind.Await; }
         }
         if First == 98u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "break") { return Compilerˉtokenˉkind.Break; }
@@ -482,6 +496,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         if First == 119u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "while") { return Compilerˉtokenˉkind.While; }
         }
+        if First == 115u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "scope") { return Compilerˉtokenˉkind.Scope; }
+        }
         if First == 117u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "using") { return Compilerˉtokenˉkind.Using; }
         }
@@ -496,6 +513,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 104u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "hosted") { return Compilerˉtokenˉkind.Hosted; }
+        }
+        if First == 112u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "policy") { return Compilerˉtokenˉkind.Policy; }
         }
         if First == 102u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "freeze") { return Compilerˉtokenˉkind.Freeze; }
@@ -518,6 +538,12 @@ export fn Compilerˉsourceˉkeywordˉkind(
         }
         if First == 117u8 {
             if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "unsafe") { return Compilerˉtokenˉkind.Unsafe; }
+        }
+        return Compilerˉtokenˉkind.Identifier;
+    }
+    if Length == 11u32 {
+        if First == 99u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "cancel_join") { return Compilerˉtokenˉkind.Cancelˉjoin; }
         }
         return Compilerˉtokenˉkind.Identifier;
     }
@@ -565,6 +591,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 9u32 {
+        if First == 102u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "fail_join") { return Compilerˉtokenˉkind.Failˉjoin; }
+        }
         if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "authority") { return Compilerˉtokenˉkind.Authority; }
         return Compilerˉtokenˉkind.Identifier;
     }

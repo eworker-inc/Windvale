@@ -132,7 +132,9 @@ const Cases = [
         fixture: 'Owned-Aggregate-Mutable-Borrow-From-Let.wv',
         analysisInvalid:
             'source analysis status=Sourceˉwir symbol-status=Valid ' +
-            'binding-status=Valid wir-status=Invalidˉborrow\n',
+            'binding-status=Valid wir-status=Invalidˉborrow ' +
+            'failure-module=0 related-module=0 function=9 offset=521 ' +
+            'line=22 column=11\n',
     },
 ];
 

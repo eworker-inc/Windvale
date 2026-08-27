@@ -9,4 +9,5 @@ source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Formatting.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Memory-Budget-Core.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv"
+source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Task-Core.wv"
 emit wvb

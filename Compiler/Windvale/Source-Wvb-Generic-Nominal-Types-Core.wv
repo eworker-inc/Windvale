@@ -266,6 +266,27 @@ fn Compilerˉsourceˉwvbˉgenericˉnominalˉshape(
     Concreteˉrecords: u32,
     Shape: u32
 ) -> Compilerˉsourceˉwvbˉgenericˉnominalˉpart {
+    if Shape >= 2147483904u32 && Shape < 2147484160u32 {
+        let Functionˉtype: u32 = Shape - 2147483904u32;
+        if Plan.Firstˉtype > 1024u32 ||
+            Plan.Instances > 1024u32 - Plan.Firstˉtype ||
+            Functionˉtype >= 1024u32 - Plan.Firstˉtype - Plan.Instances {
+            return Compilerˉsourceˉwvbˉgenericˉnominalˉpartˉfailure(
+                Input,
+                Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Unsupportedˉshape
+            );
+        }
+        return Compilerˉsourceˉwvbˉgenericˉnominalˉpart(
+            Compilerˉsourceˉwvbˉgenericˉnominalˉstatus.Valid,
+            Bytesˉconcat(
+                Bytesˉfromˉu8(35u8),
+                Bytesˉfromˉu32ˉlittle(
+                    Plan.Firstˉtype + Plan.Instances + Functionˉtype
+                )
+            ),
+            524288u32
+        );
+    }
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
         let Privateˉinstance: u32 =
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
