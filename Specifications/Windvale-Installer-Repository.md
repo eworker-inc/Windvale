@@ -84,20 +84,20 @@ The development input defines:
 | `full` | all eight components |
 
 The current deterministic repository has 15 objects and 15 unique blobs. The
-index is 3,546 bytes with SHA-256
-`c44bec65ab7b235a22e1e4d24d98f3eb2249f6f21031ddefbe2bbe5c4a6b4ef3`;
-the blobs total 9,502,931 bytes.
+index is 3,548 bytes with SHA-256
+`4f1203956b0d27cfefbc1ba4f0cc27e0f5999b5cbbaef99b3a6c2063e770929b`;
+the blobs total 10,810,501 bytes.
 
 | Target | Profile | Objects | Download bytes | Expanded bytes |
 | --- | --- | ---: | ---: | ---: |
-| Windows x64 | `runtime` | 3 | 656,576 | 3,091,393 |
-| Linux x64 | `runtime` | 3 | 655,076 | 3,093,441 |
-| Windows x64 | `developer` | 6 | 4,307,743 | 37,212,609 |
-| Linux x64 | `developer` | 6 | 4,303,735 | 37,217,217 |
+| Windows x64 | `runtime` | 3 | 1,310,442 | 6,599,105 |
+| Linux x64 | `runtime` | 3 | 1,308,780 | 6,599,617 |
+| Windows x64 | `developer` | 6 | 4,961,609 | 40,720,321 |
+| Linux x64 | `developer` | 6 | 4,957,439 | 40,723,393 |
 | Windows x64 | `publisher` | 4 | 742,573 | 3,435,457 |
 | Linux x64 | `publisher` | 4 | 739,890 | 3,434,422 |
-| Windows x64 | `full` | 8 | 4,757,006 | 39,378,881 |
-| Linux x64 | `full` | 8 | 4,751,050 | 39,380,918 |
+| Windows x64 | `full` | 8 | 5,410,872 | 42,886,593 |
+| Linux x64 | `full` | 8 | 5,404,754 | 42,887,094 |
 
 These sizes are evidence for the pinned development input, not permanent
 budgets for future releases.

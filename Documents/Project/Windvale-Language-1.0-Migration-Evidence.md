@@ -3477,10 +3477,10 @@ The executable evidence modules are:
 | call-depth-one exhaustion | 4,007 | `3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351` |
 | 37-case task runtime core | 58,977 | `7396c192fde306a2e1091d667645d4aa768a687ad91d7b31f988ae69c4e492db` |
 
-The current runner contains 211 functions and 398,123 code bytes in a
-445,196-byte WVB at SHA-256
+The initial sequential-checkpoint runner contains 211 functions and 398,123
+code bytes in a 445,196-byte WVB at SHA-256
 `4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67`.
-The current Windows package is 5,327,872 bytes at SHA-256
+Its Windows package is 5,327,872 bytes at SHA-256
 `7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0`.
 All five executable task modules produce ordinary `Result: 42` output through
 that runner; the separately packaged runtime-core self-test exits `42`.
@@ -3601,3 +3601,48 @@ reached the exact linked-image report but exposed a whole-line `findstr /x`
 failure on its LF-only output. The replacement exact numeric-suffix link and
 transport guards pass in isolation; the pushed paired-host run remains the
 final development-gate evidence.
+
+GitHub Actions run `33099588334` completes that repair evidence. The entire
+affected-owner plan passed on Windows in 27 minutes 17 seconds and on Linux in
+26 minutes 49 seconds, followed by the stable verification gate. Both hosts
+reconstructed and exercised the exact runner repair baseline. Decision 0862 is
+therefore a completed cross-host development-gate repair, while Slice 7's
+remaining scheduler behavior and qualification remain separate.
+
+## Slice 7 completion-slot reservation checkpoint
+
+[Decision 0864](../Decisions/0864-Reserve-Structured-Task-Completion-Slots-Before-Spawn.md)
+corrects the first sequential scheduler to match the frozen completion-queue
+workload. `Maximumˉcompleted` now reserves one terminal-outcome position
+for every accepted live child. A fifth spawn under a four-position completion
+bound rejects before capture acceptance even when all four prior children are
+still runnable. Completing one child does not free its reservation; consuming
+that child's affine handle does.
+
+The exact runtime-core workload accepts four of five children under limits
+`(5, 5, 4)`, proves both pre-completion and post-completion rejection without
+state mutation, awaits the first handle, admits the fifth child, retains the
+four remaining completed outcomes together, consumes them, and exits the scope.
+The active-state validator independently rejects `Live > Maximumˉcompleted`.
+
+The focused 132-case execution owner passes after rebuilding and executing the
+source-built runner. The current candidate is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB runner | 445,516 | `366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e` |
+| Windows runner | 5,329,920 | `0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258` |
+| Linux runner | 5,328,896 | `22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed` |
+
+The WVB retains 211 functions and grows from 398,123 to 398,423 code bytes.
+Staging emits 5,320,819 object bytes in 12 chunks; linking emits a 5,311,909-byte
+image at entry offset 105,270 in eight chunks; canonical transport uses two
+chunks. Direct Windows and Linux-WSL execution preserves the exact ordinary,
+reported-step, usage-rejection, and malformed-module observations. The focused
+Windows reconstruction owner independently reproduces all three artifacts and
+passes its three inventory, reconstruction, and behavior cases in 618.150
+seconds. The repinned distribution surface separately passes eight installer
+cases and twelve selective installer-repository cases, including determinism,
+tamper rejection, bounded selection, installation, execution, and uninstall.
+Paired-host GitHub reconstruction and later Slice 7 scheduler observations
+remain pending.

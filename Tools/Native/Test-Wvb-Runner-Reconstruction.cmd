@@ -10,18 +10,19 @@ set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Retur
 set "Passed=0"
 set "Failed=0"
 
-call :check_file "%Candidate%\Wvb-Runner.wvb" 445196 4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67
+call :check_file "%Candidate%\Wvb-Runner.wvb" 445516 366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\windows-x64-wvrun.exe" 5327872 7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0
+call :check_file "%Candidate%\windows-x64-wvrun.exe" 5329920 0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\linux-x64-wvrun.elf" 5328896 3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27
+call :check_file "%Candidate%\linux-x64-wvrun.elf" 5328896 22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed
 if errorlevel 1 goto :inventory_failed
 echo PASS candidate inventory
 set /a Passed+=1
 goto :inventory_done
 :inventory_failed
 echo FAIL candidate inventory
-set /a Failed+=1
+echo Tests: 1, Passed: 0, Failed: 1
+exit /b 1
 :inventory_done
 
 :allocate
@@ -29,6 +30,17 @@ set "TestDirectory=%TEMP%\windvale-wvb-runner-reconstruction-test-%RANDOM%-%RAND
 if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || exit /b 1
 mkdir "%TestDirectory%\Rebuilt" || exit /b 1
+
+call :check_runtime "%Candidate%\windows-x64-wvrun.exe"
+if errorlevel 1 goto :preflight_failed
+goto :preflight_done
+:preflight_failed
+echo diagnostic reason=%RuntimeFailure%
+echo FAIL current-host candidate preflight
+call :remove_test_directory
+echo Tests: 2, Passed: 1, Failed: 1
+exit /b 1
+:preflight_done
 
 call "%Constructor%" >"%TestDirectory%\Usage.out" 2>"%TestDirectory%\Usage.err"
 if not "%ERRORLEVEL%"=="64" goto :reconstruction_failed
@@ -58,52 +70,7 @@ echo FAIL exact source-built paired reconstruction
 set /a Failed+=1
 :reconstruction_done
 
-set "RuntimeFailure=fixture identity"
-call :check_file "%Fixture%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=ordinary execution status"
-"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" >"%TestDirectory%\Run.out" 2>"%TestDirectory%\Run.err"
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=ordinary execution output"
-call :check_file "%TestDirectory%\Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=ordinary execution diagnostics"
-call :check_file "%TestDirectory%\Run.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=reported execution status"
-"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --report-steps >"%TestDirectory%\Report.out" 2>"%TestDirectory%\Report.err"
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=reported execution output"
-call :check_file "%TestDirectory%\Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=reported execution diagnostics"
-call :check_file "%TestDirectory%\Report.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=unknown option status"
-"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --unknown >"%TestDirectory%\Option.out" 2>"%TestDirectory%\Option.err"
-if not "%ERRORLEVEL%"=="64" goto :runtime_failed
-set "RuntimeFailure=unknown option output"
-call :check_file "%TestDirectory%\Option.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=unknown option diagnostics"
-call :check_file "%TestDirectory%\Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=invalid fixture copy"
-copy /y "%InvalidFixture%" "%TestDirectory%\Invalid.wvb" >nul || goto :runtime_failed
-set "RuntimeFailure=invalid fixture identity before execution"
-call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=invalid fixture rejection status"
-"%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%TestDirectory%\Invalid.wvb" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
-if not "%ERRORLEVEL%"=="1" goto :runtime_failed
-set "RuntimeFailure=invalid fixture rejection output"
-call :check_file "%TestDirectory%\Reject.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=invalid fixture rejection diagnostics"
-call :check_file "%TestDirectory%\Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a
-if errorlevel 1 goto :runtime_failed
-set "RuntimeFailure=invalid fixture identity after execution"
-call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
+call :check_runtime "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe"
 if errorlevel 1 goto :runtime_failed
 echo PASS current-host execution reporting and rejection
 set /a Passed+=1
@@ -114,11 +81,20 @@ echo FAIL current-host execution reporting and rejection
 set /a Failed+=1
 :runtime_done
 
-rmdir /s /q "%TestDirectory%"
+call :remove_test_directory
+if errorlevel 1 exit /b 1
 set /a Total=Passed+Failed
 echo Tests: %Total%, Passed: %Passed%, Failed: %Failed%
 if not "%Failed%"=="0" exit /b 1
 exit /b 0
+
+:remove_test_directory
+set "WINDVALE_TEST_CLEANUP_ROOT=%TestDirectory%"
+pwsh -NoLogo -NoProfile -Command "$p=[IO.Path]::GetFullPath($env:WINDVALE_TEST_CLEANUP_ROOT); $t=[IO.Path]::TrimEndingDirectorySeparator([IO.Path]::GetFullPath([IO.Path]::GetTempPath())); if ([IO.Path]::GetDirectoryName($p) -ne $t -or -not [IO.Path]::GetFileName($p).StartsWith('windvale-wvb-runner-reconstruction-test-', [StringComparison]::Ordinal)) { exit 64 }; for ($i=0; $i -lt 20; $i++) { if (-not [IO.Directory]::Exists($p)) { exit 0 }; try { [IO.Directory]::Delete($p, $true) } catch {}; Start-Sleep -Milliseconds 100 }; exit 1"
+set "CleanupResult=%ERRORLEVEL%"
+set "WINDVALE_TEST_CLEANUP_ROOT="
+if not "%CleanupResult%"=="0" >&2 echo FAIL bounded test cleanup
+exit /b %CleanupResult%
 
 :check_file
 if not exist "%~1" exit /b 1
@@ -130,3 +106,54 @@ exit /b %ERRORLEVEL%
 :check_equal
 fc /b "%~1" "%~2" >nul
 exit /b %ERRORLEVEL%
+
+:check_runtime
+set "RuntimeRunner=%~1"
+set "RuntimeFailure=fixture identity"
+call :check_file "%Fixture%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=ordinary execution status"
+"%RuntimeRunner%" "%Fixture%" >"%TestDirectory%\Run.out" 2>"%TestDirectory%\Run.err"
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=ordinary execution output"
+call :check_file "%TestDirectory%\Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=ordinary execution diagnostics"
+call :check_file "%TestDirectory%\Run.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=reported execution status"
+"%RuntimeRunner%" "%Fixture%" --report-steps >"%TestDirectory%\Report.out" 2>"%TestDirectory%\Report.err"
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=reported execution output"
+call :check_file "%TestDirectory%\Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=reported execution diagnostics"
+call :check_file "%TestDirectory%\Report.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=unknown option status"
+"%RuntimeRunner%" "%Fixture%" --unknown >"%TestDirectory%\Option.out" 2>"%TestDirectory%\Option.err"
+if not "%ERRORLEVEL%"=="64" exit /b 1
+set "RuntimeFailure=unknown option output"
+call :check_file "%TestDirectory%\Option.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=unknown option diagnostics"
+call :check_file "%TestDirectory%\Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=invalid fixture copy"
+copy /y "%InvalidFixture%" "%TestDirectory%\Invalid.wvb" >nul || exit /b 1
+set "RuntimeFailure=invalid fixture identity before execution"
+call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=invalid fixture rejection status"
+"%RuntimeRunner%" "%TestDirectory%\Invalid.wvb" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
+if not "%ERRORLEVEL%"=="1" exit /b 1
+set "RuntimeFailure=invalid fixture rejection output"
+call :check_file "%TestDirectory%\Reject.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=invalid fixture rejection diagnostics"
+call :check_file "%TestDirectory%\Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a
+if errorlevel 1 exit /b 1
+set "RuntimeFailure=invalid fixture identity after execution"
+call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
+if errorlevel 1 exit /b 1
+exit /b 0

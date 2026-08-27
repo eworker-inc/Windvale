@@ -1,7 +1,7 @@
 # Decision 0862: Restore cross-host Slice 7 development gates
 
 - Date: 2026-08-27
-- Status: Implemented candidate with focused Windows evidence; paired-host rerun pending
+- Status: Implemented; paired-host development evidence complete
 - Requires: [Decision 0861](0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 - Refreshes: [Decision 0496](0496-Native-Segmented-Compiler-Toolset-Reconstruction.md),
   [Decision 0583](0583-Native-Wvb-To-Wvo-Self-Reconstruction.md), and
@@ -147,6 +147,13 @@ both guards pass. A second paired-host pushed rerun remains required.
 Independent GitHub Windows and Linux development results remain the pushed
 evidence required to change this decision from a Windows checkpoint to a
 cross-host gate repair.
+
+GitHub Actions run `33099588334` supplies that final evidence. The complete
+affected-owner plan passed on Windows in 27 minutes 17 seconds and on Linux in
+26 minutes 49 seconds, followed by the stable verification gate. Both hosts
+reconstructed and exercised the exact runner family above. This closes the
+development-gate repair; it does not qualify the later scheduler semantics or
+close Slice 7.
 
 ## Consequences
 

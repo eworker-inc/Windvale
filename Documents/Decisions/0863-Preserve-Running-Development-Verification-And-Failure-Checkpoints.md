@@ -1,7 +1,7 @@
 # Decision 0863: Preserve running development verification and failure checkpoints
 
 - Date: 2026-08-27
-- Status: Implemented candidate; pushed workflow evidence pending
+- Status: Implemented; pushed workflow evidence complete
 - Refines: [verification throughput](../Architecture/Seed-Verification-Throughput.md)
 - Preserves: exact changed-file classification, immutable checkpoint validation,
   cold qualification, and the stable verification gate
@@ -49,13 +49,19 @@ then both jobs failed only on the same stale 53-byte diagnostic oracle after
 only older cache keys because the failed jobs did not publish their completed
 checkpoint roots. This is the concrete repeated-work case addressed here.
 
-The local workflow and plan verifiers are required before publication. The
-first pushed run under this policy must demonstrate that the already-running
-verification is not cancelled, the new run waits as the sole pending run, and
-the development jobs retain cold qualification separation. A later deliberate
-late-failure probe is unnecessary: the pinned workflow verifier checks the
-`always()` save boundary, while every checkpoint family retains its own
-corruption and atomic-publication coverage.
+GitHub run `33099588334` remained active and completed successfully on both
+hosts after the policy was pushed. Run `33100571963` for the newer source state
+was created while that work was still active, waited rather than cancelling
+it, and started its focused jobs only after the predecessor completed. The
+queued run then passed on both hosts and reached the stable verification gate.
+Its affected-owner step completed in 34 seconds on Linux and 30 seconds on
+Windows after restoring the preserved development checkpoints; both final save
+steps also completed successfully. Qualification, bootstrap, WebAssembly, and
+website jobs remained unselected, preserving the cold qualification boundary.
+
+A deliberate late-failure probe is unnecessary: the pinned workflow verifier
+checks the `always()` save boundary, while every checkpoint family retains its
+own corruption and atomic-publication coverage.
 
 ## Consequences
 

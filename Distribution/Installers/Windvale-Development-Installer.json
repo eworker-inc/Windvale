@@ -4,10 +4,10 @@
   "channel": "development",
   "repository": {
     "format": "windvale-installer-repository-input-1",
-    "expectedIndexBytes": 3546,
-    "expectedIndexSha256": "c44bec65ab7b235a22e1e4d24d98f3eb2249f6f21031ddefbe2bbe5c4a6b4ef3",
+    "expectedIndexBytes": 3548,
+    "expectedIndexSha256": "4f1203956b0d27cfefbc1ba4f0cc27e0f5999b5cbbaef99b3a6c2063e770929b",
     "expectedBlobCount": 15,
-    "expectedBlobBytes": 9502931,
+    "expectedBlobBytes": 10810501,
     "profiles": [
       {
         "id": "developer",
@@ -43,9 +43,9 @@
       "id": "windows-x64",
       "archive": "windvale-0.2.0-dev.1-windows-x64.zip",
       "archiveFormat": "zip-deflate-1",
-      "expectedArchiveBytes": 4766049,
-      "expectedArchiveSha256": "ffb023fb76a0ce60657819bb35e59ab7a0924c11dfe8ac54bd6b65c7f6bc72a1",
-      "expectedPayloadSha256": "b841f13809d7c9feac917d67895427b8c7bc5ed6b57283110a0b415487f81606",
+      "expectedArchiveBytes": 5419918,
+      "expectedArchiveSha256": "6affeb81e1ceca2ae538a5eea756e55db60953e3a46b9f29a8ee0e1b4b9dc435",
+      "expectedPayloadSha256": "56881190cdea44848db7c690a69e366264a2b8bbe59707828543b1a1666457bd",
       "files": [
         {
           "component": "compiler",
@@ -75,8 +75,8 @@
           "component": "runner",
           "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
-          "bytes": 5327872,
-          "sha256": "7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0",
+          "bytes": 5329920,
+          "sha256": "0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258",
           "mode": "0755"
         },
         {
@@ -109,9 +109,9 @@
       "id": "linux-x64",
       "archive": "windvale-0.2.0-dev.1-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-deflate-1",
-      "expectedArchiveBytes": 4761772,
-      "expectedArchiveSha256": "fa4f8f189e53a72591ac0c67f6b1121e1e9af2cda8fb63da4375be1224de626d",
-      "expectedPayloadSha256": "4db4b44446138d0f9219c9f299f86d2608afb218a04addf430b50f33127035a8",
+      "expectedArchiveBytes": 5413909,
+      "expectedArchiveSha256": "f90d4c2cfc4e1898efc6fb17c31e6b2b0a81c3ad869c5a8e793a0f86f5f7ae46",
+      "expectedPayloadSha256": "7d61c064fcfe504fc1f367bc4f332d66ca978c6cb0a9aeaafdd33f4ef68d84e0",
       "files": [
         {
           "component": "compiler",
@@ -142,7 +142,7 @@
           "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
           "bytes": 5328896,
-          "sha256": "3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27",
+          "sha256": "22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed",
           "mode": "0755"
         },
         {

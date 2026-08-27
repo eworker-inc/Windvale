@@ -17,9 +17,9 @@
       "id": "windows-x64",
       "archive": "windvale-0.1.0-windows-x64.zip",
       "archiveFormat": "zip-store-1",
-      "expectedArchiveBytes": 39397383,
-      "expectedArchiveSha256": "845ecbf153eac44036080cebab7a7ce5c63ded5cd739bf24c37d5bc183039bef",
-      "expectedPayloadSha256": "84c5ee9b0ccdadc5144eabc0c3c9a0588a7bc51ccba08ec8bb8dd6e50dbd086f",
+      "expectedArchiveBytes": 42905095,
+      "expectedArchiveSha256": "01e27fb4504eb18695f68f2d5cd1ea0ef81b24fdcbe874711560451a5995a7a7",
+      "expectedPayloadSha256": "a6e3c558bc57e972e43a777ce3b0d2be4821f671379dc153831f64cfbe07c9d3",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/windows-x64/wvbuild.exe",
@@ -45,8 +45,8 @@
         {
           "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
-          "bytes": 5327872,
-          "sha256": "7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0",
+          "bytes": 5329920,
+          "sha256": "0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258",
           "mode": "0755"
         },
         {
@@ -76,9 +76,9 @@
       "id": "linux-x64",
       "archive": "windvale-0.1.0-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-store-1",
-      "expectedArchiveBytes": 39408596,
-      "expectedArchiveSha256": "c79f71a3072192659f4ababc02fe5406071973491db0269a9a595d3ca874575d",
-      "expectedPayloadSha256": "3b3b2ebe1a6bfd9260ba63575538856a0f1bad5b7234e4eda48cd421b19fa7f3",
+      "expectedArchiveBytes": 42915037,
+      "expectedArchiveSha256": "9d47aa5b238364704992dcd02ab68297cca9f4e1838efde89e6886106286a321",
+      "expectedPayloadSha256": "6475c6fdb8461dd0370fb1e960700d17216c865e095b88ee584bc38fa6888dd7",
       "files": [
         {
           "source": "Artifacts/Native-Front-Door/linux-x64/wvbuild.elf",
@@ -105,7 +105,7 @@
           "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
           "bytes": 5328896,
-          "sha256": "3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27",
+          "sha256": "22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed",
           "mode": "0755"
         },
         {

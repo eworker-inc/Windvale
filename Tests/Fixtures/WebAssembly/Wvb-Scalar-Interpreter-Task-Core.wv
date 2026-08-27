@@ -207,6 +207,7 @@ fn Activeˉscopeˉisˉvalid(State: bytes, Index: u32) -> bool {
         Workˉused > Maximumˉwork ||
         Bytesˉreadˉu32ˉlittle(State, Entry + 84u32) != 0u32 ||
         Accepted > Maximumˉchildren || Live > Accepted ||
+        Live > Maximumˉcompleted ||
         Runnable > Maximumˉrunnable || Completed > Maximumˉcompleted ||
         Runnable + Completed != Live {
         return false;
@@ -485,8 +486,10 @@ export fn Beginˉspawn(State: bytes, Scope: bytes) -> Spawnˉbegin {
             Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 56u32)
         );
     }
+    let Live: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 16u32);
     let Runnable: u32 = Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 20u32);
-    if Runnable >= Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 32u32) {
+    if Runnable >= Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 32u32) ||
+        Live >= Bytesˉreadˉu32ˉlittle(State, Scopeˉentry + 36u32) {
         return Spawnˉbegin(
             true, false, 2u32, Emptyˉvalue, State,
             Maximumˉwork - Workˉused,

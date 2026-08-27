@@ -382,7 +382,7 @@ export fn Main() -> i32 {
     State = Queueˉlimitedˉexit.State;
 
     let Completionˉscope: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
-        State, Budget, Limits(2u32, 2u32, 1u32), Context
+        State, Budget, Limits(5u32, 5u32, 4u32), Context
     );
     if !Completionˉscope.Valid || !Completionˉscope.Accepted { return 28; }
     State = Completionˉscope.State;
@@ -396,15 +396,36 @@ export fn Main() -> i32 {
     );
     if !Completionˉsecond.Valid || !Completionˉsecond.Accepted { return 28; }
     State = Completionˉsecond.State;
+    let Completionˉthird: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Completionˉscope.Token
+    );
+    if !Completionˉthird.Valid || !Completionˉthird.Accepted { return 28; }
+    State = Completionˉthird.State;
+    let Completionˉfourth: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Completionˉscope.Token
+    );
+    if !Completionˉfourth.Valid || !Completionˉfourth.Accepted { return 28; }
+    State = Completionˉfourth.State;
+    let Completionˉfifthˉblocked: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Completionˉscope.Token
+    );
+    if !Completionˉfifthˉblocked.Valid || Completionˉfifthˉblocked.Accepted ||
+        Completionˉfifthˉblocked.Reason != 2u32 ||
+        !Bytesˉequal(Completionˉfifthˉblocked.State, State) {
+        return 29;
+    }
     let Completionˉfirstˉdone: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
         State, Completionˉfirst.Token, Successˉvalue
     );
-    if !Completionˉfirstˉdone.Valid { return 29; }
+    if !Completionˉfirstˉdone.Valid { return 30; }
     State = Completionˉfirstˉdone.State;
-    let Completionˉblocked: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
-        State, Completionˉsecond.Token, Failureˉvalue
+    let Completionˉfifthˉstillˉblocked: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Completionˉscope.Token
     );
-    if Completionˉblocked.Valid || !Bytesˉequal(Completionˉblocked.State, State) {
+    if !Completionˉfifthˉstillˉblocked.Valid ||
+        Completionˉfifthˉstillˉblocked.Accepted ||
+        Completionˉfifthˉstillˉblocked.Reason != 2u32 ||
+        !Bytesˉequal(Completionˉfifthˉstillˉblocked.State, State) {
         return 30;
     }
     let Completionˉfirstˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
@@ -412,16 +433,51 @@ export fn Main() -> i32 {
     );
     if !Completionˉfirstˉawait.Valid { return 31; }
     State = Completionˉfirstˉawait.State;
+    let Completionˉfifth: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Completionˉscope.Token
+    );
+    if !Completionˉfifth.Valid || !Completionˉfifth.Accepted { return 31; }
+    State = Completionˉfifth.State;
     let Completionˉsecondˉdone: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
         State, Completionˉsecond.Token, Failureˉvalue
     );
     if !Completionˉsecondˉdone.Valid { return 31; }
     State = Completionˉsecondˉdone.State;
+    let Completionˉthirdˉdone: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
+        State, Completionˉthird.Token, Successˉvalue
+    );
+    if !Completionˉthirdˉdone.Valid { return 31; }
+    State = Completionˉthirdˉdone.State;
+    let Completionˉfourthˉdone: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
+        State, Completionˉfourth.Token, Failureˉvalue
+    );
+    if !Completionˉfourthˉdone.Valid { return 31; }
+    State = Completionˉfourthˉdone.State;
+    let Completionˉfifthˉdone: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
+        State, Completionˉfifth.Token, Successˉvalue
+    );
+    if !Completionˉfifthˉdone.Valid { return 31; }
+    State = Completionˉfifthˉdone.State;
     let Completionˉsecondˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
         State, Completionˉsecond.Token, Completionˉscope.Token
     );
     if !Completionˉsecondˉawait.Valid { return 31; }
     State = Completionˉsecondˉawait.State;
+    let Completionˉthirdˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        State, Completionˉthird.Token, Completionˉscope.Token
+    );
+    if !Completionˉthirdˉawait.Valid { return 31; }
+    State = Completionˉthirdˉawait.State;
+    let Completionˉfourthˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        State, Completionˉfourth.Token, Completionˉscope.Token
+    );
+    if !Completionˉfourthˉawait.Valid { return 31; }
+    State = Completionˉfourthˉawait.State;
+    let Completionˉfifthˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        State, Completionˉfifth.Token, Completionˉscope.Token
+    );
+    if !Completionˉfifthˉawait.Valid { return 31; }
+    State = Completionˉfifthˉawait.State;
     let Completionˉexit: Tasks.Scopeˉexit = Tasks.Exitˉscope(
         State, Completionˉscope.Token, 2u32
     );

@@ -26,12 +26,12 @@ field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 445,196 | `4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67` |
-| Windows application | 5,327,872 | `7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0` |
-| Linux application | 5,328,896 | `3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27` |
+| WVB runner | 445,516 | `366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e` |
+| Windows application | 5,329,920 | `0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258` |
+| Linux application | 5,328,896 | `22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed` |
 
-Segmented staging emits 5,318,451 object bytes across 11 chunks. Linking emits a
-5,309,541-byte native image with entry offset 105,270; canonical transport
+Segmented staging emits 5,320,819 object bytes across 12 chunks. Linking emits a
+5,311,909-byte native image with entry offset 105,270; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
@@ -401,6 +401,10 @@ scope, derive its context, transfer accepted async work, consume handles at
 await, request cancellation idempotently, and join/consume the scope. The
 runtime stores fixed task records in one 8,976-byte state value and admits at
 most 64 accepted/runnable/retained children under the lower application limit.
+Every accepted live child reserves one completion position. A full runnable or
+completion bound rejects spawn before work ownership moves; completion retains
+the reservation until the exact affine handle is awaited or the scope tears
+down.
 
 One child work unit is one dispatched verified WVB instruction after the spawn
 baseline. Exhaustion is observed by the parent as
@@ -421,11 +425,11 @@ creates both launcher-owned values. Request major `5` remains reserved for
 execution preserves the ordinary CLI contract: `Result: <i32>` on standard
 output and process exit zero.
 
-The current Windows development runner contains 211 functions and 398,123 code
-bytes in a 445,196-byte WVB at SHA-256
-`4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67`.
-It packages to a 5,327,872-byte hosted application at SHA-256
-`7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0`.
+The current Windows development runner contains 211 functions and 398,423 code
+bytes in a 445,516-byte WVB at SHA-256
+`366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e`.
+It packages to a 5,329,920-byte hosted application at SHA-256
+`0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258`.
 The 4,231-byte success
 fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
 fixture, call-depth-one fixture, and 37-case task-state self-test all return

@@ -1884,11 +1884,13 @@ The scope-exit policies mean:
   traps, then requests cancellation for remaining children and joins them before
   propagating the initiating outcome.
 
-If retaining all outcomes would exceed the completion bound, spawn is rejected
-before accepting the child that could exceed it. Scope exit does not allocate an
-unbounded outcome list. A block `return`, `try` propagation, `break`, or
-`continue` first applies the selected scope policy and local release, then
-continues the transfer.
+`Maximumˉcompleted` reserves one eventual terminal-outcome slot for every
+accepted live child. Spawn rejects before capture acceptance when no slot can be
+reserved. Child completion retains that reservation; only consuming its handle
+with `await`, or bounded scope teardown, releases it. Scope exit does not
+allocate an unbounded outcome list. A block `return`, `try` propagation,
+`break`, or `continue` first applies the selected scope policy and local release,
+then continues the transfer.
 
 The concurrent hosted-service paper workload accepts these signatures and the
 source spelling as normative-candidate inputs. The registry now records their

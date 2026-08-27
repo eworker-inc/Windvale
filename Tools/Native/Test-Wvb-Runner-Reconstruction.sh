@@ -30,18 +30,58 @@ report_file() {
         "$(basename -- "$path")" "$bytes" "${sha%% *}"
 }
 
-if check_file "$candidate/Wvb-Runner.wvb" 445196 4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67 &&
-    check_file "$candidate/windows-x64-wvrun.exe" 5327872 7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0 &&
-    check_file "$candidate/linux-x64-wvrun.elf" 5328896 3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27; then
+check_runtime() {
+    local runner=$1
+    run_status=255
+    report_status=255
+    option_status=255
+    reject_status=255
+    cp -- "$invalid_fixture" "$test_directory/Invalid.wvb" || return 1
+    "$runner" "$fixture" >"$test_directory/Run.out" 2>"$test_directory/Run.err"
+    run_status=$?
+    "$runner" "$fixture" --report-steps >"$test_directory/Report.out" 2>"$test_directory/Report.err"
+    report_status=$?
+    "$runner" "$fixture" --unknown >"$test_directory/Option.out" 2>"$test_directory/Option.err"
+    option_status=$?
+    "$runner" "$test_directory/Invalid.wvb" >"$test_directory/Reject.out" 2>"$test_directory/Reject.err"
+    reject_status=$?
+    [[ $run_status -eq 0 && $report_status -eq 0 && $option_status -eq 64 && $reject_status -eq 1 ]] &&
+        check_file "$fixture" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 &&
+        check_file "$test_directory/Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e &&
+        check_file "$test_directory/Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5 &&
+        check_file "$test_directory/Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64 &&
+        [[ ! -s $test_directory/Run.err && ! -s $test_directory/Report.err && ! -s $test_directory/Option.out && ! -s $test_directory/Reject.out ]] &&
+        check_file "$test_directory/Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a &&
+        check_file "$test_directory/Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
+}
+
+report_runtime() {
+    printf 'diagnostic statuses run=%s report=%s option=%s reject=%s\n' \
+        "$run_status" "$report_status" "$option_status" "$reject_status"
+    for output in Run.out Run.err Report.out Report.err Option.out Option.err Reject.out Reject.err Invalid.wvb; do
+        report_file "$test_directory/$output"
+    done
+}
+
+if check_file "$candidate/Wvb-Runner.wvb" 445516 366f20e2ff2fb12aa418861d2bb8fc0651439b7fb8fd11f73c9081e8a7cd7b4e &&
+    check_file "$candidate/windows-x64-wvrun.exe" 5329920 0d87bbcb2265efb58d62ef2b406881aee26d51a9baf80fdf818f052b64acc258 &&
+    check_file "$candidate/linux-x64-wvrun.elf" 5328896 22720c0eab924d82983abb7c37c6e2aaaf907da24269af2b824bcb2f8833b0ed; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))
 else
     echo 'FAIL candidate inventory'
-    failed=$((failed + 1))
+    echo 'Tests: 1, Passed: 0, Failed: 1'
+    exit 1
 fi
 
 test_directory=$(mktemp -d "${TMPDIR:-/tmp}/windvale-wvb-runner-reconstruction-test.XXXXXX") || exit 1
 trap 'rm -rf -- "$test_directory"' EXIT HUP INT TERM
+if ! check_runtime "$candidate/linux-x64-wvrun.elf"; then
+    report_runtime
+    echo 'FAIL current-host candidate preflight'
+    echo 'Tests: 2, Passed: 1, Failed: 1'
+    exit 1
+fi
 mkdir -- "$test_directory/Rebuilt" || exit 1
 
 "$constructor" >"$test_directory/Usage.out" 2>"$test_directory/Usage.err"
@@ -64,31 +104,11 @@ else
     failed=$((failed + 1))
 fi
 
-cp -- "$invalid_fixture" "$test_directory/Invalid.wvb" || exit 1
-"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" >"$test_directory/Run.out" 2>"$test_directory/Run.err"
-run_status=$?
-"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" --report-steps >"$test_directory/Report.out" 2>"$test_directory/Report.err"
-report_status=$?
-"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$fixture" --unknown >"$test_directory/Option.out" 2>"$test_directory/Option.err"
-option_status=$?
-"$test_directory/Rebuilt/linux-x64-wvrun.elf" "$test_directory/Invalid.wvb" >"$test_directory/Reject.out" 2>"$test_directory/Reject.err"
-reject_status=$?
-if [[ $run_status -eq 0 && $report_status -eq 0 && $option_status -eq 64 && $reject_status -eq 1 ]] &&
-    check_file "$fixture" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 &&
-    check_file "$test_directory/Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e &&
-    check_file "$test_directory/Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5 &&
-    check_file "$test_directory/Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64 &&
-    [[ ! -s $test_directory/Run.err && ! -s $test_directory/Report.err && ! -s $test_directory/Option.out && ! -s $test_directory/Reject.out ]] &&
-    check_file "$test_directory/Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a &&
-    check_file "$test_directory/Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5; then
+if check_runtime "$test_directory/Rebuilt/linux-x64-wvrun.elf"; then
     echo 'PASS current-host execution reporting and rejection'
     passed=$((passed + 1))
 else
-    printf 'diagnostic statuses run=%s report=%s option=%s reject=%s\n' \
-        "$run_status" "$report_status" "$option_status" "$reject_status"
-    for output in Run.out Run.err Report.out Report.err Option.out Option.err Reject.out Reject.err Invalid.wvb; do
-        report_file "$test_directory/$output"
-    done
+    report_runtime
     echo 'FAIL current-host execution reporting and rejection'
     failed=$((failed + 1))
 fi
