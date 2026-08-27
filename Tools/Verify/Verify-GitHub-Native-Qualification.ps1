@@ -48,8 +48,9 @@ Assert-Workflow (
     $Content.Contains(
         '  group: verify-${{ github.workflow }}-${{ github.ref }}',
         [StringComparison]::Ordinal) -and
-    $Content.Contains('  cancel-in-progress: true', [StringComparison]::Ordinal)
-) 'The GitHub workflow does not cancel superseded runs on the same ref.'
+    $Content.Contains('  cancel-in-progress: false', [StringComparison]::Ordinal) -and
+    $Content.Contains('  queue: single', [StringComparison]::Ordinal)
+) 'The GitHub workflow does not preserve one running and one latest pending run per ref.'
 Assert-Workflow (
     ([regex]::Matches($Content, '\$\{\{').Count -eq
         [regex]::Matches($Content, '\}\}').Count)
@@ -100,13 +101,20 @@ foreach ($Job in $DevelopmentJobs) {
         "Development job '$Job' does not pin Node.js 24."
     Assert-Workflow (
         $Block.Contains(
-            'uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5')
-    ) "Development job '$Job' does not pin the accepted checkpoint cache action."
+            'uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5') -and
+        $Block.Contains(
+            'uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5') -and
+        $Block.Contains(
+            "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}")
+    ) "Development job '$Job' does not pin the accepted restore/save checkpoint actions."
     Assert-Workflow (
+        $Block.Contains('id: native-development-cache') -and
         $Block.Contains(
             'key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}') -and
         $Block.Contains(
             'windvale-native-development-v1-${{ runner.os }}-') -and
+        $Block.Contains(
+            'key: ${{ steps.native-development-cache.outputs.cache-primary-key }}') -and
         $Block.Contains(
             'WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache')
     ) "Development job '$Job' does not bind the isolated versioned checkpoint cache."
@@ -128,7 +136,7 @@ foreach ($Job in $QualificationJobs) {
         $Block.Contains("    if: `${{ needs.classify-changes.outputs.scope == 'qualification' }}")
     ) "Qualification job '$Job' does not use the fail-closed qualification condition."
     Assert-Workflow (
-        !$Block.Contains('actions/cache@') -and
+        !$Block.Contains('actions/cache') -and
         !$Block.Contains('WINDVALE_NATIVE_CACHE_ROOT')
     ) "Qualification job '$Job' consults development checkpoint state."
 }

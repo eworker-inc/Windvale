@@ -78,13 +78,17 @@ The `Verify` workflow classifies the exact base/head comparison.
   jobs do not create a conformance or qualification claim.
 - Development jobs may restore a versioned host-specific checkpoint directory.
   Each run attempt writes a new immutable cache key and may restore an earlier
-  key by prefix; qualification jobs never bind or restore that directory.
+  key by prefix. Restore and save are separate steps, so a late development
+  assertion failure still preserves every completely published content-addressed
+  checkpoint. Qualification jobs never bind, restore, or save that directory.
 - Manual `workflow_dispatch` selects complete qualification.
 - An empty path set, missing base, unresolved comparison, or explicit
   qualification request fails closed to qualification rather than guessing.
 - The aggregate `Verification gate` remains stable for branch protection while
   requiring only the jobs selected by the classifier.
-- Workflow concurrency cancels superseded runs for the same workflow and ref.
+- Workflow concurrency retains one running run and only the latest pending run
+  for the same workflow and ref. A new push replaces an older pending run but
+  does not discard an in-flight compiler reconstruction or its eventual cache.
 
 Complete qualification is appropriate for a release candidate, artifact
 promotion, bootstrap or recovery claim, security boundary, ABI change, or a

@@ -3916,7 +3916,11 @@ $GitHubVerificationWorkflow = Get-Content -LiteralPath (
     Join-Path $RepositoryRoot '.github/workflows/verify.yml') -Raw
 $RequiredWorkflowFragments = @(
     'group: verify-${{ github.workflow }}-${{ github.ref }}',
-    'cancel-in-progress: true',
+    'cancel-in-progress: false',
+    'queue: single',
+    'uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5',
+    'uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5',
+    "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}",
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
     'run: Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}',

@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
+  queue: single
 
 jobs:
   classify-changes:
@@ -151,7 +152,8 @@ jobs:
           node-version: 24
 
       - name: Restore native development checkpoints
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: native-development-cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
           key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -165,6 +167,13 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
+
+      - name: Save native development checkpoints
+        if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ runner.temp }}/windvale-native-development-cache
+          key: ${{ steps.native-development-cache.outputs.cache-primary-key }}
 
   linux-development:
     name: Linux focused development verification
@@ -185,7 +194,8 @@ jobs:
           node-version: 24
 
       - name: Restore native development checkpoints
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        id: native-development-cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ runner.temp }}/windvale-native-development-cache
           key: windvale-native-development-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -199,6 +209,13 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
+
+      - name: Save native development checkpoints
+        if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ runner.temp }}/windvale-native-development-cache
+          key: ${{ steps.native-development-cache.outputs.cache-primary-key }}
 
   windows-native-suite:
     name: Windows native qualification (${{ matrix.shard }}/4)
