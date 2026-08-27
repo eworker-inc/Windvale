@@ -3644,5 +3644,13 @@ passes its three inventory, reconstruction, and behavior cases in 618.150
 seconds. The repinned distribution surface separately passes eight installer
 cases and twelve selective installer-repository cases, including determinism,
 tamper rejection, bounded selection, installation, execution, and uninstall.
-Paired-host GitHub reconstruction and later Slice 7 scheduler observations
+GitHub Actions run `33109422718` independently reproduces the exact runner WVB
+and both host applications. Its reconstruction owner passes in 619.760 seconds
+on Windows and 636 seconds on Linux before both jobs expose the same stale
+scripting diagnostic oracle. The checkpoint save steps preserve all completed
+products. Follow-up run `33110721245` passes the corrected six-case scripting
+owner in 50 seconds on Windows and 42 seconds on Linux, followed by the stable
+verification gate. Paired-host reconstruction and scripting integration are
+therefore complete; later Slice 7 cancellation, deadline, runtime-generation,
+deterministic parallel-observation, promotion, and broad Qualification gates
 remain pending.

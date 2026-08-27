@@ -1,7 +1,7 @@
 # Decision 0864: Reserve structured-task completion slots before spawn
 
 - Date: 2026-08-27
-- Status: Implemented candidate; paired-host rerun pending
+- Status: Implemented; paired-host reconstruction and integration evidence complete
 - Requires: [Decision 0861](0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 - Follows: [Decision 0862](0862-Restore-Cross-Host-Slice-7-Development-Gates.md)
 
@@ -73,8 +73,18 @@ installer-repository owner passes twelve deterministic construction,
 selection, and malformed-state cases over 15 content-addressed objects. Exact
 archive, payload, index, blob, and profile-selection identities are recorded in
 the installer specifications rather than silently retaining the prior runner.
-Independent GitHub Windows and Linux reconstruction remains required before
-this candidate becomes paired-host evidence.
+GitHub Actions run `33109422718` independently reconstructs these exact three
+artifacts on both permanent hosts. The reconstruction owner passes in 619.760
+seconds on Windows and 636 seconds on Linux, including current-host execution
+and rejection. Both jobs then fail only in the separate scripting owner's stale
+unsupported-authority diagnostic oracle, after saving their completed
+checkpoints. Follow-up run `33110721245` binds the current exact
+`phase=envelope` diagnostic and passes the six-case scripting owner on Linux in
+42 seconds and Windows in 50 seconds, followed by the stable verification gate.
+The candidate therefore has paired-host reconstruction and scripting
+integration evidence. This does not yet supply the later parallel scheduler,
+cancellation, deadline, or runtime-generation evidence required to close all
+of Slice 7.
 
 ## Consequences
 
