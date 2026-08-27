@@ -84,7 +84,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 6,927 | `40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239` |
+| `SHA256SUMS` | 6,927 | `b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
@@ -92,6 +92,13 @@ door. The 72 tool artifacts themselves retain explicit Stage 0 recovery
 provenance until this complete toolset is promoted. Their digest-bound native
 processes now construct either target container without calling that recovery
 path.
+
+Decision 0862 consolidates the compiler-scale `wvhostrequest` and
+`wvhostsources` applications into this canonical inventory. Their source WVBs
+and public behavior are unchanged; the replacement native applications retain
+the larger compiler-scale hashing and source-set capacity. Packaging no longer
+depends on a parallel ignored overlay directory. The unified toolset reproduces
+the current analyzer, emitter, and 445,196-byte WVB runner exactly.
 
 Decision 0833 rebuilds the nine compiler-family WVBs and both target application
 families after the profile-7 geometry change. Eight application families use

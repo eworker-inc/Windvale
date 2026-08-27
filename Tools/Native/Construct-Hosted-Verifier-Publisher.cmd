@@ -191,7 +191,7 @@ set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 set "ConsumerRoot=%RepositoryRoot%\Linker\Reference\Consumers"
 set "RawLowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
-call :verify_file "%HostedToolset%\SHA256SUMS" 6927 40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239 "hosted toolset inventory"
+call :verify_file "%HostedToolset%\SHA256SUMS" 6927 b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%HostedToolset%\SHA256SUMS") do (
     call :verify_digest "%HostedToolset%\%%I" %%H "hosted toolset artifact"

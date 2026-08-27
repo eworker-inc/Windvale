@@ -1,7 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-set "CompilerScale=0"
 set "ImageMode=0"
 if /I "%~1"=="image" goto :image_arguments
 if "%~3"=="" goto :usage
@@ -33,11 +32,9 @@ set "Target=%~8"
 if not defined Target set "Target=windows"
 
 :arguments_ready
-if "%ImageMode%"=="1" if "%Profile%"=="7" set "CompilerScale=1"
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Toolset=%RepositoryRoot%\Artifacts\Native-Hosted-Container-Toolset-Candidate"
-set "CompilerOverlay=%RepositoryRoot%\Artifacts\Native-Hosted-Compiler-Scale-Overlay-Candidate"
 set "EnumRequestCandidate=%RepositoryRoot%\Artifacts\Native-Hosted-Enum-Request-Candidate"
 set "ServiceRoot=%RepositoryRoot%\Runtime\Windvale.Native\Consumers"
 if /I "%Target%"=="windows" goto :windows_target
@@ -85,7 +82,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
@@ -93,16 +90,6 @@ for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
 )
 set "MetadataRequestTool=%Toolset%\windows-x64\wvhostrequest.exe"
 set "SourceSetTool=%Toolset%\windows-x64\wvhostsources.exe"
-if "%CompilerScale%"=="1" (
-    call :verify_file "%CompilerOverlay%\SHA256SUMS" 380 c41e05e1f3c993537c35671840aff6d57a2e5188ea7e6afba03f6b4928c32a8d "compiler-scale overlay inventory"
-    if errorlevel 1 exit /b 1
-    for /f "usebackq tokens=1,*" %%H in ("%CompilerOverlay%\SHA256SUMS") do (
-        call :verify_digest "%CompilerOverlay%\%%I" %%H "compiler-scale overlay artifact"
-        if errorlevel 1 exit /b 1
-    )
-    set "MetadataRequestTool=%CompilerOverlay%\windows-x64\wvhostrequest.exe"
-    set "SourceSetTool=%CompilerOverlay%\windows-x64\wvhostsources.exe"
-)
 call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe "hosted enum-request WVB"
 if errorlevel 1 exit /b 1
 call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b "hosted enum-request Windows application"

@@ -939,7 +939,6 @@ $NativeCases = @(
             'Tools/Native/Construct-Segmented-Compiler-Toolset.cmd',
             'Tools/Native/Package-Segmented-Compiler-Wvb.cmd',
             'Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Manifest.json',
-            'Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate/Manifest.json',
             'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
             'Projects/Linker/Windvale-Compiler-Image-Staging.wvproj',
             'Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj',
@@ -1431,6 +1430,7 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
+            'compiler-split-development',
             'hosted-verifier-publisher-files'
         )
         Gaps = @()

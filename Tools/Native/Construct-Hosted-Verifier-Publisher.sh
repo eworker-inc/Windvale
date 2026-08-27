@@ -225,7 +225,7 @@ check_file() {
 }
 
 check_file "$hosted_toolset/SHA256SUMS" 6927 \
-    40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239 \
+    b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 \
     'hosted toolset inventory' || exit $?
 (cd -- "$hosted_toolset" && sha256sum --check --strict --quiet SHA256SUMS) || exit $?
 check_file "$construction/SHA256SUMS" 5064 \

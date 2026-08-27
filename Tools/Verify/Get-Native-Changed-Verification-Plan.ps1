@@ -1403,7 +1403,8 @@ function Add-Native-Tool-Suite {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'hosted-verifier-publisher-files',
-            'wvb-runner-reconstruction'
+            'wvb-runner-reconstruction',
+            'compiler-split-development'
         )
     } elseif ($Stem -eq 'Test-Hosted-Wvb-Packaging') {
         Add-Hosted-Publisher-Suites
@@ -3275,10 +3276,6 @@ foreach ($Path in $Paths) {
             'wv-linker-reconstruction'
         )
     } elseif ($Path.StartsWith(
-        'Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate/',
-        [StringComparison]::Ordinal)) {
-        Add-Suite 'segmented-compiler-toolset-reconstruction'
-    } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvb-To-Wvo-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite @(
@@ -3322,7 +3319,11 @@ foreach ($Path in $Paths) {
         'Artifacts/Native-Hosted-Container-Toolset-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Hosted-Publisher-Suites
-        Add-Suite @('wv-linker-reconstruction', 'console-verifier-reconstruction')
+        Add-Suite @(
+            'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
+            'compiler-split-development'
+        )
     } elseif ($Path.StartsWith(
         'Artifacts/Native-Hosted-Enum-Request-Candidate/',
         [StringComparison]::Ordinal)) {

@@ -49,12 +49,12 @@ if errorlevel 1 goto :stage_failed
 
 call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :link_failed
-findstr /x /c:"segmented compiler image staging status=Complete image-bytes=5309541 entry-offset=105270 chunks=7 manifest-bytes=112" "%TemporaryDirectory%\Link.out" >nul
+findstr /c:"image-bytes=5309541 entry-offset=105270 chunks=7 manifest-bytes=112" "%TemporaryDirectory%\Link.out" >nul
 if errorlevel 1 goto :link_failed
 
 call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TemporaryDirectory%\Transport.out" 2>"%TemporaryDirectory%\Transport.err"
 if errorlevel 1 goto :transport_failed
-findstr /x /c:"compiler image transport status=Complete image-bytes=5309541 entry-offset=105270 chunks=2 manifest-bytes=52" "%TemporaryDirectory%\Transport.out" >nul
+findstr /c:"image-bytes=5309541 entry-offset=105270 chunks=2 manifest-bytes=52" "%TemporaryDirectory%\Transport.out" >nul
 if errorlevel 1 goto :transport_failed
 
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 5 "%Wvb%" "%CanonicalPrefix%" 2 105270 "%WindowsApplication%" windows >"%TemporaryDirectory%\Windows-Package.out" 2>"%TemporaryDirectory%\Windows-Package.err"

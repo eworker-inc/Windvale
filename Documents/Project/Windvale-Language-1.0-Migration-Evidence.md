@@ -3578,3 +3578,26 @@ completed the full split build and reproduced the staged bytes, then exposed a
 Windows `findstr` Unicode limitation in the success-line assertion. The fixed
 guard matches the exact ASCII byte/chunk suffix. Independent Windows/Linux
 reconstruction remains pending before the repair becomes cross-host evidence.
+
+GitHub Actions run `33087197973` passed `seed` and `seed-native-front-door` on
+both hosts, then exposed a missing ignored compiler-scale overlay during the
+first runner reconstruction package phase. The clean-checkout repair promotes
+the fixed `wvhostrequest` and `wvhostsources` Windows/Linux applications into
+the one canonical 72-artifact hosted-container toolset rather than retaining a
+duplicate four-binary overlay. The canonical 6,927-byte `SHA256SUMS` is now
+`b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35`.
+
+With the ignored overlay removed, the unified toolset packages the eight-chunk
+bootstrap analyzer, completes the formerly failing 22-chunk current-analyzer
+metadata pass, publishes the 48,591,360-byte analyzer and 33,210,368-byte
+emitter applications, and reproduces the exact 445,196-byte runner WVB at
+SHA-256
+`4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67`.
+The compiler product identities are unchanged; paired-host reconstruction of
+the unified inventory remains pending. Direct Windows and Linux profile-5
+materialization from the validated canonical runner image reproduces the exact
+tracked application identities. The integrated Windows owner subsequently
+reached the exact linked-image report but exposed a whole-line `findstr /x`
+failure on its LF-only output. The replacement exact numeric-suffix link and
+transport guards pass in isolation; the pushed paired-host run remains the
+final development-gate evidence.

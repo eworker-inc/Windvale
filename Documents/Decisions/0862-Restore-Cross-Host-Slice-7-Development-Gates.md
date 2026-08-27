@@ -117,6 +117,33 @@ then exposed a Windows `findstr` limitation on the macron in the success line;
 the guard now matches the exact ASCII byte/chunk suffix. A paired-host pushed
 rerun remains required.
 
+GitHub Actions run `33087197973` then exposed a clean-checkout dependency that
+the development host had accidentally satisfied with an ignored
+compiler-scale overlay. Both hosts passed `seed` and `seed-native-front-door`,
+entered runner reconstruction, and rejected the missing overlay before the
+current split build could continue. The overlay contained newer native builds
+of the same canonical `wvhostrequest` and `wvhostsources` WVBs. The repair
+replaces the two limited Windows/Linux application pairs in the canonical
+hosted-container toolset instead of retaining a second four-binary family. Its
+6,927-byte inventory is now SHA-256
+`b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35`.
+
+With the ignored overlay removed, the unified toolset completes all 13 current
+split phases and reproduces the exact 445,196-byte runner WVB. The earlier
+canonical tools could package the eight-fragment bootstrap analyzer but failed
+while hashing the 22-chunk current analyzer; the promoted tools complete that
+48,591,360-byte application and the 33,210,368-byte current emitter
+application. The resulting analyzer, emitter, bridge, and runner identities are
+unchanged. Direct materialization from the validated canonical image reproduces
+the tracked Windows application at SHA-256
+`7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0`
+and Linux application at SHA-256
+`3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27`.
+The integrated Windows owner then reproduced the full compiler and linked image
+but exposed the same `findstr /x` limitation on the LF-only link report. Link
+and transport guards now match their exact numeric suffixes; isolated reruns of
+both guards pass. A second paired-host pushed rerun remains required.
+
 Independent GitHub Windows and Linux development results remain the pushed
 evidence required to change this decision from a Windows checkpoint to a
 cross-host gate repair.
@@ -131,6 +158,8 @@ the object bytes it produces for the two independent golden inputs.
 The runner reconstruction now consumes the same current split compiler used by
 its Language 1.0 development evidence and no longer retains a duplicate
 monolithic WVO.
+Compiler-scale hosted packaging now has one tracked canonical toolset owner and
+no ignored overlay dependency or duplicate four-binary inventory.
 This decision restores prerequisites for Slice 7; it does not close Slice 7 or
 claim parallel task scheduling.
 

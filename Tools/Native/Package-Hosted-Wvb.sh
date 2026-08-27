@@ -29,15 +29,9 @@ case "$target:$output_argument" in
         exit 64
         ;;
 esac
-compiler_scale=0
-if [[ $image_mode -eq 1 && $profile -eq 7 ]]; then
-    compiler_scale=1
-fi
-
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 toolset="$repository_root/Artifacts/Native-Hosted-Container-Toolset-Candidate"
-compiler_overlay="$repository_root/Artifacts/Native-Hosted-Compiler-Scale-Overlay-Candidate"
 enum_request_candidate="$repository_root/Artifacts/Native-Hosted-Enum-Request-Candidate"
 service_root="$repository_root/Runtime/Windvale.Native/Consumers"
 case "$target" in
@@ -102,18 +96,11 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 40af573f510861b375b1dac5216e5e622b6539656dfec188f6f4079f33040239 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
 }
-if [[ $compiler_scale -eq 1 ]]; then
-    verify_file "$compiler_overlay/SHA256SUMS" 380 c41e05e1f3c993537c35671840aff6d57a2e5188ea7e6afba03f6b4928c32a8d 'compiler-scale overlay inventory' || exit 1
-    (cd -- "$compiler_overlay" && sha256sum --check --strict --quiet SHA256SUMS) || {
-        echo 'The compiler-scale overlay artifact inventory is invalid.' >&2
-        exit 1
-    }
-fi
 verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe 'hosted enum-request WVB' || exit 1
 verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b 'hosted enum-request Windows application' || exit 1
 verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 544768 a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31 'hosted enum-request Linux application' || exit 1
@@ -165,10 +152,6 @@ fi
 host="$toolset/linux-x64"
 metadata_request_tool="$host/wvhostrequest.elf"
 source_set_tool="$host/wvhostsources.elf"
-if [[ $compiler_scale -eq 1 ]]; then
-    metadata_request_tool="$compiler_overlay/linux-x64/wvhostrequest.elf"
-    source_set_tool="$compiler_overlay/linux-x64/wvhostsources.elf"
-fi
 "$host/wvhostfixedservices.elf" "$target" "$bundle_sources" "$fragment_count" \
     "$console_service" \
     "$service_root/Native-X64-Argument-Count-Service.bin" \
