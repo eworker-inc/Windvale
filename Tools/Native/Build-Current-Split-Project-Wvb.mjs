@@ -35,13 +35,17 @@ if (process.arch !== 'x64' ||
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
 const Project = path.resolve(process.argv[2]);
-const Output = path.resolve(process.argv[3]);
+const Outputˉargument = path.resolve(process.argv[3]);
 if (path.extname(Project).toLowerCase() !== '.wvproj' ||
-    path.extname(Output).toLowerCase() !== '.wvb') {
+    path.extname(Outputˉargument).toLowerCase() !== '.wvb') {
     Usage();
 }
 Requireˉordinaryˉfile(Project, 65_536, 'project manifest');
-Requireˉordinaryˉdirectory(path.dirname(Output), 'output parent');
+const Outputˉparent = Canonicalˉordinaryˉdirectory(
+    path.dirname(Outputˉargument),
+    'output parent',
+);
+const Output = path.join(Outputˉparent, path.basename(Outputˉargument));
 
 const Bootstrapˉroot = path.join(
     Repositoryˉroot,
@@ -69,7 +73,14 @@ Requireˉexactˉfile(
     'WVIR 1.9 bridge emitter',
 );
 
-const Work = mkdtempSync(path.join(os.tmpdir(), 'windvale-current-split-project-'));
+const Temporaryˉroot = Canonicalˉordinaryˉdirectory(
+    os.tmpdir(),
+    'temporary root',
+);
+const Work = mkdtempSync(path.join(
+    Temporaryˉroot,
+    'windvale-current-split-project-',
+));
 const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
 const Bootstrapˉanalyzer = path.join(Work, `Bootstrap-Analyzer${Suffix}`);
 const Bootstrapˉemitter = path.join(Work, `Bootstrap-Emitter${Suffix}`);
@@ -146,7 +157,6 @@ try {
     );
 } finally {
     const Resolved = path.resolve(Work);
-    const Temporaryˉroot = path.resolve(os.tmpdir());
     if (path.dirname(Resolved) !== Temporaryˉroot ||
         !path.basename(Resolved).startsWith('windvale-current-split-project-')) {
         Reject(`Refusing to remove unexpected temporary directory: ${Resolved}.`);
@@ -283,6 +293,27 @@ function Requireˉordinaryˉdirectory(Candidate, Label) {
         !Sameˉpath(realpathSync(Candidate), path.resolve(Candidate))) {
         Reject(`The ${Label} is not an ordinary directory: ${Candidate}`);
     }
+}
+
+function Canonicalˉordinaryˉdirectory(Candidate, Label) {
+    const Resolved = path.resolve(Candidate);
+    const Root = path.parse(Resolved).root;
+    let Current = Root;
+    for (const Component of Resolved.slice(Root.length).split(path.sep)) {
+        if (Component.length === 0) continue;
+        Current = path.join(Current, Component);
+        const Information = lstatSync(Current, { throwIfNoEntry: false });
+        if (Information === undefined || !Information.isDirectory() ||
+            Information.isSymbolicLink()) {
+            Reject(
+                `The ${Label} contains a missing, linked, or ` +
+                `non-directory path: ${Current}`,
+            );
+        }
+    }
+    const Canonical = realpathSync(Resolved);
+    Requireˉordinaryˉdirectory(Canonical, Label);
+    return Canonical;
 }
 
 function Sameˉpath(Left, Right) {
