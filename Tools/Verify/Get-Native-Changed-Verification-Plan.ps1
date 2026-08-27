@@ -1228,10 +1228,12 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Create-Release-Envelope-Fixture') {
         Add-Suite @('release-envelope', 'offline-package-stage')
     } elseif ($Stem -in @(
+        'Verification-Owner-Stream-Path',
         'Stream-Verification-Owner',
         'Test-Verification-Owners',
         'Test-Retirement-Suite'
     )) {
+        Add-Suite 'verification-owner-stream'
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
         Add-Suite @('os-process-object', 'os-probe')

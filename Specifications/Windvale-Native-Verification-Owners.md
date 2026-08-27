@@ -16,8 +16,8 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 
 ## Registry identity and grammar
 
-`Tests/Native/Verification-Owners.txt` is 18,052 LF-only bytes with SHA-256
-`b1ca2a737b8174b1d2959e9375275bc6dd6dc225bc1c233f883ea0b8434c08fb`.
+`Tests/Native/Verification-Owners.txt` is 18,379 LF-only bytes with SHA-256
+`4f4d747218e8c2e7d168aba1da75e35c2d013e0da66d591205b83923ecc61238`.
 Its first line is exactly:
 
 ```text
@@ -34,13 +34,13 @@ The digest fixes owner order, commands, declared case counts, qualification
 allocation, and accepted terminal summaries. Each command stem resolves under
 `Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
 
-The current registry contains exactly 113 owners and 5,507 declared cases:
+The current registry contains exactly 114 owners and 5,529 declared cases:
 
 | Qualification shard | Owners | Cases |
 | ---: | ---: | ---: |
 | 1 | 1 | 57 |
-| 2 | 35 | 2,501 |
-| 3 | 37 | 1,712 |
+| 2 | 36 | 2,505 |
+| 3 | 37 | 1,730 |
 | 4 | 40 | 1,237 |
 
 The manifest is the canonical detailed inventory. Documentation must not copy
@@ -86,6 +86,12 @@ owner it must:
 6. require the last nonempty output line to equal the registered summary;
 7. count cases only from the reviewed registry; and
 8. report owner and total elapsed time outside the semantic child summary.
+
+Owner-log parents are validated component by component with filesystem
+metadata. Symbolic links, junctions, and non-directory components reject;
+different legitimate spellings of the same Windows directory, including an
+NTFS 8.3 ancestor alias, do not constitute link evidence by themselves. The
+registered `verification-owner-stream` owner keeps this boundary executable.
 
 The first child failure stops that coordinator process after its output has
 already been exposed live. Invalid arguments and unknown filters return `64`. GitHub runs all

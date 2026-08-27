@@ -34,18 +34,24 @@ wvo_staging_wvb="$output_root/Wvo-Staging-Producer.wvb"
 image_staging_wvb="$output_root/Compiler-Image-Staging.wvb"
 transport_wvb="$output_root/Compiler-Image-Canonical-Transport.wvb"
 
+echo 'START segmented compiler toolset construction phase=build item=1/3 project=WVO-staging'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj" \
     "$wvo_staging_wvb" \
     >"$temporary_directory/Build-Wvo-Staging.txt" 2>"$temporary_directory/Build-Wvo-Staging.err" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=build item=1/3 project=WVO-staging'
+echo 'START segmented compiler toolset construction phase=build item=2/3 project=compiler-image-staging'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Linker/Windvale-Compiler-Image-Staging.wvproj" \
     "$image_staging_wvb" \
     >"$temporary_directory/Build-Image-Staging.txt" 2>"$temporary_directory/Build-Image-Staging.err" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=build item=2/3 project=compiler-image-staging'
+echo 'START segmented compiler toolset construction phase=build item=3/3 project=canonical-transport'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj" \
     "$transport_wvb" \
     >"$temporary_directory/Build-Transport.txt" 2>"$temporary_directory/Build-Transport.err" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=build item=3/3 project=canonical-transport'
 
 construct_pair() {
     local name=$1
@@ -92,15 +98,21 @@ construct_pair() {
         >"$work_directory/Linux.txt" 2>"$work_directory/Linux.err"
 }
 
+echo 'START segmented compiler toolset construction phase=package item=1/3 family=WVO-staging'
 construct_pair Wvo-Staging "$wvo_staging_wvb" \
     "$output_root/windows-x64-wvstage.exe" \
     "$output_root/linux-x64-wvstage.elf" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=package item=1/3 family=WVO-staging'
+echo 'START segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging'
 construct_pair Image-Staging "$image_staging_wvb" \
     "$output_root/windows-x64-wvlinkstage.exe" \
     "$output_root/linux-x64-wvlinkstage.elf" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging'
+echo 'START segmented compiler toolset construction phase=package item=3/3 family=canonical-transport'
 construct_pair Transport "$transport_wvb" \
     "$output_root/windows-x64-wvimagetransport.exe" \
     "$output_root/linux-x64-wvimagetransport.elf" || exit $?
+echo 'PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport'
 
 verify_file() {
     local path=$1
@@ -124,14 +136,14 @@ verify_file() {
     fi
 }
 
-verify_file "$wvo_staging_wvb" 542219 \
-    4507a1497bc5805e98d66efbef6277a42763107b84d10e7e915eb11ba2b92738 \
+verify_file "$wvo_staging_wvb" 576810 \
+    db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be \
     'WVO staging producer WVB' || exit 1
-verify_file "$output_root/windows-x64-wvstage.exe" 7855104 \
-    ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda \
+verify_file "$output_root/windows-x64-wvstage.exe" 8416768 \
+    fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e \
     'Windows WVO staging producer' || exit 1
-verify_file "$output_root/linux-x64-wvstage.elf" 7856128 \
-    8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401 \
+verify_file "$output_root/linux-x64-wvstage.elf" 8417280 \
+    3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 75666 \
     ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd \

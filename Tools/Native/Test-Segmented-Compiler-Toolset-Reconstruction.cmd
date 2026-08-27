@@ -12,6 +12,7 @@ echo START segmented compiler toolset reconstruction step=construction
 call "%RepositoryRoot%\Tools\Native\Construct-Segmented-Compiler-Toolset.cmd" >nul 2>nul
 if not "%ERRORLEVEL%"=="64" goto :failed
 
+set "FailureStep=construction"
 :allocate
 set "TestDirectory=%TEMP%\windvale-segmented-toolset-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
@@ -95,6 +96,8 @@ exit /b 0
 
 :failed
 if defined FailureStep echo FAIL  step=%FailureStep%
+if exist "%TestDirectory%\Construct.out" type "%TestDirectory%\Construct.out"
+if exist "%TestDirectory%\Construct.err" type "%TestDirectory%\Construct.err" >&2
 if exist "%TestDirectory%\Compiler-Build.err" type "%TestDirectory%\Compiler-Build.err"
 if exist "%TestDirectory%\Compiler-Stage.out" type "%TestDirectory%\Compiler-Stage.out"
 if exist "%TestDirectory%\Compiler-Stage.err" type "%TestDirectory%\Compiler-Stage.err"

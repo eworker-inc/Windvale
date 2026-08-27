@@ -16,6 +16,12 @@ pass() {
 fail() {
     tests=$((tests + 1))
     echo "FAIL  step=$failure_step"
+    if [[ -n ${test_directory:-} ]]; then
+        [[ -f $test_directory/Construct.out ]] &&
+            cat -- "$test_directory/Construct.out"
+        [[ -f $test_directory/Construct.err ]] &&
+            cat -- "$test_directory/Construct.err" >&2
+    fi
     echo 'FAIL  segmented compiler toolset reconstruction'
     echo "Tests: $tests, Passed: $passed, Failed: $((tests - passed))"
     exit 1
@@ -37,6 +43,7 @@ elif [[ $? -ne 64 ]]; then
     fail
 fi
 
+failure_step='construction'
 temporary_root=${TMPDIR:-/tmp}
 test_directory=$(mktemp -d "$temporary_root/windvale-segmented-toolset-reconstruction-test.XXXXXXXX") || fail
 cleanup() {

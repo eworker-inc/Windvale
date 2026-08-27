@@ -29,37 +29,49 @@ set "WvoStagingWvb=%OutputRoot%\Wvo-Staging-Producer.wvb"
 set "ImageStagingWvb=%OutputRoot%\Compiler-Image-Staging.wvb"
 set "TransportWvb=%OutputRoot%\Compiler-Image-Canonical-Transport.wvb"
 
+echo START segmented compiler toolset construction phase=build item=1/3 project=WVO-staging
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj" ^
     "%WvoStagingWvb%" >"%TemporaryDirectory%\Build-Wvo-Staging.txt" 2>"%TemporaryDirectory%\Build-Wvo-Staging.err"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=build item=1/3 project=WVO-staging
+echo START segmented compiler toolset construction phase=build item=2/3 project=compiler-image-staging
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Linker/Windvale-Compiler-Image-Staging.wvproj" ^
     "%ImageStagingWvb%" >"%TemporaryDirectory%\Build-Image-Staging.txt" 2>"%TemporaryDirectory%\Build-Image-Staging.err"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=build item=2/3 project=compiler-image-staging
+echo START segmented compiler toolset construction phase=build item=3/3 project=canonical-transport
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects/Linker/Windvale-Compiler-Image-Canonical-Transport.wvproj" ^
     "%TransportWvb%" >"%TemporaryDirectory%\Build-Transport.txt" 2>"%TemporaryDirectory%\Build-Transport.err"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=build item=3/3 project=canonical-transport
 
+echo START segmented compiler toolset construction phase=package item=1/3 family=WVO-staging
 call :construct_pair Wvo-Staging "%WvoStagingWvb%" ^
     "%OutputRoot%\windows-x64-wvstage.exe" ^
     "%OutputRoot%\linux-x64-wvstage.elf"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=package item=1/3 family=WVO-staging
+echo START segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging
 call :construct_pair Image-Staging "%ImageStagingWvb%" ^
     "%OutputRoot%\windows-x64-wvlinkstage.exe" ^
     "%OutputRoot%\linux-x64-wvlinkstage.elf"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging
+echo START segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
 call :construct_pair Transport "%TransportWvb%" ^
     "%OutputRoot%\windows-x64-wvimagetransport.exe" ^
     "%OutputRoot%\linux-x64-wvimagetransport.elf"
 if errorlevel 1 goto :cleanup
+echo PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
 
-call :verify_file "%WvoStagingWvb%" 542219 4507a1497bc5805e98d66efbef6277a42763107b84d10e7e915eb11ba2b92738 "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 576810 db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 7855104 ec4d0a6f0c4670c16abe2615d6668f7a52266182d18ddc31ffb8162a8872ecda "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 8416768 fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 7856128 8522d10ba8005d82dd206f2766d54f2d6f7661242de6346b14b9a396ad1f3401 "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 8417280 3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ImageStagingWvb%" 75666 ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup

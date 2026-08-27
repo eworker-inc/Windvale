@@ -3506,6 +3506,31 @@ host must still preserve the same canonical observations under different child
 completion order. Cancellation/deadline/provider-loss workloads, paired-host
 reconstruction, candidate promotion, and broad Qualification remain pending.
 
-The verification registry remains 113 owners and advances to 5,525 cases. Its
-18,270 LF-only bytes have SHA-256
-`680f8047ab04f66328d6684126bbb0a84bffd3ef85f6d25abe0fff10d8432ee8`.
+The verification registry advances to 114 owners and 5,529 cases. Its 18,379
+LF-only bytes have SHA-256
+`4f4d747218e8c2e7d168aba1da75e35c2d013e0da66d591205b83923ecc61238`.
+The added four-case owner directly checks ordinary new log paths, occupied-path
+rejection, ordinary directory traversal, and linked-parent rejection. Its path
+walk uses filesystem metadata rather than spelling equality, so a legitimate
+Windows 8.3 ancestor alias does not masquerade as a link.
+
+## Slice 7 cross-host development-gate repair
+
+[Decision 0862](../Decisions/0862-Restore-Cross-Host-Slice-7-Development-Gates.md)
+records the two failures from the first pushed sequential checkpoint before any
+task owner executed. The owner-stream guard now checks actual path-component
+metadata rather than comparing short and long Windows spellings. The segmented
+compiler toolset refreshes only its WVO-staging family to the current WVB 1.32
+compiler closure:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVO-staging WVB | 576,810 | `db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be` |
+| Windows staging application | 8,416,768 | `fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e` |
+| Linux staging application | 8,417,280 | `3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564` |
+
+The other six segmented artifacts remain byte-identical. Focused Windows
+self-reconstruction passes four cases in 297 seconds and reproduces both
+launchers at the same bytes before staging the fixed bootstrap analyzer into
+31,736,596 object bytes across 41 chunks. Pushed Windows and Linux evidence is
+still required before this repair is a cross-host claim or Slice 7 work resumes.

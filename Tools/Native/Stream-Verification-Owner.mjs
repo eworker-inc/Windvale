@@ -1,8 +1,12 @@
-import { open, lstat, realpath } from 'node:fs/promises';
+import { open, lstat } from 'node:fs/promises';
 import { dirname, extname, basename, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
+import {
+    Requireˉordinaryˉdirectoryˉpath,
+    Requireˉordinaryˉnewˉpath,
+} from './Verification-Owner-Stream-Path.mjs';
 
 const MAX_STREAM_BYTES = 8 * 1024 * 1024;
 
@@ -12,24 +16,6 @@ function Failˉusage() {
         '<stdout-log> <stderr-log> <owner-script>\n'
     );
     process.exitCode = 64;
-}
-
-async function Requireˉordinaryˉnewˉpath(Path) {
-    const Resolved = resolve(Path);
-    const Parent = dirname(Resolved);
-    const Realˉparent = await realpath(Parent);
-    if (Realˉparent !== Parent) {
-        throw new Error(`Owner log parent must not traverse a link: ${Parent}`);
-    }
-    try {
-        await lstat(Resolved);
-    } catch (Errorˉvalue) {
-        if (Errorˉvalue?.code === 'ENOENT') {
-            return Resolved;
-        }
-        throw Errorˉvalue;
-    }
-    throw new Error(`Owner log already exists: ${Resolved}`);
 }
 
 async function Requireˉowner(Path) {
@@ -43,9 +29,9 @@ async function Requireˉowner(Path) {
     if (extname(Resolved).toLowerCase() !== Expectedˉextension) {
         throw new Error(`Owner script must use ${Expectedˉextension}.`);
     }
+    await Requireˉordinaryˉdirectoryˉpath(dirname(Resolved));
     const Metadata = await lstat(Resolved);
-    if (!Metadata.isFile() || Metadata.isSymbolicLink() ||
-        await realpath(Resolved) !== Resolved) {
+    if (!Metadata.isFile() || Metadata.isSymbolicLink()) {
         throw new Error('Owner script must be a non-linked ordinary file.');
     }
     return Resolved;

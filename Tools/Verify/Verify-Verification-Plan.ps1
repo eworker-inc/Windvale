@@ -44,11 +44,15 @@ $NativeCases = @(
     @{
         Name = 'native verification owner live-stream coordinator'
         Paths = @(
+            'Tools/Native/Verification-Owner-Stream-Path.mjs',
             'Tools/Native/Stream-Verification-Owner.mjs',
+            'Tools/Native/Test-Verification-Owner-Stream.mjs',
+            'Tools/Native/Test-Verification-Owner-Stream.cmd',
+            'Tools/Native/Test-Verification-Owner-Stream.sh',
             'Tools/Native/Test-Verification-Owners.cmd',
             'Tools/Native/Test-Verification-Owners.sh'
         )
-        Suites = @()
+        Suites = @('verification-owner-stream')
         Gaps = @()
         VerifyPlan = $true
     },
@@ -3713,9 +3717,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 114 -or
+if ($VerificationOwnerLines.Count -ne 115 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 113-owner inventory differs.'
+    throw 'The native verification-owner header or exact 114-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3753,7 +3757,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5525 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5529 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
