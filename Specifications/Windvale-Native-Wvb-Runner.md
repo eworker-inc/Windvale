@@ -2,13 +2,13 @@
 
 ## Status and scope
 
-The profile-5 WVB runner is a current-host-focused native candidate. It
+The profile-5 WVB runner is a paired-host-rerun-pending native candidate. It
 preserves the fixed portable `Main() -> i32` execution command and additionally
 owns the internal bounded scripting mode defined by
 [Decision 0735](../Documents/Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md).
 The outer runner binds five capabilities to nine ordered services. The exact
-candidate reconstructs from the complete
-Project 1 source closure through the Windvale-native compiler, lowerer, linker,
+candidate reconstructs from the complete Project 2 source closure through the
+current split compiler, segmented native staging/link/transport path,
 hosted-verifier profile, and paired Windows/Linux container materializers.
 
 The project names its root tool plus the SHA-256, scalar-interpreter, envelope,
@@ -18,24 +18,23 @@ live at the repository root. Component-local manifests remain appropriate, and
 a future workspace/index contract may improve discovery without changing
 Project 1 semantics.
 
-## Retained exact products
+## Current exact products
 
-The following table is the last promoted profile-5 runner candidate. The current
-source development checkpoint described below advances portable execution to
-plain-capture closure environments through WVB 1.31 but has not repinned the paired
-reconstruction inventory.
+The following table is the current profile-5 runner candidate. Independent
+Windows/Linux reconstruction is still required before its pending qualification
+field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 183,537 | `1926cf33e359c56c8b457cbd96c685ffee052feb9f1330053c43d77e18f38d3e` |
-| ABI-22 WVO | 1,808,213 | `dfcfb2360d496a5ab873539b4d6dbcdfe3824e8593dfe3e007cc71cd9bc55480` |
-| linked fragment | 1,805,265 | `62985dc1a0090726b3b9e96810f6c37d476b1e9d8e54e9d85ce26c38d11689ab` |
-| Windows application | 1,822,208 | `7a2f245b405d01c1f0f9c7f2b9e9cbe0d88370232e8cf1843616207aa155e7bd` |
-| Linux application | 1,822,720 | `7dac00ed67f7622af2fcd4c9ededd17afced3ad54ea309d749320249188b15b4` |
+| WVB runner | 445,196 | `4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67` |
+| Windows application | 5,327,872 | `7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0` |
+| Linux application | 5,328,896 | `3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27` |
 
-The WVO contains 1,804,544 text bytes and 721 read-only-data bytes, with 71
-symbols and 27 relocations. Linking at base zero selects `Main` at address
-60,426.
+Segmented staging emits 5,318,451 object bytes across 11 chunks. Linking emits a
+5,309,541-byte native image with entry offset 105,270; canonical transport
+reduces that image to two chunks. Those intermediate chunks are reproducible
+construction evidence, not retained shipment artifacts. Removing the obsolete
+monolithic WVO avoids carrying a second copy of the runner's native code.
 
 ## Construction and execution
 
@@ -46,13 +45,13 @@ Tools\Native\Construct-Wvb-Runner-Reconstruction.cmd <existing-output-directory>
 ./Tools/Native/Construct-Wvb-Runner-Reconstruction.sh <existing-output-directory>
 ```
 
-They reject the live candidate directory, bind both tool inventories and every
-artifact digest, build the WVB from its source project, lower and link once,
-assemble both inspector startup objects, then construct profile-5 Windows and
-Linux applications. Success reports:
+They reject the live candidate directory, build the WVB through the pinned
+bootstrap and current split compiler, stage/link/transport one canonical native
+image, then construct profile-5 Windows and Linux applications from that same
+image. Success reports:
 
 ```text
-native WVB runner reconstruction status=Complete artifacts=4
+native WVB runner reconstruction status=Complete artifacts=3
 ```
 
 `Run-Wvb.cmd` and `Run-Wvb.sh` execute the corresponding digest-bound candidate
@@ -273,14 +272,14 @@ operations emitted by the compiler's exact floating-literal parser. The focused
 Language 1.0 owner executes both the compiler front-end self-test and the
 compiler-produced floating program through the retained candidate.
 
-The current Windows development build is a 336,214-byte WVB at SHA-256
+An earlier fixed-array development checkpoint produced a 336,214-byte WVB at SHA-256
 `e5ecddf54f743ee38c07d83d34a421984d48138ea046669a9b29e42c48d73686`.
 It contains 156 functions and 302,459 code bytes. Cohesive directory, request,
 data/local/bytes, collection, aggregate, and extended-operation helpers keep
 every source-built function below the existing bytecode and 2,048 native
 physical-cell limits; neither limit was raised.
-The promoted profile-5 application identity in the table above has not been
-repinned to this source checkpoint.
+That historical build was not promoted independently; the current candidate in
+the table above includes its behavior together with the later task closure.
 It accepts the deterministic 375-byte fixed-array compiler fixture, returns
 `42`, and reports code `3008` for the verified out-of-bounds mutation. It also
 parses the deterministic 436-byte WVB 1.18 Vector/Sequence metadata fixture and
@@ -340,9 +339,9 @@ The executable growth fixture is deterministic 3,628-byte WVB 1.27 at SHA-256
 It proves a 40-byte request refuses against 24 available bytes without changing
 length `1`, then a 24-byte replacement succeeds, accepts a second item, and
 returns `42`. Fifteen exact version, opcode, local, result, allocation-layout,
-and truncated-width mutations reject. The exact 88-case focused owner passes on
-Windows and Linux with identical portable fixture identities; the promoted
-paired-host runner inventory remains unrepinned.
+and truncated-width mutations reject. The exact 88-case focused owner passed on
+Windows and Linux with identical portable fixture identities. That historical
+checkpoint predated the current candidate repin.
 
 The executable aggregate fixture is deterministic 1,538-byte WVB 1.28 at
 SHA-256
@@ -352,7 +351,7 @@ It observes mutable and immutable fields of
 releases its nested Vector exactly once, and returns `42`. Six exact
 version/view/local/take mutations reject before execution. The combined focused
 owner's paired-host result is recorded in the Language 1.0 migration evidence;
-the promoted runner inventory remains unrepinned.
+that historical checkpoint also predates the current candidate repin.
 
 The executable source-snapshot fixture is deterministic 373-byte WVB 1.29 at
 SHA-256
@@ -430,8 +429,9 @@ It packages to a 5,327,872-byte hosted application at SHA-256
 The 4,231-byte success
 fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
 fixture, call-depth-one fixture, and 37-case task-state self-test all return
-`42`. These are focused sequential development results; parallel-capable paired
-host evidence and promoted-candidate repinning remain pending.
+`42`. These are focused sequential development results. The candidate is
+repinned in the table above; parallel-capable paired-host evidence remains
+pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent
@@ -443,8 +443,9 @@ command contract in [`Windvale-Scripting.md`](Windvale-Scripting.md).
 
 The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
-option rejection, malformed-module rejection, and input preservation. The
-Windows owner passes 3/3 in 49.8 seconds. The paired 185-case native Seed
+option rejection, malformed-module rejection, and input preservation. An
+earlier candidate passed that Windows owner 3/3 in 49.8 seconds; the repinned
+segmented candidate awaits its paired-host rerun. The paired 185-case native Seed
 front-door helper builds 105 exact artifacts and passes one uninterrupted
 Windows run in 939.6 seconds plus one independent Linux 6.1 x86-64 run in
 873.7 seconds over the identical tracked state. The helper owns the four Foundation

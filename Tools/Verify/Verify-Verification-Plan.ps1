@@ -947,10 +947,12 @@ $NativeCases = @(
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
-            'console-publisher-reconstruction'
+            'console-publisher-reconstruction',
+            'compiler-split-development'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1016,10 +1018,12 @@ $NativeCases = @(
             'compiler-reconstruction',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'wvo-publisher-reconstruction',
+            'compiler-split-development',
             'console-packager-container-reconstruction'
         )
         Gaps = @()
@@ -1218,6 +1222,7 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
+            'compiler-split-development',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files'
         )
@@ -1275,7 +1280,16 @@ $NativeCases = @(
             'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
             'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
         )
-        Suites = @('compiler-split-development')
+        Suites = @('wvb-runner-reconstruction', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current split project builder'
+        Paths = @(
+            'Tools/Native/Build-Current-Split-Project-Wvb.mjs'
+        )
+        Suites = @('wvb-runner-reconstruction', 'compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },

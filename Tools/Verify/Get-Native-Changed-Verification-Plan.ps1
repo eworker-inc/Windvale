@@ -1174,7 +1174,7 @@ function Add-Native-Tool-Suite {
         'Test-Compiler-Split-Development',
         'Write-Split-Compiler-Producer-Identity'
     )) {
-        Add-Suite 'compiler-split-development'
+        Add-Suite @('compiler-split-development', 'wvb-runner-reconstruction')
         return
     }
     if ($Stem -eq 'Test-Compiler-Source-Sentinel') {
@@ -1260,8 +1260,10 @@ function Add-Native-Tool-Suite {
     )) {
         Add-Suite @(
             'compiler-reconstruction',
+            'compiler-split-development',
             'segmented-compiler-toolset-reconstruction',
             'wvb-to-wvo-reconstruction',
+            'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
@@ -1281,6 +1283,9 @@ function Add-Native-Tool-Suite {
         'Measure-Segmented-Compiler-Packaging'
     )) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
+        if ($Stem -eq 'Package-Segmented-Compiler-Wvb') {
+            Add-Suite @('wvb-runner-reconstruction', 'compiler-split-development')
+        }
     } elseif ($Stem -eq 'Construct-Wvb-To-Wvo-Reconstruction') {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
@@ -1347,6 +1352,8 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Build-Current-Wvb') {
         Add-Bytecode-Suites
         Add-Suite @('compiler-reconstruction', 'libraries', 'packages')
+    } elseif ($Stem -eq 'Build-Current-Split-Project-Wvb') {
+        Add-Suite @('compiler-split-development', 'wvb-runner-reconstruction')
     } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {
         Add-Suite @('packages', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Package-Format') {
@@ -1395,7 +1402,8 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
-            'hosted-verifier-publisher-files'
+            'hosted-verifier-publisher-files',
+            'wvb-runner-reconstruction'
         )
     } elseif ($Stem -eq 'Test-Hosted-Wvb-Packaging') {
         Add-Hosted-Publisher-Suites

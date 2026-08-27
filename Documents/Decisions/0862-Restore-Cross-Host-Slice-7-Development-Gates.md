@@ -4,7 +4,8 @@
 - Status: Implemented candidate with focused Windows evidence; paired-host rerun pending
 - Requires: [Decision 0861](0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 - Refreshes: [Decision 0496](0496-Native-Segmented-Compiler-Toolset-Reconstruction.md),
-  [Decision 0583](0583-Native-Wvb-To-Wvo-Self-Reconstruction.md)
+  [Decision 0583](0583-Native-Wvb-To-Wvo-Self-Reconstruction.md), and
+  [Decision 0510](0510-Native-Wvb-Runner-Source-Reconstruction.md)
 
 ## Context
 
@@ -25,6 +26,15 @@ pre-WVB-1.32 compiler-closure identity. Its two independent input WVBs and WVO
 outputs remained byte-identical; only the source-built lowerer WVB and its two
 host launchers changed.
 
+The second repair passed that refreshed lowerer owner on both hosts, including
+both unchanged produced WVO objects, then reached the WVB-runner reconstruction.
+That owner still required the obsolete 183,537-byte runner to rebuild through
+the pre-WVB-1.32 monolithic front door. The implemented sequential task runner
+is a 445,196-byte current split-compiler product and exceeds the single-object
+lowering profile; its already accepted development package uses segmented
+staging. Both hosts therefore rejected the stale runner family before later
+owners ran.
+
 ## Decision
 
 - Validate every owner-log directory component with `lstat` metadata. Reject a
@@ -39,6 +49,10 @@ host launchers changed.
 - Reconstruct all seven WVB-to-WVO artifacts from current source. Refresh only
   the lowerer WVB and its Windows and Linux launchers; require both independent
   input modules and both produced WVO objects to remain byte-for-byte unchanged.
+- Reconstruct the current WVB runner through one reusable cache-aware split
+  project builder and the shared segmented staging/link/transport path. Retain
+  only the canonical WVB and two host applications; remove the obsolete
+  monolithic WVO instead of widening its single-object profile.
 - Emit bounded build and package phase progress from the multi-minute
   constructor and preserve its captured output when reconstruction fails.
 - Do not add a source alias, task opcode, runtime behavior, bootstrap stage, or
@@ -79,6 +93,30 @@ their previous byte identities. Constructor failures now report their own
 captured output and diagnostic instead of showing only the preceding metadata
 verifier report.
 
+GitHub Actions run `33081618051` passed `seed` and the refreshed six-case
+WVB-to-WVO reconstruction on both Windows and Linux. Both hosts then rejected
+the stale WVB-runner reconstruction, confirming that the prior repair was
+correct and moving the first failure boundary forward.
+
+The refreshed runner family is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `Wvb-Runner.wvb` | 445,196 | `4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67` |
+| `windows-x64-wvrun.exe` | 5,327,872 | `7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0` |
+| `linux-x64-wvrun.elf` | 5,328,896 | `3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27` |
+
+The current split builder reproduces the documented runner WVB through 13
+visible phases. Segmented staging emits 5,318,451 object bytes in 11 chunks;
+linking emits a 5,309,541-byte image at entry offset 105,270; canonical
+transport uses two chunks. The Windows application executes `Return-42.wvb`,
+reports exactly four guest instructions, rejects an unknown option with status
+64, and rejects the WVO-as-WVB malformed input with status 1. The first exact
+owner attempt completed all 13 build phases and reproduced the staged bytes,
+then exposed a Windows `findstr` limitation on the macron in the success line;
+the guard now matches the exact ASCII byte/chunk suffix. A paired-host pushed
+rerun remains required.
+
 Independent GitHub Windows and Linux development results remain the pushed
 evidence required to change this decision from a Windows checkpoint to a
 cross-host gate repair.
@@ -90,6 +128,9 @@ linked log parents remain rejected. The segmented staging candidate again
 embeds the same compiler closure that current source and WVB 1.32 tests verify.
 The raw native lowerer family now embeds that closure as well without changing
 the object bytes it produces for the two independent golden inputs.
+The runner reconstruction now consumes the same current split compiler used by
+its Language 1.0 development evidence and no longer retains a duplicate
+monolithic WVO.
 This decision restores prerequisites for Slice 7; it does not close Slice 7 or
 claim parallel task scheduling.
 

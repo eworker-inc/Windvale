@@ -3551,3 +3551,30 @@ The focused Windows reconstruction owner passes six cases. Both independent
 input WVBs and both produced WVO objects remain byte-identical. A second pushed
 paired-host run remains required before Decision 0862 becomes a cross-host
 repair claim.
+
+The second repair run, GitHub Actions run `33081618051`, passed `seed` and the
+refreshed six-case WVB-to-WVO reconstruction on both hosts. The lowerer rebuilt
+the exact pinned family and retained both golden produced WVO identities. Both
+hosts then reached the WVB-runner reconstruction and rejected its obsolete
+183,537-byte, pre-WVB-1.32 monolithic candidate.
+
+The current runner reconstruction now uses one reusable 13-phase split project
+builder followed by segmented native staging, linking, transport, and paired
+profile-5 materialization:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB runner | 445,196 | `4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67` |
+| Windows runner | 5,327,872 | `7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0` |
+| Linux runner | 5,328,896 | `3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27` |
+
+Staging emits 5,318,451 object bytes in 11 chunks. Linking emits a
+5,309,541-byte image at entry offset 105,270; canonical transport carries it in
+two chunks. The candidate retains only the WVB and two host applications, so
+the obsolete duplicate monolithic WVO is removed. Current Windows execution
+returns `42`, reports four instructions, preserves the exact usage failure, and
+rejects the malformed WVO-as-WVB input. The first exact reconstruction attempt
+completed the full split build and reproduced the staged bytes, then exposed a
+Windows `findstr` Unicode limitation in the success-line assertion. The fixed
+guard matches the exact ASCII byte/chunk suffix. Independent Windows/Linux
+reconstruction remains pending before the repair becomes cross-host evidence.

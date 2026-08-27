@@ -10,13 +10,11 @@ set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Retur
 set "Passed=0"
 set "Failed=0"
 
-call :check_file "%Candidate%\Wvb-Runner.wvb" 183537 1926cf33e359c56c8b457cbd96c685ffee052feb9f1330053c43d77e18f38d3e
+call :check_file "%Candidate%\Wvb-Runner.wvb" 445196 4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\Wvb-Runner.wvo" 1808213 dfcfb2360d496a5ab873539b4d6dbcdfe3824e8593dfe3e007cc71cd9bc55480
+call :check_file "%Candidate%\windows-x64-wvrun.exe" 5327872 7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\windows-x64-wvrun.exe" 1822208 7a2f245b405d01c1f0f9c7f2b9e9cbe0d88370232e8cf1843616207aa155e7bd
-if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\linux-x64-wvrun.elf" 1822720 7dac00ed67f7622af2fcd4c9ededd17afced3ad54ea309d749320249188b15b4
+call :check_file "%Candidate%\linux-x64-wvrun.elf" 5328896 3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27
 if errorlevel 1 goto :inventory_failed
 echo PASS candidate inventory
 set /a Passed+=1
@@ -42,11 +40,9 @@ call "%Constructor%" "%TestDirectory%\Rebuilt" >"%TestDirectory%\Construct.out" 
 if errorlevel 1 goto :reconstruction_failed
 call :check_file "%TestDirectory%\Construct.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 if errorlevel 1 goto :reconstruction_failed
-findstr /x /c:"native WVB runner reconstruction status=Complete artifacts=4" "%TestDirectory%\Construct.out" >nul
+findstr /x /c:"native WVB runner reconstruction status=Complete artifacts=3" "%TestDirectory%\Construct.out" >nul
 if errorlevel 1 goto :reconstruction_failed
 call :check_equal "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%Candidate%\Wvb-Runner.wvb"
-if errorlevel 1 goto :reconstruction_failed
-call :check_equal "%TestDirectory%\Rebuilt\Wvb-Runner.wvo" "%Candidate%\Wvb-Runner.wvo"
 if errorlevel 1 goto :reconstruction_failed
 call :check_equal "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Candidate%\windows-x64-wvrun.exe"
 if errorlevel 1 goto :reconstruction_failed
@@ -56,6 +52,8 @@ echo PASS exact source-built paired reconstruction
 set /a Passed+=1
 goto :reconstruction_done
 :reconstruction_failed
+if exist "%TestDirectory%\Construct.out" type "%TestDirectory%\Construct.out"
+if exist "%TestDirectory%\Construct.err" type "%TestDirectory%\Construct.err" >&2
 echo FAIL exact source-built paired reconstruction
 set /a Failed+=1
 :reconstruction_done

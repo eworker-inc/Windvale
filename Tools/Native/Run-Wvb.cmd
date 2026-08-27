@@ -13,11 +13,11 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Runner=%RepositoryRoot%\Artifacts\Native-Wvb-Runner-Candidate\windows-x64-wvrun.exe"
 
-for %%F in ("%Runner%") do if not "%%~zF"=="1822208" (
+for %%F in ("%Runner%") do if not "%%~zF"=="5327872" (
     >&2 echo The Windows native WVB runner artifact size is invalid.
     exit /b 1
 )
-certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"7a2f245b405d01c1f0f9c7f2b9e9cbe0d88370232e8cf1843616207aa155e7bd" >nul
+certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB runner artifact digest is invalid.
     exit /b 1

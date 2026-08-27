@@ -17,10 +17,9 @@ check_file() {
     printf '%s  %s\n' "$expected_sha" "$path" | sha256sum --check --strict --quiet
 }
 
-if check_file "$candidate/Wvb-Runner.wvb" 183537 1926cf33e359c56c8b457cbd96c685ffee052feb9f1330053c43d77e18f38d3e &&
-    check_file "$candidate/Wvb-Runner.wvo" 1808213 dfcfb2360d496a5ab873539b4d6dbcdfe3824e8593dfe3e007cc71cd9bc55480 &&
-    check_file "$candidate/windows-x64-wvrun.exe" 1822208 7a2f245b405d01c1f0f9c7f2b9e9cbe0d88370232e8cf1843616207aa155e7bd &&
-    check_file "$candidate/linux-x64-wvrun.elf" 1822720 7dac00ed67f7622af2fcd4c9ededd17afced3ad54ea309d749320249188b15b4; then
+if check_file "$candidate/Wvb-Runner.wvb" 445196 4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67 &&
+    check_file "$candidate/windows-x64-wvrun.exe" 5327872 7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0 &&
+    check_file "$candidate/linux-x64-wvrun.elf" 5328896 3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))
 else
@@ -39,14 +38,15 @@ if [[ $usage_status -eq 64 && ! -s $test_directory/Usage.out ]] &&
     cmp -s "$test_directory/Usage.err" "$test_directory/Expected-Usage.err" &&
     "$constructor" "$test_directory/Rebuilt" >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" &&
     [[ ! -s $test_directory/Construct.err ]] &&
-    [[ $(grep -Fxc 'native WVB runner reconstruction status=Complete artifacts=4' "$test_directory/Construct.out") -eq 1 ]] &&
+    [[ $(grep -Fxc 'native WVB runner reconstruction status=Complete artifacts=3' "$test_directory/Construct.out") -eq 1 ]] &&
     cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvb" "$candidate/Wvb-Runner.wvb" &&
-    cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvo" "$candidate/Wvb-Runner.wvo" &&
     cmp -s "$test_directory/Rebuilt/windows-x64-wvrun.exe" "$candidate/windows-x64-wvrun.exe" &&
     cmp -s "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$candidate/linux-x64-wvrun.elf"; then
     echo 'PASS exact source-built paired reconstruction'
     passed=$((passed + 1))
 else
+    [[ ! -f "$test_directory/Construct.out" ]] || cat -- "$test_directory/Construct.out"
+    [[ ! -f "$test_directory/Construct.err" ]] || cat -- "$test_directory/Construct.err" >&2
     echo 'FAIL exact source-built paired reconstruction'
     failed=$((failed + 1))
 fi
