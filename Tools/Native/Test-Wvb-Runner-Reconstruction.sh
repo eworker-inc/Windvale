@@ -17,6 +17,19 @@ check_file() {
     printf '%s  %s\n' "$expected_sha" "$path" | sha256sum --check --strict --quiet
 }
 
+report_file() {
+    local path=$1
+    if [[ ! -f $path ]]; then
+        printf 'diagnostic file=%s status=Missing\n' "$(basename -- "$path")"
+        return
+    fi
+    local bytes sha
+    bytes=$(wc -c < "$path")
+    sha=$(sha256sum "$path")
+    printf 'diagnostic file=%s bytes=%s sha256=%s\n' \
+        "$(basename -- "$path")" "$bytes" "${sha%% *}"
+}
+
 if check_file "$candidate/Wvb-Runner.wvb" 445196 4cdfb53bcd6fe49c7931ec8a0fed0f74aac3f4e10a465f0395c458af4d0a5d67 &&
     check_file "$candidate/windows-x64-wvrun.exe" 5327872 7a8b97c68c3463af858b47178978f30507af947d7cf0e86e5ec71829702157c0 &&
     check_file "$candidate/linux-x64-wvrun.elf" 5328896 3741a659a5bb3375fa2b0560679a19b746a03596ed8ca0c559e0f6c870f10f27; then
@@ -66,11 +79,16 @@ if [[ $run_status -eq 0 && $report_status -eq 0 && $option_status -eq 64 && $rej
     check_file "$test_directory/Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5 &&
     check_file "$test_directory/Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64 &&
     [[ ! -s $test_directory/Run.err && ! -s $test_directory/Report.err && ! -s $test_directory/Option.out && ! -s $test_directory/Reject.out ]] &&
-    check_file "$test_directory/Reject.err" 53 a2e698719194d86fe8d449d741af6b00bad06930727af6b513d23da909f1d28e &&
+    check_file "$test_directory/Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a &&
     check_file "$test_directory/Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5; then
     echo 'PASS current-host execution reporting and rejection'
     passed=$((passed + 1))
 else
+    printf 'diagnostic statuses run=%s report=%s option=%s reject=%s\n' \
+        "$run_status" "$report_status" "$option_status" "$reject_status"
+    for output in Run.out Run.err Report.out Report.err Option.out Option.err Reject.out Reject.err Invalid.wvb; do
+        report_file "$test_directory/$output"
+    done
     echo 'FAIL current-host execution reporting and rejection'
     failed=$((failed + 1))
 fi

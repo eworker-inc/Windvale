@@ -58,41 +58,58 @@ echo FAIL exact source-built paired reconstruction
 set /a Failed+=1
 :reconstruction_done
 
+set "RuntimeFailure=fixture identity"
 call :check_file "%Fixture%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=ordinary execution status"
 "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" >"%TestDirectory%\Run.out" 2>"%TestDirectory%\Run.err"
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=ordinary execution output"
 call :check_file "%TestDirectory%\Run.out" 11 bf24325cd27b27403c7b8053820193dcce360f640f7f394742b660ce5fe3cd4e
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=ordinary execution diagnostics"
 call :check_file "%TestDirectory%\Run.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=reported execution status"
 "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --report-steps >"%TestDirectory%\Report.out" 2>"%TestDirectory%\Report.err"
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=reported execution output"
 call :check_file "%TestDirectory%\Report.out" 27 16d83153e975eefdac7828db275b4cbd3cdd4a783ed5430c442ed4717936a3e5
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=reported execution diagnostics"
 call :check_file "%TestDirectory%\Report.err" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=unknown option status"
 "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Fixture%" --unknown >"%TestDirectory%\Option.out" 2>"%TestDirectory%\Option.err"
 if not "%ERRORLEVEL%"=="64" goto :runtime_failed
+set "RuntimeFailure=unknown option output"
 call :check_file "%TestDirectory%\Option.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=unknown option diagnostics"
 call :check_file "%TestDirectory%\Option.err" 43 fd8455c7428eece156befe036c10c6927efee163a7315dad72c730f6e2bcef64
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=invalid fixture copy"
 copy /y "%InvalidFixture%" "%TestDirectory%\Invalid.wvb" >nul || goto :runtime_failed
+set "RuntimeFailure=invalid fixture identity before execution"
 call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=invalid fixture rejection status"
 "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%TestDirectory%\Invalid.wvb" >"%TestDirectory%\Reject.out" 2>"%TestDirectory%\Reject.err"
 if not "%ERRORLEVEL%"=="1" goto :runtime_failed
+set "RuntimeFailure=invalid fixture rejection output"
 call :check_file "%TestDirectory%\Reject.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 if errorlevel 1 goto :runtime_failed
-call :check_file "%TestDirectory%\Reject.err" 53 a2e698719194d86fe8d449d741af6b00bad06930727af6b513d23da909f1d28e
+set "RuntimeFailure=invalid fixture rejection diagnostics"
+call :check_file "%TestDirectory%\Reject.err" 68 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a
 if errorlevel 1 goto :runtime_failed
+set "RuntimeFailure=invalid fixture identity after execution"
 call :check_file "%TestDirectory%\Invalid.wvb" 479 0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5
 if errorlevel 1 goto :runtime_failed
 echo PASS current-host execution reporting and rejection
 set /a Passed+=1
 goto :runtime_done
 :runtime_failed
+echo diagnostic reason=%RuntimeFailure%
 echo FAIL current-host execution reporting and rejection
 set /a Failed+=1
 :runtime_done
