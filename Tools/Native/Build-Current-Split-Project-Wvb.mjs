@@ -311,7 +311,7 @@ function Canonicalˉordinaryˉdirectory(Candidate, Label) {
             );
         }
     }
-    const Canonical = realpathSync(Resolved);
+    const Canonical = realpathSync.native(Resolved);
     Requireˉordinaryˉdirectory(Canonical, Label);
     return Canonical;
 }
