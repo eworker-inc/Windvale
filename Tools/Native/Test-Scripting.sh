@@ -33,9 +33,11 @@ status=$?
 set -e
 [[ $status -eq 64 ]]
 grep -Fqx 'Usage: wv run <source.wv> [argument ...]' "$work/Usage.err"
+echo 'PASS  native scripting case=usage'
 
 "$bin/wv" run "$repository_root/Tests/Fixtures/Scripting/Portable-Main.wv" >"$work/Portable.out" 2>"$work/Portable.err"
 [[ ! -s $work/Portable.out && ! -s $work/Portable.err ]]
+echo 'PASS  native scripting case=portable'
 
 set +e
 "$bin/wv" run "$repository_root/Tests/Fixtures/Scripting/Arguments-And-Output.wv" -flag 'snow day' >"$work/Arguments.out" 2>"$work/Arguments.err"
@@ -44,13 +46,18 @@ set -e
 [[ $status -eq 7 ]]
 grep -Fqx 'first=-flag' "$work/Arguments.out"
 grep -Fqx 'second=snow day' "$work/Arguments.err"
+echo 'PASS  native scripting case=arguments'
 
 set +e
 "$bin/wv" run "$repository_root/Tests/Fixtures/Scripting/Unsupported-Authority.wv" >"$work/Authority.out" 2>"$work/Authority.err"
 status=$?
 set -e
 [[ $status -eq 1 ]]
-grep -Fqx 'wvb run status=Unsupported profile=script-main-i32' "$work/Authority.err"
+if ! grep -Fqx 'wvb run status=Unsupported profile=script-main-i32 phase=envelope' "$work/Authority.err"; then
+    cat -- "$work/Authority.err" >&2
+    exit 1
+fi
+echo 'PASS  native scripting case=authority'
 
 set +e
 "$bin/wv" run "$repository_root/Tests/Fixtures/Scripting/Malformed.wv" >"$work/Malformed.out" 2>"$work/Malformed.err"
@@ -58,6 +65,7 @@ status=$?
 set -e
 [[ $status -eq 1 ]]
 [[ ! -e $repository_root/Tests/Fixtures/Scripting/Malformed.wvb ]]
+echo 'PASS  native scripting case=malformed'
 
 set +e
 "$bin/wv" run "$repository_root/Tests/Fixtures/Scripting/Arguments-And-Output.wv" -- value >"$work/Dash.out" 2>"$work/Dash.err"
@@ -66,6 +74,7 @@ set -e
 [[ $status -eq 7 ]]
 grep -Fqx 'first=--' "$work/Dash.out"
 grep -Fqx 'second=value' "$work/Dash.err"
+echo 'PASS  native scripting case=dash-argument'
 
 echo 'PASS  native scripting compile=hidden verification=mandatory arguments=immutable authority=base-only cleanup=verified'
 echo 'Tests: 6, Passed: 6, Failed: 0'

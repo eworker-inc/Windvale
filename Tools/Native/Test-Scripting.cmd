@@ -43,7 +43,10 @@ echo PASS  native scripting case=arguments
 
 call "%Bin%\wv.cmd" run "%RepositoryRoot%\Tests\Fixtures\Scripting\Unsupported-Authority.wv" >"%Work%\Authority.out" 2>"%Work%\Authority.err"
 if not "%ERRORLEVEL%"=="1" goto :cleanup
-powershell.exe -NoLogo -NoProfile -Command "$l=[IO.File]::ReadAllLines('%Work%\Authority.err'); if ($l.Count -ne 1 -or $l[0] -cne 'wvb run status=Unsupported profile=script-main-i32') { exit 1 }" || goto :cleanup
+powershell.exe -NoLogo -NoProfile -Command "$l=[IO.File]::ReadAllLines('%Work%\Authority.err'); if ($l.Count -ne 1 -or $l[0] -cne 'wvb run status=Unsupported profile=script-main-i32 phase=envelope') { exit 1 }" || (
+    type "%Work%\Authority.err" >&2
+    goto :cleanup
+)
 echo PASS  native scripting case=authority
 
 call "%Bin%\wv.cmd" run "%RepositoryRoot%\Tests\Fixtures\Scripting\Malformed.wv" >"%Work%\Malformed.out" 2>"%Work%\Malformed.err"
