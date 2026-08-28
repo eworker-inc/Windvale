@@ -57,6 +57,8 @@ const EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256 =
     '3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351';
 const EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256 =
     '92c1c521d4bd1a3198ff01dd54a97fb5153170afe009b6c0111ce06aba51fb64';
+const EXPECTED_STRUCTURED_TASK_FOUR_CHILD_CANCELLATION_SHA256 =
+    'b4d9c67cee803da4fb53ef21a57ccbdf9ecc410c54c369262f3c2187599df88c';
 const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
@@ -266,6 +268,9 @@ try {
     const Structuredˉtaskˉmemoryˉlimit = path.join(
         Work, 'Structured-Task-Memory-Limit.wvb',
     );
+    const Structuredˉtaskˉfourˉchildˉcancellation = path.join(
+        Work, 'Structured-Task-Four-Child-Cancellation.wvb',
+    );
     const Structuredˉtaskˉenvironment = path.join(
         Work, 'Structured-Task-Environment.wvb',
     );
@@ -355,6 +360,12 @@ try {
         Admitter, Analyzer, Emitter,
         'Structured-Task-Memory-Limit-Executable.wv',
         Structuredˉtaskˉmemoryˉlimit,
+    );
+    Compileˉtask(
+        'structured-task-four-child-cancellation-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Four-Child-Cancellation-Executable.wv',
+        Structuredˉtaskˉfourˉchildˉcancellation,
     );
     Compileˉtask(
         'structured-task-environment-compile',
@@ -542,6 +553,11 @@ try {
         EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256,
         'structured-task memory-limit fixture',
     );
+    Requireˉexactˉdigest(
+        readFileSync(Structuredˉtaskˉfourˉchildˉcancellation),
+        EXPECTED_STRUCTURED_TASK_FOUR_CHILD_CANCELLATION_SHA256,
+        'structured-task four-child cancellation fixture',
+    );
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
     Runˉnative('verifier-build', 'Build-Wvb', [
@@ -585,6 +601,10 @@ try {
     Requireˉvalid(
         Verifier, Structuredˉtaskˉmemoryˉlimit,
         'structured-task memory-limit module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉfourˉchildˉcancellation,
+        'structured-task four-child cancellation module',
     );
     Requireˉvalid(
         Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
@@ -990,6 +1010,10 @@ try {
         'structured-task memory-limit execution',
     );
     Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉfourˉchildˉcancellation,
+        'structured-task four-child cancellation execution',
+    );
+    Requireˉresultˉ42(
         Runner, Structuredˉtaskˉenvironment,
         'structured-task default environment execution',
     );
@@ -1072,7 +1096,7 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${138 + Growˉmalformedˉcases.length +
+        `cases=${139 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=22 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1082,7 +1106,7 @@ try {
             Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
-        'structured-task-cases=27 structured-task-runtime-cases=46 ' +
+        'structured-task-cases=28 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +

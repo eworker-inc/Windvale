@@ -3816,3 +3816,53 @@ The verification registry remains 114 owners and advances to 5,556 cases. Its
 Child-provider generation and deterministic completion-order workloads,
 independent Windows/Linux affected-owner integration, candidate promotion, and
 the explicit final Slice 7 Qualification gate remain pending.
+
+## Slice 7 queued multi-child scheduler checkpoint
+
+[Decision 0868](../Decisions/0868-Queue-Structured-Task-Children-Before-Await.md)
+corrects the sequential oracle's eager-spawn behavior. The prior runner entered
+each accepted child before returning its handle, so four source-level spawns
+could never create four simultaneously live siblings. The new runner publishes
+each accepted typed handle immediately and retains its child invocation in one
+bounded same-scope queue.
+
+Each queue entry has a fixed 56-byte header plus at most 4,096 child-local
+bytes. The complete queue is limited to 1 MiB and remains subordinate to the
+scope's accepted, runnable, completion, and retained-memory limits. The spawn
+reservation covers the queue entry, child locals, and maximum suspended-parent
+frame before ownership moves. Dispatch converts that state to the smaller
+40-byte active continuation and reserved terminal cell without a later
+allocation increase.
+
+The deterministic reference policy selects lanes `3, 1, 0, 2` within each
+consecutive four-task group but never selects another lexical scope's child.
+Child completion returns to the same await instruction; consuming awaits and
+the final source report therefore remain in creation order. The portable oracle
+still executes one child at a time and makes no worker-count promise.
+
+The permanent four-child cancellation fixture is a deterministic 6,049-byte
+WVB at SHA-256
+`b4d9c67cee803da4fb53ef21a57ccbdf9ecc410c54c369262f3c2187599df88c`.
+It returned `0` through the eager runner and returns `42` through the queued
+runner. The same diagnostic runner also returns `42` for the prior success,
+retained-result, work-limit, call-depth-limit, trap, and retained-memory
+fixtures.
+
+The source-built diagnostic runner contains 227 functions and 424,375 code
+bytes in a 476,206-byte WVB at SHA-256
+`b3db4ca49b5e5b4659f507e5adb4a87dd53115dcdee1420a7b1a8ab8ce0ae3af`.
+Its current-host Windows package is 5,822,464 bytes at SHA-256
+`226f6a9d67fcd7c56342cba86ac5feba8cd647876178f2eaecc77aafd437d92b`.
+Native staging, linking, transport, packaging, and the seven focused executions
+completed without raising the existing format, function, local, stack, or plan
+bounds. These are development identities, not promoted distribution artifacts.
+
+The focused owner passes all 58 named phases and 160 declared cases, including
+28 structured-task, 46 task-runtime, 17 task-environment, and 69
+malformed-input cases. The complete registry remains 114 owners and advances to
+5,557 cases at 18,556 LF-only bytes and SHA-256
+`ee5bbbb30567148d9f1352e68f6bea56bce9162a3fec0a08ae86048e8ccc3d8d`.
+Exact runner reconstruction remains pending for the settled checkpoint.
+Provider-generation recovery, an externally observable completion-order report,
+parallel-capable Windows/Linux execution, candidate promotion, and final Slice
+7 Qualification remain later gates.

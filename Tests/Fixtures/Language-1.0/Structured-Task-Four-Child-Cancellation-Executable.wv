@@ -1,0 +1,312 @@
+#!wv/1 en@1
+module Languageˉoneˉstructuredˉtaskˉfourˉchildˉcancellationˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    );
+}
+
+fn Cancelledˉvalue(Value: Task.Taskˉoutcome<i32, u32>) -> i32 {
+    return match Value {
+        case Task.Taskˉoutcome.Valid { Value: _ } { 0 }
+        case Task.Taskˉoutcome.Failure { Error: _ } { 0 }
+        case Task.Taskˉoutcome.Cancelled { 1 }
+        case Task.Taskˉoutcome.Deadlineˉreached { 0 }
+        case Task.Taskˉoutcome.Runtimeˉlost {
+            Expectedˉgeneration: _,
+            Observedˉgeneration: _,
+        } { 0 }
+        case Task.Taskˉoutcome.Runtimeˉrestarted {
+            Expectedˉgeneration: _,
+            Observedˉgeneration: _,
+        } { 0 }
+        case Task.Taskˉoutcome.Trapped { Identity: _ } { 0 }
+    };
+}
+
+fn Cancellationˉresult(
+    Cancelled: i32,
+) -> Result.Result<i32, Task.Taskˉscopeˉfailure> {
+    if Cancelled == 4 {
+        return Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+            Value: 42,
+        };
+    }
+    return Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+        Value: 0 - Cancelled,
+    };
+}
+
+async fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<i32, Task.Taskˉscopeˉfailure> effects(
+    memory.allocate,
+    resource.acquire,
+    resource.release,
+    task.cancel,
+    task.spawn,
+    task.suspend,
+) {
+    let Limits = Task.Taskˉlimits {
+        Maximumˉchildren: 4u32,
+        Maximumˉrunnable: 4u32,
+        Maximumˉcompleted: 4u32,
+        Maximumˉretainedˉbytes: 16384u64,
+        Maximumˉworkˉunits: 1024u64,
+        Maximumˉcallˉdepth: 16u32,
+        Maximumˉtimers: 1u32,
+        Maximumˉdiagnostics: 16u32,
+    };
+    task scope Scope = try Constructˉscope(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) policy cancel_join {
+        let Firstˉvalue: i32 = 39;
+        let Firstˉwork: async fn () -> Result.Result<i32, u32>
+            effects(task.suspend) =
+            async fn [copy Firstˉvalue] ()
+                -> Result.Result<i32, u32> effects(task.suspend) {
+            return Result.Result.Valid<i32, u32> { Value: Firstˉvalue };
+        };
+        let Firstˉspawned: Result.Result<
+            Task.Task<i32, u32>,
+            Task.Spawnˉfailure<
+                async fn () -> Result.Result<i32, u32>
+                    effects(task.suspend)
+            >
+        > = Task.Spawn(
+            Scope: borrow mut Scope,
+            Work: Firstˉwork,
+        );
+        return match Firstˉspawned {
+            case Result.Result.Valid { Value: First } {
+                let Secondˉvalue: i32 = 40;
+                let Secondˉwork: async fn () -> Result.Result<i32, u32>
+                    effects(task.suspend) =
+                    async fn [copy Secondˉvalue] ()
+                        -> Result.Result<i32, u32> effects(task.suspend) {
+                    return Result.Result.Valid<i32, u32> {
+                        Value: Secondˉvalue,
+                    };
+                };
+                let Secondˉspawned: Result.Result<
+                    Task.Task<i32, u32>,
+                    Task.Spawnˉfailure<
+                        async fn () -> Result.Result<i32, u32>
+                            effects(task.suspend)
+                    >
+                > = Task.Spawn(
+                    Scope: borrow mut Scope,
+                    Work: Secondˉwork,
+                );
+                match Secondˉspawned {
+                    case Result.Result.Valid { Value: Second } {
+                        let Thirdˉvalue: i32 = 41;
+                        let Thirdˉwork: async fn () -> Result.Result<i32, u32>
+                            effects(task.suspend) =
+                            async fn [copy Thirdˉvalue] ()
+                                -> Result.Result<i32, u32>
+                                    effects(task.suspend) {
+                            return Result.Result.Valid<i32, u32> {
+                                Value: Thirdˉvalue,
+                            };
+                        };
+                        let Thirdˉspawned: Result.Result<
+                            Task.Task<i32, u32>,
+                            Task.Spawnˉfailure<
+                                async fn () -> Result.Result<i32, u32>
+                                    effects(task.suspend)
+                            >
+                        > = Task.Spawn(
+                            Scope: borrow mut Scope,
+                            Work: Thirdˉwork,
+                        );
+                        match Thirdˉspawned {
+                            case Result.Result.Valid { Value: Third } {
+                                let Fourthˉvalue: i32 = 42;
+                                let Fourthˉwork: async fn ()
+                                    -> Result.Result<i32, u32>
+                                    effects(task.suspend) =
+                                    async fn [copy Fourthˉvalue] ()
+                                        -> Result.Result<i32, u32>
+                                            effects(task.suspend) {
+                                    return Result.Result.Valid<i32, u32> {
+                                        Value: Fourthˉvalue,
+                                    };
+                                };
+                                let Fourthˉspawned: Result.Result<
+                                    Task.Task<i32, u32>,
+                                    Task.Spawnˉfailure<
+                                        async fn ()
+                                            -> Result.Result<i32, u32>
+                                            effects(task.suspend)
+                                    >
+                                > = Task.Spawn(
+                                    Scope: borrow mut Scope,
+                                    Work: Fourthˉwork,
+                                );
+                                match Fourthˉspawned {
+                                    case Result.Result.Valid {
+                                        Value: Fourth,
+                                    } {
+                                        let _ = Task.Requestˉcancel(
+                                            Scope: borrow mut Scope,
+                                        );
+                                        let Firstˉcancelled: i32 =
+                                            Cancelledˉvalue(
+                                                Value: await Task.Await(
+                                                    Handle: First,
+                                                ),
+                                            );
+                                        let Secondˉcancelled: i32 =
+                                            Cancelledˉvalue(
+                                                Value: await Task.Await(
+                                                    Handle: Second,
+                                                ),
+                                            );
+                                        let Thirdˉcancelled: i32 =
+                                            Cancelledˉvalue(
+                                                Value: await Task.Await(
+                                                    Handle: Third,
+                                                ),
+                                            );
+                                        let Fourthˉcancelled: i32 =
+                                            Cancelledˉvalue(
+                                                Value: await Task.Await(
+                                                    Handle: Fourth,
+                                                ),
+                                            );
+                                        let Cancelled: i32 =
+                                            Firstˉcancelled +
+                                            Secondˉcancelled +
+                                            Thirdˉcancelled +
+                                            Fourthˉcancelled;
+                                        Cancellationˉresult(
+                                            Cancelled: Cancelled,
+                                        )
+                                    }
+                                    case Result.Result.Failure {
+                                        Error: Fourthˉerror,
+                                    } {
+                                        match Fourthˉerror {
+                                            case Task.Spawnˉfailure.Scopeˉclosing {
+                                                Work: _,
+                                            } { }
+                                            case Task.Spawnˉfailure.Taskˉlimit {
+                                                Work: _,
+                                            } { }
+                                            case Task.Spawnˉfailure.Queueˉlimit {
+                                                Work: _,
+                                            } { }
+                                            case Task.Spawnˉfailure.Memoryˉfailure {
+                                                Error: _,
+                                                Work: _,
+                                            } { }
+                                        }
+                                        Result.Result.Valid<
+                                            i32,
+                                            Task.Taskˉscopeˉfailure
+                                        > { Value: -13 }
+                                    }
+                                }
+                            }
+                            case Result.Result.Failure {
+                                Error: Thirdˉerror,
+                            } {
+                                match Thirdˉerror {
+                                    case Task.Spawnˉfailure.Scopeˉclosing {
+                                        Work: _,
+                                    } { }
+                                    case Task.Spawnˉfailure.Taskˉlimit {
+                                        Work: _,
+                                    } { }
+                                    case Task.Spawnˉfailure.Queueˉlimit {
+                                        Work: _,
+                                    } { }
+                                    case Task.Spawnˉfailure.Memoryˉfailure {
+                                        Error: _,
+                                        Work: _,
+                                    } { }
+                                }
+                                Result.Result.Valid<
+                                    i32,
+                                    Task.Taskˉscopeˉfailure
+                                > { Value: -12 }
+                            }
+                        }
+                    }
+                    case Result.Result.Failure { Error: Secondˉerror } {
+                        match Secondˉerror {
+                            case Task.Spawnˉfailure.Scopeˉclosing {
+                                Work: _,
+                            } { }
+                            case Task.Spawnˉfailure.Taskˉlimit {
+                                Work: _,
+                            } { }
+                            case Task.Spawnˉfailure.Queueˉlimit {
+                                Work: _,
+                            } { }
+                            case Task.Spawnˉfailure.Memoryˉfailure {
+                                Error: _,
+                                Work: _,
+                            } { }
+                        }
+                        Result.Result.Valid<
+                            i32,
+                            Task.Taskˉscopeˉfailure
+                        > { Value: -11 }
+                    }
+                }
+            }
+            case Result.Result.Failure { Error: Firstˉerror } {
+                match Firstˉerror {
+                    case Task.Spawnˉfailure.Scopeˉclosing { Work: _ } { }
+                    case Task.Spawnˉfailure.Taskˉlimit { Work: _ } { }
+                    case Task.Spawnˉfailure.Queueˉlimit { Work: _ } { }
+                    case Task.Spawnˉfailure.Memoryˉfailure {
+                        Error: _,
+                        Work: _,
+                    } { }
+                }
+                Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                    Value: -10,
+                }
+            }
+        };
+    }
+}
+
+export async fn Main(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> i32 effects(
+    memory.allocate,
+    resource.acquire,
+    resource.release,
+    task.cancel,
+    task.spawn,
+    task.suspend,
+) {
+    return match Run(Budget: Budget, Parentˉcontext: Parentˉcontext) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: _ } { -1 }
+    };
+}

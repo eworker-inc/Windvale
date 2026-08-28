@@ -108,14 +108,21 @@ API. Those are runtime choices below the verified contract.
 Every limit failure is deterministic and occurs before an ownership transfer
 that the failure result does not explicitly return.
 
-## Sequential reference execution
+## Sequential queued reference execution
 
 The portable WVB 1.32 runner is the correctness oracle, not a promise of one
-thread. It executes accepted work sequentially and records each child beneath
-its lexical scope. One child work unit is one verified WVB instruction
-dispatched after the spawn baseline. If no unit remains before the next
-dispatch, the child completes as `Taskˉoutcome.Trapped(3011)`; synthetic trap
-unwind and outcome construction do not consume another child unit.
+thread. `Task.Spawn` records accepted work beneath its lexical scope and returns
+the typed handle before entering the child. The reference scheduler executes
+one queued child at a time when an await requires progress. Within each
+consecutive group of four task slots it selects lanes `3, 1, 0, 2`, while
+source-level awaits still consume handles and construct reports in creation
+order. This policy makes completion order independently observable to the
+runtime without changing portable source or bytecode semantics.
+
+One child work unit is one verified WVB instruction dispatched after the spawn
+baseline. If no unit remains before the next dispatch, the child completes as
+`Taskˉoutcome.Trapped(3011)`; synthetic trap unwind and outcome construction do
+not consume another child unit.
 
 The child root frame has relative call depth one. Entering a nested call that
 would exceed `Maximumˉcallˉdepth` completes that child as
@@ -129,11 +136,11 @@ Every retained aggregate value is included in garbage-collection roots until
 state, completion count, and retained bytes remain bounded independently of the
 ordinary aggregate arena.
 
-Before accepting a spawn, the sequential WVB 1.32 profile reserves the exact
+Before accepting a spawn, the queued WVB 1.32 profile reserves the exact
 maximum scheduler state that the child can retain in this implementation:
 
-- the 40-byte pending-continuation record;
-- the 8-byte terminal-result cell;
+- the 56-byte queued-child descriptor, which covers the later 40-byte active
+  continuation and reserved 8-byte terminal-result cell;
 - the complete child local frame; and
 - the newly suspended parent frame, including its resume and function words.
 
@@ -186,8 +193,11 @@ environment with context, clock, and task-runtime generation 1. Its explicit
 `--task-environment` mode injects exact context, clock, deadline, admitted and
 observed task-runtime generations, and observation tick through
 execution-request major `6`, minor `1`; malformed values are rejected before
-module execution. Child-provider generations and parallel worker state remain
-later Slice 7 checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
+module execution. A permanent four-child cancellation fixture proves that four
+accepted sibling handles coexist before child execution and that cancellation
+can terminate every queued child. Child-provider generations, an externally
+observable completion-order report, and parallel worker state remain later
+Slice 7 checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer
@@ -195,7 +205,8 @@ or diagnostic, so both counters remain zero in this profile. Later operations
 must define and charge creation before mutation; this specification does not
 reserve an ambient timer or logging service.
 
-A parallel-capable hosted scheduler may replace eager execution only after it
+A parallel-capable hosted scheduler may replace this sequential queue policy
+only after it
 reproduces the same accepted/rejected transfers, exact outcomes, creation-order
 joins, resource accounting, cancellation observations, and deterministic
 data-race-free result bytes on Windows and Linux. Scheduler selection remains a

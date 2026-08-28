@@ -11,6 +11,8 @@ import WebAssemblyˉwvbˉscalarˉinterpreterˉtaskˉcore as Tasks;
 const PORTABLE_ROOT_MEMORY_BUDGET_BYTES: u64 = 98304u64;
 const PORTABLE_ROOT_MEMORY_BUDGET_CHILDREN: u32 = 64u32;
 const TASK_PENDING_BYTES: u32 = 40u32;
+const TASK_QUEUE_HEADER_BYTES: u32 = 56u32;
+const TASK_QUEUE_MAXIMUM_BYTES: u32 = 1048576u32;
 
 data Stackˉeffects: bytes = [
     0, 4, 4, 12, 4, 1, 4, 5, 4, 4, 12, 5, 15, 6, 6, 6,
@@ -6510,6 +6512,87 @@ fn Executeˉtaskˉoperation(
     );
 }
 
+record Taskˉqueueˉselection {
+    Valid: bool;
+    Found: bool;
+    Record: bytes;
+    Remaining: bytes;
+}
+
+fn Taskˉqueueˉrank(Ordinal: u32) -> u32 {
+    let Lane: u32 = Ordinal % 4u32;
+    if Lane == 3u32 { return 0u32; }
+    if Lane == 1u32 { return 1u32; }
+    if Lane == 0u32 { return 2u32; }
+    return 3u32;
+}
+
+fn Selectˉqueuedˉtask(
+    Queue: bytes,
+    Scope: bytes
+) -> Taskˉqueueˉselection {
+    let Empty: bytes = Bytesˉslice(Queue, 0u32, 0u32);
+    let Length: u32 = Bytesˉlength(Queue);
+    if Length > TASK_QUEUE_MAXIMUM_BYTES || Bytesˉlength(Scope) != 8u32 {
+        return Taskˉqueueˉselection(false, false, Empty, Queue);
+    }
+    var Offset: u32 = 0u32;
+    var Selectedˉoffset: u32 = 0u32;
+    var Selectedˉlength: u32 = 0u32;
+    var Selectedˉgroup: u32 = 0u32;
+    var Selectedˉrank: u32 = 0u32;
+    var Found: bool = false;
+    while Offset < Length {
+        if Length - Offset < TASK_QUEUE_HEADER_BYTES {
+            return Taskˉqueueˉselection(false, false, Empty, Queue);
+        }
+        let Localsˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Queue, Offset + 32u32
+        );
+        if Localsˉlength == 0u32 || Localsˉlength % 8u32 != 0u32 ||
+            Localsˉlength > 4096u32 ||
+            Localsˉlength > Length - Offset - TASK_QUEUE_HEADER_BYTES {
+            return Taskˉqueueˉselection(false, false, Empty, Queue);
+        }
+        let Recordˉlength: u32 = TASK_QUEUE_HEADER_BYTES + Localsˉlength;
+        if Bytesˉreadˉu32ˉlittle(Queue, Offset + 8u32) ==
+                Bytesˉreadˉu32ˉlittle(Scope, 0u32) &&
+            Bytesˉreadˉu32ˉlittle(Queue, Offset + 12u32) ==
+                Bytesˉreadˉu32ˉlittle(Scope, 4u32) {
+            let Ordinal: u32 = Bytesˉreadˉu32ˉlittle(
+                Queue, Offset + 52u32
+            );
+            let Group: u32 = Ordinal / 4u32;
+            let Rank: u32 = Taskˉqueueˉrank(Ordinal);
+            if !Found || Group < Selectedˉgroup ||
+                (Group == Selectedˉgroup && Rank < Selectedˉrank) {
+                Found = true;
+                Selectedˉoffset = Offset;
+                Selectedˉlength = Recordˉlength;
+                Selectedˉgroup = Group;
+                Selectedˉrank = Rank;
+            }
+        }
+        Offset = Offset + Recordˉlength;
+    }
+    if !Found {
+        return Taskˉqueueˉselection(true, false, Empty, Queue);
+    }
+    return Taskˉqueueˉselection(
+        true,
+        true,
+        Bytesˉslice(Queue, Selectedˉoffset, Selectedˉlength),
+        Bytesˉconcat(
+            Bytesˉslice(Queue, 0u32, Selectedˉoffset),
+            Bytesˉslice(
+                Queue,
+                Selectedˉoffset + Selectedˉlength,
+                Length - Selectedˉoffset - Selectedˉlength
+            )
+        )
+    );
+}
+
 record Taskˉspawnˉexecution {
     Valid: bool;
     Stack: bytes;
@@ -6528,6 +6611,7 @@ record Taskˉspawnˉexecution {
     Frames: bytes;
     Depth: u32;
     Pending: bytes;
+    Queue: bytes;
 }
 
 record Taskˉworkˉobservation {
@@ -6647,13 +6731,14 @@ fn Executeˉtaskˉspawn(
     Zeroˉlocals: bytes,
     Depth: u32,
     Maximumˉdepth: u32,
-    Initialˉpending: bytes
+    Initialˉpending: bytes,
+    Initialˉqueue: bytes
 ) -> Taskˉspawnˉexecution {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Taskˉspawnˉexecution = Taskˉspawnˉexecution(
         false, Empty, Empty, Empty, Empty, Empty,
         0u32, false, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-        Empty, 0u32, Empty
+        Empty, 0u32, Empty, Empty
     );
     let Scopeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
         Module, Payload + 1u32
@@ -6683,46 +6768,85 @@ fn Executeˉtaskˉspawn(
         Bytesˉlength(Call.Frames) < Bytesˉlength(Initialˉframes) {
         return Invalid;
     }
-    let Retainedˉbytes: u64 = U64ˉfromˉu32(TASK_PENDING_BYTES + 8u32) +
+    let Retainedˉbytes: u64 = U64ˉfromˉu32(TASK_QUEUE_HEADER_BYTES) +
         U64ˉfromˉu32(Bytesˉlength(Call.Locals)) +
         U64ˉfromˉu32(
             Bytesˉlength(Call.Frames) - Bytesˉlength(Initialˉframes)
         );
+    if Bytesˉlength(Call.Locals) >
+            TASK_QUEUE_MAXIMUM_BYTES - TASK_QUEUE_HEADER_BYTES ||
+        Bytesˉlength(Initialˉqueue) >
+            TASK_QUEUE_MAXIMUM_BYTES - TASK_QUEUE_HEADER_BYTES -
+                Bytesˉlength(Call.Locals) {
+        return Invalid;
+    }
     let Begun: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
         Initialˉtaskˉstate, Scope, Retainedˉbytes
     );
     if !Begun.Valid { return Invalid; }
-    if Begun.Accepted {
-        var Pending: bytes = Bytesˉfromˉu32ˉlittle(Call.Depth);
-        Pending = Bytesˉconcat(Pending, Begun.Token);
-        Pending = Bytesˉconcat(
-            Pending, Bytesˉslice(Module, Payload + 5u32, 8u32)
-        );
-        Pending = Bytesˉconcat(
-            Pending,
-            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Call.Stack) / 8u32)
-        );
-        Pending = Bytesˉconcat(
-            Pending, Bytesˉfromˉu32ˉlittle(Executed)
-        );
-        Pending = Bytesˉconcat(
-            Pending, Bytesˉfromˉu64ˉlittle(Begun.Remainingˉwork)
-        );
-        Pending = Bytesˉconcat(
-            Pending, Bytesˉfromˉu32ˉlittle(Begun.Maximumˉcallˉdepth)
-        );
-        return Taskˉspawnˉexecution(
-            true, Call.Stack, Call.Locals, Begun.State,
-            Initialˉmetadata, Initialˉrecords,
-            Call.Consumed, false, 0u32, Call.Instructions,
-            Call.Functionˉindex, Call.Functionˉcursor,
-            Call.Codeˉoffset, Call.Codeˉlength, Call.Frames, Call.Depth,
-            Bytesˉconcat(Initialˉpending, Pending)
-        );
-    }
     let Spawnˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Module, Payload + 5u32
     );
+    if Begun.Accepted {
+        let Taskˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Payload + 9u32
+        );
+        let Handle: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+            Taskˉtype + 1u32, Begun.Token,
+            Initialˉmetadata, Initialˉrecords, Zeroˉcell
+        );
+        if !Handle.Valid { return Invalid; }
+        let Spawnˉowner: u32 = 2147483648u32 +
+            (Spawnˉresultˉtype + 1u32) * 256u32;
+        let Spawned: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
+            Spawnˉowner, Handle.Value,
+            Handle.Metadata, Handle.Records, Zeroˉcell
+        );
+        if !Spawned.Valid { return Invalid; }
+        var Queued: bytes = Begun.Token;
+        Queued = Bytesˉconcat(Queued, Scope);
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Call.Functionˉindex)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Call.Functionˉcursor)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Call.Codeˉoffset)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Call.Codeˉlength)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Call.Locals))
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu64ˉlittle(Begun.Remainingˉwork)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Begun.Maximumˉcallˉdepth)
+        );
+        Queued = Bytesˉconcat(
+            Queued, Bytesˉfromˉu32ˉlittle(Depth)
+        );
+        Queued = Bytesˉconcat(
+            Queued,
+            Bytesˉfromˉu32ˉlittle(
+                Bytesˉreadˉu32ˉlittle(Begun.Token, 0u32) - 1u32
+            )
+        );
+        Queued = Bytesˉconcat(Queued, Call.Locals);
+        return Taskˉspawnˉexecution(
+            true,
+            Bytesˉconcat(Call.Stack, Spawned.Value),
+            Initialˉlocals, Begun.State,
+            Spawned.Metadata, Spawned.Records,
+            1u32, true, 2u32, Instructions + 13u32,
+            Functionˉindex, Functionˉcursor,
+            0u32, 0u32, Initialˉframes, Depth,
+            Initialˉpending, Bytesˉconcat(Initialˉqueue, Queued)
+        );
+    }
     let Failureˉtype: u32 = Taskˉvariantˉfieldˉnominal(
         Module, Typeˉoffsets, Spawnˉresultˉtype, 1u32
     );
@@ -6771,7 +6895,171 @@ fn Executeˉtaskˉspawn(
         Initialˉlocals, Begun.State, Result.Metadata, Result.Records,
         1u32, true, 2u32, Instructions + 13u32,
         Functionˉindex, Functionˉcursor,
-        0u32, 0u32, Initialˉframes, Depth, Initialˉpending
+        0u32, 0u32, Initialˉframes, Depth, Initialˉpending,
+        Initialˉqueue
+    );
+}
+
+record Taskˉscheduleˉexecution {
+    Valid: bool;
+    Scheduled: bool;
+    Stack: bytes;
+    Locals: bytes;
+    Functionˉindex: u32;
+    Functionˉcursor: u32;
+    Codeˉoffset: u32;
+    Codeˉlength: u32;
+    Frames: bytes;
+    Depth: u32;
+    Pending: bytes;
+    Queue: bytes;
+}
+
+fn Scheduleˉqueuedˉtask(
+    Module: bytes,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉlocals: bytes,
+    Functionˉcursor: u32,
+    Initialˉtaskˉstate: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉrecords: bytes,
+    Functionˉcount: u32,
+    Functionˉframeˉmetadata: bytes,
+    Functionˉcodeˉoffsets: bytes,
+    Functionˉcodeˉlengths: bytes,
+    Instructions: u32,
+    Executed: u32,
+    Functionˉindex: u32,
+    Initialˉframes: bytes,
+    Depth: u32,
+    Maximumˉdepth: u32,
+    Initialˉpending: bytes,
+    Initialˉqueue: bytes
+) -> Taskˉscheduleˉexecution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Taskˉscheduleˉexecution = Taskˉscheduleˉexecution(
+        false, false, Empty, Empty, 0u32, 0u32, 0u32, 0u32,
+        Empty, 0u32, Empty, Empty
+    );
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Origin: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+    if Local * 8u32 >= Functionˉcursor ||
+        Origin * 8u32 >= Functionˉcursor || Depth >= Maximumˉdepth {
+        return Invalid;
+    }
+    let Handleˉvalue: bytes = Bytesˉslice(
+        Initialˉlocals, Local * 8u32, 8u32
+    );
+    let Scopeˉvalue: bytes = Bytesˉslice(
+        Initialˉlocals, Origin * 8u32, 8u32
+    );
+    let Handleˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+        Handleˉvalue, Bytesˉreadˉu32ˉlittle(Handleˉvalue, 4u32),
+        Initialˉmetadata, Initialˉrecords
+    );
+    let Scopeˉtoken: bytes = Taskˉtokenˉfromˉvalue(
+        Scopeˉvalue, Bytesˉreadˉu32ˉlittle(Scopeˉvalue, 4u32),
+        Initialˉmetadata, Initialˉrecords
+    );
+    if Bytesˉlength(Handleˉtoken) != 8u32 ||
+        Bytesˉlength(Scopeˉtoken) != 8u32 {
+        return Invalid;
+    }
+    let Status: Tasks.Taskˉstatus = Tasks.Inspectˉtaskˉstatus(
+        Initialˉtaskˉstate, Handleˉtoken, Scopeˉtoken
+    );
+    if !Status.Valid { return Invalid; }
+    if Status.Status == 2u32 {
+        return Taskˉscheduleˉexecution(
+            true, false, Initialˉstack, Initialˉlocals,
+            Functionˉindex, Functionˉcursor, 0u32, 0u32,
+            Initialˉframes, Depth, Initialˉpending, Initialˉqueue
+        );
+    }
+    let Selected: Taskˉqueueˉselection = Selectˉqueuedˉtask(
+        Initialˉqueue, Scopeˉtoken
+    );
+    if !Selected.Valid || !Selected.Found ||
+        Bytesˉlength(Selected.Record) < TASK_QUEUE_HEADER_BYTES {
+        return Invalid;
+    }
+    let Taskˉtoken: bytes = Bytesˉslice(Selected.Record, 0u32, 8u32);
+    let Selectedˉstatus: Tasks.Taskˉstatus = Tasks.Inspectˉtaskˉstatus(
+        Initialˉtaskˉstate, Taskˉtoken, Scopeˉtoken
+    );
+    let Childˉfunction: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 16u32
+    );
+    let Childˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 20u32
+    );
+    let Childˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 24u32
+    );
+    let Childˉcodeˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 28u32
+    );
+    let Childˉlocalsˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 32u32
+    );
+    let Childˉmaximumˉwork: u64 = Bytesˉreadˉu64ˉlittle(
+        Selected.Record, 36u32
+    );
+    let Childˉmaximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 44u32
+    );
+    let Parentˉdepth: u32 = Bytesˉreadˉu32ˉlittle(
+        Selected.Record, 48u32
+    );
+    if !Selectedˉstatus.Valid || Selectedˉstatus.Status != 1u32 ||
+        Childˉfunction >= Functionˉcount ||
+        Childˉcursor != Childˉlocalsˉlength ||
+        Childˉcursor != Bytesˉreadˉu32ˉlittle(
+            Functionˉframeˉmetadata, Childˉfunction * 8u32 + 4u32
+        ) ||
+        Childˉcodeˉoffset != Bytesˉreadˉu32ˉlittle(
+            Functionˉcodeˉoffsets, Childˉfunction * 4u32
+        ) ||
+        Childˉcodeˉlength != Bytesˉreadˉu32ˉlittle(
+            Functionˉcodeˉlengths, Childˉfunction * 4u32
+        ) ||
+        Childˉmaximumˉwork == 0u64 ||
+        Childˉmaximumˉwork > 1000000u64 ||
+        Childˉmaximumˉcallˉdepth == 0u32 ||
+        Childˉmaximumˉcallˉdepth > 64u32 ||
+        Parentˉdepth != Depth ||
+        Bytesˉlength(Selected.Record) !=
+            TASK_QUEUE_HEADER_BYTES + Childˉlocalsˉlength {
+        return Invalid;
+    }
+    var Parentˉframe: bytes = Bytesˉfromˉu32ˉlittle(Instructions);
+    Parentˉframe = Bytesˉconcat(Parentˉframe, Initialˉlocals);
+    Parentˉframe = Bytesˉconcat(
+        Parentˉframe, Bytesˉfromˉu32ˉlittle(Functionˉindex)
+    );
+    var Pending: bytes = Bytesˉfromˉu32ˉlittle(Depth + 1u32);
+    Pending = Bytesˉconcat(Pending, Taskˉtoken);
+    Pending = Bytesˉconcat(Pending, Bytesˉfromˉu64ˉlittle(0u64));
+    Pending = Bytesˉconcat(
+        Pending, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Initialˉstack) / 8u32)
+    );
+    Pending = Bytesˉconcat(Pending, Bytesˉfromˉu32ˉlittle(Executed));
+    Pending = Bytesˉconcat(
+        Pending, Bytesˉfromˉu64ˉlittle(Childˉmaximumˉwork)
+    );
+    Pending = Bytesˉconcat(
+        Pending, Bytesˉfromˉu32ˉlittle(Childˉmaximumˉcallˉdepth)
+    );
+    return Taskˉscheduleˉexecution(
+        true, true, Initialˉstack,
+        Bytesˉslice(
+            Selected.Record, TASK_QUEUE_HEADER_BYTES, Childˉlocalsˉlength
+        ),
+        Childˉfunction, Childˉcursor,
+        Childˉcodeˉoffset, Childˉcodeˉlength,
+        Bytesˉconcat(Initialˉframes, Parentˉframe), Depth + 1u32,
+        Bytesˉconcat(Initialˉpending, Pending), Selected.Remaining
     );
 }
 
@@ -6813,12 +7101,6 @@ fn Completeˉspawnedˉtask(
     let Taskˉtoken: bytes = Bytesˉslice(
         Taskˉpending, Pendingˉoffset + 4u32, 8u32
     );
-    let Spawnˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-        Taskˉpending, Pendingˉoffset + 12u32
-    );
-    let Taskˉtype: u32 = Bytesˉreadˉu32ˉlittle(
-        Taskˉpending, Pendingˉoffset + 16u32
-    );
     let Parentˉstackˉcells: u32 = Bytesˉreadˉu32ˉlittle(
         Taskˉpending, Pendingˉoffset + 20u32
     );
@@ -6855,30 +7137,9 @@ fn Completeˉspawnedˉtask(
             Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
         );
     }
-    let Handle: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
-        Taskˉtype + 1u32, Taskˉtoken,
-        Initialˉmetadata, Initialˉrecords, Zeroˉcell
-    );
-    if !Handle.Valid {
-        return Taskˉreturnˉcompletion(
-            false, false, Initialˉresult, Initialˉtaskˉstate,
-            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
-        );
-    }
-    let Spawnˉowner: u32 = 2147483648u32 +
-        (Spawnˉresultˉtype + 1u32) * 256u32;
-    let Spawned: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
-        Spawnˉowner, Handle.Value, Handle.Metadata, Handle.Records, Zeroˉcell
-    );
-    if !Spawned.Valid {
-        return Taskˉreturnˉcompletion(
-            false, false, Initialˉresult, Initialˉtaskˉstate,
-            Initialˉmetadata, Initialˉrecords, Taskˉpending, 0u32
-        );
-    }
     return Taskˉreturnˉcompletion(
-        true, true, Spawned.Value, Completed.State,
-        Spawned.Metadata, Spawned.Records,
+        true, true, Bytesˉslice(Initialˉresult, 0u32, 0u32),
+        Completed.State, Initialˉmetadata, Initialˉrecords,
         Bytesˉslice(Taskˉpending, 0u32, Pendingˉoffset),
         Parentˉstackˉcells
     );
@@ -7148,6 +7409,7 @@ record Taskˉinstructionˉexecution {
     Frames: bytes;
     Depth: u32;
     Pending: bytes;
+    Queue: bytes;
 }
 
 fn Executeˉtaskˉinstruction(
@@ -7176,7 +7438,8 @@ fn Executeˉtaskˉinstruction(
     Zeroˉlocals: bytes,
     Depth: u32,
     Maximumˉdepth: u32,
-    Initialˉpending: bytes
+    Initialˉpending: bytes,
+    Initialˉqueue: bytes
 ) -> Taskˉinstructionˉexecution {
     if Opcode == 216u32 {
         let Spawned: Taskˉspawnˉexecution = Executeˉtaskˉspawn(
@@ -7187,7 +7450,8 @@ fn Executeˉtaskˉinstruction(
             Functionˉcodeˉoffsets, Functionˉcodeˉlengths,
             Instructions, Executed, Functionˉindex,
             Initialˉframes, Zeroˉlocals,
-            Depth, Maximumˉdepth, Initialˉpending
+            Depth, Maximumˉdepth, Initialˉpending,
+            Initialˉqueue
         );
         return Taskˉinstructionˉexecution(
             Spawned.Valid, Spawned.Valid, Spawned.Depth != Depth,
@@ -7197,8 +7461,42 @@ fn Executeˉtaskˉinstruction(
             Spawned.Producedˉkind, Spawned.Instructions,
             Spawned.Functionˉindex, Spawned.Functionˉcursor,
             Spawned.Codeˉoffset, Spawned.Codeˉlength, Spawned.Frames,
-            Spawned.Depth, Spawned.Pending
+            Spawned.Depth, Spawned.Pending, Spawned.Queue
         );
+    }
+    if Opcode == 217u32 {
+        let Scheduled: Taskˉscheduleˉexecution = Scheduleˉqueuedˉtask(
+            Module, Payload, Initialˉstack, Initialˉlocals,
+            Functionˉcursor, Initialˉtaskˉstate,
+            Initialˉmetadata, Initialˉrecords, Functionˉcount,
+            Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
+            Functionˉcodeˉlengths, Instructions, Executed,
+            Functionˉindex, Initialˉframes, Depth, Maximumˉdepth,
+            Initialˉpending, Initialˉqueue
+        );
+        if !Scheduled.Valid {
+            return Taskˉinstructionˉexecution(
+                false, false, false,
+                Initialˉstack, Initialˉlocals, Initialˉtaskˉstate,
+                Initialˉmemoryˉbudgetˉstate, Initialˉmetadata,
+                Initialˉrecords, 0u32, false, 0u32, Instructions,
+                Functionˉindex, Functionˉcursor, 0u32, 0u32,
+                Initialˉframes, Depth, Initialˉpending,
+                Initialˉqueue
+            );
+        }
+        if Scheduled.Scheduled {
+            return Taskˉinstructionˉexecution(
+                true, true, true,
+                Scheduled.Stack, Scheduled.Locals, Initialˉtaskˉstate,
+                Initialˉmemoryˉbudgetˉstate, Initialˉmetadata,
+                Initialˉrecords, 0u32, false, 0u32, 0u32,
+                Scheduled.Functionˉindex, Scheduled.Functionˉcursor,
+                Scheduled.Codeˉoffset, Scheduled.Codeˉlength,
+                Scheduled.Frames, Scheduled.Depth, Scheduled.Pending,
+                Scheduled.Queue
+            );
+        }
     }
     let Operation: Taskˉoperation = Executeˉtaskˉoperation(
         Module, Typeˉoffsets, Payload, Opcode, Initialˉstack,
@@ -7213,8 +7511,46 @@ fn Executeˉtaskˉinstruction(
         Operation.Records, Operation.Consumed, Operation.Produced,
         Operation.Producedˉkind, Instructions + Operation.Instructions,
         Functionˉindex, Functionˉcursor, 0u32, 0u32,
-        Initialˉframes, Depth, Initialˉpending
+        Initialˉframes, Depth, Initialˉpending,
+        Initialˉqueue
     );
+}
+
+fn Successfulˉexecutionˉresponse(
+    Requestˉmajor: u32,
+    Executed: u32,
+    Returnˉresult: bytes,
+    Stack: bytes,
+    Standardˉoutput: bytes,
+    Diagnosticˉoutput: bytes
+) -> bytes {
+    var Success: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
+    Success = Bytesˉconcat(
+        Success, Bytesˉfromˉu16ˉlittle(Requestˉmajor)
+    );
+    Success = Bytesˉconcat(Success, Bytesˉfromˉu16ˉlittle(0u32));
+    Success = Bytesˉconcat(Success, Bytesˉfromˉu32ˉlittle(0u32));
+    Success = Bytesˉconcat(Success, Bytesˉfromˉu32ˉlittle(Executed));
+    Success = Bytesˉconcat(
+        Success, Bytesˉslice(Returnˉresult, 0u32, 4u32)
+    );
+    if Requestˉmajor == 3u32 || Requestˉmajor == 4u32 {
+        var Streamˉsuccess: bytes = Success;
+        Streamˉsuccess = Bytesˉconcat(
+            Streamˉsuccess,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
+        );
+        Streamˉsuccess = Bytesˉconcat(
+            Streamˉsuccess,
+            Bytesˉfromˉu32ˉlittle(Bytesˉlength(Diagnosticˉoutput))
+        );
+        Streamˉsuccess = Bytesˉconcat(Streamˉsuccess, Standardˉoutput);
+        return Bytesˉconcat(Streamˉsuccess, Diagnosticˉoutput);
+    }
+    if Requestˉmajor == 2u32 {
+        return Bytesˉconcat(Success, Stack);
+    }
+    return Success;
 }
 
 export fn Main(Request: bytes) -> bytes {
@@ -7411,6 +7747,7 @@ export fn Main(Request: bytes) -> bytes {
     Recordˉmetadata = Taskˉruntime.Metadata;
     Records = Taskˉruntime.Records;
     var Taskˉpending: bytes = Invalid;
+    var Taskˉqueue: bytes = Invalid;
     // Reuse completed-preflight slots as execution state: Functionˉindex is the
     // current function, Aggregateˉinstructions is PC, Exportˉindex is depth,
     // Envelope is executed count, Sectionˉkind is guest status, Payload is the
@@ -7661,7 +7998,8 @@ export fn Main(Request: bytes) -> bytes {
                 Functionˉframeˉmetadata, Functionˉcodeˉoffsets,
                 Functionˉcodeˉlengths, Aggregateˉinstructions,
                 Envelope, Functionˉindex, Frames, Zeroˉlocals,
-                Exportˉindex, Effectiveˉcallˉdepth, Taskˉpending
+                Exportˉindex, Effectiveˉcallˉdepth, Taskˉpending,
+                Taskˉqueue
             );
         if !Taskˉinstruction.Valid { return Invalid; }
         if Taskˉinstruction.Handled {
@@ -7677,6 +8015,7 @@ export fn Main(Request: bytes) -> bytes {
             Aggregateˉinstructions = Taskˉinstruction.Instructions;
             Frames = Taskˉinstruction.Frames;
             Taskˉpending = Taskˉinstruction.Pending;
+            Taskˉqueue = Taskˉinstruction.Queue;
             if Taskˉinstruction.Enteredˉcall {
                 Functionˉindex = Taskˉinstruction.Functionˉindex;
                 Functionˉcursor = Taskˉinstruction.Functionˉcursor;
@@ -8101,10 +8440,14 @@ export fn Main(Request: bytes) -> bytes {
                 Recordˉmetadata = Taskˉcompletion.Metadata;
                 Records = Taskˉcompletion.Records;
                 Taskˉpending = Taskˉcompletion.Pending;
-                Returnˉisˉrecord = true;
-                Stackˉproducedˉkind = 2u32;
+                Returnˉisˉrecord = false;
+                Stackˉconsumed = Stackˉdescriptorˉcount -
+                    Taskˉcompletion.Parentˉstackˉcells;
+                Stackˉproduced = false;
+                Stackˉproducedˉkind = 0u32;
             }
             if Framesˉlength == 0u32 {
+                if Bytesˉlength(Taskˉqueue) != 0u32 { return Invalid; }
                 let Topˉrelease: Descriptorˉreleaseˉexecution =
                     Releaseˉdescriptorsˉandˉleases(
                         Memoryˉbudgetˉstate,
@@ -8145,69 +8488,10 @@ export fn Main(Request: bytes) -> bytes {
                         Mainˉcodeˉlength
                     );
                 }
-                var Success: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
-                Success = Bytesˉconcat(
-                    Success,
-                    Bytesˉfromˉu16ˉlittle(Requestˉmajor)
+                return Successfulˉexecutionˉresponse(
+                    Requestˉmajor, Envelope, Returnˉresult, Stack,
+                    Standardˉoutput, Diagnosticˉoutput
                 );
-                Success = Bytesˉconcat(
-                    Success,
-                    Bytesˉfromˉu16ˉlittle(0u32)
-                );
-                Success = Bytesˉconcat(
-                    Success,
-                    Bytesˉfromˉu32ˉlittle(0u32)
-                );
-                Success = Bytesˉconcat(
-                    Success,
-                    Bytesˉfromˉu32ˉlittle(Envelope)
-                );
-                Success = Bytesˉconcat(
-                    Success,
-                    Bytesˉslice(Returnˉresult, 0u32, 4u32)
-                );
-                if Requestˉmajor == 3u32 || Requestˉmajor == 4u32 {
-                    var Streamˉsuccess: bytes = Bytesˉfromˉu32ˉlittle(
-                        1331189335u32
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu16ˉlittle(Requestˉmajor)
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu16ˉlittle(0u32)
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(0u32)
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(Envelope)
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉslice(Returnˉresult, 0u32, 4u32)
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Diagnosticˉoutput))
-                    );
-                    Streamˉsuccess = Bytesˉconcat(
-                        Streamˉsuccess,
-                        Standardˉoutput
-                    );
-                    return Bytesˉconcat(Streamˉsuccess, Diagnosticˉoutput);
-                }
-                if Requestˉmajor == 2u32 {
-                    return Bytesˉconcat(Success, Stack);
-                }
-                return Success;
             }
             Functionˉindex = Bytesˉreadˉu32ˉlittle(
                 Frames,
@@ -8264,9 +8548,9 @@ export fn Main(Request: bytes) -> bytes {
                 return Invalid;
             } else if Trapped.Handled {
                 Stackˉconsumed = Stackˉdescriptorˉcount -
-                    (Bytesˉlength(Trapped.Stack) / 8u32 - 1u32);
-                Stackˉproduced = true;
-                Stackˉproducedˉkind = 2u32;
+                    Bytesˉlength(Trapped.Stack) / 8u32;
+                Stackˉproduced = false;
+                Stackˉproducedˉkind = 0u32;
                 Stack = Trapped.Stack;
                 Locals = Trapped.Locals;
                 Taskˉstate = Trapped.Taskˉstate;

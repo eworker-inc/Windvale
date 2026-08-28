@@ -193,8 +193,14 @@ prefix from its public parameters without forging a source symbol.
 completes the selected Slice 6 profile: the compiler emits synthetic closure
 bodies, proves move invalidation and confined immutable-borrow use, and the
 native backend executes nonescaping scalar/enum environments through one
-checked 16-byte callable cell. Slice 7 hosted structured concurrency is the
-next language implementation boundary.
+checked 16-byte callable cell. Slice 7 now connects lexical scopes and typed
+task outcomes through WVIR 1.21 and WVB 1.32. Decisions 0861 and 0864 through
+0868 add bounded task-state execution, completion and retained-memory admission,
+explicit runtime-environment injection, and a same-scope queued scheduler that
+allows four sibling handles to coexist. Provider-generation recovery, an
+externally observable completion-order workload, parallel-capable paired-host
+execution, promotion, and final Slice 7 qualification remain the active
+language implementation boundary.
 
 Remaining collection
 families, general ownership, localized token execution, direct

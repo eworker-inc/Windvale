@@ -732,7 +732,7 @@ captures, retained captures, general same-signature dispatch, and escaping
 environments remain separately versioned extensions; browser and OS execution,
 paired-host qualification, and candidate promotion remain separate target gates.
 
-## Current Slice 7 sequential structured-task checkpoint
+## Current Slice 7 queued structured-task checkpoint
 
 [Decision 0861](../Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 connects the accepted lexical task surface to the real edition-1 compiler,
@@ -745,7 +745,7 @@ outer resource release. Affine scope and handle state must agree at every
 control-flow join; work, context, and handles cannot escape their admitted
 lifetime or be silently copied.
 
-The current correctness oracle is one bounded sequential scheduler. It supplies
+The current correctness oracle is one bounded queued scheduler. It supplies
 the root memory budget and operation context through dedicated execution-request
 major `6`, admits at most 64 children and 1 MiB of retained task state, charges
 one work unit per dispatched verified WVB instruction, retains completed
@@ -773,11 +773,20 @@ runtime loss/restart, stale context, and unavailable runtime through 17 focused
 execution cases; malformed numeric and request input is rejected before module
 execution.
 
-This completes the sequential implementation checkpoint, not the whole Slice 7
-qualification promise. A parallel-capable Windows host and a parallel-capable
-Linux host must still prove the same canonical observations under different
-completion order before Slice 7 is closed. Child-provider generation workloads,
-deterministic completion-order coverage, paired-host
+[Decision 0868](../Decisions/0868-Queue-Structured-Task-Children-Before-Await.md)
+removes the first runner's eager spawn behavior. Accepted work now enters one
+bounded same-scope queue and returns its typed handle before child execution.
+The reference scheduler selects four task-slot lanes in order `3, 1, 0, 2`,
+while consuming awaits and report construction remain in source creation order.
+One permanent source fixture proves that four sibling handles coexist and all
+four observe a cancellation requested before the first await. Its prior eager
+execution result was `0`; the queued runner returns `42` and preserves the six
+earlier task-execution results.
+
+This completes the queued single-thread implementation checkpoint, not the
+whole Slice 7 qualification promise. The externally observable hosted-service
+completion-order report, child-provider generation and recovery workload, a
+parallel-capable Windows host, a parallel-capable Linux host, paired-host
 reconstruction, candidate promotion, and broad Qualification remain explicit
 final Slice 7 gates rather than per-edit tests.
 

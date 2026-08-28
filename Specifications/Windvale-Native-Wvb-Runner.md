@@ -395,7 +395,7 @@ raising the unchanged 64-MiB native lowering plan limit. Each bounded closure
 record is also assembled before one arena append, so a creation does not copy
 the complete retained arena once per header field.
 
-WVB 1.32 adds a deterministic sequential structured-task scheduler beneath the
+WVB 1.32 adds a deterministic queued structured-task scheduler beneath the
 same verified source semantics. The launcher supplies the exact root memory
 budget and operation context. Opcodes `D6` through `DB` construct one lexical
 scope, derive its context, transfer accepted async work, consume handles at
@@ -406,18 +406,29 @@ application limit. The bounded header retains exact root-context, clock,
 deadline, and task-runtime generation evidence. A cooperative observation
 applies deadline, runtime loss/restart, cancellation, or byte-identical
 continuation in that priority order.
-Every accepted live child reserves one completion position. A full runnable or
-completion bound rejects spawn before work ownership moves; completion retains
+Every accepted live child reserves one completion position. `Task.Spawn`
+materializes the child locals, appends a bounded queued-child descriptor, and
+returns the typed handle before child execution. A full runnable, completion,
+or queue bound rejects spawn before work ownership moves; completion retains
 the reservation until the exact affine handle is awaited or the scope tears
 down.
 
 Each accepted child also reserves its exact sequential scheduler footprint
-before ownership moves: one 40-byte pending continuation, one 8-byte completion
-cell, the child locals, and the newly suspended parent frame. A reservation
-larger than the scope's remaining retained-byte limit returns the original
-closure as typed `Memoryˉfailure(Budgetˉexhausted)` with exact requested and
-available bytes. Completion keeps the reservation; await or scope teardown
-releases it.
+before ownership moves: one 56-byte queued-child descriptor, the child locals,
+and the newly suspended parent frame. The descriptor covers the smaller
+40-byte active continuation plus reserved 8-byte completion cell used after
+dispatch. The complete queue is bounded to 1 MiB and each child-local payload to
+4,096 bytes. A reservation larger than the scope's remaining retained-byte
+limit returns the original closure as typed
+`Memoryˉfailure(Budgetˉexhausted)` with exact requested and available bytes.
+Completion keeps the reservation; await or scope teardown releases it.
+
+When await observes a runnable handle, the reference scheduler selects only
+queued children from that handle's origin scope. Each consecutive four-slot
+group uses lane priority `3, 1, 0, 2`. Child completion returns to the same
+await, which then consumes the completed task; source reports therefore remain
+creation ordered even though runtime completion order differs. This is a
+deterministic single-thread oracle, not a portable worker-count promise.
 
 One child work unit is one dispatched verified WVB instruction after the spawn
 baseline. Exhaustion is observed by the parent as
@@ -453,17 +464,18 @@ use the full `u64` range. Invalid arity or values return status `64` before
 execution. Successful task execution preserves `Result: <i32>` on standard
 output and process exit zero.
 
-The current development runner contains 222 functions and 414,206 code bytes in
-a 464,589-byte WVB at SHA-256
-`5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2`.
-It packages to a 5,659,136-byte Windows hosted application at SHA-256
-`2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114`.
+The current development runner contains 227 functions and 424,375 code bytes in
+a 476,206-byte WVB at SHA-256
+`b3db4ca49b5e5b4659f507e5adb4a87dd53115dcdee1420a7b1a8ab8ce0ae3af`.
+It packages to a 5,822,464-byte Windows hosted application at SHA-256
+`226f6a9d67fcd7c56342cba86ac5feba8cd647876178f2eaecc77aafd437d92b`.
 The 4,231-byte success fixture, the 5,057-byte environment fixture, child-trap
 fixture, aggregate-retention pressure fixture, one-work-unit fixture,
-call-depth-one fixture, retained-memory refusal fixture, and 46-case task-state
-self-test all pass their exact outcomes. The complete focused owner passes 159
-cases. These are focused sequential development results; parallel-capable
-paired-host evidence remains pending.
+call-depth-one fixture, retained-memory refusal fixture, four-child cancellation
+fixture, and 46-case task-state self-test all pass their exact outcomes. The
+complete focused owner passes 160 cases. These are focused sequential
+development results; exact reconstruction and parallel-capable paired-host
+evidence remain pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

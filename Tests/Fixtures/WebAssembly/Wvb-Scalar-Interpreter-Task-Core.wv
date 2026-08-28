@@ -64,6 +64,11 @@ export record Awaitˉresult {
     State: bytes;
 }
 
+export record Taskˉstatus {
+    Valid: bool;
+    Status: u32;
+}
+
 export record Cancelˉresult {
     Valid: bool;
     Alreadyˉrequested: bool;
@@ -908,6 +913,27 @@ export fn Observeˉtask(
         Observation.Firstˉevidence, Observation.Secondˉevidence,
         Completed.State
     );
+}
+
+export fn Inspectˉtaskˉstatus(
+    State: bytes,
+    Task: bytes,
+    Scope: bytes
+) -> Taskˉstatus {
+    let Index: u32 = Taskˉindex(State, Task);
+    if Index == TASK_CAPACITY {
+        return Taskˉstatus(false, 0u32);
+    }
+    let Entry: u32 = Taskˉoffset(Index);
+    let Status: u32 = Bytesˉreadˉu32ˉlittle(State, Entry + 16u32);
+    if (Status != 1u32 && Status != 2u32) ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 8u32) !=
+            Bytesˉreadˉu32ˉlittle(Scope, 0u32) ||
+        Bytesˉreadˉu32ˉlittle(State, Entry + 12u32) !=
+            Bytesˉreadˉu32ˉlittle(Scope, 4u32) {
+        return Taskˉstatus(false, 0u32);
+    }
+    return Taskˉstatus(true, Status);
 }
 
 export fn Awaitˉtask(State: bytes, Task: bytes, Scope: bytes) -> Awaitˉresult {
