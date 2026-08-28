@@ -756,7 +756,10 @@ reserves one outcome position per accepted live child. [Decision 0865](../Decisi
 also reserves the exact pending continuation, terminal cell, child locals, and
 newly suspended parent frame before capture acceptance. Insufficient retained
 capacity returns exact typed memory failure and the original work without state
-mutation. The task-state core has a standalone 38-case native self-test, while
+mutation. [Decision 0866](../Decisions/0866-Observe-Structured-Task-Runtime-Environment.md)
+adds a bounded cooperative observation point with exact deadline priority,
+cancellation, and task-runtime loss/restart generations. The task-state core
+has a standalone 46-case native self-test, while
 executable source fixtures cover success, child trap, retained-result pressure,
 work exhaustion, call-depth exhaustion, and retained-memory refusal through the
 interpreter.
@@ -764,9 +767,10 @@ interpreter.
 This completes the sequential implementation checkpoint, not the whole Slice 7
 qualification promise. A parallel-capable Windows host and a parallel-capable
 Linux host must still prove the same canonical observations under different
-completion order before Slice 7 is closed. Cancellation/deadline/provider-loss
-workload coverage, paired-host reconstruction, candidate promotion, and broad
-Qualification remain explicit final Slice 7 gates rather than per-edit tests.
+completion order before Slice 7 is closed. Host/request time, child-provider
+generation workloads, deterministic completion-order coverage, paired-host
+reconstruction, candidate promotion, and broad Qualification remain explicit
+final Slice 7 gates rather than per-edit tests.
 
 ## Removal checkpoint
 

@@ -61,17 +61,199 @@ fn Bytesˉequal(First: bytes, Second: bytes) -> bool {
     return true;
 }
 
+fn Testˉcontextˉfailures(
+    State: bytes,
+    Budget: bytes,
+    Context: bytes,
+    Empty: bytes
+) -> bool {
+    let Staleˉcontext: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
+        State, Budget, Limits(1u32, 1u32, 1u32),
+        Token(4294967295u32, 2u32)
+    );
+    if !Staleˉcontext.Valid || Staleˉcontext.Accepted ||
+        Staleˉcontext.Failure != 2u32 ||
+        Staleˉcontext.Minimum != 1u64 ||
+        Staleˉcontext.Observed != 2u64 ||
+        !Bytesˉequal(Staleˉcontext.State, State) {
+        return false;
+    }
+    let Unavailableˉstate: bytes =
+        Tasks.Constructˉstateˉwithˉenvironment(
+            Empty, 1u32, 1u64, 100u64, 7u64, 0u64
+        );
+    let Unavailableˉscope: Tasks.Scopeˉconstruction =
+        Tasks.Constructˉscope(
+            Unavailableˉstate, Budget, Limits(1u32, 1u32, 1u32), Context
+        );
+    return Unavailableˉscope.Valid && !Unavailableˉscope.Accepted &&
+        Unavailableˉscope.Failure == 3u32 &&
+        Unavailableˉscope.Minimum == 7u64 &&
+        Unavailableˉscope.Observed == 0u64 &&
+        Bytesˉequal(Unavailableˉscope.State, Unavailableˉstate);
+}
+
+fn Testˉcancelˉobservation(
+    Budget: bytes,
+    Context: bytes,
+    Empty: bytes
+) -> bool {
+    var State: bytes = Tasks.Constructˉstate(Empty);
+    let Scope: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
+        State, Budget, Limits(1u32, 1u32, 1u32), Context
+    );
+    if !Scope.Valid || !Scope.Accepted { return false; }
+    State = Scope.State;
+    let Task: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Scope.Token, 8u64
+    );
+    if !Task.Valid || !Task.Accepted { return false; }
+    State = Task.State;
+    let Cancel: Tasks.Cancelˉresult = Tasks.Requestˉcancel(
+        State, Scope.Token
+    );
+    if !Cancel.Valid || Cancel.Alreadyˉrequested { return false; }
+    State = Cancel.State;
+    let Observation: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Task.Token, 1u64, 1u64, 1u64
+    );
+    if !Observation.Valid || !Observation.Terminal ||
+        Observation.Terminalˉkind != 1u32 {
+        return false;
+    }
+    State = Observation.State;
+    let Awaited: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        State, Task.Token, Scope.Token
+    );
+    if !Awaited.Valid || Awaited.Terminalˉkind != 1u32 { return false; }
+    let Exited: Tasks.Scopeˉexit = Tasks.Exitˉscope(
+        Awaited.State, Scope.Token, 1u32
+    );
+    return Exited.Valid;
+}
+
+fn Testˉenvironmentˉobservations(
+    Budget: bytes,
+    Context: bytes,
+    Empty: bytes,
+    Successˉvalue: bytes
+) -> bool {
+    var State: bytes = Tasks.Constructˉstateˉwithˉenvironment(
+        Empty, 1u32, 1u64, 100u64, 7u64, 7u64
+    );
+    let Scope: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
+        State, Budget, Limits(4u32, 4u32, 4u32), Context
+    );
+    if !Scope.Valid || !Scope.Accepted { return false; }
+    State = Scope.State;
+
+    let Deadlineˉtask: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Scope.Token, 8u64
+    );
+    if !Deadlineˉtask.Valid || !Deadlineˉtask.Accepted { return false; }
+    State = Deadlineˉtask.State;
+    let Deadline: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Deadlineˉtask.Token, 100u64, 1u64, 0u64
+    );
+    if !Deadline.Valid || !Deadline.Terminal ||
+        Deadline.Terminalˉkind != 2u32 || Deadline.Firstˉevidence != 0u64 ||
+        Deadline.Secondˉevidence != 0u64 {
+        return false;
+    }
+    let Deadlineˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        Deadline.State, Deadlineˉtask.Token, Scope.Token
+    );
+    if !Deadlineˉawait.Valid || Deadlineˉawait.Terminalˉkind != 2u32 {
+        return false;
+    }
+    State = Deadlineˉawait.State;
+
+    let Lostˉtask: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Scope.Token, 8u64
+    );
+    if !Lostˉtask.Valid || !Lostˉtask.Accepted { return false; }
+    State = Lostˉtask.State;
+    let Lost: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Lostˉtask.Token, 99u64, 1u64, 0u64
+    );
+    if !Lost.Valid || !Lost.Terminal || Lost.Terminalˉkind != 3u32 ||
+        Lost.Firstˉevidence != 7u64 || Lost.Secondˉevidence != 0u64 {
+        return false;
+    }
+    let Lostˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        Lost.State, Lostˉtask.Token, Scope.Token
+    );
+    if !Lostˉawait.Valid || Lostˉawait.Terminalˉkind != 3u32 {
+        return false;
+    }
+    State = Lostˉawait.State;
+
+    let Restartedˉtask: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Scope.Token, 8u64
+    );
+    if !Restartedˉtask.Valid || !Restartedˉtask.Accepted { return false; }
+    State = Restartedˉtask.State;
+    let Restarted: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Restartedˉtask.Token, 99u64, 1u64, 8u64
+    );
+    if !Restarted.Valid || !Restarted.Terminal ||
+        Restarted.Terminalˉkind != 4u32 ||
+        Restarted.Firstˉevidence != 7u64 ||
+        Restarted.Secondˉevidence != 8u64 {
+        return false;
+    }
+    let Restartedˉawait: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        Restarted.State, Restartedˉtask.Token, Scope.Token
+    );
+    if !Restartedˉawait.Valid || Restartedˉawait.Terminalˉkind != 4u32 {
+        return false;
+    }
+    State = Restartedˉawait.State;
+
+    let Continuingˉtask: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
+        State, Scope.Token, 8u64
+    );
+    if !Continuingˉtask.Valid || !Continuingˉtask.Accepted { return false; }
+    State = Continuingˉtask.State;
+    let Invalidˉclock: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Continuingˉtask.Token, 99u64, 2u64, 7u64
+    );
+    if Invalidˉclock.Valid || !Bytesˉequal(Invalidˉclock.State, State) {
+        return false;
+    }
+    let Continuing: Tasks.Taskˉobservation = Tasks.Observeˉtask(
+        State, Continuingˉtask.Token, 99u64, 1u64, 7u64
+    );
+    if !Continuing.Valid || Continuing.Terminal ||
+        !Bytesˉequal(Continuing.State, State) {
+        return false;
+    }
+    let Completed: Tasks.Taskˉcompletion = Tasks.Completeˉtask(
+        State, Continuingˉtask.Token, Successˉvalue
+    );
+    if !Completed.Valid { return false; }
+    let Awaited: Tasks.Awaitˉresult = Tasks.Awaitˉtask(
+        Completed.State, Continuingˉtask.Token, Scope.Token
+    );
+    if !Awaited.Valid { return false; }
+    let Exited: Tasks.Scopeˉexit = Tasks.Exitˉscope(
+        Awaited.State, Scope.Token, 0u32
+    );
+    return Exited.Valid;
+}
+
 export fn Main() -> i32 {
     let Empty: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     var State: bytes = Tasks.Constructˉstate(Empty);
-    if Bytesˉlength(State) != 10000u32 { return 1; }
+    if Bytesˉlength(State) != 10040u32 { return 1; }
 
     let Budget: bytes = Token(1u32, 3u32);
-    let Context: bytes = Token(1u32, 1u32);
+    let Context: bytes = Token(4294967295u32, 1u32);
     let Refused: Tasks.Scopeˉconstruction = Tasks.Constructˉscope(
         State, Budget, Limits(0u32, 0u32, 0u32), Context
     );
-    if !Refused.Valid || Refused.Accepted || Refused.Field != 0u32 ||
+    if !Refused.Valid || Refused.Accepted || Refused.Failure != 0u32 ||
+        Refused.Field != 0u32 ||
         Refused.Observed != 0u64 || Refused.Minimum != 1u64 ||
         Refused.Maximum != 64u64 || !Bytesˉequal(Refused.State, State) {
         return 2;
@@ -85,7 +267,7 @@ export fn Main() -> i32 {
         return 3;
     }
     State = Constructed.State;
-    let Forgedˉcounters: bytes = Replaceˉu32(State, 32u32, 1u32);
+    let Forgedˉcounters: bytes = Replaceˉu32(State, 72u32, 1u32);
     let Forgedˉspawn: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(
         Forgedˉcounters, Constructed.Token, 8u64
     );
@@ -577,6 +759,14 @@ export fn Main() -> i32 {
     );
     if !Memoryˉexit.Valid { return 37; }
     State = Memoryˉexit.State;
+
+    if !Testˉcontextˉfailures(State, Budget, Context, Empty) { return 38; }
+    if !Testˉcancelˉobservation(Budget, Context, Empty) { return 40; }
+    if !Testˉenvironmentˉobservations(
+            Budget, Context, Empty, Successˉvalue
+        ) {
+        return 41;
+    }
 
     let Malformed: bytes = Replaceˉu32(State, 0u32, 0u32);
     let Malformedˉspawn: Tasks.Spawnˉbegin = Tasks.Beginˉspawn(

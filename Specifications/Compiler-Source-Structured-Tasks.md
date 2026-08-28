@@ -148,7 +148,44 @@ This limit accounts task-runtime continuation and outcome state. Heap storage
 reachable through a capture or outcome remains charged to its explicit memory
 budget and is kept live by the task root; it is not charged a second time to
 the scope's scheduler-state limit. The internal fixed task-state encoding is
-version 2 and stores one exact 64-bit reservation in every active task record.
+version 3. Its bounded 56-byte header stores the root operation-context
+identity and generation, clock generation, absolute deadline, and expected and
+observed task-runtime generations. Every active task record continues to store
+one exact 64-bit retained-state reservation.
+
+Scope construction accepts either the exact live root context or a context
+derived from a still-live scope. A generation mismatch returns
+`Taskˉscopeˉfailure.Staleˉcontext(Expected, Observed)`; an absent or replaced
+task runtime returns `Runtimeˉunavailable(Expected, Observed)`; exhausted fixed
+scope storage returns the exact allocation failure. Each refusal occurs before
+budget ownership or runtime state changes.
+
+## Task environment and terminal observation
+
+A runnable child observes its environment only at a named cooperative runtime
+point. The observation validates the task identity and exact clock generation,
+then applies one deterministic priority order:
+
+1. `Tick >= Deadline` produces `Taskˉoutcome.Deadlineˉreached`;
+2. before the deadline, observed task-runtime generation zero produces
+   `Runtimeˉlost(Expected)`;
+3. a different nonzero task-runtime generation produces
+   `Runtimeˉrestarted(Expected, Observed)`;
+4. otherwise a cancellation request on the origin scope produces `Cancelled`;
+5. otherwise the child remains runnable and task state is unchanged.
+
+Deadline and cancellation carry no generation evidence. Runtime loss carries
+only the nonzero expected generation. Runtime restart carries nonzero, distinct
+expected and observed generations. Invalid task identity, completed state, or
+clock generation leaves the state byte-identical and cannot manufacture an
+outcome. A terminal observation uses the ordinary reserved completion slot and
+retained-memory charge until consuming `Await` or scope teardown releases it.
+
+The current sequential command-line runner constructs a non-expiring default
+environment with context, clock, and task-runtime generation 1. The private
+runtime self-test injects exact alternative ticks and generations. Binding a
+host/request clock, child-provider generations, and parallel worker state is a
+later Slice 7 checkpoint and does not change source, WVIR 1.21, or WVB 1.32.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer

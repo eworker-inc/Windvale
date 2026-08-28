@@ -746,6 +746,9 @@ try {
     for (const [Name, Mutate] of Ownedˉaggregateˉmalformedˉcases) {
         const Candidate = Buffer.from(Ownedˉaggregateˉsuccessˉbytes);
         Mutate(Candidate);
+        if (Candidate.equals(Ownedˉaggregateˉsuccessˉbytes)) {
+            Reject(`The malformed aggregate mutation ${Name} changed no bytes.`);
+        }
         const Candidateˉpath = path.join(Work, `${Name}.wvb`);
         writeFileSync(Candidateˉpath, Candidate, { flag: 'wx' });
         Requireˉinvalid(Verifier, Candidateˉpath, Name);
@@ -950,7 +953,7 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${113 + Growˉmalformedˉcases.length +
+        `cases=${121 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=21 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -960,7 +963,7 @@ try {
             Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
-        'structured-task-cases=19 structured-task-runtime-cases=38 ' +
+        'structured-task-cases=27 structured-task-runtime-cases=46 ' +
         'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -1123,9 +1126,19 @@ function Requireˉinvalid(Verifier, Candidate, Label) {
         encoding: 'utf8', windowsHide: true,
         maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
     });
-    if (Result.error !== undefined || Result.status === 0 ||
-        Result.stdout.includes('wvb status=Valid')) {
-        Reject(`The verifier accepted malformed case ${Label}.`);
+    if (Result.error !== undefined) {
+        Reject(
+            `The verifier could not inspect malformed case ${Label}: ` +
+            `${Result.error.message}.`,
+        );
+    }
+    if (Result.status === 0 ||
+        (Result.stdout ?? '').includes('wvb status=Valid')) {
+        Reject(
+            `The verifier accepted malformed case ${Label}: ` +
+            `status=${Result.status}\nstdout=${Result.stdout ?? ''}` +
+            `\nstderr=${Result.stderr ?? ''}`,
+        );
     }
 }
 
@@ -1627,10 +1640,7 @@ function Inspectˉownedˉaggregateˉmodule(Bytes) {
         .find(Shape => Shape.shape === 7 && Shape.typeIndex === 1);
     const Ownerˉlocal = Entries.flatMap(Entry => Entry.localShapes)
         .find(Shape => Shape.shape === 7 && Shape.typeIndex === 1);
-    const Borrowedˉlocal = Entries.flatMap(Entry => Entry.localShapes)
-        .find(Shape => Shape.shape === 28 && Shape.typeIndex === 1);
-    if (Ownerˉparameter === undefined || Ownerˉlocal === undefined ||
-        Borrowedˉlocal === undefined) {
+    if (Ownerˉparameter === undefined || Ownerˉlocal === undefined) {
         Reject('The owned aggregate owner/view shapes differ.');
     }
     const Viewˉsequences = [];
@@ -1683,6 +1693,7 @@ function Inspectˉownedˉaggregateˉmodule(Bytes) {
                 Viewˉsequences.push({
                     ownerLoad: Loadˉowner.absolute,
                     viewLoad: Loadˉview.absolute,
+                    viewShapeOffset: Viewˉshape.shapeOffset,
                 });
             }
         }
@@ -1695,7 +1706,7 @@ function Inspectˉownedˉaggregateˉmodule(Bytes) {
     return {
         ownerParameter: Ownerˉparameter.shapeOffset,
         ownerLocal: Ownerˉlocal.shapeOffset,
-        borrowedLocal: Borrowedˉlocal.shapeOffset,
+        borrowedLocal: Viewˉsequences[0].viewShapeOffset,
         ownerLoadOpcode: Viewˉsequences[0].ownerLoad,
         borrowedLoadOpcode: Viewˉsequences[0].viewLoad,
     };

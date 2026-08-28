@@ -143,6 +143,14 @@ portable runner implements deterministic sequential execution, typed success,
 stable child traps, exact work and child-call-depth exhaustion, retained
 aggregate completion roots, and lexical scope teardown.
 
+[Decision 0866](0866-Observe-Structured-Task-Runtime-Environment.md) advances
+the private bounded task state to retain root-context, clock, deadline, and
+task-runtime generation evidence. Its cooperative observation point implements
+exact deadline priority, cancellation, runtime loss, and runtime restart while
+leaving invalid observations byte-identical. The ordinary runner still uses a
+non-expiring generation-1 environment; host/request injection, child-provider
+generation workloads, and parallel scheduling remain pending.
+
 The runner transports this exact entry through execution-request major `6`.
 The request contains only the fixed instruction/depth header and hosted WVB
 module; the envelope requires WVB 1.32, hosted profile `2`, no declared

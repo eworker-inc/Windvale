@@ -12,12 +12,12 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrst'];
 const EXPECTED_RUNNER = WINDOWS
     ? {
-        bytes: 5_366_784,
-        sha256: '063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519'
+        bytes: 5_429_248,
+        sha256: '2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38'
     }
     : {
-        bytes: 5_365_760,
-        sha256: '6e18c9c9480df40814b81244b3dcd039c8851ded646a240134d4e2969b9c2e71'
+        bytes: 5_431_296,
+        sha256: '6f645b05d9d3b8e2cae34703487f559e5212155fc4ff02c374176ed7e9844054'
     };
 
 function Reject(Message) {

@@ -21,11 +21,11 @@ set "ReleaseInput=Distribution/Installers/Windvale-Release-Installer.json"
 set "DevelopmentWindowsArchive=windvale-0.2.0-dev.1-windows-x64.zip"
 set "DevelopmentLinuxArchive=windvale-0.2.0-dev.1-linux-x64.tar.gz"
 set "DevelopmentPackageDirectory=windvale-0.2.0-dev.1-windows-x64"
-set "DevelopmentPayload=e0b5e51960a555af38aae1ebf992a1e8f4fb89d114e1dbd4f19da4f4c4062bb4"
+set "DevelopmentPayload=84400f1d17e8f8a4a7a020aecb4aaedeb1c8428959e1d2557779a6e2b3908392"
 set "WindowsArchive=windvale-0.1.0-windows-x64.zip"
 set "LinuxArchive=windvale-0.1.0-linux-x64.tar.gz"
 set "PackageDirectory=windvale-0.1.0-windows-x64"
-set "Generation=0.1.0-windows-x64-af1f41a495fc"
+set "Generation=0.1.0-windows-x64-bfd36bac7993"
 
 echo native installer step=construct-candidates item=1/8 channels=2 targets=2 attempts=2
 node "%Builder%" build "%Work%\First-Development" || goto :cleanup
@@ -38,10 +38,10 @@ fc /b "%Work%\First-Development\%DevelopmentWindowsArchive%" "%Work%\Second-Deve
 fc /b "%Work%\First-Development\%DevelopmentLinuxArchive%" "%Work%\Second-Development\%DevelopmentLinuxArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%WindowsArchive%" "%Work%\Second-Release\%WindowsArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%LinuxArchive%" "%Work%\Second-Release\%LinuxArchive%" >nul || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 5425920 f4c3d15cde199230688682df6413cc6564b0cbc5979cdfc78b92af3498a62849 "Windows development installer" || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 5420897 043176b3499e9a7a882324b463da3a5f1a8916d02e68a0031e8abb0b73b00642 "Linux development installer" || goto :cleanup
-call :verify_file "%Work%\First-Release\%WindowsArchive%" 42941959 4c05155fc41a3821afeffe0645614f3e80d6a77bf7685c6147ff93000bfa44c4 "Windows release installer" || goto :cleanup
-call :verify_file "%Work%\First-Release\%LinuxArchive%" 42951906 af40e4d1c58ecb40aa9c75678081625f4171abf1116e7d5d7362e97ea8c0c58e "Linux release installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 5439956 cf1eb3c8f35edbe0e03cd73ef72e03d8c3a44003d38c0cc9490ffc8857db1e1b "Windows development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 5436217 1b7719bb1f9110cd3d1f4bf47ef11fb43788935b83ce67b9c20cc44da460a81c "Linux development installer" || goto :cleanup
+call :verify_file "%Work%\First-Release\%WindowsArchive%" 43004423 12e2c055f64f7678d73fbd5c3b7aa9bd02c200e1e9d93e87f27b93c4e71d8865 "Windows release installer" || goto :cleanup
+call :verify_file "%Work%\First-Release\%LinuxArchive%" 43017447 56acb8f2082373dd862773d57449f014362e115475c865bf6505f3f459c203d8 "Linux release installer" || goto :cleanup
 
 echo native installer step=verify-and-reject item=3/8 channel=stable
 node "%Builder%" verify "%Work%\First-Release\%WindowsArchive%" "%ReleaseInput%" >nul || goto :cleanup

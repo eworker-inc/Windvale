@@ -26,12 +26,12 @@ field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 446,532 | `56b208d1f892f4bdd1d9c309bb6d4d46257d533a76d79d22efc8f83f27896fbe` |
-| Windows application | 5,366,784 | `063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519` |
-| Linux application | 5,365,760 | `6e18c9c9480df40814b81244b3dcd039c8851ded646a240134d4e2969b9c2e71` |
+| WVB runner | 450,825 | `fd65e221c22a48fb20da47e18099351d338a0e8107357e6a04246c2a7f31a9ef` |
+| Windows application | 5,429,248 | `2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38` |
+| Linux application | 5,431,296 | `6f645b05d9d3b8e2cae34703487f559e5212155fc4ff02c374176ed7e9844054` |
 
-Segmented staging emits 5,357,511 object bytes across 12 chunks. Linking emits a
-5,348,533-byte native image with entry offset 105,270; canonical transport
+Segmented staging emits 5,420,317 object bytes across 13 chunks. Linking emits a
+5,411,237-byte native image with entry offset 105,270; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
@@ -399,8 +399,12 @@ same verified source semantics. The launcher supplies the exact root memory
 budget and operation context. Opcodes `D6` through `DB` construct one lexical
 scope, derive its context, transfer accepted async work, consume handles at
 await, request cancellation idempotently, and join/consume the scope. The
-runtime stores fixed task records in one 10,000-byte version-2 state value and admits at
-most 64 accepted/runnable/retained children under the lower application limit.
+runtime stores fixed task records in one 10,040-byte version-3 state value and
+admits at most 64 accepted/runnable/retained children under the lower
+application limit. The bounded header retains exact root-context, clock,
+deadline, and task-runtime generation evidence. A cooperative observation
+applies deadline, runtime loss/restart, cancellation, or byte-identical
+continuation in that priority order.
 Every accepted live child reserves one completion position. A full runnable or
 completion bound rejects spawn before work ownership moves; completion retains
 the reservation until the exact affine handle is awaited or the scope tears
@@ -433,15 +437,15 @@ creates both launcher-owned values. Request major `5` remains reserved for
 execution preserves the ordinary CLI contract: `Result: <i32>` on standard
 output and process exit zero.
 
-The current Windows development runner contains 213 functions and 399,144 code
-bytes in a 446,532-byte WVB at SHA-256
-`56b208d1f892f4bdd1d9c309bb6d4d46257d533a76d79d22efc8f83f27896fbe`.
-It packages to a 5,366,784-byte hosted application at SHA-256
-`063de8f1fadcf9c37e9cef6526d628b410fa0cd21067fe6f3c795b97623cb519`.
+The current Windows development runner contains 216 functions and 402,863 code
+bytes in a 450,825-byte WVB at SHA-256
+`fd65e221c22a48fb20da47e18099351d338a0e8107357e6a04246c2a7f31a9ef`.
+It packages to a 5,429,248-byte hosted application at SHA-256
+`2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38`.
 The 4,231-byte success
 fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
-fixture, call-depth-one fixture, retained-memory refusal fixture, and 38-case
-task-state self-test all return `42`. The complete focused owner passes 134
+fixture, call-depth-one fixture, retained-memory refusal fixture, and 46-case
+task-state self-test all return `42`. The complete focused owner passes 142
 cases. These are focused sequential development results. The candidate is
 repinned in the table above; parallel-capable paired-host evidence remains
 pending.

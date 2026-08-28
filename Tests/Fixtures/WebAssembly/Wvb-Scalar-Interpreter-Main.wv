@@ -6267,26 +6267,62 @@ fn Executeˉtaskˉoperation(
             let Failureˉtype: u32 = Taskˉvariantˉfieldˉnominal(
                 Module, Typeˉoffsets, Resultˉtype, 1u32
             );
-            if Failureˉtype == 4294967295u32 { return Invalid; }
-            var Failureˉfields: bytes = Bytesˉconcat(
-                Bytesˉfromˉu32ˉlittle(Constructed.Field),
-                Bytesˉfromˉu32ˉlittle(0u32)
-            );
-            Failureˉfields = Bytesˉconcat(
-                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Observed)
-            );
-            Failureˉfields = Bytesˉconcat(
-                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Minimum)
-            );
-            Failureˉfields = Bytesˉconcat(
-                Failureˉfields, Bytesˉfromˉu64ˉlittle(Constructed.Maximum)
-            );
+            if Failureˉtype == 4294967295u32 ||
+                Constructed.Failure > 3u32 {
+                return Invalid;
+            }
+            var Failureˉfields: bytes = Empty;
+            var Failureˉmetadata: bytes = Metadata;
+            var Failureˉrecords: bytes = Records;
+            if Constructed.Failure == 0u32 {
+                Failureˉfields = Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Constructed.Field),
+                    Bytesˉfromˉu32ˉlittle(0u32)
+                );
+                Failureˉfields = Bytesˉconcat(
+                    Failureˉfields,
+                    Bytesˉfromˉu64ˉlittle(Constructed.Observed)
+                );
+                Failureˉfields = Bytesˉconcat(
+                    Failureˉfields,
+                    Bytesˉfromˉu64ˉlittle(Constructed.Minimum)
+                );
+                Failureˉfields = Bytesˉconcat(
+                    Failureˉfields,
+                    Bytesˉfromˉu64ˉlittle(Constructed.Maximum)
+                );
+            } else if Constructed.Failure == 1u32 {
+                let Allocationˉfailureˉtype: u32 =
+                    Taskˉvariantˉfieldˉnominalˉat(
+                        Module, Typeˉoffsets, Failureˉtype,
+                        1u32, 0u32, 1u32
+                    );
+                if Allocationˉfailureˉtype == 4294967295u32 {
+                    return Invalid;
+                }
+                let Allocationˉfailure: Aggregateˉallocation =
+                    Allocateˉexactˉallocationˉfailure(
+                        Module, Typeˉoffsets, Allocationˉfailureˉtype,
+                        1u8,
+                        Constructed.Observed, Constructed.Minimum,
+                        Metadata, Records, Zeroˉcell
+                    );
+                if !Allocationˉfailure.Valid { return Invalid; }
+                Failureˉfields = Allocationˉfailure.Handle;
+                Failureˉmetadata = Allocationˉfailure.Metadata;
+                Failureˉrecords = Allocationˉfailure.Values;
+            } else {
+                Failureˉfields = Bytesˉconcat(
+                    Bytesˉfromˉu64ˉlittle(Constructed.Minimum),
+                    Bytesˉfromˉu64ˉlittle(Constructed.Observed)
+                );
+            }
             let Failureˉowner: u32 = 2147483648u32 +
-                (Failureˉtype + 1u32) * 256u32;
+                (Failureˉtype + 1u32) * 256u32 + Constructed.Failure;
             let Failureˉallocation: Taskˉvalueˉallocation =
                 Allocateˉtaskˉvalue(
                     Failureˉowner, Failureˉfields,
-                    Metadata, Records, Zeroˉcell
+                    Failureˉmetadata, Failureˉrecords, Zeroˉcell
                 );
             if !Failureˉallocation.Valid { return Invalid; }
             Resultˉfield = Failureˉallocation.Value;
@@ -6950,7 +6986,7 @@ fn Initializeˉtaskˉruntime(
         );
     }
     let Rootˉcontextˉtoken: bytes = Bytesˉconcat(
-        Bytesˉfromˉu32ˉlittle(1u32),
+        Bytesˉfromˉu32ˉlittle(4294967295u32),
         Bytesˉfromˉu32ˉlittle(1u32)
     );
     let Rootˉcontext: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(

@@ -3707,3 +3707,53 @@ The verification registry remains 114 owners and advances to 5,531 cases. Its
 `e204915df4a1674a404222e0577531116bf96559635507c9335ac878c50a8216`.
 Independent Windows and Linux reconstruction and affected-owner integration
 remain pending before this newest candidate becomes paired-host evidence.
+
+## Slice 7 task-environment observation checkpoint
+
+[Decision 0866](../Decisions/0866-Observe-Structured-Task-Runtime-Environment.md)
+gives the sequential task runtime one bounded, deterministic observation point
+for the environment evidence frozen by the concurrent-service workload. The
+private task-state model advances to version 3 and 10,040 bytes. Its 56-byte
+header retains the root context identity and generation, clock generation,
+absolute deadline, expected task-runtime generation, and observed task-runtime
+generation. Root identity `4294967295` cannot collide with a bounded scope.
+
+Scope construction now distinguishes invalid limits, allocation refusal, stale
+parent context, and unavailable runtime generation without moving the budget or
+changing state. Task observation validates the task and clock generation, then
+applies exact priority: deadline, runtime loss/restart, cancellation, or
+byte-identical continuation. Terminal observation reuses the reserved
+completion slot and exact eight-byte empty result cell.
+
+The self-test adds stale-context, runtime-unavailable, cancellation,
+exact-deadline, runtime-lost, runtime-restarted, invalid-clock, and continuing
+cases. Its native package exits `42` across 46 declared runtime cases. The full
+focused owner passes all 56 phases and reports:
+
+```text
+native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed cases=142 valid=21 malformed=69 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 structured-task-cases=27 structured-task-runtime-cases=46 callable-runner-cases=2 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05 structured-task-wvb-bytes=4231 structured-task-sha256=11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8
+```
+
+The successor local candidate is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB runner | 450,825 | `fd65e221c22a48fb20da47e18099351d338a0e8107357e6a04246c2a7f31a9ef` |
+| Windows runner | 5,429,248 | `2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38` |
+| Linux runner | 5,431,296 | `6f645b05d9d3b8e2cae34703487f559e5212155fc4ff02c374176ed7e9844054` |
+
+It contains 216 functions and 402,863 code bytes. Staging emits 5,420,317
+object bytes in 13 chunks. Linking emits a 5,411,237-byte image at entry offset
+105,270 in nine chunks; canonical transport uses two chunks.
+
+The verification registry remains 114 owners and advances to 5,539 cases. Its
+18,379 LF-only bytes have SHA-256
+`263ec9e6314505d5442f822bf4029cca8903d6e203d89e534a2db70d2463befe`.
+The focused three-case reconstruction owner independently rebuilds all three
+artifacts, proves byte equality, and passes current-host execution, reporting,
+usage rejection, and malformed-module rejection. The repinned distribution
+passes eight installer lifecycle cases and twelve selective
+installer-repository cases. Independent Windows/Linux affected-owner evidence
+remains pending. The ordinary runner still supplies a non-expiring
+generation-1 environment; host/request time, provider generations, and
+parallel scheduling are later Slice 7 checkpoints.
