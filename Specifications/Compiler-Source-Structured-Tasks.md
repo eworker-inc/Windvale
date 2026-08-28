@@ -193,11 +193,26 @@ environment with context, clock, and task-runtime generation 1. Its explicit
 `--task-environment` mode injects exact context, clock, deadline, admitted and
 observed task-runtime generations, and observation tick through
 execution-request major `6`, minor `1`; malformed values are rejected before
-module execution. A permanent four-child cancellation fixture proves that four
-accepted sibling handles coexist before child execution and that cancellation
-can terminate every queued child. Child-provider generations, an externally
-observable completion-order report, and parallel worker state remain later
-Slice 7 checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
+module execution. Zero-capability task modules retain that request and its
+fixed 72-byte header.
+
+Execution-request major `6`, minor `2` is the bounded observable-output form.
+Its fixed 84-byte header adds an exact capability-grant bit, a standard-output
+limit no greater than 65,536 bytes, and a required-zero reserved word before
+the module. This first form accepts exactly one hosted declaration with the
+canonical name and signature `console.write_line(text) -> void`; it does not
+grant an ambient console or accept a different capability. The ordinary runner
+uses a 64-byte output limit, validates the response lengths, and writes the
+returned standard and diagnostic streams to their separate host sinks.
+
+A permanent four-child cancellation fixture proves that four accepted sibling
+handles coexist before child execution and that cancellation can terminate
+every queued child. A second permanent fixture prints its task-slot value from
+each child. Its exact transcript is `3`, `1`, `0`, `2`, followed by
+`Result: 42`: completion is visibly lane ordered while consuming awaits still
+associate values `0`, `1`, `2`, `3` with their creation-ordered handles.
+Child-provider generations and parallel worker state remain later Slice 7
+checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer

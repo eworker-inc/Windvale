@@ -181,13 +181,18 @@ fn Parseˉtaskˉenvironment() -> Taskˉenvironment {
 
 fn Buildˉstructuredˉtaskˉrequest(
     Module: bytes,
-    Environment: Taskˉenvironment
+    Environment: Taskˉenvironment,
+    Includeˉoutput: bool
 ) -> bytes {
     let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
     if !Environment.Valid { return Invalid; }
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
     Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(6u32));
-    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(1u32));
+    var Requestˉminor: u32 = 1u32;
+    if Includeˉoutput { Requestˉminor = 2u32; }
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu16ˉlittle(Requestˉminor)
+    );
     Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
     Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
     Request = Bytesˉconcat(
@@ -217,6 +222,11 @@ fn Buildˉstructuredˉtaskˉrequest(
         Request,
         Bytesˉfromˉu64ˉlittle(Environment.Observedˉruntimeˉgeneration)
     );
+    if Includeˉoutput {
+        Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1u32));
+        Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(64u32));
+        Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(0u32));
+    }
     return Bytesˉconcat(Request, Module);
 }
 
@@ -395,10 +405,14 @@ fn Runˉcontextˉentry(
     Request: bytes,
     Profile: text,
     Responseˉmajor: u32,
-    Reportˉresult: bool
+    Responseˉminor: u32,
+    Reportˉresult: bool,
+    Emitˉoutput: bool
 ) -> i32 {
     let Response: bytes = Interpreter.Main(Request);
-    if Bytesˉlength(Response) != 20u32 {
+    var Invalidˉlength: bool = Bytesˉlength(Response) != 20u32;
+    if Emitˉoutput { Invalidˉlength = Bytesˉlength(Response) < 28u32; }
+    if Invalidˉlength {
         var Phase: text = "execution";
         if Bytesˉlength(Envelopeˉreader.Interpreterˉenvelope(Request))
             < 64u32 {
@@ -412,9 +426,38 @@ fn Runˉcontextˉentry(
     }
     if Bytesˉreadˉu32ˉlittle(Response, 0u32) != 1331189335u32 ||
         Bytesˉreadˉu16ˉlittle(Response, 4u32) != Responseˉmajor ||
-        Bytesˉreadˉu16ˉlittle(Response, 6u32) != 0u32 {
+        Bytesˉreadˉu16ˉlittle(Response, 6u32) != Responseˉminor {
         diagnostic.write_line("wvb run status=Invalidˉresponse");
         return 1;
+    }
+    if Emitˉoutput {
+        let Standardˉoutputˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Response, 20u32
+        );
+        let Diagnosticˉoutputˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Response, 24u32
+        );
+        if Standardˉoutputˉlength > Bytesˉlength(Response) - 28u32 ||
+            Diagnosticˉoutputˉlength != Bytesˉlength(Response) - 28u32
+                - Standardˉoutputˉlength {
+            diagnostic.write_line("wvb run status=Invalidˉresponse");
+            return 1;
+        }
+        if !Emitˉlines(
+                Bytesˉslice(Response, 28u32, Standardˉoutputˉlength),
+                false
+            ) ||
+            !Emitˉlines(
+                Bytesˉslice(
+                    Response,
+                    28u32 + Standardˉoutputˉlength,
+                    Diagnosticˉoutputˉlength
+                ),
+                true
+            ) {
+            diagnostic.write_line("wvb run status=Invalidˉresponse");
+            return 1;
+        }
     }
     let Status: u32 = Bytesˉreadˉu32ˉlittle(Response, 8u32);
     if Status != 0u32 {
@@ -456,6 +499,8 @@ fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
         Buildˉsourceˉfileˉrequest(Module, Snapshot),
         "source-file-main-i32",
         5u32,
+        0u32,
+        false,
         false
     );
 }
@@ -464,11 +509,24 @@ fn Runˉstructuredˉtask(
     Module: bytes,
     Environment: Taskˉenvironment
 ) -> i32 {
+    let Includeˉoutput: bool = Isˉstructuredˉtaskˉoutputˉmodule(Module);
+    if Includeˉoutput {
+        return Runˉcontextˉentry(
+            Buildˉstructuredˉtaskˉrequest(Module, Environment, true),
+            "structured-task-main-i32",
+            6u32,
+            2u32,
+            true,
+            true
+        );
+    }
     return Runˉcontextˉentry(
-        Buildˉstructuredˉtaskˉrequest(Module, Environment),
+        Buildˉstructuredˉtaskˉrequest(Module, Environment, false),
         "structured-task-main-i32",
         6u32,
-        true
+        0u32,
+        true,
+        false
     );
 }
 
@@ -480,6 +538,29 @@ fn Isˉstructuredˉtaskˉmodule(Module: bytes) -> bool {
         Bytesˉreadˉu32ˉlittle(Module, 12u32) == 1u32 &&
         Bytesˉreadˉu32ˉlittle(Module, 16u32) >= 1u32 &&
         U32ˉfromˉu8(Bytesˉreadˉu8(Module, 20u32)) == 2u32;
+}
+
+fn Isˉstructuredˉtaskˉoutputˉmodule(Module: bytes) -> bool {
+    if !Isˉstructuredˉtaskˉmodule(Module) || Bytesˉlength(Module) < 32u32 {
+        return false;
+    }
+    let Firstˉpayloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(Module, 16u32);
+    if Firstˉpayloadˉlength > Bytesˉlength(Module) - 20u32 {
+        return false;
+    }
+    let Capabilityˉheader: u32 = 20u32 + Firstˉpayloadˉlength;
+    if Capabilityˉheader > Bytesˉlength(Module) - 12u32 {
+        return false;
+    }
+    let Capabilityˉpayloadˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Capabilityˉheader + 4u32
+    );
+    if Capabilityˉpayloadˉlength < 4u32 ||
+        Capabilityˉpayloadˉlength > Bytesˉlength(Module)
+            - Capabilityˉheader - 8u32 {
+        return false;
+    }
+    return Bytesˉreadˉu32ˉlittle(Module, Capabilityˉheader + 8u32) != 0u32;
 }
 
 export fn Main() -> i32 {

@@ -440,13 +440,27 @@ Timer and diagnostic limits are validated but remain at zero use because the
 first task opcode family creates neither resource.
 
 The public one-module command recognizes the canonical hosted WVB 1.32 profile
-and selects execution-request major `6`, minor `1`. Its fixed 72-byte
-little-endian header contains magic, version, instruction/depth limits, module
-length, context generation, clock generation, deadline, expected and admitted
-task-runtime generations, observation tick, and observed task-runtime
-generation, followed by the exact module. Envelope validation requires hosted
-profile `2`, no declared capabilities, WVB 1.32, exact request/module length,
-nonzero context/clock/expected-runtime generations, and exact
+and selects execution-request major `6`. A module without capabilities uses
+minor `1`. Its fixed 72-byte little-endian header contains magic, version,
+instruction/depth limits, module length, context generation, clock generation,
+deadline, expected and admitted task-runtime generations, observation tick,
+and observed task-runtime generation, followed by the exact module.
+
+A module that declares the exact existing
+`console.write_line(text) -> void` capability uses request and response minor
+`2`. Its fixed 84-byte request header appends one capability-grant bit at offset
+72, a standard-output byte limit at offset 76, and a required-zero reserved
+word at offset 80 before the exact module. Grants above bit zero, an output
+limit above 65,536 bytes, a nonzero reserved word, any capability count other
+than one, or a different name, version, signature, or hosted profile is
+rejected before execution. The ordinary command grants that single capability
+with a 64-byte output ceiling. The minor-2 response appends bounded standard-
+and diagnostic-output lengths and exact bytes after the common 20-byte result;
+the runner validates both lengths before emitting each stream to its matching
+host sink.
+
+Both forms require WVB 1.32, exact request/module length, nonzero
+context/clock/expected-runtime generations, and exact
 `Main(Memoryˉbudget, Operationˉcontext) -> i32`; execution then creates both
 launcher-owned values. Request major `5` remains reserved for `--source-file`
 and cannot be reused as a task envelope.
@@ -464,18 +478,21 @@ use the full `u64` range. Invalid arity or values return status `64` before
 execution. Successful task execution preserves `Result: <i32>` on standard
 output and process exit zero.
 
-The current development runner contains 227 functions and 424,375 code bytes in
-a 476,206-byte WVB at SHA-256
-`b3db4ca49b5e5b4659f507e5adb4a87dd53115dcdee1420a7b1a8ab8ce0ae3af`.
-It packages to a 5,822,464-byte Windows hosted application at SHA-256
-`226f6a9d67fcd7c56342cba86ac5feba8cd647876178f2eaecc77aafd437d92b`.
+The current development runner contains 228 functions and 430,311 code bytes in
+a 482,631-byte WVB at SHA-256
+`66fda2e18f7250aa3595edf5313403c5c20416f6a50c2b0dc7aaa3e94f5a058f`.
+It packages to a 5,903,872-byte Windows hosted application at SHA-256
+`b9133aad5e485d8f5e894f078db4c47b2599cf644b34b6a0813085e900787526`.
 The 4,231-byte success fixture, the 5,057-byte environment fixture, child-trap
 fixture, aggregate-retention pressure fixture, one-work-unit fixture,
 call-depth-one fixture, retained-memory refusal fixture, four-child cancellation
-fixture, and 46-case task-state self-test all pass their exact outcomes. The
-complete focused owner passes 160 cases. These are focused sequential
-development results; exact reconstruction and parallel-capable paired-host
-evidence remain pending.
+fixture, 6,544-byte observable completion-order fixture, and 46-case task-state
+self-test all pass their exact outcomes. The completion-order fixture writes
+`3`, `1`, `0`, `2`, then `Result: 42`; its WVB SHA-256 is
+`6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c`.
+The complete focused owner passes all 59 named phases and 161 cases. These are
+focused sequential development results; exact reconstruction, provider-
+generation recovery, and parallel-capable paired-host evidence remain pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

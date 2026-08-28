@@ -2771,6 +2771,7 @@ record Executionˉrequest {
     Taskˉadmittedˉruntimeˉgeneration: u64;
     Taskˉobservationˉtick: u64;
     Taskˉobservedˉruntimeˉgeneration: u64;
+    Requestˉminor: u32;
 }
 
 fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
@@ -2779,7 +2780,7 @@ fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         false, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
-        0u32, 0u32, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64
+        0u32, 0u32, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64, 0u32
     );
 }
 
@@ -2832,6 +2833,7 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
     var Taskˉadmittedˉruntimeˉgeneration: u64 = 0u64;
     var Taskˉobservationˉtick: u64 = 0u64;
     var Taskˉobservedˉruntimeˉgeneration: u64 = 0u64;
+    var Requestˉminor: u32 = 0u32;
     var Typeˉoffsetsˉoffset: u32 = 64u32;
     if Major == 3u32 {
         if Bytesˉlength(Preflight) < 84u32 {
@@ -2897,9 +2899,7 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
             return Invalidˉexecutionˉrequest(Request);
         }
     } else if Major == 6u32 {
-        Typeˉoffsetsˉoffset = 120u32;
-        if Bytesˉlength(Preflight)
-            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength ||
+        if Bytesˉlength(Preflight) < 124u32 ||
             Bytesˉreadˉu32ˉlittle(Preflight, 68u32) != 0u32 {
             return Invalidˉexecutionˉrequest(Request);
         }
@@ -2920,6 +2920,38 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         Taskˉobservedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
             Preflight, 112u32
         );
+        Requestˉminor = Bytesˉreadˉu32ˉlittle(Preflight, 120u32);
+        if Requestˉminor == 1u32 {
+            Typeˉoffsetsˉoffset = 124u32;
+        } else if Requestˉminor == 2u32 {
+            if Bytesˉlength(Preflight) < 144u32 {
+                return Invalidˉexecutionˉrequest(Request);
+            }
+            Capabilities = Bytesˉreadˉu32ˉlittle(Preflight, 124u32);
+            Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Preflight, 128u32);
+            Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(
+                Preflight, 132u32
+            );
+            Declaredˉcapabilities = Bytesˉreadˉu32ˉlittle(
+                Preflight, 136u32
+            );
+            let Taskˉcapabilityˉkindsˉlength: u32 =
+                Bytesˉreadˉu32ˉlittle(Preflight, 140u32);
+            Typeˉoffsetsˉoffset = 144u32 + Taskˉcapabilityˉkindsˉlength;
+            if Taskˉcapabilityˉkindsˉlength != 1u32 ||
+                Typeˉoffsetsˉoffset > Bytesˉlength(Preflight) {
+                return Invalidˉexecutionˉrequest(Request);
+            }
+            Capabilityˉkinds = Bytesˉslice(
+                Preflight, 144u32, Taskˉcapabilityˉkindsˉlength
+            );
+        } else {
+            return Invalidˉexecutionˉrequest(Request);
+        }
+        if Bytesˉlength(Preflight)
+            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength {
+            return Invalidˉexecutionˉrequest(Request);
+        }
         if Taskˉcontextˉgeneration == 0u32 ||
             Taskˉclockˉgeneration == 0u64 ||
             Taskˉexpectedˉruntimeˉgeneration == 0u64 {
@@ -2941,15 +2973,15 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         Taskˉcontextˉgeneration, Taskˉclockˉgeneration, Taskˉdeadline,
         Taskˉexpectedˉruntimeˉgeneration,
         Taskˉadmittedˉruntimeˉgeneration, Taskˉobservationˉtick,
-        Taskˉobservedˉruntimeˉgeneration
+        Taskˉobservedˉruntimeˉgeneration, Requestˉminor
     );
 }
 
-fn Capabilityˉdeniedˉresponse(Major: u32) -> bytes {
+fn Capabilityˉdeniedˉresponse(Major: u32, Minor: u32) -> bytes {
     let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     var Response: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
     Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(Major));
-    Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(0u32));
+    Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(Minor));
     Response = Bytesˉconcat(Response, Bytesˉfromˉu32ˉlittle(3010u32));
     Response = Bytesˉconcat(Response, Zero);
     Response = Bytesˉconcat(Response, Zero);
@@ -2960,6 +2992,7 @@ fn Capabilityˉdeniedˉresponse(Major: u32) -> bytes {
 
 fn Failureˉresponse(
     Major: u32,
+    Minor: u32,
     Status: u32,
     Executed: u32,
     Standardˉoutput: bytes,
@@ -2968,11 +3001,12 @@ fn Failureˉresponse(
     let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
     var Response: bytes = Bytesˉfromˉu32ˉlittle(1331189335u32);
     Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(Major));
-    Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(0u32));
+    Response = Bytesˉconcat(Response, Bytesˉfromˉu16ˉlittle(Minor));
     Response = Bytesˉconcat(Response, Bytesˉfromˉu32ˉlittle(Status));
     Response = Bytesˉconcat(Response, Bytesˉfromˉu32ˉlittle(Executed));
     Response = Bytesˉconcat(Response, Zero);
-    if Major == 3u32 || Major == 4u32 {
+    if Major == 3u32 || Major == 4u32 ||
+        (Major == 6u32 && Minor == 2u32) {
         Response = Bytesˉconcat(
             Response,
             Bytesˉfromˉu32ˉlittle(Bytesˉlength(Standardˉoutput))
@@ -7518,6 +7552,7 @@ fn Executeˉtaskˉinstruction(
 
 fn Successfulˉexecutionˉresponse(
     Requestˉmajor: u32,
+    Responseˉminor: u32,
     Executed: u32,
     Returnˉresult: bytes,
     Stack: bytes,
@@ -7528,13 +7563,16 @@ fn Successfulˉexecutionˉresponse(
     Success = Bytesˉconcat(
         Success, Bytesˉfromˉu16ˉlittle(Requestˉmajor)
     );
-    Success = Bytesˉconcat(Success, Bytesˉfromˉu16ˉlittle(0u32));
+    Success = Bytesˉconcat(
+        Success, Bytesˉfromˉu16ˉlittle(Responseˉminor)
+    );
     Success = Bytesˉconcat(Success, Bytesˉfromˉu32ˉlittle(0u32));
     Success = Bytesˉconcat(Success, Bytesˉfromˉu32ˉlittle(Executed));
     Success = Bytesˉconcat(
         Success, Bytesˉslice(Returnˉresult, 0u32, 4u32)
     );
-    if Requestˉmajor == 3u32 || Requestˉmajor == 4u32 {
+    if Requestˉmajor == 3u32 || Requestˉmajor == 4u32 ||
+        (Requestˉmajor == 6u32 && Responseˉminor == 2u32) {
         var Streamˉsuccess: bytes = Success;
         Streamˉsuccess = Bytesˉconcat(
             Streamˉsuccess,
@@ -7558,6 +7596,10 @@ export fn Main(Request: bytes) -> bytes {
     let Parsed: Executionˉrequest = Readˉexecutionˉrequest(Request);
     if !Parsed.Valid { return Invalid; }
     let Requestˉmajor: u32 = Parsed.Major;
+    var Responseˉminor: u32 = 0u32;
+    if Requestˉmajor == 6u32 && Parsed.Requestˉminor == 2u32 {
+        Responseˉminor = 2u32;
+    }
     let Maximumˉinstructions: u32 = Parsed.Maximumˉinstructions;
     let Maximumˉcallˉdepth: u32 = Parsed.Maximumˉcallˉdepth;
     let Module: bytes = Parsed.Module;
@@ -7593,7 +7635,7 @@ export fn Main(Request: bytes) -> bytes {
     if Requestˉmajor >= 3u32 &&
         (Capabilityˉgrants & Declaredˉcapabilities)
             != Declaredˉcapabilities {
-        return Capabilityˉdeniedˉresponse(Requestˉmajor);
+        return Capabilityˉdeniedˉresponse(Requestˉmajor, Responseˉminor);
     }
 
     let Directory: Functionˉdirectory = Readˉfunctionˉdirectory(
@@ -8489,7 +8531,8 @@ export fn Main(Request: bytes) -> bytes {
                     );
                 }
                 return Successfulˉexecutionˉresponse(
-                    Requestˉmajor, Envelope, Returnˉresult, Stack,
+                    Requestˉmajor, Responseˉminor,
+                    Envelope, Returnˉresult, Stack,
                     Standardˉoutput, Diagnosticˉoutput
                 );
             }
@@ -8780,6 +8823,7 @@ export fn Main(Request: bytes) -> bytes {
     if Sectionˉkind != 0u32 {
         return Failureˉresponse(
             Requestˉmajor,
+            Responseˉminor,
             Sectionˉkind,
             Envelope,
             Standardˉoutput,

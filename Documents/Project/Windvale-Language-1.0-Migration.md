@@ -783,12 +783,21 @@ four observe a cancellation requested before the first await. Its prior eager
 execution result was `0`; the queued runner returns `42` and preserves the six
 earlier task-execution results.
 
+[Decision 0869](../Decisions/0869-Expose-Structured-Task-Completion-Order.md)
+makes that scheduling difference observable without adding a scheduler API.
+Execution-request major `6`, minor `2` admits only the exact existing
+`console.write_line(text) -> void` capability and a bounded standard-output
+buffer. A real four-child source program now prints `3`, `1`, `0`, `2` as its
+children finish, then returns `42` only when four consuming awaits still yield
+values `0`, `1`, `2`, `3` through their creation-ordered handles. The
+zero-capability task request remains minor `1`; source syntax, WVIR 1.21, and
+WVB 1.32 are unchanged.
+
 This completes the queued single-thread implementation checkpoint, not the
-whole Slice 7 qualification promise. The externally observable hosted-service
-completion-order report, child-provider generation and recovery workload, a
-parallel-capable Windows host, a parallel-capable Linux host, paired-host
-reconstruction, candidate promotion, and broad Qualification remain explicit
-final Slice 7 gates rather than per-edit tests.
+whole Slice 7 qualification promise. The child-provider generation and recovery
+workload, a parallel-capable Windows host, a parallel-capable Linux host,
+paired-host reconstruction, candidate promotion, and broad Qualification remain
+explicit final Slice 7 gates rather than per-edit tests.
 
 ## Removal checkpoint
 

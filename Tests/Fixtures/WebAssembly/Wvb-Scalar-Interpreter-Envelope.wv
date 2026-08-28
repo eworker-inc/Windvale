@@ -51,7 +51,8 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if Requestˉmajor < 1u32 { return Invalid; }
     if Requestˉmajor > 6u32 { return Invalid; }
     let Requestˉminor: u32 = Bytesˉreadˉu16ˉlittle(Request, 6u32);
-    if (Requestˉmajor == 6u32 && Requestˉminor != 1u32) ||
+    if (Requestˉmajor == 6u32 && Requestˉminor != 1u32 &&
+            Requestˉminor != 2u32) ||
         (Requestˉmajor != 6u32 && Requestˉminor != 0u32) {
         return Invalid;
     }
@@ -178,8 +179,20 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         Guestˉinputˉoffset = 40u32 + Moduleˉlength;
     }
     if Requestˉmajor == 6u32 {
-        if Requestˉlength < 84u32 { return Invalid; }
-        Moduleˉoffset = 72u32;
+        if Requestˉminor == 1u32 {
+            if Requestˉlength < 84u32 { return Invalid; }
+            Moduleˉoffset = 72u32;
+        } else {
+            if Requestˉlength < 96u32 { return Invalid; }
+            Moduleˉoffset = 84u32;
+            Capabilityˉgrants = Bytesˉreadˉu32ˉlittle(Request, 72u32);
+            Standardˉoutputˉlimit = Bytesˉreadˉu32ˉlittle(Request, 76u32);
+            if Bytesˉreadˉu32ˉlittle(Request, 80u32) != 0u32 ||
+                Capabilityˉgrants > 1u32 ||
+                Standardˉoutputˉlimit > 65536u32 {
+                return Invalid;
+            }
+        }
         Moduleˉlength = Bytesˉreadˉu32ˉlittle(Request, 16u32);
         Taskˉcontextˉgeneration = Bytesˉreadˉu32ˉlittle(Request, 20u32);
         Taskˉclockˉgeneration = Bytesˉreadˉu64ˉlittle(Request, 24u32);
@@ -197,7 +210,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         if Taskˉcontextˉgeneration == 0u32 ||
             Taskˉclockˉgeneration == 0u64 ||
             Taskˉexpectedˉruntimeˉgeneration == 0u64 ||
-            Moduleˉlength != Requestˉlength - 72u32 {
+            Moduleˉlength != Requestˉlength - Moduleˉoffset {
             return Invalid;
         }
     }
@@ -383,6 +396,36 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                 Scriptˉcapabilityˉindex = Scriptˉcapabilityˉindex + 1u32;
             }
         }
+    } else if Requestˉmajor == 6u32 && Requestˉminor == 2u32 {
+        if Moduleˉprofile != 2u32 || Capabilityˉcount != 1u32 {
+            return Invalid;
+        }
+        var Taskˉcapabilityˉcursor: u32 = Capabilities + 4u32;
+        let Taskˉcapabilityˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Module, Taskˉcapabilityˉcursor
+        );
+        Taskˉcapabilityˉcursor = Taskˉcapabilityˉcursor + 4u32;
+        if !Capabilityˉnameˉequals(
+                Module, Taskˉcapabilityˉcursor,
+                Taskˉcapabilityˉnameˉlength, "console.write_line"
+            ) {
+            return Invalid;
+        }
+        Taskˉcapabilityˉcursor = Taskˉcapabilityˉcursor
+            + Taskˉcapabilityˉnameˉlength;
+        if Bytesˉreadˉu32ˉlittle(Module, Taskˉcapabilityˉcursor) != 1u32 {
+            return Invalid;
+        }
+        Taskˉcapabilityˉcursor = Taskˉcapabilityˉcursor + 4u32;
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Taskˉcapabilityˉcursor))
+                != 3u32 ||
+            U32ˉfromˉu8(Bytesˉreadˉu8(
+                Module, Taskˉcapabilityˉcursor + 1u32
+            )) != 0u32 {
+            return Invalid;
+        }
+        Capabilityˉkinds = Bytesˉfromˉu8(1u8);
+        Declaredˉcapabilities = 1u32;
     } else if Requestˉmajor == 5u32 || Requestˉmajor == 6u32 {
         if Moduleˉprofile != 2u32 || Capabilityˉcount != 0u32 {
             return Invalid;
@@ -795,6 +838,28 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             Result,
             Bytesˉfromˉu64ˉlittle(Taskˉobservedˉruntimeˉgeneration)
         );
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu32ˉlittle(Requestˉminor)
+        );
+        if Requestˉminor == 2u32 {
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu32ˉlittle(Capabilities)
+            );
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu32ˉlittle(Capabilityˉgrants)
+            );
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu32ˉlittle(Standardˉoutputˉlimit)
+            );
+            Result = Bytesˉconcat(
+                Result, Bytesˉfromˉu32ˉlittle(Declaredˉcapabilities)
+            );
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉfromˉu32ˉlittle(Bytesˉlength(Capabilityˉkinds))
+            );
+            Result = Bytesˉconcat(Result, Capabilityˉkinds);
+        }
     }
     return Bytesˉconcat(Result, Typeˉoffsets);
 }

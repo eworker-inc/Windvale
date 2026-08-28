@@ -3866,3 +3866,51 @@ Exact runner reconstruction remains pending for the settled checkpoint.
 Provider-generation recovery, an externally observable completion-order report,
 parallel-capable Windows/Linux execution, candidate promotion, and final Slice
 7 Qualification remain later gates.
+
+## Slice 7 externally observable completion-order checkpoint
+
+[Decision 0869](../Decisions/0869-Expose-Structured-Task-Completion-Order.md)
+turns the deterministic reference scheduler's internal lane choice into bounded
+application evidence without adding a scheduling primitive to the language.
+The new edition-1 fixture creates four real child tasks, each capturing and
+printing its task-slot value through the existing explicitly required
+`console.write_line` capability. It then consumes all four handles in source
+creation order and returns `42` only when their values are still `0`, `1`, `2`,
+and `3`.
+
+The request boundary remains execution major `6`. Zero-capability task modules
+retain minor `1` and its 72-byte header. Minor `2` uses one fixed 84-byte header
+with an exact one-bit capability grant, a standard-output limit no greater than
+65,536 bytes, and a required-zero reserved word. It accepts only one hosted
+`console.write_line(text) -> void` declaration. The public runner chooses a
+64-byte limit and rejects inconsistent response lengths before writing either
+returned stream.
+
+The fixture is a deterministic 6,544-byte WVB at SHA-256
+`6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c`.
+The current source-built runner is 482,631 WVB bytes with 228 functions and
+430,311 code bytes at SHA-256
+`66fda2e18f7250aa3595edf5313403c5c20416f6a50c2b0dc7aaa3e94f5a058f`.
+Its 5,903,872-byte current-host Windows package has SHA-256
+`b9133aad5e485d8f5e894f078db4c47b2599cf644b34b6a0813085e900787526`.
+The exact execution transcript is:
+
+```text
+3
+1
+0
+2
+Result: 42
+```
+
+The complete affected owner passes all 59 named construction, compilation,
+compiler-aligned verification, hosted packaging, and execution phases and all
+161 declared cases. These include 23 valid modules, 69 malformed modules, 29
+structured-task cases, 46 task-runtime cases, and 17 task-environment cases.
+The complete 114-owner registry advances to 5,558 cases and 18,687 LF-only bytes
+at SHA-256
+`0963248791b636431789ac7543434d186edbcb2eb60337a7e792682ac3da7f5b`.
+
+Provider-generation recovery, parallel-capable Windows/Linux execution, exact
+paired reconstruction, candidate promotion, and the final Slice 7 Qualification
+gate remain pending.

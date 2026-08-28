@@ -59,6 +59,8 @@ const EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256 =
     '92c1c521d4bd1a3198ff01dd54a97fb5153170afe009b6c0111ce06aba51fb64';
 const EXPECTED_STRUCTURED_TASK_FOUR_CHILD_CANCELLATION_SHA256 =
     'b4d9c67cee803da4fb53ef21a57ccbdf9ecc410c54c369262f3c2187599df88c';
+const EXPECTED_STRUCTURED_TASK_COMPLETION_ORDER_SHA256 =
+    '6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c';
 const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
@@ -271,6 +273,9 @@ try {
     const Structuredˉtaskˉfourˉchildˉcancellation = path.join(
         Work, 'Structured-Task-Four-Child-Cancellation.wvb',
     );
+    const Structuredˉtaskˉcompletionˉorder = path.join(
+        Work, 'Structured-Task-Completion-Order.wvb',
+    );
     const Structuredˉtaskˉenvironment = path.join(
         Work, 'Structured-Task-Environment.wvb',
     );
@@ -366,6 +371,20 @@ try {
         Admitter, Analyzer, Emitter,
         'Structured-Task-Four-Child-Cancellation-Executable.wv',
         Structuredˉtaskˉfourˉchildˉcancellation,
+    );
+    Compileˉtask(
+        'structured-task-completion-order-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Completion-Order-Executable.wv',
+        Structuredˉtaskˉcompletionˉorder,
+    );
+    const Structuredˉtaskˉcompletionˉorderˉbytes = readFileSync(
+        Structuredˉtaskˉcompletionˉorder,
+    );
+    Requireˉexactˉdigest(
+        Structuredˉtaskˉcompletionˉorderˉbytes,
+        EXPECTED_STRUCTURED_TASK_COMPLETION_ORDER_SHA256,
+        'structured-task completion-order fixture',
     );
     Compileˉtask(
         'structured-task-environment-compile',
@@ -605,6 +624,10 @@ try {
     Requireˉvalid(
         Verifier, Structuredˉtaskˉfourˉchildˉcancellation,
         'structured-task four-child cancellation module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉcompletionˉorder,
+        'structured-task completion-order module',
     );
     Requireˉvalid(
         Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
@@ -1013,6 +1036,10 @@ try {
         Runner, Structuredˉtaskˉfourˉchildˉcancellation,
         'structured-task four-child cancellation execution',
     );
+    Requireˉtaskˉcompletionˉorder(
+        Runner, Structuredˉtaskˉcompletionˉorder,
+        'structured-task completion-order execution',
+    );
     Requireˉresultˉ42(
         Runner, Structuredˉtaskˉenvironment,
         'structured-task default environment execution',
@@ -1096,8 +1123,8 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${139 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=22 malformed=${
+        `cases=${140 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=23 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
@@ -1106,7 +1133,7 @@ try {
             Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
-        'structured-task-cases=28 structured-task-runtime-cases=46 ' +
+        'structured-task-cases=29 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
@@ -1127,6 +1154,10 @@ try {
         `source-file-sha256=${Sourceˉfileˉsha256} ` +
         `structured-task-wvb-bytes=${Structuredˉtaskˉbytes.length} ` +
         `structured-task-sha256=${Digest(Structuredˉtaskˉbytes)} ` +
+        `task-completion-order-wvb-bytes=${
+            Structuredˉtaskˉcompletionˉorderˉbytes.length} ` +
+        `task-completion-order-sha256=${
+            Digest(Structuredˉtaskˉcompletionˉorderˉbytes)} ` +
         `task-environment-wvb-bytes=${Structuredˉtaskˉenvironmentˉbytes.length} ` +
         `task-environment-sha256=${Digest(Structuredˉtaskˉenvironmentˉbytes)}\n`,
     );
@@ -1295,6 +1326,23 @@ function Requireˉresultˉ42(Runner, Candidate, Label) {
     });
     if (Result.error !== undefined || Result.status !== 0 ||
         Normalize(Result.stdout) !== 'Result: 42\n' || Result.stderr.length !== 0) {
+        Reject(
+            `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? 'none'}\n` +
+            `stdout=${Normalize(Result.stdout)}\n` +
+            `stderr=${Normalize(Result.stderr)}`,
+        );
+    }
+}
+
+function Requireˉtaskˉcompletionˉorder(Runner, Candidate, Label) {
+    const Result = spawnSync(Runner, [Candidate], {
+        encoding: 'utf8', windowsHide: true,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+    });
+    if (Result.error !== undefined || Result.status !== 0 ||
+        Normalize(Result.stdout) !== '3\n1\n0\n2\nResult: 42\n' ||
+        Result.stderr.length !== 0) {
         Reject(
             `The ${Label} differed: status=${Result.status} ` +
             `error=${Result.error?.message ?? 'none'}\n` +
