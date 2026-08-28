@@ -1,5 +1,13 @@
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import {
+    mkdtemp,
+    mkdir,
+    readFile,
+    readdir,
+    rm,
+    writeFile,
+} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +20,10 @@ const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..', '..');
 const CACHE_SCRIPT = path.join(
     SCRIPT_DIRECTORY,
     'Build-Cached-Split-Project-Wvb.mjs',
+);
+const IDENTITY_WRITER = path.join(
+    SCRIPT_DIRECTORY,
+    'Write-Split-Compiler-Producer-Identity.mjs',
 );
 const PROJECT = path.join(
     REPOSITORY_ROOT,
@@ -54,6 +66,27 @@ try {
     const Analyzerˉidentity = path.join(Testˉroot, 'analyzer.identity');
     const Emitterˉidentity = path.join(Testˉroot, 'emitter.identity');
     await writeFile(Producer, Buffer.from([0x57]));
+    const Producerˉsha256 = createHash('sha256')
+        .update(Buffer.from([0x57])).digest('hex');
+    const Identityˉresult = spawnSync(process.execPath, [
+        IDENTITY_WRITER,
+        'analyzer',
+        Producer,
+        Analyzerˉidentity,
+    ], {
+        cwd: REPOSITORY_ROOT,
+        encoding: 'utf8',
+        windowsHide: true,
+    });
+    if (Identityˉresult.status !== 0 || Identityˉresult.stderr !== '' ||
+        !(await readFile(Analyzerˉidentity)).equals(Buffer.from(
+            Identity('analyzer', 1, Producerˉsha256), 'ascii'
+        ))) {
+        Reject(
+            'The split producer identity was not published through the ' +
+            'temporary directory path.',
+        );
+    }
     await writeFile(
         Analyzerˉidentity,
         Identity('analyzer', 2, '0'.repeat(64)),
@@ -91,8 +124,9 @@ try {
         Reject(`The failed cache publication retained debris: ${Debris[0]}`);
     }
     console.log(
-        'split project cache test cases=2 status=Passed ' +
-        'module-order=Passed forced-failure-cleanup=Passed',
+        'split project cache test cases=3 status=Passed ' +
+        'module-order=Passed identity-publication=Passed ' +
+        'forced-failure-cleanup=Passed',
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
