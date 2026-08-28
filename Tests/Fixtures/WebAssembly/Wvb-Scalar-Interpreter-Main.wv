@@ -2762,6 +2762,13 @@ record Executionˉrequest {
     Declaredˉcapabilities: u32;
     Capabilityˉkinds: bytes;
     Sourceˉgeneration: u32;
+    Taskˉcontextˉgeneration: u32;
+    Taskˉclockˉgeneration: u64;
+    Taskˉdeadline: u64;
+    Taskˉexpectedˉruntimeˉgeneration: u64;
+    Taskˉadmittedˉruntimeˉgeneration: u64;
+    Taskˉobservationˉtick: u64;
+    Taskˉobservedˉruntimeˉgeneration: u64;
 }
 
 fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
@@ -2770,7 +2777,7 @@ fn Invalidˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         false, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32, Empty, 0u32, Empty,
-        0u32
+        0u32, 0u32, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64
     );
 }
 
@@ -2816,6 +2823,13 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
     var Sourceˉrights: u32 = 0u32;
     var Sourceˉgeneration: u32 = 0u32;
     var Sourceˉresourceˉgeneration: u32 = 0u32;
+    var Taskˉcontextˉgeneration: u32 = 0u32;
+    var Taskˉclockˉgeneration: u64 = 0u64;
+    var Taskˉdeadline: u64 = 0u64;
+    var Taskˉexpectedˉruntimeˉgeneration: u64 = 0u64;
+    var Taskˉadmittedˉruntimeˉgeneration: u64 = 0u64;
+    var Taskˉobservationˉtick: u64 = 0u64;
+    var Taskˉobservedˉruntimeˉgeneration: u64 = 0u64;
     var Typeˉoffsetsˉoffset: u32 = 64u32;
     if Major == 3u32 {
         if Bytesˉlength(Preflight) < 84u32 {
@@ -2880,6 +2894,35 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
             Sourceˉresourceˉgeneration != Sourceˉgeneration {
             return Invalidˉexecutionˉrequest(Request);
         }
+    } else if Major == 6u32 {
+        Typeˉoffsetsˉoffset = 120u32;
+        if Bytesˉlength(Preflight)
+            != Typeˉoffsetsˉoffset + Typeˉoffsetsˉlength ||
+            Bytesˉreadˉu32ˉlittle(Preflight, 68u32) != 0u32 {
+            return Invalidˉexecutionˉrequest(Request);
+        }
+        Taskˉcontextˉgeneration = Bytesˉreadˉu32ˉlittle(
+            Preflight, 64u32
+        );
+        Taskˉclockˉgeneration = Bytesˉreadˉu64ˉlittle(Preflight, 72u32);
+        Taskˉdeadline = Bytesˉreadˉu64ˉlittle(Preflight, 80u32);
+        Taskˉexpectedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Preflight, 88u32
+        );
+        Taskˉadmittedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Preflight, 96u32
+        );
+        Taskˉobservationˉtick = Bytesˉreadˉu64ˉlittle(
+            Preflight, 104u32
+        );
+        Taskˉobservedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Preflight, 112u32
+        );
+        if Taskˉcontextˉgeneration == 0u32 ||
+            Taskˉclockˉgeneration == 0u64 ||
+            Taskˉexpectedˉruntimeˉgeneration == 0u64 {
+            return Invalidˉexecutionˉrequest(Request);
+        }
     } else if Bytesˉlength(Preflight) != 64u32 + Typeˉoffsetsˉlength {
         return Invalidˉexecutionˉrequest(Request);
     }
@@ -2892,7 +2935,11 @@ fn Readˉexecutionˉrequest(Request: bytes) -> Executionˉrequest {
         Code, Typeˉcount, Functionˉcount, Mainˉindex, Typeˉoffsets,
         Capabilities, Capabilityˉgrants, Standardˉoutputˉlimit,
         Diagnosticˉoutputˉlimit, Argumentˉcount, Argumentˉoffsets,
-        Declaredˉcapabilities, Capabilityˉkinds, Sourceˉgeneration
+        Declaredˉcapabilities, Capabilityˉkinds, Sourceˉgeneration,
+        Taskˉcontextˉgeneration, Taskˉclockˉgeneration, Taskˉdeadline,
+        Taskˉexpectedˉruntimeˉgeneration,
+        Taskˉadmittedˉruntimeˉgeneration, Taskˉobservationˉtick,
+        Taskˉobservedˉruntimeˉgeneration
     );
 }
 
@@ -6486,22 +6533,75 @@ record Taskˉspawnˉexecution {
 record Taskˉworkˉobservation {
     Valid: bool;
     Exhausted: bool;
+    Terminal: bool;
+    Terminalˉkind: u32;
+    Firstˉevidence: u64;
+    Secondˉevidence: u64;
 }
 
-fn Observeˉtaskˉwork(Pending: bytes, Executed: u32) -> Taskˉworkˉobservation {
+fn Inspectˉpendingˉtaskˉenvironment(
+    Pending: bytes,
+    State: bytes,
+    Request: Executionˉrequest
+) -> Tasks.Taskˉobservation {
     let Length: u32 = Bytesˉlength(Pending);
-    if Length == 0u32 { return Taskˉworkˉobservation(true, false); }
+    if Length == 0u32 {
+        return Tasks.Taskˉobservation(
+            true, false, 0u32, 0u64, 0u64, State
+        );
+    }
     if Length % TASK_PENDING_BYTES != 0u32 {
-        return Taskˉworkˉobservation(false, false);
+        return Tasks.Taskˉobservation(
+            false, false, 0u32, 0u64, 0u64, State
+        );
+    }
+    return Tasks.Inspectˉtaskˉenvironment(
+        State,
+        Bytesˉslice(Pending, Length - TASK_PENDING_BYTES + 4u32, 8u32),
+        Request.Taskˉobservationˉtick,
+        Request.Taskˉclockˉgeneration,
+        Request.Taskˉobservedˉruntimeˉgeneration
+    );
+}
+
+fn Observeˉtaskˉwork(
+    Pending: bytes,
+    Executed: u32,
+    State: bytes,
+    Request: Executionˉrequest
+) -> Taskˉworkˉobservation {
+    let Environment: Tasks.Taskˉobservation =
+        Inspectˉpendingˉtaskˉenvironment(Pending, State, Request);
+    if !Environment.Valid {
+        return Taskˉworkˉobservation(
+            false, false, false, 0u32, 0u64, 0u64
+        );
+    }
+    let Length: u32 = Bytesˉlength(Pending);
+    if Length == 0u32 {
+        return Taskˉworkˉobservation(
+            true, false, Environment.Terminal,
+            Environment.Terminalˉkind, Environment.Firstˉevidence,
+            Environment.Secondˉevidence
+        );
+    }
+    if Length % TASK_PENDING_BYTES != 0u32 {
+        return Taskˉworkˉobservation(
+            false, false, false, 0u32, 0u64, 0u64
+        );
     }
     let Offset: u32 = Length - TASK_PENDING_BYTES;
     let Started: u32 = Bytesˉreadˉu32ˉlittle(Pending, Offset + 24u32);
     let Maximum: u64 = Bytesˉreadˉu64ˉlittle(Pending, Offset + 28u32);
     if Started > Executed || Maximum == 0u64 || Maximum > 1000000u64 {
-        return Taskˉworkˉobservation(false, false);
+        return Taskˉworkˉobservation(
+            false, false, false, 0u32, 0u64, 0u64
+        );
     }
     return Taskˉworkˉobservation(
-        true, U64ˉfromˉu32(Executed - Started) >= Maximum
+        true, U64ˉfromˉu32(Executed - Started) >= Maximum,
+        Environment.Terminal, Environment.Terminalˉkind,
+        Environment.Firstˉevidence, Environment.Secondˉevidence
     );
 }
 
@@ -6803,9 +6903,10 @@ record Taskˉtrapˉexecution {
     Depth: u32;
 }
 
-fn Executeˉspawnedˉtrap(
+fn Executeˉspawnedˉterminal(
     Moduleˉminor: u32,
     Trapˉidentity: u32,
+    Environment: Taskˉworkˉobservation,
     Initialˉstack: bytes,
     Stackˉdescriptorˉcount: u32,
     Stackˉdescriptorˉflagsˉlow: u32,
@@ -6835,11 +6936,19 @@ fn Executeˉspawnedˉtrap(
     Initialˉdepth: u32,
     Zeroˉcell: bytes
 ) -> Taskˉtrapˉexecution {
+    var Terminalˉkind: u32 = 5u32;
+    var Firstˉevidence: u64 = U64ˉfromˉu32(Trapˉidentity);
+    var Secondˉevidence: u64 = 0u64;
+    if Environment.Terminal {
+        Terminalˉkind = Environment.Terminalˉkind;
+        Firstˉevidence = Environment.Firstˉevidence;
+        Secondˉevidence = Environment.Secondˉevidence;
+    }
     let Completion: Taskˉreturnˉcompletion = Completeˉspawnedˉtask(
         Initialˉpending, Initialˉdepth, Initialˉexecuted,
         Initialˉtaskˉstate,
         Zeroˉcell, Initialˉmetadata, Initialˉrecords, Zeroˉcell,
-        5u32, U64ˉfromˉu32(Trapˉidentity), 0u64
+        Terminalˉkind, Firstˉevidence, Secondˉevidence
     );
     if !Completion.Valid || (Completion.Handled &&
         (Completion.Parentˉstackˉcells > Stackˉdescriptorˉcount ||
@@ -6948,6 +7057,7 @@ record Taskˉruntimeˉinitialization {
 fn Initializeˉtaskˉruntime(
     Hasˉoperationˉcontext: bool,
     Hasˉmemoryˉbudget: bool,
+    Request: Executionˉrequest,
     Functionˉcursor: u32,
     Functionˉshapeˉoffsets: bytes,
     Mainˉindex: u32,
@@ -6958,7 +7068,15 @@ fn Initializeˉtaskˉruntime(
     Zeroˉcell: bytes
 ) -> Taskˉruntimeˉinitialization {
     let Empty: bytes = Bytesˉslice(Initialˉlocals, 0u32, 0u32);
-    let State: bytes = Tasks.Constructˉstate(Empty);
+    var State: bytes = Tasks.Constructˉstate(Empty);
+    if Hasˉoperationˉcontext {
+        State = Tasks.Constructˉstateˉwithˉenvironment(
+            Empty, Request.Taskˉcontextˉgeneration,
+            Request.Taskˉclockˉgeneration, Request.Taskˉdeadline,
+            Request.Taskˉexpectedˉruntimeˉgeneration,
+            Request.Taskˉadmittedˉruntimeˉgeneration
+        );
+    }
     if Bytesˉlength(State) == 0u32 {
         return Taskˉruntimeˉinitialization(
             false, Empty, Empty, Empty, Empty
@@ -6987,7 +7105,7 @@ fn Initializeˉtaskˉruntime(
     }
     let Rootˉcontextˉtoken: bytes = Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(4294967295u32),
-        Bytesˉfromˉu32ˉlittle(1u32)
+        Bytesˉfromˉu32ˉlittle(Request.Taskˉcontextˉgeneration)
     );
     let Rootˉcontext: Taskˉvalueˉallocation = Allocateˉtaskˉvalue(
         Contextˉowner, Rootˉcontextˉtoken,
@@ -7127,7 +7245,6 @@ export fn Main(Request: bytes) -> bytes {
     let Capabilityˉkinds: bytes = Parsed.Capabilityˉkinds;
     let Sourceˉproviderˉgeneration: u32 =
         Parsed.Sourceˉgeneration;
-
     var Envelope: u32 = 0u32;
     var Sectionˉkind: u32 = 0u32;
     var Payload: u32 = 0u32;
@@ -7284,6 +7401,7 @@ export fn Main(Request: bytes) -> bytes {
     let Taskˉruntime: Taskˉruntimeˉinitialization =
         Initializeˉtaskˉruntime(
             Mainˉhasˉoperationˉcontext, Mainˉhasˉmemoryˉbudget,
+            Parsed,
             Functionˉcursor, Functionˉshapeˉoffsets, Mainˉindex,
             Localˉshapes, Locals, Recordˉmetadata, Records, Zeroˉcell
         );
@@ -7303,10 +7421,9 @@ export fn Main(Request: bytes) -> bytes {
     var Running: bool = true;
     while Running {
         let Taskˉwork: Taskˉworkˉobservation = Observeˉtaskˉwork(
-            Taskˉpending, Envelope
+            Taskˉpending, Envelope, Taskˉstate, Parsed
         );
         if !Taskˉwork.Valid { return Invalid; }
-        let Taskˉworkˉexhausted: bool = Taskˉwork.Exhausted;
         if Envelope >= Maximumˉinstructions {
             Sectionˉkind = 3011u32;
         } else {
@@ -7317,7 +7434,10 @@ export fn Main(Request: bytes) -> bytes {
         var Releasedˉdescriptors: bytes = Invalid;
         var Heapˉallocationˉrequested: bool = false;
         var Heapˉallocationˉvalue: bytes = Invalid;
-        if Taskˉworkˉexhausted {
+        if Taskˉwork.Terminal {
+            Sectionˉkind = 1u32;
+            Mainˉfound = true;
+        } else if Taskˉwork.Exhausted {
             Sectionˉkind = 3011u32;
             Mainˉfound = true;
         } else {
@@ -8126,8 +8246,9 @@ export fn Main(Request: bytes) -> bytes {
         }
         }
         if Sectionˉkind != 0u32 && Bytesˉlength(Taskˉpending) > 0u32 {
-            let Trapped: Taskˉtrapˉexecution = Executeˉspawnedˉtrap(
-                Moduleˉminor, Sectionˉkind, Stack, Stackˉdescriptorˉcount,
+            let Trapped: Taskˉtrapˉexecution = Executeˉspawnedˉterminal(
+                Moduleˉminor, Sectionˉkind, Taskˉwork,
+                Stack, Stackˉdescriptorˉcount,
                 Stackˉdescriptorˉflagsˉlow, Stackˉdescriptorˉflagsˉhigh,
                 Locals, Taskˉstate, Recordˉmetadata, Records, Frames,
                 Taskˉpending, Releasedˉdescriptors, Functionˉshapeˉoffsets,

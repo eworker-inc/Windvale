@@ -28,11 +28,11 @@ release_input=Distribution/Installers/Windvale-Release-Installer.json
 development_windows_archive=windvale-0.2.0-dev.1-windows-x64.zip
 development_linux_archive=windvale-0.2.0-dev.1-linux-x64.tar.gz
 development_package_directory=windvale-0.2.0-dev.1-linux-x64
-development_payload=07a9db994e65cf7c1a6c90f950f786bb7ad7e026efb1237fd1e5a189065746ba
+development_payload=738778db11f628d55beb8dcb7c4f8a60cdcf72c075814a5d8786a3d3f4948ffa
 windows_archive=windvale-0.1.0-windows-x64.zip
 linux_archive=windvale-0.1.0-linux-x64.tar.gz
 package_directory=windvale-0.1.0-linux-x64
-generation=0.1.0-linux-x64-7d4f41239bc6
+generation=0.1.0-linux-x64-1321e44a32b3
 
 verify_file() {
     local file=$1 expected_bytes=$2 expected_sha256=$3 description=$4
@@ -59,17 +59,17 @@ cmp --silent "$work/First-Release/$windows_archive" \
     "$work/Second-Release/$windows_archive" || exit 1
 cmp --silent "$work/First-Release/$linux_archive" \
     "$work/Second-Release/$linux_archive" || exit 1
-verify_file "$work/First-Development/$development_windows_archive" 5439956 \
-    cf1eb3c8f35edbe0e03cd73ef72e03d8c3a44003d38c0cc9490ffc8857db1e1b \
+verify_file "$work/First-Development/$development_windows_archive" 5469526 \
+    e32b1dadc813d9f220d19f8dad9c641950b391532b0a20f69de7d78b7ed51d57 \
     'Windows development installer' || exit 1
-verify_file "$work/First-Development/$development_linux_archive" 5436217 \
-    1b7719bb1f9110cd3d1f4bf47ef11fb43788935b83ce67b9c20cc44da460a81c \
+verify_file "$work/First-Development/$development_linux_archive" 5463313 \
+    24898661ca443b50761c6cc9f03a92a3f33f881f423394093a12b51c8e3932fa \
     'Linux development installer' || exit 1
-verify_file "$work/First-Release/$windows_archive" 43004423 \
-    12e2c055f64f7678d73fbd5c3b7aa9bd02c200e1e9d93e87f27b93c4e71d8865 \
+verify_file "$work/First-Release/$windows_archive" 43234311 \
+    3f6f633e17fd5d29799ffcec91a6855f7076df9102f8a61c95bdaf760ddb54a1 \
     'Windows release installer' || exit 1
-verify_file "$work/First-Release/$linux_archive" 43017447 \
-    56acb8f2082373dd862773d57449f014362e115475c865bf6505f3f459c203d8 \
+verify_file "$work/First-Release/$linux_archive" 43246838 \
+    17d0982384ac73c251aeb5ee4fa5cfd7e3b82070abee77c321be6be07d068a63 \
     'Linux release installer' || exit 1
 
 echo 'native installer step=verify-and-reject item=3/8 channel=stable'

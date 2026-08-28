@@ -1,0 +1,165 @@
+#!wv/1 en@1
+module Languageˉoneˉstructuredˉtaskˉenvironmentˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Limits: Task.Taskˉlimits,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return Task.Construct(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    );
+}
+
+async fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<i32, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire, task.spawn, task.suspend) {
+    let Workerˉvalue: i32 = 42;
+    let Work: async fn () -> Result.Result<i32, u32>
+        effects(task.suspend) =
+        async fn [copy Workerˉvalue] ()
+            -> Result.Result<i32, u32> effects(task.suspend) {
+        return Result.Result.Valid<i32, u32> { Value: Workerˉvalue };
+    };
+    let Limits = Task.Taskˉlimits {
+        Maximumˉchildren: 1u32,
+        Maximumˉrunnable: 1u32,
+        Maximumˉcompleted: 1u32,
+        Maximumˉretainedˉbytes: 4096u64,
+        Maximumˉworkˉunits: 256u64,
+        Maximumˉcallˉdepth: 16u32,
+        Maximumˉtimers: 1u32,
+        Maximumˉdiagnostics: 16u32,
+    };
+    task scope Scope = try Constructˉscope(
+        Budget: Budget,
+        Limits: Limits,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) policy join {
+        let Context = Task.Operationˉcontext(Scope: borrow Scope);
+        let Spawned: Result.Result<
+            Task.Task<i32, u32>,
+            Task.Spawnˉfailure<
+                async fn () -> Result.Result<i32, u32>
+                    effects(task.suspend)
+            >
+        > = Task.Spawn(Scope: borrow mut Scope, Work: Work);
+        return match Spawned {
+            case Result.Result.Valid { Value: Handle } {
+                let Outcome: Task.Taskˉoutcome<i32, u32> =
+                    await Task.Await(Handle: Handle);
+                match Outcome {
+                    case Task.Taskˉoutcome.Valid { Value: Value } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: Value,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Failure { Error: _ } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: 43,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Cancelled {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: 44,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Deadlineˉreached {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: 45,
+                        }
+                    }
+                    case Task.Taskˉoutcome.Runtimeˉlost {
+                        Expectedˉgeneration: Lostˉexpected,
+                        Observedˉgeneration: Lostˉobserved,
+                    } {
+                        if Lostˉexpected == 9u64 && Lostˉobserved == 0u64 {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: 46 }
+                        } else {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: 47 }
+                        }
+                    }
+                    case Task.Taskˉoutcome.Runtimeˉrestarted {
+                        Expectedˉgeneration: Restartedˉexpected,
+                        Observedˉgeneration: Restartedˉobserved,
+                    } {
+                        if Restartedˉexpected == 9u64 &&
+                            Restartedˉobserved == 10u64 {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: 48 }
+                        } else {
+                            Result.Result.Valid<
+                                i32, Task.Taskˉscopeˉfailure
+                            > { Value: 49 }
+                        }
+                    }
+                    case Task.Taskˉoutcome.Trapped { Identity: _ } {
+                        Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                            Value: 50,
+                        }
+                    }
+                }
+            }
+            case Result.Result.Failure { Error: _ } {
+                Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                    Value: 51,
+                }
+            }
+        };
+    }
+}
+
+export async fn Main(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> i32 effects(
+    memory.allocate,
+    resource.acquire,
+    task.spawn,
+    task.suspend,
+) {
+    return match Run(Budget: Budget, Parentˉcontext: Parentˉcontext) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: Error } {
+            match Error {
+                case Task.Taskˉscopeˉfailure.Invalidˉlimits {
+                    Field: _, Observed: _, Minimum: _, Maximum: _,
+                } { 52 }
+                case Task.Taskˉscopeˉfailure.Allocation { Error: _ } { 53 }
+                case Task.Taskˉscopeˉfailure.Parentˉcontextˉstale {
+                    Expectedˉgeneration: _, Observedˉgeneration: _,
+                } { 54 }
+                case Task.Taskˉscopeˉfailure.Runtimeˉunavailable {
+                    Expectedˉgeneration: Expected,
+                    Observedˉgeneration: Observed,
+                } {
+                    if Expected == 9u64 && Observed == 0u64 {
+                        55
+                    } else if Expected == 9u64 && Observed == 10u64 {
+                        56
+                    } else {
+                        57
+                    }
+                }
+            }
+        }
+    };
+}

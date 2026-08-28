@@ -3757,3 +3757,62 @@ installer-repository cases. Independent Windows/Linux affected-owner evidence
 remains pending. The ordinary runner still supplies a non-expiring
 generation-1 environment; host/request time, provider generations, and
 parallel scheduling are later Slice 7 checkpoints.
+
+## Slice 7 task-environment request checkpoint
+
+[Decision 0867](../Decisions/0867-Inject-Structured-Task-Environment-Through-Request-Major-6.md)
+advances task execution-request major `6` to minor `1`. Its fixed 72-byte
+little-endian header carries exact launcher-owned context generation, clock
+generation, absolute deadline, expected and admitted task-runtime generations,
+observation tick, and observed task-runtime generation before the WVB module.
+The envelope validates exact module length and all required nonzero generations
+before module execution or task-state allocation.
+
+The public runner retains the ordinary non-expiring generation-1 default and
+adds one exact `--task-environment` form with canonical unsigned-decimal input.
+A real edition-1 source fixture proves success, deadline, runtime loss/restart,
+stale context, and unavailable runtime through the same compiled task program.
+Nine rejection cases cover wrong arity, leading zero, context overflow, zero
+required generations, `u64` overflow, nondecimal input, and negative tick.
+
+The full focused owner passes all 57 phases and reports:
+
+```text
+native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed cases=159 valid=22 malformed=69 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 structured-task-cases=27 structured-task-runtime-cases=46 task-environment-cases=17 task-environment-rejections=9 callable-runner-cases=2 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05 structured-task-wvb-bytes=4231 structured-task-sha256=11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8 task-environment-wvb-bytes=5057 task-environment-sha256=a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090
+```
+
+The runner entry originally exceeded the native lowerer's fixed 2,048
+parameter-plus-local slot limit. Extracting request inspection and task-runtime
+initialization, and removing redundant state propagation, reduced its largest
+function to one parameter plus 2,045 locals without raising the safety bound.
+An early native-function-limit check now reports the exact function, slot,
+code-byte, and stack limits before staging.
+
+The current local candidate is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVB runner | 464,589 | `5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2` |
+| Windows runner | 5,659,136 | `2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114` |
+| Linux runner | 5,660,672 | `ccaaa6cbb76c557e65c169ef8bad7ca3396c0a38e3e4b18adf303f94077e83d1` |
+
+It contains 222 functions and 414,206 code bytes. Staging emits 5,650,368
+object bytes in 13 chunks. Linking emits a 5,640,684-byte image at entry offset
+137,648 in nine chunks; canonical transport uses two chunks. An independent
+local reconstruction produced byte-identical copies of all three artifacts.
+
+The deterministic development installers repin to Windows archive 5,469,526
+bytes at SHA-256
+`e32b1dadc813d9f220d19f8dad9c641950b391532b0a20f69de7d78b7ed51d57`
+and Linux archive 5,463,313 bytes at SHA-256
+`24898661ca443b50761c6cc9f03a92a3f33f881f423394093a12b51c8e3932fa`.
+The selective installer repository remains 15 objects and 15 blobs, now
+10,909,878 blob bytes, with a 3,548-byte index at SHA-256
+`baeaa211734563976df93d48a2c05d0e41b6e2e236980656756039e1914de3bd`.
+
+The verification registry remains 114 owners and advances to 5,556 cases. Its
+18,556 LF-only bytes have SHA-256
+`d6b392ea29535d645f24dbc5be9b84688038744d654687df60096e2da320bc81`.
+Child-provider generation and deterministic completion-order workloads,
+independent Windows/Linux affected-owner integration, candidate promotion, and
+the explicit final Slice 7 Qualification gate remain pending.

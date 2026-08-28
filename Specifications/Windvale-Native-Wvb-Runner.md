@@ -26,12 +26,12 @@ field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 450,825 | `fd65e221c22a48fb20da47e18099351d338a0e8107357e6a04246c2a7f31a9ef` |
-| Windows application | 5,429,248 | `2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38` |
-| Linux application | 5,431,296 | `6f645b05d9d3b8e2cae34703487f559e5212155fc4ff02c374176ed7e9844054` |
+| WVB runner | 464,589 | `5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2` |
+| Windows application | 5,659,136 | `2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114` |
+| Linux application | 5,660,672 | `ccaaa6cbb76c557e65c169ef8bad7ca3396c0a38e3e4b18adf303f94077e83d1` |
 
-Segmented staging emits 5,420,317 object bytes across 13 chunks. Linking emits a
-5,411,237-byte native image with entry offset 105,270; canonical transport
+Segmented staging emits 5,650,368 object bytes across 13 chunks. Linking emits a
+5,640,684-byte native image with entry offset 137,648; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
@@ -55,7 +55,8 @@ native WVB runner reconstruction status=Complete artifacts=3
 ```
 
 `Run-Wvb.cmd` and `Run-Wvb.sh` execute the corresponding digest-bound candidate
-with either one module argument or the exact optional `--report-steps` flag.
+with either one module argument, the exact optional `--report-steps` flag, or
+the strict structured-task environment form documented below.
 The runner supplies the scalar interpreter with a fixed 1,000,000-instruction
 budget, matching the Stage 0 CLI's default execution budget. Default output
 remains `Result: <i32>`. Reporting adds one
@@ -428,27 +429,41 @@ Timer and diagnostic limits are validated but remain at zero use because the
 first task opcode family creates neither resource.
 
 The public one-module command recognizes the canonical hosted WVB 1.32 profile
-and selects execution-request major `6`. That request uses the bounded
-16-byte magic/version/instruction/depth header followed by the module. Envelope
-validation requires hosted profile `2`, no declared capabilities, WVB 1.32,
-and exact `Main(Memoryˉbudget, Operationˉcontext) -> i32`; execution then
-creates both launcher-owned values. Request major `5` remains reserved for
-`--source-file` and cannot be reused as a task envelope. Successful task
-execution preserves the ordinary CLI contract: `Result: <i32>` on standard
+and selects execution-request major `6`, minor `1`. Its fixed 72-byte
+little-endian header contains magic, version, instruction/depth limits, module
+length, context generation, clock generation, deadline, expected and admitted
+task-runtime generations, observation tick, and observed task-runtime
+generation, followed by the exact module. Envelope validation requires hosted
+profile `2`, no declared capabilities, WVB 1.32, exact request/module length,
+nonzero context/clock/expected-runtime generations, and exact
+`Main(Memoryˉbudget, Operationˉcontext) -> i32`; execution then creates both
+launcher-owned values. Request major `5` remains reserved for `--source-file`
+and cannot be reused as a task envelope.
+
+The ordinary command supplies context/clock/runtime generation `1`, deadline
+`u64::MAX`, and tick `0`. The explicit form is:
+
+```text
+wvrun --task-environment <module.wvb> <context-generation> <clock-generation> <deadline> <expected-runtime-generation> <admitted-runtime-generation> <observation-tick> <observed-runtime-generation>
+```
+
+Every value is canonical unsigned decimal. Context must fit nonzero `u32`;
+clock and expected runtime generation must be nonzero; the remaining fields may
+use the full `u64` range. Invalid arity or values return status `64` before
+execution. Successful task execution preserves `Result: <i32>` on standard
 output and process exit zero.
 
-The current Windows development runner contains 216 functions and 402,863 code
-bytes in a 450,825-byte WVB at SHA-256
-`fd65e221c22a48fb20da47e18099351d338a0e8107357e6a04246c2a7f31a9ef`.
-It packages to a 5,429,248-byte hosted application at SHA-256
-`2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38`.
-The 4,231-byte success
-fixture, child-trap fixture, aggregate-retention pressure fixture, one-work-unit
-fixture, call-depth-one fixture, retained-memory refusal fixture, and 46-case
-task-state self-test all return `42`. The complete focused owner passes 142
-cases. These are focused sequential development results. The candidate is
-repinned in the table above; parallel-capable paired-host evidence remains
-pending.
+The current development runner contains 222 functions and 414,206 code bytes in
+a 464,589-byte WVB at SHA-256
+`5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2`.
+It packages to a 5,659,136-byte Windows hosted application at SHA-256
+`2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114`.
+The 4,231-byte success fixture, the 5,057-byte environment fixture, child-trap
+fixture, aggregate-retention pressure fixture, one-work-unit fixture,
+call-depth-one fixture, retained-memory refusal fixture, and 46-case task-state
+self-test all pass their exact outcomes. The complete focused owner passes 159
+cases. These are focused sequential development results; parallel-capable
+paired-host evidence remains pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

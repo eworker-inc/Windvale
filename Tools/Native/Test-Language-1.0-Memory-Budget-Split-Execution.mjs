@@ -57,10 +57,17 @@ const EXPECTED_STRUCTURED_TASK_CALL_DEPTH_LIMIT_SHA256 =
     '3817f6d39346e3154845ff422ba54e1dd58dbeac4d00123f5904a0b22525d351';
 const EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256 =
     '92c1c521d4bd1a3198ff01dd54a97fb5153170afe009b6c0111ce06aba51fb64';
+const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
+    'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
-if (process.argv.length !== 2) {
+const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
+const Inspectionˉonly =
+    Inspectionˉmode === '--inspect-structured-task' ||
+    Inspectionˉmode === '--inspect-function-limits';
+if (process.argv.length !== 2 && !Inspectionˉonly) {
     process.stderr.write(
-        'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs\n',
+        'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
+        '[(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
 }
@@ -70,6 +77,38 @@ if (process.platform !== 'win32' && process.platform !== 'linux') {
 
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
+if (Inspectionˉonly) {
+    const Candidate = path.resolve(process.argv[3]);
+    Requireˉordinaryˉfile(
+        Candidate,
+        MAXIMUM_WVB_BYTES,
+        'structured-task inspection module',
+    );
+    const Bytes = readFileSync(Candidate);
+    if (Inspectionˉmode === '--inspect-structured-task') {
+        const Layout = Inspectˉstructuredˉtaskˉmodule(Bytes);
+        process.stdout.write(
+            'structured task inspection status=Valid ' +
+            `construct=${Layout.construct} context=${Layout.context} ` +
+            `spawn=${Layout.spawn} await=${Layout.await} exit=${Layout.exit}\n`,
+        );
+    } else {
+        const Entries = Parseˉfunctionˉentries(Bytes, Parseˉsections(Bytes)[4]);
+        let Largest = Entries[0];
+        for (const Entry of Entries) {
+            if (Entry.codeLength > Largest.codeLength) Largest = Entry;
+        }
+        process.stdout.write(
+            'function limits inspection status=Valid ' +
+            `functions=${Entries.length} largest-index=${Largest.index} ` +
+            `largest-name=${Largest.name} code-bytes=${Largest.codeLength} ` +
+            `parameters=${Largest.parameterCount} locals=${Largest.localCount} ` +
+            `total-slots=${Largest.parameterCount + Largest.localCount} ` +
+            `maximum-stack=${Largest.maximumStack}\n`,
+        );
+    }
+    process.exit(0);
+}
 const Profileˉroot = path.join(
     Repositoryˉroot,
     'Documents', 'Project', 'Language-1.0-Localization-Workloads',
@@ -227,6 +266,9 @@ try {
     const Structuredˉtaskˉmemoryˉlimit = path.join(
         Work, 'Structured-Task-Memory-Limit.wvb',
     );
+    const Structuredˉtaskˉenvironment = path.join(
+        Work, 'Structured-Task-Environment.wvb',
+    );
     const Structuredˉtaskˉruntimeˉselfˉtest = path.join(
         Work, 'Structured-Task-Runtime-Self-Test.wvb',
     );
@@ -313,6 +355,21 @@ try {
         Admitter, Analyzer, Emitter,
         'Structured-Task-Memory-Limit-Executable.wv',
         Structuredˉtaskˉmemoryˉlimit,
+    );
+    Compileˉtask(
+        'structured-task-environment-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Environment-Executable.wv',
+        Structuredˉtaskˉenvironment,
+    );
+    const Structuredˉtaskˉenvironmentˉbytes = readFileSync(
+        Structuredˉtaskˉenvironment,
+    );
+    Inspectˉstructuredˉtaskˉmodule(Structuredˉtaskˉenvironmentˉbytes);
+    Requireˉexactˉdigest(
+        Structuredˉtaskˉenvironmentˉbytes,
+        EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256,
+        'structured-task environment fixture',
     );
     Runˉnode(
         'structured-task-runtime-self-test-build',
@@ -485,7 +542,6 @@ try {
         EXPECTED_STRUCTURED_TASK_MEMORY_LIMIT_SHA256,
         'structured-task memory-limit fixture',
     );
-
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
     Runˉnative('verifier-build', 'Build-Wvb', [
@@ -533,6 +589,10 @@ try {
     Requireˉvalid(
         Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
         'structured-task runtime self-test module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉenvironment,
+        'structured-task environment module',
     );
 
     const Malformedˉcases = [
@@ -833,6 +893,7 @@ try {
         Project('Windvale-Wvb-Runner.wvproj'), Runnerˉwvb,
         Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
     ]);
+    Requireˉnativeˉfunctionˉlimits(readFileSync(Runnerˉwvb));
     Runˉnode('runner-stager-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         path.join(
             Repositoryˉroot, 'Projects', 'Compiler',
@@ -928,6 +989,64 @@ try {
         Runner, Structuredˉtaskˉmemoryˉlimit,
         'structured-task memory-limit execution',
     );
+    Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉenvironment,
+        'structured-task default environment execution',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        ['7', '3', '100', '9', '9', '100', '0'],
+        45, 'structured-task exact deadline priority',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        ['7', '3', '101', '9', '9', '100', '0'],
+        46, 'structured-task runtime loss',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        ['7', '3', '101', '9', '9', '100', '10'],
+        48, 'structured-task runtime restart',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        ['7', '3', '101', '9', '0', '100', '9'],
+        55, 'structured-task initial runtime loss',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        ['7', '3', '101', '9', '10', '100', '9'],
+        56, 'structured-task initial runtime restart',
+    );
+    Requireˉtaskˉenvironmentˉresult(
+        Runner, Structuredˉtaskˉenvironment,
+        [
+            '4294967295', '18446744073709551615',
+            '18446744073709551615', '18446744073709551615',
+            '18446744073709551615', '18446744073709551614',
+            '18446744073709551615',
+        ],
+        42, 'structured-task maximum environment values',
+    );
+    const Taskˉenvironmentˉmalformedˉcases = [
+        ['missing-observed-generation', ['1', '1', '2', '1', '1', '0']],
+        ['leading-zero-context', ['01', '1', '2', '1', '1', '0', '1']],
+        ['context-overflow', ['4294967296', '1', '2', '1', '1', '0', '1']],
+        ['zero-clock', ['1', '0', '2', '1', '1', '0', '1']],
+        [
+            'deadline-overflow',
+            ['1', '1', '18446744073709551616', '1', '1', '0', '1'],
+        ],
+        ['zero-expected-runtime', ['1', '1', '2', '0', '1', '0', '1']],
+        ['non-decimal-admitted-runtime', ['1', '1', '2', '1', 'x', '0', '1']],
+        ['negative-observation-tick', ['1', '1', '2', '1', '1', '-1', '1']],
+        ['leading-zero-observed-runtime', ['1', '1', '2', '1', '1', '0', '01']],
+    ];
+    for (const [Name, Environment] of Taskˉenvironmentˉmalformedˉcases) {
+        Requireˉtaskˉenvironmentˉrejection(
+            Runner, Structuredˉtaskˉenvironment, Environment, Name,
+        );
+    }
     const Sourceˉsnapshotˉ42 = path.join(Work, 'Source-Snapshot-42.bin');
     const Sourceˉsnapshotˉ41 = path.join(Work, 'Source-Snapshot-41.bin');
     const Sourceˉsnapshotˉoversized = path.join(
@@ -953,8 +1072,8 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${121 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=21 malformed=${
+        `cases=${138 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=22 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
@@ -964,6 +1083,7 @@ try {
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
         'structured-task-cases=27 structured-task-runtime-cases=46 ' +
+        'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
@@ -982,7 +1102,9 @@ try {
         `source-file-wvb-bytes=${Sourceˉfileˉbytes.length} ` +
         `source-file-sha256=${Sourceˉfileˉsha256} ` +
         `structured-task-wvb-bytes=${Structuredˉtaskˉbytes.length} ` +
-        `structured-task-sha256=${Digest(Structuredˉtaskˉbytes)}\n`,
+        `structured-task-sha256=${Digest(Structuredˉtaskˉbytes)} ` +
+        `task-environment-wvb-bytes=${Structuredˉtaskˉenvironmentˉbytes.length} ` +
+        `task-environment-sha256=${Digest(Structuredˉtaskˉenvironmentˉbytes)}\n`,
     );
 } finally {
     const Resolved = path.resolve(Work);
@@ -1151,6 +1273,60 @@ function Requireˉresultˉ42(Runner, Candidate, Label) {
         Normalize(Result.stdout) !== 'Result: 42\n' || Result.stderr.length !== 0) {
         Reject(
             `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? 'none'}\n` +
+            `stdout=${Normalize(Result.stdout)}\n` +
+            `stderr=${Normalize(Result.stderr)}`,
+        );
+    }
+}
+
+function Requireˉtaskˉenvironmentˉresult(
+    Runner, Candidate, Environment, Expected, Label,
+) {
+    if (Environment.length !== 7 || !Number.isInteger(Expected) ||
+        Expected < 0 || Expected > 255) {
+        Reject(`The ${Label} test inputs are invalid.`);
+    }
+    const Result = spawnSync(
+        Runner, ['--task-environment', Candidate, ...Environment],
+        {
+            encoding: 'utf8', windowsHide: true,
+            maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        },
+    );
+    if (Result.error !== undefined || Result.status !== 0 ||
+        Normalize(Result.stdout) !== `Result: ${Expected}\n` ||
+        Result.stderr.length !== 0) {
+        Reject(
+            `The ${Label} differed: status=${Result.status} ` +
+            `error=${Result.error?.message ?? 'none'}\n` +
+            `stdout=${Normalize(Result.stdout)}\n` +
+            `stderr=${Normalize(Result.stderr)}`,
+        );
+    }
+}
+
+function Requireˉtaskˉenvironmentˉrejection(
+    Runner, Candidate, Environment, Label,
+) {
+    const Result = spawnSync(
+        Runner, ['--task-environment', Candidate, ...Environment],
+        {
+            encoding: 'utf8', windowsHide: true,
+            maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        },
+    );
+    const Expectedˉdiagnostic = Environment.length === 7
+        ? 'wvb run status=Invalidˉtaskˉenvironment\n'
+        : 'Usage: wvrun --task-environment <module.wvb> ' +
+            '<context-generation> <clock-generation> <deadline> ' +
+            '<expected-runtime-generation> <admitted-runtime-generation> ' +
+            '<observation-tick> <observed-runtime-generation>\n';
+    if (Result.error !== undefined || Result.status !== 64 ||
+        Result.stdout.length !== 0 ||
+        Normalize(Result.stderr) !== Expectedˉdiagnostic) {
+        Reject(
+            `The ${Label} rejection differed: status=${Result.status} ` +
             `error=${Result.error?.message ?? 'none'}\n` +
             `stdout=${Normalize(Result.stdout)}\n` +
             `stderr=${Normalize(Result.stderr)}`,
@@ -1934,7 +2110,7 @@ function Parseˉfunctionˉentries(Bytes, Section) {
         Cursor = Readˉshape(Bytes, Cursor).end;
         const Localˉcount = Bytes.readUInt32LE(Cursor);
         Cursor += 4;
-        if (Localˉcount > 2048) Reject('A function has too many locals.');
+        if (Localˉcount > 65_536) Reject('A function has too many locals.');
         for (let Local = 0; Local < Localˉcount; Local += 1) {
             Cursor = Readˉshape(Bytes, Cursor).end;
         }
@@ -1942,9 +2118,13 @@ function Parseˉfunctionˉentries(Bytes, Section) {
             Reject('A function directory entry is truncated.');
         }
         Result.push({
+            index: Index,
             name: Name.value,
+            parameterCount: Parameterˉcount,
+            localCount: Localˉcount,
             codeOffset: Bytes.readUInt32LE(Cursor),
             codeLength: Bytes.readUInt32LE(Cursor + 4),
+            maximumStack: Bytes.readUInt32LE(Cursor + 8),
         });
         Cursor += 12;
     }
@@ -1952,6 +2132,26 @@ function Parseˉfunctionˉentries(Bytes, Section) {
         Reject('The function directory length differs.');
     }
     return Result;
+}
+
+function Requireˉnativeˉfunctionˉlimits(Bytes) {
+    const Entries = Parseˉfunctionˉentries(Bytes, Parseˉsections(Bytes)[4]);
+    if (Entries.length > 1_024) {
+        Reject(`The native runner function count differs: ${Entries.length}.`);
+    }
+    for (const Entry of Entries) {
+        const Slots = Entry.parameterCount + Entry.localCount;
+        if (Slots >= 2_048 || Entry.codeLength > 131_072 ||
+            Entry.maximumStack > 1_024) {
+            Reject(
+                `The native runner function ${Entry.index} ${Entry.name} ` +
+                `exceeds a lowering bound: parameters=${Entry.parameterCount} ` +
+                `locals=${Entry.localCount} total-slots=${Slots} ` +
+                `code-bytes=${Entry.codeLength} ` +
+                `maximum-stack=${Entry.maximumStack}.`,
+            );
+        }
+    }
 }
 
 function Wvbˉinstructionˉwidthˉat(Bytes, Cursor) {

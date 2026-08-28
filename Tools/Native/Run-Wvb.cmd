@@ -2,9 +2,30 @@
 setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~1"=="" goto :usage
+if /I "%~1"=="--task-environment" goto :task_environment
 if not "%~3"=="" goto :usage
 if not "%~2"=="" if not "%~2"=="--report-steps" goto :usage
-if /I not "%~x1"==".wvb" (
+set "Mode=ordinary"
+set "Module=%~f1"
+set "Option=%~2"
+goto :validate_module
+
+:task_environment
+if "%~9"=="" goto :usage
+set "Mode=task-environment"
+set "Module=%~f2"
+set "TaskContext=%~3"
+set "TaskClock=%~4"
+set "TaskDeadline=%~5"
+set "TaskExpectedRuntime=%~6"
+set "TaskAdmittedRuntime=%~7"
+set "TaskObservationTick=%~8"
+set "TaskObservedRuntime=%~9"
+shift /8
+if not "%~9"=="" goto :usage
+
+:validate_module
+for %%M in ("%Module%") do if /I not "%%~xM"==".wvb" (
     >&2 echo The native runner input must use the .wvb extension.
     exit /b 64
 )
@@ -13,23 +34,26 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Runner=%RepositoryRoot%\Artifacts\Native-Wvb-Runner-Candidate\windows-x64-wvrun.exe"
 
-for %%F in ("%Runner%") do if not "%%~zF"=="5429248" (
+for %%F in ("%Runner%") do if not "%%~zF"=="5659136" (
     >&2 echo The Windows native WVB runner artifact size is invalid.
     exit /b 1
 )
-certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"2080d9fed98f9f07ee0fc07036823ff271214c426b00f9d5bf08d5fcf4a78c38" >nul
+certutil -hashfile "%Runner%" SHA256 | findstr /I /C:"2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114" >nul
 if errorlevel 1 (
     >&2 echo The Windows native WVB runner artifact digest is invalid.
     exit /b 1
 )
 
-if "%~2"=="" (
-    "%Runner%" "%~f1"
+if "%Mode%"=="task-environment" (
+    "%Runner%" --task-environment "%Module%" "%TaskContext%" "%TaskClock%" "%TaskDeadline%" "%TaskExpectedRuntime%" "%TaskAdmittedRuntime%" "%TaskObservationTick%" "%TaskObservedRuntime%"
+) else if "%Option%"=="" (
+    "%Runner%" "%Module%"
 ) else (
-    "%Runner%" "%~f1" --report-steps
+    "%Runner%" "%Module%" --report-steps
 )
 exit /b %ERRORLEVEL%
 
 :usage
 >&2 echo Usage: Tools\Native\Run-Wvb.cmd ^<module.wvb^> [--report-steps]
+>&2 echo        Tools\Native\Run-Wvb.cmd --task-environment ^<module.wvb^> ^<context-generation^> ^<clock-generation^> ^<deadline^> ^<expected-runtime-generation^> ^<admitted-runtime-generation^> ^<observation-tick^> ^<observed-runtime-generation^>
 exit /b 64

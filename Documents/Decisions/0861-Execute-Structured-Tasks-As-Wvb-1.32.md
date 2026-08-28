@@ -147,15 +147,17 @@ aggregate completion roots, and lexical scope teardown.
 the private bounded task state to retain root-context, clock, deadline, and
 task-runtime generation evidence. Its cooperative observation point implements
 exact deadline priority, cancellation, runtime loss, and runtime restart while
-leaving invalid observations byte-identical. The ordinary runner still uses a
-non-expiring generation-1 environment; host/request injection, child-provider
-generation workloads, and parallel scheduling remain pending.
+leaving invalid observations byte-identical. [Decision 0867](0867-Inject-Structured-Task-Environment-Through-Request-Major-6.md)
+injects exact launcher-owned context, clock, deadline, tick, and task-runtime
+generations while preserving the ordinary non-expiring generation-1 default.
+Child-provider generation workloads and parallel scheduling remain pending.
 
-The runner transports this exact entry through execution-request major `6`.
-The request contains only the fixed instruction/depth header and hosted WVB
-module; the envelope requires WVB 1.32, hosted profile `2`, no declared
-capabilities, and the exact two-parameter task entry before it creates the root
-budget and operation context. Request major `5` remains the independent
+The runner transports this exact entry through execution-request major `6`,
+minor `1`. Its fixed 72-byte header contains instruction/depth limits, module
+length, and the seven task-environment values before the hosted WVB module. The
+envelope requires WVB 1.32, hosted profile `2`, no declared capabilities, exact
+length agreement, and the exact two-parameter task entry before it creates the
+root budget and operation context. Request major `5` remains the independent
 source-file snapshot contract.
 
 The 3,885-byte source-amendment manifest

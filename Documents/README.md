@@ -281,6 +281,7 @@ The Progress page is the single current-state dashboard. The Roadmap can report 
 - [Structured-task completion admission](Decisions/0864-Reserve-Structured-Task-Completion-Slots-Before-Spawn.md) — reserves one bounded outcome position for every accepted live child before captures move
 - [Structured-task retained-memory admission](Decisions/0865-Reserve-Structured-Task-Retained-Memory-Before-Spawn.md) — reserves exact continuation, child-local, parent-frame, and outcome state or returns typed exact memory failure with the original work
 - [Structured-task runtime environment observation](Decisions/0866-Observe-Structured-Task-Runtime-Environment.md) — retains exact context, clock, deadline, and runtime generations and applies deterministic cooperative terminal priority
+- [Structured-task environment request](Decisions/0867-Inject-Structured-Task-Environment-Through-Request-Major-6.md) — injects exact launcher-owned context, clock, deadline, tick, and runtime generations through one bounded versioned request
 - [Agent handbook](../AGENTS.md) — durable contribution and verification rules for people and AI agents
 
 ## Development and operations

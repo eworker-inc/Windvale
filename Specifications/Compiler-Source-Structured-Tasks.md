@@ -181,11 +181,13 @@ clock generation leaves the state byte-identical and cannot manufacture an
 outcome. A terminal observation uses the ordinary reserved completion slot and
 retained-memory charge until consuming `Await` or scope teardown releases it.
 
-The current sequential command-line runner constructs a non-expiring default
-environment with context, clock, and task-runtime generation 1. The private
-runtime self-test injects exact alternative ticks and generations. Binding a
-host/request clock, child-provider generations, and parallel worker state is a
-later Slice 7 checkpoint and does not change source, WVIR 1.21, or WVB 1.32.
+The sequential command-line runner constructs a non-expiring default
+environment with context, clock, and task-runtime generation 1. Its explicit
+`--task-environment` mode injects exact context, clock, deadline, admitted and
+observed task-runtime generations, and observation tick through
+execution-request major `6`, minor `1`; malformed values are rejected before
+module execution. Child-provider generations and parallel worker state remain
+later Slice 7 checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer

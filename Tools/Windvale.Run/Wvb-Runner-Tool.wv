@@ -98,12 +98,125 @@ fn Buildˉsourceˉfileˉrequest(Module: bytes, Snapshot: bytes) -> bytes {
     return Bytesˉconcat(Request, Snapshot);
 }
 
-fn Buildˉstructuredˉtaskˉrequest(Module: bytes) -> bytes {
+record Decimalˉu64 {
+    Valid: bool;
+    Value: u64;
+}
+
+record Taskˉenvironment {
+    Valid: bool;
+    Contextˉgeneration: u32;
+    Clockˉgeneration: u64;
+    Deadline: u64;
+    Expectedˉruntimeˉgeneration: u64;
+    Admittedˉruntimeˉgeneration: u64;
+    Observationˉtick: u64;
+    Observedˉruntimeˉgeneration: u64;
+}
+
+fn Parseˉdecimalˉu64(Input: text) -> Decimalˉu64 {
+    let Inputˉbytes: bytes = Textˉtoˉutf8(Input);
+    let Length: u32 = Bytesˉlength(Inputˉbytes);
+    if Length == 0u32 || (Length > 1u32 &&
+        U32ˉfromˉu8(Bytesˉreadˉu8(Inputˉbytes, 0u32)) == 48u32) {
+        return Decimalˉu64(false, 0u64);
+    }
+    var Value: u64 = 0u64;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        let Byte: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Inputˉbytes, Index)
+        );
+        if Byte < 48u32 || Byte > 57u32 {
+            return Decimalˉu64(false, 0u64);
+        }
+        let Digit: u64 = U64ˉfromˉu32(Byte - 48u32);
+        if Value > 1844674407370955161u64 ||
+            (Value == 1844674407370955161u64 && Digit > 5u64) {
+            return Decimalˉu64(false, 0u64);
+        }
+        Value = Value * 10u64 + Digit;
+        Index = Index + 1u32;
+    }
+    return Decimalˉu64(true, Value);
+}
+
+fn Defaultˉtaskˉenvironment() -> Taskˉenvironment {
+    return Taskˉenvironment(
+        true,
+        1u32,
+        1u64,
+        18446744073709551615u64,
+        1u64,
+        1u64,
+        0u64,
+        1u64
+    );
+}
+
+fn Parseˉtaskˉenvironment() -> Taskˉenvironment {
+    let Context: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(2u32));
+    let Clock: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(3u32));
+    let Deadline: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(4u32));
+    let Expected: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(5u32));
+    let Admitted: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(6u32));
+    let Tick: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(7u32));
+    let Observed: Decimalˉu64 = Parseˉdecimalˉu64(process.argument(8u32));
+    if !Context.Valid || Context.Value == 0u64 ||
+        Context.Value > 4294967295u64 || !Clock.Valid ||
+        Clock.Value == 0u64 || !Deadline.Valid || !Expected.Valid ||
+        Expected.Value == 0u64 || !Admitted.Valid || !Tick.Valid ||
+        !Observed.Valid {
+        return Taskˉenvironment(
+            false, 0u32, 0u64, 0u64, 0u64, 0u64, 0u64, 0u64
+        );
+    }
+    return Taskˉenvironment(
+        true,
+        Bytesˉreadˉu32ˉlittle(Bytesˉfromˉu64ˉlittle(Context.Value), 0u32),
+        Clock.Value, Deadline.Value, Expected.Value, Admitted.Value,
+        Tick.Value, Observed.Value
+    );
+}
+
+fn Buildˉstructuredˉtaskˉrequest(
+    Module: bytes,
+    Environment: Taskˉenvironment
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    if !Environment.Valid { return Invalid; }
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
     Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(6u32));
-    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu16ˉlittle(1u32));
     Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1000000u32));
     Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(8u32));
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Module))
+    );
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu32ˉlittle(Environment.Contextˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu64ˉlittle(Environment.Clockˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu64ˉlittle(Environment.Deadline)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu64ˉlittle(Environment.Expectedˉruntimeˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu64ˉlittle(Environment.Admittedˉruntimeˉgeneration)
+    );
+    Request = Bytesˉconcat(
+        Request, Bytesˉfromˉu64ˉlittle(Environment.Observationˉtick)
+    );
+    Request = Bytesˉconcat(
+        Request,
+        Bytesˉfromˉu64ˉlittle(Environment.Observedˉruntimeˉgeneration)
+    );
     return Bytesˉconcat(Request, Module);
 }
 
@@ -149,6 +262,21 @@ fn Isˉscriptˉmode(Input: text) -> bool {
 fn Isˉsourceˉfileˉmode(Input: text) -> bool {
     let Actual: bytes = Textˉtoˉutf8(Input);
     let Expected: bytes = Textˉtoˉutf8("--source-file");
+    let Length: u32 = Bytesˉlength(Actual);
+    if Length != Bytesˉlength(Expected) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Actual, Index) != Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Isˉtaskˉenvironmentˉmode(Input: text) -> bool {
+    let Actual: bytes = Textˉtoˉutf8(Input);
+    let Expected: bytes = Textˉtoˉutf8("--task-environment");
     let Length: u32 = Bytesˉlength(Actual);
     if Length != Bytesˉlength(Expected) { return false; }
     var Index: u32 = 0u32;
@@ -332,9 +460,12 @@ fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
     );
 }
 
-fn Runˉstructuredˉtask(Module: bytes) -> i32 {
+fn Runˉstructuredˉtask(
+    Module: bytes,
+    Environment: Taskˉenvironment
+) -> i32 {
     return Runˉcontextˉentry(
-        Buildˉstructuredˉtaskˉrequest(Module),
+        Buildˉstructuredˉtaskˉrequest(Module, Environment),
         "structured-task-main-i32",
         6u32,
         true
@@ -379,6 +510,40 @@ export fn Main() -> i32 {
             file.read_bytes(process.argument(2u32))
         );
     }
+    if Isˉtaskˉenvironmentˉmode(process.argument(0u32)) {
+        if Arguments != 9u32 {
+            diagnostic.write_line(
+                Textˉconcat(
+                    "Usage: wvrun --task-environment <module.wvb> ",
+                    Textˉconcat(
+                        "<context-generation> <clock-generation> <deadline> ",
+                        Textˉconcat(
+                            "<expected-runtime-generation> ",
+                            Textˉconcat(
+                                "<admitted-runtime-generation> ",
+                                Textˉconcat(
+                                    "<observation-tick> ",
+                                    "<observed-runtime-generation>"
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+            return 64;
+        }
+        let Environment: Taskˉenvironment = Parseˉtaskˉenvironment();
+        if !Environment.Valid {
+            diagnostic.write_line(
+                "wvb run status=Invalidˉtaskˉenvironment"
+            );
+            return 64;
+        }
+        return Runˉstructuredˉtask(
+            file.read_bytes(process.argument(1u32)),
+            Environment
+        );
+    }
     if Arguments > 2u32 {
         diagnostic.write_line("Usage: wvrun <module.wvb> [--report-steps]");
         return 64;
@@ -394,7 +559,7 @@ export fn Main() -> i32 {
 
     let Module: bytes = file.read_bytes(process.argument(0u32));
     if Isˉstructuredˉtaskˉmodule(Module) {
-        return Runˉstructuredˉtask(Module);
+        return Runˉstructuredˉtask(Module, Defaultˉtaskˉenvironment());
     }
     let Request: bytes = Buildˉrequest(Module);
     let Response: bytes = Interpreter.Main(Request);

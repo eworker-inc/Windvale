@@ -820,7 +820,7 @@ export fn Completeˉterminal(
     );
 }
 
-export fn Observeˉtask(
+export fn Inspectˉtaskˉenvironment(
     State: bytes,
     Task: bytes,
     Tick: u64,
@@ -871,20 +871,41 @@ export fn Observeˉtask(
             true, false, 0u32, 0u64, 0u64, State
         );
     }
+    return Taskˉobservation(
+        true, true, Terminalˉkind, Firstˉevidence, Secondˉevidence,
+        State
+    );
+}
+
+export fn Observeˉtask(
+    State: bytes,
+    Task: bytes,
+    Tick: u64,
+    Clockˉgeneration: u64,
+    Observedˉruntimeˉgeneration: u64
+) -> Taskˉobservation {
+    let Observation: Taskˉobservation = Inspectˉtaskˉenvironment(
+        State, Task, Tick, Clockˉgeneration,
+        Observedˉruntimeˉgeneration
+    );
+    if !Observation.Valid || !Observation.Terminal {
+        return Observation;
+    }
     let Emptyˉresult: bytes = Bytesˉconcat(
         Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32)
     );
     let Completed: Taskˉcompletion = Completeˉtaskˉterminal(
-        State, Task, Emptyˉresult, Terminalˉkind,
-        Firstˉevidence, Secondˉevidence
+        Observation.State, Task, Emptyˉresult, Observation.Terminalˉkind,
+        Observation.Firstˉevidence, Observation.Secondˉevidence
     );
     if !Completed.Valid {
         return Taskˉobservation(
-            false, false, 0u32, 0u64, 0u64, State
+            false, false, 0u32, 0u64, 0u64, Observation.State
         );
     }
     return Taskˉobservation(
-        true, true, Terminalˉkind, Firstˉevidence, Secondˉevidence,
+        true, true, Observation.Terminalˉkind,
+        Observation.Firstˉevidence, Observation.Secondˉevidence,
         Completed.State
     );
 }

@@ -764,11 +764,20 @@ executable source fixtures cover success, child trap, retained-result pressure,
 work exhaustion, call-depth exhaustion, and retained-memory refusal through the
 interpreter.
 
+[Decision 0867](../Decisions/0867-Inject-Structured-Task-Environment-Through-Request-Major-6.md)
+advances execution-request major `6` to minor `1` with one exact 72-byte header
+for launcher-owned context, clock, deadline, tick, and task-runtime generations.
+The public runner preserves its generation-1 default and adds one strict
+`--task-environment` mode. A real edition-1 executable now proves deadline,
+runtime loss/restart, stale context, and unavailable runtime through 17 focused
+execution cases; malformed numeric and request input is rejected before module
+execution.
+
 This completes the sequential implementation checkpoint, not the whole Slice 7
 qualification promise. A parallel-capable Windows host and a parallel-capable
 Linux host must still prove the same canonical observations under different
-completion order before Slice 7 is closed. Host/request time, child-provider
-generation workloads, deterministic completion-order coverage, paired-host
+completion order before Slice 7 is closed. Child-provider generation workloads,
+deterministic completion-order coverage, paired-host
 reconstruction, candidate promotion, and broad Qualification remain explicit
 final Slice 7 gates rather than per-edit tests.
 

@@ -50,7 +50,11 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     let Requestˉmajor: u32 = Bytesˉreadˉu16ˉlittle(Request, 4u32);
     if Requestˉmajor < 1u32 { return Invalid; }
     if Requestˉmajor > 6u32 { return Invalid; }
-    if Bytesˉreadˉu16ˉlittle(Request, 6u32) != 0u32 { return Invalid; }
+    let Requestˉminor: u32 = Bytesˉreadˉu16ˉlittle(Request, 6u32);
+    if (Requestˉmajor == 6u32 && Requestˉminor != 1u32) ||
+        (Requestˉmajor != 6u32 && Requestˉminor != 0u32) {
+        return Invalid;
+    }
     let Maximumˉinstructions: u32 = Bytesˉreadˉu32ˉlittle(Request, 8u32);
     let Maximumˉcallˉdepth: u32 = Bytesˉreadˉu32ˉlittle(Request, 12u32);
     if Maximumˉinstructions < 1u32 { return Invalid; }
@@ -70,6 +74,13 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     var Sourceˉrights: u32 = 0u32;
     var Sourceˉproviderˉgeneration: u32 = 0u32;
     var Sourceˉresourceˉgeneration: u32 = 0u32;
+    var Taskˉcontextˉgeneration: u32 = 0u32;
+    var Taskˉclockˉgeneration: u64 = 0u64;
+    var Taskˉdeadline: u64 = 0u64;
+    var Taskˉexpectedˉruntimeˉgeneration: u64 = 0u64;
+    var Taskˉadmittedˉruntimeˉgeneration: u64 = 0u64;
+    var Taskˉobservationˉtick: u64 = 0u64;
+    var Taskˉobservedˉruntimeˉgeneration: u64 = 0u64;
     if Requestˉmajor == 2u32 {
         if Requestˉlength < 24u32 { return Invalid; }
         Moduleˉoffset = 24u32;
@@ -165,6 +176,30 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             return Invalid;
         }
         Guestˉinputˉoffset = 40u32 + Moduleˉlength;
+    }
+    if Requestˉmajor == 6u32 {
+        if Requestˉlength < 84u32 { return Invalid; }
+        Moduleˉoffset = 72u32;
+        Moduleˉlength = Bytesˉreadˉu32ˉlittle(Request, 16u32);
+        Taskˉcontextˉgeneration = Bytesˉreadˉu32ˉlittle(Request, 20u32);
+        Taskˉclockˉgeneration = Bytesˉreadˉu64ˉlittle(Request, 24u32);
+        Taskˉdeadline = Bytesˉreadˉu64ˉlittle(Request, 32u32);
+        Taskˉexpectedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Request, 40u32
+        );
+        Taskˉadmittedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Request, 48u32
+        );
+        Taskˉobservationˉtick = Bytesˉreadˉu64ˉlittle(Request, 56u32);
+        Taskˉobservedˉruntimeˉgeneration = Bytesˉreadˉu64ˉlittle(
+            Request, 64u32
+        );
+        if Taskˉcontextˉgeneration == 0u32 ||
+            Taskˉclockˉgeneration == 0u64 ||
+            Taskˉexpectedˉruntimeˉgeneration == 0u64 ||
+            Moduleˉlength != Requestˉlength - 72u32 {
+            return Invalid;
+        }
     }
 
     let Module: bytes = Bytesˉslice(Request, Moduleˉoffset, Moduleˉlength);
@@ -732,6 +767,33 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
         );
         Result = Bytesˉconcat(
             Result, Bytesˉfromˉu32ˉlittle(Sourceˉresourceˉgeneration)
+        );
+    }
+    if Requestˉmajor == 6u32 {
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu32ˉlittle(Taskˉcontextˉgeneration)
+        );
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu64ˉlittle(Taskˉclockˉgeneration)
+        );
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu64ˉlittle(Taskˉdeadline)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu64ˉlittle(Taskˉexpectedˉruntimeˉgeneration)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu64ˉlittle(Taskˉadmittedˉruntimeˉgeneration)
+        );
+        Result = Bytesˉconcat(
+            Result, Bytesˉfromˉu64ˉlittle(Taskˉobservationˉtick)
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu64ˉlittle(Taskˉobservedˉruntimeˉgeneration)
         );
     }
     return Bytesˉconcat(Result, Typeˉoffsets);
