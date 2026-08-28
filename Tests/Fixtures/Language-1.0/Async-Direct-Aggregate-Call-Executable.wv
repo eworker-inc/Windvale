@@ -1,0 +1,18 @@
+#!wv/1 en@1
+module Languageˉoneˉasyncˉdirectˉaggregateˉcallˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+record Point {
+    Value: i32;
+}
+
+async fn Make(Value: i32) -> Point effects(task.suspend) {
+    return Point { Value: Value };
+}
+
+export async fn Main(Value: i32) -> i32 effects(task.suspend) {
+    let Result = await Make(Value: Value);
+    return Result.Value;
+}

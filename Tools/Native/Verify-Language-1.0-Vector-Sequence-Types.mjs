@@ -43,7 +43,10 @@ const Cases = [
     },
     {
         name: 'vector-target-confusion',
-        mutate: Candidate => Candidate.writeUInt32LE(1, Layout.vectorTarget),
+        mutate: Candidate => Candidate.writeUInt32LE(
+            Layout.sequenceTypeIndex,
+            Layout.vectorTarget,
+        ),
     },
 ];
 
@@ -69,9 +72,11 @@ try {
         await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
         Created.push(Candidateˉpath);
         const Result = Run(Verifier, [Candidateˉpath]);
-        if (Result.status === 0 || Result.error !== undefined ||
+        if (Result.status !== 1 || Result.error !== undefined ||
             Result.stdout.length !== 0 ||
-            Result.stderr !== 'wvb status=Invalid phase=semantic\n') {
+            !/^wvb status=Invalid phase=semantic(?: step=[a-z-]+)?\r?\n$/u.test(
+                Result.stderr,
+            )) {
             Reject(`The ${Case.name} corruption was not rejected exactly.`);
         }
     }
@@ -87,9 +92,9 @@ try {
 
 function Inspectˉlayout(Input) {
     if (Input.length < 12 || Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 18 ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 26 ||
         Input.readUInt32LE(8) !== 7) {
-        Reject('The fixture is not canonical WVB 1.18.');
+        Reject('The fixture is not canonical WVB 1.26.');
     }
     const Sections = new Map();
     let Cursor = 12;
@@ -111,9 +116,13 @@ function Inspectˉlayout(Input) {
     let Typeˉcursor = Types.payload;
     const Typeˉcount = Readˉu32(Input, Typeˉcursor, Types.end, 'type count');
     Typeˉcursor += 4;
-    if (Typeˉcount !== 2) Reject('The fixture must contain two collection types.');
+    if (Typeˉcount !== 5) {
+        Reject('The fixture must contain three library and two collection types.');
+    }
+    const Collectionˉdescriptorˉbytes = 15;
+    Typeˉcursor = Types.end - (2 * Collectionˉdescriptorˉbytes);
     const Typeˉentries = [];
-    for (let Index = 0; Index < Typeˉcount; Index += 1) {
+    for (let Index = 3; Index < Typeˉcount; Index += 1) {
         Requireˉrange(Input, Typeˉcursor, 5, 'type descriptor');
         const Kindˉoffset = Typeˉcursor;
         const Kind = Input[Typeˉcursor];
@@ -177,14 +186,15 @@ function Inspectˉlayout(Input) {
         Functionˉcursor += 12;
     }
     if (Functionˉcursor !== Functions.end || Vectorˉtarget < 0 ||
-        Sequenceˉtarget < 0 || Input.readUInt32LE(Vectorˉtarget) !== 0 ||
-        Input.readUInt32LE(Sequenceˉtarget) !== 1) {
+        Sequenceˉtarget < 0 || Input.readUInt32LE(Vectorˉtarget) !== 3 ||
+        Input.readUInt32LE(Sequenceˉtarget) !== 4) {
         Reject('The Vector/Sequence function shapes differ.');
     }
     return {
         vectorElement: Typeˉentries[0].element,
         vectorKind: Typeˉentries[0].kindOffset,
         vectorTarget: Vectorˉtarget,
+        sequenceTypeIndex: 4,
     };
 }
 

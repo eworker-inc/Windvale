@@ -62,7 +62,7 @@ const Accepted = [
         Compileˉreport:
             'source admission status=Published modules=1 source-bytes=354\n' +
             'source analysis status=Published source-bytes=354 manifest-bytes=104 ' +
-            'binding-bytes=304 wir-bytes=612\n' +
+            'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
             'code-bytes=151 module-bytes=451\n',
     },
@@ -74,7 +74,7 @@ const Accepted = [
         Compileˉreport:
             'source admission status=Published modules=1 source-bytes=354\n' +
             'source analysis status=Published source-bytes=354 manifest-bytes=104 ' +
-            'binding-bytes=304 wir-bytes=612\n' +
+            'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
             'code-bytes=151 module-bytes=451\n',
     },
@@ -86,7 +86,7 @@ const Accepted = [
         Compileˉreport:
             'source admission status=Published modules=1 source-bytes=358\n' +
             'source analysis status=Published source-bytes=358 manifest-bytes=104 ' +
-            'binding-bytes=304 wir-bytes=612\n' +
+            'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
             'code-bytes=151 module-bytes=453\n',
     },
@@ -104,7 +104,8 @@ const Rejected = [
         Source: 'Closure-Borrow-Mutable.wv',
         Diagnostic:
             'source analysis status=Sourceˉwir symbol-status=Valid ' +
-            'binding-status=Valid wir-status=Invalidˉcallable\n',
+            'binding-status=Valid wir-status=Invalidˉcallable failure-module=0 ' +
+            'related-module=0 function=0 offset=202 line=9 column=20\n',
     },
 ];
 

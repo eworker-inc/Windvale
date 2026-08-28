@@ -31,18 +31,18 @@ const Layout = Inspectˉlayout(Input);
 const Cases = [
     {
         name: 'old-minor',
-        mutate: Candidate => Candidate.writeUInt16LE(18, 6),
+        mutate: Candidate => Candidate.writeUInt16LE(21, 6),
     },
     {
         name: 'length-type-out-of-range',
         mutate: Candidate => Candidate.writeUInt32LE(
-            1, Layout.lengthInstruction + 1,
+            Layout.typeCount, Layout.lengthInstruction + 1,
         ),
     },
     {
         name: 'element-type-out-of-range',
         mutate: Candidate => Candidate.writeUInt32LE(
-            1, Layout.elementInstruction + 1,
+            Layout.typeCount, Layout.elementInstruction + 1,
         ),
     },
     {
@@ -73,9 +73,11 @@ try {
         await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
         Created.push(Candidateˉpath);
         const Result = Run(Verifier, [Candidateˉpath]);
-        if (Result.status === 0 || Result.error !== undefined ||
+        if (Result.status !== 1 || Result.error !== undefined ||
             Result.stdout.length !== 0 ||
-            Normalize(Result.stderr) !== 'wvb status=Invalid phase=semantic\n') {
+            !/^wvb status=Invalid phase=semantic(?: step=[a-z-]+)?\n$/u.test(
+                Normalize(Result.stderr),
+            )) {
             Reject(`The ${Case.name} corruption was not rejected exactly.`);
         }
     }
@@ -91,9 +93,9 @@ try {
 
 function Inspectˉlayout(Input) {
     if (Input.length < 12 || Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 19 ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 22 ||
         Input.readUInt32LE(8) !== 7) {
-        Reject('The sequence-read fixture is not canonical WVB 1.19.');
+        Reject('The sequence-read fixture is not canonical WVB 1.22.');
     }
     const Sections = new Map();
     let Cursor = 12;
@@ -115,7 +117,11 @@ function Inspectˉlayout(Input) {
     let Typeˉcursor = Types.payload;
     const Typeˉcount = Readˉu32(Input, Typeˉcursor, Types.end, 'type count');
     Typeˉcursor += 4;
-    if (Typeˉcount !== 1) Reject('The fixture must contain one Sequence type.');
+    if (Typeˉcount !== 4) {
+        Reject('The fixture must contain three library types and one Sequence type.');
+    }
+    const Sequenceˉdescriptorˉbytes = 15;
+    Typeˉcursor = Types.end - Sequenceˉdescriptorˉbytes;
     Requireˉrange(Input, Typeˉcursor, 5, 'Sequence descriptor');
     const Sequenceˉkind = Typeˉcursor;
     if (Input[Typeˉcursor] !== 6) Reject('The collection descriptor is not Sequence.');
@@ -186,7 +192,7 @@ function Inspectˉlayout(Input) {
         Reject('The Readˉat function directory entry is absent.');
     }
     if (Readˉfunction.parameters.length !== 2 ||
-        Readˉfunction.parameters[0].toString('hex') !== '1800000000' ||
+        Readˉfunction.parameters[0].toString('hex') !== '1803000000' ||
         Readˉfunction.parameters[1].toString('hex') !== '0a' ||
         Readˉfunction.returnShape.toString('hex') !== '01') {
         Reject('The Readˉat function signature differs.');
@@ -202,15 +208,16 @@ function Inspectˉlayout(Input) {
         Readˉstart, Readˉstart + Readˉfunction.codeLength,
     );
     const Lengthˉrelative = Findˉunique(
-        Readˉcode, Buffer.from([203, 0, 0, 0, 0]), 'sequence.length',
+        Readˉcode, Buffer.from([203, 3, 0, 0, 0]), 'sequence.length',
     );
     const Elementˉrelative = Findˉunique(
-        Readˉcode, Buffer.from([204, 0, 0, 0, 0]), 'sequence.element',
+        Readˉcode, Buffer.from([204, 3, 0, 0, 0]), 'sequence.element',
     );
     Requireˉrelease(Readˉcode, Lengthˉrelative, 'sequence.length');
     Requireˉrelease(Readˉcode, Elementˉrelative, 'sequence.element');
     return {
         sequenceKind: Sequenceˉkind,
+        typeCount: Typeˉcount,
         lengthInstruction: Readˉstart + Lengthˉrelative,
         elementInstruction: Readˉstart + Elementˉrelative,
     };

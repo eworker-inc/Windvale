@@ -5,6 +5,7 @@ platform linux, windows, windvale;
 authority application;
 
 import Foundationˉcollections as Collections;
+import Foundationˉmemory as Memory;
 
 export fn Acceptˉvector(Value: Collections.Vector<i32>) -> unit {
     return ();
@@ -14,6 +15,6 @@ export fn Acceptˉsequence(Value: Collections.Sequence<i32>) -> unit {
     return ();
 }
 
-export fn Main() -> i32 {
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32 {
     return 42;
 }

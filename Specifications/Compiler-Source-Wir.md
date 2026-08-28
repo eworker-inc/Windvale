@@ -171,7 +171,25 @@ The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified
 - value-phi placement as the first operation of its join block, two distinct valid predecessor blocks, two exact same-shape operands owned by those predecessors, a result of that same non-void/non-never shape, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
-Construction uses function-private payloads and merges each completed function once. Symbol lookup uses a deterministic first-byte index over absolute WVSS spans. Canonical record/enum shapes and directory identities use the private WVSI bidirectional nominal tables rather than repeated ordinal rescans. Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. For specialized WVLB 1.2/WVIR 1.10 it additionally validates the embedded catalog substitution and maps every specialized call target back to its source declaration before checking arity and dynamic operand/result shapes. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
+Construction uses function-private payloads. At most 16 consecutive completed
+functions are combined before one bounded publication into the global WIR and
+binding payloads; a generic placeholder, non-function declaration, module end,
+or the batch limit flushes the current group. Callable lookup uses the
+deterministic target-module-and-name WVSI 1.2 index over absolute WVSS spans.
+Canonical record/enum shapes and directory identities use the private WVSI
+bidirectional nominal tables rather than repeated ordinal rescans.
+
+The first WIR planning pass is retained rather than discarded. Its ordinary
+functions and generic placeholders become the canonical base. Concrete generic
+functions are then appended in WVGC order beginning at the first not-yet-built
+instance. If compiling one specialization discovers another, only that new
+catalog suffix is compiled in the next bounded round. Closures are appended
+only after the specialization catalog stabilizes. If closure lowering discovers
+another generic instance, its partial closure payload is discarded while its
+discovery catalogs are retained; the new specialization is appended before the
+closure suffix is rebuilt. The existing 32-round limit remains authoritative.
+
+Parameter/local WVLB evidence and typed WVIR are constructed in the same successful-path statement traversal. A local initializer is lowered before its declaration becomes visible; an omitted annotation takes that initializer's exact non-void shape, and the resolved growing binding state is carried through nested blocks. The independent validator can consume standalone WVLB 1.1 evidence by establishing each shape-`0` inferred local from its first verified store and requiring all subsequent accesses to agree. For specialized WVLB 1.2/WVIR 1.10 it additionally validates the embedded catalog substitution and maps every specialized call target back to its source declaration before checking arity and dynamic operand/result shapes. If typed lowering fails, the local-only and complete binding passes remain diagnostic oracles so established binding failures retain precedence.
 
 A bare required capability name emits the existing `U32ˉconstant = 3` operation
 with its exact internal capability-reference result shape and zero target and

@@ -129,6 +129,11 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Language-1-Structured-Tasks.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Structured-Task-Runtime.wvproj',
             'Specifications/Compiler-Source-Structured-Tasks.md',
+            'Tests/Fixtures/Language-1.0/Async-Direct-Aggregate-Call-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Async-Direct-Call-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Async-Direct-Call-Missing-Await.wv',
+            'Tests/Fixtures/Language-1.0/Async-Indirect-Call-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Async-Indirect-Call-Missing-Await.wv',
             'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
             'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
             'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
@@ -147,11 +152,18 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Owned-Aggregate-Vector-Executable.wv',
             'Tests/Fixtures/Language-1.0/Source-File-Snapshot-Executable.wv',
             'Tests/Fixtures/Language-1.0/Structured-Task-Call-Depth-Limit-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Structured-Task-Completion-Order-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Structured-Task-Environment-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Structured-Task-Four-Child-Cancellation-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Structured-Task-Memory-Limit-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Structured-Task-Provider-Recovery-Executable.wv',
             'Tests/Fixtures/Language-1.0/Structured-Task-Retained-Result-Executable.wv',
             'Tests/Fixtures/Language-1.0/Structured-Task-Runtime-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Structured-Task-Trap-Executable.wv',
             'Tests/Fixtures/Language-1.0/Structured-Task-Work-Limit-Executable.wv',
             'Tests/Fixtures/Language-1.0/Structured-Tasks-Executable.wv',
+            'Tests/Fixtures/Language-1.0/Sync-Call-Awaited.wv',
+            'Tests/Fixtures/Language-1.0/Sync-Caller-Awaits-Async.wv',
             'Libraries/Platform/Filesystem/File.wv',
             'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
             'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
@@ -163,6 +175,7 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
+            'Tools/Native/Verify-Language-1.0-Async-Call-Await.mjs',
             'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
             'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
@@ -193,6 +206,7 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Generic-Collection-Monomorphic-Oracle.wv',
             'Tests/Fixtures/Language-1.0/Generic-Declaration-Front-End-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Multiple-Specializations.wv',
+            'Tests/Fixtures/Language-1.0/Generic-Nested-Specialization-Discovery.wv',
             'Tests/Fixtures/Language-1.0/Generic-Resolution-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Generic-Type-Catalog-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Unsupported-Source-Profile.wv',
@@ -219,10 +233,13 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
             'Tests/Native/Language-1.0-Fixture-Inventory.txt',
             'Tools/Native/Verify-Language-1.0-Migration-Fixtures.mjs',
+            'Tools/Native/Verify-Source-Analysis-Diagnostic.mjs',
+            'Tools/Native/Verify-Source-Wir-Incremental-Generics.mjs',
             'Tools/Native/Verify-Language-1.0-Fixed-Integers.mjs',
             'Tools/Native/Verify-Language-1.0-Runes.mjs',
             'Tools/Native/Verify-Language-1.0-Floating.mjs',
             'Tools/Native/Verify-Language-1.0-Multi-Field-Variants.mjs',
+            'Tools/Native/Verify-Language-1.0-Vector-Sequence-Types.mjs',
             'Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs',
             'Tools/Native/Verify-Language-1.0-Sequence-Reads.mjs',
             'Tools/Native/Verify-Language-1.0-Vector-Reads-Freeze.mjs',
@@ -3497,6 +3514,7 @@ $NativeCases = @(
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
+            'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
@@ -3771,7 +3789,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5558 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5568 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

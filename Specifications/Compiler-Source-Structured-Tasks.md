@@ -49,6 +49,13 @@ effect set is inferred from result context.
 in an async Hosted function, requires `task.suspend`, consumes the local exactly
 once, and returns exactly `Taskˉoutcome<T, E>`.
 
+An ordinary direct or indirect call must use `await` exactly when its resolved
+function or callable type is async. An awaited call from a synchronous caller is
+invalid. The existing effect analysis separately requires `task.suspend`; the
+async marker does not infer or grant that effect. Ordinary awaited calls retain
+the existing call lowering and do not become `task.await`, which remains the
+special consuming operation over one affine task handle.
+
 `Requestˉcancel` requires an explicit mutable scope borrow, requires
 `task.cancel`, and returns `Cancelˉrequestˉoutcome`. `Operationˉcontext` requires
 an immutable scope borrow and produces a Copy value whose origin scope must
@@ -211,8 +218,13 @@ every queued child. A second permanent fixture prints its task-slot value from
 each child. Its exact transcript is `3`, `1`, `0`, `2`, followed by
 `Result: 42`: completion is visibly lane ordered while consuming awaits still
 associate values `0`, `1`, `2`, `3` with their creation-ordered handles.
-Child-provider generations and parallel worker state remain later Slice 7
-checkpoints and do not change source, WVIR 1.21, or WVB 1.32.
+A permanent provider-recovery fixture executes four generation-41 child calls,
+distinguishes determinate and indeterminate provider restart, performs no
+automatic retry, explicitly refreshes one rights-limited generation-42
+endpoint, and proves that a fifth accepted child can use it. Provider failure
+remains the child's typed `E`; it never becomes task-runtime loss or restart.
+Parallel worker state remains a later Slice 7 checkpoint. This provider
+checkpoint changes neither source grammar, WVIR 1.21, nor WVB 1.32.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer

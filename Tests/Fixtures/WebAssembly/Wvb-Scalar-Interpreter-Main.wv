@@ -4574,7 +4574,13 @@ fn Executeˉaggregate(
                 let Recordˉbyteˉend: u32 = Recordˉbyteˉoffset
                     + Recordˉfieldˉbytes;
                 if Recordˉbyteˉend > Bytesˉlength(Records) {
-                    Records = Bytesˉconcat(Records, Recordˉfields);
+                    if Recordˉbyteˉoffset > Bytesˉlength(Records) {
+                        return Invalid;
+                    }
+                    Records = Bytesˉconcat(
+                        Bytesˉslice(Records, 0u32, Recordˉbyteˉoffset),
+                        Recordˉfields
+                    );
                 } else {
                     let Recordˉprefix: bytes = Bytesˉslice(
                         Records,

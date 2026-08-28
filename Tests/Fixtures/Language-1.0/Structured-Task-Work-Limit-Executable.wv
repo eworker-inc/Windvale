@@ -124,7 +124,10 @@ export async fn Main(
     task.spawn,
     task.suspend,
 ) {
-    return match Run(Budget: Budget, Parentˉcontext: Parentˉcontext) {
+    return match await Run(
+        Budget: Budget,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) {
         case Result.Result.Valid { Value: Value } { Value }
         case Result.Result.Failure { Error: _ } { -9 }
     };

@@ -28,9 +28,9 @@ const Mutations = [
 function Parseˉmodule(Path) {
     const Bytes = readFileSync(Path);
     if (Bytes.length < 12 || Bytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
-        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 17 ||
+        Bytes.readUInt16LE(4) !== 1 || Bytes.readUInt16LE(6) !== 22 ||
         Bytes.readUInt32LE(8) !== 7) {
-        Reject(`${basename(Path)} is not a WVB 1.17 seven-section module.`);
+        Reject(`${basename(Path)} is not a WVB 1.22 seven-section module.`);
     }
     const Sections = [];
     let Cursor = 12;
@@ -93,7 +93,9 @@ function Requireˉaccepted(Path) {
 function Requireˉrejected(Path) {
     const Result = Run(Verifier, [Path]);
     if (Result.status !== 1 || Result.stdout !== '' ||
-        !/^wvb status=Invalid phase=[a-z-]+\r?\n$/u.test(Result.stderr)) {
+        !/^wvb status=Invalid phase=[a-z-]+(?: step=[a-z-]+)?\r?\n$/u.test(
+            Result.stderr,
+        )) {
         Reject(`${basename(Path)} was not rejected by the compiler-aligned verifier.`);
     }
 }
@@ -109,21 +111,34 @@ try {
         Code.length,
         U64ˉone,
     );
+    const Typesˉcursor = Types.payload;
+    const Typeˉcount = Module.Bytes.readUInt32LE(Typesˉcursor);
+    const Arrayˉtypeˉindex = Typeˉcount - 1;
+    const Arrayˉdescriptorˉbytes = 19;
+    const Arrayˉdescriptor = Types.payload + Types.length -
+        Arrayˉdescriptorˉbytes;
+    if (Typeˉcount !== 4 || Arrayˉtypeˉindex !== 3 ||
+        Module.Bytes[Arrayˉdescriptor] !== 4) {
+        Reject('The fixed-array fixture does not end with its array type.');
+    }
+    const Arrayˉcreateˉneedle = Buffer.alloc(5);
+    Arrayˉcreateˉneedle[0] = 0xc5;
+    Arrayˉcreateˉneedle.writeUInt32LE(Arrayˉtypeˉindex, 1);
     const Arrayˉcreate = Findˉunique(
         Module.Bytes,
         Code.payload,
         Code.length,
-        Buffer.from([0xc5, 0, 0, 0, 0]),
+        Arrayˉcreateˉneedle,
     );
-    const Typesˉcursor = Types.payload;
-    if (Module.Bytes.readUInt32LE(Typesˉcursor) !== 1 ||
-        Module.Bytes[Typesˉcursor + 4] !== 4) {
-        Reject('The fixed-array fixture does not declare one array type.');
-    }
-    const Nameˉbytes = Module.Bytes.readUInt32LE(Typesˉcursor + 5);
-    const Elementˉshape = Typesˉcursor + 9 + Nameˉbytes;
+    const Nameˉbytes = Module.Bytes.readUInt32LE(Arrayˉdescriptor + 1);
+    const Elementˉshape = Arrayˉdescriptor + 5 + Nameˉbytes;
     const Count = Elementˉshape + 1;
-    if (Count + 4 !== Types.payload + Types.length ||
+    if (Nameˉbytes !== 9 ||
+        Module.Bytes.subarray(
+            Arrayˉdescriptor + 5,
+            Arrayˉdescriptor + 5 + Nameˉbytes,
+        ).toString('ascii') !== '__WvY0000' ||
+        Count + 4 !== Types.payload + Types.length ||
         Module.Bytes[Elementˉshape] !== 1 ||
         Module.Bytes.readUInt32LE(Count) !== 3) {
         Reject('The fixed-array fixture type descriptor is not Array<i32, 3>.');
@@ -159,13 +174,13 @@ try {
     Requireˉrejected(Mutations[2]);
 
     const Unknownˉtype = Buffer.from(Module.Bytes);
-    Unknownˉtype.writeUInt32LE(1, Arrayˉcreate + 1);
+    Unknownˉtype.writeUInt32LE(Typeˉcount, Arrayˉcreate + 1);
     writeFileSync(Mutations[3], Unknownˉtype);
     Requireˉrejected(Mutations[3]);
 
     process.stdout.write(
         'fixed array WVB verification status=Passed cases=6 result=42 ' +
-        'bounds=WVR3008\n',
+        `bounds=WVR3008 version=1.22 types=${Typeˉcount}\n`,
     );
 } finally {
     for (const Mutation of Mutations) {

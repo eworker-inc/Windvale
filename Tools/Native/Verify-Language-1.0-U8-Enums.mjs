@@ -50,7 +50,9 @@ function Requireˉaccepted(Path) {
 function Requireˉrejected(Path) {
     const Result = Run(Verifier, [Path]);
     if (Result.status !== 1 || Result.stdout !== '' ||
-        !/^wvb status=Invalid phase=[a-z-]+\r?\n$/u.test(Result.stderr)) {
+        !/^wvb status=Invalid phase=[a-z-]+(?: step=[a-z-]+)?\r?\n$/u.test(
+            Result.stderr,
+        )) {
         Reject(`${basename(Path)} was not rejected by the verifier.`);
     }
 }

@@ -166,14 +166,20 @@ try {
         const Verification = Run(Verifier, [Candidateˉpath]);
         if (!Mutation.accepted) {
             const Phase = Mutation.phase ?? 'semantic';
-            if (Verification.status === 0 || Verification.error !== undefined ||
+            const Diagnostic = Verification.stderr.replaceAll('\r\n', '\n');
+            const Expected = new RegExp(
+                `^wvb status=Invalid phase=${Phase}` +
+                '(?: step=[a-z-]+)?\\n$',
+                'u',
+            );
+            if (Verification.status !== 1 || Verification.error !== undefined ||
                 Verification.stdout.length !== 0 ||
-                Verification.stderr !== `wvb status=Invalid phase=${Phase}\n`) {
+                !Expected.test(Diagnostic)) {
                 Reject(
                     `${Mutation.name} was not rejected exactly: ` +
                     `status=${Verification.status} ` +
                     `stdout=${JSON.stringify(Verification.stdout)} ` +
-                    `stderr=${JSON.stringify(Verification.stderr)}.`,
+                    `stderr=${JSON.stringify(Diagnostic)}.`,
                 );
             }
             continue;
@@ -208,7 +214,7 @@ try {
 }
 
 function Buildˉruntime(Input) {
-    const Sections = Inspectˉmodule(Input, 18);
+    const Sections = Inspectˉmodule(Input, 26);
     const Functions = Inspectˉfunctions(Input, Sections.get(4));
     if (Functions.entries.length !== 3 ||
         Functions.entries[0].name !== 'Acceptˉsequence' ||
@@ -221,8 +227,34 @@ function Buildˉruntime(Input) {
     if (Functions.entries[2].codeOffset > Code.payload.length) {
         Reject('The source types fixture code prefix differs.');
     }
+    const Types = Sections.get(7);
+    const Collectionˉdescriptorˉbytes = 15;
+    const Collectionˉtypesˉoffset = Types.payload.length -
+        (2 * Collectionˉdescriptorˉbytes);
+    if (Types.payload.readUInt32LE(0) !== 5 ||
+        Collectionˉtypesˉoffset < 4 ||
+        Types.payload[Collectionˉtypesˉoffset] !== 5 ||
+        Types.payload[
+            Collectionˉtypesˉoffset + Collectionˉdescriptorˉbytes
+        ] !== 6) {
+        Reject('The source types fixture collection catalog differs.');
+    }
+    const Collectionˉtypes = Buffer.concat([
+        U32(2),
+        Types.payload.subarray(Collectionˉtypesˉoffset),
+    ]);
 
     const Runtimeˉcode = Buildˉruntimeˉcode();
+    const Acceptˉsequence = Buffer.from(Functions.entries[0].bytes);
+    const Acceptˉvector = Buffer.from(Functions.entries[1].bytes);
+    const Sequenceˉtarget = 4 + Buffer.byteLength(
+        Functions.entries[0].name, 'utf8',
+    ) + 4 + 1;
+    const Vectorˉtarget = 4 + Buffer.byteLength(
+        Functions.entries[1].name, 'utf8',
+    ) + 4 + 1;
+    Acceptˉsequence.writeUInt32LE(1, Sequenceˉtarget);
+    Acceptˉvector.writeUInt32LE(0, Vectorˉtarget);
     const Mainˉentry = Buffer.concat([
         Stringˉfield('Main'),
         U32(0),
@@ -239,8 +271,8 @@ function Buildˉruntime(Input) {
     ]);
     const Functionˉpayload = Buffer.concat([
         U32(3),
-        Functions.entries[0].bytes,
-        Functions.entries[1].bytes,
+        Acceptˉsequence,
+        Acceptˉvector,
         Mainˉentry,
     ]);
     const Codeˉpayload = Buffer.concat([
@@ -258,6 +290,7 @@ function Buildˉruntime(Input) {
     }
     Payloads.set(4, Functionˉpayload);
     Payloads.set(5, Codeˉpayload);
+    Payloads.set(7, Collectionˉtypes);
     const Result = [Header];
     for (let Kind = 1; Kind <= 7; Kind += 1) {
         Result.push(Section(Kind, Payloads.get(Kind)));

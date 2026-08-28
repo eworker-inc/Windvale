@@ -267,6 +267,7 @@ const WIR_FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
 const WIR_FUNCTION_TYPE_PARAMETER_LIMIT: u32 = 64u32;
 const WIR_FUNCTION_TYPE_EVIDENCE_LIMIT: u32 = 131072u32;
 const WIR_FUNCTION_TYPE_SHAPE_BASE: u32 = 2147483904u32;
+const WIR_FUNCTION_PUBLICATION_BATCH_LIMIT: u32 = 16u32;
 
 enum Compilerˉsourceˉwirˉdataˉkind {
     None = 0;
@@ -1246,6 +1247,33 @@ fn Compilerˉsourceˉwirˉclosureˉcatalog(
     );
 }
 
+fn Compilerˉsourceˉwirˉwithˉdiscoveryˉevidence(
+    Build: Compilerˉsourceˉwirˉbuild,
+    Discovered: Compilerˉsourceˉwirˉbuild
+) -> Compilerˉsourceˉwirˉbuild {
+    return Compilerˉsourceˉwirˉwithˉanalysisˉstate(
+        Build,
+        Build.Status,
+        Build.Currentˉblock,
+        Build.Currentˉblockˉfirstˉoperation,
+        Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload,
+        Build.Bindingˉentries,
+        Build.Bindingˉparameters,
+        Build.Bindingˉlocals,
+        Build.Bindingˉnextˉslot,
+        Discovered.Genericˉevidence,
+        Build.Genericˉinstance,
+        Discovered.Closureˉevidence,
+        Build.Failureˉmodule,
+        Build.Failureˉrelatedˉmodule,
+        Build.Failureˉfunction,
+        Build.Failureˉoffset,
+        Build.Failureˉline,
+        Build.Failureˉcolumn
+    );
+}
+
 fn Compilerˉsourceˉwirˉwithˉclosureˉevidence(
     Build: Compilerˉsourceˉwirˉbuild,
     Evidence: bytes
@@ -2158,115 +2186,70 @@ export fn Compilerˉsourceˉwirˉtwoˉoperands(First: u32, Second: u32) -> bytes
     );
 }
 
-export fn Compilerˉsourceˉwirˉintrinsicˉoperation(
-    Source: bytes,
-    Offset: u32,
-    Length: u32
-) -> u32 {
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉlength") { return WIR_OPERATION_BYTES_LENGTH; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉslice") { return WIR_OPERATION_BYTES_SLICE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") { return WIR_OPERATION_BYTES_READ_U8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return WIR_OPERATION_BYTES_READ_U16_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return WIR_OPERATION_BYTES_READ_U32_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return WIR_OPERATION_BYTES_READ_I32_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return WIR_OPERATION_BYTES_READ_U64_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return WIR_OPERATION_BYTES_CONCAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return WIR_OPERATION_BYTES_FROM_U8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return WIR_OPERATION_BYTES_FROM_U16_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return WIR_OPERATION_BYTES_FROM_U32_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return WIR_OPERATION_BYTES_FROM_I32_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return WIR_OPERATION_BYTES_FROM_U64_LITTLE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return WIR_OPERATION_BYTES_SHA256_HEX; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return WIR_OPERATION_U32_FROM_U8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return WIR_OPERATION_U64_FROM_U32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return WIR_OPERATION_I32_FORMAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return WIR_OPERATION_U8_FORMAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return WIR_OPERATION_U32_FORMAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return WIR_OPERATION_I64_FORMAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return WIR_OPERATION_U64_FORMAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return WIR_OPERATION_TEXT_CONCAT; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return WIR_OPERATION_TEXT_UTF8_IS_VALID; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return WIR_OPERATION_TEXT_FROM_UTF8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return WIR_OPERATION_TEXT_QUOTE; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return WIR_OPERATION_TEXT_TO_UTF8; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Enumˉname") { return WIR_OPERATION_ENUM_NAME; }
-    return WIR_OPERATION_NONE;
-}
-
-export fn Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
-    Source: bytes,
-    Offset: u32,
-    Length: u32,
+fn Compilerˉsourceˉwirˉintrinsicˉparameterˉshapeˉfromˉoperation(
+    Operation: u32,
     Index: u32
 ) -> u32 {
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉslice") {
+    if Operation == WIR_OPERATION_BYTES_SLICE ||
+        Operation == WIR_OPERATION_BYTES_READ_U8 ||
+        Operation == WIR_OPERATION_BYTES_READ_U16_LITTLE ||
+        Operation == WIR_OPERATION_BYTES_READ_U32_LITTLE ||
+        Operation == WIR_OPERATION_BYTES_READ_I32_LITTLE ||
+        Operation == WIR_OPERATION_BYTES_READ_U64_LITTLE {
         if Index == 0u32 { return 6u32; }
         return 3u32;
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") {
-        if Index == 0u32 { return 6u32; }
+    if Operation == WIR_OPERATION_BYTES_CONCAT { return 6u32; }
+    if Operation == WIR_OPERATION_TEXT_CONCAT { return 5u32; }
+    if Operation == WIR_OPERATION_BYTES_FROM_U8 { return 2u32; }
+    if Operation == WIR_OPERATION_BYTES_FROM_U16_LITTLE ||
+        Operation == WIR_OPERATION_BYTES_FROM_U32_LITTLE {
         return 3u32;
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") {
-        if Index == 0u32 { return 6u32; }
-        return 3u32;
+    if Operation == WIR_OPERATION_BYTES_FROM_I32_LITTLE { return 1u32; }
+    if Operation == WIR_OPERATION_BYTES_FROM_U64_LITTLE { return 8u32; }
+    if Operation == WIR_OPERATION_U32_FROM_U8 { return 2u32; }
+    if Operation == WIR_OPERATION_U64_FROM_U32 { return 3u32; }
+    if Operation == WIR_OPERATION_I32_FORMAT { return 1u32; }
+    if Operation == WIR_OPERATION_U8_FORMAT { return 2u32; }
+    if Operation == WIR_OPERATION_U32_FORMAT { return 3u32; }
+    if Operation == WIR_OPERATION_I64_FORMAT { return 7u32; }
+    if Operation == WIR_OPERATION_U64_FORMAT { return 8u32; }
+    if Operation == WIR_OPERATION_TEXT_QUOTE ||
+        Operation == WIR_OPERATION_TEXT_TO_UTF8 {
+        return 5u32;
     }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") {
-        if Index == 0u32 { return 6u32; }
-        return 3u32;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") {
-        if Index == 0u32 { return 6u32; }
-        return 3u32;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") {
-        if Index == 0u32 { return 6u32; }
-        return 3u32;
-    }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉconcat") { return 6u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu8") { return 2u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu16ˉlittle") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu32ˉlittle") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉi32ˉlittle") { return 1u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉfromˉu64ˉlittle") { return 8u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 2u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 1u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 2u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return 7u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return 8u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return 5u32; }
     return 6u32;
 }
 
-export fn Compilerˉsourceˉwirˉintrinsicˉreturnˉshape(
-    Source: bytes,
-    Offset: u32,
-    Length: u32
+fn Compilerˉsourceˉwirˉintrinsicˉreturnˉshapeˉfromˉoperation(
+    Operation: u32
 ) -> u32 {
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉlength") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu8") { return 2u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu16ˉlittle") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu32ˉlittle") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉi32ˉlittle") { return 1u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉreadˉu64ˉlittle") { return 8u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉfromˉu8") { return 3u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉfromˉu32") { return 8u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉutf8ˉisˉvalid") { return 4u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I32ˉformat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U8ˉformat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U32ˉformat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "I64ˉformat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "U64ˉformat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉconcat") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Bytesˉsha256ˉhex") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉfromˉutf8") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉquote") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Enumˉname") { return 5u32; }
-    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "Textˉtoˉutf8") { return 6u32; }
+    if Operation == WIR_OPERATION_BYTES_LENGTH ||
+        Operation == WIR_OPERATION_BYTES_READ_U16_LITTLE ||
+        Operation == WIR_OPERATION_BYTES_READ_U32_LITTLE ||
+        Operation == WIR_OPERATION_U32_FROM_U8 {
+        return 3u32;
+    }
+    if Operation == WIR_OPERATION_BYTES_READ_U8 { return 2u32; }
+    if Operation == WIR_OPERATION_BYTES_READ_I32_LITTLE { return 1u32; }
+    if Operation == WIR_OPERATION_BYTES_READ_U64_LITTLE ||
+        Operation == WIR_OPERATION_U64_FROM_U32 {
+        return 8u32;
+    }
+    if Operation == WIR_OPERATION_TEXT_UTF8_IS_VALID { return 4u32; }
+    if Operation == WIR_OPERATION_I32_FORMAT ||
+        Operation == WIR_OPERATION_U8_FORMAT ||
+        Operation == WIR_OPERATION_U32_FORMAT ||
+        Operation == WIR_OPERATION_I64_FORMAT ||
+        Operation == WIR_OPERATION_U64_FORMAT ||
+        Operation == WIR_OPERATION_TEXT_CONCAT ||
+        Operation == WIR_OPERATION_BYTES_SHA256_HEX ||
+        Operation == WIR_OPERATION_TEXT_FROM_UTF8 ||
+        Operation == WIR_OPERATION_TEXT_QUOTE ||
+        Operation == WIR_OPERATION_ENUM_NAME {
+        return 5u32;
+    }
     return 6u32;
 }
 
@@ -2703,11 +2686,11 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
             );
         }
         return Compilerˉsourceˉwirˉsignature(
-            Compilerˉsourceˉwirˉintrinsicˉparameterˉshape(
-                Nameˉsource, Nameˉoffset, Nameˉlength, Argument
+            Compilerˉsourceˉwirˉintrinsicˉparameterˉshapeˉfromˉoperation(
+                Callable.Directoryˉentry, Argument
             ),
-            Compilerˉsourceˉwirˉintrinsicˉreturnˉshape(
-                Nameˉsource, Nameˉoffset, Nameˉlength
+            Compilerˉsourceˉwirˉintrinsicˉreturnˉshapeˉfromˉoperation(
+                Callable.Directoryˉentry
             ),
             Compilerˉsourceˉwirˉsentinel(),
             0u32,
@@ -3894,7 +3877,10 @@ fn Compilerˉsourceˉwirˉadmitˉnamedˉfunctionˉreference(
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉfunctionˉreference {
     if !Callable.Found || !Callable.Accessible ||
-        Callable.Kind != Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function {
+        (Callable.Kind !=
+                Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function &&
+            Callable.Kind !=
+                Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction) {
         return Compilerˉsourceˉwirˉfunctionˉreferenceˉfailure(Build);
     }
     let View: Sourceˉset.Compilerˉsourceˉsetˉview =
@@ -4142,8 +4128,10 @@ export fn Compilerˉsourceˉwirˉcompileˉname(
             Expression.Valueˉoffset, Expression.Valueˉlength
         );
     if Namedˉfunction.Found &&
-        Namedˉfunction.Kind ==
-            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function {
+        (Namedˉfunction.Kind ==
+                Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function ||
+            Namedˉfunction.Kind ==
+                Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction) {
         let Reference: Compilerˉsourceˉwirˉfunctionˉreference =
             Compilerˉsourceˉwirˉadmitˉnamedˉfunctionˉreference(
                 Input, Scan, Symbols, Source, Expression,
@@ -7829,7 +7817,9 @@ fn Compilerˉsourceˉwirˉfunctionˉgenericˉformal(
         Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric(
             0u32, 0u32, 1u32, 1u32, 0u32, 1u32, 1u32
         );
-    if Callable.Kind != Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function {
+    if Callable.Kind != Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function &&
+        Callable.Kind !=
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction {
         return Compilerˉsourceˉwirˉgenericˉformal(
             false, Emptyˉformalˉsource, Emptyˉformalˉgeneric,
             0u32, 1u32, 1u32
@@ -9427,6 +9417,7 @@ fn Compilerˉsourceˉwirˉcompileˉindirectˉcall(
     Source: bytes,
     Expression: Sourceˉbodies.Compilerˉsourceˉexpression,
     Local: Sourceˉbindings.Compilerˉsourceˉlocalˉmatch,
+    Awaited: bool,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉvalue {
     let Catalog: Compilerˉsourceˉwirˉfunctionˉtypeˉcatalog =
@@ -9453,6 +9444,18 @@ fn Compilerˉsourceˉwirˉcompileˉindirectˉcall(
             ) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉcallable,
+            Build.Currentˉmodule,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
+    if Awaited != ((Compilerˉsourceˉwirˉfunctionˉtypeˉflags(
+            Catalog, Instance
+        ) & 1u32) != 0u32) ||
+        (Awaited && !Compilerˉsourceˉwirˉcurrentˉfunctionˉisˉasync(
+            Input, Scan, Symbols, Build
+        )) {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Invalidˉtask,
             Build.Currentˉmodule,
             Expression.Offset, Expression.Line, Expression.Column
         );
@@ -9562,6 +9565,13 @@ fn Compilerˉsourceˉwirˉtaskˉfailure(
         Build.Currentˉmodule,
         Expression.Offset, Expression.Line, Expression.Column
     );
+}
+
+fn Compilerˉsourceˉwirˉcallableˉisˉasync(
+    Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch
+) -> bool {
+    return Callable.Kind ==
+        Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction;
 }
 
 fn Compilerˉsourceˉwirˉtaskˉargumentˉexpression(
@@ -10224,7 +10234,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         return Compilerˉsourceˉwirˉcompileˉindirectˉcall(
             Input, Scan, Symbols,
             Bindingˉpayload, Bindingˉfirst, Bindingˉentries,
-            Source, Expression, Indirectˉlocal, Build
+            Source, Expression, Indirectˉlocal, Awaited, Build
         );
     }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
@@ -10387,7 +10397,12 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Source, Expression, Expectedˉshape, Build
         );
     }
-    if Awaited {
+    let Callableˉisˉasync: bool =
+        Compilerˉsourceˉwirˉcallableˉisˉasync(Callable);
+    if Awaited != Callableˉisˉasync ||
+        (Awaited && !Compilerˉsourceˉwirˉcurrentˉfunctionˉisˉasync(
+            Input, Scan, Symbols, Build
+        )) {
         return Compilerˉsourceˉwirˉtaskˉfailure(Build, Expression);
     }
     var Foundationˉsequenceˉoperation: u32 = 0u32;
@@ -10443,7 +10458,9 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         Sourceˉgenerics.Compilerˉsourceˉgenericˉsolutionˉcreate(
             Emptyˉgenericˉparameters, Emptyˉgenericˉparameters
         );
-    if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function {
+    if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function ||
+        Callable.Kind ==
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction {
         let Genericˉentry: u32 = 16u32 + Callable.Directoryˉentry * 24u32;
         let Genericˉdeclarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
             Symbols.Directory, Genericˉentry + 8u32
@@ -10946,9 +10963,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Returnˉshape = Foundationˉsequenceˉelement;
             }
         } else {
-            Operation = Compilerˉsourceˉwirˉintrinsicˉoperation(
-                Source, Expression.Valueˉoffset, Expression.Valueˉlength
-            );
+            Operation = Callable.Directoryˉentry;
             Target = Compilerˉsourceˉwirˉsentinel();
         }
         Auxiliary = 0u32;
@@ -13517,7 +13532,7 @@ fn Compilerˉsourceˉwirˉbindˉfunctionˉparameters(
     return Compilerˉsourceˉwirˉfusedˉfrom(Result, Phase);
 }
 
-export fn Compilerˉsourceˉwirˉcompileˉfunction(
+fn Compilerˉsourceˉwirˉcompileˉfunctionˉlocal(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
@@ -13659,13 +13674,14 @@ export fn Compilerˉsourceˉwirˉcompileˉfunction(
     if Completed.Status != Compilerˉsourceˉwirˉstatus.Valid {
         return Completed;
     }
-    return Compilerˉsourceˉwirˉmergeˉfunction(Build, Completed);
+    return Completed;
 }
 
 fn Compilerˉsourceˉwirˉcompileˉspecializations(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Firstˉinstance: u32,
     Build: Compilerˉsourceˉwirˉbuild
 ) -> Compilerˉsourceˉwirˉbuild {
     var Result: Compilerˉsourceˉwirˉbuild = Build;
@@ -13678,7 +13694,7 @@ fn Compilerˉsourceˉwirˉcompileˉspecializations(
     let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
         Symbols.Directory, 8u32
     );
-    var Instance: u32 = 0u32;
+    var Instance: u32 = Firstˉinstance;
     while Instance < Instances {
         let Declarationˉentry: u32 =
             Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstanceˉdeclaration(
@@ -13713,20 +13729,25 @@ fn Compilerˉsourceˉwirˉcompileˉspecializations(
                 Declarationˉoffset, Position.Line, Position.Column
             );
         }
-        let Functionˉresult: Compilerˉsourceˉwirˉbuild =
-            Compilerˉsourceˉwirˉcompileˉfunction(
+        let Functionˉlocal: Compilerˉsourceˉwirˉbuild =
+            Compilerˉsourceˉwirˉcompileˉfunctionˉlocal(
                 Input, Scan, Symbols,
                 Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input),
                 Module, Function, View.Source, Declaration,
                 Position.Line, Position.Column,
                 Compilerˉsourceˉwirˉwithˉgenericˉinstance(Result, Instance)
             );
+        if Functionˉlocal.Status != Compilerˉsourceˉwirˉstatus.Valid {
+            return Functionˉlocal;
+        }
+        let Functionˉresult: Compilerˉsourceˉwirˉbuild =
+            Compilerˉsourceˉwirˉmergeˉfunction(Result, Functionˉlocal);
         if Functionˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
             return Functionˉresult;
         }
         let Functionˉbindings:
             Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
-            Compilerˉsourceˉwirˉbuildˉbindings(Input, Functionˉresult);
+            Compilerˉsourceˉwirˉbuildˉbindings(Input, Functionˉlocal);
         Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
             Bindings, Functionˉbindings
         );
@@ -14178,6 +14199,11 @@ export fn Compilerˉsourceˉwirˉphase(
     );
     var Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
         Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
+    var Functionˉbatch: Compilerˉsourceˉwirˉbuild = Result;
+    var Functionˉbatchˉbindings:
+        Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
+    var Functionˉbatchˉentries: u32 = 0u32;
     var Module: u32 = 0u32;
     while Module < Scan.Modules {
         let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
@@ -14200,26 +14226,46 @@ export fn Compilerˉsourceˉwirˉphase(
                             View.Source, Cursor, Currentˉline, Currentˉcolumn,
                             Declaration.Declarationˉoffset
                         );
-                        let Function: u32 = Result.Functionˉentries;
+                        let Function: u32 = Functionˉbatch.Functionˉentries;
                         let Generic: Sourceˉsymbols.Compilerˉsourceˉfunctionˉgeneric =
                             Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
                                 View.Source, Declaration,
                                 Position.Line, Position.Column
                             );
                         if Generic.Parameters > 0u32 {
+                            if Functionˉbatchˉentries > 0u32 {
+                                Result = Compilerˉsourceˉwirˉmergeˉfunction(
+                                    Result, Functionˉbatch
+                                );
+                                if Result.Status !=
+                                        Compilerˉsourceˉwirˉstatus.Valid {
+                                    return Result;
+                                }
+                                Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+                                    Bindings, Functionˉbatchˉbindings
+                                );
+                                Result = Compilerˉsourceˉwirˉfusedˉfrom(
+                                    Result, Bindings
+                                );
+                                Functionˉbatchˉentries = 0u32;
+                            }
                             Result = Compilerˉsourceˉwirˉappendˉfunctionˉentry(
                                 Compilerˉsourceˉwirˉwithˉgenericˉinstance(
                                     Result, Compilerˉsourceˉwirˉsentinel()
                                 ),
                                 false, 0u32, 0u32, 0u32
                             );
+                            Functionˉbatch = Result;
+                            Functionˉbatchˉbindings =
+                                Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
                         } else {
                             var Functionˉbuild: Compilerˉsourceˉwirˉbuild =
                                 Compilerˉsourceˉwirˉwithˉgenericˉinstance(
-                                    Result, Compilerˉsourceˉwirˉsentinel()
+                                    Functionˉbatch,
+                                    Compilerˉsourceˉwirˉsentinel()
                                 );
                             let Functionˉresult: Compilerˉsourceˉwirˉbuild =
-                                Compilerˉsourceˉwirˉcompileˉfunction(
+                                Compilerˉsourceˉwirˉcompileˉfunctionˉlocal(
                                     Input, Scan, Symbols,
                                     Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input),
                                     Module, Function, View.Source, Declaration,
@@ -14228,18 +14274,70 @@ export fn Compilerˉsourceˉwirˉphase(
                             if Functionˉresult.Status != Compilerˉsourceˉwirˉstatus.Valid {
                                 return Functionˉresult;
                             }
-                            Result = Functionˉresult;
                             let Functionˉbindings: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
                                 Compilerˉsourceˉwirˉbuildˉbindings(Input, Functionˉresult);
-                            Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
-                                Bindings, Functionˉbindings
-                            );
-                            Result = Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindings);
+                            if Functionˉbatchˉentries == 0u32 {
+                                Functionˉbatch = Functionˉresult;
+                            } else {
+                                Functionˉbatch = Compilerˉsourceˉwirˉmergeˉfunction(
+                                    Functionˉbatch, Functionˉresult
+                                );
+                            }
+                            if Functionˉbatch.Status !=
+                                    Compilerˉsourceˉwirˉstatus.Valid {
+                                return Functionˉbatch;
+                            }
+                            Functionˉbatchˉbindings =
+                                Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+                                    Functionˉbatchˉbindings,
+                                    Functionˉbindings
+                                );
+                            Functionˉbatchˉentries =
+                                Functionˉbatchˉentries + 1u32;
+                            if Functionˉbatchˉentries ==
+                                    WIR_FUNCTION_PUBLICATION_BATCH_LIMIT {
+                                Result = Compilerˉsourceˉwirˉmergeˉfunction(
+                                    Result, Functionˉbatch
+                                );
+                                if Result.Status !=
+                                        Compilerˉsourceˉwirˉstatus.Valid {
+                                    return Result;
+                                }
+                                Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+                                    Bindings, Functionˉbatchˉbindings
+                                );
+                                Result = Compilerˉsourceˉwirˉfusedˉfrom(
+                                    Result, Bindings
+                                );
+                                Functionˉbatch = Result;
+                                Functionˉbatchˉbindings =
+                                    Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
+                                Functionˉbatchˉentries = 0u32;
+                            }
                         }
                     } else {
+                        if Functionˉbatchˉentries > 0u32 {
+                            Result = Compilerˉsourceˉwirˉmergeˉfunction(
+                                Result, Functionˉbatch
+                            );
+                            if Result.Status !=
+                                    Compilerˉsourceˉwirˉstatus.Valid {
+                                return Result;
+                            }
+                            Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+                                Bindings, Functionˉbatchˉbindings
+                            );
+                            Result = Compilerˉsourceˉwirˉfusedˉfrom(
+                                Result, Bindings
+                            );
+                            Functionˉbatchˉentries = 0u32;
+                        }
                         Result = Compilerˉsourceˉwirˉappendˉfunctionˉentry(
                             Result, false, 0u32, 0u32, 0u32
                         );
+                        Functionˉbatch = Result;
+                        Functionˉbatchˉbindings =
+                            Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
                     }
                 }
                 if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) {
@@ -14250,11 +14348,27 @@ export fn Compilerˉsourceˉwirˉphase(
                 Currentˉcolumn = Declaration.Nextˉcolumn;
             }
         }
+        if Functionˉbatchˉentries > 0u32 {
+            Result = Compilerˉsourceˉwirˉmergeˉfunction(
+                Result, Functionˉbatch
+            );
+            if Result.Status != Compilerˉsourceˉwirˉstatus.Valid {
+                return Result;
+            }
+            Bindings = Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉmerge(
+                Bindings, Functionˉbatchˉbindings
+            );
+            Result = Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindings);
+            Functionˉbatch = Result;
+            Functionˉbatchˉbindings =
+                Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉempty(Input);
+            Functionˉbatchˉentries = 0u32;
+        }
         Module = Module + 1u32;
     }
     if !Planning {
         Result = Compilerˉsourceˉwirˉcompileˉspecializations(
-            Input, Scan, Symbols,
+            Input, Scan, Symbols, 0u32,
             Compilerˉsourceˉwirˉfusedˉfrom(Result, Bindings)
         );
         if Result.Status != Compilerˉsourceˉwirˉstatus.Valid { return Result; }
@@ -15576,53 +15690,72 @@ fn Compilerˉprepareˉsourceˉwirˉbuildˉwithˉsymbols(
         Input, Scan, Symbols, Initialˉevidence, true
     );
     if Build.Status == Compilerˉsourceˉwirˉstatus.Valid {
-        var Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
-            Compilerˉsourceˉwirˉgenericˉcatalog(
-                Build.Genericˉevidence
+        var Compiledˉinstances: u32 = 0u32;
+        var Availableˉinstances: u32 =
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+                Compilerˉsourceˉwirˉgenericˉcatalog(
+                    Build.Genericˉevidence
+                )
             );
-        var Priorˉinstances: u32 =
-            Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(Catalog);
-        if Priorˉinstances > 0u32 {
-            Build = Compilerˉsourceˉwirˉphase(
-                Input, Scan, Symbols, Build.Genericˉevidence, false
-            );
-            var Iterations: u32 = 1u32;
-            var Resolving: bool = Build.Status == Compilerˉsourceˉwirˉstatus.Valid &&
-                Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
-                    Compilerˉsourceˉwirˉgenericˉcatalog(
-                        Build.Genericˉevidence
-                    )
-                ) > Priorˉinstances;
-            while Resolving {
-                if Iterations >= 32u32 {
-                    Build = Compilerˉsourceˉwirˉbuildˉfailure(
-                        Build,
-                        Compilerˉsourceˉwirˉstatus.Genericˉiterationˉlimit,
-                        Build.Currentˉmodule, Build.Currentˉmodule,
-                        Build.Currentˉfunction,
-                        Build.Failureˉoffset,
-                        Build.Failureˉline,
-                        Build.Failureˉcolumn
+        var Iterations: u32 = 0u32;
+        var Resolving: bool = Availableˉinstances > 0u32;
+        while Resolving {
+            if Iterations >= 32u32 {
+                Build = Compilerˉsourceˉwirˉbuildˉfailure(
+                    Build,
+                    Compilerˉsourceˉwirˉstatus.Genericˉiterationˉlimit,
+                    Build.Currentˉmodule, Build.Currentˉmodule,
+                    Build.Currentˉfunction,
+                    Build.Failureˉoffset,
+                    Build.Failureˉline,
+                    Build.Failureˉcolumn
+                );
+                Resolving = false;
+            } else {
+                if Compiledˉinstances < Availableˉinstances {
+                    Build = Compilerˉsourceˉwirˉcompileˉspecializations(
+                        Input, Scan, Symbols, Compiledˉinstances, Build
                     );
+                    Compiledˉinstances = Availableˉinstances;
+                }
+                if Build.Status != Compilerˉsourceˉwirˉstatus.Valid {
                     Resolving = false;
                 } else {
-                    Catalog = Compilerˉsourceˉwirˉgenericˉcatalog(
-                        Build.Genericˉevidence
-                    );
-                    Priorˉinstances = Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
-                        Catalog
-                    );
-                    Build = Compilerˉsourceˉwirˉphase(
-                        Input, Scan, Symbols, Build.Genericˉevidence, false
-                    );
-                    Iterations = Iterations + 1u32;
-                    Resolving = Build.Status == Compilerˉsourceˉwirˉstatus.Valid &&
+                    Availableˉinstances =
                         Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
                             Compilerˉsourceˉwirˉgenericˉcatalog(
                                 Build.Genericˉevidence
                             )
-                        ) > Priorˉinstances;
+                        );
+                    if Availableˉinstances == Compiledˉinstances {
+                        let Beforeˉclosures: Compilerˉsourceˉwirˉbuild = Build;
+                        let Withˉclosures: Compilerˉsourceˉwirˉbuild =
+                            Compilerˉsourceˉwirˉcompileˉclosures(
+                                Input, Scan, Symbols, Build
+                            );
+                        if Withˉclosures.Status !=
+                                Compilerˉsourceˉwirˉstatus.Valid {
+                            Build = Withˉclosures;
+                            Resolving = false;
+                        } else {
+                            Availableˉinstances =
+                                Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉinstances(
+                                    Compilerˉsourceˉwirˉgenericˉcatalog(
+                                        Withˉclosures.Genericˉevidence
+                                    )
+                                );
+                            if Availableˉinstances > Compiledˉinstances {
+                                Build = Compilerˉsourceˉwirˉwithˉdiscoveryˉevidence(
+                                    Beforeˉclosures, Withˉclosures
+                                );
+                            } else {
+                                Build = Withˉclosures;
+                                Resolving = false;
+                            }
+                        }
+                    }
                 }
+                Iterations = Iterations + 1u32;
             }
         }
     }

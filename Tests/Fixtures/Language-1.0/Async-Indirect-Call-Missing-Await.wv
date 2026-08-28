@@ -1,0 +1,13 @@
+#!wv/1 en@1
+module Languageˉoneˉasyncˉindirectˉcallˉmissingˉawait;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+export async fn Main(Value: i32) -> i32 effects(task.suspend) {
+    let Callback: async fn () -> i32 effects(task.suspend) =
+        async fn [copy Value] () -> i32 effects(task.suspend) {
+            return Value;
+        };
+    return Callback();
+}

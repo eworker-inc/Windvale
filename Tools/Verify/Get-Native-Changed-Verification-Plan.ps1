@@ -979,6 +979,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
@@ -1129,12 +1130,14 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
+        'Verify-Source-Analysis-Diagnostic',
         'Verify-Language-1.0-Fixed-Integers',
         'Verify-Language-1.0-Fixed-Arrays',
         'Verify-Language-1.0-Runes',
         'Verify-Language-1.0-Floating',
         'Verify-Language-1.0-Unit-Never',
         'Verify-Language-1.0-Multi-Field-Variants',
+        'Verify-Language-1.0-Vector-Sequence-Types',
         'Verify-Language-1.0-Vector-Sequence-Runtime',
         'Verify-Language-1.0-Sequence-Reads',
         'Verify-Language-1.0-Vector-Reads-Freeze',
@@ -1691,6 +1694,11 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Language-1-Structured-Tasks.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Structured-Task-Runtime.wvproj',
         'Specifications/Compiler-Source-Structured-Tasks.md',
+        'Tests/Fixtures/Language-1.0/Async-Direct-Aggregate-Call-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Async-Direct-Call-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Async-Direct-Call-Missing-Await.wv',
+        'Tests/Fixtures/Language-1.0/Async-Indirect-Call-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Async-Indirect-Call-Missing-Await.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
@@ -1709,11 +1717,18 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Owned-Aggregate-Vector-Executable.wv',
         'Tests/Fixtures/Language-1.0/Source-File-Snapshot-Executable.wv',
         'Tests/Fixtures/Language-1.0/Structured-Task-Call-Depth-Limit-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Structured-Task-Completion-Order-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Structured-Task-Environment-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Structured-Task-Four-Child-Cancellation-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Structured-Task-Memory-Limit-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Structured-Task-Provider-Recovery-Executable.wv',
         'Tests/Fixtures/Language-1.0/Structured-Task-Retained-Result-Executable.wv',
         'Tests/Fixtures/Language-1.0/Structured-Task-Runtime-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Structured-Task-Trap-Executable.wv',
         'Tests/Fixtures/Language-1.0/Structured-Task-Work-Limit-Executable.wv',
         'Tests/Fixtures/Language-1.0/Structured-Tasks-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Sync-Call-Awaited.wv',
+        'Tests/Fixtures/Language-1.0/Sync-Caller-Awaits-Async.wv',
         'Tests/Fixtures/Language-1.0/Using-Non-Resource.wv',
         'Tests/Fixtures/Language-1.0/Using-Vector-Fallthrough-Wir.wv',
         'Tests/Fixtures/Language-1.0/Using-Vector-Loop-Exits-Wir.wv',
@@ -1724,6 +1739,7 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
+        'Tools/Native/Verify-Language-1.0-Async-Call-Await.mjs',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'
@@ -1746,7 +1762,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Language-1-Value-Front-End.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-Floating-Runtime.wvproj',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv',
-        'Tests/Native/Language-1.0-Fixture-Inventory.txt'
+        'Tests/Native/Language-1.0-Fixture-Inventory.txt',
+        'Tools/Native/Verify-Source-Wir-Incremental-Generics.mjs'
     )) {
         Add-Suite 'language-1-front-door'
     } elseif ($Path -in @(
@@ -1768,6 +1785,7 @@ foreach ($Path in $Paths) {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0833-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0857-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',

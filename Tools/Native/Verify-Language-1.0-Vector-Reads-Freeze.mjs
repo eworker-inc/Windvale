@@ -31,7 +31,7 @@ const Layout = Inspectˉlayout(Input);
 const Cases = [
     {
         name: 'old-minor',
-        mutate: Candidate => Candidate.writeUInt16LE(19, 6),
+        mutate: Candidate => Candidate.writeUInt16LE(21, 6),
     },
     {
         name: 'acquire-shared-return',
@@ -46,19 +46,19 @@ const Cases = [
     {
         name: 'length-type-out-of-range',
         mutate: Candidate => Candidate.writeUInt32LE(
-            2, Layout.lengthInstruction + 1,
+            Layout.typeCount, Layout.lengthInstruction + 1,
         ),
     },
     {
         name: 'freeze-vector-type-out-of-range',
         mutate: Candidate => Candidate.writeUInt32LE(
-            2, Layout.freezeInstruction + 1,
+            Layout.typeCount, Layout.freezeInstruction + 1,
         ),
     },
     {
         name: 'freeze-sequence-type-confusion',
         mutate: Candidate => Candidate.writeUInt32LE(
-            0, Layout.freezeInstruction + 5,
+            Layout.vectorTypeIndex, Layout.freezeInstruction + 5,
         ),
     },
 ];
@@ -85,13 +85,19 @@ try {
         Created.push(Candidateˉpath);
         const Result = Run(Verifier, [Candidateˉpath]);
         const Phase = Case.phase ?? 'semantic';
-        if (Result.status === 0 || Result.error !== undefined ||
+        const Diagnostic = Normalize(Result.stderr);
+        const Expected = new RegExp(
+            `^wvb status=Invalid phase=${Phase}` +
+            '(?: step=[a-z-]+)?\\n$',
+            'u',
+        );
+        if (Result.status !== 1 || Result.error !== undefined ||
             Result.stdout.length !== 0 ||
-            Normalize(Result.stderr) !== `wvb status=Invalid phase=${Phase}\n`) {
+            !Expected.test(Diagnostic)) {
             Reject(
                 `The ${Case.name} corruption was not rejected exactly: ` +
                 `status=${Result.status} stdout=${JSON.stringify(Result.stdout)} ` +
-                `stderr=${JSON.stringify(Normalize(Result.stderr))}.`,
+                `stderr=${JSON.stringify(Diagnostic)}.`,
             );
         }
     }
@@ -107,9 +113,9 @@ try {
 
 function Inspectˉlayout(Input) {
     if (Input.length < 12 || Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 20 ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 22 ||
         Input.readUInt32LE(8) !== 7) {
-        Reject('The Vector read/freeze fixture is not canonical WVB 1.20.');
+        Reject('The Vector read/freeze fixture is not canonical WVB 1.22.');
     }
     const Sections = new Map();
     let Cursor = 12;
@@ -127,14 +133,16 @@ function Inspectˉlayout(Input) {
     }
     if (Cursor !== Input.length) Reject('The WVB has trailing bytes.');
 
-    Requireˉcollectionˉtypes(Input, Sections.get(7));
+    const Collectionˉtypes = Requireˉcollectionˉtypes(
+        Input, Sections.get(7),
+    );
     const Functions = Inspectˉfunctions(Input, Sections.get(4), Sections.get(5));
-    const Acquire = Requireˉfunction(Functions, 'Acquire', '1700000000');
+    const Acquire = Requireˉfunction(Functions, 'Acquire', '1703000000');
     const Acquireˉsequence = Requireˉfunction(
-        Functions, 'Acquireˉsequence', '1801000000',
+        Functions, 'Acquireˉsequence', '1804000000',
     );
     const Consume = Requireˉfunction(Functions, 'Consume', '0a');
-    const Freeze = Requireˉfunction(Functions, 'Freeze', '1801000000');
+    const Freeze = Requireˉfunction(Functions, 'Freeze', '1804000000');
     const Freezeˉargument = Requireˉfunction(
         Functions, 'Freezeˉargument', '0a',
     );
@@ -160,7 +168,7 @@ function Inspectˉlayout(Input) {
         205, 1, 0, 0, 0,
         5, 0, 0, 0, 0,
         205, 0, 0, 0, 0,
-        201, 0, 0, 0, 0, 1, 0, 0, 0,
+        201, 3, 0, 0, 0, 4, 0, 0, 0,
         5, 2, 0, 0, 0,
         4, 2, 0, 0, 0,
         81,
@@ -171,7 +179,7 @@ function Inspectˉlayout(Input) {
         205, 1, 0, 0, 0,
         5, 0, 0, 0, 0,
         205, 0, 0, 0, 0,
-        202, 0, 0, 0, 0,
+        202, 3, 0, 0, 0,
         5, 2, 0, 0, 0,
         5, 0, 0, 0, 0,
         4, 2, 0, 0, 0,
@@ -185,7 +193,7 @@ function Inspectˉlayout(Input) {
     Requireˉexactˉcode(
         Input, Consume,
         Buffer.from(
-            '040000000005010000000401000000cb01000000050200000050040200000051',
+            '040000000005010000000401000000cb04000000050200000050040200000051',
             'hex',
         ),
     );
@@ -194,7 +202,7 @@ function Inspectˉlayout(Input) {
         Input, Freezeˉargument,
         Buffer.from(
             '40000000000501000000cd010000000500000000cd00000000' +
-            'c9000000000100000005020000000402000000400200000005' +
+            'c9030000000400000005020000000402000000400200000005' +
             '03000000040300000051',
             'hex',
         ),
@@ -203,9 +211,9 @@ function Inspectˉlayout(Input) {
         Input, Freezeˉassignment,
         Buffer.from(
             '40010000000502000000040200000005000000004000000000' +
-            '0503000000cd030000000501000000cd01000000c90000000001' +
+            '0503000000cd030000000501000000cd01000000c90300000004' +
             '0000000504000000040400000005000000000400000000050500' +
-            '00000405000000cb01000000050600000050040600000051',
+            '00000405000000cb04000000050600000050040600000051',
             'hex',
         ),
     );
@@ -213,8 +221,8 @@ function Inspectˉlayout(Input) {
         Input, Freezeˉlocal,
         Buffer.from(
             '40000000000502000000cd020000000500000000cd00000000' +
-            'c9000000000100000005030000000403000000050100000004' +
-            '0100000005040000000404000000cb01000000050500000050' +
+            'c9030000000400000005030000000403000000050100000004' +
+            '0100000005040000000404000000cb04000000050500000050' +
             '040500000051',
             'hex',
         ),
@@ -225,6 +233,8 @@ function Inspectˉlayout(Input) {
         freezeInstruction: Freeze.codeStart + 25,
         lengthTake: Length.codeStart + 20,
         lengthInstruction: Length.codeStart + 25,
+        typeCount: Collectionˉtypes.count,
+        vectorTypeIndex: Collectionˉtypes.vectorTypeIndex,
     };
 }
 
@@ -232,8 +242,12 @@ function Requireˉcollectionˉtypes(Input, Types) {
     let Cursor = Types.payload;
     const Count = Readˉu32(Input, Cursor, Types.end, 'type count');
     Cursor += 4;
-    if (Count !== 2) Reject('The fixture must contain two collection types.');
-    for (let Index = 0; Index < Count; Index += 1) {
+    if (Count !== 5) {
+        Reject('The fixture must contain three library and two collection types.');
+    }
+    const Collectionˉdescriptorˉbytes = 15;
+    Cursor = Types.end - (2 * Collectionˉdescriptorˉbytes);
+    for (let Index = 3; Index < Count; Index += 1) {
         Requireˉrange(Input, Cursor, 5, 'collection descriptor');
         const Kind = Input[Cursor];
         Cursor += 1;
@@ -242,12 +256,16 @@ function Requireˉcollectionˉtypes(Input, Types) {
         Requireˉrange(Input, Cursor, Nameˉlength, 'collection name');
         if (Nameˉlength === 0) Reject('A collection type name is empty.');
         Cursor += Nameˉlength;
-        if (Kind !== 5 + Index || Input[Cursor] !== 1) {
+        if (Kind !== 2 + Index || Input[Cursor] !== 1) {
             Reject('The exact Vector<i32>/Sequence<i32> catalog differs.');
         }
         Cursor = Shapeˉend(Input, Cursor, Types.end);
     }
     if (Cursor !== Types.end) Reject('The Types section differs.');
+    return {
+        count: Count,
+        vectorTypeIndex: Count - 2,
+    };
 }
 
 function Inspectˉfunctions(Input, Functions, Code) {

@@ -60,8 +60,8 @@ expect_analysis_failure() {
         ! -e $work/$prefix.wvlb && ! -e $work/$prefix.wvir ]] || return 1
     mapfile -t analysis_lines <"$work/$prefix.err"
     [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
-    [[ ${analysis_lines[0]} == \
-        "source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=$expected_status" ]]
+    node "$script_directory/Verify-Source-Analysis-Diagnostic.mjs" \
+        "$work/$prefix.err" wir "$expected_status"
 }
 
 expect_profiled_analysis_failure() {
@@ -89,8 +89,8 @@ expect_profiled_analysis_failure() {
         ! -e $work/$prefix.wvir ]] || return 1
     mapfile -t analysis_lines <"$work/$prefix.err"
     [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
-    [[ ${analysis_lines[0]} == \
-        "source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=$expected_status" ]]
+    node "$script_directory/Verify-Source-Analysis-Diagnostic.mjs" \
+        "$work/$prefix.err" wir "$expected_status"
 }
 
 expect_profiled_symbol_failure() {
@@ -118,8 +118,8 @@ expect_profiled_symbol_failure() {
         ! -e $work/$prefix.wvir ]] || return 1
     mapfile -t analysis_lines <"$work/$prefix.err"
     [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
-    [[ ${analysis_lines[0]} == \
-        "source analysis status=Sourceˉsymbols symbol-status=$expected_status binding-status=Sourceˉsymbols wir-status=Sourceˉbindings" ]]
+    node "$script_directory/Verify-Source-Analysis-Diagnostic.mjs" \
+        "$work/$prefix.err" symbols "$expected_status"
 }
 
 expect_profiled_analysis_failure_with_dependencies() {
@@ -155,8 +155,8 @@ expect_profiled_analysis_failure_with_dependencies() {
         ! -e $work/$prefix.wvir ]] || return 1
     mapfile -t analysis_lines <"$work/$prefix.err"
     [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
-    [[ ${analysis_lines[0]} == \
-        "source analysis status=Sourceˉwir symbol-status=Valid binding-status=Valid wir-status=$expected_status" ]]
+    node "$script_directory/Verify-Source-Analysis-Diagnostic.mjs" \
+        "$work/$prefix.err" wir "$expected_status"
 }
 
 expect_profiled_symbol_failure_with_dependency() {
@@ -185,8 +185,8 @@ expect_profiled_symbol_failure_with_dependency() {
         ! -e $work/$prefix.wvir ]] || return 1
     mapfile -t analysis_lines <"$work/$prefix.err"
     [[ ${#analysis_lines[@]} -eq 1 ]] || return 1
-    [[ ${analysis_lines[0]} == \
-        "source analysis status=Sourceˉsymbols symbol-status=$expected_status binding-status=Sourceˉsymbols wir-status=Sourceˉbindings" ]]
+    node "$script_directory/Verify-Source-Analysis-Diagnostic.mjs" \
+        "$work/$prefix.err" symbols "$expected_status"
 }
 
 expect_profiled_emission_failure() {
@@ -350,16 +350,16 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 admitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Admitter.wvb")" \
     "$(sha256sum -- "$work/Admitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Admitter.wvb") -eq 83055 ]] || exit 1
+[[ $(wc -c < "$work/Admitter.wvb") -eq 83258 ]] || exit 1
 printf '%s  %s\n' \
-    aefe1711155aa74bd6f1ac188e778aaf94d5e9f603434d0ce737858f9543cd04 \
+    12607ef0255fcc07d7adbe096929495c47b5c94425f5fa7edb7880f084e3eaf2 \
     "$work/Admitter.wvb" | sha256sum --check --strict --quiet || exit $?
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1192526 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1511092 ]] || exit 1
 printf '%s  %s\n' \
-    175851de53aa06ce600e4478ddf36a2a3f6eb666c1a000f7a84e00747d30e543 \
+    602ddd98461ec84da931a23e65a991714932220ee21400050cdd9aa9f0e7517f \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -367,6 +367,8 @@ printf '%s  %s\n' \
     "$work/Analyzer.wvb" "$work/Analyzer.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     analyzer "$work/Analyzer.elf" "$work/Analyzer.identity" || exit $?
+node "$script_directory/Verify-Source-Wir-Incremental-Generics.mjs" \
+    "$work/Analyzer.elf" "$work" || exit $?
 echo 'START language 1 front door step=generic-nominal-main-pipeline'
 "$work/Analyzer.elf" \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Main-Pipeline.wv" \
@@ -437,9 +439,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1149175 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1523142 ]] || exit 1
 printf '%s  %s\n' \
-    fdbf640bb0677b1b4e05058ffef6c6b435460507f940b7794b65a53c7a928fa9 \
+    afe8f24ce7916b5aa185dcfc9db087fcb1ecc81a9a9bf201f58d2e0cf8bca806 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
@@ -873,25 +875,6 @@ node "$script_directory/Verify-Generic-Nominal-Declaration-Dependency.mjs" \
 cmp -s -- "$work/Expected-Generic-Nominal-Main.out" \
     "$work/Generic-Nominal-Declaration-Dependency-Run.out" || exit 1
 echo 'PASS  language 1 front door step=generic-nominal-declaration-dependency cases=33 verification=compiler-aligned execution=42 cycle=Rejected'
-echo 'START language 1 front door step=generic-wir-split'
-node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj" \
-    "$work/Generic-Wir-A.wvb" \
-    "$work/Analyzer.elf" "$work/Analyzer.identity" \
-    "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
-node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Language-1-Generic-Wir.wvproj" \
-    "$work/Generic-Wir-B.wvb" \
-    "$work/Analyzer.elf" "$work/Analyzer.identity" \
-    "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
-cmp -s -- "$work/Generic-Wir-A.wvb" "$work/Generic-Wir-B.wvb" || exit 1
-[[ $(wc -c < "$work/Generic-Wir-A.wvb") -eq 1315395 ]] || exit 1
-printf '%s  %s\n' \
-    1da34176e4e17f395fadccfff9fe4f7f5e346ec2c919658744915ca86b7d6c19 \
-    "$work/Generic-Wir-A.wvb" | sha256sum --check --strict --quiet || exit $?
-generic_wir_wvb_bytes=$(wc -c < "$work/Generic-Wir-A.wvb")
-printf 'INFO  language 1 front door step=generic-wir-split wvb-bytes=%s verification=pending-current-native\n' \
-    "$generic_wir_wvb_bytes"
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1223,21 +1206,6 @@ echo 'PASS  language 1 front door step=memory-budget-entry item=verification val
 grep -Fq 'wvb status=Valid profile=compiler-aligned' \
     "$work/Verify-Enum-I32.out" || exit 1
 echo 'PASS  language 1 front door step=enum-backing-verifier cases=1 verification=current-native'
-if ! "$work/Verifier.elf" "$work/Generic-Wir-A.wvb" \
-    >"$work/Verify-Generic-Wir.out" \
-    2>"$work/Verify-Generic-Wir.err"; then
-    cat -- "$work/Verify-Generic-Wir.out" >&2
-    cat -- "$work/Verify-Generic-Wir.err" >&2
-    exit 1
-fi
-if [[ -s $work/Verify-Generic-Wir.err ]]; then
-    cat -- "$work/Verify-Generic-Wir.err" >&2
-    exit 1
-fi
-grep -Fq 'wvb status=Valid profile=compiler-aligned' \
-    "$work/Verify-Generic-Wir.out" || exit 1
-printf 'PASS  language 1 front door step=generic-wir-split wvb-bytes=%s verification=current-native\n' \
-    "$generic_wir_wvb_bytes"
 "$work/Verifier.elf" "$work/Generic-Nominal-Variant.wvb" \
     >"$work/Verify-Generic-Nominal-Variant.out" \
     2>"$work/Verify-Generic-Nominal-Variant.err" || exit $?
@@ -1405,8 +1373,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Floating-Runner.wvb" \
     "$work/Analyzer.elf" "$work/Analyzer.identity" \
     "$work/Emitter.elf" "$work/Emitter.identity" >/dev/null || exit $?
-"$script_directory/Package-Hosted-Wvb.sh" 5 \
-    "$work/Floating-Runner.wvb" "$work/Floating-Runner.elf" linux \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 5 \
+    "$work/Floating-Runner.wvb" "$work/Floating-Runner.elf" \
+    --development-cache \
     >/dev/null || exit $?
 node "$script_directory/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs" \
     "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
@@ -1858,4 +1827,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=467 frozen-inputs=251 source-fixtures=107 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-specialization-cases=4 generic-wir-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-wir-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_wir_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=466 frozen-inputs=251 source-fixtures=107 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

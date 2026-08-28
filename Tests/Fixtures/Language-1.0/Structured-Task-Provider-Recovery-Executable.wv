@@ -1,0 +1,564 @@
+#!wv/1 en@1
+module Languageˉoneˉstructuredˉtaskˉproviderˉrecoveryˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉoperation as Operation;
+import Foundationˉresult as Result;
+import Foundationˉtask as Task;
+
+record Serviceˉendpoint {
+    Serviceˉidentity: u32;
+    Providerˉidentity: u32;
+    Rights: u32;
+    Maximumˉrequestˉbytes: u32;
+    Providerˉgeneration: u64;
+}
+
+record Handlerˉreport {
+    Requestˉidentity: i32;
+    Providerˉgeneration: u64;
+    Attempt: u32;
+}
+
+variant Handlerˉfailure {
+    Providerˉlost(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Requestˉidentity: i32,
+    );
+    Providerˉrestarted(
+        Expectedˉgeneration: u64,
+        Observedˉgeneration: u64,
+        Requestˉidentity: i32,
+        Mutationˉindeterminate: bool,
+    );
+}
+
+async fn Acceptˉfresh(
+    Endpoint: Serviceˉendpoint,
+    Requestˉidentity: i32,
+) -> Result.Result<Handlerˉreport, Handlerˉfailure>
+    effects(task.suspend) {
+    if Endpoint.Serviceˉidentity != 7u32 ||
+        Endpoint.Providerˉidentity != 11u32 ||
+        Endpoint.Rights != 1u32 ||
+        Endpoint.Maximumˉrequestˉbytes != 4096u32 {
+        let Lostˉerror: Handlerˉfailure = Handlerˉfailure.Providerˉlost {
+            Expectedˉgeneration: Endpoint.Providerˉgeneration,
+            Observedˉgeneration: 0u64,
+            Requestˉidentity: Requestˉidentity,
+        };
+        return Result.Result.Failure<Handlerˉreport, Handlerˉfailure> {
+            Error: Lostˉerror,
+        };
+    }
+    if Endpoint.Providerˉgeneration == 41u64 &&
+        (Requestˉidentity == 1 || Requestˉidentity == 3) {
+        let Restartˉerror: Handlerˉfailure = Handlerˉfailure.Providerˉrestarted {
+            Expectedˉgeneration: 41u64,
+            Observedˉgeneration: 42u64,
+            Requestˉidentity: Requestˉidentity,
+            Mutationˉindeterminate: Requestˉidentity == 3,
+        };
+        return Result.Result.Failure<Handlerˉreport, Handlerˉfailure> {
+            Error: Restartˉerror,
+        };
+    }
+    return Result.Result.Valid<Handlerˉreport, Handlerˉfailure> {
+        Value: Handlerˉreport {
+            Requestˉidentity: Requestˉidentity,
+            Providerˉgeneration: Endpoint.Providerˉgeneration,
+            Attempt: 1u32,
+        },
+    };
+}
+
+async fn Observe(
+    Endpoint: Serviceˉendpoint,
+    Requestˉidentity: i32,
+) -> Result.Result<i32, u32> effects(task.suspend) {
+    let Expectedˉgeneration = Endpoint.Providerˉgeneration;
+    let Observed = await Acceptˉfresh(
+        Endpoint: Endpoint,
+        Requestˉidentity: Requestˉidentity,
+    );
+    return match Observed {
+        case Result.Result.Valid { Value: Report } {
+            if Report.Requestˉidentity != Requestˉidentity {
+                return Result.Result.Failure<i32, u32> {
+                    Error: 7u32,
+                };
+            }
+            if Report.Providerˉgeneration != Expectedˉgeneration {
+                return Result.Result.Failure<i32, u32> { Error: 8u32 };
+            }
+            if Report.Attempt != 1u32 {
+                return Result.Result.Failure<i32, u32> { Error: 9u32 };
+            }
+            Result.Result.Valid<i32, u32> {
+                Value: Requestˉidentity,
+            }
+        }
+        case Result.Result.Failure { Error: Error } {
+            match Error {
+                case Handlerˉfailure.Providerˉlost {
+                    Expectedˉgeneration: Lostˉexpected,
+                    Observedˉgeneration: Lostˉobserved,
+                    Requestˉidentity: Lostˉrequest,
+                } {
+                    if Lostˉexpected != Expectedˉgeneration ||
+                        Lostˉobserved != 0u64 ||
+                        Lostˉrequest != Requestˉidentity {
+                        return Result.Result.Failure<i32, u32> {
+                            Error: 5u32,
+                        };
+                    }
+                    Result.Result.Failure<i32, u32> {
+                        Error: 1u32,
+                    }
+                }
+                case Handlerˉfailure.Providerˉrestarted {
+                    Expectedˉgeneration: Restartˉexpected,
+                    Observedˉgeneration: Restartˉobserved,
+                    Requestˉidentity: Restartˉrequest,
+                    Mutationˉindeterminate: Indeterminate,
+                } {
+                    if Restartˉexpected != Expectedˉgeneration ||
+                        Restartˉobserved != 42u64 ||
+                        Restartˉrequest != Requestˉidentity {
+                        return Result.Result.Failure<i32, u32> {
+                            Error: 6u32,
+                        };
+                    }
+                    if Indeterminate {
+                        return Result.Result.Failure<i32, u32> {
+                            Error: 3u32,
+                        };
+                    }
+                    Result.Result.Failure<i32, u32> {
+                        Error: 2u32,
+                    }
+                }
+            }
+        }
+    };
+}
+
+fn Refresh(
+    Endpoint: Serviceˉendpoint,
+    Observedˉgeneration: u64,
+) -> Result.Result<Serviceˉendpoint, u32> {
+    if Endpoint.Providerˉgeneration != 41u64 ||
+        Observedˉgeneration != 42u64 {
+        return Result.Result.Failure<Serviceˉendpoint, u32> {
+            Error: 1u32,
+        };
+    }
+    return Result.Result.Valid<Serviceˉendpoint, u32> {
+        Value: Serviceˉendpoint {
+            Serviceˉidentity: Endpoint.Serviceˉidentity,
+            Providerˉidentity: Endpoint.Providerˉidentity,
+            Rights: Endpoint.Rights,
+            Maximumˉrequestˉbytes: Endpoint.Maximumˉrequestˉbytes,
+            Providerˉgeneration: Observedˉgeneration,
+        },
+    };
+}
+
+fn Summarizeˉfailure(Error: u32) -> i32 {
+    if Error == 1u32 { return 100; }
+    if Error == 2u32 { return 201; }
+    if Error == 3u32 { return 203; }
+    if Error == 4u32 { return 94; }
+    if Error == 5u32 { return 95; }
+    if Error == 6u32 { return 96; }
+    if Error == 7u32 { return 97; }
+    if Error == 8u32 { return 98; }
+    if Error == 9u32 { return 93; }
+    return 99;
+}
+
+fn Summarize(Outcome: Task.Taskˉoutcome<i32, u32>) -> i32 {
+    return match Outcome {
+        case Task.Taskˉoutcome.Valid { Value: Value } { Value }
+        case Task.Taskˉoutcome.Failure { Error: Error } {
+            Summarizeˉfailure(Error: Error)
+        }
+        case Task.Taskˉoutcome.Cancelled { -300 }
+        case Task.Taskˉoutcome.Deadlineˉreached { -301 }
+        case Task.Taskˉoutcome.Runtimeˉlost {
+            Expectedˉgeneration: _,
+            Observedˉgeneration: _,
+        } { -302 }
+        case Task.Taskˉoutcome.Runtimeˉrestarted {
+            Expectedˉgeneration: _,
+            Observedˉgeneration: _,
+        } { -303 }
+        case Task.Taskˉoutcome.Trapped { Identity: _ } { -304 }
+    };
+}
+
+fn Validateˉinitialˉobservations(
+    First: i32,
+    Second: i32,
+    Third: i32,
+    Fourth: i32,
+) -> i32 {
+    if First != 0 { return 20; }
+    if Second != 201 { return Second; }
+    if Third != 2 { return 22; }
+    if Fourth != 203 { return 23; }
+    return 42;
+}
+
+fn Recoveredˉgeneration(
+    Outcome: Result.Result<Serviceˉendpoint, u32>,
+) -> u64 {
+    return match Outcome {
+        case Result.Result.Valid { Value: Endpoint } {
+            if Endpoint.Serviceˉidentity != 7u32 ||
+                Endpoint.Providerˉidentity != 11u32 ||
+                Endpoint.Rights != 1u32 ||
+                Endpoint.Maximumˉrequestˉbytes != 4096u32 {
+                0u64
+            } else {
+                Endpoint.Providerˉgeneration
+            }
+        }
+        case Result.Result.Failure { Error: _ } { 0u64 }
+    };
+}
+
+fn Constructˉscope(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<Task.Taskˉscope, Task.Taskˉscopeˉfailure>
+    effects(memory.allocate, resource.acquire) {
+    return Task.Construct(
+        Budget: Budget,
+        Limits: Task.Taskˉlimits {
+            Maximumˉchildren: 5u32,
+            Maximumˉrunnable: 4u32,
+            Maximumˉcompleted: 5u32,
+            Maximumˉretainedˉbytes: 32768u64,
+            Maximumˉworkˉunits: 65536u64,
+            Maximumˉcallˉdepth: 16u32,
+            Maximumˉtimers: 1u32,
+            Maximumˉdiagnostics: 16u32,
+        },
+        Parentˉcontext: borrow Parentˉcontext,
+    );
+}
+
+async fn Run(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> Result.Result<i32, Task.Taskˉscopeˉfailure> effects(
+    memory.allocate,
+    resource.acquire,
+    resource.release,
+    task.spawn,
+    task.suspend,
+) {
+    task scope Scope = try Constructˉscope(
+        Budget: Budget,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) policy cancel_join {
+        let Request0: i32 = 0;
+        let Work0: async fn () -> Result.Result<
+            i32,
+            u32
+        > effects(task.suspend) = async fn [copy Request0] ()
+            -> Result.Result<i32, u32>
+            effects(task.suspend) {
+            return await Observe(
+                Endpoint: Serviceˉendpoint {
+                    Serviceˉidentity: 7u32,
+                    Providerˉidentity: 11u32,
+                    Rights: 1u32,
+                    Maximumˉrequestˉbytes: 4096u32,
+                    Providerˉgeneration: 41u64,
+                },
+                Requestˉidentity: Request0,
+            );
+        };
+        let Spawned0: Result.Result<
+            Task.Task<i32, u32>,
+            Task.Spawnˉfailure<
+                async fn () -> Result.Result<i32, u32>
+                    effects(task.suspend)
+            >
+        > = Task.Spawn(Scope: borrow mut Scope, Work: Work0);
+        return match Spawned0 {
+            case Result.Result.Valid { Value: Handle0 } {
+                let Request1: i32 = 1;
+                let Work1: async fn () -> Result.Result<
+                    i32,
+                    u32
+                > effects(task.suspend) = async fn [copy Request1] ()
+                    -> Result.Result<i32, u32>
+                    effects(task.suspend) {
+                    return await Observe(
+                        Endpoint: Serviceˉendpoint {
+                            Serviceˉidentity: 7u32,
+                            Providerˉidentity: 11u32,
+                            Rights: 1u32,
+                            Maximumˉrequestˉbytes: 4096u32,
+                            Providerˉgeneration: 41u64,
+                        },
+                        Requestˉidentity: Request1,
+                    );
+                };
+                let Spawned1: Result.Result<
+                    Task.Task<i32, u32>,
+                    Task.Spawnˉfailure<
+                        async fn () -> Result.Result<
+                            i32,
+                            u32
+                        > effects(task.suspend)
+                    >
+                > = Task.Spawn(Scope: borrow mut Scope, Work: Work1);
+                match Spawned1 {
+                    case Result.Result.Valid { Value: Handle1 } {
+                        let Request2: i32 = 2;
+                        let Work2: async fn () -> Result.Result<
+                            i32,
+                            u32
+                        > effects(task.suspend) = async fn [copy Request2] ()
+                            -> Result.Result<i32, u32>
+                            effects(task.suspend) {
+                            return await Observe(
+                                Endpoint: Serviceˉendpoint {
+                                    Serviceˉidentity: 7u32,
+                                    Providerˉidentity: 11u32,
+                                    Rights: 1u32,
+                                    Maximumˉrequestˉbytes: 4096u32,
+                                    Providerˉgeneration: 41u64,
+                                },
+                                Requestˉidentity: Request2,
+                            );
+                        };
+                        let Spawned2: Result.Result<
+                            Task.Task<i32, u32>,
+                            Task.Spawnˉfailure<
+                                async fn () -> Result.Result<
+                                    i32,
+                                    u32
+                                > effects(task.suspend)
+                            >
+                        > = Task.Spawn(
+                            Scope: borrow mut Scope,
+                            Work: Work2,
+                        );
+                        match Spawned2 {
+                            case Result.Result.Valid { Value: Handle2 } {
+                                let Request3: i32 = 3;
+                                let Work3: async fn () -> Result.Result<
+                                    i32,
+                                    u32
+                                > effects(task.suspend) = async fn [
+                                    copy Request3
+                                ] () -> Result.Result<
+                                    i32,
+                                    u32
+                                > effects(task.suspend) {
+                                    return await Observe(
+                                        Endpoint: Serviceˉendpoint {
+                                            Serviceˉidentity: 7u32,
+                                            Providerˉidentity: 11u32,
+                                            Rights: 1u32,
+                                            Maximumˉrequestˉbytes: 4096u32,
+                                            Providerˉgeneration: 41u64,
+                                        },
+                                        Requestˉidentity: Request3,
+                                    );
+                                };
+                                let Spawned3: Result.Result<
+                                    Task.Task<i32, u32>,
+                                    Task.Spawnˉfailure<
+                                        async fn () -> Result.Result<
+                                            i32,
+                                            u32
+                                        > effects(task.suspend)
+                                    >
+                                > = Task.Spawn(
+                                    Scope: borrow mut Scope,
+                                    Work: Work3,
+                                );
+                                match Spawned3 {
+                                    case Result.Result.Valid {
+                                        Value: Handle3,
+                                    } {
+                                        let First = Summarize(
+                                            Outcome: await Task.Await(
+                                                Handle: Handle0,
+                                            ),
+                                        );
+                                        let Second = Summarize(
+                                            Outcome: await Task.Await(
+                                                Handle: Handle1,
+                                            ),
+                                        );
+                                        let Third = Summarize(
+                                            Outcome: await Task.Await(
+                                                Handle: Handle2,
+                                            ),
+                                        );
+                                        let Fourth = Summarize(
+                                            Outcome: await Task.Await(
+                                                Handle: Handle3,
+                                            ),
+                                        );
+                                        let Initial =
+                                            Validateˉinitialˉobservations(
+                                                First: First,
+                                                Second: Second,
+                                                Third: Third,
+                                                Fourth: Fourth,
+                                            );
+                                        if Initial != 42 {
+                                            return Result.Result.Valid<
+                                                i32,
+                                                Task.Taskˉscopeˉfailure
+                                            > { Value: Initial };
+                                        }
+                                        let Refreshed = Refresh(
+                                            Endpoint: Serviceˉendpoint {
+                                                Serviceˉidentity: 7u32,
+                                                Providerˉidentity: 11u32,
+                                                Rights: 1u32,
+                                                Maximumˉrequestˉbytes: 4096u32,
+                                                Providerˉgeneration: 41u64,
+                                            },
+                                            Observedˉgeneration: 42u64,
+                                        );
+                                        let Recoveryˉgeneration =
+                                            Recoveredˉgeneration(
+                                            Outcome: Refreshed,
+                                        );
+                                        if Recoveryˉgeneration != 42u64 {
+                                            return Result.Result.Valid<
+                                                i32,
+                                                Task.Taskˉscopeˉfailure
+                                            > { Value: 25 };
+                                        }
+                                        let Work4: async fn () -> Result.Result<
+                                            i32,
+                                            u32
+                                        > effects(task.suspend) = async fn [
+                                            copy Recoveryˉgeneration
+                                        ] () -> Result.Result<
+                                            i32,
+                                            u32
+                                        > effects(task.suspend) {
+                                            return await Observe(
+                                                Endpoint: Serviceˉendpoint {
+                                                    Serviceˉidentity: 7u32,
+                                                    Providerˉidentity: 11u32,
+                                                    Rights: 1u32,
+                                                    Maximumˉrequestˉbytes:
+                                                        4096u32,
+                                                    Providerˉgeneration:
+                                                        Recoveryˉgeneration,
+                                                },
+                                                Requestˉidentity: 4,
+                                            );
+                                        };
+                                        let Spawned4: Result.Result<
+                                            Task.Task<i32, u32>,
+                                            Task.Spawnˉfailure<
+                                                async fn () -> Result.Result<
+                                                    i32,
+                                                    u32
+                                                > effects(task.suspend)
+                                            >
+                                        > = Task.Spawn(
+                                            Scope: borrow mut Scope,
+                                            Work: Work4,
+                                        );
+                                        match Spawned4 {
+                                            case Result.Result.Valid {
+                                                Value: Handle4,
+                                            } {
+                                                let Recovered = Summarize(
+                                                    Outcome: await Task.Await(
+                                                        Handle: Handle4,
+                                                    ),
+                                                );
+                                                if Recovered != 4 {
+                                                    return Result.Result.Valid<
+                                                        i32,
+                                                        Task.Taskˉscopeˉfailure
+                                                    > { Value: Recovered };
+                                                }
+                                                Result.Result.Valid<
+                                                    i32,
+                                                    Task.Taskˉscopeˉfailure
+                                                > { Value: 42 }
+                                            }
+                                            case Result.Result.Failure {
+                                                Error: _,
+                                            } {
+                                                Result.Result.Valid<
+                                                    i32,
+                                                    Task.Taskˉscopeˉfailure
+                                                > { Value: 14 }
+                                            }
+                                        }
+                                    }
+                                    case Result.Result.Failure {
+                                        Error: _,
+                                    } {
+                                        Result.Result.Valid<
+                                            i32,
+                                            Task.Taskˉscopeˉfailure
+                                        > { Value: 13 }
+                                    }
+                                }
+                            }
+                            case Result.Result.Failure { Error: _ } {
+                                Result.Result.Valid<
+                                    i32,
+                                    Task.Taskˉscopeˉfailure
+                                > { Value: 12 }
+                            }
+                        }
+                    }
+                    case Result.Result.Failure { Error: _ } {
+                        Result.Result.Valid<
+                            i32,
+                            Task.Taskˉscopeˉfailure
+                        > { Value: 11 }
+                    }
+                }
+            }
+            case Result.Result.Failure { Error: _ } {
+                Result.Result.Valid<i32, Task.Taskˉscopeˉfailure> {
+                    Value: 10,
+                }
+            }
+        };
+    }
+}
+
+export async fn Main(
+    Budget: Memory.Memoryˉbudget,
+    Parentˉcontext: borrow Operation.Operationˉcontext,
+) -> i32 effects(
+    memory.allocate,
+    resource.acquire,
+    resource.release,
+    task.spawn,
+    task.suspend,
+) {
+    return match await Run(
+        Budget: Budget,
+        Parentˉcontext: borrow Parentˉcontext,
+    ) {
+        case Result.Result.Valid { Value: Value } { Value }
+        case Result.Result.Failure { Error: _ } { -1 }
+    };
+}

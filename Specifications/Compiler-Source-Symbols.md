@@ -206,13 +206,39 @@ The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉ
 
 ## Internal lookup index
 
-`Lookup` is a private `WVSI 1.1` acceleration index. Its 16-byte header contains magic `WVSI`, major/minor version `1.1`, the WVSD entry count, and bucket count `256`. The header is followed by 256 16-byte ranges. Each range contains the first payload index, entry count, prior-record count, and prior-enum count for one possible first UTF-8 byte. The bucket payload then stores every WVSD directory index exactly once.
+`Lookup` is a private `WVSI 1.2` acceleration index. Its 16-byte header
+contains magic `WVSI`, major/minor version `1.2`, the WVSD entry count, and
+bucket count `256`. The header is followed by 256 16-byte ranges. Each range
+contains the first payload index, entry count, prior-record count, and
+prior-enum count for one possible first UTF-8 byte. The bucket payload then
+stores every WVSD directory index exactly once.
 
-Two tables follow the bucket payload. The reverse table contains one `u32` for each record and enum in canonical nominal order and maps that ordinal to its WVSD directory index. The forward table contains one `u32` for each WVSD entry and maps nominal declarations to their canonical ordinal; the total nominal count is the nonnominal sentinel. The complete length is `4112 + EntryCount * 8 + NominalCount * 4` bytes.
+Two tables follow the bucket payload. The reverse table contains one `u32` for
+each record and enum in canonical nominal order and maps that ordinal to its
+WVSD directory index. The forward table contains one `u32` for each WVSD entry
+and maps nominal declarations to their canonical ordinal; the total nominal
+count is the nonnominal sentinel. A one-byte metadata entry then follows for
+every WVSD entry: bit 0 records `export`, bit 1 records an `async` function, and
+bits 2 through 7 are zero. The bounded module-alias matrix follows.
+
+WVSI 1.2 then appends 256 callable ranges of two `u32` fields followed by one
+`u32` WVSD directory index per declaration. A declaration's bucket starts with
+`(Module + UTF8Length) mod 256` and folds each exact name byte as
+`(Hash * 33 + Byte) mod 256`. A query uses its resolved target module and
+unqualified member bytes. A bucket match remains only a candidate: consumers
+still require exact target module, declaration kind where applicable, UTF-8
+byte length, and ordinal byte equality. Hash collisions therefore cannot alter
+name resolution. The cached emitted-name directory and payload follow this
+callable region and retain their separate bounds.
 
 Exact nominal lookup searches the reverse table in two bounded passes: first the record range for the requested first UTF-8 byte, then the corresponding enum range. Unequal byte lengths are rejected before ordinal comparison. This preserves record-then-enum identity and avoids scanning unrelated WVSD entries.
 
-Name equality remains exact ordinal UTF-8 comparison over validated absolute WVSS spans. Construction is deterministic and total even before duplicate-name rejection. The index never changes namespace semantics and is not a separately published compatibility format.
+Name equality remains exact ordinal UTF-8 comparison over validated absolute
+WVSS spans. Alias and callable comparison read those spans directly from the
+packed source set; they do not materialize the complete owner or target module.
+Construction is deterministic and total even before duplicate-name rejection.
+The index never changes namespace semantics and is not a separately published
+compatibility format.
 
 ## Visibility matrix
 

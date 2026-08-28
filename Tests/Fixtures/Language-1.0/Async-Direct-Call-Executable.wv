@@ -1,0 +1,13 @@
+#!wv/1 en@1
+module Languageˉoneˉasyncˉdirectˉcallˉexecutable;
+profile hosted;
+platform linux, windows, windvale;
+authority application;
+
+async fn Run(Value: i32) -> i32 effects(task.suspend) {
+    return Value;
+}
+
+export async fn Main(Value: i32) -> i32 effects(task.suspend) {
+    return await Run(Value: Value);
+}

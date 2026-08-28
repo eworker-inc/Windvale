@@ -61,6 +61,8 @@ const EXPECTED_STRUCTURED_TASK_FOUR_CHILD_CANCELLATION_SHA256 =
     'b4d9c67cee803da4fb53ef21a57ccbdf9ecc410c54c369262f3c2187599df88c';
 const EXPECTED_STRUCTURED_TASK_COMPLETION_ORDER_SHA256 =
     '6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c';
+const EXPECTED_STRUCTURED_TASK_PROVIDER_RECOVERY_SHA256 =
+    'eb8dc8047fd2ddd7e7eb98c7e443396ac5e9d240fabb060acb88769888d4f067';
 const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
@@ -223,6 +225,14 @@ try {
         'emitter', Emitter, Emitterˉidentity,
     ]);
     Runˉnode(
+        'async-call-await-conformance',
+        'Verify-Language-1.0-Async-Call-Await.mjs',
+        [
+            Admitter, Analyzer, Emitter,
+            Sourceˉlock, SOURCE_LOCK_SHA256, Sourceˉprofile, Work,
+        ],
+    );
+    Runˉnode(
         'owned-vector-calls-and-joins-wir',
         'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
         [Admitter, Analyzer, Emitter, Work, Ownedˉaggregateˉsuccessˉa],
@@ -275,6 +285,9 @@ try {
     );
     const Structuredˉtaskˉcompletionˉorder = path.join(
         Work, 'Structured-Task-Completion-Order.wvb',
+    );
+    const Structuredˉtaskˉproviderˉrecovery = path.join(
+        Work, 'Structured-Task-Provider-Recovery.wvb',
     );
     const Structuredˉtaskˉenvironment = path.join(
         Work, 'Structured-Task-Environment.wvb',
@@ -385,6 +398,20 @@ try {
         Structuredˉtaskˉcompletionˉorderˉbytes,
         EXPECTED_STRUCTURED_TASK_COMPLETION_ORDER_SHA256,
         'structured-task completion-order fixture',
+    );
+    Compileˉtask(
+        'structured-task-provider-recovery-compile',
+        Admitter, Analyzer, Emitter,
+        'Structured-Task-Provider-Recovery-Executable.wv',
+        Structuredˉtaskˉproviderˉrecovery,
+    );
+    const Structuredˉtaskˉproviderˉrecoveryˉbytes = readFileSync(
+        Structuredˉtaskˉproviderˉrecovery,
+    );
+    Requireˉexactˉdigest(
+        Structuredˉtaskˉproviderˉrecoveryˉbytes,
+        EXPECTED_STRUCTURED_TASK_PROVIDER_RECOVERY_SHA256,
+        'structured-task provider-recovery fixture',
     );
     Compileˉtask(
         'structured-task-environment-compile',
@@ -628,6 +655,10 @@ try {
     Requireˉvalid(
         Verifier, Structuredˉtaskˉcompletionˉorder,
         'structured-task completion-order module',
+    );
+    Requireˉvalid(
+        Verifier, Structuredˉtaskˉproviderˉrecovery,
+        'structured-task provider-recovery module',
     );
     Requireˉvalid(
         Verifier, Structuredˉtaskˉruntimeˉselfˉtest,
@@ -1041,6 +1072,10 @@ try {
         'structured-task completion-order execution',
     );
     Requireˉresultˉ42(
+        Runner, Structuredˉtaskˉproviderˉrecovery,
+        'structured-task provider-recovery execution',
+    );
+    Requireˉresultˉ42(
         Runner, Structuredˉtaskˉenvironment,
         'structured-task default environment execution',
     );
@@ -1123,8 +1158,8 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${140 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=23 malformed=${
+        `cases=${151 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
@@ -1133,9 +1168,9 @@ try {
             Structuredˉtaskˉmalformedˉcases.length + 1
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
-        'structured-task-cases=29 structured-task-runtime-cases=46 ' +
+        'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
-        'callable-runner-cases=2 ' +
+        'callable-runner-cases=2 async-call-await-cases=7 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -1158,6 +1193,10 @@ try {
             Structuredˉtaskˉcompletionˉorderˉbytes.length} ` +
         `task-completion-order-sha256=${
             Digest(Structuredˉtaskˉcompletionˉorderˉbytes)} ` +
+        `task-provider-recovery-wvb-bytes=${
+            Structuredˉtaskˉproviderˉrecoveryˉbytes.length} ` +
+        `task-provider-recovery-sha256=${
+            Digest(Structuredˉtaskˉproviderˉrecoveryˉbytes)} ` +
         `task-environment-wvb-bytes=${Structuredˉtaskˉenvironmentˉbytes.length} ` +
         `task-environment-sha256=${Digest(Structuredˉtaskˉenvironmentˉbytes)}\n`,
     );

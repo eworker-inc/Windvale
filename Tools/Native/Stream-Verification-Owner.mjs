@@ -100,19 +100,24 @@ if (process.argv.length !== 5) {
             })
             : spawn(Owner, [], { stdio: ['ignore', 'pipe', 'pipe'] });
         const Activity = {
+            Started: Date.now(),
             Last: Date.now(),
             stdout: true,
             stderr: true,
             Heartbeats: 0
         };
         Heartbeat = setInterval(() => {
-            if (Date.now() - Activity.Last >= 30000 &&
+            const Now = Date.now();
+            if (Now - Activity.Last >= 30000 &&
                 Activity.stdout && Activity.stderr &&
                 Activity.Heartbeats < 240) {
                 Activity.Heartbeats += 1;
                 process.stdout.write(
-                    `Progress: step=native-owner-child status=active ` +
-                    `owner=${basename(Owner)} heartbeat=${Activity.Heartbeats}/240\n`
+                    `Progress: step=native-owner-child status=working-silently ` +
+                    `owner=${basename(Owner)} ` +
+                    `owner-elapsed-seconds=${Math.floor((Now - Activity.Started) / 1000)} ` +
+                    `silent-seconds=${Math.floor((Now - Activity.Last) / 1000)} ` +
+                    `silence-notice=${Activity.Heartbeats}\n`
                 );
             }
         }, 30000);

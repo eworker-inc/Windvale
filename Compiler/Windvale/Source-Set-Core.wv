@@ -318,6 +318,22 @@ export fn Compilerˉsourceˉsetˉmodule(
     );
 }
 
+export fn Compilerˉsourceˉsetˉmoduleˉoffset(
+    Input: bytes,
+    Scan: Compilerˉsourceˉsetˉscan,
+    Index: u32
+) -> u32 {
+    if Scan.Status != Compilerˉsourceˉsetˉstatus.Valid ||
+        Index >= Scan.Modules {
+        return Bytesˉlength(Input);
+    }
+    var Entryˉbytes: u32 = 8u32;
+    if Scan.Version == 2u32 { Entryˉbytes = 20u32; }
+    return Bytesˉreadˉu32ˉlittle(
+        Input, Scan.Directoryˉoffset + Index * Entryˉbytes
+    );
+}
+
 export fn Compilerˉsourceˉspansˉcompare(
     Left: bytes,
     Leftˉoffset: u32,

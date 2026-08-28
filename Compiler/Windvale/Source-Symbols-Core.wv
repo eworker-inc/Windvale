@@ -775,6 +775,23 @@ export fn Compilerˉsourceˉsymbolsˉemittedˉname(
     return Name;
 }
 
+export fn Compilerˉsourceˉsymbolsˉcallableˉhash(
+    Source: bytes,
+    Offset: u32,
+    Length: u32,
+    Module: u32
+) -> u32 {
+    var Hash: u32 = (Module + Length) & 255u32;
+    var Index: u32 = 0u32;
+    while Index < Length {
+        Hash = (Hash * 33u32 + U32ˉfromˉu8(
+            Bytesˉreadˉu8(Source, Offset + Index)
+        )) & 255u32;
+        Index = Index + 1u32;
+    }
+    return Hash;
+}
+
 export fn Compilerˉsourceˉsymbolsˉlookup(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -783,6 +800,39 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
     let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
     var Ranges: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
     var Payload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Firstˉkeys: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Callableˉkeys: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Keyˉindex: u32 = 0u32;
+    while Keyˉindex < Entries {
+        let Keyˉentry: u32 = 16u32 + Keyˉindex * 24u32;
+        let Keyˉmodule: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Keyˉentry
+        );
+        let Keyˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Keyˉentry + 12u32
+        );
+        let Keyˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Keyˉentry + 16u32
+        );
+        let Keyˉsourceˉoffset: u32 =
+            Sourceˉset.Compilerˉsourceˉsetˉmoduleˉoffset(
+                Input, Scan, Keyˉmodule
+            );
+        Firstˉkeys = Bytesˉconcat(
+            Firstˉkeys, Bytesˉfromˉu8(Bytesˉreadˉu8(
+                Input, Keyˉsourceˉoffset + Keyˉoffset
+            ))
+        );
+        Callableˉkeys = Bytesˉconcat(
+            Callableˉkeys, Bytesˉfromˉu32ˉlittle(
+                Compilerˉsourceˉsymbolsˉcallableˉhash(
+                    Input, Keyˉsourceˉoffset + Keyˉoffset,
+                    Keyˉlength, Keyˉmodule
+                )
+            )
+        );
+        Keyˉindex = Keyˉindex + 1u32;
+    }
     var Firstˉbyte: u32 = 0u32;
     var Payloadˉentries: u32 = 0u32;
     var Priorˉrecords: u32 = 0u32;
@@ -797,16 +847,8 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
         var Symbolˉindex: u32 = 0u32;
         while Symbolˉindex < Entries {
             let Symbolˉentry: u32 = 16u32 + Symbolˉindex * 24u32;
-            let Symbolˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Symbolˉentry);
-            let Symbolˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-                Directory, Symbolˉentry + 12u32
-            );
-            let Symbolˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
-                Sourceˉset.Compilerˉsourceˉsetˉmodule(
-                    Input, Scan, Symbolˉmodule
-                );
             let Symbolˉfirst: u32 = U32ˉfromˉu8(
-                Bytesˉreadˉu8(Symbolˉview.Source, Symbolˉnameˉoffset)
+                Bytesˉreadˉu8(Firstˉkeys, Symbolˉindex)
             );
             if Symbolˉfirst == Firstˉbyte {
                 Payload = Bytesˉconcat(Payload, Bytesˉfromˉu32ˉlittle(Symbolˉindex));
@@ -830,7 +872,7 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
     }
     var Result: bytes = Textˉtoˉutf8("WVSI");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entries));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Priorˉvariants));
     Result = Bytesˉconcat(Result, Ranges);
@@ -914,26 +956,57 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Directoryˉnominal));
         Forwardˉdirectory = Forwardˉdirectory + 1u32;
     }
-    var Exportˉdirectory: u32 = 0u32;
-    while Exportˉdirectory < Entries {
-        let Exportˉentry: u32 = 16u32 + Exportˉdirectory * 24u32;
-        let Exportˉmodule: u32 = Bytesˉreadˉu32ˉlittle(Directory, Exportˉentry);
-        let Exportˉview: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
-            Input, Scan, Exportˉmodule
+    var Metadataˉpayload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Metadataˉdirectory: u32 = 0u32;
+    while Metadataˉdirectory < Entries {
+        let Metadataˉentry: u32 = 16u32 + Metadataˉdirectory * 24u32;
+        let Metadataˉmodule: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Metadataˉentry
         );
-        let Exportˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
-            Directory, Exportˉentry + 8u32
+        let Metadataˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, Metadataˉmodule
+            );
+        let Metadataˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+            Directory, Metadataˉentry + 8u32
         );
-        let Exportˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Exportˉview.Source, Exportˉoffset, 1u32, 1u32
-        );
-        var Exported: u8 = 0u8;
-        if Exportˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
-            Exported = 1u8;
+        var Metadataˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Metadataˉview.Source, Metadataˉoffset, 1u32, 1u32
+            );
+        var Metadata: u8 = 0u8;
+        if Metadataˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+            Metadata = 1u8;
         }
-        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Exported));
-        Exportˉdirectory = Exportˉdirectory + 1u32;
+        if Bytesˉreadˉu32ˉlittle(
+                Directory, Metadataˉentry + 4u32
+            ) == 6u32 {
+            if Metadata == 1u8 {
+                Metadataˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Metadataˉview.Source, Metadataˉtoken.Nextˉoffset,
+                    Metadataˉtoken.Nextˉline, Metadataˉtoken.Nextˉcolumn
+                );
+            }
+            if Metadataˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+                Metadataˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Metadataˉview.Source, Metadataˉtoken.Nextˉoffset,
+                    Metadataˉtoken.Nextˉline, Metadataˉtoken.Nextˉcolumn
+                );
+            }
+            if Metadataˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
+                if Metadata == 1u8 {
+                    Metadata = 3u8;
+                } else {
+                    Metadata = 2u8;
+                }
+            }
+        }
+        Metadataˉpayload = Bytesˉconcat(
+            Metadataˉpayload, Bytesˉfromˉu8(Metadata)
+        );
+        Metadataˉdirectory = Metadataˉdirectory + 1u32;
     }
+    Result = Bytesˉconcat(Result, Metadataˉpayload);
     var Aliasˉowner: u32 = 0u32;
     while Aliasˉowner < Scan.Modules {
         var Aliasˉrow: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
@@ -986,6 +1059,37 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
         Result = Bytesˉconcat(Result, Aliasˉrow);
         Aliasˉowner = Aliasˉowner + 1u32;
     }
+    var Callableˉranges: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Callableˉpayload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Callableˉbucket: u32 = 0u32;
+    var Callableˉentries: u32 = 0u32;
+    while Callableˉbucket < 256u32 {
+        let Callableˉfirst: u32 = Callableˉentries;
+        var Callableˉcount: u32 = 0u32;
+        var Callableˉindex: u32 = 0u32;
+        while Callableˉindex < Entries {
+            if Bytesˉreadˉu32ˉlittle(
+                    Callableˉkeys, Callableˉindex * 4u32
+                ) == Callableˉbucket {
+                Callableˉpayload = Bytesˉconcat(
+                    Callableˉpayload,
+                    Bytesˉfromˉu32ˉlittle(Callableˉindex)
+                );
+                Callableˉcount = Callableˉcount + 1u32;
+                Callableˉentries = Callableˉentries + 1u32;
+            }
+            Callableˉindex = Callableˉindex + 1u32;
+        }
+        Callableˉranges = Bytesˉconcat(
+            Callableˉranges, Bytesˉfromˉu32ˉlittle(Callableˉfirst)
+        );
+        Callableˉranges = Bytesˉconcat(
+            Callableˉranges, Bytesˉfromˉu32ˉlittle(Callableˉcount)
+        );
+        Callableˉbucket = Callableˉbucket + 1u32;
+    }
+    Result = Bytesˉconcat(Result, Callableˉranges);
+    Result = Bytesˉconcat(Result, Callableˉpayload);
     var Nameˉdirectory: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
     var Nameˉpayload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
     var Nameˉentry: u32 = 0u32;
@@ -1025,8 +1129,36 @@ export fn Compilerˉsourceˉsymbolsˉlookupˉnameˉdirectoryˉoffset(
     Lookup: bytes,
     Modules: u32
 ) -> u32 {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Lookup, 8u32);
     return Compilerˉsourceˉsymbolsˉlookupˉaliasˉoffset(Lookup) +
-        Modules * Modules * 8u32;
+        Modules * Modules * 8u32 + 2048u32 + Entries * 4u32;
+}
+
+export fn Compilerˉsourceˉsymbolsˉlookupˉcallableˉrange(
+    Lookup: bytes,
+    Modules: u32,
+    Hash: u32
+) -> Sourceˉbodies.Compilerˉsourceˉposition {
+    let Offset: u32 = Compilerˉsourceˉsymbolsˉlookupˉaliasˉoffset(
+        Lookup
+    ) + Modules * Modules * 8u32;
+    let Entry: u32 = Offset + Hash * 8u32;
+    return Sourceˉbodies.Compilerˉsourceˉposition(
+        Bytesˉreadˉu32ˉlittle(Lookup, Entry),
+        Bytesˉreadˉu32ˉlittle(Lookup, Entry + 4u32),
+        0u32
+    );
+}
+
+export fn Compilerˉsourceˉsymbolsˉlookupˉcallableˉdirectory(
+    Lookup: bytes,
+    Modules: u32,
+    Index: u32
+) -> u32 {
+    let Offset: u32 = Compilerˉsourceˉsymbolsˉlookupˉaliasˉoffset(
+        Lookup
+    ) + Modules * Modules * 8u32 + 2048u32;
+    return Bytesˉreadˉu32ˉlittle(Lookup, Offset + Index * 4u32);
 }
 
 export fn Compilerˉsourceˉsymbolsˉlookupˉemittedˉname(
@@ -1057,7 +1189,9 @@ export fn Compilerˉsourceˉsymbolsˉlookupˉisˉexported(
     if Directoryˉindex >= Entries { return false; }
     let Exportˉoffset: u32 = Compilerˉsourceˉsymbolsˉlookupˉmetadataˉoffset(Lookup);
     if Bytesˉlength(Lookup) < Exportˉoffset + Entries { return false; }
-    return Bytesˉreadˉu8(Lookup, Exportˉoffset + Directoryˉindex) == 1u8;
+    return (U32ˉfromˉu8(
+        Bytesˉreadˉu8(Lookup, Exportˉoffset + Directoryˉindex)
+    ) & 1u32) != 0u32;
 }
 
 export fn Compilerˉsourceˉsymbolsˉlookupˉaliasˉtarget(
@@ -1077,9 +1211,10 @@ export fn Compilerˉsourceˉsymbolsˉlookupˉaliasˉtarget(
     if Bytesˉlength(Lookup) < Aliasˉoffset + Scan.Modules * Scan.Modules * 8u32 {
         return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(false, Scan.Modules);
     }
-    let View: Sourceˉset.Compilerˉsourceˉsetˉview = Sourceˉset.Compilerˉsourceˉsetˉmodule(
-        Input, Scan, Owner
-    );
+    let Ownerˉsourceˉoffset: u32 =
+        Sourceˉset.Compilerˉsourceˉsetˉmoduleˉoffset(
+            Input, Scan, Owner
+        );
     var Target: u32 = 0u32;
     while Target < Scan.Modules {
         let Entry: u32 = Aliasˉoffset + (Owner * Scan.Modules + Target) * 8u32;
@@ -1088,7 +1223,8 @@ export fn Compilerˉsourceˉsymbolsˉlookupˉaliasˉtarget(
         if Candidateˉlength == Nameˉlength {
             if Candidateˉlength != 0u32 {
                 if Sourceˉset.Compilerˉsourceˉspansˉequal(
-                    View.Source, Candidateˉoffset, Candidateˉlength,
+                    Input, Ownerˉsourceˉoffset + Candidateˉoffset,
+                    Candidateˉlength,
                     Nameˉsource, Nameˉoffset, Nameˉlength
                 ) {
                     return Sourceˉgraph.Compilerˉsourceˉgraphˉmatch(true, Target);

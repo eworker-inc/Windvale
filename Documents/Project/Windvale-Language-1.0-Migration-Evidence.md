@@ -7,10 +7,11 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 6 are complete. Slice 7 now has a completed bounded
-sequential implementation checkpoint; parallel-capable Windows/Linux evidence
-and the remaining accepted scheduler observations are still pending before the
-slice closes. The existing
+Migration Slices 1 through 6 are complete. Slice 7 now has bounded sequential
+execution, observable completion order, and explicit child-provider generation
+recovery. Parallel-capable Windows/Linux evidence, paired reconstruction,
+candidate promotion, and final Qualification are still pending before the slice
+closes. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -92,12 +93,15 @@ The verifier binds the exact replacement source frozen by
 | Frozen input bytes | 1,724,854 |
 | Frozen aggregate SHA-256 | `fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a` |
 
-The immutable Decision 0767 semantic identity above does not change. The
-current migration-verifier closure additionally contains the implementation
-catalog for the already frozen `Foundationˉresult` public identity and the
-updated source-input lock. That closure contains 251 files and 1,726,783 bytes;
-its entry stream is 46,260 bytes with SHA-256
-`de39b8f4042c98d34ff3676ec111a7ffca6e91c529f0e40f2250a824c54ad415`.
+The immutable Decision 0767 semantic identity above does not change, and every
+intermediate amendment remains immutable provenance. The current verifier is
+bound by [Decision 0870](../Decisions/0870-Enforce-Awaited-Provider-Calls-And-Recovery.md)
+to the 3,841-byte
+`Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt` manifest at SHA-256
+`e5a8928696ec8626adbfe94faf9284d037b6b40aa5d3dea6a250ddc6b6b770d4`.
+That closure contains 251 files and 1,759,474 bytes; its 46,260-byte entry
+stream has SHA-256
+`f574e26f1a7397517f192be412268bf7768a6cfbc8685b892fb38f6a44672c80`.
 
 `Tests/Native/Language-1.0-Fixture-Inventory.txt` further fixes 16 workload
 bundles containing 72 `.wv` source fixtures and 482,325 source bytes. The
@@ -3914,3 +3918,137 @@ at SHA-256
 Provider-generation recovery, parallel-capable Windows/Linux execution, exact
 paired reconstruction, candidate promotion, and the final Slice 7 Qualification
 gate remain pending.
+
+## Slice 7 explicit async provider-recovery checkpoint
+
+[Decision 0870](../Decisions/0870-Enforce-Awaited-Provider-Calls-And-Recovery.md)
+closes the remaining child-provider workload without adding a second provider
+or task API. Every direct or indirect async call now requires source `await`, an
+awaited synchronous call is rejected, and an awaited call is invalid in a
+synchronous caller. Existing exact effect analysis still requires
+`task.suspend`; the marker grants no effect and changes no WVB call opcode.
+
+Seven bounded conformance cases cover direct, aggregate-returning, and indirect
+async calls plus all four mismatched call/await forms. The three accepted cases
+publish deterministic WVB. The four rejected cases publish no product. Their
+combined evidence SHA-256 is
+`d08ace8e9143b4ae4fc6e8762769d3705fdb8424cc53f21783079dc3d7eb15bd`.
+
+The provider fixture accepts four children against generation 41. It preserves
+normal results, a determinate restart, and an indeterminate restart as distinct
+typed child results, consumes every handle, and performs no replay. The parent
+then explicitly refreshes one rights-limited endpoint to generation 42 and
+accepts a fifth child that performs a real awaited provider call through the
+new generation. The fixture is a deterministic 12,297-byte WVB at SHA-256
+`eb8dc8047fd2ddd7e7eb98c7e443396ac5e9d240fabb060acb88769888d4f067`.
+The compiler-aligned verifier accepts it; its largest function has 2 parameters,
+131 locals, 5 maximum stack cells, and 2,141 code bytes.
+
+This workload exposed a partial-tail record-reuse error in the scalar runner.
+After aggregate collection, a selected free record could begin below the
+retained value-buffer tail and end above it. The old allocator appended the
+whole record after the tail, leaving the handle over a stale prefix. The old
+runner therefore returned diagnostic result `95`. The corrected allocator
+replaces bytes from the selected offset and the same fixture returns `42`.
+
+The corrected development runner contains 228 functions and 430,435 code bytes
+in a 482,767-byte WVB at SHA-256
+`fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f`.
+Its 5,907,456-byte current-host Windows package has SHA-256
+`2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b`.
+These are development identities, not promoted distribution artifacts.
+
+The complete affected owner passes all 61 named phases and 172 declared cases:
+24 valid modules, 69 malformed modules, 33 structured-task cases, 46
+task-runtime cases, 17 task-environment cases, and 7 async-call cases. The
+complete 114-owner registry advances to 5,568 cases and 18,828 LF-only bytes at
+SHA-256
+`6138ca33e6c8e06b4baa1d99fc01c8a5be9bf6d69768592d4e80b4750bfb2b34`.
+
+Parallel-capable Windows/Linux execution, exact paired reconstruction,
+candidate promotion, and the final Slice 7 Qualification gate remain pending.
+
+## Slice 7 compiler-analysis cost checkpoint
+
+[Decision 0871](../Decisions/0871-Index-Callable-Lookup-And-Retain-Base-Wir.md)
+removes three measured sources of redundant compiler work without changing
+portable source, WVLB, or WVIR semantics. Callable resolution now uses a
+target-and-name hash bucket followed by the existing exact byte oracle; alias
+and callable comparisons read bounded absolute WVSS spans without copying a
+whole module; and generic discovery retains accepted base WIR while appending
+only newly discovered specializations. Function-private binding and WIR
+payloads publish in groups of at most 16 functions.
+
+Three permanent cases cover identity, multiple specialization, and nested
+specialization discovery. Each reproduces exact source-set, manifest, binding,
+and WIR bytes, for 12 exact artifact comparisons. The current Windows candidate
+contains 755 functions and produces a 1,511,092-byte portable WVB at SHA-256
+`602ddd98461ec84da931a23e65a991714932220ee21400050cdd9aa9f0e7517f`.
+The special-intrinsic prefilter also covers the 22-byte
+`Vectorˉgrowˉreserved` and 27-byte `Vectorˉconstructˉreserved` names. The
+focused construct oracle passes its valid WIR boundary and all eight malformed
+cases with the matched candidate pair.
+
+Whole-compiler self-analysis still reaches the native carrier's fixed
+instruction allowance before publishing output. This checkpoint therefore
+proves removal of redundant work and exact-output preservation, not completed
+self-hosting or a compiler-wide speed threshold. Self-analysis, deterministic
+repeat, and candidate promotion remain explicit Slice 7 checkpoints.
+
+## Slice 7 bounded generic WIR development oracle
+
+[Decision 0872](../Decisions/0872-Move-Compiler-Scale-Generic-Wir-Out-Of-The-Inner-Loop.md)
+separates the exact generic semantic oracle from the compiler-scale performance
+workload. The former front-door step compiled the complete compiler twice so
+the resulting program could analyze one small generic identity fixture. Both
+the preceding analyzer and the Decision 0871 candidate stop with status `2` at
+the fixed `2^37` carrier instruction allowance after admitting the same
+2,401,137 source bytes and before publishing WIR or WVB. This A/B result rules
+out the candidate's vector-prefilter correction as the cause.
+
+The development front door now runs the candidate analyzer twice across
+identity, multiple-specialization, and nested-discovery fixtures. It compares
+source-set, manifest, binding, and WIR bytes exactly and decodes each WIR to
+check its expected function, block, operation, and operand counts. This yields
+12 exact artifact comparisons plus structural validation without repeating two
+whole-compiler builds. The large project and fixture remain as an explicit
+compiler-scale performance and self-hosting workload.
+
+The settled Windows front door contains 482 cases and the Linux front door 466.
+The complete registry remains 114 owners and contains 5,568 cases in 18,829
+LF-only bytes at SHA-256
+`08944441716282739f74a1362511944e437a757204eb92d3640d2489e5037b39`.
+This is a development-loop change, not a self-hosting, promotion, or
+qualification claim.
+
+The first complete Windows rerun also found an independent obsolete package
+route. Both the preceding and candidate compilers produce the exact same
+482,767-byte, 228-function WVB runner with 430,435 code bytes at SHA-256
+`fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f`.
+The monolithic native lowerer nevertheless reaches its immutable 64 MiB output
+bound for that application. The front doors now use the already established
+segmented stage, link, transport, and hosted-package composition. A focused
+Windows package used two canonical fragments at entry offset 150,541 and the
+resulting 5,907,456-byte application executed the floating fixture with result
+`42`. No native output bound was raised.
+
+That rerun also found a stale fixed-array fixture assumption rather than a
+compiler difference. The Collections import now admits Memory transitively, so
+both compiler candidates emit the exact same 916-byte WVB 1.22 module with
+four type descriptors. The focused oracle derives array type index `3`, checks
+the final `Array<i32, 3>` descriptor, and passes all six valid, trap, and
+malformed-input cases. The collection fixture also carries the required WVB
+1.26 memory-budget entry. Both compiler candidates publish the same 978-byte
+module; the independent low-level runtime remains a 1,156-byte WVB 1.20
+product. The complete 482-case Windows front door passes. The current registry
+identity is 114 owners, 5,568 cases, and 18,829 LF-only bytes at SHA-256
+`08944441716282739f74a1362511944e437a757204eb92d3640d2489e5037b39`.
+
+The focused `using` owner passes 18 deterministic native cases with a
+406,715-byte WVB at SHA-256
+`f81e973ac7ee7f7e3929d6d587a44efd35ff10e497177104eda41d17b851c184`.
+The callable owner passes 59 cases across 11 modules and eight native AOT or
+rejection cases; its 4,392,237-byte evidence stream has SHA-256
+`88ffc45c1f6aaf8ec38866458368559c0b3a6a30d06c289de01178a4dea1354b`.
+The complete 172-case memory, Vector, using, resource, and structured-task
+owner also passes all 61 named steps.
