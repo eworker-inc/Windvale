@@ -833,6 +833,22 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
         );
         Keyˉindex = Keyˉindex + 1u32;
     }
+    var Nameˉdirectory: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Nameˉpayload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
+    var Nameˉentry: u32 = 0u32;
+    while Nameˉentry < Entries {
+        let Cachedˉname: bytes = Compilerˉsourceˉsymbolsˉemittedˉname(
+            Input, Scan, Directory, Nameˉentry
+        );
+        Nameˉdirectory = Bytesˉconcat(
+            Nameˉdirectory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉpayload))
+        );
+        Nameˉdirectory = Bytesˉconcat(
+            Nameˉdirectory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Cachedˉname))
+        );
+        Nameˉpayload = Bytesˉconcat(Nameˉpayload, Cachedˉname);
+        Nameˉentry = Nameˉentry + 1u32;
+    }
     var Firstˉbyte: u32 = 0u32;
     var Payloadˉentries: u32 = 0u32;
     var Priorˉrecords: u32 = 0u32;
@@ -897,8 +913,11 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
             while Directoryˉindex < Entries {
                 let Entry: u32 = 16u32 + Directoryˉindex * 24u32;
                 if Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) == Kindˉvalue {
-                    let Emittedˉname: bytes = Compilerˉsourceˉsymbolsˉemittedˉname(
-                        Input, Scan, Directory, Directoryˉindex
+                    let Nameˉrecord: u32 = Directoryˉindex * 8u32;
+                    let Emittedˉname: bytes = Bytesˉslice(
+                        Nameˉpayload,
+                        Bytesˉreadˉu32ˉlittle(Nameˉdirectory, Nameˉrecord),
+                        Bytesˉreadˉu32ˉlittle(Nameˉdirectory, Nameˉrecord + 4u32)
                     );
                     var Afterˉprior: bool = !Hasˉpriorˉname;
                     if Hasˉpriorˉname {
@@ -1090,22 +1109,6 @@ export fn Compilerˉsourceˉsymbolsˉlookup(
     }
     Result = Bytesˉconcat(Result, Callableˉranges);
     Result = Bytesˉconcat(Result, Callableˉpayload);
-    var Nameˉdirectory: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
-    var Nameˉpayload: bytes = Compilerˉsourceˉsymbolsˉempty(Input);
-    var Nameˉentry: u32 = 0u32;
-    while Nameˉentry < Entries {
-        let Cachedˉname: bytes = Compilerˉsourceˉsymbolsˉemittedˉname(
-            Input, Scan, Directory, Nameˉentry
-        );
-        Nameˉdirectory = Bytesˉconcat(
-            Nameˉdirectory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Nameˉpayload))
-        );
-        Nameˉdirectory = Bytesˉconcat(
-            Nameˉdirectory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Cachedˉname))
-        );
-        Nameˉpayload = Bytesˉconcat(Nameˉpayload, Cachedˉname);
-        Nameˉentry = Nameˉentry + 1u32;
-    }
     Result = Bytesˉconcat(Result, Nameˉdirectory);
     Result = Bytesˉconcat(Result, Nameˉpayload);
     return Result;

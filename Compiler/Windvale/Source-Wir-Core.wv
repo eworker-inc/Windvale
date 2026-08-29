@@ -364,6 +364,11 @@ record Compilerˉsourceˉwirˉrange {
     Returnˉshape: u32;
 }
 
+record Compilerˉsourceˉwirˉchunkedˉpayload {
+    Complete: bytes;
+    Pending: bytes;
+}
+
 record Compilerˉsourceˉwirˉbuild {
     Status: Compilerˉsourceˉwirˉstatus;
     Functionˉpayload: bytes;
@@ -371,6 +376,9 @@ record Compilerˉsourceˉwirˉbuild {
     Operationˉpayload: bytes;
     Temporaryˉpayload: bytes;
     Operandˉpayload: bytes;
+    Operationˉpending: bytes;
+    Temporaryˉpending: bytes;
+    Operandˉpending: bytes;
     Functionˉentries: u32;
     Blocks: u32;
     Operations: u32;
@@ -409,6 +417,9 @@ record Compilerˉsourceˉwirˉvalue {
     Operationˉpayload: bytes;
     Temporaryˉpayload: bytes;
     Operandˉpayload: bytes;
+    Operationˉpending: bytes;
+    Temporaryˉpending: bytes;
+    Operandˉpending: bytes;
     Functionˉentries: u32;
     Blocks: u32;
     Operations: u32;
@@ -1187,6 +1198,8 @@ fn Compilerˉsourceˉwirˉwithˉanalysisˉstate(
         Status,
         Build.Functionˉpayload, Build.Blockˉpayload, Build.Operationˉpayload,
         Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Operationˉpending, Build.Temporaryˉpending,
+        Build.Operandˉpending,
         Build.Functionˉentries, Build.Blocks, Build.Operations,
         Build.Temporaries, Build.Operands,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -1578,6 +1591,7 @@ export fn Compilerˉsourceˉwirˉbuildˉempty(
     return Compilerˉsourceˉwirˉbuild(
         Compilerˉsourceˉwirˉstatus.Valid,
         Empty, Empty, Empty, Empty, Empty,
+        Empty, Empty, Empty,
         0u32, 0u32, 0u32, 0u32, 0u32,
         Modules, Functions,
         0u32, 0u32, 0u32, 0u32,
@@ -1696,6 +1710,8 @@ export fn Compilerˉsourceˉwirˉvalueˉfrom(
         Build.Status,
         Build.Functionˉpayload, Build.Blockˉpayload, Build.Operationˉpayload,
         Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Operationˉpending, Build.Temporaryˉpending,
+        Build.Operandˉpending,
         Build.Functionˉentries, Build.Blocks, Build.Operations,
         Build.Temporaries, Build.Operands,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -1721,6 +1737,8 @@ export fn Compilerˉsourceˉwirˉvalueˉbuild(
         Value.Status,
         Value.Functionˉpayload, Value.Blockˉpayload, Value.Operationˉpayload,
         Value.Temporaryˉpayload, Value.Operandˉpayload,
+        Value.Operationˉpending, Value.Temporaryˉpending,
+        Value.Operandˉpending,
         Value.Functionˉentries, Value.Blocks, Value.Operations,
         Value.Temporaries, Value.Operands,
         Value.Currentˉmodule, Value.Currentˉfunction,
@@ -1748,6 +1766,51 @@ export fn Compilerˉsourceˉwirˉblockˉplaceholder(Input: bytes) -> bytes {
     return Result;
 }
 
+fn Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+    Complete: bytes,
+    Pending: bytes
+) -> u32 {
+    return Bytesˉlength(Complete) + Bytesˉlength(Pending);
+}
+
+fn Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+    Complete: bytes,
+    Pending: bytes
+) -> bytes {
+    if Bytesˉlength(Pending) == 0u32 {
+        return Complete;
+    }
+    return Bytesˉconcat(Complete, Pending);
+}
+
+fn Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+    Complete: bytes,
+    Pending: bytes,
+    Entry: bytes,
+    Pendingˉlimit: u32
+) -> Compilerˉsourceˉwirˉchunkedˉpayload {
+    let Entryˉbytes: u32 = Bytesˉlength(Entry);
+    if Entryˉbytes > Pendingˉlimit {
+        return Compilerˉsourceˉwirˉchunkedˉpayload(
+            Bytesˉconcat(
+                Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+                    Complete, Pending
+                ),
+                Entry
+            ),
+            Bytesˉslice(Entry, 0u32, 0u32)
+        );
+    }
+    if Bytesˉlength(Pending) > Pendingˉlimit - Entryˉbytes {
+        return Compilerˉsourceˉwirˉchunkedˉpayload(
+            Bytesˉconcat(Complete, Pending), Entry
+        );
+    }
+    return Compilerˉsourceˉwirˉchunkedˉpayload(
+        Complete, Bytesˉconcat(Pending, Entry)
+    );
+}
+
 export fn Compilerˉsourceˉwirˉstartˉfunction(
     Build: Compilerˉsourceˉwirˉbuild,
     Module: u32,
@@ -1758,6 +1821,7 @@ export fn Compilerˉsourceˉwirˉstartˉfunction(
     return Compilerˉsourceˉwirˉbuild(
         Build.Status,
         Empty, Rootˉblock, Empty, Empty, Empty,
+        Empty, Empty, Empty,
         Build.Functionˉentries, Build.Blocks + 1u32, Build.Operations,
         Build.Temporaries, Build.Operands,
         Module, Function,
@@ -1813,6 +1877,8 @@ fn Compilerˉsourceˉwirˉwithˉreservedˉblocks(
         Build.Status,
         Build.Functionˉpayload, Blockˉpayload, Build.Operationˉpayload,
         Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Operationˉpending, Build.Temporaryˉpending,
+        Build.Operandˉpending,
         Build.Functionˉentries, Build.Blocks + Added, Build.Operations,
         Build.Temporaries, Build.Operands,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -1919,6 +1985,8 @@ export fn Compilerˉsourceˉwirˉappendˉblock(
         Build.Functionˉpayload,
         Replaced.Value,
         Build.Operationˉpayload, Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Operationˉpending, Build.Temporaryˉpending,
+        Build.Operandˉpending,
         Build.Functionˉentries, Build.Blocks, Build.Operations,
         Build.Temporaries, Build.Operands,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -2001,6 +2069,8 @@ export fn Compilerˉsourceˉwirˉappendˉfunctionˉentry(
         Bytesˉconcat(Build.Functionˉpayload, Entry),
         Build.Blockˉpayload, Build.Operationˉpayload,
         Build.Temporaryˉpayload, Build.Operandˉpayload,
+        Build.Operationˉpending, Build.Temporaryˉpending,
+        Build.Operandˉpending,
         Build.Functionˉentries + 1u32, Build.Blocks, Build.Operations,
         Build.Temporaries, Build.Operands,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -2038,37 +2108,79 @@ export fn Compilerˉsourceˉwirˉmergeˉfunction(
             Function.Currentˉfunction, 0u32, 0u32, 0u32
         );
     }
-    let Operationˉbytes: u32 = Bytesˉlength(Function.Operationˉpayload);
-    if Bytesˉlength(Outer.Operationˉpayload) > 4194304u32 - Operationˉbytes {
+    let Operationˉbytes: u32 = Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+        Function.Operationˉpayload, Function.Operationˉpending
+    );
+    if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Outer.Operationˉpayload, Outer.Operationˉpending
+        ) > 4194304u32 - Operationˉbytes {
         return Compilerˉsourceˉwirˉbuildˉfailure(
             Function, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Function.Currentˉmodule, Function.Currentˉmodule,
             Function.Currentˉfunction, 0u32, 0u32, 0u32
         );
     }
-    let Temporaryˉbytes: u32 = Bytesˉlength(Function.Temporaryˉpayload);
-    if Bytesˉlength(Outer.Temporaryˉpayload) > 4194304u32 - Temporaryˉbytes {
+    let Temporaryˉbytes: u32 = Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+        Function.Temporaryˉpayload, Function.Temporaryˉpending
+    );
+    if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Outer.Temporaryˉpayload, Outer.Temporaryˉpending
+        ) > 4194304u32 - Temporaryˉbytes {
         return Compilerˉsourceˉwirˉbuildˉfailure(
             Function, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Function.Currentˉmodule, Function.Currentˉmodule,
             Function.Currentˉfunction, 0u32, 0u32, 0u32
         );
     }
-    let Operandˉbytes: u32 = Bytesˉlength(Function.Operandˉpayload);
-    if Bytesˉlength(Outer.Operandˉpayload) > 4194304u32 - Operandˉbytes {
+    let Operandˉbytes: u32 = Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+        Function.Operandˉpayload, Function.Operandˉpending
+    );
+    if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Outer.Operandˉpayload, Outer.Operandˉpending
+        ) > 4194304u32 - Operandˉbytes {
         return Compilerˉsourceˉwirˉbuildˉfailure(
             Function, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Function.Currentˉmodule, Function.Currentˉmodule,
             Function.Currentˉfunction, 0u32, 0u32, 0u32
         );
     }
+    let Operationˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Outer.Operationˉpayload,
+            Outer.Operationˉpending,
+            Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+                Function.Operationˉpayload, Function.Operationˉpending
+            ),
+            65536u32
+        );
+    let Temporaryˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Outer.Temporaryˉpayload,
+            Outer.Temporaryˉpending,
+            Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+                Function.Temporaryˉpayload, Function.Temporaryˉpending
+            ),
+            65536u32
+        );
+    let Operandˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Outer.Operandˉpayload,
+            Outer.Operandˉpending,
+            Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+                Function.Operandˉpayload, Function.Operandˉpending
+            ),
+            65536u32
+        );
     return Compilerˉsourceˉwirˉbuild(
         Function.Status,
         Bytesˉconcat(Outer.Functionˉpayload, Function.Functionˉpayload),
         Bytesˉconcat(Outer.Blockˉpayload, Function.Blockˉpayload),
-        Bytesˉconcat(Outer.Operationˉpayload, Function.Operationˉpayload),
-        Bytesˉconcat(Outer.Temporaryˉpayload, Function.Temporaryˉpayload),
-        Bytesˉconcat(Outer.Operandˉpayload, Function.Operandˉpayload),
+        Operationˉpayload.Complete,
+        Temporaryˉpayload.Complete,
+        Operandˉpayload.Complete,
+        Operationˉpayload.Pending,
+        Temporaryˉpayload.Pending,
+        Operandˉpayload.Pending,
         Function.Functionˉentries, Function.Blocks, Function.Operations,
         Function.Temporaries, Function.Operands,
         Function.Currentˉmodule, Function.Currentˉfunction,
@@ -2096,14 +2208,18 @@ export fn Compilerˉsourceˉwirˉemit(
     Offset: u32,
     Length: u32
 ) -> Compilerˉsourceˉwirˉvalue {
-    if Bytesˉlength(Build.Operationˉpayload) > 4194276u32 {
+    if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Build.Operationˉpayload, Build.Operationˉpending
+        ) > 4194276u32 {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Build.Currentˉmodule, Offset, 0u32, 0u32
         );
     }
     if Shape != 0u32 {
-        if Bytesˉlength(Build.Temporaryˉpayload) > 4194300u32 {
+        if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+                Build.Temporaryˉpayload, Build.Temporaryˉpending
+            ) > 4194300u32 {
             return Compilerˉsourceˉwirˉfailureˉvalue(
                 Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
                 Build.Currentˉmodule, Offset, 0u32, 0u32
@@ -2116,7 +2232,9 @@ export fn Compilerˉsourceˉwirˉemit(
             Build.Currentˉmodule, Offset, 0u32, 0u32
         );
     }
-    if Bytesˉlength(Build.Operandˉpayload) > 4194304u32 - Bytesˉlength(Operandˉbytes) {
+    if Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Build.Operandˉpayload, Build.Operandˉpending
+        ) > 4194304u32 - Bytesˉlength(Operandˉbytes) {
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Evidenceˉlimit,
             Build.Currentˉmodule, Offset, 0u32, 0u32
@@ -2136,11 +2254,19 @@ export fn Compilerˉsourceˉwirˉemit(
     }
     let Firstˉoperand: u32 = Build.Operands;
     var Temporary: u32 = Compilerˉsourceˉwirˉsentinel();
-    var Temporaryˉpayload: bytes = Build.Temporaryˉpayload;
+    var Temporaryˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayload(
+            Build.Temporaryˉpayload, Build.Temporaryˉpending
+        );
     var Temporaries: u32 = Build.Temporaries;
     if Shape != 0u32 {
         Temporary = Build.Temporaries - Build.Functionˉfirstˉtemporary;
-        Temporaryˉpayload = Bytesˉconcat(Temporaryˉpayload, Bytesˉfromˉu32ˉlittle(Shape));
+        Temporaryˉpayload = Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Temporaryˉpayload.Complete,
+            Temporaryˉpayload.Pending,
+            Bytesˉfromˉu32ˉlittle(Shape),
+            4096u32
+        );
         Temporaries = Temporaries + 1u32;
     }
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(Build.Currentˉblock);
@@ -2151,12 +2277,26 @@ export fn Compilerˉsourceˉwirˉemit(
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Firstˉoperand));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Target));
     Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Auxiliary));
+    let Operationˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Build.Operationˉpayload, Build.Operationˉpending, Entry, 4032u32
+        );
+    let Operandˉpayload: Compilerˉsourceˉwirˉchunkedˉpayload =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉappend(
+            Build.Operandˉpayload,
+            Build.Operandˉpending,
+            Operandˉbytes,
+            4096u32
+        );
     let Result: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉbuild(
         Build.Status,
         Build.Functionˉpayload, Build.Blockˉpayload,
-        Bytesˉconcat(Build.Operationˉpayload, Entry),
-        Temporaryˉpayload,
-        Bytesˉconcat(Build.Operandˉpayload, Operandˉbytes),
+        Operationˉpayload.Complete,
+        Temporaryˉpayload.Complete,
+        Operandˉpayload.Complete,
+        Operationˉpayload.Pending,
+        Temporaryˉpayload.Pending,
+        Operandˉpayload.Pending,
         Build.Functionˉentries, Build.Blocks, Build.Operations + 1u32,
         Temporaries, Build.Operands + Operandˉcount,
         Build.Currentˉmodule, Build.Currentˉfunction,
@@ -2403,63 +2543,72 @@ export fn Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
                     Source, Colon.Nextˉoffset, Colon.Nextˉline,
                     Colon.Nextˉcolumn
                 );
-            let Currentˉparameterˉmode: u32 =
-                Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+            let Parsedˉtype: Sourceˉdeclarations.Compilerˉparseˉstep =
+                Sourceˉdeclarations.Compilerˉparseˉparameterˉtype(
                     Source, Colon.Nextˉoffset, Colon.Nextˉline,
-                    Colon.Nextˉcolumn
+                    Colon.Nextˉcolumn, false
                 );
-            let Type: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
-                Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
-                    Input, Scan, Symbols.Directory, Symbols.Lookup,
-                    Symbols.Visibility, Module, Source,
-                    Parameterˉtype.Offset,
-                    Parameterˉtype.Line,
-                    Parameterˉtype.Column,
-                    Symbols.Records, Symbols.Enums, Generic,
-                    Catalog, Genericˉinstance, false
-                );
-            var Typeˉshape: u32 = Type.Shape;
-            var Typeˉnextˉoffset: u32 = Type.Nextˉoffset;
-            var Typeˉnextˉline: u32 = Type.Nextˉline;
-            var Typeˉnextˉcolumn: u32 = Type.Nextˉcolumn;
-            if Type.Status ==
-                    Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
-                Generic.Parameters == 0u32 {
-                let General:
-                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
-                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
-                        Input, Scan, Symbols, Module, Source,
-                        Parameterˉtype.Offset,
-                        Parameterˉtype.Line,
-                        Parameterˉtype.Column,
-                        0u32, 0u32, 0u32, 0u32,
-                        Typeˉcatalog
-                    );
-                Typeˉshape = General.Shape;
-                Typeˉnextˉoffset = General.Nextˉoffset;
-                Typeˉnextˉline = General.Nextˉline;
-                Typeˉnextˉcolumn = General.Nextˉcolumn;
-            }
-            if Type.Status ==
-                    Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
-                Generic.Parameters > 0u32 &&
-                Genericˉinstance != Compilerˉsourceˉwirˉsentinel() {
-                let Specialized:
-                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
-                    Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
-                        Input, Scan, Symbols, Module, Source,
-                        Parameterˉtype.Offset,
-                        Parameterˉtype.Line,
-                        Parameterˉtype.Column,
-                        0u32, 0u32, 0u32, 0u32,
-                        Typeˉcatalog, Source, Generic, Catalog, Genericˉinstance
-                    );
-                Typeˉshape = Specialized.Shape;
-                Typeˉnextˉoffset = Specialized.Nextˉoffset;
-                Typeˉnextˉline = Specialized.Nextˉline;
-                Typeˉnextˉcolumn = Specialized.Nextˉcolumn;
-            }
+            var Typeˉnextˉoffset: u32 = Parsedˉtype.Nextˉoffset;
+            var Typeˉnextˉline: u32 = Parsedˉtype.Nextˉline;
+            var Typeˉnextˉcolumn: u32 = Parsedˉtype.Nextˉcolumn;
             if Index == Argument {
+                let Currentˉparameterˉmode: u32 =
+                    Sourceˉdeclarations.Compilerˉsourceˉparameterˉborrowˉmode(
+                        Source, Colon.Nextˉoffset, Colon.Nextˉline,
+                        Colon.Nextˉcolumn
+                    );
+                let Type: Sourceˉsymbols.Compilerˉsourceˉconcreteˉtype =
+                    Sourceˉsymbols.Compilerˉsourceˉsymbolsˉbindˉconcreteˉfunctionˉtype(
+                        Input, Scan, Symbols.Directory, Symbols.Lookup,
+                        Symbols.Visibility, Module, Source,
+                        Parameterˉtype.Offset,
+                        Parameterˉtype.Line,
+                        Parameterˉtype.Column,
+                        Symbols.Records, Symbols.Enums, Generic,
+                        Catalog, Genericˉinstance, false
+                    );
+                var Typeˉshape: u32 = Type.Shape;
+                Typeˉnextˉoffset = Type.Nextˉoffset;
+                Typeˉnextˉline = Type.Nextˉline;
+                Typeˉnextˉcolumn = Type.Nextˉcolumn;
+                if Type.Status ==
+                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
+                    Generic.Parameters == 0u32 {
+                    let General:
+                        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+                            Input, Scan, Symbols, Module, Source,
+                            Parameterˉtype.Offset,
+                            Parameterˉtype.Line,
+                            Parameterˉtype.Column,
+                            0u32, 0u32, 0u32, 0u32,
+                            Typeˉcatalog
+                        );
+                    Typeˉshape = General.Shape;
+                    Typeˉnextˉoffset = General.Nextˉoffset;
+                    Typeˉnextˉline = General.Nextˉline;
+                    Typeˉnextˉcolumn = General.Nextˉcolumn;
+                }
+                if Type.Status ==
+                        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Unknownˉtype &&
+                    Generic.Parameters > 0u32 &&
+                    Genericˉinstance != Compilerˉsourceˉwirˉsentinel() {
+                    let Specialized:
+                        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+                        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindˉfunctionˉspecialization(
+                            Input, Scan, Symbols, Module, Source,
+                            Parameterˉtype.Offset,
+                            Parameterˉtype.Line,
+                            Parameterˉtype.Column,
+                            0u32, 0u32, 0u32, 0u32,
+                            Typeˉcatalog, Source, Generic, Catalog,
+                            Genericˉinstance
+                        );
+                    Typeˉshape = Specialized.Shape;
+                    Typeˉnextˉoffset = Specialized.Nextˉoffset;
+                    Typeˉnextˉline = Specialized.Nextˉline;
+                    Typeˉnextˉcolumn = Specialized.Nextˉcolumn;
+                }
                 Parameterˉshape = Typeˉshape;
                 Parameterˉmode = Currentˉparameterˉmode;
             }
@@ -14410,10 +14559,14 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Hasˉvectorˉgrow: bool = false;
     var Hasˉclosureˉenvironment: bool = false;
     var Hasˉtask: bool = false;
+    let Operationˉpayload: bytes =
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+            Build.Operationˉpayload, Build.Operationˉpending
+        );
     var Operationˉindex: u32 = 0u32;
     while Operationˉindex < Build.Operations {
         let Headerˉoperation: u32 = Bytesˉreadˉu16ˉlittle(
-            Build.Operationˉpayload, Operationˉindex * 28u32 + 4u32
+            Operationˉpayload, Operationˉindex * 28u32 + 4u32
         );
         if Headerˉoperation == WIR_OPERATION_FOUNDATION_MEMORY_SPLIT ||
             Headerˉoperation == WIR_OPERATION_FOUNDATION_VECTOR_CONSTRUCT_RESERVED {
@@ -14498,9 +14651,24 @@ export fn Compilerˉsourceˉwirˉdirectory(Build: Compilerˉsourceˉwirˉbuild) 
     var Result: bytes = Compilerˉsourceˉwirˉheader(Build);
     Result = Bytesˉconcat(Result, Build.Functionˉpayload);
     Result = Bytesˉconcat(Result, Build.Blockˉpayload);
-    Result = Bytesˉconcat(Result, Build.Operationˉpayload);
-    Result = Bytesˉconcat(Result, Build.Temporaryˉpayload);
-    Result = Bytesˉconcat(Result, Build.Operandˉpayload);
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+            Build.Operationˉpayload, Build.Operationˉpending
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+            Build.Temporaryˉpayload, Build.Temporaryˉpending
+        )
+    );
+    Result = Bytesˉconcat(
+        Result,
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
+            Build.Operandˉpayload, Build.Operandˉpending
+        )
+    );
     let Functionˉtypeˉcatalog:
         Compilerˉsourceˉwirˉfunctionˉtypeˉcatalog =
         Compilerˉsourceˉwirˉfunctionˉtypeˉcatalogˉfromˉgeneric(
@@ -15151,9 +15319,15 @@ export fn Compilerˉsourceˉwirˉvariantˉcaseˉbyˉindex(
 export fn Compilerˉsourceˉwirˉevidenceˉfits(Build: Compilerˉsourceˉwirˉbuild) -> bool {
     let Payloadˉbytes: u32 = Bytesˉlength(Build.Functionˉpayload) +
         Bytesˉlength(Build.Blockˉpayload) +
-        Bytesˉlength(Build.Operationˉpayload) +
-        Bytesˉlength(Build.Temporaryˉpayload) +
-        Bytesˉlength(Build.Operandˉpayload);
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Build.Operationˉpayload, Build.Operationˉpending
+        ) +
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Build.Temporaryˉpayload, Build.Temporaryˉpending
+        ) +
+        Compilerˉsourceˉwirˉchunkedˉpayloadˉlength(
+            Build.Operandˉpayload, Build.Operandˉpending
+        );
     let Catalog: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
         Compilerˉsourceˉwirˉgenericˉcatalog(Build.Genericˉevidence);
     let Genericˉinstances: u32 =

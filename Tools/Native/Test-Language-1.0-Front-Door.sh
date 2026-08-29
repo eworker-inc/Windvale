@@ -357,9 +357,9 @@ printf '%s  %s\n' \
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1511092 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1515372 ]] || exit 1
 printf '%s  %s\n' \
-    602ddd98461ec84da931a23e65a991714932220ee21400050cdd9aa9f0e7517f \
+    9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
@@ -439,9 +439,9 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1523142 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1523605 ]] || exit 1
 printf '%s  %s\n' \
-    afe8f24ce7916b5aa185dcfc9db087fcb1ecc81a9a9bf201f58d2e0cf8bca806 \
+    a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?

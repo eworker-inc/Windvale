@@ -4052,3 +4052,37 @@ rejection cases; its 4,392,237-byte evidence stream has SHA-256
 `88ffc45c1f6aaf8ec38866458368559c0b3a6a30d06c289de01178a4dea1354b`.
 The complete 172-case memory, Vector, using, resource, and structured-task
 owner also passes all 61 named steps.
+
+## Slice 7 bounded compiler-scale analysis checkpoint
+
+[Decision 0873](../Decisions/0873-Complete-Bounded-Compiler-Scale-Analysis.md)
+removes the remaining measured self-analysis blocker without increasing the
+profile-7 carrier. Canonical emitted names are constructed once before nominal
+ordering, qualified names bypass impossible local lookup, signature queries
+resolve only the requested parameter after parsing every parameter, and WIR
+operation, temporary, and operand streams publish through bounded chunks.
+
+The source-built analyzer is a 1,515,372-byte, 758-function WVB at SHA-256
+`9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9`.
+It builds the 1,523,605-byte current emitter at SHA-256
+`a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9`.
+The resulting pair analyzes the formerly failing 2,087,629-byte compiler source
+set into 314,968 binding bytes and 3,723,236 current-WIR bytes, then emits the
+exact retained 1,380,487-byte WVB at SHA-256
+`b2a83f05c5079fb71dc365b751888049b02f022a899c7cf63e1293da7332f3a6`.
+
+The retained and current analyzers agree on 1,262 functions, 19,174 blocks,
+89,614 operations, 81,969 temporaries, and 72,168 operands. Their WIR byte
+difference is exactly the deliberate four-byte-per-operation reduction between
+the retained 32-byte and current 28-byte record forms. A same-generation
+bindings-compiler comparison crosses multiple 64 KiB publication boundaries
+and produces byte-identical 2,034,560-byte WIR at SHA-256
+`776a5583dc08ddc48071444c8564fd537b94fbf76a74b8e36c7e906bc1e6fdf5`.
+
+All selected Windows Development owners pass at the settled source state. The
+callable evidence advances to 4,394,089 bytes at SHA-256
+`b0d9f00087d04695004dfc04c331c646a192cd9291741dd78b7bf395acd8ff80`.
+The registry remains 114 owners and 5,568 cases and advances to SHA-256
+`a2852df9feab3e8e79a80562db3df6eebffc0f321d65f44bf417048960cfb6c5`.
+Cross-host Development execution, candidate promotion, and final Slice 7
+Qualification remain pending.

@@ -1137,8 +1137,19 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
     Nameˉlength: u32,
     Useˉoffset: u32
 ) -> Compilerˉsourceˉlocalˉmatch {
-    var Index: u32 = First;
-    while Index < Entries {
+    var Character: u32 = 0u32;
+    while Character < Nameˉlength {
+        if Bytesˉreadˉu8(Source, Nameˉoffset + Character) == 46u8 {
+            return Compilerˉsourceˉlocalˉmatch(
+                false, Compilerˉsourceˉbindingˉkind.None,
+                0u32, 0u32, 0u32
+            );
+        }
+        Character = Character + 1u32;
+    }
+    var Index: u32 = Entries;
+    while Index > First {
+        Index = Index - 1u32;
         let Entry: u32 = Index * 36u32;
         let Priorˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 16u32);
         let Priorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Payload, Entry + 20u32);
@@ -1162,7 +1173,6 @@ export fn Compilerˉsourceˉbindingsˉfindˉlocal(
                 }
             }
         }
-        Index = Index + 1u32;
     }
     return Compilerˉsourceˉlocalˉmatch(
         false, Compilerˉsourceˉbindingˉkind.None, 0u32, 0u32, 0u32
