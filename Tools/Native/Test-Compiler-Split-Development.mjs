@@ -278,9 +278,12 @@ async function Runˉbounded(Command, Arguments, Step) {
                 return;
             }
             if (Status !== 0) {
+                const Standardˉoutput = Output.toString('utf8').trim();
+                const Standardˉerror = Errorˉoutput.toString('utf8').trim();
                 Finish(new Error(
                     `The ${Step} producer exited ${Status}: ` +
-                    Errorˉoutput.toString('utf8').trim(),
+                    `stdout=${JSON.stringify(Standardˉoutput)} ` +
+                    `stderr=${JSON.stringify(Standardˉerror)}`,
                 ));
                 return;
             }

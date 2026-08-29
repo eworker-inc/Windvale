@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import {
     mkdtemp,
     mkdir,
@@ -33,13 +34,26 @@ const PROJECT = path.join(
 );
 const HOST = `${process.platform}-${process.arch}`;
 const TEMPORARY_PREFIX = 'windvale-split-cache-test-';
+const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
+const MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS = 4_096;
+const FAILURE_TIMEOUT_MILLISECONDS = 30_000;
 
 if (process.arch !== 'x64' ||
     (process.platform !== 'win32' && process.platform !== 'linux')) {
     Reject(`The split cache test does not support ${HOST}.`);
 }
 
-const Testˉroot = await mkdtemp(path.join(os.tmpdir(), TEMPORARY_PREFIX));
+const Temporaryˉroot = realpathSync.native(os.tmpdir());
+const Allocatedˉtestˉroot = await mkdtemp(
+    path.join(Temporaryˉroot, TEMPORARY_PREFIX),
+);
+let Testˉroot;
+try {
+    Testˉroot = realpathSync.native(Allocatedˉtestˉroot);
+} catch (Error) {
+    await rm(Allocatedˉtestˉroot, { recursive: true, force: true });
+    throw Error;
+}
 try {
     const Root = Buffer.from('module Root;\n', 'utf8');
     const Mainˉfile = Buffer.from(
@@ -113,11 +127,16 @@ try {
             ...process.env,
             WINDVALE_NATIVE_CACHE_ROOT: Cacheˉroot,
         },
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: FAILURE_TIMEOUT_MILLISECONDS,
         windowsHide: true,
     });
-    if (Result.status === 0 ||
+    if (Result.status === 0 || typeof Result.stderr !== 'string' ||
         !Result.stderr.includes('analyzer producer does not match its identity')) {
-        Reject('The forced producer-identity failure was not observed.');
+        Reject(
+            'The forced producer-identity failure was not observed: ' +
+            Childˉdiagnostic(Result),
+        );
     }
     const Debris = await Findˉtemporaryˉdirectories(Cacheˉroot);
     if (Debris.length !== 0) {
@@ -130,11 +149,32 @@ try {
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
-    if (path.dirname(Resolved) !== path.resolve(os.tmpdir()) ||
+    if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
         !path.basename(Resolved).startsWith(TEMPORARY_PREFIX)) {
         Reject('Refusing to remove an unexpected split cache test directory.');
     }
     await rm(Resolved, { recursive: true, force: true });
+}
+
+function Childˉdiagnostic(Result) {
+    const Status = Result.status === null ? 'null' : String(Result.status);
+    const Signal = Result.signal === null ? 'none' : String(Result.signal);
+    const Spawnˉerror = Result.error === undefined
+        ? 'none'
+        : Diagnosticˉtext(`${Result.error.name}:${Result.error.message}`);
+    return `status=${Status} signal=${Signal} ` +
+        `spawn-error=${JSON.stringify(Spawnˉerror)} ` +
+        `stdout=${JSON.stringify(Diagnosticˉtext(Result.stdout))} ` +
+        `stderr=${JSON.stringify(Diagnosticˉtext(Result.stderr))}`;
+}
+
+function Diagnosticˉtext(Value) {
+    const Text = typeof Value === 'string' ? Value : String(Value ?? '');
+    if (Text.length <= MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS) {
+        return Text;
+    }
+    return Text.slice(0, MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS) +
+        `...[truncated characters=${Text.length}]`;
 }
 
 function Identity(Role, Bytes, Sha256) {
@@ -174,6 +214,12 @@ async function Findˉtemporaryˉdirectories(Root) {
             await Visit(Candidate);
         }
     }
+}
+
+function Sameˉpath(Left, Right) {
+    return process.platform === 'win32'
+        ? Left.toLowerCase() === Right.toLowerCase()
+        : Left === Right;
 }
 
 function Reject(Message) {
