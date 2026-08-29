@@ -4332,3 +4332,52 @@ streams bounded nested construction progress rather than remaining silent.
 The changed-path planner reports no coverage gap. Independent Linux
 reconstruction and execution and the broader selected development owners
 remain pending evidence.
+
+## Slice 8 mandatory admission and exact target descriptor
+
+[Decision 0886](../Decisions/0886-Make-Target-And-Foreign-Admission-A-Mandatory-Language-1.0-Phase.md)
+separates caller-selected target evidence from host state and makes target and
+foreign admission a required Language 1.0 phase. The implemented target
+registry assigns stable identities for the first Windows, Linux, Windvale, and
+Linux x86-64 SysV build targets. The concrete foreign predicate admits only the
+registered Linux/x86-64/little-endian/SysV/no-unwind-major-1 combination; a
+general Linux platform scope does not substitute for that exact predicate.
+
+The exact `WVTD 1.0` implementation constructs and validates the 64-byte header
+and its two optional strictly ordered identity directories. Complete values are
+bounded from 64 through 320 bytes, each directory is limited to 32 identities,
+all length and offset arithmetic is checked, unknown semantic identities reject,
+accepted bytes are preserved unchanged, and rejected results carry an empty
+value. The focused System/FFI owner now passes 46 isolated cases through two
+byte-identical builds. Its 485,528-byte WVB has SHA-256
+`cf7792dfe6c10d05bf17ce6251ae87f803d3f523a5ce6a84d9f8d936e4cbeb99`.
+
+This checkpoint defines and verifies target evidence only. It does not yet
+publish `WVFC`, `WVAE`, or a `wvadmit` product, authenticate the complete
+foreign-declaration scan, lower a foreign call, or select a runtime library.
+
+## Slice 8 System unsafe context
+
+The source-body parser now implements statement-form `unsafe Block` and
+value-form `unsafe ValueBlock`. Both forms retain exact source spans and
+participate in the existing statement, expression, item, and depth limits. A
+bounded byte candidate scan followed by lexical confirmation rejects the first
+real `unsafe` token in Core, Hosted, or default-Core source without treating the
+same bytes in a comment, longer identifier, or string as an unsafe context.
+System admission remains a source-profile rule rather than an authority grant.
+
+The focused owner passes all 24 cases through byte-identical construction and
+24 isolated native executions. Its 455,236-byte WVB has SHA-256
+`dec13607910e27445049e482ba4212cb9cc274f61aceb97bd6ae3ed127a08813`.
+Coverage includes statement and value forms, missing blocks and tails, exact
+brace and nesting failures, the 4,096-item boundary, System admission,
+Core/Hosted/default-Core rejection, malformed-Core precedence, and the three
+conservative byte-scan false positives above.
+
+After integrating WVTD and unsafe-context ownership, changed-file planning
+passes 31 general and 207 native routing cases. The registry contains 116 owners
+and 5,688 cases in 19,611 LF-only bytes at SHA-256
+`33e425a7b05f52041e17022a431b7d2479d2f092182da89cd3c160346f69dc8d`.
+This evidence does not yet claim foreign-call semantic binding, pointer or
+scratch-region safety, WIR/WVB foreign validation, native ABI lowering, hostile
+execution containment, or paired-host Slice 8 qualification.
