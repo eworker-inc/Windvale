@@ -118,6 +118,22 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 bounded parallel hosted-task scheduler owner'
+        Paths = @(
+            'Runtime/Hosted/Tasks/Bounded-Parallel-Task-Scheduler.mjs',
+            'Runtime/Hosted/Tasks/Bounded-Parallel-Task-Worker.mjs',
+            'Documents/Decisions/0875-Add-A-Bounded-Parallel-Hosted-Task-Scheduler.md',
+            'Specifications/Windvale-Hosted-Task-Scheduling.md',
+            'Tests/Fixtures/Hosted/Bounded-Parallel-Task-Executor.mjs',
+            'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.cmd',
+            'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.mjs',
+            'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.sh'
+        )
+        Suites = @('language-1-parallel-task-scheduler')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 executable resource and structured-task owner'
         Paths = @(
             'Libraries/Foundation/Operations/Operation.wv',
@@ -3752,9 +3768,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 115 -or
+if ($VerificationOwnerLines.Count -ne 116 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 114-owner inventory differs.'
+    throw 'The native verification-owner header or exact 115-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3792,7 +3808,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5568 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5617 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

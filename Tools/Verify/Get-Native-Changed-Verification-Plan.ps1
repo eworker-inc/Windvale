@@ -1685,6 +1685,17 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-memory-budget-accounting'
     } elseif ($Path -in @(
+        'Runtime/Hosted/Tasks/Bounded-Parallel-Task-Scheduler.mjs',
+        'Runtime/Hosted/Tasks/Bounded-Parallel-Task-Worker.mjs',
+        'Documents/Decisions/0875-Add-A-Bounded-Parallel-Hosted-Task-Scheduler.md',
+        'Specifications/Windvale-Hosted-Task-Scheduling.md',
+        'Tests/Fixtures/Hosted/Bounded-Parallel-Task-Executor.mjs',
+        'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.cmd',
+        'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.mjs',
+        'Tools/Native/Test-Bounded-Parallel-Task-Scheduler.sh'
+    )) {
+        Add-Suite 'language-1-parallel-task-scheduler'
+    } elseif ($Path -in @(
         'Libraries/Foundation/Operations/Operation.wv',
         'Libraries/Foundation/Tasks/Task.wv',
         'Projects/Tests/Windvale-Language-1-Structured-Task-Call-Depth-Limit.wvproj',
