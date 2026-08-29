@@ -15,11 +15,54 @@ fn Paperˉlayout() -> text {
     return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";";
 }
 
+fn Exportedˉtrailingˉcomma() -> text {
+    return "export unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Changedˉeffect() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.fail) as \"wv_paper_buffer_source_read_v1\";";
+}
+
 fn Parse(Input: text) -> Declarations.Compilerˉsourceˉdeclaration {
     let Source: bytes = Textˉtoˉutf8(Input);
     let First: Lexer.Compilerˉsourceˉtoken =
         Lexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
     return Declarations.Compilerˉparseˉforeignˉdeclaration(Source, First);
+}
+
+fn Forgedˉeffectˉcountˉisˉrejected() -> bool {
+    let Source: bytes = Textˉtoˉutf8(Canonical());
+    let Forged: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉsourceˉdeclaration(
+            Declarations.Compilerˉparseˉstatus.Valid,
+            Lexer.Compilerˉlexˉstatus.Valid,
+            Declarations.Compilerˉsourceˉdeclarationˉkind.Foreign,
+            false,
+            65u32,
+            21u32,
+            0u32,
+            253u32,
+            253u32,
+            0u32,
+            3u32,
+            true,
+            199u32,
+            17u32,
+            0u32,
+            253u32,
+            1u32,
+            248u32,
+            253u32,
+            1u32,
+            248u32,
+            Lexer.Compilerˉtokenˉkind.End,
+            Lexer.Compilerˉtokenˉkind.End
+        );
+    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
+        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+            Source, Forged
+        );
+    return !Evidence.Valid;
 }
 
 fn Caseˉkeyword() -> bool {
@@ -33,15 +76,21 @@ fn Caseˉkeyword() -> bool {
         ) &&
         !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
             0u32, Lexer.Compilerˉtokenˉkind.Foreign
-        );
+        ) && Forgedˉeffectˉcountˉisˉrejected();
 }
 
 fn Caseˉcanonical() -> bool {
     let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(Canonical());
+    let Changed: bytes = Textˉtoˉutf8(Changedˉeffect());
+    let Rejected: Declarations.Compilerˉsourceˉforeignˉevidence =
+        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+            Changed, Value
+        );
     return Value.Status == Declarations.Compilerˉparseˉstatus.Valid &&
         Value.Kind == Declarations.Compilerˉsourceˉdeclarationˉkind.Foreign &&
         Value.Items == 3u32 && Value.Hasˉeffectˉclause &&
-        Value.Effects == 1u32 && Value.Bodyˉlength == 0u32;
+        Value.Effects == 1u32 && Value.Bodyˉlength == 0u32 &&
+        Bytesˉlength(Changed) == 253u32 && !Rejected.Valid;
 }
 
 fn Caseˉevidence() -> bool {
@@ -123,17 +172,43 @@ fn Caseˉprofiles() -> bool {
         ) &&
         !Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(
             Declarations.Compilerˉsourceˉprofile.Hosted
-        );
+        ) && Exportˉtriviaˉisˉrejected();
+}
+
+fn Exportˉtriviaˉisˉrejected() -> bool {
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Parse(Textˉconcat("export\n", Canonical()));
+    return Declaration.Status ==
+        Declarations.Compilerˉparseˉstatus.Invalidˉforeignˉsignature;
 }
 
 fn Caseˉsystem() -> bool {
+    let Source: bytes = Textˉtoˉutf8(Exportedˉtrailingˉcomma());
+    let First: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            Source, 0u32, 1u32, 1u32
+        );
     let Declaration: Declarations.Compilerˉsourceˉdeclaration =
-        Parse(Textˉconcat("export ", Canonical()));
+        Declarations.Compilerˉparseˉforeignˉdeclaration(
+            Source, First
+        );
+    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
+        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+            Source, Declaration
+        );
     return Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(
             Declarations.Compilerˉsourceˉprofile.System
         ) &&
         Declaration.Status == Declarations.Compilerˉparseˉstatus.Valid &&
-        Declaration.Isˉexported;
+        Declaration.Isˉexported &&
+        Declaration.Declarationˉlength == 261u32 &&
+        Declaration.Nameˉoffset == 72u32 &&
+        Declaration.Effectˉclauseˉoffset == 207u32 &&
+        Declaration.Nextˉoffset == 261u32 &&
+        Evidence.Valid && Evidence.Abiˉoffset == 23u32 &&
+        Evidence.Abiˉlength == 44u32 &&
+        Evidence.Symbolˉoffset == 229u32 &&
+        Evidence.Symbolˉlength == 30u32;
 }
 
 fn Selectedˉcase() -> u32 {
