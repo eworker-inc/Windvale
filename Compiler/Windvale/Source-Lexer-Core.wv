@@ -116,6 +116,7 @@ export enum Compilerˉtokenˉkind {
     Join = 112;
     Cancelˉjoin = 113;
     Failˉjoin = 114;
+    Foreign = 115;
 }
 
 export enum Compilerˉnumericˉkind {
@@ -548,6 +549,9 @@ export fn Compilerˉsourceˉkeywordˉkind(
         return Compilerˉtokenˉkind.Identifier;
     }
     if Length == 7u32 {
+        if First == 102u8 {
+            if Compilerˉsourceˉspanˉequalsˉtext(Input, Offset, Length, "foreign") { return Compilerˉtokenˉkind.Foreign; }
+        }
         let Sevenˉhead: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
         let Sevenˉtail: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 3u32);
         if Sevenˉhead == 1701209701u32 {

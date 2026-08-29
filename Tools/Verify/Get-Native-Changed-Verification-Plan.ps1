@@ -1613,6 +1613,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-effect-clause-front-end'
     } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
+        'Tests/Fixtures/Language-1.0/System-Ffi-Front-End-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.cmd',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.mjs'
+    )) {
+        Add-Suite 'language-1-system-ffi-front-end'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Using-Front-End.cmd',
@@ -2769,6 +2777,7 @@ foreach ($Path in $Paths) {
             'Compiler/Windvale/Source-Set-Core.wv'
         )) {
             Add-Suite 'language-1-effect-clause-front-end'
+            Add-Suite 'language-1-system-ffi-front-end'
         }
         if ($Path -in @(
             'Compiler/Windvale/Source-Lexer-Core.wv',

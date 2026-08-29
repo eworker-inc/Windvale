@@ -1,0 +1,161 @@
+module Languageˉoneˉsystemˉffiˉfrontˉendˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Canonical() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Paperˉlayout() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Parse(Input: text) -> Declarations.Compilerˉsourceˉdeclaration {
+    let Source: bytes = Textˉtoˉutf8(Input);
+    let First: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
+    return Declarations.Compilerˉparseˉforeignˉdeclaration(Source, First);
+}
+
+fn Caseˉkeyword() -> bool {
+    let Keyword: bytes = Textˉtoˉutf8("foreign");
+    return Lexer.Compilerˉsourceˉkeywordˉkind(
+        Keyword, 0u32, Bytesˉlength(Keyword)
+    ) == Lexer.Compilerˉtokenˉkind.Foreign &&
+        Lexer.Compilerˉtokenˉkind.Unsafe != Lexer.Compilerˉtokenˉkind.Foreign &&
+        Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            1u32, Lexer.Compilerˉtokenˉkind.Foreign
+        ) &&
+        !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+            0u32, Lexer.Compilerˉtokenˉkind.Foreign
+        );
+}
+
+fn Caseˉcanonical() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(Canonical());
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+        Value.Kind == Declarations.Compilerˉsourceˉdeclarationˉkind.Foreign &&
+        Value.Items == 3u32 && Value.Hasˉeffectˉclause &&
+        Value.Effects == 1u32 && Value.Bodyˉlength == 0u32;
+}
+
+fn Caseˉevidence() -> bool {
+    let Source: bytes = Textˉtoˉutf8(Paperˉlayout());
+    let First: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉforeignˉdeclaration(Source, First);
+    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
+        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+            Source, Declaration
+        );
+    return Evidence.Valid && Evidence.Abiˉlength == 44u32 &&
+        Evidence.Symbolˉlength == 30u32 &&
+        Lexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Source, Evidence.Abiˉoffset, Evidence.Abiˉlength,
+            "windvale.paper.buffer_source.sysv_amd64_c_v1"
+        ) &&
+        Lexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Source, Evidence.Symbolˉoffset, Evidence.Symbolˉlength,
+            "wv_paper_buffer_source_read_v1"
+        );
+}
+
+fn Caseˉmissingˉunsafe() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Value.Expected == Lexer.Compilerˉtokenˉkind.Unsafe &&
+        Value.Found == Lexer.Compilerˉtokenˉkind.Foreign;
+}
+
+fn Caseˉwrongˉabi() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.unknown\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Unsupportedˉforeignˉabi;
+}
+
+fn Caseˉescapedˉabi() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v\\u{31}\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Unsupportedˉforeignˉabi;
+}
+
+fn Caseˉwrongˉpointer() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Nullableˉforeignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Invalidˉforeignˉsignature;
+}
+
+fn Caseˉwrongˉeffect() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(unsafe.address) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Invalidˉforeignˉsignature;
+}
+
+fn Caseˉwrongˉsymbol() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_other\";"
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Unsupportedˉforeignˉsymbol;
+}
+
+fn Caseˉmissingˉsemicolon() -> bool {
+    let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\""
+    );
+    return Value.Status == Declarations.Compilerˉparseˉstatus.Expectedˉtoken;
+}
+
+fn Caseˉprofiles() -> bool {
+    return !Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+            Declarations.Compilerˉsourceˉprofile.Portable
+        ) &&
+        !Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+            Declarations.Compilerˉsourceˉprofile.Hosted
+        );
+}
+
+fn Caseˉsystem() -> bool {
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Parse(Textˉconcat("export ", Canonical()));
+    return Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+            Declarations.Compilerˉsourceˉprofile.System
+        ) &&
+        Declaration.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+        Declaration.Isˉexported;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉkeyword() { return 42; }
+    if Selected == 98u32 && Caseˉcanonical() { return 42; }
+    if Selected == 99u32 && Caseˉevidence() { return 42; }
+    if Selected == 100u32 && Caseˉmissingˉunsafe() { return 42; }
+    if Selected == 101u32 && Caseˉwrongˉabi() { return 42; }
+    if Selected == 102u32 && Caseˉescapedˉabi() { return 42; }
+    if Selected == 103u32 && Caseˉwrongˉpointer() { return 42; }
+    if Selected == 104u32 && Caseˉwrongˉeffect() { return 42; }
+    if Selected == 105u32 && Caseˉwrongˉsymbol() { return 42; }
+    if Selected == 106u32 && Caseˉmissingˉsemicolon() { return 42; }
+    if Selected == 107u32 && Caseˉprofiles() { return 42; }
+    if Selected == 108u32 && Caseˉsystem() { return 42; }
+    return 1;
+}

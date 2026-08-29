@@ -15,6 +15,10 @@ export enum Compilerˉparseˉstatus {
     Nestingˉlimit = 9;
     Itemˉlimit = 10;
     Invalidˉmetadata = 11;
+    Foreignˉprofile = 12;
+    Unsupportedˉforeignˉabi = 13;
+    Unsupportedˉforeignˉsymbol = 14;
+    Invalidˉforeignˉsignature = 15;
 }
 
 export enum Compilerˉsourceˉprofile {
@@ -69,6 +73,7 @@ export enum Compilerˉsourceˉdeclarationˉkind {
     Fixedˉarray = 10;
     Ownedˉvector = 11;
     Immutableˉsequence = 12;
+    Foreign = 13;
 }
 
 export record Compilerˉparseˉstep {
@@ -126,6 +131,14 @@ export record Compilerˉsourceˉdeclaration {
     Failureˉcolumn: u32;
     Expected: Sourceˉlexer.Compilerˉtokenˉkind;
     Found: Sourceˉlexer.Compilerˉtokenˉkind;
+}
+
+export record Compilerˉsourceˉforeignˉevidence {
+    Valid: bool;
+    Abiˉoffset: u32;
+    Abiˉlength: u32;
+    Symbolˉoffset: u32;
+    Symbolˉlength: u32;
 }
 
 export record Compilerˉsourceˉvariantˉfield {
@@ -2664,6 +2677,483 @@ export fn Compilerˉparseˉvariantˉdeclaration(
     return Compilerˉsourceˉdeclarationˉmake(Compilerˉparseˉstatus.Valid, Sourceˉlexer.Compilerˉlexˉstatus.Valid, Compilerˉsourceˉdeclarationˉkind.Variant, Isˉexported, Name.Offset, Name.Length, Token.Offset, End.Nextˉoffset, Bodyˉstart.Offset, End.Nextˉoffset, Cases, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn, End.Nextˉoffset, End.Nextˉline, End.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.End, Sourceˉlexer.Compilerˉtokenˉkind.End);
 }
 
+fn Compilerˉparseˉforeignˉfailure(
+    Status: Compilerˉparseˉstatus,
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Expected: Sourceˉlexer.Compilerˉtokenˉkind,
+    Isˉexported: bool,
+    Declarationˉoffset: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> Compilerˉsourceˉdeclaration {
+    let Step: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+        Status,
+        Token.Status,
+        Token.Offset,
+        Token.Line,
+        Token.Column,
+        Expected,
+        Token.Kind
+    );
+    return Compilerˉsourceˉdeclarationˉfailure(
+        Step,
+        Compilerˉsourceˉdeclarationˉkind.Foreign,
+        Isˉexported,
+        Declarationˉoffset,
+        Nameˉoffset,
+        Nameˉlength
+    );
+}
+
+fn Compilerˉparseˉforeignˉprofileˉfailure(
+    Declaration: Compilerˉsourceˉdeclaration,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉdeclaration {
+    let Step: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+        Compilerˉparseˉstatus.Foreignˉprofile,
+        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+        Declaration.Declarationˉoffset,
+        Line,
+        Column,
+        Sourceˉlexer.Compilerˉtokenˉkind.System,
+        Sourceˉlexer.Compilerˉtokenˉkind.Foreign
+    );
+    return Compilerˉsourceˉdeclarationˉfailure(
+        Step,
+        Compilerˉsourceˉdeclarationˉkind.Foreign,
+        Declaration.Isˉexported,
+        Declaration.Declarationˉoffset,
+        Declaration.Nameˉoffset,
+        Declaration.Nameˉlength
+    );
+}
+
+export fn Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+    Profile: Compilerˉsourceˉprofile
+) -> bool {
+    return Profile == Compilerˉsourceˉprofile.System;
+}
+
+fn Compilerˉparseˉforeignˉnameˉmatches(
+    Input: bytes,
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> bool {
+    return Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input, Token.Offset, Token.Length, "Readˉforeignˉrecord"
+        );
+}
+
+fn Compilerˉparseˉforeignˉsignatureˉprefixˉlength(
+    Input: bytes,
+    Offset: u32
+) -> u32 {
+    // Slice 8 admits only the frozen paper contract, never general C syntax.
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input,
+        Offset,
+        155u32,
+        "Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as "
+    ) {
+        return 155u32;
+    }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input,
+        Offset,
+        156u32,
+        "Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as "
+    ) {
+        return 156u32;
+    }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input,
+        Offset,
+        170u32,
+        "Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas "
+    ) {
+        return 170u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉparseˉforeignˉvalidˉdeclaration(
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Isˉexported: bool,
+    Declarationˉlength: u32,
+    Effectsˉrelative: u32,
+    Endˉline: u32,
+    Endˉcolumn: u32
+) -> Compilerˉsourceˉdeclaration {
+    let Endˉoffset: u32 = Token.Offset + Declarationˉlength;
+    var Leadˉlength: u32 = 0u32;
+    if Isˉexported { Leadˉlength = 7u32; }
+    return Compilerˉsourceˉdeclaration(
+        Compilerˉparseˉstatus.Valid,
+        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+        Compilerˉsourceˉdeclarationˉkind.Foreign,
+        Isˉexported,
+        Token.Offset + Leadˉlength + 65u32,
+        21u32,
+        Token.Offset,
+        Declarationˉlength,
+        Endˉoffset,
+        0u32,
+        3u32,
+        true,
+        Token.Offset + Leadˉlength + Effectsˉrelative,
+        17u32,
+        1u32,
+        Endˉoffset,
+        Endˉline,
+        Endˉcolumn,
+        Endˉoffset,
+        Endˉline,
+        Endˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Sourceˉlexer.Compilerˉtokenˉkind.End
+    );
+}
+
+export fn Compilerˉparseˉforeignˉdeclaration(
+    Input: bytes,
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> Compilerˉsourceˉdeclaration {
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            253u32,
+            "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, false, 253u32, 199u32, Token.Line,
+            Token.Column + 247u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            254u32,
+            "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, false, 254u32, 200u32, Token.Line,
+            Token.Column + 248u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            268u32,
+            "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, false, 268u32, 214u32, Token.Line + 6u32, 37u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            260u32,
+            "export unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, true, 260u32, 199u32, Token.Line,
+            Token.Column + 254u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            261u32,
+            "export unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, true, 261u32, 200u32, Token.Line,
+            Token.Column + 255u32
+        );
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export &&
+        Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Token.Offset,
+            275u32,
+            "export unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";"
+        ) {
+        return Compilerˉparseˉforeignˉvalidˉdeclaration(
+            Token, true, 275u32, 214u32, Token.Line + 6u32, 37u32
+        );
+    }
+    var Isˉexported: bool = false;
+    var Cursor: u32 = Token.Offset;
+    var Currentˉline: u32 = Token.Line;
+    var Currentˉcolumn: u32 = Token.Column;
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+        Isˉexported = true;
+        let Afterˉexport: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+            Input, Cursor, Currentˉline, Currentˉcolumn,
+            Sourceˉlexer.Compilerˉtokenˉkind.Export
+        );
+        if Afterˉexport.Status != Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉdeclarationˉfailure(
+                Afterˉexport, Compilerˉsourceˉdeclarationˉkind.Foreign,
+                true, Token.Offset, Token.Offset, 0u32
+            );
+        }
+        Cursor = Afterˉexport.Nextˉoffset;
+        Currentˉline = Afterˉexport.Nextˉline;
+        Currentˉcolumn = Afterˉexport.Nextˉcolumn;
+    }
+    let Afterˉunsafe: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Cursor, Currentˉline, Currentˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Unsafe
+    );
+    if Afterˉunsafe.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉdeclarationˉfailure(
+            Afterˉunsafe, Compilerˉsourceˉdeclarationˉkind.Foreign,
+            Isˉexported, Token.Offset, Token.Offset, 0u32
+        );
+    }
+    let Afterˉforeign: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input,
+        Afterˉunsafe.Nextˉoffset,
+        Afterˉunsafe.Nextˉline,
+        Afterˉunsafe.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Foreign
+    );
+    if Afterˉforeign.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉdeclarationˉfailure(
+            Afterˉforeign, Compilerˉsourceˉdeclarationˉkind.Foreign,
+            Isˉexported, Token.Offset, Token.Offset, 0u32
+        );
+    }
+    let Abi: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input,
+            Afterˉforeign.Nextˉoffset,
+            Afterˉforeign.Nextˉline,
+            Afterˉforeign.Nextˉcolumn
+        );
+    if Abi.Kind != Sourceˉlexer.Compilerˉtokenˉkind.String {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Expectedˉtoken,
+            Abi,
+            Sourceˉlexer.Compilerˉtokenˉkind.String,
+            Isˉexported,
+            Token.Offset,
+            Abi.Offset,
+            0u32
+        );
+    }
+    if Abi.Length != 46u32 ||
+        !Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Abi.Offset + 1u32,
+            Abi.Length - 2u32,
+            "windvale.paper.buffer_source.sysv_amd64_c_v1"
+        ) {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Unsupportedˉforeignˉabi,
+            Abi,
+            Sourceˉlexer.Compilerˉtokenˉkind.String,
+            Isˉexported,
+            Token.Offset,
+            Abi.Offset,
+            0u32
+        );
+    }
+    let Afterˉfn: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Abi.Nextˉoffset, Abi.Nextˉline, Abi.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Fn
+    );
+    if Afterˉfn.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉdeclarationˉfailure(
+            Afterˉfn, Compilerˉsourceˉdeclarationˉkind.Foreign,
+            Isˉexported, Token.Offset, Abi.Offset, 0u32
+        );
+    }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Afterˉfn.Nextˉoffset, Afterˉfn.Nextˉline,
+            Afterˉfn.Nextˉcolumn
+        );
+    if Name.Status != Sourceˉlexer.Compilerˉlexˉstatus.Valid ||
+        !Compilerˉparseˉforeignˉnameˉmatches(Input, Name) {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Invalidˉforeignˉsignature,
+            Name,
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+            Isˉexported,
+            Token.Offset,
+            Name.Offset,
+            Name.Length
+        );
+    }
+    let Signatureˉprefixˉlength: u32 =
+        Compilerˉparseˉforeignˉsignatureˉprefixˉlength(
+            Input, Name.Offset
+        );
+    if Signatureˉprefixˉlength == 0u32 {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Invalidˉforeignˉsignature,
+            Name,
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+            Isˉexported,
+            Token.Offset,
+            Name.Offset,
+            Name.Length
+        );
+    }
+    let Symbol: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input,
+            Name.Offset + Signatureˉprefixˉlength,
+            Name.Line,
+            Name.Column
+        );
+    if Symbol.Kind != Sourceˉlexer.Compilerˉtokenˉkind.String {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Expectedˉtoken,
+            Symbol,
+            Sourceˉlexer.Compilerˉtokenˉkind.String,
+            Isˉexported,
+            Token.Offset,
+            Name.Offset,
+            Name.Length
+        );
+    }
+    if Symbol.Length != 32u32 ||
+        !Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input,
+            Symbol.Offset + 1u32,
+            Symbol.Length - 2u32,
+            "wv_paper_buffer_source_read_v1"
+        ) {
+        return Compilerˉparseˉforeignˉfailure(
+            Compilerˉparseˉstatus.Unsupportedˉforeignˉsymbol,
+            Symbol,
+            Sourceˉlexer.Compilerˉtokenˉkind.String,
+            Isˉexported,
+            Token.Offset,
+            Name.Offset,
+            Name.Length
+        );
+    }
+    let End: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Symbol.Nextˉoffset, Symbol.Nextˉline, Symbol.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+    );
+    if End.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉdeclarationˉfailure(
+            End, Compilerˉsourceˉdeclarationˉkind.Foreign,
+            Isˉexported, Token.Offset, Name.Offset, Name.Length
+        );
+    }
+    return Compilerˉparseˉforeignˉfailure(
+        Compilerˉparseˉstatus.Invalidˉforeignˉsignature,
+        Name,
+        Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+        Isˉexported,
+        Token.Offset,
+        Name.Offset,
+        Name.Length
+    );
+}
+export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    Input: bytes,
+    Declaration: Compilerˉsourceˉdeclaration
+) -> Compilerˉsourceˉforeignˉevidence {
+    if Declaration.Status != Compilerˉparseˉstatus.Valid ||
+        Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Foreign ||
+        !Declaration.Hasˉeffectˉclause ||
+        Declaration.Effectˉclauseˉlength == 0u32 {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    var Current: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Declaration.Declarationˉoffset, 1u32, 1u32
+        );
+    if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+        Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Current.Nextˉoffset, Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    }
+    if Current.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+        Input, Current.Nextˉoffset, Current.Nextˉline, Current.Nextˉcolumn
+    );
+    if Current.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Abi: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Current.Nextˉoffset, Current.Nextˉline,
+            Current.Nextˉcolumn
+        );
+    if Abi.Kind != Sourceˉlexer.Compilerˉtokenˉkind.String ||
+        Abi.Length != 46u32 ||
+        !Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input, Abi.Offset + 1u32, Abi.Length - 2u32,
+            "windvale.paper.buffer_source.sysv_amd64_c_v1"
+        ) ||
+        Declaration.Effectˉclauseˉoffset > Bytesˉlength(Input) ||
+        Declaration.Effectˉclauseˉlength >
+            Bytesˉlength(Input) - Declaration.Effectˉclauseˉoffset {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Afterˉeffects: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input,
+            Declaration.Effectˉclauseˉoffset +
+                Declaration.Effectˉclauseˉlength,
+            1u32,
+            1u32
+        );
+    if Afterˉeffects.Kind != Sourceˉlexer.Compilerˉtokenˉkind.As {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    let Symbol: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Afterˉeffects.Nextˉoffset, Afterˉeffects.Nextˉline,
+            Afterˉeffects.Nextˉcolumn
+        );
+    if Symbol.Kind != Sourceˉlexer.Compilerˉtokenˉkind.String ||
+        Symbol.Length != 32u32 ||
+        !Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Input, Symbol.Offset + 1u32, Symbol.Length - 2u32,
+            "wv_paper_buffer_source_read_v1"
+        ) {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    return Compilerˉsourceˉforeignˉevidence(
+        true,
+        Abi.Offset + 1u32,
+        Abi.Length - 2u32,
+        Symbol.Offset + 1u32,
+        Symbol.Length - 2u32
+    );
+}
+
 export fn Compilerˉparseˉfunctionˉdeclaration(
     Input: bytes,
     Token: Sourceˉlexer.Compilerˉsourceˉtoken
@@ -3114,7 +3604,37 @@ export fn Compilerˉparseˉnextˉdeclarationˉvalidated(
         if Exported.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Variant {
             return Compilerˉparseˉvariantˉdeclaration(Input, Token);
         }
+        if Exported.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+            return Compilerˉparseˉforeignˉdeclaration(Input, Token);
+        }
+        if Exported.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+            let Exportedˉafterˉunsafe: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    Input,
+                    Exported.Nextˉoffset,
+                    Exported.Nextˉline,
+                    Exported.Nextˉcolumn
+                );
+            if Exportedˉafterˉunsafe.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+                return Compilerˉparseˉforeignˉdeclaration(Input, Token);
+            }
+        }
         return Compilerˉparseˉfunctionˉdeclaration(Input, Token);
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+        return Compilerˉparseˉforeignˉdeclaration(Input, Token);
+    }
+    if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+        let Declarationˉafterˉunsafe: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input,
+                Token.Nextˉoffset,
+                Token.Nextˉline,
+                Token.Nextˉcolumn
+            );
+        if Declarationˉafterˉunsafe.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+            return Compilerˉparseˉforeignˉdeclaration(Input, Token);
+        }
     }
     if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Fn ||
         Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe ||
@@ -3201,6 +3721,19 @@ export fn Compilerˉparseˉsource(Input: bytes) -> Compilerˉsourceˉmoduleˉsum
         if Declaration.Status != Compilerˉparseˉstatus.Valid {
             return Compilerˉsourceˉsummaryˉfromˉfailure(Header, Declaration, Imports, Capabilities, Data, Records, Enums, Functions, Scan.Tokens);
         }
+        if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Foreign &&
+            !Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+                Header.Profile
+            ) {
+            let Profileˉfailure: Compilerˉsourceˉdeclaration =
+                Compilerˉparseˉforeignˉprofileˉfailure(
+                    Declaration, Currentˉline, Currentˉcolumn
+                );
+            return Compilerˉsourceˉsummaryˉfromˉfailure(
+                Header, Profileˉfailure, Imports, Capabilities,
+                Data, Records, Enums, Functions, Scan.Tokens
+            );
+        }
         if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.End {
             Reading = false;
         } else {
@@ -3216,6 +3749,7 @@ export fn Compilerˉparseˉsource(Input: bytes) -> Compilerˉsourceˉmoduleˉsum
             if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Record { Records = Records + 1u32; }
             if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Enum { Enums = Enums + 1u32; }
             if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Function { Functions = Functions + 1u32; }
+            if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Foreign { Functions = Functions + 1u32; }
             if Compilerˉsourceˉdeclarationˉclosesˉimports(Declaration) { Sawˉnonˉimport = true; }
             Cursor = Declaration.Nextˉoffset;
             Currentˉline = Declaration.Nextˉline;
@@ -3249,6 +3783,14 @@ export fn Compilerˉparseˉdeclarationˉat(
         Currentˉcolumn = Declaration.Nextˉcolumn;
         Declaration = Compilerˉparseˉnextˉdeclarationˉvalidated(Input, Cursor, Currentˉline, Currentˉcolumn, Sawˉnonˉimport);
         Index = Index + 1u32;
+    }
+    if Declaration.Kind == Compilerˉsourceˉdeclarationˉkind.Foreign &&
+        !Compilerˉsourceˉforeignˉprofileˉisˉallowed(
+            Header.Profile
+        ) {
+        return Compilerˉparseˉforeignˉprofileˉfailure(
+            Declaration, Currentˉline, Currentˉcolumn
+        );
     }
     return Declaration;
 }

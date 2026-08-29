@@ -415,6 +415,7 @@ export fn Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Join { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Cancelˉjoin { return false; }
         if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Failˉjoin { return false; }
+        if Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign { return false; }
         return true;
     }
     return false;
