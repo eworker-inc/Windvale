@@ -3,10 +3,11 @@ compiler-reconstruction|artifact|Artifacts/Native-Compiler-Reconstruction-Candid
 compiler-reconstruction|artifact|Artifacts/Native-Front-Door/SHA256SUMS
 compiler-reconstruction|producer|Tools/Native/Build-Current-Wvb.cmd
 compiler-reconstruction|producer|Tools/Native/Build-Current-Wvb.sh
-compiler-reconstruction|producer|Tools/Native/Construct-Compiler-Reconstruction.cmd
-compiler-reconstruction|producer|Tools/Native/Construct-Compiler-Reconstruction.sh
 compiler-reconstruction|producer|Tools/Native/Test-Compiler-Reconstruction.cmd
 compiler-reconstruction|producer|Tools/Native/Test-Compiler-Reconstruction.sh
+compiler-reconstruction|producer|Tools/Native/Verify-Compiler-Convergence.cmd
+compiler-reconstruction|producer|Tools/Native/Verify-Compiler-Convergence.sh
+compiler-reconstruction|producer|Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs
 compiler-reconstruction|producer|Tools/Native/Verify-Wvb.cmd
 compiler-reconstruction|producer|Tools/Native/Verify-Wvb.sh
 compiler-reconstruction|source|Projects/Tests/Windvale-Native-Test-Function-Only.wvproj

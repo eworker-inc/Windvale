@@ -3,8 +3,6 @@ $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $ArtifactDirectory = Join-Path $RepositoryRoot 'artifacts/webassembly-verification'
 $NativeScriptSuffix = if ($IsWindows) { '.cmd' } else { '.sh' }
 $NativeBuild = Join-Path $RepositoryRoot "Tools/Native/Build-Wvb$NativeScriptSuffix"
-$NativeCompilerBootstrap = Join-Path `
-    $RepositoryRoot "Tools/Native/Bootstrap-Compiler$NativeScriptSuffix"
 $NativeCompilerMemoryBuild = Join-Path `
     $RepositoryRoot 'Tools/WebAssembly/Build-Compiler-Wvb.mjs'
 $NativeWebAssemblyCompiler = Join-Path `
@@ -109,7 +107,8 @@ $WvbCompilerTypedThirdVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Typ
 $WvbCompilerControlVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Verify-Main.wvb'
 $WvbCompilerControlSecondVerifyWvb = Join-Path $ArtifactDirectory 'Wvb-Compiler-Control-Second-Verify-Main.wvb'
 $WvbScalarInterpreterWvb = Join-Path $ArtifactDirectory 'Wvb-Scalar-Interpreter-Main.wvb'
-$CompilerWvb = Join-Path $ArtifactDirectory 'Windvale-Compiler.wvb'
+$CompilerWvb = Join-Path $RepositoryRoot `
+    'Artifacts/Native-Compiler-Reconstruction-Candidate/Wvb/Windvale-Compiler.wvb'
 $CompilerMemoryWvb = Join-Path $ArtifactDirectory 'Windvale-Compiler-Memory.wvb'
 $ScalarFunctionOnlyWvb = Join-Path $ArtifactDirectory 'Scalar-Function-Only.wvb'
 $BytesEntryWvb = Join-Path $ArtifactDirectory 'Bytes-Entry-Guest.wvb'
@@ -406,16 +405,6 @@ function Invoke-NativeWebAssembly(
     }
 }
 
-function Invoke-NativeCompilerBuild([string]$OutputPath) {
-    & $NativeCompilerBootstrap `
-        (Join-Path $RepositoryRoot 'Artifacts') `
-        $RepositoryRoot `
-        $OutputPath
-    if ($LASTEXITCODE -ne 0) {
-        throw 'The native current-compiler bootstrap failed.'
-    }
-}
-
 function Invoke-NativeCompilerMemoryBuild([string]$OutputPath) {
     node $NativeCompilerMemoryBuild -o $OutputPath
     if ($LASTEXITCODE -ne 0) {
@@ -459,7 +448,6 @@ Invoke-NativeSourceCompile $WvbCompilerTypedSecondVerifySource $WvbCompilerTyped
 Invoke-NativeSourceCompile $WvbCompilerTypedThirdVerifySource $WvbCompilerTypedThirdVerifyWvb
 Invoke-NativeSourceCompile $WvbCompilerControlVerifySource $WvbCompilerControlVerifyWvb
 Invoke-NativeSourceCompile $WvbCompilerControlSecondVerifySource $WvbCompilerControlSecondVerifyWvb
-Invoke-NativeCompilerBuild $CompilerWvb
 Invoke-NativeCompilerMemoryBuild $CompilerMemoryWvb
 Invoke-NativeWvbBuild $WvbScalarInterpreterProject $WvbScalarInterpreterWvb
 Invoke-NativeSourceCompile $ScalarFunctionOnlySource $ScalarFunctionOnlyWvb

@@ -4140,3 +4140,34 @@ have SHA-256
 This proves a real bounded parallel-capable policy without adding source threads
 or mutating the scalar WVB interpreter from multiple workers. Final Slice 7
 Qualification remains the sole outstanding gate.
+
+## Slice 7 split compiler convergence checkpoint
+
+[Decision 0876](../Decisions/0876-Adopt-Exact-Split-Compiler-Convergence.md)
+replaces the stale 649-byte monolithic bootstrap with the compiler architecture
+used by current development. The analyzer and emitter are two packaged phases
+of one compiler and now form separate exact fixed points. Seed remains an
+immutable recovery and differential oracle rather than another evolving
+compiler implementation.
+
+A cold Windows run reconstructs the 1,515,372-byte analyzer at SHA-256
+`9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9`
+and the 1,523,605-byte emitter at SHA-256
+`a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9`.
+Both second-generation products match their first generation byte for byte.
+
+That run exposed a separate stale-verifier boundary: the retained release
+verifier rejects both current modules. The same compiler pair builds the current
+111-function, 399,387-byte verifier WVB at SHA-256
+`7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`.
+Its independently packaged Windows application accepts both products. The
+qualification coordinator now constructs that verifier from the same current
+pair before performing the exact comparisons.
+
+The old monolithic bootstrap, source-set, and reconstruction launchers are
+retired. The historical six-artifact compiler family remains a bounded
+differential oracle and fixed WebAssembly stress fixture, so WebAssembly no
+longer rebuilds an unrelated current compiler before its workload. The focused
+compiler owner retains three cases and now completes locally in under two
+seconds with a warm current-project cache. Full Windows/Linux convergence and
+the final Slice 7 Qualification gate remain pending.

@@ -40,10 +40,15 @@ imports, declarations, nominal identities, capabilities, functions, data, and
 exports are ordered canonically where their specifications require it. Compiler
 output is re-admitted before publication.
 
-`Projects/Examples/Windvale-Compiler.wvproj` is the exact cross-component
-compiler consumer used by bootstrap convergence. The normal compiler seed and
-constructed products are digest-bound repository artifacts; changes to their
-source inventory are deliberate bootstrap changes.
+`Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj` and
+`Windvale-Compiler-Emission-Driver.wvproj` are the exact bootstrap-convergence
+consumers. Their products form one compiler pipeline and converge independently
+because analysis and emission have different ownership and memory bounds.
+`Projects/Examples/Windvale-Compiler.wvproj` remains a complete integration
+manifest, but it is not a second monolithic bootstrap compiler. The immutable
+Seed, target-aware bootstrap products, and constructed compiler identities are
+digest-bound repository artifacts; changes to those inventories are deliberate
+bootstrap changes.
 
 ## Project and package inputs
 

@@ -554,7 +554,6 @@ $SourceWirDemoModule = Join-Path $OutputRoot 'Source-Wir-Demo.wvb'
 $SourceWirToolModule = Join-Path $OutputRoot 'Source-Wir-Tool.wvb'
 $SourceWvbModule = Join-Path $OutputRoot 'Source-Wvb-Core.wvb'
 $SourceWvbDemoModule = Join-Path $OutputRoot 'Source-Wvb-Demo.wvb'
-$SourceWvbToolModule = Join-Path $OutputRoot 'Source-Wvb-Tool.wvb'
 $WvDumpCoreModule = Join-Path $OutputRoot 'Wv-Dump-Core.wvb'
 $WvoCoreModule = Join-Path $OutputRoot 'Wvo-Object-Core.wvb'
 $WvaAssemblerModule = Join-Path $OutputRoot 'Wva-Assembler-Core.wvb'
@@ -1287,13 +1286,6 @@ Invoke-ExactSourceCompilerBuild `
     966821 `
     '43727d290de1eb8c4ef16a781b9b453e4c849c6bcab430d8645f5b07d0a41213' `
     'source wvb status=Valid functions=443 code-bytes=795023 module-bytes=966821'
-Invoke-ExactSourceCompilerBuild `
-    'tool' `
-    $SourceWvbToolModule `
-    959320 `
-    'e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb' `
-    'source wvb status=Valid functions=445 code-bytes=790934 module-bytes=959320'
-
 Invoke-ExactBuild `
     (Join-Path $RepositoryRoot 'Projects/Examples/Windvale-Wvb-Inspector.wvproj') `
     $WvDumpCoreModule `

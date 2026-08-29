@@ -2,9 +2,9 @@
 set -eu
 
 if [ "$#" -ne 2 ] ||
-    { [ "$1" != core ] && [ "$1" != demo ] && [ "$1" != tool ]; } ||
+    { [ "$1" != core ] && [ "$1" != demo ]; } ||
     [ "${2##*.}" != wvb ]; then
-    echo 'Usage: ./Tools/Native/Build-Source-Compiler-Product.sh <core|demo|tool> <output.wvb>' >&2
+    echo 'Usage: ./Tools/Native/Build-Source-Compiler-Product.sh <core|demo> <output.wvb>' >&2
     exit 64
 fi
 
@@ -36,11 +36,6 @@ case "$product" in
         project="$repository_root/Projects/Examples/Windvale-Source-Wvb-Demo.wvproj"
         project_bytes=649
         project_sha256=7e595320777792b842d230b0033baab519f9d277719f0efdfb24edb3e55fb697
-        ;;
-    tool)
-        project="$repository_root/Projects/Examples/Windvale-Compiler.wvproj"
-        project_bytes=649
-        project_sha256=a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05
         ;;
 esac
 actual_project_bytes=$(wc -c < "$project") || exit 1
@@ -74,9 +69,6 @@ case "$product" in
         ;;
     demo)
         root="$repository_root/Examples/Compiler/Source-Wvb-Demo.wv"
-        ;;
-    tool)
-        root="$repository_root/Examples/Compiler/Source-Wvb-Tool.wv"
         ;;
 esac
 

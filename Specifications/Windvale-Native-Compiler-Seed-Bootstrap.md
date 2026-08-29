@@ -1,129 +1,125 @@
-# Windvale native compiler seed bootstrap
+# Windvale native compiler bootstrap and convergence
 
 ## Status and scope
 
-This document defines the implemented candidate for rebuilding the accepted
-Windvale compiler WVB from a documented native compiler seed without invoking
-.NET. It advances the clean-bootstrap condition in Decision 0057; it does not
-complete that condition until the seed is promoted by an independent Windows and
-Linux qualification and a later accepted source state consumes that previous
-release.
+This document defines the active no-.NET bootstrap proof for the current
+Windvale compiler. The current compiler is one pipeline implemented by two
+separately packaged products:
 
-The version-1 bootstrap is intentionally narrower than a complete native toolchain
-bootstrap. It rebuilds and independently publishes the canonical compiler WVB. It
-does not yet rebuild the seed compiler PE/ELF, the complete native backend, every
-developer tool, or the final Stage 0 recovery archive without .NET.
+- the analyzer parses, validates, and publishes canonical source-analysis
+  evidence and Windvale IR; and
+- the emitter consumes that admitted evidence and publishes canonical WVB.
 
-## Seed and source identities
+The split is an implementation and resource boundary, not two source
+languages, two semantic definitions, or two competing compilers. The checked-in
+native Seed remains an immutable recovery and differential oracle. Current
+language work does not modify Seed merely to make ordinary development advance.
 
-`Artifacts/Native-Compiler-Seed/Manifest.json` binds one canonical WVB and paired
-format-3 Windows/Linux compiler applications to byte lengths, SHA-256 identities,
-source commit, source tree, target, and qualification provenance. `SHA256SUMS`
-repeats the three artifact identities for external tools.
+## Bootstrap inputs
 
-The seed compiler source is the qualified semantic-freeze tree at commit
-`524e84afb6e5bab6bbd95ebc0b9eeaf886af834b`. Commit
-`3824f39d0997e3d7ab523f7cc1fe0f4bd8288e35` remains the exact Stage 0 recovery
-state for the last 921,900-byte convergence candidate. Decision 0491 repins the
-ordinary bootstrap contract to the current explicit inventory in
-`Projects/Examples/Windvale-Compiler.wvproj`. With Decisions 0744 and 0745's
-exact propagation and compact WVIR records, the seed emits a transitional
-959,320-byte Stage 1 WVB at
-SHA-256
-`e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb`.
-The launcher packages that private compiler and uses it once to emit the stable
-935,163-byte Stage 2 WVB at SHA-256
-`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
-Decision 0494 retains the unqualified current WVB and paired reconstruction in
-`Artifacts/Native-Compiler-Reconstruction-Candidate`; exact checkpoint
-qualification remains pending on both hosts.
+The active bootstrap begins with three digest-bound portable WVB products under
+`Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/`:
 
-The bootstrap artifact root contains both `Native-Compiler-Seed` and the qualified
-`Native-Front-Door` publisher inventory. This permits a released artifact bundle
-to be copied outside the source checkout and admitted before use without
-duplicating the publisher binaries in two checked-in inventories.
+| Product | Bytes | SHA-256 |
+| --- | ---: | --- |
+| bootstrap analyzer | 992,412 | `26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120` |
+| bootstrap emitter | 895,787 | `ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94` |
+| WVIR 1.9 bridge emitter | 1,146,083 | `0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb` |
 
-## Host launchers
+These products are packaged for the current host through the pinned segmented
+compiler-container path. Their producer identities include role, target, host,
+byte length, and SHA-256. The identities are inputs to the content-addressed
+project cache; they are not inferred from filenames or ambient tools.
 
-Windows x64 uses `Tools/Native/Bootstrap-Compiler.cmd`; Linux x64 uses
-`Tools/Native/Bootstrap-Compiler.sh`. PowerShell is not the native bootstrap host:
-PowerShell 7 loads CoreCLR and therefore cannot provide no-.NET process evidence.
-It remains suitable for the explicitly retained recovery lane.
+`Artifacts/Native-Compiler-Seed` remains the last promoted semantic-freeze Seed
+and `stage0-recovery-e5a1a7473c57` remains the managed recovery release. Neither
+is silently repinned to the current source tree.
 
-Each launcher:
+## Exact current products
 
-1. admits the exact seed WVB, current-host seed compiler, qualified native
-   publisher, and compiler project manifest by length and SHA-256;
-2. passes the fixed project inventory to the seed compiler in manifest order;
-3. requires the exact transitional Stage 1 identity, packages it through the
-   pinned segmented compiler profile, and repeats the fixed source invocation;
-4. requires the exact fixed-point Stage 2 compiler WVB length and SHA-256; and
-5. invokes the qualified native publisher, which repeats compiler-aligned
-   verification and atomically replaces the requested output.
+The fixed-point compiler products are:
 
-Any identity, compilation, verification, or publication failure preserves an
-existing destination. The launchers remove both private generations and their
-private compiler on success or failure. They do not parse project syntax,
-discover sources, infer imports, or install host dependencies; the explicit
-promotion uses the already pinned segmented native compiler packager.
+| Product | Functions | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| current analyzer | 758 | 1,515,372 | `9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9` |
+| current emitter | 738 | 1,523,605 | `a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9` |
+| current compiler-aligned verifier | 111 | 399,387 | `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800` |
 
-## Bounded source-WVB product launchers
+The WVB identities are host-independent. PE and ELF container identities may
+differ because their startup and platform-service materializations are explicit
+host products.
 
-`Tools/Native/Build-Source-Compiler-Product.cmd` and `.sh` expose the admitted
-compiler seed for the current source-WVB `core`, `demo`, and `tool` products.
-This bounded route exists because the pinned generic native Project build-driver
-artifact does not compile the current WVB core/tool closure, while the compiler
-seed application directly reproduces all three exact products. It is a removable
-normal-construction seam, not a replacement Project format or a new compiler.
+## Convergence procedure
 
-Each launcher admits the seed and publisher inventory, requires the exact
-selected repository-root manifest identity, passes the fixed source inventory
-for that product, writes a process-private candidate, and delegates final
-verification and atomic replacement to the qualified publisher. The tool variant
-reuses `Projects/Examples/Windvale-Compiler.wvproj`; core and demo use their focused aggregates.
-Invalid product, arity, or output-suffix usage returns 64. Any admission,
-compilation, or publication failure preserves an existing destination.
+`Tools/Native/Verify-Compiler-Convergence.cmd` and `.sh` are the public native
+entry points. They accept no arguments and invoke the bounded coordinator
+`Verify-Current-Split-Compiler-Convergence.mjs` over the current checkout.
 
-The Windows launcher pins the exact selected compiler, publisher, compiler-WVB,
-and manifest files. The Linux launcher verifies the complete seed and
-front-door `SHA256SUMS` inventories before selecting the current-host
-applications. Independent Linux execution and grouped qualification remain
-required before this current product transfer is a cross-host claim. A rebuilt,
-qualified generic Project driver that compiles this closure should replace the
-bounded launchers.
+The coordinator performs these steps in one private temporary directory:
 
-## Recovery and promotion
+1. admit the three exact bootstrap WVB products;
+2. create a private empty native cache;
+3. package the bootstrap analyzer, emitter, and bridge for the current host;
+4. publish exact producer identities for those three applications;
+5. build the current analyzer Stage 1 with the bootstrap analyzer and emitter;
+6. package the Stage 1 analyzer and publish its producer identity;
+7. build the current emitter Stage 1 with the current analyzer and bridge
+   emitter;
+8. package the Stage 1 emitter and publish its producer identity;
+9. rebuild both compiler halves with that current analyzer/emitter pair;
+10. build and package the compiler-aligned verifier from the same current pair;
+11. verify both Stage 2 WVB products with that current verifier; and
+12. require exact Stage 1/Stage 2 byte equality for both compiler halves.
 
-`Tools/Recovery/Rebuild-Native-Compiler-Seed.ps1` and its Bash peer reconstruct the
-three seed artifacts from exact Git archives. This is an explicit Stage 0 recovery
-operation and deliberately invokes the pinned .NET SDK; it is not the native
-bootstrap route. Reconstruction always targets a separate directory and must
-reproduce the checked-in identities exactly.
+Success reports two converged compiler products and their exact identities. A
+generation, verification, identity, timeout, diagnostic-bound, or publication
+failure returns nonzero.
 
-Promotion requires the same copied-seed operation on Windows and pinned Linux,
-exact compiler output agreement, no CLR/.NET mapping in the compiler and publisher
-children, destination-preservation checks, malformed or altered seed rejection,
-and an exact-commit qualification reference in the seed manifest. A later release
-must then use the promoted previous seed before Decision 0057 condition 7 can be
-called complete.
+Node.js coordinates processes, validates bounded files, emits progress, and
+performs exact byte comparisons. It does not parse Windvale source, construct
+semantic models, emit WVB, or define compiler behavior. All semantic work is
+performed by the Windvale-built analyzer, emitter, and verifier.
 
-## Native self-convergence coordinator
+## Bounds and cleanup
 
-The ordinary bootstrap verification entry points require more than the internal
-seed-to-fixed-point promotion. `Tools/Native/Verify-Compiler-Convergence.cmd`
-and `.sh` admit the native verifier, build and publish the fixed-point compiler
-through the seed launchers, package that exact WVB through the segmented
-compiler-WVB profile, execute it over the canonical project inventory,
-independently verify the next generation, and require complete byte equality.
+Every child has a 15-minute timeout and emits a progress line at least every 30
+seconds. Combined child diagnostics are limited to 1 MiB, and admitted products
+are limited to 16 MiB. The private cache makes the qualification result
+independent of prior development state.
 
-`Tools/Native/Compile-Compiler-Source-Set.cmd` and `.sh` own the exact ordered
-source invocation shared by the seed and convergence routes. They do not discover
-files, parse the project, or weaken the project-manifest identity check.
+The coordinator removes only the exact process-created directory whose resolved
+parent is the operating-system temporary directory and whose basename has the
+owned convergence prefix. It removes that directory on success or failure.
 
-The coordinators are repinned to require identical 935,163-byte outputs at
-SHA-256
-`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
-The current toolset and paired compiler applications are reconstructed as
-unqualified candidates. Exact equality on Windows and Linux and promotion remain
-part of the grouped retirement qualification; a local or focused pass does not
-replace a named qualification decision.
+The cold proof intentionally rebuilds native host containers because it is a
+bootstrap qualification boundary. Ordinary development uses the split
+content-addressed cache and focused owners instead. A future optimization may
+reuse independently admitted fixed runtime/service container segments, but must
+not skip current compiler generation, verification, or exact comparison.
+
+## Retired monolithic route
+
+The former `Bootstrap-Compiler`, `Compile-Compiler-Source-Set`, and
+`Construct-Compiler-Reconstruction` launchers pinned a 649-byte monolithic
+project manifest. That manifest no longer represents the current compiler and
+the route could neither consume the current 1,712-byte project nor express the
+analyzer/emitter ownership boundary. Decision 0876 retires those launchers from
+`main` rather than maintaining an obsolete second compiler path.
+
+The retained 935,163-byte compiler candidate remains useful historical,
+differential, and WebAssembly stress evidence. It is not the current compiler
+identity and is not rebuilt from the current source tree.
+
+## Bounded Seed products
+
+`Build-Source-Compiler-Product.cmd` and `.sh` retain only the exact `core` and
+`demo` Seed products. The former `tool` selector used the obsolete monolithic
+compiler project as an identity sentinel and is retired. Current compiler
+products are built through the split Project 2 path and proved by convergence.
+
+## Qualification
+
+`Tools/Verify/Verify-Bootstrap.cmd` and `.sh` run this cold convergence proof.
+Cross-host convergence is claimed only when the same source commit passes on
+both permanent hosts. A local pass establishes current-host evidence only and
+does not promote Seed or replace the recovery release.

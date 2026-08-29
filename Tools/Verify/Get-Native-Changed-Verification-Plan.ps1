@@ -1248,7 +1248,9 @@ function Add-Native-Tool-Suite {
         Add-Suite 'os-probe'
     } elseif ($Stem -in @(
         'Bootstrap-Compiler',
-        'Construct-Compiler-Reconstruction'
+        'Construct-Compiler-Reconstruction',
+        'Verify-Compiler-Convergence',
+        'Verify-Current-Split-Compiler-Convergence'
     )) {
         Add-Suite 'compiler-reconstruction'
     } elseif ($Stem -eq 'Build-Source-Compiler-Product') {
@@ -1883,6 +1885,11 @@ foreach ($Path in $Paths) {
             'Verify-Seed-Native-Front-Door-Reconstruction.sh'
         )) {
             Add-Suite 'seed-native-front-door-reconstruction'
+        } elseif ([IO.Path]::GetFileName($Path) -in @(
+            'Verify-Bootstrap.cmd',
+            'Verify-Bootstrap.sh'
+        )) {
+            Add-Suite 'compiler-reconstruction'
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',

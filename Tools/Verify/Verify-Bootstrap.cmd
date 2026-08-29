@@ -5,8 +5,7 @@ if not "%~1"=="" goto :usage
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
-call "%RepositoryRoot%\Tools\Native\Verify-Compiler-Convergence.cmd" ^
-    "%RepositoryRoot%\Artifacts" "%RepositoryRoot%"
+call "%RepositoryRoot%\Tools\Native\Verify-Compiler-Convergence.cmd"
 if errorlevel 1 exit /b %ERRORLEVEL%
 
 echo Native compiler bootstrap verification passed.

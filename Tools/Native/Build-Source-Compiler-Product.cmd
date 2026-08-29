@@ -4,7 +4,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 if "%~2"=="" goto :usage
 if not "%~3"=="" goto :usage
 if /I not "%~x2"==".wvb" goto :usage
-if /I not "%~1"=="core" if /I not "%~1"=="demo" if /I not "%~1"=="tool" goto :usage
+if /I not "%~1"=="core" if /I not "%~1"=="demo" goto :usage
 
 set "Product=%~1"
 set "RepositoryRoot=%~dp0..\.."
@@ -25,12 +25,6 @@ if /I "%Product%"=="demo" (
     set "ProjectBytes=649"
     set "ProjectSha256=7e595320777792b842d230b0033baab519f9d277719f0efdfb24edb3e55fb697"
 )
-if /I "%Product%"=="tool" (
-    set "Project=%RepositoryRoot%\Projects/Examples/Windvale-Compiler.wvproj"
-    set "ProjectBytes=649"
-    set "ProjectSha256=a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05"
-)
-
 call :verify_file "%CompilerWvb%" 914746 48ff781359d9bab96ec3e19e4edba19a26ba82552d5bfd1c1a72d64b75f224a6 "native compiler seed WVB"
 if errorlevel 1 exit /b 1
 call :verify_file "%Compiler%" 27467776 344940f66b26b516b8b4e10a712a6b2c01cbff95aa7ff18aac0789ba9197f970 "Windows native compiler seed"
@@ -47,8 +41,7 @@ mkdir "%TemporaryDirectory%" || exit /b 1
 set "Candidate=%TemporaryDirectory%\Candidate.wvb"
 
 if /I "%Product%"=="core" goto :compile_core
-if /I "%Product%"=="demo" goto :compile_demo
-goto :compile_tool
+goto :compile_demo
 
 :compile_core
 "%Compiler%" ^
@@ -85,23 +78,6 @@ goto :publish
     "%Candidate%"
 goto :publish
 
-:compile_tool
-"%Compiler%" ^
-    "%RepositoryRoot%\Examples\Compiler\Source-Wvb-Tool.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Bindings-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Body-Parser.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Declaration-Parser.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Graph-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Lexer-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Set-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Symbols-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Wir-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Wvb-Core.wv" ^
-    "%RepositoryRoot%\Compiler\Windvale\Source-Wvb-Temporary-Slots.wv" ^
-    "%RepositoryRoot%\Foundation\Byte-Construction.wv" ^
-    "%RepositoryRoot%\Foundation\Decimal-Parsing.wv" ^
-    "%Candidate%"
-
 :publish
 set "Result=%ERRORLEVEL%"
 if "%Result%"=="0" (
@@ -129,5 +105,5 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Build-Source-Compiler-Product.cmd ^<core^|demo^|tool^> ^<output.wvb^>
+>&2 echo Usage: Tools\Native\Build-Source-Compiler-Product.cmd ^<core^|demo^> ^<output.wvb^>
 exit /b 64

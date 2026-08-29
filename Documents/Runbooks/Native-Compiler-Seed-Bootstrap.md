@@ -1,72 +1,72 @@
-# Native compiler seed bootstrap
+# Native compiler bootstrap and convergence
 
-This runbook rebuilds the accepted compiler WVB from the versioned native seed
-defined by the [bootstrap specification](../../Specifications/Windvale-Native-Compiler-Seed-Bootstrap.md).
-It does not invoke .NET on the ordinary bootstrap path.
+This runbook proves that the current split Windvale compiler rebuilds itself
+exactly without invoking .NET. The normative identities and bounds are in the
+[bootstrap specification](../../Specifications/Windvale-Native-Compiler-Seed-Bootstrap.md).
 
-## Bootstrap the compiler
+## Run the cold proof
 
-The ordinary verification wrappers select the repository's checked-in artifact
-and source roots automatically. They build Stage 1, package and execute that
-newly built compiler, and require exact Stage 2 equality:
+On Windows x64:
 
 ```bat
 Tools\Verify\Verify-Bootstrap.cmd
 ```
 
+On Linux x64:
+
 ```sh
 ./Tools/Verify/Verify-Bootstrap.sh
 ```
 
-Use the lower-level one-stage launchers below when proving a copied release seed
-or selecting an explicit destination. They publish Stage 1 but do not run the
-self-convergence coordinator.
+The command accepts no arguments. It validates the checked-in target-aware
+bootstrap WVBs, creates a private empty cache, constructs the current analyzer
+and emitter, rebuilds both with that current pair, constructs the current WVB
+verifier, independently verifies both products, and requires byte-for-byte
+Stage 1/Stage 2 equality.
 
-On Windows x64:
+The coordinator reports 18 named phases and 30-second progress while a child is
+active. Cold host-container construction is expected to dominate the runtime;
+repeated phase progress is not a compiler retry. Success ends with:
 
-```bat
-Tools\Native\Bootstrap-Compiler.cmd Artifacts . artifacts\Bootstrap\Windvale-Compiler.wvb
+```text
+native compiler convergence status=Complete products=2 ... cache=Isolated
+Native compiler bootstrap verification passed.
 ```
 
-On Linux x64:
+The exact products are:
 
-```sh
-./Tools/Native/Bootstrap-Compiler.sh Artifacts . artifacts/Bootstrap/Windvale-Compiler.wvb
-```
+- analyzer: 1,515,372 bytes, SHA-256
+  `9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9`;
+- emitter: 1,523,605 bytes, SHA-256
+  `a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9`;
+  and
+- current verifier WVB: 399,387 bytes, SHA-256
+  `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`.
 
-Create the output directory first. The first argument is an artifact root that
-contains both `Native-Compiler-Seed` and `Native-Front-Door`. For clean-bootstrap
-evidence, copy those two directories from the promoted seed release into a fresh
-location and pass that copied location rather than the checkout's `Artifacts`
-directory.
+A pass on one host is current-host evidence only. Run the same commit through
+the paired Windows/Linux Qualification jobs before claiming cross-host
+convergence or closing a release checkpoint.
 
-The seed first emits the transitional 959,320-byte Stage 1 WVB at SHA-256
-`e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb`.
-The launcher packages that private compiler and uses it once to emit the
-fixed-point Stage 2 candidate. Native publication must complete at 935,163
-bytes with SHA-256
-`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
-Its exact compiler status summary is
-`source wvb status=Valid functions=418 code-bytes=770988 module-bytes=935163`.
-Decision 0494 reconstructs the downstream paired applications without executing
-them; Decision 0492 owns the hosted-container toolset.
+## Ordinary development
 
-To reconstruct the current unqualified WVB and both target applications into an
-existing directory without changing the qualified seed, use:
+Do not run the cold proof after every compiler edit. Use
+`Tools/Verify/Verify-Changed.ps1` or the focused compiler owner. Ordinary builds
+use `Build-Current-Wvb.cmd` or `.sh`, which reuse exact analyzer, emitter, and
+content-addressed cache identities. A final Qualification run supersedes those
+narrower checks for the unchanged commit.
 
-```bat
-Tools\Native\Construct-Compiler-Reconstruction.cmd artifacts\Current-Compiler
-```
+## Retained compiler inventory
 
-```sh
-./Tools/Native/Construct-Compiler-Reconstruction.sh artifacts/Current-Compiler
-```
+`Artifacts/Native-Compiler-Reconstruction-Candidate` is a historical WVB 1.11
+compiler/build-driver inventory. It remains a small-source differential oracle
+and a fixed WebAssembly stress input. It is not rebuilt from the current tree.
+The former monolithic bootstrap and reconstruction launchers were retired by
+Decision 0876.
 
-## Reconstruct the seed through Stage 0
+## Reconstruct Seed through Stage 0
 
-Seed reconstruction is recovery work, not the ordinary bootstrap. It requires the
-SDK pinned by the exact reconstruction commit and writes outside the canonical
-distribution directory.
+Seed reconstruction is recovery work, not ordinary bootstrap work. It requires
+the SDK pinned by the exact recovery commit and must run in a separate workspace.
 
 On Windows:
 
@@ -80,14 +80,6 @@ On Linux:
 ./Tools/Recovery/Rebuild-Native-Compiler-Seed.sh artifacts/Recovered-Native-Compiler-Seed
 ```
 
-Both commands archive the exact reconstruction and semantic-freeze commits,
-rebuild the seed WVB and paired applications, and require every byte identity in
-`Artifacts/Native-Compiler-Seed/SHA256SUMS`.
-
-## Current boundary
-
-This candidate closes the missing distribution and host-launcher part of the clean
-native-seed bootstrap. It remains short of the complete retirement gate in three
-ways: paired-host promotion is pending, the seed does not rebuild its own PE/ELF
-without the still-candidate native packaging chain, and one later accepted release
-must consume this promoted seed as a previous release.
+Both commands must reproduce `Artifacts/Native-Compiler-Seed/SHA256SUMS`
+exactly. Recovery output does not become the current Seed without a separate
+accepted promotion decision and paired-host evidence.

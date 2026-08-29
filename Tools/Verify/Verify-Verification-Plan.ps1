@@ -946,7 +946,11 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Test-Compiler-Reconstruction.cmd',
             'Tools/Native/Test-Compiler-Reconstruction.sh',
-            'Tools/Native/Construct-Compiler-Reconstruction.cmd',
+            'Tools/Native/Verify-Compiler-Convergence.cmd',
+            'Tools/Native/Verify-Compiler-Convergence.sh',
+            'Tools/Native/Verify-Current-Split-Compiler-Convergence.mjs',
+            'Tools/Verify/Verify-Bootstrap.cmd',
+            'Tools/Verify/Verify-Bootstrap.sh',
             'Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json',
             'Specifications/Windvale-Native-Compiler-Reconstruction.md'
         )
@@ -1289,9 +1293,7 @@ $NativeCases = @(
             'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb',
             'Compiler/Windvale/Source-Analysis-Core.wv',
             'Compiler/Windvale/Source-Emission-Core.wv',
-            'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj',
-            'Tools/Native/Compile-Compiler-Source-Set.cmd',
-            'Tools/Native/Compile-Compiler-Source-Set.sh'
+            'Projects/Tests/Language-1.0-Source-Analysis-Self-Test.wvproj'
         )
         Suites = @('language-1-front-door', 'language-1-callable-semantics')
         Gaps = @()
@@ -3824,12 +3826,12 @@ foreach ($Contract in @(
         Text = $CompilerDevelopmentWindows
         Required = @(
             'Usage: Tools\Native\Test-Compiler-Reconstruction.cmd [--development]',
-            'if "%Development%"=="1" goto :development',
+            'Verify-Compiler-Convergence.cmd',
+            'retained candidate inventory',
             'Function-Only.wv',
             'Build-Current-Wvb.cmd',
             'Verify-Wvb.cmd',
-            'current candidate compiler and build-driver smoke',
-            'native paired reconstruction'
+            'retained-to-current compiler differential smoke'
         )
     },
     @{
@@ -3837,12 +3839,12 @@ foreach ($Contract in @(
         Text = $CompilerDevelopmentLinux
         Required = @(
             'Test-Compiler-Reconstruction.sh [--development]',
-            'if $development; then',
+            'Verify-Compiler-Convergence.sh',
+            'retained candidate inventory',
             'Function-Only.wv',
             'Build-Current-Wvb.sh',
             'Verify-Wvb.sh',
-            'current candidate compiler and build-driver smoke',
-            'native paired reconstruction'
+            'retained-to-current compiler differential smoke'
         )
     },
     @{

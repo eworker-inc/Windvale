@@ -1,109 +1,67 @@
-# Windvale native compiler reconstruction
+# Windvale native compiler reconstruction inventory
 
 ## Status and scope
 
-This contract owns a retained unqualified compiler candidate separately from
-the promoted semantic-freeze seed. At a named refresh checkpoint it reconstructs
-the canonical compiler WVB and paired format-3 applications without invoking
-.NET. It does not promote the candidate, execute either reconstructed compiler
-over the complete source set, or replace the retained Stage 0 recovery archive.
+This contract owns the retained pre-Language-1.0 compiler reconstruction
+inventory. It is historical bootstrap evidence, a small-source differential
+oracle, and a compiler-scale WebAssembly workload. It is not the current
+compiler, is not reconstructed from the current source tree, and does not
+define current language semantics.
 
-## Exact candidate
+The active current compiler and its exact fixed-point proof are specified by
+[Windvale native compiler bootstrap and convergence](Windvale-Native-Compiler-Seed-Bootstrap.md).
 
-The retained candidate was built from a 649-byte
-`Projects/Examples/Windvale-Compiler.wvproj` at SHA-256
+## Retained inventory
+
+The retained compiler came from the former 649-byte
+`Projects/Examples/Windvale-Compiler.wvproj` identity at SHA-256
 `a180b171446a6b047b737913ead74fb77a2ecb8d5eedcef833e881dc93ec9b05`.
-The native seed bootstrap compiles that exact inventory to a transitional
-959,320-byte Stage 1 compiler, packages it privately, and promotes its byte-stable
-Stage 2 output as the 935,163-byte candidate at SHA-256
-`a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6`.
-Its 418 functions contain 770,988 WVB code bytes.
+Its six digest-bound artifacts remain:
 
-The Language 1.0 Slice 1 tree is intentionally source-ahead: its current
-project manifest is 702 LF-only bytes at SHA-256
-`7855dcc07ef7102c287e593aa6f77ac2ea1be3c63fc51e380d87c8bda6c3b2ed`.
-The development candidate constructed from that tree is 975,403 WVB bytes at
-SHA-256
-`f4609cdc5d25850a418b1497879e07b3ec5013b134e3e92e3f93997537b54595`.
-It is measured migration evidence, not a replacement for the six retained
-artifacts below. A later explicit candidate refresh must update the complete
-compiler/build-driver artifact family and paired identities together.
-
-The current native backend produces 28,141,686 linked image bytes at SHA-256
-`492c79a9e1ef17fb4dd610de62491b9d1b2d181bf69267c7847121fad827fa57`.
-The retained independent recovery oracle remains evidence for the previous
-recovery checkpoint; this current native-only refresh does not claim a new
-managed differential measurement.
-The segmented native path transports the image as seven canonical chunks and
-binds `Main` at entry offset 51,356.
-
-The retained candidate artifacts are:
-
-| Target | Bytes | SHA-256 |
+| Product | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Canonical WVB 1.11 | 935,163 | `a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6` |
-| Windows x64 format 3 | 28,172,800 | `a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d` |
-| Linux x64 format 3 | 28,172,288 | `da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b` |
-| Build-driver WVB 1.11 | 1,142,818 | `125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574` |
+| canonical WVB 1.11 | 935,163 | `a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6` |
+| Windows x64 compiler | 28,172,800 | `a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d` |
+| Linux x64 compiler | 28,172,288 | `da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b` |
+| build-driver WVB 1.11 | 1,142,818 | `125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574` |
 | Windows x64 build driver | 30,071,296 | `f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f` |
 | Linux x64 build driver | 30,072,832 | `628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9` |
 
-`Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json` binds those
-six files. This inventory is intentionally distinct from
-`Artifacts/Native-Compiler-Seed`, which remains the last qualified recovery
-seed and must not be silently repinned to an unqualified source state.
+`Artifacts/Native-Compiler-Reconstruction-Candidate/Manifest.json` binds these
+identities. They remain distinct from `Artifacts/Native-Compiler-Seed` and the
+current split bootstrap products.
 
-## Native construction
+## Focused owner
 
-At a candidate refresh, `Construct-Compiler-Reconstruction.cmd` and `.sh`
-accept one existing output directory. They:
+The `compiler-reconstruction` owner has three bounded cases on both hosts:
 
-1. invoke the digest-bound native seed bootstrap promotion over the exact
-   project inventory;
-2. require the canonical current WVB identity;
-3. stage the large WVO through the admitted segmented native lowerer;
-4. link and transport one canonical 28,141,686-byte image;
-5. require entry offset 51,356 and exactly seven transported chunks;
-6. package the same WVB and image for both permanent hosts through the current
-   hosted-container toolset;
-7. package the reconstructed compiler for the current host and use its explicit
-   source-set launcher to compile the current build-driver closure, then
-   independently stage it as eight chunks with entry offset 220,460;
-8. package the current driver for both permanent hosts under profile 2; and
-9. reread and require all six final identities.
+1. admit the exact six-artifact retained inventory;
+2. reject invalid current convergence-wrapper usage; and
+3. compare one small program compiled by the retained compiler with the same
+   Project 2 program compiled by the current split path.
 
-Each underlying publisher retains its own exact file-publication contract. The
-wrapper does not claim an atomic transaction across the six independent
-artifacts. A failure returns nonzero and never treats a partially advanced
-directory as one accepted candidate inventory.
+Both paths must publish the exact 816-byte Function-Only WVB at SHA-256
+`28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936`,
+compare byte for byte, and pass independent WVB verification. The third case is
+a differential smoke, not proof that the retained compiler implements current
+Language 1.0.
 
-## Focused evidence
+The accepted `--development` option selects the same bounded cases so changed
+verification retains its stable command contract. Cold current compiler
+convergence runs once in the separate bootstrap qualification job rather than
+being duplicated inside this owner.
 
-`compiler-reconstruction` owns two explicit modes with three cases each. Its
-no-argument qualification mode checks the six-artifact inventory, rejects
-invalid constructor usage, and performs the complete paired native
-reconstruction. The paired case reconstructs the WVB and both compiler
-containers plus the build-driver WVB and both of its containers, but does not
-start them.
+## WebAssembly use
 
-`--development` retains the same exact six-artifact inventory and constructor
-usage checks, then replaces only the paired reconstruction with a current-host
-semantic smoke. The candidate compiler compiles the `Function-Only` oracle
-directly while the candidate build driver compiles its Project 2 manifest. Both
-paths must produce the independently verified exact 816-byte WVB at SHA-256
-`28d215b982a7b7185cfa80c4cc5346666bd0181582fe80bec8b7035d514da936`
-and compare byte for byte. This mode proves that the admitted candidate and its
-driver execute coherently; it does not prove reconstruction, cross-host output,
-or qualification.
+The WebAssembly verification gate consumes the retained 935,163-byte WVB
+directly as a fixed compiler-scale interpreter workload. Its established step,
+allocation, reclamation, and exhaustion observations depend on that exact input.
+Rebuilding a different current compiler in the WebAssembly gate would test two
+moving boundaries at once and duplicate bootstrap work.
 
-Changed-file verification invokes `--development` only for development-scoped
-plans. Qualification-scoped and direct no-argument owner execution retain the
-cold paired reconstruction. The long Stage 1/Stage 2 convergence remains
-reserved for the final grouped qualification under the compiler-seed bootstrap
-contract.
+## Retirement boundary
 
-Decision 0494 measured the managed recovery oracle once without either Stage-2
-execution. The current candidate is now reproduced through the Windows native
-path without refreshing that managed oracle. Independent Linux reconstruction
-and execution, the full current Stage-2 arena measurement, dual-host
-qualification, promotion, and the final recovery release remain open.
+Decision 0876 removes the old monolithic reconstruction launchers. Recreating
+this inventory, if ever required for historical investigation, begins from its
+recorded source commit or recovery release in a separate workspace. Current
+development does not update these six artifacts when language source changes.

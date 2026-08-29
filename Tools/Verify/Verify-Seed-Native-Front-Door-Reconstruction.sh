@@ -573,7 +573,6 @@ SOURCE_WIR_DEMO_MODULE="$OUTPUT_ROOT/Source-Wir-Demo.wvb"
 SOURCE_WIR_TOOL_MODULE="$OUTPUT_ROOT/Source-Wir-Tool.wvb"
 SOURCE_WVB_MODULE="$OUTPUT_ROOT/Source-Wvb-Core.wvb"
 SOURCE_WVB_DEMO_MODULE="$OUTPUT_ROOT/Source-Wvb-Demo.wvb"
-SOURCE_WVB_TOOL_MODULE="$OUTPUT_ROOT/Source-Wvb-Tool.wvb"
 WVDUMP_CORE_MODULE="$OUTPUT_ROOT/Wv-Dump-Core.wvb"
 WVO_CORE_MODULE="$OUTPUT_ROOT/Wvo-Object-Core.wvb"
 WVA_ASSEMBLER_MODULE="$OUTPUT_ROOT/Wva-Assembler-Core.wvb"
@@ -1417,14 +1416,6 @@ exact_source_compiler_build \
     43727d290de1eb8c4ef16a781b9b453e4c849c6bcab430d8645f5b07d0a41213 \
     000ec0a5 \
     'source wvb status=Valid functions=443 code-bytes=795023 module-bytes=966821'
-exact_source_compiler_build \
-    tool \
-    "$SOURCE_WVB_TOOL_MODULE" \
-    959320 \
-    e177e418bfd8fdcbe40cfac513ce40e58b95ba5b88a8a1d1db9fe280ae81dbfb \
-    000ea358 \
-    'source wvb status=Valid functions=445 code-bytes=790934 module-bytes=959320'
-
 exact_build \
     "$REPOSITORY_ROOT/Projects/Examples/Windvale-Wvb-Inspector.wvproj" \
     "$WVDUMP_CORE_MODULE" \

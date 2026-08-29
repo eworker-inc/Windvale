@@ -26,46 +26,15 @@ call :check_file "%Candidate%\windows-x64\wvbuild.exe" 30071296 f556f0e2c794d942
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\linux-x64\wvbuild.elf" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9
 if errorlevel 1 goto :failed
-call :pass "candidate inventory"
+call :pass "retained candidate inventory"
 
-call "%RepositoryRoot%\Tools\Native\Construct-Compiler-Reconstruction.cmd" >nul 2>nul
+call "%RepositoryRoot%\Tools\Native\Verify-Compiler-Convergence.cmd" unexpected >nul 2>nul
 if not "%ERRORLEVEL%"=="64" goto :failed
 call :pass "usage rejection"
-
-if "%Development%"=="1" goto :development
 
 :allocate
 set "TestDirectory=%TEMP%\windvale-compiler-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
-mkdir "%TestDirectory%" || goto :failed
-call "%RepositoryRoot%\Tools\Native\Construct-Compiler-Reconstruction.cmd" "%TestDirectory%" ^
-    >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
-if errorlevel 1 goto :failed
-findstr /x /c:"native compiler reconstruction status=Complete compiler-bytes=935163 native-bytes=28141686 entry-offset=51356 chunks=7 build-driver-bytes=1142818 build-driver-entry-offset=220460 build-driver-chunks=8" "%TestDirectory%\Construct.out" >nul
-if errorlevel 1 goto :failed
-for %%F in ("%TestDirectory%\Construct.err") do if not "%%~zF"=="0" goto :failed
-call :check_file "%TestDirectory%\Wvb\Windvale-Compiler.wvb" 935163 a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\windows-x64\wvcompiler.exe" 28172800 a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\linux-x64\wvcompiler.elf" 28172288 da11ab3b70b428087cbcb9de5614a2dbdccd31afc6861cc15881fd65c12ff19b
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb\Compiler-Build-Driver.wvb" 1142818 125d2b4080889615877d843a36b2f9f6b50d049d011cc06fa8ab426ab83c0574
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\windows-x64\wvbuild.exe" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\linux-x64\wvbuild.elf" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9
-if errorlevel 1 goto :failed
-call :pass "native paired reconstruction"
-
-call :cleanup
-echo Tests: %Tests%, Passed: %Passed%, Failed: 0
-exit /b 0
-
-:development
-:allocate_development
-set "TestDirectory=%TEMP%\windvale-compiler-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
-if exist "%TestDirectory%" goto :allocate_development
 mkdir "%TestDirectory%" || goto :failed
 "%Candidate%\windows-x64\wvcompiler.exe" ^
     "%RepositoryRoot%\Tests\Fixtures\Source-Wvb\Function-Only.wv" ^
@@ -91,7 +60,7 @@ for %%F in (
     "%TestDirectory%\Project.err"
     "%TestDirectory%\Verify.err"
 ) do if not "%%~zF"=="0" goto :failed
-call :pass "current candidate compiler and build-driver smoke"
+call :pass "retained-to-current compiler differential smoke"
 
 call :cleanup
 echo Tests: %Tests%, Passed: %Passed%, Failed: 0
