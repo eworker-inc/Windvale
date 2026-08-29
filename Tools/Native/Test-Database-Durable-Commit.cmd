@@ -14,8 +14,7 @@ set "TemporaryDirectory=%TEMP%\windvale-database-durable-commit-%RANDOM%-%RANDOM
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 
-set "LowererWvb=%TemporaryDirectory%\Lowerer.wvb"
-set "Lowerer=%TemporaryDirectory%\Lowerer.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 set "FirstWvb=%TemporaryDirectory%\Commit-First.wvb"
 set "SecondWvb=%TemporaryDirectory%\Commit-Second.wvb"
 set "FirstWvo=%TemporaryDirectory%\Commit-First.wvo"
@@ -27,14 +26,12 @@ set "WindowsApplication=%TemporaryDirectory%\Commit.exe"
 set "LinuxApplication=%TemporaryDirectory%\Commit.elf"
 set "Result=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
-    "%LowererWvb%" >nul
+echo START native database durable commit phase=tools item=1/4 retained-tools=1
+call :verify "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad "retained lowerer"
 if errorlevel 1 goto :cleanup
-call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-    6 "%LowererWvb%" "%Lowerer%" >nul
-if errorlevel 1 goto :cleanup
+echo PASS  native database durable commit phase=tools item=1/4
 
+echo START native database durable commit phase=compile item=2/4
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Durable-Commit.wvproj" ^
     "%FirstWvb%" >nul
@@ -56,24 +53,31 @@ fc /b "%FirstWvo%" "%SecondWvo%" >nul
 if errorlevel 1 goto :cleanup
 call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
 if errorlevel 1 goto :cleanup
-call :verify "%FirstWvo%" 2011934 7fd1efcf7a103f88935c73f751b4455a27cb858cd6abe3b0866a1205abdee0b9 "database-durable-commit WVO"
+call :verify "%FirstWvo%" 2011950 39eaa1823df0e4dfabda085eb3894d47b940a06a4d44a4f0d637aa08a5a4a4a5 "database-durable-commit WVO"
 if errorlevel 1 goto :cleanup
+echo PASS  native database durable commit phase=compile item=2/4
 
+echo START native database durable commit phase=link item=3/4
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
     "%Image%" "%FirstWvo%" >"%Map%"
 if errorlevel 1 goto :cleanup
 set "EntryOffset="
 for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%Map%"') do set "EntryOffset=%%E"
-if not "%EntryOffset%"=="151017" goto :cleanup
-call :verify "%Image%" 2008420 316dc0369bbcd9f5b39e35054ce650e7e7b90f1a812f1b2df117d399ed57ca38 "database-durable-commit image"
+if not "%EntryOffset%"=="151017" (
+    >&2 echo The database-durable-commit entry offset is %EntryOffset%, expected 151017.
+    goto :cleanup
+)
+call :verify "%Image%" 2008436 2f1182f785ad22e1011b0c76e1202b3fc436548c76d70d2be8fb5aa1f175e929 "database-durable-commit image"
 if errorlevel 1 goto :cleanup
 copy /b "%Image%" "%ImagePrefix%.chunk-0" >nul
 if errorlevel 1 goto :cleanup
+echo PASS  native database durable commit phase=link item=3/4
 
+echo START native database durable commit phase=package-and-execute item=4/4
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%WindowsApplication%" windows >nul
 if errorlevel 1 goto :cleanup
-call :verify "%WindowsApplication%" 2029568 61b45837da9a702c1c66738897fba66bd67476831f47fcbdd3a43b5b8509f9be "database-durable-commit Windows application"
+call :verify "%WindowsApplication%" 2029568 680d56c853b502b5bb76bffc3526752290da697eba707fa768ace644fb144b15 "database-durable-commit Windows application"
 if errorlevel 1 goto :cleanup
 for %%C in (A B C D E F G H I J K L) do (
     call :run_case %%C
@@ -83,8 +87,9 @@ for %%C in (A B C D E F G H I J K L) do (
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
     "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
 if errorlevel 1 goto :cleanup
-call :verify "%LinuxApplication%" 2031616 0fc26f6e50812e27717704672f269eac66e13054b10d0c61c30a23086808171e "database-durable-commit Linux application"
+call :verify "%LinuxApplication%" 2031616 6969a296c7d0819175b9a5b1dd4c64c5245d056be9d674b947f08d92f3ab0a5e "database-durable-commit Linux application"
 if errorlevel 1 goto :cleanup
+echo PASS  native database durable commit phase=package-and-execute item=4/4
 
 set "Result=0"
 
@@ -109,13 +114,16 @@ if not exist "%~1" (
     >&2 echo Missing %~4: %~1
     exit /b 1
 )
-for %%F in ("%~1") do if not "%%~zF"=="%~2" (
-    >&2 echo The %~4 byte length differs.
+set "ActualBytes="
+for %%F in ("%~1") do set "ActualBytes=%%~zF"
+set "ActualSha256="
+for /f "skip=1 delims=" %%H in ('certutil -hashfile "%~1" SHA256') do if not defined ActualSha256 set "ActualSha256=%%H"
+if not "%ActualBytes%"=="%~2" (
+    >&2 echo The %~4 byte length differs: bytes=%ActualBytes% expected=%~2 sha256=%ActualSha256%.
     exit /b 1
 )
-certutil -hashfile "%~1" SHA256 | findstr /i /c:"%~3" >nul
-if errorlevel 1 (
-    >&2 echo The %~4 digest differs.
+if /i not "%ActualSha256%"=="%~3" (
+    >&2 echo The %~4 digest differs: sha256=%ActualSha256% expected=%~3.
     exit /b 1
 )
 exit /b 0

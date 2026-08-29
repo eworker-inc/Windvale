@@ -17,7 +17,8 @@ worktree_added=0
 
 cleanup() {
     if [[ $worktree_added -eq 1 ]]; then
-        git -C "$repository_root" worktree remove "$recovery" >/dev/null 2>&1 || true
+        git -c "safe.directory=$repository_root" -C "$repository_root" \
+            worktree remove "$recovery" >/dev/null 2>&1 || true
     fi
     case "$work" in
         "$temporary_root"/windvale-standard-byte-output.*)
@@ -44,8 +45,10 @@ verify_file() {
 }
 
 echo 'START native standard byte output phase=tools item=1/4'
-git -C "$repository_root" cat-file -e "$recovery_commit^{commit}" || exit 1
-git -C "$repository_root" worktree add --detach "$recovery" "$recovery_commit" >/dev/null 2>&1 || exit 1
+git -c "safe.directory=$repository_root" -C "$repository_root" \
+    cat-file -e "$recovery_commit^{commit}" || exit 1
+git -c "safe.directory=$repository_root" -C "$repository_root" \
+    worktree add --detach "$recovery" "$recovery_commit" >/dev/null 2>&1 || exit 1
 worktree_added=1
 "$recovery/Tools/Native/Build-Wvb.sh" \
     "$recovery/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \

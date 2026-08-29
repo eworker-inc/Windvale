@@ -799,6 +799,117 @@ expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Wrong-Allocation-Failure.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
 echo 'PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.11 valid=1 wvb-boundary=1 malformed=7 source-rejections=4'
+echo 'START language 1 front door step=vector-construct-reserved'
+"$work/Admitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wir.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" \
+    "$work/Vector-Construct-Reserved-Admitted.wvss" \
+    >"$work/Vector-Construct-Reserved-Admission.out" \
+    2>"$work/Vector-Construct-Reserved-Admission.err" || exit $?
+[[ ! -s $work/Vector-Construct-Reserved-Admission.err ]] || exit 1
+"$work/Analyzer.elf" --admitted-source-set \
+    "$work/Vector-Construct-Reserved-Admitted.wvss" \
+    "$work/Vector-Construct-Reserved.wvss" \
+    "$work/Vector-Construct-Reserved.wvca" \
+    "$work/Vector-Construct-Reserved.wvlb" \
+    "$work/Vector-Construct-Reserved.wvir" \
+    >"$work/Vector-Construct-Reserved-Analysis.out" \
+    2>"$work/Vector-Construct-Reserved-Analysis.err" || exit $?
+[[ ! -s $work/Vector-Construct-Reserved-Analysis.err ]] || exit 1
+grep -Fq 'source analysis status=Published ' \
+    "$work/Vector-Construct-Reserved-Analysis.out" || exit 1
+mkdir -- "$work/Vector-Construct-Reserved-Malformed" || exit $?
+node "$script_directory/Verify-Language-1.0-Vector-Construct-Reserved-Wir.mjs" \
+    "$work/Emitter.elf" \
+    "$work/Vector-Construct-Reserved.wvss" \
+    "$work/Vector-Construct-Reserved.wvca" \
+    "$work/Vector-Construct-Reserved.wvlb" \
+    "$work/Vector-Construct-Reserved.wvir" \
+    "$work/Vector-Construct-Reserved-Malformed" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=source-rejection case=inferred'
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Inferred.wv" \
+    Vector-Construct-Reserved-Inferred Genericˉresolution \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-maximum'
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Maximum.wv" \
+    Vector-Construct-Reserved-Wrong-Maximum Invalidˉargument \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-result'
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Result.wv" \
+    Vector-Construct-Reserved-Wrong-Result Genericˉresolution \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-budget'
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Budget.wv" \
+    Vector-Construct-Reserved-Wrong-Budget Invalidˉargument \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=source-rejection case=wrong-allocation-failure'
+expect_profiled_analysis_failure_with_dependencies \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wrong-Allocation-Failure.wv" \
+    Vector-Construct-Reserved-Wrong-Allocation-Failure Genericˉresolution \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Wrong-Allocation-Failure.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
+echo 'START language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after'
+"$work/Admitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Use-After.wv" \
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
+    "$repository_root/Libraries/Foundation/Values/Result.wv" \
+    "$work/Vector-Construct-Reserved-Use-After-Admitted.wvss" \
+    >"$work/Vector-Construct-Reserved-Use-After-Admission.out" \
+    2>"$work/Vector-Construct-Reserved-Use-After-Admission.err" || exit $?
+[[ ! -s $work/Vector-Construct-Reserved-Use-After-Admission.err ]] || exit 1
+echo 'PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=admission'
+"$work/Analyzer.elf" --admitted-source-set \
+    "$work/Vector-Construct-Reserved-Use-After-Admitted.wvss" \
+    "$work/Vector-Construct-Reserved-Use-After.wvss" \
+    "$work/Vector-Construct-Reserved-Use-After.wvca" \
+    "$work/Vector-Construct-Reserved-Use-After.wvlb" \
+    "$work/Vector-Construct-Reserved-Use-After.wvir" \
+    >"$work/Vector-Construct-Reserved-Use-After-Analysis.out" \
+    2>"$work/Vector-Construct-Reserved-Use-After-Analysis.err" || exit $?
+[[ ! -s $work/Vector-Construct-Reserved-Use-After-Analysis.err ]] || exit 1
+echo 'PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=analysis'
+"$work/Emitter.elf" \
+    "$work/Vector-Construct-Reserved-Use-After.wvss" \
+    "$work/Vector-Construct-Reserved-Use-After.wvca" \
+    "$work/Vector-Construct-Reserved-Use-After.wvlb" \
+    "$work/Vector-Construct-Reserved-Use-After.wvir" \
+    "$work/Vector-Construct-Reserved-Use-After.wvb" \
+    >"$work/Vector-Construct-Reserved-Use-After-Emission.out" \
+    2>"$work/Vector-Construct-Reserved-Use-After-Emission.err"
+vector_use_after_emission_exit=$?
+printf 'INFO  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=emission exit=%s\n' \
+    "$vector_use_after_emission_exit"
+cat -- "$work/Vector-Construct-Reserved-Use-After-Emission.err"
+[[ $vector_use_after_emission_exit -eq 1 ]] || exit 1
+[[ ! -s $work/Vector-Construct-Reserved-Use-After-Emission.out ]] || exit 1
+mapfile -t vector_use_after_emission_lines \
+    <"$work/Vector-Construct-Reserved-Use-After-Emission.err"
+[[ ${#vector_use_after_emission_lines[@]} -eq 1 ]] || exit 1
+[[ ${vector_use_after_emission_lines[0]} == \
+    'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0' ]] || exit 1
+[[ ! -e $work/Vector-Construct-Reserved-Use-After.wvb ]] || exit 1
+echo 'PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=evidence'
+echo 'PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.11 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1'
 echo 'START language 1 front door step=generic-nominal-variant'
 "$work/Admitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
@@ -1885,4 +1996,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=466 frozen-inputs=251 source-fixtures=107 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=482 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

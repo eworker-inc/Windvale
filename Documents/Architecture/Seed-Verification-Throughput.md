@@ -397,10 +397,11 @@ is the behavior it owns. Dedicated convergence and reconstruction owners retain
 that independent evidence, and a historical recovery owner remains bound to its
 exact restored commit. Applying this rule to model-provider qualification cut
 the measured owner from roughly 24 to 29 minutes to 13 seconds on Linux and 21
-seconds on Windows while preserving all 11 cases. Four other ordinary owners
+seconds on Windows while preserving all 11 cases. Five other ordinary owners
 now use the same retained-tool boundary while preserving duplicate compilation,
 byte comparison, lowering, linking, cross-target packaging, and current-host
-execution of their actual products.
+execution of their actual products. The fifth is the durable-database behavior
+owner, which no longer rebuilds a lowerer before exercising its 12 cases.
 
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained

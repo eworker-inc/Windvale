@@ -28,8 +28,8 @@ set "TestProjectResource=%TestProject:\=/%"
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
 echo START native standard byte output phase=tools item=1/4
-git -C "%RepositoryRoot%" cat-file -e "%RecoveryCommit%^{commit}" >nul 2>nul || goto :cleanup
-git -C "%RepositoryRoot%" worktree add --detach "%Recovery%" "%RecoveryCommit%" >nul 2>nul || goto :cleanup
+git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" cat-file -e "%RecoveryCommit%^{commit}" >nul 2>nul || goto :cleanup
+git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" worktree add --detach "%Recovery%" "%RecoveryCommit%" >nul 2>nul || goto :cleanup
 set "WorktreeAdded=1"
 call "%Recovery%\Tools\Native\Build-Wvb.cmd" "%Recovery%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Build-Driver.wvb" 1121370 ed5bbceaa0f1b4d889a7d17fe1d138d0bd5a01a593f6925ba34023ff0b0960ef || goto :cleanup
@@ -70,7 +70,7 @@ echo PASS  native standard byte output phase=execute item=4/4
 set "Result=0"
 
 :cleanup
-if "%WorktreeAdded%"=="1" git -C "%RepositoryRoot%" worktree remove "%Recovery%" >nul 2>nul
+if "%WorktreeAdded%"=="1" git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" worktree remove "%Recovery%" >nul 2>nul
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-standard-byte-output-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"

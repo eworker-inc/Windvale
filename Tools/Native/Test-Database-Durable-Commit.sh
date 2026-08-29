@@ -29,20 +29,19 @@ verify_file() {
     [[ -f $path ]] || { echo "Missing $label: $path" >&2; return 1; }
     local actual_bytes digest_line actual_sha256
     actual_bytes=$(wc -c < "$path") || return 1
-    [[ $actual_bytes -eq $expected_bytes ]] || {
-        echo "The $label byte length differs." >&2
-        return 1
-    }
     digest_line=$(sha256sum -- "$path") || return 1
     actual_sha256=${digest_line%% *}
+    [[ $actual_bytes -eq $expected_bytes ]] || {
+        echo "The $label byte length differs: bytes=$actual_bytes expected=$expected_bytes sha256=$actual_sha256." >&2
+        return 1
+    }
     [[ $actual_sha256 == "$expected_sha256" ]] || {
-        echo "The $label digest differs." >&2
+        echo "The $label digest differs: sha256=$actual_sha256 expected=$expected_sha256." >&2
         return 1
     }
 }
 
-lowerer_wvb="$temporary_directory/Lowerer.wvb"
-lowerer="$temporary_directory/Lowerer.elf"
+lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 first_wvb="$temporary_directory/Commit-First.wvb"
 second_wvb="$temporary_directory/Commit-Second.wvb"
 first_wvo="$temporary_directory/Commit-First.wvo"
@@ -53,12 +52,13 @@ map="$temporary_directory/Commit.map"
 linux_application="$temporary_directory/Commit.elf"
 windows_application="$temporary_directory/Commit.exe"
 
-"$script_directory/Build-Wvb.sh" \
-    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
-    "$lowerer_wvb" >/dev/null || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-    6 "$lowerer_wvb" "$lowerer" >/dev/null || exit $?
+echo 'START native database durable commit phase=tools item=1/4 retained-tools=1'
+verify_file "$lowerer" 8159232 \
+    1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 \
+    'retained lowerer' || exit 1
+echo 'PASS  native database durable commit phase=tools item=1/4'
 
+echo 'START native database durable commit phase=compile item=2/4'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj" \
     "$first_wvb" >/dev/null || exit $?
@@ -80,26 +80,30 @@ cmp -s -- "$first_wvo" "$second_wvo" || {
     exit 1
 }
 "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || exit $?
-verify_file "$first_wvo" 2011934 \
-    7fd1efcf7a103f88935c73f751b4455a27cb858cd6abe3b0866a1205abdee0b9 \
+verify_file "$first_wvo" 2011950 \
+    39eaa1823df0e4dfabda085eb3894d47b940a06a4d44a4f0d637aa08a5a4a4a5 \
     'database-durable-commit WVO' || exit $?
+echo 'PASS  native database durable commit phase=compile item=2/4'
 
+echo 'START native database durable commit phase=link item=3/4'
 "$script_directory/Link-Wvo.sh" 0 Main "$image" "$first_wvo" >"$map" || exit $?
 entry_offset=$(sed -n 's/^entry name=Main address=//p' "$map")
 [[ $entry_offset == 151017 ]] || {
     echo "The database-durable-commit entry offset is $entry_offset, expected 151017." >&2
     exit 1
 }
-verify_file "$image" 2008420 \
-    316dc0369bbcd9f5b39e35054ce650e7e7b90f1a812f1b2df117d399ed57ca38 \
+verify_file "$image" 2008436 \
+    2f1182f785ad22e1011b0c76e1202b3fc436548c76d70d2be8fb5aa1f175e929 \
     'database-durable-commit image' || exit $?
 cp -- "$image" "$image_prefix.chunk-0" || exit $?
+echo 'PASS  native database durable commit phase=link item=3/4'
 
+echo 'START native database durable commit phase=package-and-execute item=4/4'
 "$script_directory/Package-Hosted-Wvb.sh" image 6 \
     "$first_wvb" "$image_prefix" 1 "$entry_offset" "$linux_application" linux \
     >/dev/null || exit $?
 verify_file "$linux_application" 2031616 \
-    0fc26f6e50812e27717704672f269eac66e13054b10d0c61c30a23086808171e \
+    6969a296c7d0819175b9a5b1dd4c64c5245d056be9d674b947f08d92f3ab0a5e \
     'database-durable-commit Linux application' || exit $?
 for test_case in A B C D E F G H I J K L; do
     "$linux_application" "$test_case" >/dev/null
@@ -114,7 +118,8 @@ done
     "$first_wvb" "$image_prefix" 1 "$entry_offset" "$windows_application" windows \
     >/dev/null || exit $?
 verify_file "$windows_application" 2029568 \
-    61b45837da9a702c1c66738897fba66bd67476831f47fcbdd3a43b5b8509f9be \
+    680d56c853b502b5bb76bffc3526752290da697eba707fa768ace644fb144b15 \
     'database-durable-commit Windows application' || exit $?
+echo 'PASS  native database durable commit phase=package-and-execute item=4/4'
 
 echo 'native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified'

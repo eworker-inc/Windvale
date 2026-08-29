@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { constants } from 'node:fs';
+import { constants, realpathSync } from 'node:fs';
 import {
     copyFile,
     lstat,
@@ -50,7 +50,17 @@ class Splitˉcompilerˉfailure extends Error {
     }
 }
 
-const Temporary = await mkdtemp(path.join(os.tmpdir(), TEMPORARY_PREFIX));
+const Temporaryˉroot = realpathSync.native(os.tmpdir());
+const Allocatedˉtemporary = await mkdtemp(
+    path.join(Temporaryˉroot, TEMPORARY_PREFIX),
+);
+let Temporary;
+try {
+    Temporary = realpathSync.native(Allocatedˉtemporary);
+} catch (Error) {
+    await rm(Allocatedˉtemporary, { recursive: true, force: true });
+    throw Error;
+}
 let Failure = null;
 let Publicationˉattempted = false;
 try {
@@ -96,7 +106,7 @@ try {
         await rm(Output, { force: true });
     }
     const Resolved = path.resolve(Temporary);
-    if (path.dirname(Resolved) !== path.resolve(os.tmpdir()) ||
+    if (path.dirname(Resolved) !== Temporaryˉroot ||
         !path.basename(Resolved).startsWith(TEMPORARY_PREFIX)) {
         Reject('Refusing to remove an unexpected split compiler directory.');
     }
