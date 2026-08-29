@@ -2878,6 +2878,25 @@ fn Compilerˉparseˉforeignˉtrailingˉcommaˉmatches(
         );
 }
 
+fn Compilerˉparseˉforeignˉlayoutˉlength(
+    Input: bytes,
+    Offset: u32,
+    Remaining: u32,
+    Canonical: bytes
+) -> u32 {
+    if Remaining >= 253u32 && Compilerˉparseˉforeignˉspanˉmatches(
+        Input, Offset, 253u32, Canonical, 0u32, 253u32
+    ) { return 253u32; }
+    if Remaining >= 254u32 &&
+        Compilerˉparseˉforeignˉtrailingˉcommaˉmatches(
+            Input, Offset, Canonical
+        ) { return 254u32; }
+    if Remaining >= 268u32 && Compilerˉparseˉforeignˉpaperˉmatches(
+        Input, Offset, Canonical
+    ) { return 268u32; }
+    return 0u32;
+}
+
 fn Compilerˉparseˉforeignˉsignatureˉprefixˉlength(
     Input: bytes,
     Offset: u32,
@@ -3074,74 +3093,31 @@ export fn Compilerˉparseˉforeignˉdeclaration(
                 );
             }
         }
-        if Fastˉremaining >= 253u32 {
-            if Compilerˉparseˉforeignˉspanˉmatches(
-                Input, Fast.Offset, 253u32, Canonical, 0u32, 253u32
-            ) {
-                if !Fastˉlayoutˉallowed {
-                    return Compilerˉparseˉforeignˉinvalidˉexportˉlayout(
-                        Token.Offset,
-                        Fast.Offset + 65u32,
-                        Fast.Line,
-                        Fast.Column + 65u32
-                    );
-                }
-                return Compilerˉparseˉforeignˉvalidˉdeclaration(
-                    Token,
-                    Fastˉisˉexported,
-                    Fast.Offset + 65u32,
-                    Fast.Offset + 199u32,
-                    Fast.Offset + 253u32,
-                    Fast.Line,
-                    Fast.Column + 247u32
+        let Fastˉbodyˉlength: u32 = Compilerˉparseˉforeignˉlayoutˉlength(
+            Input, Fast.Offset, Fastˉremaining, Canonical
+        );
+        if Fastˉbodyˉlength != 0u32 {
+            var Nameˉline: u32 = Fast.Line;
+            var Nameˉcolumn: u32 = Fast.Column + 65u32;
+            var Endˉline: u32 = Fast.Line;
+            var Endˉcolumn: u32 = Fast.Column + Fastˉbodyˉlength - 6u32;
+            if Fastˉbodyˉlength == 268u32 {
+                Nameˉline = Fast.Line + 1u32;
+                Nameˉcolumn = 4u32;
+                Endˉline = Fast.Line + 6u32;
+                Endˉcolumn = 37u32;
+            }
+            if !Fastˉlayoutˉallowed {
+                return Compilerˉparseˉforeignˉinvalidˉexportˉlayout(
+                    Token.Offset, Fast.Offset + 65u32,
+                    Nameˉline, Nameˉcolumn
                 );
             }
-        }
-        if Fastˉremaining >= 254u32 {
-            if Compilerˉparseˉforeignˉtrailingˉcommaˉmatches(
-                Input, Fast.Offset, Canonical
-            ) {
-                if !Fastˉlayoutˉallowed {
-                    return Compilerˉparseˉforeignˉinvalidˉexportˉlayout(
-                        Token.Offset,
-                        Fast.Offset + 65u32,
-                        Fast.Line,
-                        Fast.Column + 65u32
-                    );
-                }
-                return Compilerˉparseˉforeignˉvalidˉdeclaration(
-                    Token,
-                    Fastˉisˉexported,
-                    Fast.Offset + 65u32,
-                    Fast.Offset + 200u32,
-                    Fast.Offset + 254u32,
-                    Fast.Line,
-                    Fast.Column + 248u32
-                );
-            }
-        }
-        if Fastˉremaining >= 268u32 {
-            if Compilerˉparseˉforeignˉpaperˉmatches(
-                Input, Fast.Offset, Canonical
-            ) {
-                if !Fastˉlayoutˉallowed {
-                    return Compilerˉparseˉforeignˉinvalidˉexportˉlayout(
-                        Token.Offset,
-                        Fast.Offset + 65u32,
-                        Fast.Line + 1u32,
-                        4u32
-                    );
-                }
-                return Compilerˉparseˉforeignˉvalidˉdeclaration(
-                    Token,
-                    Fastˉisˉexported,
-                    Fast.Offset + 65u32,
-                    Fast.Offset + 214u32,
-                    Fast.Offset + 268u32,
-                    Fast.Line + 6u32,
-                    37u32
-                );
-            }
+            return Compilerˉparseˉforeignˉvalidˉdeclaration(
+                Token, Fastˉisˉexported, Fast.Offset + 65u32,
+                Fast.Offset + Fastˉbodyˉlength - 54u32,
+                Fast.Offset + Fastˉbodyˉlength, Endˉline, Endˉcolumn
+            );
         }
     }
 
@@ -3387,36 +3363,9 @@ fn Compilerˉsourceˉforeignˉlayoutˉlength(
     }
     if Current.Offset > Inputˉlength { return 0u32; }
     let Remaining: u32 = Inputˉlength - Current.Offset;
-    var Bodyˉlength: u32 = 0u32;
-    var Nameˉoffset: u32 = 0u32;
-    var Effectˉoffset: u32 = 0u32;
-    if Remaining >= 253u32 {
-        if Compilerˉparseˉforeignˉspanˉmatches(
-            Input, Current.Offset, 253u32, Canonical, 0u32, 253u32
-        ) {
-            Bodyˉlength = 253u32;
-            Nameˉoffset = Current.Offset + 65u32;
-            Effectˉoffset = Current.Offset + 199u32;
-        }
-    }
-    if Bodyˉlength == 0u32 && Remaining >= 254u32 {
-        if Compilerˉparseˉforeignˉtrailingˉcommaˉmatches(
-            Input, Current.Offset, Canonical
-        ) {
-            Bodyˉlength = 254u32;
-            Nameˉoffset = Current.Offset + 65u32;
-            Effectˉoffset = Current.Offset + 200u32;
-        }
-    }
-    if Bodyˉlength == 0u32 && Remaining >= 268u32 {
-        if Compilerˉparseˉforeignˉpaperˉmatches(
-            Input, Current.Offset, Canonical
-        ) {
-            Bodyˉlength = 268u32;
-            Nameˉoffset = Current.Offset + 65u32;
-            Effectˉoffset = Current.Offset + 214u32;
-        }
-    }
+    let Bodyˉlength: u32 = Compilerˉparseˉforeignˉlayoutˉlength(
+        Input, Current.Offset, Remaining, Canonical
+    );
     if Bodyˉlength == 0u32 { return 0u32; }
     let Nextˉoffset: u32 = Current.Offset + Bodyˉlength;
     if Expectedˉnextˉoffset != Nextˉoffset { return 0u32; }
@@ -3424,11 +3373,11 @@ fn Compilerˉsourceˉforeignˉlayoutˉlength(
         Nextˉoffset - Expectedˉdeclarationˉoffset {
         return 0u32;
     }
-    if Expectedˉnameˉoffset != Nameˉoffset ||
+    if Expectedˉnameˉoffset != Current.Offset + 65u32 ||
         Expectedˉnameˉlength != 21u32 {
         return 0u32;
     }
-    if Expectedˉeffectˉoffset != Effectˉoffset ||
+    if Expectedˉeffectˉoffset != Current.Offset + Bodyˉlength - 54u32 ||
         Expectedˉeffectˉlength != 17u32 {
         return 0u32;
     }
@@ -3439,98 +3388,62 @@ export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
     Input: bytes,
     Declaration: Compilerˉsourceˉdeclaration
 ) -> Compilerˉsourceˉforeignˉevidence {
-    if Declaration.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
-    }
+    let Invalid: Compilerˉsourceˉforeignˉevidence =
+        Compilerˉsourceˉforeignˉevidence(false, 0u32, 0u32, 0u32, 0u32);
+    if Declaration.Status != Compilerˉparseˉstatus.Valid { return Invalid; }
     if Declaration.Lexicalˉstatus !=
         Sourceˉlexer.Compilerˉlexˉstatus.Valid {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Foreign {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Bodyˉoffset != Declaration.Nextˉoffset {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Bodyˉlength != 0u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Items != 3u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if !Declaration.Hasˉeffectˉclause {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Effectˉclauseˉlength == 0u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Effects != 1u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Failureˉoffset != Declaration.Nextˉoffset {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Nextˉline == 0u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Nextˉcolumn == 0u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Failureˉline != Declaration.Nextˉline {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Failureˉcolumn != Declaration.Nextˉcolumn {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Expected != Sourceˉlexer.Compilerˉtokenˉkind.End {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Found != Sourceˉlexer.Compilerˉtokenˉkind.End {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     let Inputˉlength: u32 = Bytesˉlength(Input);
     if Declaration.Declarationˉoffset > Inputˉlength {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     if Declaration.Declarationˉlength >
         Inputˉlength - Declaration.Declarationˉoffset {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     let Canonical: bytes = Compilerˉparseˉforeignˉcanonical();
     let Layoutˉlength: u32 =
@@ -3547,22 +3460,17 @@ export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
         Declaration.Effectˉclauseˉlength
     );
     if Layoutˉlength == 0u32 {
-        return Compilerˉsourceˉforeignˉevidence(
-            false, 0u32, 0u32, 0u32, 0u32
-        );
+        return Invalid;
     }
     var Unsafeˉoffset: u32 = Declaration.Declarationˉoffset;
     if Declaration.Isˉexported {
         Unsafeˉoffset = Unsafeˉoffset + 7u32;
     }
-    var Symbolˉrelative: u32 = 221u32;
-    if Layoutˉlength == 254u32 { Symbolˉrelative = 222u32; }
-    if Layoutˉlength == 268u32 { Symbolˉrelative = 236u32; }
     return Compilerˉsourceˉforeignˉevidence(
         true,
         Unsafeˉoffset + 16u32,
         44u32,
-        Unsafeˉoffset + Symbolˉrelative,
+        Unsafeˉoffset + Layoutˉlength - 32u32,
         30u32
     );
 }
