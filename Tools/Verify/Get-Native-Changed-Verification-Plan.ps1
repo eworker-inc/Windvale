@@ -1623,6 +1623,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-system-ffi-front-end'
     } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Unsafe-Context.wvproj',
+        'Tests/Fixtures/Language-1.0/System-Ffi-Unsafe-Context-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Unsafe-Context.cmd',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Unsafe-Context.sh',
+        'Tools/Native/Test-Language-1.0-System-Ffi-Unsafe-Context.mjs'
+    )) {
+        Add-Suite 'language-1-system-ffi-unsafe-context'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Using-Front-End.cmd',
@@ -2788,6 +2796,9 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'language-1-using-front-end'
         }
+        if ($Path -eq 'Compiler/Windvale/Source-Body-Parser.wv') {
+            Add-Suite 'language-1-system-ffi-unsafe-context'
+        }
         if ($Path -in @(
             'Compiler/Windvale/Source-Lexer-Core.wv',
             'Compiler/Windvale/Source-Declaration-Parser.wv',
@@ -3689,7 +3700,10 @@ foreach ($Path in $Paths) {
             Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
         } elseif ($Path -eq 'Specifications/Compiler-Source-Body-Parser.md') {
             Add-Compiler-Suites
-            Add-Suite 'language-1-using-front-end'
+            Add-Suite @(
+                'language-1-using-front-end',
+                'language-1-system-ffi-unsafe-context'
+            )
         } elseif ($Path -in @(
             'Specifications/Seed-Language.md',
             'Specifications/Seed-Records.md',

@@ -1,0 +1,389 @@
+module Languageˉoneˉsystemˉffiˉunsafeˉcontextˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbodyˉparser as Bodies;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Parseˉstatement(
+    Source: text,
+    Nesting: u32
+) -> Bodies.Compilerˉsourceˉstatement {
+    let Input: bytes = Textˉtoˉutf8(Source);
+    return Bodies.Compilerˉparseˉnextˉstatementˉvalidated(
+        Input, 0u32, 1u32, 1u32, Bytesˉlength(Input), Nesting
+    );
+}
+
+fn Parseˉexpression(
+    Source: text,
+    Nesting: u32
+) -> Bodies.Compilerˉsourceˉexpression {
+    let Input: bytes = Textˉtoˉutf8(Source);
+    return Bodies.Compilerˉparseˉexpressionˉvalidated(
+        Input, 0u32, 1u32, 1u32, Bytesˉlength(Input), 0u32, Nesting
+    );
+}
+
+fn Parseˉsource(Source: text) -> Bodies.Compilerˉsourceˉbodyˉsummary {
+    return Bodies.Compilerˉparseˉsourceˉbodies(Textˉtoˉutf8(Source));
+}
+
+fn Itemˉlimitˉstatement() -> Bodies.Compilerˉsourceˉstatement {
+    var Source: text = "unsafe {";
+    var Index: u32 = 0u32;
+    while Index < 4096u32 {
+        Source = Textˉconcat(Source, "return;");
+        Index = Index + 1u32;
+    }
+    Source = Textˉconcat(Source, "}");
+    return Parseˉstatement(Source, 0u32);
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+fn Casesˉaˉthroughˉd(Selected: u32) -> i32 {
+    if Selected == 97u32 {
+        let Keyword: bytes = Textˉtoˉutf8("unsafe");
+        if Lexer.Compilerˉsourceˉkeywordˉkind(
+                Keyword, 0u32, Bytesˉlength(Keyword)
+            ) != Lexer.Compilerˉtokenˉkind.Unsafe ||
+            !Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+                1u32, Lexer.Compilerˉtokenˉkind.Unsafe
+            ) ||
+            Sourceˉset.Compilerˉsourceˉsetˉeditionˉtokenˉisˉallowed(
+                0u32, Lexer.Compilerˉtokenˉkind.Unsafe
+            ) {
+            return 1;
+        }
+        return 42;
+    }
+    if Selected == 98u32 {
+        let Emptyˉstatement: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe {}", 0u32);
+        if Emptyˉstatement.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Emptyˉstatement.Kind != Bodies.Compilerˉsourceˉstatementˉkind.Unsafe ||
+            Emptyˉstatement.Offset != 0u32 || Emptyˉstatement.Length != 9u32 ||
+            Emptyˉstatement.Firstˉblockˉoffset != 7u32 ||
+            Emptyˉstatement.Firstˉblockˉlength != 2u32 ||
+            Emptyˉstatement.Statements != 1u32 || Emptyˉstatement.Expressions != 0u32 ||
+            Emptyˉstatement.Maximumˉstatementˉdepth != 1u32 ||
+            Emptyˉstatement.Nextˉoffset != 9u32 || Emptyˉstatement.Nextˉline != 1u32 ||
+            Emptyˉstatement.Nextˉcolumn != 10u32 {
+            return 2;
+        }
+        return 42;
+    }
+    if Selected == 99u32 {
+        let Nestedˉstatement: Bodies.Compilerˉsourceˉstatement = Parseˉstatement(
+            "unsafe { if true { return; } }", 0u32
+        );
+        if Nestedˉstatement.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Nestedˉstatement.Statements != 3u32 || Nestedˉstatement.Expressions != 1u32 ||
+            Nestedˉstatement.Maximumˉstatementˉdepth != 3u32 ||
+            Nestedˉstatement.Maximumˉexpressionˉdepth != 1u32 {
+            return 3;
+        }
+        return 42;
+    }
+    if Selected == 100u32 {
+        let Multilineˉstatement: Bodies.Compilerˉsourceˉstatement = Parseˉstatement(
+            "unsafe {\n    while true {\n        return;\n    }\n}", 0u32
+        );
+        if Multilineˉstatement.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Multilineˉstatement.Nextˉline != 5u32 || Multilineˉstatement.Nextˉcolumn != 2u32 ||
+            Multilineˉstatement.Statements != 3u32 || Multilineˉstatement.Expressions != 1u32 {
+            return 4;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Casesˉeˉthroughˉh(Selected: u32) -> i32 {
+    if Selected == 101u32 {
+        let Missingˉblock: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe return;", 0u32);
+        if Missingˉblock.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉblock.Failureˉoffset != 7u32 || Missingˉblock.Failureˉline != 1u32 ||
+            Missingˉblock.Failureˉcolumn != 8u32 ||
+            Missingˉblock.Expected != Lexer.Compilerˉtokenˉkind.Leftˉbrace ||
+            Missingˉblock.Found != Lexer.Compilerˉtokenˉkind.Return {
+            return 5;
+        }
+        return 42;
+    }
+    if Selected == 102u32 {
+        let Missingˉright: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe {\n return;", 0u32);
+        if Missingˉright.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉright.Failureˉoffset != 17u32 || Missingˉright.Failureˉline != 2u32 ||
+            Missingˉright.Failureˉcolumn != 9u32 ||
+            Missingˉright.Expected != Lexer.Compilerˉtokenˉkind.Rightˉbrace ||
+            Missingˉright.Found != Lexer.Compilerˉtokenˉkind.End {
+            return 6;
+        }
+        return 42;
+    }
+    if Selected == 103u32 {
+        let Statementˉtail: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe { 1 }", 0u32);
+        if Statementˉtail.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Statementˉtail.Failureˉoffset != 11u32 ||
+            Statementˉtail.Expected != Lexer.Compilerˉtokenˉkind.Semicolon ||
+            Statementˉtail.Found != Lexer.Compilerˉtokenˉkind.Rightˉbrace {
+            return 7;
+        }
+        return 42;
+    }
+    if Selected == 104u32 {
+        let Accepted: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe {}", 63u32);
+        let Rejected: Bodies.Compilerˉsourceˉstatement =
+            Parseˉstatement("unsafe {}", 64u32);
+        if Accepted.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Rejected.Status != Bodies.Compilerˉbodyˉparseˉstatus.Nestingˉlimit ||
+            Rejected.Failureˉoffset != 6u32 ||
+            Rejected.Failureˉline != 1u32 || Rejected.Failureˉcolumn != 7u32 ||
+            Rejected.Expected != Lexer.Compilerˉtokenˉkind.Rightˉbrace ||
+            Rejected.Found != Lexer.Compilerˉtokenˉkind.Leftˉbrace {
+            return 8;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Casesˉiˉthroughˉl(Selected: u32) -> i32 {
+    if Selected == 105u32 {
+        let Itemˉlimit: Bodies.Compilerˉsourceˉstatement = Itemˉlimitˉstatement();
+        if Itemˉlimit.Status != Bodies.Compilerˉbodyˉparseˉstatus.Itemˉlimit ||
+            Itemˉlimit.Failureˉoffset != 0u32 || Itemˉlimit.Failureˉline != 1u32 ||
+            Itemˉlimit.Failureˉcolumn != 1u32 ||
+            Itemˉlimit.Expected != Lexer.Compilerˉtokenˉkind.Rightˉbrace ||
+            Itemˉlimit.Found != Lexer.Compilerˉtokenˉkind.Unsafe {
+            return 9;
+        }
+        return 42;
+    }
+    if Selected == 106u32 {
+        let Simpleˉvalue: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe { 42 }", 0u32);
+        if Simpleˉvalue.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Simpleˉvalue.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Unsafe ||
+            Simpleˉvalue.Operator != Lexer.Compilerˉtokenˉkind.Unsafe ||
+            Simpleˉvalue.Offset != 0u32 || Simpleˉvalue.Length != 13u32 ||
+            Simpleˉvalue.Valueˉoffset != 9u32 || Simpleˉvalue.Valueˉlength != 2u32 ||
+            Simpleˉvalue.Firstˉoffset != 7u32 || Simpleˉvalue.Firstˉlength != 6u32 ||
+            Simpleˉvalue.Items != 0u32 || Simpleˉvalue.Nodes != 2u32 ||
+            Simpleˉvalue.Depth != 2u32 || Simpleˉvalue.Nextˉoffset != 13u32 {
+            return 10;
+        }
+        return 42;
+    }
+    if Selected == 107u32 {
+        let Nestedˉvalue: Bodies.Compilerˉsourceˉexpression = Parseˉexpression(
+            "unsafe { if true { 1 } else { 2 } }", 0u32
+        );
+        if Nestedˉvalue.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Nestedˉvalue.Kind != Bodies.Compilerˉsourceˉexpressionˉkind.Unsafe ||
+            Nestedˉvalue.Nodes != 5u32 || Nestedˉvalue.Depth != 3u32 {
+            return 11;
+        }
+        return 42;
+    }
+    if Selected == 108u32 {
+        let Statementˉvalue: Bodies.Compilerˉsourceˉexpression = Parseˉexpression(
+            "unsafe { let Value: i32 = 1; Value }", 0u32
+        );
+        if Statementˉvalue.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Statementˉvalue.Valueˉoffset != 29u32 || Statementˉvalue.Valueˉlength != 5u32 ||
+            Statementˉvalue.Items != 1u32 || Statementˉvalue.Nodes != 3u32 ||
+            Statementˉvalue.Depth != 2u32 {
+            return 12;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Casesˉmˉthroughˉp(Selected: u32) -> i32 {
+    if Selected == 109u32 {
+        let Missingˉblock: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe 1", 0u32);
+        if Missingˉblock.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉblock.Failureˉoffset != 7u32 || Missingˉblock.Failureˉcolumn != 8u32 ||
+            Missingˉblock.Expected != Lexer.Compilerˉtokenˉkind.Leftˉbrace ||
+            Missingˉblock.Found != Lexer.Compilerˉtokenˉkind.Integer {
+            return 13;
+        }
+        return 42;
+    }
+    if Selected == 110u32 {
+        let Missingˉtail: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe {}", 0u32);
+        if Missingˉtail.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉexpression ||
+            Missingˉtail.Failureˉoffset != 8u32 || Missingˉtail.Failureˉline != 1u32 ||
+            Missingˉtail.Failureˉcolumn != 9u32 ||
+            Missingˉtail.Found != Lexer.Compilerˉtokenˉkind.Rightˉbrace {
+            return 14;
+        }
+        return 42;
+    }
+    if Selected == 111u32 {
+        let Missingˉright: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe { 1", 0u32);
+        if Missingˉright.Status != Bodies.Compilerˉbodyˉparseˉstatus.Expectedˉtoken ||
+            Missingˉright.Failureˉoffset != 10u32 || Missingˉright.Failureˉcolumn != 11u32 ||
+            Missingˉright.Expected != Lexer.Compilerˉtokenˉkind.Rightˉbrace ||
+            Missingˉright.Found != Lexer.Compilerˉtokenˉkind.End {
+            return 15;
+        }
+        return 42;
+    }
+    if Selected == 112u32 {
+        let Accepted: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe { 1 }", 62u32);
+        let Rejected: Bodies.Compilerˉsourceˉexpression =
+            Parseˉexpression("unsafe { 1 }", 63u32);
+        if Accepted.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Rejected.Status != Bodies.Compilerˉbodyˉparseˉstatus.Nestingˉlimit ||
+            Rejected.Failureˉoffset != 9u32 ||
+            Rejected.Failureˉline != 1u32 || Rejected.Failureˉcolumn != 10u32 {
+            return 16;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Caseˉq(Selected: u32) -> i32 {
+    if Selected == 113u32 {
+        let Systemˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉsystem; profile system; platform linux; authority application;\nfn Probe() -> unit {\n    unsafe {}\n}"
+        );
+        if Systemˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Systemˉsummary.Functions != 1u32 || Systemˉsummary.Statements != 1u32 {
+            return 17;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Caseˉr(Selected: u32) -> i32 {
+    if Selected == 114u32 {
+        let Valueˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉvalue; profile system; platform linux; authority application;\nfn Probe() -> i32 {\n    let Value: i32 = unsafe { 42 };\n    return Value;\n}"
+        );
+        if Valueˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Valueˉsummary.Functions != 1u32 || Valueˉsummary.Statements != 2u32 ||
+            Valueˉsummary.Expressions != 3u32 {
+            return 18;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Casesˉsˉthroughˉt(Selected: u32) -> i32 {
+    if Selected == 115u32 {
+        let Coreˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉcore; profile core; platform linux; authority application;\nfn Probe() -> unit {\n    unsafe return;\n}"
+        );
+        if Coreˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Unsafeˉprofile ||
+            Coreˉsummary.Failureˉoffset != 99u32 ||
+            Coreˉsummary.Failureˉline != 3u32 || Coreˉsummary.Failureˉcolumn != 5u32 ||
+            Coreˉsummary.Expected != Lexer.Compilerˉtokenˉkind.System ||
+            Coreˉsummary.Found != Lexer.Compilerˉtokenˉkind.Unsafe {
+            return 19;
+        }
+        return 42;
+    }
+    if Selected == 116u32 {
+        let Hostedˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉhosted; profile hosted; platform linux; authority application;\nfn Probe() -> unit {\n    unsafe {}\n}"
+        );
+        if Hostedˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Unsafeˉprofile ||
+            Hostedˉsummary.Failureˉoffset != 103u32 ||
+            Hostedˉsummary.Failureˉline != 3u32 || Hostedˉsummary.Failureˉcolumn != 5u32 {
+            return 20;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Casesˉuˉthroughˉx(Selected: u32) -> i32 {
+    if Selected == 117u32 {
+        let Defaultˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉdefault; platform linux; authority application;\nfn Probe() -> unit {\n    unsafe {}\n}"
+        );
+        if Defaultˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Unsafeˉprofile ||
+            Defaultˉsummary.Failureˉoffset != 88u32 ||
+            Defaultˉsummary.Failureˉline != 3u32 || Defaultˉsummary.Failureˉcolumn != 5u32 {
+            return 21;
+        }
+        return 42;
+    }
+    if Selected == 118u32 {
+        let Nestedˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉnested; profile system; platform linux; authority application;\nfn Probe() -> unit {\n    if true { unsafe { while false {} } }\n}"
+        );
+        if Nestedˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Nestedˉsummary.Statements != 3u32 ||
+            Nestedˉsummary.Maximumˉstatementˉdepth != 3u32 {
+            return 22;
+        }
+        return 42;
+    }
+    if Selected == 119u32 {
+        let Structuralˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉstructural; profile system; platform linux; authority application;\nfn Probe() -> unit {\n    unsafe { Unknownˉoperation(); }\n}"
+        );
+        if Structuralˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Structuralˉsummary.Expressions != 1u32 {
+            return 23;
+        }
+        return 42;
+    }
+    if Selected == 120u32 {
+        let Textˉsummary: Bodies.Compilerˉsourceˉbodyˉsummary = Parseˉsource(
+            "module Unsafeˉtext; profile core; platform linux; authority application;\nfn Probe() -> text {\n    // unsafe remains comment text\n    let Valueˉunsafeˉcandidate: text = \"unsafe\";\n    return Valueˉunsafeˉcandidate;\n}"
+        );
+        if Textˉsummary.Status != Bodies.Compilerˉbodyˉparseˉstatus.Valid ||
+            Textˉsummary.Functions != 1u32 || Textˉsummary.Statements != 2u32 {
+            return 24;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    let First: i32 = Casesˉaˉthroughˉd(Selected);
+    if First != 0 { return First; }
+    let Second: i32 = Casesˉeˉthroughˉh(Selected);
+    if Second != 0 { return Second; }
+    let Third: i32 = Casesˉiˉthroughˉl(Selected);
+    if Third != 0 { return Third; }
+    let Fourth: i32 = Casesˉmˉthroughˉp(Selected);
+    if Fourth != 0 { return Fourth; }
+    let Fifth: i32 = Caseˉq(Selected);
+    if Fifth != 0 { return Fifth; }
+    let Sixth: i32 = Caseˉr(Selected);
+    if Sixth != 0 { return Sixth; }
+    let Seventh: i32 = Casesˉsˉthroughˉt(Selected);
+    if Seventh != 0 { return Seventh; }
+    let Eighth: i32 = Casesˉuˉthroughˉx(Selected);
+    if Eighth != 0 { return Eighth; }
+    return 64;
+}

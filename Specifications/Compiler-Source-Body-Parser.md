@@ -14,6 +14,8 @@ The parser recognizes:
 - simple identifier `=`, `+=`, `-=`, and `*=` assignment;
 - statement and value-producing `if` plus optional recursive block-form `else if` and final block `else`, `while`, bounded `for`/`in`, statement and value-producing exhaustive `match`/`case`, narrow `try` propagation, `push`, nearest-loop-shaped `break` and `continue`, nested blocks, return, and expression statements;
 - the Language 1.0 resource-scope form `using Name = Expression Block`;
+- Language 1.0 statement-form `unsafe Block` and value-form
+  `unsafe ValueBlock` in an explicitly declared System module;
 - `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, and `u64` integer literals plus rune, string-shape, and Boolean literals;
 - the Language 1.0 empty-parentheses unit literal `()`;
 - qualified names, field access, one call or index postfix, named record
@@ -26,6 +28,10 @@ The parser recognizes:
 
 This is syntax only. A string view retains its source bytes rather than decoding a durable text value. Assignment and builder mutation remain limited to simple-name targets. Statement kinds append `Match = 10`, `Push = 11`, `For = 12`, `Try = 13`, and `Using = 14`; expression kinds append `Builder = 11`, `Unit = 12`, `Recordˉupdate = 13`, `Rune = 14`, `Floating = 15`, `If = 16`, `Match = 17`, and `Explicitˉgenericˉcall = 18`. An explicit-generic call retains the complete qualified-name span, the type/constant-argument interior span and count, and the ordinary call-argument interior span and count. `::` is mandatory; a bare `Name<T>(...)` stays in the relational-expression grammar and is not reinterpreted as a generic call. The parser accepts fixed-integer constant tokens in a type-argument list while semantic resolution owns the declaration-ordered type-versus-constant classification and complete constant-expression contract. A value match reuses the bounded statement-match view with value-block arms; its selector is parsed by the ordinary expression parser and may therefore include a brace-form nominal construction before the arm-list brace. A rune expression carries the lexer's already validated scalar in `Numericˉvalue`. A unit expression spans both parentheses, owns one node at depth one, and has no child or payload. A record update retains the target name, one base-expression span, and the nonempty replacement-field interior/count. A base expression containing its own top-level brace construction is parenthesized at the current parser boundary so the replacement list remains lexically unambiguous. Edition admission, base nominal identity, field checks, and exact evaluation semantics belong to the later typed-WIR phase. A `try` statement records the one expression between its keyword and required semicolon. Semantic lowering proves its exact result contract as well as exhaustiveness, payload binding, collection types, affine builder use, and loop placement.
 
+The subsequent Language 1.0 structural additions append statement kinds
+`Taskˉscope = 15` and `Unsafe = 16`, and expression kinds
+`Genericˉnamedˉrecord = 19`, `Array = 20`, `Closure = 21`, and `Unsafe = 22`.
+
 A `using` statement retains the binding-name span, acquisition-expression span,
 and complete brace-delimited body span in the existing flat statement record. It
 includes its acquisition and body descendants in the ordinary 4,096-statement,
@@ -34,6 +40,22 @@ classify the acquisition result as an owned resource, introduce the binding in
 semantic scope, prove moves or borrows, select a release protocol, or lower
 reverse-order cleanup. Those are Slice 5 ownership and resource responsibilities.
 Descriptorless Seed rejects the appended `using` token; Edition 1 admits it.
+
+An `unsafe` statement retains its complete ordinary block span and produces unit.
+An `unsafe` expression retains the complete value-block span, its ordinary
+statement interior, and its required final tail-expression span. Both wrappers
+participate in the existing statement, expression-node, and depth ceilings. The
+module-summary entry point first applies a bounded raw-byte candidate scan to an
+authenticated function-body span. Only a span containing the exact contiguous
+ASCII bytes `unsafe` receives the token scan before full body parsing. The pass
+rejects the first `unsafe` token in Core, Hosted, or
+descriptorless default-Core source with exact offset, line, and column evidence.
+The byte scan may conservatively select strings, comments, or longer identifiers,
+but the token scan does not match those forms. This admission rule is only a
+structural System-profile boundary: it does not prove that an operation is
+foreign, that a call is legal, that capabilities or effects are satisfied, or
+that any unsafe contract is semantically sound. Those proofs remain owned by
+later binding and typed-WIR phases.
 
 Each value `if` or value `match` arm contains zero or more ordinary statements
 followed by one final expression without a semicolon. A missing final expression
@@ -68,6 +90,12 @@ Compilerˉparseˉnextˉstatementˉvalidated(Input, Offset, Line, Column, Endˉof
 Compilerˉbodyˉparseˉusingˉstatement(Input, Start, Endˉoffset, Statementˉnesting)
     -> Compilerˉsourceˉstatement
 
+Compilerˉbodyˉparseˉunsafeˉstatement(Input, Start, Endˉoffset, Statementˉnesting)
+    -> Compilerˉsourceˉstatement
+
+Compilerˉbodyˉparseˉunsafeˉexpression(Input, Start, Endˉoffset, Nesting)
+    -> Compilerˉsourceˉexpression
+
 Compilerˉparseˉblockˉvalidated(Input, Offset, Line, Column, Endˉoffset, Statementˉnesting)
     -> Compilerˉbodyˉparseˉstep
 
@@ -85,7 +113,7 @@ Safe `span`/whole-source entries lexically preflight input. The checked body-spa
 
 ## Status and limits
 
-`Compilerˉbodyˉparseˉstatus` contains `Valid`, `Lexicalˉerror`, `Invalidˉspan`, `Expectedˉtoken`, `Expectedˉexpression`, `Invalidˉtype`, `Nestingˉlimit`, `Itemˉlimit`, and `Declarationˉerror`.
+`Compilerˉbodyˉparseˉstatus` contains `Valid`, `Lexicalˉerror`, `Invalidˉspan`, `Expectedˉtoken`, `Expectedˉexpression`, `Invalidˉtype`, `Nestingˉlimit`, `Itemˉlimit`, `Declarationˉerror`, and `Unsafeˉprofile`.
 
 The pass enforces:
 

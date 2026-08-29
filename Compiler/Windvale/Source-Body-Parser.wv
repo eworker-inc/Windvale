@@ -13,6 +13,7 @@ export enum Compilerˉbodyˉparseˉstatus {
     Nestingˉlimit = 6;
     Itemˉlimit = 7;
     Declarationˉerror = 8;
+    Unsafeˉprofile = 9;
 }
 
 export enum Compilerˉsourceˉstatementˉkind {
@@ -32,6 +33,7 @@ export enum Compilerˉsourceˉstatementˉkind {
     Try = 13;
     Using = 14;
     Taskˉscope = 15;
+    Unsafe = 16;
 }
 
 export enum Compilerˉsourceˉexpressionˉkind {
@@ -57,6 +59,7 @@ export enum Compilerˉsourceˉexpressionˉkind {
     Genericˉnamedˉrecord = 19;
     Array = 20;
     Closure = 21;
+    Unsafe = 22;
 }
 
 export record Compilerˉsourceˉposition {
@@ -1049,6 +1052,15 @@ export fn Compilerˉbodyˉparseˉvalueˉblock(
                     Right.Nextˉcolumn,
                     Sourceˉlexer.Compilerˉtokenˉkind.End,
                     Sourceˉlexer.Compilerˉtokenˉkind.End
+                );
+            }
+            if Right.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+                return Compilerˉbodyˉvalueˉblockˉfailure(
+                    Compilerˉbodyˉstepˉfromˉtoken(
+                        Compilerˉbodyˉparseˉstatus.Expectedˉtoken,
+                        Right,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+                    )
                 );
             }
         }
@@ -2314,6 +2326,49 @@ export fn Compilerˉbodyˉparseˉprimary(
     return Compilerˉbodyˉexpressionˉmake(Compilerˉsourceˉexpressionˉkind.Name, Sourceˉlexer.Compilerˉtokenˉkind.End, Name.Offset, Name.Offset + Name.Length, Line, Column, Name.Offset, Name.Length, Name.Offset, 0u32, Name.Offset, 0u32, Name.Offset, Name.Offset, 0u32, Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false, Name.Nextˉoffset, Name.Nextˉline, Name.Nextˉcolumn, 1u32, 1u32);
 }
 
+export fn Compilerˉbodyˉparseˉunsafeˉexpression(
+    Input: bytes,
+    Start: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Endˉoffset: u32,
+    Nesting: u32
+) -> Compilerˉsourceˉexpression {
+    let Block: Compilerˉsourceˉvalueˉblock =
+        Compilerˉbodyˉparseˉvalueˉblock(
+            Input, Start.Nextˉoffset, Start.Nextˉline,
+            Start.Nextˉcolumn, Endˉoffset, Nesting + 1u32
+        );
+    if Block.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉexpressionˉfailureˉfromˉvalueˉblock(Block);
+    }
+    let Nodes: u32 = Block.Expressions + 1u32;
+    let Depth: u32 = Block.Maximumˉexpressionˉdepth + 1u32;
+    if Nodes > 262144u32 {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Itemˉlimit, Start,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    if Depth > 64u32 {
+        return Compilerˉbodyˉexpressionˉfailure(
+            Compilerˉbodyˉparseˉstatus.Nestingˉlimit, Start,
+            Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+        );
+    }
+    return Compilerˉbodyˉexpressionˉmake(
+        Compilerˉsourceˉexpressionˉkind.Unsafe,
+        Sourceˉlexer.Compilerˉtokenˉkind.Unsafe,
+        Start.Offset, Block.Nextˉoffset, Start.Line, Start.Column,
+        Block.Valueˉoffset, Block.Valueˉlength,
+        Block.Blockˉoffset, Block.Blockˉlength,
+        Block.Statementsˉoffset, Block.Statementsˉlength,
+        Block.Statementsˉoffset, Block.Valueˉoffset + Block.Valueˉlength,
+        Block.Statements,
+        Sourceˉlexer.Compilerˉnumericˉkind.None, 0u32, false,
+        Block.Nextˉoffset, Block.Nextˉline, Block.Nextˉcolumn,
+        Nodes, Depth
+    );
+}
+
 fn Compilerˉbodyˉparseˉexpressionˉnested(
     Input: bytes,
     Offset: u32,
@@ -2346,6 +2401,11 @@ fn Compilerˉbodyˉparseˉexpressionˉnested(
     }
     if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.If {
         return Compilerˉbodyˉparseˉifˉexpression(
+            Input, First, Endˉoffset, Nesting
+        );
+    }
+    if First.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+        return Compilerˉbodyˉparseˉunsafeˉexpression(
             Input, First, Endˉoffset, Nesting
         );
     }
@@ -3755,6 +3815,56 @@ export fn Compilerˉbodyˉparseˉtaskˉscopeˉstatement(
     );
 }
 
+export fn Compilerˉbodyˉparseˉunsafeˉstatement(
+    Input: bytes,
+    Start: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Endˉoffset: u32,
+    Statementˉnesting: u32
+) -> Compilerˉsourceˉstatement {
+    let Blockˉstart: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Compilerˉbodyˉtoken(
+            Input, Start.Nextˉoffset, Start.Nextˉline,
+            Start.Nextˉcolumn, Endˉoffset
+        );
+    let Body: Compilerˉbodyˉparseˉstep =
+        Compilerˉparseˉblockˉvalidated(
+            Input, Start.Nextˉoffset, Start.Nextˉline,
+            Start.Nextˉcolumn, Endˉoffset, Statementˉnesting + 1u32
+        );
+    if Body.Status != Compilerˉbodyˉparseˉstatus.Valid {
+        return Compilerˉbodyˉstatementˉfailure(
+            Body, Compilerˉsourceˉstatementˉkind.Unsafe, Start
+        );
+    }
+    let Statements: u32 = Body.Statements + 1u32;
+    if Statements > 4096u32 {
+        return Compilerˉbodyˉstatementˉfailure(
+            Compilerˉbodyˉstepˉfromˉtoken(
+                Compilerˉbodyˉparseˉstatus.Itemˉlimit, Start,
+                Sourceˉlexer.Compilerˉtokenˉkind.Rightˉbrace
+            ),
+            Compilerˉsourceˉstatementˉkind.Unsafe, Start
+        );
+    }
+    let Result: Compilerˉbodyˉparseˉstep = Compilerˉbodyˉstepˉvalid(
+        Body.Nextˉoffset, Body.Nextˉline, Body.Nextˉcolumn,
+        Statements, Body.Expressions,
+        Body.Maximumˉstatementˉdepth + 1u32,
+        Body.Maximumˉexpressionˉdepth
+    );
+    return Compilerˉbodyˉstatementˉmake(
+        Compilerˉsourceˉstatementˉkind.Unsafe, false,
+        Start, Body.Nextˉoffset,
+        Start.Offset, 0u32,
+        Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Unknown,
+        Start.Offset, 0u32,
+        Start.Offset, 0u32,
+        Blockˉstart.Offset, Body.Nextˉoffset - Blockˉstart.Offset,
+        Start.Offset, 0u32,
+        Result
+    );
+}
+
 export fn Compilerˉbodyˉparseˉblockˉstatement(
     Input: bytes,
     Start: Sourceˉlexer.Compilerˉsourceˉtoken,
@@ -3788,6 +3898,7 @@ export fn Compilerˉparseˉnextˉstatementˉvalidated(
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.For { return Compilerˉbodyˉparseˉforˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Using { return Compilerˉbodyˉparseˉusingˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Task { return Compilerˉbodyˉparseˉtaskˉscopeˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
+    if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe { return Compilerˉbodyˉparseˉunsafeˉstatement(Input, Start, Endˉoffset, Statementˉnesting); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Match { return Compilerˉbodyˉparseˉmatchˉstatement(Input, Start, Endˉoffset, Statementˉnesting, false); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Return { return Compilerˉbodyˉparseˉreturnˉstatement(Input, Start, Endˉoffset); }
     if Start.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Try {
@@ -3981,6 +4092,83 @@ export fn Compilerˉparseˉbodyˉspan(
     return Compilerˉparseˉbodyˉspanˉvalidated(Input, Offset, Line, Column, Endˉoffset);
 }
 
+fn Compilerˉbodyˉspanˉmayˉcontainˉunsafe(
+    Input: bytes,
+    Offset: u32,
+    Endˉoffset: u32
+) -> bool {
+    if Offset > Endˉoffset { return false; }
+    if Endˉoffset - Offset < 6u32 { return false; }
+    let Last: u32 = Endˉoffset - 6u32;
+    var Cursor: u32 = Offset;
+    while Cursor <= Last {
+        if Bytesˉreadˉu8(Input, Cursor) == 117u8 &&
+            Bytesˉreadˉu8(Input, Cursor + 1u32) == 110u8 &&
+            Bytesˉreadˉu8(Input, Cursor + 2u32) == 115u8 &&
+            Bytesˉreadˉu8(Input, Cursor + 3u32) == 97u8 &&
+            Bytesˉreadˉu8(Input, Cursor + 4u32) == 102u8 &&
+            Bytesˉreadˉu8(Input, Cursor + 5u32) == 101u8 {
+            return true;
+        }
+        Cursor = Cursor + 1u32;
+    }
+    return false;
+}
+
+fn Compilerˉbodyˉfirstˉunsafeˉtoken(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Endˉoffset: u32
+) -> Sourceˉlexer.Compilerˉsourceˉtoken {
+    var Cursor: u32 = Offset;
+    var Currentˉline: u32 = Line;
+    var Currentˉcolumn: u32 = Column;
+    var Reading: bool = true;
+    while Reading {
+        let Current: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Compilerˉbodyˉtoken(
+                Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+            );
+        if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+            return Current;
+        }
+        if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+            return Current;
+        }
+        Cursor = Current.Nextˉoffset;
+        Currentˉline = Current.Nextˉline;
+        Currentˉcolumn = Current.Nextˉcolumn;
+    }
+    return Compilerˉbodyˉtoken(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Endˉoffset
+    );
+}
+
+fn Compilerˉbodyˉsummaryˉunsafeˉprofile(
+    Token: Sourceˉlexer.Compilerˉsourceˉtoken
+) -> Compilerˉsourceˉbodyˉsummary {
+    return Compilerˉsourceˉbodyˉsummary(
+        Compilerˉbodyˉparseˉstatus.Unsafeˉprofile,
+        Token.Status,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Token.Offset,
+        Token.Line,
+        Token.Column,
+        Token.Offset,
+        Token.Line,
+        Token.Column,
+        Sourceˉlexer.Compilerˉtokenˉkind.System,
+        Token.Kind
+    );
+}
+
 export fn Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(
     Input: bytes,
     Declarationˉsummary: Sourceˉdeclarations.Compilerˉsourceˉmoduleˉsummary
@@ -4020,6 +4208,19 @@ export fn Compilerˉparseˉsourceˉbodiesˉfromˉdeclarations(
                     return Compilerˉsourceˉbodyˉsummary(Compilerˉbodyˉparseˉstatus.Invalidˉspan, Sourceˉlexer.Compilerˉlexˉstatus.Valid, Functions, Topˉlevelˉstatements, Statements, Expressions, Maximumˉstatementˉdepth, Maximumˉexpressionˉdepth, Bodyˉposition.Offset, Bodyˉposition.Line, Bodyˉposition.Column, Bodyˉposition.Offset, Bodyˉposition.Line, Bodyˉposition.Column, Sourceˉlexer.Compilerˉtokenˉkind.Leftˉbrace, Sourceˉlexer.Compilerˉtokenˉkind.End);
                 }
                 let Bodyˉend: u32 = Declaration.Bodyˉoffset + Declaration.Bodyˉlength;
+                if Header.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+                    Compilerˉbodyˉspanˉmayˉcontainˉunsafe(
+                        Input, Declaration.Bodyˉoffset, Bodyˉend
+                    ) {
+                    let Unsafeˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+                        Compilerˉbodyˉfirstˉunsafeˉtoken(
+                            Input, Declaration.Bodyˉoffset,
+                            Bodyˉposition.Line, Bodyˉposition.Column, Bodyˉend
+                        );
+                    if Unsafeˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe {
+                        return Compilerˉbodyˉsummaryˉunsafeˉprofile(Unsafeˉtoken);
+                    }
+                }
                 let Body: Compilerˉsourceˉbodyˉsummary = Compilerˉparseˉbodyˉspanˉvalidated(Input, Declaration.Bodyˉoffset, Bodyˉposition.Line, Bodyˉposition.Column, Bodyˉend);
                 if Body.Status != Compilerˉbodyˉparseˉstatus.Valid { return Body; }
                 Functions = Functions + 1u32;
