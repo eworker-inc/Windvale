@@ -41,8 +41,8 @@ The fixed-point compiler products are:
 
 | Product | Functions | Bytes | SHA-256 |
 | --- | ---: | ---: | --- |
-| current analyzer | 758 | 1,515,372 | `9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9` |
-| current emitter | 738 | 1,523,605 | `a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9` |
+| current analyzer | 758 | 1,515,281 | `a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a` |
+| current emitter | 738 | 1,523,514 | `61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403` |
 | current compiler-aligned verifier | 111 | 399,387 | `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800` |
 
 The WVB identities are host-independent. PE and ELF container identities may

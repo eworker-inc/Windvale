@@ -91,7 +91,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 181772 c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4 "metadata-aware WVB publisher candidate"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 408545 525779efa3e19a3874919e1f51a5d33e93cdc825e67835b6ab5d9878d08e2275 "metadata-aware WVB publisher candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
     "%TestDirectory%\Wvb-Publisher.wvb" ^
@@ -100,7 +100,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 1523708 c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35 "metadata-aware WVB publisher object candidate"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 3317775 0369818eed1af26a353da91167687d6ea29b564aaa84877120c4f7d27d8f7ec6 "metadata-aware WVB publisher object candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TestDirectory%\Wvb-Publisher.bin" "%TestDirectory%\Wvb-Publisher.wvo" >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
 if errorlevel 1 goto :failed
@@ -108,7 +108,7 @@ call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native
 if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.bin" 1520746 98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a "linked metadata-aware WVB publisher fragment"
+call :check_file "%TestDirectory%\Wvb-Publisher.bin" 3311953 68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4 "linked metadata-aware WVB publisher fragment"
 if errorlevel 1 goto :failed
 call :pass "metadata-aware publisher source and refreshed construction inventory"
 
@@ -414,7 +414,7 @@ if not exist "%~1" (
     exit /b 1
 )
 for %%F in ("%~1") do if not "%%~zF"=="%~2" (
-    >&2 echo FAIL  hosted-verifier publisher files: %~4 byte length differs
+    >&2 echo FAIL  hosted-verifier publisher files: %~4 byte length differs expected=%~2 found=%%~zF
     exit /b 1
 )
 call :check_digest "%~1" %~3 "%~4"

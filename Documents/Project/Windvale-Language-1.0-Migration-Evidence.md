@@ -4193,3 +4193,37 @@ The registry advances to 114 owners and 5,616 cases. Its 18,992 LF-only bytes
 have SHA-256
 `52d968714832bd452c113713c543171458dacc7dad2b8e0aee874464a20d54b6`.
 Final paired-host Qualification on this corrected boundary remains pending.
+
+## Slice 7 exact qualification ownership repair
+
+[Decision 0878](../Decisions/0878-Restore-Exact-Slice-7-Qualification-Ownership.md)
+keeps frozen Seed immutable and repairs the narrower defects exposed by the
+first complete post-convergence Qualification run. Generic nominal deferral no
+longer hides an invalid generic-parameter application. Database qualification
+consumes the retained exact build driver and lowerer instead of rebuilding the
+compiler before testing storage. Windows temporary evidence begins from a
+canonical long path, the console AOT owner separates display text from exact
+object identity, and the Linux structured-task runtime self-test uses an
+explicit `.elf` output.
+
+The source-built analyzer advances to 1,515,281 bytes at SHA-256
+`a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a`.
+The source-built emitter advances to 1,523,514 bytes at SHA-256
+`61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403`.
+An isolated cold Windows convergence run passes all 18 phases: both products
+rebuild byte-identically through generation 2, the exact current 399,387-byte
+verifier rebuilds at SHA-256
+`7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`,
+and that verifier accepts both final products.
+
+The current WVB publisher source rebuild is 408,545 bytes at SHA-256
+`525779efa3e19a3874919e1f51a5d33e93cdc825e67835b6ab5d9878d08e2275`.
+Its WVO is 3,317,775 bytes at SHA-256
+`0369818eed1af26a353da91167687d6ea29b564aaa84877120c4f7d27d8f7ec6`,
+and its linked fragment is 3,311,953 bytes at SHA-256
+`68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4`.
+The focused publisher owner passes all 16 cases, generic declarations pass all
+12 cases and return `42`, and the native console AOT owner passes its exact
+case. Retained database-tool preparation passes in 190 milliseconds and now
+reports the complete qualification sequence as 60 visible steps. The complete
+paired-host Qualification repeat remains the final Slice 7 gate.

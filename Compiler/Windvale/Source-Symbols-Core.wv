@@ -5348,13 +5348,11 @@ fn Compilerˉsourceˉsymbolsˉbindˉdeclarationˉtype(
                     Token.Nextˉoffset, Token.Nextˉline, Token.Nextˉcolumn
                 );
             }
-            var Failureˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken = After;
-            if Complete { Failureˉtoken = Token; }
             return Compilerˉsourceˉsymbolsˉtypeˉfailure(
                 Compilerˉsourceˉsymbolˉstatus.Unknownˉtype,
                 Sourceˉdeclarations.Compilerˉsourceˉtypeˉkind.Named,
                 Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
-                0u32, Module, Failureˉtoken
+                0u32, Module, Token
             );
         }
     }

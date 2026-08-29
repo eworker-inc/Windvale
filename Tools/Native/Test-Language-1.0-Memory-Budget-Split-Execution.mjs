@@ -134,8 +134,9 @@ const Bridgeˉemitterˉwvb = path.join(
     Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
     'Wvb', 'wvemit-wvir-1.9-bridge.wvb',
 );
+const Temporaryˉroot = realpathSync(os.tmpdir());
 const Work = mkdtempSync(path.join(
-    os.tmpdir(), 'windvale-memory-budget-split-execution-',
+    Temporaryˉroot, 'windvale-memory-budget-split-execution-',
 ));
 let Step = 0;
 
@@ -299,7 +300,7 @@ try {
         Work,
         process.platform === 'win32'
             ? 'Structured-Task-Runtime-Self-Test.exe'
-            : 'Structured-Task-Runtime-Self-Test',
+            : 'Structured-Task-Runtime-Self-Test.elf',
     );
     Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
@@ -1202,7 +1203,6 @@ try {
     );
 } finally {
     const Resolved = path.resolve(Work);
-    const Temporaryˉroot = path.resolve(os.tmpdir());
     if (path.dirname(Resolved) !== Temporaryˉroot ||
         !path.basename(Resolved).startsWith('windvale-memory-budget-split-execution-')) {
         Reject(`Refusing to remove unexpected test directory: ${Resolved}.`);

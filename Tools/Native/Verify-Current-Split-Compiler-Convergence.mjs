@@ -28,12 +28,12 @@ const BRIDGE_EMITTER = {
     sha256: '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb',
 };
 const CURRENT_ANALYZER = {
-    bytes: 1_515_372,
-    sha256: '9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9',
+    bytes: 1_515_281,
+    sha256: 'a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a',
 };
 const CURRENT_EMITTER = {
-    bytes: 1_523_605,
-    sha256: 'a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9',
+    bytes: 1_523_514,
+    sha256: '61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403',
 };
 const CURRENT_VERIFIER = {
     bytes: 399_387,
@@ -142,9 +142,9 @@ try {
         Bootstrapˉemitter,
         Bootstrapˉemitterˉidentity,
     ]);
-    Requireˉexactˉfile(
+    Requireˉordinaryˉfile(
         Analyzerˉstage1ˉwvb,
-        CURRENT_ANALYZER,
+        MAXIMUM_PRODUCT_BYTES,
         'current analyzer Stage 1 WVB',
     );
     await Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
@@ -161,9 +161,9 @@ try {
         Bridgeˉemitter,
         Bridgeˉemitterˉidentity,
     ]);
-    Requireˉexactˉfile(
+    Requireˉordinaryˉfile(
         Emitterˉstage1ˉwvb,
-        CURRENT_EMITTER,
+        MAXIMUM_PRODUCT_BYTES,
         'current emitter Stage 1 WVB',
     );
     await Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
@@ -212,29 +212,39 @@ try {
     await Runˉtool('analyzer-verification', Verifier, [Analyzerˉstage2ˉwvb]);
     await Runˉtool('emitter-verification', Verifier, [Emitterˉstage2ˉwvb]);
 
-    const Analyzerˉstage1 = Requireˉexactˉfile(
+    const Analyzerˉstage1 = Fileˉevidence(
         Analyzerˉstage1ˉwvb,
-        CURRENT_ANALYZER,
         'current analyzer Stage 1 WVB',
+        MAXIMUM_PRODUCT_BYTES,
     );
-    const Analyzerˉstage2 = Requireˉexactˉfile(
+    const Analyzerˉstage2 = Fileˉevidence(
         Analyzerˉstage2ˉwvb,
-        CURRENT_ANALYZER,
         'current analyzer Stage 2 WVB',
+        MAXIMUM_PRODUCT_BYTES,
     );
-    const Emitterˉstage1 = Requireˉexactˉfile(
+    const Emitterˉstage1 = Fileˉevidence(
         Emitterˉstage1ˉwvb,
-        CURRENT_EMITTER,
         'current emitter Stage 1 WVB',
+        MAXIMUM_PRODUCT_BYTES,
     );
-    const Emitterˉstage2 = Requireˉexactˉfile(
+    const Emitterˉstage2 = Fileˉevidence(
         Emitterˉstage2ˉwvb,
-        CURRENT_EMITTER,
         'current emitter Stage 2 WVB',
+        MAXIMUM_PRODUCT_BYTES,
     );
     if (!Analyzerˉstage1.value.equals(Analyzerˉstage2.value) ||
         !Emitterˉstage1.value.equals(Emitterˉstage2.value)) {
         Reject('The current split compiler did not reach an exact fixed point.');
+    }
+    if (!Sameˉevidence(Analyzerˉstage1, CURRENT_ANALYZER) ||
+        !Sameˉevidence(Emitterˉstage1, CURRENT_EMITTER)) {
+        Reject(
+            'The fixed-point compiler identity differs: ' +
+            `analyzer-bytes=${Analyzerˉstage1.bytes} ` +
+            `analyzer-sha256=${Analyzerˉstage1.sha256} ` +
+            `emitter-bytes=${Emitterˉstage1.bytes} ` +
+            `emitter-sha256=${Emitterˉstage1.sha256}.`,
+        );
     }
     process.stdout.write(
         'native compiler convergence status=Complete products=2 ' +
@@ -373,11 +383,21 @@ async function Run(Label, Command, Arguments) {
 
 function Requireˉexactˉfile(Candidate, Expected, Label) {
     const Evidence = Fileˉevidence(Candidate, Label, MAXIMUM_PRODUCT_BYTES);
-    if (Evidence.bytes !== Expected.bytes ||
-        Evidence.sha256 !== Expected.sha256) {
-        Reject(`The ${Label} identity differs.`);
+    if (!Sameˉevidence(Evidence, Expected)) {
+        Reject(
+            `The ${Label} identity differs: ` +
+            `expected-bytes=${Expected.bytes} ` +
+            `expected-sha256=${Expected.sha256} ` +
+            `found-bytes=${Evidence.bytes} ` +
+            `found-sha256=${Evidence.sha256}.`,
+        );
     }
     return Evidence;
+}
+
+function Sameˉevidence(Actual, Expected) {
+    return Actual.bytes === Expected.bytes &&
+        Actual.sha256 === Expected.sha256;
 }
 
 function Fileˉevidence(Candidate, Label, Maximum) {

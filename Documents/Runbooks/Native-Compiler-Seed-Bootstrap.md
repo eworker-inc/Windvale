@@ -35,10 +35,10 @@ Native compiler bootstrap verification passed.
 
 The exact products are:
 
-- analyzer: 1,515,372 bytes, SHA-256
-  `9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9`;
-- emitter: 1,523,605 bytes, SHA-256
-  `a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9`;
+- analyzer: 1,515,281 bytes, SHA-256
+  `a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a`;
+- emitter: 1,523,514 bytes, SHA-256
+  `61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403`;
   and
 - current verifier WVB: 399,387 bytes, SHA-256
   `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`.

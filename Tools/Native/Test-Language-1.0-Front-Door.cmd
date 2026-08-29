@@ -124,8 +124,8 @@ for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83258" goto :cleanup
 certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"12607ef0255fcc07d7adbe096929495c47b5c94425f5fa7edb7880f084e3eaf2" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1515372" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"9876f178f4ac06872a44f44085de5d72f17777abf462985300f6e453e4b625d9" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1515281" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
@@ -208,8 +208,8 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1523605" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"a0beb624dcc225b0ccdac848d808af1faef63cdb66eb650faf0bb9216e0815c9" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1523514" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^

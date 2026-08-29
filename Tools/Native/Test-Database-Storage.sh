@@ -106,6 +106,8 @@ if ((prepare_only == 1)); then
 fi
 progress_total=$((selected_cases + 1))
 progress_current=1
+qualification_step=0
+qualification_steps=60
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -144,10 +146,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-build_driver_wvb="$temporary_directory/Build-Driver.wvb"
-build_driver="$temporary_directory/Build-Driver.elf"
-lowerer_wvb="$temporary_directory/Lowerer.wvb"
-lowerer="$temporary_directory/Lowerer.elf"
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
+lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 workspace_path="$repository_root/Windvale.wvws"
 project_checkpoint_host_storage=NotRun
 project_checkpoint_host_root_writer=NotRun
@@ -300,46 +300,17 @@ prepare_cached_build_driver() {
     tool_checkpoint=Created
 }
 
-if ((development == 1)); then
-    echo 'Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb'
-    project_wvb_report="$temporary_directory/Build-Driver-Wvb-Cache.txt"
-    "$script_directory/Build-Cached-Project-Wvb.sh" \
-        "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-        "$build_driver_wvb" > "$project_wvb_report" || exit $?
-    project_wvb_checkpoint=$(sed -n \
-        's/^native project wvb cache status=\([^ ]*\) key=[0-9a-f][0-9a-f]*$/\1/p' \
-        "$project_wvb_report")
-    [[ $project_wvb_checkpoint == Created || $project_wvb_checkpoint == Hit ]] || exit 1
-    echo 'Progress: step=database-storage-tools item=2/4 detail=package-build-driver'
-    prepare_cached_build_driver "$build_driver_wvb" || exit $?
-    echo 'Progress: step=database-storage-tools item=3/4 detail=verify-lowerer'
-    lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
-    verify_file "$lowerer" 8159232 \
-        1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
-else
-    echo 'Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb'
-    "$script_directory/Build-Current-Wvb.sh" \
-        "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-        "$build_driver_wvb" >/dev/null || exit $?
-    verify_file "$build_driver_wvb" 1259719 \
-        3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 || exit $?
-    echo 'Progress: step=database-storage-tools item=2/4 detail=package-build-driver'
-    "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-        2 "$build_driver_wvb" "$build_driver" --development-cache >/dev/null || exit $?
-
-    echo 'Progress: step=database-storage-tools item=3/4 detail=build-lowerer-wvb'
-    "$build_driver" --workspace "$workspace_path" --project \
-        "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
-        "$lowerer_wvb" >/dev/null || exit $?
-    verify_file "$lowerer_wvb" 567615 \
-        77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || exit $?
-    echo 'Progress: step=database-storage-tools item=4/4 detail=package-lowerer'
-    "$script_directory/Package-Segmented-Compiler-Wvb.sh" \
-        6 "$lowerer_wvb" "$lowerer" --development-cache >/dev/null || exit $?
-fi
+echo 'Progress: step=database-storage-tools item=1/2 detail=verify-build-driver'
+verify_file "$build_driver" 30072832 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit $?
+echo 'Progress: step=database-storage-tools item=2/2 detail=verify-lowerer'
+verify_file "$lowerer" 8159232 \
+    1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
+tool_checkpoint=Retained
+project_wvb_checkpoint=NotBuilt
 
 if ((development == 1 && prepare_only == 0)); then
-    echo 'Progress: step=database-storage-tools item=4/4 detail=start-hosted-session'
+    echo 'Progress: step=database-storage-tools item=3/3 detail=start-hosted-session'
     node "$hosted_application_session" serve \
         "$hosted_application_session_ready" linux "$build_driver" "$lowerer" \
         >"$hosted_application_session_log" 2>&1 &
@@ -351,7 +322,7 @@ if ((development == 1 && prepare_only == 0)); then
     fi
 fi
 if ((development == 1 && prepare_only == 1)); then
-    echo 'Progress: step=database-storage-tools item=4/4 detail=tools-ready'
+    echo 'Progress: step=database-storage-tools item=3/3 detail=tools-ready'
 fi
 
 if ((development == 1)); then
@@ -364,7 +335,16 @@ if ((prepare_only == 1)); then
     exit 0
 fi
 
+start_qualification_step() {
+    if ((development == 1)); then
+        return 0
+    fi
+    qualification_step=$((qualification_step + 1))
+    echo "Progress: step=database-storage-cases item=$qualification_step/$qualification_steps detail=$1"
+}
+
 verify_segmented_target() {
+    start_qualification_step "$1"
     local label=$1 project_path=$2
     local first_wvb="$temporary_directory/$label-Segmented-First.wvb"
     local second_wvb="$temporary_directory/$label-Segmented-Second.wvb"
@@ -460,6 +440,7 @@ verify_segmented_target() {
 }
 
 verify_target() {
+    start_qualification_step "$1"
     local label=$1 project_path=$2
     local first_wvb="$temporary_directory/$label-First.wvb"
     local second_wvb="$temporary_directory/$label-Second.wvb"
@@ -549,6 +530,7 @@ verify_target() {
 }
 
 verify_storage_lowering() {
+    start_qualification_step StorageLowering
     local project_path=$1
     local first_wvb="$temporary_directory/StorageLowering-First.wvb"
     local second_wvb="$temporary_directory/StorageLowering-Second.wvb"
@@ -641,6 +623,7 @@ verify_host_storage_interruption() {
 }
 
 verify_host_storage() {
+    start_qualification_step HostStorage
     local project_path=$1
     local first_wvb="$temporary_directory/HostStorage-First.wvb"
     local second_wvb="$temporary_directory/HostStorage-Second.wvb"
@@ -797,6 +780,7 @@ verify_host_storage() {
 }
 
 verify_host_root_writer() {
+    start_qualification_step HostRootWriter
     local project_path=$1
     local first_wvb="$temporary_directory/HostRootWriter-First.wvb"
     local second_wvb="$temporary_directory/HostRootWriter-Second.wvb"
@@ -935,6 +919,7 @@ verify_host_root_writer_interruption() {
 }
 
 verify_host_root_split_writer() {
+    start_qualification_step HostRootSplitWriter
     local fill_project=$1 split_project=$2 get_project=$3
     local fill_application="$temporary_directory/HostLocal-RootFill.elf"
     local split_application="$temporary_directory/HostLocal-RootSplit.elf"
@@ -1160,6 +1145,7 @@ verify_host_tree_delete_interruption() {
 }
 
 verify_host_tree_delete() {
+    start_qualification_step HostTreeDelete
     local project_path=$1
     local application="$temporary_directory/HostLocal-TreeDelete.elf"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
@@ -1191,6 +1177,7 @@ verify_host_tree_delete() {
 }
 
 verify_host_tree_scan() {
+    start_qualification_step HostTreeScan
     local project_path=$1
     local application="$temporary_directory/HostLocal-TreeScan.elf"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
@@ -1227,6 +1214,7 @@ verify_host_tree_scan() {
 }
 
 verify_host_local_service() {
+    start_qualification_step HostLocalService
     local put_project=$1 get_project=$2
     local put_application="$temporary_directory/HostLocal-Put.elf"
     local get_application="$temporary_directory/HostLocal-Get.elf"
@@ -1267,6 +1255,7 @@ verify_host_local_service() {
 }
 
 verify_host_tree_reader() {
+    start_qualification_step HostTreeReader
     local project_path=$1
     local first_wvb="$temporary_directory/HostTreeReader-First.wvb"
     local second_wvb="$temporary_directory/HostTreeReader-Second.wvb"
@@ -1453,6 +1442,7 @@ verify_host_tree_reader_update_interruption() {
 }
 
 verify_host_engine() {
+    start_qualification_step HostEngine
     local project_path=$1
     local first_wvb="$temporary_directory/Engine-First.wvb"
     local second_wvb="$temporary_directory/Engine-Second.wvb"
@@ -1610,6 +1600,7 @@ verify_host_engine_recovery() {
 }
 
 verify_host_tree_writer() {
+    start_qualification_step HostTreeWriter
     local project_path=$1
     local linux_application="$temporary_directory/HostTreeWriter.elf"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
@@ -1651,6 +1642,7 @@ verify_host_tree_writer() {
 }
 
 verify_host_logical_tree_writer() {
+    start_qualification_step HostLogicalTreeWriter
     local put_project=$1 get_project=$2
     local put_application="$temporary_directory/HostLocal-LogicalTreePut.elf"
     local get_application="$temporary_directory/HostLocal-LogicalTreeGet.elf"
@@ -1709,6 +1701,7 @@ verify_host_tree_writer_interruption() {
 }
 
 verify_persistent_transaction_writer() {
+    start_qualification_step PersistentTransactionWriter
     local project_path=$1
     local linux_application="$temporary_directory/PersistentTransactionWriter.elf"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"

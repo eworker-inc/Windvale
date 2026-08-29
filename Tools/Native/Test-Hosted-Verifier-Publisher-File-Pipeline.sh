@@ -59,8 +59,10 @@ check_file() {
         echo "FAIL  hosted-verifier publisher files: missing $label" >&2
         return 1
     fi
-    if [[ $(wc -c < "$path") -ne $bytes ]]; then
-        echo "FAIL  hosted-verifier publisher files: $label byte length differs" >&2
+    local found_bytes
+    found_bytes=$(wc -c < "$path")
+    if [[ $found_bytes -ne $bytes ]]; then
+        echo "FAIL  hosted-verifier publisher files: $label byte length differs expected=$bytes found=$found_bytes" >&2
         return 1
     fi
     if ! check_hash "$path" "$digest"; then
@@ -169,8 +171,8 @@ check_file "$test_directory/Publisher-Promoter.bin" 658339 \
     2> "$test_directory/Wvb-Publisher-Build.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Build.err" \
     'WVB publisher source build wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvb" 181772 \
-    c90f5325ea409d0710254812e1d434cce712de68385dec74d23eef5a475cf3c4 \
+check_file "$test_directory/Wvb-Publisher.wvb" 408545 \
+    525779efa3e19a3874919e1f51a5d33e93cdc825e67835b6ab5d9878d08e2275 \
     'metadata-aware WVB publisher candidate' || fail
 "$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
     "$test_directory/Wvb-Publisher.wvb" \
@@ -179,8 +181,8 @@ check_file "$test_directory/Wvb-Publisher.wvb" 181772 \
     2> "$test_directory/Wvb-Publisher-Lower.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Lower.err" \
     'WVB publisher native lowering wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvo" 1523708 \
-    c1ce50f68e12dc94e56fa848c6f09f707ad117294af5e19f15659b7901c0bf35 \
+check_file "$test_directory/Wvb-Publisher.wvo" 3317775 \
+    0369818eed1af26a353da91167687d6ea29b564aaa84877120c4f7d27d8f7ec6 \
     'metadata-aware WVB publisher object candidate' || fail
 "$repository_root/Tools/Native/Link-Wvo.sh" 0 Main \
     "$test_directory/Wvb-Publisher.bin" "$test_directory/Wvb-Publisher.wvo" \
@@ -190,8 +192,8 @@ check_empty "$test_directory/Wvb-Publisher-Link.err" \
     'WVB publisher native link wrote a diagnostic' || fail
 grep -Fx 'entry name=Main address=0' \
     "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.bin" 1520746 \
-    98aba65ccfdb0455f9fcb78ad3ffa0ecbe7aa942fcbf9064d179018dec12178a \
+check_file "$test_directory/Wvb-Publisher.bin" 3311953 \
+    68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4 \
     'linked metadata-aware WVB publisher fragment' || fail
 pass 'metadata-aware publisher source and refreshed construction inventory'
 

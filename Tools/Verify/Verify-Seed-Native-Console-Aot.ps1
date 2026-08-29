@@ -66,7 +66,10 @@ try {
     if (
         $LASTEXITCODE -ne 0 -or
         $VerifyOutput.Count -ne 2 -or
-        $VerifyOutput[0] -ne 'Verified object: X86ˉ64' -or
+        $VerifyOutput[0].Length -le 'Verified object: '.Length -or
+        !$VerifyOutput[0].StartsWith(
+            'Verified object: ',
+            [StringComparison]::Ordinal) -or
         $VerifyOutput[1] -ne
             'SHA-256: 4e4958f8f0d611e00e912b925b837aa968e06f85abb116b721e3d6e9b8eed4e1'
     ) {

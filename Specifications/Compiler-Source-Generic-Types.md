@@ -273,10 +273,10 @@ generic records, variants, and phantom parameters; duplicate and
 kind-mismatched parameters; rejected type-parameter application, builder
 storage, and bare templates; ordinary nominal regression; and edition-1 WVSS 2
 imports of the exact
-Foundation `Option` and `Result` declarations. Its 604,172-byte WVB has SHA-256
-`fa056f720caa741d3b3312e97ccd0b5dfce46559c07871f0e99eca229e06ca85`.
-The four-fragment 15,083,520-byte hosted Windows executable has SHA-256
-`c8e87418ca758bab33f9f16ff93d36f74f1a8f2e5cb962a6bc56c1c29ab4d83a`,
+Foundation `Option` and `Result` declarations. Its 680,865-byte WVB has SHA-256
+`274db85b46b1074e15515a9ab377887ec581cc92ec62a0bb810742d2816ed95a`.
+The five-fragment 17,234,944-byte hosted Windows executable has SHA-256
+`c9e13895bdc8082505d2318c325eeb6bdbcfc25750e30e28dd99eaea631babf1`,
 returns `42`, and writes no output. The independent
 `generic-nominal-declarations` owner reproduces this focused evidence through
 content-keyed compiler and hosted-application caches.

@@ -61,6 +61,8 @@ if not defined SelectedCases goto :usage
 if "%PrepareOnly%"=="1" set "SelectedCases=0"
 set /a ProgressTotal=SelectedCases+1
 set "ProgressCurrent=1"
+set "QualificationStep=0"
+set "QualificationSteps=60"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -70,10 +72,8 @@ set "TemporaryDirectory=%TEMP%\windvale-database-storage-%RANDOM%-%RANDOM%-%RAND
 if exist "%TemporaryDirectory%" goto :allocate
 mkdir "%TemporaryDirectory%" || exit /b 1
 
-set "BuildDriverWvb=%TemporaryDirectory%\Build-Driver.wvb"
-set "BuildDriver=%TemporaryDirectory%\Build-Driver.exe"
-set "LowererWvb=%TemporaryDirectory%\Lowerer.wvb"
-set "Lowerer=%TemporaryDirectory%\Lowerer.exe"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 set "WorkspacePath=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%WorkspacePath:\=/%"
 set "TemporaryResource=%TemporaryDirectory:\=/%"
@@ -110,49 +110,17 @@ if "%Development%"=="1" call :read_clock DevelopmentStart
 if "%Development%"=="1" call :read_clock ToolsStart
 if "%Development%"=="1" echo START native database storage development step=tools item=%ProgressCurrent%/%ProgressTotal% target=%DevelopmentTarget%
 
-if "%Development%"=="1" (
-    echo Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Project-Wvb.cmd" ^
-        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
-        "%BuildDriverWvb%" >"%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"
-    if errorlevel 1 goto :cleanup
-    set "ProjectWvbCheckpoint="
-    for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project wvb cache status=" "%TemporaryDirectory%\Build-Driver-Wvb-Cache.txt"') do set "ProjectWvbCheckpoint=%%S"
-    if not defined ProjectWvbCheckpoint goto :cleanup
-    echo Progress: step=database-storage-tools item=2/4 detail=package-build-driver
-    call :prepare_cached_build_driver "%BuildDriverWvb%"
-    if errorlevel 1 goto :cleanup
-    echo Progress: step=database-storage-tools item=3/4 detail=verify-lowerer
-    set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-    call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad
-    if errorlevel 1 goto :cleanup
-) else (
-    echo Progress: step=database-storage-tools item=1/4 detail=build-driver-wvb
-    call "%RepositoryRoot%\Tools\Native\Build-Current-Wvb.cmd" ^
-        "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" ^
-        "%BuildDriverWvb%" >nul
-    if errorlevel 1 goto :cleanup
-    call :verify_file "%BuildDriverWvb%" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949
-    if errorlevel 1 goto :cleanup
-    echo Progress: step=database-storage-tools item=2/4 detail=package-build-driver
-    call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-        2 "%BuildDriverWvb%" "%BuildDriver%" --development-cache >nul
-    if errorlevel 1 goto :cleanup
-
-    echo Progress: step=database-storage-tools item=3/4 detail=build-lowerer-wvb
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
-        "%LowererProjectResource%" "%TemporaryResource%/Lowerer.wvb" >nul
-    if errorlevel 1 goto :cleanup
-    call :verify_file "%LowererWvb%" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60
-    if errorlevel 1 goto :cleanup
-    echo Progress: step=database-storage-tools item=4/4 detail=package-lowerer
-    call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" ^
-        6 "%LowererWvb%" "%Lowerer%" --development-cache >nul
-    if errorlevel 1 goto :cleanup
-)
+echo Progress: step=database-storage-tools item=1/2 detail=verify-build-driver
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f
+if errorlevel 1 goto :cleanup
+echo Progress: step=database-storage-tools item=2/2 detail=verify-lowerer
+call :verify_file "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad
+if errorlevel 1 goto :cleanup
+set "ToolCheckpoint=Retained"
+set "ProjectWvbCheckpoint=NotBuilt"
 
 if "%Development%"=="1" if "%PrepareOnly%"=="0" (
-    echo Progress: step=database-storage-tools item=4/4 detail=start-hosted-session
+    echo Progress: step=database-storage-tools item=3/3 detail=start-hosted-session
     start "" /b node "%HostedApplicationSession%" serve ^
         "%HostedApplicationSessionReady%" windows "%BuildDriver%" "%Lowerer%" ^
         >"%HostedApplicationSessionLog%" 2>&1
@@ -162,7 +130,7 @@ if "%Development%"=="1" if "%PrepareOnly%"=="0" (
         goto :cleanup
     )
 )
-if "%Development%"=="1" if "%PrepareOnly%"=="1" echo Progress: step=database-storage-tools item=4/4 detail=tools-ready
+if "%Development%"=="1" if "%PrepareOnly%"=="1" echo Progress: step=database-storage-tools item=3/3 detail=tools-ready
 
 if "%Development%"=="1" call :read_clock ToolsEnd
 if "%Development%"=="1" call :elapsed_milliseconds ToolsStart ToolsEnd ToolsElapsedMs
@@ -484,6 +452,12 @@ if "%Development%"=="1" (
 echo native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
 exit /b 0
 
+:start_qualification_step
+if "%Development%"=="1" exit /b 0
+set /a QualificationStep+=1
+call echo Progress: step=database-storage-cases item=%%QualificationStep%%/%QualificationSteps% detail=%~1
+exit /b 0
+
 :verify_development_target
 if /I "%DevelopmentTarget%"=="transaction-branch-partition" if /I "%~2"=="transaction-branch-pages" goto :verify_development_target_selected
 if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" if /I not "%DevelopmentTarget%"=="%~4" if /I not "%DevelopmentTarget%"=="%~5" if /I not "%DevelopmentTarget%"=="%~6" if /I not "%DevelopmentTarget%"=="%~7" if /I not "%DevelopmentTarget%"=="%~8" if /I not "%DevelopmentTarget%"=="%~9" exit /b 0
@@ -694,6 +668,7 @@ call echo PASS  native database storage development step=persistent-transaction-
 exit /b 0
 
 :verify_host_storage
+call :start_qualification_step HostStorage
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
@@ -884,6 +859,7 @@ endlocal
 exit /b 0
 
 :verify_host_root_writer
+call :start_qualification_step HostRootWriter
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
@@ -1043,6 +1019,7 @@ endlocal
 exit /b 0
 
 :verify_host_local_service
+call :start_qualification_step HostLocalService
 setlocal EnableExtensions DisableDelayedExpansion
 set "PutProject=%~f1"
 set "GetProject=%~f2"
@@ -1108,6 +1085,7 @@ endlocal
 exit /b 0
 
 :verify_host_root_split_writer
+call :start_qualification_step HostRootSplitWriter
 setlocal EnableExtensions DisableDelayedExpansion
 set "FillProject=%~f1"
 set "SplitProject=%~f2"
@@ -1354,6 +1332,7 @@ endlocal & set "HostSegmentedComponentProjectCheckpoint=%ProjectCheckpoint%"
 exit /b 0
 
 :verify_host_tree_delete
+call :start_qualification_step HostTreeDelete
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "WindowsApplication=%TemporaryDirectory%\HostLocal-TreeDelete.exe"
@@ -1434,6 +1413,7 @@ endlocal
 exit /b 0
 
 :verify_host_tree_scan
+call :start_qualification_step HostTreeScan
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "WindowsApplication=%TemporaryDirectory%\HostLocal-TreeScan.exe"
@@ -1489,6 +1469,7 @@ endlocal
 exit /b 0
 
 :verify_host_tree_reader
+call :start_qualification_step HostTreeReader
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
@@ -1669,6 +1650,7 @@ endlocal
 exit /b 0
 
 :verify_host_engine
+call :start_qualification_step HostEngine
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
@@ -1846,6 +1828,7 @@ endlocal
 exit /b 0
 
 :verify_host_tree_writer
+call :start_qualification_step HostTreeWriter
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "WindowsApplication=%TemporaryDirectory%\HostTreeWriter.exe"
@@ -1927,6 +1910,7 @@ endlocal
 exit /b 0
 
 :verify_persistent_transaction_writer
+call :start_qualification_step PersistentTransactionWriter
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "WindowsApplication=%TemporaryDirectory%\PersistentTransactionWriter.exe"
@@ -1967,6 +1951,7 @@ endlocal
 exit /b 0
 
 :verify_host_logical_tree_writer
+call :start_qualification_step HostLogicalTreeWriter
 setlocal EnableExtensions DisableDelayedExpansion
 set "PutProject=%~f1"
 set "GetProject=%~f2"
@@ -2278,6 +2263,7 @@ exit /b 0
 exit /b 64
 
 :verify_storage_lowering
+call :start_qualification_step StorageLowering
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
@@ -2356,6 +2342,7 @@ endlocal
 exit /b 0
 
 :verify_segmented_target
+call :start_qualification_step "%~1"
 setlocal EnableExtensions DisableDelayedExpansion
 set "Label=%~1"
 set "ProjectPath=%~f2"
@@ -2458,6 +2445,7 @@ endlocal
 exit /b 0
 
 :verify_target
+call :start_qualification_step "%~1"
 setlocal EnableExtensions DisableDelayedExpansion
 set "Label=%~1"
 set "ProjectPath=%~f2"
