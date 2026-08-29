@@ -4256,3 +4256,11 @@ to their exact current identities. The focused Windows provider-image,
 process-object, and boot-probe owners pass 8, 2, and 4 cases respectively; the
 paired shell harnesses pass syntax validation. The corrected complete
 paired-host Qualification repeat remains the final Slice 7 gate.
+
+The first dispatch of that repeat stops every native shard at the bounded owner
+registry preflight because the Windows and Linux coordinators still pin the
+preceding registry digest. No native owner executes. Both coordinators and the
+current owner specification now advance with the registry to SHA-256
+`ca7e733addb1e4b9980af48fccde062e603ea3876da67bda88f14595846f0e85`;
+paired local preflights accept the identity and reject the deliberately unknown
+owner with the specified usage status.
