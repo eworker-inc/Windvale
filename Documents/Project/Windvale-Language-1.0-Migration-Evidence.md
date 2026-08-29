@@ -8,10 +8,10 @@ claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
 Migration Slices 1 through 6 are complete. Slice 7 now has bounded sequential
-execution, observable completion order, and explicit child-provider generation
-recovery. Parallel-capable Windows/Linux evidence, paired reconstruction,
-candidate promotion, and final Qualification are still pending before the slice
-closes. The existing
+execution, observable completion order, explicit child-provider generation
+recovery, paired runner reconstruction, candidate promotion, and bounded
+parallel-capable Windows/Linux evidence. Final Qualification is the only
+remaining Slice 7 gate. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -4084,8 +4084,9 @@ callable evidence advances to 4,394,089 bytes at SHA-256
 `b0d9f00087d04695004dfc04c331c646a192cd9291741dd78b7bf395acd8ff80`.
 The registry remains 114 owners and 5,568 cases and advances to SHA-256
 `a2852df9feab3e8e79a80562db3df6eebffc0f321d65f44bf417048960cfb6c5`.
-Candidate promotion is recorded by Decision 0874. Cross-host Development
-execution and final Slice 7 Qualification remain pending.
+Candidate promotion is recorded by Decision 0874. Paired reconstruction and
+cross-host parallel Development evidence are recorded below; final Slice 7
+Qualification remains pending.
 
 ## Slice 7 complete runner promotion checkpoint
 
@@ -4105,5 +4106,37 @@ analyzer/emitter pair reconstructs the WVB through all 13 visible phases. The
 split-project cache now validates every path component by metadata, accepting
 ordinary NTFS short spellings without admitting linked ancestors.
 
-Independent Windows/Linux Development execution and the explicit final Slice
-7 Qualification gate remain pending.
+At promotion commit `7993569d`, GitHub Actions run `33232989584` passes the exact
+three-case reconstruction owner on Linux in 603 seconds and Windows in
+1,260.210 seconds. Its later failure belonged to the independent WVB-inspector
+owner's stale historical Echo lock, not runner construction. Commit `4b5e9daf`
+removes that obsolete lock, and run `33233921944` passes the corrected focused
+Development plan on both hosts. The explicit final Slice 7 Qualification gate
+remains pending.
+
+## Slice 7 bounded parallel-host checkpoint
+
+[Decision 0875](../Decisions/0875-Add-A-Bounded-Parallel-Hosted-Task-Scheduler.md)
+adds an isolated hosted scheduler beneath unchanged Language 1.0 and WVB 1.32
+semantics. Admission reserves each complete 56-byte task record, opaque work,
+maximum 65,536-byte terminal value, and declared work units before transfer.
+Affine handles, exact runtime generations, cooperative cancellation, worker
+lifetime, retained bytes, and teardown are all bounded. Worker or protocol loss
+is reported as task-runtime loss rather than a fabricated source trap.
+
+The permanent workload requires four actual worker threads to be live together
+at one shared atomic rendezvous. It then publishes completion order `3,1,0,2`,
+preserves creation-ordered joins `0,1,2,3`, and returns `42`. The focused owner
+passes 49 cases with transcript SHA-256
+`ec46e8f65ee74954a51180781f35d37e1d1b36dda92e4c4ac2872a1b0eefb576`.
+Commit `aef806b7` passes that unchanged owner in GitHub Actions run
+`33235016333` on Windows in 1 minute 22 seconds and Linux in 59 seconds. Both
+jobs also pass the four-case verification-owner stream and the 31-general,
+206-native planner; the aggregate gate passes.
+
+The complete registry is 115 owners and 5,617 cases. Its 19,108 LF-only bytes
+have SHA-256
+`0904efe6c9c78c61e5e7947063ee2896124fffa1f7732eda9197cc7b5d6f09a2`.
+This proves a real bounded parallel-capable policy without adding source threads
+or mutating the scalar WVB interpreter from multiple workers. Final Slice 7
+Qualification remains the sole outstanding gate.

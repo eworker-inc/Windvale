@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted implementation checkpoint on 2026-08-29. Focused Windows evidence is
-complete. Independent Linux evidence and the final Slice 7 Qualification gate
-remain pending.
+Accepted implementation checkpoint on 2026-08-29. Independent Windows and
+Linux focused Development evidence is complete at commit `aef806b7`; the final
+Slice 7 Qualification gate remains pending.
 
 ## Context
 
@@ -47,10 +47,11 @@ already established by the sequential oracle.
 
 ## Evidence
 
-The focused Windows owner passes 49 cases. Four workers are simultaneously live,
-all four arrive at and leave the shared rendezvous, completion order is
-`3,1,0,2`, join order is `0,1,2,3`, and the final result is `42`. The exact
-transcript SHA-256 is
+The unchanged focused owner passes 49 cases on Windows and Linux in GitHub
+Actions run `33235016333`. Four workers are simultaneously live, all four arrive
+at and leave the shared rendezvous, completion order is `3,1,0,2`, join order is
+`0,1,2,3`, and the final result is `42`. The exact transcript SHA-256 on both
+hosts is
 `ec46e8f65ee74954a51180781f35d37e1d1b36dda92e4c4ac2872a1b0eefb576`.
 
 The owner also covers invalid limits and executor identities, duplicate
@@ -60,8 +61,11 @@ after closing, typed child failure, double await, runtime loss/restart, containe
 trap identity, worker-lifetime containment, malformed worker-protocol loss, and
 complete teardown accounting.
 
-Independent Linux execution and the complete final qualification remain required
-before this decision closes Slice 7.
+The Windows focused Development job completed in 1 minute 22 seconds and the
+Linux job completed in 59 seconds. Each selected exactly
+`verification-owner-stream` and `language-1-parallel-task-scheduler`; the
+aggregate verification gate passed. The complete final Qualification gate
+remains required before this decision closes Slice 7.
 
 ## Consequences
 

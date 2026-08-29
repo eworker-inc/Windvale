@@ -2,8 +2,9 @@
 
 ## Status and scope
 
-The profile-5 WVB runner is a paired-host-rerun-pending native candidate. It
-preserves the fixed portable `Main() -> i32` execution command and additionally
+The profile-5 WVB runner is a paired-host-reconstructed,
+qualification-pending native candidate. It preserves the fixed portable
+`Main() -> i32` execution command and additionally
 owns the internal bounded scripting mode defined by
 [Decision 0735](../Documents/Decisions/0735-Implement-The-First-Windvale-Scripting-Slice.md).
 The outer runner binds five capabilities to nine ordered services. The exact
@@ -21,8 +22,8 @@ Project 1 semantics.
 ## Current exact products
 
 The following table is the current profile-5 runner candidate. Independent
-Windows/Linux reconstruction is still required before its pending qualification
-field can advance.
+Windows/Linux reconstruction reproduces all three identities; the pending
+qualification field advances only after the final Slice 7 Qualification gate.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -491,9 +492,11 @@ self-test all pass their exact outcomes. The completion-order fixture writes
 `3`, `1`, `0`, `2`, then `Result: 42`; its WVB SHA-256 is
 `6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c`.
 The complete focused owner passes all 61 named phases and 172 cases, including
-the provider-generation recovery workload. These are focused sequential
-development results; independent paired-host reconstruction and
-parallel-capable paired-host evidence remain pending.
+the provider-generation recovery workload. GitHub Actions run `33232989584`
+passes the exact three-case runner reconstruction owner independently on Linux
+and Windows. GitHub Actions run `33235016333` separately proves the bounded
+parallel-capable host policy on both systems. The final Slice 7 Qualification
+gate remains pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent
@@ -507,7 +510,8 @@ The three-case fixed owner proves exact candidate inventory, source-built
 paired reconstruction, current-host result and instruction reporting, invalid
 option rejection, malformed-module rejection, and input preservation. An
 earlier candidate passed that Windows owner 3/3 in 49.8 seconds; the repinned
-segmented candidate awaits its paired-host rerun. The paired 185-case native Seed
+segmented candidate passes on Linux in 603 seconds and Windows in 1,260.210
+seconds in run `33232989584`. The paired 185-case native Seed
 front-door helper builds 105 exact artifacts and passes one uninterrupted
 Windows run in 939.6 seconds plus one independent Linux 6.1 x86-64 run in
 873.7 seconds over the identical tracked state. The helper owns the four Foundation

@@ -2,9 +2,8 @@
 
 ## Status
 
-Accepted on 2026-08-29. Exact local reconstruction is complete; independent
-Windows/Linux Development execution and the final Slice 7 Qualification gate
-remain pending.
+Accepted on 2026-08-29. Exact local and independent Windows/Linux reconstruction
+are complete; the final Slice 7 Qualification gate remains pending.
 
 ## Context
 
@@ -83,8 +82,14 @@ reconstruction and repository content storage is not duplicated.
 
 The first local reconstruction reached all 13 current split-compiler phases
 and emitted the exact promoted WVB before correctly failing against the stale
-tracked identity. The refreshed reconstruction owner and paired-host workflow
-remain the acceptance evidence for the settled promotion commit.
+tracked identity. At promotion commit `7993569d`, GitHub Actions run
+`33232989584` then passed the three-case `wvb-runner-reconstruction` owner on
+Linux in 603 seconds and Windows in 1,260.210 seconds. That run failed only
+afterward in the separate WVB-inspector owner because it still required a
+historical Echo package identity. Commit `4b5e9daf` removed that stale lock, and
+run `33233921944` passed the resulting focused Development plan on both hosts.
+The promoted runner therefore has exact paired reconstruction evidence; the
+explicit final Slice 7 Qualification gate remains separate.
 
 ## Consequences
 

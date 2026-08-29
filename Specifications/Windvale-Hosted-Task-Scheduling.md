@@ -108,6 +108,12 @@ requires exact agreement on 49 cases, worker count four, completion order
 `3,1,0,2`, join order `0,1,2,3`, result `42`, and transcript SHA-256
 `ec46e8f65ee74954a51180781f35d37e1d1b36dda92e4c4ac2872a1b0eefb576`.
 
+Commit `aef806b7` satisfies that focused paired-host contract in GitHub Actions
+run `33235016333`: Windows and Linux report the same 49-case result and exact
+observation identity, and the aggregate Development gate passes. This is the
+required parallel-capability evidence; complete Slice 7 Qualification remains a
+separate final integration gate.
+
 ## Boundaries
 
 This first host policy does not expose threads, worker counts, scheduler events,

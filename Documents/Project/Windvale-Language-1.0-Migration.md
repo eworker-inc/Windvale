@@ -732,7 +732,7 @@ captures, retained captures, general same-signature dispatch, and escaping
 environments remain separately versioned extensions; browser and OS execution,
 paired-host qualification, and candidate promotion remain separate target gates.
 
-## Current Slice 7 queued structured-task checkpoint
+## Current Slice 7 hosted structured-task checkpoint
 
 [Decision 0861](../Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 connects the accepted lexical task surface to the real edition-1 compiler,
@@ -793,11 +793,24 @@ values `0`, `1`, `2`, `3` through their creation-ordered handles. The
 zero-capability task request remains minor `1`; source syntax, WVIR 1.21, and
 WVB 1.32 are unchanged.
 
-This completes the queued single-thread implementation checkpoint, not the
-whole Slice 7 qualification promise. The child-provider generation and recovery
-workload, a parallel-capable Windows host, a parallel-capable Linux host,
-paired-host reconstruction, candidate promotion, and broad Qualification remain
-explicit final Slice 7 gates rather than per-edit tests.
+[Decision 0870](../Decisions/0870-Enforce-Awaited-Provider-Calls-And-Recovery.md)
+completes explicit child-provider generation and recovery without automatic
+retry. [Decision 0874](../Decisions/0874-Promote-The-Complete-Slice-7-Wvb-Runner.md)
+promotes the resulting complete 228-function runner and records exact
+reconstruction on Windows and Linux. The scalar WVB runner remains the
+deterministic portable oracle.
+
+[Decision 0875](../Decisions/0875-Add-A-Bounded-Parallel-Hosted-Task-Scheduler.md)
+adds the separate bounded parallel-capable hosted policy. Four isolated worker
+threads must all reach one atomic rendezvous, publish completion order
+`3,1,0,2`, preserve creation-ordered joins `0,1,2,3`, and return `42`. The same
+49-case owner and exact transcript identity pass independently on Windows and
+Linux. This does not expose threads to source or make the scalar interpreter's
+shared heap concurrent.
+
+Child-provider recovery, candidate promotion, paired runner reconstruction, and
+parallel-capable Windows/Linux execution are complete. The one explicit broad
+Qualification run remains the final Slice 7 gate rather than a per-edit test.
 
 ## Removal checkpoint
 

@@ -223,8 +223,10 @@ distinguishes determinate and indeterminate provider restart, performs no
 automatic retry, explicitly refreshes one rights-limited generation-42
 endpoint, and proves that a fifth accepted child can use it. Provider failure
 remains the child's typed `E`; it never becomes task-runtime loss or restart.
-Parallel worker state remains a later Slice 7 checkpoint. This provider
-checkpoint changes neither source grammar, WVIR 1.21, nor WVB 1.32.
+A separate bounded hosted scheduler now supplies the required parallel-capable
+policy with isolated worker executors and immutable outcomes. It changes neither
+source grammar, WVIR 1.21, nor WVB 1.32, and it does not make the scalar
+interpreter's shared heap concurrent.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six
 limits. WVB 1.32's first six task instructions do not create a task-owned timer
@@ -238,3 +240,9 @@ reproduces the same accepted/rejected transfers, exact outcomes, creation-order
 joins, resource accounting, cancellation observations, and deterministic
 data-race-free result bytes on Windows and Linux. Scheduler selection remains a
 runtime policy and never changes source, WVIR, or WVB.
+
+The bounded policy specified by
+[`Windvale-Hosted-Task-Scheduling.md`](Windvale-Hosted-Task-Scheduling.md)
+satisfies that first paired-host checkpoint with four concurrently live worker
+threads. The sequential WVB runner remains the portable correctness oracle;
+shared-heap parallel execution requires a later ownership and merge contract.
