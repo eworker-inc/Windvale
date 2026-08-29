@@ -7,11 +7,11 @@ measurement evidence outside that immutable identity. It must not be read as a
 claim that the complete Language 1.0 compiler, Foundation, runtime, editor, or
 any natural-language pack is implemented.
 
-Migration Slices 1 through 6 are complete. Slice 7 now has bounded sequential
+Migration Slices 1 through 7 are complete. Slice 7 has bounded sequential
 execution, observable completion order, explicit child-provider generation
-recovery, paired runner reconstruction, candidate promotion, and bounded
-parallel-capable Windows/Linux evidence. Final Qualification is the only
-remaining Slice 7 gate. The existing
+recovery, paired runner reconstruction, candidate promotion, bounded
+parallel-capable Windows/Linux execution, and exact paired-host Qualification.
+Slice 8 System and FFI work is the next implementation stage. The existing
 compiler admits an edition-1 source descriptor only through an explicitly
 supplied, hash-pinned source-input lock and composite source profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
@@ -4264,3 +4264,24 @@ current owner specification now advance with the registry to SHA-256
 `ca7e733addb1e4b9980af48fccde062e603ea3876da67bda88f14595846f0e85`;
 paired local preflights accept the identity and reject the deliberately unknown
 owner with the specified usage status.
+
+## Slice 7 final paired-host qualification
+
+[Decision 0882](../Decisions/0882-Complete-Windvale-Language-1.0-Slice-7-Qualification.md)
+closes Slice 7 at exact source commit
+`23c66552d26f0a5f2ca969a62e5f59425100c206`. The final repair chain reports the
+filesystem provider's native identity as host-specific, refreshes the changed
+native filesystem evidence, canonicalizes nested Windows split-cache failure
+paths, rejects impossible console publication candidates before expensive
+reconstruction, and corrects the offline-package-uninstall owner inventory.
+
+The resulting registry contains 114 owners and 5,618 cases in 19,004 LF-only
+bytes at SHA-256
+`a3d9217b63d187a697a5df116c6ebe14e4ada96ca64df9a93119b202b0ed5668`.
+Final GitHub Actions Qualification run
+[33265179717](https://github.com/eworker-inc/Windvale/actions/runs/33265179717)
+resolves all 18 jobs: 14 pass, four correctly skip outside the selected scope,
+and none fail. Both native bootstrap jobs, both WebAssembly jobs, all eight
+Windows/Linux native shards, classification, and aggregation pass at that exact
+commit. Slice 7 is therefore complete; this evidence does not claim that Slice
+8 or the complete Language 1.0 migration is already implemented.

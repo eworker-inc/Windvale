@@ -793,11 +793,14 @@ values `0`, `1`, `2`, `3` through their creation-ordered handles. The
 zero-capability task request remains minor `1`; source syntax, WVIR 1.21, and
 WVB 1.32 are unchanged.
 
-This completes the queued single-thread implementation checkpoint, not the
-whole Slice 7 qualification promise. The child-provider generation and recovery
-workload, a parallel-capable Windows host, a parallel-capable Linux host,
-paired-host reconstruction, candidate promotion, and broad Qualification remain
-explicit final Slice 7 gates rather than per-edit tests.
+This completed the queued single-thread implementation checkpoint. Subsequent
+work added the child-provider generation and recovery workload,
+parallel-capable Windows and Linux hosts, paired-host reconstruction, candidate
+promotion, and the complete owned Qualification boundary. As recorded by
+[Decision 0882](../Decisions/0882-Complete-Windvale-Language-1.0-Slice-7-Qualification.md),
+the exact final source state passes both native bootstraps, both WebAssembly
+jobs, and all eight Windows/Linux native shards. Slice 7 is complete; Slice 8
+System and FFI work is the next migration stage.
 
 ## Removal checkpoint
 
