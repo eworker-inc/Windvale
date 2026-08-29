@@ -61,9 +61,13 @@ special consuming operation over one affine task handle.
 an immutable scope borrow and produces a Copy value whose origin scope must
 remain live.
 
-## WVIR 1.21 operations
+## WVIR 1.21/1.22 operations
 
-WVIR 1.21 appends these operations without changing earlier identities:
+WVIR 1.21 appends these operations without changing earlier identities. WVIR
+1.22 retains the same operation vocabulary and adds the generic-specialization
+header used by the earlier even WVIR minors. WVIR 1.21 is selected when no
+generic function instance is admitted; WVIR 1.22 is selected when the task
+directory contains at least one admitted generic function instance:
 
 | Operation | Identity | Result |
 |---:|---|---|
@@ -225,7 +229,7 @@ endpoint, and proves that a fifth accepted child can use it. Provider failure
 remains the child's typed `E`; it never becomes task-runtime loss or restart.
 A separate bounded hosted scheduler now supplies the required parallel-capable
 policy with isolated worker executors and immutable outcomes. It changes neither
-source grammar, WVIR 1.21, nor WVB 1.32, and it does not make the scalar
+source grammar, WVIR 1.21/1.22, nor WVB 1.32, and it does not make the scalar
 interpreter's shared heap concurrent.
 
 `Maximumˉtimers` and `Maximumˉdiagnostics` are validated with the other six

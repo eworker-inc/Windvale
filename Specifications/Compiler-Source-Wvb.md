@@ -14,7 +14,7 @@ linkage. Direct native lowering, browser packaging, and Windvale OS execution
 retain their separately versioned subsets.
 
 WVIR 1.19/1.20 and WVB 1.31 establish the prepared-evidence and portable-runtime
-substrate for frame-owned plain captures. WVIR 1.21 and WVB 1.32 add the exact
+substrate for frame-owned plain captures. WVIR 1.21/1.22 and WVB 1.32 add the exact
 structured-task lowering selected by
 [Decision 0861](../Documents/Decisions/0861-Execute-Structured-Tasks-As-Wvb-1.32.md).
 The task extension preserves async and effect evidence, affine scope/handle
@@ -952,7 +952,8 @@ the exact flags, result mode, language-effect mask, capability-effect bitmap,
 and parameter modes to every callable descriptor in that module.
 
 WVIR 1.21 operations 180 through 185 lower in order to WVB opcodes `D6` through
-`DB`. The writer remaps all scope, handle, construction, spawn, and outcome
+`DB`; WVIR 1.22 retains the same operations with the generic-specialization
+header. The writer remaps all scope, handle, construction, spawn, and outcome
 types into the canonical Types directory and writes exact local/type immediates.
 The verifier reconstructs the canonical `Foundationˉtask` and
 `Foundationˉoperation` layouts, proves scope and handle availability at every

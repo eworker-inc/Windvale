@@ -9,9 +9,9 @@ individually bounded values:
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
   specialization-evidence `WVLB 1.3` binding directory; and
-- one canonical `WVIR 1.9` through `WVIR 1.18` typed source directory, with the
-  exact ordinary/specialized, memory/append/growth, and callable feature pairing
-  defined by WVIR.
+- one canonical `WVIR 1.9` through `WVIR 1.22` typed source directory, with the
+  exact ordinary/specialized, memory/append/growth, callable, closure, and
+  structured-task feature pairing defined by WVIR.
 
 The artifact set is an internal compiler-phase contract. It is not executable,
 is not a package or distribution format, and does not create another source
