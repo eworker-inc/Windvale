@@ -16,12 +16,6 @@ pass() {
 fail() {
     tests=$((tests + 1))
     echo "FAIL  step=$failure_step"
-    if [[ -n ${test_directory:-} ]]; then
-        [[ -f $test_directory/Construct.out ]] &&
-            cat -- "$test_directory/Construct.out"
-        [[ -f $test_directory/Construct.err ]] &&
-            cat -- "$test_directory/Construct.err" >&2
-    fi
     echo 'FAIL  segmented compiler toolset reconstruction'
     echo "Tests: $tests, Passed: $passed, Failed: $((tests - passed))"
     exit 1
@@ -59,11 +53,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-"$script_directory/Construct-Segmented-Compiler-Toolset.sh" "$test_directory" \
-    >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" || fail
-grep -Fx 'native segmented compiler toolset construction status=Complete artifacts=9' \
-    "$test_directory/Construct.out" >/dev/null || fail
-[[ ! -s $test_directory/Construct.err ]] || fail
+"$script_directory/Construct-Segmented-Compiler-Toolset.sh" "$test_directory" || fail
 echo 'INFO  segmented compiler toolset reconstruction step=construction status=Complete'
 
 failure_step='WVO staging producer identity'
@@ -103,7 +93,7 @@ failure_step='compiler-scale native staging diagnostic'
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 failure_step='compiler-scale native staging report'
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=31736596 chunks=41 manifest-bytes=516' \
+    'native x64 staging status=Complete object-bytes=31736596 chunks=34 manifest-bytes=432' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

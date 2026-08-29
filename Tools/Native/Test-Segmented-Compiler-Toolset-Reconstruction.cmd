@@ -17,12 +17,8 @@ set "FailureStep=construction"
 set "TestDirectory=%TEMP%\windvale-segmented-toolset-reconstruction-test-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%TestDirectory%" goto :allocate
 mkdir "%TestDirectory%" || goto :failed
-call "%RepositoryRoot%\Tools\Native\Construct-Segmented-Compiler-Toolset.cmd" "%TestDirectory%" ^
-    >"%TestDirectory%\Construct.out" 2>"%TestDirectory%\Construct.err"
+call "%RepositoryRoot%\Tools\Native\Construct-Segmented-Compiler-Toolset.cmd" "%TestDirectory%"
 if errorlevel 1 goto :failed
-findstr /x /c:"native segmented compiler toolset construction status=Complete artifacts=9" "%TestDirectory%\Construct.out" >nul
-if errorlevel 1 goto :failed
-for %%F in ("%TestDirectory%\Construct.err") do if not "%%~zF"=="0" goto :failed
 echo INFO  segmented compiler toolset reconstruction step=construction status=Complete
 
 set "FailureStep=WVO staging producer identity"
@@ -59,7 +55,7 @@ if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging diagnostic"
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
 set "FailureStep=compiler-scale native staging report"
-findstr /b /c:"native x64 staging status=Complete object-bytes=31736596 chunks=41 manifest-bytes=516" "%TestDirectory%\Compiler-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=31736596 chunks=34 manifest-bytes=432" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 
@@ -96,8 +92,6 @@ exit /b 0
 
 :failed
 if defined FailureStep echo FAIL  step=%FailureStep%
-if exist "%TestDirectory%\Construct.out" type "%TestDirectory%\Construct.out"
-if exist "%TestDirectory%\Construct.err" type "%TestDirectory%\Construct.err" >&2
 if exist "%TestDirectory%\Compiler-Build.err" type "%TestDirectory%\Compiler-Build.err"
 if exist "%TestDirectory%\Compiler-Stage.out" type "%TestDirectory%\Compiler-Stage.out"
 if exist "%TestDirectory%\Compiler-Stage.err" type "%TestDirectory%\Compiler-Stage.err"

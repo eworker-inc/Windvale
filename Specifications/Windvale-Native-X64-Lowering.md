@@ -240,6 +240,15 @@ cursor steps, and writes each remaining value exactly once to
 or manifest resource. Chunk index zero is the first nonempty cursor value;
 indices increase by one and their recorded WVO positions are contiguous.
 
+Consecutive nonempty code steps are greedily coalesced in publication order
+while their checked combined length is at most 1,310,720 bytes (1.25 MiB). The
+pending code resource is flushed before every non-code step or before the next
+append would exceed that target. One naturally larger code step remains one
+resource and is still subject to the ordinary 4,194,304-byte publication
+ceiling. Prefix, padding, read-only, symbol, and relocation steps are never
+coalesced with code or with each other. This staging-only rule preserves exact
+WVO bytes and positions without changing the shared lowerer cursor policy.
+
 Only after every chunk write returns does the tool write the little-endian
 `WVOP 1.0` manifest:
 

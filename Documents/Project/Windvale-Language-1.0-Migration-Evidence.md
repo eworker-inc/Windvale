@@ -4306,3 +4306,29 @@ contains 115 owners and 5,630 cases in 19,198 LF-only bytes at SHA-256
 Exact target enforcement, general grammar-driven foreign signatures, typed WIR
 and pointer evidence, ABI binding, native call lowering, hostile execution,
 containment, and the first real migrated boundary remain pending.
+
+## Slice 8 compiler-scale staging coalescing
+
+[Decision 0885](../Decisions/0885-Increase-Compiler-Scale-Code-Coalescing-Within-The-Retained-Staging-Bound.md)
+records the first current analyzer to exceed the retained 62-resource native
+staging bound. The exact 1,538,858-byte analyzer lowers to 50,505,412 WVO bytes.
+The former 1 MiB code coalescing target emitted 63 resources; the selected
+1.25 MiB target emits 50 while preserving the WVO SHA-256
+`499d31bfe2dad3ca561955dac26b55dc376e967e3085fd198dc6bf7e90064e60`.
+
+The refreshed staging family is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVO-staging WVB | 576,810 | `0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc` |
+| Windows staging application | 8,416,768 | `ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54` |
+| Linux staging application | 8,417,280 | `499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280` |
+
+Windows cross-target construction leaves the other six segmented toolset
+artifacts byte-identical. The retained bootstrap analyzer now stages its exact
+31,736,596-byte WVO in 34 resources plus a 432-byte manifest. The focused
+Windows reconstruction owner passes all four cases twice; its final wrapper
+streams bounded nested construction progress rather than remaining silent.
+The changed-path planner reports no coverage gap. Independent Linux
+reconstruction and execution and the broader selected development owners
+remain pending evidence.

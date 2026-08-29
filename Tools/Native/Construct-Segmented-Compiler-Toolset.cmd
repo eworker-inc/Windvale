@@ -67,11 +67,11 @@ call :construct_pair Transport "%TransportWvb%" ^
 if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
 
-call :verify_file "%WvoStagingWvb%" 576810 db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 576810 0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 8416768 fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 8416768 ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54 "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 8417280 3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564 "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 8417280 499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ImageStagingWvb%" 75666 ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup

@@ -9,7 +9,7 @@
   "capacityDecision": "0821",
   "aggregateSymbolDecision": "0860",
   "structuredTaskDecision": "0861",
-  "stagingRefreshDecision": "0862",
+  "stagingRefreshDecision": "0885",
   "maximumImageBytes": 67108864,
   "maximumFragments": 16,
   "applicationConstruction": "native-segmented-self-reconstruction",
@@ -19,7 +19,7 @@
       "path": "Wvo-Staging-Producer.wvb",
       "target": "canonical-wvb-1.11",
       "bytes": 576810,
-      "sha256": "db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be",
+      "sha256": "0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc",
       "sourceProject": "Windvale-Native-X64-Lowering-Staging-Tool.wvproj"
     },
     {
@@ -27,7 +27,7 @@
       "path": "windows-x64-wvstage.exe",
       "target": "windows-x64-wvo-staging-producer-v1",
       "bytes": 8416768,
-      "sha256": "fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e",
+      "sha256": "ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
@@ -35,7 +35,7 @@
       "path": "linux-x64-wvstage.elf",
       "target": "linux-x64-wvo-staging-producer-v1",
       "bytes": 8417280,
-      "sha256": "3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564",
+      "sha256": "499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {

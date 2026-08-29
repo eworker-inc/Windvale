@@ -309,12 +309,13 @@ hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
 The segmented producer WVB is exactly 576,810 bytes at SHA-256
-`db08361446b4524c63c04e6265e1775d65b2b2ae464fe8cfc351b7d1f77d62be`.
+`0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc`.
 Its Windows application is 8,416,768 bytes at SHA-256
-`fa939fb8f0d45182dcffe1a4a4e9e2eedb264bcba5e71544e81e7c5c0013628e`;
+`ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54`;
 its Linux application is 8,417,280 bytes at SHA-256
-`3e50fb3170779cfe3d2ee6b12581f2b0b69793c372d5bdf7e9777d2cc7e3e564`.
-Decisions 0496, 0542, 0545, 0583, 0713, 0724, 0770, 0860, 0861, and 0862 reconstruct this pair and the staging and transport pairs from
+`499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280`.
+Decisions 0496, 0542, 0545, 0583, 0713, 0724, 0770, 0860, 0861, 0862, and
+0885 reconstruct this pair and the staging and transport pairs from
 the retained native candidate toolset on Windows. That construction does not
 by itself prove Stage 2, Linux execution, promotion, or a seed-independent
 bootstrap.
