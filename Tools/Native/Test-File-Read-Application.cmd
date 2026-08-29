@@ -11,32 +11,33 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 
 :allocate
-set "Work=%TEMP%\windvale-file-read-application-%RANDOM%-%RANDOM%-%RANDOM%"
+set "Work=%TemporaryRoot%\windvale-file-read-application-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
+set "CanonicalWork="
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+if not defined CanonicalWork (
+    rmdir "%Work%" >nul 2>&1
+    exit /b 1
+)
+set "Work=%CanonicalWork%"
+set "CanonicalWork="
+for /f "usebackq delims=" %%T in (`node -p "require('node:path').dirname(process.argv[1])" "%Work%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 set "WorkResource=%Work:\=/%"
 set "Result=1"
 
-echo START native file read phase=tools item=1/6
-set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
-echo Progress: step=file-read-tools item=1/4 detail=build-driver-wvb
-call "%Native%\Build-Current-Wvb.cmd" ^
-    "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 "current build driver WVB" || goto :cleanup
-echo Progress: step=file-read-tools item=2/4 detail=package-build-driver
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
-    "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
-set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
-set "LowererProjectResource=%LowererProject:\=/%"
-echo Progress: step=file-read-tools item=3/4 detail=build-lowerer-wvb
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
-    "%LowererProjectResource%" "%WorkResource%/Lowerer.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 "current lowerer WVB" || goto :cleanup
-echo Progress: step=file-read-tools item=4/4 detail=package-lowerer
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 ^
-    "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
+echo START native file read phase=tools item=1/6 retained-tools=2
+echo Progress: step=file-read-tools item=1/2 detail=verify-build-driver
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f "retained build driver" || goto :cleanup
+echo Progress: step=file-read-tools item=2/2 detail=verify-lowerer
+call :verify_file "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad "retained lowerer" || goto :cleanup
 echo PASS  native file read phase=tools item=1/6
 
 echo START native file read phase=compile item=2/6
@@ -45,14 +46,14 @@ set "ResponseProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Standa
 set "ResponseProjectResource=%ResponseProject:\=/%"
 set "ApplicationProject=%RepositoryRoot%\Projects\Applications\Windvale-File-Read.wvproj"
 set "ApplicationProjectResource=%ApplicationProject:\=/%"
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
     "%ResponseProjectResource%" "%WorkResource%/Response.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project ^
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project ^
     "%ApplicationProjectResource%" "%WorkResource%/File-Read.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Response.wvb" 8417 868c9967432b3b5b2859de26bb3caf76dcbcc113d4a9c678625eecde73fd8193 "response-core self-test WVB" || goto :cleanup
 call :verify_file "%Work%\File-Read.wvb" 76474 95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb "file-read WVB" || goto :cleanup
 echo native file read compile step=lower
-"%Work%\Lowerer.exe" "%Work%\File-Read.wvb" "%Work%\File-Read.wvo" >nul || goto :cleanup
+"%Lowerer%" "%Work%\File-Read.wvb" "%Work%\File-Read.wvo" >nul || goto :cleanup
 call :verify_file "%Work%\File-Read.wvo" 2410255 8ad63e3dbe87daccf6a9a94407ee0a661f177d6f812b300587b77fe36f7dd323 "file-read WVO" || goto :cleanup
 echo native file read compile step=response-package
 call "%Native%\Package-Hosted-Wvb.cmd" 2 "%Work%\Response.wvb" "%Work%\Response.exe" windows >nul || goto :cleanup
@@ -107,7 +108,7 @@ set "Result=0"
 
 :cleanup
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
-echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-file-read-application-" >nul || exit /b 1
+echo(%ResolvedWork%| findstr /b /i /c:"%TemporaryRoot%\windvale-file-read-application-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
 echo native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified

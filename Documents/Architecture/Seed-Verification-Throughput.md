@@ -389,6 +389,19 @@ set. Replaying the 112 commits from 2026-08-16 reduced library-owner selection
 from 31 commits to four, avoiding about 711 seconds of measured Windows work
 while retaining two focused selections and two legitimate complete selections.
 
+Qualification owners follow the same ownership boundary even though they run
+cold. An ordinary application, library, or provider owner verifies the exact
+retained compiler and lowerer candidates, then reconstructs and exercises its
+own product. It does not rebuild compiler tooling unless compiler construction
+is the behavior it owns. Dedicated convergence and reconstruction owners retain
+that independent evidence, and a historical recovery owner remains bound to its
+exact restored commit. Applying this rule to model-provider qualification cut
+the measured owner from roughly 24 to 29 minutes to 13 seconds on Linux and 21
+seconds on Windows while preserving all 11 cases. Four other ordinary owners
+now use the same retained-tool boundary while preserving duplicate compilation,
+byte comparison, lowering, linking, cross-target packaging, and current-host
+execution of their actual products.
+
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained
    sequential equivalence oracle.

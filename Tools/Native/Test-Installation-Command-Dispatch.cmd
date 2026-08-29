@@ -23,7 +23,7 @@ call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Resolver.wvb" "%Work%\Resolver.
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" windows || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
 
 echo native installation command dispatch step=build-package-payloads item=2/7 packages=2
 call "%Native%\Build-Wvdb-Query-Package.cmd" ^

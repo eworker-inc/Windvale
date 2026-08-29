@@ -27,17 +27,17 @@ echo native offline package stage step=build-tools item=1/8
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 284755 ccffc57e6a18b7a14b2aeecc0ff5ef38a0a9bd8206ea429ebf9d9b93c678296c "bundle writer WVB" || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 510498 7bc577ac157fc20c301699e5cd08286b736017922871f5206b045d6c46b93a1d "bundle writer WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 304048 1e37b48c182690b600d1310feb7d057ef337ebc4f962499eeb031116f22e64d8 "bundle verifier WVB" || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 529791 218e8939a6e0686c6d2086e2ce977c405abb77728280b332bdf15277f8fa606b "bundle verifier WVB" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Generation-Verifier.wvproj" ^
     "%Work%\Generation-Verifier.wvb" || goto :cleanup
 call :verify_file "%Work%\Generation-Verifier.wvb" 42364 2beb02ba0ea13b1552a0c3bf9b92bebe438ac65b2eb49000a4fc1762ed8f7e9f "generation verifier WVB" || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" windows || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" windows || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Verifier.wvb" "%Work%\Verifier.exe" || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Generation-Verifier.wvb" "%Work%\Generation-Verifier.exe" windows || goto :cleanup
 
 echo native offline package stage step=build-packages item=2/8 packages=2

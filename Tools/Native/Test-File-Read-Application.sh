@@ -8,8 +8,16 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-temporary_root=${TMPDIR:-/tmp}
-work=$(mktemp -d "$temporary_root/windvale-file-read-application.XXXXXXXX") || exit 1
+temporary_root=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
+allocated_work=$(mktemp -d "$temporary_root/windvale-file-read-application.XXXXXXXX") || exit 1
+if ! work=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "$allocated_work"); then
+    rmdir -- "$allocated_work"
+    exit 1
+fi
+if ! temporary_root=$(node -p "require('node:path').dirname(process.argv[1])" "$work"); then
+    rmdir -- "$work"
+    exit 1
+fi
 cleanup() {
     case "$work" in
         "$temporary_root"/windvale-file-read-application.*)
@@ -34,37 +42,26 @@ verify_file() {
 }
 
 workspace="$repository_root/Windvale.wvws"
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
+lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
-echo 'START native file read phase=tools item=1/6'
-echo 'Progress: step=file-read-tools item=1/4 detail=build-driver-wvb'
-"$script_directory/Build-Current-Wvb.sh" \
-    "$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-    "$work/Build-Driver.wvb" >/dev/null || exit $?
-verify_file "$work/Build-Driver.wvb" 1259719 \
-    3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 \
-    'current build driver WVB' || exit 1
-echo 'Progress: step=file-read-tools item=2/4 detail=package-build-driver'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
-    "$work/Build-Driver.wvb" "$work/Build-Driver.elf" --development-cache \
-    >/dev/null || exit $?
-echo 'Progress: step=file-read-tools item=3/4 detail=build-lowerer-wvb'
-"$work/Build-Driver.elf" --workspace "$workspace" --project \
-    "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
-    "$work/Lowerer.wvb" >/dev/null || exit $?
-verify_file "$work/Lowerer.wvb" 567615 \
-    77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 \
-    'current lowerer WVB' || exit 1
-echo 'Progress: step=file-read-tools item=4/4 detail=package-lowerer'
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
-    "$work/Lowerer.wvb" "$work/Lowerer.elf" --development-cache >/dev/null || exit $?
+echo 'START native file read phase=tools item=1/6 retained-tools=2'
+echo 'Progress: step=file-read-tools item=1/2 detail=verify-build-driver'
+verify_file "$build_driver" 30072832 \
+    628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 \
+    'retained build driver' || exit 1
+echo 'Progress: step=file-read-tools item=2/2 detail=verify-lowerer'
+verify_file "$lowerer" 8159232 \
+    1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 \
+    'retained lowerer' || exit 1
 echo 'PASS  native file read phase=tools item=1/6'
 
 echo 'START native file read phase=compile item=2/6'
 echo 'native file read compile step=source'
-"$work/Build-Driver.elf" --workspace "$workspace" --project \
+"$build_driver" --workspace "$workspace" --project \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Standard-Byte-Output-Response-Core.wvproj" \
     "$work/Response.wvb" >/dev/null || exit $?
-"$work/Build-Driver.elf" --workspace "$workspace" --project \
+"$build_driver" --workspace "$workspace" --project \
     "$repository_root/Projects/Applications/Windvale-File-Read.wvproj" \
     "$work/File-Read.wvb" >/dev/null || exit $?
 verify_file "$work/Response.wvb" 8417 \
@@ -74,7 +71,7 @@ verify_file "$work/File-Read.wvb" 76474 \
     95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb \
     'file-read WVB' || exit 1
 echo 'native file read compile step=lower'
-"$work/Lowerer.elf" "$work/File-Read.wvb" "$work/File-Read.wvo" >/dev/null || exit $?
+"$lowerer" "$work/File-Read.wvb" "$work/File-Read.wvo" >/dev/null || exit $?
 verify_file "$work/File-Read.wvo" 2410255 \
     8ad63e3dbe87daccf6a9a94407ee0a661f177d6f812b300587b77fe36f7dd323 \
     'file-read WVO' || exit 1

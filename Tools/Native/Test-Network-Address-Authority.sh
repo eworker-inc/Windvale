@@ -8,8 +8,16 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-temporary_root=${TMPDIR:-/tmp}
-work=$(mktemp -d "$temporary_root/windvale-network-authority.XXXXXXXX") || exit 1
+temporary_root=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
+allocated_work=$(mktemp -d "$temporary_root/windvale-network-authority.XXXXXXXX") || exit 1
+if ! work=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "$allocated_work"); then
+    rmdir -- "$allocated_work"
+    exit 1
+fi
+if ! temporary_root=$(node -p "require('node:path').dirname(process.argv[1])" "$work"); then
+    rmdir -- "$work"
+    exit 1
+fi
 cleanup() {
     case "$work" in
         "$temporary_root"/windvale-network-authority.*)
@@ -36,23 +44,22 @@ verify_file() {
 }
 
 workspace_resource=${repository_root//\\//}/Windvale.wvws
-build_project="$repository_root/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj"
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
 library_project_resource=${repository_root//\\//}/Projects/Libraries/Windvale-Library-Network-Address-Authority.wvproj
 test_project_resource=${repository_root//\\//}/Projects/Tests/Windvale-Native-Test-Network-Address-Authority.wvproj
 lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
-echo 'START native network authority phase=tools item=1/4'
-"$script_directory/Build-Wvb.sh" "$build_project" "$work/Build-Driver.wvb" >/dev/null || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 "$work/Build-Driver.wvb" "$work/Build-Driver.elf" >/dev/null || exit $?
+echo 'START native network authority phase=tools item=1/4 retained-tools=2'
+verify_file "$build_driver" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit 1
 verify_file "$lowerer" 8159232 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
 echo 'PASS  native network authority phase=tools item=1/4'
 
 echo 'START native network authority phase=compile item=2/4'
-"$work/Build-Driver.elf" --workspace "$workspace_resource" --project "$library_project_resource" "$work/Library-A.wvb" >/dev/null || exit $?
-"$work/Build-Driver.elf" --workspace "$workspace_resource" --project "$library_project_resource" "$work/Library-B.wvb" >/dev/null || exit $?
+"$build_driver" --workspace "$workspace_resource" --project "$library_project_resource" "$work/Library-A.wvb" >/dev/null || exit $?
+"$build_driver" --workspace "$workspace_resource" --project "$library_project_resource" "$work/Library-B.wvb" >/dev/null || exit $?
 cmp -s -- "$work/Library-A.wvb" "$work/Library-B.wvb" || exit 1
-"$work/Build-Driver.elf" --workspace "$workspace_resource" --project "$test_project_resource" "$work/Test-A.wvb" >/dev/null || exit $?
-"$work/Build-Driver.elf" --workspace "$workspace_resource" --project "$test_project_resource" "$work/Test-B.wvb" >/dev/null || exit $?
+"$build_driver" --workspace "$workspace_resource" --project "$test_project_resource" "$work/Test-A.wvb" >/dev/null || exit $?
+"$build_driver" --workspace "$workspace_resource" --project "$test_project_resource" "$work/Test-B.wvb" >/dev/null || exit $?
 cmp -s -- "$work/Test-A.wvb" "$work/Test-B.wvb" || exit 1
 "$lowerer" "$work/Test-A.wvb" "$work/Test-A.wvo" >/dev/null || exit $?
 "$lowerer" "$work/Test-B.wvb" "$work/Test-B.wvo" >/dev/null || exit $?

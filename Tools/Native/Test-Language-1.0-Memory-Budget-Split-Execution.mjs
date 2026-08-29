@@ -134,8 +134,8 @@ const Bridgeˉemitterˉwvb = path.join(
     Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
     'Wvb', 'wvemit-wvir-1.9-bridge.wvb',
 );
-const Temporaryˉallocationˉroot = realpathSync(os.tmpdir());
-const Work = realpathSync(mkdtempSync(path.join(
+const Temporaryˉallocationˉroot = realpathSync.native(os.tmpdir());
+const Work = realpathSync.native(mkdtempSync(path.join(
     Temporaryˉallocationˉroot, 'windvale-memory-budget-split-execution-',
 )));
 const Temporaryˉroot = path.dirname(Work);

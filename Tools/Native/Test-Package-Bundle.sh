@@ -47,34 +47,34 @@ echo 'native package bundle step=build-tools item=1/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Package-Bundle.wvproj" \
     "$work/Self-Test.wvb" || exit $?
-verify_file "$work/Self-Test.wvb" 332593 \
-    2c12fb139ebe89a2d206418a3ded6f73a948838b4b06d5df5de954214e4837ab \
+verify_file "$work/Self-Test.wvb" 558336 \
+    6523933e61896df401d1c0115c6023fc48d8fbfce9c9f486ac9feb4eb9de46e9 \
     'bundle self-test WVB' || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 284755 \
-    ccffc57e6a18b7a14b2aeecc0ff5ef38a0a9bd8206ea429ebf9d9b93c678296c \
+verify_file "$work/Writer.wvb" 510498 \
+    7bc577ac157fc20c301699e5cd08286b736017922871f5206b045d6c46b93a1d \
     'bundle writer WVB' || exit 1
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj" \
     "$work/Verifier.wvb" || exit $?
-verify_file "$work/Verifier.wvb" 304048 \
-    1e37b48c182690b600d1310feb7d057ef337ebc4f962499eeb031116f22e64d8 \
+verify_file "$work/Verifier.wvb" 529791 \
+    218e8939a6e0686c6d2086e2ce977c405abb77728280b332bdf15277f8fa606b \
     'bundle verifier WVB' || exit 1
 
 echo 'native package bundle step=package-self-test item=2/7'
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
-    "$work/Self-Test.wvb" "$work/Self-Test.elf" linux || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+    "$work/Self-Test.wvb" "$work/Self-Test.elf" || exit $?
 "$work/Self-Test.elf"
 [[ $? -eq 42 ]] || exit 1
 
 echo 'native package bundle step=package-writer item=3/7'
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
-    "$work/Writer.wvb" "$work/Writer.elf" linux || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+    "$work/Writer.wvb" "$work/Writer.elf" || exit $?
 echo 'native package bundle step=package-independent-verifier item=4/7'
-"$script_directory/Package-Hosted-Wvb.sh" 6 \
-    "$work/Verifier.wvb" "$work/Verifier.elf" linux || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
+    "$work/Verifier.wvb" "$work/Verifier.elf" || exit $?
 
 echo 'native package bundle step=rebuild-locked-applications item=5/7 applications=2'
 "$script_directory/Build-Wvdb-Query-Package.sh" \

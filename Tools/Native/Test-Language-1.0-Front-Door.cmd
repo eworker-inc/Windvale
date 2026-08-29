@@ -16,7 +16,7 @@ set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d7238
 set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
 set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
 set "BridgeEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit-wvir-1.9-bridge.wvb"
-for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
 if not defined TemporaryRoot exit /b 1
 
 :allocate
@@ -24,7 +24,7 @@ set "Work=%TemporaryRoot%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RAND
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
 set "CanonicalWork="
-for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
 if not defined CanonicalWork (
     rmdir "%Work%" >nul 2>&1
     exit /b 1

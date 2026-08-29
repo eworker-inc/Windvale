@@ -15,9 +15,9 @@ source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3
 bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
 bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
 bridge_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit-wvir-1.9-bridge.wvb"
-temporary_root=$(node -p "require('node:fs').realpathSync(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
+temporary_root=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
 allocated_work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
-if ! work=$(node -p "require('node:fs').realpathSync(process.argv[1])" "$allocated_work"); then
+if ! work=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "$allocated_work"); then
     rmdir -- "$allocated_work"
     exit 1
 fi
@@ -143,6 +143,7 @@ expect_profiled_analysis_failure_with_dependencies() {
     local expected_status=$3
     local first_dependency=$4
     local second_dependency=${5-}
+    local third_dependency=${6-}
     local analysis_exit
     local -a analysis_lines admission_arguments
     admission_arguments=(
@@ -152,6 +153,9 @@ expect_profiled_analysis_failure_with_dependencies() {
     )
     if [[ -n $second_dependency ]]; then
         admission_arguments+=("$second_dependency")
+    fi
+    if [[ -n $third_dependency ]]; then
+        admission_arguments+=("$third_dependency")
     fi
     admission_arguments+=("$work/$prefix.wvss")
     "$work/Admitter.elf" "${admission_arguments[@]}" \

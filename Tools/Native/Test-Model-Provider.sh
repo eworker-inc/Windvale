@@ -8,9 +8,9 @@ fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
-temporary_root=$(node -p "require('node:fs').realpathSync(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
+temporary_root=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
 allocated_work=$(mktemp -d "$temporary_root/windvale-model-provider.XXXXXXXX") || exit 1
-if ! work=$(node -p "require('node:fs').realpathSync(process.argv[1])" "$allocated_work"); then
+if ! work=$(node -p "require('node:fs').realpathSync.native(process.argv[1])" "$allocated_work"); then
     rmdir -- "$allocated_work"
     exit 1
 fi

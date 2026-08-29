@@ -9,34 +9,46 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 
 :allocate
-set "Work=%TEMP%\windvale-network-authority-%RANDOM%-%RANDOM%-%RANDOM%"
+set "Work=%TemporaryRoot%\windvale-network-authority-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
+set "CanonicalWork="
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+if not defined CanonicalWork (
+    rmdir "%Work%" >nul 2>&1
+    exit /b 1
+)
+set "Work=%CanonicalWork%"
+set "CanonicalWork="
+for /f "usebackq delims=" %%T in (`node -p "require('node:path').dirname(process.argv[1])" "%Work%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
+set "WorkResource=%Work:\=/%"
 set "Result=1"
 
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
-set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
 set "LibraryProject=%RepositoryRoot%\Projects\Libraries\Windvale-Library-Network-Address-Authority.wvproj"
 set "TestProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Network-Address-Authority.wvproj"
 set "LibraryProjectResource=%LibraryProject:\=/%"
 set "TestProjectResource=%TestProject:\=/%"
-set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
-echo START native network authority phase=tools item=1/4
-call "%Native%\Build-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" >nul || goto :cleanup
+echo START native network authority phase=tools item=1/4 retained-tools=2
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || goto :cleanup
 call :verify_file "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad || goto :cleanup
 echo PASS  native network authority phase=tools item=1/4
 
 echo START native network authority phase=compile item=2/4
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-A.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-B.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%WorkResource%/Library-A.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%WorkResource%/Library-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Library-A.wvb" "%Work%\Library-B.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-A.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-B.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%WorkResource%/Test-A.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%WorkResource%/Test-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Test-A.wvb" "%Work%\Test-B.wvb" >nul || goto :cleanup
 "%Lowerer%" "%Work%\Test-A.wvb" "%Work%\Test-A.wvo" >nul || goto :cleanup
 "%Lowerer%" "%Work%\Test-B.wvb" "%Work%\Test-B.wvo" >nul || goto :cleanup
@@ -61,7 +73,7 @@ set "Result=0"
 
 :cleanup
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
-echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-network-authority-" >nul || exit /b 1
+echo(%ResolvedWork%| findstr /b /i /c:"%TemporaryRoot%\windvale-network-authority-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
 echo native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified

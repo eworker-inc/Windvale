@@ -11,7 +11,7 @@ for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
 set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
-for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
 if not defined TemporaryRoot exit /b 1
 
 :allocate
@@ -19,7 +19,7 @@ set "Work=%TemporaryRoot%\windvale-model-provider-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
 set "CanonicalWork="
-for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
 if not defined CanonicalWork (
     rmdir "%Work%" >nul 2>&1
     exit /b 1
