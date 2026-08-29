@@ -96,11 +96,14 @@ call :check_equal "%TestDirectory%\Probe.out" "%TestDirectory%\Probe.expected"
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Probe.err"
 if errorlevel 1 goto :failed
-set "Fixture=%Probe%\Return-42.exe"
+set "WindowsFixture=%Probe%\Return-42.exe"
+set "LinuxFixture=%Probe%\Return-42.elf"
 
-call :check_file "%Fixture%" 2560 8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6
+call :check_file "%WindowsFixture%" 2560 8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6
 if errorlevel 1 goto :failed
-copy /b "%Fixture%" "%TestDirectory%\Subject.exe" >nul
+call :check_file "%LinuxFixture%" 8304 fe525b84b9bf902677a5c7beb36872dfd72e7d6d0f12bfb5c95d491c4e1cd3f7
+if errorlevel 1 goto :failed
+copy /b "%WindowsFixture%" "%TestDirectory%\Subject.exe" >nul
 if errorlevel 1 goto :failed
 copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Destination.exe" >nul
 if errorlevel 1 goto :failed
@@ -127,10 +130,75 @@ call :check_file "%TestDirectory%\Reject.err" 54 39db034713225109f62c272db447d75
 if errorlevel 1 goto :failed
 call :check_equal "%TestDirectory%\Invalid.exe" "%Candidate%\Console-Application-Publisher.wvb"
 if errorlevel 1 goto :failed
-call :check_equal "%TestDirectory%\Destination.exe" "%Fixture%"
+call :check_equal "%TestDirectory%\Destination.exe" "%WindowsFixture%"
 if errorlevel 1 goto :failed
 for /f "usebackq delims=" %%S in (`dir /b /a "%TestDirectory%\.wvpublish-*" 2^>nul`) do goto :failed
 call :pass "current-host independent version-1 publication and rejected-input preservation"
+
+node --check "%RepositoryRoot%\Tools\Native\Check-Console-Publication-Candidate.mjs"
+if errorlevel 1 goto :failed
+
+copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Public-Windows.exe" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Publish-Console.cmd" ^
+    "%WindowsFixture%" "%TestDirectory%\Public-Windows.exe" ^
+    >"%TestDirectory%\Public-Windows.out" 2>"%TestDirectory%\Public-Windows.err"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Public-Windows.out" 117 19172b4e0501f1cc471b857f8fd55e51f1a6677c5296ab7f67b5618ee7d8018f
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Public-Windows.err"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Public-Windows.exe" "%WindowsFixture%"
+if errorlevel 1 goto :failed
+
+copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Public-Linux.elf" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Publish-Console.cmd" ^
+    "%LinuxFixture%" "%TestDirectory%\Public-Linux.elf" ^
+    >"%TestDirectory%\Public-Linux.out" 2>"%TestDirectory%\Public-Linux.err"
+if errorlevel 1 goto :failed
+call :check_file "%TestDirectory%\Public-Linux.out" 117 3f37b8e32972391192e21fc581500909e0ea74629744e0c248589f3bc0f24d7c
+if errorlevel 1 goto :failed
+call :check_empty "%TestDirectory%\Public-Linux.err"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Public-Linux.elf" "%LinuxFixture%"
+if errorlevel 1 goto :failed
+
+copy /b "%WindowsFixture%" "%TestDirectory%\Wrong-Windows.elf" >nul
+if errorlevel 1 goto :failed
+copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Wrong-Windows-Destination.elf" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Publish-Console.cmd" ^
+    "%TestDirectory%\Wrong-Windows.elf" "%TestDirectory%\Wrong-Windows-Destination.elf" ^
+    >"%TestDirectory%\Wrong-Windows.out" 2>"%TestDirectory%\Wrong-Windows.err"
+if not "%ERRORLEVEL%"=="1" goto :failed
+call :check_empty "%TestDirectory%\Wrong-Windows.out"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Windows.err" "%TestDirectory%\Reject.err"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Windows-Destination.elf" "%Candidate%\Console-Application-Publisher.wvb"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Windows.elf" "%WindowsFixture%"
+if errorlevel 1 goto :failed
+
+copy /b "%LinuxFixture%" "%TestDirectory%\Wrong-Linux.exe" >nul
+if errorlevel 1 goto :failed
+copy /b "%Candidate%\Console-Application-Publisher.wvb" "%TestDirectory%\Wrong-Linux-Destination.exe" >nul
+if errorlevel 1 goto :failed
+call "%RepositoryRoot%\Tools\Native\Publish-Console.cmd" ^
+    "%TestDirectory%\Wrong-Linux.exe" "%TestDirectory%\Wrong-Linux-Destination.exe" ^
+    >"%TestDirectory%\Wrong-Linux.out" 2>"%TestDirectory%\Wrong-Linux.err"
+if not "%ERRORLEVEL%"=="1" goto :failed
+call :check_empty "%TestDirectory%\Wrong-Linux.out"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Linux.err" "%TestDirectory%\Reject.err"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Linux-Destination.exe" "%Candidate%\Console-Application-Publisher.wvb"
+if errorlevel 1 goto :failed
+call :check_equal "%TestDirectory%\Wrong-Linux.exe" "%LinuxFixture%"
+if errorlevel 1 goto :failed
+for /f "usebackq delims=" %%S in (`dir /b /a "%TestDirectory%\.wvpublish-*" 2^>nul`) do goto :failed
+call :pass "public front-door target preflight and cross-target publication"
 
 call :cleanup
 echo Tests: %Tests%, Passed: %Passed%, Failed: 0

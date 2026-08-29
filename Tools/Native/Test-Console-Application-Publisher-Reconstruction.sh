@@ -137,11 +137,14 @@ printf '%s\n' 'native AOT composition probe status=Complete artifacts=6' \
     >"$test_directory/Probe.expected" || fail
 check_equal "$test_directory/Probe.out" "$test_directory/Probe.expected" || fail
 [[ ! -s $test_directory/Probe.err ]] || fail
-fixture="$probe/Return-42.elf"
+windows_fixture="$probe/Return-42.exe"
+linux_fixture="$probe/Return-42.elf"
 
-check_file "$fixture" 8304 \
+check_file "$windows_fixture" 2560 \
+    8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6 || fail
+check_file "$linux_fixture" 8304 \
     fe525b84b9bf902677a5c7beb36872dfd72e7d6d0f12bfb5c95d491c4e1cd3f7 || fail
-cp -- "$fixture" \
+cp -- "$linux_fixture" \
     "$test_directory/Subject.elf" || fail
 cp -- "$candidate/Console-Application-Publisher.wvb" \
     "$test_directory/Destination.elf" || fail
@@ -172,8 +175,72 @@ check_equal "$test_directory/Reject.err" "$test_directory/Reject.expected" || fa
 check_equal "$test_directory/Invalid.elf" \
     "$candidate/Console-Application-Publisher.wvb" || fail
 check_equal "$test_directory/Destination.elf" \
-    "$fixture" || fail
+    "$linux_fixture" || fail
 [[ -z $(find "$test_directory" -maxdepth 1 -name '.wvpublish-*' -print -quit) ]] || fail
 pass 'current-host independent version-1 publication and rejected-input preservation'
+
+node --check "$repository_root/Tools/Native/Check-Console-Publication-Candidate.mjs" || fail
+
+cp -- "$candidate/Console-Application-Publisher.wvb" \
+    "$test_directory/Public-Windows.exe" || fail
+"$repository_root/Tools/Native/Publish-Console.sh" \
+    "$windows_fixture" "$test_directory/Public-Windows.exe" \
+    >"$test_directory/Public-Windows.out" \
+    2>"$test_directory/Public-Windows.err" || fail
+printf '%s\n' \
+    'publication status=Complete bytes=0x00000a00 sha256=8f2c3389dafa40c0231a0f5aeead3db5570697d54874f324a81f84a2d5b16eb6' \
+    >"$test_directory/Public-Windows.expected" || fail
+check_equal "$test_directory/Public-Windows.out" \
+    "$test_directory/Public-Windows.expected" || fail
+[[ ! -s $test_directory/Public-Windows.err ]] || fail
+check_equal "$test_directory/Public-Windows.exe" "$windows_fixture" || fail
+
+cp -- "$candidate/Console-Application-Publisher.wvb" \
+    "$test_directory/Public-Linux.elf" || fail
+"$repository_root/Tools/Native/Publish-Console.sh" \
+    "$linux_fixture" "$test_directory/Public-Linux.elf" \
+    >"$test_directory/Public-Linux.out" \
+    2>"$test_directory/Public-Linux.err" || fail
+check_equal "$test_directory/Public-Linux.out" "$test_directory/Publish.out" || fail
+[[ ! -s $test_directory/Public-Linux.err ]] || fail
+check_equal "$test_directory/Public-Linux.elf" "$linux_fixture" || fail
+
+cp -- "$windows_fixture" "$test_directory/Wrong-Windows.elf" || fail
+cp -- "$candidate/Console-Application-Publisher.wvb" \
+    "$test_directory/Wrong-Windows-Destination.elf" || fail
+if "$repository_root/Tools/Native/Publish-Console.sh" \
+    "$test_directory/Wrong-Windows.elf" \
+    "$test_directory/Wrong-Windows-Destination.elf" \
+    >"$test_directory/Wrong-Windows.out" \
+    2>"$test_directory/Wrong-Windows.err"; then
+    fail
+elif [[ $? -ne 1 ]]; then
+    fail
+fi
+[[ ! -s $test_directory/Wrong-Windows.out ]] || fail
+check_equal "$test_directory/Wrong-Windows.err" "$test_directory/Reject.err" || fail
+check_equal "$test_directory/Wrong-Windows-Destination.elf" \
+    "$candidate/Console-Application-Publisher.wvb" || fail
+check_equal "$test_directory/Wrong-Windows.elf" "$windows_fixture" || fail
+
+cp -- "$linux_fixture" "$test_directory/Wrong-Linux.exe" || fail
+cp -- "$candidate/Console-Application-Publisher.wvb" \
+    "$test_directory/Wrong-Linux-Destination.exe" || fail
+if "$repository_root/Tools/Native/Publish-Console.sh" \
+    "$test_directory/Wrong-Linux.exe" \
+    "$test_directory/Wrong-Linux-Destination.exe" \
+    >"$test_directory/Wrong-Linux.out" \
+    2>"$test_directory/Wrong-Linux.err"; then
+    fail
+elif [[ $? -ne 1 ]]; then
+    fail
+fi
+[[ ! -s $test_directory/Wrong-Linux.out ]] || fail
+check_equal "$test_directory/Wrong-Linux.err" "$test_directory/Reject.err" || fail
+check_equal "$test_directory/Wrong-Linux-Destination.exe" \
+    "$candidate/Console-Application-Publisher.wvb" || fail
+check_equal "$test_directory/Wrong-Linux.exe" "$linux_fixture" || fail
+[[ -z $(find "$test_directory" -maxdepth 1 -name '.wvpublish-*' -print -quit) ]] || fail
+pass 'public front-door target preflight and cross-target publication'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"
