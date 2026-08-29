@@ -50,8 +50,10 @@ Tools\Native\Test-Verification-Owners.cmd --filter seed-native-front-door
 ```
 
 This fast owner checks all pinned front-door identities and current-host WVB
-admission. Use `seed-native-front-door-reconstruction` only for an explicit
-product-reconstruction investigation or the complete qualification gate.
+admission. The former mutable-source exact-hash reconstruction owner is retired.
+Use the focused owner for the boundary being changed, `seed-native-console-aot`
+for the canonical Seed native chain, and the independent split convergence gate
+for current compiler fixed points.
 
 Do not run the complete manifest locally merely because a commit or push is
 next.
@@ -156,8 +158,10 @@ Use the focused owner selected by `Verify-Changed.ps1`:
   the relevant live boot gate when that claim is made;
 - pinned browser-package or development engine changes use
   `Tools/Verify/Verify-WebAssembly-Engine.ps1`, while generator, ABI, broad
-  fixture, compiler/backend package, or qualification changes use the complete
-  `Tools/Verify/Verify-WebAssembly.ps1`; and
+  fixture, or compiler/backend source changes use the complete explicit
+  `Tools/Verify/Verify-WebAssembly.ps1` promotion gate; blanket cross-host
+  qualification uses the pinned engine checkpoint and does not rebuild current
+  source through frozen Seed; and
 - static site, playground, function, or browser packaging changes use
   `Tools/Verify/Verify-Website.ps1`.
 

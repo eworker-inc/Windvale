@@ -1118,6 +1118,11 @@ function Add-Os-Suite {
 function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
+    if ($Stem -eq 'Test-Seed-Native-Front-Door-Reconstruction') {
+        # Deletion tombstone: the mutable-source exact-hash farm is retired.
+        $script:RunPlanVerification = $true
+        return
+    }
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
@@ -1884,7 +1889,8 @@ foreach ($Path in $Paths) {
             'Verify-Seed-Native-Front-Door-Reconstruction.ps1',
             'Verify-Seed-Native-Front-Door-Reconstruction.sh'
         )) {
-            Add-Suite 'seed-native-front-door-reconstruction'
+            # Deletion tombstone: only planner policy remains affected.
+            $RunPlanVerification = $true
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Bootstrap.cmd',
             'Verify-Bootstrap.sh'

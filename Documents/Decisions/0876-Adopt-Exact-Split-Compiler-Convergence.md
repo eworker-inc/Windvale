@@ -42,8 +42,10 @@ WVB products that the current verifier source accepts.
 7. Retire the Seed source-compiler `tool` selector. Keep only its still-exact
    `core` and `demo` products; build the current compiler through the split
    Project 2 route.
-8. Keep WebAssembly verification focused by consuming its exact retained
-   compiler workload directly instead of rebuilding a current compiler first.
+8. Keep blanket WebAssembly qualification focused on the digest-pinned
+   playground package and executable compiler core. Full current-source
+   WebAssembly reconstruction is a separate promotion boundary and must use the
+   current split compiler rather than frozen Seed.
 
 ## Evidence
 

@@ -175,21 +175,27 @@ investigation restores that exact release in a separate workspace.
 
 ## Next measured optimizations
 
-The measured 733,980 ms `seed-native-front-door` owner is now split. The ordinary
-owner validates the pinned manifest and inventory, hashes all 18 artifacts, and
-admits all six WVB modules in 13,900 ms on the same Windows host. The complete
-105-artifact, 185-assertion audit remains the explicitly named
-`seed-native-front-door-reconstruction` qualification owner. This is a 98.11%
-wall-clock reduction for ordinary front-door feedback without deleting the
-reconstruction evidence.
+The former measured 733,980 ms Seed front-door reconstruction mixed immutable
+Seed admission with exact hashes for mutable current source. It is retired, not
+repinned. The remaining `seed-native-front-door` owner validates the pinned
+manifest and inventory, hashes all 18 immutable artifacts, and admits all six
+WVB modules in 13,900 ms on the same Windows host. The separate
+`seed-native-console-aot` owner reconstructs the canonical source-to-WVB,
+WVB-to-WVO, link, package, and execution chain. Current compiler fixed points
+belong to split compiler convergence. This removes the redundant 105-artifact,
+185-assertion hash farm from every complete qualification without reducing an
+owned current or immutable boundary.
 
-The WebAssembly owner is now split as well. The checked-in playground package
-binds its direct compiler and scalar interpreter WVB/Wasm identities plus the
-referenced native compiler, backend, and segmented-backend packages. Its
-package-and-core engine checkpoint passes in 29,674 ms on Windows without
-regenerating a product. Compared with the last recorded 1,619,500 ms complete
-construction-and-engine command, that is a 98.17% development-path reduction;
-the complete cold owner remains unchanged for explicit qualification.
+The checked-in WebAssembly playground package binds its direct compiler and
+scalar interpreter WVB/Wasm identities plus the referenced native compiler,
+backend, and segmented-backend packages. Its package-and-core engine checkpoint
+passes in 29,674 ms on Windows without regenerating a product. It is the
+independent blanket qualification contract on both hosts. The old 1,619,500 ms
+cold command attempted to compile current Language 1.0 fixtures through frozen
+Seed and regenerate an untracked historical compiler workload; it is not a
+valid general qualification boundary. Full current-source WebAssembly
+reconstruction remains an explicit WebAssembly promotion task and must migrate
+to the current split compiler before it can make that stronger claim.
 
 The database development owner now checkpoints the six portable tree projects,
 their linked images, and their current-host applications. It reports live

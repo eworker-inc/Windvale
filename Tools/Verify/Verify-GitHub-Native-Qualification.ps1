@@ -144,8 +144,8 @@ foreach ($Job in $QualificationJobs) {
 $ExpectedCommands = @{
     'windows-native-suite' = 'Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}'
     'linux-native-suite' = './Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}'
-    'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
-    'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly.ps1'
+    'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
+    'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'
     'linux-bootstrap' = './Tools/Verify/Verify-Bootstrap.sh'
 }
@@ -161,7 +161,7 @@ foreach ($Job in $ExpectedCommands.Keys) {
         "Qualification job '$Job' does not invoke its exact native owner."
 }
 
-foreach ($Job in @('windows-native-suite', 'linux-native-suite', 'windows-webassembly', 'linux-webassembly')) {
+foreach ($Job in $QualificationJobs) {
     $Block = Get-JobBlock $Job
     Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
         "Qualification job '$Job' does not pin the Node setup action."

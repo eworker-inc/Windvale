@@ -2,7 +2,6 @@ windvale-native-verification-owners 1
 verification-owner-stream|Test-Verification-Owner-Stream|4|2|verification owner stream status=Passed cases=4
 seed|Test-Seed|26|2|Tests: 26, Passed: 26, Failed: 0
 seed-native-front-door|Test-Seed-Native-Front-Door|1|2|Tests: 1, Passed: 1, Failed: 0
-seed-native-front-door-reconstruction|Test-Seed-Native-Front-Door-Reconstruction|1|2|Tests: 1, Passed: 1, Failed: 0
 seed-native-console-aot|Test-Seed-Native-Console-Aot|1|2|Tests: 1, Passed: 1, Failed: 0
 compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
 segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0

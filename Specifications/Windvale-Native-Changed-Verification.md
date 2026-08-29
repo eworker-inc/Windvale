@@ -77,12 +77,13 @@ front door. Other historical source-transfer mappings remain explicit until
 their affected-owner closures are audited. This lane does not reconstruct
 products.
 
-The separate `seed-native-front-door-reconstruction` lane retains the complete
-105-artifact, 185-assertion Project 1 build, publication, verification,
-inspection, execution, assembly, object, and linker audit. Changes to that owner
-select it directly, and explicit complete qualification includes it through the
-digest-bound retirement plan. Ordinary source changes do not run it merely to
-reprove unchanged pinned artifacts.
+The former `seed-native-front-door-reconstruction` lane is retired. It combined
+immutable Seed evidence with exact hashes for mutable current source and
+duplicated focused owners. Deleted launcher names remain planner tombstones so
+the retirement diff selects policy verification without opening a coverage gap.
+The immutable front door, canonical Seed AOT chain, current split compiler
+fixed points, assembler, object, linker, and runtime boundaries retain their
+separate owners.
 
 The `seed-native-console-aot` lane owns the standalone canonical `Sum-Data`
 source-to-WVB, WVB-to-WVO, WVO admission, flat-link, paired version-1 console
@@ -91,13 +92,11 @@ the qualified native Project 1 front door before invoking the paired host audit.
 All three paths formerly classified with the `seed-native-console-aot` gap now
 select this lane; no gap with that name remains in the native planner.
 
-The `compiler-reconstruction` lane has a current-host development mode and a
-cold qualification mode. Development admits the exact six checked-in candidate
-artifacts and executes both the compiler and build driver over one deterministic
-Project 2 oracle. It does not reconstruct or package either host candidate.
-Qualification and direct no-argument owner execution retain the complete paired
-compiler and build-driver reconstruction. A development pass therefore cannot
-be cited as compiler reconstruction evidence.
+The `compiler-reconstruction` lane admits the exact retained candidate family
+and runs a deterministic retained-to-current Project 2 differential smoke. The
+independent Windows and Linux bootstrap jobs own cold current analyzer/emitter
+fixed points plus current-verifier admission. Retained historical containers
+are not reconstructed merely because current compiler source changed.
 
 The `source-containment` lane likewise separates affected compiler feedback
 from complete dual-oracle evidence. Compiler and direct-compiler-artifact
@@ -122,7 +121,15 @@ front door dispatches `Verify-WebAssembly.ps1`, which reconstructs the complete
 product set through the paired native host front doors and then executes the
 broad engine and probe matrix. Complete construction subsumes the engine
 checkpoint, so the planner never runs both for one source state. No managed or
-unfiltered fallback is permitted.
+unfiltered fallback is permitted. This is an explicit WebAssembly promotion
+boundary, not part of every unrelated qualification. Its current migration to
+the split compiler remains required before a new full current-source claim.
+
+The independent Windows and Linux WebAssembly jobs in blanket qualification run
+`Verify-WebAssembly-Engine.ps1`. They validate the digest-pinned package and
+execute real compiler-core behavior without regenerating products. This is a
+cross-host retained-package claim, not a substitute claim that current
+WebAssembly sources were rebuilt.
 
 The shared scalar-interpreter source retains several historical paths under
 `Tests/Fixtures/WebAssembly`, but its non-browser envelope, main driver, and

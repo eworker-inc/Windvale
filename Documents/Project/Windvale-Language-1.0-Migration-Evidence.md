@@ -4171,3 +4171,25 @@ longer rebuilds an unrelated current compiler before its workload. The focused
 compiler owner retains three cases and now completes locally in under two
 seconds with a warm current-project cache. Full Windows/Linux convergence and
 the final Slice 7 Qualification gate remain pending.
+
+## Slice 7 qualification-boundary correction
+
+[Decision 0877](../Decisions/0877-Remove-Mutable-Source-Hashes-From-Blanket-Qualification.md)
+records the evidence exposed by the first post-convergence Qualification
+attempt. The Linux bootstrap job lacked Node.js for its new coordinator; both
+WebAssembly jobs attempted a historical current-source reconstruction through
+frozen Seed; and the broad Seed front-door reconstruction stopped at its first
+stale mutable-source hash. The database owner seen ending at 45 seconds was
+terminated by workflow cancellation and did not exceed an owner timeout.
+
+Both bootstrap jobs now install pinned Node.js 24. Blanket WebAssembly
+qualification keeps independent Windows and Linux execution but validates the
+digest-pinned playground package and compiler core rather than regenerating
+mutable source. The redundant 105-artifact, 185-assertion Seed hash farm is
+retired; immutable front-door admission, the canonical Seed AOT chain, focused
+tool owners, and cold current split convergence remain.
+
+The registry advances to 114 owners and 5,616 cases. Its 18,992 LF-only bytes
+have SHA-256
+`52d968714832bd452c113713c543171458dacc7dad2b8e0aee874464a20d54b6`.
+Final paired-host Qualification on this corrected boundary remains pending.

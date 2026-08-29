@@ -626,18 +626,12 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Seed native front-door reconstruction owner'
+        Name = 'retired Seed native front-door reconstruction names'
         Paths = @(
+            'Tools/Native/Test-Seed-Native-Front-Door-Reconstruction.cmd',
+            'Tools/Native/Test-Seed-Native-Front-Door-Reconstruction.sh',
             'Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.ps1',
-            'Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.sh'
-        )
-        Suites = @('seed-native-front-door-reconstruction')
-        Gaps = @()
-        VerifyPlan = $false
-    },
-    @{
-        Name = 'superseded Seed native front-door reconstruction names'
-        Paths = @(
+            'Tools/Verify/Verify-Seed-Native-Front-Door-Reconstruction.sh',
             'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
             'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
         )
@@ -3770,9 +3764,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 116 -or
+if ($VerificationOwnerLines.Count -ne 115 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 115-owner inventory differs.'
+    throw 'The native verification-owner header or exact 114-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3810,7 +3804,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5617 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5616 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
