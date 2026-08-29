@@ -1,0 +1,168 @@
+module Compilerˉsourceˉtarget profile portable;
+
+export const COMPILER_SOURCE_TARGET_MAX_PLATFORM_SCOPES: u32 = 32u32;
+export const COMPILER_SOURCE_TARGET_KNOWN_PLATFORM_MASK: u32 = 15u32;
+
+// Target identities are fixed-width registry values suitable for immutable phase evidence.
+export const COMPILER_SOURCE_TARGET_ENVIRONMENT_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX: u32 = 2u32;
+export const COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE: u32 = 3u32;
+
+export const COMPILER_SOURCE_TARGET_ARCHITECTURE_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64: u32 = 2u32;
+
+export const COMPILER_SOURCE_TARGET_ABI_NONE: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1: u32 = 1u32;
+
+// Target evidence and status use fixed-width phase-boundary registry values.
+export const COMPILER_SOURCE_TARGET_STATUS_VALID: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE: u32 = 2u32;
+export const COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM: u32 = 3u32;
+export const COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET: u32 = 4u32;
+export const COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM: u32 = 5u32;
+
+export record Compilerˉsourceˉtargetˉdescriptor {
+    Environment: u32;
+    Architecture: u32;
+    Abi: u32;
+    Addressˉbits: u32;
+    Littleˉendian: bool;
+    Noˉunwindˉcˉscalarˉpointerˉmajor: u32;
+    Extensionˉidentities: u32;
+    Targetˉinterfaceˉidentities: u32;
+}
+
+// Parser evidence is finite: four recognized identities, a declared total, and the
+// source slice for the selected concrete identity. Consumers authenticate that slice.
+export record Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
+    Scopeˉmask: u32;
+    Declaredˉscopes: u32;
+    Unknownˉscopes: u32;
+    Concreteˉsourceˉoffset: u32;
+    Concreteˉsourceˉlength: u32;
+}
+
+export fn Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(
+) -> Compilerˉsourceˉtargetˉdescriptor {
+    return Compilerˉsourceˉtargetˉdescriptor(
+        COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+        COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+        COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
+        64u32, true, 1u32, 0u32, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(
+    Target: Compilerˉsourceˉtargetˉdescriptor
+) -> bool {
+    if Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_UNKNOWN ||
+        Target.Environment > COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE {
+        return false;
+    }
+    if Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_UNKNOWN ||
+        Target.Architecture > COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64 {
+        return false;
+    }
+    if Target.Addressˉbits != 64u32 || !Target.Littleˉendian { return false; }
+    if Target.Extensionˉidentities != 0u32 || Target.Targetˉinterfaceˉidentities != 0u32 {
+        return false;
+    }
+    if Target.Abi == COMPILER_SOURCE_TARGET_ABI_NONE {
+        return Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 0u32;
+    }
+    if Target.Abi == COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 {
+        if Target.Environment != COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX { return false; }
+        if Target.Architecture != COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 { return false; }
+        if Target.Noˉunwindˉcˉscalarˉpointerˉmajor != 1u32 { return false; }
+        return true;
+    }
+    return false;
+}
+
+fn Compilerˉsourceˉtargetˉknownˉplatforms(Scopeˉmask: u32) -> u32 {
+    var Count: u32 = 0u32;
+    if (Scopeˉmask & 1u32) != 0u32 { Count = Count + 1u32; }
+    if (Scopeˉmask & 2u32) != 0u32 { Count = Count + 1u32; }
+    if (Scopeˉmask & 4u32) != 0u32 { Count = Count + 1u32; }
+    if (Scopeˉmask & 8u32) != 0u32 { Count = Count + 1u32; }
+    return Count;
+}
+
+export fn Compilerˉsourceˉtargetˉadmitˉplatforms(
+    Target: Compilerˉsourceˉtargetˉdescriptor,
+    Platforms: Compilerˉsourceˉtargetˉplatformˉsetˉevidence
+) -> u32 {
+    if !Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(Target) {
+        return COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
+    }
+    if Platforms.Declaredˉscopes == 0u32 ||
+        Platforms.Declaredˉscopes > COMPILER_SOURCE_TARGET_MAX_PLATFORM_SCOPES ||
+        Platforms.Scopeˉmask > COMPILER_SOURCE_TARGET_KNOWN_PLATFORM_MASK ||
+        Platforms.Unknownˉscopes > Platforms.Declaredˉscopes {
+        return COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE;
+    }
+    let Known: u32 = Compilerˉsourceˉtargetˉknownˉplatforms(Platforms.Scopeˉmask);
+    if Known + Platforms.Unknownˉscopes != Platforms.Declaredˉscopes {
+        return COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE;
+    }
+    if Platforms.Unknownˉscopes != 0u32 {
+        return COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM;
+    }
+    if (Platforms.Scopeˉmask & 8u32) != 0u32 {
+        if Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
+            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+            Target.Abi == COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 &&
+            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 1u32 {
+            return COMPILER_SOURCE_TARGET_STATUS_VALID;
+        }
+    }
+    if (Platforms.Scopeˉmask & 1u32) != 0u32 &&
+        Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS {
+        return COMPILER_SOURCE_TARGET_STATUS_VALID;
+    }
+    if (Platforms.Scopeˉmask & 2u32) != 0u32 &&
+        Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX {
+        return COMPILER_SOURCE_TARGET_STATUS_VALID;
+    }
+    if (Platforms.Scopeˉmask & 4u32) != 0u32 &&
+        Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE {
+        return COMPILER_SOURCE_TARGET_STATUS_VALID;
+    }
+    return COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+}
+
+export fn Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
+    Environment: u32,
+    Architecture: u32,
+    Abi: u32,
+    Addressˉbits: u32,
+    Littleˉendian: bool,
+    Noˉunwindˉmajor: u32,
+    Extensionˉidentities: u32,
+    Targetˉinterfaceˉidentities: u32,
+    Platformˉscopeˉmask: u32,
+    Declaredˉplatforms: u32,
+    Unknownˉplatforms: u32
+) -> u32 {
+    if Environment != COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX {
+        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+    }
+    if Architecture != COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 {
+        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+    }
+    if Abi != COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 {
+        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+    }
+    if Addressˉbits != 64u32 || !Littleˉendian || Noˉunwindˉmajor != 1u32 ||
+        Extensionˉidentities != 0u32 || Targetˉinterfaceˉidentities != 0u32 {
+        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+    }
+    if Platformˉscopeˉmask != 8u32 || Declaredˉplatforms != 1u32 ||
+        Unknownˉplatforms != 0u32 {
+        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+    }
+    return COMPILER_SOURCE_TARGET_STATUS_VALID;
+}

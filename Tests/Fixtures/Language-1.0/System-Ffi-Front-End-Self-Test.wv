@@ -3,6 +3,7 @@ module Languageˉoneˉsystemˉffiˉfrontˉendˉselfˉtest profile hosted;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉtarget as Target;
 
 capability process.argument;
 capability process.argument_count;
@@ -211,6 +212,238 @@ fn Caseˉsystem() -> bool {
         Evidence.Symbolˉlength == 30u32;
 }
 
+fn Targetˉdescriptor(
+    Environment: u32,
+    Architecture: u32,
+    Abi: u32,
+    Addressˉbits: u32,
+    Littleˉendian: bool,
+    Major: u32
+) -> Target.Compilerˉsourceˉtargetˉdescriptor {
+    return Target.Compilerˉsourceˉtargetˉdescriptor(
+        Environment,
+        Architecture,
+        Abi,
+        Addressˉbits,
+        Littleˉendian,
+        Major,
+        0u32,
+        0u32
+    );
+}
+
+fn Targetˉsystemˉsource(
+    Platforms: text
+) -> bytes {
+    var Source: text = Textˉconcat(
+        "module Targetˉtest; profile system; platform ", Platforms
+    );
+    Source = Textˉconcat(Source, "; authority application; ");
+    Source = Textˉconcat(Source, Canonical());
+    return Textˉtoˉutf8(Source);
+}
+
+fn Targetˉplatforms(
+    Scopeˉmask: u32,
+    Count: u32,
+    Unknownˉscopes: u32,
+    Concreteˉsourceˉoffset: u32,
+    Concreteˉsourceˉlength: u32
+) -> Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
+    return Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence(
+        Scopeˉmask, Count, Unknownˉscopes,
+        Concreteˉsourceˉoffset, Concreteˉsourceˉlength
+    );
+}
+
+fn Caseˉtargetˉexact() -> bool {
+    let Source: bytes = Textˉtoˉutf8(
+        "module Targetˉtest; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    let Header: Declarations.Compilerˉsourceˉheader =
+        Declarations.Compilerˉparseˉheaderˉvalidated(Source);
+    let Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor =
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
+    let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
+        Targetˉplatforms(8u32, 1u32, 0u32, 46u32, 28u32);
+    let Targetˉstatus: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
+            Descriptor.Environment, Descriptor.Architecture, Descriptor.Abi,
+            Descriptor.Addressˉbits, Descriptor.Littleˉendian,
+            Descriptor.Noˉunwindˉcˉscalarˉpointerˉmajor,
+            Descriptor.Extensionˉidentities, Descriptor.Targetˉinterfaceˉidentities,
+            Platforms.Scopeˉmask, Platforms.Declaredˉscopes, Platforms.Unknownˉscopes
+        );
+    return Header.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+        Header.Profile == Declarations.Compilerˉsourceˉprofile.System &&
+        Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID;
+}
+
+fn Caseˉtargetˉportableˉselection() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            Targetˉplatforms(7u32, 3u32, 0u32, 0u32, 0u32)
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_VALID;
+}
+
+fn Caseˉtargetˉwindowsˉmismatch() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+                Target.COMPILER_SOURCE_TARGET_ABI_NONE,
+                64u32, true, 0u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+}
+
+fn Caseˉtargetˉarchitectureˉmismatch() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64,
+                Target.COMPILER_SOURCE_TARGET_ABI_NONE,
+                64u32, true, 0u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+}
+
+fn Caseˉtargetˉabiˉmismatch() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+                Target.COMPILER_SOURCE_TARGET_ABI_NONE,
+                64u32, true, 0u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+}
+
+fn Caseˉtargetˉaddressˉwidth() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+                Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
+                32u32, true, 1u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
+}
+
+fn Caseˉtargetˉbyteˉorder() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+                Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
+                64u32, false, 1u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
+}
+
+fn Caseˉtargetˉnoˉunwindˉcontract() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+                Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
+                64u32, true, 2u32
+            ),
+            Targetˉplatforms(
+                8u32, 1u32, 0u32, 0u32, 0u32
+            )
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
+}
+
+fn Caseˉtargetˉgenericˉforeign() -> bool {
+    let Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor =
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
+    let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
+        Targetˉplatforms(2u32, 1u32, 0u32, 0u32, 0u32);
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
+            Descriptor.Environment, Descriptor.Architecture, Descriptor.Abi,
+            Descriptor.Addressˉbits, Descriptor.Littleˉendian,
+            Descriptor.Noˉunwindˉcˉscalarˉpointerˉmajor,
+            Descriptor.Extensionˉidentities, Descriptor.Targetˉinterfaceˉidentities,
+            Platforms.Scopeˉmask, Platforms.Declaredˉscopes, Platforms.Unknownˉscopes
+        );
+    return Admission ==
+        Target.COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
+}
+
+fn Caseˉtargetˉunknownˉplatform() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            Targetˉplatforms(8u32, 2u32, 1u32, 0u32, 0u32)
+        );
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM;
+}
+
+fn Caseˉtargetˉplatformˉcount() -> bool {
+    let Admission: u32 =
+        Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            Targetˉplatforms(2u32, 2u32, 0u32, 0u32, 0u32)
+        );
+    return Admission ==
+        Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE;
+}
+
+fn Caseˉtargetˉforgedˉsourceˉslice() -> bool {
+    let Source: bytes = Targetˉsystemˉsource(
+        "linux.x86_64.sysv_amd64_c_v1"
+    );
+    let Header: Declarations.Compilerˉsourceˉheader =
+        Declarations.Compilerˉparseˉheaderˉvalidated(Source);
+    let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
+        Targetˉplatforms(8u32, 1u32, 0u32, 47u32, 28u32);
+    let Forgedˉvalid: bool = Platforms.Concreteˉsourceˉlength == 28u32 &&
+        Platforms.Concreteˉsourceˉoffset <= Header.Nextˉoffset &&
+        Platforms.Concreteˉsourceˉlength <=
+            Header.Nextˉoffset - Platforms.Concreteˉsourceˉoffset &&
+        Lexer.Compilerˉsourceˉspanˉequalsˉtext(
+            Source,
+            Platforms.Concreteˉsourceˉoffset,
+            Platforms.Concreteˉsourceˉlength,
+            "linux.x86_64.sysv_amd64_c_v1"
+        );
+    let Exactˉvalid: bool = Lexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Source, 46u32, 28u32, "linux.x86_64.sysv_amd64_c_v1"
+    );
+    return Exactˉvalid && !Forgedˉvalid;
+}
+
 fn Selectedˉcase() -> u32 {
     if process.argument_count() != 1u32 { return 0u32; }
     let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
@@ -232,5 +465,17 @@ export fn Main() -> i32 {
     if Selected == 106u32 && Caseˉmissingˉsemicolon() { return 42; }
     if Selected == 107u32 && Caseˉprofiles() { return 42; }
     if Selected == 108u32 && Caseˉsystem() { return 42; }
+    if Selected == 109u32 && Caseˉtargetˉexact() { return 42; }
+    if Selected == 110u32 && Caseˉtargetˉportableˉselection() { return 42; }
+    if Selected == 111u32 && Caseˉtargetˉwindowsˉmismatch() { return 42; }
+    if Selected == 112u32 && Caseˉtargetˉarchitectureˉmismatch() { return 42; }
+    if Selected == 113u32 && Caseˉtargetˉabiˉmismatch() { return 42; }
+    if Selected == 114u32 && Caseˉtargetˉaddressˉwidth() { return 42; }
+    if Selected == 115u32 && Caseˉtargetˉbyteˉorder() { return 42; }
+    if Selected == 116u32 && Caseˉtargetˉnoˉunwindˉcontract() { return 42; }
+    if Selected == 117u32 && Caseˉtargetˉgenericˉforeign() { return 42; }
+    if Selected == 118u32 && Caseˉtargetˉunknownˉplatform() { return 42; }
+    if Selected == 119u32 && Caseˉtargetˉplatformˉcount() { return 42; }
+    if Selected == 120u32 && Caseˉtargetˉforgedˉsourceˉslice() { return 42; }
     return 1;
 }

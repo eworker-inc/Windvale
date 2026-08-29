@@ -9,7 +9,7 @@ const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
-const SELECTORS = [...'abcdefghijkl'];
+const SELECTORS = [...'abcdefghijklmnopqrstuvwx'];
 const EXPECTED_RUNNER = WINDOWS
     ? {
         bytes: 5_907_456,
@@ -178,15 +178,15 @@ try {
     await Verifyˉrunner(Runner);
 
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=3/4 cases=1-6\n'
+        'START language 1 system FFI front end phase=execute item=3/4 cases=1-12\n'
     );
-    for (var Index = 0; Index < 6; Index += 1) {
+    for (var Index = 0; Index < 12; Index += 1) {
         await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
     }
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=4/4 cases=7-12\n'
+        'START language 1 system FFI front end phase=execute item=4/4 cases=13-24\n'
     );
-    for (var Index = 6; Index < SELECTORS.length; Index += 1) {
+    for (var Index = 12; Index < SELECTORS.length; Index += 1) {
         await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
     }
     Passed = true;
@@ -196,7 +196,7 @@ try {
 
 if (Passed) {
     process.stdout.write(
-        'native language 1 system FFI front end status=Passed cases=12 ' +
-        'result=42 deterministic=Verified isolated-executions=12\n'
+        'native language 1 system FFI front end status=Passed cases=24 ' +
+        'result=42 deterministic=Verified isolated-executions=24\n'
     );
 }

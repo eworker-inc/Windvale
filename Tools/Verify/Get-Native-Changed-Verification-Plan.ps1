@@ -1613,6 +1613,7 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-effect-clause-front-end'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Target-Core.wv',
         'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/System-Ffi-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.cmd',
