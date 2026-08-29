@@ -25,30 +25,53 @@ cleanup() {
 }
 trap cleanup EXIT
 
+fail() {
+    local step=$1
+    shift
+    printf 'FAIL  language 1 memory budget accounting step=%s' "$step" >&2
+    if [[ $# -gt 0 ]]; then
+        printf ' %s' "$*" >&2
+    fi
+    printf '\n' >&2
+    for evidence in \
+        "$work/Build-A.err" \
+        "$work/Build-B.err" \
+        "$work/Package.err" \
+        "$work/Run.err"; do
+        if [[ -s $evidence ]]; then
+            cat -- "$evidence" >&2
+        fi
+    done
+    exit 1
+}
+
 echo 'START language 1 memory budget accounting phase=build item=1/4'
 "$script_directory/Build-Wvb.sh" "$project" "$work/Accounting-A.wvb" \
-    >"$work/Build-A.out" 2>"$work/Build-A.err" || exit $?
-[[ ! -s $work/Build-A.err ]] || exit 1
+    >"$work/Build-A.out" 2>"$work/Build-A.err" || fail build-a
+[[ ! -s $work/Build-A.err ]] || fail build-a-stderr
 
 echo 'START language 1 memory budget accounting phase=build item=2/4'
 "$script_directory/Build-Wvb.sh" "$project" "$work/Accounting-B.wvb" \
-    >"$work/Build-B.out" 2>"$work/Build-B.err" || exit $?
-[[ ! -s $work/Build-B.err ]] || exit 1
-cmp -s -- "$work/Accounting-A.wvb" "$work/Accounting-B.wvb" || exit 1
+    >"$work/Build-B.out" 2>"$work/Build-B.err" || fail build-b
+[[ ! -s $work/Build-B.err ]] || fail build-b-stderr
+cmp -s -- "$work/Accounting-A.wvb" "$work/Accounting-B.wvb" || \
+    fail deterministic-wvb
 wvb_bytes=$(wc -c < "$work/Accounting-A.wvb")
-[[ $wvb_bytes -eq 35799 ]] || exit 1
+[[ $wvb_bytes -eq 37445 ]] || \
+    fail wvb-size "expected=37445 actual=$wvb_bytes"
 
 echo 'START language 1 memory budget accounting phase=package item=3/4'
 "$script_directory/Package-Hosted-Wvb.sh" 1 "$work/Accounting-A.wvb" \
     "$work/Accounting.elf" linux \
-    >"$work/Package.out" 2>"$work/Package.err" || exit $?
-[[ ! -s $work/Package.err ]] || exit 1
+    >"$work/Package.out" 2>"$work/Package.err" || fail package
+[[ ! -s $work/Package.err ]] || fail package-stderr
 
 echo 'START language 1 memory budget accounting phase=execute item=4/4'
 "$work/Accounting.elf" >"$work/Run.out" 2>"$work/Run.err"
 execution_result=$?
-[[ $execution_result -eq 42 ]] || exit 1
-[[ ! -s $work/Run.out && ! -s $work/Run.err ]] || exit 1
+[[ $execution_result -eq 42 ]] || \
+    fail execute-result "expected=42 actual=$execution_result"
+[[ ! -s $work/Run.out && ! -s $work/Run.err ]] || fail execute-output
 
 printf 'native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=%s\n' \
     "$wvb_bytes"

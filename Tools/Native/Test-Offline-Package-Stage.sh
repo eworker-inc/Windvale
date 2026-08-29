@@ -87,8 +87,10 @@ node -e "const fs=require('node:fs');const input=fs.readFileSync(process.argv[1]
 echo 'native offline package stage step=create-exact-input item=4/8 policy-records=8'
 node "$approval_verifier" verify >/dev/null || exit $?
 node "$approval_verifier" verify-inspector >/dev/null || exit $?
-revision=$(git -C "$repository_root" rev-parse HEAD) || exit $?
-tree=$(git -C "$repository_root" rev-parse HEAD:) || exit $?
+revision=$(git -c "safe.directory=$repository_root" -C "$repository_root" \
+    rev-parse HEAD) || exit $?
+tree=$(git -c "safe.directory=$repository_root" -C "$repository_root" \
+    rev-parse HEAD:) || exit $?
 node "$stage_tool" "$work/Wvdb-Query.wvbundle" "$work/Wvb-Inspector.wvbundle" \
     "$revision" "$tree" "$work/Stage-Input" || exit $?
 

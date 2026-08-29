@@ -72,8 +72,8 @@ node "%ApprovalVerifier%" verify >nul || goto :cleanup
 node "%ApprovalVerifier%" verify-inspector >nul || goto :cleanup
 set "Revision="
 set "Tree="
-for /f %%H in ('git -C "%RepositoryRoot%" rev-parse HEAD') do set "Revision=%%H"
-for /f %%H in ('git -C "%RepositoryRoot%" rev-parse HEAD:') do set "Tree=%%H"
+for /f %%H in ('git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" rev-parse HEAD') do set "Revision=%%H"
+for /f %%H in ('git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" rev-parse HEAD:') do set "Tree=%%H"
 if not defined Revision goto :cleanup
 if not defined Tree goto :cleanup
 node "%StageTool%" "%Work%\Wvdb-Query.wvbundle" "%Work%\Wvb-Inspector.wvbundle" ^

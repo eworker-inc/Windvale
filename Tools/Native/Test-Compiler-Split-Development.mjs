@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { createReadStream } from 'node:fs';
+import { createReadStream, realpathSync } from 'node:fs';
 import {
     lstat,
     mkdtemp,
@@ -69,7 +69,17 @@ if (Compilerˉevidence.bytes !== COMPILERS[HOST].bytes ||
     Reject('The native source compiler identity is invalid.');
 }
 
-const Testˉroot = await mkdtemp(path.join(os.tmpdir(), TEMPORARY_PREFIX));
+const Temporaryˉroot = realpathSync.native(os.tmpdir());
+const Allocatedˉtestˉroot = await mkdtemp(
+    path.join(Temporaryˉroot, TEMPORARY_PREFIX),
+);
+let Testˉroot;
+try {
+    Testˉroot = realpathSync.native(Allocatedˉtestˉroot);
+} catch (Error) {
+    await rm(Allocatedˉtestˉroot, { recursive: true, force: true });
+    throw Error;
+}
 try {
     console.log(`compiler split development status=Started cases=4 host=${HOST}`);
     console.log(
@@ -145,7 +155,7 @@ try {
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
-    if (path.dirname(Resolved) !== path.resolve(os.tmpdir()) ||
+    if (!Sameˉpath(path.dirname(Resolved), Temporaryˉroot) ||
         !path.basename(Resolved).startsWith(TEMPORARY_PREFIX)) {
         Reject('Refusing to remove an unexpected compiler split test directory.');
     }

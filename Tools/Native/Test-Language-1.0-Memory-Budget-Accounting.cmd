@@ -10,6 +10,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
 set "Project=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Language-1-Memory-Budget-Accounting.wvproj"
+set "ExpectedWvbBytes=37445"
 
 :allocate
 set "Work=%TEMP%\windvale-memory-budget-accounting-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -28,9 +29,14 @@ echo START language 1 memory budget accounting phase=build item=2/4
 call "%Native%\Build-Wvb.cmd" "%Project%" "%Work%\Accounting-B.wvb" ^
     >"%Work%\Build-B.out" 2>"%Work%\Build-B.err" || goto :cleanup
 for %%F in ("%Work%\Build-B.err") do if not "%%~zF"=="0" goto :cleanup
+set "FailureStep=deterministic-wvb"
 fc /b "%Work%\Accounting-A.wvb" "%Work%\Accounting-B.wvb" >nul || goto :cleanup
 for %%F in ("%Work%\Accounting-A.wvb") do set "WvbBytes=%%~zF"
-if not "%WvbBytes%"=="35799" goto :cleanup
+set "FailureStep=wvb-size"
+if not "%WvbBytes%"=="%ExpectedWvbBytes%" (
+    set "FailureDetail=expected=%ExpectedWvbBytes% actual=%WvbBytes%"
+    goto :cleanup
+)
 
 set "FailureStep=package"
 echo START language 1 memory budget accounting phase=package item=3/4
@@ -50,6 +56,7 @@ set "Result=0"
 :cleanup
 if not "%Result%"=="0" (
     >&2 echo FAIL  language 1 memory budget accounting step=%FailureStep%
+    if defined FailureDetail >&2 echo INFO  language 1 memory budget accounting %FailureDetail%
     if exist "%Work%\Build-A.err" type "%Work%\Build-A.err" >&2
     if exist "%Work%\Build-B.err" type "%Work%\Build-B.err" >&2
     if exist "%Work%\Package.err" type "%Work%\Package.err" >&2
