@@ -118,24 +118,23 @@ echo 'PASS  WVB inspector reconstruction metadata-absent module'
 grep -F 'module version=1.11 profile=hosted name=' "$work/Present.txt" >/dev/null || fail 'metadata-present module report'
 grep -F 'capability index=0 name="process.argument_count"' "$work/Present.txt" >/dev/null || fail 'metadata-present capability report'
 echo 'PASS  WVB inspector reconstruction metadata-present module'
-"$script_directory/Build-Echo-Package.sh" \
-    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvpack" \
-    "$repository_root/Distribution/Applications/Echo/Windvale-Echo.wvlock" \
-    "$work/Echo.wvb" >/dev/null || fail 'Echo package build'
+"$script_directory/Build-Cached-Project-Wvb.sh" \
+    "$repository_root/Projects/Applications/Windvale-Echo.wvproj" \
+    "$work/Echo.wvb" >/dev/null || fail 'Echo application build'
 "$work/Wvb-Inspector.elf" "$work/Echo.wvb" \
-    >"$work/Echo.txt" 2>&1 || fail 'Echo package inspection'
+    >"$work/Echo.txt" 2>&1 || fail 'Echo application inspection'
 grep -F 'module version=1.11 profile=hosted name=' \
-    "$work/Echo.txt" >/dev/null || fail 'Echo package module report'
+    "$work/Echo.txt" >/dev/null || fail 'Echo application module report'
 grep -F 'capability index=0 name="console.write_line"' \
-    "$work/Echo.txt" >/dev/null || fail 'Echo package first capability report'
+    "$work/Echo.txt" >/dev/null || fail 'Echo application first capability report'
 grep -F 'capability index=2 name="process.argument_count"' \
-    "$work/Echo.txt" >/dev/null || fail 'Echo package final capability report'
-echo 'PASS  WVB inspector reconstruction metadata-present Echo package'
+    "$work/Echo.txt" >/dev/null || fail 'Echo application final capability report'
+echo 'PASS  WVB inspector reconstruction metadata-present Echo application'
 
 echo 'native WVB inspector reconstruction step=identity item=4/4'
 fixture="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Metadata.wvb"
 [[ $(wc -c < "$fixture") -eq 369 ]] || fail 'metadata fixture length'
 fixture_hash=$(sha256sum -- "$fixture") || fail 'metadata fixture digest'
 [[ ${fixture_hash%% *} == 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa ]] || fail 'metadata fixture identity'
-echo 'native WVB inspector reconstruction status=Passed profile=4 metadata=Present cases=4 package-applications=1'
+echo 'native WVB inspector reconstruction status=Passed profile=4 metadata=Present cases=4 project-applications=1'
 echo 'Tests: 4, Passed: 4, Failed: 0'

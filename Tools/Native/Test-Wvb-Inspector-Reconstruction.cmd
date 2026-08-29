@@ -89,9 +89,8 @@ findstr /b /c:"module version=1.11 profile=hosted name=" "%Work%\Present.txt" >n
 findstr /b /c:"capability index=0 name=" "%Work%\Present.txt" >nul || goto :cleanup
 findstr /c:"process.argument_count" "%Work%\Present.txt" >nul || goto :cleanup
 echo PASS  WVB inspector reconstruction metadata-present module
-call "%Native%\Build-Echo-Package.cmd" ^
-    "%RepositoryRoot%\Distribution\Applications\Echo\Windvale-Echo.wvpack" ^
-    "%RepositoryRoot%\Distribution\Applications\Echo\Windvale-Echo.wvlock" ^
+call "%Native%\Build-Cached-Project-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Applications\Windvale-Echo.wvproj" ^
     "%Work%\Echo.wvb" >nul || goto :cleanup
 "%Work%\Wvb-Inspector.exe" "%Work%\Echo.wvb" ^
     >"%Work%\Echo.txt" 2>&1 || goto :cleanup
@@ -101,13 +100,13 @@ findstr /b /c:"capability index=0 name=" "%Work%\Echo.txt" >nul || goto :cleanup
 findstr /c:"console.write_line" "%Work%\Echo.txt" >nul || goto :cleanup
 findstr /b /c:"capability index=2 name=" "%Work%\Echo.txt" >nul || goto :cleanup
 findstr /c:"process.argument_count" "%Work%\Echo.txt" >nul || goto :cleanup
-echo PASS  WVB inspector reconstruction metadata-present Echo package
+echo PASS  WVB inspector reconstruction metadata-present Echo application
 
 echo native WVB inspector reconstruction step=identity item=4/4
 call :verify_file "%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Metadata.wvb" ^
     369 94b41f5016722c9e5bf16ace5ec933acc35c14efdd4e08fe11fd582a62b58ffa ^
     "metadata-present fixture" || goto :cleanup
-echo native WVB inspector reconstruction status=Passed profile=4 metadata=Present cases=4 package-applications=1
+echo native WVB inspector reconstruction status=Passed profile=4 metadata=Present cases=4 project-applications=1
 echo Tests: 4, Passed: 4, Failed: 0
 set "Result=0"
 
