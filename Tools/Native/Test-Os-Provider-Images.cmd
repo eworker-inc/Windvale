@@ -35,7 +35,7 @@ call "%Native%\Assemble-Wva.cmd" "%Root%\Operating-System\Kernel\Network-Process
 call :verify "%Work%\Network-Shim.wvo" 296 ffc757391199f456850bdb80a2f67b1815b7bc7c1dda9a1bf6b6ed1919df87af || goto :cleanup
 call "%Native%\Link-Wvo.cmd" 0 Windvale_network_process_user_entry "%Work%\Network.bin" "%Work%\Network-Shim.wvo" "%Work%\Network.wvo" >nul || goto :cleanup
 call :verify "%Work%\Network.bin" 242571 68182de6018a6c64d02c4a384355ea14c463a67d1939cb18db0c058223358e42 || goto :cleanup
-echo native os provider images status=Passed services=2 readiness=2 cases=8
+echo native os provider images status=Passed services=2 readiness=host-specific cases=8
 set "Status=0"
 goto :cleanup
 :verify
