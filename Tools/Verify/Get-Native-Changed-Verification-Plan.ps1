@@ -3311,6 +3311,10 @@ foreach ($Path in $Paths) {
         Add-Suite @('wvb-runner-reconstruction', 'scripting')
         Add-Suite 'seed-native-front-door'
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wvb-Runner-0.1.0/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'installers'
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'wvo-publisher-reconstruction'

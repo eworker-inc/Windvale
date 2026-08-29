@@ -68,8 +68,8 @@ verify_file() {
 
 node "$repository_root/Tools/Native/Build-Current-Split-Project-Wvb.mjs" \
     "$source_project" "$wvb" || exit 1
-verify_file "$wvb" 464589 \
-    5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2 \
+verify_file "$wvb" 482767 \
+    fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f \
     'WVB-runner module' || exit 1
 
 "$repository_root/Tools/Native/Stage-Compiler-Wvb.sh" \
@@ -77,7 +77,7 @@ verify_file "$wvb" 464589 \
     >"$temporary_directory/Stage.out" 2>"$temporary_directory/Stage.err" ||
     report_failure Stage
 grep -Fqx \
-    'native x64 staging status=Complete object-bytes=5650368 chunks=13 manifest-bytes=180' \
+    'native x64 staging status=Complete object-bytes=5899132 chunks=13 manifest-bytes=180' \
     "$temporary_directory/Stage.out" || report_failure Stage
 
 "$repository_root/Tools/Native/Link-Staged-Compiler-Wvo.sh" \
@@ -85,7 +85,7 @@ grep -Fqx \
     >"$temporary_directory/Link.out" 2>"$temporary_directory/Link.err" ||
     report_failure Link
 grep -Fqx \
-    'segmented compiler image staging status=Complete image-bytes=5640684 entry-offset=137648 chunks=9 manifest-bytes=136' \
+    'segmented compiler image staging status=Complete image-bytes=5889164 entry-offset=150541 chunks=9 manifest-bytes=136' \
     "$temporary_directory/Link.out" || report_failure Link
 
 "$repository_root/Tools/Native/Transport-Compiler-Image.sh" \
@@ -93,23 +93,23 @@ grep -Fqx \
     >"$temporary_directory/Transport.out" 2>"$temporary_directory/Transport.err" ||
     report_failure Transport
 grep -Fqx \
-    'compiler image transport status=Complete image-bytes=5640684 entry-offset=137648 chunks=2 manifest-bytes=52' \
+    'compiler image transport status=Complete image-bytes=5889164 entry-offset=150541 chunks=2 manifest-bytes=52' \
     "$temporary_directory/Transport.out" || report_failure Transport
 
 "$repository_root/Tools/Native/Package-Hosted-Wvb.sh" image 5 \
-    "$wvb" "$canonical_prefix" 2 137648 "$windows_application" windows \
+    "$wvb" "$canonical_prefix" 2 150541 "$windows_application" windows \
     >"$temporary_directory/Windows-Package.out" \
     2>"$temporary_directory/Windows-Package.err" || report_failure Windows-Package
-verify_file "$windows_application" 5659136 \
-    2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114 \
+verify_file "$windows_application" 5907456 \
+    2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b \
     'Windows WVB-runner application' || exit 1
 
 "$repository_root/Tools/Native/Package-Hosted-Wvb.sh" image 5 \
-    "$wvb" "$canonical_prefix" 2 137648 "$linux_application" linux \
+    "$wvb" "$canonical_prefix" 2 150541 "$linux_application" linux \
     >"$temporary_directory/Linux-Package.out" \
     2>"$temporary_directory/Linux-Package.err" || report_failure Linux-Package
-verify_file "$linux_application" 5660672 \
-    ccaaa6cbb76c557e65c169ef8bad7ca3396c0a38e3e4b18adf303f94077e83d1 \
+verify_file "$linux_application" 5906432 \
+    611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae \
     'Linux WVB-runner application' || exit 1
 
 echo 'native WVB runner reconstruction status=Complete artifacts=3'

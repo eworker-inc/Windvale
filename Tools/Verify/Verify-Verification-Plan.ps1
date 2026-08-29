@@ -3376,6 +3376,9 @@ $NativeCases = @(
     @{
         Name = 'installer owner'
         Paths = @(
+            'Artifacts/Native-Wvb-Runner-0.1.0/README.md',
+            'Artifacts/Native-Wvb-Runner-0.1.0/windows-x64-wvrun.exe',
+            'Artifacts/Native-Wvb-Runner-0.1.0/linux-x64-wvrun.elf',
             'Distribution/Installers/Windvale-Development-Installer.json',
             'Distribution/Installers/Windvale-Release-Installer.json',
             'Distribution/Installers/Templates/windows-x64/Install-Windvale.ps1',

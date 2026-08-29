@@ -26,12 +26,12 @@ field can advance.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 464,589 | `5c3bc6773f97e0cb9e5dc3d993d2768e5e401f73884630710e29a6a3c67ef4f2` |
-| Windows application | 5,659,136 | `2292555c4dad03d646d7e14d0bf716bd663d95b1d0e224f9f6c11d598b519114` |
-| Linux application | 5,660,672 | `ccaaa6cbb76c557e65c169ef8bad7ca3396c0a38e3e4b18adf303f94077e83d1` |
+| WVB runner | 482,767 | `fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f` |
+| Windows application | 5,907,456 | `2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b` |
+| Linux application | 5,906,432 | `611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae` |
 
-Segmented staging emits 5,650,368 object bytes across 13 chunks. Linking emits a
-5,640,684-byte native image with entry offset 137,648; canonical transport
+Segmented staging emits 5,899,132 object bytes across 13 chunks. Linking emits a
+5,889,164-byte native image with entry offset 150,541; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
@@ -478,11 +478,11 @@ use the full `u64` range. Invalid arity or values return status `64` before
 execution. Successful task execution preserves `Result: <i32>` on standard
 output and process exit zero.
 
-The current development runner contains 228 functions and 430,311 code bytes in
-a 482,631-byte WVB at SHA-256
-`66fda2e18f7250aa3595edf5313403c5c20416f6a50c2b0dc7aaa3e94f5a058f`.
-It packages to a 5,903,872-byte Windows hosted application at SHA-256
-`b9133aad5e485d8f5e894f078db4c47b2599cf644b34b6a0813085e900787526`.
+The current promoted runner contains 228 functions and 430,435 code bytes in a
+482,767-byte WVB at SHA-256
+`fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f`.
+It packages to the exact Windows and Linux applications in the current-product
+table above.
 The 4,231-byte success fixture, the 5,057-byte environment fixture, child-trap
 fixture, aggregate-retention pressure fixture, one-work-unit fixture,
 call-depth-one fixture, retained-memory refusal fixture, four-child cancellation
@@ -490,9 +490,10 @@ fixture, 6,544-byte observable completion-order fixture, and 46-case task-state
 self-test all pass their exact outcomes. The completion-order fixture writes
 `3`, `1`, `0`, `2`, then `Result: 42`; its WVB SHA-256 is
 `6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c`.
-The complete focused owner passes all 59 named phases and 161 cases. These are
-focused sequential development results; exact reconstruction, provider-
-generation recovery, and parallel-capable paired-host evidence remain pending.
+The complete focused owner passes all 61 named phases and 172 cases, including
+the provider-generation recovery workload. These are focused sequential
+development results; independent paired-host reconstruction and
+parallel-capable paired-host evidence remain pending.
 
 The installed `wv run` composition invokes the same candidate through its
 internal `--script <module.wvb> [argument ...]` mode only after an independent

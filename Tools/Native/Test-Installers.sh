@@ -28,7 +28,7 @@ release_input=Distribution/Installers/Windvale-Release-Installer.json
 development_windows_archive=windvale-0.2.0-dev.1-windows-x64.zip
 development_linux_archive=windvale-0.2.0-dev.1-linux-x64.tar.gz
 development_package_directory=windvale-0.2.0-dev.1-linux-x64
-development_payload=738778db11f628d55beb8dcb7c4f8a60cdcf72c075814a5d8786a3d3f4948ffa
+development_payload=de150890e0cd959b98d283a0df3b170775bf7eeb690422e3b20822b0ee2319c7
 windows_archive=windvale-0.1.0-windows-x64.zip
 linux_archive=windvale-0.1.0-linux-x64.tar.gz
 package_directory=windvale-0.1.0-linux-x64
@@ -59,11 +59,11 @@ cmp --silent "$work/First-Release/$windows_archive" \
     "$work/Second-Release/$windows_archive" || exit 1
 cmp --silent "$work/First-Release/$linux_archive" \
     "$work/Second-Release/$linux_archive" || exit 1
-verify_file "$work/First-Development/$development_windows_archive" 5469526 \
-    e32b1dadc813d9f220d19f8dad9c641950b391532b0a20f69de7d78b7ed51d57 \
+verify_file "$work/First-Development/$development_windows_archive" 5516228 \
+    e71218d21d28c42cf6e3e69531686fd5fe2b79f25e4cb2b0489593d733b029b6 \
     'Windows development installer' || exit 1
-verify_file "$work/First-Development/$development_linux_archive" 5463313 \
-    24898661ca443b50761c6cc9f03a92a3f33f881f423394093a12b51c8e3932fa \
+verify_file "$work/First-Development/$development_linux_archive" 5511747 \
+    eff1bd1aa4354099f3ff6ce625d00136d53db02436ae90b2415f2629fc6d5839 \
     'Linux development installer' || exit 1
 verify_file "$work/First-Release/$windows_archive" 43234311 \
     3f6f633e17fd5d29799ffcec91a6855f7076df9102f8a61c95bdaf760ddb54a1 \

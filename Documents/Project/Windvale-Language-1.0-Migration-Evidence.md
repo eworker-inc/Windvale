@@ -4084,5 +4084,26 @@ callable evidence advances to 4,394,089 bytes at SHA-256
 `b0d9f00087d04695004dfc04c331c646a192cd9291741dd78b7bf395acd8ff80`.
 The registry remains 114 owners and 5,568 cases and advances to SHA-256
 `a2852df9feab3e8e79a80562db3df6eebffc0f321d65f44bf417048960cfb6c5`.
-Cross-host Development execution, candidate promotion, and final Slice 7
-Qualification remain pending.
+Candidate promotion is recorded by Decision 0874. Cross-host Development
+execution and final Slice 7 Qualification remain pending.
+
+## Slice 7 complete runner promotion checkpoint
+
+[Decision 0874](../Decisions/0874-Promote-The-Complete-Slice-7-Wvb-Runner.md)
+promotes the complete queued-task, completion-order, and provider-recovery
+runtime as the sole tracked profile-5 WVB-runner family. The source-built
+482,767-byte WVB has SHA-256
+`fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f`.
+Its Windows application is 5,907,456 bytes at SHA-256
+`2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b`;
+its Linux application is 5,906,432 bytes at SHA-256
+`611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae`.
+
+One 5,899,132-byte, 13-chunk object set links to a 5,889,164-byte image at
+entry offset 150,541 and canonically transports in two chunks. The current
+analyzer/emitter pair reconstructs the WVB through all 13 visible phases. The
+split-project cache now validates every path component by metadata, accepting
+ordinary NTFS short spellings without admitting linked ancestors.
+
+Independent Windows/Linux Development execution and the explicit final Slice
+7 Qualification gate remain pending.

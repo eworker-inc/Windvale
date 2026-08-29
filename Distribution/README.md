@@ -41,5 +41,9 @@ outputs. Those generated outputs and all private keys remain outside this tree.
 General resolver, registry, updater, rollback, and package-manager contracts
 remain outside Installer 1.
 
+Stable installer manifests select versioned release-input artifact paths, not
+mutable development-candidate paths. This keeps an already-published installer
+reconstructible when the active compiler or runner is promoted.
+
 Package metadata does not grant capabilities. A launcher or service manager must
 still approve and bind each required rights-limited provider independently.

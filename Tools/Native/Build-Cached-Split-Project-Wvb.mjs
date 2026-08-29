@@ -8,7 +8,6 @@ import {
     mkdtemp,
     open,
     readFile,
-    realpath,
     rename,
     rm,
     stat,
@@ -706,28 +705,34 @@ async function Verifyˉproducer(Candidate, Identity) {
 }
 
 async function Requireˉordinaryˉfile(Candidate, Label, Maximum) {
+    await Requireˉordinaryˉdirectory(
+        path.dirname(Candidate),
+        `${Label} parent`,
+    );
     const Information = await lstat(Candidate).catch(() => null);
     if (Information === null || !Information.isFile() ||
         Information.isSymbolicLink() || Information.size < 1 ||
         Information.size > Maximum) {
         Reject(`The ${Label} is not a bounded ordinary file: ${Candidate}`);
     }
-    const Canonical = await realpath(Candidate);
-    if (!Sameˉpath(Canonical, path.resolve(Candidate))) {
-        Reject(`The ${Label} must use its canonical non-link path: ${Candidate}`);
-    }
     return Information;
 }
 
 async function Requireˉordinaryˉdirectory(Candidate, Label) {
-    const Information = await lstat(Candidate).catch(() => null);
-    if (Information === null || !Information.isDirectory() ||
-        Information.isSymbolicLink()) {
-        Reject(`The ${Label} is not an ordinary directory: ${Candidate}`);
-    }
-    const Canonical = await realpath(Candidate);
-    if (!Sameˉpath(Canonical, path.resolve(Candidate))) {
-        Reject(`The ${Label} must use its canonical non-link path: ${Candidate}`);
+    const Resolved = path.resolve(Candidate);
+    const Root = path.parse(Resolved).root;
+    let Current = Root;
+    for (const Component of path.relative(Root, Resolved)
+            .split(path.sep).filter(Value => Value.length !== 0)) {
+        Current = path.join(Current, Component);
+        const Information = await lstat(Current).catch(() => null);
+        if (Information === null || !Information.isDirectory() ||
+            Information.isSymbolicLink()) {
+            Reject(
+                `The ${Label} traverses a missing, linked, or ` +
+                `non-directory path: ${Current}`,
+            );
+        }
     }
 }
 
@@ -738,12 +743,6 @@ async function Readˉbounded(Candidate, Label, Maximum) {
 
 async function Exists(Candidate) {
     return (await stat(Candidate).catch(() => null)) !== null;
-}
-
-function Sameˉpath(Left, Right) {
-    return process.platform === 'win32'
-        ? Left.toLowerCase() === Right.toLowerCase()
-        : Left === Right;
 }
 
 function Usage() {

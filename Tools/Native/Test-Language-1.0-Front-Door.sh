@@ -41,6 +41,24 @@ cleanup() {
 }
 trap cleanup EXIT
 
+report_step_failure() {
+    local step=$1
+    local status=$2
+    shift 2
+    printf 'FAIL  language 1 front door step=%s status=%s\n' \
+        "$step" "$status" >&2
+    local evidence
+    for evidence in "$@"; do
+        if [[ -s $evidence ]]; then
+            printf 'diagnostic step=%s file=%s bytes=%s\n' \
+                "$step" "$(basename -- "$evidence")" \
+                "$(wc -c < "$evidence")" >&2
+            head -c 65536 -- "$evidence" >&2
+            printf '\n' >&2
+        fi
+    done
+}
+
 expect_analysis_failure() {
     local fixture=$1
     local prefix=$2
@@ -591,14 +609,34 @@ echo 'PASS  language 1 front door step=borrow-call-semantics item=direct-rejecti
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$work/Borrow-Sequence-Admitted.wvss" \
     >"$work/Borrow-Sequence-Admission.out" \
-    2>"$work/Borrow-Sequence-Admission.err" || exit $?
-[[ ! -s $work/Borrow-Sequence-Admission.err ]] || exit 1
+    2>"$work/Borrow-Sequence-Admission.err" || {
+        admission_status=$?
+        report_step_failure borrow-sequence-admission "$admission_status" \
+            "$work/Borrow-Sequence-Admission.out" \
+            "$work/Borrow-Sequence-Admission.err"
+        exit "$admission_status"
+    }
+if [[ -s $work/Borrow-Sequence-Admission.err ]]; then
+    report_step_failure borrow-sequence-admission 1 \
+        "$work/Borrow-Sequence-Admission.out" \
+        "$work/Borrow-Sequence-Admission.err"
+    exit 1
+fi
 "$work/Analyzer.elf" --admitted-source-set \
     "$work/Borrow-Sequence-Admitted.wvss" \
     "$work/Borrow-Sequence.wvss" "$work/Borrow-Sequence.wvca" \
     "$work/Borrow-Sequence.wvlb" "$work/Borrow-Sequence.wvir" \
-    >"$work/Borrow-Sequence.out" 2>"$work/Borrow-Sequence.err" || exit $?
-[[ ! -s $work/Borrow-Sequence.err ]] || exit 1
+    >"$work/Borrow-Sequence.out" 2>"$work/Borrow-Sequence.err" || {
+        analysis_status=$?
+        report_step_failure borrow-sequence-analysis "$analysis_status" \
+            "$work/Borrow-Sequence.out" "$work/Borrow-Sequence.err"
+        exit "$analysis_status"
+    }
+if [[ -s $work/Borrow-Sequence.err ]]; then
+    report_step_failure borrow-sequence-analysis 1 \
+        "$work/Borrow-Sequence.out" "$work/Borrow-Sequence.err"
+    exit 1
+fi
 grep -Fq 'source analysis status=Published' "$work/Borrow-Sequence.out" || exit 1
 echo 'PASS  language 1 front door step=borrow-call-semantics item=sequence ownership=Shared'
 "$work/Admitter.elf" \

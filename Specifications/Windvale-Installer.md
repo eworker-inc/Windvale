@@ -58,6 +58,13 @@ checkout line endings cannot change an archive. Undeclared build caches,
 managed binaries, SDKs, WVDB, application data, credentials, and host
 configuration cannot enter the payload.
 
+An immutable stable input must select versioned release-input artifacts rather
+than a mutable development-candidate path. The 0.1.0 manifest therefore selects
+its exact historical host runners from `Native-Wvb-Runner-0.1.0`, while the
+development manifest selects the active `Native-Wvb-Runner-Candidate` family.
+Identical retained binary content is deduplicated by Git's content-addressed
+object store.
+
 The payload also contains the source license, channel and version record,
 bounded notice, small `wv` client, and offline payload verifier. `wv` exposes
 `version`, `tools`, `doctor`, `run`, and `help`; it resolves only sibling
@@ -86,8 +93,8 @@ directory, an input outside `Distribution/Installers/`, or an existing output.
 
 | Channel | Target | Artifact | Bytes | SHA-256 | Payload manifest SHA-256 |
 | --- | --- | --- | ---: | --- | --- |
-| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 5,469,526 | `e32b1dadc813d9f220d19f8dad9c641950b391532b0a20f69de7d78b7ed51d57` | `b76ba48e67da4658b347f4211514e78eb174be4d538753e35056baa8c3395d60` |
-| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 5,463,313 | `24898661ca443b50761c6cc9f03a92a3f33f881f423394093a12b51c8e3932fa` | `738778db11f628d55beb8dcb7c4f8a60cdcf72c075814a5d8786a3d3f4948ffa` |
+| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 5,516,228 | `e71218d21d28c42cf6e3e69531686fd5fe2b79f25e4cb2b0489593d733b029b6` | `8b86e348597ed34718308efe5565bb9ba26d3f226dd3b7f45185ca203cc7d2ef` |
+| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 5,511,747 | `eff1bd1aa4354099f3ff6ce625d00136d53db02436ae90b2415f2629fc6d5839` | `de150890e0cd959b98d283a0df3b170775bf7eeb690422e3b20822b0ee2319c7` |
 | stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 43,234,311 | `3f6f633e17fd5d29799ffcec91a6855f7076df9102f8a61c95bdaf760ddb54a1` | `e30fd560a1fc9701d21bd407d8bf51a58b969c331ad7a6498ecf8bceed9d0d7f` |
 | stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 43,246,838 | `17d0982384ac73c251aeb5ee4fa5cfd7e3b82070abee77c321be6be07d068a63` | `1321e44a32b39d25dc3063bffdfda9cbca4890a66c25343f3dc7ad00fe1f8ddf` |
 
