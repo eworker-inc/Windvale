@@ -24,15 +24,15 @@ call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Resolver.wvb" ^
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 284755 ccffc57e6a18b7a14b2aeecc0ff5ef38a0a9bd8206ea429ebf9d9b93c678296c || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Writer.wvb" ^
-    "%Work%\Writer.exe" windows || goto :cleanup
+call :verify_file "%Work%\Writer.wvb" 510498 7bc577ac157fc20c301699e5cd08286b736017922871f5206b045d6c46b93a1d || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" ^
+    "%Work%\Writer.exe" || goto :cleanup
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 304048 1e37b48c182690b600d1310feb7d057ef337ebc4f962499eeb031116f22e64d8 || goto :cleanup
-call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Verifier.wvb" ^
-    "%Work%\Verifier.exe" windows || goto :cleanup
+call :verify_file "%Work%\Verifier.wvb" 529791 218e8939a6e0686c6d2086e2ce977c405abb77728280b332bdf15277f8fa606b || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Verifier.wvb" ^
+    "%Work%\Verifier.exe" || goto :cleanup
 
 echo native echo command launch step=construct-package item=2/3
 call "%Native%\Build-Echo-Package.cmd" ^
@@ -47,10 +47,10 @@ node -e "const fs=require('node:fs');const x=fs.readFileSync(process.argv[1],'ut
     "%Work%\Echo.wvb" "%Work%\LICENSE.md" ^
     "%RepositoryRoot%\Distribution\Applications\Echo\Windvale-Echo.wvprov" ^
     "%Work%\Echo.wvbundle" >nul || goto :cleanup
-node -e "const fs=require('node:fs'),c=require('node:crypto'),p=process.argv[1],b=fs.readFileSync(p),h=c.createHash('sha256').update(b).digest('hex');if(b.length!==17009||h!=='9abc97a4088ed60ba26015909ed4375ce92e27e9280fbe8be892c1b14ee7eb85')process.exit(1);" ^
+node -e "const fs=require('node:fs'),c=require('node:crypto'),p=process.argv[1],b=fs.readFileSync(p),h=c.createHash('sha256').update(b).digest('hex');if(b.length!==17009||h!=='a649a98c6d6f8dd2873f1b5097f74f613f7e3422929ef8838a7f6522bc464a0e')process.exit(1);" ^
     "%Work%\Echo.wvbundle" || goto :cleanup
 "%Work%\Verifier.exe" "%Work%\Echo.wvbundle" >"%Work%\Bundle.txt" || goto :cleanup
-node -e "const fs=require('node:fs'),x=fs.readFileSync(process.argv[1],'utf8').replaceAll('\r\n','\n');if(x!=='bundle status=Valid bytes=17009 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=9abc97a4088ed60ba26015909ed4375ce92e27e9280fbe8be892c1b14ee7eb85\n')process.exit(1);" ^
+node -e "const fs=require('node:fs'),x=fs.readFileSync(process.argv[1],'utf8').replaceAll('\r\n','\n');if(x!=='bundle status=Valid bytes=17009 package=windvale.echo version=0.1.0 target=hosted-wvb-v1 items=3 blobs=5 sha256=a649a98c6d6f8dd2873f1b5097f74f613f7e3422929ef8838a7f6522bc464a0e\n')process.exit(1);" ^
     "%Work%\Bundle.txt" || goto :cleanup
 
 echo native echo command launch step=package-and-dispatch item=3/3 cases=10

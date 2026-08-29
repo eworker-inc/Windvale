@@ -11,12 +11,12 @@ const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, "../..");
 const DISPATCHER = path.join(SCRIPT_DIRECTORY, "Dispatch-Installation-Command.mjs");
 const GENERATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-Generation.mjs");
 const ACTIVATION_PUBLISHER = path.join(SCRIPT_DIRECTORY, "Publish-Installation-Activation.mjs");
-const APPROVAL = "cf2bf11b8b737466fad088e383004ee3fbdef45609ff046022fa6bf4a5c232b9";
-const BUNDLE = "9abc97a4088ed60ba26015909ed4375ce92e27e9280fbe8be892c1b14ee7eb85";
-const LOCK = "b2bd85d1f76d062c45a8f5ee8ce531b87aeaf499440f1fdf52a4a8a5aca317f3";
+const APPROVAL = "36b5244d45c14b8372c2e969207740a78963bce137b6fe9e7ea72cbefe1140ed";
+const BUNDLE = "a649a98c6d6f8dd2873f1b5097f74f613f7e3422929ef8838a7f6522bc464a0e";
+const LOCK = "caf8b109f7b0d817115f53dac539da4ec63760cb2a34e23943871b787d74836e";
 const LAUNCH = {
-    "windows-x64": "39839a75c852c46eec896bfe47f8c43228d5e2fff650a722ea72f08f55e7a8b8",
-    "linux-x64": "1010e131f66c45dec68b29b2f2797bc6ef47c4c6c3b83554f1e0872949a670fb",
+    "windows-x64": "2b6f080b0e3475f32442c20be3bc27afd9756c59b761173edf69098cebd57daa",
+    "linux-x64": "495576d9f207f76debb8ab1febbc5408c8d404f81e1a232460766cca50edec96",
 };
 
 const Sha256 = Value => crypto.createHash("sha256").update(Value).digest("hex");

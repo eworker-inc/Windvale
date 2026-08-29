@@ -9,43 +9,46 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
-set "FrontDoor=%RepositoryRoot%\Artifacts\Native-Front-Door\windows-x64\wvbuild.exe"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
+set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 
 :allocate
-set "Work=%TEMP%\windvale-model-provider-%RANDOM%-%RANDOM%-%RANDOM%"
+set "Work=%TemporaryRoot%\windvale-model-provider-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
+set "CanonicalWork="
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+if not defined CanonicalWork (
+    rmdir "%Work%" >nul 2>&1
+    exit /b 1
+)
+set "Work=%CanonicalWork%"
+set "CanonicalWork="
+for /f "usebackq delims=" %%T in (`node -p "require('node:path').dirname(process.argv[1])" "%Work%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 set "WorkResource=%Work:\=/%"
 set "Result=1"
 
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
 set "WorkspaceResource=%Workspace:\=/%"
-set "BuildProject=%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj"
-set "BuildProjectResource=%BuildProject:\=/%"
-set "LowererProject=%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj"
-set "LowererProjectResource=%LowererProject:\=/%"
 set "ModelProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Hosted-Model-Provider.wvproj"
 set "ModelProjectResource=%ModelProject:\=/%"
 
-echo START native model provider phase=tools item=1/4
-echo Progress: step=model-provider-tools item=1/4 detail=build-driver-wvb
-call "%Native%\Build-Current-Wvb.cmd" "%BuildProject%" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1259719 3e84e6dc8e646f7cde061e21fdbff7850e83e9faa83114d810b70297a445f949 || goto :cleanup
-echo Progress: step=model-provider-tools item=2/4 detail=package-build-driver
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
-echo Progress: step=model-provider-tools item=3/4 detail=build-lowerer-wvb
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LowererProjectResource%" "%Work%/Lowerer.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || goto :cleanup
-echo Progress: step=model-provider-tools item=4/4 detail=package-lowerer
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" --development-cache >nul || goto :cleanup
+echo START native model provider phase=tools item=1/4 retained-tools=2
+echo Progress: step=model-provider-tools item=1/2 detail=verify-build-driver
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || goto :cleanup
+echo Progress: step=model-provider-tools item=2/2 detail=verify-lowerer
+call :verify_file "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad || goto :cleanup
 echo PASS  native model provider phase=tools item=1/4
 
 echo START native model provider phase=compile item=2/4
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%ModelProjectResource%" "%Work%/Model-A.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%ModelProjectResource%" "%Work%/Model-B.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ModelProjectResource%" "%WorkResource%/Model-A.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ModelProjectResource%" "%WorkResource%/Model-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Model-A.wvb" "%Work%\Model-B.wvb" >nul || goto :cleanup
-"%Work%\Lowerer.exe" "%Work%\Model-A.wvb" "%Work%\Model-A.wvo" >nul || goto :cleanup
-"%Work%\Lowerer.exe" "%Work%\Model-B.wvb" "%Work%\Model-B.wvo" >nul || goto :cleanup
+"%Lowerer%" "%Work%\Model-A.wvb" "%Work%\Model-A.wvo" >nul || goto :cleanup
+"%Lowerer%" "%Work%\Model-B.wvb" "%Work%\Model-B.wvo" >nul || goto :cleanup
 fc /b "%Work%\Model-A.wvo" "%Work%\Model-B.wvo" >nul || goto :cleanup
 call "%Native%\Check-Wvo.cmd" "%Work%\Model-A.wvo" >nul || goto :cleanup
 echo PASS  native model provider phase=compile item=2/4
@@ -71,7 +74,7 @@ set "Result=0"
 
 :cleanup
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
-echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-model-provider-" >nul || exit /b 1
+echo(%ResolvedWork%| findstr /b /i /c:"%TemporaryRoot%\windvale-model-provider-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
 echo native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified

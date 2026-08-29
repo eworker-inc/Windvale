@@ -20,11 +20,11 @@ if /I not "%Manifest%"=="%ExpectedManifest%" (
     exit /b 64
 )
 
-call :verify_file "%Lock%" 940 b2bd85d1f76d062c45a8f5ee8ce531b87aeaf499440f1fdf52a4a8a5aca317f3 || goto :lock_rejected
+call :verify_file "%Lock%" 940 caf8b109f7b0d817115f53dac539da4ec63760cb2a34e23943871b787d74836e || goto :lock_rejected
 call :verify_file "%Manifest%" 333 27d32dc98d1c2d57792f0a37b173a77d5dab465e005bc9c47fd8fd086c8b6234 || goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Windvale.wvws" 21 5cb4f5f771ffd5a9f443ca993fd66f53109cd5862f7c268f1f3958a36b8f4199 || goto :lock_rejected
-call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" 923818 49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2 || goto :lock_rejected
-call :verify_file "%Compiler%" 27678720 6f266759e2d2524ad9ce2045cb21243538efc7bce35ab1f94a7da4009865eac8 || goto :lock_rejected
+call :verify_file "%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\Wvb\Windvale-Compiler.wvb" 935163 a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6 || goto :lock_rejected
+call :verify_file "%Compiler%" 28172800 a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d || goto :lock_rejected
 call :verify_file "%Publisher%" 1544192 0fdb432aa54cc7b9cc4a1d42a438d2b56a29695e06b2369540dac845989751c1 || goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Projects\Applications\Windvale-Echo.wvproj" 62 bf5b476f36512f48c0798fc1683708872500094e6a853ba6274d3ee7a8b3c6ef || goto :lock_rejected
 call :verify_file "%RepositoryRoot%\Applications\Shell\Echo.wv" 845 f843e69b9549a890aa808331f6ef503941c0a1d5240ecd5859e46f6f8ae044c7 || goto :lock_rejected

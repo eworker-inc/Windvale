@@ -16,22 +16,19 @@ bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emi
 bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
 bridge_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit-wvir-1.9-bridge.wvb"
 temporary_root=$(node -p "require('node:fs').realpathSync(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
-work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
+allocated_work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
+if ! work=$(node -p "require('node:fs').realpathSync(process.argv[1])" "$allocated_work"); then
+    rmdir -- "$allocated_work"
+    exit 1
+fi
+if ! temporary_root=$(node -p "require('node:path').dirname(process.argv[1])" "$work"); then
+    rmdir -- "$work"
+    exit 1
+fi
 cleanup() {
     case "$work" in
         "$temporary_root"/windvale-language-1-front-door.*)
-            for malformed in \
-                Memory-Budget-Entry-Malformed Memory-Budget-Split-Malformed \
-                Fixed-Integer-Malformed \
-                Rune-Malformed Floating-Malformed \
-                Unit-Never-Malformed Multi-Field-Variant-Malformed; do
-                if [[ -d $work/$malformed ]]; then
-                    rm -f -- "$work/$malformed"/*
-                    rmdir -- "$work/$malformed"
-                fi
-            done
-            rm -f -- "$work"/*
-            rmdir -- "$work"
+            rm -rf -- "$work"
             ;;
         *)
             echo "Refusing to remove unexpected temporary path: $work" >&2

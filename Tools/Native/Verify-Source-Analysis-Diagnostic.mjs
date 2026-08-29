@@ -57,7 +57,10 @@ const Match = new RegExp(
     '\\r?\\n$', 'u',
 ).exec(Diagnostic);
 if (Match === null) {
-    Reject('The source-analysis diagnostic differs.');
+    Reject(
+        `The source-analysis diagnostic differs: phase=${Phase} ` +
+        `status=${Canonicalˉstatus} observed=${JSON.stringify(Diagnostic)}.`,
+    );
 }
 const Numericˉvalues = Phase === 'wir'
     ? Match.slice(1)

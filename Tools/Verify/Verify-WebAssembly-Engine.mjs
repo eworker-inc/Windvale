@@ -1161,9 +1161,9 @@ function verifyRuntime(expected, module, exports, digest) {
         );
         const compiler = readFileSync(expected.inputPath);
         if (
-            compiler.length !== 923_818 ||
+            compiler.length !== 935_163 ||
             createHash("sha256").update(compiler).digest("hex") !==
-                "49b5cbf040de4bcb22c071a5da9a4fbad47f4f0658ef910957a67b52c07607c2"
+                "a7d47b2de29faee089c7a22ef23eac4657f719331dc02044eb2d818457dac5b6"
         ) {
             throw new Error(`${expected.inputPath}: the exact compiler WVB identity changed.`);
         }

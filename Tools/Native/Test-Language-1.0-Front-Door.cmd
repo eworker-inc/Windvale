@@ -23,6 +23,16 @@ if not defined TemporaryRoot exit /b 1
 set "Work=%TemporaryRoot%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
+set "CanonicalWork="
+for /f "usebackq delims=" %%W in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%Work%"`) do set "CanonicalWork=%%W"
+if not defined CanonicalWork (
+    rmdir "%Work%" >nul 2>&1
+    exit /b 1
+)
+set "Work=%CanonicalWork%"
+set "CanonicalWork="
+for /f "usebackq delims=" %%T in (`node -p "require('node:path').dirname(process.argv[1])" "%Work%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 set "Result=1"
 set "FailureStep=frozen-fixtures"
 
