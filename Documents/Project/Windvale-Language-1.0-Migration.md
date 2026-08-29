@@ -802,6 +802,21 @@ the exact final source state passes both native bootstraps, both WebAssembly
 jobs, and all eight Windows/Linux native shards. Slice 7 is complete; Slice 8
 System and FFI work is the next migration stage.
 
+## Current Slice 8 System/FFI front-door checkpoint
+
+[Decision 0883](../Decisions/0883-Open-Slice-8-With-The-Exact-System-Ffi-Front-Door.md)
+opens Slice 8 at the narrowest real compiler boundary. Edition 1 appends the
+`foreign` keyword, while Seed continues to reject it. The declaration parser
+admits only the frozen paper ABI identity, exact symbol, exact signature,
+explicit `unsafe`, and System profile, and preserves bounded ABI and symbol
+evidence for later phases.
+
+This is a front-door checkpoint, not a working native FFI. Exact target
+enforcement, general grammar-driven signature semantics, typed WIR and pointer
+evidence, ABI registry binding, linker resolution, native call lowering,
+hostile isolated execution, terminal containment, and the first real migrated
+runtime or OS boundary remain Slice 8 work.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

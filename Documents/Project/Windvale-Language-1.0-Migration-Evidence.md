@@ -11,9 +11,11 @@ Migration Slices 1 through 7 are complete. Slice 7 has bounded sequential
 execution, observable completion order, explicit child-provider generation
 recovery, paired runner reconstruction, candidate promotion, bounded
 parallel-capable Windows/Linux execution, and exact paired-host Qualification.
-Slice 8 System and FFI work is the next implementation stage. The existing
-compiler admits an edition-1 source descriptor only through an explicitly
-supplied, hash-pinned source-input lock and composite source profile. It
+Slice 8 System and FFI work has begun with one exact compiler front-door seam.
+Target enforcement, typed lowering, linking, and foreign execution remain. The
+existing compiler admits an edition-1 source descriptor only through an
+explicitly supplied, hash-pinned source-input lock and composite source
+profile. It
 resolves the frozen `en@1` component chain, exposes the remaining bytes as an
 immutable view, parses the required standalone module metadata, and compiles
 one minimal Core program deterministically through WIR and WVB. Slice 2 adds
@@ -4285,3 +4287,22 @@ and none fail. Both native bootstrap jobs, both WebAssembly jobs, all eight
 Windows/Linux native shards, classification, and aggregation pass at that exact
 commit. Slice 7 is therefore complete; this evidence does not claim that Slice
 8 or the complete Language 1.0 migration is already implemented.
+
+## Slice 8 exact System/FFI front door
+
+[Decision 0883](../Decisions/0883-Open-Slice-8-With-The-Exact-System-Ffi-Front-Door.md)
+implements the first compiler seam for the frozen System/FFI design. The lexer
+appends `foreign` as token 115 and admits it only in edition 1. The declaration
+parser requires explicit `unsafe`, the System profile, the exact paper ABI
+identity, the exact external symbol, and the exact three-parameter
+`effects(ffi.call)` signature. It preserves bounded ABI and symbol source spans
+without lowering or executing a foreign call.
+
+The focused owner passes 12 cases through two byte-identical WVB builds and 12
+isolated runner executions. The editor contract passes, and changed-file
+planning passes 31 general and 206 native routing cases. The owner registry now
+contains 115 owners and 5,630 cases in 19,198 LF-only bytes at SHA-256
+`32e21b116ce5691198c611d47829ec43c092d9dcb3ae99fcf5ac18a167be8231`.
+Exact target enforcement, general grammar-driven foreign signatures, typed WIR
+and pointer evidence, ABI binding, native call lowering, hostile execution,
+containment, and the first real migrated boundary remain pending.
