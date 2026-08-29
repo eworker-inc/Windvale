@@ -793,37 +793,11 @@ values `0`, `1`, `2`, `3` through their creation-ordered handles. The
 zero-capability task request remains minor `1`; source syntax, WVIR 1.21, and
 WVB 1.32 are unchanged.
 
-This completed the queued single-thread implementation checkpoint. Subsequent
-work added the child-provider generation and recovery workload,
-parallel-capable Windows and Linux hosts, paired-host reconstruction, candidate
-promotion, and the complete owned Qualification boundary. As recorded by
-[Decision 0882](../Decisions/0882-Complete-Windvale-Language-1.0-Slice-7-Qualification.md),
-the exact final source state passes both native bootstraps, both WebAssembly
-jobs, and all eight Windows/Linux native shards. Slice 7 is complete; Slice 8
-System and FFI work is the next migration stage.
-
-## Current Slice 8 System/FFI front-door checkpoint
-
-[Decision 0883](../Decisions/0883-Open-Slice-8-With-The-Exact-System-Ffi-Front-Door.md)
-opens Slice 8 at the narrowest real compiler boundary. Edition 1 appends the
-`foreign` keyword, while Seed continues to reject it. The declaration parser
-admits only the frozen paper ABI identity, exact symbol, exact signature,
-explicit `unsafe`, and System profile, and preserves bounded ABI and symbol
-evidence for later phases.
-
-[Decision 0884](../Decisions/0884-Preserve-The-Slice-8-Native-Data-Bound.md)
-corrects the first package integration without increasing the qualified native
-limit. One canonical foreign literal now represents all three admitted layouts,
-reducing the affected compiler package from 265 to 254 static data records under
-the retained 256-record bound. Evidence authenticates both exact source bytes and
-the semantic declaration record before deriving ABI and symbol spans; changed
-source, forged effect counts, and export trivia reject explicitly.
-
-This is a front-door checkpoint, not a working native FFI. Exact target
-enforcement, general grammar-driven signature semantics, typed WIR and pointer
-evidence, ABI registry binding, linker resolution, native call lowering,
-hostile isolated execution, terminal containment, and the first real migrated
-runtime or OS boundary remain Slice 8 work.
+This completes the queued single-thread implementation checkpoint, not the
+whole Slice 7 qualification promise. The child-provider generation and recovery
+workload, a parallel-capable Windows host, a parallel-capable Linux host,
+paired-host reconstruction, candidate promotion, and broad Qualification remain
+explicit final Slice 7 gates rather than per-edit tests.
 
 ## Removal checkpoint
 

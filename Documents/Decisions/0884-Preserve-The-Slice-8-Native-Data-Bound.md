@@ -47,6 +47,8 @@ request ABI and symbol spans.
 6. Keep the owner at 12 isolated executions while adding rejection of a
    same-length `ffi.fail` source, rejection of a forged zero-effect record,
    rejection of export trivia, and exact exported trailing-comma evidence.
+7. Treat this as an implementation correction, not a Language 1.0 source
+   amendment. Preserve the accepted 0870 freeze and its migration-plan identity.
 
 ## Consequences
 
@@ -62,6 +64,7 @@ request ABI and symbol spans.
   same `Invalidˉforeignˉsignature` result.
 - The verification-owner registry remains at 115 owners and 5,630 cases; no
   routing or registry identity changes are required.
+- The frozen Language 1.0 source and grammar identities remain unchanged.
 - These are local Windows results. The pushed correction must still pass the
   affected Windows and Linux workflow jobs before cross-host conformance is
   claimed.
