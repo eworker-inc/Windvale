@@ -1615,6 +1615,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Target-Core.wv',
         'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
+        'Specifications/Windvale-Language-1.0-Target-Descriptor.md',
         'Tests/Fixtures/Language-1.0/System-Ffi-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.cmd',
         'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',

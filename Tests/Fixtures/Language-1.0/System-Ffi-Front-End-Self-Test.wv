@@ -213,22 +213,22 @@ fn Caseˉsystem() -> bool {
 }
 
 fn Targetˉdescriptor(
+    Buildˉtarget: u32,
     Environment: u32,
     Architecture: u32,
     Abi: u32,
     Addressˉbits: u32,
-    Littleˉendian: bool,
+    Byteˉorder: u32,
     Major: u32
 ) -> Target.Compilerˉsourceˉtargetˉdescriptor {
     return Target.Compilerˉsourceˉtargetˉdescriptor(
+        Buildˉtarget,
         Environment,
         Architecture,
         Abi,
         Addressˉbits,
-        Littleˉendian,
-        Major,
-        0u32,
-        0u32
+        Byteˉorder,
+        Major
     );
 }
 
@@ -265,14 +265,13 @@ fn Caseˉtargetˉexact() -> bool {
     let Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor =
         Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
     let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
-        Targetˉplatforms(8u32, 1u32, 0u32, 46u32, 28u32);
+        Targetˉplatforms(
+            Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+            1u32, 0u32, 46u32, 28u32
+        );
     let Targetˉstatus: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
-            Descriptor.Environment, Descriptor.Architecture, Descriptor.Abi,
-            Descriptor.Addressˉbits, Descriptor.Littleˉendian,
-            Descriptor.Noˉunwindˉcˉscalarˉpointerˉmajor,
-            Descriptor.Extensionˉidentities, Descriptor.Targetˉinterfaceˉidentities,
-            Platforms.Scopeˉmask, Platforms.Declaredˉscopes, Platforms.Unknownˉscopes
+            Descriptor, Platforms
         );
     return Header.Status == Declarations.Compilerˉparseˉstatus.Valid &&
         Header.Profile == Declarations.Compilerˉsourceˉprofile.System &&
@@ -283,7 +282,12 @@ fn Caseˉtargetˉportableˉselection() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
-            Targetˉplatforms(7u32, 3u32, 0u32, 0u32, 0u32)
+            Targetˉplatforms(
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS |
+                    Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX |
+                    Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE,
+                3u32, 0u32, 0u32, 0u32
+            )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_VALID;
 }
@@ -291,14 +295,10 @@ fn Caseˉtargetˉportableˉselection() -> bool {
 fn Caseˉtargetˉwindowsˉmismatch() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
-            Targetˉdescriptor(
-                Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS,
-                Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
-                Target.COMPILER_SOURCE_TARGET_ABI_NONE,
-                64u32, true, 0u32
-            ),
+            Target.Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1(),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
@@ -308,45 +308,51 @@ fn Caseˉtargetˉarchitectureˉmismatch() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_NONE_V1,
                 Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
                 Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64,
                 Target.COMPILER_SOURCE_TARGET_ABI_NONE,
-                64u32, true, 0u32
+                64u32, Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE, 0u32
             ),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
-    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
 }
 
 fn Caseˉtargetˉabiˉmismatch() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
                 Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
                 Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
                 Target.COMPILER_SOURCE_TARGET_ABI_NONE,
-                64u32, true, 0u32
+                64u32, Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE, 0u32
             ),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
-    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET;
+    return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
 }
 
 fn Caseˉtargetˉaddressˉwidth() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
                 Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
                 Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
                 Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
-                32u32, true, 1u32
+                32u32, Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE, 1u32
             ),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
@@ -356,13 +362,15 @@ fn Caseˉtargetˉbyteˉorder() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
                 Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
                 Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
                 Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
-                64u32, false, 1u32
+                64u32, Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_BIG, 1u32
             ),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
@@ -372,13 +380,15 @@ fn Caseˉtargetˉnoˉunwindˉcontract() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Targetˉdescriptor(
+                Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
                 Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
                 Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
                 Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
-                64u32, true, 2u32
+                64u32, Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE, 2u32
             ),
             Targetˉplatforms(
-                8u32, 1u32, 0u32, 0u32, 0u32
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                1u32, 0u32, 0u32, 0u32
             )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR;
@@ -388,14 +398,13 @@ fn Caseˉtargetˉgenericˉforeign() -> bool {
     let Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor =
         Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
     let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
-        Targetˉplatforms(2u32, 1u32, 0u32, 0u32, 0u32);
+        Targetˉplatforms(
+            Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX,
+            1u32, 0u32, 0u32, 0u32
+        );
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
-            Descriptor.Environment, Descriptor.Architecture, Descriptor.Abi,
-            Descriptor.Addressˉbits, Descriptor.Littleˉendian,
-            Descriptor.Noˉunwindˉcˉscalarˉpointerˉmajor,
-            Descriptor.Extensionˉidentities, Descriptor.Targetˉinterfaceˉidentities,
-            Platforms.Scopeˉmask, Platforms.Declaredˉscopes, Platforms.Unknownˉscopes
+            Descriptor, Platforms
         );
     return Admission ==
         Target.COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
@@ -405,7 +414,10 @@ fn Caseˉtargetˉunknownˉplatform() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
-            Targetˉplatforms(8u32, 2u32, 1u32, 0u32, 0u32)
+            Targetˉplatforms(
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1,
+                2u32, 1u32, 0u32, 0u32
+            )
         );
     return Admission == Target.COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM;
 }
@@ -414,7 +426,10 @@ fn Caseˉtargetˉplatformˉcount() -> bool {
     let Admission: u32 =
         Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
             Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
-            Targetˉplatforms(2u32, 2u32, 0u32, 0u32, 0u32)
+            Targetˉplatforms(
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX,
+                2u32, 0u32, 0u32, 0u32
+            )
         );
     return Admission ==
         Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE;
@@ -442,6 +457,353 @@ fn Caseˉtargetˉforgedˉsourceˉslice() -> bool {
         Source, 46u32, 28u32, "linux.x86_64.sysv_amd64_c_v1"
     );
     return Exactˉvalid && !Forgedˉvalid;
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Wvtdˉempty() -> bytes {
+    return Textˉtoˉutf8("");
+}
+
+fn Wvtdˉreplaceˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(Value));
+    return Bytesˉconcat(
+        Output,
+        Bytesˉslice(Input, Offset + 2u32, Bytesˉlength(Input) - Offset - 2u32)
+    );
+}
+
+fn Wvtdˉreplaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    var Output: bytes = Bytesˉslice(Input, 0u32, Offset);
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Value));
+    return Bytesˉconcat(
+        Output,
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Wvtdˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Wvtdˉappendˉzeroˉbytes(Input: bytes, Count: u32) -> bytes {
+    let Zero: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 1u32);
+    var Output: bytes = Input;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Output = Bytesˉconcat(Output, Zero);
+        Index = Index + 1u32;
+    }
+    return Output;
+}
+
+fn Wvtdˉdirectory(Count: u32) -> bytes {
+    var Output: bytes = Wvtdˉempty();
+    var Identity: u32 = 1u32;
+    while Identity <= Count {
+        Output = Wvtdˉappendˉu32(Output, Identity);
+        Identity = Identity + 1u32;
+    }
+    return Output;
+}
+
+fn Wvtdˉcanonical() -> Target.Compilerˉsourceˉtargetˉwvtdˉresult {
+    return Target.Compilerˉsourceˉtargetˉwvtdˉconstruct(
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+        Wvtdˉempty(),
+        Wvtdˉempty()
+    );
+}
+
+fn Wvtdˉcanonicalˉbytes() -> bytes {
+    let Result: Target.Compilerˉsourceˉtargetˉwvtdˉresult = Wvtdˉcanonical();
+    return Result.Value;
+}
+
+fn Caseˉwvtdˉregistry() -> bool {
+    return Target.COMPILER_SOURCE_TARGET_BUILD_WINDOWS_X86_64_NONE_V1 == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_NONE_V1 == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_BUILD_WINDVALE_X86_64_NONE_V1 == 3u32 &&
+        Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 == 4u32 &&
+        Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE == 3u32 &&
+        Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64 == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_ABI_NONE == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_BIG == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_WINDOWS == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_LINUX == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_WINDVALE == 3u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_LINUX_X86_64_SYSV_AMD64_C_V1 == 4u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS == 1u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX == 2u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE == 4u32 &&
+        Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1 == 8u32;
+}
+
+fn Caseˉwvtdˉcanonical() -> bool {
+    let Constructed: Target.Compilerˉsourceˉtargetˉwvtdˉresult = Wvtdˉcanonical();
+    let Structure: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(Constructed.Value);
+    let Validated: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Constructed.Value);
+    return Constructed.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Bytesˉlength(Constructed.Value) == 64u32 &&
+        Bytesˉreadˉu32ˉlittle(Constructed.Value, 0u32) == 1146377815u32 &&
+        Bytesˉreadˉu16ˉlittle(Constructed.Value, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Constructed.Value, 6u32) == 0u32 &&
+        Structure.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Validated.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Bytesˉequal(Structure.Value, Constructed.Value) &&
+        Bytesˉequal(Validated.Value, Constructed.Value);
+}
+
+fn Wvtdˉtargetˉconstructs(
+    Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor
+) -> bool {
+    let Constructed: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉconstruct(
+            Descriptor, Wvtdˉempty(), Wvtdˉempty()
+        );
+    let Validated: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Constructed.Value);
+    return Constructed.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Validated.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID;
+}
+
+fn Caseˉwvtdˉsupportedˉtargets() -> bool {
+    return Wvtdˉtargetˉconstructs(
+            Target.Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1()
+        ) &&
+        Wvtdˉtargetˉconstructs(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉnoneˉv1()
+        ) &&
+        Wvtdˉtargetˉconstructs(
+            Target.Compilerˉsourceˉtargetˉwindvaleˉx86_64ˉnoneˉv1()
+        ) &&
+        Wvtdˉtargetˉconstructs(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1()
+        );
+}
+
+fn Caseˉwvtdˉtruncated() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Bytesˉslice(Canonical, 0u32, 63u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE &&
+        Rejected.Failureˉoffset == 8u32 && Bytesˉlength(Rejected.Value) == 0u32;
+}
+
+fn Caseˉwvtdˉoversized() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉappendˉzeroˉbytes(Canonical, 257u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE &&
+        Rejected.Failureˉoffset == 8u32;
+}
+
+fn Caseˉwvtdˉtrailing() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉappendˉzeroˉbytes(Canonical, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE &&
+        Rejected.Failureˉoffset == 8u32;
+}
+
+fn Caseˉwvtdˉmagic() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 0u32, 0u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_MAGIC &&
+        Rejected.Failureˉoffset == 0u32;
+}
+
+fn Caseˉwvtdˉmajor() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu16(Canonical, 4u32, 2u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_VERSION &&
+        Rejected.Failureˉoffset == 4u32;
+}
+
+fn Caseˉwvtdˉminor() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu16(Canonical, 6u32, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_VERSION &&
+        Rejected.Failureˉoffset == 4u32;
+}
+
+fn Caseˉwvtdˉflags() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 56u32, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_FLAGS &&
+        Rejected.Failureˉoffset == 56u32;
+}
+
+fn Caseˉwvtdˉreserved() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 60u32, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_RESERVED &&
+        Rejected.Failureˉoffset == 60u32;
+}
+
+fn Caseˉwvtdˉextensionˉcount() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 40u32, 33u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_COUNT &&
+        Rejected.Failureˉoffset == 40u32;
+}
+
+fn Caseˉwvtdˉinterfaceˉcount() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 44u32, 33u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_COUNT &&
+        Rejected.Failureˉoffset == 44u32;
+}
+
+fn Caseˉwvtdˉextensionˉoffset() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 68u32);
+    Value = Wvtdˉreplaceˉu32(Value, 40u32, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 48u32, 64u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 48u32, 68u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_OFFSET &&
+        Rejected.Failureˉoffset == 48u32;
+}
+
+fn Caseˉwvtdˉinterfaceˉoffset() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 68u32);
+    Value = Wvtdˉreplaceˉu32(Value, 44u32, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 52u32, 64u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 52u32, 68u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_OFFSET &&
+        Rejected.Failureˉoffset == 52u32;
+}
+
+fn Caseˉwvtdˉdirectoryˉorder() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 72u32);
+    Value = Wvtdˉreplaceˉu32(Value, 40u32, 2u32);
+    Value = Wvtdˉreplaceˉu32(Value, 48u32, 64u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER &&
+        Rejected.Failureˉoffset == 68u32;
+}
+
+fn Caseˉwvtdˉboundary() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 320u32);
+    Value = Wvtdˉreplaceˉu32(Value, 40u32, 32u32);
+    Value = Wvtdˉreplaceˉu32(Value, 44u32, 32u32);
+    Value = Wvtdˉreplaceˉu32(Value, 48u32, 64u32);
+    Value = Wvtdˉreplaceˉu32(Value, 52u32, 192u32);
+    Value = Bytesˉconcat(Value, Wvtdˉdirectory(32u32));
+    Value = Bytesˉconcat(Value, Wvtdˉdirectory(32u32));
+    let Structure: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(Value);
+    let Semantic: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Bytesˉlength(Value) == 320u32 &&
+        Structure.Status == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Bytesˉequal(Structure.Value, Value) &&
+        Semantic.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY &&
+        Semantic.Failureˉoffset == 64u32;
+}
+
+fn Caseˉwvtdˉunknownˉtarget() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(Canonical, 12u32, 99u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY &&
+        Rejected.Failureˉoffset == 12u32;
+}
+
+fn Caseˉwvtdˉunknownˉextension() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 68u32);
+    Value = Wvtdˉreplaceˉu32(Value, 40u32, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 48u32, 64u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY &&
+        Rejected.Failureˉoffset == 64u32;
+}
+
+fn Caseˉwvtdˉtargetˉmismatch() -> bool {
+    let Canonical: bytes = Wvtdˉcanonicalˉbytes();
+    let Value: bytes = Wvtdˉreplaceˉu32(
+        Canonical,
+        16u32,
+        Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS
+    );
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_TARGET_MISMATCH &&
+        Rejected.Failureˉoffset == 12u32;
+}
+
+fn Caseˉwvtdˉunknownˉinterface() -> bool {
+    var Value: bytes = Wvtdˉcanonicalˉbytes();
+    Value = Wvtdˉreplaceˉu32(Value, 8u32, 68u32);
+    Value = Wvtdˉreplaceˉu32(Value, 44u32, 1u32);
+    Value = Wvtdˉreplaceˉu32(Value, 52u32, 64u32);
+    Value = Wvtdˉappendˉu32(Value, 1u32);
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidate(Value);
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY &&
+        Rejected.Failureˉoffset == 64u32;
+}
+
+fn Caseˉwvtdˉconstructorˉinput() -> bool {
+    let Rejected: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉconstruct(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            Textˉtoˉutf8("abc"),
+            Wvtdˉempty()
+        );
+    return Rejected.Status == Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_INPUT &&
+        Rejected.Failureˉoffset == 40u32 && Bytesˉlength(Rejected.Value) == 0u32;
 }
 
 fn Selectedˉcase() -> u32 {
@@ -477,5 +839,27 @@ export fn Main() -> i32 {
     if Selected == 118u32 && Caseˉtargetˉunknownˉplatform() { return 42; }
     if Selected == 119u32 && Caseˉtargetˉplatformˉcount() { return 42; }
     if Selected == 120u32 && Caseˉtargetˉforgedˉsourceˉslice() { return 42; }
+    if Selected == 121u32 && Caseˉwvtdˉregistry() { return 42; }
+    if Selected == 122u32 && Caseˉwvtdˉcanonical() { return 42; }
+    if Selected == 65u32 && Caseˉwvtdˉsupportedˉtargets() { return 42; }
+    if Selected == 66u32 && Caseˉwvtdˉtruncated() { return 42; }
+    if Selected == 67u32 && Caseˉwvtdˉoversized() { return 42; }
+    if Selected == 68u32 && Caseˉwvtdˉtrailing() { return 42; }
+    if Selected == 69u32 && Caseˉwvtdˉmagic() { return 42; }
+    if Selected == 70u32 && Caseˉwvtdˉmajor() { return 42; }
+    if Selected == 71u32 && Caseˉwvtdˉminor() { return 42; }
+    if Selected == 72u32 && Caseˉwvtdˉflags() { return 42; }
+    if Selected == 73u32 && Caseˉwvtdˉreserved() { return 42; }
+    if Selected == 74u32 && Caseˉwvtdˉextensionˉcount() { return 42; }
+    if Selected == 75u32 && Caseˉwvtdˉinterfaceˉcount() { return 42; }
+    if Selected == 76u32 && Caseˉwvtdˉextensionˉoffset() { return 42; }
+    if Selected == 77u32 && Caseˉwvtdˉinterfaceˉoffset() { return 42; }
+    if Selected == 78u32 && Caseˉwvtdˉdirectoryˉorder() { return 42; }
+    if Selected == 79u32 && Caseˉwvtdˉboundary() { return 42; }
+    if Selected == 80u32 && Caseˉwvtdˉunknownˉtarget() { return 42; }
+    if Selected == 81u32 && Caseˉwvtdˉunknownˉextension() { return 42; }
+    if Selected == 82u32 && Caseˉwvtdˉtargetˉmismatch() { return 42; }
+    if Selected == 83u32 && Caseˉwvtdˉunknownˉinterface() { return 42; }
+    if Selected == 84u32 && Caseˉwvtdˉconstructorˉinput() { return 42; }
     return 1;
 }

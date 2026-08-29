@@ -512,6 +512,7 @@ $NativeCases = @(
         Paths = @(
             'Compiler/Windvale/Source-Target-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
+            'Specifications/Windvale-Language-1.0-Target-Descriptor.md',
             'Tests/Fixtures/Language-1.0/System-Ffi-Front-End-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.cmd',
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',
@@ -3820,7 +3821,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5642 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5664 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

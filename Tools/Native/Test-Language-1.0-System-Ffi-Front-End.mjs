@@ -9,7 +9,7 @@ const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
-const SELECTORS = [...'abcdefghijklmnopqrstuvwx'];
+const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST'];
 const EXPECTED_RUNNER = WINDOWS
     ? {
         bytes: 5_907_456,
@@ -145,6 +145,8 @@ const Work = await mkdtemp(join(
     Temporaryˉroot, 'windvale-system-ffi-front-end-'
 ));
 var Passed = false;
+var Productˉbytes = 0;
+var Productˉsha256 = '';
 try {
     const Extension = WINDOWS ? 'cmd' : 'sh';
     const Build = join(SCRIPT_DIRECTORY, `Build-Wvb.${Extension}`);
@@ -175,18 +177,20 @@ try {
     if (!Firstˉbytes.equals(Secondˉbytes)) {
         Reject('The system-ffi WVB rebuild was not byte-identical.');
     }
+    Productˉbytes = Firstˉbytes.length;
+    Productˉsha256 = createHash('sha256').update(Firstˉbytes).digest('hex');
     await Verifyˉrunner(Runner);
 
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=3/4 cases=1-12\n'
+        'START language 1 system FFI front end phase=execute item=3/4 cases=1-23\n'
     );
-    for (var Index = 0; Index < 12; Index += 1) {
+    for (var Index = 0; Index < 23; Index += 1) {
         await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
     }
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=4/4 cases=13-24\n'
+        'START language 1 system FFI front end phase=execute item=4/4 cases=24-46\n'
     );
-    for (var Index = 12; Index < SELECTORS.length; Index += 1) {
+    for (var Index = 23; Index < SELECTORS.length; Index += 1) {
         await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
     }
     Passed = true;
@@ -196,7 +200,8 @@ try {
 
 if (Passed) {
     process.stdout.write(
-        'native language 1 system FFI front end status=Passed cases=24 ' +
-        'result=42 deterministic=Verified isolated-executions=24\n'
+        'native language 1 system FFI front end status=Passed cases=46 ' +
+        'result=42 deterministic=Verified isolated-executions=46 ' +
+        `wvb-bytes=${Productˉbytes} sha256=${Productˉsha256}\n`
     );
 }

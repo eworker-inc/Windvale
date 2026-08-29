@@ -1,9 +1,17 @@
 module Compilerˉsourceˉtarget profile portable;
 
 export const COMPILER_SOURCE_TARGET_MAX_PLATFORM_SCOPES: u32 = 32u32;
-export const COMPILER_SOURCE_TARGET_KNOWN_PLATFORM_MASK: u32 = 15u32;
+export const COMPILER_SOURCE_TARGET_WVTD_HEADER_BYTES: u32 = 64u32;
+export const COMPILER_SOURCE_TARGET_WVTD_MAX_BYTES: u32 = 320u32;
+export const COMPILER_SOURCE_TARGET_WVTD_MAX_DIRECTORY_IDENTITIES: u32 = 32u32;
 
-// Target identities are fixed-width registry values suitable for immutable phase evidence.
+// Zero is unregistered in every version-1 target registry.
+export const COMPILER_SOURCE_TARGET_BUILD_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_BUILD_WINDOWS_X86_64_NONE_V1: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_NONE_V1: u32 = 2u32;
+export const COMPILER_SOURCE_TARGET_BUILD_WINDVALE_X86_64_NONE_V1: u32 = 3u32;
+export const COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1: u32 = 4u32;
+
 export const COMPILER_SOURCE_TARGET_ENVIRONMENT_UNKNOWN: u32 = 0u32;
 export const COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS: u32 = 1u32;
 export const COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX: u32 = 2u32;
@@ -13,26 +21,58 @@ export const COMPILER_SOURCE_TARGET_ARCHITECTURE_UNKNOWN: u32 = 0u32;
 export const COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64: u32 = 1u32;
 export const COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64: u32 = 2u32;
 
-export const COMPILER_SOURCE_TARGET_ABI_NONE: u32 = 0u32;
-export const COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_ABI_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_ABI_NONE: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1: u32 = 2u32;
 
-// Target evidence and status use fixed-width phase-boundary registry values.
+export const COMPILER_SOURCE_TARGET_BYTE_ORDER_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_BYTE_ORDER_BIG: u32 = 2u32;
+
+export const COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_WINDOWS: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_LINUX: u32 = 2u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_WINDVALE: u32 = 3u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_PREDICATE_LINUX_X86_64_SYSV_AMD64_C_V1: u32 = 4u32;
+
+export const COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS: u32 = 1u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX: u32 = 2u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE: u32 = 4u32;
+export const COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1: u32 = 8u32;
+export const COMPILER_SOURCE_TARGET_KNOWN_PLATFORM_MASK: u32 = 15u32;
+
+// Target evidence and status use fixed-width phase-boundary values.
 export const COMPILER_SOURCE_TARGET_STATUS_VALID: u32 = 0u32;
 export const COMPILER_SOURCE_TARGET_STATUS_INVALID_DESCRIPTOR: u32 = 1u32;
 export const COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE: u32 = 2u32;
 export const COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM: u32 = 3u32;
 export const COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET: u32 = 4u32;
 export const COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM: u32 = 5u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_INPUT: u32 = 6u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE: u32 = 7u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_MAGIC: u32 = 8u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_VERSION: u32 = 9u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_FLAGS: u32 = 10u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_RESERVED: u32 = 11u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_COUNT: u32 = 12u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_OFFSET: u32 = 13u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER: u32 = 14u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY: u32 = 15u32;
+export const COMPILER_SOURCE_TARGET_STATUS_WVTD_TARGET_MISMATCH: u32 = 16u32;
 
 export record Compilerˉsourceˉtargetˉdescriptor {
+    Buildˉtarget: u32;
     Environment: u32;
     Architecture: u32;
     Abi: u32;
     Addressˉbits: u32;
-    Littleˉendian: bool;
+    Byteˉorder: u32;
     Noˉunwindˉcˉscalarˉpointerˉmajor: u32;
-    Extensionˉidentities: u32;
-    Targetˉinterfaceˉidentities: u32;
+}
+
+export record Compilerˉsourceˉtargetˉwvtdˉresult {
+    Status: u32;
+    Failureˉoffset: u32;
+    Value: bytes;
 }
 
 // Parser evidence is finite: four recognized identities, a declared total, and the
@@ -45,49 +85,546 @@ export record Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
     Concreteˉsourceˉlength: u32;
 }
 
+export fn Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1(
+) -> Compilerˉsourceˉtargetˉdescriptor {
+    return Compilerˉsourceˉtargetˉdescriptor(
+        COMPILER_SOURCE_TARGET_BUILD_WINDOWS_X86_64_NONE_V1,
+        COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS,
+        COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+        COMPILER_SOURCE_TARGET_ABI_NONE,
+        64u32,
+        COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE,
+        0u32
+    );
+}
+
+export fn Compilerˉsourceˉtargetˉlinuxˉx86_64ˉnoneˉv1(
+) -> Compilerˉsourceˉtargetˉdescriptor {
+    return Compilerˉsourceˉtargetˉdescriptor(
+        COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_NONE_V1,
+        COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+        COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+        COMPILER_SOURCE_TARGET_ABI_NONE,
+        64u32,
+        COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE,
+        0u32
+    );
+}
+
+export fn Compilerˉsourceˉtargetˉwindvaleˉx86_64ˉnoneˉv1(
+) -> Compilerˉsourceˉtargetˉdescriptor {
+    return Compilerˉsourceˉtargetˉdescriptor(
+        COMPILER_SOURCE_TARGET_BUILD_WINDVALE_X86_64_NONE_V1,
+        COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE,
+        COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+        COMPILER_SOURCE_TARGET_ABI_NONE,
+        64u32,
+        COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE,
+        0u32
+    );
+}
+
 export fn Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(
 ) -> Compilerˉsourceˉtargetˉdescriptor {
     return Compilerˉsourceˉtargetˉdescriptor(
+        COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
         COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
         COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
         COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
-        64u32, true, 1u32, 0u32, 0u32
+        64u32,
+        COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE,
+        1u32
     );
+}
+
+fn Compilerˉsourceˉtargetˉbuildˉidentityˉisˉknown(Value: u32) -> bool {
+    return Value >= COMPILER_SOURCE_TARGET_BUILD_WINDOWS_X86_64_NONE_V1 &&
+        Value <= COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1;
+}
+
+fn Compilerˉsourceˉtargetˉenvironmentˉidentityˉisˉknown(Value: u32) -> bool {
+    return Value >= COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS &&
+        Value <= COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE;
+}
+
+fn Compilerˉsourceˉtargetˉarchitectureˉidentityˉisˉknown(Value: u32) -> bool {
+    return Value >= COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+        Value <= COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64;
+}
+
+fn Compilerˉsourceˉtargetˉabiˉidentityˉisˉknown(Value: u32) -> bool {
+    return Value >= COMPILER_SOURCE_TARGET_ABI_NONE &&
+        Value <= COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1;
+}
+
+fn Compilerˉsourceˉtargetˉbyteˉorderˉidentityˉisˉknown(Value: u32) -> bool {
+    return Value >= COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE &&
+        Value <= COMPILER_SOURCE_TARGET_BYTE_ORDER_BIG;
+}
+
+export fn Compilerˉsourceˉtargetˉdescriptorˉidentitiesˉareˉknown(
+    Target: Compilerˉsourceˉtargetˉdescriptor
+) -> bool {
+    return Compilerˉsourceˉtargetˉbuildˉidentityˉisˉknown(Target.Buildˉtarget) &&
+        Compilerˉsourceˉtargetˉenvironmentˉidentityˉisˉknown(Target.Environment) &&
+        Compilerˉsourceˉtargetˉarchitectureˉidentityˉisˉknown(Target.Architecture) &&
+        Compilerˉsourceˉtargetˉabiˉidentityˉisˉknown(Target.Abi) &&
+        Compilerˉsourceˉtargetˉbyteˉorderˉidentityˉisˉknown(Target.Byteˉorder);
+}
+
+fn Compilerˉsourceˉtargetˉdescriptorˉunknownˉoffset(
+    Target: Compilerˉsourceˉtargetˉdescriptor
+) -> u32 {
+    if !Compilerˉsourceˉtargetˉbuildˉidentityˉisˉknown(Target.Buildˉtarget) {
+        return 12u32;
+    }
+    if !Compilerˉsourceˉtargetˉenvironmentˉidentityˉisˉknown(Target.Environment) {
+        return 16u32;
+    }
+    if !Compilerˉsourceˉtargetˉarchitectureˉidentityˉisˉknown(Target.Architecture) {
+        return 20u32;
+    }
+    if !Compilerˉsourceˉtargetˉabiˉidentityˉisˉknown(Target.Abi) {
+        return 24u32;
+    }
+    if !Compilerˉsourceˉtargetˉbyteˉorderˉidentityˉisˉknown(Target.Byteˉorder) {
+        return 32u32;
+    }
+    return 0u32;
 }
 
 export fn Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(
     Target: Compilerˉsourceˉtargetˉdescriptor
 ) -> bool {
-    if Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_UNKNOWN ||
-        Target.Environment > COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE {
+    if !Compilerˉsourceˉtargetˉdescriptorˉidentitiesˉareˉknown(Target) {
         return false;
     }
-    if Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_UNKNOWN ||
-        Target.Architecture > COMPILER_SOURCE_TARGET_ARCHITECTURE_AARCH64 {
+    if Target.Addressˉbits != 64u32 ||
+        Target.Byteˉorder != COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE {
         return false;
     }
-    if Target.Addressˉbits != 64u32 || !Target.Littleˉendian { return false; }
-    if Target.Extensionˉidentities != 0u32 || Target.Targetˉinterfaceˉidentities != 0u32 {
-        return false;
+    if Target.Buildˉtarget == COMPILER_SOURCE_TARGET_BUILD_WINDOWS_X86_64_NONE_V1 {
+        return Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS &&
+            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+            Target.Abi == COMPILER_SOURCE_TARGET_ABI_NONE &&
+            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 0u32;
     }
-    if Target.Abi == COMPILER_SOURCE_TARGET_ABI_NONE {
-        return Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 0u32;
+    if Target.Buildˉtarget == COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_NONE_V1 {
+        return Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
+            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+            Target.Abi == COMPILER_SOURCE_TARGET_ABI_NONE &&
+            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 0u32;
     }
-    if Target.Abi == COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 {
-        if Target.Environment != COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX { return false; }
-        if Target.Architecture != COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 { return false; }
-        if Target.Noˉunwindˉcˉscalarˉpointerˉmajor != 1u32 { return false; }
-        return true;
+    if Target.Buildˉtarget == COMPILER_SOURCE_TARGET_BUILD_WINDVALE_X86_64_NONE_V1 {
+        return Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE &&
+            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+            Target.Abi == COMPILER_SOURCE_TARGET_ABI_NONE &&
+            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 0u32;
+    }
+    if Target.Buildˉtarget ==
+        COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 {
+        return Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
+            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+            Target.Abi == COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 &&
+            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 1u32;
     }
     return false;
 }
 
+fn Compilerˉsourceˉtargetˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉtargetˉwvtdˉfailure(
+    Input: bytes,
+    Status: u32,
+    Offset: u32
+) -> Compilerˉsourceˉtargetˉwvtdˉresult {
+    return Compilerˉsourceˉtargetˉwvtdˉresult(
+        Status, Offset, Compilerˉsourceˉtargetˉempty(Input)
+    );
+}
+
+fn Compilerˉsourceˉtargetˉwvtdˉsuccess(
+    Input: bytes
+) -> Compilerˉsourceˉtargetˉwvtdˉresult {
+    return Compilerˉsourceˉtargetˉwvtdˉresult(
+        COMPILER_SOURCE_TARGET_STATUS_VALID, 0u32, Input
+    );
+}
+
+fn Compilerˉsourceˉtargetˉappendˉu16(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉtargetˉappendˉu32(Input: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉtargetˉdirectoryˉorderˉfailure(
+    Directory: bytes,
+    Count: u32
+) -> u32 {
+    var Previous: u32 = 0u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(Directory, Index * 4u32);
+        if Identity <= Previous { return Index; }
+        Previous = Identity;
+        Index = Index + 1u32;
+    }
+    return Count;
+}
+
+fn Compilerˉsourceˉtargetˉextensionˉidentityˉisˉknown(Identity: u32) -> bool {
+    // WVTD 1.0 publishes no extension identities yet.
+    return false;
+}
+
+fn Compilerˉsourceˉtargetˉinterfaceˉidentityˉisˉknown(Identity: u32) -> bool {
+    // WVTD 1.0 publishes no target-interface identities yet.
+    return false;
+}
+
+fn Compilerˉsourceˉtargetˉdirectoryˉunknownˉidentity(
+    Directory: bytes,
+    Count: u32,
+    Isˉextension: bool
+) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(Directory, Index * 4u32);
+        if Isˉextension {
+            if !Compilerˉsourceˉtargetˉextensionˉidentityˉisˉknown(Identity) {
+                return Index;
+            }
+        } else {
+            if !Compilerˉsourceˉtargetˉinterfaceˉidentityˉisˉknown(Identity) {
+                return Index;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    return Count;
+}
+
+export fn Compilerˉsourceˉtargetˉwvtdˉconstruct(
+    Target: Compilerˉsourceˉtargetˉdescriptor,
+    Extensionˉidentities: bytes,
+    Targetˉinterfaceˉidentities: bytes
+) -> Compilerˉsourceˉtargetˉwvtdˉresult {
+    let Unknownˉdescriptor: u32 =
+        Compilerˉsourceˉtargetˉdescriptorˉunknownˉoffset(Target);
+    if Unknownˉdescriptor != 0u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Extensionˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+            Unknownˉdescriptor
+        );
+    }
+    if !Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(Target) {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Extensionˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_TARGET_MISMATCH,
+            12u32
+        );
+    }
+    let Extensionˉbytes: u32 = Bytesˉlength(Extensionˉidentities);
+    let Interfaceˉbytes: u32 = Bytesˉlength(Targetˉinterfaceˉidentities);
+    let Extensionˉcount: u32 = Extensionˉbytes / 4u32;
+    let Interfaceˉcount: u32 = Interfaceˉbytes / 4u32;
+    if Extensionˉbytes > 128u32 || Extensionˉcount * 4u32 != Extensionˉbytes {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Extensionˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_INPUT,
+            40u32
+        );
+    }
+    if Interfaceˉbytes > 128u32 || Interfaceˉcount * 4u32 != Interfaceˉbytes {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Targetˉinterfaceˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_INPUT,
+            44u32
+        );
+    }
+    let Extensionˉorderˉfailure: u32 =
+        Compilerˉsourceˉtargetˉdirectoryˉorderˉfailure(
+            Extensionˉidentities, Extensionˉcount
+        );
+    if Extensionˉorderˉfailure != Extensionˉcount {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Extensionˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER,
+            64u32 + Extensionˉorderˉfailure * 4u32
+        );
+    }
+    let Interfaceˉorderˉfailure: u32 =
+        Compilerˉsourceˉtargetˉdirectoryˉorderˉfailure(
+            Targetˉinterfaceˉidentities, Interfaceˉcount
+        );
+    if Interfaceˉorderˉfailure != Interfaceˉcount {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Targetˉinterfaceˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER,
+            64u32 + Extensionˉbytes + Interfaceˉorderˉfailure * 4u32
+        );
+    }
+    let Unknownˉextension: u32 =
+        Compilerˉsourceˉtargetˉdirectoryˉunknownˉidentity(
+            Extensionˉidentities, Extensionˉcount, true
+        );
+    if Unknownˉextension != Extensionˉcount {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Extensionˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+            64u32 + Unknownˉextension * 4u32
+        );
+    }
+    let Unknownˉinterface: u32 =
+        Compilerˉsourceˉtargetˉdirectoryˉunknownˉidentity(
+            Targetˉinterfaceˉidentities, Interfaceˉcount, false
+        );
+    if Unknownˉinterface != Interfaceˉcount {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Targetˉinterfaceˉidentities,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+            64u32 + Extensionˉbytes + Unknownˉinterface * 4u32
+        );
+    }
+
+    let Total: u32 = 64u32 + Extensionˉbytes + Interfaceˉbytes;
+    var Extensionˉoffset: u32 = 0u32;
+    if Extensionˉcount != 0u32 { Extensionˉoffset = 64u32; }
+    var Interfaceˉoffset: u32 = 0u32;
+    if Interfaceˉcount != 0u32 {
+        Interfaceˉoffset = 64u32 + Extensionˉbytes;
+    }
+    var Output: bytes = Compilerˉsourceˉtargetˉempty(Extensionˉidentities);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, 1146377815u32);
+    Output = Compilerˉsourceˉtargetˉappendˉu16(Output, 1u32);
+    Output = Compilerˉsourceˉtargetˉappendˉu16(Output, 0u32);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Total);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Buildˉtarget);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Environment);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Architecture);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Abi);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Addressˉbits);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Target.Byteˉorder);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(
+        Output, Target.Noˉunwindˉcˉscalarˉpointerˉmajor
+    );
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Extensionˉcount);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Interfaceˉcount);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Extensionˉoffset);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, Interfaceˉoffset);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, 0u32);
+    Output = Compilerˉsourceˉtargetˉappendˉu32(Output, 0u32);
+    Output = Bytesˉconcat(Output, Extensionˉidentities);
+    Output = Bytesˉconcat(Output, Targetˉinterfaceˉidentities);
+    return Compilerˉsourceˉtargetˉwvtdˉsuccess(Output);
+}
+
+export fn Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(
+    Input: bytes
+) -> Compilerˉsourceˉtargetˉwvtdˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < COMPILER_SOURCE_TARGET_WVTD_HEADER_BYTES ||
+        Total > COMPILER_SOURCE_TARGET_WVTD_MAX_BYTES {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1146377815u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_MAGIC, 0u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_VERSION, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 56u32) != 0u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_FLAGS, 56u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 60u32) != 0u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_RESERVED, 60u32
+        );
+    }
+
+    let Extensionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Interfaceˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
+    if Extensionˉcount > COMPILER_SOURCE_TARGET_WVTD_MAX_DIRECTORY_IDENTITIES {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_COUNT, 40u32
+        );
+    }
+    if Interfaceˉcount > COMPILER_SOURCE_TARGET_WVTD_MAX_DIRECTORY_IDENTITIES {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_COUNT, 44u32
+        );
+    }
+    let Extensionˉbytes: u32 = Extensionˉcount * 4u32;
+    let Interfaceˉbytes: u32 = Interfaceˉcount * 4u32;
+    if Total != 64u32 + Extensionˉbytes + Interfaceˉbytes {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE, 8u32
+        );
+    }
+    let Extensionˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32);
+    let Interfaceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 52u32);
+    var Expectedˉextensionˉoffset: u32 = 0u32;
+    if Extensionˉcount != 0u32 { Expectedˉextensionˉoffset = 64u32; }
+    var Expectedˉinterfaceˉoffset: u32 = 0u32;
+    if Interfaceˉcount != 0u32 {
+        Expectedˉinterfaceˉoffset = 64u32 + Extensionˉbytes;
+    }
+    if Extensionˉoffset != Expectedˉextensionˉoffset {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_OFFSET, 48u32
+        );
+    }
+    if Interfaceˉoffset != Expectedˉinterfaceˉoffset {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_OFFSET, 52u32
+        );
+    }
+    if Extensionˉcount != 0u32 {
+        let Extensions: bytes = Bytesˉslice(
+            Input, Extensionˉoffset, Extensionˉbytes
+        );
+        let Extensionˉorderˉfailure: u32 =
+            Compilerˉsourceˉtargetˉdirectoryˉorderˉfailure(
+                Extensions, Extensionˉcount
+            );
+        if Extensionˉorderˉfailure != Extensionˉcount {
+            return Compilerˉsourceˉtargetˉwvtdˉfailure(
+                Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER,
+                Extensionˉoffset + Extensionˉorderˉfailure * 4u32
+            );
+        }
+    }
+    if Interfaceˉcount != 0u32 {
+        let Interfaces: bytes = Bytesˉslice(
+            Input, Interfaceˉoffset, Interfaceˉbytes
+        );
+        let Interfaceˉorderˉfailure: u32 =
+            Compilerˉsourceˉtargetˉdirectoryˉorderˉfailure(
+                Interfaces, Interfaceˉcount
+            );
+        if Interfaceˉorderˉfailure != Interfaceˉcount {
+            return Compilerˉsourceˉtargetˉwvtdˉfailure(
+                Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_ORDER,
+                Interfaceˉoffset + Interfaceˉorderˉfailure * 4u32
+            );
+        }
+    }
+    return Compilerˉsourceˉtargetˉwvtdˉsuccess(Input);
+}
+
+fn Compilerˉsourceˉtargetˉwvtdˉdescriptor(
+    Input: bytes
+) -> Compilerˉsourceˉtargetˉdescriptor {
+    return Compilerˉsourceˉtargetˉdescriptor(
+        Bytesˉreadˉu32ˉlittle(Input, 12u32),
+        Bytesˉreadˉu32ˉlittle(Input, 16u32),
+        Bytesˉreadˉu32ˉlittle(Input, 20u32),
+        Bytesˉreadˉu32ˉlittle(Input, 24u32),
+        Bytesˉreadˉu32ˉlittle(Input, 28u32),
+        Bytesˉreadˉu32ˉlittle(Input, 32u32),
+        Bytesˉreadˉu32ˉlittle(Input, 36u32)
+    );
+}
+
+export fn Compilerˉsourceˉtargetˉwvtdˉvalidate(
+    Input: bytes
+) -> Compilerˉsourceˉtargetˉwvtdˉresult {
+    let Structure: Compilerˉsourceˉtargetˉwvtdˉresult =
+        Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(Input);
+    if Structure.Status != COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Structure;
+    }
+    let Target: Compilerˉsourceˉtargetˉdescriptor =
+        Compilerˉsourceˉtargetˉwvtdˉdescriptor(Input);
+    let Unknownˉdescriptor: u32 =
+        Compilerˉsourceˉtargetˉdescriptorˉunknownˉoffset(Target);
+    if Unknownˉdescriptor != 0u32 {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input,
+            COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+            Unknownˉdescriptor
+        );
+    }
+    if !Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(Target) {
+        return Compilerˉsourceˉtargetˉwvtdˉfailure(
+            Input, COMPILER_SOURCE_TARGET_STATUS_WVTD_TARGET_MISMATCH, 12u32
+        );
+    }
+
+    let Extensionˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 40u32);
+    let Interfaceˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 44u32);
+    if Extensionˉcount != 0u32 {
+        let Extensionˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 48u32);
+        let Extensions: bytes = Bytesˉslice(
+            Input, Extensionˉoffset, Extensionˉcount * 4u32
+        );
+        let Unknownˉextensionˉidentity: u32 =
+            Compilerˉsourceˉtargetˉdirectoryˉunknownˉidentity(
+                Extensions, Extensionˉcount, true
+            );
+        if Unknownˉextensionˉidentity != Extensionˉcount {
+            return Compilerˉsourceˉtargetˉwvtdˉfailure(
+                Input,
+                COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+                Extensionˉoffset + Unknownˉextensionˉidentity * 4u32
+            );
+        }
+    }
+    if Interfaceˉcount != 0u32 {
+        let Interfaceˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Input, 52u32);
+        let Interfaces: bytes = Bytesˉslice(
+            Input, Interfaceˉoffset, Interfaceˉcount * 4u32
+        );
+        let Unknownˉinterfaceˉidentity: u32 =
+            Compilerˉsourceˉtargetˉdirectoryˉunknownˉidentity(
+                Interfaces, Interfaceˉcount, false
+            );
+        if Unknownˉinterfaceˉidentity != Interfaceˉcount {
+            return Compilerˉsourceˉtargetˉwvtdˉfailure(
+                Input,
+                COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY,
+                Interfaceˉoffset + Unknownˉinterfaceˉidentity * 4u32
+            );
+        }
+    }
+    return Compilerˉsourceˉtargetˉwvtdˉsuccess(Input);
+}
+
 fn Compilerˉsourceˉtargetˉknownˉplatforms(Scopeˉmask: u32) -> u32 {
     var Count: u32 = 0u32;
-    if (Scopeˉmask & 1u32) != 0u32 { Count = Count + 1u32; }
-    if (Scopeˉmask & 2u32) != 0u32 { Count = Count + 1u32; }
-    if (Scopeˉmask & 4u32) != 0u32 { Count = Count + 1u32; }
-    if (Scopeˉmask & 8u32) != 0u32 { Count = Count + 1u32; }
+    if (Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS) != 0u32 {
+        Count = Count + 1u32;
+    }
+    if (Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX) != 0u32 {
+        Count = Count + 1u32;
+    }
+    if (Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE) != 0u32 {
+        Count = Count + 1u32;
+    }
+    if (Scopeˉmask &
+        COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1
+    ) != 0u32 {
+        Count = Count + 1u32;
+    }
     return Count;
 }
 
@@ -111,23 +648,22 @@ export fn Compilerˉsourceˉtargetˉadmitˉplatforms(
     if Platforms.Unknownˉscopes != 0u32 {
         return COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM;
     }
-    if (Platforms.Scopeˉmask & 8u32) != 0u32 {
-        if Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
-            Target.Architecture == COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
-            Target.Abi == COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 &&
-            Target.Noˉunwindˉcˉscalarˉpointerˉmajor == 1u32 {
-            return COMPILER_SOURCE_TARGET_STATUS_VALID;
-        }
+    if (Platforms.Scopeˉmask &
+            COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1
+        ) != 0u32 &&
+        Target.Buildˉtarget ==
+            COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 {
+        return COMPILER_SOURCE_TARGET_STATUS_VALID;
     }
-    if (Platforms.Scopeˉmask & 1u32) != 0u32 &&
+    if (Platforms.Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS) != 0u32 &&
         Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDOWS {
         return COMPILER_SOURCE_TARGET_STATUS_VALID;
     }
-    if (Platforms.Scopeˉmask & 2u32) != 0u32 &&
+    if (Platforms.Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX) != 0u32 &&
         Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX {
         return COMPILER_SOURCE_TARGET_STATUS_VALID;
     }
-    if (Platforms.Scopeˉmask & 4u32) != 0u32 &&
+    if (Platforms.Scopeˉmask & COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE) != 0u32 &&
         Target.Environment == COMPILER_SOURCE_TARGET_ENVIRONMENT_WINDVALE {
         return COMPILER_SOURCE_TARGET_STATUS_VALID;
     }
@@ -135,33 +671,16 @@ export fn Compilerˉsourceˉtargetˉadmitˉplatforms(
 }
 
 export fn Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
-    Environment: u32,
-    Architecture: u32,
-    Abi: u32,
-    Addressˉbits: u32,
-    Littleˉendian: bool,
-    Noˉunwindˉmajor: u32,
-    Extensionˉidentities: u32,
-    Targetˉinterfaceˉidentities: u32,
-    Platformˉscopeˉmask: u32,
-    Declaredˉplatforms: u32,
-    Unknownˉplatforms: u32
+    Target: Compilerˉsourceˉtargetˉdescriptor,
+    Platforms: Compilerˉsourceˉtargetˉplatformˉsetˉevidence
 ) -> u32 {
-    if Environment != COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX {
-        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
-    }
-    if Architecture != COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 {
-        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
-    }
-    if Abi != COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 {
-        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
-    }
-    if Addressˉbits != 64u32 || !Littleˉendian || Noˉunwindˉmajor != 1u32 ||
-        Extensionˉidentities != 0u32 || Targetˉinterfaceˉidentities != 0u32 {
-        return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
-    }
-    if Platformˉscopeˉmask != 8u32 || Declaredˉplatforms != 1u32 ||
-        Unknownˉplatforms != 0u32 {
+    if !Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(Target) ||
+        Target.Buildˉtarget !=
+            COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 ||
+        Platforms.Scopeˉmask !=
+            COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1 ||
+        Platforms.Declaredˉscopes != 1u32 ||
+        Platforms.Unknownˉscopes != 0u32 {
         return COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM;
     }
     return COMPILER_SOURCE_TARGET_STATUS_VALID;
