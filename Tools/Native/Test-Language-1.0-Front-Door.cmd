@@ -16,9 +16,11 @@ set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d7238
 set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
 set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
 set "BridgeEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit-wvir-1.9-bridge.wvb"
+for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
+if not defined TemporaryRoot exit /b 1
 
 :allocate
-set "Work=%TEMP%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
+set "Work=%TemporaryRoot%\windvale-language-1-front-door-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
 set "Result=1"
@@ -1691,7 +1693,7 @@ set "Result=0"
 
 :cleanup
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
-echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-language-1-front-door-" >nul || exit /b 1
+echo(%ResolvedWork%| findstr /b /i /c:"%TemporaryRoot%\windvale-language-1-front-door-" >nul || exit /b 1
 if not "%Result%"=="0" (
     >&2 echo FAIL  language 1 front door step=%FailureStep%
     if exist "%Work%\Bootstrap.err" type "%Work%\Bootstrap.err" >&2

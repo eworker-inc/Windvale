@@ -16,7 +16,7 @@ The canonical 816-byte `Function-Only.wv` WVB remains the embedded admission ide
 
 The separate directory service is a 473-byte WVB with SHA-256 `33b0e425bd6e2a1cd6ae8f95d4645748a6031b93684a9b1ac4d0e56e8408bef7`. Its WVA entry, exact preemption probe, and ABI-22 object link to a 3,911-byte image with SHA-256 `f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb`. The machine seam pins and revalidates that complete image and exact preemption-function bytes before publication.
 
-The native Probe object and process-object producers create the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge/support, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The 956,321-byte process object at SHA-256 `ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1` exports callable source-owned filesystem image, paging, and record constructors at addresses 780,192, 780,256, and 783,600. A separately assembled 2,654-byte WVA transaction at SHA-256 `51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8` releases the terminal generation-two client, allocates process/object generation 3 at the same root, invokes those constructors, validates the machine, exactly preflights and reuses the terminal directory-endpoint slot as `WVDOM001`, reconstructs endpoint/channel slot 0, creates a fresh thread, and publishes domain, endpoint, thread, then process ready state. The live filesystem domain commits `1/81/1`. The endpoint has provider `196610` and client 0, so it grants no application authority and is not used for traffic. The transaction does not enter the provider. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. The immutable Stage 0 recovery release preserves the former construction path and historical differential provenance; it is not invoked by ordinary `main` construction.
+The native Probe object and process-object producers create the loader, fixed-page memory leaf, exception, paging, admission bridge, process machine, retained bridge/support, canonical three-entry `WVRS 1` store, and canonical two-entry `WVDS 1` snapshot. The 956,321-byte process object at SHA-256 `9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b` exports callable source-owned filesystem image, paging, and record constructors at addresses 780,192, 780,256, and 783,600. A separately assembled 2,654-byte WVA transaction at SHA-256 `51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8` releases the terminal generation-two client, allocates process/object generation 3 at the same root, invokes those constructors, validates the machine, exactly preflights and reuses the terminal directory-endpoint slot as `WVDOM001`, reconstructs endpoint/channel slot 0, creates a fresh thread, and publishes domain, endpoint, thread, then process ready state. The live filesystem domain commits `1/81/1`. The endpoint has provider `196610` and client 0, so it grants no application authority and is not used for traffic. The transaction does not enter the provider. The separately assembled 2,538-byte memory-object WVA has SHA-256 `fe0a94461b743be58319d2e2f8b737840ec1216e61a98ee7e210f96f97f85bee`; the retained 1,202-byte timer WVA has SHA-256 `e331a1db404b8b8359d35d410792496683a63acee621ff64f128a6eae128c344`. The immutable Stage 0 recovery release preserves the former construction path and historical differential provenance; it is not invoked by ordinary `main` construction.
 
 The linked executable code ends at byte 793,095 and fits the fixed 794,624-byte supervisor RX window. Init and the directory service each fit two user RX pages; the client fits 110 user RX pages. Generated WVB, WVO, EFI, firmware maps, and virtual disks are not committed.
 
@@ -24,9 +24,9 @@ Current native `main` image identities are:
 
 | Scenario | EFI bytes | SHA-256 | Expected host code |
 | --- | ---: | --- | ---: |
-| `normal` | 1,698,816 | `0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2` | 0 |
-| `invalid-opcode` | 1,698,816 | `14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a` | 3 |
-| `general-protection` | 1,698,816 | `cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351` | 3 |
+| `normal` | 1,698,816 | `9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af` | 0 |
+| `invalid-opcode` | 1,698,816 | `b1a84634a107b5482d280a66615291f32838839ce7f87e13e87e0877e608c93d` | 3 |
+| `general-protection` | 1,698,816 | `fa2f6d92c81f12de1af4868df22e9f0fcddf7341dedf5ae04e893ddfe865e75b` | 3 |
 
 The current native builder does not construct `user-fault` or `service-fault`; changes to their retained source seams are therefore an explicit changed-file verification gap rather than falsely covered by the normal probe owner.
 
@@ -122,7 +122,7 @@ $efi = Join-Path $env:TEMP 'Windvale-Probe40-normal.efi'
 Tools\Native\Build-Os-Probe.cmd $efi normal
 pwsh -NoProfile -File Tools/Verify/Verify-Os-Boot.ps1 `
     -EfiPath $efi `
-    -ExpectedEfiSha256 0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2 `
+    -ExpectedEfiSha256 9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af `
     -Scenario normal
 ```
 

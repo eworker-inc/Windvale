@@ -15,21 +15,21 @@ set "InvalidOpcode=%TemporaryDirectory%\Invalid-Opcode.efi"
 set "GeneralProtection=%TemporaryDirectory%\General-Protection.efi"
 set "Status=1"
 
-call :build normal "%Normal%" 0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2 1698816
+call :build normal "%Normal%" 9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af 1698816
 if errorlevel 1 goto :failure
 
 call "%Builder%" "%Normal%" normal >"%TemporaryDirectory%\Repeat.out" 2>"%TemporaryDirectory%\Repeat.err"
 if not errorlevel 1 goto :failure
 findstr /x /c:"The native Probe 40 output already exists." "%TemporaryDirectory%\Repeat.err" >nul
 if errorlevel 1 goto :failure
-call :verify "%Normal%" 1698816 0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2
+call :verify "%Normal%" 1698816 9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af
 if errorlevel 1 goto :failure
 dir /b /a "%TemporaryDirectory%\.windvale-os-probe-native-*" >nul 2>&1
 if not errorlevel 1 goto :failure
 
-call :build invalid-opcode "%InvalidOpcode%" 14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a 1698816
+call :build invalid-opcode "%InvalidOpcode%" b1a84634a107b5482d280a66615291f32838839ce7f87e13e87e0877e608c93d 1698816
 if errorlevel 1 goto :failure
-call :build general-protection "%GeneralProtection%" cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351 1698816
+call :build general-protection "%GeneralProtection%" fa2f6d92c81f12de1af4868df22e9f0fcddf7341dedf5ae04e893ddfe865e75b 1698816
 if errorlevel 1 goto :failure
 
 echo Tests: 4, Passed: 4, Failed: 0

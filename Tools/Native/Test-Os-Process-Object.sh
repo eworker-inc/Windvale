@@ -20,10 +20,14 @@ trap cleanup EXIT
 object="$temporary_directory/05-process.wvo"
 existing="$temporary_directory/Existing.wvo"
 
-"$script_directory/Build-Os-Process-Object.sh" "$object" >/dev/null 2>&1 || exit 1
+if ! "$script_directory/Build-Os-Process-Object.sh" "$object" \
+    >"$temporary_directory/Build.log" 2>&1; then
+    cat -- "$temporary_directory/Build.log" >&2
+    exit 1
+fi
 if [[ $(wc -c < "$object") -ne 956321 ]] ||
     ! printf '%s  %s\n' \
-        'ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1' \
+        '9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b' \
         "$object" | sha256sum --check --strict --quiet; then
     exit 1
 fi

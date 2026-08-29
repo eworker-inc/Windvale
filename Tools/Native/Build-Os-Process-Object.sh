@@ -18,11 +18,28 @@ fi
 
 verify_identity() {
     local path=$1
-    local bytes=$2
-    local digest=$3
-    [[ -f $path && $(wc -c < "$path") -eq $bytes ]] &&
-        printf '%s  %s\n' "$digest" "$path" |
-            sha256sum --check --strict --quiet
+    local expected_bytes=$2
+    local expected_digest=$3
+    if [[ ! -f $path ]]; then
+        printf 'Missing exact OS process-object input: %s\n' "$path" >&2
+        return 1
+    fi
+    local actual_bytes
+    actual_bytes=$(wc -c < "$path") || return 1
+    if [[ $actual_bytes -ne $expected_bytes ]]; then
+        printf 'OS process-object identity mismatch path=%s expected-bytes=%s found-bytes=%s\n' \
+            "$path" "$expected_bytes" "$actual_bytes" >&2
+        return 1
+    fi
+    local actual_digest
+    actual_digest=$(sha256sum -- "$path") || return 1
+    actual_digest=${actual_digest%% *}
+    if [[ $actual_digest != "$expected_digest" ]]; then
+        printf 'OS process-object identity mismatch path=%s expected-sha256=%s found-sha256=%s\n' \
+            "$path" "$expected_digest" "$actual_digest" >&2
+        return 1
+    fi
+    return 0
 }
 
 verify_identity "$toolset/linux-x64-boot-resource-object.elf" 389120 21f15f20769465b6b9c2272147a00f995e455b9e6fd2db354772bf932fc7194b || exit 1
@@ -70,7 +87,7 @@ verify_identity "$work/Directory.wvo" 2803 04339b8fd627c6b765a16903ad339408c86ea
 run_logged Build-Filesystem.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Filesystem-Process-Service.wvproj" "$work/Filesystem.wvb"
 verify_identity "$work/Filesystem.wvb" 14812 054dc2c9b5c33e02e6263b644049fd84f1ed2e1219d642ec64c066af5bdc8fcf || exit 1
 run_logged Lower-Filesystem.log "$script_directory/Lower-Wvb-To-Wvo.sh" "$work/Filesystem.wvb" "$work/Filesystem-Main.wvo"
-verify_identity "$work/Filesystem-Main.wvo" 196327 5ee235d5dca7bfdab8a5a1b7c54874b6545725e69da754e22e06f72f578ebdb3 || exit 1
+verify_identity "$work/Filesystem-Main.wvo" 196327 c0cbc0ce96f14858de9f3973da4cfb5335f6c7087cdd78e6397b480093d59fcc || exit 1
 run_logged Rename-Filesystem.log "$script_directory/Rename-Wvo-Export.sh" "$work/Filesystem-Main.wvo" Main Windvale_filesystem_process_service_main "$work/Filesystem.wvo"
 
 run_logged Build-Network.log "$script_directory/Build-Wvb.sh" "$repository_root/Projects/Operating-System/Windvale-Os-Network-Process-Service.wvproj" "$work/Network.wvb"
@@ -110,7 +127,7 @@ verify_identity "$work/Init.bin" 5159 e9624ebe3b857b77d8b1024a4edfdaf23e040ee61f
 run_logged Link-Directory.log "$script_directory/Link-Wvo.sh" 0 Windvale_directory_process_user_entry "$work/Directory.bin" "$work/Directory-Shim.wvo" "$work/Directory.wvo"
 verify_identity "$work/Directory.bin" 3911 f4d047c6f311b1561a5621b98f3db2868a969c54bb81dac2f75d599b7207f3fb || exit 1
 run_logged Link-Filesystem.log "$script_directory/Link-Wvo.sh" 0 Windvale_filesystem_process_user_entry "$work/Filesystem.bin" "$work/Filesystem-Shim.wvo" "$work/Filesystem.wvo"
-verify_identity "$work/Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6 || exit 1
+verify_identity "$work/Filesystem.bin" 195657 d40d9cdb16f9aa115a20bac2b27f572fad853eca27cf2539fe61dfd2ecbd7601 || exit 1
 run_logged Link-Network.log "$script_directory/Link-Wvo.sh" 0 Windvale_network_process_user_entry "$work/Network.bin" "$work/Network-Shim.wvo" "$work/Network.wvo"
 verify_identity "$work/Network.bin" 242571 68182de6018a6c64d02c4a384355ea14c463a67d1939cb18db0c058223358e42 || exit 1
 run_logged Link-Client.log "$script_directory/Link-Wvo.sh" 0 Windvale_process_user_entry "$work/Client.bin" "$work/User-Shim.wvo" "$work/Interpreter.wvo" "$work/Boot-Service.wvo"
@@ -122,6 +139,6 @@ run_logged Directory-Snapshot.log "$toolset/linux-x64-process-directory-snapshot
 verify_identity "$work/Directory.wvds" 3184 0f793a41a701240b9cf41179dafa252384b43cd23214646ff021d245657c235a || exit 1
 
 run_logged Process-Object.log "$toolset/linux-x64-process-object.elf" "$toolset/normal-x64-process.bin" "$work/Init.bin" "$work/Client.bin" "$work/Program.wvb" "$work/Resources.wvrs" "$work/Directory.wvds" "$work/Directory.bin" "$work/Filesystem.bin" "$work/Network.bin" "$work/Process.wvo"
-verify_identity "$work/Process.wvo" 956321 ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1 || exit 1
+verify_identity "$work/Process.wvo" 956321 9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b || exit 1
 run_logged Verify-Process.log "$script_directory/Verify-Wvo.sh" "$work/Process.wvo"
 run_logged Publish.log "$script_directory/Publish-Wvo.sh" "$work/Process.wvo" "$output"

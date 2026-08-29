@@ -79,7 +79,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=lower-filesystem"
 call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Filesystem.wvb" "%Work%\Filesystem-Main.wvo" >"%Work%\Lower-Filesystem.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Filesystem-Main.wvo" 196327 5ee235d5dca7bfdab8a5a1b7c54874b6545725e69da754e22e06f72f578ebdb3
+call :verify "%Work%\Filesystem-Main.wvo" 196327 c0cbc0ce96f14858de9f3973da4cfb5335f6c7087cdd78e6397b480093d59fcc
 if errorlevel 1 goto :failure
 set "FailureStep=rename-filesystem"
 call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Filesystem-Main.wvo" Main Windvale_filesystem_process_service_main "%Work%\Filesystem.wvo" >"%Work%\Rename-Filesystem.log" 2>&1
@@ -171,7 +171,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=link-filesystem"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_filesystem_process_user_entry "%Work%\Filesystem.bin" "%Work%\Filesystem-Shim.wvo" "%Work%\Filesystem.wvo" >"%Work%\Link-Filesystem.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6
+call :verify "%Work%\Filesystem.bin" 195657 d40d9cdb16f9aa115a20bac2b27f572fad853eca27cf2539fe61dfd2ecbd7601
 if errorlevel 1 goto :failure
 set "FailureStep=link-network"
 call "%Native%\Link-Wvo.cmd" 0 Windvale_network_process_user_entry "%Work%\Network.bin" "%Work%\Network-Shim.wvo" "%Work%\Network.wvo" >"%Work%\Link-Network.log" 2>&1
@@ -198,7 +198,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=build-process-object"
 "%Toolset%\windows-x64-process-object.exe" "%Toolset%\normal-x64-process.bin" "%Work%\Init.bin" "%Work%\Client.bin" "%Work%\Program.wvb" "%Work%\Resources.wvrs" "%Work%\Directory.wvds" "%Work%\Directory.bin" "%Work%\Filesystem.bin" "%Work%\Network.bin" "%Work%\Process.wvo" >"%Work%\Process-Object.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\Process.wvo" 956321 ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1
+call :verify "%Work%\Process.wvo" 956321 9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b
 if errorlevel 1 goto :failure
 call "%Native%\Verify-Wvo.cmd" "%Work%\Process.wvo" >"%Work%\Verify-Process.log" 2>&1
 if errorlevel 1 goto :failure

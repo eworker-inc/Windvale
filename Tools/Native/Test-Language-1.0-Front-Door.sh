@@ -15,7 +15,7 @@ source_lock_hash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3
 bootstrap_analyzer_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
 bootstrap_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit.wvb"
 bridge_emitter_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvemit-wvir-1.9-bridge.wvb"
-temporary_root=${TMPDIR:-/tmp}
+temporary_root=$(node -p "require('node:fs').realpathSync(process.argv[1])" "${TMPDIR:-/tmp}") || exit 1
 work=$(mktemp -d "$temporary_root/windvale-language-1-front-door.XXXXXXXX") || exit 1
 cleanup() {
     case "$work" in
@@ -607,6 +607,7 @@ echo 'PASS  language 1 front door step=borrow-call-semantics item=direct-rejecti
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Sequence-Read-Through.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Borrow-Sequence-Admitted.wvss" \
     >"$work/Borrow-Sequence-Admission.out" \
     2>"$work/Borrow-Sequence-Admission.err" || {
@@ -644,6 +645,7 @@ echo 'PASS  language 1 front door step=borrow-call-semantics item=sequence owner
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Vector-Owned-Read-Through.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Borrow-Vector-Admitted.wvss" \
     >"$work/Borrow-Vector-Admission.out" \
     2>"$work/Borrow-Vector-Admission.err" || exit $?
@@ -1479,6 +1481,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Fixed-Array-A.wvb" \
     >"$work/Fixed-Array-A.out" 2>"$work/Fixed-Array-A.err" || exit $?
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
@@ -1486,6 +1489,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Fixed-Array-B.wvb" \
     >"$work/Fixed-Array-B.out" 2>"$work/Fixed-Array-B.err" || exit $?
 [[ ! -s $work/Fixed-Array-A.err && ! -s $work/Fixed-Array-B.err ]] || exit 1
@@ -1504,6 +1508,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Sequence-Wvb-Types.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Vector-Sequence-Types.wvb" \
     >"$work/Vector-Sequence-Types.out" \
     2>"$work/Vector-Sequence-Types.err" || exit $?
@@ -1519,6 +1524,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Sequence-Read.wvb" \
     >"$work/Sequence-Read.out" 2>"$work/Sequence-Read.err" || exit $?
 [[ ! -s $work/Sequence-Read.err ]] || exit 1
@@ -1530,6 +1536,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Freeze-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Vector-Read-Freeze.wvb" \
     >"$work/Vector-Read-Freeze.out" 2>"$work/Vector-Read-Freeze.err" || exit $?
 [[ ! -s $work/Vector-Read-Freeze.err ]] || exit 1
@@ -1539,19 +1546,23 @@ node "$script_directory/Verify-Language-1.0-Vector-Reads-Freeze.mjs" \
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Wrong-Owner.wv" \
     Sequence-Read-Wrong-Owner Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Wrong-Index.wv" \
     Sequence-Read-Wrong-Index Invalidˉargument \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Unsupported-Element.wv" \
     Sequence-Read-Unsupported-Element Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Lookalike.wv" \
     Sequence-Read-Lookalike Invalidˉargument \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Lookalike-Module.wv" || exit $?
 if node "$script_directory/Run-Split-Compiler.mjs" \
     "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
@@ -1559,6 +1570,7 @@ if node "$script_directory/Run-Split-Compiler.mjs" \
     --source-profile "$source_profile" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Use-After.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Vector-Freeze-Use-After.wvb" \
     >"$work/Vector-Freeze-Use-After.out" \
     2>"$work/Vector-Freeze-Use-After.err"; then
@@ -1571,37 +1583,44 @@ echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=1/8 c
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Wrong-Borrow.wv" \
     Vector-Freeze-Wrong-Borrow Invalidˉborrow \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=2/8 case=wrong-borrow'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Parameter.wv" \
     Vector-Read-Parameter Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=3/8 case=parameter'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Unsupported-Element.wv" \
     Vector-Read-Unsupported-Element Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=4/8 case=unsupported-element'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Wrong-Borrow.wv" \
     Vector-Read-Wrong-Borrow Invalidˉborrow \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=5/8 case=read-wrong-borrow'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Inferred-Result.wv" \
     Vector-Freeze-Inferred-Result Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=6/8 case=inferred-result'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Mismatched-Result.wv" \
     Vector-Freeze-Mismatched-Result Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=7/8 case=mismatched-result'
 expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Mismatched-Argument.wv" \
     Vector-Freeze-Mismatched-Argument Invalidˉcollection \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" || exit $?
+    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
+    "$repository_root/Libraries/Foundation/Memory/Memory.wv" || exit $?
 echo 'PASS  language 1 front door step=vector-reads-freeze-rejections item=8/8 case=mismatched-argument'
 vector_sequence_types_wvb_bytes=$(wc -c < "$work/Vector-Sequence-Types.wvb")
 sequence_read_wvb_bytes=$(wc -c < "$work/Sequence-Read.wvb")

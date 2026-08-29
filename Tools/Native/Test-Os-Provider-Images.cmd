@@ -12,7 +12,7 @@ set "Status=1"
 call "%Native%\Build-Wvb.cmd" "%Root%\Projects\Operating-System\Windvale-Os-Filesystem-Process-Service.wvproj" "%Work%\Filesystem.wvb" >nul || goto :cleanup
 call :verify "%Work%\Filesystem.wvb" 14812 054dc2c9b5c33e02e6263b644049fd84f1ed2e1219d642ec64c066af5bdc8fcf || goto :cleanup
 call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Filesystem.wvb" "%Work%\Filesystem-Main.wvo" >nul || goto :cleanup
-call :verify "%Work%\Filesystem-Main.wvo" 196327 5ee235d5dca7bfdab8a5a1b7c54874b6545725e69da754e22e06f72f578ebdb3 || goto :cleanup
+call :verify "%Work%\Filesystem-Main.wvo" 196327 c0cbc0ce96f14858de9f3973da4cfb5335f6c7087cdd78e6397b480093d59fcc || goto :cleanup
 call "%Native%\Link-Wvo.cmd" 0 Main "%Work%\Filesystem-Readiness.bin" "%Work%\Filesystem-Main.wvo" >nul || goto :cleanup
 call "%Native%\Package-Console.cmd" windows-x64-console-v1 "%Work%\Filesystem-Readiness.bin" 0 "%Work%\Filesystem-Readiness.exe" >nul || goto :cleanup
 "%Work%\Filesystem-Readiness.exe" >nul
@@ -21,7 +21,7 @@ call "%Native%\Rename-Wvo-Export.cmd" "%Work%\Filesystem-Main.wvo" Main Windvale
 call "%Native%\Assemble-Wva.cmd" "%Root%\Operating-System\Kernel\Filesystem-Process-Service-Shim.wva" "%Work%\Filesystem-Shim.wvo" >nul || goto :cleanup
 call :verify "%Work%\Filesystem-Shim.wvo" 302 aae81021f8e5d349570533299bbd1c4196358c3ad857eecc80b5b918c48f301c || goto :cleanup
 call "%Native%\Link-Wvo.cmd" 0 Windvale_filesystem_process_user_entry "%Work%\Filesystem.bin" "%Work%\Filesystem-Shim.wvo" "%Work%\Filesystem.wvo" >nul || goto :cleanup
-call :verify "%Work%\Filesystem.bin" 195657 57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6 || goto :cleanup
+call :verify "%Work%\Filesystem.bin" 195657 d40d9cdb16f9aa115a20bac2b27f572fad853eca27cf2539fe61dfd2ecbd7601 || goto :cleanup
 call "%Native%\Build-Wvb.cmd" "%Root%\Projects\Operating-System\Windvale-Os-Network-Process-Service.wvproj" "%Work%\Network.wvb" >nul || goto :cleanup
 call :verify "%Work%\Network.wvb" 13543 32c595716af0a3706226d677924a5279ea2d7b97b0a4cbdf7c6c9eed808e1b2a || goto :cleanup
 call "%Native%\Lower-Wvb-To-Wvo.cmd" "%Work%\Network.wvb" "%Work%\Network-Main.wvo" >nul || goto :cleanup

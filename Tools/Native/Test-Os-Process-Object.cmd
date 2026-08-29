@@ -12,10 +12,13 @@ set "Object=%TemporaryDirectory%\05-process.wvo"
 set "Existing=%TemporaryDirectory%\Existing.wvo"
 set "Status=1"
 
-call "%RepositoryRoot%\Tools\Native\Build-Os-Process-Object.cmd" "%Object%" >nul 2>&1
-if errorlevel 1 goto :failure
+call "%RepositoryRoot%\Tools\Native\Build-Os-Process-Object.cmd" "%Object%" >"%TemporaryDirectory%\Build.log" 2>&1
+if errorlevel 1 (
+    type "%TemporaryDirectory%\Build.log" 1>&2
+    goto :failure
+)
 for %%F in ("%Object%") do if not "%%~zF"=="956321" goto :failure
-certutil -hashfile "%Object%" SHA256 | findstr /i /x /c:"ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1" >nul
+certutil -hashfile "%Object%" SHA256 | findstr /i /x /c:"9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b" >nul
 if errorlevel 1 goto :failure
 call "%RepositoryRoot%\Tools\Native\Verify-Wvo.cmd" "%Object%" >nul 2>&1
 if errorlevel 1 goto :failure

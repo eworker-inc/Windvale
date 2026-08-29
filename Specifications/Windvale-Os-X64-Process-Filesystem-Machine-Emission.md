@@ -17,7 +17,7 @@ The record fixes process and thread identity 2, generation 3, role 2, runtime
 profile 5, a 262,144-instruction candidate budget, depth 16, primary capability
 slot 0 at endpoint generation 2 with provider rights 46 and capacity one, the
 endpoint-table address at state offset 1,168, and the 195,657-byte service digest
-`57f79e283a33c7e874761a9c3713ae753736731d6cbf477c90fd7caac231c8d6`.
+`d40d9cdb16f9aa115a20bac2b27f572fad853eca27cf2539fe61dfd2ecbd7601`.
 Its configuration digest is SHA-256
 `0e34a46dd568fdf97fb72c005d11bc626e9c2950b706fec73cb166521ccfecf4`,
 the exact admitted 80-byte `WVPR 1` filesystem launch request. This is not
@@ -59,7 +59,7 @@ targets process-object symbol 7 with signed addend -4, copies exactly 195,657
 bytes, and rejects zero or more than 196,608 bytes. The 956,321-byte process
 object exports the image, paging, and record constructors at section addresses
 780,192, 780,256, and 783,600 respectively, with SHA-256
-`ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1`.
+`9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b`.
 The separately assembled 2,654-byte construction transaction has SHA-256
 `51a7302bfe8f5565cb9e17522a4d042b618df2903944f2c567b46c9193d002d8`.
 

@@ -11,7 +11,7 @@ case $scenario in
         memory_role=memory
         memory_bytes=1529
         memory_digest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed
-        efi_digest=0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2
+        efi_digest=9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af
         efi_bytes=1698816
         code_tail_offset=793552
         ;;
@@ -19,7 +19,7 @@ case $scenario in
         memory_role=memory-invalid-opcode
         memory_bytes=1545
         memory_digest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868
-        efi_digest=14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a
+        efi_digest=b1a84634a107b5482d280a66615291f32838839ce7f87e13e87e0877e608c93d
         efi_bytes=1698816
         code_tail_offset=793568
         ;;
@@ -27,7 +27,7 @@ case $scenario in
         memory_role=memory-general-protection
         memory_bytes=1545
         memory_digest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0
-        efi_digest=cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351
+        efi_digest=fa2f6d92c81f12de1af4868df22e9f0fcddf7341dedf5ae04e893ddfe865e75b
         efi_bytes=1698816
         code_tail_offset=793568
         ;;
@@ -192,7 +192,7 @@ if ! "$script_directory/Build-Os-Process-Object.sh" \
 fi
 if [[ $(wc -c < "$work/05-process.wvo") -ne 956321 ]] ||
     ! printf '%s  %s\n' \
-        'ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1' \
+        '9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b' \
         "$work/05-process.wvo" | sha256sum --check --strict --quiet; then
     echo 'The native Probe 40 process object is invalid.' >&2
     exit 1

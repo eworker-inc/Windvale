@@ -4224,6 +4224,35 @@ and its linked fragment is 3,311,953 bytes at SHA-256
 `68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4`.
 The focused publisher owner passes all 16 cases, generic declarations pass all
 12 cases and return `42`, and the native console AOT owner passes its exact
-case. Retained database-tool preparation passes in 190 milliseconds and now
-reports the complete qualification sequence as 60 visible steps. The complete
+case. The first Linux qualification repeat also passes all 59 callable cases
+and advances their 4,393,725-byte evidence stream to SHA-256
+`052a90530c690f42d488fe90775558cfa30b89ddc2dbfcf95e5e29da40501c4a`;
+the shard correctly rejects the stale registry summary before later owners run.
+The registry remains 114 owners and 5,616 cases; its 18,992 LF-only bytes now
+have SHA-256
+`ca7e733addb1e4b9980af48fccde062e603ea3876da67bda88f14595846f0e85`.
+Retained database-tool preparation passes in 190 milliseconds and now reports
+the complete qualification sequence as 60 visible steps.
+
+The first paired repeat confirms exact current split convergence and the pinned
+WebAssembly package independently on Windows and Linux. It also exposes two
+host-harness defects before later owners can run: Windows creates front-door
+producer evidence through a noncanonical short temporary path, and the Linux
+front door omits `Foundationˉmemory` from all 19 source sets that include
+`Foundationˉcollections`. The repaired harnesses canonicalize the temporary
+root without weakening cache link rejection and keep the paired dependency
+sets identical.
+
+The optimizer changes the filesystem provider's native bytes without changing
+its 14,812-byte source WVB, 196,327-byte WVO size, 195,657-byte linked size, or
+published process layout. Its WVO advances to SHA-256
+`c0cbc0ce96f14858de9f3973da4cfb5335f6c7087cdd78e6397b480093d59fcc`,
+the linked image to
+`d40d9cdb16f9aa115a20bac2b27f572fad853eca27cf2539fe61dfd2ecbd7601`,
+and the 956,321-byte process object to
+`9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b`.
+All three 1,698,816-byte boot-probe scenarios retain their layouts and advance
+to their exact current identities. The focused Windows provider-image,
+process-object, and boot-probe owners pass 8, 2, and 4 cases respectively; the
+paired shell harnesses pass syntax validation. The corrected complete
 paired-host Qualification repeat remains the final Slice 7 gate.

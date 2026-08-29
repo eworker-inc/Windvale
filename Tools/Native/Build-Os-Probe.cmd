@@ -11,7 +11,7 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory"
     set "MemoryBytes=1529"
     set "MemoryDigest=2668e17c3181e168415fb7bdee530873e2ddc8fa2d100af94bcc7b74909df3ed"
-    set "EfiDigest=0796a5d70d865d35bcf0833a6d6d1168bba2fe35c5968b8db6e73767ca763cc2"
+    set "EfiDigest=9f938953bcb5f9dc1b1f1c9edffe742bf255529c874b3ff791f71b4261c754af"
     set "EfiBytes=1698816"
     set "CodeTailOffset=793552"
 ) else if /I "%Scenario%"=="invalid-opcode" (
@@ -19,7 +19,7 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory-invalid-opcode"
     set "MemoryBytes=1545"
     set "MemoryDigest=09aa0fcfe12c561b79367cb26569dbc6f1f47ca3b98dc892426ca57b4328f868"
-    set "EfiDigest=14cd177057858acd35023abd558e54670ca0e4c80122f43a7f7671f5a767ae6a"
+    set "EfiDigest=b1a84634a107b5482d280a66615291f32838839ce7f87e13e87e0877e608c93d"
     set "EfiBytes=1698816"
     set "CodeTailOffset=793568"
 ) else if /I "%Scenario%"=="general-protection" (
@@ -27,7 +27,7 @@ if /I "%Scenario%"=="normal" (
     set "MemoryRole=memory-general-protection"
     set "MemoryBytes=1545"
     set "MemoryDigest=23a052f9d47a9416618c9b7a50a382c68c46d3bf7834410cc79f8fef2aa461e0"
-    set "EfiDigest=cda36c9cdea101c81199ccd16422d1285b157e6f1dc8b69819280ccb6755d351"
+    set "EfiDigest=fa2f6d92c81f12de1af4868df22e9f0fcddf7341dedf5ae04e893ddfe865e75b"
     set "EfiBytes=1698816"
     set "CodeTailOffset=793568"
 ) else goto :usage
@@ -122,7 +122,7 @@ if errorlevel 1 goto :failure
 set "FailureStep=process-object"
 cmd /d /c call "%ProcessProducer%" "%Work%\05-process.wvo" >"%Work%\05.log" 2>&1
 if errorlevel 1 goto :failure
-call :verify "%Work%\05-process.wvo" 956321 ea07c502f0b3f45e650284426c136c601c9fdacf8addfa9f99fd890cc2a535a1
+call :verify "%Work%\05-process.wvo" 956321 9a9714176c2dd1959a7df4dc2915081b518d1e02551f799d4c630672c86dab5b
 if errorlevel 1 goto :failure
 
 set "FailureStep=application-start-context"
