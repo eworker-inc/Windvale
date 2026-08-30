@@ -537,7 +537,6 @@ $NativeCases = @(
         Paths = @(
             'Compiler/Windvale/Source-Target-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
-            'Specifications/Windvale-Language-1.0-Target-Descriptor.md',
             'Tests/Fixtures/Language-1.0/System-Ffi-Front-End-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.cmd',
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',
@@ -545,7 +544,18 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-system-ffi-front-end',
-            'language-1-admission-evidence-format'
+            'language-1-admission-evidence-format',
+            'language-1-foreign-memory-semantics'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign memory target descriptor contract routing'
+        Paths = @('Specifications/Windvale-Language-1.0-Target-Descriptor.md')
+        Suites = @(
+            'language-1-system-ffi-front-end',
+            'language-1-foreign-memory-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -557,7 +567,8 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-foreign-catalog-format',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-foreign-memory-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -575,7 +586,8 @@ $NativeCases = @(
         Suites = @(
             'language-1-foreign-catalog-format',
             'language-1-admission-evidence-format',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-foreign-memory-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -593,6 +605,34 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
         )
         Suites = @('language-1-foreign-catalog-producer')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign memory semantics routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Foreign-Semantics-Core.wv',
+            'Documents/Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Memory-Profile-Regression.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Memory-Semantics.wvproj',
+            'Specifications/Windvale-Language-1.0-Foreign-Memory-Semantics.md',
+            'Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression-System.wv',
+            'Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression.wv',
+            'Tests/Fixtures/Language-1.0/Foreign-Memory-Semantics-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.cmd',
+            'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.sh',
+            'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.mjs'
+        )
+        Suites = @('language-1-foreign-memory-semantics')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign memory decision routing'
+        Paths = @(
+            'Documents/Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md'
+        )
+        Suites = @('language-1-foreign-memory-semantics')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -702,7 +742,8 @@ $NativeCases = @(
         Suites = @(
             'language-1-foreign-catalog-format',
             'language-1-admission-evidence-format',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-foreign-memory-semantics'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1492,6 +1533,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'wvb-containment',
             'language-1-foreign-catalog-producer',
+            'language-1-foreign-memory-semantics',
             'compiler-split-development',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files',
@@ -3974,9 +4016,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 121 -or
+if ($VerificationOwnerLines.Count -ne 122 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 120-owner inventory differs.'
+    throw 'The native verification-owner header or exact 121-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -4014,7 +4056,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5811 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5841 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

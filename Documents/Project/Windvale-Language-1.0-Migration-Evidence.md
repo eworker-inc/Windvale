@@ -4468,3 +4468,61 @@ SHA-256
 This is producer evidence only. Admission coordination, selected-WVTD/platform
 agreement, WVAE publication, Analyzer authentication, semantic foreign
 binding, runtime/linker work, and Linux paired-host evidence remain pending.
+
+## Slice 8 bounded foreign-memory semantic oracle
+
+[Decision 0889](../Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md)
+adds the first bounded rule-level oracle for caller-owned foreign memory and
+exact registered-call admission. The oracle accepts no WVFC or source bytes and
+owns no parser. Its normalized callable facts are not authority: a future
+Analyzer adapter must authenticate the admitted WVFC identity against the same
+immutable WVSS and WVAE evidence before constructing them.
+
+The checkpoint distinguishes `memory.allocate`, `unsafe.address`, and
+`ffi.call`; enforces lexical unsafe context where required; and models one
+nonzero, aligned, nonwrapping scratch allocation, one positive exclusive
+region, one generation-matched pointer, and one consumed call. It preserves
+exact range, overflow, alignment, alias, lifetime, no-retain, no-unwind,
+evidence-budget, and deterministic typed-failure rules. Retain or unwind is
+terminal and returns a poisoned state with reusable authority scrubbed.
+
+The strengthened state derives a checked 64-byte retained-evidence minimum for
+each completed allocation, region, pointer, and call transition. Dereference
+simulation is bound to concrete pointer/owner generations and access geometry;
+the oracle independently derives lifetime, extent, address, alignment,
+initialization, and alias facts rather than trusting naked proof Booleans. A
+single generation-bound immutable slice models the Analyzer's lexical borrow
+and must be explicitly released before another region or scratch release. These
+compiler rule facts add neither authentication authority nor a public
+Foundation dereference API.
+
+Two focused preflight builds produce byte-identical 147,372-byte WVB values
+with SHA-256
+`7937f9558a97ec5408f79b2871c9611a838eed16e07ae7acf9ccecaedac06055`.
+A narrow x64 preflight stages the WVB to a 5,297,182-byte object set in 7 chunks
+with a 108-byte manifest. The generic segmented-hosted-WVB cache performs the
+candidate's sole complete verification before direct profile-7 native
+packaging. The prior Windows application and 29-selector result belonged to the
+superseded 121,635-byte identity; the corrected 147,372-byte result below is the
+current local Windows development evidence.
+
+An initial strengthened focused-owner run caught region construction
+classifying a live immutable slice as generic `Aliasing`. The corrected rule
+returns `Sliceˉaliasing` before the live-region/live-pointer `Aliasing` branch.
+A narrow cached profile-7 selector-`y` probe on the corrected identity returns
+42 with no output. The corrected focused owner then passes termination,
+byte-identical build and rebuild, exact profile rejection, sole complete
+verification, immutable cache hit at key
+`e2f5a700bd1fd84f9012780dd1a26f0e60526eb6532cb01742e4561f29ea6408`,
+four negative dispatch probes, all 29 isolated rule selectors, and the exact
+two-module source-graph rejection.
+
+The thirtieth focused case is exact source-to-WIR graph evidence: a portable
+root importing the System fixture rejects with `Dependencyˉprofile`, valid
+source-set, parse, and body evidence, and no output artifact. Cases 3, 4, 11,
+and 15–30 are rule-level evidence; only case 5 is source-graph evidence in this
+checkpoint. The registry now contains 121 owners and 5,841 cases.
+
+Slice 8 remains in progress. Authenticated WVFC-to-semantic adaptation, actual
+foreign binding and call lowering, runtime containment, paired-host evidence,
+full Language 1.0 migration, and qualified Seed promotion remain pending.

@@ -1,0 +1,1455 @@
+module Compilerˉsourceˉforeignˉsemantics profile portable;
+
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉtarget as Target;
+
+// This module is a bounded semantic oracle, not an admission front door. Its
+// normalized declaration identity is meaningful only after an Analyzer-owned
+// adapter authenticates WVFC spans, source bytes, digests, and completeness.
+// Deliberately no operation here accepts WVFC or source bytes.
+
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES: u64 = 64u64;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT: u64 = 8u64;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_ALLOCATIONS: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_REGIONS: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_POINTERS: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_CALLS: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_DIAGNOSTICS: u32 = 16u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES: u32 = 524288u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_MEMORY_ALLOCATE_EFFECT: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT: u32 = 128u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT: u32 = 256u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM: u32 = 3u32;
+
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_SOURCE_NAME_BUFFER_READ: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_EXTERNAL_SYMBOL_BUFFER_READ: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_SEMANTICS_TARGET_UNADDRESSABLE_REASON: u32 = 2u32;
+
+export enum Compilerˉsourceˉforeignˉtypeˉkind {
+    Unknown = 0;
+    U8 = 1;
+    U64 = 2;
+    I64 = 3;
+    Foreignˉpointer = 4;
+    Nullableˉforeignˉpointer = 5;
+    Foreignˉscratch = 6;
+    Foreignˉwriteˉregion = 7;
+    Bool = 8;
+    Enum = 9;
+    Record = 10;
+    Text = 11;
+    Bytes = 12;
+}
+
+export enum Compilerˉsourceˉforeignˉsemanticˉstatus {
+    Valid = 0;
+    Invalidˉevidence = 1;
+    Resourceˉlimit = 2;
+    Unsupportedˉtarget = 3;
+    Unsupportedˉabi = 4;
+    Systemˉprofileˉrequired = 5;
+    Unsafeˉcontextˉrequired = 6;
+    Ffiˉeffectˉrequired = 7;
+    Invalidˉforeignˉsignature = 8;
+    Noˉretainˉrequired = 9;
+    Noˉunwindˉrequired = 10;
+    Invalidˉlength = 11;
+    Invalidˉalignment = 12;
+    Allocationˉfailure = 13;
+    Addressˉoverflow = 14;
+    Outˉofˉrange = 15;
+    Misaligned = 16;
+    Aliasing = 17;
+    Lifetimeˉended = 18;
+    Null = 19;
+    Forbiddenˉpointerˉoperation = 20;
+    Pointerˉescape = 21;
+    Sliceˉaliasing = 22;
+    Terminalˉcontainment = 23;
+    Memoryˉallocateˉeffectˉrequired = 24;
+    Unsafeˉaddressˉeffectˉrequired = 25;
+    Invalidˉcallˉcontract = 26;
+}
+
+export const COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_NONE: u32 = 0u32;
+export const COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_TERMINAL: u32 = 4u32;
+
+export const COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_INVALID_LENGTH: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_INVALID_ALIGNMENT: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_ALLOCATION: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_UNSUPPORTED_ABI: u32 = 4u32;
+
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_NULL: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED: u32 = 4u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING: u32 = 5u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED: u32 = 6u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_UNSUPPORTED_ABI: u32 = 7u32;
+
+export const COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_DEREFERENCE: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_ESCAPE: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_INTEGER: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_SERIALIZE: u32 = 4u32;
+export const COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_RETAIN: u32 = 5u32;
+
+export record Compilerˉsourceˉforeignˉtypeˉidentity {
+    Kind: Compilerˉsourceˉforeignˉtypeˉkind;
+    Element: Compilerˉsourceˉforeignˉtypeˉkind;
+    Abiˉcontract: u32;
+}
+
+// This record contains normalized facts, not authentication authority. A future
+// Analyzer adapter owns construction after validating the corresponding WVFC
+// record against WVSS and WVAE.
+export record Compilerˉsourceˉforeignˉauthenticatedˉcallable {
+    Abiˉcontract: u32;
+    Sourceˉname: u32;
+    Externalˉsymbol: u32;
+    Unsafe: bool;
+    Profile: u32;
+    Languageˉeffects: u32;
+    Destination: Compilerˉsourceˉforeignˉtypeˉidentity;
+    Capacity: Compilerˉsourceˉforeignˉtypeˉidentity;
+    Expectedˉgeneration: Compilerˉsourceˉforeignˉtypeˉidentity;
+    Return: Compilerˉsourceˉforeignˉtypeˉidentity;
+    Noˉretain: bool;
+    Noˉunwind: bool;
+}
+
+export record Compilerˉsourceˉforeignˉcallˉcontext {
+    Profile: u32;
+    Unsafeˉdepth: u32;
+    Languageˉeffects: u32;
+    Capacity: u64;
+    Attemptsˉretain: bool;
+    Attemptsˉunwind: bool;
+}
+
+export record Compilerˉsourceˉforeignˉoperationˉcontext {
+    Profile: u32;
+    Unsafeˉdepth: u32;
+    Languageˉeffects: u32;
+}
+
+// These are normalized Analyzer simulation facts, not authority. The future
+// Analyzer adapter owns construction after authenticating source/WVFC evidence
+// and binds every fact to one concrete pointer access.
+export record Compilerˉsourceˉforeignˉdereferenceˉevidence {
+    Pointerˉgeneration: u32;
+    Ownerˉgeneration: u32;
+    Offset: u64;
+    Length: u64;
+    Requiredˉalignment: u64;
+}
+
+// This exported record is a normalized rule-simulation shape, not provider or
+// provenance authority. A future compiler-owned opaque state and authenticated
+// Analyzer transition own provenance before these facts may guide lowering.
+export record Compilerˉsourceˉforeignˉmemoryˉstate {
+    Valid: bool;
+    Abiˉcontract: u32;
+    Baseˉaddress: u64;
+    Budgetˉremaining: u64;
+    Allocationˉcount: u32;
+    Regionˉcount: u32;
+    Pointerˉcount: u32;
+    Callˉcount: u32;
+    Scratchˉlive: bool;
+    Scratchˉzeroˉinitialized: bool;
+    Scratchˉlength: u64;
+    Scratchˉalignment: u64;
+    Scratchˉgeneration: u32;
+    Regionˉlive: bool;
+    Regionˉstart: u64;
+    Regionˉlength: u64;
+    Regionˉalignment: u64;
+    Regionˉgeneration: u32;
+    Pointerˉlive: bool;
+    Pointerˉgeneration: u32;
+    Evidenceˉbytes: u32;
+    Sliceˉlive: bool;
+    Sliceˉgeneration: u32;
+}
+
+export record Compilerˉsourceˉforeignˉsemanticˉresult {
+    Status: Compilerˉsourceˉforeignˉsemanticˉstatus;
+    Failureˉdomain: u32;
+    Failureˉkind: u32;
+    First: u64;
+    Second: u64;
+    Third: u64;
+    Diagnostics: u32;
+    State: Compilerˉsourceˉforeignˉmemoryˉstate;
+}
+
+export fn Compilerˉsourceˉforeignˉtype(
+    Kind: Compilerˉsourceˉforeignˉtypeˉkind,
+    Element: Compilerˉsourceˉforeignˉtypeˉkind,
+    Abiˉcontract: u32
+) -> Compilerˉsourceˉforeignˉtypeˉidentity {
+    return Compilerˉsourceˉforeignˉtypeˉidentity(Kind, Element, Abiˉcontract);
+}
+
+export fn Compilerˉsourceˉforeignˉscalarˉtype(
+    Kind: Compilerˉsourceˉforeignˉtypeˉkind
+) -> Compilerˉsourceˉforeignˉtypeˉidentity {
+    return Compilerˉsourceˉforeignˉtypeˉidentity(
+        Kind, Compilerˉsourceˉforeignˉtypeˉkind.Unknown, 0u32
+    );
+}
+
+fn Compilerˉsourceˉforeignˉtypeˉequals(
+    Left: Compilerˉsourceˉforeignˉtypeˉidentity,
+    Right: Compilerˉsourceˉforeignˉtypeˉidentity
+) -> bool {
+    return Left.Kind == Right.Kind && Left.Element == Right.Element &&
+        Left.Abiˉcontract == Right.Abiˉcontract;
+}
+
+export fn Compilerˉsourceˉforeignˉtypeˉisˉopaque(
+    Type: Compilerˉsourceˉforeignˉtypeˉidentity
+) -> bool {
+    return Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Nullableˉforeignˉpointer ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉscratch ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉwriteˉregion;
+}
+
+export fn Compilerˉsourceˉforeignˉtypeˉisˉwellˉformed(
+    Type: Compilerˉsourceˉforeignˉtypeˉidentity
+) -> bool {
+    if Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.U8 ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.U64 ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.I64 {
+        return Type.Element == Compilerˉsourceˉforeignˉtypeˉkind.Unknown &&
+            Type.Abiˉcontract == 0u32;
+    }
+    if Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Nullableˉforeignˉpointer {
+        return Type.Element == Compilerˉsourceˉforeignˉtypeˉkind.U8 &&
+            Foreignˉcatalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(
+                Type.Abiˉcontract
+            );
+    }
+    if Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉscratch ||
+        Type.Kind == Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉwriteˉregion {
+        return Type.Element == Compilerˉsourceˉforeignˉtypeˉkind.Unknown &&
+            Foreignˉcatalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(
+                Type.Abiˉcontract
+            );
+    }
+    return false;
+}
+
+export fn Compilerˉsourceˉforeignˉmemoryˉempty(
+    Abiˉcontract: u32,
+    Baseˉaddress: u64,
+    Budgetˉbytes: u64
+) -> Compilerˉsourceˉforeignˉmemoryˉstate {
+    return Compilerˉsourceˉforeignˉmemoryˉstate(
+        true, Abiˉcontract, Baseˉaddress, Budgetˉbytes,
+        0u32, 0u32, 0u32, 0u32,
+        false, false, 0u64, 0u64, 0u32,
+        false, 0u64, 0u64, 0u64, 0u32,
+        false, 0u32, 0u32, false, 0u32
+    );
+}
+
+export fn Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> bool {
+    if !State.Valid || State.Allocationˉcount > 1u32 ||
+        State.Regionˉcount > 1u32 || State.Pointerˉcount > 1u32 ||
+        State.Callˉcount > 1u32 ||
+        !Compilerˉsourceˉforeignˉabiˉisˉexact(State.Abiˉcontract) ||
+        State.Evidenceˉbytes >
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES {
+        return false;
+    }
+    if (State.Allocationˉcount == 0u32 && State.Scratchˉgeneration != 0u32) ||
+        (State.Allocationˉcount == 1u32 && State.Scratchˉgeneration == 0u32) ||
+        (State.Regionˉcount == 0u32 && State.Regionˉgeneration != 0u32) ||
+        (State.Regionˉcount == 1u32 && State.Regionˉgeneration == 0u32) ||
+        (State.Pointerˉcount == 0u32 && State.Pointerˉgeneration != 0u32) ||
+        (State.Pointerˉcount == 1u32 && State.Pointerˉgeneration == 0u32) {
+        return false;
+    }
+    if State.Callˉcount > State.Pointerˉcount ||
+        State.Pointerˉcount > State.Regionˉcount ||
+        State.Regionˉcount > State.Allocationˉcount {
+        return false;
+    }
+    var Requiredˉevidence: u32 = 0u32;
+    if State.Allocationˉcount == 1u32 {
+        if Requiredˉevidence >
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 64u32 {
+            return false;
+        }
+        Requiredˉevidence = Requiredˉevidence + 64u32;
+    }
+    if State.Regionˉcount == 1u32 {
+        if Requiredˉevidence >
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 64u32 {
+            return false;
+        }
+        Requiredˉevidence = Requiredˉevidence + 64u32;
+    }
+    if State.Pointerˉcount == 1u32 {
+        if Requiredˉevidence >
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 64u32 {
+            return false;
+        }
+        Requiredˉevidence = Requiredˉevidence + 64u32;
+    }
+    if State.Callˉcount == 1u32 {
+        if Requiredˉevidence >
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 64u32 {
+            return false;
+        }
+        Requiredˉevidence = Requiredˉevidence + 64u32;
+    }
+    if State.Evidenceˉbytes < Requiredˉevidence {
+        return false;
+    }
+    if (State.Regionˉcount == 1u32 &&
+            State.Regionˉgeneration != State.Scratchˉgeneration) ||
+        (State.Pointerˉcount == 1u32 &&
+            State.Pointerˉgeneration != State.Regionˉgeneration) {
+        return false;
+    }
+    if (State.Pointerˉcount == 1u32 && !State.Pointerˉlive &&
+            State.Callˉcount == 0u32) ||
+        (State.Callˉcount == 1u32 && State.Pointerˉlive) {
+        return false;
+    }
+    if State.Scratchˉlive {
+        if State.Allocationˉcount != 1u32 || !State.Scratchˉzeroˉinitialized ||
+            State.Scratchˉlength == 0u64 ||
+            State.Scratchˉlength > COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES ||
+            !Compilerˉsourceˉforeignˉpowerˉofˉtwo(State.Scratchˉalignment) ||
+            State.Scratchˉgeneration == 0u32 {
+            return false;
+        }
+        if State.Baseˉaddress == 0u64 ||
+            (State.Baseˉaddress & (State.Scratchˉalignment - 1u64)) != 0u64 ||
+            State.Baseˉaddress > 18446744073709551615u64 -
+                (State.Scratchˉlength - 1u64) {
+            return false;
+        }
+    } else {
+        if State.Scratchˉzeroˉinitialized || State.Scratchˉlength != 0u64 ||
+            State.Scratchˉalignment != 0u64 || State.Regionˉlive ||
+            State.Pointerˉlive {
+            return false;
+        }
+    }
+    if State.Regionˉlive {
+        if State.Regionˉcount != 1u32 ||
+            State.Regionˉgeneration != State.Scratchˉgeneration ||
+            State.Regionˉlength == 0u64 ||
+            State.Regionˉstart > 18446744073709551615u64 - State.Regionˉlength ||
+            State.Regionˉstart + State.Regionˉlength > State.Scratchˉlength ||
+            !Compilerˉsourceˉforeignˉpowerˉofˉtwo(State.Regionˉalignment) ||
+            State.Regionˉalignment > State.Scratchˉalignment ||
+            State.Baseˉaddress > 18446744073709551615u64 - State.Regionˉstart {
+            return false;
+        }
+        let Regionˉaddress: u64 = State.Baseˉaddress + State.Regionˉstart;
+        if Regionˉaddress > 18446744073709551615u64 - State.Regionˉlength ||
+            (Regionˉaddress & (State.Regionˉalignment - 1u64)) != 0u64 {
+            return false;
+        }
+    } else {
+        if State.Regionˉstart != 0u64 || State.Regionˉlength != 0u64 ||
+            State.Regionˉalignment != 0u64 || State.Pointerˉlive {
+            return false;
+        }
+    }
+    if State.Pointerˉlive &&
+        (State.Pointerˉcount != 1u32 ||
+            State.Pointerˉgeneration != State.Regionˉgeneration) {
+        return false;
+    }
+    if State.Sliceˉlive {
+        if !State.Scratchˉlive || State.Regionˉlive || State.Pointerˉlive ||
+            State.Sliceˉgeneration == 0u32 ||
+            State.Sliceˉgeneration != State.Scratchˉgeneration {
+            return false;
+        }
+    } else {
+        if State.Sliceˉgeneration != 0u32 { return false; }
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉforeignˉresult(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Status: Compilerˉsourceˉforeignˉsemanticˉstatus,
+    Domain: u32,
+    Kind: u32,
+    First: u64,
+    Second: u64,
+    Third: u64
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    var Diagnostics: u32 = 0u32;
+    if Status != Compilerˉsourceˉforeignˉsemanticˉstatus.Valid {
+        Diagnostics = 1u32;
+    }
+    return Compilerˉsourceˉforeignˉsemanticˉresult(
+        Status, Domain, Kind, First, Second, Third, Diagnostics, State
+    );
+}
+
+fn Compilerˉsourceˉforeignˉvalid(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    return Compilerˉsourceˉforeignˉresult(
+        State, Compilerˉsourceˉforeignˉsemanticˉstatus.Valid,
+        COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_NONE, 0u32, 0u64, 0u64, 0u64
+    );
+}
+
+fn Compilerˉsourceˉforeignˉinvalidˉevidence(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    return Compilerˉsourceˉforeignˉresult(
+        State, Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence,
+        COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+        0u64, 0u64, 0u64
+    );
+}
+
+fn Compilerˉsourceˉforeignˉexactˉtarget(
+    Value: Target.Compilerˉsourceˉtargetˉdescriptor
+) -> bool {
+    return Target.Compilerˉsourceˉtargetˉdescriptorˉisˉvalid(Value) &&
+        Value.Buildˉtarget ==
+            Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 &&
+        Value.Environment == Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
+        Value.Architecture == Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+        Value.Abi == Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 &&
+        Value.Addressˉbits == 64u32 &&
+        Value.Byteˉorder == Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE &&
+        Value.Noˉunwindˉcˉscalarˉpointerˉmajor == 1u32;
+}
+
+fn Compilerˉsourceˉforeignˉabiˉisˉexact(Abiˉcontract: u32) -> bool {
+    return Abiˉcontract ==
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1;
+}
+
+fn Compilerˉsourceˉforeignˉpowerˉofˉtwo(Value: u64) -> bool {
+    if Value == 0u64 ||
+        Value > COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT {
+        return false;
+    }
+    return (Value & (Value - 1u64)) == 0u64;
+}
+
+fn Compilerˉsourceˉforeignˉwithˉevidence(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Additional: u32
+) -> Compilerˉsourceˉforeignˉmemoryˉstate {
+    return Compilerˉsourceˉforeignˉmemoryˉstate(
+        State.Valid, State.Abiˉcontract, State.Baseˉaddress,
+        State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+        State.Pointerˉcount, State.Callˉcount, State.Scratchˉlive,
+        State.Scratchˉzeroˉinitialized, State.Scratchˉlength,
+        State.Scratchˉalignment, State.Scratchˉgeneration, State.Regionˉlive,
+        State.Regionˉstart, State.Regionˉlength, State.Regionˉalignment,
+        State.Regionˉgeneration, State.Pointerˉlive, State.Pointerˉgeneration,
+        State.Evidenceˉbytes + Additional,
+        State.Sliceˉlive, State.Sliceˉgeneration
+    );
+}
+
+fn Compilerˉsourceˉforeignˉevidenceˉhasˉroom(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Additional: u32
+) -> bool {
+    return Additional <=
+        COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES &&
+        State.Evidenceˉbytes <=
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - Additional;
+}
+
+// Failure order is System profile, memory.allocate effect, target, ABI,
+// state/evidence bound, length, alignment, allocation-count bound, budget, and
+// provider failure. No allocation is observed before every preceding check
+// succeeds. Construct is effectful but is not itself an unsafe invocation.
+export fn Compilerˉsourceˉforeignˉconstructˉscratch(
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Length: u64,
+    Alignment: u64,
+    Allocationˉreason: u32
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MEMORY_ALLOCATE_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Memoryˉallocateˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_MEMORY_ALLOCATE_EFFECT),
+            0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉexactˉtarget(Buildˉtarget) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉtarget,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉabiˉisˉexact(State.Abiˉcontract) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_UNSUPPORTED_ABI,
+            U64ˉfromˉu32(State.Abiˉcontract), 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if Length == 0u64 ||
+        Length > COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉlength,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_INVALID_LENGTH,
+            Length, COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉpowerˉofˉtwo(Alignment) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉalignment,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_INVALID_ALIGNMENT,
+            Alignment, COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT,
+            0u64
+        );
+    }
+    if State.Allocationˉcount >=
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_ALLOCATIONS ||
+        State.Scratchˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Allocationˉcount),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_ALLOCATIONS),
+            0u64
+        );
+    }
+    if Length > State.Budgetˉremaining {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_ALLOCATION,
+            Length, State.Budgetˉremaining, 1u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉevidenceˉhasˉroom(State, 64u32) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Evidenceˉbytes),
+            U64ˉfromˉu32(
+                COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES
+            ), 0u64
+        );
+    }
+    if Allocationˉreason > 4u32 {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if Allocationˉreason != 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_ALLOCATION,
+            Length, State.Budgetˉremaining, U64ˉfromˉu32(Allocationˉreason)
+        );
+    }
+    if State.Baseˉaddress == 0u64 ||
+        (State.Baseˉaddress & (Alignment - 1u64)) != 0u64 ||
+        State.Baseˉaddress > 18446744073709551615u64 - (Length - 1u64) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY,
+            COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_ALLOCATION,
+            Length, State.Budgetˉremaining,
+            U64ˉfromˉu32(
+                COMPILER_SOURCE_FOREIGN_SEMANTICS_TARGET_UNADDRESSABLE_REASON
+            )
+        );
+    }
+    var Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining - Length, 1u32, 0u32, 0u32, 0u32,
+            true, true, Length, Alignment, 1u32,
+            false, 0u64, 0u64, 0u64, 0u32,
+            false, 0u32, State.Evidenceˉbytes, false, 0u32
+        );
+    Next = Compilerˉsourceˉforeignˉwithˉevidence(Next, 64u32);
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+// Region failure order is System profile, lexical unsafe context,
+// unsafe.address effect, target, ABI, bounded-state/lifetime, positive length,
+// relative u64 overflow, native base plus start/end overflow, owner extent,
+// alignment, exclusivity, and the one-region bound.
+export fn Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Ownerˉgeneration: u32,
+    Start: u64,
+    Length: u64,
+    Requiredˉalignment: u64
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if Context.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉaddressˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT),
+            0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉexactˉtarget(Buildˉtarget) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉtarget,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉabiˉisˉexact(State.Abiˉcontract) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_UNSUPPORTED_ABI,
+            U64ˉfromˉu32(State.Abiˉcontract), 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Scratchˉlive || Ownerˉgeneration != State.Scratchˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            U64ˉfromˉu32(Ownerˉgeneration),
+            U64ˉfromˉu32(State.Scratchˉgeneration), 0u64
+        );
+    }
+    if Length == 0u64 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            Start, Length, State.Scratchˉlength
+        );
+    }
+    if Start > 18446744073709551615u64 - Length {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            Start, Length, 64u64
+        );
+    }
+    let Relativeˉend: u64 = Start + Length;
+    if State.Baseˉaddress > 18446744073709551615u64 - Start {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            Start, Length, 64u64
+        );
+    }
+    let Regionˉaddress: u64 = State.Baseˉaddress + Start;
+    if Regionˉaddress > 18446744073709551615u64 - Length {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            Start, Length, 64u64
+        );
+    }
+    if Relativeˉend > State.Scratchˉlength {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            Start, Length, State.Scratchˉlength
+        );
+    }
+    if !Compilerˉsourceˉforeignˉpowerˉofˉtwo(Requiredˉalignment) ||
+        Requiredˉalignment > State.Scratchˉalignment ||
+        (Regionˉaddress & (Requiredˉalignment - 1u64)) != 0u64 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED,
+            Start, Requiredˉalignment, Regionˉaddress
+        );
+    }
+    if State.Sliceˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Sliceˉaliasing,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING,
+            Start, Length, 0u64
+        );
+    }
+    if State.Regionˉlive || State.Pointerˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Aliasing,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING,
+            Start, Length, 0u64
+        );
+    }
+    if State.Regionˉcount >= COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_REGIONS {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Regionˉcount),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_REGIONS), 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉevidenceˉhasˉroom(State, 64u32) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Evidenceˉbytes),
+            U64ˉfromˉu32(
+                COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES
+            ), 0u64
+        );
+    }
+    var Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, 1u32,
+            State.Pointerˉcount, State.Callˉcount,
+            true, true, State.Scratchˉlength, State.Scratchˉalignment,
+            State.Scratchˉgeneration, true, Start, Length,
+            Requiredˉalignment, State.Scratchˉgeneration,
+            false, 0u32, State.Evidenceˉbytes, false, 0u32
+        );
+    Next = Compilerˉsourceˉforeignˉwithˉevidence(Next, 64u32);
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉwriteˉpointer(
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if Context.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉaddressˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT),
+            0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Regionˉlive ||
+        State.Regionˉgeneration != State.Scratchˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            0u64, 0u64, 0u64
+        );
+    }
+    if State.Pointerˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Aliasing,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING,
+            0u64, 0u64, 0u64
+        );
+    }
+    if State.Pointerˉcount >= COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_POINTERS {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Pointerˉcount),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_POINTERS), 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉevidenceˉhasˉroom(State, 64u32) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Evidenceˉbytes),
+            U64ˉfromˉu32(
+                COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES
+            ), 0u64
+        );
+    }
+    var Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+            1u32, State.Callˉcount, true, true,
+            State.Scratchˉlength, State.Scratchˉalignment,
+            State.Scratchˉgeneration, true, State.Regionˉstart,
+            State.Regionˉlength, State.Regionˉalignment,
+            State.Regionˉgeneration, true, State.Regionˉgeneration,
+            State.Evidenceˉbytes, State.Sliceˉlive, State.Sliceˉgeneration
+        );
+    Next = Compilerˉsourceˉforeignˉwithˉevidence(Next, 64u32);
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉcallableˉisˉexact(
+    Callable: Compilerˉsourceˉforeignˉauthenticatedˉcallable
+) -> bool {
+    let Pointer: Compilerˉsourceˉforeignˉtypeˉidentity =
+        Compilerˉsourceˉforeignˉtype(
+            Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer,
+            Compilerˉsourceˉforeignˉtypeˉkind.U8,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1
+        );
+    let U64ˉtype: Compilerˉsourceˉforeignˉtypeˉidentity =
+        Compilerˉsourceˉforeignˉscalarˉtype(
+            Compilerˉsourceˉforeignˉtypeˉkind.U64
+        );
+    let I64ˉtype: Compilerˉsourceˉforeignˉtypeˉidentity =
+        Compilerˉsourceˉforeignˉscalarˉtype(
+            Compilerˉsourceˉforeignˉtypeˉkind.I64
+        );
+    return Callable.Abiˉcontract ==
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1 &&
+        Callable.Sourceˉname ==
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_SOURCE_NAME_BUFFER_READ &&
+        Callable.Externalˉsymbol ==
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_EXTERNAL_SYMBOL_BUFFER_READ &&
+        Callable.Unsafe && Callable.Profile ==
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM &&
+        Callable.Languageˉeffects == COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT &&
+        Compilerˉsourceˉforeignˉtypeˉequals(Callable.Destination, Pointer) &&
+        Compilerˉsourceˉforeignˉtypeˉequals(Callable.Capacity, U64ˉtype) &&
+        Compilerˉsourceˉforeignˉtypeˉequals(Callable.Expectedˉgeneration, U64ˉtype) &&
+        Compilerˉsourceˉforeignˉtypeˉequals(Callable.Return, I64ˉtype);
+}
+
+// Call admission order is state, target/ABI identity, System profile, lexical
+// unsafe context, ffi.call effect, exact signature, no-retain, no-unwind,
+// pointer lifetime, exact capacity, evidence headroom, and
+// terminal provider behavior. Provider behavior is observed only after a
+// consumed successor has been constructed.
+export fn Compilerˉsourceˉforeignˉadmitˉcall(
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Callable: Compilerˉsourceˉforeignˉauthenticatedˉcallable,
+    Context: Compilerˉsourceˉforeignˉcallˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !Compilerˉsourceˉforeignˉexactˉtarget(Buildˉtarget) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉtarget,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉabiˉisˉexact(Callable.Abiˉcontract) ||
+        Callable.Abiˉcontract != State.Abiˉcontract {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Callable.Abiˉcontract),
+            U64ˉfromˉu32(State.Abiˉcontract), 0u64
+        );
+    }
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM ||
+        Callable.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), U64ˉfromˉu32(Callable.Profile), 0u64
+        );
+    }
+    if Context.Unsafeˉdepth == 0u32 || !Callable.Unsafe {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Unsafeˉdepth), 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Ffiˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT), 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉcallableˉisˉexact(Callable) {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉforeignˉsignature,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Callable.Noˉretain {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉretainˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Callable.Noˉunwind {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉunwindˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !State.Pointerˉlive || !State.Regionˉlive ||
+        State.Pointerˉgeneration != State.Regionˉgeneration ||
+        State.Regionˉgeneration != State.Scratchˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            0u64, 0u64, 0u64
+        );
+    }
+    if Context.Capacity > State.Regionˉlength {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            0u64, Context.Capacity, State.Regionˉlength
+        );
+    }
+    if Context.Capacity != COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES ||
+        State.Regionˉlength != COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉcallˉcontract,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            Context.Capacity,
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES,
+            State.Regionˉlength
+        );
+    }
+    let Destinationˉaddress: u64 = State.Baseˉaddress + State.Regionˉstart;
+    if (Destinationˉaddress &
+            (COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT - 1u64)) != 0u64 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED,
+            Destinationˉaddress,
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉevidenceˉhasˉroom(State, 64u32) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(State.Evidenceˉbytes),
+            U64ˉfromˉu32(
+                COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES
+            ), 0u64
+        );
+    }
+    var Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+            State.Pointerˉcount, 1u32, true, true,
+            State.Scratchˉlength, State.Scratchˉalignment,
+            State.Scratchˉgeneration, true, State.Regionˉstart,
+            State.Regionˉlength, State.Regionˉalignment,
+            State.Regionˉgeneration, false, State.Pointerˉgeneration,
+            State.Evidenceˉbytes, State.Sliceˉlive, State.Sliceˉgeneration
+        );
+    Next = Compilerˉsourceˉforeignˉwithˉevidence(Next, 64u32);
+    if Context.Attemptsˉretain || Context.Attemptsˉunwind {
+        let Poisoned: Compilerˉsourceˉforeignˉmemoryˉstate =
+            Compilerˉsourceˉforeignˉmemoryˉstate(
+                false, Next.Abiˉcontract, 0u64, Next.Budgetˉremaining,
+                Next.Allocationˉcount, Next.Regionˉcount,
+                Next.Pointerˉcount, Next.Callˉcount,
+                false, false, 0u64, 0u64, Next.Scratchˉgeneration,
+                false, 0u64, 0u64, 0u64, Next.Regionˉgeneration,
+                false, Next.Pointerˉgeneration, Next.Evidenceˉbytes,
+                false, 0u32
+            );
+        return Compilerˉsourceˉforeignˉresult(
+            Poisoned,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Terminalˉcontainment,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_TERMINAL, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉborrowˉscratchˉslice(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Start: u64,
+    Length: u64
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Scratchˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            Start, Length, 0u64
+        );
+    }
+    if State.Regionˉlive || State.Pointerˉlive || State.Sliceˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Sliceˉaliasing,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING,
+            Start, Length, 0u64
+        );
+    }
+    if Start > 18446744073709551615u64 - Length {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            Start, Length, 64u64
+        );
+    }
+    if Start + Length > State.Scratchˉlength {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            Start, Length, State.Scratchˉlength
+        );
+    }
+    let Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            State.Valid, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+            State.Pointerˉcount, State.Callˉcount, State.Scratchˉlive,
+            State.Scratchˉzeroˉinitialized, State.Scratchˉlength,
+            State.Scratchˉalignment, State.Scratchˉgeneration,
+            State.Regionˉlive, State.Regionˉstart, State.Regionˉlength,
+            State.Regionˉalignment, State.Regionˉgeneration,
+            State.Pointerˉlive, State.Pointerˉgeneration, State.Evidenceˉbytes,
+            true, State.Scratchˉgeneration
+        );
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉreleaseˉscratchˉslice(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Borrowˉgeneration: u32
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Sliceˉlive || Borrowˉgeneration != State.Sliceˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            U64ˉfromˉu32(Borrowˉgeneration),
+            U64ˉfromˉu32(State.Sliceˉgeneration), 0u64
+        );
+    }
+    let Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            State.Valid, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+            State.Pointerˉcount, State.Callˉcount, State.Scratchˉlive,
+            State.Scratchˉzeroˉinitialized, State.Scratchˉlength,
+            State.Scratchˉalignment, State.Scratchˉgeneration,
+            State.Regionˉlive, State.Regionˉstart, State.Regionˉlength,
+            State.Regionˉalignment, State.Regionˉgeneration,
+            State.Pointerˉlive, State.Pointerˉgeneration, State.Evidenceˉbytes,
+            false, 0u32
+        );
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉreleaseˉregion(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Regionˉlive || State.Pointerˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            0u64, 0u64, 0u64
+        );
+    }
+    let Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining, State.Allocationˉcount, State.Regionˉcount,
+            State.Pointerˉcount, State.Callˉcount, true, true,
+            State.Scratchˉlength, State.Scratchˉalignment,
+            State.Scratchˉgeneration, false, 0u64,
+            0u64, 0u64,
+            State.Regionˉgeneration, false, State.Pointerˉgeneration,
+            State.Evidenceˉbytes, State.Sliceˉlive, State.Sliceˉgeneration
+        );
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉreleaseˉscratch(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Scratchˉlive || State.Regionˉlive || State.Pointerˉlive ||
+        State.Sliceˉlive {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            0u64, 0u64, 0u64
+        );
+    }
+    if State.Budgetˉremaining >
+        18446744073709551615u64 - State.Scratchˉlength {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    let Next: Compilerˉsourceˉforeignˉmemoryˉstate =
+        Compilerˉsourceˉforeignˉmemoryˉstate(
+            true, State.Abiˉcontract, State.Baseˉaddress,
+            State.Budgetˉremaining + State.Scratchˉlength,
+            State.Allocationˉcount, State.Regionˉcount, State.Pointerˉcount,
+            State.Callˉcount, false, false, 0u64, 0u64,
+            State.Scratchˉgeneration, false, 0u64, 0u64, 0u64,
+            State.Regionˉgeneration, false, State.Pointerˉgeneration,
+            State.Evidenceˉbytes, false, 0u32
+        );
+    return Compilerˉsourceˉforeignˉvalid(Next);
+}
+
+export fn Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Operation: u32
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Pointerˉlive || !State.Regionˉlive ||
+        State.Pointerˉgeneration != State.Regionˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            U64ˉfromˉu32(Operation), 0u64, 0u64
+        );
+    }
+    if Operation == COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_DEREFERENCE {
+        // Dereference is admitted only by Compilerˉsourceˉforeignˉadmitˉdereference,
+        // whose signature requires lexical context, unsafe.address, and concrete
+        // generation/access geometry. This generic operation is not an alternate path.
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Forbiddenˉpointerˉoperation,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Operation), 0u64, 0u64
+        );
+    }
+    if Operation == COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_ESCAPE {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Pointerˉescape,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Operation), 0u64, 0u64
+        );
+    }
+    if Operation == COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_INTEGER ||
+        Operation == COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_SERIALIZE {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Forbiddenˉpointerˉoperation,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Operation), 0u64, 0u64
+        );
+    }
+    if Operation == COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_RETAIN {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉretainˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Operation), 0u64, 0u64
+        );
+    }
+    return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+}
+
+export fn Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Isˉnull: bool
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if Context.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉaddressˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT),
+            0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉabiˉisˉexact(State.Abiˉcontract) {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_UNSUPPORTED_ABI,
+            U64ˉfromˉu32(State.Abiˉcontract), 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if Isˉnull {
+        if State.Allocationˉcount != 0u32 || State.Regionˉcount != 0u32 ||
+            State.Pointerˉcount != 0u32 || State.Callˉcount != 0u32 ||
+            State.Scratchˉlive || State.Regionˉlive || State.Pointerˉlive ||
+            State.Sliceˉlive {
+            return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+        }
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Null,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_NULL,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !State.Pointerˉlive || !State.Regionˉlive ||
+        State.Pointerˉgeneration != State.Regionˉgeneration ||
+        State.Regionˉgeneration != State.Scratchˉgeneration {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    return Compilerˉsourceˉforeignˉvalid(State);
+}
+
+export fn Compilerˉsourceˉforeignˉadmitˉdereference(
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate,
+    Evidence: Compilerˉsourceˉforeignˉdereferenceˉevidence
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if Context.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if (Context.Languageˉeffects &
+            COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT) == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉaddressˉeffectˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Languageˉeffects),
+            U64ˉfromˉu32(COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT),
+            0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    if !State.Pointerˉlive || !State.Regionˉlive ||
+        Evidence.Pointerˉgeneration != State.Pointerˉgeneration ||
+        Evidence.Ownerˉgeneration != State.Scratchˉgeneration ||
+        Evidence.Ownerˉgeneration != State.Regionˉgeneration {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED,
+            U64ˉfromˉu32(Evidence.Pointerˉgeneration),
+            U64ˉfromˉu32(State.Pointerˉgeneration),
+            U64ˉfromˉu32(Evidence.Ownerˉgeneration)
+        );
+    }
+    if Evidence.Length == 0u64 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            Evidence.Offset, Evidence.Length, State.Regionˉlength
+        );
+    }
+    if Evidence.Offset > 18446744073709551615u64 - Evidence.Length {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            Evidence.Offset, Evidence.Length, State.Regionˉlength
+        );
+    }
+    if Evidence.Offset + Evidence.Length > State.Regionˉlength {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE,
+            Evidence.Offset, Evidence.Length, State.Regionˉlength
+        );
+    }
+    if State.Regionˉstart > 18446744073709551615u64 - Evidence.Offset {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            State.Regionˉstart, Evidence.Offset, State.Regionˉlength
+        );
+    }
+    let Accessˉstart: u64 = State.Regionˉstart + Evidence.Offset;
+    if State.Baseˉaddress > 18446744073709551615u64 - Accessˉstart {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW,
+            State.Baseˉaddress, Accessˉstart, Evidence.Length
+        );
+    }
+    let Accessˉaddress: u64 = State.Baseˉaddress + Accessˉstart;
+    if !Compilerˉsourceˉforeignˉpowerˉofˉtwo(Evidence.Requiredˉalignment) ||
+        Evidence.Requiredˉalignment > State.Regionˉalignment ||
+        (Accessˉaddress & (Evidence.Requiredˉalignment - 1u64)) != 0u64 {
+        return Compilerˉsourceˉforeignˉresult(
+            State, Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER,
+            COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED,
+            Accessˉaddress, Evidence.Requiredˉalignment,
+            State.Regionˉalignment
+        );
+    }
+    if !State.Scratchˉzeroˉinitialized {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    return Compilerˉsourceˉforeignˉvalid(State);
+}
+
+export fn Compilerˉsourceˉforeignˉadmitˉunsafeˉinvocation(
+    Context: Compilerˉsourceˉforeignˉoperationˉcontext,
+    Calleeˉisˉunsafe: bool,
+    State: Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Compilerˉsourceˉforeignˉsemanticˉresult {
+    if Context.Profile != COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            U64ˉfromˉu32(Context.Profile), 0u64, 0u64
+        );
+    }
+    if Calleeˉisˉunsafe && Context.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉforeignˉresult(
+            State,
+            Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired,
+            COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION, 0u32,
+            0u64, 0u64, 0u64
+        );
+    }
+    if !Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(State) {
+        return Compilerˉsourceˉforeignˉinvalidˉevidence(State);
+    }
+    return Compilerˉsourceˉforeignˉvalid(State);
+}

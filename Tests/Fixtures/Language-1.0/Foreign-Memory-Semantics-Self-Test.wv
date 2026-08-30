@@ -1,0 +1,1183 @@
+module Languageˉoneˉforeignˉmemoryˉsemanticsˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+import Compilerˉsourceˉforeignˉsemantics as Foreign;
+import Compilerˉsourceˉtarget as Target;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Buildˉtarget() -> Target.Compilerˉsourceˉtargetˉdescriptor {
+    return Target.Compilerˉsourceˉtargetˉdescriptor(
+        Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1,
+        Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX,
+        Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64,
+        Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1,
+        64u32,
+        Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE,
+        1u32
+    );
+}
+
+fn Unsupportedˉtarget() -> Target.Compilerˉsourceˉtargetˉdescriptor {
+    return Target.Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1();
+}
+
+fn Operationˉcontext(
+    Unsafeˉdepth: u32,
+    Effects: u32
+) -> Foreign.Compilerˉsourceˉforeignˉoperationˉcontext {
+    return Foreign.Compilerˉsourceˉforeignˉoperationˉcontext(
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM,
+        Unsafeˉdepth,
+        Effects
+    );
+}
+
+fn Callˉcontext(
+    Unsafeˉdepth: u32,
+    Effects: u32,
+    Capacity: u64,
+    Retain: bool,
+    Unwind: bool
+) -> Foreign.Compilerˉsourceˉforeignˉcallˉcontext {
+    return Foreign.Compilerˉsourceˉforeignˉcallˉcontext(
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM,
+        Unsafeˉdepth, Effects, Capacity, Retain, Unwind
+    );
+}
+
+fn Dereferenceˉevidence(
+    Pointerˉgeneration: u32,
+    Ownerˉgeneration: u32,
+    Offset: u64,
+    Length: u64,
+    Alignment: u64
+) -> Foreign.Compilerˉsourceˉforeignˉdereferenceˉevidence {
+    return Foreign.Compilerˉsourceˉforeignˉdereferenceˉevidence(
+        Pointerˉgeneration, Ownerˉgeneration, Offset, Length, Alignment
+    );
+}
+
+fn Exactˉcallable() -> Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable {
+    let Pointer: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer,
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.U8,
+            Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1
+        );
+    let U64ˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.U64
+        );
+    let I64ˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.I64
+        );
+    return Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+        Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_SOURCE_NAME_BUFFER_READ,
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_EXTERNAL_SYMBOL_BUFFER_READ,
+        true,
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM,
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT,
+        Pointer, U64ˉtype, U64ˉtype, I64ˉtype, true, true
+    );
+}
+
+fn Scratchˉwith(
+    Base: u64,
+    Budget: u64,
+    Length: u64,
+    Alignment: u64,
+    Allocationˉreason: u32
+) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉresult {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(
+            Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+            Base, Budget
+        );
+    return Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+        Buildˉtarget(),
+        Operationˉcontext(
+            0u32,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MEMORY_ALLOCATE_EFFECT
+        ),
+        State, Length, Alignment, Allocationˉreason
+    );
+}
+
+fn Scratch(Base: u64) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉresult {
+    return Scratchˉwith(Base, 64u64, 64u64, 8u64, 0u32);
+}
+
+fn Region(Base: u64) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉresult {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(Base);
+    if Owner.Status != Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid {
+        return Owner;
+    }
+    return Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+        Buildˉtarget(),
+        Operationˉcontext(
+            1u32,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT
+        ),
+        Owner.State, 1u32, 0u64, 64u64, 8u64
+    );
+}
+
+fn Pointer(Base: u64) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉresult {
+    let Borrowed: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Region(Base);
+    if Borrowed.Status != Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid {
+        return Borrowed;
+    }
+    return Foreign.Compilerˉsourceˉforeignˉwriteˉpointer(
+        Operationˉcontext(
+            1u32,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT
+        ),
+        Borrowed.State
+    );
+}
+
+fn Foreignˉcall(
+    Callable: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable,
+    Context: Foreign.Compilerˉsourceˉforeignˉcallˉcontext,
+    State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉresult {
+    return Foreign.Compilerˉsourceˉforeignˉadmitˉcall(
+        Buildˉtarget(), Callable, Context, State
+    );
+}
+
+fn Callableˉstatus(
+    Callable: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable,
+    State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate
+) -> Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus {
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Callable, Callˉcontext(1u32, 256u32, 64u64, false, false), State
+    );
+    return Result.Status;
+}
+
+fn Forgedˉinvalidˉstate() -> Foreign.Compilerˉsourceˉforeignˉmemoryˉstate {
+    return Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+        false,
+        Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+        4096u64, 64u64, 0u32, 0u32, 0u32, 0u32,
+        false, false, 0u64, 0u64, 0u32,
+        false, 0u64, 0u64, 0u64, 0u32,
+        false, 0u32, 0u32, false, 0u32
+    );
+}
+
+fn Caseˉopaqueˉidentities() -> bool {
+    let Pointerˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer,
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.U8, 1u32
+        );
+    let Nullableˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Nullableˉforeignˉpointer,
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.U8, 1u32
+        );
+    let Scratchˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉscratch,
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Unknown, 1u32
+        );
+    let Regionˉtype: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉwriteˉregion,
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Unknown, 1u32
+        );
+    return Pointerˉtype.Kind != Nullableˉtype.Kind &&
+        Nullableˉtype.Kind != Scratchˉtype.Kind &&
+        Scratchˉtype.Kind != Regionˉtype.Kind &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉopaque(Pointerˉtype) &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉopaque(Nullableˉtype) &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉopaque(Scratchˉtype) &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉopaque(Regionˉtype) &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉwellˉformed(Pointerˉtype) &&
+        Foreign.Compilerˉsourceˉforeignˉtypeˉisˉwellˉformed(Nullableˉtype);
+}
+
+fn Caseˉmemoryˉeffect() -> bool {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Buildˉtarget(), Operationˉcontext(0u32, 128u32 | 256u32),
+            State, 64u64, 8u64, 0u32
+        );
+    return Result.Status ==
+        Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Memoryˉallocateˉeffectˉrequired;
+}
+
+fn Caseˉunsafeˉaddressˉeffect() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Missingˉcontext: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(0u32, 128u32),
+            Owner.State, 1u32, 0u64, 64u64, 8u64
+        );
+    let Missingˉeffect: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 256u32),
+            Owner.State, 1u32, 0u64, 64u64, 8u64
+        );
+    return Missingˉcontext.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired &&
+        Missingˉeffect.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉaddressˉeffectˉrequired;
+}
+
+fn Caseˉforeignˉoutsideˉunsafe() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(0u32, 256u32, 64u64, false, false),
+        Value.State
+    );
+    let Missingˉeffect: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreignˉcall(
+            Exactˉcallable(), Callˉcontext(1u32, 128u32, 64u64, false, false),
+            Value.State
+        );
+    return Result.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired &&
+        Missingˉeffect.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Ffiˉeffectˉrequired;
+}
+
+fn Caseˉsafeˉimplicitˉunsafe() -> bool {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉunsafeˉinvocation(
+            Operationˉcontext(0u32, 0u32), true, State
+        );
+    let Forged: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉunsafeˉinvocation(
+            Operationˉcontext(1u32, 0u32), true, Forgedˉinvalidˉstate()
+        );
+    return Result.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired &&
+        Forged.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence;
+}
+
+fn Callableˉtailˉmutationsˉareˉrejected() -> bool {
+    let Exact: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Exactˉcallable();
+    let Wrongˉscalar: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Bool
+        );
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Wrongˉgeneration: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Wrongˉscalar,
+            Exact.Return, true, true
+        );
+    let Wrongˉreturn: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Exact.Expectedˉgeneration,
+            Wrongˉscalar, true, true
+        );
+    let Wrongˉabi: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            0u32, Exact.Sourceˉname, Exact.Externalˉsymbol, Exact.Unsafe,
+            Exact.Profile, Exact.Languageˉeffects, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Wrongˉprofile: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, 2u32, Exact.Languageˉeffects, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Safeˉflag: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            false, Exact.Profile, Exact.Languageˉeffects, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Retaining: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Exact.Expectedˉgeneration,
+            Exact.Return, false, true
+        );
+    let Unwinding: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Exact.Expectedˉgeneration,
+            Exact.Return, true, false
+        );
+    let Invalidˉsignature: Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus =
+        Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉforeignˉsignature;
+    return Callableˉstatus(Wrongˉgeneration, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉreturn, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉabi, Value.State) ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi &&
+        Callableˉstatus(Wrongˉprofile, Value.State) ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired &&
+        Callableˉstatus(Safeˉflag, Value.State) ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired &&
+        Callableˉstatus(Retaining, Value.State) ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉretainˉrequired &&
+        Callableˉstatus(Unwinding, Value.State) ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉunwindˉrequired;
+}
+
+fn Caseˉforbiddenˉbyˉvalue() -> bool {
+    let Exact: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Exactˉcallable();
+    let Wrongˉdestination: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Foreign.Compilerˉsourceˉforeignˉscalarˉtype(
+                Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Bool
+            ),
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return,
+            true, true
+        );
+    let Wrongˉscalar: Foreign.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreign.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreign.Compilerˉsourceˉforeignˉtypeˉkind.Bool
+        );
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Wrongˉsource: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, 0u32, Exact.Externalˉsymbol, Exact.Unsafe,
+            Exact.Profile, Exact.Languageˉeffects, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Wrongˉsymbol: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, 0u32, Exact.Unsafe,
+            Exact.Profile, Exact.Languageˉeffects, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Wrongˉeffect: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, 0u32, Exact.Destination,
+            Exact.Capacity, Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Wrongˉcapacity: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Wrongˉscalar, Exact.Expectedˉgeneration,
+            Exact.Return, true, true
+        );
+    let Invalidˉsignature: Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus =
+        Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉforeignˉsignature;
+    return Callableˉstatus(Wrongˉdestination, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉsource, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉsymbol, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉeffect, Value.State) == Invalidˉsignature &&
+        Callableˉstatus(Wrongˉcapacity, Value.State) == Invalidˉsignature &&
+        Callableˉtailˉmutationsˉareˉrejected();
+}
+
+fn Caseˉzeroˉscratch() -> bool {
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 64u64, 0u64, 8u64, 0u32);
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉlength &&
+        Result.Failureˉdomain == Foreign.COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_MEMORY &&
+        Result.Failureˉkind == Foreign.COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_INVALID_LENGTH &&
+        Result.First == 0u64 && Result.Second == 64u64 &&
+        Result.State.Allocationˉcount == 0u32;
+}
+
+fn Caseˉscratchˉmaximum() -> bool {
+    let Large: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 128u64, 65u64, 8u64, 0u32);
+    let Budget: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 63u64, 64u64, 8u64, 0u32);
+    return Large.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉlength &&
+        Budget.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure &&
+        Budget.Third == 1u64;
+}
+
+fn Caseˉscratchˉalignment() -> bool {
+    let Zero: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 64u64, 64u64, 0u64, 0u32);
+    let Three: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 64u64, 64u64, 3u64, 0u32);
+    let Large: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 64u64, 64u64, 16u64, 0u32);
+    return Zero.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉalignment &&
+        Three.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉalignment &&
+        Large.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉalignment;
+}
+
+fn Caseˉallocationˉfailure() -> bool {
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4096u64, 64u64, 64u64, 8u64, 3u32);
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure &&
+        Result.Failureˉkind == Foreign.COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_ALLOCATION &&
+        Result.Third == 3u64 && Result.State.Allocationˉcount == 0u32;
+}
+
+fn Caseˉunsupportedˉabi() -> bool {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(0u32, 4096u64, 64u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Buildˉtarget(), Operationˉcontext(0u32, 1u32),
+            State, 64u64, 8u64, 0u32
+        );
+    let Exactˉstate: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Targetˉresult: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Unsupportedˉtarget(), Operationˉcontext(0u32, 1u32),
+            Exactˉstate, 64u64, 8u64, 0u32
+        );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉabi &&
+        Result.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_MEMORY_FAILURE_UNSUPPORTED_ABI &&
+        Targetˉresult.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsupportedˉtarget;
+}
+
+fn Caseˉrelativeˉoverflow() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Owner.State,
+            1u32, 18446744073709551615u64, 2u64, 8u64
+        );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow &&
+        Result.First == 18446744073709551615u64 && Result.Second == 2u64;
+}
+
+fn Caseˉnativeˉoverflow() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratch(18446744073709551552u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Owner.State,
+            1u32, 0u64, 64u64, 8u64
+        );
+    return Owner.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow;
+}
+
+fn Caseˉoutˉofˉrange() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Owner.State,
+            1u32, 64u64, 1u64, 1u64
+        );
+    let Zero: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Owner.State,
+            1u32, 0u64, 0u64, 1u64
+        );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange &&
+        Result.First == 64u64 && Result.Second == 1u64 && Result.Third == 64u64 &&
+        Zero.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange &&
+        Zero.Second == 0u64 && !Zero.State.Regionˉlive;
+}
+
+fn Caseˉmisaligned() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Owner.State,
+            1u32, 1u64, 8u64, 8u64
+        );
+    let Ownerˉfour: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4100u64, 64u64, 64u64, 4u64, 0u32);
+    let Regionˉfour: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Ownerˉfour.State,
+            1u32, 0u64, 64u64, 4u64
+        );
+    let Pointerˉfour: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉwriteˉpointer(
+            Operationˉcontext(1u32, 128u32), Regionˉfour.State
+        );
+    let Call: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(1u32, 256u32, 64u64, false, false),
+        Pointerˉfour.State
+    );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned &&
+        Result.First == 1u64 && Result.Second == 8u64 &&
+        Ownerˉfour.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Regionˉfour.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Pointerˉfour.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Call.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned &&
+        Call.First == 4100u64 && Call.Second == 8u64 && Call.State.Pointerˉlive;
+}
+
+fn Caseˉoverlap() -> bool {
+    let First: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Region(4096u64);
+    let Second: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), First.State,
+            1u32, 0u64, 8u64, 8u64
+        );
+    return Second.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Aliasing &&
+        Second.Failureˉkind == Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ALIASING;
+}
+
+fn Caseˉsliceˉalias() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Region(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉscratchˉslice(
+            Value.State, 0u64, 8u64
+        );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Sliceˉaliasing;
+}
+
+fn Caseˉpointerˉescape() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+            Value.State, Foreign.COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_ESCAPE
+        );
+    return Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Pointerˉescape;
+}
+
+fn Caseˉnoˉretain() -> bool {
+    let Exact: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Exactˉcallable();
+    let Invalid: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Exact.Expectedˉgeneration,
+            Exact.Return, false, true
+        );
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Invalid, Callˉcontext(1u32, 256u32, 64u64, false, false), Value.State
+    );
+    let Attempt: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exact, Callˉcontext(1u32, 256u32, 64u64, true, false), Value.State
+    );
+    let Followˉon: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉscratchˉslice(
+            Attempt.State, 0u64, 1u64
+        );
+    return Result.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉretainˉrequired &&
+        Attempt.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Terminalˉcontainment &&
+        Attempt.State.Callˉcount == 1u32 && !Attempt.State.Pointerˉlive &&
+        !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Attempt.State) &&
+        Followˉon.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence;
+}
+
+fn Caseˉpointerˉconversion() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Integer: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+            Value.State, Foreign.COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_INTEGER
+        );
+    let Serialized: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+            Value.State, Foreign.COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_SERIALIZE
+        );
+    return Integer.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Forbiddenˉpointerˉoperation &&
+        Serialized.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Forbiddenˉpointerˉoperation;
+}
+
+fn Caseˉnullableˉnull() -> bool {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Null: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), State, true
+        );
+    let Pointerˉvalue: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Pointer(4096u64);
+    let Present: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), Pointerˉvalue.State, false
+        );
+    let Missing: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), State, false
+        );
+    let Forged: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), Forgedˉinvalidˉstate(), false
+        );
+    let Contradictoryˉlive: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), Pointerˉvalue.State, true
+        );
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Contradictoryˉhistory: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉrequireˉnonˉnull(
+            Operationˉcontext(1u32, 128u32), Owner.State, true
+        );
+    return Null.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Null &&
+        Null.Failureˉkind == Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_NULL &&
+        Present.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Missing.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence &&
+        Forged.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence &&
+        Contradictoryˉlive.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence &&
+        Contradictoryˉhistory.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence;
+}
+
+fn Caseˉdereferenceˉproofs() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Generic: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+            Value.State,
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_DEREFERENCE
+        );
+    let Missing: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 64u64, 1u64, 1u64)
+        );
+    let Complete: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 0u64, 1u64, 1u64)
+        );
+    let Exactˉend: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 63u64, 1u64, 1u64)
+        );
+    let Zero: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 0u64, 0u64, 1u64)
+        );
+    let Overflow: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(
+                1u32, 1u32, 18446744073709551615u64, 2u64, 1u64
+            )
+        );
+    let Lifetime: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(2u32, 1u32, 0u64, 1u64, 1u64)
+        );
+    let Alignment: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 1u64, 1u64, 8u64)
+        );
+    let Staleˉowner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 2u32, 0u64, 1u64, 1u64)
+        );
+    let Alignmentˉzero: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 0u64, 1u64, 0u64)
+        );
+    let Alignmentˉlarge: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Value.State,
+            Dereferenceˉevidence(1u32, 1u32, 0u64, 1u64, 16u64)
+        );
+    let Forgedˉalias: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Value.State.Valid, Value.State.Abiˉcontract,
+            Value.State.Baseˉaddress, Value.State.Budgetˉremaining,
+            Value.State.Allocationˉcount, Value.State.Regionˉcount,
+            Value.State.Pointerˉcount, Value.State.Callˉcount,
+            Value.State.Scratchˉlive, Value.State.Scratchˉzeroˉinitialized,
+            Value.State.Scratchˉlength, Value.State.Scratchˉalignment,
+            Value.State.Scratchˉgeneration, Value.State.Regionˉlive,
+            Value.State.Regionˉstart, Value.State.Regionˉlength,
+            Value.State.Regionˉalignment, Value.State.Regionˉgeneration,
+            Value.State.Pointerˉlive, Value.State.Pointerˉgeneration,
+            Value.State.Evidenceˉbytes, true, Value.State.Scratchˉgeneration
+        );
+    let Alias: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉadmitˉdereference(
+            Operationˉcontext(1u32, 128u32), Forgedˉalias,
+            Dereferenceˉevidence(1u32, 1u32, 0u64, 1u64, 1u64)
+        );
+    return Generic.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Forbiddenˉpointerˉoperation &&
+        Missing.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange &&
+        Missing.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE &&
+        Exactˉend.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Zero.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange &&
+        Zero.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE &&
+        Overflow.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Addressˉoverflow &&
+        Overflow.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_ADDRESS_OVERFLOW &&
+        Lifetime.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended &&
+        Lifetime.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED &&
+        Staleˉowner.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended &&
+        Staleˉowner.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_LIFETIME_ENDED &&
+        Alignment.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned &&
+        Alignment.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED &&
+        Alignmentˉzero.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned &&
+        Alignmentˉzero.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED &&
+        Alignmentˉlarge.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Misaligned &&
+        Alignmentˉlarge.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_MISALIGNED &&
+        Alias.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉevidence &&
+        Complete.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid;
+}
+
+fn Caseˉnoˉunwind() -> bool {
+    let Exact: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Exactˉcallable();
+    let Invalid: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, Exact.Sourceˉname, Exact.Externalˉsymbol,
+            Exact.Unsafe, Exact.Profile, Exact.Languageˉeffects,
+            Exact.Destination, Exact.Capacity, Exact.Expectedˉgeneration,
+            Exact.Return, true, false
+        );
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Invalid, Callˉcontext(1u32, 256u32, 64u64, false, false), Value.State
+    );
+    let Attempt: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exact, Callˉcontext(1u32, 256u32, 64u64, false, true), Value.State
+    );
+    return Result.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Noˉunwindˉrequired &&
+        Attempt.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Terminalˉcontainment &&
+        Attempt.State.Callˉcount == 1u32 && !Attempt.State.Pointerˉlive &&
+        !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Attempt.State);
+}
+
+fn Caseˉlifecycle() -> bool {
+    let Pointerˉvalue: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Called: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(1u32, 256u32, 64u64, false, false),
+        Pointerˉvalue.State
+    );
+    let Stale: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉpointerˉoperationˉadmit(
+            Called.State, Foreign.COMPILER_SOURCE_FOREIGN_POINTER_OPERATION_DEREFERENCE
+        );
+    let Releasedˉregion: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉregion(Called.State);
+    let Slice: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉscratchˉslice(
+            Releasedˉregion.State, 0u64, 64u64
+        );
+    let Blockedˉregion: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Slice.State,
+            1u32, 0u64, 8u64, 8u64
+        );
+    let Blockedˉscratch: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉscratch(Slice.State);
+    let Secondˉslice: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉscratchˉslice(
+            Slice.State, 0u64, 1u64
+        );
+    let Wrongˉrelease: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉscratchˉslice(
+            Slice.State, Slice.State.Sliceˉgeneration + 1u32
+        );
+    let Releasedˉslice: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉscratchˉslice(
+            Wrongˉrelease.State, Slice.State.Sliceˉgeneration
+        );
+    let Releasedˉscratch: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉscratch(Releasedˉslice.State);
+    return Called.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        !Called.State.Pointerˉlive && Called.State.Callˉcount == 1u32 &&
+        Stale.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended &&
+        Releasedˉregion.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Releasedˉregion.State.Regionˉstart == 0u64 &&
+        Releasedˉregion.State.Regionˉlength == 0u64 &&
+        Releasedˉregion.State.Regionˉalignment == 0u64 &&
+        Slice.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Slice.State.Sliceˉlive &&
+        Blockedˉregion.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Sliceˉaliasing &&
+        Blockedˉscratch.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended &&
+        Secondˉslice.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Sliceˉaliasing &&
+        Wrongˉrelease.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Lifetimeˉended &&
+        Wrongˉrelease.State.Sliceˉlive &&
+        Wrongˉrelease.State.Sliceˉgeneration == Slice.State.Sliceˉgeneration &&
+        Releasedˉslice.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        !Releasedˉslice.State.Sliceˉlive &&
+        Releasedˉscratch.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Releasedˉscratch.State.Budgetˉremaining == 64u64;
+}
+
+fn Caseˉstrictˉbounds() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Released: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉreleaseˉscratch(Owner.State);
+    let Second: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Buildˉtarget(), Operationˉcontext(0u32, 1u32),
+            Released.State, 64u64, 8u64, 0u32
+        );
+    return Released.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Second.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit;
+}
+
+fn Callˉevidenceˉheadroomˉisˉenforced() -> bool {
+    let Pointerˉvalue: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Pointer(4096u64);
+    let Callˉfull: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Pointerˉvalue.State.Valid, Pointerˉvalue.State.Abiˉcontract,
+            Pointerˉvalue.State.Baseˉaddress,
+            Pointerˉvalue.State.Budgetˉremaining,
+            Pointerˉvalue.State.Allocationˉcount,
+            Pointerˉvalue.State.Regionˉcount,
+            Pointerˉvalue.State.Pointerˉcount,
+            Pointerˉvalue.State.Callˉcount,
+            Pointerˉvalue.State.Scratchˉlive,
+            Pointerˉvalue.State.Scratchˉzeroˉinitialized,
+            Pointerˉvalue.State.Scratchˉlength,
+            Pointerˉvalue.State.Scratchˉalignment,
+            Pointerˉvalue.State.Scratchˉgeneration,
+            Pointerˉvalue.State.Regionˉlive,
+            Pointerˉvalue.State.Regionˉstart,
+            Pointerˉvalue.State.Regionˉlength,
+            Pointerˉvalue.State.Regionˉalignment,
+            Pointerˉvalue.State.Regionˉgeneration,
+            Pointerˉvalue.State.Pointerˉlive,
+            Pointerˉvalue.State.Pointerˉgeneration,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 32u32,
+            Pointerˉvalue.State.Sliceˉlive, Pointerˉvalue.State.Sliceˉgeneration
+        );
+    let Call: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(1u32, 256u32, 64u64, true, false),
+        Callˉfull
+    );
+    return Call.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit &&
+        Call.State.Callˉcount == 0u32 && Call.State.Pointerˉlive;
+}
+
+fn Caseˉevidenceˉbound() -> bool {
+    let Owner: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Scratch(4096u64);
+    let Full: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Owner.State.Valid, Owner.State.Abiˉcontract, Owner.State.Baseˉaddress,
+            Owner.State.Budgetˉremaining, Owner.State.Allocationˉcount,
+            Owner.State.Regionˉcount, Owner.State.Pointerˉcount,
+            Owner.State.Callˉcount, Owner.State.Scratchˉlive,
+            Owner.State.Scratchˉzeroˉinitialized, Owner.State.Scratchˉlength,
+            Owner.State.Scratchˉalignment, Owner.State.Scratchˉgeneration,
+            Owner.State.Regionˉlive, Owner.State.Regionˉstart,
+            Owner.State.Regionˉlength, Owner.State.Regionˉalignment,
+            Owner.State.Regionˉgeneration, Owner.State.Pointerˉlive,
+            Owner.State.Pointerˉgeneration,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 63u32,
+            Owner.State.Sliceˉlive, Owner.State.Sliceˉgeneration
+        );
+    let Result: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Full,
+            1u32, 0u64, 64u64, 8u64
+        );
+    let Exactˉroom: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Owner.State.Valid, Owner.State.Abiˉcontract, Owner.State.Baseˉaddress,
+            Owner.State.Budgetˉremaining, Owner.State.Allocationˉcount,
+            Owner.State.Regionˉcount, Owner.State.Pointerˉcount,
+            Owner.State.Callˉcount, Owner.State.Scratchˉlive,
+            Owner.State.Scratchˉzeroˉinitialized, Owner.State.Scratchˉlength,
+            Owner.State.Scratchˉalignment, Owner.State.Scratchˉgeneration,
+            Owner.State.Regionˉlive, Owner.State.Regionˉstart,
+            Owner.State.Regionˉlength, Owner.State.Regionˉalignment,
+            Owner.State.Regionˉgeneration, Owner.State.Pointerˉlive,
+            Owner.State.Pointerˉgeneration,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 64u32,
+            Owner.State.Sliceˉlive, Owner.State.Sliceˉgeneration
+        );
+    let Exactˉtransition: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉborrowˉwriteˉregion(
+            Buildˉtarget(), Operationˉcontext(1u32, 128u32), Exactˉroom,
+            1u32, 0u64, 64u64, 8u64
+        );
+    let Empty: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Constructionˉfull: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Empty.Valid, Empty.Abiˉcontract, Empty.Baseˉaddress,
+            Empty.Budgetˉremaining, Empty.Allocationˉcount,
+            Empty.Regionˉcount, Empty.Pointerˉcount, Empty.Callˉcount,
+            Empty.Scratchˉlive, Empty.Scratchˉzeroˉinitialized,
+            Empty.Scratchˉlength, Empty.Scratchˉalignment,
+            Empty.Scratchˉgeneration, Empty.Regionˉlive,
+            Empty.Regionˉstart, Empty.Regionˉlength,
+            Empty.Regionˉalignment, Empty.Regionˉgeneration,
+            Empty.Pointerˉlive, Empty.Pointerˉgeneration,
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES - 32u32,
+            Empty.Sliceˉlive, Empty.Sliceˉgeneration
+        );
+    let Construction: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Buildˉtarget(), Operationˉcontext(0u32, 1u32),
+            Constructionˉfull, 64u64, 8u64, 3u32
+        );
+    return Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Full) &&
+        Result.Status == Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit &&
+        Exactˉtransition.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Valid &&
+        Exactˉtransition.State.Evidenceˉbytes ==
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES &&
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Constructionˉfull) &&
+        Construction.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Resourceˉlimit &&
+        Construction.State.Allocationˉcount == 0u32 &&
+        Construction.State.Budgetˉremaining == 64u64 &&
+        Callˉevidenceˉheadroomˉisˉenforced();
+}
+
+fn Caseˉproviderˉalignment() -> bool {
+    let Misaligned: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(4097u64, 64u64, 64u64, 8u64, 0u32);
+    let Nullˉbase: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(0u64, 64u64, 64u64, 8u64, 0u32);
+    let Wrapping: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Scratchˉwith(18446744073709551608u64, 64u64, 64u64, 8u64, 0u32);
+    return Misaligned.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure &&
+        Misaligned.Third == U64ˉfromˉu32(
+            Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_TARGET_UNADDRESSABLE_REASON
+        ) && !Misaligned.State.Scratchˉlive &&
+        Nullˉbase.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure &&
+        Nullˉbase.Third == Misaligned.Third && !Nullˉbase.State.Scratchˉlive &&
+        Wrapping.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Allocationˉfailure &&
+        Wrapping.Third == Misaligned.Third && !Wrapping.State.Scratchˉlive;
+}
+
+fn Caseˉfailureˉordering() -> bool {
+    let State: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(0u32, 4097u64, 0u64);
+    let Construct: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult =
+        Foreign.Compilerˉsourceˉforeignˉconstructˉscratch(
+            Buildˉtarget(), Foreign.Compilerˉsourceˉforeignˉoperationˉcontext(
+                2u32, 0u32, 0u32
+            ),
+            State, 0u64, 3u64, 5u32
+        );
+    let Pointerˉvalue: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Exact: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Exactˉcallable();
+    let Invalid: Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Foreign.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+            Exact.Abiˉcontract, 0u32, 0u32, true, Exact.Profile,
+            Exact.Languageˉeffects, Exact.Destination, Exact.Capacity,
+            Exact.Expectedˉgeneration, Exact.Return, true, true
+        );
+    let Call: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Invalid, Callˉcontext(0u32, 0u32, 1u64, false, false),
+        Pointerˉvalue.State
+    );
+    return Construct.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Systemˉprofileˉrequired &&
+        Call.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Unsafeˉcontextˉrequired;
+}
+
+fn Underreportedˉhistoryˉevidenceˉisˉrejected() -> bool {
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Forged: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Value.State.Valid, Value.State.Abiˉcontract,
+            Value.State.Baseˉaddress, Value.State.Budgetˉremaining,
+            Value.State.Allocationˉcount, Value.State.Regionˉcount,
+            Value.State.Pointerˉcount, Value.State.Callˉcount,
+            Value.State.Scratchˉlive, Value.State.Scratchˉzeroˉinitialized,
+            Value.State.Scratchˉlength, Value.State.Scratchˉalignment,
+            Value.State.Scratchˉgeneration, Value.State.Regionˉlive,
+            Value.State.Regionˉstart, Value.State.Regionˉlength,
+            Value.State.Regionˉalignment, Value.State.Regionˉgeneration,
+            Value.State.Pointerˉlive, Value.State.Pointerˉgeneration,
+            128u32, Value.State.Sliceˉlive, Value.State.Sliceˉgeneration
+        );
+    return !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Forged);
+}
+
+fn Caseˉcontractˉbounds() -> bool {
+    let Empty: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉempty(1u32, 4096u64, 64u64);
+    let Forgedˉdead: Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Empty.Valid, Empty.Abiˉcontract, Empty.Baseˉaddress,
+            Empty.Budgetˉremaining, Empty.Allocationˉcount,
+            Empty.Regionˉcount, Empty.Pointerˉcount, Empty.Callˉcount,
+            false, false, 8u64, 0u64, Empty.Scratchˉgeneration,
+            false, 1u64, 0u64, 0u64, Empty.Regionˉgeneration,
+            false, Empty.Pointerˉgeneration, Empty.Evidenceˉbytes,
+            false, 0u32
+        );
+    let Value: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Pointer(4096u64);
+    let Capacity: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(1u32, 256u32, 63u64, false, false),
+        Value.State
+    );
+    let Oversized: Foreign.Compilerˉsourceˉforeignˉsemanticˉresult = Foreignˉcall(
+        Exactˉcallable(), Callˉcontext(1u32, 256u32, 65u64, false, false),
+        Value.State
+    );
+    let Forgedˉuncalledˉdeadˉpointer:
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Value.State.Valid, Value.State.Abiˉcontract,
+            Value.State.Baseˉaddress, Value.State.Budgetˉremaining,
+            Value.State.Allocationˉcount, Value.State.Regionˉcount,
+            Value.State.Pointerˉcount, 0u32, Value.State.Scratchˉlive,
+            Value.State.Scratchˉzeroˉinitialized,
+            Value.State.Scratchˉlength, Value.State.Scratchˉalignment,
+            Value.State.Scratchˉgeneration, Value.State.Regionˉlive,
+            Value.State.Regionˉstart, Value.State.Regionˉlength,
+            Value.State.Regionˉalignment, Value.State.Regionˉgeneration,
+            false, Value.State.Pointerˉgeneration, Value.State.Evidenceˉbytes,
+            Value.State.Sliceˉlive, Value.State.Sliceˉgeneration
+        );
+    let Forgedˉcallˉwithoutˉpointer:
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Empty.Valid, Empty.Abiˉcontract, Empty.Baseˉaddress,
+            Empty.Budgetˉremaining, 0u32, 0u32, 0u32, 1u32,
+            false, false, 0u64, 0u64, 0u32,
+            false, 0u64, 0u64, 0u64, 0u32,
+            false, 0u32, Empty.Evidenceˉbytes, false, 0u32
+        );
+    let Forgedˉcalledˉliveˉpointer:
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate =
+        Foreign.Compilerˉsourceˉforeignˉmemoryˉstate(
+            Value.State.Valid, Value.State.Abiˉcontract,
+            Value.State.Baseˉaddress, Value.State.Budgetˉremaining,
+            Value.State.Allocationˉcount, Value.State.Regionˉcount,
+            Value.State.Pointerˉcount, 1u32, Value.State.Scratchˉlive,
+            Value.State.Scratchˉzeroˉinitialized,
+            Value.State.Scratchˉlength, Value.State.Scratchˉalignment,
+            Value.State.Scratchˉgeneration, Value.State.Regionˉlive,
+            Value.State.Regionˉstart, Value.State.Regionˉlength,
+            Value.State.Regionˉalignment, Value.State.Regionˉgeneration,
+            true, Value.State.Pointerˉgeneration, Value.State.Evidenceˉbytes,
+            Value.State.Sliceˉlive, Value.State.Sliceˉgeneration
+        );
+    return !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(Forgedˉdead) &&
+        !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(
+            Forgedˉuncalledˉdeadˉpointer
+        ) &&
+        !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(
+            Forgedˉcallˉwithoutˉpointer
+        ) &&
+        !Foreign.Compilerˉsourceˉforeignˉmemoryˉstateˉisˉvalid(
+            Forgedˉcalledˉliveˉpointer
+        ) &&
+        Underreportedˉhistoryˉevidenceˉisˉrejected() &&
+        Capacity.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Invalidˉcallˉcontract &&
+        Capacity.Failureˉdomain ==
+            Foreign.COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_ADMISSION &&
+        Capacity.Failureˉkind == 0u32 &&
+        Capacity.First == 63u64 && Capacity.Second == 64u64 &&
+        Capacity.Third == 64u64 && Capacity.State.Pointerˉlive &&
+        Oversized.Status ==
+            Foreign.Compilerˉsourceˉforeignˉsemanticˉstatus.Outˉofˉrange &&
+        Oversized.Failureˉdomain ==
+            Foreign.COMPILER_SOURCE_FOREIGN_FAILURE_DOMAIN_POINTER &&
+        Oversized.Failureˉkind ==
+            Foreign.COMPILER_SOURCE_FOREIGN_POINTER_FAILURE_OUT_OF_RANGE &&
+        Oversized.First == 0u64 && Oversized.Second == 65u64 &&
+        Oversized.Third == 64u64 && Oversized.State.Pointerˉlive &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_BYTES == 64u64 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_ABI_MAXIMUM_ALIGNMENT == 8u64 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_ALLOCATIONS == 1u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_REGIONS == 1u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_POINTERS == 1u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_CALLS == 1u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_DIAGNOSTICS == 16u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MAXIMUM_EVIDENCE_BYTES == 524288u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_MEMORY_ALLOCATE_EFFECT == 1u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_UNSAFE_ADDRESS_EFFECT == 128u32 &&
+        Foreign.COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT == 256u32;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Value: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Value) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Value, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉopaqueˉidentities() { return 42; }
+    if Selected == 98u32 && Caseˉmemoryˉeffect() { return 42; }
+    if Selected == 99u32 && Caseˉunsafeˉaddressˉeffect() { return 42; }
+    if Selected == 100u32 && Caseˉforeignˉoutsideˉunsafe() { return 42; }
+    if Selected == 101u32 && Caseˉsafeˉimplicitˉunsafe() { return 42; }
+    if Selected == 103u32 && Caseˉforbiddenˉbyˉvalue() { return 42; }
+    if Selected == 104u32 && Caseˉzeroˉscratch() { return 42; }
+    if Selected == 105u32 && Caseˉscratchˉmaximum() { return 42; }
+    if Selected == 106u32 && Caseˉscratchˉalignment() { return 42; }
+    if Selected == 107u32 && Caseˉallocationˉfailure() { return 42; }
+    if Selected == 108u32 && Caseˉunsupportedˉabi() { return 42; }
+    if Selected == 109u32 && Caseˉrelativeˉoverflow() { return 42; }
+    if Selected == 110u32 && Caseˉnativeˉoverflow() { return 42; }
+    if Selected == 111u32 && Caseˉoutˉofˉrange() { return 42; }
+    if Selected == 112u32 && Caseˉmisaligned() { return 42; }
+    if Selected == 113u32 && Caseˉoverlap() { return 42; }
+    if Selected == 114u32 && Caseˉsliceˉalias() { return 42; }
+    if Selected == 115u32 && Caseˉpointerˉescape() { return 42; }
+    if Selected == 116u32 && Caseˉnoˉretain() { return 42; }
+    if Selected == 117u32 && Caseˉpointerˉconversion() { return 42; }
+    if Selected == 118u32 && Caseˉnullableˉnull() { return 42; }
+    if Selected == 119u32 && Caseˉdereferenceˉproofs() { return 42; }
+    if Selected == 120u32 && Caseˉnoˉunwind() { return 42; }
+    if Selected == 121u32 && Caseˉlifecycle() { return 42; }
+    if Selected == 122u32 && Caseˉstrictˉbounds() { return 42; }
+    if Selected == 65u32 && Caseˉevidenceˉbound() { return 42; }
+    if Selected == 66u32 && Caseˉproviderˉalignment() { return 42; }
+    if Selected == 67u32 && Caseˉfailureˉordering() { return 42; }
+    if Selected == 68u32 && Caseˉcontractˉbounds() { return 42; }
+    return 1;
+}

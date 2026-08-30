@@ -1,0 +1,6 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Foreign-Memory-Semantics-Self-Test.wv"
+source "Compiler/Windvale/Source-Foreign-Catalog-Core.wv"
+source "Compiler/Windvale/Source-Foreign-Semantics-Core.wv"
+source "Compiler/Windvale/Source-Target-Core.wv"
+emit wvb

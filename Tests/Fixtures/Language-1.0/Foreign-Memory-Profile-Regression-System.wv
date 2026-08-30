@@ -1,0 +1,5 @@
+module Foreignˉmemoryˉsystemˉregression profile system;
+
+export fn Value() -> i32 {
+    return 42;
+}

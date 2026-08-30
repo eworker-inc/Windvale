@@ -1184,7 +1184,8 @@ function Add-Native-Tool-Suite {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'hosted-verifier-publisher-files',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-foreign-memory-semantics'
         )
         return
     }
@@ -1520,7 +1521,11 @@ foreach ($Path in $Paths) {
         $Path.StartsWith('Documents/Project/Images/', [StringComparison]::Ordinal) -and
         [IO.Path]::GetExtension($Path) -in @('.gif', '.jpeg', '.jpg', '.png', '.svg', '.webp')
     )
-    if (Test-LanguageFrozenSourceDesignPath $Path) {
+    if ($Path -eq
+        'Documents/Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md') {
+        Add-Suite 'language-1-foreign-memory-semantics'
+        continue
+    } elseif (Test-LanguageFrozenSourceDesignPath $Path) {
         Add-Suite 'language-1-front-door'
         continue
     } elseif (
@@ -1661,7 +1666,14 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Compiler/Windvale/Source-Target-Core.wv') {
             Add-Suite @(
                 'language-1-system-ffi-front-end',
-                'language-1-admission-evidence-format'
+                'language-1-admission-evidence-format',
+                'language-1-foreign-memory-semantics'
+            )
+        } elseif ($Path -eq
+            'Specifications/Windvale-Language-1.0-Target-Descriptor.md') {
+            Add-Suite @(
+                'language-1-system-ffi-front-end',
+                'language-1-foreign-memory-semantics'
             )
         } else {
             Add-Suite 'language-1-system-ffi-front-end'
@@ -1678,6 +1690,7 @@ foreach ($Path in $Paths) {
         'Specifications/Windvale-Language-1.0-Foreign-Catalog.md') {
         Add-Suite 'language-1-foreign-catalog-format'
         Add-Suite 'language-1-foreign-catalog-producer'
+        Add-Suite 'language-1-foreign-memory-semantics'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
         'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
@@ -1690,7 +1703,8 @@ foreach ($Path in $Paths) {
             Add-Suite @(
                 'language-1-foreign-catalog-format',
                 'language-1-admission-evidence-format',
-                'language-1-foreign-catalog-producer'
+                'language-1-foreign-catalog-producer',
+                'language-1-foreign-memory-semantics'
             )
         } else {
             Add-Suite 'language-1-foreign-catalog-format'
@@ -1706,6 +1720,20 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
     )) {
         Add-Suite 'language-1-foreign-catalog-producer'
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Foreign-Semantics-Core.wv',
+        'Documents/Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Memory-Profile-Regression.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Memory-Semantics.wvproj',
+        'Specifications/Windvale-Language-1.0-Foreign-Memory-Semantics.md',
+        'Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression-System.wv',
+        'Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression.wv',
+        'Tests/Fixtures/Language-1.0/Foreign-Memory-Semantics-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.cmd',
+        'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.sh',
+        'Tools/Native/Test-Language-1.0-Foreign-Memory-Semantics.mjs'
+    )) {
+        Add-Suite 'language-1-foreign-memory-semantics'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',

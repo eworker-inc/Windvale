@@ -1,0 +1,7 @@
+module Foreignˉmemoryˉprofileˉregression profile portable;
+
+import Foreignˉmemoryˉsystemˉregression as Systemˉregression;
+
+export fn Main() -> i32 {
+    return Systemˉregression.Value();
+}

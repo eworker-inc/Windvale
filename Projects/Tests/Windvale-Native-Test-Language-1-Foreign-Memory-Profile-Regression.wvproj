@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression.wv"
+source "Tests/Fixtures/Language-1.0/Foreign-Memory-Profile-Regression-System.wv"
+emit wvb
