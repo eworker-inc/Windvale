@@ -69,7 +69,15 @@ fn Statusˉvalue(
         Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Placeholder {
         return 11u32;
     }
-    return 12u32;
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Padding {
+        return 12u32;
+    }
+    if Status ==
+        Relocations.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Helper {
+        return 13u32;
+    }
+    return 4294967295u32;
 }
 
 export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉvalidate(

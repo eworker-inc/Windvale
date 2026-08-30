@@ -20,12 +20,15 @@ Language, Libraries, WVDB, package/service, and integrated qualification work
 advance as product workstreams rather than numbered release stages. OS-1 retains
 its independent qualification path.
 
-The latest Language 1.0 Slice 8 checkpoint adds the canonical WVFC producer
-selected by [Decision 0888](../Decisions/0888-Publish-The-Canonical-WVFC-Producer.md).
-The focused Windows owner passes 25 exact direct-native cases over validated
-WVSS 2 snapshots, including the 683-record accumulator flush. Admission
-coordination, WVTD/platform agreement, WVAE, Analyzer consumption, and paired
-Linux evidence remain pending.
+The latest Language 1.0 Slice 8 checkpoint implements the bounded native x64
+`bytes.sha256_hex` lowering selected by
+[Decision 0890](../Decisions/0890-Lower-Bytes-Sha256-Hex-In-The-Native-X64-Backend.md).
+Its registered owner passes 8/8 cases in 185.1 seconds on exact-current Windows
+and 8/8 in 234,000 milliseconds on local Debian 13.5 under WSL, with identical
+known-answer, 64/63-byte arena, 1,640-byte helper, SHA-free identity, and staged
+corruption-rejection summaries. This is cross-host development evidence, not
+paired-host CI qualification. Candidate-pin promotion and consumer migration
+remain pending.
 
 ## Indicators
 
@@ -138,7 +141,9 @@ long-name/Unicode mapping remains explicit future work.
 | Exact selected-release recovery | **2/2 hosts** |
 | Published and independently retained recovery assets | **13/13** |
 
-Current work uses a separate 79-owner, 3,756-case native verification registry.
+Current work uses a separate 122-owner, 5,849-case native verification registry.
+Its 21,412 LF-only bytes have SHA-256
+`79c2549aa0d6ab4f123ba33b61033af6c90a6c71c2f1c0d06fd4158ac204fb87`.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 

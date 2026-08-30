@@ -1,5 +1,5 @@
 windvale-project 2
-root "Tests/Fixtures/Native-X64/Wvo-Staging-Relocations-Native-Adapter.wv"
+root "Tests/Fixtures/Native-X64/Sha256-Native-Kat.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Sha256.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv"

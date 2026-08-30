@@ -1,5 +1,6 @@
 windvale-project 2
 root "Linker/Windvale/Compiler-Wvo-Segmented-Flat-Image-Staging-Tool.wv"
+source "Compiler/Windvale/Native-X64-Lowering-Sha256.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv"

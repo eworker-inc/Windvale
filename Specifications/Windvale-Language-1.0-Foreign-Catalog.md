@@ -206,10 +206,19 @@ intentionally have different signature digests.
 The digest is the exact host-independent SHA-256 from
 `Foundationˉsha256.Foundationˉsha256ˉhex`, decoded by a compiler-owned decoder
 that accepts exactly 64 lowercase ASCII hexadecimal bytes and publishes exactly
-32 raw bytes. The source-owned implementation is used because this producer is
-packaged and executed through the current direct-native profile, where the
-semantic `Bytesˉsha256ˉhex` opcode is not a supported native operation. This is
-an implementation choice, not a change to digest semantics.
+32 raw bytes. The source-owned implementation remains the selected dependency
+for the retained producer generation and its recorded evidence. The implemented
+native x64 candidate now lowers the semantic `Bytesˉsha256ˉhex` opcode, but that
+later backend support does not retroactively change this producer's WVB or
+justify an unmeasured substitution. Any migration to the intrinsic requires a
+named producer rebuild, focused current-host measurement, and independent Linux
+evidence for that rebuilt producer. The registered backend owner has separately
+passed all eight cases on exact-current Windows and local Debian 13.5 under
+WSL. It proves exact empty and `abc` known answers, a `bytes` parameter, and an
+owned `text` digest returned across a helper boundary; it has not migrated or
+rebuilt this producer. The Debian/WSL run is Linux development evidence, not
+paired-host CI qualification. This is an implementation choice, not a change
+to digest semantics.
 
 Records accumulate in at most 65,536 pending bytes before a complete-chunk
 flush, then materialize once for the canonical catalog constructor. This keeps

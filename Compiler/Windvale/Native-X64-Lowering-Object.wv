@@ -2,6 +2,7 @@ module Compilerˉnativeˉx64ˉloweringˉobject profile portable;
 
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 
 export record Compilerˉnativeˉx64ˉobjectˉregions {
     Valid: bool;
@@ -112,10 +113,21 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     Directory: bytes,
     Functionˉcount: u32,
     Mainˉfunction: u32,
+    Helper: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
     Relocations: bytes
 ) -> Compilerˉnativeˉx64ˉobjectˉregions {
-    if Codeˉbytes > 67108864u32 { return Invalidˉregions(Input); }
+    let Helperˉbytes: u32 = Bytesˉlength(Helper);
+    if Helperˉbytes != 0u32 &&
+        !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(Helper) {
+        return Invalidˉregions(Input);
+    }
+    if Codeˉbytes > 67108864u32 ||
+        Helperˉbytes > 67108864u32 - Codeˉbytes {
+        return Invalidˉregions(Input);
+    }
+    let Declaredˉcodeˉbytes: u32 = Codeˉbytes;
+    let Totalˉcodeˉbytes: u32 = Codeˉbytes + Helperˉbytes;
     if Functionˉcount == 0u32 { return Invalidˉregions(Input); }
     if Functionˉcount >
         Layout.Compilerˉnativeˉx64ˉlayoutˉfunctionˉlimit() {
@@ -144,16 +156,16 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
                 Directory,
                 Layoutˉfunction
             );
-        if Expectedˉmachineˉoffset > Codeˉbytes {
+        if Expectedˉmachineˉoffset > Declaredˉcodeˉbytes {
             return Invalidˉregions(Input);
         }
-        if Machineˉlength > Codeˉbytes - Expectedˉmachineˉoffset {
+        if Machineˉlength > Declaredˉcodeˉbytes - Expectedˉmachineˉoffset {
             return Invalidˉregions(Input);
         }
         Expectedˉmachineˉoffset = Expectedˉmachineˉoffset + Machineˉlength;
         Layoutˉfunction = Layoutˉfunction + 1u32;
     }
-    if Expectedˉmachineˉoffset != Codeˉbytes {
+    if Expectedˉmachineˉoffset != Declaredˉcodeˉbytes {
         return Invalidˉregions(Input);
     }
     if Bytesˉlength(Relocations) % 8u32 != 0u32 {
@@ -196,7 +208,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         if Bytesˉlength(Padding) != 0u32 { return Invalidˉregions(Input); }
     } else {
         if Bytesˉlength(Padding) > 15u32 { return Invalidˉregions(Input); }
-        if (Codeˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+        if (Totalˉcodeˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
             return Invalidˉregions(Input);
         }
         var Paddingˉindex: u32 = 0u32;
@@ -217,8 +229,10 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
             Relocation * 8u32 + 4u32
         );
         if Targetˉdata >= Data.Count { return Invalidˉregions(Input); }
-        if Patchˉoffset > Codeˉbytes { return Invalidˉregions(Input); }
-        if 4u32 > Codeˉbytes - Patchˉoffset { return Invalidˉregions(Input); }
+        if Patchˉoffset > Declaredˉcodeˉbytes { return Invalidˉregions(Input); }
+        if 4u32 > Declaredˉcodeˉbytes - Patchˉoffset {
+            return Invalidˉregions(Input);
+        }
         if Relocation > 0u32 {
             if Patchˉoffset < Previousˉoffset + 4u32 {
                 return Invalidˉregions(Input);
@@ -230,6 +244,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
 
     var Sectionˉcount: u32 = 1u32;
     var Symbolˉcount: u32 = Functionˉcount;
+    if Helperˉbytes > 0u32 { Symbolˉcount = Symbolˉcount + 1u32; }
     if Data.Count > 0u32 {
         Sectionˉcount = 2u32;
         Symbolˉcount = Symbolˉcount + Data.Count;
@@ -247,7 +262,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     let Textˉsectionˉheader: bytes = Sectionˉheader(
         1u8,
         ".text",
-        Codeˉbytes + Bytesˉlength(Padding)
+        Totalˉcodeˉbytes + Bytesˉlength(Padding)
     );
     var Readˉonlyˉheader: bytes = Empty(Input);
     var Symbols: bytes = Empty(Input);
@@ -291,6 +306,12 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         }
         Function = Function + 1u32;
     }
+    if Helperˉbytes > 0u32 {
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            1u8, 1u8, 0u32, Declaredˉcodeˉbytes, Helperˉbytes,
+            Textˉtoˉutf8("$native_sha256_hex")
+        ));
+    }
     Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
         2u8,
         1u8,
@@ -316,7 +337,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         Relocation = Relocation + 1u32;
     }
     let Prefix: bytes = Bytesˉconcat(Header, Textˉsectionˉheader);
-    let Objectˉbytes: u32 = Bytesˉlength(Prefix) + Codeˉbytes +
+    let Objectˉbytes: u32 = Bytesˉlength(Prefix) + Totalˉcodeˉbytes +
         Bytesˉlength(Padding) + Bytesˉlength(Readˉonlyˉheader) +
         Bytesˉlength(Data.Bytes) + Bytesˉlength(Symbols) +
         Bytesˉlength(Relocationˉrecords);
@@ -336,6 +357,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
     Directory: bytes,
     Functionˉcount: u32,
     Mainˉfunction: u32,
+    Helper: bytes,
     Data: Staticˉdata.Compilerˉnativeˉx64ˉdata,
     Relocations: bytes
 ) -> bytes {
@@ -347,6 +369,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
             Directory,
             Functionˉcount,
             Mainˉfunction,
+            Helper,
             Data,
             Relocations
         );
@@ -363,7 +386,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉemit(
         Relocation = Relocation + 1u32;
     }
     let Body: bytes = Objectˉbody(
-        Code,
+        Bytesˉconcat(Code, Helper),
         Padding,
         Regions.Readˉonlyˉheader,
         Data.Bytes,

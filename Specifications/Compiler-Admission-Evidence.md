@@ -201,10 +201,17 @@ not set the eventual complete `wvauth` product ceiling. Cross-host equality
 remains required before qualification is claimed.
 
 This is an intermediate format and validator-foundation checkpoint, not a
-completed hosted-validator execution claim. On the measured Windows toolchain,
-native x64 staging rejects WVB opcode `0x7D` (`bytes.sha256_hex`) as
-`Unsupportedˉmodule`; the script runner independently and correctly rejects
-the hosted-profile validator at the envelope boundary. Executing the
-`wvverify-admission-evidence` product therefore remains pending later
-runtime/native-lowering work. No Foundation SHA-256 or host hash substitutes
-for the intrinsic while that support is absent.
+completed hosted-validator execution claim. The implemented native x64
+lowering candidate now recognizes WVB opcode `0x7D` (`bytes.sha256_hex`) and
+retains the intrinsic's exact bounded result contract. Its registered owner
+passes eight cases on exact-current Windows and local Debian 13.5 under WSL,
+including exact known answers, owned-text return, and 64/63-byte arena
+behavior. That removes the backend opcode-level cause of the prior
+`Unsupportedˉmodule` gap, but it is not packaging or execution evidence for
+the complete `wvverify-admission-evidence` application. That
+application's packaged execution and paired-host CI qualification remain
+pending. The local Debian/WSL result is Linux development evidence, not that
+qualification. The script runner's separate hosted-profile envelope boundary
+likewise does not prove the packaged native application. This module continues
+to use the semantic intrinsic; it does not
+substitute Foundation SHA-256 or a host hashing service.

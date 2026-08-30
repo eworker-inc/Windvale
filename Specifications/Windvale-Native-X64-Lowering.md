@@ -44,7 +44,7 @@ The shared lowering core accepts exactly:
 - zero through 128 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 256 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
 - one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes` at any ordinal and every other function non-exported;
 - parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those seven primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
-- one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
+- one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families, including `bytes.sha256_hex`, plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
 - instruction-aligned forward or backward targets, empty stacks at every block edge, complete fixed-point reachability from entry, valid typed local uses and stack effects, an exact declared maximum depth, and a combined local/value frame of at most 2,048 ABI cells. Locals retain WVB's zero-initialized entry semantics.
 
 ### Selected callable ABI
@@ -132,17 +132,69 @@ Checked `u32.add` and `u32.subtract` emit their ordinary 32-bit operation and br
 
 `diagnostic.write_line` uses the same verified borrowed-text input sequence, calls service-table slot 48, and writes exact UTF-8 text plus one LF to the separate diagnostic channel. The two calls share one parameterized emitter but retain distinct capability identities, services, grants, sinks, and failure paths.
 
+### Native SHA-256 intrinsic
+
+WVB opcode `0x7D`, `bytes.sha256_hex`, consumes one immutable `bytes`
+descriptor whose length is at most the existing 4,194,304-byte value ceiling.
+It hashes exactly that sequence or slice and produces one arena-owned `text`
+descriptor containing exactly 64 lowercase ASCII hexadecimal characters. It
+does not call a host hashing service, accept a caller-supplied digest, widen the
+value ceiling, or change the language-level SHA-256 semantics.
+
+Each opcode occurrence emits the ordinary ten-byte instruction-budget charge
+followed by one exact 152-byte raw wrapper. The wrapper reserves exactly 64
+arena bytes before publication, patches the source and destination descriptor
+slots, makes one signed-relative call to the private helper, and reaches the
+existing runtime-failure tail when the arena cannot supply the complete result.
+The measured and emitted function contribution is therefore exactly 162 bytes
+per occurrence. The helper receives only the admitted source address and
+length plus the already reserved output address; successful return leaves all
+64 result bytes complete before the following WVB operation can execute.
+
+An object containing at least one admitted occurrence appends one and only one
+exact 1,640-byte helper after all declared function code and before optional
+text padding. The suffix consists of 1,350 relocation-free x86-64 instruction
+bytes, two zero alignment bytes, the 32-byte SHA-256 initial state, and the
+256-byte round table. Every wrapper call is resolved directly to that suffix.
+The object exposes it as the local ordinary function symbol
+`$native_sha256_hex` at the exact end of declared function code; the symbol is
+not a WVB function ordinal or export. The helper's internal data references are
+already resolved against its private suffix, so neither wrapper nor helper adds
+a WVO relocation, platform import, public symbol kind, section kind, or format
+version.
+
+If no admitted function contains opcode `0x7D`, the plan carries no helper,
+the object carries no helper symbol, and padding, symbols, relocations, and all
+WVO bytes retain their prior identities. This SHA-free byte identity is a
+required non-regression property, not an optimization hint.
+
+The registered owner reconstructs the lowerer from current Windvale source and
+passes eight cases on exact-current Windows in 185.1 seconds and on local
+Debian 13.5 under WSL in 234,000 milliseconds. Both runs publish the exact
+summary `native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63
+helper-bytes=1640 sha-free=Identical staged-corruption=Rejected`. They prove
+byte-identical SHA-free Return-42 WVO; one oracle-exact 1,640-byte helper and
+its wrapper call targets; exact empty-input and `abc` native results through
+direct use, a `bytes` parameter, and an owned `text` return across a helper boundary;
+segmented publication with coalesced-helper staging acceptance and
+same-length corruption rejection; atomic allocation with detail 2; exact
+64-byte arena success at exit 42; and exact 63-byte arena rejection at exit 1.
+The local Debian/WSL run is Linux development evidence, not paired-host CI
+qualification. Candidate-pin regeneration and promotion, that paired CI gate,
+and consumer migration remain pending.
+
 The emitted layout is versioned by this contract and must change whenever its ABI, target, metering, trap, frame, or verification contract changes. A changed complete backend is not silently accepted because it happens to return the same scalar.
 
 ### Segmentable object regions
 
 The focused object writer also exposes a validated region plan without
-changing WVO 1.0. It owns the header-plus-text-section prefix, optional
-read-only-section header, canonical symbol records, canonical relocation
-records, and exact final length. Machine code, zero-through-fifteen `0x90`
-alignment bytes, and immutable data remain separate spans. Concatenating
-prefix, code, padding, read-only header, data, symbols, and relocations in that
-order reproduces the ordinary emitter byte for byte.
+changing WVO 1.0. It owns the header-plus-text-section prefix, optional private
+SHA-256 helper, optional read-only-section header, canonical symbol records,
+canonical relocation records, and exact final length. Declared function code,
+the helper, zero-through-fifteen `0x90` alignment bytes, and immutable data
+remain separate spans. Concatenating prefix, declared code, optional helper,
+padding, read-only header, data, symbols, and relocations in that order
+reproduces the ordinary emitter byte for byte.
 
 Planning validates the directory, data layout, relocation ordering and ranges,
 padding, counts, and projected length without requiring one complete code
@@ -205,10 +257,12 @@ relocation order, and construct the segmentable WVO region plan without one
 complete code value. The projected object remains bounded to 64 MiB.
 
 An immutable cursor then yields one exact `(position, bytes)` step in canonical
-WVO order: prefix, one or more code batches, alignment padding, optional
-read-only header, immutable data, symbols, and relocation records. Every code
-position is derived from the plan's canonical function offset. The next cursor
-contains the exclusive next-function ordinal and exact next position; a
+WVO order: prefix, one or more declared-code batches, the optional helper as a
+final code step, alignment padding, optional read-only header, immutable data,
+symbols, and relocation records. No new public publication kind is introduced.
+Every declared-code position is derived from the plan's canonical function
+offset, and the helper position is the exact end of those functions. The next
+cursor contains the exclusive next-function ordinal and exact next position; a
 changed, skipped, repeated, or out-of-range cursor fails closed. Completion is
 valid only at the planned final object length. Concatenating the yielded values
 therefore reproduces the ordinary WVO byte for byte while no yielded value
@@ -240,7 +294,8 @@ cursor steps, and writes each remaining value exactly once to
 or manifest resource. Chunk index zero is the first nonempty cursor value;
 indices increase by one and their recorded WVO positions are contiguous.
 
-Consecutive nonempty code steps are greedily coalesced in publication order
+Consecutive nonempty code steps, including the optional helper step, are
+greedily coalesced in publication order
 while their checked combined length is at most 1,310,720 bytes (1.25 MiB). The
 pending code resource is flushed before every non-code step or before the next
 append would exceed that target. One naturally larger code step remains one
@@ -313,19 +368,21 @@ one value. Valid evidence exposes object length, counts, both section lengths,
 and the exact symbol position; rejected evidence exposes only a named status
 and zeroes. Its ABI-22 scalar bridge reruns the same validation for each query.
 This is the compiler-produced section envelope, not yet symbol, relocation,
-placeholder, or complete staged-content verification.
+placeholder, helper-content, or complete staged-content verification.
 
 Decision 0290's focused reader consumes the actual symbol chunk at that admitted
 position. It accepts only the native compiler's bounded symbol profile:
 sequential local `$data_NNNN` records cover `.rodata`; ascending local
-`$function_NNNN` records describe every non-main ordinal; and one final
-exported `Main` fills the one omitted ordinal and exact code-range gap. Reserved
-fields, bindings, kinds, section indices, names, ranges, data coverage, function
-coverage, and the optional zero-through-15-byte text padding are checked. The
-complete chunk must be consumed, with at most 256 data symbols, 1,024 functions,
-and 1,280 symbols total. The combined bound is the sum of the already admitted
-data and function inventories; it does not widen either component limit. Its
-end is the exact relocation position. A nonempty
+`$function_NNNN` records describe every non-main ordinal; an optional local
+`$native_sha256_hex` symbol of exactly 1,640 bytes begins at the exact end of
+declared function code; and one final exported `Main` fills the one omitted
+ordinal and exact declared-code gap. Reserved fields, bindings, kinds, section
+indices, names, ranges, data coverage, function coverage, helper contiguity,
+and the optional zero-through-15-byte text padding are checked. The complete
+chunk must be consumed, with at most 256 data symbols, 1,024 functions, and
+1,281 symbols total. The additional symbol is available only for the one
+private helper; it does not widen either admitted data or function inventory.
+The symbol chunk's end is the exact relocation position. A nonempty
 relocation table must be one following manifest chunk of `count * 20` bytes
 ending at the object extent; with no relocations, the symbol chunk ends the
 object. Valid evidence exposes data/function counts and the relocation extent;
@@ -337,15 +394,19 @@ Decision 0291's following reader consumes the actual relocation chunk and
 accepts only the native compiler's canonical 20-byte `Relative_i32` records:
 zero flags/reserved fields, section zero, addend `-4`, ascending nonoverlapping
 four-byte code ranges, and targets limited to the admitted data symbols. It
-derives exact code length from the validated function ranges and requires any
-optional text padding to begin at one manifest boundary. Valid summary evidence
-exposes code bytes, text-chunk count, and relocation count; rejection exposes
-named status and zeroes. A per-text-chunk call binds the actual bounded chunk to
-its manifest entry, rejects code/padding crossings, requires every owned
-relocation placeholder to contain four zero bytes, and requires the separate
-padding chunk to contain only `0x90`. The scalar ABI bridge reruns the same
-checks over borrowed snapshots. The fixed adapter must call this validator for
-every admitted text chunk.
+derives exact declared-code length from the validated function ranges, keeps
+every relocation patch inside that declared code, and requires any optional
+text padding to begin after the optional helper at one manifest boundary. Valid
+summary evidence exposes declared code, helper, padding, text-chunk, and
+relocation bounds; rejection exposes named status and zeroes. A per-text-chunk
+call binds the actual bounded chunk to its manifest entry, rejects
+code-or-helper/padding crossings, requires every owned relocation placeholder
+to contain four zero bytes, compares every helper byte with the canonical
+1,640-byte suffix even when different chunks cover different helper spans, and
+requires the separate padding chunk to contain only `0x90`. Helper corruption
+has a distinct rejection status. The scalar ABI bridge reruns the same checks
+over borrowed snapshots. The fixed adapter must call this validator for every
+admitted text chunk.
 
 Decision 0293's content cursor then binds every actual nonempty staged chunk to
 both the strict manifest entry and the retained publication cursor. The caller

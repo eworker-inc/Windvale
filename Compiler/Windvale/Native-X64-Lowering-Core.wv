@@ -18,6 +18,7 @@ import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
 import Compilerˉnativeˉx64ˉloweringˉdescriptorˉinstructions as Descriptorˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉdescriptorˉcalls as Descriptorˉcalls;
 import Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors as Runtimeˉdescriptors;
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation as Bytesˉconcatenation;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
 
@@ -73,6 +74,8 @@ export record Compilerˉnativeˉx64ˉplan {
     Functionˉcount: u32;
     Mainˉfunction: u32;
     Machineˉcodeˉbytes: u32;
+    Helperˉbytes: u32;
+    Helper: bytes;
     Relocationˉbytes: u32;
     Directory: bytes;
     Functionˉcursors: bytes;
@@ -219,6 +222,8 @@ fn Compilerˉnativeˉx64ˉplanˉfailure(
         0u32,
         0u32,
         Empty,
+        0u32,
+        Empty,
         Empty,
         Empty,
         0u32,
@@ -255,6 +260,8 @@ fn Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
         0u32,
         0u32,
         0u32,
+        0u32,
+        Empty,
         0u32,
         Empty,
         Empty,
@@ -1122,6 +1129,7 @@ export fn Compilerˉnativeˉx64ˉdescriptorˉoperation(Opcode: u8) -> bool {
     if Opcode == 122u8 { return true; }
     if Opcode == 123u8 { return true; }
     if Opcode == 124u8 { return true; }
+    if Opcode == 125u8 { return true; }
     if Opcode == 189u8 { return true; }
     if Opcode == 190u8 { return true; }
     return Opcode == 191u8;
@@ -1234,6 +1242,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 122u8 { return 1u32; }
     if Opcode == 123u8 { return 1u32; }
     if Opcode == 124u8 { return 1u32; }
+    if Opcode == 125u8 { return 1u32; }
     if Opcode == 161u8 { return 1u32; }
     if Opcode == 162u8 { return 1u32; }
     if Opcode == 165u8 || Opcode == 166u8 { return 1u32; }
@@ -1246,6 +1255,22 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 213u8 { return 13u32; }
     if Compilerˉnativeˉx64ˉisˉu64ˉbitwise(Opcode) { return 1u32; }
     return 0u32;
+}
+
+fn Compilerˉnativeˉx64ˉcodeˉusesˉsha256(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32
+) -> bool {
+    var Cursor: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 125u8 { return true; }
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        if Size == 0u32 || Size > Codeˉlength - Cursor { return false; }
+        Cursor = Cursor + Size;
+    }
+    return false;
 }
 
 fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
@@ -1981,6 +2006,19 @@ fn Compilerˉnativeˉx64ˉanalyzeˉdescriptorˉvalueˉinstruction(
         Textˉvalues = Textˉvalues + 1u32;
         Bodyˉbytes = Bodyˉbytes +
             Runtimeˉdescriptors.Compilerˉnativeˉx64ˉtextˉquoteˉbytes();
+    }
+    if Opcode == 125u8 {
+        if Depth == 0u32 ||
+            Bytesˉreadˉu8(Stack, Depth - 1u32) != 6u8 {
+            return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
+        }
+        Depth = Depth - 1u32;
+        Stack = Bytesˉslice(Stack, 0u32, Depth);
+        Stack = Bytesˉconcat(Stack, Bytesˉfromˉu8(3u8));
+        Depth = Depth + 1u32;
+        Textˉvalues = Textˉvalues + 1u32;
+        Bodyˉbytes = Bodyˉbytes + 10u32 +
+            Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉinstructionˉbytes();
     }
     if Opcode == 119u8 {
         if Depth < 2u32 ||
@@ -4006,6 +4044,10 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     if Opcode == 124u8 {
         return Descriptors.Compilerˉnativeˉx64ˉdescriptorˉcopyˉbytes();
     }
+    if Opcode == 125u8 {
+        return 10u32 +
+            Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉinstructionˉbytes();
+    }
     if Opcode == 16u8 { return 39u32; }
     if Opcode == 17u8 { return 39u32; }
     if Opcode == 18u8 { return 40u32; }
@@ -5774,6 +5816,16 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     Capabilityˉtable: Nativeˉcapabilities.Compilerˉnativeˉx64ˉcapabilities
 ) -> bytes {
+    let Directoryˉfunctions: u32 = Bytesˉlength(Callˉdirectory) /
+        Layout.Compilerˉnativeˉx64ˉlayoutˉentryˉbytes();
+    let Lastˉfunction: u32 = Directoryˉfunctions - 1u32;
+    let Helperˉglobalˉoffset: u32 =
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
+            Callˉdirectory, Lastˉfunction
+        ) +
+        Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉlength(
+            Callˉdirectory, Lastˉfunction
+        );
     let Slots: u32 = Compilerˉnativeˉx64ˉframeˉslots(
         Function,
         Analysis
@@ -6102,6 +6154,10 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
                         ),
                         Compilerˉnativeˉx64ˉrelativeˉu32(
                             Runtimeˉserviceˉoffset,
+                            Emittedˉprefixˉbytes
+                        ),
+                        Compilerˉnativeˉx64ˉrelativeˉu32(
+                            Helperˉglobalˉoffset - Codeˉbase,
                             Emittedˉprefixˉbytes
                         ),
                         Compilerˉnativeˉx64ˉrelativeˉu32(
@@ -7230,6 +7286,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     var Relocationˉlengths: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Expectedˉrelocationˉbytes: u32 = 0u32;
     var Expectedˉmachineˉcodeˉbytes: u32 = 0u32;
+    var Hasˉsha256: bool = false;
     var Nativeˉabi: u32 = 22u32;
     Functionˉcursor = Functions.Payloadˉoffset + 4u32;
     Functionˉindex = 0u32;
@@ -7261,6 +7318,11 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
             Types,
             Capabilityˉtable
         );
+        if Compilerˉnativeˉx64ˉcodeˉusesˉsha256(
+            Input,
+            Measureˉcodeˉsection.Payloadˉoffset,
+            Measureˉcodeˉsection.Payloadˉlength
+        ) { Hasˉsha256 = true; }
         if Machineˉbytes >= 2147483648u32 {
             return Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
                 Input,
@@ -7344,6 +7406,13 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         );
     }
 
+    var Helper: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    if Hasˉsha256 { Helper = Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelper(); }
+    if Bytesˉlength(Helper) > 67108864u32 - Expectedˉmachineˉcodeˉbytes {
+        return Compilerˉnativeˉx64ˉplanˉfailure(
+            Input, Compilerˉnativeˉx64ˉstatus.Outputˉlimit
+        );
+    }
     return Compilerˉnativeˉx64ˉplan(
         Compilerˉnativeˉx64ˉstatus.Valid,
         Nativeˉabi,
@@ -7353,6 +7422,8 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         Functionˉcount,
         Mainˉfunction,
         Expectedˉmachineˉcodeˉbytes,
+        Bytesˉlength(Helper),
+        Helper,
         Expectedˉrelocationˉbytes,
         Directory,
         Functionˉcursors,
@@ -7418,6 +7489,12 @@ export fn Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
         Bytesˉlength(Plan.Functionˉcursors) != Plan.Functionˉcount * 4u32 ||
         Bytesˉlength(Plan.Relocationˉlengths) != Plan.Functionˉcount * 4u32 ||
         Plan.Machineˉcodeˉbytes > 67108864u32 ||
+        Plan.Helperˉbytes != Bytesˉlength(Plan.Helper) ||
+        Plan.Helperˉbytes > 67108864u32 - Plan.Machineˉcodeˉbytes ||
+        (Plan.Helperˉbytes != 0u32 &&
+            !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(
+                Plan.Helper
+            )) ||
         Plan.Relocationˉbytes > 524288u32 ||
         Plan.Dataˉcount > Staticˉdata.Compilerˉnativeˉx64ˉdataˉlimit() ||
         Bytesˉlength(Plan.Dataˉkinds) != Plan.Dataˉcount ||
@@ -7615,29 +7692,33 @@ export fn Compilerˉlowerˉwvbˉnativeˉx64(Input: bytes)
     }
     let Relocations: bytes =
         Bytesˉslice(Functionˉartifacts, 16u32, Relocationˉbytes);
-    let Code: bytes = Bytesˉslice(
+    let Declaredˉcode: bytes = Bytesˉslice(
         Functionˉartifacts,
         16u32 + Relocationˉbytes,
         Codeˉbytes
     );
     var Padding: bytes = Compilerˉnativeˉx64ˉempty(Input);
     if Data.Count > 0u32 {
-        while (Bytesˉlength(Code) + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+        while (Bytesˉlength(Declaredˉcode) + Plan.Helperˉbytes +
+            Bytesˉlength(Padding)) % 16u32 != 0u32 {
             Padding = Bytesˉconcat(Padding, Bytesˉfromˉu8(144u8));
         }
     }
-    let Textˉbytes: u32 = Bytesˉlength(Code) + Bytesˉlength(Padding);
+    let Textˉbytes: u32 = Bytesˉlength(Declaredˉcode) + Plan.Helperˉbytes +
+        Bytesˉlength(Padding);
     let Object: bytes = Objectˉwriter.Compilerˉnativeˉx64ˉobjectˉemit(
-        Code,
+        Declaredˉcode,
         Padding,
         Plan.Directory,
         Plan.Functionˉcount,
         Plan.Mainˉfunction,
+        Plan.Helper,
         Data,
         Relocations
     );
     var Objectˉoverhead: u32 =
         73u32 + (Plan.Functionˉcount - 1u32) * 34u32;
+    if Plan.Helperˉbytes > 0u32 { Objectˉoverhead = Objectˉoverhead + 38u32; }
     if Data.Count > 0u32 {
         Objectˉoverhead = Objectˉoverhead + 27u32 +
             Bytesˉlength(Data.Bytes) + Data.Count * 30u32 +

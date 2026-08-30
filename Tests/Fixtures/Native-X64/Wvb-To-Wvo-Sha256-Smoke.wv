@@ -1,0 +1,8 @@
+module Compilerˉnativeˉx64ˉsha256ˉsmoke profile portable;
+
+data Empty: bytes = [];
+
+export fn Main() -> i32 {
+    let Digest: text = Bytesˉsha256ˉhex(Empty);
+    return 42;
+}

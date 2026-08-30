@@ -5,6 +5,7 @@ import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors as Runtimeˉdescriptors;
 import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation as Bytesˉconcatenation;
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 
 data U32ˉfromˉu8ˉtemplate: bytes = [
     139, 132, 36, 0, 0, 0, 0,
@@ -190,8 +191,46 @@ export record Compilerˉnativeˉx64ˉdescriptorˉinstruction {
     Opcode: u8;
     Boundsˉtarget: u32;
     Runtimeˉtarget: u32;
+    Helperˉtarget: u32;
     Invalidˉutf8ˉtarget: u32;
     Divisionˉbyˉzeroˉtarget: u32;
+}
+
+fn Emitˉsha256(
+    Instruction: Compilerˉnativeˉx64ˉdescriptorˉinstruction,
+    Shape: Compilerˉnativeˉx64ˉdescriptorˉlayout,
+    State: Compilerˉnativeˉx64ˉdescriptorˉstate
+) -> Compilerˉnativeˉx64ˉdescriptorˉstate {
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots,
+        (State.Stackˉdepth - 1u32) * 4u32
+    );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Target: u32 = Valueˉslot(Shape, 3u8, State.Nextˉtext);
+    return Compilerˉnativeˉx64ˉdescriptorˉstate(
+        Nativeˉsha256.Compilerˉnativeˉx64ˉemitˉsha256(
+            State.Result,
+            Source,
+            Target,
+            Instruction.Helperˉtarget,
+            Instruction.Runtimeˉtarget
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(3u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext + 1u32,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes
+    );
 }
 
 export record Compilerˉnativeˉx64ˉdescriptorˉlayout {
@@ -1066,6 +1105,9 @@ export fn Compilerˉnativeˉx64ˉemitˉdescriptorˉinstruction(
     }
     if Instruction.Opcode == 119u8 {
         return Emitˉbytesˉconcat(Instruction, Shape, State);
+    }
+    if Instruction.Opcode == 125u8 {
+        return Emitˉsha256(Instruction, Shape, State);
     }
     if Instruction.Opcode == 120u8 || Instruction.Opcode == 121u8 ||
         Instruction.Opcode == 122u8 ||

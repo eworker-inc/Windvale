@@ -6,6 +6,12 @@
 
 The portable core owns absent-metadata WVB 1.11/1.30/1.31 admission, control and type verification, ABI-22 selection, direct and checked callable-call measurement and patching, and canonical WVO 1.0 construction. The application owns one bounded independent-metadata admission adapter that validates and normalizes the Module envelope before invoking the unchanged core; it adds no second selector, object writer, or target-specific lowering logic.
 
+The implemented source candidate additionally lowers WVB opcode `0x7D`,
+`bytes.sha256_hex`, under the exact optional-helper contract below. Its
+registered owner passes all eight cases on exact-current Windows and local
+Debian 13.5 under WSL. The latter is Linux development evidence, not paired-host
+CI qualification, and this is not yet a promoted artifact identity.
+
 ## Construction contract
 
 `Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj` is the exact source-to-WVB project. Its root is `Compiler/Windvale/Native-X64-Lowering-Tool.wv`, its canonical module identity is `Compilerˉnativeˉx64ˉloweringˉtool`, its profile is `hosted`, and it exports exactly one `Main() -> i32`.
@@ -26,6 +32,34 @@ The native writer accepts only that identity and entry. Its fragment requires th
 The fragment and application bundle now share the established ten-service compiler-authority layout; the lowerer's bounded data reader directly requires strict UTF-8 validation. The six declared capabilities are `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`.
 
 A different module identity, capability set, fragment or bundle service set, entry shape, runtime profile, metadata, or outer target is rejected before publication.
+
+### Optional SHA-256 lowering contract
+
+Each `bytes.sha256_hex` occurrence consumes a verified immutable input of at
+most 4,194,304 bytes and produces exactly 64 lowercase ASCII characters as one
+owned `text` value. Its function body contains the ordinary ten-byte metering
+charge followed by an exact 152-byte raw wrapper. All occurrences call one
+relocation-free 1,640-byte private helper appended once after declared function
+code. The helper is absent when the opcode is absent.
+
+The complete WVO remains WVO 1.0. The helper uses the existing local-function
+symbol kind under the exact name `$native_sha256_hex`; it adds no public WVO
+kind, section kind, relocation kind, platform import, or format version. Its
+layout is 1,350 code bytes, two zero alignment bytes, 32 initial-state bytes,
+and 256 round-table bytes. Direct complete-object lowering emits declared code,
+the optional helper, optional text padding, and the existing remaining regions
+in canonical order. The segmented staging application yields the helper as the
+final ordinary code step, may coalesce it only under the existing bounded code
+resource policy, and requires the staged linker to verify its symbol,
+contiguity, exact bytes across every covering chunk, and absence of relocation
+patches into the helper.
+
+A WVB containing no `bytes.sha256_hex` must lower to exactly the same WVO bytes
+as before this candidate. In particular, the retained Return-42 and Metadata
+WVB/WVO vectors below are SHA-free identity sentinels. The registered Windows
+and local Debian/WSL owner proves Return-42 WVO byte identity and same-length
+staged-helper corruption rejection; an unchanged manifest is not
+authentication evidence for corrupted chunk content.
 
 ## Command behavior
 
@@ -48,13 +82,21 @@ Both targets reuse the compiler-authority process entry, argument capture, bound
 
 ## Candidate identities and fixed vector
 
-The current candidate identities are:
+The retained pre-SHA candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
 | WVB-to-WVO tool WVB | 567,615 | `77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60` |
 | Windows WVB-to-WVO tool | 8,160,256 | `f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad` |
 | Linux WVB-to-WVO tool | 8,159,232 | `1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185` |
+
+These identities remain the pinned candidate generation while the optional
+SHA-256 source candidate awaits paired-host CI qualification and promotion.
+Rebuilding and promoting that source is expected to change the tool WVB and
+both platform application identities, but must not change either SHA-free
+fixed-vector WVB or WVO identity. No digest produced by the focused temporary
+reconstructions is normative; a new pin requires candidate-pin regeneration
+and paired-host CI agreement.
 
 These pinned candidate applications include Decision 0419's parameterless
 `Main() -> bytes` contract and Decision 0423's compiler-scale admission work.

@@ -1,0 +1,213 @@
+module Compilerˉnativeˉx64ˉsha256ˉnativeˉkat profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocationsˉnativeˉbridge as Staging;
+import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+
+// One one-byte function followed by the canonical 1,640-byte private helper.
+data Stagingˉmanifest: bytes = [
+    87, 86, 79, 80, 1, 0, 0, 0,
+    60, 0, 0, 0, 216, 6, 0, 0,
+    3, 0, 0, 0, 0, 0, 64, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 49, 0, 0, 0,
+    1, 0, 0, 0, 49, 0, 0, 0, 105, 6, 0, 0,
+    2, 0, 0, 0, 154, 6, 0, 0, 62, 0, 0, 0,
+];
+
+data Prefix: bytes = [
+    87, 86, 79, 49, 1, 0, 0, 0,
+    1, 0, 0, 0, 1, 0, 0, 0,
+    2, 0, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 16, 0, 0, 0,
+    105, 6, 0, 0, 105, 6, 0, 0,
+    5, 0, 0, 0, 46, 116, 101, 120, 116,
+];
+
+data Symbolˉchunk: bytes = [
+    1, 1, 0, 0, 0, 0, 0, 0,
+    1, 0, 0, 0, 104, 6, 0, 0,
+    18, 0, 0, 0, 36, 110, 97, 116, 105, 118, 101, 95, 115, 104,
+    97, 50, 53, 54, 95, 104, 101, 120,
+    2, 1, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 1, 0, 0, 0,
+    4, 0, 0, 0, 77, 97, 105, 110,
+];
+
+data Relocationˉchunk: bytes = [];
+data Functionˉchunk: bytes = [195];
+data Empty: bytes = [];
+data Abc: bytes = [97, 98, 99];
+
+fn Parameterˉdigest(Value: bytes) -> bytes {
+    return Textˉtoˉutf8(Bytesˉsha256ˉhex(Value));
+}
+
+fn Parameterˉdigestˉtext(Value: bytes) -> text {
+    return Bytesˉsha256ˉhex(Value);
+}
+
+export fn Main() -> i32 {
+    let Emptyˉdigest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Empty));
+    let Emptyˉexpected: bytes = Textˉtoˉutf8(
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    );
+    if Bytesˉlength(Emptyˉdigest) != 64u32 { return 1; }
+    var Emptyˉindex: u32 = 0u32;
+    while Emptyˉindex < 64u32 {
+        if Bytesˉreadˉu8(Emptyˉdigest, Emptyˉindex) !=
+            Bytesˉreadˉu8(Emptyˉexpected, Emptyˉindex) {
+            return 1;
+        }
+        Emptyˉindex = Emptyˉindex + 1u32;
+    }
+    let Abcˉdigest: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Abc));
+    let Abcˉexpected: bytes = Textˉtoˉutf8(
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    );
+    if Bytesˉlength(Abcˉdigest) != 64u32 { return 2; }
+    var Abcˉindex: u32 = 0u32;
+    while Abcˉindex < 64u32 {
+        if Bytesˉreadˉu8(Abcˉdigest, Abcˉindex) !=
+            Bytesˉreadˉu8(Abcˉexpected, Abcˉindex) {
+            return 2;
+        }
+        Abcˉindex = Abcˉindex + 1u32;
+    }
+    let Nestedˉdigest: bytes = Parameterˉdigest(Abc);
+    if Bytesˉlength(Nestedˉdigest) != 64u32 { return 9; }
+    var Nestedˉindex: u32 = 0u32;
+    while Nestedˉindex < 64u32 {
+        if Bytesˉreadˉu8(Nestedˉdigest, Nestedˉindex) !=
+            Bytesˉreadˉu8(Abcˉexpected, Nestedˉindex) {
+            return 9;
+        }
+        Nestedˉindex = Nestedˉindex + 1u32;
+    }
+    let Returnedˉtextˉdigest: bytes =
+        Textˉtoˉutf8(Parameterˉdigestˉtext(Abc));
+    if Bytesˉlength(Returnedˉtextˉdigest) != 64u32 { return 10; }
+    var Returnedˉtextˉindex: u32 = 0u32;
+    while Returnedˉtextˉindex < 64u32 {
+        if Bytesˉreadˉu8(
+            Returnedˉtextˉdigest, Returnedˉtextˉindex
+        ) != Bytesˉreadˉu8(Abcˉexpected, Returnedˉtextˉindex) {
+            return 10;
+        }
+        Returnedˉtextˉindex = Returnedˉtextˉindex + 1u32;
+    }
+
+    let Helper: bytes = Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelper();
+    if Bytesˉlength(Helper) != 1640u32 { return 3; }
+    let Manifestˉsummary: Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉsummary =
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(Stagingˉmanifest);
+    if Manifestˉsummary.Status !=
+        Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉstatus.Valid {
+        return 40;
+    }
+    let Envelopeˉsummary: Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉsummary =
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉvalidate(
+            Stagingˉmanifest, Prefix, Empty
+        );
+    if Envelopeˉsummary.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Manifest {
+        return 41;
+    }
+    if Envelopeˉsummary.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Sectionˉextent {
+        return 50;
+    }
+    if Envelopeˉsummary.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Chunkˉboundary {
+        return 51;
+    }
+    if Envelopeˉsummary.Status ==
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Objectˉextent {
+        return 53;
+    }
+    if Envelopeˉsummary.Status !=
+        Envelope.Compilerˉnativeˉx64ˉstagingˉwvoˉenvelopeˉstatus.Valid {
+        return 59;
+    }
+    let Symbolˉsummary: Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary =
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
+            Stagingˉmanifest, Prefix, Empty, Symbolˉchunk
+        );
+    if Symbolˉsummary.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Envelope {
+        return 21;
+    }
+    if Symbolˉsummary.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Symbolˉchunk {
+        return 22;
+    }
+    if Symbolˉsummary.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape {
+        return 25;
+    }
+    if Symbolˉsummary.Status ==
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage {
+        return 31;
+    }
+    if Symbolˉsummary.Status !=
+        Symbols.Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid {
+        return 39;
+    }
+    let Stagingˉstatus: u32 =
+        Staging.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉvalidate(
+        Stagingˉmanifest,
+        Prefix,
+        Empty,
+        Symbolˉchunk,
+        Relocationˉchunk
+    );
+    if Stagingˉstatus == 1u32 { return 11; }
+    if Stagingˉstatus == 2u32 { return 12; }
+    if Stagingˉstatus == 3u32 { return 13; }
+    if Stagingˉstatus == 4u32 { return 14; }
+    if Stagingˉstatus == 5u32 { return 15; }
+    if Stagingˉstatus == 6u32 { return 16; }
+    if Stagingˉstatus == 7u32 { return 17; }
+    if Stagingˉstatus == 8u32 { return 18; }
+    if Stagingˉstatus != 0u32 { return 19; }
+    if Staging.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉcodeˉbytes(
+        Stagingˉmanifest,
+        Prefix,
+        Empty,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 1641u32 { return 5; }
+    if Staging.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunks(
+        Stagingˉmanifest,
+        Prefix,
+        Empty,
+        Symbolˉchunk,
+        Relocationˉchunk
+    ) != 1u32 { return 6; }
+    let Coalescedˉtext: bytes = Bytesˉconcat(Functionˉchunk, Helper);
+    if Staging.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunk(
+        Stagingˉmanifest,
+        Prefix,
+        Empty,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        1u32,
+        Coalescedˉtext
+    ) != 0u32 { return 7; }
+
+    let Corruptˉhelper: bytes = Bytesˉconcat(
+        Bytesˉfromˉu8(84u8),
+        Bytesˉslice(Helper, 1u32, 1639u32)
+    );
+    if Staging.Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉnativeˉtextˉchunk(
+        Stagingˉmanifest,
+        Prefix,
+        Empty,
+        Symbolˉchunk,
+        Relocationˉchunk,
+        1u32,
+        Bytesˉconcat(Functionˉchunk, Corruptˉhelper)
+    ) != 13u32 { return 8; }
+    return 42;
+}

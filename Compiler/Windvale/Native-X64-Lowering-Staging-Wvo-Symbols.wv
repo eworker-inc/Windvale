@@ -23,6 +23,10 @@ export record Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
     Status: Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus;
     Dataˉsymbols: u32;
     Functions: u32;
+    Codeˉbytes: u32;
+    Declaredˉcodeˉbytes: u32;
+    Helperˉbytes: u32;
+    Paddingˉbytes: u32;
     Relocationˉposition: u32;
     Relocationˉbytes: u32;
 }
@@ -35,6 +39,10 @@ fn Invalid(
         0u32,
         0u32,
         0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
         0u32
     );
 }
@@ -42,6 +50,10 @@ fn Invalid(
 fn Accepted(
     Dataˉsymbols: u32,
     Functions: u32,
+    Codeˉbytes: u32,
+    Declaredˉcodeˉbytes: u32,
+    Helperˉbytes: u32,
+    Paddingˉbytes: u32,
     Relocationˉposition: u32,
     Relocationˉbytes: u32
 ) -> Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉsummary {
@@ -49,6 +61,10 @@ fn Accepted(
         Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Valid,
         Dataˉsymbols,
         Functions,
+        Codeˉbytes,
+        Declaredˉcodeˉbytes,
+        Helperˉbytes,
+        Paddingˉbytes,
         Relocationˉposition,
         Relocationˉbytes
     );
@@ -164,6 +180,22 @@ fn Mainˉnameˉisˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
     return Bytesˉreadˉu8(Input, Offset + 3u32) == 110u8;
 }
 
+fn Sha256ˉhelperˉnameˉisˉvalid(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> bool {
+    if Length != 18u32 { return false; }
+    let Expected: bytes = Textˉtoˉutf8("$native_sha256_hex");
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Offset + Index) !=
+            Bytesˉreadˉu8(Expected, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     Stagingˉmanifest: bytes,
     Prefix: bytes,
@@ -188,7 +220,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
             Stagingˉmanifest
         );
-    if Envelopeˉsummary.Symbols > 1280u32 {
+    if Envelopeˉsummary.Symbols > 1281u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );
@@ -217,6 +249,9 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     var Exportˉoffset: u32 = 0u32;
     var Exportˉsize: u32 = 0u32;
     var Mainˉseen: bool = false;
+    var Helperˉseen: bool = false;
+    var Helperˉoffset: u32 = 0u32;
+    var Helperˉbytes: u32 = 0u32;
     while Index < Envelopeˉsummary.Symbols {
         let Total: u32 = Bytesˉlength(Symbolˉchunk);
         if Cursor > Total || 20u32 > Total - Cursor {
@@ -289,6 +324,20 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                     );
                 }
                 Functionsˉstarted = true;
+                if Sha256ˉhelperˉnameˉisˉvalid(
+                    Symbolˉchunk, Nameˉoffset, Nameˉlength
+                ) {
+                    if Helperˉseen || Index + 2u32 != Envelopeˉsummary.Symbols ||
+                        Size != 1640u32 || Offset > Envelopeˉsummary.Textˉbytes ||
+                        Size > Envelopeˉsummary.Textˉbytes - Offset {
+                        return Invalid(
+                            Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Shape
+                        );
+                    }
+                    Helperˉseen = true;
+                    Helperˉoffset = Offset;
+                    Helperˉbytes = Size;
+                } else {
                 let Functionˉordinal: u32 = Functionˉnameˉordinal(
                     Symbolˉchunk,
                     Nameˉoffset,
@@ -327,6 +376,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
                 Expectedˉfunctionˉoffset = Expectedˉfunctionˉoffset + Size;
                 Nextˉfunctionˉordinal = Functionˉordinal + 1u32;
                 Localˉfunctions = Localˉfunctions + 1u32;
+                }
             } else {
                 if Binding != 2u32 || Kind != 1u32 || Section != 0u32 ||
                     Mainˉseen || Index + 1u32 != Envelopeˉsummary.Symbols {
@@ -411,7 +461,16 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
         );
     }
-    let Padding: u32 = Envelopeˉsummary.Textˉbytes - Functionˉend;
+    var Codeˉend: u32 = Functionˉend;
+    if Helperˉseen {
+        if Helperˉoffset != Functionˉend {
+            return Invalid(
+                Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Functionˉcoverage
+            );
+        }
+        Codeˉend = Helperˉoffset + Helperˉbytes;
+    }
+    let Padding: u32 = Envelopeˉsummary.Textˉbytes - Codeˉend;
     if Envelopeˉsummary.Sections == 1u32 {
         if Padding != 0u32 {
             return Invalid(
@@ -459,6 +518,10 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
     return Accepted(
         Dataˉsymbols,
         Functions,
+        Codeˉend,
+        Functionˉend,
+        Helperˉbytes,
+        Padding,
         Relocationˉposition,
         Relocationˉbytes
     );

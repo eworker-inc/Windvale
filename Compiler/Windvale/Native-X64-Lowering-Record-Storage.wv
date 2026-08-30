@@ -180,7 +180,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 106u8 { return 9u32; }
     if Opcode == 129u8 { return 9u32; }
     if Numeric >= 107u32 {
-        if Numeric <= 124u32 { return 1u32; }
+        if Numeric <= 125u32 { return 1u32; }
     }
     if Numeric >= 134u32 && Numeric <= 136u32 { return 1u32; }
     if Numeric >= 143u32 && Numeric <= 148u32 { return 1u32; }
@@ -938,7 +938,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Opcode == 40u8 ||
             Numericˉopcode >= 109u32 && Numericˉopcode <= 112u32 ||
             Numericˉopcode >= 115u32 && Numericˉopcode <= 118u32 ||
-            Numericˉopcode >= 120u32 && Numericˉopcode <= 124u32 ||
+            Numericˉopcode >= 120u32 && Numericˉopcode <= 125u32 ||
             Opcode == 190u8 ||
             Opcode == 191u8 {
             if Depth == 0u32 { return Invalid(Input); }

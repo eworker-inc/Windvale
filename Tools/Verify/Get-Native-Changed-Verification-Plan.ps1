@@ -2799,6 +2799,14 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
+        'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj',
+        'Tests/Fixtures/Native-X64/Sha256-Native-Kat.wv',
+        'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Sha256-Smoke.wv'
+    )) {
+        Add-Suite 'native-sha256-lowering'
+    } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
         'Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv',
@@ -2825,12 +2833,26 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv',
         'Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Types.wv'
     )) {
         Add-Compiler-Suites
+        if ($Path -in @(
+            'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Object.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv'
+        )) {
+            Add-Suite 'native-sha256-lowering'
+        }
         Add-Suite 'native-u64-lowering'
         Add-Suite 'model-provider'
         Add-Suite 'database-superblock'
@@ -3956,6 +3978,9 @@ foreach ($Path in $Paths) {
             'segmented-compiler-toolset-reconstruction',
             'wv-linker-reconstruction'
         )
+        if ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj') {
+            Add-Suite 'native-sha256-lowering'
+        }
     } elseif ($Path -in @(
         'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
         'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj'
@@ -3968,6 +3993,9 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
+        if ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
+            Add-Suite 'native-sha256-lowering'
+        }
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj') {
         Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {

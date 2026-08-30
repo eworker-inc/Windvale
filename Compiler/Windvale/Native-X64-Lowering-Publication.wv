@@ -4,6 +4,7 @@ import Compilerˉnativeˉx64ˉlowering as Nativeˉx64;
 import Compilerˉnativeˉx64ˉloweringˉdata as Staticˉdata;
 import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 
 export enum Compilerˉnativeˉx64ˉpublicationˉstatus {
     Valid = 0;
@@ -28,6 +29,7 @@ export record Compilerˉnativeˉx64ˉpublicationˉregions {
     Valid: bool;
     Objectˉbytes: u32;
     Prefix: bytes;
+    Helper: bytes;
     Padding: bytes;
     Readˉonlyˉheader: bytes;
     Readˉonlyˉdata: bytes;
@@ -90,6 +92,7 @@ fn Invalidˉregions(Input: bytes)
     return Compilerˉnativeˉx64ˉpublicationˉregions(
         false,
         0u32,
+        Emptyˉvalue,
         Emptyˉvalue,
         Emptyˉvalue,
         Emptyˉvalue,
@@ -285,8 +288,9 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
     );
 
     var Padding: bytes = Empty(Input);
+    let Textˉbytes: u32 = Plan.Machineˉcodeˉbytes + Plan.Helperˉbytes;
     if Plan.Dataˉcount > 0u32 {
-        while (Plan.Machineˉcodeˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
+        while (Textˉbytes + Bytesˉlength(Padding)) % 16u32 != 0u32 {
             Padding = Bytesˉconcat(Padding, Bytesˉfromˉu8(144u8));
         }
     }
@@ -298,6 +302,7 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
             Plan.Directory,
             Plan.Functionˉcount,
             Plan.Mainˉfunction,
+            Plan.Helper,
             Data(Plan),
             Relocations
         );
@@ -308,6 +313,7 @@ export fn Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
         true,
         Objectˉregions.Objectˉbytes,
         Objectˉregions.Prefix,
+        Plan.Helper,
         Padding,
         Objectˉregions.Readˉonlyˉheader,
         Plan.Dataˉbytes,
@@ -336,7 +342,8 @@ fn Expectedˉposition(
     Cursor: Compilerˉnativeˉx64ˉpublicationˉcursor
 ) -> u32 {
     let Prefixˉend: u32 = Bytesˉlength(Regions.Prefix);
-    let Codeˉend: u32 = Prefixˉend + Plan.Machineˉcodeˉbytes;
+    let Declaredˉcodeˉend: u32 = Prefixˉend + Plan.Machineˉcodeˉbytes;
+    let Codeˉend: u32 = Declaredˉcodeˉend + Plan.Helperˉbytes;
     let Paddingˉend: u32 = Codeˉend + Bytesˉlength(Regions.Padding);
     let Readˉonlyˉheaderˉend: u32 =
         Paddingˉend + Bytesˉlength(Regions.Readˉonlyˉheader);
@@ -348,7 +355,11 @@ fn Expectedˉposition(
         return 0u32;
     }
     if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Code {
-        if Cursor.Nextˉfunction >= Plan.Functionˉcount { return 4294967295u32; }
+        if Cursor.Nextˉfunction == Plan.Functionˉcount {
+            if Plan.Helperˉbytes == 0u32 { return 4294967295u32; }
+            return Declaredˉcodeˉend;
+        }
+        if Cursor.Nextˉfunction > Plan.Functionˉcount { return 4294967295u32; }
         return Prefixˉend +
             Layout.Compilerˉnativeˉx64ˉlayoutˉmachineˉoffset(
                 Plan.Directory,
@@ -439,6 +450,28 @@ export fn Compilerˉnativeˉx64ˉpublicationˉnext(
         );
     }
     if Cursor.Kind == Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+        if Cursor.Nextˉfunction == Plan.Functionˉcount {
+            if Plan.Helperˉbytes == 0u32 ||
+                Bytesˉlength(Regions.Helper) != Plan.Helperˉbytes ||
+                !Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelperˉisˉexact(
+                    Regions.Helper
+                ) {
+                return Stepˉfailure(
+                    Input,
+                    Compilerˉnativeˉx64ˉpublicationˉstatus.Invalidˉcursor,
+                    Cursor.Kind,
+                    Cursor.Position
+                );
+            }
+            return Step(
+                Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,
+                Cursor.Kind,
+                Cursor.Position,
+                Regions.Helper,
+                Compilerˉnativeˉx64ˉpublicationˉkind.Padding,
+                Plan.Functionˉcount
+            );
+        }
         let Batch: Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatch =
             Nativeˉx64.Compilerˉnativeˉx64ˉfunctionˉbatchˉemitˉbounded(
                 Input,
@@ -466,6 +499,9 @@ export fn Compilerˉnativeˉx64ˉpublicationˉnext(
             Compilerˉnativeˉx64ˉpublicationˉkind.Code;
         if Batch.Nextˉfunction == Plan.Functionˉcount {
             Nextˉkind = Compilerˉnativeˉx64ˉpublicationˉkind.Padding;
+            if Plan.Helperˉbytes > 0u32 {
+                Nextˉkind = Compilerˉnativeˉx64ˉpublicationˉkind.Code;
+            }
         }
         return Step(
             Compilerˉnativeˉx64ˉpublicationˉstatus.Valid,

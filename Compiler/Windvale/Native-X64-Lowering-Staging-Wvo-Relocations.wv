@@ -3,6 +3,7 @@ module Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉrelocations profile portab
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉsymbols as Symbols;
+import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 
 export enum Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus {
     Valid = 0;
@@ -18,11 +19,15 @@ export enum Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus {
     Textˉchunkˉlength = 10;
     Placeholder = 11;
     Padding = 12;
+    Helper = 13;
 }
 
 export record Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
     Status: Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus;
     Codeˉbytes: u32;
+    Declaredˉcodeˉbytes: u32;
+    Helperˉbytes: u32;
+    Paddingˉbytes: u32;
     Textˉchunks: u32;
     Relocations: u32;
 }
@@ -34,18 +39,27 @@ fn Invalid(
         Status,
         0u32,
         0u32,
+        0u32,
+        0u32,
+        0u32,
         0u32
     );
 }
 
 fn Accepted(
     Codeˉbytes: u32,
+    Declaredˉcodeˉbytes: u32,
+    Helperˉbytes: u32,
+    Paddingˉbytes: u32,
     Textˉchunks: u32,
     Relocations: u32
 ) -> Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary {
     return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉsummary(
         Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid,
         Codeˉbytes,
+        Declaredˉcodeˉbytes,
+        Helperˉbytes,
+        Paddingˉbytes,
         Textˉchunks,
         Relocations
     );
@@ -68,28 +82,6 @@ fn Chunkˉlengthˉatˉposition(
         Index = Index + 1u32;
     }
     return 0u32;
-}
-
-fn Measureˉcodeˉbytes(Prefix: bytes, Symbolˉchunk: bytes) -> u32 {
-    let Symbolˉcount: u32 = Bytesˉreadˉu32ˉlittle(Prefix, 16u32);
-    var Cursor: u32 = 0u32;
-    var Index: u32 = 0u32;
-    var Result: u32 = 0u32;
-    while Index < Symbolˉcount {
-        if Bytesˉreadˉu8(Symbolˉchunk, Cursor + 1u32) == 1u8 {
-            let Offset: u32 =
-                Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 8u32);
-            let Size: u32 =
-                Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 12u32);
-            let End: u32 = Offset + Size;
-            if End > Result { Result = End; }
-        }
-        let Nameˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Symbolˉchunk, Cursor + 16u32);
-        Cursor = Cursor + 20u32 + Nameˉbytes;
-        Index = Index + 1u32;
-    }
-    return Result;
 }
 
 fn Textˉchunkˉcount(
@@ -149,7 +141,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
             Stagingˉmanifest
         );
-    let Codeˉlength: u32 = Measureˉcodeˉbytes(Prefix, Symbolˉchunk);
+    let Codeˉlength: u32 = Symbolˉsummary.Codeˉbytes;
     let Paddingˉbytes: u32 = Envelopeˉsummary.Textˉbytes - Codeˉlength;
     if Paddingˉbytes > 0u32 {
         if Chunkˉlengthˉatˉposition(
@@ -182,7 +174,8 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
         }
         let Offset: u32 =
             Bytesˉreadˉu32ˉlittle(Relocationˉchunk, Entry + 8u32);
-        if Offset > Codeˉlength || 4u32 > Codeˉlength - Offset {
+        if Offset > Symbolˉsummary.Declaredˉcodeˉbytes ||
+            4u32 > Symbolˉsummary.Declaredˉcodeˉbytes - Offset {
             return Invalid(
                 Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Range
             );
@@ -207,6 +200,9 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉvalidate(
     }
     return Accepted(
         Codeˉlength,
+        Symbolˉsummary.Declaredˉcodeˉbytes,
+        Symbolˉsummary.Helperˉbytes,
+        Symbolˉsummary.Paddingˉbytes,
         Textˉchunkˉcount(
             Stagingˉmanifest,
             Manifestˉsummary.Chunks,
@@ -265,6 +261,8 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
         Length > Textˉend - Position {
         return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Textˉchunkˉindex;
     }
+    let Declaredˉcodeˉend: u32 =
+        49u32 + Summary.Declaredˉcodeˉbytes;
     let Codeˉend: u32 = 49u32 + Summary.Codeˉbytes;
     if Position < Codeˉend {
         if Length > Codeˉend - Position {
@@ -287,6 +285,26 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉtextˉchunkˉvalidate(
                 }
             }
             Relocation = Relocation + 1u32;
+        }
+        let Chunkˉend: u32 = Position + Length;
+        if Chunkˉend > Declaredˉcodeˉend {
+            var Helperˉposition: u32 = Position;
+            if Helperˉposition < Declaredˉcodeˉend {
+                Helperˉposition = Declaredˉcodeˉend;
+            }
+            let Canonical: bytes =
+                Nativeˉsha256.Compilerˉnativeˉx64ˉsha256ˉhelper();
+            var Helperˉindex: u32 = Helperˉposition;
+            while Helperˉindex < Chunkˉend {
+                if Bytesˉreadˉu8(
+                    Chunk, Helperˉindex - Position
+                ) != Bytesˉreadˉu8(
+                    Canonical, Helperˉindex - Declaredˉcodeˉend
+                ) {
+                    return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Helper;
+                }
+                Helperˉindex = Helperˉindex + 1u32;
+            }
         }
         return Compilerˉnativeˉx64ˉstagingˉwvoˉrelocationsˉstatus.Valid;
     }

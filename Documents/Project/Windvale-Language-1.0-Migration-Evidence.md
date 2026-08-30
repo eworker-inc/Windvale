@@ -4454,10 +4454,11 @@ The focused Windows owner passes all 25 selectors with exact exit 42 and no
 output after complete verification. Two builds produce byte-identical
 503,800-byte WVB values with SHA-256
 `d647180c2015c236c6b1cbbade40d2aff25959c74936174e11d2d771723addc1`.
-The direct-native profile uses the exact source-owned Foundation SHA-256
-implementation because the current backend does not implement the semantic
-hash operation and the nested scalar-interpreter carrier exceeded its retained
-text arena. No arena or ordinary value bound changes.
+The recorded producer generation uses the exact source-owned Foundation
+SHA-256 implementation because its then-current backend did not implement the
+semantic hash operation and the nested scalar-interpreter carrier exceeded its
+retained text arena. No arena or ordinary value bound changed for that
+generation.
 
 After adding the producer and its complete shared-source and hosted-cache
 routing, changed-file planning passes 31 general and 217 native routing cases.
@@ -4526,3 +4527,47 @@ checkpoint. The registry now contains 121 owners and 5,841 cases.
 Slice 8 remains in progress. Authenticated WVFC-to-semantic adaptation, actual
 foreign binding and call lowering, runtime containment, paired-host evidence,
 full Language 1.0 migration, and qualified Seed promotion remain pending.
+
+## Slice 8 native SHA-256 lowering candidate
+
+[Decision 0890](../Decisions/0890-Lower-Bytes-Sha256-Hex-In-The-Native-X64-Backend.md)
+implements the bounded native x64 candidate for semantic WVB opcode `0x7D`,
+`bytes.sha256_hex`. The operation retains the existing 4 MiB input ceiling and
+exact 64-byte lowercase-ASCII `text` result. Each occurrence contributes the
+ordinary ten-byte instruction-budget charge plus one 152-byte raw wrapper. An
+object with one or more occurrences appends one exact relocation-free
+1,640-byte helper and local `$native_sha256_hex` symbol once; an object without
+the opcode appends neither and must retain its prior WVO identity.
+
+The helper is the final ordinary code region before optional text padding. It
+adds no WVO kind, relocation, platform import, or format version. Segmented
+publication carries it through the existing code-step and resource limits, and
+the staged consumer validates its unique symbol, contiguity, relocation-free
+range, and exact bytes across every covering chunk before linking.
+
+The opcode classifier, canonical width and typed-stack accounting, descriptor
+emitter, record-provenance scanner, complete-object writer, publication cursor,
+staged readers, and explicit project closures are implemented. A read-only
+completeness audit found no additional table or consumer omission after the
+record-storage correction. The registered owner reconstructs the lowerer from
+current Windvale source and passes all eight cases on exact-current Windows in
+185.1 seconds and on local Debian 13.5 under WSL in 234,000 milliseconds. Both
+runs publish the exact summary `native SHA-256 lowering status=Passed cases=8
+kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical
+staged-corruption=Rejected`. They prove byte-identical SHA-free Return-42 WVO;
+one exact 1,640-byte oracle helper with every wrapper call targeting it; empty
+and `abc` native known answers through direct use, a `bytes` parameter, and an
+owned `text` return across a helper boundary; segmented publication and coalesced-helper
+staging acceptance with same-length corruption rejection; the wrapper's atomic
+allocation and detail-2 machine contract; a 64-byte arena application exiting
+42; and its otherwise identical 63-byte form exiting 1 with detail 2.
+
+Node syntax checking, the harness checks, diff checks, and the verification-plan
+suite pass. The plan suite covers 31 general and 224 native routing cases. The
+registered native inventory contains 122 owners and 5,849 cases in 21,412
+LF-only bytes with SHA-256
+`79c2549aa0d6ab4f123ba33b61033af6c90a6c71c2f1c0d06fd4158ac204fb87`.
+
+The Debian/WSL result is local Linux development evidence, not a paired-host CI
+qualification claim. Paired CI qualification, candidate-pin regeneration and
+promotion, and any consumer migration from Foundation SHA-256 remain pending.

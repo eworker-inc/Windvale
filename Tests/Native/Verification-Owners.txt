@@ -7,6 +7,7 @@ compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Fa
 segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
 segmented-hosted-wvb-cache|Test-Cached-Segmented-Hosted-Wvb|10|4|segmented hosted WVB cache test cases=10 status=Passed deadline-tree-termination=Passed output-bound-termination=Passed termination-failure-settle=Passed forced-failure-cleanup=Passed publication-cleanup=Passed prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed race-cleanup=Passed executable-materialization=Passed
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|Tests: 6, Passed: 6, Failed: 0
+native-sha256-lowering|Test-Native-Sha256|8|3|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected
 wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
 scripting|Test-Scripting|6|2|Tests: 6, Passed: 6, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0

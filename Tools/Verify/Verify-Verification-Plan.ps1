@@ -1185,12 +1185,25 @@ $NativeCases = @(
         )
         Suites = @(
             'segmented-compiler-toolset-reconstruction',
+            'native-sha256-lowering',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'unconsumed staging project excludes native SHA-256 owner'
+        Paths = @(
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj'
+        )
+        Suites = @(
+            'segmented-compiler-toolset-reconstruction',
+            'wv-linker-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1271,8 +1284,46 @@ $NativeCases = @(
         Name = 'segmented compiler source closure'
         Paths = @(
             'Compiler/Windvale/Native-X64-Lowering-Core.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv'
+            'Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Object.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
+            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv'
         )
+        Suites = @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-to-wvo-reconstruction',
+            'native-sha256-lowering',
+            'wvb-runner-reconstruction',
+            'wv-linker-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction',
+            'native-u64-lowering',
+            'model-provider',
+            'file-read-application',
+            'database-superblock',
+            'database-durable-commit',
+            'database-storage',
+            'wvdb-query-capability'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $false
+    },
+    @{
+        Name = 'unrelated shared lowerer source excludes native SHA-256 owner'
+        Paths = @('Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv')
         Suites = @(
             'seed',
             'segmented-compiler-toolset-reconstruction',
@@ -1350,6 +1401,22 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'native SHA-256 lowering owner'
+        Paths = @(
+            'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
+            'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj',
+            'Tests/Fixtures/Native-X64/Sha256-Native-Kat.wv',
+            'Tests/Fixtures/Native-X64/Wvb-To-Wvo-Sha256-Smoke.wv',
+            'Tools/Native/Test-Native-Sha256.cmd',
+            'Tools/Native/Test-Native-Sha256.mjs',
+            'Tools/Native/Test-Native-Sha256.sh'
+        )
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'WVB-to-WVO reconstruction owner'
         Paths = @(
             'Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd',
@@ -1367,6 +1434,7 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-to-wvo-reconstruction',
+            'native-sha256-lowering',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
@@ -1374,6 +1442,20 @@ $NativeCases = @(
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
             'lowerer-rejections'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'unconsumed lowerer project excludes native SHA-256 owner'
+        Paths = @('Projects/Compiler/Windvale-Native-X64-Lowering.wvproj')
+        Suites = @(
+            'wvb-to-wvo-reconstruction',
+            'wv-linker-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -4016,9 +4098,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 122 -or
+if ($VerificationOwnerLines.Count -ne 123 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 121-owner inventory differs.'
+    throw 'The native verification-owner header or exact 122-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -4056,7 +4138,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5841 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5849 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
