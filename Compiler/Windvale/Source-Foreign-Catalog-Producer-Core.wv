@@ -1,5 +1,6 @@
 module Compilerˉsourceˉforeignˉcatalogˉproducer profile portable;
 
+import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -189,8 +190,8 @@ fn Compilerˉsourceˉforeignˉproducerˉforeignˉrecord(
     Declarationˉordinal: u32,
     Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
 ) -> Compilerˉsourceˉforeignˉproducerˉresult {
-    let Evidence: Sourceˉdeclarations.Compilerˉsourceˉforeignˉevidence =
-        Sourceˉdeclarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    let Evidence: Admissionˉparser.Compilerˉsourceˉforeignˉevidence =
+        Admissionˉparser.Compilerˉsourceˉforeignˉdeclarationˉevidence(
             Source, Declaration
         );
     if !Evidence.Valid {

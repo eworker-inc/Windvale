@@ -19,9 +19,9 @@ const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const ACQUISITION_TIMEOUT_MILLISECONDS = 1_200_000;
 const CASE_TIMEOUT_MILLISECONDS = 120_000;
-const EXPECTED_WVB_BYTES = 623_826;
+const EXPECTED_WVB_BYTES = 634_819;
 const EXPECTED_WVB_SHA256 =
-    '0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188';
+    '7d004263b350097f8bcd82997d4210464ee2dba8937a5c0b76d32b8139f99ac1';
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzAB'];
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -531,8 +531,8 @@ async function Main() {
             'cases=28 result=42 deterministic=Verified ' +
             'four-value-output=Verified empty-on-failure=Verified ' +
             'execution=native-cached-profile-7 isolated-executions=28 ' +
-            'wvb-bytes=623826 ' +
-            'sha256=0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188\n'
+            'wvb-bytes=634819 ' +
+            'sha256=7d004263b350097f8bcd82997d4210464ee2dba8937a5c0b76d32b8139f99ac1\n'
         );
     }
 }

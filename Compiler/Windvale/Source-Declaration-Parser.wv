@@ -135,52 +135,6 @@ export record Compilerˉsourceˉdeclaration {
     Found: Sourceˉlexer.Compilerˉtokenˉkind;
 }
 
-export record Compilerˉsourceˉforeignˉevidence {
-    Valid: bool;
-    Abiˉoffset: u32;
-    Abiˉlength: u32;
-    Symbolˉoffset: u32;
-    Symbolˉlength: u32;
-}
-
-// The module-header parser owns the only platform-list grammar. The finite mask
-// is evidence for target admission; offsets remain source-relative.
-export record Compilerˉsourceˉplatformˉscope {
-    Ordinal: u32;
-    Mask: u32;
-    Offset: u32;
-    Length: u32;
-    Line: u32;
-    Column: u32;
-}
-
-export record Compilerˉsourceˉplatformˉevidence {
-    Status: Compilerˉparseˉstatus;
-    Lexicalˉstatus: Sourceˉlexer.Compilerˉlexˉstatus;
-    Scopeˉmask: u32;
-    Declaredˉscopes: u32;
-    Unknownˉscopes: u32;
-    Duplicateˉscopes: u32;
-    Failureˉordinal: u32;
-    Failureˉlength: u32;
-    Firstˉscope: Compilerˉsourceˉplatformˉscope;
-    Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope;
-    Concreteˉscope: Compilerˉsourceˉplatformˉscope;
-    Nextˉoffset: u32;
-    Nextˉline: u32;
-    Nextˉcolumn: u32;
-    Failureˉoffset: u32;
-    Failureˉline: u32;
-    Failureˉcolumn: u32;
-    Expected: Sourceˉlexer.Compilerˉtokenˉkind;
-    Found: Sourceˉlexer.Compilerˉtokenˉkind;
-}
-
-record Compilerˉsourceˉmetadataˉprefix {
-    Header: Compilerˉsourceˉheader;
-    Platforms: Compilerˉsourceˉplatformˉevidence;
-}
-
 export record Compilerˉsourceˉvariantˉfield {
     Status: Compilerˉparseˉstatus;
     Lexicalˉstatus: Sourceˉlexer.Compilerˉlexˉstatus;
@@ -3424,66 +3378,64 @@ fn Compilerˉsourceˉforeignˉlayoutˉlength(
     return Bodyˉlength;
 }
 
-export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
+export fn Compilerˉsourceˉforeignˉdeclarationˉlayoutˉlength(
     Input: bytes,
     Declaration: Compilerˉsourceˉdeclaration
-) -> Compilerˉsourceˉforeignˉevidence {
-    let Invalid: Compilerˉsourceˉforeignˉevidence =
-        Compilerˉsourceˉforeignˉevidence(false, 0u32, 0u32, 0u32, 0u32);
-    if Declaration.Status != Compilerˉparseˉstatus.Valid { return Invalid; }
+) -> u32 {
+    if Declaration.Status != Compilerˉparseˉstatus.Valid { return 0u32; }
     if Declaration.Lexicalˉstatus !=
         Sourceˉlexer.Compilerˉlexˉstatus.Valid {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Kind != Compilerˉsourceˉdeclarationˉkind.Foreign {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Bodyˉoffset != Declaration.Nextˉoffset {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Bodyˉlength != 0u32 {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Items != 3u32 {
-        return Invalid;
+        return 0u32;
     }
     if !Declaration.Hasˉeffectˉclause {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Effectˉclauseˉlength == 0u32 {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Effects != 1u32 {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Failureˉoffset != Declaration.Nextˉoffset {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Nextˉline == 0u32 {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Nextˉcolumn == 0u32 {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Failureˉline != Declaration.Nextˉline {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Failureˉcolumn != Declaration.Nextˉcolumn {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Expected != Sourceˉlexer.Compilerˉtokenˉkind.End {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Found != Sourceˉlexer.Compilerˉtokenˉkind.End {
-        return Invalid;
+        return 0u32;
     }
     let Inputˉlength: u32 = Bytesˉlength(Input);
     if Declaration.Declarationˉoffset > Inputˉlength {
-        return Invalid;
+        return 0u32;
     }
     if Declaration.Declarationˉlength >
         Inputˉlength - Declaration.Declarationˉoffset {
-        return Invalid;
+        return 0u32;
     }
     let Canonical: bytes = Compilerˉparseˉforeignˉcanonical();
     let Layoutˉlength: u32 =
@@ -3499,20 +3451,7 @@ export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
         Declaration.Effectˉclauseˉoffset,
         Declaration.Effectˉclauseˉlength
     );
-    if Layoutˉlength == 0u32 {
-        return Invalid;
-    }
-    var Unsafeˉoffset: u32 = Declaration.Declarationˉoffset;
-    if Declaration.Isˉexported {
-        Unsafeˉoffset = Unsafeˉoffset + 7u32;
-    }
-    return Compilerˉsourceˉforeignˉevidence(
-        true,
-        Unsafeˉoffset + 16u32,
-        44u32,
-        Unsafeˉoffset + Layoutˉlength - 32u32,
-        30u32
-    );
+    return Layoutˉlength;
 }
 
 export fn Compilerˉparseˉfunctionˉdeclaration(
@@ -3706,86 +3645,60 @@ export fn Compilerˉparseˉfunctionˉdeclaration(
     return Declaration;
 }
 
-fn Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-    Step: Compilerˉparseˉstep,
-    Scopeˉmask: u32,
-    Declaredˉscopes: u32,
-    Unknownˉscopes: u32,
-    Duplicateˉscopes: u32,
-    Failureˉordinal: u32,
-    Failureˉlength: u32,
-    Firstˉscope: Compilerˉsourceˉplatformˉscope,
-    Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope,
-    Concreteˉscope: Compilerˉsourceˉplatformˉscope
-) -> Compilerˉsourceˉplatformˉevidence {
-    return Compilerˉsourceˉplatformˉevidence(
-        Step.Status,
-        Step.Lexicalˉstatus,
-        Scopeˉmask,
-        Declaredˉscopes,
-        Unknownˉscopes,
-        Duplicateˉscopes,
-        Failureˉordinal,
-        Failureˉlength,
-        Firstˉscope,
-        Firstˉnonconcreteˉscope,
-        Concreteˉscope,
-        Step.Nextˉoffset,
-        Step.Nextˉline,
-        Step.Nextˉcolumn,
-        Step.Failureˉoffset,
-        Step.Failureˉline,
-        Step.Failureˉcolumn,
-        Step.Expected,
-        Step.Found
-    );
-}
-
-fn Compilerˉsourceˉplatformˉemptyˉscope(
-) -> Compilerˉsourceˉplatformˉscope {
-    return Compilerˉsourceˉplatformˉscope(
-        0u32, 0u32, 0u32, 0u32, 0u32, 0u32
-    );
-}
-
-fn Compilerˉsourceˉplatformˉscopeˉmask(
+export fn Compilerˉsourceˉplatformˉscopeˉmask(
     Input: bytes,
     Offset: u32,
     Length: u32
 ) -> u32 {
-    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
-        Input, Offset, Length, "windows"
-    ) { return 1u32; }
-    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
-        Input, Offset, Length, "linux"
-    ) { return 2u32; }
-    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
-        Input, Offset, Length, "windvale"
-    ) { return 4u32; }
-    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
-        Input, Offset, Length, "linux.x86_64.sysv_amd64_c_v1"
-    ) { return 8u32; }
+    let Inputˉlength: u32 = Bytesˉlength(Input);
+    if Offset > Inputˉlength { return 0u32; }
+    if Length > Inputˉlength - Offset { return 0u32; }
+
+    // These fixed ASCII platform names are compared as little-endian words so
+    // compiler products do not retain four static texts solely for recognition.
+    if Length == 5u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset) == 1970170220u32 &&
+        Bytesˉreadˉu8(Input, Offset + 4u32) == 120u8 {
+        return 2u32;
+    }
+    if Length == 7u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset) == 1684957559u32 &&
+        Bytesˉreadˉu8(Input, Offset + 4u32) == 111u8 &&
+        Bytesˉreadˉu8(Input, Offset + 5u32) == 119u8 &&
+        Bytesˉreadˉu8(Input, Offset + 6u32) == 115u8 {
+        return 1u32;
+    }
+    if Length == 8u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset) == 1684957559u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) == 1701601654u32 {
+        return 4u32;
+    }
+    if Length == 28u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset) == 1970170220u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32) == 947400312u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32) == 875978550u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) == 1937339182u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32) == 1835097974u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32) == 1597257316u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) == 829841251u32 {
+        return 8u32;
+    }
     return 0u32;
 }
 
-// This is the single platform-list parser used by both ordinary header
-// validation and target-admission evidence retention.
+// This is the single authoritative platform-list grammar. Admission evidence
+// may retain its already validated tokens, but it cannot change acceptance.
 export fn Compilerˉparseˉplatformˉlistˉvalidated(
     Input: bytes,
     Offset: u32,
     Line: u32,
     Column: u32
-) -> Compilerˉsourceˉplatformˉevidence {
-    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
-        Compilerˉsourceˉplatformˉemptyˉscope();
+) -> Compilerˉparseˉstep {
     let Afterˉplatform: Compilerˉparseˉstep = Compilerˉparseˉconsume(
         Input, Offset, Line, Column, Sourceˉlexer.Compilerˉtokenˉkind.Platform
     );
     if Afterˉplatform.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-            Afterˉplatform, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-            Emptyˉscope, Emptyˉscope, Emptyˉscope
-        );
+        return Afterˉplatform;
     }
 
     var Cursor: u32 = Afterˉplatform.Nextˉoffset;
@@ -3793,12 +3706,6 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
     var Currentˉcolumn: u32 = Afterˉplatform.Nextˉcolumn;
     var Scopeˉmask: u32 = 0u32;
     var Declaredˉscopes: u32 = 0u32;
-    var Unknownˉscopes: u32 = 0u32;
-    var Duplicateˉscopes: u32 = 0u32;
-    var Firstˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
-    var Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope =
-        Emptyˉscope;
-    var Concreteˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
     var Reading: bool = true;
     while Reading {
         let First: Sourceˉlexer.Compilerˉsourceˉtoken =
@@ -3809,31 +3716,15 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
             Input, Cursor, Currentˉline, Currentˉcolumn, false
         );
         if Scope.Status != Compilerˉparseˉstatus.Valid {
-            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-                Scope, Scopeˉmask, Declaredˉscopes,
-                Unknownˉscopes, Duplicateˉscopes,
-                Declaredˉscopes + 1u32,
-                0u32,
-                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
-            );
+            return Scope;
         }
         Declaredˉscopes = Declaredˉscopes + 1u32;
         let Scopeˉlength: u32 = Scope.Nextˉoffset - First.Offset;
         let Currentˉmask: u32 = Compilerˉsourceˉplatformˉscopeˉmask(
             Input, First.Offset, Scopeˉlength
         );
-        let Currentˉscope: Compilerˉsourceˉplatformˉscope =
-            Compilerˉsourceˉplatformˉscope(
-                Declaredˉscopes,
-                Currentˉmask,
-                First.Offset,
-                Scopeˉlength,
-                First.Line,
-                First.Column
-            );
-        if Firstˉscope.Ordinal == 0u32 { Firstˉscope = Currentˉscope; }
         if Declaredˉscopes > 32u32 {
-            let Limit: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+            return Compilerˉparseˉstepˉfailure(
                 Compilerˉparseˉstatus.Itemˉlimit,
                 Sourceˉlexer.Compilerˉlexˉstatus.Valid,
                 First.Offset,
@@ -3842,17 +3733,9 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
                 Sourceˉlexer.Compilerˉtokenˉkind.Semicolon,
                 First.Kind
             );
-            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-                Limit, Scopeˉmask, Declaredˉscopes,
-                Unknownˉscopes, Duplicateˉscopes,
-                Declaredˉscopes,
-                Scopeˉlength,
-                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
-            );
         }
         if Currentˉmask == 0u32 {
-            Unknownˉscopes = Unknownˉscopes + 1u32;
-            let Unknown: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+            return Compilerˉparseˉstepˉfailure(
                 Compilerˉparseˉstatus.Unknownˉplatform,
                 Sourceˉlexer.Compilerˉlexˉstatus.Valid,
                 First.Offset,
@@ -3861,40 +3744,19 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
                 Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
                 First.Kind
             );
-            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-                Unknown, Scopeˉmask, Declaredˉscopes,
-                Unknownˉscopes, Duplicateˉscopes,
-                Declaredˉscopes,
-                Scopeˉlength,
-                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
-            );
         } else {
             if (Scopeˉmask & Currentˉmask) != 0u32 {
-                Duplicateˉscopes = Duplicateˉscopes + 1u32;
-                let Duplicate: Compilerˉparseˉstep =
-                    Compilerˉparseˉstepˉfailure(
-                        Compilerˉparseˉstatus.Duplicateˉplatform,
-                        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
-                        First.Offset,
-                        First.Line,
-                        First.Column,
-                        Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
-                        First.Kind
-                    );
-                return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-                    Duplicate, Scopeˉmask, Declaredˉscopes,
-                    Unknownˉscopes, Duplicateˉscopes,
-                    Declaredˉscopes,
-                    Scopeˉlength,
-                    Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+                return Compilerˉparseˉstepˉfailure(
+                    Compilerˉparseˉstatus.Duplicateˉplatform,
+                    Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                    First.Offset,
+                    First.Line,
+                    First.Column,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                    First.Kind
                 );
             } else {
                 Scopeˉmask = Scopeˉmask | Currentˉmask;
-                if Currentˉmask == 8u32 {
-                    Concreteˉscope = Currentˉscope;
-                } else if Firstˉnonconcreteˉscope.Ordinal == 0u32 {
-                    Firstˉnonconcreteˉscope = Currentˉscope;
-                }
             }
         }
 
@@ -3908,18 +3770,10 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
             Currentˉcolumn = Separator.Nextˉcolumn;
         } else {
             if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
-                let Badˉseparator: Compilerˉparseˉstep =
-                    Compilerˉparseˉstepˉfromˉtoken(
-                        Compilerˉparseˉstatus.Expectedˉtoken,
-                        Separator,
-                        Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
-                    );
-                return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-                    Badˉseparator, Scopeˉmask, Declaredˉscopes,
-                    Unknownˉscopes, Duplicateˉscopes,
-                    Declaredˉscopes,
-                    Separator.Length,
-                    Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+                return Compilerˉparseˉstepˉfromˉtoken(
+                    Compilerˉparseˉstatus.Expectedˉtoken,
+                    Separator,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
                 );
             }
             Cursor = Separator.Nextˉoffset;
@@ -3928,35 +3782,20 @@ export fn Compilerˉparseˉplatformˉlistˉvalidated(
             Reading = false;
         }
     }
-    let Complete: Compilerˉparseˉstep = Compilerˉparseˉstepˉvalid(
+    return Compilerˉparseˉstepˉvalid(
         Cursor,
         Currentˉline,
         Currentˉcolumn,
         Compilerˉsourceˉtypeˉkind.Unknown,
         Declaredˉscopes
     );
-    return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-        Complete, Scopeˉmask, Declaredˉscopes,
-        Unknownˉscopes, Duplicateˉscopes,
-        0u32,
-        0u32,
-        Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
-    );
 }
 
 fn Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
     Name: Sourceˉlexer.Compilerˉsourceˉtoken,
-    Step: Compilerˉparseˉstep,
-    Failureˉlength: u32
-) -> Compilerˉsourceˉmetadataˉprefix {
-    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
-        Compilerˉsourceˉplatformˉemptyˉscope();
-    let Platforms: Compilerˉsourceˉplatformˉevidence =
-        Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-            Step, 0u32, 0u32, 0u32, 0u32, 0u32, Failureˉlength,
-            Emptyˉscope, Emptyˉscope, Emptyˉscope
-        );
-    let Header: Compilerˉsourceˉheader = Compilerˉsourceˉheader(
+    Step: Compilerˉparseˉstep
+) -> Compilerˉsourceˉheader {
+    return Compilerˉsourceˉheader(
         Step.Status,
         Step.Lexicalˉstatus,
         Compilerˉsourceˉprofile.None,
@@ -3971,14 +3810,13 @@ fn Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
         Step.Expected,
         Step.Found
     );
-    return Compilerˉsourceˉmetadataˉprefix(Header, Platforms);
 }
 
-fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
+export fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
     Input: bytes,
     Name: Sourceˉlexer.Compilerˉsourceˉtoken,
     Afterˉname: Compilerˉparseˉstep
-) -> Compilerˉsourceˉmetadataˉprefix {
+) -> Compilerˉsourceˉheader {
     let Afterˉmoduleˉend: Compilerˉparseˉstep = Compilerˉparseˉconsume(
         Input,
         Afterˉname.Nextˉoffset,
@@ -3988,7 +3826,7 @@ fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
     );
     if Afterˉmoduleˉend.Status != Compilerˉparseˉstatus.Valid {
         return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
-            Name, Afterˉmoduleˉend, 0u32
+            Name, Afterˉmoduleˉend
         );
     }
 
@@ -4027,9 +3865,9 @@ fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
                     Compilerˉparseˉstatus.Invalidˉprofile,
                     Profileˉtoken,
                     Sourceˉlexer.Compilerˉtokenˉkind.Identifier
-                );
+            );
             return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
-                Name, Badˉprofile, Profileˉtoken.Length
+                Name, Badˉprofile
             );
         }
         let Afterˉdeclaredˉprofile: Compilerˉparseˉstep =
@@ -4042,7 +3880,7 @@ fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
             );
         if Afterˉdeclaredˉprofile.Status != Compilerˉparseˉstatus.Valid {
             return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
-                Name, Afterˉdeclaredˉprofile, 0u32
+                Name, Afterˉdeclaredˉprofile
             );
         }
         Cursor = Afterˉdeclaredˉprofile.Nextˉoffset;
@@ -4050,11 +3888,11 @@ fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
         Currentˉcolumn = Afterˉdeclaredˉprofile.Nextˉcolumn;
     }
 
-    let Platforms: Compilerˉsourceˉplatformˉevidence =
+    let Platforms: Compilerˉparseˉstep =
         Compilerˉparseˉplatformˉlistˉvalidated(
             Input, Cursor, Currentˉline, Currentˉcolumn
         );
-    let Header: Compilerˉsourceˉheader = Compilerˉsourceˉheader(
+    return Compilerˉsourceˉheader(
         Platforms.Status,
         Platforms.Lexicalˉstatus,
         Declaredˉprofile,
@@ -4069,48 +3907,6 @@ fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
         Platforms.Expected,
         Platforms.Found
     );
-    return Compilerˉsourceˉmetadataˉprefix(Header, Platforms);
-}
-
-export fn Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
-    Input: bytes
-) -> Compilerˉsourceˉplatformˉevidence {
-    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
-        Compilerˉsourceˉplatformˉemptyˉscope();
-    let Afterˉmodule: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-        Input, 0u32, 1u32, 1u32, Sourceˉlexer.Compilerˉtokenˉkind.Module
-    );
-    if Afterˉmodule.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-            Afterˉmodule, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-            Emptyˉscope, Emptyˉscope, Emptyˉscope
-        );
-    }
-    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Input,
-            Afterˉmodule.Nextˉoffset,
-            Afterˉmodule.Nextˉline,
-            Afterˉmodule.Nextˉcolumn
-        );
-    let Afterˉname: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-        Input,
-        Afterˉmodule.Nextˉoffset,
-        Afterˉmodule.Nextˉline,
-        Afterˉmodule.Nextˉcolumn,
-        Sourceˉlexer.Compilerˉtokenˉkind.Identifier
-    );
-    if Afterˉname.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
-            Afterˉname, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
-            Emptyˉscope, Emptyˉscope, Emptyˉscope
-        );
-    }
-    let Prefix: Compilerˉsourceˉmetadataˉprefix =
-        Compilerˉparseˉmetadataˉprefixˉafterˉname(
-            Input, Name, Afterˉname
-        );
-    return Prefix.Platforms;
 }
 
 export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
@@ -4118,18 +3914,18 @@ export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
     Name: Sourceˉlexer.Compilerˉsourceˉtoken,
     Afterˉname: Compilerˉparseˉstep
 ) -> Compilerˉsourceˉheader {
-    let Prefix: Compilerˉsourceˉmetadataˉprefix =
+    let Prefix: Compilerˉsourceˉheader =
         Compilerˉparseˉmetadataˉprefixˉafterˉname(
             Input, Name, Afterˉname
         );
-    if Prefix.Header.Status != Compilerˉparseˉstatus.Valid {
-        return Prefix.Header;
+    if Prefix.Status != Compilerˉparseˉstatus.Valid {
+        return Prefix;
     }
 
-    var Cursor: u32 = Prefix.Header.Nextˉoffset;
-    var Currentˉline: u32 = Prefix.Header.Nextˉline;
-    var Currentˉcolumn: u32 = Prefix.Header.Nextˉcolumn;
-    let Declaredˉprofile: Compilerˉsourceˉprofile = Prefix.Header.Profile;
+    var Cursor: u32 = Prefix.Nextˉoffset;
+    var Currentˉline: u32 = Prefix.Nextˉline;
+    var Currentˉcolumn: u32 = Prefix.Nextˉcolumn;
+    let Declaredˉprofile: Compilerˉsourceˉprofile = Prefix.Profile;
 
     let Afterˉauthority: Compilerˉparseˉstep = Compilerˉparseˉconsume(
         Input, Cursor, Currentˉline, Currentˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Authority

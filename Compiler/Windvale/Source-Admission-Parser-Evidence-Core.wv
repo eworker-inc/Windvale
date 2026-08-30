@@ -1,0 +1,415 @@
+module Compilerˉsourceˉadmissionˉparserˉevidence profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+
+export record Compilerˉsourceˉforeignˉevidence {
+    Valid: bool;
+    Abiˉoffset: u32;
+    Abiˉlength: u32;
+    Symbolˉoffset: u32;
+    Symbolˉlength: u32;
+}
+
+export record Compilerˉsourceˉplatformˉscope {
+    Ordinal: u32;
+    Mask: u32;
+    Offset: u32;
+    Length: u32;
+    Line: u32;
+    Column: u32;
+}
+
+export record Compilerˉsourceˉplatformˉevidence {
+    Status: Sourceˉdeclarations.Compilerˉparseˉstatus;
+    Lexicalˉstatus: Sourceˉlexer.Compilerˉlexˉstatus;
+    Scopeˉmask: u32;
+    Declaredˉscopes: u32;
+    Unknownˉscopes: u32;
+    Duplicateˉscopes: u32;
+    Failureˉordinal: u32;
+    Failureˉlength: u32;
+    Firstˉscopeˉordinal: u32;
+    Firstˉscopeˉmask: u32;
+    Firstˉscopeˉoffset: u32;
+    Firstˉscopeˉlength: u32;
+    Firstˉscopeˉline: u32;
+    Firstˉscopeˉcolumn: u32;
+    Firstˉnonconcreteˉscopeˉordinal: u32;
+    Firstˉnonconcreteˉscopeˉmask: u32;
+    Firstˉnonconcreteˉscopeˉoffset: u32;
+    Firstˉnonconcreteˉscopeˉlength: u32;
+    Firstˉnonconcreteˉscopeˉline: u32;
+    Firstˉnonconcreteˉscopeˉcolumn: u32;
+    Concreteˉscopeˉordinal: u32;
+    Concreteˉscopeˉmask: u32;
+    Concreteˉscopeˉoffset: u32;
+    Concreteˉscopeˉlength: u32;
+    Concreteˉscopeˉline: u32;
+    Concreteˉscopeˉcolumn: u32;
+    Nextˉoffset: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Expected: Sourceˉlexer.Compilerˉtokenˉkind;
+    Found: Sourceˉlexer.Compilerˉtokenˉkind;
+}
+
+export fn Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    Input: bytes,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
+) -> Compilerˉsourceˉforeignˉevidence {
+    let Layoutˉlength: u32 =
+        Sourceˉdeclarations.Compilerˉsourceˉforeignˉdeclarationˉlayoutˉlength(
+            Input, Declaration
+        );
+    if Layoutˉlength == 0u32 {
+        return Compilerˉsourceˉforeignˉevidence(
+            false, 0u32, 0u32, 0u32, 0u32
+        );
+    }
+    var Unsafeˉoffset: u32 = Declaration.Declarationˉoffset;
+    if Declaration.Isˉexported {
+        Unsafeˉoffset = Unsafeˉoffset + 7u32;
+    }
+    return Compilerˉsourceˉforeignˉevidence(
+        true,
+        Unsafeˉoffset + 16u32,
+        44u32,
+        Unsafeˉoffset + Layoutˉlength - 32u32,
+        30u32
+    );
+}
+
+fn Compilerˉsourceˉplatformˉemptyˉscope(
+) -> Compilerˉsourceˉplatformˉscope {
+    return Compilerˉsourceˉplatformˉscope(
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+    Step: Sourceˉdeclarations.Compilerˉparseˉstep,
+    Scopeˉmask: u32,
+    Declaredˉscopes: u32,
+    Unknownˉscopes: u32,
+    Duplicateˉscopes: u32,
+    Failureˉordinal: u32,
+    Failureˉlength: u32,
+    Firstˉscope: Compilerˉsourceˉplatformˉscope,
+    Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope,
+    Concreteˉscope: Compilerˉsourceˉplatformˉscope
+) -> Compilerˉsourceˉplatformˉevidence {
+    return Compilerˉsourceˉplatformˉevidence(
+        Step.Status,
+        Step.Lexicalˉstatus,
+        Scopeˉmask,
+        Declaredˉscopes,
+        Unknownˉscopes,
+        Duplicateˉscopes,
+        Failureˉordinal,
+        Failureˉlength,
+        Firstˉscope.Ordinal,
+        Firstˉscope.Mask,
+        Firstˉscope.Offset,
+        Firstˉscope.Length,
+        Firstˉscope.Line,
+        Firstˉscope.Column,
+        Firstˉnonconcreteˉscope.Ordinal,
+        Firstˉnonconcreteˉscope.Mask,
+        Firstˉnonconcreteˉscope.Offset,
+        Firstˉnonconcreteˉscope.Length,
+        Firstˉnonconcreteˉscope.Line,
+        Firstˉnonconcreteˉscope.Column,
+        Concreteˉscope.Ordinal,
+        Concreteˉscope.Mask,
+        Concreteˉscope.Offset,
+        Concreteˉscope.Length,
+        Concreteˉscope.Line,
+        Concreteˉscope.Column,
+        Step.Nextˉoffset,
+        Step.Nextˉline,
+        Step.Nextˉcolumn,
+        Step.Failureˉoffset,
+        Step.Failureˉline,
+        Step.Failureˉcolumn,
+        Step.Expected,
+        Step.Found
+    );
+}
+
+fn Compilerˉsourceˉplatformˉevidenceˉfromˉheader(
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Failureˉlength: u32
+) -> Compilerˉsourceˉplatformˉevidence {
+    return Compilerˉsourceˉplatformˉevidence(
+        Header.Status,
+        Header.Lexicalˉstatus,
+        0u32, 0u32, 0u32, 0u32, 0u32, Failureˉlength,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Header.Nextˉoffset,
+        Header.Nextˉline,
+        Header.Nextˉcolumn,
+        Header.Failureˉoffset,
+        Header.Failureˉline,
+        Header.Failureˉcolumn,
+        Header.Expected,
+        Header.Found
+    );
+}
+
+fn Compilerˉsourceˉplatformˉheaderˉmatchesˉstep(
+    Header: Sourceˉdeclarations.Compilerˉsourceˉheader,
+    Step: Sourceˉdeclarations.Compilerˉparseˉstep
+) -> bool {
+    return Header.Status == Step.Status &&
+        Header.Lexicalˉstatus == Step.Lexicalˉstatus &&
+        Header.Nextˉoffset == Step.Nextˉoffset &&
+        Header.Nextˉline == Step.Nextˉline &&
+        Header.Nextˉcolumn == Step.Nextˉcolumn &&
+        Header.Failureˉoffset == Step.Failureˉoffset &&
+        Header.Failureˉline == Step.Failureˉline &&
+        Header.Failureˉcolumn == Step.Failureˉcolumn &&
+        Header.Expected == Step.Expected && Header.Found == Step.Found;
+}
+
+fn Compilerˉparseˉplatformˉevidenceˉvalidated(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Validation: Sourceˉdeclarations.Compilerˉparseˉstep
+) -> Compilerˉsourceˉplatformˉevidence {
+    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
+        Compilerˉsourceˉplatformˉemptyˉscope();
+    let Afterˉplatform: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉconsume(
+            Input, Offset, Line, Column,
+            Sourceˉlexer.Compilerˉtokenˉkind.Platform
+        );
+    if Afterˉplatform.Status !=
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Validation, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+
+    var Cursor: u32 = Afterˉplatform.Nextˉoffset;
+    var Currentˉline: u32 = Afterˉplatform.Nextˉline;
+    var Currentˉcolumn: u32 = Afterˉplatform.Nextˉcolumn;
+    var Scopeˉmask: u32 = 0u32;
+    var Declaredˉscopes: u32 = 0u32;
+    var Unknownˉscopes: u32 = 0u32;
+    var Duplicateˉscopes: u32 = 0u32;
+    var Firstˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
+    var Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope =
+        Emptyˉscope;
+    var Concreteˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
+    var Reading: bool = true;
+    while Reading {
+        let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Scope: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉqualifiedˉname(
+                Input, Cursor, Currentˉline, Currentˉcolumn, false
+            );
+        if Scope.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Validation, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes + 1u32, 0u32,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        Declaredˉscopes = Declaredˉscopes + 1u32;
+        let Scopeˉlength: u32 = Scope.Nextˉoffset - First.Offset;
+        let Currentˉmask: u32 =
+            Sourceˉdeclarations.Compilerˉsourceˉplatformˉscopeˉmask(
+                Input, First.Offset, Scopeˉlength
+            );
+        let Currentˉscope: Compilerˉsourceˉplatformˉscope =
+            Compilerˉsourceˉplatformˉscope(
+                Declaredˉscopes,
+                Currentˉmask,
+                First.Offset,
+                Scopeˉlength,
+                First.Line,
+                First.Column
+            );
+        if Firstˉscope.Ordinal == 0u32 { Firstˉscope = Currentˉscope; }
+        if Declaredˉscopes > 32u32 {
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Validation, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes, Scopeˉlength,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        if Currentˉmask == 0u32 {
+            Unknownˉscopes = Unknownˉscopes + 1u32;
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Validation, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes, Scopeˉlength,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        if (Scopeˉmask & Currentˉmask) != 0u32 {
+            Duplicateˉscopes = Duplicateˉscopes + 1u32;
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Validation, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes, Scopeˉlength,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        Scopeˉmask = Scopeˉmask | Currentˉmask;
+        if Currentˉmask == 8u32 {
+            Concreteˉscope = Currentˉscope;
+        } else if Firstˉnonconcreteˉscope.Ordinal == 0u32 {
+            Firstˉnonconcreteˉscope = Currentˉscope;
+        }
+
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input, Scope.Nextˉoffset, Scope.Nextˉline, Scope.Nextˉcolumn
+            );
+        if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Cursor = Separator.Nextˉoffset;
+            Currentˉline = Separator.Nextˉline;
+            Currentˉcolumn = Separator.Nextˉcolumn;
+        } else {
+            if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
+                return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                    Validation, Scopeˉmask, Declaredˉscopes,
+                    Unknownˉscopes, Duplicateˉscopes,
+                    Declaredˉscopes, Separator.Length,
+                    Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+                );
+            }
+            Reading = false;
+        }
+    }
+    return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+        Validation, Scopeˉmask, Declaredˉscopes,
+        Unknownˉscopes, Duplicateˉscopes,
+        0u32, 0u32,
+        Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+    );
+}
+
+export fn Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+    Input: bytes
+) -> Compilerˉsourceˉplatformˉevidence {
+    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
+        Compilerˉsourceˉplatformˉemptyˉscope();
+    let Afterˉmodule: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉconsume(
+            Input, 0u32, 1u32, 1u32,
+            Sourceˉlexer.Compilerˉtokenˉkind.Module
+        );
+    if Afterˉmodule.Status !=
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Afterˉmodule, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input,
+            Afterˉmodule.Nextˉoffset,
+            Afterˉmodule.Nextˉline,
+            Afterˉmodule.Nextˉcolumn
+        );
+    let Afterˉname: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉconsume(
+            Input,
+            Afterˉmodule.Nextˉoffset,
+            Afterˉmodule.Nextˉline,
+            Afterˉmodule.Nextˉcolumn,
+            Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+        );
+    if Afterˉname.Status !=
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Afterˉname, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+    let Prefix: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉmetadataˉprefixˉafterˉname(
+            Input, Name, Afterˉname
+        );
+    let Afterˉmoduleˉend: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉconsume(
+            Input,
+            Afterˉname.Nextˉoffset,
+            Afterˉname.Nextˉline,
+            Afterˉname.Nextˉcolumn,
+            Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+        );
+    if Afterˉmoduleˉend.Status !=
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉheader(Prefix, 0u32);
+    }
+
+    var Cursor: u32 = Afterˉmoduleˉend.Nextˉoffset;
+    var Currentˉline: u32 = Afterˉmoduleˉend.Nextˉline;
+    var Currentˉcolumn: u32 = Afterˉmoduleˉend.Nextˉcolumn;
+    let Metadataˉform: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Cursor, Currentˉline, Currentˉcolumn
+        );
+    if Metadataˉform.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile {
+        let Profileˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input,
+                Metadataˉform.Nextˉoffset,
+                Metadataˉform.Nextˉline,
+                Metadataˉform.Nextˉcolumn
+            );
+        if Prefix.Status ==
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Invalidˉprofile {
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉheader(
+                Prefix, Profileˉtoken.Length
+            );
+        }
+        let Afterˉprofile: Sourceˉdeclarations.Compilerˉparseˉstep =
+            Sourceˉdeclarations.Compilerˉparseˉconsume(
+                Input,
+                Profileˉtoken.Nextˉoffset,
+                Profileˉtoken.Nextˉline,
+                Profileˉtoken.Nextˉcolumn,
+                Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+            );
+        if Afterˉprofile.Status !=
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉheader(
+                Prefix, 0u32
+            );
+        }
+        Cursor = Afterˉprofile.Nextˉoffset;
+        Currentˉline = Afterˉprofile.Nextˉline;
+        Currentˉcolumn = Afterˉprofile.Nextˉcolumn;
+    }
+    let Validation: Sourceˉdeclarations.Compilerˉparseˉstep =
+        Sourceˉdeclarations.Compilerˉparseˉplatformˉlistˉvalidated(
+            Input, Cursor, Currentˉline, Currentˉcolumn
+        );
+    if !Compilerˉsourceˉplatformˉheaderˉmatchesˉstep(
+        Prefix, Validation
+    ) {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉheader(Prefix, 0u32);
+    }
+    return Compilerˉparseˉplatformˉevidenceˉvalidated(
+        Input, Cursor, Currentˉline, Currentˉcolumn, Validation
+    );
+}

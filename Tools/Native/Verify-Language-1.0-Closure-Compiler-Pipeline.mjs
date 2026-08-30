@@ -17,23 +17,26 @@ const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const TEMPORARY_PREFIX = 'closure-compiler-pipeline-';
 
-if (process.argv.length !== 11) {
+if (process.argv.length !== 13) {
     Reject(
         'Usage: node Verify-Language-1.0-Closure-Compiler-Pipeline.mjs ' +
-        '<admitter> <analyzer> <emitter> <verifier> <runner> ' +
-        '<source-lock> <source-lock-sha256> <source-profile> <scratch-directory>',
+        '<admitter> <validator> <analyzer> <emitter> <verifier> <runner> ' +
+        '<source-lock> <source-lock-sha256> <source-profile> <target.wvtd> ' +
+        '<scratch-directory>',
     );
 }
 
 const Admitter = resolve(process.argv[2]);
-const Analyzer = resolve(process.argv[3]);
-const Emitter = resolve(process.argv[4]);
-const Verifier = resolve(process.argv[5]);
-const Runner = resolve(process.argv[6]);
-const Sourceˉlock = resolve(process.argv[7]);
-const Sourceˉlockˉsha256 = process.argv[8];
-const Sourceˉprofile = resolve(process.argv[9]);
-const Scratch = resolve(process.argv[10]);
+const Validator = resolve(process.argv[3]);
+const Analyzer = resolve(process.argv[4]);
+const Emitter = resolve(process.argv[5]);
+const Verifier = resolve(process.argv[6]);
+const Runner = resolve(process.argv[7]);
+const Sourceˉlock = resolve(process.argv[8]);
+const Sourceˉlockˉsha256 = process.argv[9];
+const Sourceˉprofile = resolve(process.argv[10]);
+const Target = resolve(process.argv[11]);
+const Scratch = resolve(process.argv[12]);
 const Splitˉcompiler = join(SCRIPT_DIRECTORY, 'Run-Split-Compiler.mjs');
 
 if (!/^[0-9a-f]{64}$/u.test(Sourceˉlockˉsha256)) {
@@ -41,12 +44,14 @@ if (!/^[0-9a-f]{64}$/u.test(Sourceˉlockˉsha256)) {
 }
 for (const [Candidate, Label, Maximum] of [
     [Admitter, 'admitter', 134_217_728],
+    [Validator, 'validator', 134_217_728],
     [Analyzer, 'analyzer', 134_217_728],
     [Emitter, 'emitter', 134_217_728],
     [Verifier, 'verifier', 134_217_728],
     [Runner, 'runner', 134_217_728],
     [Sourceˉlock, 'source lock', 65_536],
     [Sourceˉprofile, 'source profile', 65_536],
+    [Target, 'target descriptor', 320],
     [Splitˉcompiler, 'split compiler driver', 1_048_576],
 ]) {
     await Requireˉordinaryˉfile(Candidate, Label, Maximum);
@@ -60,7 +65,9 @@ const Accepted = [
         Bytes: 451,
         Sha256: '8000144daaab85c10698e6205729f7de6798f866f69ed32861cf1e2c8daafc03',
         Compileˉreport:
-            'source admission status=Published modules=1 source-bytes=354\n' +
+            'source admission status=Published wvss-bytes=354 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=354 manifest-bytes=104 ' +
             'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -72,7 +79,9 @@ const Accepted = [
         Bytes: 451,
         Sha256: 'b95e5bd8e20584f73f55f34ff9de0e5a9fe03ab9118bf48adba70b1078a17cca',
         Compileˉreport:
-            'source admission status=Published modules=1 source-bytes=354\n' +
+            'source admission status=Published wvss-bytes=354 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=354 manifest-bytes=104 ' +
             'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -84,7 +93,9 @@ const Accepted = [
         Bytes: 453,
         Sha256: 'd8c6632dc52a8337af4fac4711a09c8fd4089174351f278fe8debfc51304f7dd',
         Compileˉreport:
-            'source admission status=Published modules=1 source-bytes=358\n' +
+            'source admission status=Published wvss-bytes=358 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=358 manifest-bytes=104 ' +
             'binding-bytes=304 wir-bytes=644\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -193,6 +204,7 @@ async function Runˉsplit(Sourceˉname, Product) {
     return Runˉbounded(process.execPath, [
         Splitˉcompiler,
         Admitter,
+        Validator,
         Analyzer,
         Emitter,
         '--source-input-lock',
@@ -200,6 +212,8 @@ async function Runˉsplit(Sourceˉname, Product) {
         Sourceˉlockˉsha256,
         '--source-profile',
         Sourceˉprofile,
+        '--target-descriptor',
+        Target,
         Source,
         Product,
     ]);

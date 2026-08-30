@@ -1,0 +1,1155 @@
+module Compilerˉsourceˉforeignˉcatalogˉauthentication profile portable;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+import Compilerˉsourceˉtarget as Target;
+
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID: u32 = 0u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_SOURCE: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_HEADER: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_DECLARATION_LIMIT: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_MISSING_RECORD: u32 = 4u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_EXTRA_RECORD: u32 = 5u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_MODULE: u32 = 6u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_DECLARATION: u32 = 7u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_FLAGS: u32 = 8u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_DECLARATION_SPAN: u32 = 9u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_NAME_SPAN: u32 = 10u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_ABI_EVIDENCE: u32 = 11u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SYMBOL_EVIDENCE: u32 = 12u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SIGNATURE_EVIDENCE: u32 = 13u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_EFFECT_EVIDENCE: u32 = 14u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SIGNATURE_DIGEST: u32 = 15u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_PROFILE: u32 = 16u32;
+export const COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET: u32 = 17u32;
+
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_END: u32 = 0u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER: u32 = 1u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_STRING: u32 = 2u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RUNE: u32 = 3u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON: u32 = 4u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACE: u32 = 5u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACE: u32 = 6u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_PAREN: u32 = 7u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_PAREN: u32 = 8u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACKET: u32 = 9u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACKET: u32 = 10u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_COMMA: u32 = 11u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_DOT: u32 = 12u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_OTHER: u32 = 13u32;
+const COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD: u32 = 14u32;
+
+export record Compilerˉsourceˉforeignˉauthenticationˉresult {
+    Status: u32;
+    Targetˉstatus: u32;
+    Failureˉmodule: u32;
+    Failureˉdeclaration: u32;
+    Failureˉoffset: u32;
+    Foreignˉcount: u32;
+}
+
+record Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    Kind: u32;
+    Offset: u32;
+    Length: u32;
+    Nextˉoffset: u32;
+}
+
+record Compilerˉsourceˉforeignˉauthenticationˉheader {
+    Status: u32;
+    Failureˉoffset: u32;
+    Nextˉoffset: u32;
+    Isˉsystem: bool;
+    Platformˉmask: u32;
+    Platformˉcount: u32;
+    Unknownˉplatforms: u32;
+    Platformˉoffset: u32;
+}
+
+record Compilerˉsourceˉforeignˉauthenticationˉboundary {
+    Valid: bool;
+    Failureˉoffset: u32;
+    Nextˉoffset: u32;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉfailure(
+    Status: u32,
+    Targetˉstatus: u32,
+    Module: u32,
+    Declaration: u32,
+    Offset: u32,
+    Foreignˉcount: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉresult {
+    return Compilerˉsourceˉforeignˉauthenticationˉresult(
+        Status, Targetˉstatus, Module, Declaration, Offset, Foreignˉcount
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+    Kind: u32,
+    Offset: u32,
+    Length: u32,
+    Nextˉoffset: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    return Compilerˉsourceˉforeignˉauthenticationˉtoken(
+        Kind, Offset, Length, Nextˉoffset
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉwhitespace(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Offset: u32
+) -> u32 {
+    if Offset >= Length { return 0u32; }
+    let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Wvss, Base + Offset));
+    if First == 32u32 || First == 10u32 || First == 9u32 ||
+        First == 11u32 || First == 12u32 || First == 13u32 {
+        return 1u32;
+    }
+    if Length - Offset >= 2u32 && First == 194u32 {
+        let Twoˉbyteˉsecond: u32 = U32ˉfromˉu8(
+            Bytesˉreadˉu8(Wvss, Base + Offset + 1u32)
+        );
+        if Twoˉbyteˉsecond == 133u32 || Twoˉbyteˉsecond == 160u32 {
+            return 2u32;
+        }
+    }
+    if Length - Offset < 3u32 { return 0u32; }
+    let Second: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Wvss, Base + Offset + 1u32)
+    );
+    let Third: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Wvss, Base + Offset + 2u32)
+    );
+    if First == 225u32 && Second == 154u32 && Third == 128u32 {
+        return 3u32;
+    }
+    if First == 226u32 {
+        if Second == 128u32 {
+            if Third >= 128u32 && Third <= 138u32 { return 3u32; }
+            if Third == 168u32 || Third == 169u32 || Third == 175u32 {
+                return 3u32;
+            }
+        }
+        if Second == 129u32 && Third == 159u32 { return 3u32; }
+    }
+    if First == 227u32 && Second == 128u32 && Third == 128u32 {
+        return 3u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉidentifierˉstart(
+    Value: u8
+) -> bool {
+    let Character: u32 = U32ˉfromˉu8(Value);
+    if Character >= 97u32 && Character <= 122u32 { return true; }
+    if Character >= 65u32 && Character <= 90u32 { return true; }
+    return Character == 95u32;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉidentifierˉpart(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Offset: u32
+) -> u32 {
+    if Offset >= Length { return 0u32; }
+    let Character: u32 = U32ˉfromˉu8(
+        Bytesˉreadˉu8(Wvss, Base + Offset)
+    );
+    if Character >= 97u32 && Character <= 122u32 { return 1u32; }
+    if Character >= 48u32 && Character <= 57u32 { return 1u32; }
+    if Character >= 65u32 && Character <= 90u32 { return 1u32; }
+    if Character == 95u32 { return 1u32; }
+    if Character == 203u32 && Length - Offset >= 2u32 {
+        if Bytesˉreadˉu8(Wvss, Base + Offset + 1u32) == 137u8 {
+            return 2u32;
+        }
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉquoted(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Offset: u32,
+    Quote: u8,
+    Kind: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    var Cursor: u32 = Offset + 1u32;
+    while Cursor < Length {
+        let Value: u8 = Bytesˉreadˉu8(Wvss, Base + Cursor);
+        if Value == Quote {
+            return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+                Kind, Offset, Cursor + 1u32 - Offset, Cursor + 1u32
+            );
+        }
+        if Value == 10u8 || Value == 13u8 {
+            return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+                COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD,
+                Offset,
+                Cursor - Offset,
+                Cursor
+            );
+        }
+        if Value == 92u8 {
+            if Cursor + 1u32 >= Length {
+                return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+                    COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD,
+                    Offset,
+                    Length - Offset,
+                    Length
+                );
+            }
+            Cursor = Cursor + 2u32;
+        } else {
+            Cursor = Cursor + 1u32;
+        }
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+        COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD,
+        Offset,
+        Length - Offset,
+        Length
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉnext(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Offset: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    var Cursor: u32 = Offset;
+    var Skipping: bool = true;
+    while Skipping {
+        let White: u32 = Compilerˉsourceˉforeignˉauthenticationˉwhitespace(
+            Wvss, Base, Length, Cursor
+        );
+        if White != 0u32 {
+            Cursor = Cursor + White;
+        } else if Cursor < Length && Length - Cursor >= 2u32 &&
+            Bytesˉreadˉu8(Wvss, Base + Cursor) == 47u8 &&
+            Bytesˉreadˉu8(Wvss, Base + Cursor + 1u32) == 47u8 {
+            Cursor = Cursor + 2u32;
+            var Inˉcomment: bool = true;
+            while Inˉcomment {
+                if Cursor >= Length ||
+                    Bytesˉreadˉu8(Wvss, Base + Cursor) == 10u8 {
+                    Inˉcomment = false;
+                } else {
+                    Cursor = Cursor + 1u32;
+                }
+            }
+        } else {
+            Skipping = false;
+        }
+    }
+    if Cursor >= Length {
+        return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+            COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_END,
+            Length,
+            0u32,
+            Length
+        );
+    }
+    let First: u8 = Bytesˉreadˉu8(Wvss, Base + Cursor);
+    if Compilerˉsourceˉforeignˉauthenticationˉidentifierˉstart(First) {
+        var End: u32 = Cursor + 1u32;
+        var Reading: bool = true;
+        while Reading {
+            let Part: u32 =
+                Compilerˉsourceˉforeignˉauthenticationˉidentifierˉpart(
+                    Wvss, Base, Length, End
+                );
+            if Part == 0u32 {
+                Reading = false;
+            } else {
+                End = End + Part;
+            }
+        }
+        return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+            COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER,
+            Cursor,
+            End - Cursor,
+            End
+        );
+    }
+    if First == 34u8 {
+        return Compilerˉsourceˉforeignˉauthenticationˉquoted(
+            Wvss, Base, Length, Cursor, 34u8,
+            COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_STRING
+        );
+    }
+    if First == 39u8 {
+        return Compilerˉsourceˉforeignˉauthenticationˉquoted(
+            Wvss, Base, Length, Cursor, 39u8,
+            COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RUNE
+        );
+    }
+    var Kind: u32 = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_OTHER;
+    if First == 59u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON; }
+    if First == 123u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACE; }
+    if First == 125u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACE; }
+    if First == 40u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_PAREN; }
+    if First == 41u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_PAREN; }
+    if First == 91u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACKET; }
+    if First == 93u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACKET; }
+    if First == 44u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_COMMA; }
+    if First == 46u8 { Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_DOT; }
+    if U32ˉfromˉu8(First) >= 128u32 {
+        Kind = COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD;
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+        Kind, Cursor, 1u32, Cursor + 1u32
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+    Wvss: bytes,
+    Base: u32,
+    Token: Compilerˉsourceˉforeignˉauthenticationˉtoken,
+    Expected: bytes
+) -> bool {
+    let Expectedˉlength: u32 = Bytesˉlength(Expected);
+    if Token.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER ||
+        Token.Length != Expectedˉlength {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Expectedˉlength {
+        if Bytesˉreadˉu8(Wvss, Base + Token.Offset + Index) !=
+            Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉexpectˉword(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Offset: u32,
+    Expected: text
+) -> Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    let Token: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Offset
+        );
+    if Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+        Wvss, Base, Token, Textˉtoˉutf8(Expected)
+    ) {
+        return Token;
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉtokenˉmake(
+        COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD,
+        Token.Offset,
+        Token.Length,
+        Token.Nextˉoffset
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+    Offset: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉheader {
+    return Compilerˉsourceˉforeignˉauthenticationˉheader(
+        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_HEADER,
+        Offset,
+        Offset,
+        false,
+        0u32,
+        0u32,
+        0u32,
+        Offset
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉreadˉheader(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉheader {
+    let Module: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉexpectˉword(
+            Wvss, Base, Length, 0u32, "module"
+        );
+    if Module.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Module.Offset);
+    }
+    let Name: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Module.Nextˉoffset
+        );
+    if Name.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Name.Offset);
+    }
+    let Moduleˉend: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Name.Nextˉoffset
+        );
+    if Moduleˉend.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Moduleˉend.Offset);
+    }
+    let Profile: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉexpectˉword(
+            Wvss, Base, Length, Moduleˉend.Nextˉoffset, "profile"
+        );
+    if Profile.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Profile.Offset);
+    }
+    let Profileˉvalue: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Profile.Nextˉoffset
+        );
+    if Profileˉvalue.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+            Profileˉvalue.Offset
+        );
+    }
+    let Isˉsystem: bool =
+        Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+            Wvss, Base, Profileˉvalue, Textˉtoˉutf8("system")
+        );
+    let Profileˉend: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Profileˉvalue.Nextˉoffset
+        );
+    if Profileˉend.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+            Profileˉend.Offset
+        );
+    }
+    let Platform: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉexpectˉword(
+            Wvss, Base, Length, Profileˉend.Nextˉoffset, "platform"
+        );
+    if Platform.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Platform.Offset);
+    }
+
+    var Cursor: u32 = Platform.Nextˉoffset;
+    var Platformˉmask: u32 = 0u32;
+    var Platformˉcount: u32 = 0u32;
+    var Unknownˉplatforms: u32 = 0u32;
+    var Firstˉplatformˉoffset: u32 = Platform.Offset;
+    var Readingˉplatforms: bool = true;
+    while Readingˉplatforms {
+        let Scope: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+            Compilerˉsourceˉforeignˉauthenticationˉnext(
+                Wvss, Base, Length, Cursor
+            );
+        if Scope.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER {
+            return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Scope.Offset);
+        }
+        if Platformˉcount == 0u32 { Firstˉplatformˉoffset = Scope.Offset; }
+        Platformˉcount = Platformˉcount + 1u32;
+        if Platformˉcount > 32u32 {
+            return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(Scope.Offset);
+        }
+        var Scopeˉknown: bool = false;
+        var Scopeˉcursor: u32 = Scope.Nextˉoffset;
+        if Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+            Wvss, Base, Scope, Textˉtoˉutf8("windows")
+        ) {
+            Scopeˉknown = true;
+            Platformˉmask = Platformˉmask |
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDOWS;
+        } else if Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+            Wvss, Base, Scope, Textˉtoˉutf8("windvale")
+        ) {
+            Scopeˉknown = true;
+            Platformˉmask = Platformˉmask |
+                Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_WINDVALE;
+        } else if Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+            Wvss, Base, Scope, Textˉtoˉutf8("linux")
+        ) {
+            let Afterˉlinux: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+                Compilerˉsourceˉforeignˉauthenticationˉnext(
+                    Wvss, Base, Length, Scopeˉcursor
+                );
+            if Afterˉlinux.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_DOT {
+                let Architecture: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+                    Compilerˉsourceˉforeignˉauthenticationˉnext(
+                        Wvss, Base, Length, Afterˉlinux.Nextˉoffset
+                    );
+                let Secondˉdot: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+                    Compilerˉsourceˉforeignˉauthenticationˉnext(
+                        Wvss, Base, Length, Architecture.Nextˉoffset
+                    );
+                let Abi: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+                    Compilerˉsourceˉforeignˉauthenticationˉnext(
+                        Wvss, Base, Length, Secondˉdot.Nextˉoffset
+                    );
+                if Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+                        Wvss, Base, Architecture, Textˉtoˉutf8("x86_64")
+                    ) && Secondˉdot.Kind ==
+                        COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_DOT &&
+                    Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+                        Wvss, Base, Abi,
+                        Textˉtoˉutf8("sysv_amd64_c_v1")
+                    ) {
+                    Scopeˉknown = true;
+                    Platformˉmask = Platformˉmask |
+                        Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX_X86_64_SYSV_AMD64_C_V1;
+                    Scopeˉcursor = Abi.Nextˉoffset;
+                }
+            } else {
+                Scopeˉknown = true;
+                Platformˉmask = Platformˉmask |
+                    Target.COMPILER_SOURCE_TARGET_PLATFORM_MASK_LINUX;
+            }
+        }
+        if !Scopeˉknown { Unknownˉplatforms = Unknownˉplatforms + 1u32; }
+        let Separator: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+            Compilerˉsourceˉforeignˉauthenticationˉnext(
+                Wvss, Base, Length, Scopeˉcursor
+            );
+        if Separator.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_COMMA {
+            Cursor = Separator.Nextˉoffset;
+        } else if Separator.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON {
+            Cursor = Separator.Nextˉoffset;
+            Readingˉplatforms = false;
+        } else {
+            return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+                Separator.Offset
+            );
+        }
+    }
+
+    let Authority: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉexpectˉword(
+            Wvss, Base, Length, Cursor, "authority"
+        );
+    if Authority.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+            Authority.Offset
+        );
+    }
+    let Authorityˉvalue: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Authority.Nextˉoffset
+        );
+    if Authorityˉvalue.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_IDENTIFIER {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+            Authorityˉvalue.Offset
+        );
+    }
+    let Authorityˉend: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Authorityˉvalue.Nextˉoffset
+        );
+    if Authorityˉend.Kind != COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON {
+        return Compilerˉsourceˉforeignˉauthenticationˉbadˉheader(
+            Authorityˉend.Offset
+        );
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉheader(
+        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID,
+        0u32,
+        Authorityˉend.Nextˉoffset,
+        Isˉsystem,
+        Platformˉmask,
+        Platformˉcount,
+        Unknownˉplatforms,
+        Firstˉplatformˉoffset
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+    Wvss: bytes,
+    Base: u32,
+    Token: Compilerˉsourceˉforeignˉauthenticationˉtoken,
+    Expected: text
+) -> bool {
+    return Compilerˉsourceˉforeignˉauthenticationˉtokenˉequals(
+        Wvss, Base, Token, Textˉtoˉutf8(Expected)
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉforeignˉstart(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    First: Compilerˉsourceˉforeignˉauthenticationˉtoken
+) -> bool {
+    var Token: Compilerˉsourceˉforeignˉauthenticationˉtoken = First;
+    if Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+        Wvss, Base, Token, "export"
+    ) {
+        Token = Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Token.Nextˉoffset
+        );
+    }
+    if Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+        Wvss, Base, Token, "unsafe"
+    ) {
+        Token = Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Token.Nextˉoffset
+        );
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+        Wvss, Base, Token, "foreign"
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉbracedˉdeclaration(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    First: Compilerˉsourceˉforeignˉauthenticationˉtoken
+) -> bool {
+    let Second: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉafterˉdeclarationˉprefix(
+            Wvss, Base, Length, First
+        );
+    let Third: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉafterˉdeclarationˉprefix(
+            Wvss, Base, Length, Second
+        );
+    let Token: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉafterˉdeclarationˉprefix(
+            Wvss, Base, Length, Third
+        );
+    return Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "fn"
+        ) || Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "record"
+        ) || Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "enum"
+        ) || Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "variant"
+        );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉafterˉdeclarationˉprefix(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    Token: Compilerˉsourceˉforeignˉauthenticationˉtoken
+) -> Compilerˉsourceˉforeignˉauthenticationˉtoken {
+    if Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "export"
+        ) || Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "unsafe"
+        ) || Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+            Wvss, Base, Token, "async"
+        ) {
+        return Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Length, Token.Nextˉoffset
+        );
+    }
+    return Token;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉordinaryˉend(
+    Wvss: bytes,
+    Base: u32,
+    Length: u32,
+    First: Compilerˉsourceˉforeignˉauthenticationˉtoken
+) -> Compilerˉsourceˉforeignˉauthenticationˉboundary {
+    let Braced: bool =
+        Compilerˉsourceˉforeignˉauthenticationˉbracedˉdeclaration(
+            Wvss, Base, Length, First
+        );
+    var Cursor: u32 = First.Offset;
+    var Braces: u32 = 0u32;
+    var Parentheses: u32 = 0u32;
+    var Brackets: u32 = 0u32;
+    var Sawˉbrace: bool = false;
+    while Cursor < Length {
+        let Token: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+            Compilerˉsourceˉforeignˉauthenticationˉnext(
+                Wvss, Base, Length, Cursor
+            );
+        if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD ||
+            Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_END {
+            return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                false, Token.Offset, Token.Nextˉoffset
+            );
+        }
+        if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_PAREN {
+            Parentheses = Parentheses + 1u32;
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_PAREN {
+            if Parentheses == 0u32 {
+                return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                    false, Token.Offset, Token.Nextˉoffset
+                );
+            }
+            Parentheses = Parentheses - 1u32;
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACKET {
+            Brackets = Brackets + 1u32;
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACKET {
+            if Brackets == 0u32 {
+                return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                    false, Token.Offset, Token.Nextˉoffset
+                );
+            }
+            Brackets = Brackets - 1u32;
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_LEFT_BRACE {
+            Braces = Braces + 1u32;
+            Sawˉbrace = true;
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_RIGHT_BRACE {
+            if Braces == 0u32 {
+                return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                    false, Token.Offset, Token.Nextˉoffset
+                );
+            }
+            Braces = Braces - 1u32;
+            if Braced && Sawˉbrace && Braces == 0u32 &&
+                Parentheses == 0u32 && Brackets == 0u32 {
+                return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                    true, 0u32, Token.Nextˉoffset
+                );
+            }
+        } else if Token.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_SEMICOLON &&
+            !Braced && Braces == 0u32 && Parentheses == 0u32 &&
+            Brackets == 0u32 {
+            return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+                true, 0u32, Token.Nextˉoffset
+            );
+        }
+        Cursor = Token.Nextˉoffset;
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉboundary(
+        false, Length, Length
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉspanˉequals(
+    Wvss: bytes,
+    Base: u32,
+    Sourceˉoffset: u32,
+    Expected: bytes
+) -> bool {
+    let Expectedˉlength: u32 = Bytesˉlength(Expected);
+    var Index: u32 = 0u32;
+    while Index < Expectedˉlength {
+        if Bytesˉreadˉu8(Wvss, Base + Sourceˉoffset + Index) !=
+            Bytesˉreadˉu8(Expected, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉdigestˉequals(
+    Wvss: bytes,
+    Base: u32,
+    Signatureˉoffset: u32,
+    Signatureˉlength: u32,
+    Wvfc: bytes,
+    Digestˉoffset: u32
+) -> bool {
+    let Signature: bytes = Bytesˉslice(
+        Wvss,
+        Base + Signatureˉoffset,
+        Signatureˉlength
+    );
+    let Hex: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Signature));
+    let Decoded: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(Hex);
+    if Decoded.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+        Bytesˉlength(Decoded.Value) != 32u32 {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        if Bytesˉreadˉu8(Decoded.Value, Index) !=
+            Bytesˉreadˉu8(Wvfc, Digestˉoffset + Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+    Status: u32,
+    Module: u32,
+    Declaration: u32,
+    Offset: u32,
+    Foreignˉcount: u32
+) -> Compilerˉsourceˉforeignˉauthenticationˉresult {
+    return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+        Status,
+        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+        Module,
+        Declaration,
+        Offset,
+        Foreignˉcount
+    );
+}
+
+fn Compilerˉsourceˉforeignˉauthenticationˉrecord(
+    Wvss: bytes,
+    Base: u32,
+    Sourceˉlength: u32,
+    Wvfc: bytes,
+    Recordˉindex: u32,
+    Module: u32,
+    Declaration: u32,
+    Declarationˉstart: u32,
+    Canonical: bytes,
+    Trailing: bytes,
+    Paper: bytes
+) -> Compilerˉsourceˉforeignˉauthenticationˉresult {
+    let Record: u32 = 48u32 + Recordˉindex * 96u32;
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record) != Module {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_MODULE,
+            Module, Declaration, Record, Recordˉindex
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 4u32) != Declaration {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_DECLARATION,
+            Module, Declaration, Record + 4u32, Recordˉindex
+        );
+    }
+    let First: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+        Compilerˉsourceˉforeignˉauthenticationˉnext(
+            Wvss, Base, Sourceˉlength, Declarationˉstart
+        );
+    let Exported: bool = Compilerˉsourceˉforeignˉauthenticationˉisˉword(
+        Wvss, Base, First, "export"
+    );
+    var Expectedˉflags: u32 = 1u32;
+    var Unsafeˉoffset: u32 = Declarationˉstart;
+    if Exported {
+        Expectedˉflags = 3u32;
+        Unsafeˉoffset = Unsafeˉoffset + 7u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 8u32) != Expectedˉflags {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_FLAGS,
+            Module, Declaration, Record + 8u32, Recordˉindex
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 12u32) !=
+        Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1 {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_ABI_EVIDENCE,
+            Module, Declaration, Record + 12u32, Recordˉindex
+        );
+    }
+
+    var Bodyˉlength: u32 = Bytesˉlength(Canonical);
+    let Claimedˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Wvfc, Record + 20u32
+    );
+    var Layoutˉknown: bool = false;
+    if Claimedˉlength == Bodyˉlength ||
+        (Exported && Claimedˉlength == Bodyˉlength + 7u32) {
+        if Unsafeˉoffset <= Sourceˉlength &&
+            Bodyˉlength <= Sourceˉlength - Unsafeˉoffset &&
+            Compilerˉsourceˉforeignˉauthenticationˉspanˉequals(
+                Wvss, Base, Unsafeˉoffset, Canonical
+            ) {
+            Layoutˉknown = true;
+        }
+    }
+    if !Layoutˉknown {
+        Bodyˉlength = Bytesˉlength(Trailing);
+        if (Claimedˉlength == Bodyˉlength ||
+                (Exported && Claimedˉlength == Bodyˉlength + 7u32)) &&
+            Unsafeˉoffset <= Sourceˉlength &&
+            Bodyˉlength <= Sourceˉlength - Unsafeˉoffset &&
+            Compilerˉsourceˉforeignˉauthenticationˉspanˉequals(
+                Wvss, Base, Unsafeˉoffset, Trailing
+            ) {
+            Layoutˉknown = true;
+        }
+    }
+    if !Layoutˉknown {
+        Bodyˉlength = Bytesˉlength(Paper);
+        if (Claimedˉlength == Bodyˉlength ||
+                (Exported && Claimedˉlength == Bodyˉlength + 7u32)) &&
+            Unsafeˉoffset <= Sourceˉlength &&
+            Bodyˉlength <= Sourceˉlength - Unsafeˉoffset &&
+            Compilerˉsourceˉforeignˉauthenticationˉspanˉequals(
+                Wvss, Base, Unsafeˉoffset, Paper
+            ) {
+            Layoutˉknown = true;
+        }
+    }
+    if !Layoutˉknown ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 16u32) != Declarationˉstart ||
+        Claimedˉlength != Bodyˉlength + (Unsafeˉoffset - Declarationˉstart) {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_DECLARATION_SPAN,
+            Module, Declaration, Record + 16u32, Recordˉindex
+        );
+    }
+
+    let Nameˉoffset: u32 = Unsafeˉoffset + 65u32;
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 24u32) != Nameˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 28u32) != 21u32 {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_NAME_SPAN,
+            Module, Declaration, Record + 24u32, Recordˉindex
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 32u32) !=
+            Unsafeˉoffset + 16u32 ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 36u32) != 44u32 {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_ABI_EVIDENCE,
+            Module, Declaration, Record + 32u32, Recordˉindex
+        );
+    }
+    let Symbolˉoffset: u32 = Unsafeˉoffset + Bodyˉlength - 32u32;
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 40u32) != Symbolˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 44u32) != 30u32 {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SYMBOL_EVIDENCE,
+            Module, Declaration, Record + 40u32, Recordˉindex
+        );
+    }
+    let Effectˉoffset: u32 = Unsafeˉoffset + Bodyˉlength - 54u32;
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 56u32) != Effectˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 60u32) != 17u32 {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_EFFECT_EVIDENCE,
+            Module, Declaration, Record + 56u32, Recordˉindex
+        );
+    }
+    let Signatureˉoffset: u32 = Nameˉoffset - 3u32;
+    let Signatureˉlength: u32 =
+        Effectˉoffset + 17u32 - Signatureˉoffset;
+    if Bytesˉreadˉu32ˉlittle(Wvfc, Record + 48u32) != Signatureˉoffset ||
+        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 52u32) != Signatureˉlength {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SIGNATURE_EVIDENCE,
+            Module, Declaration, Record + 48u32, Recordˉindex
+        );
+    }
+    if !Compilerˉsourceˉforeignˉauthenticationˉdigestˉequals(
+        Wvss, Base, Signatureˉoffset, Signatureˉlength,
+        Wvfc, Record + 64u32
+    ) {
+        return Compilerˉsourceˉforeignˉauthenticationˉrecordˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_SIGNATURE_DIGEST,
+            Module, Declaration, Record + 64u32, Recordˉindex
+        );
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉresult(
+        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID,
+        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+        0u32,
+        0u32,
+        0u32,
+        Recordˉindex + 1u32
+    );
+}
+
+export fn Compilerˉauthenticateˉsourceˉforeignˉcatalog(
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes
+) -> Compilerˉsourceˉforeignˉauthenticationˉresult {
+    let Targetˉresult: Target.Compilerˉsourceˉtargetˉdescriptorˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉdescriptor(Wvtd);
+    if Targetˉresult.Status != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET,
+            Targetˉresult.Status,
+            0u32,
+            0u32,
+            Targetˉresult.Failureˉoffset,
+            0u32
+        );
+    }
+    let Modules: u32 = Bytesˉreadˉu32ˉlittle(Wvss, 8u32);
+    let Catalogˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, 12u32);
+    let Canonical: bytes = Textˉtoˉutf8(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    let Trailing: bytes = Textˉtoˉutf8(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";"
+    );
+    let Paper: bytes = Textˉtoˉutf8(
+        "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";"
+    );
+    var Recordˉindex: u32 = 0u32;
+    var Module: u32 = 0u32;
+    while Module < Modules {
+        let Entry: u32 = 16u32 + Module * 20u32;
+        let Base: u32 = Bytesˉreadˉu32ˉlittle(Wvss, Entry);
+        let Sourceˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Wvss, Entry + 4u32
+        );
+        let Header: Compilerˉsourceˉforeignˉauthenticationˉheader =
+            Compilerˉsourceˉforeignˉauthenticationˉreadˉheader(
+                Wvss, Base, Sourceˉlength
+            );
+        if Header.Status != COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID {
+            return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                Header.Status,
+                Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                Module,
+                0u32,
+                Header.Failureˉoffset,
+                Recordˉindex
+            );
+        }
+        let Platforms: Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence =
+            Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence(
+                Header.Platformˉmask,
+                Header.Platformˉcount,
+                Header.Unknownˉplatforms,
+                Header.Platformˉoffset,
+                0u32
+            );
+        let Platformˉstatus: u32 =
+            Target.Compilerˉsourceˉtargetˉadmitˉplatforms(
+                Targetˉresult.Value, Platforms
+            );
+        if Platformˉstatus != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+            return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET,
+                Platformˉstatus,
+                Module,
+                0u32,
+                Header.Platformˉoffset,
+                Recordˉindex
+            );
+        }
+        var Cursor: u32 = Header.Nextˉoffset;
+        var Declaration: u32 = 0u32;
+        var Reading: bool = true;
+        while Reading {
+            let First: Compilerˉsourceˉforeignˉauthenticationˉtoken =
+                Compilerˉsourceˉforeignˉauthenticationˉnext(
+                    Wvss, Base, Sourceˉlength, Cursor
+                );
+            if First.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_END {
+                Reading = false;
+            } else if First.Kind == COMPILER_SOURCE_FOREIGN_AUTH_TOKEN_BAD {
+                return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                    COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_SOURCE,
+                    Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                    Module,
+                    Declaration,
+                    First.Offset,
+                    Recordˉindex
+                );
+            } else {
+                if Declaration >= 4096u32 {
+                    return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_DECLARATION_LIMIT,
+                        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                        Module,
+                        Declaration,
+                        First.Offset,
+                        Recordˉindex
+                    );
+                }
+                if Compilerˉsourceˉforeignˉauthenticationˉforeignˉstart(
+                    Wvss, Base, Sourceˉlength, First
+                ) {
+                    if !Header.Isˉsystem {
+                        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_PROFILE,
+                            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                            Module,
+                            Declaration,
+                            First.Offset,
+                            Recordˉindex
+                        );
+                    }
+                    let Targetˉstatus: u32 =
+                        Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
+                            Targetˉresult.Value, Platforms
+                        );
+                    if Targetˉstatus != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+                        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET,
+                            Targetˉstatus,
+                            Module,
+                            Declaration,
+                            Header.Platformˉoffset,
+                            Recordˉindex
+                        );
+                    }
+                    if Recordˉindex >= Catalogˉcount {
+                        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_MISSING_RECORD,
+                            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                            Module,
+                            Declaration,
+                            First.Offset,
+                            Recordˉindex
+                        );
+                    }
+                    let Authenticated:
+                        Compilerˉsourceˉforeignˉauthenticationˉresult =
+                        Compilerˉsourceˉforeignˉauthenticationˉrecord(
+                            Wvss,
+                            Base,
+                            Sourceˉlength,
+                            Wvfc,
+                            Recordˉindex,
+                            Module,
+                            Declaration,
+                            First.Offset,
+                            Canonical,
+                            Trailing,
+                            Paper
+                        );
+                    if Authenticated.Status !=
+                        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID {
+                        return Authenticated;
+                    }
+                    let Record: u32 = 48u32 + Recordˉindex * 96u32;
+                    Cursor = Bytesˉreadˉu32ˉlittle(Wvfc, Record + 16u32) +
+                        Bytesˉreadˉu32ˉlittle(Wvfc, Record + 20u32);
+                    Recordˉindex = Recordˉindex + 1u32;
+                } else {
+                    let Boundary:
+                        Compilerˉsourceˉforeignˉauthenticationˉboundary =
+                        Compilerˉsourceˉforeignˉauthenticationˉordinaryˉend(
+                            Wvss, Base, Sourceˉlength, First
+                        );
+                    if !Boundary.Valid {
+                        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+                            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_SOURCE,
+                            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                            Module,
+                            Declaration,
+                            Boundary.Failureˉoffset,
+                            Recordˉindex
+                        );
+                    }
+                    Cursor = Boundary.Nextˉoffset;
+                }
+                Declaration = Declaration + 1u32;
+            }
+        }
+        Module = Module + 1u32;
+    }
+    if Recordˉindex != Catalogˉcount {
+        return Compilerˉsourceˉforeignˉauthenticationˉfailure(
+            COMPILER_SOURCE_FOREIGN_AUTH_STATUS_EXTRA_RECORD,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Modules,
+            0u32,
+            48u32 + Recordˉindex * 96u32,
+            Recordˉindex
+        );
+    }
+    return Compilerˉsourceˉforeignˉauthenticationˉresult(
+        COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID,
+        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+        0u32,
+        0u32,
+        0u32,
+        Recordˉindex
+    );
+}

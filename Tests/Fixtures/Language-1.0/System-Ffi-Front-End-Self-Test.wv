@@ -1,5 +1,6 @@
 module Languageˉoneˉsystemˉffiˉfrontˉendˉselfˉtest profile hosted;
 
+import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉlexer as Lexer;
 import Compilerˉsourceˉset as Sourceˉset;
@@ -59,8 +60,8 @@ fn Forgedˉeffectˉcountˉisˉrejected() -> bool {
             Lexer.Compilerˉtokenˉkind.End,
             Lexer.Compilerˉtokenˉkind.End
         );
-    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
-        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    let Evidence: Admissionˉparser.Compilerˉsourceˉforeignˉevidence =
+        Admissionˉparser.Compilerˉsourceˉforeignˉdeclarationˉevidence(
             Source, Forged
         );
     return !Evidence.Valid;
@@ -83,8 +84,8 @@ fn Caseˉkeyword() -> bool {
 fn Caseˉcanonical() -> bool {
     let Value: Declarations.Compilerˉsourceˉdeclaration = Parse(Canonical());
     let Changed: bytes = Textˉtoˉutf8(Changedˉeffect());
-    let Rejected: Declarations.Compilerˉsourceˉforeignˉevidence =
-        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    let Rejected: Admissionˉparser.Compilerˉsourceˉforeignˉevidence =
+        Admissionˉparser.Compilerˉsourceˉforeignˉdeclarationˉevidence(
             Changed, Value
         );
     return Value.Status == Declarations.Compilerˉparseˉstatus.Valid &&
@@ -100,8 +101,8 @@ fn Caseˉevidence() -> bool {
         Lexer.Compilerˉlexˉnextˉafterˉscan(Source, 0u32, 1u32, 1u32);
     let Declaration: Declarations.Compilerˉsourceˉdeclaration =
         Declarations.Compilerˉparseˉforeignˉdeclaration(Source, First);
-    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
-        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    let Evidence: Admissionˉparser.Compilerˉsourceˉforeignˉevidence =
+        Admissionˉparser.Compilerˉsourceˉforeignˉdeclarationˉevidence(
             Source, Declaration
         );
     return Evidence.Valid && Evidence.Abiˉlength == 44u32 &&
@@ -193,8 +194,8 @@ fn Caseˉsystem() -> bool {
         Declarations.Compilerˉparseˉforeignˉdeclaration(
             Source, First
         );
-    let Evidence: Declarations.Compilerˉsourceˉforeignˉevidence =
-        Declarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+    let Evidence: Admissionˉparser.Compilerˉsourceˉforeignˉevidence =
+        Admissionˉparser.Compilerˉsourceˉforeignˉdeclarationˉevidence(
             Source, Declaration
         );
     return Declarations.Compilerˉsourceˉforeignˉprofileˉisˉallowed(

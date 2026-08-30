@@ -160,6 +160,13 @@ the hashes record historical measurement only and are not active pins.
 
 This is local Windows development evidence, not paired-host qualification.
 
+Decision 0893 implements the later complete product without changing this
+leaf: `Compilerˉsourceˉadmissionˉauthentication` composes the leaf's success
+with an independent source/catalog/target scan, and the separately built
+`Windvale-Compiler-Source-Authenticator.wvproj` exposes that composition as
+`wvauth`. The complete product has its own measured ceiling and identity; it is
+not part of this leaf's fixed 262,144-byte capacity contract.
+
 ## Consequences
 
 WVAE can be published without consuming the analyzer's retained WVIR margin or
@@ -176,9 +183,8 @@ removal. No such integration or qualification is claimed.
 
 ## Reconsideration triggers
 
-Reconsider the product geometry if complete source/catalog authentication
-approaches either 262,144-byte product ceiling, duplicates a complete producer
-parser, or cannot retain bounded work and diagnostics. A later design must
-choose a separately bounded segmented validator or a new evidence version; it
-must not widen the analyzer, introduce a forgeable certificate, or fall back to
-Foundation or host hashing.
+Reconsider the leaf geometry if its structural/digest implementation approaches
+either 262,144-byte ceiling. Reconsider the separate complete product if
+source/catalog authentication duplicates a complete producer parser or cannot
+retain bounded work and diagnostics. Neither path may widen the analyzer,
+introduce a forgeable certificate, or fall back to Foundation or host hashing.

@@ -1,5 +1,6 @@
 windvale-project 2
 root "Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv"
+source "Compiler/Windvale/Source-Admission-Parser-Evidence-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"

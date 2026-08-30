@@ -77,7 +77,7 @@ verify_file "$wvb" 482767 \
     >"$temporary_directory/Stage.out" 2>"$temporary_directory/Stage.err" ||
     report_failure Stage
 grep -Fqx \
-    'native x64 staging status=Complete object-bytes=5899132 chunks=13 manifest-bytes=180' \
+    'native x64 staging status=Complete object-bytes=5899132 chunks=11 manifest-bytes=156' \
     "$temporary_directory/Stage.out" || report_failure Stage
 
 "$repository_root/Tools/Native/Link-Staged-Compiler-Wvo.sh" \
@@ -85,7 +85,7 @@ grep -Fqx \
     >"$temporary_directory/Link.out" 2>"$temporary_directory/Link.err" ||
     report_failure Link
 grep -Fqx \
-    'segmented compiler image staging status=Complete image-bytes=5889164 entry-offset=150541 chunks=9 manifest-bytes=136' \
+    'segmented compiler image staging status=Complete image-bytes=5889164 entry-offset=150541 chunks=7 manifest-bytes=112' \
     "$temporary_directory/Link.out" || report_failure Link
 
 "$repository_root/Tools/Native/Transport-Compiler-Image.sh" \

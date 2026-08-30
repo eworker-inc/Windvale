@@ -4,6 +4,7 @@ import {
     readFileSync,
     realpathSync,
     unlinkSync,
+    writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,18 +24,21 @@ const INVALID_RESOURCE =
     'failure-module=0 related-module=0 function=0 offset=291 ' +
     'line=12 column=20\n';
 
-if (process.argv.length !== 6) {
+if (process.argv.length !== 8) {
     process.stderr.write(
         'Usage: node Tools/Native/Verify-Language-1.0-Using-Wir.mjs ' +
-        '<admitter> <analyzer> <emitter> <work-directory>\n',
+        '<admitter> <validator> <analyzer> <emitter> <target.wvtd> ' +
+        '<work-directory>\n',
     );
     process.exit(64);
 }
 
 const Admitter = path.resolve(process.argv[2]);
-const Analyzer = path.resolve(process.argv[3]);
-const Emitter = path.resolve(process.argv[4]);
-const Work = path.resolve(process.argv[5]);
+const Validator = path.resolve(process.argv[3]);
+const Analyzer = path.resolve(process.argv[4]);
+const Emitter = path.resolve(process.argv[5]);
+const Target = path.resolve(process.argv[6]);
+const Work = path.resolve(process.argv[7]);
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
 const Profileˉroot = path.join(
@@ -93,8 +97,10 @@ const Cases = [
 ];
 
 Requireˉordinaryˉfile(Admitter, MAXIMUM_TOOL_BYTES, 'admitter');
+Requireˉordinaryˉfile(Validator, MAXIMUM_TOOL_BYTES, 'validator');
 Requireˉordinaryˉfile(Analyzer, MAXIMUM_TOOL_BYTES, 'analyzer');
 Requireˉordinaryˉfile(Emitter, MAXIMUM_TOOL_BYTES, 'emitter');
+Requireˉordinaryˉfile(Target, 320, 'target descriptor');
 Requireˉordinaryˉfile(Sourceˉlock, MAXIMUM_INPUT_BYTES, 'source lock');
 Requireˉordinaryˉfile(Sourceˉprofile, MAXIMUM_INPUT_BYTES, 'source profile');
 Requireˉordinaryˉdirectory(Work, 'work directory');
@@ -108,31 +114,55 @@ try {
     for (const Case of Cases) {
         const Fixture = path.join(Fixtureˉroot, Case.fixture);
         const Prefix = path.join(Work, Case.name);
+        const Input = `${Prefix}-input.wvss`;
         const Source = `${Prefix}.wvss`;
+        const Analyzedˉsource = `${Prefix}-analysis.wvss`;
+        const Admittedˉtarget = `${Prefix}.wvtd`;
+        const Catalog = `${Prefix}.wvfc`;
+        const Evidence = `${Prefix}.wvae`;
         const Manifest = `${Prefix}.wvca`;
         const Bindings = `${Prefix}.wvlb`;
         const Wir = `${Prefix}.wvir`;
         const Product = `${Prefix}.wvb`;
-        Created.push(Source, Manifest, Bindings, Wir, Product);
+        Created.push(
+            Input, Source, Analyzedˉsource, Admittedˉtarget, Catalog, Evidence,
+            Manifest, Bindings, Wir, Product,
+        );
         Requireˉordinaryˉfile(Fixture, MAXIMUM_INPUT_BYTES, Case.fixture);
+
+        writeFileSync(
+            Input, Constructˉsourceˉset([Fixture, ...Dependencies]),
+            { flag: 'wx' },
+        );
 
         Requireˉsuccess(
             Run(Admitter, [
                 '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
                 '--source-profile', Sourceˉprofile,
-                Fixture, ...Dependencies, Source,
+                '--target-descriptor', Target,
+                '--source-set', Input,
+                Source, Admittedˉtarget, Catalog, Evidence,
             ]),
             'source admission status=Published ',
             `${Case.name} admission`,
         );
+        Requireˉsuccess(
+            Run(Validator, [
+                Evidence, Source, Admittedˉtarget, Catalog,
+                Sourceˉlock, Sourceˉprofile,
+            ]),
+            'wvauth status=Accepted ',
+            `${Case.name} authentication`,
+        );
         const Analysis = Run(Analyzer, [
-            '--admitted-source-set', Source,
-            Source, Manifest, Bindings, Wir,
+            '--internal-source-set', Source,
+            Analyzedˉsource, Manifest, Bindings, Wir,
         ]);
         if (Case.analysisRejection !== undefined) {
             Requireˉrejection(
                 Analysis, Case.analysisRejection,
-                `${Case.name} analysis`, Manifest, Bindings, Wir,
+                `${Case.name} analysis`,
+                Analyzedˉsource, Manifest, Bindings, Wir,
             );
             continue;
         }
@@ -140,13 +170,18 @@ try {
             Analysis, 'source analysis status=Published ',
             `${Case.name} analysis`,
         );
+        if (!readFileSync(Analyzedˉsource).equals(readFileSync(Source))) {
+            Reject(`${Case.name} analysis republished a different source set.`);
+        }
         Requireˉordinaryˉfile(Wir, MAXIMUM_INPUT_BYTES, 'using WVIR');
         if (Case.emissionRejection === undefined) {
             Inspectˉreleases(readFileSync(Wir), Case.releases, Case.name);
             Releases += Case.releases.length;
         }
 
-        const Emission = Run(Emitter, [Source, Manifest, Bindings, Wir, Product]);
+        const Emission = Run(Emitter, [
+            Analyzedˉsource, Manifest, Bindings, Wir, Product,
+        ]);
         if (Case.emissionRejection !== undefined) {
             Requireˉrejection(
                 Emission, Case.emissionRejection,
@@ -173,6 +208,29 @@ try {
             if (Error?.code !== 'ENOENT') throw Error;
         }
     }
+}
+
+function Constructˉsourceˉset(Paths) {
+    const Sources = Paths.map(Candidate => readFileSync(Candidate));
+    const Headerˉbytes = 16 + Sources.length * 8;
+    const Payloadˉbytes = Sources.reduce((Total, Source) => Total + Source.length, 0);
+    if (Sources.length < 1 || Sources.length > 64 ||
+        Headerˉbytes + Payloadˉbytes > MAXIMUM_INPUT_BYTES) {
+        Reject('The verifier source closure is outside the canonical WVSS bound.');
+    }
+    const Result = Buffer.alloc(Headerˉbytes + Payloadˉbytes);
+    Result.write('WVSS', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt32LE(Sources.length, 8);
+    Result.writeUInt32LE(Sources.length * 8, 12);
+    let Offset = Headerˉbytes;
+    Sources.forEach((Source, Index) => {
+        Result.writeUInt32LE(Offset, 16 + Index * 8);
+        Result.writeUInt32LE(Source.length, 20 + Index * 8);
+        Source.copy(Result, Offset);
+        Offset += Source.length;
+    });
+    return Result;
 }
 
 function Inspectˉreleases(Input, Expected, Label) {

@@ -54,6 +54,14 @@ used as a proxy for that identity. Therefore Project 2's semantically irrelevant
 directive order never changes source-module meaning or successful WVB bytes. The
 version-3 family prevents a pre-fix path-ordered checkpoint from being reused.
 
+On a miss, the coordinator passes those root-first canonical source paths to
+the retained descriptorless Project 2 Analyzer route. The Analyzer owns its
+bounded reads and publishes WVSS 1 beside WVCA, WVLB, and WVIR. The coordinator
+does not construct an "admitted" WVSS, invoke the removed public
+`--admitted-source-set` option, or enter the private authenticated Language 1.0
+sequence. Project 2 remains development-only and its Analyzer precheck rejects a
+`System` profile plus every platform or foreign declaration before analysis.
+
 The emission cache uses namespace `project-split-wvb-optimized-v3`, binds both
 producer identities and the same closure, and records the exact analysis key
 beside the WVB size and hash. The fixed optimized target therefore participates
@@ -103,8 +111,10 @@ analyzer/emitter reconstruction and fixed point.
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
 complete counterpart, then forces a producer-identity failure and proves that
-no temporary checkpoint directory remains. It deliberately does not rebuild
-three large compiler products already covered by the Language 1.0 front door.
+no temporary checkpoint directory remains. Its cache sentinel also executes
+instrumented producers and proves the root-first raw Project 2 argument and
+WVSS/WVCA/WVLB/WVIR output order. It deliberately does not rebuild three large
+compiler products already covered by the Language 1.0 front door.
 Compiler analysis/emission core changes select that broader semantic gate once;
 split adapter, identity, and cache changes select this focused owner. Full
 storage, OS, complete native, and paired-host qualification remain final

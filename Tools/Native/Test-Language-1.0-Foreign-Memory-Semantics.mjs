@@ -17,8 +17,8 @@ const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SEMANTIC_SELECTORS = [...'abcdeghijklmnopqrstuvwxyzABCD'];
 const EXPECTED_PRODUCT = {
-    bytes: 147_372,
-    sha256: '7937f9558a97ec5408f79b2871c9611a838eed16e07ae7acf9ccecaedac06055'
+    bytes: 147_912,
+    sha256: '1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003'
 };
 
 function Reject(Message) {

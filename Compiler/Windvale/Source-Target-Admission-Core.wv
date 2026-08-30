@@ -1,5 +1,6 @@
 module Compilerˉsourceˉtargetˉadmission profile portable;
 
+import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
 import Compilerˉsourceˉforeignˉcatalogˉproducer as Foreignˉproducer;
@@ -199,7 +200,7 @@ fn Compilerˉsourceˉtargetˉadmissionˉscanˉfailure(
 fn Compilerˉsourceˉtargetˉadmissionˉplatformˉparseˉresult(
     Module: u32,
     Originˉoffset: u32,
-    Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence,
+    Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence,
     Status: u32,
     Targetˉstatus: u32
 ) -> Compilerˉsourceˉtargetˉadmissionˉresult {
@@ -223,7 +224,11 @@ fn Compilerˉsourceˉtargetˉadmissionˉplatformˉparseˉresult(
 fn Compilerˉsourceˉtargetˉadmissionˉscopeˉresult(
     Module: u32,
     Originˉoffset: u32,
-    Scope: Sourceˉdeclarations.Compilerˉsourceˉplatformˉscope,
+    Scopeˉordinal: u32,
+    Scopeˉoffset: u32,
+    Scopeˉlength: u32,
+    Scopeˉline: u32,
+    Scopeˉcolumn: u32,
     Status: u32,
     Targetˉstatus: u32,
     Catalogˉstatus: u32
@@ -231,11 +236,11 @@ fn Compilerˉsourceˉtargetˉadmissionˉscopeˉresult(
     return Compilerˉsourceˉtargetˉadmissionˉresult(
         Status,
         Module,
-        Originˉoffset + Scope.Offset,
-        Scope.Length,
-        Scope.Line,
-        Scope.Column,
-        Scope.Ordinal,
+        Originˉoffset + Scopeˉoffset,
+        Scopeˉlength,
+        Scopeˉline,
+        Scopeˉcolumn,
+        Scopeˉordinal,
         Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
         Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
         Sourceˉlexer.Compilerˉtokenˉkind.End,
@@ -246,14 +251,14 @@ fn Compilerˉsourceˉtargetˉadmissionˉscopeˉresult(
 }
 
 fn Compilerˉsourceˉtargetˉadmissionˉevidence(
-    Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence
+    Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence
 ) -> Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
     return Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence(
         Evidence.Scopeˉmask,
         Evidence.Declaredˉscopes,
         Evidence.Unknownˉscopes,
-        Evidence.Concreteˉscope.Offset,
-        Evidence.Concreteˉscope.Length
+        Evidence.Concreteˉscopeˉoffset,
+        Evidence.Concreteˉscopeˉlength
     );
 }
 
@@ -312,8 +317,8 @@ export fn Compilerˉsourceˉtargetˉadmitˉsourceˉplatforms(
     while Module < Scan.Modules {
         let View: Sourceˉset.Compilerˉsourceˉsetˉview =
             Sourceˉset.Compilerˉsourceˉsetˉmodule(Wvss, Scan, Module);
-        let Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence =
-            Sourceˉdeclarations.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+        let Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence =
+            Admissionˉparser.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
                 View.Source
             );
         if Evidence.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid ||
@@ -337,7 +342,11 @@ export fn Compilerˉsourceˉtargetˉadmitˉsourceˉplatforms(
             return Compilerˉsourceˉtargetˉadmissionˉscopeˉresult(
                 Module,
                 View.Originˉoffset,
-                Evidence.Firstˉscope,
+                Evidence.Firstˉscopeˉordinal,
+                Evidence.Firstˉscopeˉoffset,
+                Evidence.Firstˉscopeˉlength,
+                Evidence.Firstˉscopeˉline,
+                Evidence.Firstˉscopeˉcolumn,
                 COMPILER_SOURCE_TARGET_ADMISSION_STATUS_TARGET,
                 Admissionˉstatus,
                 Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
@@ -385,8 +394,8 @@ fn Compilerˉsourceˉtargetˉadmitˉforeignˉcatalogˉvalidated(
                 Catalogˉstatus
             );
         }
-        let Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence =
-            Sourceˉdeclarations.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+        let Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence =
+            Admissionˉparser.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
                 View.Source
             );
         if Evidence.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
@@ -406,13 +415,30 @@ fn Compilerˉsourceˉtargetˉadmitˉforeignˉcatalogˉvalidated(
                 Compilerˉsourceˉtargetˉadmissionˉevidence(Evidence)
             );
         if Foreignˉtargetˉstatus != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
-            var Offending: Sourceˉdeclarations.Compilerˉsourceˉplatformˉscope =
-                Evidence.Firstˉnonconcreteˉscope;
-            if Offending.Ordinal == 0u32 { Offending = Evidence.Concreteˉscope; }
+            var Offendingˉordinal: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉordinal;
+            var Offendingˉoffset: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉoffset;
+            var Offendingˉlength: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉlength;
+            var Offendingˉline: u32 = Evidence.Firstˉnonconcreteˉscopeˉline;
+            var Offendingˉcolumn: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉcolumn;
+            if Offendingˉordinal == 0u32 {
+                Offendingˉordinal = Evidence.Concreteˉscopeˉordinal;
+                Offendingˉoffset = Evidence.Concreteˉscopeˉoffset;
+                Offendingˉlength = Evidence.Concreteˉscopeˉlength;
+                Offendingˉline = Evidence.Concreteˉscopeˉline;
+                Offendingˉcolumn = Evidence.Concreteˉscopeˉcolumn;
+            }
             return Compilerˉsourceˉtargetˉadmissionˉscopeˉresult(
                 Module,
                 View.Originˉoffset,
-                Offending,
+                Offendingˉordinal,
+                Offendingˉoffset,
+                Offendingˉlength,
+                Offendingˉline,
+                Offendingˉcolumn,
                 COMPILER_SOURCE_TARGET_ADMISSION_STATUS_FOREIGN_TARGET,
                 Foreignˉtargetˉstatus,
                 Catalogˉstatus

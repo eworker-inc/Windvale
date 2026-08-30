@@ -4497,14 +4497,14 @@ and must be explicitly released before another region or scratch release. These
 compiler rule facts add neither authentication authority nor a public
 Foundation dereference API.
 
-Two focused preflight builds produce byte-identical 147,372-byte WVB values
+Two focused preflight builds produce byte-identical 147,912-byte WVB values
 with SHA-256
-`7937f9558a97ec5408f79b2871c9611a838eed16e07ae7acf9ccecaedac06055`.
+`1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003`.
 A narrow x64 preflight stages the WVB to a 5,297,182-byte object set in 7 chunks
 with a 108-byte manifest. The generic segmented-hosted-WVB cache performs the
 candidate's sole complete verification before direct profile-7 native
 packaging. The prior Windows application and 29-selector result belonged to the
-superseded 121,635-byte identity; the corrected 147,372-byte result below is the
+superseded 121,635-byte identity; the corrected 147,912-byte result below is the
 current local Windows development evidence.
 
 An initial strengthened focused-owner run caught region construction
@@ -4732,3 +4732,67 @@ wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
 wrapper in 138,530 ms. This current local Windows result does not alter the
 paired-host, production coordinator/private-snapshot, Analyzer-consumer,
 foreign-lowering, runtime-containment, or complete Slice 8 nonclaims above.
+
+## Slice 8 authenticated production-ingress candidate
+
+[Decision 0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md)
+now has an implementation candidate for the production source-analysis
+relationship. The private runner snapshots the ordered sources, lock, profile,
+and target once; constructs WVSS 1; invokes target-aware `wvadmit` to publish
+WVSS 2, unchanged WVTD, canonical WVFC, and WVAE; and then invokes complete
+independent `wvauth` over those values plus the retained lock and profile.
+`wvauth` validates the exact six snapshots and independently proves the
+source/catalog/target relationship without constructing a second complete
+catalog or publishing a certificate.
+
+A validated nonempty catalog stops at exact
+`Foreignˉsemanticsˉpending` before Analyzer launch. An empty catalog proceeds
+through `wvanalyze --internal-source-set`; the Analyzer treats WVSS as ordinary
+untrusted compiler input and republishes the bytes it consumed. The runner
+rechecks its retained snapshots, byte-compares that WVSS with the authenticated
+original, and gives the emitter the retained original plus WVCA, WVLB, and WVIR.
+The emitter writes only a private candidate. The runner alone copies and syncs
+that WVB into a unique destination candidate and atomically creates the final
+path without overwrite. Direct Analyzer or emitter invocation carries no
+admission authority. The old public `--admitted-source-set` route is removed;
+raw Project 2 remains development-only and rejects System, platform, and foreign
+source before analysis.
+
+The pinned bootstrap transition produces 4,182,928 WVIR bytes for the selected
+Analyzer closure, leaving 11,376 bytes under the unchanged 4 MiB immutable-value
+limit; a duplicated ingress closure did not fit that transition. One packaged
+current Analyzer has separately compiled its exact 2,132,771-byte source set to
+3,815,704 WVIR bytes, leaving 378,600 bytes. The complete 18-phase
+current-compiler convergence check reproduces stage-2 Analyzer and emitter
+bytes. The pinned local WVB products are `wvadmit` at 572,926 bytes and SHA-256
+`a9c2e966b84420aaa64de89a232246a15b8fb859ba5ef737e853d2482d5f5831`,
+the separately composed `wvauth` at 91,774 bytes and SHA-256
+`88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580`,
+Analyzer at 1,552,090 bytes and SHA-256
+`5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77`,
+and emitter at 1,556,434 bytes and SHA-256
+`d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9`.
+The complete 21-case local Windows production owner passes. Changed-file
+planning covers the new product and its transitive source dependencies and
+passes 31 general plus 247 native routing cases.
+
+An isolated Windows observation gives complete `wvauth` a migration-scale
+2,135,504-byte six-input set derived from the exact current 2,132,771-byte
+Analyzer closure. The exact closure cannot enter Language 1.0 admission
+unchanged because it retains legacy combined module/profile headers. The
+23-module reconstruction adds the descriptor and separate `module`, `profile
+core`, `platform linux`, and `authority application` clauses while preserving
+every post-header source byte, producing a 2,133,877-byte WVSS 1 and canonical
+2,133,900-byte admitted WVSS 2. Two direct authentication runs complete in
+697.678 ms and 705.534 ms with sampled peak working sets of 137,244,672 and
+9,924,608 bytes. The first observation records a real late-run transient after
+remaining near 10 MB for its first 501 milliseconds; a separately labelled
+668.716 ms diagnostic run at 9,977,856 bytes corroborates the second. Every run
+produced exact accepted output and no diagnostics. This is observed
+migration-scale evidence, not a byte-identical current-source measurement or
+hard process ceiling.
+
+Paired-host evidence remains pending. Decision 0893 therefore remains
+Proposed; this candidate is not production-ingress acceptance, foreign semantic
+lowering, runtime containment, Slice 8 completion, or whole-compiler
+qualification.

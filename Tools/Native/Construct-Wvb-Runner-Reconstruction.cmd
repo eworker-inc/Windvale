@@ -44,12 +44,12 @@ if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" "%Wvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%TemporaryDirectory%\Stage.out" 2>"%TemporaryDirectory%\Stage.err"
 if errorlevel 1 goto :stage_failed
-findstr /c:"object-bytes=5899132 chunks=13 manifest-bytes=180" "%TemporaryDirectory%\Stage.out" >nul
+findstr /c:"object-bytes=5899132 chunks=11 manifest-bytes=156" "%TemporaryDirectory%\Stage.out" >nul
 if errorlevel 1 goto :stage_failed
 
 call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :link_failed
-findstr /c:"image-bytes=5889164 entry-offset=150541 chunks=9 manifest-bytes=136" "%TemporaryDirectory%\Link.out" >nul
+findstr /c:"image-bytes=5889164 entry-offset=150541 chunks=7 manifest-bytes=112" "%TemporaryDirectory%\Link.out" >nul
 if errorlevel 1 goto :link_failed
 
 call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TemporaryDirectory%\Transport.out" 2>"%TemporaryDirectory%\Transport.err"

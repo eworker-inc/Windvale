@@ -8,8 +8,10 @@ import {
     mkdtemp,
     open,
     readFile,
+    realpath,
     rename,
     rm,
+    rmdir,
     stat,
     writeFile,
 } from 'node:fs/promises';
@@ -24,14 +26,16 @@ import {
 import {
     Orderˉsplitˉprojectˉsourceˉpayloads,
 } from './Split-Project-Source-Ordering-Core.mjs';
-
 const MAXIMUM_VALUE_BYTES = 4_194_304;
 const MAXIMUM_WVB_BYTES = 16_777_216;
 const MAXIMUM_MANIFEST_BYTES = 4_096;
 const MAXIMUM_PROJECT_BYTES = 65_536;
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
+const MAXIMUM_CLEANUP_DIAGNOSTIC_CHARACTERS = 1_024;
+const MAXIMUM_PRIMARY_DIAGNOSTIC_CHARACTERS = 4_096;
 const PRODUCER_TIMEOUT_MILLISECONDS = 300_000;
 const HOST = `${process.platform}-${process.arch}`;
+const TEST_HOOKS = Readˉtestˉhooks();
 
 if (process.argv.length !== 8) {
     Usage();
@@ -95,13 +99,16 @@ const Analysisˉinputˉbyˉpath = new Map(
         Evidence.path,
     ]),
 );
-const Orderedˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
+const Declaredˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
     const Input = Analysisˉinputˉbyˉpath.get(Normalizedˉpath(Candidate));
     if (Input === undefined) {
         Reject(`The split compiler project input is unavailable: ${Candidate}`);
     }
     return Input;
 });
+const Orderedˉanalysisˉinputs = await Orderˉanalysisˉinputs(
+    Declaredˉanalysisˉinputs,
+);
 const Analysisˉfamily = await Prepareˉfamily(
     Cacheˉroot,
     'project-analysis-wvca-v3',
@@ -172,34 +179,34 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
         console.log(`split project step=analysis cache=Hit key=${Request.key}`);
         return Checkpoint;
     }
-    let Temporary = '';
+    let Temporary = null;
+    let Failure = null;
     try {
         Temporary = await Allocateˉtemporary(Family, Request.key);
-        await Verifyˉproducer(Analyzer, Identity);
-        const Admittedˉsourceˉset = path.join(
+        Temporary = await Identifyˉtemporaryˉallocation(
+            Family,
+            Request.key,
             Temporary,
-            'Admitted.wvss',
         );
-        await Writeˉadmittedˉsourceˉset(Inputs, Admittedˉsourceˉset);
-        await Run(Analyzer, [
-            '--admitted-source-set',
-            Admittedˉsourceˉset,
-            path.join(Temporary, 'Source.wvss'),
-            path.join(Temporary, 'Manifest.wvca'),
-            path.join(Temporary, 'Bindings.wvlb'),
-            path.join(Temporary, 'Wir.wvir'),
-        ], 'analysis');
-        await rm(Admittedˉsourceˉset, { force: true });
+        await Applyˉtestˉhook('afterTemporaryIdentified', Temporary);
         await Verifyˉproducer(Analyzer, Identity);
-        const Evidence = await Analysisˉevidence(Temporary);
+        await Run(Analyzer, [
+            ...Inputs,
+            path.join(Temporary.path, 'Source.wvss'),
+            path.join(Temporary.path, 'Manifest.wvca'),
+            path.join(Temporary.path, 'Bindings.wvlb'),
+            path.join(Temporary.path, 'Wir.wvir'),
+        ], 'analysis');
+        await Verifyˉproducer(Analyzer, Identity);
+        const Evidence = await Analysisˉevidence(Temporary.path);
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
         await Writeˉcheckpoint(
-            Temporary,
+            Temporary.path,
             Analysisˉmanifest(Request.key, Evidence),
         );
         try {
-            await rename(Temporary, Checkpoint);
-            Temporary = '';
+            await rename(Temporary.path, Checkpoint);
+            Temporary = null;
         } catch (error) {
             if (error?.code !== 'EEXIST' && error?.code !== 'ENOTEMPTY') {
                 throw error;
@@ -209,10 +216,16 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
         console.log(`split project step=analysis cache=Created key=${Request.key}`);
         return Checkpoint;
     } catch (Error) {
-        await Reportˉanalysisˉfailureˉoutputs(Temporary);
+        Failure = Error;
+        await Reportˉanalysisˉfailureˉoutputs(Temporary?.path ?? '');
         throw Error;
     } finally {
-        await Removeˉtemporary(Family, Request.key, Temporary);
+        await Removeˉtemporaryˉpreservingˉfailure(
+            Family,
+            Request.key,
+            Temporary,
+            Failure,
+        );
     }
 }
 
@@ -221,7 +234,6 @@ async function Reportˉanalysisˉfailureˉoutputs(Directory) {
         return;
     }
     for (const Name of [
-        'Admitted.wvss',
         'Source.wvss',
         'Manifest.wvca',
         'Bindings.wvlb',
@@ -236,46 +248,32 @@ async function Reportˉanalysisˉfailureˉoutputs(Directory) {
     }
 }
 
-async function Writeˉadmittedˉsourceˉset(Inputs, Candidate) {
+async function Orderˉanalysisˉinputs(Inputs) {
     if (Inputs.length < 1 || Inputs.length > 64) {
-        Reject('The admitted source set has invalid module cardinality.');
+        Reject('The split compiler source closure has invalid cardinality.');
     }
-    const Headerˉbytes = 16 + Inputs.length * 8;
-    const Header = Buffer.alloc(16);
-    Header.write('WVSS', 0, 4, 'ascii');
-    Header.writeUInt16LE(1, 4);
-    Header.writeUInt16LE(0, 6);
-    Header.writeUInt32LE(Inputs.length, 8);
-    Header.writeUInt32LE(Inputs.length * 8, 12);
-    const Directory = Buffer.alloc(Inputs.length * 8);
-    const Unorderedˉpayloads = [];
+    const Entries = [];
     let Payloadˉbytes = 0;
+    const Directoryˉbytes = 16 + Inputs.length * 8;
     for (let Index = 0; Index < Inputs.length; Index += 1) {
-        const Remaining = MAXIMUM_VALUE_BYTES - Headerˉbytes - Payloadˉbytes;
+        const Remaining = MAXIMUM_VALUE_BYTES - Directoryˉbytes - Payloadˉbytes;
         if (Remaining < 1) {
-            Reject('The admitted source set exceeds 4 MiB.');
+            Reject('The split compiler source closure exceeds 4 MiB.');
         }
         const Payload = await Readˉbounded(
             Inputs[Index],
             `source module ${Index}`,
             Remaining,
         );
-        Unorderedˉpayloads.push(Payload);
+        Entries.push({ path: Inputs[Index], payload: Payload });
         Payloadˉbytes += Payload.length;
     }
-    const Payloads = Orderˉsplitˉprojectˉsourceˉpayloads(
-        Unorderedˉpayloads,
+    const Pathˉbyˉpayload = new Map(
+        Entries.map(Entry => [Entry.payload, Entry.path]),
     );
-    let Payloadˉoffset = 0;
-    for (let Index = 0; Index < Payloads.length; Index += 1) {
-        Directory.writeUInt32LE(Headerˉbytes + Payloadˉoffset, Index * 8);
-        Directory.writeUInt32LE(Payloads[Index].length, Index * 8 + 4);
-        Payloadˉoffset += Payloads[Index].length;
-    }
-    await writeFile(
-        Candidate,
-        Buffer.concat([Header, Directory, ...Payloads], Headerˉbytes + Payloadˉbytes),
-    );
+    return Orderˉsplitˉprojectˉsourceˉpayloads(
+        Entries.map(Entry => Entry.payload),
+    ).map(Payload => Pathˉbyˉpayload.get(Payload));
 }
 
 function Parseˉprojectˉ2(Text) {
@@ -341,6 +339,12 @@ function Normalizedˉpath(Candidate) {
     return process.platform === 'win32' ? Resolved.toLowerCase() : Resolved;
 }
 
+function Sameˉpath(Left, Right) {
+    return process.platform === 'win32'
+        ? Left.toLowerCase() === Right.toLowerCase()
+        : Left === Right;
+}
+
 async function Acquireˉemission(
     Family,
     Request,
@@ -355,31 +359,38 @@ async function Acquireˉemission(
         console.log(`split project step=emission cache=Hit key=${Request.key}`);
         return Checkpoint;
     }
-    let Temporary = '';
+    let Temporary = null;
+    let Failure = null;
     try {
         Temporary = await Allocateˉtemporary(Family, Request.key);
+        Temporary = await Identifyˉtemporaryˉallocation(
+            Family,
+            Request.key,
+            Temporary,
+        );
+        await Applyˉtestˉhook('afterTemporaryIdentified', Temporary);
         await Verifyˉproducer(Emitter, Identity);
         await Run(Emitter, [
             path.join(Analysisˉcheckpoint, 'Source.wvss'),
             path.join(Analysisˉcheckpoint, 'Manifest.wvca'),
             path.join(Analysisˉcheckpoint, 'Bindings.wvlb'),
             path.join(Analysisˉcheckpoint, 'Wir.wvir'),
-            path.join(Temporary, 'Product.wvb'),
+            path.join(Temporary.path, 'Product.wvb'),
         ], 'emission');
         await Verifyˉproducer(Emitter, Identity);
         const Evidence = await Fileˉevidence(
-            path.join(Temporary, 'Product.wvb'),
+            path.join(Temporary.path, 'Product.wvb'),
             'emitted WVB',
             MAXIMUM_WVB_BYTES,
         );
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
         await Writeˉcheckpoint(
-            Temporary,
+            Temporary.path,
             Emissionˉmanifest(Request.key, Analysisˉkey, Evidence),
         );
         try {
-            await rename(Temporary, Checkpoint);
-            Temporary = '';
+            await rename(Temporary.path, Checkpoint);
+            Temporary = null;
         } catch (error) {
             if (error?.code !== 'EEXIST' && error?.code !== 'ENOTEMPTY') {
                 throw error;
@@ -388,8 +399,16 @@ async function Acquireˉemission(
         await Validateˉemission(Checkpoint, Request.key, Analysisˉkey);
         console.log(`split project step=emission cache=Created key=${Request.key}`);
         return Checkpoint;
+    } catch (Error) {
+        Failure = Error;
+        throw Error;
     } finally {
-        await Removeˉtemporary(Family, Request.key, Temporary);
+        await Removeˉtemporaryˉpreservingˉfailure(
+            Family,
+            Request.key,
+            Temporary,
+            Failure,
+        );
     }
 }
 
@@ -509,21 +528,174 @@ async function Prepareˉfamily(Root, Name) {
 
 async function Allocateˉtemporary(Family, Key) {
     const Suffix = randomBytes(8).toString('hex');
-    return mkdtemp(path.join(Family, `.new-${Key}-${Suffix}-`));
+    const Candidate = await mkdtemp(
+        path.join(Family, `.new-${Key}-${Suffix}-`),
+    );
+    const Resolved = path.resolve(Candidate);
+    let Information = null;
+    let Identificationˉfailure = null;
+    try {
+        Information = await lstat(Resolved, { bigint: true });
+        if (!Information.isDirectory() || Information.isSymbolicLink()) {
+            Reject('The allocated cache temporary path is not a directory.');
+        }
+    } catch (Error) {
+        Identificationˉfailure = Error;
+    }
+    return Object.freeze({
+        path: Resolved,
+        family: path.resolve(Family),
+        device: Information?.dev ?? null,
+        inode: Information?.ino ?? null,
+        identificationFailure: Identificationˉfailure,
+    });
 }
 
-async function Removeˉtemporary(Family, Key, Candidate) {
-    if (Candidate === '') {
+async function Identifyˉtemporaryˉallocation(Family, Key, Allocation) {
+    if (Allocation.identificationFailure !== null ||
+        Allocation.device === null || Allocation.inode === null) {
+        throw Allocation.identificationFailure ??
+            new Error('The cache temporary allocation has no retained identity.');
+    }
+    const Canonicalˉfamily = await realpath(Family);
+    const Canonical = await realpath(Allocation.path);
+    const Information = await lstat(Canonical, { bigint: true });
+    if (!Information.isDirectory() || Information.isSymbolicLink() ||
+        !Sameˉpath(Allocation.family, Canonicalˉfamily) ||
+        !Sameˉpath(Canonical, Allocation.path) ||
+        !Sameˉpath(path.dirname(Canonical), Canonicalˉfamily) ||
+        !path.basename(Canonical).startsWith(`.new-${Key}-`) ||
+        Information.dev !== Allocation.device ||
+        Information.ino !== Allocation.inode) {
+        Reject('The allocated cache temporary directory is not canonical.');
+    }
+    return Object.freeze({
+        path: Canonical,
+        family: Canonicalˉfamily,
+        device: Information.dev,
+        inode: Information.ino,
+        identificationFailure: null,
+    });
+}
+
+async function Removeˉtemporaryˉpreservingˉfailure(
+    Family,
+    Key,
+    Allocation,
+    Primaryˉfailure,
+) {
+    try {
+        await Removeˉtemporary(Family, Key, Allocation);
+    } catch (Cleanupˉfailure) {
+        if (Primaryˉfailure === null) {
+            throw Cleanupˉfailure;
+        }
+        throw Combineˉprimaryˉandˉcleanupˉfailure(
+            Primaryˉfailure,
+            Cleanupˉfailure,
+        );
+    }
+}
+
+function Combineˉprimaryˉandˉcleanupˉfailure(
+    Primaryˉfailure,
+    Cleanupˉfailure,
+) {
+    const Primaryˉraw = Primaryˉfailure instanceof Error
+        ? `${Primaryˉfailure.name}: ${Primaryˉfailure.message}`
+        : String(Primaryˉfailure);
+    const Primaryˉflat = Primaryˉraw.replace(/[\r\n]+/gu, ' ');
+    const Primaryˉbounded = Primaryˉflat.length <=
+        MAXIMUM_PRIMARY_DIAGNOSTIC_CHARACTERS
+        ? Primaryˉflat
+        : Primaryˉflat.slice(0, MAXIMUM_PRIMARY_DIAGNOSTIC_CHARACTERS) +
+            '...[truncated]';
+    const Raw = Cleanupˉfailure instanceof Error
+        ? `${Cleanupˉfailure.name}: ${Cleanupˉfailure.message}`
+        : String(Cleanupˉfailure);
+    const Flat = Raw.replace(/[\r\n]+/gu, ' ');
+    const Bounded = Flat.length <= MAXIMUM_CLEANUP_DIAGNOSTIC_CHARACTERS
+        ? Flat
+        : Flat.slice(0, MAXIMUM_CLEANUP_DIAGNOSTIC_CHARACTERS) +
+            '...[truncated]';
+    return new Error(
+        `${Primaryˉbounded}\n` +
+        `Cache temporary cleanup also failed: ${Bounded}`,
+        { cause: Primaryˉfailure },
+    );
+}
+
+async function Removeˉtemporary(Family, Key, Allocation) {
+    if (Allocation === null) {
         return;
     }
-    const Resolved = path.resolve(Candidate);
-    const Relative = path.relative(Family, Resolved);
-    if (path.dirname(Resolved) !== path.resolve(Family) ||
+    const Resolvedˉfamily = path.resolve(Family);
+    const Resolved = path.resolve(Allocation.path);
+    const Relative = path.relative(Resolvedˉfamily, Resolved);
+    if (!Sameˉpath(Allocation.family, Resolvedˉfamily) ||
+        !Sameˉpath(path.dirname(Resolved), Resolvedˉfamily) ||
         Relative.startsWith('..') || path.isAbsolute(Relative) ||
         !path.basename(Resolved).startsWith(`.new-${Key}-`)) {
         Reject('Refusing to remove an unexpected cache temporary directory.');
     }
-    await rm(Resolved, { recursive: true, force: true });
+    if (Allocation.device === null || Allocation.inode === null) {
+        await rmdir(Resolved).catch(error => {
+            if (error?.code !== 'ENOENT') {
+                throw error;
+            }
+        });
+        return;
+    }
+    const Canonicalˉfamily = await realpath(Family);
+    if (!Sameˉpath(Allocation.family, Canonicalˉfamily)) {
+        Reject('Refusing to remove a temporary from a replaced cache family.');
+    }
+    const Information = await lstat(Resolved, { bigint: true })
+        .catch(error => error?.code === 'ENOENT' ? null : Promise.reject(error));
+    if (Information === null || !Information.isDirectory() ||
+        Information.isSymbolicLink() ||
+        Information.dev !== Allocation.device ||
+        Information.ino !== Allocation.inode) {
+        return;
+    }
+    const Canonical = await realpath(Resolved)
+        .catch(error => error?.code === 'ENOENT' ? null : Promise.reject(error));
+    if (Canonical === null || !Sameˉpath(Canonical, Resolved) ||
+        !Sameˉpath(path.dirname(Canonical), Canonicalˉfamily)) {
+        return;
+    }
+    const Quarantine = path.join(
+        Canonicalˉfamily,
+        `.remove-${Key}-${randomBytes(16).toString('hex')}`,
+    );
+    await Applyˉtestˉhook('beforeQuarantineRename', Object.freeze({
+        candidate: Resolved,
+        family: Canonicalˉfamily,
+        quarantine: Quarantine,
+    }));
+    await rename(Resolved, Quarantine).catch(error => {
+        if (error?.code !== 'ENOENT') throw error;
+    });
+    const Quarantinedˉinformation = await lstat(
+        Quarantine,
+        { bigint: true },
+    ).catch(error => error?.code === 'ENOENT' ? null : Promise.reject(error));
+    if (Quarantinedˉinformation === null ||
+        !Quarantinedˉinformation.isDirectory() ||
+        Quarantinedˉinformation.isSymbolicLink() ||
+        Quarantinedˉinformation.dev !== Allocation.device ||
+        Quarantinedˉinformation.ino !== Allocation.inode) {
+        return;
+    }
+    const Canonicalˉquarantine = await realpath(Quarantine)
+        .catch(error => error?.code === 'ENOENT' ? null : Promise.reject(error));
+    if (Canonicalˉquarantine === null ||
+        !Sameˉpath(Canonicalˉquarantine, Quarantine) ||
+        !Sameˉpath(path.dirname(Canonicalˉquarantine), Canonicalˉfamily) ||
+        !path.basename(Canonicalˉquarantine).startsWith(`.remove-${Key}-`)) {
+        return;
+    }
+    await rm(Canonicalˉquarantine, { recursive: true, force: true });
 }
 
 async function Writeˉcheckpoint(Directory, Text) {
@@ -556,10 +728,32 @@ async function Syncˉfile(Candidate) {
 
 async function Run(Command, Arguments, Step) {
     console.log(`split project producer step=${Step} status=Started`);
+    const Isˉcommand = process.platform === 'win32' &&
+        Command.toLowerCase().endsWith('.cmd');
+    if (Isˉcommand && [Command, ...Arguments].some(
+        Argument => /[\r\n&|<>^%!"]/u.test(Argument)
+    )) {
+        Reject(
+            `The split compiler ${Step} command contains Windows shell ` +
+            'metacharacters.',
+        );
+    }
+    const Executable = Isˉcommand
+        ? process.env.ComSpec ?? 'cmd.exe'
+        : Command;
+    const Commandˉarguments = Isˉcommand
+        ? [
+            '/d', '/v:off', '/s', '/c',
+            `"${[Command, ...Arguments]
+                .map(Argument => `"${Argument}"`)
+                .join(' ')}"`,
+        ]
+        : Arguments;
     const Result = await new Promise((Resolve, Rejectˉpromise) => {
-        const Child = spawn(Command, Arguments, {
+        const Child = spawn(Executable, Commandˉarguments, {
             cwd: path.dirname(Projectˉpath),
             windowsHide: true,
+            windowsVerbatimArguments: Isˉcommand,
             stdio: ['ignore', 'pipe', 'pipe'],
         });
         const Started = Date.now();
@@ -743,6 +937,41 @@ async function Readˉbounded(Candidate, Label, Maximum) {
 
 async function Exists(Candidate) {
     return (await stat(Candidate).catch(() => null)) !== null;
+}
+
+function Readˉtestˉhooks() {
+    const Key = Symbol.for('windvale.split-cache.test-hooks.v1');
+    const Hooks = globalThis[Key];
+    delete globalThis[Key];
+    if (Hooks === undefined) {
+        return Object.freeze({
+            afterTemporaryIdentified: null,
+            beforeQuarantineRename: null,
+        });
+    }
+    if (Hooks === null || typeof Hooks !== 'object' ||
+        !Object.isFrozen(Hooks) ||
+        ![null, 'function'].includes(
+            Hooks.afterTemporaryIdentified === null
+                ? null
+                : typeof Hooks.afterTemporaryIdentified
+        ) ||
+        ![null, 'function'].includes(
+            Hooks.beforeQuarantineRename === null
+                ? null
+                : typeof Hooks.beforeQuarantineRename
+        )) {
+        Reject('The explicitly imported split-cache test hooks are invalid.');
+    }
+    return Object.freeze({
+        afterTemporaryIdentified: Hooks.afterTemporaryIdentified,
+        beforeQuarantineRename: Hooks.beforeQuarantineRename,
+    });
+}
+
+async function Applyˉtestˉhook(Name, Payload) {
+    const Hook = TEST_HOOKS[Name];
+    if (Hook !== null) await Hook(Payload);
 }
 
 function Usage() {

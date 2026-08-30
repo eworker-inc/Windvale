@@ -202,7 +202,6 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 frozen source and descriptor front door'
         Paths = @(
-            'Compiler/Windvale/Source-Descriptor-Core.wv',
             'Projects/Compiler/Windvale-Source-Descriptor-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Source-Descriptor.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Calls.wvproj',
@@ -270,12 +269,7 @@ $NativeCases = @(
             'Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md',
             'Documents/Project/Language-1.0-Paper-Corpus/01-Command-Line-Application/Source/Inspect-Application.wv'
         )
-        Suites = @(
-            'language-1-front-door',
-            'language-1-admission-evidence-format',
-            'language-1-foreign-catalog-producer',
-            'language-1-source-admission-coordinator'
-        )
+        Suites = @('language-1-front-door')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -531,7 +525,8 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-admission-evidence-format',
-            'language-1-source-admission-coordinator'
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -570,10 +565,36 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'Language 1.0 source admission coordinator routing'
+        Name = 'Language 1.0 admission parser evidence routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Admission-Parser-Evidence-Core.wv',
+            'Projects/Compiler/Windvale-Source-Admission-Parser-Evidence-Core.wvproj'
+        )
+        Suites = @(
+            'language-1-system-ffi-front-end',
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 source admission production dependency routing'
         Paths = @(
             'Compiler/Windvale/Source-Admission-Coordinator-Core.wv',
-            'Compiler/Windvale/Source-Target-Admission-Core.wv',
+            'Compiler/Windvale/Source-Target-Admission-Core.wv'
+        )
+        Suites = @(
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 source admission coordinator routing'
+        Paths = @(
             'Documents/Decisions/0892-Coordinate-Authenticated-Source-Admission.md',
             'Projects/Compiler/Windvale-Source-Admission-Coordinator-Core.wvproj',
             'Projects/Compiler/Windvale-Source-Target-Admission-Core.wvproj',
@@ -584,6 +605,101 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.sh'
         )
         Suites = @('language-1-source-admission-coordinator')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production admission ingress owner routing'
+        Paths = @(
+            'Documents/Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md',
+            'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd',
+            'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
+            'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh'
+        )
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production foreign catalog authentication routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Foreign-Catalog-Authentication-Core.wv',
+            'Projects/Compiler/Windvale-Source-Foreign-Catalog-Authentication-Core.wvproj'
+        )
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production wvadmit routing'
+        Paths = @(
+            'Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj',
+            'Tools/Windvale.Build/Compiler-Admission-Driver.wv'
+        )
+        Suites = @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production wvauth routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Admission-Authentication-Core.wv',
+            'Projects/Tools/Windvale-Compiler-Source-Authenticator.wvproj',
+            'Tools/Windvale.Build/Compiler-Source-Authenticator-Driver.wv'
+        )
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production Analyzer ingress routing'
+        Paths = @(
+            'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
+            'Tools/Windvale.Build/Compiler-Analysis-Driver.wv'
+        )
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production split compiler runner routing'
+        Paths = @('Tools/Native/Run-Split-Compiler.mjs')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 authenticated admission helper routing'
+        Paths = @('Tools/Native/Run-Authenticated-Source-Admission.mjs')
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 target descriptor writer routing'
+        Paths = @(
+            'Tools/Native/Write-Canonical-Language-1.0-Target-Descriptor.mjs'
+        )
+        Suites = @('language-1-front-door')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 production source analysis contract routing'
+        Paths = @('Specifications/Compiler-Source-Analysis.md')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -621,6 +737,7 @@ $NativeCases = @(
             'language-1-system-ffi-front-end',
             'language-1-admission-evidence-format',
             'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -632,6 +749,7 @@ $NativeCases = @(
         Suites = @(
             'language-1-system-ffi-front-end',
             'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -646,6 +764,21 @@ $NativeCases = @(
             'language-1-foreign-catalog-format',
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress',
+            'language-1-foreign-memory-semantics'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign catalog production dependency routing'
+        Paths = @('Compiler/Windvale/Source-Foreign-Catalog-Core.wv')
+        Suites = @(
+            'language-1-foreign-catalog-format',
+            'language-1-admission-evidence-format',
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -654,19 +787,23 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 foreign catalog format routing'
         Paths = @(
-            'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
             'Tests/Fixtures/Language-1.0/Foreign-Catalog-Format-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.cmd',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.mjs'
         )
+        Suites = @('language-1-foreign-catalog-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign catalog producer production dependency routing'
+        Paths = @('Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv')
         Suites = @(
-            'language-1-foreign-catalog-format',
-            'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator',
-            'language-1-foreign-memory-semantics'
+            'language-1-production-admission-ingress'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -674,7 +811,6 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 foreign catalog producer routing'
         Paths = @(
-            'Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv',
             'Documents/Decisions/0888-Publish-The-Canonical-WVFC-Producer.md',
             'Projects/Compiler/Windvale-Source-Foreign-Catalog-Producer-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Producer.wvproj',
@@ -815,7 +951,8 @@ $NativeCases = @(
             'language-1-front-door',
             'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
-            'language-1-source-admission-coordinator'
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -828,6 +965,7 @@ $NativeCases = @(
             'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -1736,18 +1874,57 @@ $NativeCases = @(
         Name = 'compiler split development owner'
         Paths = @(
             'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
-            'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
             'Specifications/Compiler-Split-Development-Cache.md',
-            'Tools/Native/Build-Cached-Split-Project-Wvb.mjs',
             'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
             'Tools/Native/Test-Compiler-Split-Development.cmd',
             'Tools/Native/Test-Compiler-Split-Development.sh',
             'Tools/Native/Test-Compiler-Split-Development.mjs',
             'Tools/Native/Write-Split-Compiler-Producer-Identity.mjs',
-            'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
-            'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
+            'Tools/Windvale.Build/Compiler-Analysis-Driver.wv'
         )
-        Suites = @('wvb-runner-reconstruction', 'compiler-split-development')
+        Suites = @(
+            'wvb-runner-reconstruction',
+            'language-1-production-admission-ingress',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'compiler split development specification routing'
+        Paths = @('Specifications/Compiler-Split-Development-Cache.md')
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'production cached split builder routing'
+        Paths = @('Tools/Native/Build-Cached-Split-Project-Wvb.mjs')
+        Suites = @(
+            'wvb-runner-reconstruction',
+            'language-1-production-admission-ingress',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'production emitter project routing'
+        Paths = @('Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj')
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'production emitter driver routing'
+        Paths = @('Tools/Windvale.Build/Compiler-Emission-Driver.wv')
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'compiler-split-development'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -4205,9 +4382,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 124 -or
+if ($VerificationOwnerLines.Count -ne 125 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 123-owner inventory differs.'
+    throw 'The native verification-owner header or exact 124-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -4245,7 +4422,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5890 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5911 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

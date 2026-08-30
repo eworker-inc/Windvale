@@ -2,6 +2,8 @@ module Windvaleˉcompilerˉanalysisˉdriver profile hosted;
 
 import Compilerˉsourceˉanalysis as Analysis;
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
 import Compilerˉsourceˉset as Sourceˉsets;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
@@ -148,6 +150,59 @@ fn Argumentˉequals(Value: text, Expected: text) -> bool {
     return true;
 }
 
+fn Rawˉprecheck(Sourceˉset: bytes) -> u32 {
+    let Scan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
+        Sourceˉsets.Compilerˉscanˉsourceˉset(Sourceˉset);
+    if Scan.Status != Sourceˉsets.Compilerˉsourceˉsetˉstatus.Valid {
+        return 0u32;
+    }
+    var Module: u32 = 0u32;
+    while Module < Scan.Modules {
+        let View: Sourceˉsets.Compilerˉsourceˉsetˉview =
+            Sourceˉsets.Compilerˉsourceˉsetˉmodule(Sourceˉset, Scan, Module);
+        if Bytesˉlength(View.Source) > 0u32 &&
+            Bytesˉreadˉu8(View.Source, 0u32) == 35u8 {
+            return 1u32;
+        }
+        if View.Status != Sourceˉsets.Compilerˉsourceˉsetˉstatus.Valid {
+            return 0u32;
+        }
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheader(View.Source);
+        if Header.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return 0u32;
+        }
+        if Header.Profile == Sourceˉdeclarations.Compilerˉsourceˉprofile.System {
+            return 2u32;
+        }
+        var Cursor: u32 = 0u32;
+        var Line: u32 = 1u32;
+        var Column: u32 = 1u32;
+        var Reading: bool = true;
+        while Reading {
+            let Token: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    View.Source, Cursor, Line, Column
+                );
+            if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Platform {
+                return 3u32;
+            }
+            if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+                return 4u32;
+            }
+            if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+                Reading = false;
+            } else {
+                Cursor = Token.Nextˉoffset;
+                Line = Token.Nextˉline;
+                Column = Token.Nextˉcolumn;
+            }
+        }
+        Module = Module + 1u32;
+    }
+    return 0u32;
+}
+
 fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
     if Bytesˉlength(Sourceˉset) == 0u32 {
         diagnostic.write_line("source analysis status=Invalidˉinput");
@@ -170,14 +225,36 @@ fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
 
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
-    if Arguments == 6u32 && Argumentˉequals(
-        process.argument(0u32), "--admitted-source-set"
-    ) {
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--admitted-source-set"
+        ) {
+        diagnostic.write_line(
+            "source analysis status=Invalidˉinvocation reason=admitted-source-set-route-removed"
+        );
+        return 64;
+    }
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-authenticated-admission"
+        ) {
+        diagnostic.write_line(
+            "source analysis status=Invalidˉinvocation reason=authenticated-admission-route-removed"
+        );
+        return 64;
+    }
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-source-set"
+        ) {
+        if Arguments != 6u32 {
+            diagnostic.write_line(
+                "Usage: wvanalyze --internal-source-set <input.wvss> <output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
+            );
+            return 64;
+        }
         return Analyze(file.read_bytes(process.argument(1u32)), 2u32);
     }
     if Arguments < 5u32 {
         diagnostic.write_line(
-            "Usage: wvanalyze <root.wv> [dependency.wv ...] <output.wvss> <output.wvca> <output.wvlb> <output.wvir>; or wvanalyze --admitted-source-set <input.wvss> <output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
+            "Usage: wvanalyze <root.wv> [dependency.wv ...] <output.wvss> <output.wvca> <output.wvlb> <output.wvir>"
         );
         return 64;
     }
@@ -187,5 +264,22 @@ export fn Main() -> i32 {
         return 64;
     }
     let Sourceˉset: bytes = Buildˉsourceˉset(Modules);
+    let Precheck: u32 = Rawˉprecheck(Sourceˉset);
+    if Precheck == 1u32 {
+        diagnostic.write_line("source analysis status=Rawˉdescriptor");
+        return 1;
+    }
+    if Precheck == 2u32 {
+        diagnostic.write_line("source analysis status=RawˉSystemˉprofile");
+        return 1;
+    }
+    if Precheck == 3u32 {
+        diagnostic.write_line("source analysis status=Rawˉplatform");
+        return 1;
+    }
+    if Precheck == 4u32 {
+        diagnostic.write_line("source analysis status=Rawˉforeign");
+        return 1;
+    }
     return Analyze(Sourceˉset, Modules);
 }

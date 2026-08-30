@@ -3,23 +3,32 @@
 ## Status and ownership
 
 This specification defines Windvale Admission Evidence 1.0 (`WVAE 1.0`) and
-the first compiler-owned construction and authentication foundation. The
-format is an internal compiler-phase value, not a package, executable, cache,
-authority grant, or distribution format.
+its compiler-owned construction and authentication boundary. The format is an
+internal compiler-phase value, not a package, executable, cache, authority
+grant, or distribution format.
 
 `Compiler/Windvale/Admission-Evidence-Core.wv` owns the portable format code.
 `Compiler/Windvale/Admission-Evidence-Validator-Core.wv` owns the portable
 post-read structural, cross-field, and digest orchestration shared by the
-hosted shell and focused fixture.
+small `wvverify-admission-evidence` shell and focused fixture.
 `Compiler/Windvale/Admission-Source-Set-Core.wv` owns the independent small
-WVSS 2 structural reader. The hosted `wvverify-admission-evidence` leaf
-compiles those modules with the existing lightweight WVTD and WVFC structural
-validators independently of the source analyzer. The complete independent
-validator remains named `wvauth`. Portable in-memory `wvadmit` construction and
-authenticated coordination are now implemented by
+WVSS 2 structural reader.
+`Compiler/Windvale/Source-Foreign-Catalog-Authentication-Core.wv` owns the
+independent source/catalog semantic scan. The distinct
+`Compiler/Windvale/Source-Admission-Authentication-Core.wv` composition first
+calls the small structural/digest validator and only after that success calls
+the source/catalog/target scan; the hosted
+`Windvale-Compiler-Source-Authenticator.wvproj` product exposes that complete
+six-input boundary as `wvauth`. Neither authentication layer imports or calls
+the canonical WVFC producer. Portable in-memory
+`wvadmit` construction and authenticated coordination are implemented by
 `Compiler/Windvale/Source-Admission-Coordinator-Core.wv` and
-`Compiler/Windvale/Source-Target-Admission-Core.wv`; a hosted file publisher
-and Analyzer integration remain later checkpoints.
+`Compiler/Windvale/Source-Target-Admission-Core.wv`. The target-aware hosted
+publisher, complete authenticator, private snapshot runner, and
+non-authoritative Analyzer handoff are implemented as the candidate under
+[Decision 0893](../Documents/Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md).
+That decision remains Proposed. Its exact local Windows products and complete
+focused owner pass; paired-host evidence remains required for acceptance.
 
 ## Fixed binary format
 
@@ -171,7 +180,7 @@ authentication. Failure always returns an empty `Value`.
 
 ## Independent validator boundary
 
-`wvverify-admission-evidence` accepts exactly six explicit snapshot resource
+The complete hosted `wvauth` accepts exactly six explicit snapshot resource
 names in WVAE, admitted WVSS 2, WVTD, WVFC, lock, and profile order. Before
 deriving counts it checks all per-value and aggregate retention limits, then:
 
@@ -180,16 +189,23 @@ deriving counts it checks all per-value and aggregate retention limits, then:
    through 129, nonempty payloads, and canonical contiguous layout;
 2. invokes the existing lightweight WVTD and WVFC structural validators;
 3. derives the module and foreign counts, requires the WVFC module count to
-   equal the WVSS count, and authenticates every WVAE field and digest.
+   equal the WVSS count, and authenticates every WVAE field and digest; and
+4. independently scans the source modules and consumes WVFC records in source
+   order, proving exact declaration ordinals, flags, declaration/name/ABI/
+   symbol/signature/effect spans, signature digest, `System` plus `unsafe`
+   requirements, and the exact concrete foreign-target predicate.
 
 A structurally valid WVFC whose module count differs from the structurally
 valid WVSS fails in `Crossˉfield` phase with structure status 1, offset 24,
 and an empty value.
 
-It publishes no certificate or successor artifact and reports only success or
-bounded failure control flow. The coordinator retains all six exact immutable
-private snapshots. A future Analyzer handoff may invoke internal admitted mode
-only after the complete `wvauth` succeeds.
+It neither constructs a second complete catalog nor imports the canonical
+catalog producer merely to compare results. It publishes no certificate or
+successor artifact and reports only success or bounded failure control flow.
+The coordinator retains all six exact immutable private snapshots, and may
+continue to the non-authoritative Analyzer source-set route only after this
+complete `wvauth` succeeds. A nonempty authenticated catalog stops at the
+named staged foreign-semantics boundary before analysis.
 
 ## Authenticated source-admission coordinator
 
@@ -230,10 +246,15 @@ the exact concrete predicate alone can do so.
 
 No public analyzer mode may bypass that control flow. A cache key, path,
 producer identity, file existence, or forgeable certificate cannot replace
-validation. The analyzer remains responsible for independent WVSS, WVTD, and
-WVFC structure validation plus semantic and source/catalog consistency.
+validation. The Analyzer treats its internal WVSS argument as untrusted input
+and republishes the exact bytes it consumed; the coordinator compares those
+bytes with its retained authenticated WVSS before the emitter independently
+validates that original WVSS against WVCA, WVLB, and WVIR. The Analyzer option
+and its direct artifacts carry no admission authority. The emitter writes only
+the private candidate WVB; the runner alone performs no-overwrite atomic
+publication of the final WVB path.
 
-The current admission-evidence leaf has fixed development ceilings of 262,144
+The earlier admission-evidence leaf has fixed development ceilings of 262,144
 WVIR bytes and 262,144 WVB bytes. The refined Windows capacity case publishes
 191,712 WVIR bytes at SHA-256
 `067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`.
@@ -250,15 +271,13 @@ Two current-compiler builds also reproduce the 44-selector fixture exactly as a
 the maintained verifier accepts it as compiler-aligned. The final focused owner
 also pins the 24,292-byte portable core WVB at SHA-256
 `5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`.
-These ceilings do not set the eventual complete `wvauth` product ceiling.
+Those leaf ceilings do not set the complete `wvauth` product ceiling.
 Cross-host equality remains required before qualification is claimed.
 
-This is an intermediate format and validator-foundation checkpoint, not a
-complete `wvauth` or hosted coordinator-integration claim. The implemented
-native x64 lowering recognizes WVB opcode `0x7D` (`bytes.sha256_hex`) and
-retains the intrinsic's exact bounded result contract. After promotion of both
-SHA-capable segmented staging families, the focused Windows owner packages the
-exact validator WVB
+The implemented native x64 lowering recognizes WVB opcode `0x7D`
+(`bytes.sha256_hex`) and retains the intrinsic's exact bounded result contract.
+After promotion of both SHA-capable segmented staging families, the earlier
+focused Windows owner packages the exact structural/digest validator WVB
 through the standard profile-7 `Package-Segmented-Compiler-Wvb` product path
 and executes the resulting `wvverify-admission-evidence` application. Twelve
 bounded actual-product cases cover acceptance, exact argument failures,
@@ -272,12 +291,28 @@ wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
 wrapper in 138,530 ms. The run uses the 24,292-byte core, 191,712-byte WVIR,
 72,600-byte validator WVB, and 94,839-byte fixture identities pinned above.
 
-That is local Windows development evidence, not paired-host CI qualification.
-Decision 0892 separately supplies the in-memory authenticated source-admission
-coordinator and exact foreign-catalog readback evidence. Paired-host
-qualification, complete validator-side source/catalog authentication, hosted
-`wvadmit` publication, private-snapshot lifecycle integration, and public-
-front-door removal remain pending. The script runner's separate hosted-profile
-envelope boundary is not substituted for the packaged native application
-evidence. This module continues to use the semantic intrinsic; it does not
-substitute Foundation SHA-256 or a host hashing service.
+The complete, separately composed `wvauth` additionally builds
+byte-identically in two initially empty split-compiler caches as a
+91,774-byte compiler-aligned WVB at SHA-256
+`88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580`.
+The earlier 108,847-byte product was constructed by the retained historical
+monolithic compiler and is not the production-ingress pin. Actual-product
+cases accept an authentic foreign set and reject missing and extra records,
+wrong flags, ABI, symbol, signature, effect, or signature-digest evidence, a
+wrong target, and missing or surplus command arguments. Its six retained-input
+ceiling remains 9,503,264 bytes.
+
+That is local Windows development evidence, not paired-host CI qualification
+or acceptance of the production ingress. Decision 0892 separately supplies
+the in-memory authenticated source-admission coordinator and exact
+foreign-catalog readback evidence. Target-aware `wvadmit` publication and
+complete validator-side source/catalog authentication are implemented. The
+Decision 0893 candidate now also supplies the private-snapshot lifecycle,
+removed public Analyzer bypass, internal Analyzer republishing check, and sole
+runner publication boundary. It pins all four exact successor products and its
+complete 21-case production owner passes on local Windows. Paired-host evidence
+remains pending.
+The script runner's separate hosted-profile envelope boundary is not
+substituted for packaged native application evidence. These modules continue
+to use the semantic intrinsic; they do not substitute Foundation SHA-256 or a
+host hashing service.

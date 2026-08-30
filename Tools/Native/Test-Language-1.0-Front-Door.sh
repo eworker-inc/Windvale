@@ -37,6 +37,9 @@ cleanup() {
     esac
 }
 trap cleanup EXIT
+target_descriptor="$work/Target.wvtd"
+node "$script_directory/Write-Canonical-Language-1.0-Target-Descriptor.mjs" \
+    "$target_descriptor" || exit $?
 
 report_step_failure() {
     local step=$1
@@ -54,6 +57,28 @@ report_step_failure() {
             printf '\n' >&2
         fi
     done
+}
+
+analyze_authenticated() {
+    local admitted=$1
+    local requested_output=$2
+    shift 2
+    local analysis_output=$requested_output
+    local remove_output=0
+    if [[ $admitted == "$requested_output" ]]; then
+        analysis_output="$requested_output.republished"
+        remove_output=1
+    fi
+    "$work/Analyzer.elf" --internal-source-set \
+        "$admitted" "$analysis_output" "$@"
+    local status=$?
+    if [[ $status -ne 0 ]]; then
+        return "$status"
+    fi
+    cmp -s -- "$admitted" "$analysis_output" || return 1
+    if [[ $remove_output -eq 1 ]]; then
+        rm -- "$analysis_output"
+    fi
 }
 
 expect_analysis_failure() {
@@ -85,13 +110,15 @@ expect_profiled_analysis_failure() {
     local expected_status=$3
     local analysis_exit
     local -a analysis_lines
-    "$work/Admitter.elf" \
+    node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$fixture" "$work/$prefix.wvss" \
         >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
     [[ ! -s $work/$prefix-admission.err ]] || return 1
-    if "$work/Analyzer.elf" --admitted-source-set \
+    if analyze_authenticated \
         "$work/$prefix.wvss" "$work/$prefix.wvss" \
         "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
         >"$work/$prefix.out" 2>"$work/$prefix.err"; then
@@ -114,13 +141,15 @@ expect_profiled_symbol_failure() {
     local expected_status=$3
     local analysis_exit
     local -a analysis_lines
-    "$work/Admitter.elf" \
+    node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$fixture" "$work/$prefix.wvss" \
         >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
     [[ ! -s $work/$prefix-admission.err ]] || return 1
-    if "$work/Analyzer.elf" --admitted-source-set \
+    if analyze_authenticated \
         "$work/$prefix.wvss" "$work/$prefix.wvss" \
         "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
         >"$work/$prefix.out" 2>"$work/$prefix.err"; then
@@ -149,6 +178,7 @@ expect_profiled_analysis_failure_with_dependencies() {
     admission_arguments=(
         --source-input-lock "$source_lock" "$source_lock_hash"
         --source-profile "$source_profile"
+        --target-descriptor "$target_descriptor"
         "$fixture" "$first_dependency"
     )
     if [[ -n $second_dependency ]]; then
@@ -158,10 +188,12 @@ expect_profiled_analysis_failure_with_dependencies() {
         admission_arguments+=("$third_dependency")
     fi
     admission_arguments+=("$work/$prefix.wvss")
-    "$work/Admitter.elf" "${admission_arguments[@]}" \
+    node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
+        "${admission_arguments[@]}" \
         >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
     [[ ! -s $work/$prefix-admission.err ]] || return 1
-    if "$work/Analyzer.elf" --admitted-source-set \
+    if analyze_authenticated \
         "$work/$prefix.wvss" "$work/$prefix.wvss" \
         "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
         >"$work/$prefix.out" 2>"$work/$prefix.err"; then
@@ -185,13 +217,15 @@ expect_profiled_symbol_failure_with_dependency() {
     local dependency=$4
     local analysis_exit
     local -a analysis_lines
-    "$work/Admitter.elf" \
+    node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$fixture" "$dependency" "$work/$prefix.wvss" \
         >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
     [[ ! -s $work/$prefix-admission.err ]] || return 1
-    if "$work/Analyzer.elf" --admitted-source-set \
+    if analyze_authenticated \
         "$work/$prefix.wvss" "$work/$prefix.wvss" \
         "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
         >"$work/$prefix.out" 2>"$work/$prefix.err"; then
@@ -214,13 +248,15 @@ expect_profiled_emission_failure() {
     local expected_line=$3
     local emission_exit
     local -a emission_lines
-    "$work/Admitter.elf" \
+    node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$fixture" "$work/$prefix.wvss" \
         >"$work/$prefix-admission.out" 2>"$work/$prefix-admission.err" || return 1
     [[ ! -s $work/$prefix-admission.err ]] || return 1
-    "$work/Analyzer.elf" --admitted-source-set \
+    analyze_authenticated \
         "$work/$prefix.wvss" "$work/$prefix.wvss" \
         "$work/$prefix.wvca" "$work/$prefix.wvlb" "$work/$prefix.wvir" \
         >"$work/$prefix-analysis.out" 2>"$work/$prefix-analysis.err" || return 1
@@ -362,6 +398,11 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
     "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
 node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
+    "$repository_root/Projects/Tools/Windvale-Compiler-Source-Authenticator.wvproj" \
+    "$work/Validator.wvb" \
+    "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
+    "$work/Bootstrap-Emitter.elf" "$work/Bootstrap-Emitter.identity" || exit $?
+node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     "$repository_root/Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj" \
     "$work/Analyzer.wvb" \
     "$work/Bootstrap-Analyzer.elf" "$work/Bootstrap-Analyzer.identity" \
@@ -369,19 +410,28 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 admitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Admitter.wvb")" \
     "$(sha256sum -- "$work/Admitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Admitter.wvb") -eq 83258 ]] || exit 1
+[[ $(wc -c < "$work/Admitter.wvb") -eq 572926 ]] || exit 1
 printf '%s  %s\n' \
-    12607ef0255fcc07d7adbe096929495c47b5c94425f5fa7edb7880f084e3eaf2 \
+    a9c2e966b84420aaa64de89a232246a15b8fb859ba5ef737e853d2482d5f5831 \
     "$work/Admitter.wvb" | sha256sum --check --strict --quiet || exit $?
+printf 'INFO  language 1 validator wvb-bytes=%s sha256=%s\n' \
+    "$(wc -c < "$work/Validator.wvb")" \
+    "$(sha256sum -- "$work/Validator.wvb" | cut -d' ' -f1)"
+[[ $(wc -c < "$work/Validator.wvb") -eq 91774 ]] || exit 1
+printf '%s  %s\n' \
+    88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580 \
+    "$work/Validator.wvb" | sha256sum --check --strict --quiet || exit $?
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1515281 ]] || exit 1
+[[ $(wc -c < "$work/Analyzer.wvb") -eq 1552090 ]] || exit 1
 printf '%s  %s\n' \
-    a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a \
+    5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77 \
     "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" --development-cache || exit $?
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+    "$work/Validator.wvb" "$work/Validator.elf" --development-cache || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Analyzer.wvb" "$work/Analyzer.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
@@ -458,24 +508,26 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1523514 ]] || exit 1
+[[ $(wc -c < "$work/Emitter.wvb") -eq 1556434 ]] || exit 1
 printf '%s  %s\n' \
-    61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403 \
+    d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9 \
     "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     emitter "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
 echo 'START language 1 front door step=enum-backing'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-Backing-All.wv" \
     "$work/Enum-Backing-All.wvss" \
     >"$work/Enum-Backing-All-Admission.out" \
     2>"$work/Enum-Backing-All-Admission.err" || exit $?
 [[ ! -s $work/Enum-Backing-All-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Enum-Backing-All.wvss" "$work/Enum-Backing-All.wvss" \
     "$work/Enum-Backing-All.wvca" "$work/Enum-Backing-All.wvlb" \
     "$work/Enum-Backing-All.wvir" \
@@ -501,17 +553,19 @@ cmp -s -- "$work/Expected-Enum-Backing-All.out" \
 enum_dead_type_wvb_bytes=$(wc -c < "$work/Enum-Backing-All.wvb")
 [[ $enum_dead_type_wvb_bytes -eq 217 ]] || exit 1
 node "$script_directory/Run-Split-Compiler.mjs" \
-    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-U8-Used-Main.wv" \
     "$work/Enum-U8-Used-Main-A.wvb" \
     >"$work/Enum-U8-Used-Main-A.out" \
     2>"$work/Enum-U8-Used-Main-A.err" || exit $?
 node "$script_directory/Run-Split-Compiler.mjs" \
-    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-U8-Used-Main.wv" \
     "$work/Enum-U8-Used-Main-B.wvb" \
     >"$work/Enum-U8-Used-Main-B.out" \
@@ -542,9 +596,10 @@ expect_profiled_symbol_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-Missing-Backing.wv" \
     Enum-Missing-Backing Missingˉenumˉbacking || exit 1
 node "$script_directory/Run-Split-Compiler.mjs" \
-    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Enum-I32-Negative-Main.wv" \
     "$work/Enum-I32-Negative-Main.wvb" \
     >"$work/Enum-I32-Negative-Main.out" \
@@ -603,9 +658,11 @@ expect_analysis_failure \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv" \
     Borrow-Owned-Read-Through Invalidˉborrow || exit 1
 echo 'PASS  language 1 front door step=borrow-call-semantics item=direct-rejections cases=6'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Sequence-Read-Through.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -624,7 +681,7 @@ if [[ -s $work/Borrow-Sequence-Admission.err ]]; then
         "$work/Borrow-Sequence-Admission.err"
     exit 1
 fi
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Borrow-Sequence-Admitted.wvss" \
     "$work/Borrow-Sequence.wvss" "$work/Borrow-Sequence.wvca" \
     "$work/Borrow-Sequence.wvlb" "$work/Borrow-Sequence.wvir" \
@@ -641,9 +698,11 @@ if [[ -s $work/Borrow-Sequence.err ]]; then
 fi
 grep -Fq 'source analysis status=Published' "$work/Borrow-Sequence.out" || exit 1
 echo 'PASS  language 1 front door step=borrow-call-semantics item=sequence ownership=Shared'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Borrow-Vector-Owned-Read-Through.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -651,7 +710,7 @@ echo 'PASS  language 1 front door step=borrow-call-semantics item=sequence owner
     >"$work/Borrow-Vector-Admission.out" \
     2>"$work/Borrow-Vector-Admission.err" || exit $?
 [[ ! -s $work/Borrow-Vector-Admission.err ]] || exit 1
-if "$work/Analyzer.elf" --admitted-source-set \
+if analyze_authenticated \
     "$work/Borrow-Vector-Admitted.wvss" \
     "$work/Borrow-Vector.wvss" "$work/Borrow-Vector.wvca" \
     "$work/Borrow-Vector.wvlb" "$work/Borrow-Vector.wvir" \
@@ -664,16 +723,18 @@ fi
 [[ ! -e $work/Borrow-Vector.wvir ]] || exit 1
 grep -Fq 'wir-status=Invalidˉborrow' "$work/Borrow-Vector.err" || exit 1
 echo 'PASS  language 1 front door step=borrow-call-semantics item=vector ownership=Owned rejection=Invalid-borrow'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Memory-Budget-Type-Identity.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Memory-Budget-Admitted.wvss" \
     >"$work/Memory-Budget-Admission.out" \
     2>"$work/Memory-Budget-Admission.err" || exit $?
 [[ ! -s $work/Memory-Budget-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Memory-Budget-Admitted.wvss" \
     "$work/Memory-Budget.wvss" "$work/Memory-Budget.wvca" \
     "$work/Memory-Budget.wvlb" "$work/Memory-Budget.wvir" \
@@ -714,16 +775,18 @@ expect_profiled_symbol_failure_with_dependency \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Lookalike.wv" || exit $?
 echo 'PASS  language 1 front door step=borrow-call-semantics item=memory-rejections cases=3'
 echo 'START language 1 front door step=memory-budget-entry'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Memory-Budget-Entry-Main.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Memory-Budget-Entry-Admitted.wvss" \
     >"$work/Memory-Budget-Entry-Admission.out" \
     2>"$work/Memory-Budget-Entry-Admission.err" || exit $?
 [[ ! -s $work/Memory-Budget-Entry-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Memory-Budget-Entry-Admitted.wvss" \
     "$work/Memory-Budget-Entry.wvss" "$work/Memory-Budget-Entry.wvca" \
     "$work/Memory-Budget-Entry.wvlb" "$work/Memory-Budget-Entry.wvir" \
@@ -749,9 +812,11 @@ printf 'PASS  language 1 front door step=memory-budget-entry item=compile format
     "$memory_budget_entry_wvb_bytes"
 echo 'PASS  language 1 front door step=borrow-call-semantics cases=14 execution=42 vector=Owned sequence=Shared memory-budget=Owned-WVIR'
 echo 'START language 1 front door step=memory-budget-split'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Memory-Budget-Split-Wir.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" \
@@ -759,7 +824,7 @@ echo 'START language 1 front door step=memory-budget-split'
     >"$work/Memory-Budget-Split-Admission.out" \
     2>"$work/Memory-Budget-Split-Admission.err" || exit $?
 [[ ! -s $work/Memory-Budget-Split-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Memory-Budget-Split-Admitted.wvss" \
     "$work/Memory-Budget-Split.wvss" \
     "$work/Memory-Budget-Split.wvca" \
@@ -800,9 +865,11 @@ expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
 echo 'PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.11 valid=1 wvb-boundary=1 malformed=7 source-rejections=4'
 echo 'START language 1 front door step=vector-construct-reserved'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Wir.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -811,7 +878,7 @@ echo 'START language 1 front door step=vector-construct-reserved'
     >"$work/Vector-Construct-Reserved-Admission.out" \
     2>"$work/Vector-Construct-Reserved-Admission.err" || exit $?
 [[ ! -s $work/Vector-Construct-Reserved-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Vector-Construct-Reserved-Admitted.wvss" \
     "$work/Vector-Construct-Reserved.wvss" \
     "$work/Vector-Construct-Reserved.wvca" \
@@ -866,9 +933,11 @@ expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Memory-Wrong-Allocation-Failure.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" || exit $?
 echo 'START language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Use-After.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -878,7 +947,7 @@ echo 'START language 1 front door step=vector-construct-reserved item=ownership-
     2>"$work/Vector-Construct-Reserved-Use-After-Admission.err" || exit $?
 [[ ! -s $work/Vector-Construct-Reserved-Use-After-Admission.err ]] || exit 1
 echo 'PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=admission'
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Vector-Construct-Reserved-Use-After-Admitted.wvss" \
     "$work/Vector-Construct-Reserved-Use-After.wvss" \
     "$work/Vector-Construct-Reserved-Use-After.wvca" \
@@ -911,15 +980,17 @@ mapfile -t vector_use_after_emission_lines \
 echo 'PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=evidence'
 echo 'PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.11 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1'
 echo 'START language 1 front door step=generic-nominal-variant'
-"$work/Admitter.elf" \
+node "$script_directory/Run-Authenticated-Source-Admission.mjs" \
+        "$work/Admitter.elf" "$work/Validator.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Nominal-Variant.wv" \
     "$work/Generic-Nominal-Variant.wvss" \
     >"$work/Generic-Nominal-Variant-Admission.out" \
     2>"$work/Generic-Nominal-Variant-Admission.err" || exit $?
 [[ ! -s $work/Generic-Nominal-Variant-Admission.err ]] || exit 1
-"$work/Analyzer.elf" --admitted-source-set \
+analyze_authenticated \
     "$work/Generic-Nominal-Variant.wvss" \
     "$work/Generic-Nominal-Variant.wvss" \
     "$work/Generic-Nominal-Variant.wvca" \
@@ -1027,14 +1098,16 @@ node "$script_directory/Verify-Generic-Nominal-Declaration-Dependency.mjs" \
 cmp -s -- "$work/Expected-Generic-Nominal-Main.out" \
     "$work/Generic-Nominal-Declaration-Dependency-Run.out" || exit 1
 echo 'PASS  language 1 front door step=generic-nominal-declaration-dependency cases=33 verification=compiler-aligned execution=42 cycle=Rejected'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
     "$work/Minimum-A.wvb" >"$work/Compile-A.out" 2>"$work/Compile-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Minimum-Program.wv" \
     "$work/Minimum-B.wvb" >"$work/Compile-B.out" 2>"$work/Compile-B.err" || exit $?
 [[ ! -s $work/Compile-A.err && ! -s $work/Compile-B.err ]] || exit 1
@@ -1045,14 +1118,16 @@ cmp -s -- "$work/Minimum-A.wvb" "$work/Minimum-B.wvb" || exit 1
 [[ ! -s $work/Minimum.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Minimum.out"
 cmp -s -- "$work/Expected-Minimum.out" "$work/Minimum.out" || exit 1
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
     "$work/Unit-A.wvb" >"$work/Unit-A.out" 2>"$work/Unit-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
     "$work/Unit-B.wvb" >"$work/Unit-B.out" 2>"$work/Unit-B.err" || exit $?
 [[ ! -s $work/Unit-A.err && ! -s $work/Unit-B.err ]] || exit 1
@@ -1060,15 +1135,17 @@ cmp -s -- "$work/Unit-A.out" "$work/Unit-B.out" || exit 1
 cmp -s -- "$work/Unit-A.wvb" "$work/Unit-B.wvb" || exit 1
 cat -- "$work/Unit-A.out"
 printf 'INFO  language 1 unit wvb-bytes=%s\n' "$(wc -c < "$work/Unit-A.wvb")"
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
     "$work/Record-Update-A.wvb" \
     >"$work/Record-Update-A.out" 2>"$work/Record-Update-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
     "$work/Record-Update-B.wvb" \
     >"$work/Record-Update-B.out" 2>"$work/Record-Update-B.err" || exit $?
@@ -1091,9 +1168,11 @@ expect_rejection() {
 expect_rejection_with_digest() {
     local source=$1 output=$2 digest=$3 profile=$4
     [[ ! -e $output ]] || return 1
-    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
         --source-input-lock "$source_lock" "$digest" \
-        --source-profile "$profile" "$source" "$output" \
+        --source-profile "$profile" \
+        --target-descriptor "$target_descriptor" \
+        "$source" "$output" \
         >"$output.out" 2>"$output.err"; then
         return 1
     fi
@@ -1102,9 +1181,10 @@ expect_rejection_with_digest() {
 expect_foundation_generic_rejection() {
     local source=$1 output=$2
     [[ ! -e $output ]] || return 1
-    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$source" \
         "$repository_root/Libraries/Foundation/Values/Result.wv" \
         "$output" >"$output.out" 2>"$output.err"; then
@@ -1112,14 +1192,16 @@ expect_foundation_generic_rejection() {
     fi
     [[ ! -e $output ]]
 }
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
     "$work/Value-If-A.wvb" >"$work/Value-If-A.out" 2>"$work/Value-If-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
     "$work/Value-If-B.wvb" >"$work/Value-If-B.out" 2>"$work/Value-If-B.err" || exit $?
 [[ ! -s $work/Value-If-A.err && ! -s $work/Value-If-B.err ]] || exit 1
@@ -1130,9 +1212,10 @@ cmp -s -- "$work/Value-If-A.wvb" "$work/Value-If-B.wvb" || exit 1
 [[ ! -s $work/Value-If.err ]] || exit 1
 printf 'Result: 42\n' >"$work/Expected-Value-If.out"
 cmp -s -- "$work/Expected-Value-If.out" "$work/Value-If.out" || exit 1
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-If-Lazy.wv" \
     "$work/Value-If-Lazy.wvb" >"$work/Value-If-Lazy.out" \
     2>"$work/Value-If-Lazy.err" || exit $?
@@ -1154,15 +1237,17 @@ if node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/A
 fi
 [[ ! -e $work/Seed-Value-If.wvb ]] || exit 1
 value_if_wvb_bytes=$(wc -c < "$work/Value-If-A.wvb")
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
     "$work/Value-Match-A.wvb" >"$work/Value-Match-A.out" \
     2>"$work/Value-Match-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
     "$work/Value-Match-B.wvb" >"$work/Value-Match-B.out" \
     2>"$work/Value-Match-B.err" || exit $?
@@ -1173,9 +1258,10 @@ cmp -s -- "$work/Value-Match-A.wvb" "$work/Value-Match-B.wvb" || exit 1
     >"$work/Value-Match.out" 2>"$work/Value-Match.err" || exit $?
 [[ ! -s $work/Value-Match.err ]] || exit 1
 cmp -s -- "$work/Expected-Value-If.out" "$work/Value-Match.out" || exit 1
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Lazy.wv" \
     "$work/Value-Match-Lazy.wvb" >"$work/Value-Match-Lazy.out" \
     2>"$work/Value-Match-Lazy.err" || exit $?
@@ -1186,16 +1272,18 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
 [[ ! -s $work/Value-Match-Lazy-Run.err ]] || exit 1
 cmp -s -- "$work/Expected-Value-If.out" \
     "$work/Value-Match-Lazy-Run.out" || exit 1
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
     "$work/Value-Match-Never-A.wvb" \
     >"$work/Value-Match-Never-A.out" \
     2>"$work/Value-Match-Never-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
     "$work/Value-Match-Never-B.wvb" \
     >"$work/Value-Match-Never-B.out" \
@@ -1206,16 +1294,18 @@ cmp -s -- "$work/Value-Match-Never-A.out" \
     "$work/Value-Match-Never-B.out" || exit 1
 cmp -s -- "$work/Value-Match-Never-A.wvb" \
     "$work/Value-Match-Never-B.wvb" || exit 1
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
     "$work/Value-Match-Variant-A.wvb" \
     >"$work/Value-Match-Variant-A.out" \
     2>"$work/Value-Match-Variant-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
     "$work/Value-Match-Variant-B.wvb" \
     >"$work/Value-Match-Variant-B.out" \
@@ -1303,15 +1393,17 @@ printf '%s  %s\n' \
 echo 'PASS  language 1 front door phase=compiler-slice item=4/13'
 
 echo 'START language 1 front door phase=fixed-integers item=5/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
     "$work/Fixed-Integer-A.wvb" \
     >"$work/Fixed-Integer-A.out" 2>"$work/Fixed-Integer-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
     "$work/Fixed-Integer-B.wvb" \
     >"$work/Fixed-Integer-B.out" 2>"$work/Fixed-Integer-B.err" || exit $?
@@ -1320,9 +1412,10 @@ cmp -s -- "$work/Fixed-Integer-A.out" "$work/Fixed-Integer-B.out" || exit 1
 cmp -s -- "$work/Fixed-Integer-A.wvb" "$work/Fixed-Integer-B.wvb" || exit 1
 
 for name in Overflow Divide-By-Zero Invalid-Shift; do
-    node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
         --source-input-lock "$source_lock" "$source_lock_hash" \
         --source-profile "$source_profile" \
+        --target-descriptor "$target_descriptor" \
         "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-$name.wv" \
         "$work/Fixed-Integer-$name.wvb" \
         >"$work/Fixed-Integer-$name.out" 2>"$work/Fixed-Integer-$name.err" || exit $?
@@ -1427,15 +1520,17 @@ printf 'INFO  language 1 fixed-integer wvb-bytes=%s\n' \
 echo 'PASS  language 1 front door phase=fixed-integers item=5/13'
 
 echo 'START language 1 front door phase=runes item=6/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
     "$work/Rune-A.wvb" \
     >"$work/Rune-A.out" 2>"$work/Rune-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
     "$work/Rune-B.wvb" \
     >"$work/Rune-B.out" 2>"$work/Rune-B.err" || exit $?
@@ -1490,15 +1585,17 @@ printf 'INFO  language 1 rune wvb-bytes=%s\n' "$rune_wvb_bytes"
 echo 'PASS  language 1 front door phase=runes item=6/13'
 
 echo 'START language 1 front door phase=floating item=7/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
     "$work/Floating-A.wvb" \
     >"$work/Floating-A.out" 2>"$work/Floating-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
     "$work/Floating-B.wvb" \
     >"$work/Floating-B.out" 2>"$work/Floating-B.err" || exit $?
@@ -1530,9 +1627,10 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
     --development-cache \
     >/dev/null || exit $?
 node "$script_directory/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs" \
-    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
-    "$source_lock" "$source_lock_hash" "$source_profile" "$work" || exit $?
+    "$source_lock" "$source_lock_hash" "$source_profile" \
+    "$target_descriptor" "$work" || exit $?
 "$work/Floating-Runner.elf" "$work/Memory-Budget-Entry-A.wvb" \
     >"$work/Memory-Budget-Entry-Run.out" \
     2>"$work/Memory-Budget-Entry-Run.err" || exit $?
@@ -1588,17 +1686,19 @@ printf 'INFO  language 1 floating wvb-bytes=%s\n' "$floating_wvb_bytes"
 echo 'PASS  language 1 front door phase=floating item=7/13'
 
 echo 'START language 1 front door phase=fixed-arrays item=8/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Fixed-Array-A.wvb" \
     >"$work/Fixed-Array-A.out" 2>"$work/Fixed-Array-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -1615,9 +1715,10 @@ printf 'INFO  language 1 fixed-array wvb-bytes=%s\n' "$fixed_array_wvb_bytes"
 echo 'PASS  language 1 front door phase=fixed-arrays item=8/13'
 
 echo 'START language 1 front door phase=vector-sequence-types item=9/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Sequence-Wvb-Types.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -1631,9 +1732,10 @@ node "$script_directory/Verify-Language-1.0-Vector-Sequence-Types.mjs" \
 node "$script_directory/Verify-Language-1.0-Vector-Sequence-Runtime.mjs" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
     "$work/Vector-Sequence-Types.wvb" "$work" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -1643,9 +1745,10 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Anal
 node "$script_directory/Verify-Language-1.0-Sequence-Reads.mjs" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
     "$work/Sequence-Read.wvb" "$work" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Read-Freeze-Main-Pipeline.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -1677,9 +1780,10 @@ expect_profiled_analysis_failure_with_dependencies \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$repository_root/Tests/Fixtures/Language-1.0/Sequence-Read-Lookalike-Module.wv" || exit $?
 if node "$script_directory/Run-Split-Compiler.mjs" \
-    "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Vector-Freeze-Use-After.wv" \
     "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
@@ -1746,15 +1850,17 @@ printf 'INFO  language 1 vector reads and freeze wvb-bytes=%s cases=19\n' \
 echo 'PASS  language 1 front door phase=vector-sequence-types item=9/13'
 
 echo 'START language 1 front door phase=unit-never item=10/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
     "$work/Never-A.wvb" \
     >"$work/Never-A.out" 2>"$work/Never-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
     "$work/Never-B.wvb" \
     >"$work/Never-B.out" 2>"$work/Never-B.err" || exit $?
@@ -1786,16 +1892,18 @@ printf 'INFO  language 1 unit-never unit-wvb-bytes=%s never-wvb-bytes=%s\n' \
 echo 'PASS  language 1 front door phase=unit-never item=10/13'
 
 echo 'START language 1 front door phase=multi-field-variants item=11/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
     "$work/Multi-Field-Variant-A.wvb" \
     >"$work/Multi-Field-Variant-A.out" \
     2>"$work/Multi-Field-Variant-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Multi-Field-Variant.wv" \
     "$work/Multi-Field-Variant-B.wvb" \
     >"$work/Multi-Field-Variant-B.out" \
@@ -1816,9 +1924,10 @@ for name in \
         "$work/Multi-Field-Variant-$name.wvb" || exit 1
 done
 
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Named-Variant-Field.wv" \
     "$work/Named-Variant-Field.wvb" \
     >"$work/Named-Variant-Field.out" \
@@ -1877,15 +1986,17 @@ printf 'INFO  language 1 multi-field-variants wvb-bytes=%s\n' \
 echo 'PASS  language 1 front door phase=multi-field-variants item=11/13'
 
 echo 'START language 1 front door phase=typed-failure item=12/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
     "$work/Result-Try-A.wvb" \
     >"$work/Result-Try-A.out" 2>"$work/Result-Try-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
     "$work/Result-Try-B.wvb" \
     >"$work/Result-Try-B.out" 2>"$work/Result-Try-B.err" || exit $?
@@ -1915,18 +2026,20 @@ printf 'INFO  language 1 typed-failure wvb-bytes=%s\n' \
 echo 'PASS  language 1 front door phase=typed-failure item=12/13'
 
 echo 'START language 1 front door phase=foundation-generics item=13/13'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv" \
     "$repository_root/Libraries/Foundation/Values/Option.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" \
     "$work/Foundation-Generic-A.wvb" \
     >"$work/Foundation-Generic-A.out" \
     2>"$work/Foundation-Generic-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Foundation-Generic-Result.wv" \
     "$repository_root/Libraries/Foundation/Values/Option.wv" \
     "$repository_root/Libraries/Foundation/Values/Result.wv" \
@@ -1963,12 +2076,18 @@ printf 'INFO  language 1 foundation-generics wvb-bytes=%s\n' \
     "$foundation_generic_wvb_bytes"
 
 echo 'START language 1 front door step=generic-specializations'
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Multiple-Specializations.wv" \
     "$work/Generic-Specializations-A.wvb" \
     >"$work/Generic-Specializations-A.out" \
     2>"$work/Generic-Specializations-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
+    --source-input-lock "$source_lock" "$source_lock_hash" \
+    --source-profile "$source_profile" \
+    --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Generic-Multiple-Specializations.wv" \
     "$work/Generic-Specializations-B.wvb" \
     >"$work/Generic-Specializations-B.out" \

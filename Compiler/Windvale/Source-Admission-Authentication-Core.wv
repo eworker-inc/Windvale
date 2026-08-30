@@ -1,0 +1,66 @@
+module Compilerˉsourceˉadmissionˉauthentication profile portable;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉadmissionˉevidenceˉvalidator as Validator;
+import Compilerˉadmissionˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉforeignˉcatalogˉauthentication as Foreignˉauthentication;
+import Compilerˉsourceˉtarget as Target;
+
+export record Compilerˉsourceˉadmissionˉauthenticationˉresult {
+    Phase: Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase;
+    Evidenceˉstatus: Evidence.Compilerˉadmissionˉevidenceˉstatus;
+    Wvssˉstatus: Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus;
+    Structureˉstatus: u32;
+    Failureˉoffset: u32;
+    Sourceˉstatus: u32;
+    Targetˉstatus: u32;
+    Failureˉmodule: u32;
+    Failureˉdeclaration: u32;
+    Value: bytes;
+}
+
+export fn Compilerˉauthenticateˉsourceˉadmission(
+    Envelope: bytes,
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes,
+    Lock: bytes,
+    Profile: bytes
+) -> Compilerˉsourceˉadmissionˉauthenticationˉresult {
+    let Base: Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Envelope, Wvss, Wvtd, Wvfc, Lock, Profile
+        );
+    if Base.Phase !=
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Valid {
+        return Compilerˉsourceˉadmissionˉauthenticationˉresult(
+            Base.Phase,
+            Base.Evidenceˉstatus,
+            Base.Wvssˉstatus,
+            Base.Structureˉstatus,
+            Base.Failureˉoffset,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            0u32,
+            0u32,
+            Bytesˉslice(Envelope, 0u32, 0u32)
+        );
+    }
+    let Source:
+        Foreignˉauthentication.Compilerˉsourceˉforeignˉauthenticationˉresult =
+        Foreignˉauthentication.Compilerˉauthenticateˉsourceˉforeignˉcatalog(
+            Wvss, Wvtd, Wvfc
+        );
+    return Compilerˉsourceˉadmissionˉauthenticationˉresult(
+        Base.Phase,
+        Base.Evidenceˉstatus,
+        Base.Wvssˉstatus,
+        Base.Structureˉstatus,
+        Source.Failureˉoffset,
+        Source.Status,
+        Source.Targetˉstatus,
+        Source.Failureˉmodule,
+        Source.Failureˉdeclaration,
+        Bytesˉslice(Envelope, 0u32, 0u32)
+    );
+}

@@ -1,0 +1,267 @@
+module Windvaleˉcompilerˉsourceˉauthenticatorˉdriver profile hosted;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉadmissionˉevidenceˉvalidator as Validator;
+import Compilerˉadmissionˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉadmissionˉauthentication as Authentication;
+import Compilerˉsourceˉforeignˉcatalogˉauthentication as Foreignˉauthentication;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Rejectˉevidence(
+    Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+) -> i32 {
+    var Report: text =
+        "admission-evidence validation status=Rejected phase=WVAE evidence-status=";
+    Report = Textˉconcat(Report, Enumˉname(Status));
+    Report = Textˉconcat(Report, " offset=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Offset)));
+    return 1;
+}
+
+fn Rejectˉsourceˉset(
+    Status: Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus,
+    Offset: u32
+) -> i32 {
+    var Report: text =
+        "admission-evidence validation status=Rejected phase=WVSS2 structure-status=";
+    Report = Textˉconcat(Report, Enumˉname(Status));
+    Report = Textˉconcat(Report, " offset=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Offset)));
+    return 1;
+}
+
+fn Rejectˉstructure(Phase: text, Status: u32, Offset: u32) -> i32 {
+    var Report: text =
+        "admission-evidence validation status=Rejected phase=";
+    Report = Textˉconcat(Report, Phase);
+    Report = Textˉconcat(Report, " structure-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Status));
+    Report = Textˉconcat(Report, " offset=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Offset)));
+    return 1;
+}
+
+fn Rejectˉinput(
+    Phase: text,
+    Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+) -> i32 {
+    var Report: text =
+        "admission-evidence validation status=Rejected phase=Input-";
+    Report = Textˉconcat(Report, Phase);
+    Report = Textˉconcat(Report, " evidence-status=");
+    Report = Textˉconcat(Report, Enumˉname(Status));
+    Report = Textˉconcat(Report, " offset=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Offset)));
+    return 1;
+}
+
+fn Rejectˉresourceˉlimit(Phase: text) -> i32 {
+    var Report: text =
+        "admission-evidence validation status=Rejected phase=Input-";
+    Report = Textˉconcat(Report, Phase);
+    diagnostic.write_line(Textˉconcat(Report, " status=Resource-limit"));
+    return 1;
+}
+
+fn Rejectˉsourceˉcatalog(
+    Status: u32,
+    Targetˉstatus: u32,
+    Module: u32,
+    Declaration: u32,
+    Offset: u32
+) -> i32 {
+    var Report: text =
+        "wvauth status=Rejected phase=Source-Catalog authentication-status=";
+    Report = Textˉconcat(Report, U32ˉformat(Status));
+    Report = Textˉconcat(Report, " target-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Targetˉstatus));
+    Report = Textˉconcat(Report, " module=");
+    Report = Textˉconcat(Report, U32ˉformat(Module));
+    Report = Textˉconcat(Report, " declaration=");
+    Report = Textˉconcat(Report, U32ˉformat(Declaration));
+    Report = Textˉconcat(Report, " offset=");
+    diagnostic.write_line(Textˉconcat(Report, U32ˉformat(Offset)));
+    return 1;
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 6u32 {
+        diagnostic.write_line(
+            "Usage: wvauth <evidence.wvae> <admitted.wvss> <target.wvtd> <catalog.wvfc> <lock.wvlock> <profile.wvsp>"
+        );
+        return 64;
+    }
+    var Retainedˉbytes: u32 = 0u32;
+    let Envelope: bytes = file.read_bytes(process.argument(0u32));
+    let Envelopeˉlength: u32 = Bytesˉlength(Envelope);
+    if Envelopeˉlength != 224u32 {
+        var Offset: u32 = Envelopeˉlength;
+        if Offset > 224u32 { Offset = 224u32; }
+        return Rejectˉinput(
+            "WVAE",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            Offset
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Envelopeˉlength
+        ) {
+        return Rejectˉresourceˉlimit("WVAE");
+    }
+    Retainedˉbytes = Retainedˉbytes + Envelopeˉlength;
+
+    let Wvtd: bytes = file.read_bytes(process.argument(2u32));
+    let Wvtdˉlength: u32 = Bytesˉlength(Wvtd);
+    if Wvtdˉlength < 64u32 || Wvtdˉlength > 320u32 {
+        return Rejectˉinput(
+            "WVTD",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Wvtdˉlength
+        ) {
+        return Rejectˉresourceˉlimit("WVTD");
+    }
+    Retainedˉbytes = Retainedˉbytes + Wvtdˉlength;
+
+    let Lock: bytes = file.read_bytes(process.argument(4u32));
+    let Lockˉlength: u32 = Bytesˉlength(Lock);
+    if Lockˉlength == 0u32 || Lockˉlength > 1048576u32 {
+        return Rejectˉinput(
+            "Lock",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+            160u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Lockˉlength
+        ) {
+        return Rejectˉresourceˉlimit("Lock");
+    }
+    Retainedˉbytes = Retainedˉbytes + Lockˉlength;
+
+    let Profile: bytes = file.read_bytes(process.argument(5u32));
+    let Profileˉlength: u32 = Bytesˉlength(Profile);
+    if Profileˉlength == 0u32 || Profileˉlength > 65536u32 {
+        return Rejectˉinput(
+            "Profile",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+            192u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Profileˉlength
+        ) {
+        return Rejectˉresourceˉlimit("Profile");
+    }
+    Retainedˉbytes = Retainedˉbytes + Profileˉlength;
+
+    let Wvss: bytes = file.read_bytes(process.argument(1u32));
+    let Wvssˉlength: u32 = Bytesˉlength(Wvss);
+    if Wvssˉlength < 37u32 || Wvssˉlength > 4194304u32 {
+        return Rejectˉinput(
+            "WVSS2",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Wvssˉlength
+        ) {
+        return Rejectˉresourceˉlimit("WVSS2");
+    }
+    Retainedˉbytes = Retainedˉbytes + Wvssˉlength;
+
+    let Wvfc: bytes = file.read_bytes(process.argument(3u32));
+    let Wvfcˉlength: u32 = Bytesˉlength(Wvfc);
+    if Wvfcˉlength < 48u32 || Wvfcˉlength > 4194304u32 {
+        return Rejectˉinput(
+            "WVFC",
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+            Retainedˉbytes, Wvfcˉlength
+        ) {
+        return Rejectˉresourceˉlimit("WVFC");
+    }
+    Retainedˉbytes = Retainedˉbytes + Wvfcˉlength;
+
+    let Checked: Authentication.Compilerˉsourceˉadmissionˉauthenticationˉresult =
+        Authentication.Compilerˉauthenticateˉsourceˉadmission(
+            Envelope, Wvss, Wvtd, Wvfc, Lock, Profile
+        );
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Input {
+        return Rejectˉinput(
+            "Snapshots", Checked.Evidenceˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Resourceˉlimit {
+        return Rejectˉresourceˉlimit("Snapshots");
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvss {
+        return Rejectˉsourceˉset(
+            Checked.Wvssˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvtd {
+        return Rejectˉstructure(
+            "WVTD", Checked.Structureˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvfc {
+        return Rejectˉstructure(
+            "WVFC", Checked.Structureˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Crossˉfield {
+        return Rejectˉstructure(
+            "WVFC-WVSS", Checked.Structureˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Evidence {
+        return Rejectˉevidence(
+            Checked.Evidenceˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Phase !=
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Valid {
+        return Rejectˉstructure(
+            "Validator", Checked.Structureˉstatus, Checked.Failureˉoffset
+        );
+    }
+    if Checked.Sourceˉstatus !=
+        Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID {
+        return Rejectˉsourceˉcatalog(
+            Checked.Sourceˉstatus,
+            Checked.Targetˉstatus,
+            Checked.Failureˉmodule,
+            Checked.Failureˉdeclaration,
+            Checked.Failureˉoffset
+        );
+    }
+    if Bytesˉlength(Checked.Value) != 0u32 {
+        return Rejectˉstructure("Authenticator", 1u32, 0u32);
+    }
+    console.write_line(
+        "wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated"
+    );
+    return 0;
+}

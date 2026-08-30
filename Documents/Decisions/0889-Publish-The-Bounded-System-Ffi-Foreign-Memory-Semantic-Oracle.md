@@ -81,9 +81,9 @@ authentication and lowering with their existing owners.
 
 ## Initial evidence
 
-The focused semantic project binds and lowers 116 functions to a 147,372-byte
+The focused semantic project binds and lowers 116 functions to a 147,912-byte
 compiler-aligned WVB at SHA-256
-`7937f9558a97ec5408f79b2871c9611a838eed16e07ae7acf9ccecaedac06055`.
+`1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003`.
 Two preflight builds are byte-identical. A narrow x64 preflight stages the WVB
 to a 5,297,182-byte object set in 7 chunks with a 108-byte manifest. The generic
 segmented-hosted-WVB cache performs the candidate's sole complete verification
@@ -100,7 +100,7 @@ four negative dispatch probes, all 29 isolated rule selectors, and the exact
 source-graph rejection.
 
 The prior Windows direct-native identity and its 29-selector result belonged to
-the superseded 121,635-byte WVB. The corrected 147,372-byte result is the
+the superseded 121,635-byte WVB. The corrected 147,912-byte result is the
 current local Windows development evidence.
 
 The thirtieth case is exact source-to-WIR graph evidence: a portable root that

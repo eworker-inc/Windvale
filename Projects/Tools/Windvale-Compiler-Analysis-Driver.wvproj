@@ -1,7 +1,7 @@
 windvale-project 2
 root "Tools/Windvale.Build/Compiler-Analysis-Driver.wv"
-source "Compiler/Windvale/Source-Analysis-Contract-Core.wv"
 source "Compiler/Windvale/Source-Analysis-Core.wv"
+source "Compiler/Windvale/Source-Analysis-Contract-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Closures-Core.wv"
 source "Compiler/Windvale/Source-Bindings-Generic-Types-Core.wv"

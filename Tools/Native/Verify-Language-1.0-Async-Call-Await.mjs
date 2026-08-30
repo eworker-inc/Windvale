@@ -16,11 +16,12 @@ const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_PRODUCT_BYTES = 16_777_216;
 const TOOL_TIMEOUT_MILLISECONDS = 300_000;
 
-if (process.argv.length !== 9) {
+if (process.argv.length !== 11) {
     process.stderr.write(
         'Usage: node Verify-Language-1.0-Async-Call-Await.mjs ' +
-        '<admitter> <analyzer> <emitter> <source-lock> ' +
-        '<source-lock-sha256> <source-profile> <scratch-directory>\n',
+        '<admitter> <validator> <analyzer> <emitter> <source-lock> ' +
+        '<source-lock-sha256> <source-profile> <target.wvtd> ' +
+        '<scratch-directory>\n',
     );
     process.exit(64);
 }
@@ -28,12 +29,14 @@ if (process.argv.length !== 9) {
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
 const Admitter = path.resolve(process.argv[2]);
-const Analyzer = path.resolve(process.argv[3]);
-const Emitter = path.resolve(process.argv[4]);
-const Sourceˉlock = path.resolve(process.argv[5]);
-const Sourceˉlockˉsha256 = process.argv[6];
-const Sourceˉprofile = path.resolve(process.argv[7]);
-const Scratch = path.resolve(process.argv[8]);
+const Validator = path.resolve(process.argv[3]);
+const Analyzer = path.resolve(process.argv[4]);
+const Emitter = path.resolve(process.argv[5]);
+const Sourceˉlock = path.resolve(process.argv[6]);
+const Sourceˉlockˉsha256 = process.argv[7];
+const Sourceˉprofile = path.resolve(process.argv[8]);
+const Target = path.resolve(process.argv[9]);
+const Scratch = path.resolve(process.argv[10]);
 const Splitˉcompiler = path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs');
 
 if (!/^[0-9a-f]{64}$/u.test(Sourceˉlockˉsha256)) {
@@ -41,10 +44,12 @@ if (!/^[0-9a-f]{64}$/u.test(Sourceˉlockˉsha256)) {
 }
 for (const [Candidate, Label, Maximum] of [
     [Admitter, 'admitter', 134_217_728],
+    [Validator, 'validator', 134_217_728],
     [Analyzer, 'analyzer', 134_217_728],
     [Emitter, 'emitter', 134_217_728],
     [Sourceˉlock, 'source lock', 4_194_304],
     [Sourceˉprofile, 'source profile', 4_194_304],
+    [Target, 'target descriptor', 320],
     [Splitˉcompiler, 'split compiler', 1_048_576],
 ]) {
     Requireˉordinaryˉfile(Candidate, Maximum, Label);
@@ -58,7 +63,9 @@ const Accepted = [
         Bytes: 308,
         Sha256: '744b2e3a972ce25602a5df4949877eeefeafac37c9ef4b7e2a880118c8f59d57',
         Report:
-            'source admission status=Published modules=1 source-bytes=346\n' +
+            'source admission status=Published wvss-bytes=346 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=346 manifest-bytes=104 ' +
             'binding-bytes=112 wir-bytes=300\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -70,7 +77,9 @@ const Accepted = [
         Bytes: 418,
         Sha256: 'cfd25dd95ed66d936f00d20f34472c544d28ff7d79aa2b30c947177a2152ee8e',
         Report:
-            'source admission status=Published modules=1 source-bytes=443\n' +
+            'source admission status=Published wvss-bytes=443 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=443 manifest-bytes=104 ' +
             'binding-bytes=156 wir-bytes=484\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -82,7 +91,9 @@ const Accepted = [
         Bytes: 398,
         Sha256: 'b2f3adc1944bd316839b7ba50d5bc71a42b506ae001ab2c8c65b4e550a34e26b',
         Report:
-            'source admission status=Published modules=1 source-bytes=426\n' +
+            'source admission status=Published wvss-bytes=426 wvtd-bytes=64 ' +
+            'wvfc-bytes=48 wvae-bytes=224\n' +
+            'wvauth status=Accepted format=WVAE-1 source-catalog=Authenticated\n' +
             'source analysis status=Published source-bytes=426 manifest-bytes=104 ' +
             'binding-bytes=268 wir-bytes=464\n' +
             'source emission status=Published mode=optimized functions=2 ' +
@@ -194,9 +205,10 @@ if (Passed) {
 function Compile(Fixture, Output) {
     return spawnSync(process.execPath, [
         Splitˉcompiler,
-        Admitter, Analyzer, Emitter,
+        Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, Sourceˉlockˉsha256,
         '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Target,
         path.join(
             Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture,
         ),

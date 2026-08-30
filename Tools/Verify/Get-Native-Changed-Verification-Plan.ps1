@@ -1192,14 +1192,34 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Compile-Compiler-Source-Set',
-        'Compile-Project-2-With-Compiler',
-        'Run-Split-Compiler'
+        'Compile-Project-2-With-Compiler'
     )) {
         Add-Suite 'language-1-front-door'
         return
     }
     if ($Stem -in @(
-        'Build-Cached-Split-Project-Wvb',
+        'Run-Authenticated-Source-Admission',
+        'Write-Canonical-Language-1.0-Target-Descriptor'
+    )) {
+        Add-Suite 'language-1-front-door'
+        return
+    }
+    if ($Stem -eq 'Run-Split-Compiler') {
+        Add-Suite @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress'
+        )
+        return
+    }
+    if ($Stem -eq 'Build-Cached-Split-Project-Wvb') {
+        Add-Suite @(
+            'compiler-split-development',
+            'wvb-runner-reconstruction',
+            'language-1-production-admission-ingress'
+        )
+        return
+    }
+    if ($Stem -in @(
         'Split-Project-Source-Ordering-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development',
@@ -1555,6 +1575,10 @@ foreach ($Path in $Paths) {
         'Documents/Decisions/0892-Coordinate-Authenticated-Source-Admission.md') {
         Add-Suite 'language-1-source-admission-coordinator'
         continue
+    } elseif ($Path -eq
+        'Documents/Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md') {
+        Add-Suite 'language-1-production-admission-ingress'
+        continue
     } elseif (Test-LanguageFrozenSourceDesignPath $Path) {
         Add-Suite 'language-1-front-door'
         continue
@@ -1578,7 +1602,10 @@ foreach ($Path in $Paths) {
         'Projects/Tools/Windvale-Compiler-Admission-Driver.wvproj',
         'Tools/Windvale.Build/Compiler-Admission-Driver.wv'
     )) {
-        Add-Suite 'language-1-front-door'
+        Add-Suite @(
+            'language-1-front-door',
+            'language-1-production-admission-ingress'
+        )
     } elseif ($Path.StartsWith(
         'Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/',
         [StringComparison]::Ordinal)) {
@@ -1599,6 +1626,9 @@ foreach ($Path in $Paths) {
         'Tools/Native/Verify-Language-1.0-Closure-Compiler-Pipeline.mjs'
     )) {
         Add-Suite 'language-1-front-door'
+        if ($Path -eq 'Specifications/Compiler-Source-Analysis.md') {
+            Add-Suite 'language-1-production-admission-ingress'
+        }
         if ($Path -in @(
             'Compiler/Windvale/Source-Emission-Core.wv',
             'Projects/Compiler/Windvale-Source-Emission-Core.wvproj'
@@ -1613,6 +1643,14 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
     )) {
         Add-Suite 'compiler-split-development'
+        if ($Path -in @(
+            'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
+            'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
+            'Tools/Windvale.Build/Compiler-Analysis-Driver.wv',
+            'Tools/Windvale.Build/Compiler-Emission-Driver.wv'
+        )) {
+            Add-Suite 'language-1-production-admission-ingress'
+        }
     } elseif ($Path -in @(
         'Tools/Native/Language-1.0-Callable-Wvb-Fixtures.mjs',
         'Tools/Native/Verify-Language-1.0-Callable-Runner.mjs'
@@ -1669,6 +1707,16 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-effect-clause-front-end'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Admission-Parser-Evidence-Core.wv',
+        'Projects/Compiler/Windvale-Source-Admission-Parser-Evidence-Core.wvproj'
+    )) {
+        Add-Suite @(
+            'language-1-system-ffi-front-end',
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
+        )
+    } elseif ($Path -in @(
         'Compiler/Windvale/Source-Admission-Coordinator-Core.wv',
         'Compiler/Windvale/Source-Target-Admission-Core.wv',
         'Documents/Decisions/0892-Coordinate-Authenticated-Source-Admission.md',
@@ -1680,7 +1728,28 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.mjs',
         'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.sh'
     )) {
-        Add-Suite 'language-1-source-admission-coordinator'
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Admission-Coordinator-Core.wv',
+            'Compiler/Windvale/Source-Target-Admission-Core.wv'
+        )) {
+            Add-Suite @(
+                'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress'
+            )
+        } else {
+            Add-Suite 'language-1-source-admission-coordinator'
+        }
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Admission-Authentication-Core.wv',
+        'Projects/Tools/Windvale-Compiler-Source-Authenticator.wvproj',
+        'Tools/Windvale.Build/Compiler-Source-Authenticator-Driver.wv'
+    )) {
+        Add-Suite 'language-1-production-admission-ingress'
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Foreign-Catalog-Authentication-Core.wv',
+        'Projects/Compiler/Windvale-Source-Foreign-Catalog-Authentication-Core.wvproj'
+    )) {
+        Add-Suite 'language-1-production-admission-ingress'
     } elseif ($Path -in @(
         'Compiler/Windvale/Admission-Evidence-Core.wv',
         'Compiler/Windvale/Admission-Evidence-Validator-Core.wv',
@@ -1698,7 +1767,8 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite @(
             'language-1-admission-evidence-format',
-            'language-1-source-admission-coordinator'
+            'language-1-source-admission-coordinator',
+            'language-1-production-admission-ingress'
         )
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Target-Core.wv',
@@ -1714,6 +1784,7 @@ foreach ($Path in $Paths) {
                 'language-1-system-ffi-front-end',
                 'language-1-admission-evidence-format',
                 'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress',
                 'language-1-foreign-memory-semantics'
             )
         } elseif ($Path -eq
@@ -1721,6 +1792,7 @@ foreach ($Path in $Paths) {
             Add-Suite @(
                 'language-1-system-ffi-front-end',
                 'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress',
                 'language-1-foreign-memory-semantics'
             )
         } else {
@@ -1739,6 +1811,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'language-1-foreign-catalog-format'
         Add-Suite 'language-1-foreign-catalog-producer'
         Add-Suite 'language-1-source-admission-coordinator'
+        Add-Suite 'language-1-production-admission-ingress'
         Add-Suite 'language-1-foreign-memory-semantics'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
@@ -1754,6 +1827,7 @@ foreach ($Path in $Paths) {
                 'language-1-admission-evidence-format',
                 'language-1-foreign-catalog-producer',
                 'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress',
                 'language-1-foreign-memory-semantics'
             )
         } else {
@@ -1769,10 +1843,19 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.sh',
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
     )) {
-        Add-Suite @(
-            'language-1-foreign-catalog-producer',
-            'language-1-source-admission-coordinator'
-        )
+        if ($Path -eq
+            'Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv') {
+            Add-Suite @(
+                'language-1-foreign-catalog-producer',
+                'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress'
+            )
+        } else {
+            Add-Suite @(
+                'language-1-foreign-catalog-producer',
+                'language-1-source-admission-coordinator'
+            )
+        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Semantics-Core.wv',
         'Documents/Decisions/0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md',
@@ -1963,7 +2046,8 @@ foreach ($Path in $Paths) {
                 'language-1-front-door',
                 'language-1-admission-evidence-format',
                 'language-1-foreign-catalog-producer',
-                'language-1-source-admission-coordinator'
+                'language-1-source-admission-coordinator',
+                'language-1-production-admission-ingress'
             )
         } else {
             Add-Suite 'language-1-front-door'

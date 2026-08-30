@@ -10,11 +10,16 @@ platform predicates.
 
 The portable authenticated source-admission coordinator now carries exact WVTD
 input/output through in-memory `wvadmit` construction and enforces target and
-foreign predicates before WVAE construction. A hosted file-system front door,
-Analyzer authentication, foreign-call WIR/WVB and native lowering, linker
-imports, and provider containment remain pending. WVTD is an internal
-compiler-phase format, not a package or distribution format. Canonical WVB
-remains the distribution contract.
+foreign predicates before WVAE construction. The target-aware hosted `wvadmit`
+publishes that exact descriptor, and the complete `wvauth` independently proves
+the retained source/catalog target predicate without publishing a certificate.
+The proposed production-ingress candidate now retains and rechecks that private
+snapshot through the non-authoritative Analyzer handoff. Exact local Windows
+product pins and the complete focused owner pass. Paired-host acceptance,
+foreign-call WIR/WVB and native lowering, linker imports, and provider
+containment remain pending. WVTD is an internal compiler-phase format, not a
+package or distribution format. Canonical WVB remains the distribution
+contract.
 
 ## Encoding and limits
 

@@ -2,6 +2,7 @@ module Languageˉoneˉsourceˉadmissionˉcoordinatorˉselfˉtest profile hosted;
 
 import Compilerˉadmissionˉevidence as Evidence;
 import Compilerˉsourceˉadmissionˉcoordinator as Coordinator;
+import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉdescriptor as Descriptor;
 import Compilerˉsourceˉforeignˉcatalog as Catalog;
@@ -310,12 +311,33 @@ fn Caseˉmaximumˉmodules() -> bool {
     );
 }
 
+fn Platformˉparserˉagrees(Input: bytes) -> bool {
+    let Header: Declarations.Compilerˉsourceˉheader =
+        Declarations.Compilerˉparseˉheaderˉvalidated(Input);
+    let Platforms: Admissionˉparser.Compilerˉsourceˉplatformˉevidence =
+        Admissionˉparser.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+            Input
+        );
+    if Platforms.Status == Declarations.Compilerˉparseˉstatus.Valid {
+        return Header.Status == Declarations.Compilerˉparseˉstatus.Valid &&
+            Header.Lexicalˉstatus == Platforms.Lexicalˉstatus;
+    }
+    return Header.Status == Platforms.Status &&
+        Header.Lexicalˉstatus == Platforms.Lexicalˉstatus &&
+        Header.Nextˉoffset == Platforms.Nextˉoffset &&
+        Header.Nextˉline == Platforms.Nextˉline &&
+        Header.Nextˉcolumn == Platforms.Nextˉcolumn &&
+        Header.Failureˉoffset == Platforms.Failureˉoffset &&
+        Header.Failureˉline == Platforms.Failureˉline &&
+        Header.Failureˉcolumn == Platforms.Failureˉcolumn &&
+        Header.Expected == Platforms.Expected && Header.Found == Platforms.Found;
+}
+
 fn Caseˉplatform(Build: u32, Platform: text) -> bool {
     let Targetˉbytes: bytes = Wvtd(Build);
-    return Validˉresult(
-        Coordinate(Oneˉsourceˉset(Source(
-            "Root", "core", Platform, ""
-        )), Targetˉbytes),
+    let Input: bytes = Source("Root", "core", Platform, "");
+    return Platformˉparserˉagrees(Input) && Validˉresult(
+        Coordinate(Oneˉsourceˉset(Input), Targetˉbytes),
         Targetˉbytes, 0u32, 1u32
     );
 }
@@ -340,10 +362,12 @@ fn Caseˉplatformˉmismatch() -> bool {
 }
 
 fn Caseˉunknown() -> bool {
+    let Input: bytes = Source("Root", "core", "unknown", "");
     let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
-        Oneˉsourceˉset(Source("Root", "core", "unknown", "")), Wvtd(2u32)
+        Oneˉsourceˉset(Input), Wvtd(2u32)
     );
-    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+    return Platformˉparserˉagrees(Input) &&
+        Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
         Result.Targetˉadmissionˉstatus ==
             Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_PLATFORM &&
         Result.Parseˉstatus ==
@@ -361,11 +385,12 @@ fn Caseˉunknown() -> bool {
 }
 
 fn Caseˉduplicate() -> bool {
+    let Input: bytes = Source("Root", "core", "linux, linux", "");
     let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
-        Oneˉsourceˉset(Source("Root", "core", "linux, linux", "")),
-        Wvtd(2u32)
+        Oneˉsourceˉset(Input), Wvtd(2u32)
     );
-    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+    return Platformˉparserˉagrees(Input) &&
+        Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
         Result.Parseˉstatus ==
             Declarations.Compilerˉparseˉstatus.Duplicateˉplatform &&
         Result.Failureˉoffset == 55u32 &&
@@ -379,10 +404,12 @@ fn Caseˉduplicate() -> bool {
 }
 
 fn Caseˉmissing() -> bool {
+    let Input: bytes = Missingˉplatformˉsource();
     let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
-        Oneˉsourceˉset(Missingˉplatformˉsource()), Wvtd(2u32)
+        Oneˉsourceˉset(Input), Wvtd(2u32)
     );
-    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+    return Platformˉparserˉagrees(Input) &&
+        Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
         Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
         Result.Failureˉoffset == 39u32 &&
         Result.Failureˉlength == 0u32 &&
@@ -432,12 +459,13 @@ fn Caseˉgenericˉlinuxˉforeign() -> bool {
         Wvtd(4u32)
     );
     let Targetˉbytes: bytes = Wvtd(4u32);
+    let Broaderˉsource: bytes = Source(
+        "Root", "system",
+        "linux, linux.x86_64.sysv_amd64_c_v1",
+        Foreignˉdeclaration()
+    );
     let Broader: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
-        Oneˉsourceˉset(Source(
-            "Root", "system",
-            "linux, linux.x86_64.sysv_amd64_c_v1",
-            Foreignˉdeclaration()
-        )),
+        Oneˉsourceˉset(Broaderˉsource),
         Targetˉbytes
     );
     let Exact: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(

@@ -20,19 +20,21 @@ Language, Libraries, WVDB, package/service, and integrated qualification work
 advance as product workstreams rather than numbered release stages. OS-1 retains
 its independent qualification path.
 
-The latest Language 1.0 Slice 8 checkpoint uses the SHA-capable segmented
-staging families promoted under
-[Decision 0891](../Decisions/0891-Promote-Sha-Capable-Segmented-Staging.md) to
-execute the separately bounded validator from
-[Decision 0887](../Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md).
-The focused Windows owner packages the exact validator through the standard
-profile-7 product wrapper and passes 12 actual-product cases beside 44 portable
-selectors and 15 WVSS structure subcases. Decision 0892 separately adds the
-in-memory authenticated source-admission coordinator and exact foreign-catalog
-readback evidence. Local Linux reconstruction, paired-host CI, hosted
-coordinator publication and private-snapshot lifecycle integration, complete
-validator-side source/catalog authentication, foreign binding/lowering, and
-runtime containment remain pending.
+The latest Language 1.0 Slice 8 candidate implements the production ingress
+designed by
+[Decision 0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md).
+Target-aware `wvadmit` publishes WVSS, WVTD, WVFC, and WVAE; independent
+six-snapshot `wvauth` publishes no certificate; and the private runner rechecks
+the retained relationship before invoking the non-authoritative Analyzer
+source-set route. A nonempty catalog stops at exact
+`Foreignˉsemanticsˉpending`. For an empty catalog, the runner byte-compares the
+Analyzer's republished WVSS, gives the emitter the retained original, and alone
+atomically publishes the final WVB. Raw Project 2 remains development-only and
+rejects System, platform, and foreign source before analysis. Local Windows
+evidence now pins all four products, passes the complete 21-case focused owner,
+and reproduces Analyzer/emitter stage-2 bytes through the 18-phase convergence
+check. Paired-host evidence, foreign binding/lowering, and runtime containment
+remain pending, so Decision 0893 remains Proposed.
 
 The coordinator's target-descriptor evolution directly enters the validator
 closure. A narrow retained-analyzer audit reproduces its 191,712-byte WVIR at
@@ -166,9 +168,9 @@ long-name/Unicode mapping remains explicit future work.
 | Exact selected-release recovery | **2/2 hosts** |
 | Published and independently retained recovery assets | **13/13** |
 
-Current work uses a separate 122-owner, 5,850-case native verification registry.
-Its 21,412 LF-only bytes have SHA-256
-`b549ef509cf6eac5d53679ea79ceae66f4b2d17306e2daa66b8d1e6bb7032208`.
+Current work uses a separate 124-owner, 5,911-case native verification registry.
+Its 22,130 LF-only bytes have SHA-256
+`b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a`.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 
@@ -279,30 +281,41 @@ predicate enforcement, and WVAE construction into one portable all-or-nothing
 result. Success publishes separate WVSS, unchanged WVTD, WVFC, and WVAE values;
 failure returns all four empty with bounded subordinate diagnostics.
 
-The producer owner now uses the current forward-language build route. Its
-510,644-byte WVB at SHA-256
-`ef8c089b0bc1369f960c889e5d3276bfc7aa43e0584d2ec0664049669d15cf28`
-and 12,825,088-byte Windows application at SHA-256
-`443aa180cf86b126db7d51cf29790ddaba450e613d7ac235020c51c1941a6291`
+The producer owner uses the current forward-language build route. Its
+518,755-byte WVB at SHA-256
+`e930239f2b02f840fbfe92fc64cfa8409aeb38955a52dd16d1a73a8f62062db7`
+and 12,891,136-byte Windows application at SHA-256
+`35ffb6d0d1b928f43b2d7117eb2092905a40dac045ae84ebd676081d6f0ecbf0`
 passed complete verification and all 25 isolated selectors.
 
-The coordinator's identical builds publish a 623,826-byte WVB at SHA-256
-`0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188`.
-Its 14,772,736-byte Windows application at SHA-256
-`d7130fbaf5ecc1cb15b7162b4ec2a812d2ea61bdab67a9b10502d285c826dbd7`
+The coordinator's identical builds publish a 634,819-byte WVB at SHA-256
+`7d004263b350097f8bcd82997d4210464ee2dba8937a5c0b76d32b8139f99ac1`.
+Its 14,952,960-byte Windows application at SHA-256
+`e466cbb1f89452cc894eeba1ef7406aa2b204dc8b8c2ef66ddc7b750df3b6f16`
 passed all 28 isolated selectors. The owner includes exact source-ordered WVFC
 readback, rejects structure-valid empty and remapped catalogs, preserves
 `UNKNOWN_PLATFORM`, rejects generic and broader-than-exact foreign scopes,
 accepts exact-only, and checks max/one-past retention plus
 malformed-within-format-ceiling diagnostics. The planner passed 31 general and
-229 native routing cases. This completes focused current-Windows development
+244 native routing cases. This completes focused current-Windows development
 evidence for the candidate.
 
-The registry has 123 owners and 5,890 cases in 21,871 LF-only bytes at SHA-256
-`4b3fb12c8fa8fb910737c3f787f00973dda67e76c306c7be12c2a9535e4adb91`.
-Its shards contain 1/57, 43/2,802, 38/1,782, and 41/1,249 owners/cases. Local
-Linux execution, paired-host qualification, hosted publication, Analyzer
-integration, foreign lowering, and runtime containment remain pending.
+The registry has 124 owners and 5,911 cases in 22,130 LF-only bytes at SHA-256
+`b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a`.
+Its shards contain 1/57, 44/2,823, 38/1,782, and 41/1,249 owners/cases. The
+subsequent Decision 0893 candidate implements hosted publication and the
+Analyzer handoff. Its exact local product pins and complete owner result pass;
+the planner covers its transitive product dependencies and passes 31 general
+plus 247 native routing cases. Paired-host qualification remains pending beside
+foreign lowering and runtime containment.
+
+The pinned bootstrap transition produces 4,182,928 WVIR bytes for the selected
+Analyzer closure, leaving 11,376 bytes, and could not carry duplicated ingress
+authentication. One packaged current Analyzer has separately compiled its
+exact 2,132,771-byte source set to 3,815,704 WVIR bytes, leaving 378,600 bytes.
+The 18-phase current-compiler convergence check reproduces stage-2 bytes and
+pins the 1,552,090-byte WVB at SHA-256
+`5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77`.
 
 ### Preserve bounded development feedback
 

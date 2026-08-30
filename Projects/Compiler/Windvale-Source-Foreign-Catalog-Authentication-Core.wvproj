@@ -1,0 +1,7 @@
+windvale-project 2
+root "Compiler/Windvale/Source-Foreign-Catalog-Authentication-Core.wv"
+source "Compiler/Windvale/Admission-Evidence-Core.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+source "Compiler/Windvale/Source-Foreign-Catalog-Core.wv"
+source "Compiler/Windvale/Source-Target-Core.wv"
+emit wvb

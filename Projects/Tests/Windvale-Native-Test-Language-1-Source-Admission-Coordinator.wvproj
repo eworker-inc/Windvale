@@ -2,6 +2,7 @@ windvale-project 2
 root "Tests/Fixtures/Language-1.0/Source-Admission-Coordinator-Self-Test.wv"
 source "Compiler/Windvale/Admission-Evidence-Core.wv"
 source "Compiler/Windvale/Source-Admission-Coordinator-Core.wv"
+source "Compiler/Windvale/Source-Admission-Parser-Evidence-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
 source "Compiler/Windvale/Source-Descriptor-Core.wv"

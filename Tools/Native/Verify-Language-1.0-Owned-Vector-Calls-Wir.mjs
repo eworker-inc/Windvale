@@ -5,6 +5,7 @@ import {
     readFileSync,
     realpathSync,
     unlinkSync,
+    writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,21 +20,24 @@ const INVALID_WIR =
     'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir ' +
     'wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n';
 
-if (process.argv.length !== 6 && process.argv.length !== 7) {
+if (process.argv.length !== 8 && process.argv.length !== 9) {
     process.stderr.write(
         'Usage: node Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs ' +
-        '<admitter> <analyzer> <emitter> <work-directory> ' +
+        '<admitter> <validator> <analyzer> <emitter> <target.wvtd> ' +
+        '<work-directory> ' +
         '[owned-aggregate-output.wvb]\n',
     );
     process.exit(64);
 }
 
 const Admitter = path.resolve(process.argv[2]);
-const Analyzer = path.resolve(process.argv[3]);
-const Emitter = path.resolve(process.argv[4]);
-const Work = path.resolve(process.argv[5]);
-const Aggregateˉoutput = process.argv.length === 7
-    ? path.resolve(process.argv[6])
+const Validator = path.resolve(process.argv[3]);
+const Analyzer = path.resolve(process.argv[4]);
+const Emitter = path.resolve(process.argv[5]);
+const Target = path.resolve(process.argv[6]);
+const Work = path.resolve(process.argv[7]);
+const Aggregateˉoutput = process.argv.length === 9
+    ? path.resolve(process.argv[8])
     : null;
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
@@ -61,8 +65,10 @@ const Dependencies = [
 ];
 
 Requireˉordinaryˉfile(Admitter, MAXIMUM_TOOL_BYTES, 'admitter');
+Requireˉordinaryˉfile(Validator, MAXIMUM_TOOL_BYTES, 'validator');
 Requireˉordinaryˉfile(Analyzer, MAXIMUM_TOOL_BYTES, 'analyzer');
 Requireˉordinaryˉfile(Emitter, MAXIMUM_TOOL_BYTES, 'emitter');
+Requireˉordinaryˉfile(Target, 320, 'target descriptor');
 Requireˉordinaryˉfile(Sourceˉlock, MAXIMUM_INPUT_BYTES, 'source lock');
 Requireˉordinaryˉfile(Sourceˉprofile, MAXIMUM_INPUT_BYTES, 'source profile');
 Requireˉordinaryˉdirectory(Work, 'work directory');
@@ -149,34 +155,58 @@ try {
     for (const Case of Cases) {
         const Fixture = path.join(Fixtureˉroot, Case.fixture);
         const Prefix = path.join(Work, Case.name);
+        const Input = `${Prefix}-input.wvss`;
         const Source = `${Prefix}.wvss`;
+        const Analyzedˉsource = `${Prefix}-analysis.wvss`;
+        const Admittedˉtarget = `${Prefix}.wvtd`;
+        const Catalog = `${Prefix}.wvfc`;
+        const Evidence = `${Prefix}.wvae`;
         const Manifest = `${Prefix}.wvca`;
         const Bindings = `${Prefix}.wvlb`;
         const Wir = `${Prefix}.wvir`;
         const Persistˉaggregate = Case.name === 'owned-aggregate-vector' &&
             Aggregateˉoutput !== null;
         const Product = Persistˉaggregate ? Aggregateˉoutput : `${Prefix}.wvb`;
-        Created.push(Source, Manifest, Bindings, Wir);
+        Created.push(
+            Input, Source, Analyzedˉsource, Admittedˉtarget, Catalog, Evidence,
+            Manifest, Bindings, Wir,
+        );
         if (!Persistˉaggregate) Created.push(Product);
         Requireˉordinaryˉfile(Fixture, MAXIMUM_INPUT_BYTES, Case.fixture);
+
+        writeFileSync(
+            Input, Constructˉsourceˉset([Fixture, ...Dependencies]),
+            { flag: 'wx' },
+        );
 
         Requireˉsuccess(
             Run(Admitter, [
                 '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
                 '--source-profile', Sourceˉprofile,
-                Fixture, ...Dependencies, Source,
+                '--target-descriptor', Target,
+                '--source-set', Input,
+                Source, Admittedˉtarget, Catalog, Evidence,
             ]),
             'source admission status=Published ',
             `${Case.name} admission`,
         );
+        Requireˉsuccess(
+            Run(Validator, [
+                Evidence, Source, Admittedˉtarget, Catalog,
+                Sourceˉlock, Sourceˉprofile,
+            ]),
+            'wvauth status=Accepted ',
+            `${Case.name} authentication`,
+        );
         const Analysis = Run(Analyzer, [
-            '--admitted-source-set', Source,
-            Source, Manifest, Bindings, Wir,
+            '--internal-source-set', Source,
+            Analyzedˉsource, Manifest, Bindings, Wir,
         ]);
         if (Case.analysisInvalid !== undefined) {
             Requireˉrejection(
                 Analysis, Case.analysisInvalid,
-                `${Case.name} analysis`, Product,
+                `${Case.name} analysis`,
+                Analyzedˉsource, Manifest, Bindings, Wir, Product,
             );
             continue;
         }
@@ -184,7 +214,10 @@ try {
             Analysis, 'source analysis status=Published ',
             `${Case.name} analysis`,
         );
-        Requireˉordinaryˉfile(Source, MAXIMUM_INPUT_BYTES, 'source set');
+        Requireˉordinaryˉfile(Analyzedˉsource, MAXIMUM_INPUT_BYTES, 'source set');
+        if (!readFileSync(Analyzedˉsource).equals(readFileSync(Source))) {
+            Reject(`${Case.name} analysis republished a different source set.`);
+        }
         Requireˉordinaryˉfile(
             Manifest, MAXIMUM_INPUT_BYTES, 'analysis manifest',
         );
@@ -192,7 +225,7 @@ try {
         Requireˉordinaryˉfile(Wir, MAXIMUM_INPUT_BYTES, 'owned-call WVIR');
         if (!Case.valid) {
             Requireˉrejection(
-                Run(Emitter, [Source, Manifest, Bindings, Wir, Product]),
+                Run(Emitter, [Analyzedˉsource, Manifest, Bindings, Wir, Product]),
                 INVALID_WIR, `${Case.name} WVB boundary`, Product,
             );
             continue;
@@ -204,7 +237,9 @@ try {
             Positiveˉcalls = Evidence.calls;
         }
         Requireˉownedˉcallˉproduct(
-            Run(Emitter, [Source, Manifest, Bindings, Wir, Product]), Product,
+            Run(Emitter, [
+                Analyzedˉsource, Manifest, Bindings, Wir, Product,
+            ]), Product,
         );
         const Productˉbytes = readFileSync(Product);
         if (Case.name === 'owned-vector-calls-and-joins') {
@@ -238,6 +273,29 @@ try {
             if (Error?.code !== 'ENOENT') throw Error;
         }
     }
+}
+
+function Constructˉsourceˉset(Paths) {
+    const Sources = Paths.map(Candidate => readFileSync(Candidate));
+    const Headerˉbytes = 16 + Sources.length * 8;
+    const Payloadˉbytes = Sources.reduce((Total, Source) => Total + Source.length, 0);
+    if (Sources.length < 1 || Sources.length > 64 ||
+        Headerˉbytes + Payloadˉbytes > MAXIMUM_INPUT_BYTES) {
+        Reject('The verifier source closure is outside the canonical WVSS bound.');
+    }
+    const Result = Buffer.alloc(Headerˉbytes + Payloadˉbytes);
+    Result.write('WVSS', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt32LE(Sources.length, 8);
+    Result.writeUInt32LE(Sources.length * 8, 12);
+    let Offset = Headerˉbytes;
+    Sources.forEach((Source, Index) => {
+        Result.writeUInt32LE(Offset, 16 + Index * 8);
+        Result.writeUInt32LE(Source.length, 20 + Index * 8);
+        Source.copy(Result, Offset);
+        Offset += Source.length;
+    });
+    return Result;
 }
 
 function Inspectˉownedˉcallˉwvir(Input) {
@@ -481,10 +539,10 @@ function Requireˉsuccess(Result, Prefix, Label) {
     }
 }
 
-function Requireˉrejection(Result, Expected, Label, Product) {
+function Requireˉrejection(Result, Expected, Label, ...Outputs) {
     if (Result.error !== undefined || Result.status !== 1 ||
         Result.stdout.length !== 0 || Normalize(Result.stderr) !== Expected ||
-        Exists(Product)) {
+        Outputs.some(Exists)) {
         Reject(
             `The ${Label} rejection differs: status=${Result.status} ` +
             `stdout=${JSON.stringify(Result.stdout)} ` +

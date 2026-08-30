@@ -208,6 +208,21 @@ Those branches prove deterministic `WVSS`, `WVTD`, `WVFC`, and `WVAE` output on
 success and empty publication of all four values on failure. This owner does not
 claim a filesystem `wvadmit` or `wvauth` product.
 
+The separate `language-1-production-admission-ingress` owner claims that hosted
+boundary. It double-builds and pins target-aware `wvadmit`, complete independent
+`wvauth`, the successor Analyzer, and the matching current emitter, packages the
+real products, and executes the private runner through 21 bounded acceptance,
+tamper, bypass, sequencing, publication, cleanup, timeout, output-limit, and
+progress cases. Direct changes to the four product entry-point drivers, their
+project manifests, the runner, the cached split-project builder, the focused
+owner, or Decision 0893 select this owner. The development-only admission helper
+and target-descriptor writer select the front-door owner that executes them.
+Shared parser, coordinator, format, producer, and compiler sources retain their
+narrow semantic owners; they do not force four cold double builds merely because
+they occur in a pinned product closure. Exact product identities are refreshed
+at an explicit production checkpoint. The production owner does not replace the
+shared semantic owners.
+
 The `os-x64-code-emission` development lane reads the canonical version-2,
 56-target manifest. Each row owns its project closure, artifact stem, expected
 local result, and exact WVB, WVO, linked-image, Windows-container, and

@@ -140,6 +140,8 @@ const Work = realpathSync.native(mkdtempSync(path.join(
 )));
 const Temporaryˉroot = path.dirname(Work);
 let Step = 0;
+let Validator = null;
+let Targetˉdescriptor = null;
 
 try {
     Requireˉordinaryˉfile(Sourceˉlock, 4_194_304, 'source lock');
@@ -158,7 +160,7 @@ try {
     );
 
     const Executableˉsuffix = process.platform === 'win32' ? '.exe' : '.elf';
-    const Target = process.platform === 'win32' ? 'windows' : 'linux';
+    const Hostˉtarget = process.platform === 'win32' ? 'windows' : 'linux';
     const Bootstrapˉanalyzer = path.join(Work, `Bootstrap-Analyzer${Executableˉsuffix}`);
     const Bootstrapˉemitter = path.join(Work, `Bootstrap-Emitter${Executableˉsuffix}`);
     const Bridgeˉemitter = path.join(Work, `Bridge-Emitter${Executableˉsuffix}`);
@@ -166,9 +168,11 @@ try {
     const Bootstrapˉemitterˉidentity = path.join(Work, 'Bootstrap-Emitter.identity');
     const Bridgeˉemitterˉidentity = path.join(Work, 'Bridge-Emitter.identity');
     const Admitterˉwvb = path.join(Work, 'Admitter.wvb');
+    const Validatorˉwvb = path.join(Work, 'Validator.wvb');
     const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
     const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
     const Admitter = path.join(Work, `Admitter${Executableˉsuffix}`);
+    Validator = path.join(Work, `Validator${Executableˉsuffix}`);
     const Analyzer = path.join(Work, `Analyzer${Executableˉsuffix}`);
     const Emitter = path.join(Work, `Emitter${Executableˉsuffix}`);
     const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
@@ -176,6 +180,8 @@ try {
     const Ownedˉaggregateˉsuccessˉa = path.join(
         Work, 'Owned-Aggregate-Success-A.wvb',
     );
+    Targetˉdescriptor = path.join(Work, 'Target.wvtd');
+    writeFileSync(Targetˉdescriptor, Constructˉtargetˉdescriptor(), { flag: 'wx' });
 
     Runˉnative('bootstrap-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Bootstrapˉanalyzerˉwvb, Bootstrapˉanalyzer, '--development-cache',
@@ -201,6 +207,12 @@ try {
         Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
         Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
     ]);
+    Runˉnode('current-validator-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+        Project('Windvale-Compiler-Source-Authenticator.wvproj'),
+        Validatorˉwvb,
+        Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
+        Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+    ]);
     Runˉnode('current-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Analysis-Driver.wvproj'), Analyzerˉwvb,
         Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
@@ -208,6 +220,9 @@ try {
     ]);
     Runˉnative('current-admitter-package', 'Package-Segmented-Compiler-Wvb', [
         '2', Admitterˉwvb, Admitter, '--development-cache',
+    ]);
+    Runˉnative('current-validator-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Validatorˉwvb, Validator, '--development-cache',
     ]);
     Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Analyzerˉwvb, Analyzer, '--development-cache',
@@ -230,19 +245,23 @@ try {
         'async-call-await-conformance',
         'Verify-Language-1.0-Async-Call-Await.mjs',
         [
-            Admitter, Analyzer, Emitter,
-            Sourceˉlock, SOURCE_LOCK_SHA256, Sourceˉprofile, Work,
+            Admitter, Validator, Analyzer, Emitter,
+            Sourceˉlock, SOURCE_LOCK_SHA256, Sourceˉprofile,
+            Targetˉdescriptor, Work,
         ],
     );
     Runˉnode(
         'owned-vector-calls-and-joins-wir',
         'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
-        [Admitter, Analyzer, Emitter, Work, Ownedˉaggregateˉsuccessˉa],
+        [
+            Admitter, Validator, Analyzer, Emitter,
+            Targetˉdescriptor, Work, Ownedˉaggregateˉsuccessˉa,
+        ],
     );
     Runˉnode(
         'using-semantics-wir',
         'Verify-Language-1.0-Using-Wir.mjs',
-        [Admitter, Analyzer, Emitter, Work],
+        [Admitter, Validator, Analyzer, Emitter, Targetˉdescriptor, Work],
     );
 
     const Successˉa = path.join(Work, 'Success-A.wvb');
@@ -449,7 +468,7 @@ try {
             '1',
             Structuredˉtaskˉruntimeˉselfˉtest,
             Structuredˉtaskˉruntimeˉselfˉtestˉexecutable,
-            Target,
+            Hostˉtarget,
         ],
     );
     Requireˉexitˉ42(
@@ -612,7 +631,7 @@ try {
         Project('Windvale-Compiler-Wvb-Verifier.wvproj'), Verifierˉwvb,
     ]);
     Runˉnative('verifier-package', 'Package-Hosted-Wvb', [
-        '2', Verifierˉwvb, Verifier, Target,
+        '2', Verifierˉwvb, Verifier, Hostˉtarget,
     ]);
     Requireˉvalid(Verifier, Successˉa, 'successful Split module');
     Requireˉvalid(Verifier, Failure, 'refused Split module');
@@ -1014,7 +1033,7 @@ try {
     }
     Runˉnative('runner-package', 'Package-Hosted-Wvb', [
         'image', '5', Runnerˉwvb, Runnerˉcanonicalˉprefix,
-        String(Runnerˉfragments), String(Runnerˉentry), Runner, Target,
+        String(Runnerˉfragments), String(Runnerˉentry), Runner, Hostˉtarget,
     ]);
     Runˉnode(
         'callable-runner-compatibility',
@@ -1219,11 +1238,24 @@ function Testˉproject(Name) {
     return path.join(Repositoryˉroot, 'Projects', 'Tests', Name);
 }
 
+function Constructˉtargetˉdescriptor() {
+    const Result = Buffer.alloc(64);
+    Result.write('WVTD', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt32LE(64, 8);
+    const Values = [4, 2, 1, 2, 64, 1, 1];
+    Values.forEach((Value, Index) => {
+        Result.writeUInt32LE(Value, 12 + Index * 4);
+    });
+    return Result;
+}
+
 function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     Runˉnode(Label, 'Run-Split-Compiler.mjs', [
-        Admitter, Analyzer, Emitter,
+        Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Targetˉdescriptor,
         path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
@@ -1233,9 +1265,10 @@ function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
 
 function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     Runˉnode(Label, 'Run-Split-Compiler.mjs', [
-        Admitter, Analyzer, Emitter,
+        Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Targetˉdescriptor,
         path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
         path.join(
             Repositoryˉroot, 'Libraries', 'Foundation', 'Collections',
@@ -1249,9 +1282,10 @@ function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
 
 function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
     Runˉnode(Label, 'Run-Split-Compiler.mjs', [
-        Admitter, Analyzer, Emitter,
+        Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Targetˉdescriptor,
         path.join(
             Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0',
             'Source-File-Snapshot-Executable.wv',
@@ -1265,9 +1299,10 @@ function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
 
 function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     Runˉnode(Label, 'Run-Split-Compiler.mjs', [
-        Admitter, Analyzer, Emitter,
+        Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Targetˉdescriptor,
         path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
         path.join(

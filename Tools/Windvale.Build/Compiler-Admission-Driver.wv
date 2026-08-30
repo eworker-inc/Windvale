@@ -1,6 +1,6 @@
 module Windvaleˉcompilerˉadmissionˉdriver profile hosted;
 
-import Compilerˉsourceˉprofile as Sourceˉprofile;
+import Compilerˉsourceˉadmissionˉcoordinator as Admission;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -9,42 +9,17 @@ capability file.write_bytes;
 capability process.argument;
 capability process.argument_count;
 
-fn Empty() -> bytes {
-    return Textˉtoˉutf8("");
-}
-
-fn Header(Modules: u32) -> bytes {
-    var Result: bytes = Textˉtoˉutf8("WVSS");
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
-    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Modules));
-    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
-}
-
-fn Buildˉsourceˉset(Start: u32, Modules: u32) -> bytes {
-    let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
-    var Directory: bytes = Empty();
-    var Payload: bytes = Empty();
-    var Payloadˉbytes: u32 = 0u32;
-    var Index: u32 = 0u32;
-    while Index < Modules {
-        let Source: bytes = file.read_bytes(process.argument(Start + Index));
-        let Length: u32 = Bytesˉlength(Source);
-        if Length == 0u32 ||
-            Payloadˉbytes > 4194304u32 - Headerˉbytes ||
-            Length > 4194304u32 - Headerˉbytes - Payloadˉbytes {
-            return Empty();
-        }
-        Directory = Bytesˉconcat(
-            Directory, Bytesˉfromˉu32ˉlittle(Headerˉbytes + Payloadˉbytes)
-        );
-        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Length));
-        Payload = Bytesˉconcat(Payload, Source);
-        Payloadˉbytes = Payloadˉbytes + Length;
-        Index = Index + 1u32;
-    }
-    return Bytesˉconcat(Bytesˉconcat(Header(Modules), Directory), Payload);
-}
+const ARGUMENT_COUNT: u32 = 13u32;
+const FIRST_OUTPUT_ARGUMENT: u32 = 9u32;
+const RESOURCE_COUNT: u32 = 8u32;
+const MAX_RESOURCE_NAME_BYTES: u32 = 4096u32;
+const MIN_SOURCE_SET_BYTES: u32 = 25u32;
+const MAX_SOURCE_SET_BYTES: u32 = 4194304u32;
+const MAX_LOCK_BYTES: u32 = 1048576u32;
+const EXPECTED_LOCK_HASH_BYTES: u32 = 64u32;
+const MAX_PROFILE_BYTES: u32 = 65536u32;
+const MIN_WVTD_BYTES: u32 = 64u32;
+const MAX_WVTD_BYTES: u32 = 320u32;
 
 fn Argumentˉequals(Value: text, Expected: text) -> bool {
     let Left: bytes = Textˉtoˉutf8(Value);
@@ -83,67 +58,204 @@ fn Resourceˉequals(First: text, Second: text) -> bool {
     return true;
 }
 
+fn Resourceˉargument(Index: u32) -> u32 {
+    if Index == 0u32 { return 1u32; }
+    if Index == 1u32 { return 4u32; }
+    if Index == 2u32 { return 6u32; }
+    if Index == 3u32 { return 8u32; }
+    return Index + 5u32;
+}
+
+fn Resourcesˉareˉdistinct() -> bool {
+    var First: u32 = 0u32;
+    while First < RESOURCE_COUNT {
+        let Firstˉresource: text = process.argument(Resourceˉargument(First));
+        let Length: u32 = Bytesˉlength(Textˉtoˉutf8(Firstˉresource));
+        if Length == 0u32 || Length > MAX_RESOURCE_NAME_BYTES { return false; }
+        var Second: u32 = First + 1u32;
+        while Second < RESOURCE_COUNT {
+            if Resourceˉequals(
+                Firstˉresource,
+                process.argument(Resourceˉargument(Second))
+            ) {
+                return false;
+            }
+            Second = Second + 1u32;
+        }
+        First = First + 1u32;
+    }
+    return true;
+}
+
+fn Lockˉhashˉisˉcanonical(Value: text) -> bool {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    if Bytesˉlength(Encoded) != EXPECTED_LOCK_HASH_BYTES { return false; }
+    var Index: u32 = 0u32;
+    while Index < EXPECTED_LOCK_HASH_BYTES {
+        let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Encoded, Index));
+        let Digit: bool = Character >= 48u32 && Character <= 57u32;
+        let Lowerˉhex: bool = Character >= 97u32 && Character <= 102u32;
+        if !Digit && !Lowerˉhex { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Coordinatorˉstatus(Status: u32) -> text {
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        return "Valid";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_INPUT_SHAPE {
+        return "Inputˉshape";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_PROFILE {
+        return "Profile";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_TARGET {
+        return "Target";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_CATALOG {
+        return "Foreignˉcatalog";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_SOURCE_SET {
+        return "Sourceˉset";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_WVTD {
+        return "WVTD";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_WVFC {
+        return "WVFC";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_COUNT {
+        return "Count";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_TARGET {
+        return "Foreignˉtarget";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_WVAE {
+        return "WVAE";
+    }
+    if Status == Admission.COMPILER_SOURCE_ADMISSION_STATUS_RESOURCE_LIMIT {
+        return "Resourceˉlimit";
+    }
+    return "Unknown";
+}
+
+fn Failure(Result: Admission.Compilerˉsourceˉadmissionˉresult) -> text {
+    var Report: text = "source admission status=Rejected coordinator-status=";
+    Report = Textˉconcat(Report, Coordinatorˉstatus(Result.Status));
+    Report = Textˉconcat(Report, " coordinator-status-code=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Status));
+    Report = Textˉconcat(Report, " failure-module=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉmodule));
+    Report = Textˉconcat(Report, " offset=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉoffset));
+    Report = Textˉconcat(Report, " length=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉlength));
+    Report = Textˉconcat(Report, " line=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉline));
+    Report = Textˉconcat(Report, " column=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉcolumn));
+    Report = Textˉconcat(Report, " ordinal=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Failureˉordinal));
+    Report = Textˉconcat(Report, " profile-status=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Profileˉstatus));
+    Report = Textˉconcat(Report, " target-admission-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Targetˉadmissionˉstatus));
+    Report = Textˉconcat(Report, " parse-status=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Parseˉstatus));
+    Report = Textˉconcat(Report, " expected=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Expected));
+    Report = Textˉconcat(Report, " found=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Found));
+    Report = Textˉconcat(Report, " foreign-producer-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Foreignˉproducerˉstatus));
+    Report = Textˉconcat(Report, " source-set-status=");
+    Report = Textˉconcat(Report, Enumˉname(Result.Sourceˉsetˉstatus));
+    Report = Textˉconcat(Report, " target-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Targetˉstatus));
+    Report = Textˉconcat(Report, " catalog-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Result.Catalogˉstatus));
+    Report = Textˉconcat(Report, " evidence-status=");
+    return Textˉconcat(Report, Enumˉname(Result.Evidenceˉstatus));
+}
+
+fn Usage() -> text {
+    return "Usage: wvadmit --source-input-lock <lock.wvlock> <sha256> --source-profile <profile.wvsp> --target-descriptor <input.wvtd> --source-set <input.wvss> <output.wvss> <output.wvtd> <output.wvfc> <output.wvae>";
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
-    if Arguments < 7u32 ||
+    if Arguments != ARGUMENT_COUNT ||
         !Argumentˉequals(process.argument(0u32), "--source-input-lock") ||
-        !Argumentˉequals(process.argument(3u32), "--source-profile") {
-        diagnostic.write_line(
-            Textˉconcat(
-                "Usage: wvadmit --source-input-lock <lock.wvlock> <sha256> ",
-                "--source-profile <profile.wvsp> <root.wv> [dependency.wv ...] <output.wvss>"
-            )
-        );
+        !Argumentˉequals(process.argument(3u32), "--source-profile") ||
+        !Argumentˉequals(process.argument(5u32), "--target-descriptor") ||
+        !Argumentˉequals(process.argument(7u32), "--source-set") {
+        diagnostic.write_line(Usage());
         return 64;
     }
-    let Modules: u32 = Arguments - 6u32;
-    if Modules > 64u32 {
-        diagnostic.write_line("source admission status=Moduleˉlimit");
+    if !Lockˉhashˉisˉcanonical(process.argument(2u32)) {
+        diagnostic.write_line("source admission status=Invalidˉlockˉhash");
         return 64;
     }
-    let Outputˉpath: text = process.argument(Arguments - 1u32);
-    if Resourceˉequals(Outputˉpath, process.argument(1u32)) ||
-        Resourceˉequals(Outputˉpath, process.argument(4u32)) {
-        diagnostic.write_line("source admission status=Outputˉisˉinput");
+    if !Resourcesˉareˉdistinct() {
+        diagnostic.write_line("source admission status=Resourceˉalias");
         return 64;
     }
-    var Inputˉindex: u32 = 0u32;
-    while Inputˉindex < Modules {
-        if Resourceˉequals(
-            Outputˉpath, process.argument(5u32 + Inputˉindex)
-        ) {
-            diagnostic.write_line("source admission status=Outputˉisˉinput");
-            return 64;
-        }
-        Inputˉindex = Inputˉindex + 1u32;
-    }
-    let Input: bytes = Buildˉsourceˉset(5u32, Modules);
-    if Bytesˉlength(Input) == 0u32 {
-        diagnostic.write_line("source admission status=Invalidˉinput");
+
+    let Lock: bytes = file.read_bytes(process.argument(1u32));
+    let Lockˉlength: u32 = Bytesˉlength(Lock);
+    if Lockˉlength == 0u32 || Lockˉlength > MAX_LOCK_BYTES {
+        diagnostic.write_line("source admission status=Invalidˉlockˉlength");
         return 1;
     }
-    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
-        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
+    let Profile: bytes = file.read_bytes(process.argument(4u32));
+    let Profileˉlength: u32 = Bytesˉlength(Profile);
+    if Profileˉlength == 0u32 || Profileˉlength > MAX_PROFILE_BYTES {
+        diagnostic.write_line("source admission status=Invalidˉprofileˉlength");
+        return 1;
+    }
+    let Wvtd: bytes = file.read_bytes(process.argument(6u32));
+    let Wvtdˉlength: u32 = Bytesˉlength(Wvtd);
+    if Wvtdˉlength < MIN_WVTD_BYTES || Wvtdˉlength > MAX_WVTD_BYTES {
+        diagnostic.write_line("source admission status=Invalidˉwvtdˉlength");
+        return 1;
+    }
+    let Input: bytes = file.read_bytes(process.argument(8u32));
+    let Inputˉlength: u32 = Bytesˉlength(Input);
+    if Inputˉlength < MIN_SOURCE_SET_BYTES ||
+        Inputˉlength > MAX_SOURCE_SET_BYTES {
+        diagnostic.write_line("source admission status=Invalidˉsourceˉsetˉlength");
+        return 1;
+    }
+    let Result: Admission.Compilerˉsourceˉadmissionˉresult =
+        Admission.Compilerˉsourceˉadmissionˉcoordinate(
             Input,
-            file.read_bytes(process.argument(1u32)),
+            Lock,
             Textˉtoˉutf8(process.argument(2u32)),
-            file.read_bytes(process.argument(4u32))
+            Profile,
+            Wvtd
         );
-    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
-        var Report: text = "source admission status=Rejected profile-status=";
-        Report = Textˉconcat(Report, Enumˉname(Admitted.Status));
-        Report = Textˉconcat(Report, " offset=");
-        diagnostic.write_line(
-            Textˉconcat(Report, U32ˉformat(Admitted.Failureˉoffset))
-        );
+    if Result.Status != Admission.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        diagnostic.write_line(Failure(Result));
         return 1;
     }
-    file.write_bytes(Outputˉpath, Admitted.Input);
-    var Success: text = "source admission status=Published modules=";
-    Success = Textˉconcat(Success, U32ˉformat(Modules));
-    Success = Textˉconcat(Success, " source-bytes=");
+
+    // The hosted boundary has no delete or transaction operation. Publish WVAE
+    // last so no envelope is written before its three bound values.
+    file.write_bytes(process.argument(FIRST_OUTPUT_ARGUMENT), Result.Wvss);
+    file.write_bytes(process.argument(FIRST_OUTPUT_ARGUMENT + 1u32), Result.Wvtd);
+    file.write_bytes(process.argument(FIRST_OUTPUT_ARGUMENT + 2u32), Result.Wvfc);
+    file.write_bytes(process.argument(FIRST_OUTPUT_ARGUMENT + 3u32), Result.Wvae);
+    var Success: text = "source admission status=Published wvss-bytes=";
+    Success = Textˉconcat(Success, U32ˉformat(Bytesˉlength(Result.Wvss)));
+    Success = Textˉconcat(Success, " wvtd-bytes=");
+    Success = Textˉconcat(Success, U32ˉformat(Bytesˉlength(Result.Wvtd)));
+    Success = Textˉconcat(Success, " wvfc-bytes=");
+    Success = Textˉconcat(Success, U32ˉformat(Bytesˉlength(Result.Wvfc)));
+    Success = Textˉconcat(Success, " wvae-bytes=");
     console.write_line(
-        Textˉconcat(Success, U32ˉformat(Bytesˉlength(Admitted.Input)))
+        Textˉconcat(Success, U32ˉformat(Bytesˉlength(Result.Wvae)))
     );
     return 0;
 }

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, realpath, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -10,21 +10,11 @@ const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST'];
-const EXPECTED_RUNNER = WINDOWS
-    ? {
-        bytes: 5_907_456,
-        sha256: '2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b'
-    }
-    : {
-        bytes: 5_906_432,
-        sha256: '611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae'
-    };
-
 function Reject(Message) {
     throw new Error(Message);
 }
 
-function Runˉcommand(Tool, Argumentsˉvalue) {
+function Runˉcommand(Tool, Argumentsˉvalue, Mirrorˉoutput = false) {
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
         if (WINDOWS && [Tool, ...Argumentsˉvalue].some(
             Argument => /[\r\n&|<>^%!"]/u.test(Argument))) {
@@ -60,6 +50,7 @@ function Runˉcommand(Tool, Argumentsˉvalue) {
             Outputˉbytes += Chunk.length;
             if (Outputˉbytes <= MAXIMUM_OUTPUT_BYTES) {
                 Output.push(Chunk);
+                if (Mirrorˉoutput) process.stdout.write(Chunk);
             } else {
                 Exceeded = true;
                 Child.kill();
@@ -98,23 +89,26 @@ async function Requireˉbuild(Build, Project, Output) {
     }
 }
 
-async function Verifyˉrunner(Runner) {
-    const Metadata = await stat(Runner);
-    if (Metadata.size !== EXPECTED_RUNNER.bytes) {
-        Reject('The WVB runner size is invalid.');
+async function Requireˉpackage(Package, Module, Application) {
+    const Result = await Runˉcommand(
+        Package, ['7', Module, Application, '--development-cache'], true
+    );
+    if (Result.Exceeded) {
+        Reject('The system-ffi package exceeded the diagnostic-output limit.');
     }
-    const Digest = createHash('sha256')
-        .update(await readFile(Runner))
-        .digest('hex');
-    if (Digest !== EXPECTED_RUNNER.sha256) {
-        Reject('The WVB runner digest is invalid.');
+    if (Result.Code !== 0 || Result.Error.length !== 0 ||
+        !Result.Output.toString('utf8').includes(
+            'segmented compiler package status=Complete '
+        )) {
+        Reject(
+            `The system-ffi package failed with exit ${Result.Code}.\n` +
+            Result.Error.toString('utf8')
+        );
     }
 }
 
-async function Runˉcase(Runner, Module, Selector, Index) {
-    const Result = await Runˉcommand(
-        Runner, ['--script', Module, Selector]
-    );
+async function Runˉcase(Application, Selector, Index) {
+    const Result = await Runˉcommand(Application, [Selector]);
     if (Result.Exceeded) {
         Reject(`System-FFI case ${Index} exceeded the output limit.`);
     }
@@ -149,26 +143,27 @@ var Productˉbytes = 0;
 var Productˉsha256 = '';
 try {
     const Extension = WINDOWS ? 'cmd' : 'sh';
-    const Build = join(SCRIPT_DIRECTORY, `Build-Wvb.${Extension}`);
+    const Build = join(SCRIPT_DIRECTORY, `Build-Current-Wvb.${Extension}`);
+    const Package = join(
+        SCRIPT_DIRECTORY, `Package-Segmented-Compiler-Wvb.${Extension}`
+    );
     const Project = join(
         REPOSITORY_ROOT,
         'Projects', 'Tests',
         'Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj'
     );
-    const Runner = join(
-        REPOSITORY_ROOT,
-        'Artifacts', 'Native-Wvb-Runner-Candidate',
-        WINDOWS ? 'windows-x64-wvrun.exe' : 'linux-x64-wvrun.elf'
-    );
     const First = join(Work, 'System-Ffi-A.wvb');
     const Second = join(Work, 'System-Ffi-B.wvb');
+    const Application = join(
+        Work, WINDOWS ? 'System-Ffi.exe' : 'System-Ffi.elf'
+    );
 
     process.stdout.write(
-        'START language 1 system FFI front end phase=build item=1/4\n'
+        'START language 1 system FFI front end phase=build item=1/5\n'
     );
     await Requireˉbuild(Build, Project, First);
     process.stdout.write(
-        'START language 1 system FFI front end phase=rebuild item=2/4\n'
+        'START language 1 system FFI front end phase=rebuild item=2/5\n'
     );
     await Requireˉbuild(Build, Project, Second);
 
@@ -179,19 +174,22 @@ try {
     }
     Productˉbytes = Firstˉbytes.length;
     Productˉsha256 = createHash('sha256').update(Firstˉbytes).digest('hex');
-    await Verifyˉrunner(Runner);
+    process.stdout.write(
+        'START language 1 system FFI front end phase=package item=3/5\n'
+    );
+    await Requireˉpackage(Package, First, Application);
 
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=3/4 cases=1-23\n'
+        'START language 1 system FFI front end phase=execute item=4/5 cases=1-23\n'
     );
     for (var Index = 0; Index < 23; Index += 1) {
-        await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
+        await Runˉcase(Application, SELECTORS[Index], Index + 1);
     }
     process.stdout.write(
-        'START language 1 system FFI front end phase=execute item=4/4 cases=24-46\n'
+        'START language 1 system FFI front end phase=execute item=5/5 cases=24-46\n'
     );
     for (var Index = 23; Index < SELECTORS.length; Index += 1) {
-        await Runˉcase(Runner, First, SELECTORS[Index], Index + 1);
+        await Runˉcase(Application, SELECTORS[Index], Index + 1);
     }
     Passed = true;
 } finally {
@@ -201,7 +199,8 @@ try {
 if (Passed) {
     process.stdout.write(
         'native language 1 system FFI front end status=Passed cases=46 ' +
-        'result=42 deterministic=Verified isolated-executions=46 ' +
+        'result=42 deterministic=Verified execution=native-package ' +
+        'isolated-executions=46 ' +
         `wvb-bytes=${Productˉbytes} sha256=${Productˉsha256}\n`
     );
 }

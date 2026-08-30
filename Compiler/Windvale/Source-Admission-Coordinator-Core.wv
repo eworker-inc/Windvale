@@ -1,6 +1,7 @@
 module Compilerˉsourceˉadmissionˉcoordinator profile portable;
 
 import Compilerˉadmissionˉevidence as Admissionˉevidence;
+import Compilerˉsourceˉadmissionˉparserˉevidence as Admissionˉparser;
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
@@ -319,14 +320,14 @@ fn Compilerˉsourceˉadmissionˉforeignˉsuccess(
 }
 
 fn Compilerˉsourceˉadmissionˉforeignˉevidence(
-    Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence
+    Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence
 ) -> Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
     return Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence(
         Evidence.Scopeˉmask,
         Evidence.Declaredˉscopes,
         Evidence.Unknownˉscopes,
-        Evidence.Concreteˉscope.Offset,
-        Evidence.Concreteˉscope.Length
+        Evidence.Concreteˉscopeˉoffset,
+        Evidence.Concreteˉscopeˉlength
     );
 }
 
@@ -377,8 +378,8 @@ fn Compilerˉsourceˉadmissionˉadmitˉvalidatedˉforeignˉtargets(
                 Catalogˉstatus
             );
         }
-        let Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence =
-            Sourceˉdeclarations.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+        let Evidence: Admissionˉparser.Compilerˉsourceˉplatformˉevidence =
+            Admissionˉparser.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
                 View.Source
             );
         if Evidence.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
@@ -406,17 +407,30 @@ fn Compilerˉsourceˉadmissionˉadmitˉvalidatedˉforeignˉtargets(
                 Compilerˉsourceˉadmissionˉforeignˉevidence(Evidence)
             );
         if Foreignˉtargetˉstatus != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
-            var Offending: Sourceˉdeclarations.Compilerˉsourceˉplatformˉscope =
-                Evidence.Firstˉnonconcreteˉscope;
-            if Offending.Ordinal == 0u32 { Offending = Evidence.Concreteˉscope; }
+            var Offendingˉordinal: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉordinal;
+            var Offendingˉoffset: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉoffset;
+            var Offendingˉlength: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉlength;
+            var Offendingˉline: u32 = Evidence.Firstˉnonconcreteˉscopeˉline;
+            var Offendingˉcolumn: u32 =
+                Evidence.Firstˉnonconcreteˉscopeˉcolumn;
+            if Offendingˉordinal == 0u32 {
+                Offendingˉordinal = Evidence.Concreteˉscopeˉordinal;
+                Offendingˉoffset = Evidence.Concreteˉscopeˉoffset;
+                Offendingˉlength = Evidence.Concreteˉscopeˉlength;
+                Offendingˉline = Evidence.Concreteˉscopeˉline;
+                Offendingˉcolumn = Evidence.Concreteˉscopeˉcolumn;
+            }
             return Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult(
                 Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_FOREIGN_TARGET,
                 Module,
-                View.Originˉoffset + Offending.Offset,
-                Offending.Length,
-                Offending.Line,
-                Offending.Column,
-                Offending.Ordinal,
+                View.Originˉoffset + Offendingˉoffset,
+                Offendingˉlength,
+                Offendingˉline,
+                Offendingˉcolumn,
+                Offendingˉordinal,
                 Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
                 Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
                 Sourceˉlexer.Compilerˉtokenˉkind.End,

@@ -12,11 +12,16 @@ format, and carries no authority.
 This checkpoint implements the stable first ABI-contract registry identity,
 fixed format construction, checked structural validation, exact failure
 positions, byte-identical accepted output, and a compiler-owned canonical
-producer over validated descriptor-free `WVSS 2` source snapshots. It does
-**not** yet coordinate the producer inside `wvadmit`, compare a selected WVTD
-with platform scopes, produce WVAE, feed the Analyzer, perform semantic FFI
-validation, bind a native symbol, or execute foreign code. Those are subsequent
-producer/consumer migration boundaries.
+producer over validated descriptor-free `WVSS 2` source snapshots. The
+target-aware hosted `wvadmit` now composes that producer with exact WVTD
+admission and WVAE construction, while the separately built `wvauth`
+independently authenticates every source/catalog record and target predicate.
+The proposed production-ingress candidate carries an authenticated empty
+catalog through its private Analyzer handoff and stops a nonempty catalog at
+exact `Foreignˉsemanticsˉpending` before launching the Analyzer. Exact local
+Windows product pins and the complete focused owner pass; paired-host
+acceptance, semantic FFI binding and lowering, native-symbol binding, runtime
+containment, and foreign execution remain later boundaries.
 
 ## Encoding
 
@@ -119,8 +124,8 @@ Zero is permanently unregistered. The first stable registry row is:
 | 1 | `windvale.paper.buffer_source.sysv_amd64_c_v1` | the no-unwind scalar/pointer buffer-source contract for `linux.x86_64.sysv_amd64_c_v1` |
 
 The implementation exports identity 1 and an exact numeric membership check.
-The future admission producer maps the authenticated ordinary text literal to
-this row. A WVFC consumer accepts no other numeric identity in version 1.0.
+The admission producer maps the authenticated ordinary text literal to this
+row. A WVFC consumer accepts no other numeric identity in version 1.0.
 The identity records requested syntax; it grants no capability, target match,
 library handle, linker import, pointer, or execution authority.
 
@@ -267,8 +272,9 @@ offsets are never relabeled as source offsets.
 This producer records syntax only. It does not infer semantic types or effects,
 grant authority, bind declarations or external symbols, select overloads,
 compare platform scopes with a selected WVTD, construct WVAE, or affect the
-runtime or linker. Selected-WVTD/platform-scope agreement remains an explicit
-later coordinator responsibility.
+runtime or linker. The source-admission coordinator owns selected-WVTD scope
+agreement and WVAE construction around this deliberately narrower producer;
+`wvauth` owns the independent post-read source/catalog/target proof.
 
 ## Focused evidence and remaining proof
 
@@ -297,9 +303,21 @@ and 683 records crossing the 65,536-byte accumulator flush. The flush case
 checks the catalog count and first/last declaration ordinals, so a lost,
 duplicated, or reordered boundary record cannot pass.
 
+The complete, separately composed `wvauth` consumer builds byte-identically in
+two initially empty split-compiler caches as a 91,774-byte compiler-aligned
+WVB at SHA-256
+`88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580`.
+The earlier 108,847-byte historical-monolithic product is not the
+production-ingress pin. Actual-product cases accept the authentic paper
+foreign set and reject missing or extra records, flags, ABI, symbol, signature,
+effect, digest, and target mismatches at their bounded source/catalog offsets.
+It neither invokes this canonical producer nor constructs a second complete
+catalog.
+
 A later producer/consumer capacity workload may retain a representative near-
 maximum WVSS and catalog when it can measure peak memory and both compiler
 products without weakening the ordinary value limit. Current focused evidence
-does not claim selected-target agreement, semantic types/effects/ownership,
-WVAE or Analyzer consumption, runtime containment, a full-capacity retained
-workload, or paired Windows/Linux qualification.
+does not claim Analyzer semantic consumption, foreign
+types/effects/ownership lowering, runtime containment, a full-capacity retained
+workload, production-ingress acceptance, or paired Windows/Linux
+qualification.

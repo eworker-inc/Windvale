@@ -28,12 +28,12 @@ const BRIDGE_EMITTER = {
     sha256: '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb',
 };
 const CURRENT_ANALYZER = {
-    bytes: 1_515_281,
-    sha256: 'a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a',
+    bytes: 1_552_090,
+    sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77',
 };
 const CURRENT_EMITTER = {
-    bytes: 1_523_514,
-    sha256: '61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403',
+    bytes: 1_556_434,
+    sha256: 'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9',
 };
 const CURRENT_VERIFIER = {
     bytes: 399_387,

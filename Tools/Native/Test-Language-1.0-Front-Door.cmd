@@ -34,6 +34,9 @@ set "CanonicalWork="
 for /f "usebackq delims=" %%T in (`node -p "require('node:path').dirname(process.argv[1])" "%Work%"`) do set "TemporaryRoot=%%T"
 if not defined TemporaryRoot exit /b 1
 set "Result=1"
+set "TargetDescriptor=%Work%\Target.wvtd"
+node "%Native%\Write-Canonical-Language-1.0-Target-Descriptor.mjs" ^
+    "%TargetDescriptor%" || goto :cleanup
 set "FailureStep=frozen-fixtures"
 
 echo START language 1 front door phase=frozen-fixtures item=1/13
@@ -126,21 +129,32 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
+    "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Source-Authenticator.wvproj" ^
+    "%Work%\Validator.wvb" ^
+    "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
+    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Analysis-Driver.wvproj" ^
     "%Work%\Analyzer.wvb" ^
     "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
     "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Admitter.wvb") do echo INFO  language 1 admitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Admitter.wvb" SHA256
-for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="83258" goto :cleanup
-certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"12607ef0255fcc07d7adbe096929495c47b5c94425f5fa7edb7880f084e3eaf2" >nul || goto :cleanup
+for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="572926" goto :cleanup
+certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"a9c2e966b84420aaa64de89a232246a15b8fb859ba5ef737e853d2482d5f5831" >nul || goto :cleanup
+for %%F in ("%Work%\Validator.wvb") do echo INFO  language 1 validator wvb-bytes=%%~zF
+certutil -hashfile "%Work%\Validator.wvb" SHA256
+for %%F in ("%Work%\Validator.wvb") do if not "%%~zF"=="91774" goto :cleanup
+certutil -hashfile "%Work%\Validator.wvb" SHA256 | findstr /I /C:"88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1515281" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1552090" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+    "%Work%\Validator.wvb" "%Work%\Validator.exe" --development-cache || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Analyzer.wvb" "%Work%\Analyzer.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -220,23 +234,25 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1523514" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1556434" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     emitter "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
 set "FailureStep=compiler-enum-backing-analysis"
 echo START language 1 front door step=enum-backing
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-Backing-All.wv" ^
     "%Work%\Enum-Backing-All.wvss" ^
     >"%Work%\Enum-Backing-All-Admission.out" ^
     2>"%Work%\Enum-Backing-All-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Enum-Backing-All-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Enum-Backing-All.wvss" "%Work%\Enum-Backing-All.wvss" ^
     "%Work%\Enum-Backing-All.wvca" "%Work%\Enum-Backing-All.wvlb" ^
     "%Work%\Enum-Backing-All.wvir" ^
@@ -262,17 +278,19 @@ for %%F in ("%Work%\Enum-Backing-All.wvb") do set "EnumDeadTypeWvbBytes=%%~zF"
 if not "%EnumDeadTypeWvbBytes%"=="217" goto :cleanup
 set "FailureStep=compiler-enum-u8-used-wvb-boundary"
 node "%Native%\Run-Split-Compiler.mjs" ^
-    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-U8-Used-Main.wv" ^
     "%Work%\Enum-U8-Used-Main-A.wvb" ^
     >"%Work%\Enum-U8-Used-Main-A.out" ^
     2>"%Work%\Enum-U8-Used-Main-A.err" || goto :cleanup
 node "%Native%\Run-Split-Compiler.mjs" ^
-    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-U8-Used-Main.wv" ^
     "%Work%\Enum-U8-Used-Main-B.wvb" ^
     >"%Work%\Enum-U8-Used-Main-B.out" ^
@@ -301,9 +319,10 @@ call :expect_profiled_symbol_failure ^
     "Enum-Missing-Backing" "Missingˉenumˉbacking" || goto :cleanup
 set "FailureStep=compiler-enum-i32"
 node "%Native%\Run-Split-Compiler.mjs" ^
-    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Enum-I32-Negative-Main.wv" ^
     "%Work%\Enum-I32-Negative-Main.wvb" ^
     >"%Work%\Enum-I32-Negative-Main.out" ^
@@ -362,9 +381,11 @@ call :expect_analysis_failure ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Owned-Read-Through.wv" ^
     "Borrow-Owned-Read-Through" "Invalidˉborrow" || goto :cleanup
 echo PASS  language 1 front door step=borrow-call-semantics item=direct-rejections cases=6
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Sequence-Read-Through.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -372,7 +393,7 @@ echo PASS  language 1 front door step=borrow-call-semantics item=direct-rejectio
     >"%Work%\Borrow-Sequence-Admission.out" ^
     2>"%Work%\Borrow-Sequence-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Borrow-Sequence-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Borrow-Sequence-Admitted.wvss" ^
     "%Work%\Borrow-Sequence.wvss" "%Work%\Borrow-Sequence.wvca" ^
     "%Work%\Borrow-Sequence.wvlb" "%Work%\Borrow-Sequence.wvir" ^
@@ -380,9 +401,11 @@ for %%F in ("%Work%\Borrow-Sequence-Admission.err") do if not "%%~zF"=="0" goto 
 for %%F in ("%Work%\Borrow-Sequence.err") do if not "%%~zF"=="0" goto :cleanup
 findstr /c:"source analysis status=Published" "%Work%\Borrow-Sequence.out" >nul || goto :cleanup
 echo PASS  language 1 front door step=borrow-call-semantics item=sequence ownership=Shared
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Borrow-Vector-Owned-Read-Through.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -390,7 +413,7 @@ echo PASS  language 1 front door step=borrow-call-semantics item=sequence owners
     >"%Work%\Borrow-Vector-Admission.out" ^
     2>"%Work%\Borrow-Vector-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Borrow-Vector-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Borrow-Vector-Admitted.wvss" ^
     "%Work%\Borrow-Vector.wvss" "%Work%\Borrow-Vector.wvca" ^
     "%Work%\Borrow-Vector.wvlb" "%Work%\Borrow-Vector.wvir" ^
@@ -409,16 +432,18 @@ node "%Native%\Verify-Source-Analysis-Diagnostic.mjs" ^
     "%Work%\Borrow-Vector.err" wir Invalid-borrow || goto :cleanup
 if exist "%Work%\Borrow-Vector.wvir" goto :cleanup
 echo PASS  language 1 front door step=borrow-call-semantics item=vector ownership=Owned rejection=Invalid-borrow
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Type-Identity.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Memory-Budget-Admitted.wvss" ^
     >"%Work%\Memory-Budget-Admission.out" ^
     2>"%Work%\Memory-Budget-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Memory-Budget-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Memory-Budget-Admitted.wvss" ^
     "%Work%\Memory-Budget.wvss" "%Work%\Memory-Budget.wvca" ^
     "%Work%\Memory-Budget.wvlb" "%Work%\Memory-Budget.wvir" ^
@@ -460,16 +485,18 @@ call :expect_profiled_symbol_failure_with_dependency ^
 echo PASS  language 1 front door step=borrow-call-semantics item=memory-rejections cases=3
 set "FailureStep=compiler-memory-budget-entry"
 echo START language 1 front door step=memory-budget-entry
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Entry-Main.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Memory-Budget-Entry-Admitted.wvss" ^
     >"%Work%\Memory-Budget-Entry-Admission.out" ^
     2>"%Work%\Memory-Budget-Entry-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Memory-Budget-Entry-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Memory-Budget-Entry-Admitted.wvss" ^
     "%Work%\Memory-Budget-Entry.wvss" "%Work%\Memory-Budget-Entry.wvca" ^
     "%Work%\Memory-Budget-Entry.wvlb" "%Work%\Memory-Budget-Entry.wvir" ^
@@ -493,9 +520,11 @@ echo PASS  language 1 front door step=memory-budget-entry item=compile format=WV
 echo PASS  language 1 front door step=borrow-call-semantics cases=14 execution=42 vector=Owned sequence=Shared memory-budget=Owned-WVIR
 set "FailureStep=compiler-memory-budget-split"
 echo START language 1 front door step=memory-budget-split
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Memory-Budget-Split-Wir.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
@@ -503,7 +532,7 @@ echo START language 1 front door step=memory-budget-split
     >"%Work%\Memory-Budget-Split-Admission.out" ^
     2>"%Work%\Memory-Budget-Split-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Memory-Budget-Split-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Memory-Budget-Split-Admitted.wvss" ^
     "%Work%\Memory-Budget-Split.wvss" ^
     "%Work%\Memory-Budget-Split.wvca" ^
@@ -545,9 +574,11 @@ call :expect_profiled_analysis_failure_with_dependencies ^
 echo PASS  language 1 front door step=memory-budget-split cases=13 wvir=1.11 valid=1 wvb-boundary=1 malformed=7 source-rejections=4
 set "FailureStep=compiler-vector-construct-reserved"
 echo START language 1 front door step=vector-construct-reserved
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Wir.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -556,7 +587,7 @@ echo START language 1 front door step=vector-construct-reserved
     >"%Work%\Vector-Construct-Reserved-Admission.out" ^
     2>"%Work%\Vector-Construct-Reserved-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Vector-Construct-Reserved-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Vector-Construct-Reserved-Admitted.wvss" ^
     "%Work%\Vector-Construct-Reserved.wvss" ^
     "%Work%\Vector-Construct-Reserved.wvca" ^
@@ -611,9 +642,11 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Memory-Wrong-Allocation-Failure.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" || goto :cleanup
 echo START language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Construct-Reserved-Use-After.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -623,7 +656,7 @@ echo START language 1 front door step=vector-construct-reserved item=ownership-r
     2>"%Work%\Vector-Construct-Reserved-Use-After-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Vector-Construct-Reserved-Use-After-Admission.err") do if not "%%~zF"=="0" goto :cleanup
 echo PASS  language 1 front door step=vector-construct-reserved item=ownership-rejection case=use-after phase=admission
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Vector-Construct-Reserved-Use-After-Admitted.wvss" ^
     "%Work%\Vector-Construct-Reserved-Use-After.wvss" ^
     "%Work%\Vector-Construct-Reserved-Use-After.wvca" ^
@@ -659,15 +692,17 @@ echo PASS  language 1 front door step=vector-construct-reserved item=ownership-r
 echo PASS  language 1 front door step=vector-construct-reserved cases=16 wvir=1.11 valid=1 wvb-boundary=1 malformed=8 source-rejections=5 ownership-rejections=1
 set "FailureStep=compiler-generic-nominal-variant"
 echo START language 1 front door step=generic-nominal-variant
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Nominal-Variant.wv" ^
     "%Work%\Generic-Nominal-Variant.wvss" ^
     >"%Work%\Generic-Nominal-Variant-Admission.out" ^
     2>"%Work%\Generic-Nominal-Variant-Admission.err" || goto :cleanup
 for %%F in ("%Work%\Generic-Nominal-Variant-Admission.err") do if not "%%~zF"=="0" goto :cleanup
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\Generic-Nominal-Variant.wvss" ^
     "%Work%\Generic-Nominal-Variant.wvss" ^
     "%Work%\Generic-Nominal-Variant.wvca" ^
@@ -769,15 +804,17 @@ for %%F in ("%Work%\Generic-Nominal-Declaration-Dependency-Run.err") do if not "
 call :expect_result_42 "%Work%\Generic-Nominal-Declaration-Dependency-Run.out" || goto :cleanup
 echo PASS  language 1 front door step=generic-nominal-declaration-dependency cases=33 verification=compiler-aligned execution=42 cycle=Rejected
 set "FailureStep=compiler-minimum-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" ^
     "%Work%\Minimum-A.wvb" >"%Work%\Compile-A.out" 2>"%Work%\Compile-A.err" || goto :cleanup
 set "FailureStep=compiler-minimum-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Minimum-Program.wv" ^
     "%Work%\Minimum-B.wvb" >"%Work%\Compile-B.out" 2>"%Work%\Compile-B.err" || goto :cleanup
 for %%F in ("%Work%\Compile-A.err" "%Work%\Compile-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -797,15 +834,17 @@ for /f "usebackq delims=" %%L in ("%Work%\Minimum.out") do (
 if not "%MinimumLines%"=="1" goto :cleanup
 if not "%MinimumLine%"=="Result: 42" goto :cleanup
 set "FailureStep=compiler-unit-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Control.wv" ^
     "%Work%\Unit-A.wvb" >"%Work%\Unit-A.out" 2>"%Work%\Unit-A.err" || goto :cleanup
 set "FailureStep=compiler-unit-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Unit-Control.wv" ^
     "%Work%\Unit-B.wvb" >"%Work%\Unit-B.out" 2>"%Work%\Unit-B.err" || goto :cleanup
 for %%F in ("%Work%\Unit-A.err" "%Work%\Unit-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -815,15 +854,17 @@ fc /b "%Work%\Unit-A.wvb" "%Work%\Unit-B.wvb" >nul || goto :cleanup
 type "%Work%\Unit-A.out"
 for %%F in ("%Work%\Unit-A.wvb") do echo INFO  language 1 unit wvb-bytes=%%~zF
 set "FailureStep=compiler-record-update-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update.wv" ^
     "%Work%\Record-Update-A.wvb" >"%Work%\Record-Update-A.out" 2>"%Work%\Record-Update-A.err" || goto :cleanup
 set "FailureStep=compiler-record-update-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Record-Update.wv" ^
     "%Work%\Record-Update-B.wvb" >"%Work%\Record-Update-B.out" 2>"%Work%\Record-Update-B.err" || goto :cleanup
 for %%F in ("%Work%\Record-Update-A.err" "%Work%\Record-Update-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -844,15 +885,17 @@ for /f "usebackq delims=" %%L in ("%Work%\Record-Update.out") do (
 if not "%RecordUpdateLines%"=="1" goto :cleanup
 if not "%RecordUpdateLine%"=="Result: 42" goto :cleanup
 set "FailureStep=compiler-value-if-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Control.wv" ^
     "%Work%\Value-If-A.wvb" >"%Work%\Value-If-A.out" 2>"%Work%\Value-If-A.err" || goto :cleanup
 set "FailureStep=compiler-value-if-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Control.wv" ^
     "%Work%\Value-If-B.wvb" >"%Work%\Value-If-B.out" 2>"%Work%\Value-If-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-If-A.err" "%Work%\Value-If-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -863,9 +906,10 @@ call "%Native%\Run-Wvb.cmd" "%Work%\Value-If-A.wvb" >"%Work%\Value-If.out" 2>"%W
 for %%F in ("%Work%\Value-If.err") do if not "%%~zF"=="0" goto :cleanup
 call :expect_result_42 "%Work%\Value-If.out" || goto :cleanup
 set "FailureStep=compiler-value-if-lazy"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-If-Lazy.wv" ^
     "%Work%\Value-If-Lazy.wvb" >"%Work%\Value-If-Lazy.out" 2>"%Work%\Value-If-Lazy.err" || goto :cleanup
 for %%F in ("%Work%\Value-If-Lazy.err") do if not "%%~zF"=="0" goto :cleanup
@@ -884,15 +928,17 @@ if not errorlevel 1 goto :cleanup
 if exist "%Work%\Seed-Value-If.wvb" goto :cleanup
 for %%F in ("%Work%\Value-If-A.wvb") do set "ValueIfWvbBytes=%%~zF"
 set "FailureStep=compiler-value-match-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match.wv" ^
     "%Work%\Value-Match-A.wvb" >"%Work%\Value-Match-A.out" 2>"%Work%\Value-Match-A.err" || goto :cleanup
 set "FailureStep=compiler-value-match-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match.wv" ^
     "%Work%\Value-Match-B.wvb" >"%Work%\Value-Match-B.out" 2>"%Work%\Value-Match-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-A.err" "%Work%\Value-Match-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -903,9 +949,10 @@ call "%Native%\Run-Wvb.cmd" "%Work%\Value-Match-A.wvb" >"%Work%\Value-Match.out"
 for %%F in ("%Work%\Value-Match.err") do if not "%%~zF"=="0" goto :cleanup
 call :expect_result_42 "%Work%\Value-Match.out" || goto :cleanup
 set "FailureStep=compiler-value-match-lazy"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Lazy.wv" ^
     "%Work%\Value-Match-Lazy.wvb" >"%Work%\Value-Match-Lazy.out" 2>"%Work%\Value-Match-Lazy.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-Lazy.err") do if not "%%~zF"=="0" goto :cleanup
@@ -913,30 +960,34 @@ call "%Native%\Run-Wvb.cmd" "%Work%\Value-Match-Lazy.wvb" >"%Work%\Value-Match-L
 for %%F in ("%Work%\Value-Match-Lazy-Run.err") do if not "%%~zF"=="0" goto :cleanup
 call :expect_result_42 "%Work%\Value-Match-Lazy-Run.out" || goto :cleanup
 set "FailureStep=compiler-value-match-never-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Never.wv" ^
     "%Work%\Value-Match-Never-A.wvb" >"%Work%\Value-Match-Never-A.out" 2>"%Work%\Value-Match-Never-A.err" || goto :cleanup
 set "FailureStep=compiler-value-match-never-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Never.wv" ^
     "%Work%\Value-Match-Never-B.wvb" >"%Work%\Value-Match-Never-B.out" 2>"%Work%\Value-Match-Never-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-Never-A.err" "%Work%\Value-Match-Never-B.err") do if not "%%~zF"=="0" goto :cleanup
 fc /b "%Work%\Value-Match-Never-A.out" "%Work%\Value-Match-Never-B.out" >nul || goto :cleanup
 fc /b "%Work%\Value-Match-Never-A.wvb" "%Work%\Value-Match-Never-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-value-match-variant-a"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Variant.wv" ^
     "%Work%\Value-Match-Variant-A.wvb" >"%Work%\Value-Match-Variant-A.out" 2>"%Work%\Value-Match-Variant-A.err" || goto :cleanup
 set "FailureStep=compiler-value-match-variant-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Variant.wv" ^
     "%Work%\Value-Match-Variant-B.wvb" >"%Work%\Value-Match-Variant-B.out" 2>"%Work%\Value-Match-Variant-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-Variant-A.err" "%Work%\Value-Match-Variant-B.err") do if not "%%~zF"=="0" goto :cleanup
@@ -1001,15 +1052,17 @@ echo PASS  language 1 front door phase=compiler-slice item=4/13
 
 set "FailureStep=fixed-integer-compile-a"
 echo START language 1 front door phase=fixed-integers item=5/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Program.wv" ^
     "%Work%\Fixed-Integer-A.wvb" >"%Work%\Fixed-Integer-A.out" 2>"%Work%\Fixed-Integer-A.err" || goto :cleanup
 set "FailureStep=fixed-integer-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-Program.wv" ^
     "%Work%\Fixed-Integer-B.wvb" >"%Work%\Fixed-Integer-B.out" 2>"%Work%\Fixed-Integer-B.err" || goto :cleanup
 set "FailureStep=fixed-integer-determinism"
@@ -1019,9 +1072,10 @@ fc /b "%Work%\Fixed-Integer-A.wvb" "%Work%\Fixed-Integer-B.wvb" >nul || goto :cl
 
 set "FailureStep=fixed-integer-trap-inputs"
 for %%N in (Overflow Divide-By-Zero Invalid-Shift) do (
-    node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
         --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
         --source-profile "%SourceProfile%" ^
+        --target-descriptor "%TargetDescriptor%" ^
         "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Integer-%%N.wv" ^
         "%Work%\Fixed-Integer-%%N.wvb" >"%Work%\Fixed-Integer-%%N.out" 2>"%Work%\Fixed-Integer-%%N.err" || goto :cleanup
 )
@@ -1109,15 +1163,17 @@ echo PASS  language 1 front door phase=fixed-integers item=5/13
 
 set "FailureStep=rune-compile-a"
 echo START language 1 front door phase=runes item=6/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Rune-Program.wv" ^
     "%Work%\Rune-A.wvb" >"%Work%\Rune-A.out" 2>"%Work%\Rune-A.err" || goto :cleanup
 set "FailureStep=rune-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Rune-Program.wv" ^
     "%Work%\Rune-B.wvb" >"%Work%\Rune-B.out" 2>"%Work%\Rune-B.err" || goto :cleanup
 set "FailureStep=rune-determinism"
@@ -1172,15 +1228,17 @@ echo PASS  language 1 front door phase=runes item=6/13
 
 set "FailureStep=floating-compile-a"
 echo START language 1 front door phase=floating item=7/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Floating-Program.wv" ^
     "%Work%\Floating-A.wvb" >"%Work%\Floating-A.out" 2>"%Work%\Floating-A.err" || goto :cleanup
 set "FailureStep=floating-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Floating-Program.wv" ^
     "%Work%\Floating-B.wvb" >"%Work%\Floating-B.out" 2>"%Work%\Floating-B.err" || goto :cleanup
 set "FailureStep=floating-determinism"
@@ -1214,9 +1272,10 @@ call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 5 ^
     --development-cache >nul || goto :cleanup
 set "FailureStep=compiler-closure-pipeline"
 node "%Native%\Verify-Language-1.0-Closure-Compiler-Pipeline.mjs" ^
-    "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
-    "%SourceLock%" "%SourceLockHash%" "%SourceProfile%" "%Work%" ^
+    "%SourceLock%" "%SourceLockHash%" "%SourceProfile%" ^
+    "%TargetDescriptor%" "%Work%" ^
     || goto :cleanup
 set "FailureStep=memory-budget-entry-runtime"
 "%Work%\Floating-Runner.exe" "%Work%\Memory-Budget-Entry-A.wvb" ^
@@ -1279,18 +1338,20 @@ echo PASS  language 1 front door phase=floating item=7/13
 
 set "FailureStep=fixed-array-compile-a"
 echo START language 1 front door phase=fixed-arrays item=8/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%Work%\Fixed-Array-A.wvb" ^
     >"%Work%\Fixed-Array-A.out" 2>"%Work%\Fixed-Array-A.err" || goto :cleanup
 set "FailureStep=fixed-array-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Fixed-Array-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -1310,9 +1371,10 @@ echo PASS  language 1 front door phase=fixed-arrays item=8/13
 
 set "FailureStep=vector-sequence-types-compile"
 echo START language 1 front door phase=vector-sequence-types item=9/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Sequence-Wvb-Types.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -1329,9 +1391,10 @@ node "%Native%\Verify-Language-1.0-Vector-Sequence-Runtime.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
     "%Work%\Vector-Sequence-Types.wvb" "%Work%" || goto :cleanup
 set "FailureStep=sequence-reads-compile"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -1343,9 +1406,10 @@ node "%Native%\Verify-Language-1.0-Sequence-Reads.mjs" ^
     "%Work%\Verifier.exe" "%Work%\Floating-Runner.exe" ^
     "%Work%\Sequence-Read.wvb" "%Work%" || goto :cleanup
 set "FailureStep=vector-reads-freeze-compile"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Read-Freeze-Main-Pipeline.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -1379,9 +1443,10 @@ call :expect_profiled_analysis_failure_with_dependencies ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Sequence-Read-Lookalike-Module.wv" || goto :cleanup
 set "FailureStep=vector-reads-freeze-rejections"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Vector-Freeze-Use-After.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Collections\Collections.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Memory\Memory.wv" ^
@@ -1450,15 +1515,17 @@ echo PASS  language 1 front door phase=vector-sequence-types item=9/13
 
 set "FailureStep=unit-never-compile-a"
 echo START language 1 front door phase=unit-never item=10/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Never-Control.wv" ^
     "%Work%\Never-A.wvb" >"%Work%\Never-A.out" 2>"%Work%\Never-A.err" || goto :cleanup
 set "FailureStep=unit-never-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Never-Control.wv" ^
     "%Work%\Never-B.wvb" >"%Work%\Never-B.out" 2>"%Work%\Never-B.err" || goto :cleanup
 set "FailureStep=unit-never-determinism"
@@ -1508,15 +1575,17 @@ echo PASS  language 1 front door phase=unit-never item=10/13
 
 set "FailureStep=multi-field-variant-compile-a"
 echo START language 1 front door phase=multi-field-variants item=11/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Multi-Field-Variant.wv" ^
     "%Work%\Multi-Field-Variant-A.wvb" >"%Work%\Multi-Field-Variant-A.out" 2>"%Work%\Multi-Field-Variant-A.err" || goto :cleanup
 set "FailureStep=multi-field-variant-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Multi-Field-Variant.wv" ^
     "%Work%\Multi-Field-Variant-B.wvb" >"%Work%\Multi-Field-Variant-B.out" 2>"%Work%\Multi-Field-Variant-B.err" || goto :cleanup
 set "FailureStep=multi-field-variant-determinism"
@@ -1530,9 +1599,10 @@ for %%N in (Duplicate-Declaration Empty-Payload Missing-Field Duplicate-Field Un
 )
 
 set "FailureStep=named-single-field-variant"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Named-Variant-Field.wv" ^
     "%Work%\Named-Variant-Field.wvb" >"%Work%\Named-Variant-Field.out" 2>"%Work%\Named-Variant-Field.err" || goto :cleanup
 for %%F in ("%Work%\Named-Variant-Field.err") do if not "%%~zF"=="0" goto :cleanup
@@ -1587,15 +1657,17 @@ echo PASS  language 1 front door phase=multi-field-variants item=11/13
 
 set "FailureStep=typed-failure-compile-a"
 echo START language 1 front door phase=typed-failure item=12/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Result-Try.wv" ^
     "%Work%\Result-Try-A.wvb" >"%Work%\Result-Try-A.out" 2>"%Work%\Result-Try-A.err" || goto :cleanup
 set "FailureStep=typed-failure-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Result-Try.wv" ^
     "%Work%\Result-Try-B.wvb" >"%Work%\Result-Try-B.out" 2>"%Work%\Result-Try-B.err" || goto :cleanup
 set "FailureStep=typed-failure-determinism"
@@ -1624,18 +1696,20 @@ echo PASS  language 1 front door phase=typed-failure item=12/13
 
 set "FailureStep=foundation-generics-compile-a"
 echo START language 1 front door phase=foundation-generics item=13/13
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Generic-Result.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Option.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
     "%Work%\Foundation-Generic-A.wvb" ^
     >"%Work%\Foundation-Generic-A.out" 2>"%Work%\Foundation-Generic-A.err" || goto :cleanup
 set "FailureStep=foundation-generics-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Foundation-Generic-Result.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Option.wv" ^
     "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
@@ -1671,12 +1745,18 @@ echo INFO  language 1 foundation-generics wvb-bytes=%FoundationGenericWvbBytes%
 
 set "FailureStep=generic-specializations-compile-a"
 echo START language 1 front door step=generic-specializations
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations.wv" ^
     "%Work%\Generic-Specializations-A.wvb" ^
     >"%Work%\Generic-Specializations-A.out" 2>"%Work%\Generic-Specializations-A.err" || goto :cleanup
 set "FailureStep=generic-specializations-compile-b"
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+    --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
+    --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations.wv" ^
     "%Work%\Generic-Specializations-B.wvb" ^
     >"%Work%\Generic-Specializations-B.out" 2>"%Work%\Generic-Specializations-B.err" || goto :cleanup
@@ -1821,15 +1901,34 @@ if not "%Result%"=="0" exit /b %Result%
 echo native language 1 front door status=Passed cases=482 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
+:analyze_authenticated
+setlocal EnableDelayedExpansion
+set "Admitted=%~f1"
+set "AnalysisSource=%~f2"
+set "RemoveAnalysisSource=0"
+if /I "!Admitted!"=="!AnalysisSource!" (
+    set "AnalysisSource=%~f2.republished"
+    set "RemoveAnalysisSource=1"
+)
+"%Work%\Analyzer.exe" --internal-source-set ^
+    "!Admitted!" "!AnalysisSource!" "%~f3" "%~f4" "%~f5"
+set "AnalysisStatus=!ERRORLEVEL!"
+if not "!AnalysisStatus!"=="0" exit /b !AnalysisStatus!
+fc /b "!Admitted!" "!AnalysisSource!" >nul || exit /b 1
+if "!RemoveAnalysisSource!"=="1" del /q "!AnalysisSource!" || exit /b 1
+exit /b 0
+
 :expect_profiled_emission_failure
 setlocal EnableDelayedExpansion
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%~f1" "%Work%\%~2.wvss" ^
     >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
     "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
     >"%Work%\%~2-analysis.out" 2>"%Work%\%~2-analysis.err" || exit /b 1
@@ -1876,13 +1975,15 @@ exit /b 0
 
 :expect_profiled_analysis_failure
 setlocal EnableDelayedExpansion
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%~f1" "%Work%\%~2.wvss" ^
     >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
     "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
     >"%Work%\%~2.out" 2>"%Work%\%~2.err"
@@ -1905,26 +2006,32 @@ exit /b 0
 :expect_profiled_analysis_failure_with_dependencies
 setlocal EnableDelayedExpansion
 if "%~5"=="" (
-    "%Work%\Admitter.exe" ^
+    node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
         --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
         --source-profile "%SourceProfile%" ^
+        --target-descriptor "%TargetDescriptor%" ^
         "%~f1" "%~f4" "%Work%\%~2.wvss" ^
         >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 ) else if "%~6"=="" (
-    "%Work%\Admitter.exe" ^
+    node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
         --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
         --source-profile "%SourceProfile%" ^
+        --target-descriptor "%TargetDescriptor%" ^
         "%~f1" "%~f4" "%~f5" "%Work%\%~2.wvss" ^
         >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 ) else (
-    "%Work%\Admitter.exe" ^
+    node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
         --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
         --source-profile "%SourceProfile%" ^
+        --target-descriptor "%TargetDescriptor%" ^
         "%~f1" "%~f4" "%~f5" "%~f6" "%Work%\%~2.wvss" ^
         >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 )
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
     "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
     >"%Work%\%~2.out" 2>"%Work%\%~2.err"
@@ -1946,13 +2053,15 @@ exit /b 0
 
 :expect_profiled_symbol_failure
 setlocal EnableDelayedExpansion
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%~f1" "%Work%\%~2.wvss" ^
     >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
     "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
     >"%Work%\%~2.out" 2>"%Work%\%~2.err"
@@ -1974,13 +2083,15 @@ exit /b 0
 
 :expect_profiled_symbol_failure_with_dependency
 setlocal EnableDelayedExpansion
-"%Work%\Admitter.exe" ^
+node "%Native%\Run-Authenticated-Source-Admission.mjs" ^
+    "%Work%\Admitter.exe" "%Work%\Validator.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%~f1" "%~f4" "%Work%\%~2.wvss" ^
     >"%Work%\%~2-admission.out" 2>"%Work%\%~2-admission.err" || exit /b 1
 for %%F in ("%Work%\%~2-admission.err") do if not "%%~zF"=="0" exit /b 1
-"%Work%\Analyzer.exe" --admitted-source-set ^
+call :analyze_authenticated ^
     "%Work%\%~2.wvss" "%Work%\%~2.wvss" ^
     "%Work%\%~2.wvca" "%Work%\%~2.wvlb" "%Work%\%~2.wvir" ^
     >"%Work%\%~2.out" 2>"%Work%\%~2.err"
@@ -2018,9 +2129,10 @@ exit /b %ERRORLEVEL%
 
 :expect_foundation_generic_rejection
 if exist "%~f2" exit /b 1
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
+    --target-descriptor "%TargetDescriptor%" ^
     "%~f1" "%RepositoryRoot%\Libraries\Foundation\Values\Result.wv" ^
     "%~f2" >"%~f2.out" 2>"%~f2.err"
 if not errorlevel 1 exit /b 1
@@ -2029,7 +2141,7 @@ exit /b 0
 
 :expect_rejection_with_digest
 if exist "%~f2" exit /b 1
-node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" --source-input-lock "%SourceLock%" "%~3" --source-profile "%~4" "%~f1" "%~f2" >"%~f2.out" 2>"%~f2.err"
+node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" --source-input-lock "%SourceLock%" "%~3" --source-profile "%~4" --target-descriptor "%TargetDescriptor%" "%~f1" "%~f2" >"%~f2.out" 2>"%~f2.err"
 if not errorlevel 1 exit /b 1
 if exist "%~f2" exit /b 1
 exit /b 0

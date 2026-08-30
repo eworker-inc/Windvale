@@ -3,8 +3,10 @@
 ## Status and purpose
 
 `Compilerˉsourceˉanalysis` separates reusable source and type analysis from WVB
-emission. It consumes one canonical admitted WVSS source set and publishes three
-individually bounded values:
+emission. It consumes one canonical WVSS source set and publishes three
+individually bounded values. Production Language 1.0 reaches that input only
+through the retained authenticated-snapshot relationship below; descriptorless
+Project 2 remains a narrower development route.
 
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
@@ -168,59 +170,130 @@ and option identities; WVCA alone is not a cache key.
 
 ## Command-line products and development reuse
 
-The hosted Language 1.0 admission front door accepts an ordered source closure,
-the exact source-input lock and expected hash, and the selected composite
-source profile:
+The public Language 1.0 host coordinator accepts an ordered source closure, the
+exact source-input lock and expected hash, the selected composite source
+profile, and one mandatory target descriptor:
+
+```text
+Run-Split-Compiler <wvadmit> <wvauth> <wvanalyze> <wvemit>
+    --source-input-lock <lock.wvlock> <sha256>
+    --source-profile <profile.wvsp>
+    --target-descriptor <input.wvtd>
+    <root.wv> [dependency.wv ...] <output.wvb>
+```
+
+It snapshots every input once, constructs bounded private WVSS 1 without
+reducing the 64-module limit, and retains the complete successor set in one
+private directory. Its first child is the target-aware hosted admitter:
 
 ```text
 wvadmit --source-input-lock <lock.wvlock> <sha256>
     --source-profile <profile.wvsp>
-    <root.wv> [dependency.wv ...] <output.wvss>
+    --target-descriptor <input.wvtd>
+    --source-set <input.wvss>
+    <output.wvss> <output.wvtd> <output.wvfc> <output.wvae>
 ```
 
-It constructs bounded WVSS 1 input, applies the same
-`Compilerˉadmitˉsourceˉprofileˉinputs` contract used by one-shot compilation,
-and publishes descriptor-free WVSS 2 only after every module agrees on edition
-and profile. Rejection publishes no admitted source set.
+The admitter applies source-profile and exact-target admission, constructs the
+canonical foreign catalog, and writes WVAE last only after one portable
+in-memory success. The independent authenticator then consumes the same exact
+six snapshots and publishes no transferable certificate or successor value:
 
-The hosted analyzer front door accepts either an ordered Project 2 source
-closure or one already admitted source set:
+```text
+wvauth <input.wvae> <input.wvss> <input.wvtd> <input.wvfc>
+    <input.wvlock> <input.wvsp>
+```
+
+Only its successful process result permits the coordinator to continue. Until
+foreign binding and lowering are implemented, a validated nonempty catalog
+reports `Foreignˉsemanticsˉpending` and publishes no Analyzer or emitter
+artifact. For an empty catalog, the coordinator rechecks the retained snapshot
+bytes and invokes the Analyzer's explicitly non-authoritative source-set route:
+
+```text
+wvanalyze --internal-source-set <input.wvss> <output.wvss>
+    <output.wvca> <output.wvlb> <output.wvir>
+```
+
+The Analyzer treats that WVSS as ordinary untrusted compiler input; neither the
+option nor its path claims admission. It scans and analyzes the source, then
+re-publishes the exact consumed WVSS beside WVCA, WVLB, and WVIR. The
+coordinator requires that WVSS to equal its retained authenticated snapshot
+byte for byte before invoking the emitter with the retained original. The
+emitter independently validates that original WVSS against all three analysis
+artifacts. A direct Analyzer or emitter invocation therefore produces only an
+untrusted intermediate or candidate; it cannot use the public coordinator to
+publish a final WVB without the complete preceding `wvadmit` and `wvauth`
+sequence.
+
+The only descriptorless Analyzer form is the retained development-only Project
+2 route:
 
 ```text
 wvanalyze <root.wv> [dependency.wv ...]
     <output.wvss> <output.wvca> <output.wvlb> <output.wvir>
-
-wvanalyze --admitted-source-set <input.wvss>
-    <output.wvss> <output.wvca> <output.wvlb> <output.wvir>
 ```
 
-The hosted emitter accepts exactly that persisted set and publishes unoptimized
-portable WVB:
+Before analysis, this route rejects a `System` profile and every platform or
+foreign declaration. The former public `--admitted-source-set` route is
+removed; possession of one serialized source set cannot bypass production
+authentication.
+
+The hosted emitter accepts exactly that persisted set and writes one
+unoptimized portable WVB candidate:
 
 ```text
 wvemit <input.wvss> <input.wvca> <input.wvlb> <input.wvir> <output.wvb>
 ```
 
-These are three bounded front-door products over one semantic compiler. The
-admitter owns Language 1.0 descriptor/profile admission, the analyzer owns
-source scanning, symbols, binding, and typed WIR construction, and the emitter
-revalidates all persisted values and calls the same prepared backend as the
-retained one-shot compiler. Descriptorless Project 2 input starts at the
-analyzer; descriptor-bearing Language 1.0 input starts at the admitter.
+In the authenticated route, `input.wvss` is the retained original rather than
+the Analyzer's republished copy. The emitter writes only inside the private
+candidate directory. The runner alone copies and syncs that completed WVB into
+a unique destination-directory candidate and atomically creates the final path
+without overwrite.
+
+These are four bounded front-door products over one semantic compiler. The
+admitter owns Language 1.0 descriptor/profile admission and catalog production;
+the authenticator independently proves the retained snapshot relationship; the
+Analyzer owns ordinary source scanning, symbols, binding, and typed WIR
+construction; and the emitter revalidates all persisted analysis values and
+calls the same prepared backend as the retained one-shot compiler.
+Descriptorless Project 2 input starts at the Analyzer. Descriptor-bearing
+Language 1.0 input starts at the private host coordinator and admitter.
 Optimization is not an implicit command-line mode; a later optimized product
 must have a distinct target and producer identity.
+
+The complete compiler-scale Analyzer remains inside Windvale 1.0's fixed 4 MiB
+immutable-`bytes` ceiling. Under the pinned bootstrap transition, the
+pre-ingress closure produces 4,181,228 WVIR bytes. Importing the foreign-catalog
+and target contracts would add 79,212 bytes, and the first duplicated admission
+adapter added another 48,860 bytes; even a geometry-only six-input adapter costs
+9,748 bytes. The selected non-authoritative handoff plus Project 2 prechecks
+produces 4,182,928 bytes, leaving 11,376 bounded bytes in that transition.
+
+That narrow number is not the observed current-compiler margin. One packaged
+current Analyzer successfully compiled its exact 2,132,771-byte source set to
+3,815,704 WVIR bytes, leaving 378,600 bytes. The complete current-compiler
+convergence check reproduced its stage-2 bytes exactly and pins the resulting
+1,552,090-byte WVB at SHA-256
+`5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77`.
+Authentication
+stays in dedicated `wvauth` because it is an independent boundary and because
+duplicating the ingress closure did not fit the bootstrap transition, not
+because the current compiler has only 11,376 bytes of measured headroom.
 
 `Build-Cached-Split-Project-Wvb` is a development-only Project 2 coordinator.
 Its analysis key binds the complete project source closure and exact analyzer
 identity. Its emission key additionally binds the exact emitter identity and
-the checkpoint binds the selected analysis key. Both identities name target
-`portable-wvb-v1` and the current host family. A cache hit hashes and validates
-the small phase values and resulting WVB, but neither reads nor launches the
-large compiler executables. A miss hashes the selected executable immediately
-before and after execution against its packaging-time identity. Consequently a
-stale or corrupt producer cannot publish under another producer's key, while a
-valid warm analysis result can be reused without repeating source analysis or
-large executable hashes.
+the checkpoint binds the selected analysis key. The analyzer identity names
+`source-analysis-v1`; the emitter identity and product name
+`portable-wvb-optimized-v1`; both bind the current host family. A cache hit
+hashes and validates the small phase values and resulting WVB, but neither
+reads nor launches the large compiler executables. A miss hashes the selected
+executable immediately before and after execution against its packaging-time
+identity. Consequently a stale or corrupt producer cannot publish under
+another producer's key, while a valid warm analysis result can be reused
+without repeating source analysis or large executable hashes.
 
 This cache is not qualification evidence. Release and cross-host conformance
 continue to use canonical WVB and the named broad gates independently of local
