@@ -1,0 +1,584 @@
+module Compilerˉadmissionˉevidence profile portable;
+
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+
+export enum Compilerˉadmissionˉevidenceˉstatus {
+    Valid = 0;
+    Invalidˉlength = 1;
+    Invalidˉmagic = 2;
+    Unsupportedˉversion = 3;
+    Invalidˉstructureˉlength = 4;
+    Unsupportedˉhash = 5;
+    Invalidˉflags = 6;
+    Invalidˉwvssˉlength = 7;
+    Invalidˉwvtdˉlength = 8;
+    Invalidˉwvfcˉlength = 9;
+    Invalidˉmoduleˉcount = 10;
+    Invalidˉforeignˉcount = 11;
+    Invalidˉedition = 12;
+    Invalidˉprofileˉbinding = 13;
+    Invalidˉreserved = 14;
+    Invalidˉdigestˉencoding = 15;
+    Digestˉmismatch = 16;
+    Invalidˉlockˉlength = 17;
+    Invalidˉprofileˉlength = 18;
+}
+
+export record Compilerˉadmissionˉevidenceˉresult {
+    Status: Compilerˉadmissionˉevidenceˉstatus;
+    Failureˉoffset: u32;
+    Value: bytes;
+}
+
+fn Compilerˉadmissionˉevidenceˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉadmissionˉevidenceˉfailure(
+    Input: bytes,
+    Status: Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+) -> Compilerˉadmissionˉevidenceˉresult {
+    return Compilerˉadmissionˉevidenceˉresult(
+        Status,
+        Offset,
+        Compilerˉadmissionˉevidenceˉempty(Input)
+    );
+}
+
+fn Compilerˉadmissionˉevidenceˉsuccess(
+    Value: bytes
+) -> Compilerˉadmissionˉevidenceˉresult {
+    return Compilerˉadmissionˉevidenceˉresult(
+        Compilerˉadmissionˉevidenceˉstatus.Valid,
+        0u32,
+        Value
+    );
+}
+
+fn Compilerˉadmissionˉevidenceˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Compilerˉadmissionˉevidenceˉhexˉnibble(Value: u32) -> u32 {
+    if Value >= 48u32 && Value <= 57u32 { return Value - 48u32; }
+    return Value - 87u32;
+}
+
+export fn Compilerˉdecodeˉadmissionˉsha256ˉhex(
+    Input: bytes
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length != 64u32 {
+        var Offset: u32 = Length;
+        if Offset > 64u32 { Offset = 64u32; }
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+            Offset
+        );
+    }
+    var Result: bytes = Compilerˉadmissionˉevidenceˉempty(Input);
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let High: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index));
+        let Low: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Index + 1u32));
+        let Highˉvalid: bool =
+            (High >= 48u32 && High <= 57u32) ||
+            (High >= 97u32 && High <= 102u32);
+        if !Highˉvalid {
+            return Compilerˉadmissionˉevidenceˉfailure(
+                Input,
+                Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+                Index
+            );
+        }
+        let Lowˉvalid: bool =
+            (Low >= 48u32 && Low <= 57u32) ||
+            (Low >= 97u32 && Low <= 102u32);
+        if !Lowˉvalid {
+            return Compilerˉadmissionˉevidenceˉfailure(
+                Input,
+                Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+                Index + 1u32
+            );
+        }
+        let Byte: u32 =
+            Compilerˉadmissionˉevidenceˉhexˉnibble(High) * 16u32 +
+            Compilerˉadmissionˉevidenceˉhexˉnibble(Low);
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu8(Bytesˉreadˉu8(Bytesˉfromˉu32ˉlittle(Byte), 0u32))
+        );
+        Index = Index + 2u32;
+    }
+    return Compilerˉadmissionˉevidenceˉsuccess(Result);
+}
+
+fn Compilerˉadmissionˉevidenceˉhash(
+    Input: bytes,
+    Evidenceˉoffset: u32
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Encoded: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Input));
+    let Decoded: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉdecodeˉadmissionˉsha256ˉhex(Encoded);
+    if Decoded.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Decoded.Status,
+            Evidenceˉoffset + Decoded.Failureˉoffset
+        );
+    }
+    return Decoded;
+}
+
+export fn Compilerˉadmissionˉevidenceˉretainedˉtotalˉisˉbounded(
+    Envelopeˉlength: u32,
+    Wvssˉlength: u32,
+    Wvtdˉlength: u32,
+    Wvfcˉlength: u32,
+    Lockˉlength: u32,
+    Profileˉlength: u32
+) -> bool {
+    let Maximum: u32 = 9503264u32;
+    if Envelopeˉlength > Maximum { return false; }
+    var Total: u32 = Envelopeˉlength;
+    if Wvssˉlength > Maximum - Total { return false; }
+    Total = Total + Wvssˉlength;
+    if Wvtdˉlength > Maximum - Total { return false; }
+    Total = Total + Wvtdˉlength;
+    if Wvfcˉlength > Maximum - Total { return false; }
+    Total = Total + Wvfcˉlength;
+    if Lockˉlength > Maximum - Total { return false; }
+    Total = Total + Lockˉlength;
+    return Profileˉlength <= Maximum - Total;
+}
+
+export fn Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+    Current: u32,
+    Additional: u32
+) -> bool {
+    return Current <= 9503264u32 && Additional <= 9503264u32 - Current;
+}
+
+export fn Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+    Wvssˉlength: u32,
+    Wvtdˉlength: u32,
+    Wvfcˉlength: u32,
+    Wvssˉmoduleˉcount: u32,
+    Foreignˉcount: u32,
+    Lockˉlength: u32,
+    Profileˉlength: u32
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Empty: bytes = Textˉtoˉutf8("");
+    if Wvssˉmoduleˉcount == 0u32 || Wvssˉmoduleˉcount > 64u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉmoduleˉcount,
+            32u32
+        );
+    }
+    let Minimumˉwvss: u32 = 16u32 + Wvssˉmoduleˉcount * 21u32;
+    if Wvssˉlength < Minimumˉwvss || Wvssˉlength > 4194304u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        );
+    }
+    if Wvtdˉlength < 64u32 || Wvtdˉlength > 320u32 ||
+        (Wvtdˉlength - 64u32) % 4u32 != 0u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        );
+    }
+    if Foreignˉcount > 43690u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉforeignˉcount,
+            36u32
+        );
+    }
+    let Expectedˉwvfc: u32 = 48u32 + Foreignˉcount * 96u32;
+    if Wvfcˉlength != Expectedˉwvfc || Wvfcˉlength > 4194304u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        );
+    }
+    if Lockˉlength == 0u32 || Lockˉlength > 1048576u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+            160u32
+        );
+    }
+    if Profileˉlength == 0u32 || Profileˉlength > 65536u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Empty,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+            192u32
+        );
+    }
+    return Compilerˉadmissionˉevidenceˉsuccess(Empty);
+}
+
+export fn Compilerˉvalidateˉadmissionˉevidenceˉshape(
+    Input: bytes
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length != 224u32 {
+        var Offset: u32 = Length;
+        if Offset > 224u32 { Offset = 224u32; }
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            Offset
+        );
+    }
+    let Magic: bytes = Textˉtoˉutf8("WVAE");
+    var Index: u32 = 0u32;
+    while Index < 4u32 {
+        if Bytesˉreadˉu8(Input, Index) != Bytesˉreadˉu8(Magic, Index) {
+            return Compilerˉadmissionˉevidenceˉfailure(
+                Input,
+                Compilerˉadmissionˉevidenceˉstatus.Invalidˉmagic,
+                Index
+            );
+        }
+        Index = Index + 1u32;
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉversion,
+            4u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉversion,
+            6u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 224u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉstructureˉlength,
+            8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 12u32) != 1u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉhash,
+            12u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) != 0u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉflags,
+            16u32
+        );
+    }
+    let Wvssˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
+    let Wvtdˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    let Wvfcˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
+    let Moduleˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
+    let Foreignˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 36u32);
+    let Geometry: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+            Wvssˉlength,
+            Wvtdˉlength,
+            Wvfcˉlength,
+            Moduleˉcount,
+            Foreignˉcount,
+            1u32,
+            1u32
+        );
+    if Geometry.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Geometry.Status,
+            Geometry.Failureˉoffset
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 40u32) != 1u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉedition,
+            40u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 44u32) != 1u32 {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Input,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        );
+    }
+    Index = 48u32;
+    while Index < 64u32 {
+        if Bytesˉreadˉu8(Input, Index) != 0u8 {
+            return Compilerˉadmissionˉevidenceˉfailure(
+                Input,
+                Compilerˉadmissionˉevidenceˉstatus.Invalidˉreserved,
+                Index
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Compilerˉadmissionˉevidenceˉsuccess(Input);
+}
+
+fn Compilerˉadmissionˉevidenceˉdigestˉmatches(
+    Evidence: bytes,
+    Offset: u32,
+    Digest: bytes
+) -> bool {
+    var Index: u32 = 0u32;
+    while Index < 32u32 {
+        if Bytesˉreadˉu8(Evidence, Offset + Index) !=
+            Bytesˉreadˉu8(Digest, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉconstructˉadmissionˉevidence(
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes,
+    Lock: bytes,
+    Profile: bytes,
+    Wvssˉmoduleˉcount: u32,
+    Foreignˉcount: u32,
+    Binding: Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Geometry: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+            Bytesˉlength(Wvss),
+            Bytesˉlength(Wvtd),
+            Bytesˉlength(Wvfc),
+            Wvssˉmoduleˉcount,
+            Foreignˉcount,
+            Bytesˉlength(Lock),
+            Bytesˉlength(Profile)
+        );
+    if Geometry.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Geometry;
+    }
+    if Binding != Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Wvss,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        );
+    }
+    let Wvssˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvss, 64u32);
+    let Wvtdˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvtd, 96u32);
+    let Wvfcˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvfc, 128u32);
+    let Lockˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Lock, 160u32);
+    let Profileˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Profile, 192u32);
+    if Wvssˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvssˉdigest;
+    }
+    if Wvtdˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvtdˉdigest;
+    }
+    if Wvfcˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvfcˉdigest;
+    }
+    if Lockˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Lockˉdigest;
+    }
+    if Profileˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Profileˉdigest;
+    }
+    var Header: bytes = Textˉtoˉutf8("WVAE");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 224u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 1u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 0u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, Bytesˉlength(Wvss));
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, Bytesˉlength(Wvtd));
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, Bytesˉlength(Wvfc));
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, Wvssˉmoduleˉcount);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, Foreignˉcount);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 1u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 1u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 0u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 0u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 0u32);
+    Header = Compilerˉadmissionˉevidenceˉappendˉu32(Header, 0u32);
+    var Value: bytes = Bytesˉconcat(Header, Wvssˉdigest.Value);
+    Value = Bytesˉconcat(Value, Wvtdˉdigest.Value);
+    Value = Bytesˉconcat(Value, Wvfcˉdigest.Value);
+    Value = Bytesˉconcat(Value, Lockˉdigest.Value);
+    Value = Bytesˉconcat(Value, Profileˉdigest.Value);
+    return Compilerˉadmissionˉevidenceˉsuccess(Value);
+}
+
+export fn Compilerˉauthenticateˉadmissionˉevidence(
+    Evidence: bytes,
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes,
+    Lock: bytes,
+    Profile: bytes,
+    Wvssˉmoduleˉcount: u32,
+    Foreignˉcount: u32,
+    Binding: Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding
+) -> Compilerˉadmissionˉevidenceˉresult {
+    let Shape: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉvalidateˉadmissionˉevidenceˉshape(Evidence);
+    if Shape.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Shape;
+    }
+    let Geometry: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+            Bytesˉlength(Wvss),
+            Bytesˉlength(Wvtd),
+            Bytesˉlength(Wvfc),
+            Wvssˉmoduleˉcount,
+            Foreignˉcount,
+            Bytesˉlength(Lock),
+            Bytesˉlength(Profile)
+        );
+    if Geometry.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Geometry.Status,
+            Geometry.Failureˉoffset
+        );
+    }
+    if Binding != Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Evidence, 20u32) != Bytesˉlength(Wvss) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Evidence, 24u32) != Bytesˉlength(Wvtd) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Evidence, 28u32) != Bytesˉlength(Wvfc) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Evidence, 32u32) != Wvssˉmoduleˉcount {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉmoduleˉcount,
+            32u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Evidence, 36u32) != Foreignˉcount {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Invalidˉforeignˉcount,
+            36u32
+        );
+    }
+    let Wvssˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvss, 64u32);
+    let Wvtdˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvtd, 96u32);
+    let Wvfcˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Wvfc, 128u32);
+    let Lockˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Lock, 160u32);
+    let Profileˉdigest: Compilerˉadmissionˉevidenceˉresult =
+        Compilerˉadmissionˉevidenceˉhash(Profile, 192u32);
+    if Wvssˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvssˉdigest;
+    }
+    if Wvtdˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvtdˉdigest;
+    }
+    if Wvfcˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Wvfcˉdigest;
+    }
+    if Lockˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Lockˉdigest;
+    }
+    if Profileˉdigest.Status != Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Profileˉdigest;
+    }
+    if !Compilerˉadmissionˉevidenceˉdigestˉmatches(
+        Evidence, 64u32, Wvssˉdigest.Value
+    ) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            64u32
+        );
+    }
+    if !Compilerˉadmissionˉevidenceˉdigestˉmatches(
+        Evidence, 96u32, Wvtdˉdigest.Value
+    ) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            96u32
+        );
+    }
+    if !Compilerˉadmissionˉevidenceˉdigestˉmatches(
+        Evidence, 128u32, Wvfcˉdigest.Value
+    ) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            128u32
+        );
+    }
+    if !Compilerˉadmissionˉevidenceˉdigestˉmatches(
+        Evidence, 160u32, Lockˉdigest.Value
+    ) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            160u32
+        );
+    }
+    if !Compilerˉadmissionˉevidenceˉdigestˉmatches(
+        Evidence, 192u32, Profileˉdigest.Value
+    ) {
+        return Compilerˉadmissionˉevidenceˉfailure(
+            Evidence,
+            Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            192u32
+        );
+    }
+    return Compilerˉadmissionˉevidenceˉsuccess(Evidence);
+}

@@ -1,0 +1,220 @@
+module Compilerˉadmissionˉevidenceˉvalidator profile portable;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉadmissionˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉtarget as Target;
+
+export enum Compilerˉadmissionˉevidenceˉvalidationˉphase {
+    Valid = 0;
+    Input = 1;
+    Wvss = 2;
+    Wvtd = 3;
+    Wvfc = 4;
+    Crossˉfield = 5;
+    Evidence = 6;
+    Resourceˉlimit = 7;
+}
+
+export record Compilerˉadmissionˉevidenceˉvalidationˉresult {
+    Phase: Compilerˉadmissionˉevidenceˉvalidationˉphase;
+    Evidenceˉstatus: Evidence.Compilerˉadmissionˉevidenceˉstatus;
+    Wvssˉstatus: Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus;
+    Structureˉstatus: u32;
+    Failureˉoffset: u32;
+    Value: bytes;
+}
+
+fn Validationˉfailure(
+    Input: bytes,
+    Phase: Compilerˉadmissionˉevidenceˉvalidationˉphase,
+    Evidenceˉstatus: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Wvssˉstatus: Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus,
+    Structureˉstatus: u32,
+    Offset: u32
+) -> Compilerˉadmissionˉevidenceˉvalidationˉresult {
+    return Compilerˉadmissionˉevidenceˉvalidationˉresult(
+        Phase,
+        Evidenceˉstatus,
+        Wvssˉstatus,
+        Structureˉstatus,
+        Offset,
+        Bytesˉslice(Input, 0u32, 0u32)
+    );
+}
+
+fn Inputˉfailure(
+    Input: bytes,
+    Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+)
+    -> Compilerˉadmissionˉevidenceˉvalidationˉresult {
+    return Validationˉfailure(
+        Input,
+        Compilerˉadmissionˉevidenceˉvalidationˉphase.Input,
+        Status,
+        Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+        0u32,
+        Offset
+    );
+}
+
+fn Resourceˉfailure(Input: bytes)
+    -> Compilerˉadmissionˉevidenceˉvalidationˉresult {
+    return Validationˉfailure(
+        Input,
+        Compilerˉadmissionˉevidenceˉvalidationˉphase.Resourceˉlimit,
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+        Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+        0u32,
+        0u32
+    );
+}
+
+export fn Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+    Envelope: bytes,
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes,
+    Lock: bytes,
+    Profile: bytes
+) -> Compilerˉadmissionˉevidenceˉvalidationˉresult {
+    let Envelopeˉlength: u32 = Bytesˉlength(Envelope);
+    let Wvssˉlength: u32 = Bytesˉlength(Wvss);
+    let Wvtdˉlength: u32 = Bytesˉlength(Wvtd);
+    let Wvfcˉlength: u32 = Bytesˉlength(Wvfc);
+    let Lockˉlength: u32 = Bytesˉlength(Lock);
+    let Profileˉlength: u32 = Bytesˉlength(Profile);
+    if Envelopeˉlength != 224u32 {
+        var Offset: u32 = Envelopeˉlength;
+        if Offset > 224u32 { Offset = 224u32; }
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            Offset
+        );
+    }
+    if Wvssˉlength < 37u32 || Wvssˉlength > 4194304u32 {
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        );
+    }
+    if Wvtdˉlength < 64u32 || Wvtdˉlength > 320u32 {
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        );
+    }
+    if Wvfcˉlength < 48u32 || Wvfcˉlength > 4194304u32 {
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        );
+    }
+    if Lockˉlength == 0u32 || Lockˉlength > 1048576u32 {
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+            160u32
+        );
+    }
+    if Profileˉlength == 0u32 || Profileˉlength > 65536u32 {
+        return Inputˉfailure(
+            Envelope,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+            192u32
+        );
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉtotalˉisˉbounded(
+        Envelopeˉlength, Wvssˉlength, Wvtdˉlength, Wvfcˉlength,
+        Lockˉlength, Profileˉlength
+    ) {
+        return Resourceˉfailure(Envelope);
+    }
+
+    let Wvssˉchecked: Sourceˉset.Compilerˉadmissionˉsourceˉsetˉresult =
+        Sourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(Wvss);
+    if Wvssˉchecked.Status !=
+        Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid {
+        return Validationˉfailure(
+            Envelope,
+            Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvss,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+            Wvssˉchecked.Status,
+            0u32,
+            Wvssˉchecked.Failureˉoffset
+        );
+    }
+    let Wvtdˉchecked: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(Wvtd);
+    if Wvtdˉchecked.Status != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Validationˉfailure(
+            Envelope,
+            Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvtd,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+            Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+            Wvtdˉchecked.Status,
+            Wvtdˉchecked.Failureˉoffset
+        );
+    }
+    let Wvfcˉchecked: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Wvfc);
+    if Wvfcˉchecked.Status !=
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Validationˉfailure(
+            Envelope,
+            Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvfc,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+            Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+            Wvfcˉchecked.Status,
+            Wvfcˉchecked.Failureˉoffset
+        );
+    }
+    let Catalogˉmodules: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, 24u32);
+    if Catalogˉmodules != Wvssˉchecked.Modules {
+        return Validationˉfailure(
+            Envelope,
+            Compilerˉadmissionˉevidenceˉvalidationˉphase.Crossˉfield,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+            Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+            1u32,
+            24u32
+        );
+    }
+    let Authenticated: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+            Envelope,
+            Wvss,
+            Wvtd,
+            Wvfc,
+            Lock,
+            Profile,
+            Wvssˉchecked.Modules,
+            Bytesˉreadˉu32ˉlittle(Wvfc, 12u32),
+            Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+        );
+    if Authenticated.Status !=
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Validationˉfailure(
+            Envelope,
+            Compilerˉadmissionˉevidenceˉvalidationˉphase.Evidence,
+            Authenticated.Status,
+            Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+            0u32,
+            Authenticated.Failureˉoffset
+        );
+    }
+    return Compilerˉadmissionˉevidenceˉvalidationˉresult(
+        Compilerˉadmissionˉevidenceˉvalidationˉphase.Valid,
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+        Sourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+        0u32,
+        0u32,
+        Authenticated.Value
+    );
+}

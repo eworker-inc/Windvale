@@ -1,0 +1,945 @@
+module Languageˉoneˉadmissionˉevidenceˉselfˉtest profile hosted;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉadmissionˉevidenceˉvalidator as Validator;
+import Compilerˉadmissionˉsourceˉset as Admissionˉsourceˉset;
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉtarget as Target;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Patch(Input: bytes, Offset: u32, Replacement: bytes) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Replacement),
+        Bytesˉslice(
+            Input,
+            Offset + Bytesˉlength(Replacement),
+            Bytesˉlength(Input) - Offset - Bytesˉlength(Replacement)
+        )
+    );
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Patch(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Corruptˉbyte(Input: bytes, Offset: u32) -> bytes {
+    var Value: u8 = 0u8;
+    if Bytesˉreadˉu8(Input, Offset) == 0u8 { Value = 1u8; }
+    return Patch(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+fn Wvss() -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(20u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(36u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    return Bytesˉconcat(Value, Bytesˉfromˉu8(10u8));
+}
+
+fn Wvssˉminimumˉboundary() -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(64u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1280u32));
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        Value = Bytesˉconcat(
+            Value, Bytesˉfromˉu32ˉlittle(1296u32 + Index)
+        );
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < 64u32 {
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu8(10u8));
+        Index = Index + 1u32;
+    }
+    return Value;
+}
+
+fn Wvtd() -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVTD");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(64u32));
+    var Field: u32 = 0u32;
+    while Field < 13u32 {
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+        Field = Field + 1u32;
+    }
+    return Value;
+}
+
+fn Wvfc() -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVFC");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(48u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(96u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(48u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    var Field: u32 = 0u32;
+    while Field < 5u32 {
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+        Field = Field + 1u32;
+    }
+    return Value;
+}
+
+fn Lock() -> bytes { return Textˉtoˉutf8("lock\n"); }
+
+fn Profile() -> bytes { return Textˉtoˉutf8("profile\n"); }
+
+fn Construct() -> Evidence.Compilerˉadmissionˉevidenceˉresult {
+    return Evidence.Compilerˉconstructˉadmissionˉevidence(
+        Wvss(),
+        Wvtd(),
+        Wvfc(),
+        Lock(),
+        Profile(),
+        1u32,
+        0u32,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+    );
+}
+
+fn Authenticate(
+    Input: bytes
+) -> Evidence.Compilerˉadmissionˉevidenceˉresult {
+    return Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+        Input,
+        Wvss(),
+        Wvtd(),
+        Wvfc(),
+        Lock(),
+        Profile(),
+        1u32,
+        0u32,
+        Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+    );
+}
+
+fn Failureˉis(
+    Result: Evidence.Compilerˉadmissionˉevidenceˉresult,
+    Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+) -> bool {
+    return Result.Status == Status && Result.Failureˉoffset == Offset &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Wvssˉfailureˉis(
+    Result: Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉresult,
+    Status: Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus,
+    Offset: u32
+) -> bool {
+    return Result.Status == Status && Result.Failureˉoffset == Offset &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Validatorˉinputˉfailureˉis(
+    Result: Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult,
+    Status: Evidence.Compilerˉadmissionˉevidenceˉstatus,
+    Offset: u32
+) -> bool {
+    return Result.Phase ==
+        Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Input &&
+        Result.Evidenceˉstatus == Status &&
+        Result.Wvssˉstatus ==
+            Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid &&
+        Result.Structureˉstatus == 0u32 &&
+        Result.Failureˉoffset == Offset &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Validatorˉinputˉcoverage(Valid: bytes) -> bool {
+    if !Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Bytesˉslice(Valid, 0u32, 223u32),
+            Wvss(), Wvtd(), Wvfc(), Lock(), Profile()
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+        223u32
+    ) { return false; }
+    if !Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Valid, Empty(Wvss()), Wvtd(), Wvfc(), Lock(), Profile()
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+        20u32
+    ) { return false; }
+    if !Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Valid, Wvss(), Empty(Wvtd()), Wvfc(), Lock(), Profile()
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+        24u32
+    ) { return false; }
+    if !Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Valid, Wvss(), Wvtd(), Empty(Wvfc()), Lock(), Profile()
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+        28u32
+    ) { return false; }
+    if !Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Valid, Wvss(), Wvtd(), Wvfc(), Empty(Lock()), Profile()
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+        160u32
+    ) { return false; }
+    return Validatorˉinputˉfailureˉis(
+        Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+            Valid, Wvss(), Wvtd(), Wvfc(), Lock(), Empty(Profile())
+        ),
+        Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+        192u32
+    );
+}
+
+fn Wvssˉstructureˉcoverage() -> i32 {
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Empty(Wvss())
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Tooˉshort,
+        0u32
+    ) { return 51; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Bytesˉslice(Wvss(), 0u32, 15u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Tooˉshort,
+        15u32
+    ) { return 52; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patch(Wvss(), 0u32, Bytesˉfromˉu8(0u8))
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉmagic,
+        0u32
+    ) { return 53; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patch(Wvss(), 4u32, Bytesˉfromˉu16ˉlittle(1u32))
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Unsupportedˉversion,
+        4u32
+    ) { return 54; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 8u32, 0u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉcount,
+        8u32
+    ) { return 55; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 8u32, 65u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉcount,
+        8u32
+    ) { return 56; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 12u32, 19u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉdirectory,
+        12u32
+    ) { return 57; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 24u32, 2u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉedition,
+        24u32
+    ) { return 58; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 28u32, 0u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉbinding,
+        28u32
+    ) { return 59; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 32u32, 0u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉorigin,
+        32u32
+    ) { return 60; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 32u32, 130u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉorigin,
+        32u32
+    ) { return 61; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 20u32, 0u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉentry,
+        20u32
+    ) { return 62; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 20u32, 2u32)
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉentry,
+        20u32
+    ) { return 63; }
+    if !Wvssˉfailureˉis(
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Bytesˉconcat(Wvss(), Bytesˉfromˉu8(0u8))
+        ),
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Noncanonicalˉlayout,
+        37u32
+    ) { return 64; }
+    let Boundary: Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉresult =
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Wvssˉminimumˉboundary()
+        );
+    if Boundary.Status !=
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid ||
+        Boundary.Modules != 64u32 || Bytesˉlength(Boundary.Value) != 1360u32 {
+        return 65;
+    }
+    return 0;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    let Character: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+    if Character >= 65u32 && Character <= 82u32 {
+        return Character - 65u32 + 123u32;
+    }
+    return Character;
+}
+
+fn Shapeˉcases(Selected: u32, Valid: bytes) -> i32 {
+    if Selected == 97u32 {
+        let Shape: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(Valid);
+        if Shape.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+            !Bytesˉequal(Shape.Value, Valid) {
+            return 1;
+        }
+        return 42;
+    }
+    if Selected == 98u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(Empty(Valid)),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            0u32
+        ) { return 2; }
+        return 42;
+    }
+    if Selected == 99u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Bytesˉslice(Valid, 0u32, 223u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            223u32
+        ) { return 3; }
+        return 42;
+    }
+    if Selected == 100u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlength,
+            224u32
+        ) { return 4; }
+        return 42;
+    }
+    if Selected == 101u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patch(Valid, 2u32, Bytesˉfromˉu8(0u8))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉmagic,
+            2u32
+        ) { return 5; }
+        return 42;
+    }
+    if Selected == 102u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patch(Valid, 4u32, Bytesˉfromˉu16ˉlittle(2u32))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉversion,
+            4u32
+        ) { return 6; }
+        return 42;
+    }
+    if Selected == 103u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patch(Valid, 6u32, Bytesˉfromˉu16ˉlittle(1u32))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉversion,
+            6u32
+        ) { return 7; }
+        return 42;
+    }
+    if Selected == 104u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 8u32, 223u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉstructureˉlength,
+            8u32
+        ) { return 8; }
+        return 42;
+    }
+    if Selected == 105u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 12u32, 2u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Unsupportedˉhash,
+            12u32
+        ) { return 9; }
+        return 42;
+    }
+    if Selected == 106u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 16u32, 1u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉflags,
+            16u32
+        ) { return 10; }
+        return 42;
+    }
+    return 0;
+}
+
+fn Fieldˉcases(Selected: u32, Valid: bytes) -> i32 {
+    if Selected == 107u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 20u32, 24u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        ) { return 11; }
+        return 42;
+    }
+    if Selected == 108u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 24u32, 63u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        ) { return 12; }
+        return 42;
+    }
+    if Selected == 109u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 28u32, 49u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        ) { return 13; }
+        return 42;
+    }
+    if Selected == 110u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 32u32, 0u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉmoduleˉcount,
+            32u32
+        ) { return 14; }
+        return 42;
+    }
+    if Selected == 111u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 36u32, 43691u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉforeignˉcount,
+            36u32
+        ) { return 15; }
+        return 42;
+    }
+    if Selected == 112u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 40u32, 0u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉedition,
+            40u32
+        ) { return 16; }
+        return 42;
+    }
+    if Selected == 113u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patchˉu32(Valid, 44u32, 2u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        ) { return 17; }
+        return 42;
+    }
+    if Selected == 114u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉshape(
+                Patch(Valid, 63u32, Bytesˉfromˉu8(1u8))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉreserved,
+            63u32
+        ) { return 18; }
+        return 42;
+    }
+    return 0;
+}
+
+fn Digestˉcases(Selected: u32, Valid: bytes) -> i32 {
+    if Selected == 118u32 {
+        let Tampered: Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+            Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+                Valid,
+                Wvss(),
+                Wvtd(),
+                Wvfc(),
+                Corruptˉbyte(Lock(), 0u32),
+                Profile()
+            );
+        if Tampered.Phase !=
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Evidence ||
+            Tampered.Evidenceˉstatus !=
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch ||
+            Tampered.Failureˉoffset != 160u32 ||
+            Bytesˉlength(Tampered.Value) != 0u32 {
+            return 19;
+        }
+        return 42;
+    }
+    if Selected >= 115u32 && Selected <= 119u32 && Selected != 118u32 {
+        let Digestˉindex: u32 = Selected - 115u32;
+        let Offset: u32 = 64u32 + Digestˉindex * 32u32;
+        if !Failureˉis(
+            Authenticate(Corruptˉbyte(Valid, Offset)),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch,
+            Offset
+        ) { return 19; }
+        return 42;
+    }
+    let Hex: bytes = Textˉtoˉutf8(
+        "0000000000000000000000000000000000000000000000000000000000000000"
+    );
+    if Selected == 120u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(
+                Patch(Hex, 5u32, Textˉtoˉutf8("A"))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+            5u32
+        ) { return 24; }
+        return 42;
+    }
+    if Selected == 121u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(
+                Patch(Hex, 7u32, Textˉtoˉutf8("g"))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+            7u32
+        ) { return 25; }
+        return 42;
+    }
+    if Selected == 122u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(
+                Bytesˉslice(Hex, 0u32, 63u32)
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+            63u32
+        ) { return 26; }
+        return 42;
+    }
+    if Selected == 123u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(
+                Bytesˉconcat(Hex, Bytesˉfromˉu8(0u8))
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉdigestˉencoding,
+            64u32
+        ) { return 27; }
+        return 42;
+    }
+    if Selected == 124u32 {
+        let Decoded: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(Hex);
+        if Decoded.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+            Bytesˉlength(Decoded.Value) != 32u32 {
+            return 28;
+        }
+        var Rawˉindex: u32 = 0u32;
+        while Rawˉindex < 32u32 {
+            if Bytesˉreadˉu8(Decoded.Value, Rawˉindex) != 0u8 { return 28; }
+            Rawˉindex = Rawˉindex + 1u32;
+        }
+        return 42;
+    }
+    return 0;
+}
+
+fn Constructionˉcases(Selected: u32, Valid: bytes) -> i32 {
+    if Selected == 125u32 {
+        let Second: Evidence.Compilerˉadmissionˉevidenceˉresult = Construct();
+        if Second.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+            !Bytesˉequal(Second.Value, Valid) {
+            return 29;
+        }
+        return 42;
+    }
+    if Selected == 126u32 {
+        let Expected: bytes = Bytesˉconcat(Valid, Textˉtoˉutf8(""));
+        let Authenticated:
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+            Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+                Valid, Wvss(), Wvtd(), Wvfc(), Lock(), Profile()
+            );
+        if Authenticated.Phase !=
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Valid ||
+            Bytesˉlength(Authenticated.Value) != 224u32 ||
+            !Bytesˉequal(Authenticated.Value, Expected) {
+            return 30;
+        }
+        return 42;
+    }
+    if Selected == 127u32 {
+        let Rejectedˉconstruction: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉconstructˉadmissionˉevidence(
+                Wvss(), Wvtd(), Wvfc(), Lock(), Profile(), 1u32, 0u32,
+                Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None
+            );
+        if !Failureˉis(
+            Rejectedˉconstruction,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        ) { return 31; }
+        let Mismatchedˉmodules:
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+            Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+                Valid,
+                Wvss(),
+                Wvtd(),
+                Patchˉu32(Wvfc(), 24u32, 2u32),
+                Lock(),
+                Profile()
+            );
+        if Mismatchedˉmodules.Phase !=
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Crossˉfield ||
+            Mismatchedˉmodules.Structureˉstatus != 1u32 ||
+            Mismatchedˉmodules.Failureˉoffset != 24u32 ||
+            Bytesˉlength(Mismatchedˉmodules.Value) != 0u32 {
+            return 68;
+        }
+        return 42;
+    }
+    if Selected == 128u32 {
+        let Rejectedˉauthentication: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+                Valid, Wvss(), Wvtd(), Wvfc(), Lock(), Profile(), 1u32, 0u32,
+                Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.None
+            );
+        if !Failureˉis(
+            Rejectedˉauthentication,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding,
+            44u32
+        ) { return 32; }
+        let Invalidˉwvtd:
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+            Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+                Valid,
+                Wvss(),
+                Patch(Wvtd(), 0u32, Bytesˉfromˉu8(0u8)),
+                Wvfc(),
+                Lock(),
+                Profile()
+            );
+        if Invalidˉwvtd.Phase !=
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvtd ||
+            Invalidˉwvtd.Structureˉstatus !=
+                Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_MAGIC ||
+            Invalidˉwvtd.Failureˉoffset != 0u32 ||
+            Bytesˉlength(Invalidˉwvtd.Value) != 0u32 {
+            return 47;
+        }
+        return 42;
+    }
+    if Selected == 129u32 {
+        let Rejectedˉwvss: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+                Valid,
+                Bytesˉconcat(Wvss(), Bytesˉfromˉu8(0u8)),
+                Wvtd(), Wvfc(), Lock(), Profile(), 1u32, 0u32,
+                Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+            );
+        if !Failureˉis(
+            Rejectedˉwvss,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        ) { return 33; }
+        let Invalidˉwvfc:
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉresult =
+            Validator.Compilerˉvalidateˉadmissionˉevidenceˉsnapshots(
+                Valid,
+                Wvss(),
+                Wvtd(),
+                Patchˉu32(Wvfc(), 32u32, 1u32),
+                Lock(),
+                Profile()
+            );
+        if Invalidˉwvfc.Phase !=
+            Validator.Compilerˉadmissionˉevidenceˉvalidationˉphase.Wvfc ||
+            Invalidˉwvfc.Structureˉstatus !=
+                Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RESERVED ||
+            Invalidˉwvfc.Failureˉoffset != 32u32 ||
+            Bytesˉlength(Invalidˉwvfc.Value) != 0u32 {
+            return 48;
+        }
+        return 42;
+    }
+    if Selected == 130u32 {
+        let Twoˉmoduleˉwvss: bytes = Bytesˉconcat(
+            Wvss(), Textˉtoˉutf8("123456789abcdefghijkl")
+        );
+        let Twoˉmoduleˉevidence: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉconstructˉadmissionˉevidence(
+                Twoˉmoduleˉwvss, Wvtd(), Wvfc(), Lock(), Profile(), 2u32, 0u32,
+                Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+            );
+        if Twoˉmoduleˉevidence.Status !=
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid {
+            return 34;
+        }
+        let Rejectedˉmodules: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+                Twoˉmoduleˉevidence.Value,
+                Twoˉmoduleˉwvss,
+                Wvtd(), Wvfc(), Lock(), Profile(), 1u32, 0u32,
+                Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+            );
+        if !Failureˉis(
+            Rejectedˉmodules,
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉmoduleˉcount,
+            32u32
+        ) { return 34; }
+        return 42;
+    }
+    return 0;
+}
+
+fn Geometryˉcasesˉfirst(Selected: u32) -> i32 {
+    if Selected == 131u32 {
+        let Boundary: Evidence.Compilerˉadmissionˉevidenceˉresult =
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                4194304u32, 320u32, 4194288u32, 64u32, 43690u32,
+                1048576u32, 65536u32
+            );
+        if Boundary.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid {
+            return 35;
+        }
+        return 42;
+    }
+    if Selected == 132u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                4194305u32, 64u32, 48u32, 1u32, 0u32, 1u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        ) { return 36; }
+        return 42;
+    }
+    if Selected == 133u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 321u32, 48u32, 1u32, 0u32, 1u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvtdˉlength,
+            24u32
+        ) { return 37; }
+        return 42;
+    }
+    if Selected == 134u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 48u32, 1u32, 43691u32, 1u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉforeignˉcount,
+            36u32
+        ) { return 38; }
+        return 42;
+    }
+    if Selected == 135u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 49u32, 1u32, 0u32, 1u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvfcˉlength,
+            28u32
+        ) { return 39; }
+        return 42;
+    }
+    return 0;
+}
+
+fn Geometryˉcasesˉsecond(Selected: u32, Valid: bytes) -> i32 {
+    if Selected == 136u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 48u32, 1u32, 0u32, 0u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+            160u32
+        ) { return 40; }
+        return 42;
+    }
+    if Selected == 137u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 48u32, 1u32, 0u32, 1048577u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉlockˉlength,
+            160u32
+        ) { return 41; }
+        if !Validatorˉinputˉcoverage(Valid) { return 69; }
+        return 42;
+    }
+    if Selected == 138u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 48u32, 1u32, 0u32, 1u32, 0u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+            192u32
+        ) { return 43; }
+        return 42;
+    }
+    if Selected == 139u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                37u32, 64u32, 48u32, 1u32, 0u32, 1u32, 65537u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉlength,
+            192u32
+        ) { return 43; }
+        return 42;
+    }
+    if Selected == 140u32 {
+        if !Failureˉis(
+            Evidence.Compilerˉvalidateˉadmissionˉevidenceˉinputˉshape(
+                1359u32, 64u32, 48u32, 64u32, 0u32, 1u32, 1u32
+            ),
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉwvssˉlength,
+            20u32
+        ) { return 44; }
+        return 42;
+    }
+    return 0;
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 {
+        let Wvssˉcoverage: i32 = Wvssˉstructureˉcoverage();
+        if Wvssˉcoverage != 0 { return Wvssˉcoverage; }
+    }
+    let Wvssˉstructure: Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉresult =
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(Wvss());
+    if Wvssˉstructure.Status !=
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Valid ||
+        Wvssˉstructure.Modules != 1u32 ||
+        Wvssˉstructure.Failureˉoffset != 0u32 ||
+        !Bytesˉequal(Wvssˉstructure.Value, Wvss()) {
+        return 45;
+    }
+    let Noncanonicalˉwvss: Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉresult =
+        Admissionˉsourceˉset.Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+            Patchˉu32(Wvss(), 16u32, 37u32)
+        );
+    if Noncanonicalˉwvss.Status !=
+        Admissionˉsourceˉset.Compilerˉadmissionˉsourceˉsetˉstatus.Noncanonicalˉlayout ||
+        Noncanonicalˉwvss.Failureˉoffset != 16u32 ||
+        Bytesˉlength(Noncanonicalˉwvss.Value) != 0u32 {
+        return 46;
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉtotalˉisˉbounded(
+        224u32, 4194304u32, 320u32, 4194304u32, 1048576u32, 65536u32
+    ) || Evidence.Compilerˉadmissionˉevidenceˉretainedˉtotalˉisˉbounded(
+        225u32, 4194304u32, 320u32, 4194304u32, 1048576u32, 65536u32
+    ) {
+        return 49;
+    }
+    if !Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+        5308960u32, 4194304u32
+    ) || Evidence.Compilerˉadmissionˉevidenceˉretainedˉadditionˉisˉbounded(
+        5308961u32, 4194304u32
+    ) {
+        return 50;
+    }
+    let Constructed: Evidence.Compilerˉadmissionˉevidenceˉresult = Construct();
+    if Constructed.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+        Bytesˉlength(Constructed.Value) != 224u32 {
+        return 1;
+    }
+    var Result: i32 = Shapeˉcases(Selected, Constructed.Value);
+    if Result != 0 { return Result; }
+    Result = Fieldˉcases(Selected, Constructed.Value);
+    if Result != 0 { return Result; }
+    Result = Digestˉcases(Selected, Constructed.Value);
+    if Result != 0 { return Result; }
+    Result = Constructionˉcases(Selected, Constructed.Value);
+    if Result != 0 { return Result; }
+    Result = Geometryˉcasesˉfirst(Selected);
+    if Result != 0 { return Result; }
+    Result = Geometryˉcasesˉsecond(Selected, Constructed.Value);
+    if Result != 0 { return Result; }
+    return 64;
+}

@@ -1613,6 +1613,22 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-effect-clause-front-end'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Admission-Evidence-Core.wv',
+        'Compiler/Windvale/Admission-Evidence-Validator-Core.wv',
+        'Compiler/Windvale/Admission-Source-Set-Core.wv',
+        'Documents/Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md',
+        'Projects/Compiler/Windvale-Admission-Evidence-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Admission-Evidence.wvproj',
+        'Projects/Tools/Windvale-Compiler-Admission-Evidence-Validator.wvproj',
+        'Specifications/Compiler-Admission-Evidence.md',
+        'Tests/Fixtures/Language-1.0/Admission-Evidence-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.cmd',
+        'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.mjs',
+        'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.sh',
+        'Tools/Windvale.Build/Compiler-Admission-Evidence-Validator-Driver.wv'
+    )) {
+        Add-Suite 'language-1-admission-evidence-format'
+    } elseif ($Path -in @(
         'Compiler/Windvale/Source-Target-Core.wv',
         'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Front-End.wvproj',
         'Specifications/Windvale-Language-1.0-Target-Descriptor.md',
@@ -1621,7 +1637,14 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',
         'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.mjs'
     )) {
-        Add-Suite 'language-1-system-ffi-front-end'
+        if ($Path -eq 'Compiler/Windvale/Source-Target-Core.wv') {
+            Add-Suite @(
+                'language-1-system-ffi-front-end',
+                'language-1-admission-evidence-format'
+            )
+        } else {
+            Add-Suite 'language-1-system-ffi-front-end'
+        }
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-System-Ffi-Unsafe-Context.wvproj',
         'Tests/Fixtures/Language-1.0/System-Ffi-Unsafe-Context-Self-Test.wv',
@@ -1639,7 +1662,14 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.mjs'
     )) {
-        Add-Suite 'language-1-foreign-catalog-format'
+        if ($Path -eq 'Compiler/Windvale/Source-Foreign-Catalog-Core.wv') {
+            Add-Suite @(
+                'language-1-foreign-catalog-format',
+                'language-1-admission-evidence-format'
+            )
+        } else {
+            Add-Suite 'language-1-foreign-catalog-format'
+        }
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
@@ -1811,7 +1841,14 @@ foreach ($Path in $Paths) {
         'Tests/Native/Language-1.0-Fixture-Inventory.txt',
         'Tools/Native/Verify-Source-Wir-Incremental-Generics.mjs'
     )) {
-        Add-Suite 'language-1-front-door'
+        if ($Path -eq 'Compiler/Windvale/Source-Descriptor-Core.wv') {
+            Add-Suite @(
+                'language-1-front-door',
+                'language-1-admission-evidence-format'
+            )
+        } else {
+            Add-Suite 'language-1-front-door'
+        }
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Function-Only.wvproj',
         'Tests/Fixtures/Source-Wvb/Function-Only.wv'

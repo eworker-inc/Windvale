@@ -1,0 +1,161 @@
+module Compilerˉadmissionˉsourceˉset profile portable;
+
+export enum Compilerˉadmissionˉsourceˉsetˉstatus {
+    Valid = 0;
+    Tooˉshort = 1;
+    Tooˉlarge = 2;
+    Invalidˉmagic = 3;
+    Unsupportedˉversion = 4;
+    Invalidˉcount = 5;
+    Invalidˉdirectory = 6;
+    Invalidˉedition = 7;
+    Invalidˉbinding = 8;
+    Invalidˉorigin = 9;
+    Invalidˉentry = 10;
+    Noncanonicalˉlayout = 11;
+}
+
+export record Compilerˉadmissionˉsourceˉsetˉresult {
+    Status: Compilerˉadmissionˉsourceˉsetˉstatus;
+    Modules: u32;
+    Failureˉoffset: u32;
+    Value: bytes;
+}
+
+fn Compilerˉadmissionˉsourceˉsetˉfailure(
+    Input: bytes,
+    Status: Compilerˉadmissionˉsourceˉsetˉstatus,
+    Offset: u32
+) -> Compilerˉadmissionˉsourceˉsetˉresult {
+    return Compilerˉadmissionˉsourceˉsetˉresult(
+        Status, 0u32, Offset, Bytesˉslice(Input, 0u32, 0u32)
+    );
+}
+
+export fn Compilerˉvalidateˉadmittedˉsourceˉsetˉstructure(
+    Input: bytes
+) -> Compilerˉadmissionˉsourceˉsetˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total > 4194304u32 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Tooˉlarge, 4194304u32
+        );
+    }
+    if Total < 16u32 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Tooˉshort, Total
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉmagic, 0u32
+        );
+    }
+    if Bytesˉreadˉu8(Input, 1u32) != 86u8 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉmagic, 1u32
+        );
+    }
+    if Bytesˉreadˉu8(Input, 2u32) != 83u8 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉmagic, 2u32
+        );
+    }
+    if Bytesˉreadˉu8(Input, 3u32) != 83u8 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉmagic, 3u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 2u32 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Unsupportedˉversion, 4u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Unsupportedˉversion, 6u32
+        );
+    }
+    let Modules: u32 = Bytesˉreadˉu32ˉlittle(Input, 8u32);
+    if Modules == 0u32 || Modules > 64u32 {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉcount, 8u32
+        );
+    }
+    let Directoryˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    let Requiredˉdirectory: u32 = Modules * 20u32;
+    if Directoryˉlength != Requiredˉdirectory {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉdirectory, 12u32
+        );
+    }
+    let Payloadˉoffset: u32 = 16u32 + Requiredˉdirectory;
+    if Payloadˉoffset > Total || Modules > Total - Payloadˉoffset {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉdirectory, 12u32
+        );
+    }
+    var Expectedˉoffset: u32 = Payloadˉoffset;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Entry: u32 = 16u32 + Index * 20u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry);
+        let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 4u32);
+        if Bytesˉreadˉu32ˉlittle(Input, Entry + 8u32) != 1u32 {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉedition,
+                Entry + 8u32
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Entry + 12u32) != 1u32 {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉbinding,
+                Entry + 12u32
+            );
+        }
+        let Origin: u32 = Bytesˉreadˉu32ˉlittle(Input, Entry + 16u32);
+        if Origin == 0u32 || Origin > 129u32 {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉorigin,
+                Entry + 16u32
+            );
+        }
+        if Offset != Expectedˉoffset {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Noncanonicalˉlayout,
+                Entry
+            );
+        }
+        if Length == 0u32 {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉentry,
+                Entry + 4u32
+            );
+        }
+        if Offset > Total {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉentry, Entry
+            );
+        }
+        if Length > Total - Offset {
+            return Compilerˉadmissionˉsourceˉsetˉfailure(
+                Input, Compilerˉadmissionˉsourceˉsetˉstatus.Invalidˉentry,
+                Entry + 4u32
+            );
+        }
+        Expectedˉoffset = Offset + Length;
+        Index = Index + 1u32;
+    }
+    if Expectedˉoffset != Total {
+        return Compilerˉadmissionˉsourceˉsetˉfailure(
+            Input, Compilerˉadmissionˉsourceˉsetˉstatus.Noncanonicalˉlayout,
+            Expectedˉoffset
+        );
+    }
+    return Compilerˉadmissionˉsourceˉsetˉresult(
+        Compilerˉadmissionˉsourceˉsetˉstatus.Valid,
+        Modules,
+        0u32,
+        Input
+    );
+}

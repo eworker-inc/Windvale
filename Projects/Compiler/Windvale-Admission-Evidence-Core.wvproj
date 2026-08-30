@@ -1,0 +1,4 @@
+windvale-project 2
+root "Compiler/Windvale/Admission-Evidence-Core.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+emit wvb

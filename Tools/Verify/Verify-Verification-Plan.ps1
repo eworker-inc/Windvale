@@ -270,7 +270,10 @@ $NativeCases = @(
             'Documents/Decisions/0760-Resolve-Language-1.0-Concurrent-Service-Findings.md',
             'Documents/Project/Language-1.0-Paper-Corpus/01-Command-Line-Application/Source/Inspect-Application.wv'
         )
-        Suites = @('language-1-front-door')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-admission-evidence-format'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -508,6 +511,27 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 admission evidence format routing'
+        Paths = @(
+            'Compiler/Windvale/Admission-Evidence-Core.wv',
+            'Compiler/Windvale/Admission-Evidence-Validator-Core.wv',
+            'Compiler/Windvale/Admission-Source-Set-Core.wv',
+            'Documents/Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md',
+            'Projects/Compiler/Windvale-Admission-Evidence-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Admission-Evidence.wvproj',
+            'Projects/Tools/Windvale-Compiler-Admission-Evidence-Validator.wvproj',
+            'Specifications/Compiler-Admission-Evidence.md',
+            'Tests/Fixtures/Language-1.0/Admission-Evidence-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.cmd',
+            'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.mjs',
+            'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.sh',
+            'Tools/Windvale.Build/Compiler-Admission-Evidence-Validator-Driver.wv'
+        )
+        Suites = @('language-1-admission-evidence-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 System FFI front-end routing'
         Paths = @(
             'Compiler/Windvale/Source-Target-Core.wv',
@@ -518,7 +542,10 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.sh',
             'Tools/Native/Test-Language-1.0-System-Ffi-Front-End.mjs'
         )
-        Suites = @('language-1-system-ffi-front-end')
+        Suites = @(
+            'language-1-system-ffi-front-end',
+            'language-1-admission-evidence-format'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -533,7 +560,10 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.mjs'
         )
-        Suites = @('language-1-foreign-catalog-format')
+        Suites = @(
+            'language-1-foreign-catalog-format',
+            'language-1-admission-evidence-format'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3812,9 +3842,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 118 -or
+if ($VerificationOwnerLines.Count -ne 119 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 117-owner inventory differs.'
+    throw 'The native verification-owner header or exact 118-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3852,7 +3882,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5732 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5776 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
