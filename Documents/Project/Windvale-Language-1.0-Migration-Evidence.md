@@ -4613,3 +4613,64 @@ SHA-256
 Local Linux reconstruction, paired-host qualification, the admission-validator
 consumer rerun, authenticated source coordination, foreign binding/lowering,
 runtime containment, and Slice 8 completion remain pending.
+
+## Slice 8 authenticated source-admission coordinator
+
+[Decision 0892](../Decisions/0892-Coordinate-Authenticated-Source-Admission.md)
+adds the portable in-memory coordinator for locked WVSS 1 input, source-input
+lock and digest, selected profile, and exact WVTD. It rejects outer input
+geometry before source admission, produces descriptor-free WVSS 2, validates
+every source predicate, publishes canonical source-ordered WVFC, independently
+revalidates WVSS/WVTD/WVFC and cross-file counts, requires the exact concrete
+foreign predicate alone, and constructs WVAE over the immutable snapshots.
+Every rejection carries four empty output values.
+
+Public foreign-catalog readback is source-authenticated rather than
+structure-only. It reproduces canonical WVFC and compares it once, byte by byte,
+before foreign-target admission. The focused selectors prove exact two-module
+record order, accept exact readback, and reject structure-valid empty and
+remapped catalogs. Generic `linux` and `linux` plus the exact ABI predicate both
+reject foreign source; exact-only succeeds. Unknown spelling preserves parser
+status `Unknownˉplatform` and maps to target status `UNKNOWN_PLATFORM`.
+
+Stable public-readback retention is 12,583,216 bytes: 4,194,304 WVSS, 320 WVTD,
+4,194,304 supplied WVFC, and 4,194,288 canonical reproduced WVFC bytes.
+Conservative simultaneously-live large immutable payload retention is
+16,777,456 bytes after adding the bounded 4,194,240-byte headerless record
+accumulator. This is not a process working-set bound. A supplied 4,194,289-byte
+WVFC remains within the general format ceiling and reaches the WVFC validator's
+exact `INVALID_SIZE` diagnostic instead of being mislabeled as a resource
+failure. Oversized WVSS rejects before scanning; WVTD validation precedes WVSS
+scan in the durable target APIs.
+
+The producer owner was repaired to use `Build-Current-Wvb`; the frozen Seed
+route is not current-source evidence. Its two 510,644-byte builds were
+byte-identical at SHA-256
+`ef8c089b0bc1369f960c889e5d3276bfc7aa43e0584d2ec0664049669d15cf28`.
+Complete verification passed, profile-7 acquisition created cache key
+`35b2a546701d2276125138d373dc64a26558bbdd161020f1024e12ed992c3e75`,
+and the 12,825,088-byte application at SHA-256
+`443aa180cf86b126db7d51cf29790ddaba450e613d7ac235020c51c1941a6291`
+passed selectors `a` through `y`. The suite completed in 178,300 ms and its
+registry dispatch in 178,890 ms.
+
+The coordinator's two settled current-source builds were byte-identical at
+623,826 WVB bytes and SHA-256
+`0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188`.
+Complete verification passed, profile-7 acquisition created cache key
+`599c706b44eac57c3a686b8202c560ae6833a9063f6b086a00e40fdb34025dc8`,
+and the 14,772,736-byte application at SHA-256
+`d7130fbaf5ecc1cb15b7162b4ec2a812d2ea61bdab67a9b10502d285c826dbd7`
+passed all 28 isolated selectors with exact exit 42 and no output. The suite
+completed in 207,450 ms and its registry dispatch in 208,070 ms. The
+changed-file planner passed 31 general and 229 native routing cases.
+
+The native registry has 123 owners and 5,878 cases in 21,806 LF-only bytes at
+SHA-256
+`e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f`;
+its shards contain 1/57, 43/2,790, 38/1,782, and 41/1,249 owners/cases.
+
+This completes focused current-Windows development evidence. Local Linux
+execution, paired-host qualification, hosted publication, Analyzer
+authentication, semantic foreign binding/lowering, runtime containment, and
+complete Slice 8 qualification remain pending.

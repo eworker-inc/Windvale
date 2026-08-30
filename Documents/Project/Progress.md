@@ -245,6 +245,40 @@ requests, arbitrary admitted-image construction, real filesystem/network
 provider processes serving live clients, and generic structured supervision
 with a bounded restart or deliberate terminal result.
 
+### Slice 8 authenticated source-admission coordinator candidate
+
+[Decision 0892](../Decisions/0892-Coordinate-Authenticated-Source-Admission.md)
+composes locked source-profile admission, exact target admission, canonical
+foreign-catalog production, independent format/count validation, exact foreign
+predicate enforcement, and WVAE construction into one portable all-or-nothing
+result. Success publishes separate WVSS, unchanged WVTD, WVFC, and WVAE values;
+failure returns all four empty with bounded subordinate diagnostics.
+
+The producer owner now uses the current forward-language build route. Its
+510,644-byte WVB at SHA-256
+`ef8c089b0bc1369f960c889e5d3276bfc7aa43e0584d2ec0664049669d15cf28`
+and 12,825,088-byte Windows application at SHA-256
+`443aa180cf86b126db7d51cf29790ddaba450e613d7ac235020c51c1941a6291`
+passed complete verification and all 25 isolated selectors.
+
+The coordinator's identical builds publish a 623,826-byte WVB at SHA-256
+`0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188`.
+Its 14,772,736-byte Windows application at SHA-256
+`d7130fbaf5ecc1cb15b7162b4ec2a812d2ea61bdab67a9b10502d285c826dbd7`
+passed all 28 isolated selectors. The owner includes exact source-ordered WVFC
+readback, rejects structure-valid empty and remapped catalogs, preserves
+`UNKNOWN_PLATFORM`, rejects generic and broader-than-exact foreign scopes,
+accepts exact-only, and checks max/one-past retention plus
+malformed-within-format-ceiling diagnostics. The planner passed 31 general and
+229 native routing cases. This completes focused current-Windows development
+evidence for the candidate.
+
+The registry has 123 owners and 5,878 cases in 21,806 LF-only bytes at SHA-256
+`e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f`.
+Its shards contain 1/57, 43/2,790, 38/1,782, and 41/1,249 owners/cases. Local
+Linux execution, paired-host qualification, hosted publication, Analyzer
+integration, foreign lowering, and runtime containment remain pending.
+
 ### Preserve bounded development feedback
 
 - Use `Tools/Verify/Verify-Changed.ps1` once after a coherent edit.

@@ -86,6 +86,23 @@ or declaration ordinals are structurally representable because modules may
 contain nonforeign declarations; the later complete WVSS scan proves that no
 foreign declaration was omitted or added.
 
+Structure validation alone is not source authentication. Durable public target
+readback reproduces the complete canonical catalog from supplied admitted WVSS
+and requires byte identity before it walks foreign target predicates. A
+structure-valid empty catalog, omitted/reordered record, remapped declaration
+ordinal, or extra record therefore rejects. The first byte difference is the
+catalog failure offset; reproduction failure uses outer target-admission status
+`WVFC` and retains subordinate source-set, parser, and catalog evidence.
+
+At exact maxima, public readback stably retains 4,194,304 WVSS bytes, 320 WVTD
+bytes, a supplied WVFC up to the general 4,194,304-byte format ceiling, and a
+canonical reproduced WVFC up to 4,194,288 bytes: 12,583,216 bytes.
+Conservative simultaneously-live large immutable payload retention adds the
+producer's 4,194,240-byte headerless record accumulator for 16,777,456 bytes.
+This is not a process working-set bound and excludes runtime state and small
+bounded temporaries. Reproduction and exact comparison are linear bounded
+scans.
+
 The raw digest field is always exactly 32 bytes because it occupies the fixed
 record tail. The record constructor separately rejects any supplied digest
 whose length is not exactly 32. Structural validation deliberately does not
@@ -233,6 +250,19 @@ declaration, offset, line, and column evidence plus the underlying source-set,
 declaration-parser, and catalog statuses. Success publishes only the canonical
 constructor result. Failure never repairs input or publishes a partial record
 sequence.
+
+`Failureˉoffset` has one deterministic domain per phase. Source-set scan,
+WVSS-version, validated-summary, and final-catalog failures retain their
+upstream container or already-normalized offsets. Direct module-loop
+`PROFILE`, `DECLARATION`, and `RESOURCE_LIMIT` failures report the original
+pre-descriptor source offset by adding the WVSS 2 entry's `Originˉoffset`.
+Private-record `DECLARATION`, `ABI_CONTRACT`, `SPAN`, and `DIGEST` failures are
+normalized at the same return boundary. A private record-constructor `CATALOG`
+failure reports the exact canonical absolute WVFC field offset, `48 +
+record_count * 96 + record_relative_offset`; the final catalog constructor
+retains its own absolute WVFC offset. Line and column already account for the
+retained descriptor line ending and are not translated. Container and catalog
+offsets are never relabeled as source offsets.
 
 This producer records syntax only. It does not infer semantic types or effects,
 grant authority, bind declarations or external symbols, select overloads,

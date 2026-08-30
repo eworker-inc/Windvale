@@ -1,0 +1,821 @@
+module Languageˉoneˉsourceˉadmissionˉcoordinatorˉselfˉtest profile hosted;
+
+import Compilerˉadmissionˉevidence as Evidence;
+import Compilerˉsourceˉadmissionˉcoordinator as Coordinator;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉdescriptor as Descriptor;
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+import Compilerˉsourceˉforeignˉcatalogˉproducer as Producer;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉprofile as Sourceˉprofile;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉtarget as Target;
+import Compilerˉsourceˉtargetˉadmission as Targetˉadmission;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Empty(Input: bytes) -> bytes { return Bytesˉslice(Input, 0u32, 0u32); }
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Zeroˉbytes(Length: u32, Source: bytes) -> bytes {
+    var Value: bytes = Empty(Source);
+    if Length == 0u32 { return Value; }
+    Value = Bytesˉfromˉu8(0u8);
+    while Bytesˉlength(Value) < Length {
+        let Remaining: u32 = Length - Bytesˉlength(Value);
+        if Bytesˉlength(Value) <= Remaining {
+            Value = Bytesˉconcat(Value, Value);
+        } else {
+            Value = Bytesˉconcat(
+                Value, Bytesˉslice(Value, 0u32, Remaining)
+            );
+        }
+    }
+    return Value;
+}
+
+fn Lock() -> bytes {
+    var Value: text = "windvale-source-input-lock|1\nprofile-count|2\n";
+    Value = Textˉconcat(Value, "profile|en|1|e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27\n");
+    Value = Textˉconcat(Value, "profile|test-Unicode|1|40f7170011682646af2f341bb6ffaa9d8d68125e531c41c00cb20dba9986deba\n");
+    Value = Textˉconcat(Value, "catalog-count|3\n");
+    Value = Textˉconcat(Value, "catalog|en|1|Foundationˉoption|1|1fe70000bf7a33c035dcc163bbbab4c299e4a8301a806e28592dbb569e8011e4|91f5d7c00167678e5b4bd9bb0a77ca992f18cc8641d35d5eaaf7651e5abacd37\n");
+    Value = Textˉconcat(Value, "catalog|en|1|Foundationˉresult|1|aabe8b02f6e239a198d21780704679936bbf8125cdd5ea55431d66a650590691|f8bb5f44b2f64af34bb2eea54f7050fba0136ebf69a7bab1b1d28e8968357508\n");
+    Value = Textˉconcat(Value, "catalog|test-Unicode|1|Foundationˉoption|1|1fe70000bf7a33c035dcc163bbbab4c299e4a8301a806e28592dbb569e8011e4|3daed357af2fa8858fcf167ba03935e3bb2215a369810dbfe84ae9581ba09b0f\n");
+    Value = Textˉconcat(Value, "end|windvale-source-input-lock\n");
+    return Textˉtoˉutf8(Value);
+}
+
+fn Profile() -> bytes {
+    var Value: text = "windvale-source-profile|1\nidentity|en\nversion|1\nsource-edition|1\n";
+    Value = Textˉconcat(Value, "unicode-profile|windvale.unicode17.source|1|2772f22969972eaae52058ce2cad0f2a716181c494a2b422188cbe5215e08ce9\n");
+    Value = Textˉconcat(Value, "token-registry|windvale.language1.keyword-tokens|1|cefa459df5dcaf22b53670a81f09c6f696188903c8e136d763da869a5ec6286e\n");
+    Value = Textˉconcat(Value, "keyword-lexicon|windvale.source.en|1|25049aab3ecdbdeedcedfdada97247782bf42de6f861c6bdfb0d3fe86a24b89a\n");
+    Value = Textˉconcat(Value, "source-vocabulary|en|1|2bc0e795b812755056cf08cfdef0b985d9750273dcc70ab470d992ebcfe830f3\n");
+    Value = Textˉconcat(Value, "end|windvale-source-profile\n");
+    return Textˉtoˉutf8(Value);
+}
+
+fn Expectedˉlockˉhash() -> bytes {
+    return Textˉtoˉutf8(
+        "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+    );
+}
+
+fn Foreignˉdeclaration() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Source(Name: text, Profileˉname: text, Platforms: text, Body: text) -> bytes {
+    var Value: text = "#!wv/1 en@1\nmodule ";
+    Value = Textˉconcat(Value, Name);
+    Value = Textˉconcat(Value, "; profile ");
+    Value = Textˉconcat(Value, Profileˉname);
+    Value = Textˉconcat(Value, "; platform ");
+    Value = Textˉconcat(Value, Platforms);
+    Value = Textˉconcat(Value, "; authority application; ");
+    return Textˉtoˉutf8(Textˉconcat(Value, Body));
+}
+
+fn Missingˉplatformˉsource() -> bytes {
+    return Textˉtoˉutf8(
+        "#!wv/1 en@1\nmodule Root; profile core; authority application;"
+    );
+}
+
+fn Oneˉsourceˉset(Sourceˉbytes: bytes) -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(8u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(24u32));
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes))
+    );
+    return Bytesˉconcat(Value, Sourceˉbytes);
+}
+
+fn Numberedˉsource(Index: u32, Platforms: text) -> bytes {
+    if Index == 0u32 { return Source("Root", "core", Platforms, ""); }
+    var Name: text = "M";
+    if Index < 10u32 { Name = Textˉconcat(Name, "0"); }
+    Name = Textˉconcat(Name, U32ˉformat(Index));
+    return Source(Name, "core", Platforms, "");
+}
+
+fn Numberedˉsourceˉset(Modules: u32, Platforms: text) -> bytes {
+    let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules * 8u32));
+    var Directory: bytes = Empty(Header);
+    var Payload: bytes = Empty(Header);
+    var Offset: u32 = Headerˉbytes;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Current: bytes = Numberedˉsource(Index, Platforms);
+        Directory = Bytesˉconcat(Directory, Bytesˉfromˉu32ˉlittle(Offset));
+        Directory = Bytesˉconcat(
+            Directory, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Current))
+        );
+        Payload = Bytesˉconcat(Payload, Current);
+        Offset = Offset + Bytesˉlength(Current);
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Payload);
+}
+
+fn Twoˉsourceˉset(First: bytes, Second: bytes) -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(16u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(32u32));
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Bytesˉlength(First))
+    );
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(32u32 + Bytesˉlength(First))
+    );
+    Value = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Second))
+    );
+    return Bytesˉconcat(Bytesˉconcat(Value, First), Second);
+}
+
+fn Wvtd(Build: u32) -> bytes {
+    var Descriptorˉvalue: Target.Compilerˉsourceˉtargetˉdescriptor =
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉnoneˉv1();
+    if Build == 1u32 {
+        Descriptorˉvalue = Target.Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1();
+    }
+    if Build == 3u32 {
+        Descriptorˉvalue = Target.Compilerˉsourceˉtargetˉwindvaleˉx86_64ˉnoneˉv1();
+    }
+    if Build == 4u32 {
+        Descriptorˉvalue = Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
+    }
+    let Emptyˉdirectory: bytes = Textˉtoˉutf8("");
+    let Constructed: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉconstruct(
+        Descriptorˉvalue, Emptyˉdirectory, Emptyˉdirectory
+    );
+    return Constructed.Value;
+}
+
+fn Coordinate(Input: bytes, Wvtdˉbytes: bytes) -> Coordinator.Compilerˉsourceˉadmissionˉresult {
+    return Coordinator.Compilerˉsourceˉadmissionˉcoordinate(
+        Input, Lock(), Expectedˉlockˉhash(), Profile(), Wvtdˉbytes
+    );
+}
+
+fn Allˉempty(Result: Coordinator.Compilerˉsourceˉadmissionˉresult) -> bool {
+    return Bytesˉlength(Result.Wvss) == 0u32 &&
+        Bytesˉlength(Result.Wvtd) == 0u32 &&
+        Bytesˉlength(Result.Wvfc) == 0u32 &&
+        Bytesˉlength(Result.Wvae) == 0u32;
+}
+
+fn Validˉresult(Result: Coordinator.Compilerˉsourceˉadmissionˉresult, Wvtdˉbytes: bytes, Foreignˉcount: u32, Modules: u32) -> bool {
+    if Result.Status != Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID ||
+        Bytesˉreadˉu16ˉlittle(Result.Wvss, 4u32) != 2u32 ||
+        !Bytesˉequal(Result.Wvtd, Wvtdˉbytes) ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 12u32) != Foreignˉcount ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 24u32) != Modules ||
+        Bytesˉlength(Result.Wvae) != 224u32 {
+        return false;
+    }
+    let Authenticated: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+            Result.Wvae, Result.Wvss, Result.Wvtd, Result.Wvfc,
+            Lock(), Profile(), Modules, Foreignˉcount,
+            Descriptor.Compilerˉsourceˉprofileˉbinding.English
+        );
+    return Authenticated.Status == Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid;
+}
+
+fn Caseˉempty() -> bool {
+    let Targetˉbytes: bytes = Wvtd(2u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "linux", "")), Targetˉbytes
+    );
+    return Validˉresult(Result, Targetˉbytes, 0u32, 1u32) &&
+        Bytesˉlength(Result.Wvfc) == 48u32;
+}
+
+fn Caseˉoneˉforeign() -> bool {
+    let Targetˉbytes: bytes = Wvtd(4u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source(
+            "Root", "system", "linux.x86_64.sysv_amd64_c_v1",
+            Foreignˉdeclaration()
+        )),
+        Targetˉbytes
+    );
+    if !Validˉresult(Result, Targetˉbytes, 1u32, 1u32) { return false; }
+    let Readˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Result.Wvss, Result.Wvtd, Result.Wvfc
+        );
+    return Readˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID &&
+        Readˉback.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID;
+}
+
+fn Caseˉmultipleˉforeign() -> bool {
+    let Targetˉbytes: bytes = Wvtd(4u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+            Twoˉsourceˉset(
+                Source(
+                    "Root", "system", "linux.x86_64.sysv_amd64_c_v1",
+                    Foreignˉdeclaration()
+                ),
+                Source(
+                    "M01", "system", "linux.x86_64.sysv_amd64_c_v1",
+                    Foreignˉdeclaration()
+                )
+            ),
+            Targetˉbytes
+        );
+    if !Validˉresult(Result, Targetˉbytes, 2u32, 2u32) ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 48u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 52u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 144u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Result.Wvfc, 148u32) != 0u32 {
+        return false;
+    }
+    let Readˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Result.Wvss, Result.Wvtd, Result.Wvfc
+        );
+    let Emptyˉcatalog: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(
+            2u32, Empty(Result.Wvfc)
+        );
+    let Emptyˉreadˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Result.Wvss, Result.Wvtd, Emptyˉcatalog.Value
+        );
+    let Remappedˉreadˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Result.Wvss, Result.Wvtd,
+            Patchˉu32(Result.Wvfc, 148u32, 1u32)
+        );
+    return Readˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID &&
+        Emptyˉcatalog.Status ==
+            Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID &&
+        Emptyˉreadˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVFC &&
+        Remappedˉreadˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVFC;
+}
+
+fn Caseˉmaximumˉmodules() -> bool {
+    let Targetˉbytes: bytes = Wvtd(1u32);
+    return Validˉresult(
+        Coordinate(Numberedˉsourceˉset(64u32, "windows"), Targetˉbytes),
+        Targetˉbytes, 0u32, 64u32
+    );
+}
+
+fn Caseˉplatform(Build: u32, Platform: text) -> bool {
+    let Targetˉbytes: bytes = Wvtd(Build);
+    return Validˉresult(
+        Coordinate(Oneˉsourceˉset(Source(
+            "Root", "core", Platform, ""
+        )), Targetˉbytes),
+        Targetˉbytes, 0u32, 1u32
+    );
+}
+
+fn Caseˉplatformˉmismatch() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "windows", "")), Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Targetˉadmissionˉstatus ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_TARGET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Valid &&
+        Result.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET &&
+        Result.Failureˉmodule == 0u32 &&
+        Result.Failureˉoffset == 48u32 &&
+        Result.Failureˉlength == 7u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 37u32 &&
+        Result.Failureˉordinal == 1u32 &&
+        Allˉempty(Result);
+}
+
+fn Caseˉunknown() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "unknown", "")), Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Targetˉadmissionˉstatus ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_PLATFORM &&
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Unknownˉplatform &&
+        Result.Failureˉoffset == 48u32 &&
+        Result.Failureˉlength == 7u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 37u32 &&
+        Result.Failureˉordinal == 1u32 &&
+        Result.Expected == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Result.Found == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Result.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM &&
+        Allˉempty(Result);
+}
+
+fn Caseˉduplicate() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "linux, linux", "")),
+        Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Duplicateˉplatform &&
+        Result.Failureˉoffset == 55u32 &&
+        Result.Failureˉlength == 5u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 44u32 &&
+        Result.Failureˉordinal == 2u32 &&
+        Result.Expected == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Result.Found == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Allˉempty(Result);
+}
+
+fn Caseˉmissing() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Missingˉplatformˉsource()), Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Result.Failureˉoffset == 39u32 &&
+        Result.Failureˉlength == 0u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 28u32 &&
+        Result.Failureˉordinal == 0u32 &&
+        Result.Expected == Lexer.Compilerˉtokenˉkind.Platform &&
+        Result.Found == Lexer.Compilerˉtokenˉkind.Authority &&
+        Allˉempty(Result);
+}
+
+fn Thirtyˉthreeˉplatforms() -> text {
+    var Result: text = "windows";
+    var Index: u32 = 1u32;
+    while Index < 33u32 {
+        Result = Textˉconcat(Result, ", windows");
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+fn Caseˉthirtyˉthird() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source(
+            "Root", "core", Thirtyˉthreeˉplatforms(), ""
+        )),
+        Wvtd(1u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        // With four finite known scopes, the second repeated scope is the
+        // earliest semantic failure and deterministically precedes item 33.
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Duplicateˉplatform &&
+        Result.Failureˉoffset == 57u32 &&
+        Result.Failureˉlength == 7u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 46u32 &&
+        Result.Failureˉordinal == 2u32 &&
+        Allˉempty(Result);
+}
+
+fn Caseˉgenericˉlinuxˉforeign() -> bool {
+    let Generic: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source(
+            "Root", "system", "linux", Foreignˉdeclaration()
+        )),
+        Wvtd(4u32)
+    );
+    let Targetˉbytes: bytes = Wvtd(4u32);
+    let Broader: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source(
+            "Root", "system",
+            "linux, linux.x86_64.sysv_amd64_c_v1",
+            Foreignˉdeclaration()
+        )),
+        Targetˉbytes
+    );
+    let Exact: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source(
+            "Root", "system", "linux.x86_64.sysv_amd64_c_v1",
+            Foreignˉdeclaration()
+        )),
+        Targetˉbytes
+    );
+    return Generic.Status ==
+            Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_TARGET &&
+        Generic.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM &&
+        Generic.Failureˉmodule == 0u32 &&
+        Generic.Failureˉoffset == 50u32 &&
+        Generic.Failureˉlength == 5u32 &&
+        Generic.Failureˉline == 2u32 &&
+        Generic.Failureˉcolumn == 39u32 &&
+        Generic.Failureˉordinal == 1u32 &&
+        Allˉempty(Generic) &&
+        Broader.Status ==
+            Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_TARGET &&
+        Broader.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_FOREIGN_REQUIRES_CONCRETE_PLATFORM &&
+        Broader.Failureˉoffset == 50u32 &&
+        Broader.Failureˉlength == 5u32 &&
+        Broader.Failureˉordinal == 1u32 &&
+        Allˉempty(Broader) &&
+        Validˉresult(Exact, Targetˉbytes, 1u32, 1u32);
+}
+
+fn Validˉbase() -> Coordinator.Compilerˉsourceˉadmissionˉresult {
+    return Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "linux", "")), Wvtd(2u32)
+    );
+}
+
+fn Caseˉmalformedˉwvtd() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "core", "linux", "")),
+        Patchˉu32(Wvtd(2u32), 12u32, 99u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_UNKNOWN_IDENTITY &&
+        Allˉempty(Result);
+}
+
+fn Caseˉtruncatedˉwvtdˉdescriptor() -> bool {
+    let Full: bytes = Wvtd(2u32);
+    let Truncated: bytes = Bytesˉslice(Full, 0u32, 12u32);
+    let Result: Target.Compilerˉsourceˉtargetˉdescriptorˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉdescriptor(Truncated);
+    let Base: Coordinator.Compilerˉsourceˉadmissionˉresult = Validˉbase();
+    if Base.Status != Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        return false;
+    }
+    let Oversized: bytes = Bytesˉconcat(
+        Full, Zeroˉbytes(257u32, Full)
+    );
+    let Oversizedˉresult:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉsourceˉplatforms(
+            Base.Wvss, Oversized
+        );
+    let Orderedˉresult:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉsourceˉplatforms(
+            Patchˉu32(Base.Wvss, 0u32, 0u32),
+            Patchˉu32(Full, 0u32, 0u32)
+        );
+    return Result.Status ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE &&
+        Result.Failureˉoffset == 8u32 &&
+        Result.Value.Buildˉtarget == Target.COMPILER_SOURCE_TARGET_BUILD_UNKNOWN &&
+        Bytesˉlength(Oversized) == 321u32 &&
+        Oversizedˉresult.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVTD &&
+        Oversizedˉresult.Failureˉoffset == 8u32 &&
+        Oversizedˉresult.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_SIZE &&
+        Orderedˉresult.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVTD &&
+        Orderedˉresult.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_WVTD_INVALID_MAGIC;
+}
+
+fn Caseˉinvalidˉmetadataˉprofile() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Oneˉsourceˉset(Source("Root", "banana", "linux", "")), Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Invalidˉprofile &&
+        Result.Failureˉmodule == 0u32 &&
+        Result.Failureˉoffset == 33u32 &&
+        Result.Failureˉlength == 6u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 22u32 &&
+        Result.Expected == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Result.Found == Lexer.Compilerˉtokenˉkind.Identifier &&
+        Allˉempty(Result);
+}
+
+fn Caseˉzeroˉinput() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinator.Compilerˉsourceˉadmissionˉcoordinate(
+            Empty(Lock()), Lock(), Expectedˉlockˉhash(), Profile(), Wvtd(2u32)
+        );
+    return Result.Status ==
+            Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_INPUT_SHAPE &&
+        Allˉempty(Result);
+}
+
+fn Caseˉmixedˉmoduleˉmismatch() -> bool {
+    let Input: bytes = Twoˉsourceˉset(
+        Source("Root", "core", "linux", ""),
+        Source("M01", "core", "windows", "")
+    );
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinate(Input, Wvtd(2u32));
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_TARGET &&
+        Result.Targetˉstatus ==
+            Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET &&
+        Result.Failureˉmodule == 1u32 &&
+        Result.Failureˉoffset == 47u32 &&
+        Result.Failureˉlength == 7u32 &&
+        Result.Failureˉline == 2u32 &&
+        Result.Failureˉcolumn == 36u32 &&
+        Result.Failureˉordinal == 1u32 &&
+        Allˉempty(Result);
+}
+
+fn Caseˉcatalogˉfailure() -> bool {
+    let Malformedˉinput: bytes = Oneˉsourceˉset(
+        Source("Root", "core", "linux", "fn Broken(")
+    );
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinate(Malformedˉinput, Wvtd(2u32));
+    let Base: Coordinator.Compilerˉsourceˉadmissionˉresult = Validˉbase();
+    if Base.Status != Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        return false;
+    }
+    let Emptyˉcatalog: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(
+            1u32, Empty(Base.Wvfc)
+        );
+    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
+        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
+            Malformedˉinput, Lock(), Expectedˉlockˉhash(), Profile()
+        );
+    let Sourceˉreadˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Admitted.Input, Wvtd(2u32), Emptyˉcatalog.Value
+        );
+    var Malformed: bytes = Patchˉu32(
+        Emptyˉcatalog.Value, 8u32, 4194289u32
+    );
+    Malformed = Patchˉu32(Malformed, 12u32, 43690u32);
+    Malformed = Bytesˉconcat(
+        Malformed, Zeroˉbytes(4194241u32, Base.Wvfc)
+    );
+    let Readˉback:
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉforeignˉcatalog(
+            Base.Wvss, Base.Wvtd, Malformed
+        );
+    return Result.Status ==
+            Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_CATALOG &&
+        Result.Foreignˉproducerˉstatus ==
+            Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Result.Failureˉoffset == 88u32 &&
+        Allˉempty(Result) &&
+        Admitted.Status == Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid &&
+        Sourceˉreadˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVFC &&
+        Sourceˉreadˉback.Sourceˉsetˉstatus ==
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Sourceˉsyntax &&
+        Sourceˉreadˉback.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Sourceˉreadˉback.Failureˉoffset == 88u32 &&
+        Bytesˉlength(Malformed) == 4194289u32 &&
+        Readˉback.Status ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVFC &&
+        Readˉback.Failureˉoffset == 8u32 &&
+        Readˉback.Catalogˉstatus ==
+            Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE;
+}
+
+fn Caseˉwvaeˉconstructorˉfailure() -> bool {
+    let Base: Coordinator.Compilerˉsourceˉadmissionˉresult = Validˉbase();
+    if Base.Status != Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        return false;
+    }
+    let Result: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉconstructˉadmissionˉevidence(
+            Base.Wvss, Base.Wvtd, Base.Wvfc, Lock(), Profile(), 1u32, 0u32,
+            Descriptor.Compilerˉsourceˉprofileˉbinding.None
+        );
+    return Result.Status ==
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Invalidˉprofileˉbinding &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉexactˉsnapshots() -> bool {
+    let Base: Coordinator.Compilerˉsourceˉadmissionˉresult = Validˉbase();
+    if Base.Status != Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID {
+        return false;
+    }
+    let Wrongˉlock: bytes = Bytesˉconcat(Lock(), Bytesˉfromˉu8(0u8));
+    let Wrongˉprofile: bytes = Bytesˉconcat(Profile(), Bytesˉfromˉu8(0u8));
+    let Lockˉfailure: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+            Base.Wvae, Base.Wvss, Base.Wvtd, Base.Wvfc, Wrongˉlock, Profile(),
+            1u32, 0u32, Descriptor.Compilerˉsourceˉprofileˉbinding.English
+        );
+    let Profileˉfailure: Evidence.Compilerˉadmissionˉevidenceˉresult =
+        Evidence.Compilerˉauthenticateˉadmissionˉevidence(
+            Base.Wvae, Base.Wvss, Base.Wvtd, Base.Wvfc, Lock(), Wrongˉprofile,
+            1u32, 0u32, Descriptor.Compilerˉsourceˉprofileˉbinding.English
+        );
+    return Lockˉfailure.Status ==
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch &&
+        Lockˉfailure.Failureˉoffset == 160u32 &&
+        Profileˉfailure.Status ==
+            Evidence.Compilerˉadmissionˉevidenceˉstatus.Digestˉmismatch &&
+        Profileˉfailure.Failureˉoffset == 192u32;
+}
+
+fn Caseˉbadˉexpectedˉhash() -> bool {
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinator.Compilerˉsourceˉadmissionˉcoordinate(
+            Oneˉsourceˉset(Source("Root", "core", "linux", "")),
+            Lock(),
+            Textˉtoˉutf8("0c5840af896924292a2ad3f3d5d986956211745a8e4a9bb60f0b45f10cecf9c3"),
+            Profile(), Wvtd(2u32)
+        );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_PROFILE &&
+        Result.Profileˉstatus ==
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Lockˉhashˉmismatch &&
+        Allˉempty(Result);
+}
+
+fn Caseˉmutatedˉlock() -> bool {
+    let Mutated: bytes = Patchˉu32(Lock(), 0u32, 0u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinator.Compilerˉsourceˉadmissionˉcoordinate(
+            Oneˉsourceˉset(Source("Root", "core", "linux", "")),
+            Mutated, Expectedˉlockˉhash(), Profile(), Wvtd(2u32)
+        );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_PROFILE &&
+        Result.Profileˉstatus ==
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Lockˉhashˉmismatch &&
+        Allˉempty(Result);
+}
+
+fn Caseˉmutatedˉprofile() -> bool {
+    let Mutated: bytes = Patchˉu32(Profile(), 0u32, 0u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinator.Compilerˉsourceˉadmissionˉcoordinate(
+            Oneˉsourceˉset(Source("Root", "core", "linux", "")),
+            Lock(), Expectedˉlockˉhash(), Mutated, Wvtd(2u32)
+        );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_PROFILE &&
+        Result.Profileˉstatus ==
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Profileˉhashˉmismatch &&
+        Allˉempty(Result);
+}
+
+fn Caseˉmutatedˉwvss() -> bool {
+    let Input: bytes = Oneˉsourceˉset(Source("Root", "core", "linux", ""));
+    let Mutated: bytes = Patchˉu32(Input, 0u32, 0u32);
+    let Result: Coordinator.Compilerˉsourceˉadmissionˉresult = Coordinate(
+        Mutated, Wvtd(2u32)
+    );
+    return Result.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_PROFILE &&
+        Result.Profileˉstatus ==
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Invalidˉdescriptor &&
+        Allˉempty(Result);
+}
+
+fn Caseˉdeterministic() -> bool {
+    let Input: bytes = Oneˉsourceˉset(Source("Root", "core", "linux", ""));
+    let Targetˉbytes: bytes = Wvtd(2u32);
+    let First: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinate(Input, Targetˉbytes);
+    let Second: Coordinator.Compilerˉsourceˉadmissionˉresult =
+        Coordinate(Input, Targetˉbytes);
+    return First.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID &&
+        Second.Status == Coordinator.COMPILER_SOURCE_ADMISSION_STATUS_VALID &&
+        Bytesˉequal(First.Wvss, Second.Wvss) &&
+        Bytesˉequal(First.Wvtd, Second.Wvtd) &&
+        Bytesˉequal(First.Wvfc, Second.Wvfc) &&
+        Bytesˉequal(First.Wvae, Second.Wvae);
+}
+
+fn Caseˉarithmetic() -> bool {
+    return Coordinator.COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES ==
+            5308800u32 &&
+        Coordinator.COMPILER_SOURCE_ADMISSION_MAX_WVSS_BYTES ==
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_MAX_WVSS_BYTES &&
+        Coordinator.COMPILER_SOURCE_ADMISSION_MAX_RESULT_RETAINED_BYTES ==
+            8389152u32 &&
+        Coordinator.COMPILER_SOURCE_ADMISSION_MAX_RETAINED_INPUT_PLUS_RESULT_BYTES ==
+            13697952u32 &&
+        Coordinator.Compilerˉsourceˉadmissionˉinputˉshapeˉisˉvalid(
+            4194304u32, 1048576u32, 64u32, 65536u32, 320u32
+        ) &&
+        !Coordinator.Compilerˉsourceˉadmissionˉinputˉshapeˉisˉvalid(
+            4194305u32, 1048576u32, 64u32, 65536u32, 320u32
+        ) &&
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉwvssˉshapeˉisˉbounded(
+            4194304u32
+        ) &&
+        !Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉwvssˉshapeˉisˉbounded(
+            4194305u32
+        ) &&
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_MAX_STABLE_RETAINED_BYTES ==
+            12583216u32 &&
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_MAX_LARGE_IMMUTABLE_PAYLOAD_BYTES ==
+            16777456u32 &&
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉforeignˉgeometryˉisˉbounded(
+            4194304u32, 320u32, 4194304u32, 4194288u32, 4194240u32
+        ) &&
+        !Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉforeignˉgeometryˉisˉbounded(
+            4194305u32, 320u32, 4194304u32, 4194288u32, 4194240u32
+        ) &&
+        !Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉforeignˉgeometryˉisˉbounded(
+            4194304u32, 321u32, 4194304u32, 4194288u32, 4194240u32
+        ) &&
+        !Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉforeignˉgeometryˉisˉbounded(
+            4194304u32, 320u32, 4194305u32, 4194288u32, 4194240u32
+        ) &&
+        Coordinator.Compilerˉsourceˉadmissionˉcandidateˉshapeˉisˉbounded(
+            5308800u32, 4194304u32, 320u32, 4194304u32, 224u32
+        ) &&
+        !Coordinator.Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+            13697952u32, 1u32
+        );
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉempty() { return 42; }
+    if Selected == 98u32 && Caseˉoneˉforeign() { return 42; }
+    if Selected == 99u32 && Caseˉmultipleˉforeign() { return 42; }
+    if Selected == 100u32 && Caseˉmaximumˉmodules() { return 42; }
+    if Selected == 101u32 && Caseˉplatform(1u32, "windows") { return 42; }
+    if Selected == 102u32 && Caseˉplatform(2u32, "linux") { return 42; }
+    if Selected == 103u32 && Caseˉplatform(3u32, "windvale") { return 42; }
+    if Selected == 104u32 && Caseˉplatform(4u32, "linux.x86_64.sysv_amd64_c_v1") { return 42; }
+    if Selected == 105u32 && Caseˉplatformˉmismatch() { return 42; }
+    if Selected == 106u32 && Caseˉunknown() { return 42; }
+    if Selected == 107u32 && Caseˉduplicate() { return 42; }
+    if Selected == 108u32 && Caseˉmissing() { return 42; }
+    if Selected == 109u32 && Caseˉthirtyˉthird() { return 42; }
+    if Selected == 110u32 && Caseˉgenericˉlinuxˉforeign() { return 42; }
+    if Selected == 111u32 && Caseˉmalformedˉwvtd() { return 42; }
+    if Selected == 112u32 && Caseˉcatalogˉfailure() { return 42; }
+    if Selected == 113u32 && Caseˉwvaeˉconstructorˉfailure() { return 42; }
+    if Selected == 114u32 && Caseˉexactˉsnapshots() { return 42; }
+    if Selected == 115u32 && Caseˉbadˉexpectedˉhash() { return 42; }
+    if Selected == 116u32 && Caseˉmutatedˉlock() { return 42; }
+    if Selected == 117u32 && Caseˉmutatedˉprofile() { return 42; }
+    if Selected == 118u32 && Caseˉmutatedˉwvss() { return 42; }
+    if Selected == 119u32 && Caseˉdeterministic() { return 42; }
+    if Selected == 120u32 && Caseˉarithmetic() { return 42; }
+    if Selected == 121u32 && Caseˉinvalidˉmetadataˉprofile() { return 42; }
+    if Selected == 122u32 && Caseˉtruncatedˉwvtdˉdescriptor() { return 42; }
+    if Selected == 65u32 && Caseˉzeroˉinput() { return 42; }
+    if Selected == 66u32 && Caseˉmixedˉmoduleˉmismatch() { return 42; }
+    return 1;
+}

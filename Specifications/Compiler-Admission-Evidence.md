@@ -14,10 +14,12 @@ hosted shell and focused fixture.
 `Compiler/Windvale/Admission-Source-Set-Core.wv` owns the independent small
 WVSS 2 structural reader. The hosted `wvverify-admission-evidence` leaf
 compiles those modules with the existing lightweight WVTD and WVFC structural
-validators independently of the source analyzer. The eventual complete
-validator is named `wvauth`; `wvadmit` construction, complete WVFC source
-authentication, and coordinator integration are later checkpoints and are not
-implemented by this foundation.
+validators independently of the source analyzer. The complete independent
+validator remains named `wvauth`. Portable in-memory `wvadmit` construction and
+authenticated coordination are now implemented by
+`Compiler/Windvale/Source-Admission-Coordinator-Core.wv` and
+`Compiler/Windvale/Source-Target-Admission-Core.wv`; a hosted file publisher
+and Analyzer integration remain later checkpoints.
 
 ## Fixed binary format
 
@@ -185,9 +187,46 @@ valid WVSS fails in `Crossˉfield` phase with structure status 1, offset 24,
 and an empty value.
 
 It publishes no certificate or successor artifact and reports only success or
-bounded failure control flow. The eventual coordinator must retain all six
-exact immutable private snapshots and may invoke the internal admitted analyzer
-mode only after the complete `wvauth` succeeds.
+bounded failure control flow. The coordinator retains all six exact immutable
+private snapshots. A future Analyzer handoff may invoke internal admitted mode
+only after the complete `wvauth` succeeds.
+
+## Authenticated source-admission coordinator
+
+`Compilerˉsourceˉadmissionˉcoordinate` accepts WVSS 1 source input, locked
+source-profile snapshots, the exact 64-byte lowercase lock digest, and one
+WVTD. It rejects outer geometry first, admits descriptor-free WVSS 2, checks
+every platform scope against WVTD, produces canonical source-ordered WVFC,
+independently validates the three formats and counts, checks each foreign
+module's System profile and exact concrete predicate, and constructs WVAE.
+Success returns WVSS, unchanged WVTD, WVFC, and WVAE as four separate immutable
+values. Failure returns all four values empty.
+
+The input-retention ceiling is 5,308,800 bytes. The conservative result ceiling
+is 8,389,152 bytes, and combined retained input plus result is at most
+13,697,952 bytes. These are retained-value bounds, not a compiler process
+working-set claim. A WVSS above 4,194,304 bytes rejects before source scanning.
+The arithmetic APIs cover exact maxima and one-past rejection without allocating
+oversized fixtures.
+
+The exported foreign-catalog target readback is independently safe. After
+WVSS, WVTD, WVFC, and module-count validation, it reproduces WVFC from supplied
+WVSS and requires exact bytes before target admission. Stable retention is at
+most 12,583,216 bytes: supplied WVFC retains the general 4,194,304-byte format
+ceiling while reproduced canonical WVFC is at most 4,194,288 bytes.
+Conservative simultaneously-live large immutable payload retention additionally
+holds the bounded 4,194,240-byte headerless record accumulator, totaling
+16,777,456 bytes. This is not a process working-set bound and excludes runtime
+state and small bounded scalar/view temporaries. Reproduction and comparison
+are linear in the bounded source/catalog sizes.
+
+Producer failure maps to outer target-admission status `WVFC` and preserves the
+subordinate source-set, parser, catalog, source module, and source offset. A
+structure-valid byte mismatch also reports `WVFC` at the first differing
+catalog offset. The coordinator's earlier production phase retains the more
+specific foreign-producer status. Generic `linux`, and a list mixing generic
+`linux` with the exact ABI predicate, cannot authorize foreign source; only
+the exact concrete predicate alone can do so.
 
 No public analyzer mode may bypass that control flow. A cache key, path,
 producer identity, file existence, or forgeable certificate cannot replace

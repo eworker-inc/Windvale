@@ -397,6 +397,7 @@ fn Caseˉmissingˉunsafe() -> bool {
         );
     return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
         Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Result.Failureˉoffset == 103u32 &&
         Bytesˉlength(Result.Value) == 0u32;
 }
 
@@ -411,6 +412,7 @@ fn Caseˉwrongˉprofile() -> bool {
         );
     return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
         Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Foreignˉprofile &&
+        Result.Failureˉoffset == 97u32 &&
         Bytesˉlength(Result.Value) == 0u32;
 }
 

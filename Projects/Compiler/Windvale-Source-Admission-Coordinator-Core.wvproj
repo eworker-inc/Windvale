@@ -1,0 +1,15 @@
+windvale-project 2
+root "Compiler/Windvale/Source-Admission-Coordinator-Core.wv"
+source "Compiler/Windvale/Admission-Evidence-Core.wv"
+source "Compiler/Windvale/Source-Body-Parser.wv"
+source "Compiler/Windvale/Source-Declaration-Parser.wv"
+source "Compiler/Windvale/Source-Descriptor-Core.wv"
+source "Compiler/Windvale/Source-Foreign-Catalog-Core.wv"
+source "Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv"
+source "Compiler/Windvale/Source-Lexer-Core.wv"
+source "Compiler/Windvale/Source-Profile-Core.wv"
+source "Compiler/Windvale/Source-Set-Core.wv"
+source "Compiler/Windvale/Source-Target-Core.wv"
+source "Compiler/Windvale/Source-Target-Admission-Core.wv"
+source "Foundation/Sha256.wv"
+emit wvb

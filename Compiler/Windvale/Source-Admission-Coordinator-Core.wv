@@ -1,0 +1,719 @@
+module Compilerˉsourceˉadmissionˉcoordinator profile portable;
+
+import Compilerˉadmissionˉevidence as Admissionˉevidence;
+import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉforeignˉcatalogˉproducer as Foreignˉproducer;
+import Compilerˉsourceˉlexer as Sourceˉlexer;
+import Compilerˉsourceˉprofile as Sourceˉprofile;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉtarget as Target;
+import Compilerˉsourceˉtargetˉadmission as Targetˉadmission;
+
+export const COMPILER_SOURCE_ADMISSION_MAX_WVSS_BYTES: u32 = 4194304u32;
+export const COMPILER_SOURCE_ADMISSION_MAX_LOCK_BYTES: u32 = 1048576u32;
+export const COMPILER_SOURCE_ADMISSION_EXPECTED_LOCK_HASH_BYTES: u32 = 64u32;
+export const COMPILER_SOURCE_ADMISSION_MAX_PROFILE_BYTES: u32 = 65536u32;
+export const COMPILER_SOURCE_ADMISSION_MAX_WVTD_BYTES: u32 = 320u32;
+export const COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES: u32 = 5308800u32;
+export const COMPILER_SOURCE_ADMISSION_MAX_RESULT_RETAINED_BYTES: u32 = 8389152u32;
+// This is retained immutable input plus retained result geometry, not a
+// peak-working-set bound for compiler execution.
+export const COMPILER_SOURCE_ADMISSION_MAX_RETAINED_INPUT_PLUS_RESULT_BYTES: u32 =
+    13697952u32;
+
+export const COMPILER_SOURCE_ADMISSION_STATUS_VALID: u32 = 0u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_INPUT_SHAPE: u32 = 1u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_PROFILE: u32 = 2u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_TARGET: u32 = 3u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_CATALOG: u32 = 4u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_SOURCE_SET: u32 = 5u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_WVTD: u32 = 6u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_WVFC: u32 = 7u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_COUNT: u32 = 8u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_TARGET: u32 = 9u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_WVAE: u32 = 10u32;
+export const COMPILER_SOURCE_ADMISSION_STATUS_RESOURCE_LIMIT: u32 = 11u32;
+
+export record Compilerˉsourceˉadmissionˉresult {
+    Status: u32;
+    Failureˉmodule: u32;
+    Failureˉoffset: u32;
+    Failureˉlength: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Failureˉordinal: u32;
+    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus;
+    Targetˉadmissionˉstatus: u32;
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus;
+    Expected: Sourceˉlexer.Compilerˉtokenˉkind;
+    Found: Sourceˉlexer.Compilerˉtokenˉkind;
+    Foreignˉproducerˉstatus: u32;
+    Sourceˉsetˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus;
+    Targetˉstatus: u32;
+    Catalogˉstatus: u32;
+    Evidenceˉstatus: Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus;
+    Wvss: bytes;
+    Wvtd: bytes;
+    Wvfc: bytes;
+    Wvae: bytes;
+}
+
+export fn Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+    Current: u32,
+    Additional: u32
+) -> bool {
+    if Current >
+        COMPILER_SOURCE_ADMISSION_MAX_RETAINED_INPUT_PLUS_RESULT_BYTES {
+        return false;
+    }
+    return Additional <=
+        COMPILER_SOURCE_ADMISSION_MAX_RETAINED_INPUT_PLUS_RESULT_BYTES - Current;
+}
+
+export fn Compilerˉsourceˉadmissionˉinputˉshapeˉisˉvalid(
+    Wvssˉlength: u32,
+    Lockˉlength: u32,
+    Expectedˉhashˉlength: u32,
+    Profileˉlength: u32,
+    Wvtdˉlength: u32
+) -> bool {
+    if Wvssˉlength < 25u32 ||
+        Wvssˉlength > COMPILER_SOURCE_ADMISSION_MAX_WVSS_BYTES ||
+        Lockˉlength == 0u32 ||
+        Lockˉlength > COMPILER_SOURCE_ADMISSION_MAX_LOCK_BYTES ||
+        Expectedˉhashˉlength !=
+            COMPILER_SOURCE_ADMISSION_EXPECTED_LOCK_HASH_BYTES ||
+        Profileˉlength == 0u32 ||
+        Profileˉlength > COMPILER_SOURCE_ADMISSION_MAX_PROFILE_BYTES ||
+        Wvtdˉlength < Target.COMPILER_SOURCE_TARGET_WVTD_HEADER_BYTES ||
+        Wvtdˉlength > COMPILER_SOURCE_ADMISSION_MAX_WVTD_BYTES {
+        return false;
+    }
+    var Total: u32 = Wvssˉlength;
+    if Lockˉlength >
+        COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES - Total {
+        return false;
+    }
+    Total = Total + Lockˉlength;
+    if Expectedˉhashˉlength >
+        COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES - Total {
+        return false;
+    }
+    Total = Total + Expectedˉhashˉlength;
+    if Profileˉlength >
+        COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES - Total {
+        return false;
+    }
+    Total = Total + Profileˉlength;
+    if Wvtdˉlength >
+        COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES - Total {
+        return false;
+    }
+    return Total + Wvtdˉlength <=
+        COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES;
+}
+
+export fn Compilerˉsourceˉadmissionˉcandidateˉshapeˉisˉbounded(
+    Inputˉbytes: u32,
+    Wvssˉbytes: u32,
+    Wvtdˉbytes: u32,
+    Wvfcˉbytes: u32,
+    Wvaeˉbytes: u32
+) -> bool {
+    if Inputˉbytes > COMPILER_SOURCE_ADMISSION_MAX_INPUT_RETAINED_BYTES ||
+        Wvssˉbytes > COMPILER_SOURCE_ADMISSION_MAX_WVSS_BYTES ||
+        Wvtdˉbytes > COMPILER_SOURCE_ADMISSION_MAX_WVTD_BYTES ||
+        Wvfcˉbytes > Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_BYTES ||
+        Wvaeˉbytes > 224u32 {
+        return false;
+    }
+    var Total: u32 = Inputˉbytes;
+    if !Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+        Total, Wvssˉbytes
+    ) { return false; }
+    Total = Total + Wvssˉbytes;
+    if !Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+        Total, Wvtdˉbytes
+    ) { return false; }
+    Total = Total + Wvtdˉbytes;
+    if !Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+        Total, Wvfcˉbytes
+    ) { return false; }
+    Total = Total + Wvfcˉbytes;
+    if !Compilerˉsourceˉadmissionˉretainedˉadditionˉisˉbounded(
+        Total, Wvaeˉbytes
+    ) { return false; }
+    return true;
+}
+
+fn Compilerˉsourceˉadmissionˉfailureˉdiagnostic(
+    Emptyˉsource: bytes,
+    Status: u32,
+    Module: u32,
+    Offset: u32,
+    Length: u32,
+    Line: u32,
+    Column: u32,
+    Ordinal: u32,
+    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus,
+    Targetˉadmissionˉstatus: u32,
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus,
+    Expected: Sourceˉlexer.Compilerˉtokenˉkind,
+    Found: Sourceˉlexer.Compilerˉtokenˉkind,
+    Foreignˉproducerˉstatus: u32,
+    Sourceˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus,
+    Targetˉstatus: u32,
+    Catalogˉstatus: u32,
+    Evidenceˉstatus: Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus
+) -> Compilerˉsourceˉadmissionˉresult {
+    // A single canonical empty value replaces every partial candidate.
+    let Empty: bytes = Bytesˉslice(Emptyˉsource, 0u32, 0u32);
+    return Compilerˉsourceˉadmissionˉresult(
+        Status,
+        Module,
+        Offset,
+        Length,
+        Line,
+        Column,
+        Ordinal,
+        Profileˉstatus,
+        Targetˉadmissionˉstatus,
+        Parseˉstatus,
+        Expected,
+        Found,
+        Foreignˉproducerˉstatus,
+        Sourceˉstatus,
+        Targetˉstatus,
+        Catalogˉstatus,
+        Evidenceˉstatus,
+        Empty,
+        Empty,
+        Empty,
+        Empty
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉfailure(
+    Emptyˉsource: bytes,
+    Status: u32,
+    Module: u32,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Profileˉstatus: Sourceˉprofile.Compilerˉsourceˉprofileˉstatus,
+    Targetˉadmissionˉstatus: u32,
+    Foreignˉproducerˉstatus: u32,
+    Sourceˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus,
+    Targetˉstatus: u32,
+    Catalogˉstatus: u32,
+    Evidenceˉstatus: Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus
+) -> Compilerˉsourceˉadmissionˉresult {
+    return Compilerˉsourceˉadmissionˉfailureˉdiagnostic(
+        Emptyˉsource,
+        Status,
+        Module,
+        Offset,
+        0u32,
+        Line,
+        Column,
+        0u32,
+        Profileˉstatus,
+        Targetˉadmissionˉstatus,
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Foreignˉproducerˉstatus,
+        Sourceˉstatus,
+        Targetˉstatus,
+        Catalogˉstatus,
+        Evidenceˉstatus
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉtargetˉfailure(
+    Emptyˉsource: bytes,
+    Status: u32,
+    Failure: Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult,
+    Foreignˉproducerˉstatus: u32
+) -> Compilerˉsourceˉadmissionˉresult {
+    return Compilerˉsourceˉadmissionˉfailureˉdiagnostic(
+        Emptyˉsource,
+        Status,
+        Failure.Failureˉmodule,
+        Failure.Failureˉoffset,
+        Failure.Failureˉlength,
+        Failure.Failureˉline,
+        Failure.Failureˉcolumn,
+        Failure.Failureˉordinal,
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+        Failure.Status,
+        Failure.Parseˉstatus,
+        Failure.Expected,
+        Failure.Found,
+        Foreignˉproducerˉstatus,
+        Failure.Sourceˉsetˉstatus,
+        Failure.Targetˉstatus,
+        Failure.Catalogˉstatus,
+        Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉsuccess(
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes,
+    Wvae: bytes
+) -> Compilerˉsourceˉadmissionˉresult {
+    return Compilerˉsourceˉadmissionˉresult(
+        COMPILER_SOURCE_ADMISSION_STATUS_VALID,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+        Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+        Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid,
+        Wvss,
+        Wvtd,
+        Wvfc,
+        Wvae
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉinputˉbytes(
+    Input: bytes,
+    Lock: bytes,
+    Profile: bytes,
+    Wvtd: bytes
+) -> u32 {
+    var Total: u32 = Bytesˉlength(Input);
+    Total = Total + Bytesˉlength(Lock);
+    Total = Total + COMPILER_SOURCE_ADMISSION_EXPECTED_LOCK_HASH_BYTES;
+    Total = Total + Bytesˉlength(Profile);
+    return Total + Bytesˉlength(Wvtd);
+}
+
+fn Compilerˉsourceˉadmissionˉforeignˉsuccess(
+) -> Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult {
+    return Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult(
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Sourceˉlexer.Compilerˉtokenˉkind.End,
+        Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉforeignˉevidence(
+    Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence
+) -> Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
+    return Target.Compilerˉsourceˉtargetˉplatformˉsetˉevidence(
+        Evidence.Scopeˉmask,
+        Evidence.Declaredˉscopes,
+        Evidence.Unknownˉscopes,
+        Evidence.Concreteˉscope.Offset,
+        Evidence.Concreteˉscope.Length
+    );
+}
+
+fn Compilerˉsourceˉadmissionˉplatformˉstatus(
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus
+) -> u32 {
+    if Parseˉstatus ==
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Unknownˉplatform {
+        return Target.COMPILER_SOURCE_TARGET_STATUS_UNKNOWN_PLATFORM;
+    }
+    return Target.COMPILER_SOURCE_TARGET_STATUS_INVALID_PLATFORM_EVIDENCE;
+}
+
+// This private seam accepts only evidence produced by the authenticated
+// coordinator path after complete WVSS/WVTD/WVFC/count validation. It performs
+// the required foreign-module predicate walk without a second WVFC validation.
+fn Compilerˉsourceˉadmissionˉadmitˉvalidatedˉforeignˉtargets(
+    Wvss: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Wvfc: bytes,
+    Catalogˉstatus: u32
+) -> Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult {
+    let Foreignˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, 12u32);
+    var Recordˉindex: u32 = 0u32;
+    while Recordˉindex < Foreignˉcount {
+        let Recordˉoffset: u32 = 48u32 + Recordˉindex * 96u32;
+        let Module: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, Recordˉoffset);
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Wvss, Scan, Module);
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+        if Header.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid ||
+            Header.Profile != Sourceˉdeclarations.Compilerˉsourceˉprofile.System {
+            return Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult(
+                Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_FOREIGN_PROFILE,
+                Module,
+                View.Originˉoffset + Header.Failureˉoffset,
+                0u32,
+                Header.Failureˉline,
+                Header.Failureˉcolumn,
+                0u32,
+                Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                Header.Status,
+                Header.Expected,
+                Header.Found,
+                Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+                Catalogˉstatus
+            );
+        }
+        let Evidence: Sourceˉdeclarations.Compilerˉsourceˉplatformˉevidence =
+            Sourceˉdeclarations.Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+                View.Source
+            );
+        if Evidence.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+            return Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult(
+                Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_PLATFORM,
+                Module,
+                View.Originˉoffset + Evidence.Failureˉoffset,
+                Evidence.Failureˉlength,
+                Evidence.Failureˉline,
+                Evidence.Failureˉcolumn,
+                Evidence.Failureˉordinal,
+                Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                Evidence.Status,
+                Evidence.Expected,
+                Evidence.Found,
+                Compilerˉsourceˉadmissionˉplatformˉstatus(
+                    Evidence.Status
+                ),
+                Catalogˉstatus
+            );
+        }
+        let Foreignˉtargetˉstatus: u32 =
+            Target.Compilerˉsourceˉtargetˉadmitˉforeignˉtarget(
+                Descriptor,
+                Compilerˉsourceˉadmissionˉforeignˉevidence(Evidence)
+            );
+        if Foreignˉtargetˉstatus != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+            var Offending: Sourceˉdeclarations.Compilerˉsourceˉplatformˉscope =
+                Evidence.Firstˉnonconcreteˉscope;
+            if Offending.Ordinal == 0u32 { Offending = Evidence.Concreteˉscope; }
+            return Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult(
+                Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_FOREIGN_TARGET,
+                Module,
+                View.Originˉoffset + Offending.Offset,
+                Offending.Length,
+                Offending.Line,
+                Offending.Column,
+                Offending.Ordinal,
+                Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+                Sourceˉlexer.Compilerˉtokenˉkind.End,
+                Sourceˉlexer.Compilerˉtokenˉkind.End,
+                Foreignˉtargetˉstatus,
+                Catalogˉstatus
+            );
+        }
+        Recordˉindex = Recordˉindex + 1u32;
+        var Sameˉmodule: bool = Recordˉindex < Foreignˉcount;
+        while Sameˉmodule {
+            if Bytesˉreadˉu32ˉlittle(
+                Wvfc, 48u32 + Recordˉindex * 96u32
+            ) != Module {
+                Sameˉmodule = false;
+            } else {
+                Recordˉindex = Recordˉindex + 1u32;
+                Sameˉmodule = Recordˉindex < Foreignˉcount;
+            }
+        }
+    }
+    return Compilerˉsourceˉadmissionˉforeignˉsuccess();
+}
+
+fn Compilerˉsourceˉadmissionˉfinalizeˉvalidatedˉcandidate(
+    Input: bytes,
+    Lock: bytes,
+    Profile: bytes,
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes
+) -> Compilerˉsourceˉadmissionˉresult {
+    if !Compilerˉsourceˉadmissionˉinputˉshapeˉisˉvalid(
+        Bytesˉlength(Input),
+        Bytesˉlength(Lock),
+        COMPILER_SOURCE_ADMISSION_EXPECTED_LOCK_HASH_BYTES,
+        Bytesˉlength(Profile),
+        Bytesˉlength(Wvtd)
+    ) {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_INPUT_SHAPE,
+            0u32, 0u32, 0u32, 0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Inputˉbytes: u32 = Compilerˉsourceˉadmissionˉinputˉbytes(
+        Input, Lock, Profile, Wvtd
+    );
+    if !Compilerˉsourceˉadmissionˉcandidateˉshapeˉisˉbounded(
+        Inputˉbytes,
+        Bytesˉlength(Wvss),
+        Bytesˉlength(Wvtd),
+        Bytesˉlength(Wvfc),
+        224u32
+    ) {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_RESOURCE_LIMIT,
+            0u32, 0u32, 0u32, 0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Wvss);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Scan.Version != 2u32 {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_SOURCE_SET,
+            Scan.Failureˉmodule,
+            Scan.Failureˉoffset,
+            0u32,
+            0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_SOURCE_SET,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Scan.Status,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Validatedˉtarget: Target.Compilerˉsourceˉtargetˉdescriptorˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉdescriptor(Wvtd);
+    if Validatedˉtarget.Status != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_WVTD,
+            0u32,
+            Validatedˉtarget.Failureˉoffset,
+            0u32,
+            0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVTD,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Validatedˉtarget.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Catalog: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Wvfc);
+    if Catalog.Status !=
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_WVFC,
+            0u32,
+            Catalog.Failureˉoffset,
+            0u32,
+            0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_WVFC,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Catalog.Status,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Foreignˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, 12u32);
+    if Bytesˉreadˉu32ˉlittle(Wvfc, 24u32) != Scan.Modules {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_COUNT,
+            0u32,
+            24u32,
+            0u32,
+            0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_COUNT,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Catalog.Status,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Foreignˉtarget: Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Compilerˉsourceˉadmissionˉadmitˉvalidatedˉforeignˉtargets(
+            Wvss, Scan, Validatedˉtarget.Value, Catalog.Value, Catalog.Status
+        );
+    if Foreignˉtarget.Status !=
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID {
+        return Compilerˉsourceˉadmissionˉtargetˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_TARGET,
+            Foreignˉtarget,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID
+        );
+    }
+    // Authentication, canonical production, independent structure/count checks,
+    // and fixed English binding make this failure invariant-unreachable for a
+    // correct intrinsic/backend. Keep it fail-closed without a public injection seam.
+    let Evidence: Admissionˉevidence.Compilerˉadmissionˉevidenceˉresult =
+        Admissionˉevidence.Compilerˉconstructˉadmissionˉevidence(
+            Wvss,
+            Wvtd,
+            Catalog.Value,
+            Lock,
+            Profile,
+            Scan.Modules,
+            Foreignˉcount,
+            Sourceˉdescriptor.Compilerˉsourceˉprofileˉbinding.English
+        );
+    if Evidence.Status !=
+        Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_WVAE,
+            0u32,
+            Evidence.Failureˉoffset,
+            0u32,
+            0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Catalog.Status,
+            Evidence.Status
+        );
+    }
+    return Compilerˉsourceˉadmissionˉsuccess(
+        Wvss, Wvtd, Catalog.Value, Evidence.Value
+    );
+}
+
+export fn Compilerˉsourceˉadmissionˉcoordinate(
+    Input: bytes,
+    Lock: bytes,
+    Expectedˉlockˉhash: bytes,
+    Profile: bytes,
+    Wvtd: bytes
+) -> Compilerˉsourceˉadmissionˉresult {
+    if !Compilerˉsourceˉadmissionˉinputˉshapeˉisˉvalid(
+        Bytesˉlength(Input),
+        Bytesˉlength(Lock),
+        Bytesˉlength(Expectedˉlockˉhash),
+        Bytesˉlength(Profile),
+        Bytesˉlength(Wvtd)
+    ) {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_INPUT_SHAPE,
+            0u32, 0u32, 0u32, 0u32,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Admitted: Sourceˉprofile.Compilerˉsourceˉprofileˉinput =
+        Sourceˉprofile.Compilerˉadmitˉsourceˉprofileˉinputs(
+            Input, Lock, Expectedˉlockˉhash, Profile
+        );
+    if Admitted.Status != Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid {
+        return Compilerˉsourceˉadmissionˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_PROFILE,
+            0u32,
+            Admitted.Failureˉoffset,
+            0u32,
+            0u32,
+            Admitted.Status,
+            Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    let Platforms: Targetˉadmission.Compilerˉsourceˉtargetˉadmissionˉresult =
+        Targetˉadmission.Compilerˉsourceˉtargetˉadmitˉsourceˉplatforms(
+            Admitted.Input, Wvtd
+        );
+    if Platforms.Status !=
+        Targetˉadmission.COMPILER_SOURCE_TARGET_ADMISSION_STATUS_VALID {
+        return Compilerˉsourceˉadmissionˉtargetˉfailure(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_TARGET,
+            Platforms,
+            Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID
+        );
+    }
+    let Produced: Foreignˉproducer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Foreignˉproducer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Admitted.Input
+        );
+    if Produced.Status !=
+        Foreignˉproducer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID {
+        return Compilerˉsourceˉadmissionˉfailureˉdiagnostic(
+            Input,
+            COMPILER_SOURCE_ADMISSION_STATUS_FOREIGN_CATALOG,
+            Produced.Failureˉmodule,
+            Produced.Failureˉoffset,
+            0u32,
+            Produced.Failureˉline,
+            Produced.Failureˉcolumn,
+            Produced.Failureˉdeclaration,
+            Sourceˉprofile.Compilerˉsourceˉprofileˉstatus.Valid,
+            Platforms.Status,
+            Produced.Parseˉstatus,
+            Sourceˉlexer.Compilerˉtokenˉkind.End,
+            Sourceˉlexer.Compilerˉtokenˉkind.End,
+            Produced.Status,
+            Produced.Sourceˉsetˉstatus,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Produced.Catalogˉstatus,
+            Admissionˉevidence.Compilerˉadmissionˉevidenceˉstatus.Valid
+        );
+    }
+    return Compilerˉsourceˉadmissionˉfinalizeˉvalidatedˉcandidate(
+        Input,
+        Lock,
+        Profile,
+        Admitted.Input,
+        Wvtd,
+        Produced.Value
+    );
+}

@@ -19,6 +19,8 @@ export enum Compilerˉparseˉstatus {
     Unsupportedˉforeignˉabi = 13;
     Unsupportedˉforeignˉsymbol = 14;
     Invalidˉforeignˉsignature = 15;
+    Unknownˉplatform = 16;
+    Duplicateˉplatform = 17;
 }
 
 export enum Compilerˉsourceˉprofile {
@@ -139,6 +141,44 @@ export record Compilerˉsourceˉforeignˉevidence {
     Abiˉlength: u32;
     Symbolˉoffset: u32;
     Symbolˉlength: u32;
+}
+
+// The module-header parser owns the only platform-list grammar. The finite mask
+// is evidence for target admission; offsets remain source-relative.
+export record Compilerˉsourceˉplatformˉscope {
+    Ordinal: u32;
+    Mask: u32;
+    Offset: u32;
+    Length: u32;
+    Line: u32;
+    Column: u32;
+}
+
+export record Compilerˉsourceˉplatformˉevidence {
+    Status: Compilerˉparseˉstatus;
+    Lexicalˉstatus: Sourceˉlexer.Compilerˉlexˉstatus;
+    Scopeˉmask: u32;
+    Declaredˉscopes: u32;
+    Unknownˉscopes: u32;
+    Duplicateˉscopes: u32;
+    Failureˉordinal: u32;
+    Failureˉlength: u32;
+    Firstˉscope: Compilerˉsourceˉplatformˉscope;
+    Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope;
+    Concreteˉscope: Compilerˉsourceˉplatformˉscope;
+    Nextˉoffset: u32;
+    Nextˉline: u32;
+    Nextˉcolumn: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Expected: Sourceˉlexer.Compilerˉtokenˉkind;
+    Found: Sourceˉlexer.Compilerˉtokenˉkind;
+}
+
+record Compilerˉsourceˉmetadataˉprefix {
+    Header: Compilerˉsourceˉheader;
+    Platforms: Compilerˉsourceˉplatformˉevidence;
 }
 
 export record Compilerˉsourceˉvariantˉfield {
@@ -3666,29 +3706,308 @@ export fn Compilerˉparseˉfunctionˉdeclaration(
     return Declaration;
 }
 
-export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
+fn Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+    Step: Compilerˉparseˉstep,
+    Scopeˉmask: u32,
+    Declaredˉscopes: u32,
+    Unknownˉscopes: u32,
+    Duplicateˉscopes: u32,
+    Failureˉordinal: u32,
+    Failureˉlength: u32,
+    Firstˉscope: Compilerˉsourceˉplatformˉscope,
+    Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope,
+    Concreteˉscope: Compilerˉsourceˉplatformˉscope
+) -> Compilerˉsourceˉplatformˉevidence {
+    return Compilerˉsourceˉplatformˉevidence(
+        Step.Status,
+        Step.Lexicalˉstatus,
+        Scopeˉmask,
+        Declaredˉscopes,
+        Unknownˉscopes,
+        Duplicateˉscopes,
+        Failureˉordinal,
+        Failureˉlength,
+        Firstˉscope,
+        Firstˉnonconcreteˉscope,
+        Concreteˉscope,
+        Step.Nextˉoffset,
+        Step.Nextˉline,
+        Step.Nextˉcolumn,
+        Step.Failureˉoffset,
+        Step.Failureˉline,
+        Step.Failureˉcolumn,
+        Step.Expected,
+        Step.Found
+    );
+}
+
+fn Compilerˉsourceˉplatformˉemptyˉscope(
+) -> Compilerˉsourceˉplatformˉscope {
+    return Compilerˉsourceˉplatformˉscope(
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Compilerˉsourceˉplatformˉscopeˉmask(
+    Input: bytes,
+    Offset: u32,
+    Length: u32
+) -> u32 {
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input, Offset, Length, "windows"
+    ) { return 1u32; }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input, Offset, Length, "linux"
+    ) { return 2u32; }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input, Offset, Length, "windvale"
+    ) { return 4u32; }
+    if Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
+        Input, Offset, Length, "linux.x86_64.sysv_amd64_c_v1"
+    ) { return 8u32; }
+    return 0u32;
+}
+
+// This is the single platform-list parser used by both ordinary header
+// validation and target-admission evidence retention.
+export fn Compilerˉparseˉplatformˉlistˉvalidated(
+    Input: bytes,
+    Offset: u32,
+    Line: u32,
+    Column: u32
+) -> Compilerˉsourceˉplatformˉevidence {
+    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
+        Compilerˉsourceˉplatformˉemptyˉscope();
+    let Afterˉplatform: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, Offset, Line, Column, Sourceˉlexer.Compilerˉtokenˉkind.Platform
+    );
+    if Afterˉplatform.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Afterˉplatform, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+
+    var Cursor: u32 = Afterˉplatform.Nextˉoffset;
+    var Currentˉline: u32 = Afterˉplatform.Nextˉline;
+    var Currentˉcolumn: u32 = Afterˉplatform.Nextˉcolumn;
+    var Scopeˉmask: u32 = 0u32;
+    var Declaredˉscopes: u32 = 0u32;
+    var Unknownˉscopes: u32 = 0u32;
+    var Duplicateˉscopes: u32 = 0u32;
+    var Firstˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
+    var Firstˉnonconcreteˉscope: Compilerˉsourceˉplatformˉscope =
+        Emptyˉscope;
+    var Concreteˉscope: Compilerˉsourceˉplatformˉscope = Emptyˉscope;
+    var Reading: bool = true;
+    while Reading {
+        let First: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input, Cursor, Currentˉline, Currentˉcolumn
+            );
+        let Scope: Compilerˉparseˉstep = Compilerˉparseˉqualifiedˉname(
+            Input, Cursor, Currentˉline, Currentˉcolumn, false
+        );
+        if Scope.Status != Compilerˉparseˉstatus.Valid {
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Scope, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes + 1u32,
+                0u32,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        Declaredˉscopes = Declaredˉscopes + 1u32;
+        let Scopeˉlength: u32 = Scope.Nextˉoffset - First.Offset;
+        let Currentˉmask: u32 = Compilerˉsourceˉplatformˉscopeˉmask(
+            Input, First.Offset, Scopeˉlength
+        );
+        let Currentˉscope: Compilerˉsourceˉplatformˉscope =
+            Compilerˉsourceˉplatformˉscope(
+                Declaredˉscopes,
+                Currentˉmask,
+                First.Offset,
+                Scopeˉlength,
+                First.Line,
+                First.Column
+            );
+        if Firstˉscope.Ordinal == 0u32 { Firstˉscope = Currentˉscope; }
+        if Declaredˉscopes > 32u32 {
+            let Limit: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+                Compilerˉparseˉstatus.Itemˉlimit,
+                Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                First.Offset,
+                First.Line,
+                First.Column,
+                Sourceˉlexer.Compilerˉtokenˉkind.Semicolon,
+                First.Kind
+            );
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Limit, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes,
+                Scopeˉlength,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        }
+        if Currentˉmask == 0u32 {
+            Unknownˉscopes = Unknownˉscopes + 1u32;
+            let Unknown: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(
+                Compilerˉparseˉstatus.Unknownˉplatform,
+                Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                First.Offset,
+                First.Line,
+                First.Column,
+                Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                First.Kind
+            );
+            return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                Unknown, Scopeˉmask, Declaredˉscopes,
+                Unknownˉscopes, Duplicateˉscopes,
+                Declaredˉscopes,
+                Scopeˉlength,
+                Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+            );
+        } else {
+            if (Scopeˉmask & Currentˉmask) != 0u32 {
+                Duplicateˉscopes = Duplicateˉscopes + 1u32;
+                let Duplicate: Compilerˉparseˉstep =
+                    Compilerˉparseˉstepˉfailure(
+                        Compilerˉparseˉstatus.Duplicateˉplatform,
+                        Sourceˉlexer.Compilerˉlexˉstatus.Valid,
+                        First.Offset,
+                        First.Line,
+                        First.Column,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Identifier,
+                        First.Kind
+                    );
+                return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                    Duplicate, Scopeˉmask, Declaredˉscopes,
+                    Unknownˉscopes, Duplicateˉscopes,
+                    Declaredˉscopes,
+                    Scopeˉlength,
+                    Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+                );
+            } else {
+                Scopeˉmask = Scopeˉmask | Currentˉmask;
+                if Currentˉmask == 8u32 {
+                    Concreteˉscope = Currentˉscope;
+                } else if Firstˉnonconcreteˉscope.Ordinal == 0u32 {
+                    Firstˉnonconcreteˉscope = Currentˉscope;
+                }
+            }
+        }
+
+        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                Input, Scope.Nextˉoffset, Scope.Nextˉline, Scope.Nextˉcolumn
+            );
+        if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
+            Cursor = Separator.Nextˉoffset;
+            Currentˉline = Separator.Nextˉline;
+            Currentˉcolumn = Separator.Nextˉcolumn;
+        } else {
+            if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
+                let Badˉseparator: Compilerˉparseˉstep =
+                    Compilerˉparseˉstepˉfromˉtoken(
+                        Compilerˉparseˉstatus.Expectedˉtoken,
+                        Separator,
+                        Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+                    );
+                return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+                    Badˉseparator, Scopeˉmask, Declaredˉscopes,
+                    Unknownˉscopes, Duplicateˉscopes,
+                    Declaredˉscopes,
+                    Separator.Length,
+                    Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+                );
+            }
+            Cursor = Separator.Nextˉoffset;
+            Currentˉline = Separator.Nextˉline;
+            Currentˉcolumn = Separator.Nextˉcolumn;
+            Reading = false;
+        }
+    }
+    let Complete: Compilerˉparseˉstep = Compilerˉparseˉstepˉvalid(
+        Cursor,
+        Currentˉline,
+        Currentˉcolumn,
+        Compilerˉsourceˉtypeˉkind.Unknown,
+        Declaredˉscopes
+    );
+    return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+        Complete, Scopeˉmask, Declaredˉscopes,
+        Unknownˉscopes, Duplicateˉscopes,
+        0u32,
+        0u32,
+        Firstˉscope, Firstˉnonconcreteˉscope, Concreteˉscope
+    );
+}
+
+fn Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
+    Name: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Step: Compilerˉparseˉstep,
+    Failureˉlength: u32
+) -> Compilerˉsourceˉmetadataˉprefix {
+    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
+        Compilerˉsourceˉplatformˉemptyˉscope();
+    let Platforms: Compilerˉsourceˉplatformˉevidence =
+        Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Step, 0u32, 0u32, 0u32, 0u32, 0u32, Failureˉlength,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    let Header: Compilerˉsourceˉheader = Compilerˉsourceˉheader(
+        Step.Status,
+        Step.Lexicalˉstatus,
+        Compilerˉsourceˉprofile.None,
+        Name.Offset,
+        Name.Length,
+        Step.Nextˉoffset,
+        Step.Nextˉline,
+        Step.Nextˉcolumn,
+        Step.Failureˉoffset,
+        Step.Failureˉline,
+        Step.Failureˉcolumn,
+        Step.Expected,
+        Step.Found
+    );
+    return Compilerˉsourceˉmetadataˉprefix(Header, Platforms);
+}
+
+fn Compilerˉparseˉmetadataˉprefixˉafterˉname(
     Input: bytes,
     Name: Sourceˉlexer.Compilerˉsourceˉtoken,
     Afterˉname: Compilerˉparseˉstep
-) -> Compilerˉsourceˉheader {
+) -> Compilerˉsourceˉmetadataˉprefix {
     let Afterˉmoduleˉend: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-        Input, Afterˉname.Nextˉoffset, Afterˉname.Nextˉline, Afterˉname.Nextˉcolumn,
+        Input,
+        Afterˉname.Nextˉoffset,
+        Afterˉname.Nextˉline,
+        Afterˉname.Nextˉcolumn,
         Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
     );
     if Afterˉmoduleˉend.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉheader(Afterˉmoduleˉend.Status, Afterˉmoduleˉend.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉmoduleˉend.Nextˉoffset, Afterˉmoduleˉend.Nextˉline, Afterˉmoduleˉend.Nextˉcolumn, Afterˉmoduleˉend.Failureˉoffset, Afterˉmoduleˉend.Failureˉline, Afterˉmoduleˉend.Failureˉcolumn, Afterˉmoduleˉend.Expected, Afterˉmoduleˉend.Found);
+        return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
+            Name, Afterˉmoduleˉend, 0u32
+        );
     }
 
     var Cursor: u32 = Afterˉmoduleˉend.Nextˉoffset;
     var Currentˉline: u32 = Afterˉmoduleˉend.Nextˉline;
     var Currentˉcolumn: u32 = Afterˉmoduleˉend.Nextˉcolumn;
-    var Declaredˉprofile: Compilerˉsourceˉprofile = Compilerˉsourceˉprofile.None;
+    var Declaredˉprofile: Compilerˉsourceˉprofile =
+        Compilerˉsourceˉprofile.None;
     let Metadataˉform: Sourceˉlexer.Compilerˉsourceˉtoken =
-        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(Input, Cursor, Currentˉline, Currentˉcolumn);
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input, Cursor, Currentˉline, Currentˉcolumn
+        );
     if Metadataˉform.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Profile {
         let Profileˉtoken: Sourceˉlexer.Compilerˉsourceˉtoken =
             Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-                Input, Metadataˉform.Nextˉoffset, Metadataˉform.Nextˉline, Metadataˉform.Nextˉcolumn
+                Input,
+                Metadataˉform.Nextˉoffset,
+                Metadataˉform.Nextˉline,
+                Metadataˉform.Nextˉcolumn
             );
         if Profileˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Identifier &&
             Sourceˉlexer.Compilerˉsourceˉspanˉequalsˉtext(
@@ -3703,67 +4022,114 @@ export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
             Declaredˉprofile = Compilerˉsourceˉprofile.System;
         }
         if Declaredˉprofile == Compilerˉsourceˉprofile.None {
-            let Badˉprofile: Compilerˉparseˉstep = Compilerˉparseˉstepˉfromˉtoken(
-                Compilerˉparseˉstatus.Invalidˉprofile,
-                Profileˉtoken,
-                Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+            let Badˉprofile: Compilerˉparseˉstep =
+                Compilerˉparseˉstepˉfromˉtoken(
+                    Compilerˉparseˉstatus.Invalidˉprofile,
+                    Profileˉtoken,
+                    Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+                );
+            return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
+                Name, Badˉprofile, Profileˉtoken.Length
             );
-            return Compilerˉsourceˉheader(Badˉprofile.Status, Badˉprofile.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Badˉprofile.Nextˉoffset, Badˉprofile.Nextˉline, Badˉprofile.Nextˉcolumn, Badˉprofile.Failureˉoffset, Badˉprofile.Failureˉline, Badˉprofile.Failureˉcolumn, Badˉprofile.Expected, Badˉprofile.Found);
         }
-        let Afterˉdeclaredˉprofile: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-            Input, Profileˉtoken.Nextˉoffset, Profileˉtoken.Nextˉline, Profileˉtoken.Nextˉcolumn,
-            Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
-        );
+        let Afterˉdeclaredˉprofile: Compilerˉparseˉstep =
+            Compilerˉparseˉconsume(
+                Input,
+                Profileˉtoken.Nextˉoffset,
+                Profileˉtoken.Nextˉline,
+                Profileˉtoken.Nextˉcolumn,
+                Sourceˉlexer.Compilerˉtokenˉkind.Semicolon
+            );
         if Afterˉdeclaredˉprofile.Status != Compilerˉparseˉstatus.Valid {
-            return Compilerˉsourceˉheader(Afterˉdeclaredˉprofile.Status, Afterˉdeclaredˉprofile.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉdeclaredˉprofile.Nextˉoffset, Afterˉdeclaredˉprofile.Nextˉline, Afterˉdeclaredˉprofile.Nextˉcolumn, Afterˉdeclaredˉprofile.Failureˉoffset, Afterˉdeclaredˉprofile.Failureˉline, Afterˉdeclaredˉprofile.Failureˉcolumn, Afterˉdeclaredˉprofile.Expected, Afterˉdeclaredˉprofile.Found);
+            return Compilerˉsourceˉmetadataˉprefixˉfromˉstep(
+                Name, Afterˉdeclaredˉprofile, 0u32
+            );
         }
         Cursor = Afterˉdeclaredˉprofile.Nextˉoffset;
         Currentˉline = Afterˉdeclaredˉprofile.Nextˉline;
         Currentˉcolumn = Afterˉdeclaredˉprofile.Nextˉcolumn;
     }
-    let Afterˉplatform: Compilerˉparseˉstep = Compilerˉparseˉconsume(
-        Input, Cursor, Currentˉline, Currentˉcolumn,
-        Sourceˉlexer.Compilerˉtokenˉkind.Platform
+
+    let Platforms: Compilerˉsourceˉplatformˉevidence =
+        Compilerˉparseˉplatformˉlistˉvalidated(
+            Input, Cursor, Currentˉline, Currentˉcolumn
+        );
+    let Header: Compilerˉsourceˉheader = Compilerˉsourceˉheader(
+        Platforms.Status,
+        Platforms.Lexicalˉstatus,
+        Declaredˉprofile,
+        Name.Offset,
+        Name.Length,
+        Platforms.Nextˉoffset,
+        Platforms.Nextˉline,
+        Platforms.Nextˉcolumn,
+        Platforms.Failureˉoffset,
+        Platforms.Failureˉline,
+        Platforms.Failureˉcolumn,
+        Platforms.Expected,
+        Platforms.Found
     );
-    if Afterˉplatform.Status != Compilerˉparseˉstatus.Valid {
-        return Compilerˉsourceˉheader(Afterˉplatform.Status, Afterˉplatform.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Afterˉplatform.Nextˉoffset, Afterˉplatform.Nextˉline, Afterˉplatform.Nextˉcolumn, Afterˉplatform.Failureˉoffset, Afterˉplatform.Failureˉline, Afterˉplatform.Failureˉcolumn, Afterˉplatform.Expected, Afterˉplatform.Found);
+    return Compilerˉsourceˉmetadataˉprefix(Header, Platforms);
+}
+
+export fn Compilerˉparseˉmetadataˉplatformˉevidenceˉvalidated(
+    Input: bytes
+) -> Compilerˉsourceˉplatformˉevidence {
+    let Emptyˉscope: Compilerˉsourceˉplatformˉscope =
+        Compilerˉsourceˉplatformˉemptyˉscope();
+    let Afterˉmodule: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input, 0u32, 1u32, 1u32, Sourceˉlexer.Compilerˉtokenˉkind.Module
+    );
+    if Afterˉmodule.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Afterˉmodule, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+    let Name: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            Input,
+            Afterˉmodule.Nextˉoffset,
+            Afterˉmodule.Nextˉline,
+            Afterˉmodule.Nextˉcolumn
+        );
+    let Afterˉname: Compilerˉparseˉstep = Compilerˉparseˉconsume(
+        Input,
+        Afterˉmodule.Nextˉoffset,
+        Afterˉmodule.Nextˉline,
+        Afterˉmodule.Nextˉcolumn,
+        Sourceˉlexer.Compilerˉtokenˉkind.Identifier
+    );
+    if Afterˉname.Status != Compilerˉparseˉstatus.Valid {
+        return Compilerˉsourceˉplatformˉevidenceˉfromˉstep(
+            Afterˉname, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            Emptyˉscope, Emptyˉscope, Emptyˉscope
+        );
+    }
+    let Prefix: Compilerˉsourceˉmetadataˉprefix =
+        Compilerˉparseˉmetadataˉprefixˉafterˉname(
+            Input, Name, Afterˉname
+        );
+    return Prefix.Platforms;
+}
+
+export fn Compilerˉparseˉmetadataˉheaderˉafterˉname(
+    Input: bytes,
+    Name: Sourceˉlexer.Compilerˉsourceˉtoken,
+    Afterˉname: Compilerˉparseˉstep
+) -> Compilerˉsourceˉheader {
+    let Prefix: Compilerˉsourceˉmetadataˉprefix =
+        Compilerˉparseˉmetadataˉprefixˉafterˉname(
+            Input, Name, Afterˉname
+        );
+    if Prefix.Header.Status != Compilerˉparseˉstatus.Valid {
+        return Prefix.Header;
     }
 
-    Cursor = Afterˉplatform.Nextˉoffset;
-    Currentˉline = Afterˉplatform.Nextˉline;
-    Currentˉcolumn = Afterˉplatform.Nextˉcolumn;
-    var Platforms: u32 = 0u32;
-    var Readingˉplatforms: bool = true;
-    while Readingˉplatforms {
-        let Scope: Compilerˉparseˉstep = Compilerˉparseˉqualifiedˉname(
-            Input, Cursor, Currentˉline, Currentˉcolumn, false
-        );
-        if Scope.Status != Compilerˉparseˉstatus.Valid {
-            return Compilerˉsourceˉheader(Scope.Status, Scope.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Scope.Nextˉoffset, Scope.Nextˉline, Scope.Nextˉcolumn, Scope.Failureˉoffset, Scope.Failureˉline, Scope.Failureˉcolumn, Scope.Expected, Scope.Found);
-        }
-        Platforms = Platforms + 1u32;
-        if Platforms > 32u32 {
-            let Limit: Compilerˉparseˉstep = Compilerˉparseˉstepˉfailure(Compilerˉparseˉstatus.Itemˉlimit, Sourceˉlexer.Compilerˉlexˉstatus.Valid, Scope.Nextˉoffset, Scope.Nextˉline, Scope.Nextˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Semicolon, Sourceˉlexer.Compilerˉtokenˉkind.Identifier);
-            return Compilerˉsourceˉheader(Limit.Status, Limit.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Limit.Nextˉoffset, Limit.Nextˉline, Limit.Nextˉcolumn, Limit.Failureˉoffset, Limit.Failureˉline, Limit.Failureˉcolumn, Limit.Expected, Limit.Found);
-        }
-        let Separator: Sourceˉlexer.Compilerˉsourceˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
-            Input, Scope.Nextˉoffset, Scope.Nextˉline, Scope.Nextˉcolumn
-        );
-        if Separator.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Comma {
-            Cursor = Separator.Nextˉoffset;
-            Currentˉline = Separator.Nextˉline;
-            Currentˉcolumn = Separator.Nextˉcolumn;
-        } else {
-            if Separator.Kind != Sourceˉlexer.Compilerˉtokenˉkind.Semicolon {
-                let Badˉseparator: Compilerˉparseˉstep = Compilerˉparseˉstepˉfromˉtoken(Compilerˉparseˉstatus.Expectedˉtoken, Separator, Sourceˉlexer.Compilerˉtokenˉkind.Semicolon);
-                return Compilerˉsourceˉheader(Badˉseparator.Status, Badˉseparator.Lexicalˉstatus, Compilerˉsourceˉprofile.None, Name.Offset, Name.Length, Badˉseparator.Nextˉoffset, Badˉseparator.Nextˉline, Badˉseparator.Nextˉcolumn, Badˉseparator.Failureˉoffset, Badˉseparator.Failureˉline, Badˉseparator.Failureˉcolumn, Badˉseparator.Expected, Badˉseparator.Found);
-            }
-            Cursor = Separator.Nextˉoffset;
-            Currentˉline = Separator.Nextˉline;
-            Currentˉcolumn = Separator.Nextˉcolumn;
-            Readingˉplatforms = false;
-        }
-    }
+    var Cursor: u32 = Prefix.Header.Nextˉoffset;
+    var Currentˉline: u32 = Prefix.Header.Nextˉline;
+    var Currentˉcolumn: u32 = Prefix.Header.Nextˉcolumn;
+    let Declaredˉprofile: Compilerˉsourceˉprofile = Prefix.Header.Profile;
 
     let Afterˉauthority: Compilerˉparseˉstep = Compilerˉparseˉconsume(
         Input, Cursor, Currentˉline, Currentˉcolumn, Sourceˉlexer.Compilerˉtokenˉkind.Authority

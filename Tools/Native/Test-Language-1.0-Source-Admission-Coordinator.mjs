@@ -13,15 +13,16 @@ import { fileURLToPath } from 'node:url';
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 65_536;
+const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
 const TASKKILL_TIMEOUT_MILLISECONDS = 2_000;
 const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const ACQUISITION_TIMEOUT_MILLISECONDS = 1_200_000;
 const CASE_TIMEOUT_MILLISECONDS = 120_000;
-const EXPECTED_WVB_BYTES = 510_644;
+const EXPECTED_WVB_BYTES = 623_826;
 const EXPECTED_WVB_SHA256 =
-    'ef8c089b0bc1369f960c889e5d3276bfc7aa43e0584d2ec0664049669d15cf28';
-const SELECTORS = [...'abcdefghijklmnopqrstuvwxy'];
+    '0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188';
+const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzAB'];
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 
@@ -92,14 +93,20 @@ async function Terminateˉprocessˉtree(Child) {
     return Diagnostic;
 }
 
-function Runˉcommand(Tool, Argumentsˉvalue, Timeout, Relayˉoutput = false) {
+function Runˉcommand(
+    Tool,
+    Argumentsˉvalue,
+    Timeout,
+    Relayˉoutput = false,
+    Activity = 'command'
+) {
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
         const Isˉcommand = WINDOWS && Tool.toLowerCase().endsWith('.cmd');
         if (Isˉcommand && [Tool, ...Argumentsˉvalue].some(
             Argument => /[\r\n&|<>^%!"]/u.test(Argument)
         )) {
             Rejectˉpromise(new Error(
-                'A Windows producer-owner argument contains shell metacharacters.'
+                'A Windows coordinator-owner argument contains shell metacharacters.'
             ));
             return;
         }
@@ -122,6 +129,13 @@ function Runˉcommand(Tool, Argumentsˉvalue, Timeout, Relayˉoutput = false) {
             windowsHide: true,
             windowsVerbatimArguments: Isˉcommand,
         });
+        const Heartbeat = setInterval(() => {
+            process.stdout.write(
+                `INFO  language 1 source admission coordinator active ` +
+                `step=${Activity} elapsed-ms=${Date.now() - Started}\n`
+            );
+        }, HEARTBEAT_INTERVAL_MILLISECONDS);
+        Heartbeat.unref();
         const Output = [];
         const Errorˉoutput = [];
         var Outputˉbytes = 0;
@@ -151,6 +165,7 @@ function Runˉcommand(Tool, Argumentsˉvalue, Timeout, Relayˉoutput = false) {
             if (Settled) return;
             Settled = true;
             clearTimeout(Timer);
+            clearInterval(Heartbeat);
             if (Settleˉtimer !== undefined) clearTimeout(Settleˉtimer);
             Resolveˉresult(Result(Code, Forced));
         }
@@ -219,6 +234,7 @@ function Runˉcommand(Tool, Argumentsˉvalue, Timeout, Relayˉoutput = false) {
             if (Settled) return;
             Settled = true;
             clearTimeout(Timer);
+            clearInterval(Heartbeat);
             if (Settleˉtimer !== undefined) clearTimeout(Settleˉtimer);
             Rejectˉpromise(Errorˉvalue);
         });
@@ -243,7 +259,7 @@ async function Requireˉcommand(
     Relayˉoutput = false
 ) {
     const Result = await Runˉcommand(
-        Tool, Argumentsˉvalue, Timeout, Relayˉoutput
+        Tool, Argumentsˉvalue, Timeout, Relayˉoutput, Label
     );
     if (Result.Cleanupˉfailure !== null) {
         Reject(`${Label} cleanup failed: ${Result.Cleanupˉfailure}.`);
@@ -290,24 +306,26 @@ async function Runˉcase(Application, Selector, Index) {
     const Result = await Runˉcommand(
         Application,
         [Selector],
-        CASE_TIMEOUT_MILLISECONDS
+        CASE_TIMEOUT_MILLISECONDS,
+        false,
+        `execute-${Index}-selector-${Selector}`
     );
     if (Result.Cleanupˉfailure !== null) {
         Reject(
-            `Producer case ${Index} cleanup failed: ` +
+            `Coordinator case ${Index} cleanup failed: ` +
             `${Result.Cleanupˉfailure}.`
         );
     }
-    if (Result.Timedˉout) Reject(`Producer case ${Index} timed out.`);
-    if (Result.Exceeded) Reject(`Producer case ${Index} exceeded output bounds.`);
+    if (Result.Timedˉout) Reject(`Coordinator case ${Index} timed out.`);
+    if (Result.Exceeded) Reject(`Coordinator case ${Index} exceeded output bounds.`);
     if (Result.Output.length !== 0 || Result.Error.length !== 0) {
         Reject(
-            `Producer case ${Index} wrote output.\n` +
+            `Coordinator case ${Index} wrote output.\n` +
             Result.Output.toString('utf8') + Result.Error.toString('utf8')
         );
     }
     if (Result.Code !== 42) {
-        Reject(`Producer case ${Index} returned ${Result.Code}.`);
+        Reject(`Coordinator case ${Index} returned ${Result.Code}.`);
     }
     return Result.Elapsed;
 }
@@ -315,8 +333,12 @@ async function Runˉcase(Application, Selector, Index) {
 async function Removeˉwork(Work, Temporaryˉroot) {
     const Realˉroot = await realpath(Temporaryˉroot);
     const Realˉparent = await realpath(dirname(Work));
+    const Information = await lstat(Work);
+    const Realˉwork = await realpath(Work);
     if (Realˉparent !== Realˉroot ||
-        !basename(Work).startsWith('windvale-foreign-catalog-producer-')) {
+        !Information.isDirectory() || Information.isSymbolicLink() ||
+        Realˉwork !== resolve(Work) ||
+        !basename(Work).startsWith('windvale-source-admission-coordinator-')) {
         Reject(`Refusing to remove unexpected temporary path: ${Work}`);
     }
     await rm(Work, { recursive: true, force: false, maxRetries: 2 });
@@ -371,7 +393,7 @@ async function Runˉterminationˉprobe() {
         Reject(`The termination probe left its descendant running.`);
     }
     process.stdout.write(
-        `producer owner process termination probe status=Passed ` +
+        `source admission coordinator process termination probe status=Passed ` +
         `elapsed-ms=${Result.Elapsed}\n`
     );
 }
@@ -380,21 +402,20 @@ async function Main() {
     const Probeˉonly = process.argv.length === 3 &&
         process.argv[2] === '--termination-probe';
     if (!Probeˉonly && process.argv.length !== 2) {
-        Reject('The producer owner accepts no arguments.');
+        Reject('The source-admission coordinator owner accepts no arguments.');
     }
     await Runˉterminationˉprobe();
     if (Probeˉonly) return;
 
-    const Maximumˉcount = 43_690n;
-    const Maximumˉlength = 48n + 96n * Maximumˉcount;
-    if (Maximumˉlength !== 4_194_288n || Maximumˉlength > 4_194_304n) {
-        Reject('The independent producer count/length boundary is invalid.');
+    if (SELECTORS.length !== 28 ||
+        new Set(SELECTORS).size !== SELECTORS.length) {
+        Reject('The source-admission selector inventory is invalid.');
     }
 
     const Temporaryˉroot = resolve(tmpdir());
     const Work = await mkdtemp(join(
         Temporaryˉroot,
-        'windvale-foreign-catalog-producer-'
+        'windvale-source-admission-coordinator-'
     ));
     var Passed = false;
     try {
@@ -409,51 +430,51 @@ async function Main() {
         const Project = join(
             REPOSITORY_ROOT,
             'Projects', 'Tests',
-            'Windvale-Native-Test-Language-1-Foreign-Catalog-Producer.wvproj'
+            'Windvale-Native-Test-Language-1-Source-Admission-Coordinator.wvproj'
         );
-        const First = join(Work, 'Producer-A.wvb');
-        const Second = join(Work, 'Producer-B.wvb');
-        const Application = join(Work, `Producer${Executableˉsuffix}`);
+        const First = join(Work, 'Coordinator-A.wvb');
+        const Second = join(Work, 'Coordinator-B.wvb');
+        const Application = join(Work, `Coordinator${Executableˉsuffix}`);
 
         process.stdout.write(
-            'START language 1 foreign catalog producer phase=build item=1/2\n'
+            'START language 1 source admission coordinator phase=build item=1/2\n'
         );
         const Firstˉbuild = await Requireˉcommand(
-            'First producer build',
+            'first coordinator build',
             Build,
             [Project, First],
             BUILD_TIMEOUT_MILLISECONDS
         );
         process.stdout.write(
-            `PASS  language 1 foreign catalog producer phase=build item=1/2 ` +
+            `PASS  language 1 source admission coordinator phase=build item=1/2 ` +
             `elapsed-ms=${Firstˉbuild.Elapsed}\n`
         );
         process.stdout.write(
-            'START language 1 foreign catalog producer phase=build item=2/2\n'
+            'START language 1 source admission coordinator phase=build item=2/2\n'
         );
         const Secondˉbuild = await Requireˉcommand(
-            'Second producer build',
+            'second coordinator build',
             Build,
             [Project, Second],
             BUILD_TIMEOUT_MILLISECONDS
         );
-        const Firstˉidentity = await Fileˉidentity(First, 'first producer WVB');
-        const Secondˉidentity = await Fileˉidentity(Second, 'second producer WVB');
-        Requireˉexpectedˉwvb(Firstˉidentity, 'first producer WVB');
-        Requireˉexpectedˉwvb(Secondˉidentity, 'second producer WVB');
+        const Firstˉidentity = await Fileˉidentity(First, 'first coordinator WVB');
+        const Secondˉidentity = await Fileˉidentity(Second, 'second coordinator WVB');
+        Requireˉexpectedˉwvb(Firstˉidentity, 'first coordinator WVB');
+        Requireˉexpectedˉwvb(Secondˉidentity, 'second coordinator WVB');
         if (!Firstˉidentity.value.equals(Secondˉidentity.value)) {
-            Reject('The two producer WVB builds are not byte-identical.');
+            Reject('The two coordinator WVB builds are not byte-identical.');
         }
         process.stdout.write(
-            `PASS  language 1 foreign catalog producer phase=build item=2/2 ` +
+            `PASS  language 1 source admission coordinator phase=build item=2/2 ` +
             `elapsed-ms=${Secondˉbuild.Elapsed} deterministic=Verified\n`
         );
 
         process.stdout.write(
-            'START language 1 foreign catalog producer phase=acquire item=1/1\n'
+            'START language 1 source admission coordinator phase=acquire item=1/1\n'
         );
         const Acquisition = await Requireˉcommand(
-            'Cached segmented hosted producer acquisition',
+            'cached segmented hosted coordinator acquisition',
             Acquire,
             ['7', First, Application],
             ACQUISITION_TIMEOUT_MILLISECONDS,
@@ -470,41 +491,35 @@ async function Main() {
         const Expectedˉhost = `${Target}-x64`;
         if (Acquisitionˉmatch === null || Acquisitionˉmatch[3] !== Expectedˉhost ||
             Acquisitionˉmatch[4] !== Target) {
-            Reject(`The producer acquisition report differs: ${Acquisitionˉreport}`);
+            Reject(`The coordinator acquisition report differs: ${Acquisitionˉreport}`);
         }
         const Applicationˉidentity = await Fileˉidentity(
             Application,
-            'producer application'
+            'coordinator application'
         );
         process.stdout.write(
-            `PASS  language 1 foreign catalog producer phase=acquire item=1/1 ` +
+            `PASS  language 1 source admission coordinator phase=acquire item=1/1 ` +
             `elapsed-ms=${Acquisition.Elapsed} cache=${Acquisitionˉmatch[1]} ` +
             `application-bytes=${Applicationˉidentity.bytes} ` +
             `application-sha256=${Applicationˉidentity.sha256}\n`
         );
 
-        var Accumulatorˉelapsed = 0;
         for (var Index = 0; Index < SELECTORS.length; Index += 1) {
             const Selector = SELECTORS[Index];
             process.stdout.write(
-                `START language 1 foreign catalog producer phase=execute ` +
-                `item=${Index + 1}/25 selector=${Selector}\n`
+                `START language 1 source admission coordinator phase=execute ` +
+                `item=${Index + 1}/28 selector=${Selector}\n`
             );
             const Elapsed = await Runˉcase(
                 Application,
                 Selector,
                 Index + 1
             );
-            if (Selector === 'y') Accumulatorˉelapsed = Elapsed;
             process.stdout.write(
-                `PASS  language 1 foreign catalog producer phase=execute ` +
-                `item=${Index + 1}/25 selector=${Selector} elapsed-ms=${Elapsed}\n`
+                `PASS  language 1 source admission coordinator phase=execute ` +
+                `item=${Index + 1}/28 selector=${Selector} elapsed-ms=${Elapsed}\n`
             );
         }
-        process.stdout.write(
-            `INFO  language 1 foreign catalog producer accumulator-records=683 ` +
-            `elapsed-ms=${Accumulatorˉelapsed}\n`
-        );
         Passed = true;
     } finally {
         await Removeˉwork(Work, Temporaryˉroot);
@@ -512,10 +527,12 @@ async function Main() {
 
     if (Passed) {
         process.stdout.write(
-            'native language 1 foreign catalog producer status=Passed cases=25 ' +
-            'result=42 deterministic=Verified complete-verifier=Passed ' +
-            'accumulator-records=683 wvb-bytes=510644 ' +
-            'sha256=ef8c089b0bc1369f960c889e5d3276bfc7aa43e0584d2ec0664049669d15cf28\n'
+            'native language 1 source admission coordinator status=Passed ' +
+            'cases=28 result=42 deterministic=Verified ' +
+            'four-value-output=Verified empty-on-failure=Verified ' +
+            'execution=native-cached-profile-7 isolated-executions=28 ' +
+            'wvb-bytes=623826 ' +
+            'sha256=0c3304cb297c86e09c2314c8b2aaac5649ba372ab19f3f4a090d6c06b3a58188\n'
         );
     }
 }

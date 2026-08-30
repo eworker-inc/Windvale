@@ -75,6 +75,12 @@ export record Compilerˉsourceˉtargetˉwvtdˉresult {
     Value: bytes;
 }
 
+export record Compilerˉsourceˉtargetˉdescriptorˉresult {
+    Status: u32;
+    Failureˉoffset: u32;
+    Value: Compilerˉsourceˉtargetˉdescriptor;
+}
+
 // Parser evidence is finite: four recognized identities, a declared total, and the
 // source slice for the selected concrete identity. Consumers authenticate that slice.
 export record Compilerˉsourceˉtargetˉplatformˉsetˉevidence {
@@ -531,7 +537,7 @@ export fn Compilerˉsourceˉtargetˉwvtdˉvalidateˉstructure(
     return Compilerˉsourceˉtargetˉwvtdˉsuccess(Input);
 }
 
-fn Compilerˉsourceˉtargetˉwvtdˉdescriptor(
+fn Compilerˉsourceˉtargetˉwvtdˉdescriptorˉunchecked(
     Input: bytes
 ) -> Compilerˉsourceˉtargetˉdescriptor {
     return Compilerˉsourceˉtargetˉdescriptor(
@@ -554,7 +560,7 @@ export fn Compilerˉsourceˉtargetˉwvtdˉvalidate(
         return Structure;
     }
     let Target: Compilerˉsourceˉtargetˉdescriptor =
-        Compilerˉsourceˉtargetˉwvtdˉdescriptor(Input);
+        Compilerˉsourceˉtargetˉwvtdˉdescriptorˉunchecked(Input);
     let Unknownˉdescriptor: u32 =
         Compilerˉsourceˉtargetˉdescriptorˉunknownˉoffset(Target);
     if Unknownˉdescriptor != 0u32 {
@@ -607,6 +613,27 @@ export fn Compilerˉsourceˉtargetˉwvtdˉvalidate(
         }
     }
     return Compilerˉsourceˉtargetˉwvtdˉsuccess(Input);
+}
+
+export fn Compilerˉsourceˉtargetˉwvtdˉdescriptor(
+    Input: bytes
+) -> Compilerˉsourceˉtargetˉdescriptorˉresult {
+    let Validated: Compilerˉsourceˉtargetˉwvtdˉresult =
+        Compilerˉsourceˉtargetˉwvtdˉvalidate(Input);
+    if Validated.Status != COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Compilerˉsourceˉtargetˉdescriptorˉresult(
+            Validated.Status,
+            Validated.Failureˉoffset,
+            Compilerˉsourceˉtargetˉdescriptor(
+                0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32
+            )
+        );
+    }
+    return Compilerˉsourceˉtargetˉdescriptorˉresult(
+        COMPILER_SOURCE_TARGET_STATUS_VALID,
+        0u32,
+        Compilerˉsourceˉtargetˉwvtdˉdescriptorˉunchecked(Input)
+    );
 }
 
 fn Compilerˉsourceˉtargetˉknownˉplatforms(Scopeˉmask: u32) -> u32 {

@@ -189,9 +189,24 @@ The canonical WVFC format and producer retain separate focused owners. A change
 to their shared foreign-catalog contract selects both; producer source, project,
 fixture, owner, or Decision 0888 selects
 `language-1-foreign-catalog-producer`. That owner builds its candidate twice,
-complete-verifies the immutable WVB, acquires one content-addressed segmented
-profile-7 application, and executes all 25 selectors directly. It does not use
-the scalar interpreter or a generic bounded-case runner.
+through the current reconstructed compiler, complete-verifies the immutable
+WVB, acquires one content-addressed segmented profile-7 application, and
+executes all 25 selectors directly. A change to `Build-Current-Wvb` selects
+both this producer and the source-admission coordinator because both consume
+that forward-language build boundary. The producer does not use the scalar
+interpreter or a generic bounded-case runner.
+
+The authenticated source-admission coordinator has its own focused
+`language-1-source-admission-coordinator` owner. Direct coordinator or target-
+admission source, project, fixture, and owner changes select it; changes to its
+profile, descriptor, target, catalog, admission-evidence, SHA-256, or segmented-
+hosted dependencies select it alongside the narrower owner of that dependency.
+The owner uses the current reconstructed compiler to build the candidate twice,
+requires byte identity and one pinned WVB identity, acquires a bounded native
+profile-7 application, and executes all 28 live selector branches independently.
+Those branches prove deterministic `WVSS`, `WVTD`, `WVFC`, and `WVAE` output on
+success and empty publication of all four values on failure. This owner does not
+claim a filesystem `wvadmit` or `wvauth` product.
 
 The `os-x64-code-emission` development lane reads the canonical version-2,
 56-target manifest. Each row owns its project closure, artifact stem, expected

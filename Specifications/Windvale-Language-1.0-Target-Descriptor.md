@@ -8,12 +8,13 @@ checkpoint accepted by [Decision 0886](../Documents/Decisions/0886-Make-Target-A
 canonical constructor, structural validator, semantic validator, and source
 platform predicates.
 
-This checkpoint does not yet add the WVTD input/output paths to `wvadmit`, make
-target admission the release front door, or implement `WVFC`, `WVAE`, Analyzer
-authentication, foreign-call semantics, WVB imports, native thunks, linker
-imports, or provider containment. It is an internal compiler-phase format, not
-a package or distribution format. Canonical WVB remains the distribution
-contract.
+The portable authenticated source-admission coordinator now carries exact WVTD
+input/output through in-memory `wvadmit` construction and enforces target and
+foreign predicates before WVAE construction. A hosted file-system front door,
+Analyzer authentication, foreign-call WIR/WVB and native lowering, linker
+imports, and provider containment remain pending. WVTD is an internal
+compiler-phase format, not a package or distribution format. Canonical WVB
+remains the distribution contract.
 
 ## Encoding and limits
 
@@ -114,6 +115,23 @@ The known mask is exactly `15`. A source platform list contains at most 32
 declared alternatives, rejects unknown or duplicate evidence, and admits when
 at least one registered predicate matches. The concrete foreign declaration
 requires predicate identity 4 alone; generic `linux` is insufficient.
+
+The exact predicate must be the only alternative for a module with foreign
+declarations. A list containing generic `linux` and the exact ABI predicate is
+broader than the foreign contract and rejects with
+`FOREIGN_REQUIRES_CONCRETE_PLATFORM`; it is not normalized to the exact member.
+Unknown spelling retains parser status `Unknownˉplatform` and maps to target
+status `UNKNOWN_PLATFORM`.
+
+Durable foreign-catalog readback reproduces canonical source-ordered WVFC from
+admitted WVSS before reporting target success. Stable retained geometry is
+12,583,216 bytes: supplied WVFC retains the general 4,194,304-byte format
+ceiling and reproduced canonical WVFC is at most 4,194,288 bytes. Conservative
+simultaneously-live large immutable payload retention is 16,777,456 bytes
+including the bounded 4,194,240-byte record accumulator. This is not a process
+working-set bound; comparison is one bounded linear scan. Producer failures
+collapse to outer target-admission status `WVFC` while preserving subordinate
+source-set, parser, catalog, module, and offset evidence.
 
 ## Construction
 

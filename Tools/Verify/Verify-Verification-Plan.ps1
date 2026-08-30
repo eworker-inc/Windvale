@@ -273,7 +273,8 @@ $NativeCases = @(
         Suites = @(
             'language-1-front-door',
             'language-1-admission-evidence-format',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -528,7 +529,80 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Admission-Evidence-Format.sh',
             'Tools/Windvale.Build/Compiler-Admission-Evidence-Validator-Driver.wv'
         )
-        Suites = @('language-1-admission-evidence-format')
+        Suites = @(
+            'language-1-admission-evidence-format',
+            'language-1-source-admission-coordinator'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 admission validator decision routing'
+        Paths = @(
+            'Documents/Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md'
+        )
+        Suites = @(
+            'language-1-admission-evidence-format',
+            'language-1-source-admission-coordinator'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign catalog producer decision routing'
+        Paths = @(
+            'Documents/Decisions/0888-Publish-The-Canonical-WVFC-Producer.md'
+        )
+        Suites = @(
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 source admission coordinator decision routing'
+        Paths = @(
+            'Documents/Decisions/0892-Coordinate-Authenticated-Source-Admission.md'
+        )
+        Suites = @('language-1-source-admission-coordinator')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 source admission coordinator routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Admission-Coordinator-Core.wv',
+            'Compiler/Windvale/Source-Target-Admission-Core.wv',
+            'Documents/Decisions/0892-Coordinate-Authenticated-Source-Admission.md',
+            'Projects/Compiler/Windvale-Source-Admission-Coordinator-Core.wvproj',
+            'Projects/Compiler/Windvale-Source-Target-Admission-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Source-Admission-Coordinator.wvproj',
+            'Tests/Fixtures/Language-1.0/Source-Admission-Coordinator-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.cmd',
+            'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.mjs',
+            'Tools/Native/Test-Language-1.0-Source-Admission-Coordinator.sh'
+        )
+        Suites = @('language-1-source-admission-coordinator')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current forward-language WVB builder routing'
+        Paths = @(
+            'Tools/Native/Build-Current-Wvb.cmd',
+            'Tools/Native/Build-Current-Wvb.sh'
+        )
+        Suites = @(
+            'seed',
+            'compiler-reconstruction',
+            'unsafe-wvb',
+            'wvb-containment',
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
+            'libraries',
+            'packages'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -545,6 +619,7 @@ $NativeCases = @(
         Suites = @(
             'language-1-system-ffi-front-end',
             'language-1-admission-evidence-format',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -555,6 +630,7 @@ $NativeCases = @(
         Paths = @('Specifications/Windvale-Language-1.0-Target-Descriptor.md')
         Suites = @(
             'language-1-system-ffi-front-end',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -568,6 +644,7 @@ $NativeCases = @(
         Suites = @(
             'language-1-foreign-catalog-format',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -587,6 +664,7 @@ $NativeCases = @(
             'language-1-foreign-catalog-format',
             'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -604,7 +682,10 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.sh',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
         )
-        Suites = @('language-1-foreign-catalog-producer')
+        Suites = @(
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -702,6 +783,7 @@ $NativeCases = @(
             'language-1-effect-clause-front-end',
             'language-1-system-ffi-front-end',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-callable-semantics'
         )
         Gaps = @()
@@ -731,7 +813,8 @@ $NativeCases = @(
         Suites = @(
             'language-1-front-door',
             'language-1-admission-evidence-format',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -743,6 +826,7 @@ $NativeCases = @(
             'language-1-foreign-catalog-format',
             'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics'
         )
         Gaps = @()
@@ -764,6 +848,7 @@ $NativeCases = @(
             'language-1-effect-clause-front-end',
             'language-1-system-ffi-front-end',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-using-front-end',
             'language-1-callable-semantics'
         )
@@ -778,7 +863,8 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'language-1-foreign-catalog-producer'
+            'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -937,6 +1023,7 @@ $NativeCases = @(
             'language-1-system-ffi-front-end',
             'language-1-system-ffi-unsafe-context',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-using-front-end',
             'language-1-callable-semantics',
             'language-1-memory-budget-split-execution',
@@ -1519,6 +1606,7 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -1615,6 +1703,7 @@ $NativeCases = @(
             'unsafe-wvb',
             'wvb-containment',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'language-1-foreign-memory-semantics',
             'compiler-split-development',
             'console-packager-container-reconstruction',
@@ -1768,6 +1857,7 @@ $NativeCases = @(
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'language-1-foreign-catalog-producer',
+            'language-1-source-admission-coordinator',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit',
@@ -4098,9 +4188,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 123 -or
+if ($VerificationOwnerLines.Count -ne 124 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 122-owner inventory differs.'
+    throw 'The native verification-owner header or exact 123-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -4138,7 +4228,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5850 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5878 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

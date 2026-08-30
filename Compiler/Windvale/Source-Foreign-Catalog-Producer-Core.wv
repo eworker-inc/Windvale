@@ -495,7 +495,7 @@ export fn Compilerˉsourceˉforeignˉcatalogˉproduce(
                     COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DECLARATION,
                     Moduleˉordinal,
                     Declarationˉordinal,
-                    Declaration.Failureˉoffset,
+                    View.Originˉoffset + Declaration.Failureˉoffset,
                     Declaration.Failureˉline,
                     Declaration.Failureˉcolumn,
                     Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
@@ -516,7 +516,7 @@ export fn Compilerˉsourceˉforeignˉcatalogˉproduce(
                             COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_PROFILE,
                             Moduleˉordinal,
                             Declarationˉordinal,
-                            Declaration.Declarationˉoffset,
+                            View.Originˉoffset + Declaration.Declarationˉoffset,
                             Currentˉline,
                             Currentˉcolumn,
                             Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
@@ -531,7 +531,7 @@ export fn Compilerˉsourceˉforeignˉcatalogˉproduce(
                             COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_RESOURCE_LIMIT,
                             Moduleˉordinal,
                             Declarationˉordinal,
-                            Declaration.Declarationˉoffset,
+                            View.Originˉoffset + Declaration.Declarationˉoffset,
                             Currentˉline,
                             Currentˉcolumn,
                             Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
@@ -549,7 +549,37 @@ export fn Compilerˉsourceˉforeignˉcatalogˉproduce(
                         );
                     if Produced.Status !=
                         COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID {
-                        return Produced;
+                        var Failureˉoffset: u32 = Produced.Failureˉoffset;
+                        if Produced.Status ==
+                                COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DECLARATION ||
+                            Produced.Status ==
+                                COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ABI_CONTRACT ||
+                            Produced.Status ==
+                                COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN ||
+                            Produced.Status ==
+                                COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DIGEST {
+                            Failureˉoffset = View.Originˉoffset + Failureˉoffset;
+                        }
+                        if Produced.Status ==
+                            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_CATALOG {
+                            Failureˉoffset =
+                                Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES +
+                                Recordˉcount *
+                                    Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES +
+                                Produced.Failureˉoffset;
+                        }
+                        return Compilerˉsourceˉforeignˉproducerˉfailure(
+                            Input,
+                            Produced.Status,
+                            Produced.Failureˉmodule,
+                            Produced.Failureˉdeclaration,
+                            Failureˉoffset,
+                            Produced.Failureˉline,
+                            Produced.Failureˉcolumn,
+                            Produced.Sourceˉsetˉstatus,
+                            Produced.Parseˉstatus,
+                            Produced.Catalogˉstatus
+                        );
                     }
                     Accumulator = Compilerˉsourceˉforeignˉrecordˉappend(
                         Accumulator, Produced.Value
