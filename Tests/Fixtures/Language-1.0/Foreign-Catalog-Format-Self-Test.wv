@@ -1,0 +1,526 @@
+module Languageˉoneˉforeignˉcatalogˉformatˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Empty() -> bytes {
+    let Seed: bytes = Textˉtoˉutf8("");
+    return Bytesˉslice(Seed, 0u32, 0u32);
+}
+
+fn Digest() -> bytes {
+    return Textˉtoˉutf8("0123456789abcdef0123456789abcdef");
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Left);
+    if Length != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Record(
+    Module: u32,
+    Declaration: u32,
+    Offset: u32,
+    Flags: u32
+) -> Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord {
+    return Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord(
+        Module,
+        Declaration,
+        Flags,
+        Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+        Offset,
+        100u32,
+        Offset + 25u32,
+        10u32,
+        Offset + 4u32,
+        10u32,
+        Offset + 75u32,
+        20u32,
+        Offset + 20u32,
+        50u32,
+        Offset + 50u32,
+        10u32,
+        Digest()
+    );
+}
+
+fn Recordˉbytes(
+    Modules: u32,
+    Module: u32,
+    Declaration: u32,
+    Offset: u32,
+    Flags: u32
+) -> bytes {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(
+            Modules, Record(Module, Declaration, Offset, Flags)
+        );
+    return Result.Value;
+}
+
+fn Canonicalˉrecord() -> bytes {
+    return Recordˉbytes(
+        2u32, 0u32, 3u32, 100u32,
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_UNSAFE
+    );
+}
+
+fn Construct(Modules: u32, Records: bytes) -> Catalog.Compilerˉsourceˉforeignˉcatalogˉresult {
+    return Catalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(
+        Modules, Records
+    );
+}
+
+fn Canonical() -> bytes {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Construct(2u32, Canonicalˉrecord());
+    return Result.Value;
+}
+
+fn Replaceˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffix: bytes = Bytesˉslice(
+        Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32
+    );
+    return Bytesˉconcat(
+        Prefix, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value), Suffix)
+    );
+}
+
+fn Replaceˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    let Prefix: bytes = Bytesˉslice(Input, 0u32, Offset);
+    let Suffix: bytes = Bytesˉslice(
+        Input, Offset + 2u32, Bytesˉlength(Input) - Offset - 2u32
+    );
+    return Bytesˉconcat(
+        Prefix, Bytesˉconcat(Bytesˉfromˉu16ˉlittle(Value), Suffix)
+    );
+}
+
+fn Expectedˉheader(Modules: u32, Count: u32) -> bytes {
+    var Output: bytes = Textˉtoˉutf8("WVFC");
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(1u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu16ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(
+        48u32 + Count * 96u32
+    ));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Count));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(96u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(48u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(Modules));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+    Output = Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Output, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Rejected(Input: bytes, Status: u32, Offset: u32) -> bool {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Input);
+    return Result.Status == Status && Result.Failureˉoffset == Offset &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Constructˉrejected(Records: bytes, Status: u32, Offset: u32) -> bool {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(2u32, Records);
+    return Result.Status == Status && Result.Failureˉoffset == Offset;
+}
+
+fn Caseˉregistry() -> bool {
+    return Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_UNKNOWN == 0u32 &&
+        Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1 == 1u32 &&
+        Catalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(1u32) &&
+        !Catalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(0u32) &&
+        !Catalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(2u32);
+}
+
+fn Caseˉempty() -> bool {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult = Construct(1u32, Empty());
+    let Expected: bytes = Expectedˉheader(1u32, 0u32);
+    let Validated: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Result.Value);
+    return Result.Status == 0u32 && Bytesˉequal(Result.Value, Expected) &&
+        Bytesˉlength(Result.Value) == 48u32 && Validated.Status == 0u32 &&
+        Bytesˉequal(Validated.Value, Result.Value);
+}
+
+fn Caseˉsingle() -> bool {
+    let Recordˉvalue: bytes = Canonicalˉrecord();
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult = Construct(2u32, Recordˉvalue);
+    let Expected: bytes = Bytesˉconcat(Expectedˉheader(2u32, 1u32), Recordˉvalue);
+    let Validated: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Result.Value);
+    return Result.Status == 0u32 && Bytesˉequal(Result.Value, Expected) &&
+        Bytesˉlength(Result.Value) == 144u32 && Validated.Status == 0u32 &&
+        Bytesˉequal(Validated.Value, Result.Value);
+}
+
+fn Caseˉmultipleˉsameˉmodule() -> bool {
+    let First: bytes = Canonicalˉrecord();
+    let Second: bytes = Recordˉbytes(2u32, 0u32, 4u32, 220u32, 1u32);
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Construct(2u32, Bytesˉconcat(First, Second));
+    return Result.Status == 0u32 && Bytesˉlength(Result.Value) == 240u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 12u32) == 2u32;
+}
+
+fn Caseˉmultipleˉmodules() -> bool {
+    let First: bytes = Canonicalˉrecord();
+    let Second: bytes = Recordˉbytes(2u32, 1u32, 0u32, 50u32, 1u32);
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Construct(2u32, Bytesˉconcat(First, Second));
+    return Result.Status == 0u32;
+}
+
+fn Caseˉexport() -> bool {
+    let Value: bytes = Recordˉbytes(2u32, 0u32, 3u32, 100u32, 3u32);
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult = Construct(2u32, Value);
+    return Bytesˉlength(Value) == 96u32 && Result.Status == 0u32;
+}
+
+fn Caseˉeffectˉrequired() -> bool {
+    var Value: bytes = Canonicalˉrecord();
+    Value = Replaceˉu32(Value, 56u32, 0u32);
+    Value = Replaceˉu32(Value, 60u32, 0u32);
+    return Constructˉrejected(
+        Value, Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 104u32
+    );
+}
+
+fn Caseˉrecordˉbytes() -> bool {
+    let Value: bytes = Canonicalˉrecord();
+    return Bytesˉlength(Value) == 96u32 &&
+        Bytesˉreadˉu32ˉlittle(Value, 0u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Value, 12u32) == 1u32 &&
+        Bytesˉequal(Bytesˉslice(Value, 64u32, 32u32), Digest());
+}
+
+fn Caseˉtruncated() -> bool {
+    return Rejected(
+        Bytesˉslice(Canonical(), 0u32, 47u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE,
+        8u32
+    );
+}
+
+fn Caseˉtrailing() -> bool {
+    let Value: bytes = Bytesˉconcat(Canonical(), Textˉtoˉutf8("x"));
+    let Shortˉrecord: bytes = Bytesˉslice(Canonicalˉrecord(), 0u32, 95u32);
+    return Rejected(
+        Value, Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE, 8u32
+    ) && Constructˉrejected(
+        Shortˉrecord,
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_INPUT,
+        16u32
+    );
+}
+
+fn Caseˉmagic() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 0u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MAGIC, 0u32
+    );
+}
+
+fn Caseˉmajor() -> bool {
+    return Rejected(
+        Replaceˉu16(Canonical(), 4u32, 2u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_VERSION, 4u32
+    );
+}
+
+fn Caseˉminor() -> bool {
+    return Rejected(
+        Replaceˉu16(Canonical(), 6u32, 1u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_VERSION, 4u32
+    );
+}
+
+fn Caseˉdeclaredˉtotal() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 8u32, 48u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE, 8u32
+    );
+}
+
+fn Caseˉcountˉboundary() -> bool {
+    return Catalog.Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(0u32) == 48u32 &&
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(43690u32) == 4194288u32 &&
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(43691u32) == 0u32 &&
+        Rejected(
+            Replaceˉu32(Canonical(), 12u32, 43691u32),
+            Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT, 12u32
+        );
+}
+
+fn Caseˉrecordˉsize() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 16u32, 95u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_SIZE, 16u32
+    );
+}
+
+fn Caseˉrecordˉoffset() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 20u32, 52u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_OFFSET, 20u32
+    );
+}
+
+fn Caseˉmoduleˉzero() -> bool {
+    let Constructed: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Construct(0u32, Empty());
+    return Rejected(
+        Replaceˉu32(Canonical(), 24u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT, 24u32
+    ) && Constructed.Status ==
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT;
+}
+
+fn Caseˉmoduleˉmaximum() -> bool {
+    let Constructed: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Construct(65u32, Empty());
+    return Rejected(
+        Replaceˉu32(Canonical(), 24u32, 65u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT, 24u32
+    ) && Constructed.Status ==
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT;
+}
+
+fn Caseˉheaderˉflags() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 28u32, 1u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS, 28u32
+    );
+}
+
+fn Caseˉreservedˉfirst() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 32u32, 1u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RESERVED, 32u32
+    );
+}
+
+fn Caseˉreservedˉlast() -> bool {
+    return Rejected(
+        Replaceˉu32(Canonical(), 44u32, 1u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RESERVED, 44u32
+    );
+}
+
+fn Caseˉmissingˉunsafe() -> bool {
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult = Construct(
+        2u32, Replaceˉu32(Canonicalˉrecord(), 8u32, 0u32)
+    );
+    return Result.Status == Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS &&
+        Result.Failureˉoffset == 56u32 && Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉunknownˉflag() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 8u32, 5u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS, 56u32
+    );
+}
+
+fn Caseˉunknownˉabi() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 12u32, 2u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_UNKNOWN_ABI_CONTRACT, 60u32
+    );
+}
+
+fn Caseˉmoduleˉordinal() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 0u32, 2u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT, 48u32
+    );
+}
+
+fn Caseˉduplicate() -> bool {
+    let Value: bytes = Canonicalˉrecord();
+    return Constructˉrejected(
+        Bytesˉconcat(Value, Value),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER, 148u32
+    );
+}
+
+fn Caseˉdeclarationˉreordered() -> bool {
+    let First: bytes = Canonicalˉrecord();
+    let Second: bytes = Recordˉbytes(2u32, 0u32, 2u32, 220u32, 1u32);
+    return Constructˉrejected(
+        Bytesˉconcat(First, Second),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER, 148u32
+    );
+}
+
+fn Caseˉmoduleˉreordered() -> bool {
+    let First: bytes = Recordˉbytes(2u32, 1u32, 0u32, 50u32, 1u32);
+    let Second: bytes = Canonicalˉrecord();
+    return Constructˉrejected(
+        Bytesˉconcat(First, Second),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER, 144u32
+    );
+}
+
+fn Caseˉoverlap() -> bool {
+    let First: bytes = Canonicalˉrecord();
+    let Second: bytes = Recordˉbytes(2u32, 0u32, 4u32, 150u32, 1u32);
+    return Constructˉrejected(
+        Bytesˉconcat(First, Second),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER, 160u32
+    );
+}
+
+fn Caseˉdeclarationˉempty() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 20u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 64u32
+    );
+}
+
+fn Caseˉdeclarationˉoverflow() -> bool {
+    var Value: bytes = Replaceˉu32(Canonicalˉrecord(), 16u32, 4294967290u32);
+    Value = Replaceˉu32(Value, 20u32, 10u32);
+    return Constructˉrejected(
+        Value, Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 64u32
+    );
+}
+
+fn Caseˉsourceˉnameˉempty() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 28u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 72u32
+    );
+}
+
+fn Caseˉabiˉspanˉoutside() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 32u32, 200u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 80u32
+    );
+}
+
+fn Caseˉexternalˉempty() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 44u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 88u32
+    );
+}
+
+fn Caseˉsignatureˉempty() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 52u32, 0u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 96u32
+    );
+}
+
+fn Caseˉeffectˉabsentˉoffset() -> bool {
+    let Value: bytes = Replaceˉu32(Canonicalˉrecord(), 60u32, 0u32);
+    return Constructˉrejected(
+        Value, Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 104u32
+    );
+}
+
+fn Caseˉeffectˉoutside() -> bool {
+    return Constructˉrejected(
+        Replaceˉu32(Canonicalˉrecord(), 56u32, 195u32),
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN, 104u32
+    );
+}
+
+fn Caseˉdigestˉshort() -> bool {
+    let Value: Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord(
+            0u32, 0u32, 1u32, 1u32,
+            100u32, 100u32, 125u32, 10u32,
+            104u32, 10u32, 175u32, 20u32,
+            120u32, 50u32, 150u32, 10u32,
+            Bytesˉslice(Digest(), 0u32, 31u32)
+        );
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(1u32, Value);
+    return Result.Status == Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_DIGEST &&
+        Result.Failureˉoffset == 64u32 && Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉdigestˉlong() -> bool {
+    let Value: Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord(
+            0u32, 0u32, 1u32, 1u32,
+            100u32, 100u32, 125u32, 10u32,
+            104u32, 10u32, 175u32, 20u32,
+            120u32, 50u32, 150u32, 10u32,
+            Bytesˉconcat(Digest(), Textˉtoˉutf8("x"))
+        );
+    let Result: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(1u32, Value);
+    return Result.Status == Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_DIGEST &&
+        Result.Failureˉoffset == 64u32 && Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉregistry() { return 42; }
+    if Selected == 98u32 && Caseˉempty() { return 42; }
+    if Selected == 99u32 && Caseˉsingle() { return 42; }
+    if Selected == 100u32 && Caseˉmultipleˉsameˉmodule() { return 42; }
+    if Selected == 101u32 && Caseˉmultipleˉmodules() { return 42; }
+    if Selected == 102u32 && Caseˉexport() { return 42; }
+    if Selected == 103u32 && Caseˉeffectˉrequired() { return 42; }
+    if Selected == 104u32 && Caseˉrecordˉbytes() { return 42; }
+    if Selected == 105u32 && Caseˉtruncated() { return 42; }
+    if Selected == 106u32 && Caseˉtrailing() { return 42; }
+    if Selected == 107u32 && Caseˉmagic() { return 42; }
+    if Selected == 108u32 && Caseˉmajor() { return 42; }
+    if Selected == 109u32 && Caseˉminor() { return 42; }
+    if Selected == 110u32 && Caseˉdeclaredˉtotal() { return 42; }
+    if Selected == 111u32 && Caseˉcountˉboundary() { return 42; }
+    if Selected == 112u32 && Caseˉrecordˉsize() { return 42; }
+    if Selected == 113u32 && Caseˉrecordˉoffset() { return 42; }
+    if Selected == 114u32 && Caseˉmoduleˉzero() { return 42; }
+    if Selected == 115u32 && Caseˉmoduleˉmaximum() { return 42; }
+    if Selected == 116u32 && Caseˉheaderˉflags() { return 42; }
+    if Selected == 117u32 && Caseˉreservedˉfirst() { return 42; }
+    if Selected == 118u32 && Caseˉreservedˉlast() { return 42; }
+    if Selected == 119u32 && Caseˉmissingˉunsafe() { return 42; }
+    if Selected == 120u32 && Caseˉunknownˉflag() { return 42; }
+    if Selected == 121u32 && Caseˉunknownˉabi() { return 42; }
+    if Selected == 122u32 && Caseˉmoduleˉordinal() { return 42; }
+    if Selected == 65u32 && Caseˉduplicate() { return 42; }
+    if Selected == 66u32 && Caseˉdeclarationˉreordered() { return 42; }
+    if Selected == 67u32 && Caseˉmoduleˉreordered() { return 42; }
+    if Selected == 68u32 && Caseˉoverlap() { return 42; }
+    if Selected == 69u32 && Caseˉdeclarationˉempty() { return 42; }
+    if Selected == 70u32 && Caseˉdeclarationˉoverflow() { return 42; }
+    if Selected == 71u32 && Caseˉsourceˉnameˉempty() { return 42; }
+    if Selected == 72u32 && Caseˉabiˉspanˉoutside() { return 42; }
+    if Selected == 73u32 && Caseˉexternalˉempty() { return 42; }
+    if Selected == 74u32 && Caseˉsignatureˉempty() { return 42; }
+    if Selected == 75u32 && Caseˉeffectˉabsentˉoffset() { return 42; }
+    if Selected == 76u32 && Caseˉeffectˉoutside() { return 42; }
+    if Selected == 77u32 && Caseˉdigestˉshort() { return 42; }
+    if Selected == 78u32 && Caseˉdigestˉlong() { return 42; }
+    return 1;
+}

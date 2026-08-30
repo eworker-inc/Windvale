@@ -1,0 +1,534 @@
+module Compilerˉsourceˉforeignˉcatalog profile portable;
+
+export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES: u32 = 48u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES: u32 = 96u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_BYTES: u32 = 4194304u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS: u32 = 43690u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_WVSS_MAX_MODULES: u32 = 64u32;
+
+export const COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_UNSAFE: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_EXPORT: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_KNOWN_FLAGS: u32 = 3u32;
+
+// Zero is unregistered. Registry values are serialized and therefore stable.
+export const COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_UNKNOWN: u32 = 0u32;
+export const COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1: u32 = 1u32;
+
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID: u32 = 0u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_INPUT: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MAGIC: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_VERSION: u32 = 4u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_SIZE: u32 = 5u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_OFFSET: u32 = 6u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT: u32 = 7u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS: u32 = 8u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RESERVED: u32 = 9u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER: u32 = 10u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_UNKNOWN_ABI_CONTRACT: u32 = 11u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN: u32 = 12u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_DIGEST: u32 = 13u32;
+export const COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT: u32 = 14u32;
+
+export record Compilerˉsourceˉforeignˉcatalogˉresult {
+    Status: u32;
+    Failureˉoffset: u32;
+    Value: bytes;
+}
+
+export record Compilerˉsourceˉforeignˉcatalogˉrecord {
+    Moduleˉordinal: u32;
+    Declarationˉordinal: u32;
+    Flags: u32;
+    Abiˉcontract: u32;
+    Declarationˉoffset: u32;
+    Declarationˉlength: u32;
+    Sourceˉnameˉoffset: u32;
+    Sourceˉnameˉlength: u32;
+    Abiˉliteralˉoffset: u32;
+    Abiˉliteralˉlength: u32;
+    Externalˉsymbolˉoffset: u32;
+    Externalˉsymbolˉlength: u32;
+    Signatureˉoffset: u32;
+    Signatureˉlength: u32;
+    Effectˉclauseˉoffset: u32;
+    Effectˉclauseˉlength: u32;
+    Signatureˉsha256: bytes;
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉfailure(
+    Input: bytes,
+    Status: u32,
+    Offset: u32
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    return Compilerˉsourceˉforeignˉcatalogˉresult(
+        Status,
+        Offset,
+        Compilerˉsourceˉforeignˉcatalogˉempty(Input)
+    );
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉsuccess(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    return Compilerˉsourceˉforeignˉcatalogˉresult(
+        COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID, 0u32, Input
+    );
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉappendˉu16(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu16ˉlittle(Value));
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉappendˉu32(
+    Input: bytes,
+    Value: u32
+) -> bytes {
+    return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+export fn Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(
+    Identity: u32
+) -> bool {
+    return Identity ==
+        COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1;
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(
+    Count: u32
+) -> u32 {
+    // Validate before multiplication so hostile counts cannot overflow u32.
+    if Count > COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS {
+        return 0u32;
+    }
+    return COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES +
+        Count * COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES;
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+    Declarationˉoffset: u32,
+    Declarationˉlength: u32,
+    Childˉoffset: u32,
+    Childˉlength: u32
+) -> bool {
+    if Childˉlength == 0u32 || Declarationˉlength == 0u32 ||
+        Declarationˉoffset > 4294967295u32 - Declarationˉlength ||
+        Childˉoffset > 4294967295u32 - Childˉlength {
+        return false;
+    }
+    let Declarationˉend: u32 = Declarationˉoffset + Declarationˉlength;
+    let Childˉend: u32 = Childˉoffset + Childˉlength;
+    return Childˉoffset >= Declarationˉoffset &&
+        Childˉend <= Declarationˉend;
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉrecordˉvalidate(
+    Input: bytes,
+    Readˉoffset: u32,
+    Failureˉbase: u32,
+    Moduleˉcount: u32,
+    Hasˉprevious: bool,
+    Previousˉmodule: u32,
+    Previousˉdeclaration: u32,
+    Previousˉdeclarationˉoffset: u32,
+    Previousˉdeclarationˉlength: u32
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    let Module: u32 = Bytesˉreadˉu32ˉlittle(Input, Readˉoffset);
+    if Module >= Moduleˉcount {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT,
+            Failureˉbase
+        );
+    }
+    let Declaration: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 4u32
+    );
+    let Flags: u32 = Bytesˉreadˉu32ˉlittle(Input, Readˉoffset + 8u32);
+    if Flags != COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_UNSAFE &&
+        Flags != COMPILER_SOURCE_FOREIGN_CATALOG_KNOWN_FLAGS {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS,
+            Failureˉbase + 8u32
+        );
+    }
+    let Abi: u32 = Bytesˉreadˉu32ˉlittle(Input, Readˉoffset + 12u32);
+    if !Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(Abi) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_UNKNOWN_ABI_CONTRACT,
+            Failureˉbase + 12u32
+        );
+    }
+
+    let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 16u32
+    );
+    let Declarationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 20u32
+    );
+    if Declarationˉlength == 0u32 ||
+        Declarationˉoffset > 4294967295u32 - Declarationˉlength {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 16u32
+        );
+    }
+    if Hasˉprevious {
+        if Module < Previousˉmodule {
+            return Compilerˉsourceˉforeignˉcatalogˉfailure(
+                Input,
+                COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER,
+                Failureˉbase
+            );
+        }
+        if Module == Previousˉmodule && Declaration <= Previousˉdeclaration {
+            return Compilerˉsourceˉforeignˉcatalogˉfailure(
+                Input,
+                COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER,
+                Failureˉbase + 4u32
+            );
+        }
+        if Module == Previousˉmodule {
+            let Previousˉend: u32 = Previousˉdeclarationˉoffset +
+                Previousˉdeclarationˉlength;
+            if Declarationˉoffset < Previousˉend {
+                return Compilerˉsourceˉforeignˉcatalogˉfailure(
+                    Input,
+                    COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_ORDER,
+                    Failureˉbase + 16u32
+                );
+            }
+        }
+    }
+
+    let Sourceˉnameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 24u32
+    );
+    let Sourceˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 28u32
+    );
+    if !Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+        Declarationˉoffset, Declarationˉlength,
+        Sourceˉnameˉoffset, Sourceˉnameˉlength
+    ) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 24u32
+        );
+    }
+    let Abiˉliteralˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 32u32
+    );
+    let Abiˉliteralˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 36u32
+    );
+    if !Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+        Declarationˉoffset, Declarationˉlength,
+        Abiˉliteralˉoffset, Abiˉliteralˉlength
+    ) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 32u32
+        );
+    }
+    let Externalˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 40u32
+    );
+    let Externalˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 44u32
+    );
+    if !Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+        Declarationˉoffset, Declarationˉlength,
+        Externalˉoffset, Externalˉlength
+    ) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 40u32
+        );
+    }
+    let Signatureˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 48u32
+    );
+    let Signatureˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 52u32
+    );
+    if !Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+        Declarationˉoffset, Declarationˉlength,
+        Signatureˉoffset, Signatureˉlength
+    ) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 48u32
+        );
+    }
+    let Effectˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 56u32
+    );
+    let Effectˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Readˉoffset + 60u32
+    );
+    if !Compilerˉsourceˉforeignˉcatalogˉspanˉisˉcontained(
+        Declarationˉoffset, Declarationˉlength,
+        Effectˉoffset, Effectˉlength
+    ) {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN,
+            Failureˉbase + 56u32
+        );
+    }
+    return Compilerˉsourceˉforeignˉcatalogˉsuccess(Input);
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(
+    Moduleˉcount: u32,
+    Record: Compilerˉsourceˉforeignˉcatalogˉrecord
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    if Moduleˉcount == 0u32 ||
+        Moduleˉcount > COMPILER_SOURCE_FOREIGN_CATALOG_WVSS_MAX_MODULES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Record.Signatureˉsha256,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT,
+            0u32
+        );
+    }
+    if Bytesˉlength(Record.Signatureˉsha256) != 32u32 {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Record.Signatureˉsha256,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_DIGEST,
+            64u32
+        );
+    }
+    var Output: bytes = Compilerˉsourceˉforeignˉcatalogˉempty(
+        Record.Signatureˉsha256
+    );
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Moduleˉordinal);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Declarationˉordinal);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Flags);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Abiˉcontract);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Declarationˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Declarationˉlength);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Sourceˉnameˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Sourceˉnameˉlength);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Abiˉliteralˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Abiˉliteralˉlength);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Externalˉsymbolˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Externalˉsymbolˉlength);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Signatureˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Signatureˉlength);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Effectˉclauseˉoffset);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Record.Effectˉclauseˉlength);
+    Output = Bytesˉconcat(Output, Record.Signatureˉsha256);
+    return Compilerˉsourceˉforeignˉcatalogˉrecordˉvalidate(
+        Output, 0u32, 0u32, Moduleˉcount,
+        false, 0u32, 0u32, 0u32, 0u32
+    );
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉvalidateˉrecords(
+    Input: bytes,
+    Recordˉoffset: u32,
+    Count: u32,
+    Moduleˉcount: u32
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    var Index: u32 = 0u32;
+    var Previousˉmodule: u32 = 0u32;
+    var Previousˉdeclaration: u32 = 0u32;
+    var Previousˉoffset: u32 = 0u32;
+    var Previousˉlength: u32 = 0u32;
+    while Index < Count {
+        let Offset: u32 = Recordˉoffset +
+            Index * COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES;
+        let Checked: Compilerˉsourceˉforeignˉcatalogˉresult =
+            Compilerˉsourceˉforeignˉcatalogˉrecordˉvalidate(
+                Input, Offset, Offset, Moduleˉcount,
+                Index != 0u32,
+                Previousˉmodule,
+                Previousˉdeclaration,
+                Previousˉoffset,
+                Previousˉlength
+            );
+        if Checked.Status != COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+            return Checked;
+        }
+        Previousˉmodule = Bytesˉreadˉu32ˉlittle(Input, Offset);
+        Previousˉdeclaration = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+        Previousˉoffset = Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32);
+        Previousˉlength = Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32);
+        Index = Index + 1u32;
+    }
+    return Compilerˉsourceˉforeignˉcatalogˉsuccess(Input);
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉconstruct(
+    Moduleˉcount: u32,
+    Records: bytes
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    if Moduleˉcount == 0u32 ||
+        Moduleˉcount > COMPILER_SOURCE_FOREIGN_CATALOG_WVSS_MAX_MODULES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Records,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT,
+            24u32
+        );
+    }
+    let Recordˉbytes: u32 = Bytesˉlength(Records);
+    if Recordˉbytes >
+        COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_BYTES -
+            COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Records,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT,
+            8u32
+        );
+    }
+    let Count: u32 = Recordˉbytes /
+        COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES;
+    if Count * COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES != Recordˉbytes {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Records,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_INPUT,
+            16u32
+        );
+    }
+    if Count > COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Records,
+            COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT,
+            12u32
+        );
+    }
+
+    let Recordsˉchecked: Compilerˉsourceˉforeignˉcatalogˉresult =
+        Compilerˉsourceˉforeignˉcatalogˉvalidateˉrecords(
+            Records, 0u32, Count, Moduleˉcount
+        );
+    if Recordsˉchecked.Status != COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Records,
+            Recordsˉchecked.Status,
+            COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES +
+                Recordsˉchecked.Failureˉoffset
+        );
+    }
+
+    let Total: u32 = Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(
+        Count
+    );
+    var Output: bytes = Compilerˉsourceˉforeignˉcatalogˉempty(Records);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 1128683095u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu16(Output, 1u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu16(Output, 0u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Total);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Count);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(
+        Output, COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES
+    );
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(
+        Output, COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES
+    );
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, Moduleˉcount);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 0u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 0u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 0u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 0u32);
+    Output = Compilerˉsourceˉforeignˉcatalogˉappendˉu32(Output, 0u32);
+    Output = Bytesˉconcat(Output, Records);
+    return Compilerˉsourceˉforeignˉcatalogˉsuccess(Output);
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉcatalogˉresult {
+    let Total: u32 = Bytesˉlength(Input);
+    if Total < COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE, 8u32
+        );
+    }
+    if Total > COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_BYTES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT, 8u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 0u32) != 1128683095u32 {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MAGIC, 0u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_VERSION, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) != Total {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE, 8u32
+        );
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
+    if Count > COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT, 12u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 16u32) !=
+        COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_SIZE, 16u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 20u32) !=
+        COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RECORD_OFFSET, 20u32
+        );
+    }
+    let Moduleˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
+    if Moduleˉcount == 0u32 ||
+        Moduleˉcount > COMPILER_SOURCE_FOREIGN_CATALOG_WVSS_MAX_MODULES {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_MODULE_COUNT, 24u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_FLAGS, 28u32
+        );
+    }
+    var Reserved: u32 = 32u32;
+    while Reserved < 48u32 {
+        if Bytesˉreadˉu32ˉlittle(Input, Reserved) != 0u32 {
+            return Compilerˉsourceˉforeignˉcatalogˉfailure(
+                Input,
+                COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_RESERVED,
+                Reserved
+            );
+        }
+        Reserved = Reserved + 4u32;
+    }
+    let Expected: u32 = Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(
+        Count
+    );
+    if Expected == 0u32 || Total != Expected {
+        return Compilerˉsourceˉforeignˉcatalogˉfailure(
+            Input, COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SIZE, 8u32
+        );
+    }
+    return Compilerˉsourceˉforeignˉcatalogˉvalidateˉrecords(
+        Input,
+        COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_HEADER_BYTES,
+        Count,
+        Moduleˉcount
+    );
+}

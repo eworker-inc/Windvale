@@ -523,6 +523,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 foreign catalog format routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
+            'Specifications/Windvale-Language-1.0-Foreign-Catalog.md',
+            'Tests/Fixtures/Language-1.0/Foreign-Catalog-Format-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.cmd',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.mjs'
+        )
+        Suites = @('language-1-foreign-catalog-format')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 using front-end routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
@@ -3797,9 +3812,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 117 -or
+if ($VerificationOwnerLines.Count -ne 118 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 116-owner inventory differs.'
+    throw 'The native verification-owner header or exact 117-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3837,7 +3852,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5688 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5728 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -1631,6 +1631,16 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-system-ffi-unsafe-context'
     } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
+        'Specifications/Windvale-Language-1.0-Foreign-Catalog.md',
+        'Tests/Fixtures/Language-1.0/Foreign-Catalog-Format-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.cmd',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.mjs'
+    )) {
+        Add-Suite 'language-1-foreign-catalog-format'
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Using-Front-End.cmd',
