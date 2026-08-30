@@ -1167,6 +1167,26 @@ function Add-Native-Tool-Suite {
         Add-Suite 'os-x64-code-emission'
         return
     }
+    if ($Stem -eq 'Build-Cached-Segmented-Hosted-Wvb') {
+        Add-Bytecode-Suites
+        Add-Suite @(
+            'segmented-hosted-wvb-cache',
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-runner-reconstruction',
+            'compiler-split-development',
+            'native-u64-lowering',
+            'database-superblock',
+            'database-durable-commit',
+            'wv-linker-reconstruction',
+            'console-packager-container-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'hosted-verifier-publisher-files'
+        )
+        return
+    }
     if ($Stem -in @(
         'Compile-Compiler-Source-Set',
         'Compile-Project-2-With-Compiler',

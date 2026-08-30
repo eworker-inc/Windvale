@@ -1372,6 +1372,46 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'segmented hosted WVB cache safety owner'
+        Paths = @(
+            'Tools/Native/Test-Cached-Segmented-Hosted-Wvb.cmd',
+            'Tools/Native/Test-Cached-Segmented-Hosted-Wvb.sh',
+            'Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs'
+        )
+        Suites = @('segmented-hosted-wvb-cache')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'segmented hosted WVB cache producer owner routing'
+        Paths = @(
+            'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.cmd',
+            'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh',
+            'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs'
+        )
+        Suites = @(
+            'seed',
+            'segmented-compiler-toolset-reconstruction',
+            'segmented-hosted-wvb-cache',
+            'wvb-runner-reconstruction',
+            'wv-linker-reconstruction',
+            'wvo-inspector-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'wvo-publisher-reconstruction',
+            'unsafe-wvb',
+            'wvb-containment',
+            'compiler-split-development',
+            'console-packager-container-reconstruction',
+            'hosted-verifier-publisher-files',
+            'native-u64-lowering',
+            'database-superblock',
+            'database-durable-commit'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'compiler split development owner'
         Paths = @(
             'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
@@ -3842,9 +3882,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 119 -or
+if ($VerificationOwnerLines.Count -ne 120 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 118-owner inventory differs.'
+    throw 'The native verification-owner header or exact 119-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3882,7 +3922,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5776 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5786 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

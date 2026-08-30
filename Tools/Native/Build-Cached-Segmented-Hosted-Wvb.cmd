@@ -3,7 +3,6 @@ setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~3"=="" goto :usage
 if not "%~4"=="" goto :usage
-echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 if /I not "%~x3"==".exe" goto :usage
 

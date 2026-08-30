@@ -17,6 +17,7 @@ import path from 'node:path';
 import {
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
+    Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged,
     Runˉboundedˉsegmentedˉhostedˉproducer,
     Validateˉsegmentedˉhostedˉcheckpoint,
 } from './Build-Cached-Segmented-Hosted-Wvb.mjs';
@@ -44,6 +45,22 @@ try {
         sha256: createHash('sha256').update(inputBytes).digest('hex'),
     };
     const profile = '5';
+
+    const loadedProducerSnapshot = [{
+        bytes: Buffer.from('loaded producer A\n', 'ascii'),
+        relative: 'Tools/Native/Loaded-Producer.mjs',
+    }];
+    await Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged(
+        loadedProducerSnapshot,
+        async () => Buffer.from('loaded producer A\n', 'ascii'),
+    );
+    await Expectˉrejection(
+        Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged(
+            loadedProducerSnapshot,
+            async () => Buffer.from('loaded producer B\n', 'ascii'),
+        ),
+        'loaded segmented hosted producer changed',
+    );
 
     const timeoutPidPath = path.join(testRoot, 'Timeout.pid');
     const timeoutProducer = await Writeˉboundedˉproducer(
@@ -124,6 +141,31 @@ try {
         ),
         'forced producer failure',
     );
+    if (await lstat(path.join(checkpointFamily, failedKey)).catch(() => null) !== null) {
+        Reject('The producer-rejected checkpoint was published.');
+    }
+    await Requireˉnoˉtemporaryˉcheckpoints(checkpointFamily);
+
+    const admissionFailedKey = '5'.repeat(64);
+    await Expectˉrejection(
+        Createˉsegmentedˉhostedˉcheckpoint(
+            checkpointFamily,
+            path.join(checkpointFamily, admissionFailedKey),
+            admissionFailedKey,
+            profile,
+            input,
+            temporary =>
+                Writeˉproduct(temporary, Buffer.alloc(1_048_576, 0x32)),
+            async () => {
+                throw new Error('forced producer admission failure');
+            },
+        ),
+        'forced producer admission failure',
+    );
+    if (await lstat(path.join(checkpointFamily, admissionFailedKey))
+        .catch(() => null) !== null) {
+        Reject('The admission-rejected checkpoint was published.');
+    }
     await Requireˉnoˉtemporaryˉcheckpoints(checkpointFamily);
 
     const unexpectedKey = '4'.repeat(64);
@@ -154,6 +196,7 @@ try {
     const createdKey = '2'.repeat(64);
     const createdDirectory = path.join(checkpointFamily, createdKey);
     const productBytes = Buffer.from('segmented hosted product\n', 'ascii');
+    let createdAdmissions = 0;
     const createdStatus = await Createˉsegmentedˉhostedˉcheckpoint(
         checkpointFamily,
         createdDirectory,
@@ -161,8 +204,11 @@ try {
         profile,
         input,
         temporary => Writeˉproduct(temporary, productBytes),
+        async () => {
+            createdAdmissions += 1;
+        },
     );
-    if (createdStatus !== 'Created') {
+    if (createdStatus !== 'Created' || createdAdmissions !== 1) {
         Reject(`The first checkpoint status differs: ${createdStatus}`);
     }
     await Requireˉnoˉtemporaryˉcheckpoints(checkpointFamily);
@@ -173,6 +219,7 @@ try {
         input,
     );
     const outputPath = path.join(outputRoot, OUTPUT_LEAF);
+    await writeFile(outputPath, Buffer.from('previous output\n', 'ascii'));
     await Materializeˉsegmentedˉhostedˉcheckpoint(
         checkpoint,
         outputPath,

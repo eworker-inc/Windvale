@@ -44,6 +44,16 @@ const HEARTBEAT_MILLISECONDS = 30_000;
 const TERMINATION_GRACE_MILLISECONDS = 500;
 const POST_TERMINATION_CLOSE_GRACE_MILLISECONDS = 1_000;
 const VERIFICATION_TEMPORARY_PREFIX = 'windvale-segmented-hosted-verification-';
+const LOADED_PRODUCER_RELATIVES = [
+    'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs',
+    'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
+];
+const LOADED_PRODUCER_SNAPSHOTS = await Promise.all(
+    LOADED_PRODUCER_RELATIVES.map(async relative => ({
+        bytes: await Readˉproducer(relative),
+        relative,
+    })),
+);
 
 function Reject(message, exitCode = 1) {
     const error = new Error(message);
@@ -323,10 +333,7 @@ export async function Materializeˉsegmentedˉhostedˉcheckpoint(
             copied.sha256 !== checkpoint.product.sha256) {
             Reject('The segmented hosted materialization candidate differs.');
         }
-        await copyFile(temporary, outputPath);
-        if (!WINDOWS) {
-            await chmod(outputPath, 0o755);
-        }
+        await rename(temporary, outputPath);
         const materialized = await Measureˉproduct(
             outputPath,
             'materialized segmented hosted product',
@@ -620,7 +627,11 @@ export async function Createˉsegmentedˉhostedˉcheckpoint(
     profile,
     input,
     producer,
+    admit,
 ) {
+    if (admit !== undefined && typeof admit !== 'function') {
+        Reject('The segmented hosted checkpoint admission is invalid.');
+    }
     const temporary = path.join(
         checkpointFamily,
         `.new-${key}-${process.pid}-${randomBytes(16).toString('hex')}`,
@@ -648,6 +659,9 @@ export async function Createˉsegmentedˉhostedˉcheckpoint(
             profile,
             input,
         );
+        if (admit !== undefined) {
+            await admit();
+        }
         try {
             await rename(temporary, checkpointDirectory);
             return 'Created';
@@ -675,6 +689,27 @@ async function Readˉproducer(relative) {
     );
 }
 
+export async function Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged(
+    snapshots = LOADED_PRODUCER_SNAPSHOTS,
+    reader = Readˉproducer,
+) {
+    if (!Array.isArray(snapshots) || typeof reader !== 'function' ||
+        snapshots.some(snapshot =>
+            snapshot === null || typeof snapshot !== 'object' ||
+            typeof snapshot.relative !== 'string' ||
+            !Buffer.isBuffer(snapshot.bytes))) {
+        Reject('The loaded segmented hosted producer snapshots are invalid.');
+    }
+    for (const snapshot of snapshots) {
+        const current = await reader(snapshot.relative);
+        if (!Buffer.isBuffer(current) || !current.equals(snapshot.bytes)) {
+            Reject(
+                `The loaded segmented hosted producer changed: ${snapshot.relative}`,
+            );
+        }
+    }
+}
+
 async function Getˉcacheˉkey(profile, input, hostedContext) {
     const hash = createHash('sha256');
     Addˉhostedˉkeyˉfield(
@@ -694,10 +729,8 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
     const currentExtension = WINDOWS ? 'cmd' : 'sh';
     const currentArtifactExtension = WINDOWS ? 'exe' : 'elf';
     const producerPaths = [
-        'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs',
         'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.cmd',
         'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh',
-        'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
         `Tools/Native/Verify-Wvb.${currentExtension}`,
         `Tools/Native/Package-Segmented-Compiler-Wvb.${currentExtension}`,
         `Tools/Native/Stage-Compiler-Wvb.${currentExtension}`,
@@ -708,6 +741,13 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
         `Artifacts/Native-Segmented-Compiler-Toolset-Candidate/${HOST_FAMILY}-wvlinkstage.${currentArtifactExtension}`,
         `Artifacts/Native-Segmented-Compiler-Toolset-Candidate/${HOST_FAMILY}-wvimagetransport.${currentArtifactExtension}`,
     ];
+    for (const snapshot of LOADED_PRODUCER_SNAPSHOTS) {
+        Addˉhostedˉkeyˉfield(
+            hash,
+            `producer:${snapshot.relative}`,
+            snapshot.bytes,
+        );
+    }
     for (const relative of producerPaths) {
         Addˉhostedˉkeyˉfield(
             hash,
@@ -719,6 +759,27 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
         Addˉhostedˉkeyˉfield(hash, field.label, field.bytes);
     }
     return hash.digest('hex');
+}
+
+async function Getˉcurrentˉcacheˉkey(profile, input) {
+    const packager = Nativeˉwrapper('Package-Hosted-Wvb');
+    const hostedContext = await Prepareˉhostedˉapplicationˉcontext(
+        TARGET,
+        packager,
+    );
+    try {
+        return await Getˉcacheˉkey(profile, input, hostedContext);
+    } finally {
+        hostedContext.producerFields.length = 0;
+    }
+}
+
+async function Requireˉproducersˉunchanged(profile, input, expectedKey) {
+    const currentKey = await Getˉcurrentˉcacheˉkey(profile, input);
+    await Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged();
+    if (currentKey !== expectedKey) {
+        Reject('A segmented hosted cache producer changed during production.');
+    }
 }
 
 async function Getˉcheckpointˉfamily() {
@@ -761,14 +822,7 @@ async function Main() {
     const input = await Requireˉinputˉsnapshot(process.argv[3]);
     const outputPath = await Requireˉoutputˉpath(process.argv[4]);
     await Completeˉverifyˉinput(input);
-    const packager = Nativeˉwrapper('Package-Hosted-Wvb');
-    let hostedContext = await Prepareˉhostedˉapplicationˉcontext(
-        TARGET,
-        packager,
-    );
-    const key = await Getˉcacheˉkey(profile, input, hostedContext);
-    hostedContext.producerFields.length = 0;
-    hostedContext = null;
+    const key = await Getˉcurrentˉcacheˉkey(profile, input);
     await Requireˉinputˉunchanged(input);
     const checkpointFamily = await Getˉcheckpointˉfamily();
     const checkpointDirectory = path.join(checkpointFamily, key);
@@ -792,6 +846,7 @@ async function Main() {
                 input,
                 Date.now() + COLD_DEADLINE_MILLISECONDS,
             ),
+            () => Requireˉproducersˉunchanged(profile, input, key),
         );
         checkpointInformation = await lstat(checkpointDirectory).catch(() => null);
         if (checkpointInformation === null) {
