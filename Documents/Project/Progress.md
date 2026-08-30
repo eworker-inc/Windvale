@@ -170,7 +170,7 @@ long-name/Unicode mapping remains explicit future work.
 
 Current work uses a separate 124-owner, 5,911-case native verification registry.
 Its 22,130 LF-only bytes have SHA-256
-`b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a`.
+`e2a6560134abc1b85d929275dbc9127623c34d7d69511423ec10483d569507da`.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 

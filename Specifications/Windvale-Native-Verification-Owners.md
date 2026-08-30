@@ -17,7 +17,7 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 ## Registry identity and grammar
 
 `Tests/Native/Verification-Owners.txt` is 22,130 LF-only bytes with SHA-256
-`b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a`.
+`e2a6560134abc1b85d929275dbc9127623c34d7d69511423ec10483d569507da`.
 Its first line is exactly:
 
 ```text

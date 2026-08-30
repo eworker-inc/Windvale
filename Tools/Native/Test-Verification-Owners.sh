@@ -34,7 +34,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Verification-Owners.txt"
 plan_bytes=22130
-plan_digest=b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a
+plan_digest=e2a6560134abc1b85d929275dbc9127623c34d7d69511423ec10483d569507da
 plan_owners=124
 plan_cases=5911
 plan_shard_1_owners=1
