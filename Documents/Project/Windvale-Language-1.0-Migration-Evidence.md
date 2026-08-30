@@ -4381,3 +4381,55 @@ and 5,688 cases in 19,611 LF-only bytes at SHA-256
 This evidence does not yet claim foreign-call semantic binding, pointer or
 scratch-region safety, WIR/WVB foreign validation, native ABI lowering, hostile
 execution containment, or paired-host Slice 8 qualification.
+
+## Slice 8 exact foreign-declaration catalog format
+
+The [WVFC 1.0 format](../../Specifications/Windvale-Language-1.0-Foreign-Catalog.md)
+implements the fixed syntactic foreign-declaration inventory required by
+Decision 0886. Its 48-byte header carries one exact module and declaration
+count; each source-ordered 96-byte record carries the module/declaration
+ordinals, required `unsafe` and optional `export` flags, stable ABI-contract
+identity 1, six nonempty source spans, and a 32-byte signature digest. Complete
+values are bounded to 4 MiB and 43,690 records. Checked construction and
+structural validation reject unknown flags or ABI identities, arithmetic
+overflow, malformed or escaping spans, module/declaration reorder, same-module
+overlap, noncanonical lengths, and trailing input. Accepted bytes are preserved
+unchanged and every rejected result carries an empty value.
+
+The focused owner passes 40 isolated native cases after two byte-identical
+builds. Its 35,508-byte WVB has SHA-256
+`78f1b4b9995771c00b9568468fdc4bd2150d60fa1ad828e09115871016663d6b`.
+The independent host arithmetic check proves the exact 43,690-record maximum
+occupies 4,194,288 bytes and that 43,691 records exceed the retained value
+ceiling. This checkpoint deliberately does not claim WVSS span authentication,
+catalog completeness, signature-digest recomputation, target agreement,
+semantic FFI validation, symbol binding, or execution.
+
+## Slice 8 canonical foreign-call effect
+
+The canonical language effect `ffi.call` is now stable bit 8 (`0x00000100`).
+Existing bits 0 through 7 remain unchanged. WVEF 1.0's existing `u32` field
+admits the new bit without a format version change and still rejects bit 9 or
+higher. Unknown identities in the reserved `ffi.*` namespace reject before
+capability lookup. `ffi.call` has an exact zero capability mask and grants no
+authority, provider, library availability, or symbol binding.
+
+The callable-semantics owner passes 63 cases across 11 modules and eight native
+AOT or rejection cases. Its 4,550,200-byte evidence stream has SHA-256
+`e49414bf24b35063fdcff744fb420183040fee15349c0fb4a777b42ad00c4b64`.
+The focused effect product is 985,724 WVB bytes at SHA-256
+`c910921af16d55fa87f698e469efae73c35f1797ff3452a68771bd4f80d9e8f1`.
+The 1,062,167-byte serialized-callable product at SHA-256
+`58a794fb43eef60efdf2d7afe057c5c59dee688b89cb6b9bdf03eadd33c51661`
+proves that plain and `ffi.call` signatures receive distinct WVFT identities,
+exact re-admission deduplicates the effectful identity, and WVCF extraction
+preserves language masks 0 and 256 with zero capability masks.
+
+After integrating the catalog and effect checkpoints, changed-file planning
+passes 31 general and 208 native routing cases. The registry contains 117 owners
+and 5,732 cases in 19,913 LF-only bytes at SHA-256
+`b98d1ca2653fe59d089f74c2211163fbe273ecd7cf38558a7b1e86d2338429f5`.
+Foreign-call origin and safe-caller effect enforcement remain pending with the
+semantic call model, as do pointer/lifetime evidence, WIR/WVB foreign
+operations, native ABI lowering, runtime containment, and paired-host Slice 8
+qualification.
