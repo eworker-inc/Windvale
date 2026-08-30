@@ -242,8 +242,8 @@ file output. The existing hosted-container layout additionally carries its
 canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
-The exact 75,666-byte tool WVB has SHA-256
-`ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd`.
+The exact 81,530-byte tool WVB has SHA-256
+`825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9`.
 Its canonical repository source closure is
 `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -262,15 +262,18 @@ path recorded by Decision 0496. That path consumes the retained candidate
 toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
-The Windows candidate is 854,016 bytes at SHA-256
-`c46534cd0fbbd294d2aa242a3ed26ca3ef663d6b1e054290befe0f4edc426da4`;
-the Linux candidate is 856,064 bytes at SHA-256
-`360f05b19181f001439a8309f571d0979eef260285f4995d7dcae1f06679a445`.
+The Windows candidate is 931,840 bytes at SHA-256
+`969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f`;
+the Linux candidate is 933,888 bytes at SHA-256
+`d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process
 report includes the exact decimal image size, `Main` entry offset, output chunk
 count, and manifest size so an orchestrator never needs to decode `WVLI`.
+Decision 0891 refreshes this family after native SHA-256 lowering: the symbol
+validator now accepts the one exact private `$native_sha256_hex` helper while
+retaining its existing section, range, ordering, and duplicate-name checks.
 The former Stage 0 application writer remains recovery and differential
 evidence; it is no longer the only constructor for these exact candidates.
 
@@ -308,17 +311,22 @@ segmented WVO producer, segmented image linker, canonical image transport, and
 hosted-container toolset. The launcher owns only process orchestration and
 parsing of the transport process's strict decimal completion line.
 
-The segmented producer WVB is exactly 576,810 bytes at SHA-256
-`0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc`.
-Its Windows application is 8,416,768 bytes at SHA-256
-`ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54`;
-its Linux application is 8,417,280 bytes at SHA-256
-`499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280`.
+The segmented producer WVB is exactly 587,383 bytes at SHA-256
+`2a3d3a1c088ff0a99eab3ec5f1723fe0bf2886eddbe0fc0858e4f0250bb419aa`.
+Its Windows application is 8,630,784 bytes at SHA-256
+`a20d6b9465540bc72a28b61e128b31254ce76db1d840b558a73944ebe22bf7d7`;
+its Linux application is 8,630,272 bytes at SHA-256
+`139025c23fb52e02afd27b0e7514f3617502230bf99130fd47da262e14640c93`.
 Decisions 0496, 0542, 0545, 0583, 0713, 0724, 0770, 0860, 0861, 0862, and
-0885 reconstruct this pair and the staging and transport pairs from
+0885 establish the reconstruction path; Decision 0891 promotes the current
+SHA-capable producer and compiler-image stager while leaving all three
+canonical-transport identities exact. The focused reconstruction owner builds
+and stages a 237-byte `bytes.sha256_hex` fixture, then links its 2,860-byte WVO
+and private helper into a 2,672-byte image through the locally reconstructed
+applications. These families reconstruct from
 the retained native candidate toolset on Windows. That construction does not
-by itself prove Stage 2, Linux execution, promotion, or a seed-independent
-bootstrap.
+by itself prove Stage 2, Linux execution, paired-host qualification, or a
+seed-independent bootstrap.
 
 The shared `Package-Hosted-Wvb` launcher exposes a separate image-input form:
 `image <profile> <input.wvb> <chunk-prefix> <fragment-count> <entry-offset>

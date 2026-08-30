@@ -4571,3 +4571,45 @@ LF-only bytes with SHA-256
 The Debian/WSL result is local Linux development evidence, not a paired-host CI
 qualification claim. Paired CI qualification, candidate-pin regeneration and
 promotion, and any consumer migration from Foundation SHA-256 remain pending.
+
+## Slice 8 SHA-capable segmented staging promotion
+
+[Decision 0891](../Decisions/0891-Promote-Sha-Capable-Segmented-Staging.md)
+promotes both retained products required to carry a SHA-using WVB through the
+ordinary segmented compiler path. The pre-SHA WVO producer rejected opcode
+`0x7D`; after that boundary used current source, the pre-SHA compiler-image
+stager rejected the valid private `$native_sha256_hex` symbol. Promoting only
+one family would therefore preserve a known failure at the next process.
+
+The promoted identities are:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVO-staging WVB | 587,383 | `2a3d3a1c088ff0a99eab3ec5f1723fe0bf2886eddbe0fc0858e4f0250bb419aa` |
+| Windows WVO-staging application | 8,630,784 | `a20d6b9465540bc72a28b61e128b31254ce76db1d840b558a73944ebe22bf7d7` |
+| Linux WVO-staging application | 8,630,272 | `139025c23fb52e02afd27b0e7514f3617502230bf99130fd47da262e14640c93` |
+| compiler-image-staging WVB | 81,530 | `825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9` |
+| Windows compiler-image-staging application | 931,840 | `969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f` |
+| Linux compiler-image-staging application | 933,888 | `d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0` |
+
+The 23,836-byte transport WVB and its 269,312-byte Windows and 270,336-byte
+Linux applications remain byte-identical at SHA-256
+`d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8`,
+`e724a5efbffc233fda76f55bfb5cc01c044e221882b5de5f247b0ab236726f81`,
+and `9ff5401eca1ffd93a49077dd6ebc56c446c59939379a481f22662465fc3cf6db`.
+
+The focused Windows reconstruction owner rebuilds all nine artifacts and
+reproduces their candidate bytes. Its new case builds the exact 237-byte SHA
+fixture at SHA-256
+`d7962514021a6771efef7894472efabf339014b03051b54d97165cca030dafdf`,
+stages it to an exact 2,860-byte WVO in six chunks, and links it through the
+local compiler-image stager into an exact 2,672-byte image in two chunks. The
+owner retains the three family comparisons and compiler-scale analyzer case,
+and reports `Tests: 5, Passed: 5, Failed: 0`.
+
+The registry contains 122 owners and 5,850 cases in 21,412 LF-only bytes at
+SHA-256
+`b549ef509cf6eac5d53679ea79ceae66f4b2d17306e2daa66b8d1e6bb7032208`.
+Local Linux reconstruction, paired-host qualification, the admission-validator
+consumer rerun, authenticated source coordination, foreign binding/lowering,
+runtime containment, and Slice 8 completion remain pending.

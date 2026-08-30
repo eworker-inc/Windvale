@@ -9,7 +9,7 @@
   "capacityDecision": "0821",
   "aggregateSymbolDecision": "0860",
   "structuredTaskDecision": "0861",
-  "stagingRefreshDecision": "0885",
+  "stagingRefreshDecision": "0891",
   "maximumImageBytes": 67108864,
   "maximumFragments": 16,
   "applicationConstruction": "native-segmented-self-reconstruction",
@@ -18,48 +18,48 @@
       "name": "wvo-staging-producer-wvb",
       "path": "Wvo-Staging-Producer.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 576810,
-      "sha256": "0eca0f227cbc3f2e9ad54dce9439ac0c859c8176cf72964cdda627c88d33e5cc",
+      "bytes": 587383,
+      "sha256": "2a3d3a1c088ff0a99eab3ec5f1723fe0bf2886eddbe0fc0858e4f0250bb419aa",
       "sourceProject": "Windvale-Native-X64-Lowering-Staging-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvo-staging-producer",
       "path": "windows-x64-wvstage.exe",
       "target": "windows-x64-wvo-staging-producer-v1",
-      "bytes": 8416768,
-      "sha256": "ca19b920d59987762d423dd8e79e4569878f6da0fc31d455564ef827c0f19e54",
+      "bytes": 8630784,
+      "sha256": "a20d6b9465540bc72a28b61e128b31254ce76db1d840b558a73944ebe22bf7d7",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
       "name": "linux-x64-wvo-staging-producer",
       "path": "linux-x64-wvstage.elf",
       "target": "linux-x64-wvo-staging-producer-v1",
-      "bytes": 8417280,
-      "sha256": "499032e30458c0b60ab7225e082aa00d5ebc9e79d49bfb71c9167b721d6c5280",
+      "bytes": 8630272,
+      "sha256": "139025c23fb52e02afd27b0e7514f3617502230bf99130fd47da262e14640c93",
       "sourceWvb": "Wvo-Staging-Producer.wvb"
     },
     {
       "name": "compiler-image-staging-wvb",
       "path": "Compiler-Image-Staging.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 75666,
-      "sha256": "ac01daa598f67d34ae5ed9dbc83a168dc288c05f7369b0773713947f0d5a85cd",
+      "bytes": 81530,
+      "sha256": "825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9",
       "sourceProject": "Windvale-Compiler-Image-Staging.wvproj"
     },
     {
       "name": "windows-x64-compiler-image-staging",
       "path": "windows-x64-wvlinkstage.exe",
       "target": "windows-x64-compiler-image-staging-v1",
-      "bytes": 854016,
-      "sha256": "c46534cd0fbbd294d2aa242a3ed26ca3ef663d6b1e054290befe0f4edc426da4",
+      "bytes": 931840,
+      "sha256": "969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f",
       "sourceWvb": "Compiler-Image-Staging.wvb"
     },
     {
       "name": "linux-x64-compiler-image-staging",
       "path": "linux-x64-wvlinkstage.elf",
       "target": "linux-x64-compiler-image-staging-v1",
-      "bytes": 856064,
-      "sha256": "360f05b19181f001439a8309f571d0979eef260285f4995d7dcae1f06679a445",
+      "bytes": 933888,
+      "sha256": "d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0",
       "sourceWvb": "Compiler-Image-Staging.wvb"
     },
     {

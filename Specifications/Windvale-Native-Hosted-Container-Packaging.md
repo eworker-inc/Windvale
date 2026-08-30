@@ -195,9 +195,14 @@ uses the same transaction with `0600`. The launchers do not apply a later
 
 `Test-Segmented-Compiler-Toolset-Reconstruction` calls the durable segmented
 toolset constructor once and verifies three family cases: each exact WVB plus
-its paired Windows and Linux applications. `Test-Segmented-Compiler-Packaging`
-is a compatibility entry point for that same owner; it no longer couples this
-lane to current-lowerer or baseline-JIT differential evidence.
+its paired Windows and Linux applications. A fourth bounded case builds the
+237-byte native SHA-256 fixture, stages its exact 2,860-byte WVO through the
+locally reconstructed producer, and links the private `$native_sha256_hex`
+symbol through the locally reconstructed compiler-image stager into an exact
+2,672-byte image. The fifth case retains the compiler-scale analyzer staging
+proof. `Test-Segmented-Compiler-Packaging` is a compatibility entry point for
+that same owner; it no longer couples this lane to current-lowerer or
+baseline-JIT differential evidence.
 
 The Windows candidate composes `wvhostcontrol.wvb` into a 236,032-byte PE with
 SHA-256 `2483ec3c219f63cf6d16e114fcc8d7ef563296b5b7dea4d9b370c914d8b94362`,
