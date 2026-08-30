@@ -977,8 +977,11 @@ through a generic protocol or closure preserves the required effect set.
 Effect identities are canonical lowercase ASCII names. Required language
 identities include `memory.allocate`, `resource.acquire`,
 `resource.complete`, `resource.release`, `task.cancel`, `task.spawn`,
-`task.suspend`, and each
-capability interface identity. Release of already owned local accounting carries
+`task.suspend`, `unsafe.address`, and `ffi.call`. Capability-interface identities
+are separate effects resolved from declared capabilities. Neither
+`unsafe.address` nor `ffi.call` itself grants authority; every required
+capability remains separately declared and bound. Release of already owned local
+accounting carries
 `resource.release` but is not external authority; provider-visible release also
 retains that provider interface effect.
 

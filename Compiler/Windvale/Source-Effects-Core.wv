@@ -59,6 +59,7 @@ const EFFECT_TASK_CANCEL: u32 = 16u32;
 const EFFECT_TASK_SPAWN: u32 = 32u32;
 const EFFECT_TASK_SUSPEND: u32 = 64u32;
 const EFFECT_UNSAFE_ADDRESS: u32 = 128u32;
+const EFFECT_FFI_CALL: u32 = 256u32;
 
 const EFFECT_ENTRY_IS_FUNCTION: u32 = 1u32;
 const EFFECT_ENTRY_IS_EXPLICIT: u32 = 2u32;
@@ -130,7 +131,18 @@ fn Compilerˉsourceˉeffectsˉlanguageˉbit(Identity: bytes) -> u32 {
     if Compilerˉsourceˉeffectsˉbytesˉequal(
         Identity, Textˉtoˉutf8("unsafe.address")
     ) { return EFFECT_UNSAFE_ADDRESS; }
+    if Compilerˉsourceˉeffectsˉbytesˉequal(
+        Identity, Textˉtoˉutf8("ffi.call")
+    ) { return EFFECT_FFI_CALL; }
     return 0u32;
+}
+
+fn Compilerˉsourceˉeffectsˉisˉreservedˉffi(Identity: bytes) -> bool {
+    return Bytesˉlength(Identity) >= 4u32 &&
+        Bytesˉreadˉu8(Identity, 0u32) == 102u8 &&
+        Bytesˉreadˉu8(Identity, 1u32) == 102u8 &&
+        Bytesˉreadˉu8(Identity, 2u32) == 105u8 &&
+        Bytesˉreadˉu8(Identity, 3u32) == 46u8;
 }
 
 fn Compilerˉsourceˉeffectsˉsymbolˉsource(
@@ -415,6 +427,15 @@ export fn Compilerˉsourceˉeffectsˉresolveˉclause(
                 }
                 Language = Language | Languageˉbit;
             } else {
+                if Compilerˉsourceˉeffectsˉisˉreservedˉffi(
+                    Identity.Value
+                ) {
+                    return Compilerˉsourceˉeffectˉset(
+                        Compilerˉsourceˉeffectˉstatus.Unknownˉidentity,
+                        Language, Capabilities, Count,
+                        Identity.Failureˉoffset
+                    );
+                }
                 let Rank: u32 = Compilerˉsourceˉeffectsˉcapabilityˉrank(
                     Input, Scan, Symbols, Identity.Value
                 );
@@ -1217,7 +1238,7 @@ export fn Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
             return false;
         }
         if (Bytesˉreadˉu32ˉlittle(Directory, Entry + 4u32) &
-                4294967040u32) != 0u32 {
+                4294966784u32) != 0u32 {
             return false;
         }
         if Capabilities < 32u32 &&

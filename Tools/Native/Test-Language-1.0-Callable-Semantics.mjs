@@ -41,7 +41,7 @@ const TESTS = [
     {
         Name: 'effects',
         Project: 'Windvale-Native-Test-Language-1-Effect-Semantics.wvproj',
-        Selectors: [...'abcdefghijklm']
+        Selectors: [...'abcdefghijklmnopq']
     },
     {
         Name: 'callable-type-catalog',

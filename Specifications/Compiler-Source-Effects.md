@@ -27,11 +27,16 @@ Language 1.0 currently assigns these canonical language-effect bits:
 | 5 | `task.spawn` |
 | 6 | `task.suspend` |
 | 7 | `unsafe.address` |
+| 8 | `ffi.call` |
 
 Every other identity must resolve to an exact capability symbol declared by the
-source set. Capability bits are assigned by canonical source-name ordering, not
-symbol insertion order. A module may declare at most 32 distinct capabilities
-in this checkpoint. Unknown and duplicate identities reject.
+source set, except that the `ffi.*` language-effect namespace is reserved and an
+unknown member always rejects rather than falling through to capability lookup.
+Capability bits are assigned by canonical source-name ordering, not symbol
+insertion order. A module may declare at most 32 distinct capabilities in this
+checkpoint. Unknown and duplicate identities reject. `ffi.call` records an
+audited foreign-call effect; it is not a capability, authority grant, provider
+binding, or proof that a foreign library is available.
 
 WVIR operations 171, 172, and 175 contribute `memory.allocate`; operation 174
 contributes `resource.release`. Operation 62 propagates the exact effect set of

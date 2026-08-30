@@ -3,6 +3,7 @@ module Languageˉoneˉcallableˉtypeˉcatalogˉselfˉtest profile portable;
 import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉcallableˉtypes as Callables;
 import Compilerˉsourceˉeffects as Effects;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 
@@ -173,6 +174,22 @@ fn Analyze(
     );
 }
 
+fn Ffiˉeffectˉdirectory() -> bytes {
+    var Directory: bytes = Textˉtoˉutf8("WVEF");
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(0u32));
+    Directory = Appendˉu32(Directory, 1u32);
+    Directory = Appendˉu32(Directory, 12u32);
+    Directory = Appendˉu32(Directory, 0u32);
+    Directory = Appendˉu32(Directory, 4u32);
+    Directory = Appendˉu32(Directory, 32u32);
+    Directory = Appendˉu32(Directory, 44u32);
+    Directory = Appendˉu32(Directory, 3u32);
+    Directory = Appendˉu32(Directory, 256u32);
+    Directory = Appendˉu32(Directory, 0u32);
+    return Directory;
+}
+
 fn Analyzeˉlegacy() -> Callables.Compilerˉsourceˉcallableˉtypeˉsummary {
     let Input: bytes = Legacyˉsourceˉsetˉfrom(Textˉtoˉutf8(
         "module Callableˉlegacyˉprobe profile portable; fn Legacy() -> void { return; }"
@@ -300,12 +317,109 @@ fn Malformedˉprobe() -> i32 {
     return 42;
 }
 
+fn Ffiˉeffectˉcatalogˉprobe() -> i32 {
+    let Effectsˉdirectory: bytes = Ffiˉeffectˉdirectory();
+    if !Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+        Effectsˉdirectory, 1u32, 0u32
+    ) {
+        return 43;
+    }
+    let Ffiˉeffect: u32 =
+        Effects.Compilerˉsourceˉeffectsˉfunctionˉlanguage(
+            Effectsˉdirectory, 0u32
+        );
+    let Parameters: bytes =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉappend(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉparametersˉempty(
+                Effectsˉdirectory
+            ),
+            3u32, 0u32
+        );
+    let Plain: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(),
+            0u32, 1u32, 3u32, 0u32, 0u32, 0u32, Parameters, 1u32
+        );
+    let Plainˉcatalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Plain
+        );
+    let Foreign: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Plainˉcatalog, 0u32, 1u32, 3u32, 0u32,
+            Ffiˉeffect, 0u32, Parameters, 1u32
+        );
+    let Catalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Foreign
+        );
+    let Reused: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Catalog, 0u32, 1u32, 3u32, 0u32,
+            Ffiˉeffect, 0u32, Parameters, 1u32
+        );
+    if Plain.Status != Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Plain.Instance != 0u32 || Plain.Reused ||
+        Foreign.Status != Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Foreign.Instance != 1u32 || Foreign.Reused ||
+        Reused.Status != Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid ||
+        Reused.Instance != 1u32 || !Reused.Reused {
+        return 45;
+    }
+    var Directory: bytes = Textˉtoˉutf8("WVCF");
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(1u32));
+    Directory = Bytesˉconcat(Directory, Bytesˉfromˉu16ˉlittle(0u32));
+    Directory = Appendˉu32(Directory, 2u32);
+    Directory = Appendˉu32(Directory, 8u32);
+    Directory = Appendˉu32(Directory, Bytesˉlength(Catalog.Evidence));
+    Directory = Appendˉu32(Directory, 32u32);
+    Directory = Appendˉu32(Directory, 48u32);
+    Directory = Appendˉu32(
+        Directory, 48u32 + Bytesˉlength(Catalog.Evidence)
+    );
+    Directory = Appendˉu32(Directory, 4u32);
+    Directory = Appendˉu32(Directory, 0u32);
+    Directory = Appendˉu32(Directory, 4u32);
+    Directory = Appendˉu32(Directory, 1u32);
+    Directory = Bytesˉconcat(Directory, Catalog.Evidence);
+    if !Callables.Compilerˉsourceˉcallableˉdirectoryˉisˉvalid(
+            Directory, 2u32
+        ) ||
+        Callables.Compilerˉsourceˉcallableˉfunctionˉinstance(
+            Directory, 0u32
+        ) != 0u32 ||
+        Callables.Compilerˉsourceˉcallableˉfunctionˉinstance(
+            Directory, 1u32
+        ) != 1u32 {
+        return 44;
+    }
+    let Serialized: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Callables.Compilerˉsourceˉcallableˉdirectoryˉcatalog(Directory);
+    if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
+            Serialized, 0u32
+        ) != 0u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcapabilityˉeffects(
+            Serialized, 0u32
+        ) != 0u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉlanguageˉeffects(
+            Serialized, 1u32
+        ) != 256u32 ||
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcapabilityˉeffects(
+            Serialized, 1u32
+        ) != 0u32 {
+        return 46;
+    }
+    return 42;
+}
+
 fn Callableˉtypeˉcatalogˉprobe() -> i32 {
     let Valid: i32 = Validˉprobe();
     if Valid != 42 { return Valid; }
     let Legacy: i32 = Legacyˉprobe();
     if Legacy != 42 { return Legacy; }
-    return Malformedˉprobe();
+    let Malformed: i32 = Malformedˉprobe();
+    if Malformed != 42 { return Malformed; }
+    return Ffiˉeffectˉcatalogˉprobe();
 }
 
 export fn Main() -> i32 {

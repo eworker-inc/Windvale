@@ -1,6 +1,7 @@
 module Languageˉoneˉeffectˉsemanticsˉselfˉtest profile hosted;
 
 import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
 import Compilerˉsourceˉeffects as Effects;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
@@ -128,6 +129,28 @@ fn Pureˉinput(Name: text) -> bytes {
             Name,
             "export fn Main() -> i32 effects() { return 42; }"
         )
+    );
+}
+
+fn Resolveˉclause(
+    Source: text,
+    Declarationˉindex: u32
+) -> Effects.Compilerˉsourceˉeffectˉset {
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    let Input: bytes = Sourceˉsetˉfrom(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉdeclarationˉat(
+            Sourceˉbytes, Declarationˉindex
+        );
+    return Effects.Compilerˉsourceˉeffectsˉresolveˉclause(
+        Input, Scan, Symbolˉsummary, Sourceˉbytes,
+        Declaration.Hasˉeffectˉclause,
+        Declaration.Effectˉclauseˉoffset,
+        1u32, 1u32, Declaration.Nameˉoffset
     );
 }
 
@@ -380,6 +403,107 @@ fn Unknownˉidentityˉprobe() -> i32 {
     return 42;
 }
 
+fn Ffiˉcallˉidentityˉprobe() -> i32 {
+    let Resolved: Effects.Compilerˉsourceˉeffectˉset = Resolveˉclause(
+        Program(
+            "Effectˉffiˉcallˉidentity",
+            "export fn Main() -> i32 effects(ffi.call) { return 42; }"
+        ),
+        0u32
+    );
+    if Resolved.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Resolved.Language != 256u32 ||
+        Resolved.Capabilities != 0u32 ||
+        Resolved.Count != 1u32 {
+        return 39;
+    }
+    return 42;
+}
+
+fn Ffiˉcallˉorderˉandˉduplicateˉprobe() -> i32 {
+    let First: Effects.Compilerˉsourceˉeffectˉset = Resolveˉclause(
+        Program(
+            "Effectˉffiˉcallˉorderˉfirst",
+            "export fn Main() -> i32 effects(ffi.call, memory.allocate) { return 42; }"
+        ),
+        0u32
+    );
+    let Second: Effects.Compilerˉsourceˉeffectˉset = Resolveˉclause(
+        Program(
+            "Effectˉffiˉcallˉorderˉsecond",
+            "export fn Main() -> i32 effects(memory.allocate, ffi.call) { return 42; }"
+        ),
+        0u32
+    );
+    let Duplicate: Effects.Compilerˉsourceˉeffectˉset = Resolveˉclause(
+        Program(
+            "Effectˉffiˉcallˉduplicate",
+            "export fn Main() -> i32 effects(ffi.call, ffi.call) { return 42; }"
+        ),
+        0u32
+    );
+    if First.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        Second.Status != Effects.Compilerˉsourceˉeffectˉstatus.Valid ||
+        First.Language != 257u32 || Second.Language != 257u32 ||
+        First.Capabilities != 0u32 || Second.Capabilities != 0u32 ||
+        First.Count != 2u32 || Second.Count != 2u32 ||
+        Duplicate.Status !=
+            Effects.Compilerˉsourceˉeffectˉstatus.Duplicateˉidentity {
+        return 40;
+    }
+    return 42;
+}
+
+fn Ffiˉnamespaceˉisˉreservedˉprobe() -> i32 {
+    let Resolved: Effects.Compilerˉsourceˉeffectˉset = Resolveˉclause(
+        Program(
+            "Effectˉffiˉnamespaceˉreserved",
+            "capability ffi.unknown; export fn Main() -> i32 effects(ffi.unknown) { return 42; }"
+        ),
+        1u32
+    );
+    if Resolved.Status !=
+            Effects.Compilerˉsourceˉeffectˉstatus.Unknownˉidentity ||
+        Resolved.Language != 0u32 || Resolved.Capabilities != 0u32 {
+        return 41;
+    }
+    return 42;
+}
+
+fn Ffiˉdirectoryˉmaskˉprobe() -> i32 {
+    var Header: bytes = Textˉtoˉutf8("WVEF");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(1u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(12u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(4u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(32u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(44u32));
+    let Valid: bytes = Bytesˉconcat(
+        Header,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(3u32),
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(256u32),
+                Bytesˉfromˉu32ˉlittle(0u32)
+            )
+        )
+    );
+    let Invalid: Byteˉconstruction.Foundationˉbytesˉresult =
+        Byteˉconstruction.Foundationˉbytesˉreplace(
+            Valid, 36u32, 4u32, Bytesˉfromˉu32ˉlittle(512u32)
+        );
+    if !Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Valid, 1u32, 0u32
+        ) || Effects.Compilerˉsourceˉeffectsˉdirectoryˉisˉvalid(
+            Invalid.Value, 1u32, 0u32
+        ) {
+        return 43;
+    }
+    return 42;
+}
+
 fn Recursiveˉinferenceˉprobe() -> i32 {
     let Prepared: Effects.Compilerˉsourceˉeffectˉsummary = Analyze(
         Program(
@@ -459,5 +583,11 @@ export fn Main() -> i32 {
     if Selected == 107u32 { return Unknownˉidentityˉprobe(); }
     if Selected == 108u32 { return Recursiveˉinferenceˉprobe(); }
     if Selected == 109u32 { return Directoryˉboundsˉprobe(); }
+    if Selected == 110u32 { return Ffiˉcallˉidentityˉprobe(); }
+    if Selected == 111u32 {
+        return Ffiˉcallˉorderˉandˉduplicateˉprobe();
+    }
+    if Selected == 112u32 { return Ffiˉnamespaceˉisˉreservedˉprobe(); }
+    if Selected == 113u32 { return Ffiˉdirectoryˉmaskˉprobe(); }
     return 64;
 }
