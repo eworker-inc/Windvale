@@ -215,6 +215,10 @@ function Compile(Fixture, Output) {
         Output,
     ], {
         encoding: 'utf8',
+        env: {
+            ...process.env,
+            WINDVALE_SPLIT_COMPILER_ACTIVITY: '0',
+        },
         windowsHide: true,
         maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
         timeout: TOOL_TIMEOUT_MILLISECONDS,

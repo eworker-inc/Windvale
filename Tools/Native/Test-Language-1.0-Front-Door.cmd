@@ -16,6 +16,7 @@ set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d7238
 set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
 set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
 set "BridgeEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit-wvir-1.9-bridge.wvb"
+set "WINDVALE_SPLIT_COMPILER_ACTIVITY=0"
 for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
 if not defined TemporaryRoot exit /b 1
 
@@ -819,7 +820,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Minimum-B.wvb" >"%Work%\Compile-B.out" 2>"%Work%\Compile-B.err" || goto :cleanup
 for %%F in ("%Work%\Compile-A.err" "%Work%\Compile-B.err") do if not "%%~zF"=="0" goto :cleanup
 set "FailureStep=compiler-determinism"
-fc /b "%Work%\Compile-A.out" "%Work%\Compile-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Compile-A.out" "%Work%\Compile-B.out" || goto :cleanup
 fc /b "%Work%\Minimum-A.wvb" "%Work%\Minimum-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-execution-run"
 call "%Native%\Run-Wvb.cmd" "%Work%\Minimum-A.wvb" >"%Work%\Minimum.out" 2>"%Work%\Minimum.err" || goto :cleanup
@@ -849,7 +850,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Unit-B.wvb" >"%Work%\Unit-B.out" 2>"%Work%\Unit-B.err" || goto :cleanup
 for %%F in ("%Work%\Unit-A.err" "%Work%\Unit-B.err") do if not "%%~zF"=="0" goto :cleanup
 set "FailureStep=compiler-unit-determinism"
-fc /b "%Work%\Unit-A.out" "%Work%\Unit-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Unit-A.out" "%Work%\Unit-B.out" || goto :cleanup
 fc /b "%Work%\Unit-A.wvb" "%Work%\Unit-B.wvb" >nul || goto :cleanup
 type "%Work%\Unit-A.out"
 for %%F in ("%Work%\Unit-A.wvb") do echo INFO  language 1 unit wvb-bytes=%%~zF
@@ -869,7 +870,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Record-Update-B.wvb" >"%Work%\Record-Update-B.out" 2>"%Work%\Record-Update-B.err" || goto :cleanup
 for %%F in ("%Work%\Record-Update-A.err" "%Work%\Record-Update-B.err") do if not "%%~zF"=="0" goto :cleanup
 set "FailureStep=compiler-record-update-determinism"
-fc /b "%Work%\Record-Update-A.out" "%Work%\Record-Update-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Record-Update-A.out" "%Work%\Record-Update-B.out" || goto :cleanup
 fc /b "%Work%\Record-Update-A.wvb" "%Work%\Record-Update-B.wvb" >nul || goto :cleanup
 type "%Work%\Record-Update-A.out"
 for %%F in ("%Work%\Record-Update-A.wvb") do echo INFO  language 1 record-update wvb-bytes=%%~zF
@@ -899,7 +900,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Control.wv" ^
     "%Work%\Value-If-B.wvb" >"%Work%\Value-If-B.out" 2>"%Work%\Value-If-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-If-A.err" "%Work%\Value-If-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Value-If-A.out" "%Work%\Value-If-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Value-If-A.out" "%Work%\Value-If-B.out" || goto :cleanup
 fc /b "%Work%\Value-If-A.wvb" "%Work%\Value-If-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-value-if-execution"
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-If-A.wvb" >"%Work%\Value-If.out" 2>"%Work%\Value-If.err" || goto :cleanup
@@ -942,7 +943,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match.wv" ^
     "%Work%\Value-Match-B.wvb" >"%Work%\Value-Match-B.out" 2>"%Work%\Value-Match-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-A.err" "%Work%\Value-Match-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Value-Match-A.out" "%Work%\Value-Match-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Value-Match-A.out" "%Work%\Value-Match-B.out" || goto :cleanup
 fc /b "%Work%\Value-Match-A.wvb" "%Work%\Value-Match-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-value-match-execution"
 call "%Native%\Run-Wvb.cmd" "%Work%\Value-Match-A.wvb" >"%Work%\Value-Match.out" 2>"%Work%\Value-Match.err" || goto :cleanup
@@ -974,7 +975,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Never.wv" ^
     "%Work%\Value-Match-Never-B.wvb" >"%Work%\Value-Match-Never-B.out" 2>"%Work%\Value-Match-Never-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-Never-A.err" "%Work%\Value-Match-Never-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Value-Match-Never-A.out" "%Work%\Value-Match-Never-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Value-Match-Never-A.out" "%Work%\Value-Match-Never-B.out" || goto :cleanup
 fc /b "%Work%\Value-Match-Never-A.wvb" "%Work%\Value-Match-Never-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-value-match-variant-a"
 node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.exe" "%Work%\Analyzer.exe" "%Work%\Emitter.exe" ^
@@ -991,7 +992,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Value-Match-Variant.wv" ^
     "%Work%\Value-Match-Variant-B.wvb" >"%Work%\Value-Match-Variant-B.out" 2>"%Work%\Value-Match-Variant-B.err" || goto :cleanup
 for %%F in ("%Work%\Value-Match-Variant-A.err" "%Work%\Value-Match-Variant-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Value-Match-Variant-A.out" "%Work%\Value-Match-Variant-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Value-Match-Variant-A.out" "%Work%\Value-Match-Variant-B.out" || goto :cleanup
 fc /b "%Work%\Value-Match-Variant-A.wvb" "%Work%\Value-Match-Variant-B.wvb" >nul || goto :cleanup
 set "FailureStep=compiler-value-match-source-rejections"
 for %%N in (Missing-Case Trailing-Semicolon Type-Mismatch) do (
@@ -1067,7 +1068,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Fixed-Integer-B.wvb" >"%Work%\Fixed-Integer-B.out" 2>"%Work%\Fixed-Integer-B.err" || goto :cleanup
 set "FailureStep=fixed-integer-determinism"
 for %%F in ("%Work%\Fixed-Integer-A.err" "%Work%\Fixed-Integer-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Fixed-Integer-A.out" "%Work%\Fixed-Integer-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Fixed-Integer-A.out" "%Work%\Fixed-Integer-B.out" || goto :cleanup
 fc /b "%Work%\Fixed-Integer-A.wvb" "%Work%\Fixed-Integer-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=fixed-integer-trap-inputs"
@@ -1178,7 +1179,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Rune-B.wvb" >"%Work%\Rune-B.out" 2>"%Work%\Rune-B.err" || goto :cleanup
 set "FailureStep=rune-determinism"
 for %%F in ("%Work%\Rune-A.err" "%Work%\Rune-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Rune-A.out" "%Work%\Rune-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Rune-A.out" "%Work%\Rune-B.out" || goto :cleanup
 fc /b "%Work%\Rune-A.wvb" "%Work%\Rune-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=rune-source-rejections"
@@ -1243,7 +1244,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Floating-B.wvb" >"%Work%\Floating-B.out" 2>"%Work%\Floating-B.err" || goto :cleanup
 set "FailureStep=floating-determinism"
 for %%F in ("%Work%\Floating-A.err" "%Work%\Floating-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Floating-A.out" "%Work%\Floating-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Floating-A.out" "%Work%\Floating-B.out" || goto :cleanup
 fc /b "%Work%\Floating-A.wvb" "%Work%\Floating-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=floating-source-rejections"
@@ -1359,7 +1360,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     >"%Work%\Fixed-Array-B.out" 2>"%Work%\Fixed-Array-B.err" || goto :cleanup
 set "FailureStep=fixed-array-determinism"
 for %%F in ("%Work%\Fixed-Array-A.err" "%Work%\Fixed-Array-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Fixed-Array-A.out" "%Work%\Fixed-Array-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Fixed-Array-A.out" "%Work%\Fixed-Array-B.out" || goto :cleanup
 fc /b "%Work%\Fixed-Array-A.wvb" "%Work%\Fixed-Array-B.wvb" >nul || goto :cleanup
 set "FailureStep=fixed-array-verifier-runtime"
 node "%Native%\Verify-Language-1.0-Fixed-Arrays.mjs" ^
@@ -1530,7 +1531,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Never-B.wvb" >"%Work%\Never-B.out" 2>"%Work%\Never-B.err" || goto :cleanup
 set "FailureStep=unit-never-determinism"
 for %%F in ("%Work%\Never-A.err" "%Work%\Never-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Never-A.out" "%Work%\Never-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Never-A.out" "%Work%\Never-B.out" || goto :cleanup
 fc /b "%Work%\Never-A.wvb" "%Work%\Never-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=unit-never-source-rejections"
@@ -1590,7 +1591,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Multi-Field-Variant-B.wvb" >"%Work%\Multi-Field-Variant-B.out" 2>"%Work%\Multi-Field-Variant-B.err" || goto :cleanup
 set "FailureStep=multi-field-variant-determinism"
 for %%F in ("%Work%\Multi-Field-Variant-A.err" "%Work%\Multi-Field-Variant-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Multi-Field-Variant-A.out" "%Work%\Multi-Field-Variant-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Multi-Field-Variant-A.out" "%Work%\Multi-Field-Variant-B.out" || goto :cleanup
 fc /b "%Work%\Multi-Field-Variant-A.wvb" "%Work%\Multi-Field-Variant-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=multi-field-variant-source-rejections"
@@ -1672,7 +1673,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     "%Work%\Result-Try-B.wvb" >"%Work%\Result-Try-B.out" 2>"%Work%\Result-Try-B.err" || goto :cleanup
 set "FailureStep=typed-failure-determinism"
 for %%F in ("%Work%\Result-Try-A.err" "%Work%\Result-Try-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Result-Try-A.out" "%Work%\Result-Try-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Result-Try-A.out" "%Work%\Result-Try-B.out" || goto :cleanup
 fc /b "%Work%\Result-Try-A.wvb" "%Work%\Result-Try-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=typed-failure-source-rejections"
@@ -1717,7 +1718,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     >"%Work%\Foundation-Generic-B.out" 2>"%Work%\Foundation-Generic-B.err" || goto :cleanup
 set "FailureStep=foundation-generics-determinism"
 for %%F in ("%Work%\Foundation-Generic-A.err" "%Work%\Foundation-Generic-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Foundation-Generic-A.out" "%Work%\Foundation-Generic-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Foundation-Generic-A.out" "%Work%\Foundation-Generic-B.out" || goto :cleanup
 fc /b "%Work%\Foundation-Generic-A.wvb" "%Work%\Foundation-Generic-B.wvb" >nul || goto :cleanup
 
 set "FailureStep=foundation-generics-source-rejections"
@@ -1749,7 +1750,7 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
     --target-descriptor "%TargetDescriptor%" ^
-    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations.wv" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations-Executable.wv" ^
     "%Work%\Generic-Specializations-A.wvb" ^
     >"%Work%\Generic-Specializations-A.out" 2>"%Work%\Generic-Specializations-A.err" || goto :cleanup
 set "FailureStep=generic-specializations-compile-b"
@@ -1757,12 +1758,12 @@ node "%Native%\Run-Split-Compiler.mjs" "%Work%\Admitter.exe" "%Work%\Validator.e
     --source-input-lock "%SourceLock%" "%SourceLockHash%" ^
     --source-profile "%SourceProfile%" ^
     --target-descriptor "%TargetDescriptor%" ^
-    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations.wv" ^
+    "%RepositoryRoot%\Tests\Fixtures\Language-1.0\Generic-Multiple-Specializations-Executable.wv" ^
     "%Work%\Generic-Specializations-B.wvb" ^
     >"%Work%\Generic-Specializations-B.out" 2>"%Work%\Generic-Specializations-B.err" || goto :cleanup
 set "FailureStep=generic-specializations-determinism"
 for %%F in ("%Work%\Generic-Specializations-A.err" "%Work%\Generic-Specializations-B.err") do if not "%%~zF"=="0" goto :cleanup
-fc /b "%Work%\Generic-Specializations-A.out" "%Work%\Generic-Specializations-B.out" >nul || goto :cleanup
+call :compare_split_reports "%Work%\Generic-Specializations-A.out" "%Work%\Generic-Specializations-B.out" || goto :cleanup
 fc /b "%Work%\Generic-Specializations-A.wvb" "%Work%\Generic-Specializations-B.wvb" >nul || goto :cleanup
 set "FailureStep=generic-specializations-verifier"
 "%Work%\Verifier.exe" "%Work%\Generic-Specializations-A.wvb" ^
@@ -2122,6 +2123,14 @@ for /f "usebackq delims=" %%L in ("%~f1") do (
 if not "!ResultLines!"=="1" exit /b 1
 if not "!ResultLine!"=="Result: 42" exit /b 1
 exit /b 0
+
+:compare_split_reports
+findstr /V /B /L /C:"INFO  split compiler active " "%~f1" >"%Work%\Deterministic-Left.out"
+if errorlevel 2 exit /b 1
+findstr /V /B /L /C:"INFO  split compiler active " "%~f2" >"%Work%\Deterministic-Right.out"
+if errorlevel 2 exit /b 1
+fc /b "%Work%\Deterministic-Left.out" "%Work%\Deterministic-Right.out" >nul
+exit /b %ERRORLEVEL%
 
 :expect_rejection
 call :expect_rejection_with_digest "%~f1" "%~f2" "%SourceLockHash%" "%SourceProfile%"

@@ -237,6 +237,10 @@ async function Runˉbounded(Command, Arguments) {
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
         const Child = spawn(Command, Arguments, {
             cwd: REPOSITORY_ROOT,
+            env: {
+                ...process.env,
+                WINDVALE_SPLIT_COMPILER_ACTIVITY: '0',
+            },
             windowsHide: true,
             stdio: ['ignore', 'pipe', 'pipe'],
         });

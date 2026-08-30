@@ -96,14 +96,18 @@ The verifier binds the exact replacement source frozen by
 | Frozen aggregate SHA-256 | `fb918a763ae7c8c85dd1a2ffecee6587ab93bbf846ae31ae19b53509aed36a0a` |
 
 The immutable Decision 0767 semantic identity above does not change, and every
-intermediate amendment remains immutable provenance. The current verifier is
-bound by [Decision 0870](../Decisions/0870-Enforce-Awaited-Provider-Calls-And-Recovery.md)
-to the 3,841-byte
-`Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt` manifest at SHA-256
-`e5a8928696ec8626adbfe94faf9284d037b6b40aa5d3dea6a250ddc6b6b770d4`.
-That closure contains 251 files and 1,759,474 bytes; its 46,260-byte entry
-stream has SHA-256
-`f574e26f1a7397517f192be412268bf7768a6cfbc8685b892fb38f6a44672c80`.
+intermediate amendment remains immutable provenance. The current verifier
+candidate advances through
+[Decision 0894](../Decisions/0894-Advance-The-Frozen-Source-Identity-For-Canonical-Unsafe-And-Ffi-Effects.md)
+to the 3,704-byte
+`Windvale-Language-1.0-Source-Amendment-0894-Candidate.txt` manifest at SHA-256
+`47d2f8adbf2cf3f7fde7a91b368bb614cfceb0a8096379239847143aa5ebe5fc`.
+That closure contains 251 files and 1,759,688 bytes; its unchanged 46,260-byte
+entry stream has SHA-256
+`d5976bddf9637b7559117ceff76087cf6554e1d0b9509a57b70a5b58929fea6e`.
+The v8 amendment changes only the exact Language 1.0 semantic-specification
+identity needed to bind canonical `unsafe.address` and `ffi.call` effects; it
+does not rewrite the Decision 0870 manifest or any earlier identity.
 
 `Tests/Native/Language-1.0-Fixture-Inventory.txt` further fixes 16 workload
 bundles containing 72 `.wv` source fixtures and 482,325 source bytes. The

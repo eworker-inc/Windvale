@@ -61,13 +61,17 @@ if (Authenticated) {
 
 const Coordinatorˉstarted = Date.now();
 let Activeˉstep = 'input-validation';
-const Coordinatorˉheartbeat = setInterval(() => {
-    process.stdout.write(
-        `INFO  split compiler active step=${Activeˉstep} ` +
-        `elapsed-ms=${Date.now() - Coordinatorˉstarted}\n`
-    );
-}, HEARTBEAT_INTERVAL_MILLISECONDS);
-Coordinatorˉheartbeat.unref();
+const Activityˉenabled =
+    process.env.WINDVALE_SPLIT_COMPILER_ACTIVITY !== '0';
+const Coordinatorˉheartbeat = Activityˉenabled
+    ? setInterval(() => {
+        process.stdout.write(
+            `INFO  split compiler active step=${Activeˉstep} ` +
+            `elapsed-ms=${Date.now() - Coordinatorˉstarted}\n`
+        );
+    }, HEARTBEAT_INTERVAL_MILLISECONDS)
+    : null;
+Coordinatorˉheartbeat?.unref();
 
 await Requireˉordinaryˉfile(
     Admitter, 1, MAXIMUM_PRODUCT_COMMAND_BYTES, 'source admission product'
@@ -451,7 +455,7 @@ try {
     }
 }
 
-clearInterval(Coordinatorˉheartbeat);
+if (Coordinatorˉheartbeat !== null) clearInterval(Coordinatorˉheartbeat);
 
 if (Failure !== null) {
     if (Failure instanceof Splitˉcompilerˉfailure) {
@@ -646,6 +650,7 @@ function Runˉbounded(Command, Commandˉarguments, Step) {
 
 function Reportˉactivity(Step) {
     Activeˉstep = Step;
+    if (!Activityˉenabled) return;
     process.stdout.write(
         `INFO  split compiler active step=${Step} ` +
         `elapsed-ms=${Date.now() - Coordinatorˉstarted}\n`
