@@ -1317,7 +1317,11 @@ function Add-Native-Tool-Suite {
     )) {
         Add-Suite 'segmented-compiler-toolset-reconstruction'
         if ($Stem -eq 'Package-Segmented-Compiler-Wvb') {
-            Add-Suite @('wvb-runner-reconstruction', 'compiler-split-development')
+            Add-Suite @(
+                'wvb-runner-reconstruction',
+                'compiler-split-development',
+                'language-1-admission-evidence-format'
+            )
         }
     } elseif ($Stem -eq 'Construct-Wvb-To-Wvo-Reconstruction') {
         Add-Suite @(
@@ -1388,6 +1392,7 @@ function Add-Native-Tool-Suite {
             'compiler-reconstruction',
             'libraries',
             'packages',
+            'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator'
         )

@@ -94,8 +94,9 @@ mismatch, unknown/duplicate/missing platforms, generic/broader/exact foreign
 scopes, malformed metadata and WVTD, all-or-nothing failure, exact snapshot
 authentication, deterministic output, and max/one-past resource arithmetic.
 
-The changed-file planner passed 31 general and 229 native routing cases. The
-registry has 123 owners and 5,878 cases in 21,806 LF-only bytes at SHA-256
+The changed-file planner passed 31 general and 229 native routing cases. At the
+coordinator landing, the registry had 123 owners and 5,878 cases in 21,806
+LF-only bytes at SHA-256
 `e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f`.
 Its shards contain 1/57, 43/2,790, 38/1,782, and 41/1,249 owners/cases.
 

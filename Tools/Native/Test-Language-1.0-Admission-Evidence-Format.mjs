@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -8,10 +8,18 @@ import { fileURLToPath } from 'node:url';
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 1024 * 1024;
 const MAXIMUM_LEAF_BYTES = 262_144;
+const MAXIMUM_APPLICATION_BYTES = 64 * 1024 * 1024;
 const CHILD_TIMEOUT_MILLISECONDS = 180_000;
+const CONSTRUCTION_TIMEOUT_MILLISECONDS = 10 * 60_000;
+const PRODUCT_TIMEOUT_MILLISECONDS = 30_000;
+const OVERALL_TIMEOUT_MILLISECONDS = 20 * 60_000;
+const HEARTBEAT_MILLISECONDS = 30_000;
+const TASKKILL_TIMEOUT_MILLISECONDS = 2_000;
+const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR'];
+const DYNAMIC_CASES = 12;
 const EXPECTED_RUNNER = WINDOWS
     ? { bytes: 5_907_456, sha256: '2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b' }
     : { bytes: 5_906_432, sha256: '611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae' };
@@ -24,27 +32,117 @@ const EXPECTED_CORE = {
     sha256: '5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537'
 };
 const EXPECTED_VALIDATOR = {
-    wvirBytes: 190_524,
-    wvirSha256: '47c7eeb1680b6c58e791e38efaa457d90b069c31cda3aa32e8fba5fedc6ab878',
-    wvbBytes: 72_060,
-    wvbSha256: '868eb8c6b7fd27affad03844de2915a19a74167d75baf041e28e750111d178f4'
+    wvirBytes: 191_712,
+    wvirSha256: '067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391',
+    wvbBytes: 72_600,
+    wvbSha256: '706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59'
 };
 const EXPECTED_FIXTURE = {
-    bytes: 94_299,
-    sha256: '37772c1a75d03b2d8eb22015fde4efacbcc27718cd891f4486bc597317ebeee9'
+    bytes: 94_839,
+    sha256: '5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b'
 };
 
 function Reject(Message) { throw new Error(Message); }
 
-function Run(Tool, Arguments) {
+const OwnerStarted = Date.now();
+
+function ProcessIsLive(Child) {
+    return Child.pid !== undefined &&
+        Child.exitCode === null && Child.signalCode === null;
+}
+
+function RunBoundedTaskkill(ProcessIdentifier) {
+    return new Promise(ResolveResult => {
+        const Killer = spawn(
+            'taskkill.exe',
+            ['/pid', String(ProcessIdentifier), '/t', '/f'],
+            { stdio: 'ignore', windowsHide: true }
+        );
+        var Settled = false;
+        const Timer = setTimeout(() => {
+            if (Settled) return;
+            Settled = true;
+            Killer.kill('SIGKILL');
+            Killer.unref();
+            ResolveResult('taskkill did not settle within 2000 ms');
+        }, TASKKILL_TIMEOUT_MILLISECONDS);
+        Killer.once('error', ErrorValue => {
+            if (Settled) return;
+            Settled = true;
+            clearTimeout(Timer);
+            ResolveResult(`taskkill error: ${ErrorValue.message}`);
+        });
+        Killer.once('close', Code => {
+            if (Settled) return;
+            Settled = true;
+            clearTimeout(Timer);
+            ResolveResult(Code === 0 ? null : `taskkill exited ${Code}`);
+        });
+    });
+}
+
+async function TerminateProcessTree(Child) {
+    if (!ProcessIsLive(Child)) return null;
+    var Diagnostic = null;
+    if (WINDOWS) {
+        Diagnostic = await RunBoundedTaskkill(Child.pid);
+    }
+    else {
+        try {
+            process.kill(-Child.pid, 'SIGKILL');
+        } catch (ErrorValue) {
+            Diagnostic = `process-group kill error: ${ErrorValue.message}`;
+        }
+    }
+    if (ProcessIsLive(Child)) {
+        try {
+            if (!Child.kill('SIGKILL') && Diagnostic !== null) {
+                Diagnostic += '; direct child kill returned false';
+            }
+        } catch (ErrorValue) {
+            if (Diagnostic !== null) {
+                Diagnostic += `; direct child kill error: ${ErrorValue.message}`;
+            }
+        }
+    }
+    return Diagnostic;
+}
+
+function SelectTimeout(RequestedTimeout, Remaining) {
+    return {
+        Milliseconds: Math.min(RequestedTimeout, Remaining),
+        OwnerBudgetLimited: Remaining < RequestedTimeout
+    };
+}
+
+function Run(Tool, Arguments, Label = 'child', RequestedTimeout = CHILD_TIMEOUT_MILLISECONDS) {
     return new Promise((Resolve, RejectPromise) => {
+        const Remaining = OVERALL_TIMEOUT_MILLISECONDS - (Date.now() - OwnerStarted);
+        if (Remaining <= 0) {
+            RejectPromise(new Error(
+                `Admission-evidence verification exceeded ${OVERALL_TIMEOUT_MILLISECONDS} ms.`
+            ));
+            return;
+        }
+        const TimeoutSelection = SelectTimeout(RequestedTimeout, Remaining);
+        const TimeoutMilliseconds = TimeoutSelection.Milliseconds;
         const IsCommand = WINDOWS && Tool.toLowerCase().endsWith('.cmd');
+        if (IsCommand && [Tool, ...Arguments].some(
+            Argument => /[\r\n&|<>^%!"]/u.test(Argument)
+        )) {
+            RejectPromise(new Error(
+                'An admission-evidence owner argument contains shell metacharacters.'
+            ));
+            return;
+        }
         const Executable = IsCommand ? process.env.ComSpec ?? 'cmd.exe' : Tool;
         const ProducerArguments = IsCommand
             ? ['/d', '/v:off', '/s', '/c', `"${[Tool, ...Arguments].map(Value => `"${Value}"`).join(' ')}"`]
             : Arguments;
+        const Started = Date.now();
         const Child = spawn(Executable, ProducerArguments, {
             cwd: REPOSITORY_ROOT,
+            detached: !WINDOWS,
             stdio: ['ignore', 'pipe', 'pipe'],
             windowsHide: true,
             windowsVerbatimArguments: IsCommand
@@ -54,37 +152,204 @@ function Run(Tool, Arguments) {
         var Bytes = 0;
         var Exceeded = false;
         var TimedOut = false;
+        var Settled = false;
+        var CleanupFailure = null;
+        var TerminationDiagnostic = null;
+        var TerminationPromise = null;
+        var CloseCode = null;
+        var CloseReceived = false;
+        var SettleTimer;
+        const Heartbeat = setInterval(() => {
+            const ElapsedSeconds = Math.floor((Date.now() - OwnerStarted) / 1000);
+            process.stdout.write(
+                `HEARTBEAT admission evidence child=${Label} elapsed-seconds=${ElapsedSeconds}\n`
+            );
+        }, HEARTBEAT_MILLISECONDS);
+        Heartbeat.unref();
+        function Result(Code, Forced) {
+            return {
+                Code,
+                CleanupFailure,
+                Elapsed: Date.now() - Started,
+                Error: Buffer.concat(ErrorOutput),
+                Exceeded,
+                Forced,
+                Output: Buffer.concat(Output),
+                TimeoutLimitedByOwnerBudget: TimeoutSelection.OwnerBudgetLimited,
+                TimeoutMilliseconds,
+                TimedOut
+            };
+        }
+        function Complete(Code, Forced) {
+            if (Settled) return;
+            Settled = true;
+            clearTimeout(Timeout);
+            clearInterval(Heartbeat);
+            if (SettleTimer !== undefined) clearTimeout(SettleTimer);
+            Resolve(Result(Code, Forced));
+        }
+        function TerminateAndSettle() {
+            if (TerminationPromise !== null) return;
+            SettleTimer = setTimeout(() => {
+                try {
+                    Child.kill('SIGKILL');
+                } catch (ErrorValue) {
+                    TerminationDiagnostic = TerminationDiagnostic ??
+                        `final direct child kill error: ${ErrorValue.message}`;
+                }
+                const SettleDiagnostic =
+                    `process tree did not close within ` +
+                    `${TERMINATION_SETTLE_MILLISECONDS} ms`;
+                CleanupFailure = TerminationDiagnostic === null
+                    ? SettleDiagnostic
+                    : `${TerminationDiagnostic}; ${SettleDiagnostic}`;
+                Child.stdout.destroy();
+                Child.stderr.destroy();
+                Child.unref();
+                Complete(null, true);
+            }, TERMINATION_SETTLE_MILLISECONDS);
+            TerminationPromise = (async () => {
+                try {
+                    TerminationDiagnostic = await TerminateProcessTree(Child);
+                } catch (ErrorValue) {
+                    TerminationDiagnostic =
+                        `tree termination error: ${ErrorValue.message}`;
+                    try {
+                        Child.kill('SIGKILL');
+                    } catch {
+                        // The bounded settle path records the diagnostic.
+                    }
+                }
+                CleanupFailure = TerminationDiagnostic;
+                if (CloseReceived) Complete(CloseCode, false);
+            })();
+        }
         const Timeout = setTimeout(() => {
             TimedOut = true;
-            Child.kill('SIGKILL');
-        }, CHILD_TIMEOUT_MILLISECONDS);
+            TerminateAndSettle();
+        }, TimeoutMilliseconds);
         for (const [Stream, Target] of [[Child.stdout, Output], [Child.stderr, ErrorOutput]]) {
             Stream.on('data', Chunk => {
                 Bytes += Chunk.length;
                 if (Bytes <= MAXIMUM_OUTPUT_BYTES) Target.push(Chunk);
-                else { Exceeded = true; Child.kill(); }
+                else if (!Exceeded) {
+                    Exceeded = true;
+                    TerminateAndSettle();
+                }
             });
         }
-        Child.once('error', Error => {
+        Child.once('error', ErrorValue => {
+            if (TimedOut || Exceeded) return;
+            if (Settled) return;
+            Settled = true;
             clearTimeout(Timeout);
-            RejectPromise(Error);
+            clearInterval(Heartbeat);
+            if (SettleTimer !== undefined) clearTimeout(SettleTimer);
+            RejectPromise(ErrorValue);
         });
         Child.once('close', Code => {
-            clearTimeout(Timeout);
-            Resolve({
-                Code,
-                Output: Buffer.concat(Output),
-                Error: Buffer.concat(ErrorOutput),
-                Exceeded,
-                TimedOut
-            });
+            CloseReceived = true;
+            CloseCode = Code;
+            if (TerminationPromise === null) {
+                Complete(Code, false);
+                return;
+            }
+            void TerminationPromise.then(() => Complete(Code, false));
         });
     });
 }
 
-async function RequireSuccess(Label, Tool, Arguments, PermitOutput = false) {
-    const Result = await Run(Tool, Arguments);
-    if (Result.TimedOut) Reject(`${Label} exceeded ${CHILD_TIMEOUT_MILLISECONDS} ms.`);
+function RequireCleanTermination(Result, Label) {
+    if (Result.CleanupFailure !== null || Result.Forced) {
+        Reject(
+            `${Label} process cleanup failed: forced=${Result.Forced} ` +
+            `diagnostic=${Result.CleanupFailure ?? 'none'}.`
+        );
+    }
+}
+
+function TimeoutDescription(Result) {
+    const Scope = Result.TimeoutLimitedByOwnerBudget
+        ? 'remaining overall child-execution budget'
+        : 'requested child timeout';
+    return `the ${Scope} of ${Result.TimeoutMilliseconds} ms`;
+}
+
+function ProcessIdentifierIsLive(ProcessIdentifier) {
+    try {
+        process.kill(ProcessIdentifier, 0);
+        return true;
+    } catch (ErrorValue) {
+        if (ErrorValue.code === 'ESRCH') return false;
+        throw ErrorValue;
+    }
+}
+
+async function WaitForProcessExit(ProcessIdentifier) {
+    const Deadline = Date.now() + 1_000;
+    while (ProcessIdentifierIsLive(ProcessIdentifier)) {
+        if (Date.now() >= Deadline) return false;
+        await new Promise(ResolveWait => setTimeout(ResolveWait, 25));
+    }
+    return true;
+}
+
+async function RunTerminationProbe() {
+    const RequestedSelection = SelectTimeout(500, 1_000);
+    const OwnerSelection = SelectTimeout(500, 100);
+    if (RequestedSelection.Milliseconds !== 500 ||
+        RequestedSelection.OwnerBudgetLimited ||
+        OwnerSelection.Milliseconds !== 100 ||
+        !OwnerSelection.OwnerBudgetLimited) {
+        Reject('The timeout-selection contract is invalid.');
+    }
+    const DescendantSource = 'setInterval(()=>{},1000)';
+    const Source =
+        "const{spawn}=require('node:child_process');" +
+        `const c=spawn(process.execPath,['-e',${JSON.stringify(
+            DescendantSource
+        )}],{stdio:'ignore'});` +
+        'process.stdout.write(String(c.pid));setInterval(()=>{},1000)';
+    const Result = await Run(
+        process.execPath,
+        ['-e', Source],
+        'termination-probe',
+        500
+    );
+    if (!Result.TimedOut || Result.Exceeded || Result.Forced ||
+        Result.CleanupFailure !== null) {
+        Reject(
+            `The termination probe returned an invalid result: ` +
+            `timed-out=${Result.TimedOut} exceeded=${Result.Exceeded} ` +
+            `forced=${Result.Forced} cleanup=${Result.CleanupFailure}.`
+        );
+    }
+    const DescendantText = Result.Output.toString('utf8');
+    if (!/^[1-9][0-9]*$/u.test(DescendantText)) {
+        Reject('The termination probe descendant identity is invalid.');
+    }
+    const DescendantIdentifier = Number.parseInt(DescendantText, 10);
+    if (!await WaitForProcessExit(DescendantIdentifier)) {
+        Reject('The termination probe left its descendant running.');
+    }
+    process.stdout.write(
+        `admission evidence process termination probe status=Passed ` +
+        `elapsed-ms=${Result.Elapsed}\n`
+    );
+}
+
+async function RequireSuccess(
+    Label,
+    Tool,
+    Arguments,
+    PermitOutput = false,
+    TimeoutMilliseconds = CHILD_TIMEOUT_MILLISECONDS
+) {
+    const Result = await Run(
+        Tool, Arguments, Label.replaceAll(' ', '-'), TimeoutMilliseconds
+    );
+    RequireCleanTermination(Result, Label);
+    if (Result.TimedOut) Reject(`${Label} exceeded ${TimeoutDescription(Result)}.`);
     if (Result.Exceeded) Reject(`${Label} exceeded the output limit.`);
     if (Result.Code !== 0 || Result.Error.length !== 0 ||
         (!PermitOutput && Result.Output.length !== 0)) {
@@ -92,6 +357,104 @@ async function RequireSuccess(Label, Tool, Arguments, PermitOutput = false) {
             Result.Error.toString('utf8') + Result.Output.toString('utf8'));
     }
     return Result.Output.toString('utf8');
+}
+
+function Normalize(Value) { return Value.toString('utf8').replaceAll('\r', ''); }
+
+function Sha256(Value) { return createHash('sha256').update(Value).digest(); }
+
+function ConstructWvss() {
+    const Result = Buffer.alloc(37);
+    Result.write('WVSS', 0, 4, 'ascii');
+    Result.writeUInt16LE(2, 4);
+    Result.writeUInt16LE(0, 6);
+    Result.writeUInt32LE(1, 8);
+    Result.writeUInt32LE(20, 12);
+    Result.writeUInt32LE(36, 16);
+    Result.writeUInt32LE(1, 20);
+    Result.writeUInt32LE(1, 24);
+    Result.writeUInt32LE(1, 28);
+    Result.writeUInt32LE(1, 32);
+    Result[36] = 120;
+    return Result;
+}
+
+function ConstructWvtd() {
+    const Result = Buffer.alloc(64);
+    Result.write('WVTD', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt16LE(0, 6);
+    Result.writeUInt32LE(Result.length, 8);
+    Result.writeUInt32LE(1, 12);
+    Result.writeUInt32LE(1, 16);
+    Result.writeUInt32LE(1, 20);
+    Result.writeUInt32LE(1, 24);
+    Result.writeUInt32LE(64, 28);
+    Result.writeUInt32LE(1, 32);
+    return Result;
+}
+
+function ConstructWvfc(ModuleCount = 1) {
+    const Result = Buffer.alloc(48);
+    Result.write('WVFC', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt16LE(0, 6);
+    Result.writeUInt32LE(Result.length, 8);
+    Result.writeUInt32LE(0, 12);
+    Result.writeUInt32LE(96, 16);
+    Result.writeUInt32LE(48, 20);
+    Result.writeUInt32LE(ModuleCount, 24);
+    return Result;
+}
+
+function ConstructWvae(Wvss, Wvtd, Wvfc, Lock, Profile) {
+    const Result = Buffer.alloc(224);
+    Result.write('WVAE', 0, 4, 'ascii');
+    Result.writeUInt16LE(1, 4);
+    Result.writeUInt16LE(0, 6);
+    Result.writeUInt32LE(Result.length, 8);
+    Result.writeUInt32LE(1, 12);
+    Result.writeUInt32LE(0, 16);
+    Result.writeUInt32LE(Wvss.length, 20);
+    Result.writeUInt32LE(Wvtd.length, 24);
+    Result.writeUInt32LE(Wvfc.length, 28);
+    Result.writeUInt32LE(1, 32);
+    Result.writeUInt32LE(0, 36);
+    Result.writeUInt32LE(1, 40);
+    Result.writeUInt32LE(1, 44);
+    for (const [Offset, Snapshot] of [
+        [64, Wvss], [96, Wvtd], [128, Wvfc], [160, Lock], [192, Profile]
+    ]) Sha256(Snapshot).copy(Result, Offset);
+    return Result;
+}
+
+async function WriteSnapshot(Path, Value) {
+    if (!Buffer.isBuffer(Value) || Value.length > 4_194_304) {
+        Reject(`Refusing to write an invalid dynamic snapshot: ${basename(Path)}.`);
+    }
+    await writeFile(Path, Value, { flag: 'wx' });
+}
+
+async function RequireProductCase(Application, Index, Name, Arguments, Code, Output, Error) {
+    const Result = await Run(
+        Application,
+        Arguments,
+        `product-case-${Index}-${Name}`,
+        PRODUCT_TIMEOUT_MILLISECONDS
+    );
+    RequireCleanTermination(Result, `Product case ${Index} (${Name})`);
+    if (Result.TimedOut) {
+        Reject(`Product case ${Index} (${Name}) exceeded ${TimeoutDescription(Result)}.`);
+    }
+    if (Result.Exceeded) Reject(`Product case ${Index} (${Name}) exceeded the output limit.`);
+    if (Result.Code !== Code || Normalize(Result.Output) !== Output ||
+        Normalize(Result.Error) !== Error) {
+        Reject(
+            `Product case ${Index} (${Name}) differed: exit=${Result.Code} ` +
+            `stdout=${JSON.stringify(Normalize(Result.Output))} ` +
+            `stderr=${JSON.stringify(Normalize(Result.Error))}.`
+        );
+    }
 }
 
 async function Evidence(Path) {
@@ -166,12 +529,19 @@ async function VerifySourceBoundaries() {
     }
 }
 
+const ProbeOnly = process.argv.length === 3 &&
+    process.argv[2] === '--termination-probe';
+if (!ProbeOnly && process.argv.length !== 2) {
+    Reject('The admission-evidence owner accepts no arguments.');
+}
+await RunTerminationProbe();
+if (!ProbeOnly) {
 const TemporaryRoot = resolve(tmpdir());
 const Work = await mkdtemp(join(TemporaryRoot, 'windvale-admission-evidence-'));
 var Passed = false;
 try {
     const Extension = WINDOWS ? 'cmd' : 'sh';
-    const Build = join(SCRIPT_DIRECTORY, `Build-Wvb.${Extension}`);
+    const Build = join(SCRIPT_DIRECTORY, `Build-Current-Wvb.${Extension}`);
     const Package = join(SCRIPT_DIRECTORY, `Package-Segmented-Compiler-Wvb.${Extension}`);
     const Runner = join(
         REPOSITORY_ROOT, 'Artifacts', 'Native-Wvb-Runner-Candidate',
@@ -188,10 +558,10 @@ try {
         'bootstrap analyzer'
     );
 
-    process.stdout.write('START admission evidence phase=boundaries item=1/4\n');
+    process.stdout.write('START admission evidence phase=boundaries item=1/6\n');
     await VerifySourceBoundaries();
 
-    process.stdout.write('START admission evidence phase=capacity item=2/4\n');
+    process.stdout.write('START admission evidence phase=capacity item=2/6\n');
     const Analyzer = join(Work, WINDOWS ? 'wvanalyze.exe' : 'wvanalyze.elf');
     await RequireSuccess('analyzer packaging', Package, [
         '7', BootstrapAnalyzerWvb, Analyzer, '--development-cache'
@@ -219,7 +589,7 @@ try {
         sha256: EXPECTED_VALIDATOR.wvirSha256
     }, 'validator WVIR');
 
-    process.stdout.write('START admission evidence phase=build item=3/4\n');
+    process.stdout.write('START admission evidence phase=build item=3/6\n');
     const ValidatorProject = join(
         REPOSITORY_ROOT, 'Projects', 'Tools',
         'Windvale-Compiler-Admission-Evidence-Validator.wvproj'
@@ -252,16 +622,157 @@ try {
     RequireExact(await Evidence(ValidatorB), ValidatorEvidence, 'deterministic validator WVB');
     RequireExact(await Evidence(Fixture), EXPECTED_FIXTURE, 'admission-evidence fixture');
 
-    process.stdout.write('START admission evidence phase=cases item=4/4\n');
+    process.stdout.write('START admission evidence phase=package item=4/6\n');
+    const ApplicationExtension = WINDOWS ? 'exe' : 'elf';
+    const Validator = join(
+        Work, `wvverify-admission-evidence.${ApplicationExtension}`
+    );
+    await RequireSuccess('validator packaging', Package, [
+        '7', ValidatorA, Validator, '--development-cache'
+    ], true, CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    const ValidatorApplication = await stat(Validator);
+    if (!ValidatorApplication.isFile() || ValidatorApplication.size === 0 ||
+        ValidatorApplication.size > MAXIMUM_APPLICATION_BYTES) {
+        Reject('The packaged validator application exceeds its file bound.');
+    }
+
+    process.stdout.write('START admission evidence phase=product-cases item=5/6\n');
+    const WvssBytes = ConstructWvss();
+    const WvtdBytes = ConstructWvtd();
+    const WvfcBytes = ConstructWvfc();
+    const LockBytes = Buffer.from('lock snapshot\n', 'utf8');
+    const ProfileBytes = Buffer.from('profile snapshot\n', 'utf8');
+    const WvaeBytes = ConstructWvae(
+        WvssBytes, WvtdBytes, WvfcBytes, LockBytes, ProfileBytes
+    );
+    const SnapshotPaths = {
+        Wvae: join(Work, 'Evidence.wvae'),
+        Wvss: join(Work, 'Admitted.wvss'),
+        Wvtd: join(Work, 'Target.wvtd'),
+        Wvfc: join(Work, 'Catalog.wvfc'),
+        Lock: join(Work, 'Source-Inputs.wvlock'),
+        Profile: join(Work, 'Source-Profile.wvsp')
+    };
+    await Promise.all([
+        WriteSnapshot(SnapshotPaths.Wvae, WvaeBytes),
+        WriteSnapshot(SnapshotPaths.Wvss, WvssBytes),
+        WriteSnapshot(SnapshotPaths.Wvtd, WvtdBytes),
+        WriteSnapshot(SnapshotPaths.Wvfc, WvfcBytes),
+        WriteSnapshot(SnapshotPaths.Lock, LockBytes),
+        WriteSnapshot(SnapshotPaths.Profile, ProfileBytes)
+    ]);
+    const ValidArguments = [
+        SnapshotPaths.Wvae, SnapshotPaths.Wvss, SnapshotPaths.Wvtd,
+        SnapshotPaths.Wvfc, SnapshotPaths.Lock, SnapshotPaths.Profile
+    ];
+    const Usage =
+        'Usage: wvverify-admission-evidence <evidence.wvae> <admitted.wvss> ' +
+        '<target.wvtd> <catalog.wvfc> <lock.wvlock> <profile.wvsp>\n';
+    const Rejections = {
+        TruncatedWvae:
+            'admission-evidence validation status=Rejected phase=Input-WVAE ' +
+            'evidence-status=Invalidˉlength offset=223\n',
+        TrailingWvae:
+            'admission-evidence validation status=Rejected phase=Input-WVAE ' +
+            'evidence-status=Invalidˉlength offset=224\n',
+        Wvss:
+            'admission-evidence validation status=Rejected phase=WVSS2 ' +
+            'structure-status=Noncanonicalˉlayout offset=16\n',
+        Wvtd:
+            'admission-evidence validation status=Rejected phase=WVTD ' +
+            'structure-status=10 offset=56\n',
+        Wvfc:
+            'admission-evidence validation status=Rejected phase=WVFC ' +
+            'structure-status=8 offset=28\n',
+        ModuleCount:
+            'admission-evidence validation status=Rejected phase=WVFC-WVSS ' +
+            'structure-status=1 offset=24\n',
+        Digest:
+            'admission-evidence validation status=Rejected phase=WVAE ' +
+            'evidence-status=Digestˉmismatch offset=64\n',
+        Lock:
+            'admission-evidence validation status=Rejected phase=Input-Lock ' +
+            'evidence-status=Invalidˉlockˉlength offset=160\n',
+        Profile:
+            'admission-evidence validation status=Rejected phase=Input-Profile ' +
+            'evidence-status=Invalidˉprofileˉlength offset=192\n'
+    };
+    const Mutations = {
+        TruncatedWvae: WvaeBytes.subarray(0, 223),
+        TrailingWvae: Buffer.concat([WvaeBytes, Buffer.from([0])]),
+        Wvss: Buffer.from(WvssBytes),
+        Wvtd: Buffer.from(WvtdBytes),
+        Wvfc: Buffer.from(WvfcBytes),
+        ModuleCount: ConstructWvfc(2),
+        Digest: Buffer.from(WvaeBytes),
+        Lock: Buffer.alloc(0),
+        Profile: Buffer.alloc(0)
+    };
+    Mutations.Wvss.writeUInt32LE(37, 16);
+    Mutations.Wvtd.writeUInt32LE(1, 56);
+    Mutations.Wvfc.writeUInt32LE(1, 28);
+    Mutations.Digest[64] ^= 1;
+    const MutationPaths = {};
+    for (const [Name, Value] of Object.entries(Mutations)) {
+        const Path = join(Work, `Rejected-${Name}.bin`);
+        await WriteSnapshot(Path, Value);
+        MutationPaths[Name] = Path;
+    }
+    const With = (Position, Path) => {
+        const Arguments = [...ValidArguments];
+        Arguments[Position] = Path;
+        return Arguments;
+    };
+    const ProductCases = [
+        ['valid-six-snapshot-set', ValidArguments, 0,
+            'admission-evidence validation status=Accepted format=WVAE-1\n', ''],
+        ['missing-argument', ValidArguments.slice(0, 5), 64, '', Usage],
+        ['surplus-argument', [...ValidArguments, SnapshotPaths.Wvae], 64, '', Usage],
+        ['truncated-wvae', With(0, MutationPaths.TruncatedWvae), 1, '',
+            Rejections.TruncatedWvae],
+        ['trailing-wvae', With(0, MutationPaths.TrailingWvae), 1, '',
+            Rejections.TrailingWvae],
+        ['wvss-contiguity', With(1, MutationPaths.Wvss), 1, '', Rejections.Wvss],
+        ['wvtd-inner-status', With(2, MutationPaths.Wvtd), 1, '', Rejections.Wvtd],
+        ['wvfc-inner-status', With(3, MutationPaths.Wvfc), 1, '', Rejections.Wvfc],
+        ['module-count-mismatch', With(3, MutationPaths.ModuleCount), 1, '',
+            Rejections.ModuleCount],
+        ['digest-mismatch', With(0, MutationPaths.Digest), 1, '', Rejections.Digest],
+        ['lock-length', With(4, MutationPaths.Lock), 1, '', Rejections.Lock],
+        ['profile-length', With(5, MutationPaths.Profile), 1, '', Rejections.Profile]
+    ];
+    if (ProductCases.length !== DYNAMIC_CASES) Reject('The dynamic case count differs.');
+    for (const [Index, Case] of ProductCases.entries()) {
+        await RequireProductCase(Validator, Index + 1, ...Case);
+    }
+
+    process.stdout.write('START admission evidence phase=portable-cases item=6/6\n');
     for (const [Index, Selector] of SELECTORS.entries()) {
-        const Result = await Run(Runner, ['--script', Fixture, Selector]);
-        if (Result.TimedOut || Result.Code !== 42 ||
+        const Result = await Run(
+            Runner,
+            ['--script', Fixture, Selector],
+            `portable-case-${Index + 1}`,
+            PRODUCT_TIMEOUT_MILLISECONDS
+        );
+        RequireCleanTermination(Result, `Admission-evidence case ${Index + 1} (${Selector})`);
+        if (Result.TimedOut) {
+            Reject(
+                `Admission-evidence case ${Index + 1} (${Selector}) exceeded ` +
+                `${TimeoutDescription(Result)}.`
+            );
+        }
+        if (Result.Exceeded) {
+            Reject(`Admission-evidence case ${Index + 1} (${Selector}) exceeded the output limit.`);
+        }
+        if (Result.Code !== 42 ||
             Result.Output.length !== 0 || Result.Error.length !== 0) {
             Reject(`Admission-evidence case ${Index + 1} (${Selector}) returned ${Result.Code}.`);
         }
     }
     process.stdout.write(
-        `PASS admission evidence cases=${SELECTORS.length} wvss-structure-subcases=15 ` +
+        `PASS admission evidence cases=${SELECTORS.length + DYNAMIC_CASES} ` +
+        `portable-selectors=${SELECTORS.length} dynamic-cases=${DYNAMIC_CASES} ` +
+        `wvss-structure-subcases=15 execution=native-packaged ` +
         `core-wvb-bytes=${CoreEvidence.bytes} ` +
         `wvir-bytes=${WvirEvidence.bytes} wvb-bytes=${ValidatorEvidence.bytes}\n`
     );
@@ -273,5 +784,12 @@ try {
         Reject(`Refusing to remove unexpected temporary path: ${Work}`);
     }
     await rm(Work, { recursive: true, force: false, maxRetries: 2 });
+    var TemporaryStillExists = true;
+    try { await access(Work); } catch (Error) {
+        if (Error.code !== 'ENOENT') throw Error;
+        TemporaryStillExists = false;
+    }
+    if (TemporaryStillExists) Reject(`Temporary path remains after cleanup: ${Work}`);
 }
 if (!Passed) Reject('Admission-evidence verification did not complete.');
+}

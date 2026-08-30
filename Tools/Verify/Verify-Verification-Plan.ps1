@@ -598,6 +598,7 @@ $NativeCases = @(
             'compiler-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
+            'language-1-admission-evidence-format',
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator',
             'libraries',
@@ -1278,6 +1279,22 @@ $NativeCases = @(
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
+            'language-1-admission-evidence-format',
+            'compiler-split-development'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'target-aware segmented compiler package consumers'
+        Paths = @(
+            'Tools/Native/Package-Segmented-Compiler-Wvb.cmd',
+            'Tools/Native/Package-Segmented-Compiler-Wvb.sh'
+        )
+        Suites = @(
+            'segmented-compiler-toolset-reconstruction',
+            'wvb-runner-reconstruction',
+            'language-1-admission-evidence-format',
             'compiler-split-development'
         )
         Gaps = @()
@@ -4228,7 +4245,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5878 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5890 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

@@ -20,15 +20,40 @@ Language, Libraries, WVDB, package/service, and integrated qualification work
 advance as product workstreams rather than numbered release stages. OS-1 retains
 its independent qualification path.
 
-The latest Language 1.0 Slice 8 checkpoint promotes both SHA-capable segmented
-staging families under
-[Decision 0891](../Decisions/0891-Promote-Sha-Capable-Segmented-Staging.md).
-The focused Windows owner reconstructs all nine toolset artifacts byte for byte,
-passes the new 237-byte SHA fixture through the locally reconstructed WVO and
-compiler-image stagers, retains the compiler-scale path, and passes 5/5 cases.
-The WVO producer and image stager change on both targets; all three canonical
-transport identities remain exact. Local Linux reconstruction, paired-host CI,
-and admission-consumer migration remain pending.
+The latest Language 1.0 Slice 8 checkpoint uses the SHA-capable segmented
+staging families promoted under
+[Decision 0891](../Decisions/0891-Promote-Sha-Capable-Segmented-Staging.md) to
+execute the separately bounded validator from
+[Decision 0887](../Decisions/0887-Use-A-Separately-Bounded-Admission-Validator.md).
+The focused Windows owner packages the exact validator through the standard
+profile-7 product wrapper and passes 12 actual-product cases beside 44 portable
+selectors and 15 WVSS structure subcases. Decision 0892 separately adds the
+in-memory authenticated source-admission coordinator and exact foreign-catalog
+readback evidence. Local Linux reconstruction, paired-host CI, hosted
+coordinator publication and private-snapshot lifecycle integration, complete
+validator-side source/catalog authentication, foreign binding/lowering, and
+runtime containment remain pending.
+
+The coordinator's target-descriptor evolution directly enters the validator
+closure. A narrow retained-analyzer audit reproduces its 191,712-byte WVIR at
+SHA-256
+`067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`
+twice with exact WVCA bindings. Validator WVB construction now requires the
+current reconstructed compiler. Two builds produce the same verifier-accepted
+72,600-byte WVB at SHA-256
+`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`;
+two builds also reproduce the verifier-accepted 94,839-byte portable fixture at
+SHA-256
+`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`.
+The final focused owner also pins the 24,292-byte core WVB at SHA-256
+`5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`,
+packages the current validator, and reports exactly `PASS admission evidence
+cases=56 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
+wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
+wrapper in 138,530 ms. This is current local Windows execution evidence; the
+Linux, paired-host, production-integration, and broader Slice 8 work above
+remains pending.
 
 ## Indicators
 
@@ -273,9 +298,9 @@ malformed-within-format-ceiling diagnostics. The planner passed 31 general and
 229 native routing cases. This completes focused current-Windows development
 evidence for the candidate.
 
-The registry has 123 owners and 5,878 cases in 21,806 LF-only bytes at SHA-256
-`e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f`.
-Its shards contain 1/57, 43/2,790, 38/1,782, and 41/1,249 owners/cases. Local
+The registry has 123 owners and 5,890 cases in 21,871 LF-only bytes at SHA-256
+`4b3fb12c8fa8fb910737c3f787f00973dda67e76c306c7be12c2a9535e4adb91`.
+Its shards contain 1/57, 43/2,802, 38/1,782, and 41/1,249 owners/cases. Local
 Linux execution, paired-host qualification, hosted publication, Analyzer
 integration, foreign lowering, and runtime containment remain pending.
 

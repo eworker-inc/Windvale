@@ -235,22 +235,49 @@ WVFC structure validation plus semantic and source/catalog consistency.
 
 The current admission-evidence leaf has fixed development ceilings of 262,144
 WVIR bytes and 262,144 WVB bytes. The refined Windows capacity case publishes
-190,524 WVIR bytes and a valid deterministic 72,060-byte WVB. These ceilings do
-not set the eventual complete `wvauth` product ceiling. Cross-host equality
-remains required before qualification is claimed.
+191,712 WVIR bytes at SHA-256
+`067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`.
+Two independent retained-analyzer runs reproduce the exact WVSS, WVCA, WVLB,
+and WVIR products; the WVCA lengths and counts bind the structurally valid
+WVIR 1.3 directory. Because the directly included target source now requires
+the current compiler, validator WVB construction uses the reconstructed
+`Build-Current-Wvb` front door rather than frozen `Build-Wvb`. The current WVB
+is deterministic and verifier-accepted at 72,600 bytes and SHA-256
+`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`.
+Two current-compiler builds also reproduce the 44-selector fixture exactly as a
+94,839-byte WVB at SHA-256
+`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`;
+the maintained verifier accepts it as compiler-aligned. The final focused owner
+also pins the 24,292-byte portable core WVB at SHA-256
+`5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`.
+These ceilings do not set the eventual complete `wvauth` product ceiling.
+Cross-host equality remains required before qualification is claimed.
 
 This is an intermediate format and validator-foundation checkpoint, not a
-completed hosted-validator execution claim. The implemented native x64
-lowering candidate now recognizes WVB opcode `0x7D` (`bytes.sha256_hex`) and
-retains the intrinsic's exact bounded result contract. Its registered owner
-passes eight cases on exact-current Windows and local Debian 13.5 under WSL,
-including exact known answers, owned-text return, and 64/63-byte arena
-behavior. That removes the backend opcode-level cause of the prior
-`Unsupportedˉmodule` gap, but it is not packaging or execution evidence for
-the complete `wvverify-admission-evidence` application. That
-application's packaged execution and paired-host CI qualification remain
-pending. The local Debian/WSL result is Linux development evidence, not that
-qualification. The script runner's separate hosted-profile envelope boundary
-likewise does not prove the packaged native application. This module continues
-to use the semantic intrinsic; it does not
+complete `wvauth` or hosted coordinator-integration claim. The implemented
+native x64 lowering recognizes WVB opcode `0x7D` (`bytes.sha256_hex`) and
+retains the intrinsic's exact bounded result contract. After promotion of both
+SHA-capable segmented staging families, the focused Windows owner packages the
+exact validator WVB
+through the standard profile-7 `Package-Segmented-Compiler-Wvb` product path
+and executes the resulting `wvverify-admission-evidence` application. Twelve
+bounded actual-product cases cover acceptance, exact argument failures,
+truncated and trailing WVAE, delegated WVSS/WVTD/WVFC structure, cross-field
+module count, digest, lock, and profile rejection. They pass beside the 44
+portable selectors and 15 WVSS structure subcases, for 56 cases total.
+The exact current-closure summary is `PASS admission evidence cases=56
+portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
+wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
+wrapper in 138,530 ms. The run uses the 24,292-byte core, 191,712-byte WVIR,
+72,600-byte validator WVB, and 94,839-byte fixture identities pinned above.
+
+That is local Windows development evidence, not paired-host CI qualification.
+Decision 0892 separately supplies the in-memory authenticated source-admission
+coordinator and exact foreign-catalog readback evidence. Paired-host
+qualification, complete validator-side source/catalog authentication, hosted
+`wvadmit` publication, private-snapshot lifecycle integration, and public-
+front-door removal remain pending. The script runner's separate hosted-profile
+envelope boundary is not substituted for the packaged native application
+evidence. This module continues to use the semantic intrinsic; it does not
 substitute Foundation SHA-256 or a host hashing service.

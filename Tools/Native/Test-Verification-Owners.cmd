@@ -26,7 +26,22 @@ goto :usage
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Plan=%RepositoryRoot%\Tests\Native\Verification-Owners.txt"
-set "PlanDigest=e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f"
+set "PlanBytes=21871"
+set "PlanDigest=4b3fb12c8fa8fb910737c3f787f00973dda67e76c306c7be12c2a9535e4adb91"
+set "PlanOwners=123"
+set "PlanCases=5890"
+set "PlanShard1Owners=1"
+set "PlanShard1Cases=57"
+set "PlanShard2Owners=43"
+set "PlanShard2Cases=2802"
+set "PlanShard3Owners=38"
+set "PlanShard3Cases=1782"
+set "PlanShard4Owners=41"
+set "PlanShard4Cases=1249"
+for %%S in ("%Plan%") do if not "%%~zS"=="%PlanBytes%" (
+    >&2 echo Native verification owner plan identity differs
+    exit /b 1
+)
 certutil -hashfile "%Plan%" SHA256 | findstr /I /C:"%PlanDigest%" >nul
 if errorlevel 1 (
     >&2 echo Native verification owner plan identity differs
@@ -38,6 +53,19 @@ if not "%PlanHeader%"=="windvale-native-verification-owners 1" (
     >&2 echo Native verification owner plan header differs
     exit /b 1
 )
+
+set /a ActualOwners=0
+set /a ActualCases=0
+for %%S in (1 2 3 4) do (
+    set /a ActualShard%%SOwners=0
+    set /a ActualShard%%SCases=0
+)
+for /f "usebackq skip=1 tokens=1,3,4 delims=|" %%N in ("%Plan%") do (
+    call :measure_plan_entry "%%N" "%%O" "%%P"
+)
+if not "%ActualOwners%"=="%PlanOwners%" goto :plan_inventory_differs
+if not "%ActualCases%"=="%PlanCases%" goto :plan_inventory_differs
+for %%S in (1 2 3 4) do call :verify_shard_identity %%S || goto :plan_inventory_differs
 
 for /f "usebackq skip=1 tokens=1,2,4 delims=|" %%N in ("%Plan%") do (
     call :verify_plan_entry "%%N" "%%O" "%%P"
@@ -142,6 +170,26 @@ if defined Filter if not "%Filter%"=="%~1" exit /b 0
 if defined Shard if not "%Shard%"=="%~2" exit /b 0
 set /a Planned+=1
 exit /b 0
+
+:measure_plan_entry
+set /a ActualOwners+=1
+set /a ActualCases+=%~2
+set /a ActualShard%~3Owners+=1
+set /a ActualShard%~3Cases+=%~2
+exit /b 0
+
+:verify_shard_identity
+call set "ActualOwnersForShard=%%ActualShard%~1Owners%%"
+call set "ActualCasesForShard=%%ActualShard%~1Cases%%"
+call set "PlanOwnersForShard=%%PlanShard%~1Owners%%"
+call set "PlanCasesForShard=%%PlanShard%~1Cases%%"
+if not "%ActualOwnersForShard%"=="%PlanOwnersForShard%" exit /b 1
+if not "%ActualCasesForShard%"=="%PlanCasesForShard%" exit /b 1
+exit /b 0
+
+:plan_inventory_differs
+>&2 echo Native verification owner plan inventory differs
+exit /b 1
 
 :verify_plan_entry
 if not exist "%RepositoryRoot%\Tools\Native\%~2.cmd" (

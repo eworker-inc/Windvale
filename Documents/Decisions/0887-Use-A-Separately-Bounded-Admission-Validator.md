@@ -68,13 +68,13 @@ hosted driver, portable format and post-read validator cores, small WVSS 2
 reader, existing source-descriptor identity owner, and existing lightweight
 WVTD and WVFC structural validators. On Windows it publishes:
 
-- 105,584 source bytes;
-- 13,484 WVLB bytes;
-- 190,524 WVIR bytes under the 262,144-byte ceiling, SHA-256
-  `47c7eeb1680b6c58e791e38efaa457d90b069c31cda3aa32e8fba5fedc6ab878`;
+- 106,530 WVSS bytes;
+- 13,572 WVLB bytes;
+- 191,712 WVIR bytes under the 262,144-byte ceiling, SHA-256
+  `067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`;
   and
-- 72,060 WVB bytes under the 262,144-byte ceiling, SHA-256
-  `868eb8c6b7fd27affad03844de2915a19a74167d75baf041e28e750111d178f4`.
+- 72,600 WVB bytes under the 262,144-byte ceiling, SHA-256
+  `706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`.
 
 The maintained portable core project separately builds a 24,292-byte WVB at
 SHA-256
@@ -83,9 +83,10 @@ The focused owner builds and pins this project; the historical complete
 Analyzer capacity failure remains documentary evidence rather than an
 unexecuted mapped project.
 
-The separate 44-case fixture publishes a 94,299-byte WVB at SHA-256
+At the pre-Decision 0892 checkpoint, the separate 44-case fixture published a
+94,299-byte WVB at SHA-256
 `37772c1a75d03b2d8eb22015fde4efacbcc27718cd891f4486bc597317ebeee9`
-and passes every isolated case with result 42. It covers exact construction,
+and passed every isolated case with result 42. It covers exact construction,
 shape and authentication success, rejected empty values, truncation, trailing
 bytes, every fixed field, every digest mismatch, strict decoder failures,
 determinism, accepted-byte preservation, and numeric boundary arithmetic
@@ -95,17 +96,58 @@ aggregate retained-input arithmetic. The same fixture covers exact portable
 input-status/offset mappings for all six values and a structurally valid
 WVFC/WVSS module-count mismatch at cross-field offset 24. Its in-range
 malformed WVTD and WVFC cases run through the shared snapshot validator and
-pin the delegated structural phase, status, and inner offset.
+pin the delegated structural phase, status, and inner offset. After the direct
+closure input changed, two current-compiler builds produce a byte-identical
+94,839-byte fixture WVB at SHA-256
+`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`,
+and the maintained verifier accepts it as compiler-aligned. The current-closure
+selector execution is included in the final focused-owner evidence below.
 
-The validator WVB is valid and deterministic, but executable product evidence
-is not yet available. On Windows, packaging reaches native x64 staging and
-fails exactly with `native x64 staging status=Unsupportedˉmodule` because the
-native lowering closure does not yet support opcode `0x7D`,
-`bytes.sha256_hex`. Direct `wvrun --script` correctly rejects the hosted-profile
-WVB with `wvb run status=Unsupported profile=script-main-i32 phase=envelope`.
-Actual `wvverify-admission-evidence` execution remains pending later
-runtime/native-lowering work. This checkpoint neither substitutes
-`Foundation/Sha256.wv` nor host hashing, and it does not complete Slice 8.
+On 2026-08-30, after the profile-7 segmented stager gained native SHA-256
+lowering, the focused owner packaged the exact validator WVB through the
+standard `Package-Segmented-Compiler-Wvb` product path and executed the
+resulting `wvverify-admission-evidence` application. Twelve bounded actual-product
+cases passed: one accepted six-snapshot set, exact missing- and surplus-argument
+usage failures, truncated and trailing WVAE rejection, delegated WVSS, WVTD,
+and WVFC structural rejection, WVFC/WVSS module-count mismatch, digest mismatch,
+and empty lock and profile rejection. The existing 44 portable selectors and
+15 WVSS structure subcases also passed, for 56 total cases. The owner retained
+the exact 24,292-byte core WVB. The current compiler follow-up below supersedes
+the WVIR and validator-WVB identities from that packaged run.
+
+Each child has a bounded aggregate output capture and execution timeout;
+product cases have a 30-second timeout, construction has a 10-minute timeout,
+the complete owner has a 20-minute child-execution budget, and active children
+emit 30-second heartbeats. Timeout or output-limit failure terminates the whole
+Windows process tree or detached POSIX process group, uses a direct-child
+fallback, and has a separate five-second forced-settle ceiling with an explicit
+cleanup diagnostic. A child-plus-descendant termination probe runs before
+product work. Generated snapshot writes and the packaged application have
+explicit size ceilings, and the temporary directory is removed with bounded
+retries and checked absent.
+This checkpoint uses neither a source-built packaging workaround nor
+`Foundation/Sha256.wv` or host hashing inside the validator, and it does not
+complete Slice 8.
+
+Decision 0892 later evolved the directly included target-descriptor source.
+The retained analyzer independently reproduced the resulting 191,712-byte
+WVIR twice with the exact identity above and valid WVCA count/length bindings.
+The validator WVB therefore depends on the current reconstructed compiler
+rather than the frozen `Build-Wvb` front door, which reports its total-function
+sentinel after the evolved 75-function closure. Two current-compiler builds
+produce byte-identical, verifier-accepted 72,600-byte WVB values at SHA-256
+`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`.
+The final focused Windows owner pins those current WVIR and validator-WVB
+identities, the 24,292-byte core WVB at SHA-256
+`5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`,
+and the 94,839-byte fixture identity above. It packages and executes the current
+validator and reports exactly `PASS admission evidence cases=56
+portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
+wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
+wrapper in 138,530 ms. This remains local Windows development evidence; it does
+not add Linux or paired-host qualification, production coordinator or Analyzer
+consumer integration, or broader Slice 8 completion.
 
 At historical source commit `b93b88dab04ec5b95d9eca197e6ec49a8e841f06`,
 the canonical analyzer manifest is 1,289 bytes at SHA-256

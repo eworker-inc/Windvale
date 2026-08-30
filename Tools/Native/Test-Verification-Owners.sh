@@ -33,7 +33,18 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Verification-Owners.txt"
-plan_digest=e516c55c6ac760f2b380d0e885e5149a5b6428ba0518dfc21553c5d98444359f
+plan_bytes=21871
+plan_digest=4b3fb12c8fa8fb910737c3f787f00973dda67e76c306c7be12c2a9535e4adb91
+plan_owners=123
+plan_cases=5890
+plan_shard_1_owners=1
+plan_shard_1_cases=57
+plan_shard_2_owners=43
+plan_shard_2_cases=2802
+plan_shard_3_owners=38
+plan_shard_3_cases=1782
+plan_shard_4_owners=41
+plan_shard_4_cases=1249
 
 check_hash() {
     local path=$1
@@ -44,11 +55,22 @@ check_hash() {
         "$digest" "$(basename -- "$path")" | sha256sum --check --strict --quiet)
 }
 
-if ! check_hash "$plan" "$plan_digest"; then
+if [[ $(wc -c < "$plan") -ne $plan_bytes ]] ||
+    ! check_hash "$plan" "$plan_digest"; then
     echo 'Native verification owner plan identity differs' >&2
     exit 1
 fi
 
+actual_owners=0
+actual_cases=0
+actual_shard_1_owners=0
+actual_shard_1_cases=0
+actual_shard_2_owners=0
+actual_shard_2_cases=0
+actual_shard_3_owners=0
+actual_shard_3_cases=0
+actual_shard_4_owners=0
+actual_shard_4_cases=0
 while IFS='|' read -r name command cases suite_shard expected_summary; do
     owner="$repository_root/Tools/Native/$command.sh"
     if [[ ! -x $owner ]]; then
@@ -62,7 +84,29 @@ while IFS='|' read -r name command cases suite_shard expected_summary; do
             exit 1
             ;;
     esac
+    actual_owners=$((actual_owners + 1))
+    actual_cases=$((actual_cases + cases))
+    owner_variable="actual_shard_${suite_shard}_owners"
+    case_variable="actual_shard_${suite_shard}_cases"
+    printf -v "$owner_variable" '%d' "$(( ${!owner_variable} + 1 ))"
+    printf -v "$case_variable" '%d' "$(( ${!case_variable} + cases ))"
 done < <(tail -n +2 -- "$plan")
+
+if ((actual_owners != plan_owners || actual_cases != plan_cases)); then
+    echo 'Native verification owner plan inventory differs' >&2
+    exit 1
+fi
+for suite_shard in 1 2 3 4; do
+    actual_owner_variable="actual_shard_${suite_shard}_owners"
+    actual_case_variable="actual_shard_${suite_shard}_cases"
+    plan_owner_variable="plan_shard_${suite_shard}_owners"
+    plan_case_variable="plan_shard_${suite_shard}_cases"
+    if (( ${!actual_owner_variable} != ${!plan_owner_variable} ||
+        ${!actual_case_variable} != ${!plan_case_variable} )); then
+        echo 'Native verification owner plan inventory differs' >&2
+        exit 1
+    fi
+done
 
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-native-verification-owners.XXXXXXXX") || exit 1

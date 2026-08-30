@@ -4674,3 +4674,61 @@ This completes focused current-Windows development evidence. Local Linux
 execution, paired-host qualification, hosted publication, Analyzer
 authentication, semantic foreign binding/lowering, runtime containment, and
 complete Slice 8 qualification remain pending.
+
+## Slice 8 packaged admission-validator execution
+
+The SHA-capable staging promotion unlocks the first actual product execution of
+the separately bounded validator from Decision 0887. Its focused Windows owner
+uses the standard profile-7 `Package-Segmented-Compiler-Wvb` wrapper to package
+the then-current 72,060-byte validator WVB, then executes the resulting
+`wvverify-admission-evidence` application against 12 bounded actual-product
+cases. The accepted six-snapshot set, exact missing/surplus argument behavior,
+truncated/trailing WVAE, delegated WVSS/WVTD/WVFC failures, WVFC/WVSS module
+count mismatch, digest mismatch, and lock/profile length failures all match
+their exact exit, standard-output, and diagnostic contracts.
+
+The same owner retains the existing 44 portable selectors, 15 WVSS structure
+subcases, and 24,292-byte portable core WVB. Its pre-Decision 0892 observed
+product summary was `PASS admission evidence
+cases=56 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=190524
+wvb-bytes=72060`. Children have bounded time and aggregate output, packaging
+and overall execution budgets emit 30-second heartbeats, and timeout or output
+failure uses bounded complete-tree termination. A child-plus-descendant probe
+checks that termination path before product work. Snapshots and the application
+have fixed size ceilings, and temporary cleanup is checked complete.
+
+After the 12-case registry increase, the native registry has 123 owners and
+5,890 cases in 21,871 LF-only bytes at SHA-256
+`4b3fb12c8fa8fb910737c3f787f00973dda67e76c306c7be12c2a9535e4adb91`.
+
+This is local Windows development evidence. Paired-host qualification,
+complete validator-side source/catalog authentication, coordinator/private-
+snapshot lifecycle integration, foreign binding/lowering, runtime containment,
+and Slice 8 completion remain pending.
+
+The later Decision 0892 target-descriptor change is a direct validator-project
+input. Two narrow retained-analyzer runs reproduce exact 106,530-byte WVSS,
+104-byte WVCA, 13,572-byte WVLB, and 191,712-byte WVIR products. The WVIR has
+SHA-256
+`067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`;
+its retained WVIR 1.3 section geometry and every WVCA length/count binding are
+exact. The evolved 75-function closure requires `Build-Current-Wvb`; frozen
+`Build-Wvb` reports its total-function binding sentinel. Two current-compiler
+builds produce byte-identical 72,600-byte WVB values at SHA-256
+`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`,
+and the maintained verifier accepts the result as compiler-aligned. Two
+current-compiler fixture builds also reproduce byte-identical 94,839-byte WVB
+values at SHA-256
+`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`,
+and the maintained verifier accepts that fixture as compiler-aligned. The final
+focused Windows owner additionally pins the 24,292-byte core WVB at SHA-256
+`5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`,
+packages the current validator, and executes both the actual product and the
+portable selectors. Its exact summary is `PASS admission evidence cases=56
+portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
+wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
+wrapper in 138,530 ms. This current local Windows result does not alter the
+paired-host, production coordinator/private-snapshot, Analyzer-consumer,
+foreign-lowering, runtime-containment, or complete Slice 8 nonclaims above.
