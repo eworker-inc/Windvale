@@ -1,0 +1,597 @@
+module Compilerˉsourceˉforeignˉcatalogˉproducer profile portable;
+
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉset as Sourceˉset;
+import Foundationˉsha256 as Sha256;
+
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_MAX_SOURCE_SET_BYTES: u32 =
+    4194304u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_ADMITTED_WVSS_VERSION: u32 = 2u32;
+const COMPILER_SOURCE_FOREIGN_PRODUCER_RECORD_CHUNK_BYTES: u32 = 65536u32;
+
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID: u32 = 0u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET: u32 = 1u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ADMITTED_WVSS: u32 = 2u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_PROFILE: u32 = 3u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DECLARATION: u32 = 4u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ABI_CONTRACT: u32 = 5u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN: u32 = 6u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DIGEST: u32 = 7u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_RESOURCE_LIMIT: u32 = 8u32;
+export const COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_CATALOG: u32 = 9u32;
+
+export record Compilerˉsourceˉforeignˉhexˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
+export record Compilerˉsourceˉforeignˉproducerˉresult {
+    Status: u32;
+    Failureˉmodule: u32;
+    Failureˉdeclaration: u32;
+    Failureˉoffset: u32;
+    Failureˉline: u32;
+    Failureˉcolumn: u32;
+    Sourceˉsetˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus;
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus;
+    Catalogˉstatus: u32;
+    Value: bytes;
+}
+
+record Compilerˉsourceˉforeignˉrecordˉaccumulator {
+    Complete: bytes;
+    Pending: bytes;
+}
+
+fn Compilerˉsourceˉforeignˉproducerˉempty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉforeignˉproducerˉfailure(
+    Input: bytes,
+    Status: u32,
+    Module: u32,
+    Declaration: u32,
+    Offset: u32,
+    Line: u32,
+    Column: u32,
+    Sourceˉstatus: Sourceˉset.Compilerˉsourceˉsetˉstatus,
+    Parseˉstatus: Sourceˉdeclarations.Compilerˉparseˉstatus,
+    Catalogˉstatus: u32
+) -> Compilerˉsourceˉforeignˉproducerˉresult {
+    return Compilerˉsourceˉforeignˉproducerˉresult(
+        Status,
+        Module,
+        Declaration,
+        Offset,
+        Line,
+        Column,
+        Sourceˉstatus,
+        Parseˉstatus,
+        Catalogˉstatus,
+        Compilerˉsourceˉforeignˉproducerˉempty(Input)
+    );
+}
+
+fn Compilerˉsourceˉforeignˉproducerˉsuccess(
+    Value: bytes
+) -> Compilerˉsourceˉforeignˉproducerˉresult {
+    return Compilerˉsourceˉforeignˉproducerˉresult(
+        COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        0u32,
+        Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+        Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID,
+        Value
+    );
+}
+
+fn Compilerˉsourceˉforeignˉrecordˉappend(
+    Accumulator: Compilerˉsourceˉforeignˉrecordˉaccumulator,
+    Record: bytes
+) -> Compilerˉsourceˉforeignˉrecordˉaccumulator {
+    let Pendingˉbytes: u32 = Bytesˉlength(Accumulator.Pending);
+    if Pendingˉbytes >
+        COMPILER_SOURCE_FOREIGN_PRODUCER_RECORD_CHUNK_BYTES -
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_RECORD_BYTES {
+        return Compilerˉsourceˉforeignˉrecordˉaccumulator(
+            Bytesˉconcat(Accumulator.Complete, Accumulator.Pending),
+            Record
+        );
+    }
+    return Compilerˉsourceˉforeignˉrecordˉaccumulator(
+        Accumulator.Complete,
+        Bytesˉconcat(Accumulator.Pending, Record)
+    );
+}
+
+fn Compilerˉsourceˉforeignˉhexˉnibble(Character: u8) -> u32 {
+    let Value: u32 = U32ˉfromˉu8(Character);
+    if Value >= 48u32 && Value <= 57u32 {
+        return Value - 48u32;
+    }
+    return Value - 87u32;
+}
+
+fn Compilerˉsourceˉforeignˉhexˉcharacterˉisˉlower(
+    Character: u8
+) -> bool {
+    let Value: u32 = U32ˉfromˉu8(Character);
+    return (Value >= 48u32 && Value <= 57u32) ||
+        (Value >= 97u32 && Value <= 102u32);
+}
+
+export fn Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉhexˉresult {
+    let Empty: bytes = Compilerˉsourceˉforeignˉproducerˉempty(Input);
+    if Bytesˉlength(Input) != 64u32 {
+        return Compilerˉsourceˉforeignˉhexˉresult(false, Empty);
+    }
+    var Output: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Highˉcharacter: u8 = Bytesˉreadˉu8(Input, Index);
+        let Lowˉcharacter: u8 = Bytesˉreadˉu8(Input, Index + 1u32);
+        if !Compilerˉsourceˉforeignˉhexˉcharacterˉisˉlower(
+                Highˉcharacter
+            ) ||
+            !Compilerˉsourceˉforeignˉhexˉcharacterˉisˉlower(
+                Lowˉcharacter
+            ) {
+            return Compilerˉsourceˉforeignˉhexˉresult(false, Empty);
+        }
+        let High: u32 = Compilerˉsourceˉforeignˉhexˉnibble(
+            Highˉcharacter
+        );
+        let Low: u32 = Compilerˉsourceˉforeignˉhexˉnibble(
+            Lowˉcharacter
+        );
+        let Encoded: bytes = Bytesˉfromˉu16ˉlittle(High * 16u32 + Low);
+        Output = Bytesˉconcat(
+            Output, Bytesˉslice(Encoded, 0u32, 1u32)
+        );
+        Index = Index + 2u32;
+    }
+    return Compilerˉsourceˉforeignˉhexˉresult(true, Output);
+}
+
+fn Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+    Sourceˉlength: u32,
+    Declarationˉoffset: u32,
+    Declarationˉlength: u32,
+    Childˉoffset: u32,
+    Childˉlength: u32
+) -> bool {
+    if Declarationˉlength == 0u32 || Childˉlength == 0u32 {
+        return false;
+    }
+    if Declarationˉoffset > Sourceˉlength ||
+        Declarationˉlength > Sourceˉlength - Declarationˉoffset {
+        return false;
+    }
+    let Declarationˉend: u32 = Declarationˉoffset + Declarationˉlength;
+    if Childˉoffset < Declarationˉoffset || Childˉoffset > Declarationˉend {
+        return false;
+    }
+    return Childˉlength <= Declarationˉend - Childˉoffset;
+}
+
+fn Compilerˉsourceˉforeignˉproducerˉforeignˉrecord(
+    Source: bytes,
+    Moduleˉcount: u32,
+    Moduleˉordinal: u32,
+    Declarationˉordinal: u32,
+    Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration
+) -> Compilerˉsourceˉforeignˉproducerˉresult {
+    let Evidence: Sourceˉdeclarations.Compilerˉsourceˉforeignˉevidence =
+        Sourceˉdeclarations.Compilerˉsourceˉforeignˉdeclarationˉevidence(
+            Source, Declaration
+        );
+    if !Evidence.Valid {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DECLARATION,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Declaration.Declarationˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+        );
+    }
+
+    // The parser evidence has already authenticated the one frozen ABI literal;
+    // this maps that exact syntax to its stable serialized registry identity.
+    if !Foreignˉcatalog.Compilerˉsourceˉforeignˉabiˉcontractˉisˉknown(
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1
+    ) {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ABI_CONTRACT,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Evidence.Abiˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_UNKNOWN_ABI_CONTRACT
+        );
+    }
+
+    if Declaration.Nameˉoffset < 3u32 {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Declaration.Nameˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN
+        );
+    }
+    let Signatureˉoffset: u32 = Declaration.Nameˉoffset - 3u32;
+    if Declaration.Effectˉclauseˉoffset >
+        4294967295u32 - Declaration.Effectˉclauseˉlength {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Declaration.Effectˉclauseˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN
+        );
+    }
+    let Effectˉend: u32 = Declaration.Effectˉclauseˉoffset +
+        Declaration.Effectˉclauseˉlength;
+    if Effectˉend <= Signatureˉoffset {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Signatureˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN
+        );
+    }
+    let Signatureˉlength: u32 = Effectˉend - Signatureˉoffset;
+    let Sourceˉlength: u32 = Bytesˉlength(Source);
+    if !Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+            Sourceˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Declaration.Nameˉoffset,
+            Declaration.Nameˉlength
+        ) ||
+        !Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+            Sourceˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Evidence.Abiˉoffset,
+            Evidence.Abiˉlength
+        ) ||
+        !Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+            Sourceˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Evidence.Symbolˉoffset,
+            Evidence.Symbolˉlength
+        ) ||
+        !Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+            Sourceˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Signatureˉoffset,
+            Signatureˉlength
+        ) ||
+        !Compilerˉsourceˉforeignˉproducerˉspanˉisˉcontained(
+            Sourceˉlength,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Declaration.Effectˉclauseˉoffset,
+            Declaration.Effectˉclauseˉlength
+        ) {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SPAN,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Declaration.Declarationˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_SPAN
+        );
+    }
+
+    let Signature: bytes = Bytesˉslice(
+        Source, Signatureˉoffset, Signatureˉlength
+    );
+    let Signatureˉhex: bytes = Sha256.Foundationˉsha256ˉhex(Signature);
+    let Digest: Compilerˉsourceˉforeignˉhexˉresult =
+        Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Signatureˉhex
+        );
+    if !Digest.Valid || Bytesˉlength(Digest.Value) != 32u32 {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DIGEST,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Signatureˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_INVALID_DIGEST
+        );
+    }
+
+    var Flags: u32 = Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_UNSAFE;
+    if Declaration.Isˉexported {
+        Flags = Flags | Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_EXPORT;
+    }
+    let Record: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉrecord =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉrecord(
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Flags,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+            Declaration.Declarationˉoffset,
+            Declaration.Declarationˉlength,
+            Declaration.Nameˉoffset,
+            Declaration.Nameˉlength,
+            Evidence.Abiˉoffset,
+            Evidence.Abiˉlength,
+            Evidence.Symbolˉoffset,
+            Evidence.Symbolˉlength,
+            Signatureˉoffset,
+            Signatureˉlength,
+            Declaration.Effectˉclauseˉoffset,
+            Declaration.Effectˉclauseˉlength,
+            Digest.Value
+        );
+    let Constructed: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(
+            Moduleˉcount, Record
+        );
+    if Constructed.Status !=
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Source,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_CATALOG,
+            Moduleˉordinal,
+            Declarationˉordinal,
+            Constructed.Failureˉoffset,
+            Declaration.Failureˉline,
+            Declaration.Failureˉcolumn,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Declaration.Status,
+            Constructed.Status
+        );
+    }
+    return Compilerˉsourceˉforeignˉproducerˉsuccess(Constructed.Value);
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉproduce(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉproducerˉresult {
+    if Bytesˉlength(Input) >
+        COMPILER_SOURCE_FOREIGN_PRODUCER_MAX_SOURCE_SET_BYTES {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_RESOURCE_LIMIT,
+            0u32,
+            0u32,
+            8u32,
+            0u32,
+            0u32,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉentry,
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET,
+            Scan.Failureˉmodule,
+            0u32,
+            Scan.Failureˉoffset,
+            0u32,
+            0u32,
+            Scan.Status,
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+        );
+    }
+    if Scan.Version != COMPILER_SOURCE_FOREIGN_PRODUCER_ADMITTED_WVSS_VERSION {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ADMITTED_WVSS,
+            0u32,
+            0u32,
+            4u32,
+            0u32,
+            0u32,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Unsupportedˉversion,
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+        );
+    }
+    let Summary: Sourceˉset.Compilerˉsourceˉsetˉsummary =
+        Sourceˉset.Compilerˉvalidateˉsourceˉset(Input);
+    if Summary.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET,
+            Summary.Failureˉmodule,
+            0u32,
+            Summary.Failureˉoffset,
+            Summary.Failureˉline,
+            Summary.Failureˉcolumn,
+            Summary.Status,
+            Summary.Parseˉstatus,
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+        );
+    }
+
+    var Accumulator: Compilerˉsourceˉforeignˉrecordˉaccumulator =
+        Compilerˉsourceˉforeignˉrecordˉaccumulator(
+            Compilerˉsourceˉforeignˉproducerˉempty(Input),
+            Compilerˉsourceˉforeignˉproducerˉempty(Input)
+        );
+    var Recordˉcount: u32 = 0u32;
+    var Moduleˉordinal: u32 = 0u32;
+    while Moduleˉordinal < Scan.Modules {
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(
+                Input, Scan, Moduleˉordinal
+            );
+        let Source: bytes = View.Source;
+        let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(Source);
+        var Cursor: u32 = Header.Nextˉoffset;
+        var Currentˉline: u32 = Header.Nextˉline;
+        var Currentˉcolumn: u32 = Header.Nextˉcolumn;
+        var Sawˉnonˉimport: bool = false;
+        var Declarationˉordinal: u32 = 0u32;
+        var Reading: bool = true;
+        while Reading {
+            let Declaration: Sourceˉdeclarations.Compilerˉsourceˉdeclaration =
+                Sourceˉdeclarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+                    Source,
+                    Cursor,
+                    Currentˉline,
+                    Currentˉcolumn,
+                    Sawˉnonˉimport
+                );
+            if Declaration.Status !=
+                Sourceˉdeclarations.Compilerˉparseˉstatus.Valid {
+                return Compilerˉsourceˉforeignˉproducerˉfailure(
+                    Input,
+                    COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_DECLARATION,
+                    Moduleˉordinal,
+                    Declarationˉordinal,
+                    Declaration.Failureˉoffset,
+                    Declaration.Failureˉline,
+                    Declaration.Failureˉcolumn,
+                    Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                    Declaration.Status,
+                    Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+                );
+            }
+            if Declaration.Kind ==
+                Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End {
+                Reading = false;
+            } else {
+                if Declaration.Kind ==
+                    Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Foreign {
+                    if Header.Profile !=
+                        Sourceˉdeclarations.Compilerˉsourceˉprofile.System {
+                        return Compilerˉsourceˉforeignˉproducerˉfailure(
+                            Input,
+                            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_PROFILE,
+                            Moduleˉordinal,
+                            Declarationˉordinal,
+                            Declaration.Declarationˉoffset,
+                            Currentˉline,
+                            Currentˉcolumn,
+                            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                            Sourceˉdeclarations.Compilerˉparseˉstatus.Foreignˉprofile,
+                            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID
+                        );
+                    }
+                    if Recordˉcount >=
+                        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS {
+                        return Compilerˉsourceˉforeignˉproducerˉfailure(
+                            Input,
+                            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_RESOURCE_LIMIT,
+                            Moduleˉordinal,
+                            Declarationˉordinal,
+                            Declaration.Declarationˉoffset,
+                            Currentˉline,
+                            Currentˉcolumn,
+                            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+                            Declaration.Status,
+                            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_RESOURCE_LIMIT
+                        );
+                    }
+                    let Produced: Compilerˉsourceˉforeignˉproducerˉresult =
+                        Compilerˉsourceˉforeignˉproducerˉforeignˉrecord(
+                            Source,
+                            Scan.Modules,
+                            Moduleˉordinal,
+                            Declarationˉordinal,
+                            Declaration
+                        );
+                    if Produced.Status !=
+                        COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID {
+                        return Produced;
+                    }
+                    Accumulator = Compilerˉsourceˉforeignˉrecordˉappend(
+                        Accumulator, Produced.Value
+                    );
+                    Recordˉcount = Recordˉcount + 1u32;
+                }
+                if Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉclosesˉimports(
+                    Declaration
+                ) {
+                    Sawˉnonˉimport = true;
+                }
+                Cursor = Declaration.Nextˉoffset;
+                Currentˉline = Declaration.Nextˉline;
+                Currentˉcolumn = Declaration.Nextˉcolumn;
+                Declarationˉordinal = Declarationˉordinal + 1u32;
+            }
+        }
+        Moduleˉordinal = Moduleˉordinal + 1u32;
+    }
+
+    var Records: bytes = Accumulator.Complete;
+    if Bytesˉlength(Accumulator.Pending) != 0u32 {
+        Records = Bytesˉconcat(Records, Accumulator.Pending);
+    }
+    let Catalog: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(
+            Scan.Modules, Records
+        );
+    if Catalog.Status !=
+        Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉproducerˉfailure(
+            Input,
+            COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_CATALOG,
+            Scan.Modules,
+            Recordˉcount,
+            Catalog.Failureˉoffset,
+            0u32,
+            0u32,
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid,
+            Sourceˉdeclarations.Compilerˉparseˉstatus.Valid,
+            Catalog.Status
+        );
+    }
+    return Compilerˉsourceˉforeignˉproducerˉsuccess(Catalog.Value);
+}

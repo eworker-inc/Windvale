@@ -1183,7 +1183,8 @@ function Add-Native-Tool-Suite {
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
-            'hosted-verifier-publisher-files'
+            'hosted-verifier-publisher-files',
+            'language-1-foreign-catalog-producer'
         )
         return
     }
@@ -1673,10 +1674,13 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-System-Ffi-Unsafe-Context.mjs'
     )) {
         Add-Suite 'language-1-system-ffi-unsafe-context'
+    } elseif ($Path -eq
+        'Specifications/Windvale-Language-1.0-Foreign-Catalog.md') {
+        Add-Suite 'language-1-foreign-catalog-format'
+        Add-Suite 'language-1-foreign-catalog-producer'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
         'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
-        'Specifications/Windvale-Language-1.0-Foreign-Catalog.md',
         'Tests/Fixtures/Language-1.0/Foreign-Catalog-Format-Self-Test.wv',
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.cmd',
         'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
@@ -1685,11 +1689,23 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Compiler/Windvale/Source-Foreign-Catalog-Core.wv') {
             Add-Suite @(
                 'language-1-foreign-catalog-format',
-                'language-1-admission-evidence-format'
+                'language-1-admission-evidence-format',
+                'language-1-foreign-catalog-producer'
             )
         } else {
             Add-Suite 'language-1-foreign-catalog-format'
         }
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv',
+        'Documents/Decisions/0888-Publish-The-Canonical-WVFC-Producer.md',
+        'Projects/Compiler/Windvale-Source-Foreign-Catalog-Producer-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Producer.wvproj',
+        'Tests/Fixtures/Language-1.0/Foreign-Catalog-Producer-Self-Test.wv',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.cmd',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.sh',
+        'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
+    )) {
+        Add-Suite 'language-1-foreign-catalog-producer'
     } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Using-Front-End.wvproj',
         'Tests/Fixtures/Language-1.0/Using-Front-End-Self-Test.wv',
@@ -1864,7 +1880,8 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Compiler/Windvale/Source-Descriptor-Core.wv') {
             Add-Suite @(
                 'language-1-front-door',
-                'language-1-admission-evidence-format'
+                'language-1-admission-evidence-format',
+                'language-1-foreign-catalog-producer'
             )
         } else {
             Add-Suite 'language-1-front-door'
@@ -2851,6 +2868,14 @@ foreach ($Path in $Paths) {
         if ($Path -in @(
             'Compiler/Windvale/Source-Lexer-Core.wv',
             'Compiler/Windvale/Source-Declaration-Parser.wv',
+            'Compiler/Windvale/Source-Body-Parser.wv',
+            'Compiler/Windvale/Source-Set-Core.wv'
+        )) {
+            Add-Suite 'language-1-foreign-catalog-producer'
+        }
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Declaration-Parser.wv',
             'Compiler/Windvale/Source-Set-Core.wv'
         )) {
             Add-Suite 'language-1-effect-clause-front-end'
@@ -3223,6 +3248,9 @@ foreach ($Path in $Paths) {
         }
         if ($Path -eq 'Foundation/Decimal-Parsing.wv') {
             Add-Suite 'packages'
+        }
+        if ($Path -eq 'Foundation/Sha256.wv') {
+            Add-Suite 'language-1-foreign-catalog-producer'
         }
     } elseif ($Path -eq 'Foundation/Immutable-Source-Regions.wv') {
         Add-Suite @(

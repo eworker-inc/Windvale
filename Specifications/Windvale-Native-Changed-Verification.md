@@ -185,6 +185,14 @@ and executes them. Database storage remains selected for changes to its own
 sources or contracts, shared cache tooling, native lowering that can affect its
 generated images, and deliberate final milestone or qualification evidence.
 
+The canonical WVFC format and producer retain separate focused owners. A change
+to their shared foreign-catalog contract selects both; producer source, project,
+fixture, owner, or Decision 0888 selects
+`language-1-foreign-catalog-producer`. That owner builds its candidate twice,
+complete-verifies the immutable WVB, acquires one content-addressed segmented
+profile-7 application, and executes all 25 selectors directly. It does not use
+the scalar interpreter or a generic bounded-case runner.
+
 The `os-x64-code-emission` development lane reads the canonical version-2,
 56-target manifest. Each row owns its project closure, artifact stem, expected
 local result, and exact WVB, WVO, linked-image, Windows-container, and

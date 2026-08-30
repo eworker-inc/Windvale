@@ -272,7 +272,8 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-front-door',
-            'language-1-admission-evidence-format'
+            'language-1-admission-evidence-format',
+            'language-1-foreign-catalog-producer'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -550,11 +551,22 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 shared foreign catalog contract routing'
+        Paths = @(
+            'Specifications/Windvale-Language-1.0-Foreign-Catalog.md'
+        )
+        Suites = @(
+            'language-1-foreign-catalog-format',
+            'language-1-foreign-catalog-producer'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 foreign catalog format routing'
         Paths = @(
             'Compiler/Windvale/Source-Foreign-Catalog-Core.wv',
             'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Format.wvproj',
-            'Specifications/Windvale-Language-1.0-Foreign-Catalog.md',
             'Tests/Fixtures/Language-1.0/Foreign-Catalog-Format-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.cmd',
             'Tools/Native/Test-Language-1.0-Foreign-Catalog-Format.sh',
@@ -562,8 +574,25 @@ $NativeCases = @(
         )
         Suites = @(
             'language-1-foreign-catalog-format',
-            'language-1-admission-evidence-format'
+            'language-1-admission-evidence-format',
+            'language-1-foreign-catalog-producer'
         )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign catalog producer routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Foreign-Catalog-Producer-Core.wv',
+            'Documents/Decisions/0888-Publish-The-Canonical-WVFC-Producer.md',
+            'Projects/Compiler/Windvale-Source-Foreign-Catalog-Producer-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Catalog-Producer.wvproj',
+            'Tests/Fixtures/Language-1.0/Foreign-Catalog-Producer-Self-Test.wv',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.cmd',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.sh',
+            'Tools/Native/Test-Language-1.0-Foreign-Catalog-Producer.mjs'
+        )
+        Suites = @('language-1-foreign-catalog-producer')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -632,6 +661,7 @@ $NativeCases = @(
             'language-1-front-door',
             'language-1-effect-clause-front-end',
             'language-1-system-ffi-front-end',
+            'language-1-foreign-catalog-producer',
             'language-1-callable-semantics'
         )
         Gaps = @()
@@ -648,8 +678,66 @@ $NativeCases = @(
             'generic-nominal-wvlb-carrier',
             'language-1-front-door',
             'language-1-system-ffi-unsafe-context',
+            'language-1-foreign-catalog-producer',
             'language-1-using-front-end',
             'language-1-callable-semantics'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 descriptor producer dependency routing'
+        Paths = @('Compiler/Windvale/Source-Descriptor-Core.wv')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-admission-evidence-format',
+            'language-1-foreign-catalog-producer'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 foreign catalog producer format dependency routing'
+        Paths = @('Compiler/Windvale/Source-Foreign-Catalog-Core.wv')
+        Suites = @(
+            'language-1-foreign-catalog-format',
+            'language-1-admission-evidence-format',
+            'language-1-foreign-catalog-producer'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 lexer and source set producer dependency routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Lexer-Core.wv',
+            'Compiler/Windvale/Source-Set-Core.wv'
+        )
+        Suites = @(
+            'source-containment',
+            'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
+            'generic-nominal-type-materialization',
+            'generic-nominal-wvlb-carrier',
+            'language-1-front-door',
+            'language-1-effect-clause-front-end',
+            'language-1-system-ffi-front-end',
+            'language-1-foreign-catalog-producer',
+            'language-1-using-front-end',
+            'language-1-callable-semantics'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 SHA-256 producer dependency routing'
+        Paths = @('Foundation/Sha256.wv')
+        Suites = @(
+            'seed',
+            'wv-linker-reconstruction',
+            'console-verifier-reconstruction',
+            'console-publisher-reconstruction',
+            'language-1-foreign-catalog-producer'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -807,6 +895,7 @@ $NativeCases = @(
             'language-1-effect-clause-front-end',
             'language-1-system-ffi-front-end',
             'language-1-system-ffi-unsafe-context',
+            'language-1-foreign-catalog-producer',
             'language-1-using-front-end',
             'language-1-callable-semantics',
             'language-1-memory-budget-split-execution',
@@ -1306,6 +1395,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
+            'language-1-foreign-catalog-producer',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit'
@@ -1401,6 +1491,7 @@ $NativeCases = @(
             'wvo-publisher-reconstruction',
             'unsafe-wvb',
             'wvb-containment',
+            'language-1-foreign-catalog-producer',
             'compiler-split-development',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files',
@@ -1552,6 +1643,7 @@ $NativeCases = @(
             'wv-linker-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
+            'language-1-foreign-catalog-producer',
             'linker-rejections',
             'linker-hostile',
             'linker-map-limit',
@@ -3882,9 +3974,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 120 -or
+if ($VerificationOwnerLines.Count -ne 121 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 119-owner inventory differs.'
+    throw 'The native verification-owner header or exact 120-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -3922,7 +4014,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5786 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5811 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

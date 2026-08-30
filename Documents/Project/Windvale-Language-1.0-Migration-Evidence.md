@@ -4433,3 +4433,38 @@ Foreign-call origin and safe-caller effect enforcement remain pending with the
 semantic call model, as do pointer/lifetime evidence, WIR/WVB foreign
 operations, native ABI lowering, runtime containment, and paired-host Slice 8
 qualification.
+## Slice 8 canonical foreign-catalog producer
+
+[Decision 0888](../Decisions/0888-Publish-The-Canonical-WVFC-Producer.md)
+adds the compiler-owned canonical WVFC producer over validated descriptor-free
+WVSS 2 snapshots. It reuses the declaration parser's authenticated foreign
+evidence, counts every non-end import and declaration in exact source ordinals,
+maps the frozen ABI literal to registry identity 1, preserves exact UTF-8 source
+spans, and hashes the raw `fn`-through-effects signature bytes. It publishes
+only the existing canonical record/catalog-constructor result and returns an
+empty value with bounded diagnostics on every failure.
+
+The producer retains a 65,536-byte pending record chunk before bounded flushes,
+so the 43,690-record ceiling does not cause a whole-catalog concatenation for
+every declaration. The 683-record case crosses the first flush boundary and
+verifies structure, count, and first/last declaration ordinals. Its final
+Windows direct-native execution completed in 546 ms.
+
+The focused Windows owner passes all 25 selectors with exact exit 42 and no
+output after complete verification. Two builds produce byte-identical
+503,800-byte WVB values with SHA-256
+`d647180c2015c236c6b1cbbade40d2aff25959c74936174e11d2d771723addc1`.
+The direct-native profile uses the exact source-owned Foundation SHA-256
+implementation because the current backend does not implement the semantic
+hash operation and the nested scalar-interpreter carrier exceeded its retained
+text arena. No arena or ordinary value bound changes.
+
+After adding the producer and its complete shared-source and hosted-cache
+routing, changed-file planning passes 31 general and 217 native routing cases.
+The registry contains 120 owners and 5,811 cases in 20,844 LF-only bytes at
+SHA-256
+`09f82b7ba5debd811e4e0f4d724f9f1bd5466871244c89365a5173c11aff193b`.
+
+This is producer evidence only. Admission coordination, selected-WVTD/platform
+agreement, WVAE publication, Analyzer authentication, semantic foreign
+binding, runtime/linker work, and Linux paired-host evidence remain pending.

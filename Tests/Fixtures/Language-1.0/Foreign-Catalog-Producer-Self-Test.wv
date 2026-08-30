@@ -1,0 +1,579 @@
+module Languageˉoneˉforeignˉcatalogˉproducerˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+import Compilerˉsourceˉforeignˉcatalogˉproducer as Producer;
+import Compilerˉsourceˉset as Sourceˉset;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Canonicalˉdeclaration() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Exportedˉdeclaration() -> text {
+    return Textˉconcat("export ", Canonicalˉdeclaration());
+}
+
+fn Trailingˉcommaˉdeclaration() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64,) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Paperˉdeclaration() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\"\nfn Readˉforeignˉrecord(\n    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,\n    Capacity: u64,\n    Expectedˉgeneration: u64,\n) -> i64 effects(ffi.call)\nas \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Systemˉsource(Name: text, Body: text) -> bytes {
+    var Source: text = Textˉconcat("module ", Name);
+    Source = Textˉconcat(
+        Source,
+        "; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; "
+    );
+    Source = Textˉconcat(Source, Body);
+    return Textˉtoˉutf8(Source);
+}
+
+fn Systemˉsourceˉbytes(Name: text, Body: bytes) -> bytes {
+    var Source: text = Textˉconcat("module ", Name);
+    Source = Textˉconcat(
+        Source,
+        "; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; "
+    );
+    return Bytesˉconcat(Textˉtoˉutf8(Source), Body);
+}
+
+fn Coreˉsource(Name: text) -> bytes {
+    var Source: text = Textˉconcat("module ", Name);
+    Source = Textˉconcat(
+        Source,
+        "; profile core; platform linux, windows, windvale; authority application;"
+    );
+    return Textˉtoˉutf8(Source);
+}
+
+fn Appendˉentry(
+    Directory: bytes,
+    Offset: u32,
+    Length: u32,
+    Version: u32
+) -> bytes {
+    var Result: bytes = Bytesˉconcat(
+        Directory, Bytesˉfromˉu32ˉlittle(Offset)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Length));
+    if Version == 2u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+    }
+    return Result;
+}
+
+fn Oneˉsourceˉset(Source: bytes, Version: u32) -> bytes {
+    var Entryˉbytes: u32 = 8u32;
+    if Version == 2u32 { Entryˉbytes = 20u32; }
+    let Sourceˉoffset: u32 = 16u32 + Entryˉbytes;
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(Version));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Entryˉbytes));
+    Result = Appendˉentry(Result, Sourceˉoffset, Bytesˉlength(Source), Version);
+    return Bytesˉconcat(Result, Source);
+}
+
+fn Twoˉsourceˉset(First: bytes, Second: bytes) -> bytes {
+    let Firstˉoffset: u32 = 56u32;
+    let Secondˉoffset: u32 = Firstˉoffset + Bytesˉlength(First);
+    var Result: bytes = Textˉtoˉutf8("WVSS");
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(2u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(40u32));
+    Result = Appendˉentry(Result, Firstˉoffset, Bytesˉlength(First), 2u32);
+    Result = Appendˉentry(Result, Secondˉoffset, Bytesˉlength(Second), 2u32);
+    Result = Bytesˉconcat(Result, First);
+    return Bytesˉconcat(Result, Second);
+}
+
+fn Numberedˉsource(Index: u32) -> bytes {
+    if Index == 0u32 { return Coreˉsource("Root"); }
+    var Name: text = "M";
+    if Index < 10u32 { Name = Textˉconcat(Name, "0"); }
+    Name = Textˉconcat(Name, U32ˉformat(Index));
+    return Coreˉsource(Name);
+}
+
+fn Numberedˉsourceˉset(Modules: u32) -> bytes {
+    let Directoryˉbytes: u32 = Modules * 20u32;
+    var Header: bytes = Textˉtoˉutf8("WVSS");
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(2u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
+    Header = Bytesˉconcat(Header, Bytesˉfromˉu32ˉlittle(Modules));
+    Header = Bytesˉconcat(
+        Header, Bytesˉfromˉu32ˉlittle(Directoryˉbytes)
+    );
+    var Directory: bytes = Bytesˉslice(Header, 0u32, 0u32);
+    var Offset: u32 = 16u32 + Directoryˉbytes;
+    var Index: u32 = 0u32;
+    while Index < Modules {
+        let Source: bytes = Numberedˉsource(Index);
+        Directory = Appendˉentry(
+            Directory, Offset, Bytesˉlength(Source), 2u32
+        );
+        Offset = Offset + Bytesˉlength(Source);
+        Index = Index + 1u32;
+    }
+    var Payload: bytes = Bytesˉslice(Header, 0u32, 0u32);
+    Index = 0u32;
+    while Index < Modules {
+        Payload = Bytesˉconcat(Payload, Numberedˉsource(Index));
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Bytesˉconcat(Header, Directory), Payload);
+}
+
+fn Bytesˉareˉzero(Input: bytes) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Input) {
+        if Bytesˉreadˉu8(Input, Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Bytesˉequal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Digestˉmatches(Catalogˉbytes: bytes, Expected: text) -> bool {
+    let Decoded: Producer.Compilerˉsourceˉforeignˉhexˉresult =
+        Producer.Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8(Expected)
+        );
+    if !Decoded.Valid { return false; }
+    return Bytesˉequal(
+        Bytesˉslice(Catalogˉbytes, 112u32, 32u32), Decoded.Value
+    );
+}
+
+fn Caseˉhexˉzero() -> bool {
+    let Decoded: Producer.Compilerˉsourceˉforeignˉhexˉresult =
+        Producer.Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8(
+                "0000000000000000000000000000000000000000000000000000000000000000"
+            )
+        );
+    return Decoded.Valid && Bytesˉlength(Decoded.Value) == 32u32 &&
+        Bytesˉareˉzero(Decoded.Value);
+}
+
+fn Caseˉhexˉshort() -> bool {
+    let Decoded: Producer.Compilerˉsourceˉforeignˉhexˉresult =
+        Producer.Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8(
+                "69ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d"
+            )
+        );
+    return !Decoded.Valid && Bytesˉlength(Decoded.Value) == 0u32;
+}
+
+fn Caseˉhexˉuppercase() -> bool {
+    let Decoded: Producer.Compilerˉsourceˉforeignˉhexˉresult =
+        Producer.Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8(
+                "A9ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d3"
+            )
+        );
+    return !Decoded.Valid && Bytesˉlength(Decoded.Value) == 0u32;
+}
+
+fn Caseˉhexˉinvalid() -> bool {
+    let Decoded: Producer.Compilerˉsourceˉforeignˉhexˉresult =
+        Producer.Compilerˉsourceˉforeignˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8(
+                "g9ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d3"
+            )
+        );
+    return !Decoded.Valid && Bytesˉlength(Decoded.Value) == 0u32;
+}
+
+fn Caseˉempty() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Coreˉsource("Root"), 2u32)
+        );
+    if Result.Status != Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID {
+        return false;
+    }
+    if Bytesˉlength(Result.Value) != 48u32 { return false; }
+    return Bytesˉreadˉu32ˉlittle(Result.Value, 12u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 24u32) == 1u32;
+}
+
+fn Caseˉsingle() -> bool {
+    let Source: bytes = Systemˉsource("Root", Canonicalˉdeclaration());
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Source, 2u32)
+        );
+    if Result.Status != Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID ||
+        Bytesˉlength(Result.Value) != 144u32 {
+        return false;
+    }
+    return Bytesˉreadˉu32ˉlittle(Result.Value, 12u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 48u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 52u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 56u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 60u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 64u32) == 91u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 68u32) == 253u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 72u32) == 156u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 76u32) == 21u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 80u32) == 107u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 84u32) == 44u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 88u32) == 312u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 92u32) == 30u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 96u32) == 153u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 100u32) == 154u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 104u32) == 290u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 108u32) == 17u32 &&
+        Digestˉmatches(
+            Result.Value,
+            "69ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d3"
+        );
+}
+
+fn Caseˉexport() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(
+                Systemˉsource("Root", Exportedˉdeclaration()), 2u32
+            )
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 56u32) == 3u32 &&
+        Digestˉmatches(
+            Result.Value,
+            "69ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d3"
+        );
+}
+
+fn Caseˉtrailingˉcomma() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(
+                Systemˉsource("Root", Trailingˉcommaˉdeclaration()), 2u32
+            )
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 100u32) == 155u32 &&
+        Digestˉmatches(
+            Result.Value,
+            "69814592d46f7b325fe186e0f23329f0e44141a38e7ae59bd6c41f1373950fa1"
+        );
+}
+
+fn Caseˉpaper() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(
+                Systemˉsource("Root", Paperˉdeclaration()), 2u32
+            )
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 100u32) == 169u32 &&
+        Digestˉmatches(
+            Result.Value,
+            "fb94dc140584f4c95d8ee49b0901217d9568cf9300b22b9555e94920f505c74f"
+        );
+}
+
+fn Caseˉdeclarationˉordinal() -> bool {
+    let Body: text = Textˉconcat(
+        "import Foundationˉcollections as Collections;\nfn Marker() -> i32 { return 1; }\n",
+        Canonicalˉdeclaration()
+    );
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Body), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 52u32) == 2u32;
+}
+
+fn Caseˉsameˉmoduleˉorder() -> bool {
+    let Body: text = Textˉconcat(
+        Canonicalˉdeclaration(),
+        Textˉconcat("\n", Trailingˉcommaˉdeclaration())
+    );
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Body), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 12u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 52u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 148u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 160u32) >
+            Bytesˉreadˉu32ˉlittle(Result.Value, 64u32);
+}
+
+fn Caseˉmoduleˉorder() -> bool {
+    let Input: bytes = Twoˉsourceˉset(
+        Systemˉsource("Root", Canonicalˉdeclaration()),
+        Systemˉsource("Zed", Trailingˉcommaˉdeclaration())
+    );
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(Input);
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 12u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 24u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 48u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 144u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 148u32) == 0u32;
+}
+
+fn Caseˉdeterministic() -> bool {
+    let Input: bytes = Oneˉsourceˉset(
+        Systemˉsource("Root", Canonicalˉdeclaration()), 2u32
+    );
+    let First: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(Input);
+    let Second: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(Input);
+    return First.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Second.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉequal(First.Value, Second.Value);
+}
+
+fn Caseˉwvssˉversions() -> bool {
+    let Versionˉone: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Coreˉsource("Root"), 1u32)
+        );
+    let Versionˉthree: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Coreˉsource("Root"), 3u32)
+        );
+    return Versionˉone.Status ==
+            Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_ADMITTED_WVSS &&
+        Versionˉone.Failureˉoffset == 4u32 &&
+        Bytesˉlength(Versionˉone.Value) == 0u32 &&
+        Versionˉthree.Status ==
+            Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Versionˉthree.Sourceˉsetˉstatus ==
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Unsupportedˉversion &&
+        Versionˉthree.Failureˉoffset == 4u32 &&
+        Bytesˉlength(Versionˉthree.Value) == 0u32;
+}
+
+fn Caseˉtrailingˉwvss() -> bool {
+    let Valid: bytes = Oneˉsourceˉset(Coreˉsource("Root"), 2u32);
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Bytesˉconcat(Valid, Bytesˉfromˉu8(0u8))
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Sourceˉsetˉstatus ==
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Noncanonicalˉlayout &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉmissingˉunsafe() -> bool {
+    let Declaration: text = "foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Declaration), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Expectedˉtoken &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉwrongˉprofile() -> bool {
+    let Source: bytes = Bytesˉconcat(
+        Coreˉsource("Root"),
+        Textˉtoˉutf8(Textˉconcat(" ", Canonicalˉdeclaration()))
+    );
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Source, 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus == Declarations.Compilerˉparseˉstatus.Foreignˉprofile &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉwrongˉabi() -> bool {
+    let Declaration: text = "unsafe foreign \"windvale.paper.unknown\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Declaration), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Unsupportedˉforeignˉabi &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉwrongˉsymbol() -> bool {
+    let Declaration: text = "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_other\";";
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Declaration), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Unsupportedˉforeignˉsymbol &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉwrongˉeffect() -> bool {
+    let Declaration: text = "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.fail) as \"wv_paper_buffer_source_read_v1\";";
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsource("Root", Declaration), 2u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Parseˉstatus ==
+            Declarations.Compilerˉparseˉstatus.Invalidˉforeignˉsignature &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉmoduleˉmaximum() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Numberedˉsourceˉset(64u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID &&
+        Bytesˉlength(Result.Value) == 48u32 &&
+        Bytesˉreadˉu32ˉlittle(Result.Value, 24u32) == 64u32;
+}
+
+fn Caseˉmoduleˉoverflow() -> bool {
+    let Result: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Numberedˉsourceˉset(65u32)
+        );
+    return Result.Status == Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_SOURCE_SET &&
+        Result.Sourceˉsetˉstatus ==
+            Sourceˉset.Compilerˉsourceˉsetˉstatus.Invalidˉcount &&
+        Bytesˉlength(Result.Value) == 0u32;
+}
+
+fn Caseˉbounds() -> bool {
+    return Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_MAX_SOURCE_SET_BYTES ==
+            4194304u32 &&
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVSS_MAX_MODULES == 64u32 &&
+        Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_WVFC_MAX_RECORDS == 43690u32 &&
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(
+            43690u32
+        ) == 4194288u32 &&
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉtotalˉbytesˉforˉcount(
+            43691u32
+        ) == 0u32;
+}
+
+fn Caseˉcatalogˉstructure() -> bool {
+    let Produced: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(
+                Systemˉsource("Root", Canonicalˉdeclaration()), 2u32
+            )
+        );
+    if Produced.Status != Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID {
+        return false;
+    }
+    let Checked: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(
+            Produced.Value
+        );
+    return Checked.Status == Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID &&
+        Bytesˉequal(Checked.Value, Produced.Value);
+}
+
+fn Caseˉaccumulatorˉflush() -> bool {
+    let Unit: bytes = Textˉtoˉutf8(
+        Textˉconcat(Canonicalˉdeclaration(), "\n")
+    );
+    var Body: bytes = Bytesˉslice(Unit, 0u32, 0u32);
+    var Block: bytes = Unit;
+    var Remaining: u32 = 683u32;
+    while Remaining != 0u32 {
+        if Remaining % 2u32 != 0u32 {
+            Body = Bytesˉconcat(Body, Block);
+        }
+        Remaining = Remaining / 2u32;
+        if Remaining != 0u32 { Block = Bytesˉconcat(Block, Block); }
+    }
+    let Produced: Producer.Compilerˉsourceˉforeignˉproducerˉresult =
+        Producer.Compilerˉsourceˉforeignˉcatalogˉproduce(
+            Oneˉsourceˉset(Systemˉsourceˉbytes("Root", Body), 2u32)
+        );
+    if Produced.Status != Producer.COMPILER_SOURCE_FOREIGN_PRODUCER_STATUS_VALID ||
+        Bytesˉlength(Produced.Value) != 65616u32 ||
+        Bytesˉreadˉu32ˉlittle(Produced.Value, 12u32) != 683u32 {
+        return false;
+    }
+    let Lastˉrecord: u32 = 48u32 + 682u32 * 96u32;
+    if Bytesˉreadˉu32ˉlittle(Produced.Value, 52u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Produced.Value, Lastˉrecord) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Produced.Value, Lastˉrecord + 4u32
+        ) != 682u32 {
+        return false;
+    }
+    let Checked: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(
+            Produced.Value
+        );
+    return Checked.Status == Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID &&
+        Bytesˉequal(Checked.Value, Produced.Value);
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉhexˉzero() { return 42; }
+    if Selected == 98u32 && Caseˉhexˉshort() { return 42; }
+    if Selected == 99u32 && Caseˉhexˉuppercase() { return 42; }
+    if Selected == 100u32 && Caseˉhexˉinvalid() { return 42; }
+    if Selected == 101u32 && Caseˉempty() { return 42; }
+    if Selected == 102u32 && Caseˉsingle() { return 42; }
+    if Selected == 103u32 && Caseˉexport() { return 42; }
+    if Selected == 104u32 && Caseˉtrailingˉcomma() { return 42; }
+    if Selected == 105u32 && Caseˉpaper() { return 42; }
+    if Selected == 106u32 && Caseˉdeclarationˉordinal() { return 42; }
+    if Selected == 107u32 && Caseˉsameˉmoduleˉorder() { return 42; }
+    if Selected == 108u32 && Caseˉmoduleˉorder() { return 42; }
+    if Selected == 109u32 && Caseˉdeterministic() { return 42; }
+    if Selected == 110u32 && Caseˉwvssˉversions() { return 42; }
+    if Selected == 111u32 && Caseˉtrailingˉwvss() { return 42; }
+    if Selected == 112u32 && Caseˉmissingˉunsafe() { return 42; }
+    if Selected == 113u32 && Caseˉwrongˉprofile() { return 42; }
+    if Selected == 114u32 && Caseˉwrongˉabi() { return 42; }
+    if Selected == 115u32 && Caseˉwrongˉsymbol() { return 42; }
+    if Selected == 116u32 && Caseˉwrongˉeffect() { return 42; }
+    if Selected == 117u32 && Caseˉmoduleˉmaximum() { return 42; }
+    if Selected == 118u32 && Caseˉmoduleˉoverflow() { return 42; }
+    if Selected == 119u32 && Caseˉbounds() { return 42; }
+    if Selected == 120u32 && Caseˉcatalogˉstructure() { return 42; }
+    if Selected == 121u32 && Caseˉaccumulatorˉflush() { return 42; }
+    return 1;
+}

@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 26 August 2026
+> Status snapshot: 30 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -19,6 +19,13 @@ now targets Windvale 1.0 directly; no `v0.2.0` product release is planned.
 Language, Libraries, WVDB, package/service, and integrated qualification work
 advance as product workstreams rather than numbered release stages. OS-1 retains
 its independent qualification path.
+
+The latest Language 1.0 Slice 8 checkpoint adds the canonical WVFC producer
+selected by [Decision 0888](../Decisions/0888-Publish-The-Canonical-WVFC-Producer.md).
+The focused Windows owner passes 25 exact direct-native cases over validated
+WVSS 2 snapshots, including the 683-record accumulator flush. Admission
+coordination, WVTD/platform agreement, WVAE, Analyzer consumption, and paired
+Linux evidence remain pending.
 
 ## Indicators
 

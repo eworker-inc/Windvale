@@ -11,11 +11,12 @@ format, and carries no authority.
 
 This checkpoint implements the stable first ABI-contract registry identity,
 fixed format construction, checked structural validation, exact failure
-positions, and byte-identical accepted output. It does **not** yet construct the
-catalog in `wvadmit`, authenticate spans against WVSS, recompute signature
-digests, prove catalog completeness, produce WVAE, feed the Analyzer, perform
-semantic FFI validation, bind a native symbol, or execute foreign code. Those
-are subsequent producer/consumer migration boundaries.
+positions, byte-identical accepted output, and a compiler-owned canonical
+producer over validated descriptor-free `WVSS 2` source snapshots. It does
+**not** yet coordinate the producer inside `wvadmit`, compare a selected WVTD
+with platform scopes, produce WVAE, feed the Analyzer, perform semantic FFI
+validation, bind a native symbol, or execute foreign code. Those are subsequent
+producer/consumer migration boundaries.
 
 ## Encoding
 
@@ -155,6 +156,81 @@ Record-field offsets are reported as absolute WVFC offsets when validating or
 constructing a catalog. The standalone record constructor reports offsets
 relative to its 96-byte record.
 
+## Canonical producer
+
+`Compilerˉsourceˉforeignˉcatalogˉproduce` consumes one immutable, validated,
+descriptor-free `WVSS 2` snapshot. `WVSS 1`, an unknown WVSS version, a source
+set larger than 4,194,304 bytes, zero or more than 64 modules, malformed module
+content, and trailing source-set bytes are rejected before catalog publication.
+Structurally recognized WVSS 1 returns producer status `ADMITTED_WVSS`;
+an unknown version returns `SOURCE_SET` with underlying source-set status
+`Unsupported_version`. This preserves the source-set scanner's earlier
+structural diagnostic instead of relabeling it as a recognized legacy input.
+The producer performs the established bounded source-set validation and one
+independent source-ordered declaration scan. It does not mutate the input and
+returns an empty `Value` on every failure.
+
+The declaration ordinal is the zero-based ordinal of **every non-`End` entry**
+returned by the validated declaration scan. Imports and ordinary declarations
+therefore consume ordinals even though they produce no WVFC record. Records are
+emitted in module order and declaration order without sorting.
+
+For each foreign declaration, the producer requires the frozen edition-1
+System profile and the parser-authenticated `unsafe` marker, exact ABI literal,
+nonempty external-symbol literal, and complete `effects(ffi.call)` clause. The
+parser's exact ABI literal maps directly to registry identity 1; this is a
+mapping from already authenticated syntax, not a general membership test over
+arbitrary text. The producer reuses
+`Compilerˉsourceˉforeignˉdeclarationˉevidence` and the existing WVFC record and
+catalog constructors. It does not carry a second grammar.
+
+The source spans are exact UTF-8 byte ranges:
+
+- declaration: optional `export` through the terminating semicolon;
+- name: identifier bytes;
+- ABI and external symbol: literal contents, excluding quotes;
+- effect: the complete `effects(ffi.call)` clause; and
+- signature: raw source bytes from the authenticated `fn` token through the
+  final effect-clause byte, excluding ABI/external literals and `as`.
+
+For the three frozen foreign layouts, the signature begins at
+`Name_offset - 3` and ends at
+`Effect_clause_offset + Effect_clause_length`. The producer computes those
+bounds only after parser evidence succeeds and guards the subtraction,
+addition, containment, and nonempty length. Any future foreign layout must
+revise this explicit parser/producer invariant; it must not silently inherit
+the current arithmetic. Trivia and layout are part of the raw signature, so
+two otherwise equivalent declarations with different admitted bytes
+intentionally have different signature digests.
+
+The digest is the exact host-independent SHA-256 from
+`Foundationˉsha256.Foundationˉsha256ˉhex`, decoded by a compiler-owned decoder
+that accepts exactly 64 lowercase ASCII hexadecimal bytes and publishes exactly
+32 raw bytes. The source-owned implementation is used because this producer is
+packaged and executed through the current direct-native profile, where the
+semantic `Bytesˉsha256ˉhex` opcode is not a supported native operation. This is
+an implementation choice, not a change to digest semantics.
+
+Records accumulate in at most 65,536 pending bytes before a complete-chunk
+flush, then materialize once for the canonical catalog constructor. This keeps
+the append path bounded at the 43,690-record ceiling and avoids one whole-value
+concatenation per record. A 683-record case crosses the first flush boundary
+and verifies the catalog count plus first and last declaration ordinals.
+
+Producer status values are `VALID` 0, `SOURCE_SET` 1, `ADMITTED_WVSS` 2,
+`PROFILE` 3, `DECLARATION` 4, `ABI_CONTRACT` 5, `SPAN` 6, `DIGEST` 7,
+`RESOURCE_LIMIT` 8, and `CATALOG` 9. The result also carries bounded module,
+declaration, offset, line, and column evidence plus the underlying source-set,
+declaration-parser, and catalog statuses. Success publishes only the canonical
+constructor result. Failure never repairs input or publishes a partial record
+sequence.
+
+This producer records syntax only. It does not infer semantic types or effects,
+grant authority, bind declarations or external symbols, select overloads,
+compare platform scopes with a selected WVTD, construct WVAE, or affect the
+runtime or linker. Selected-WVTD/platform-scope agreement remains an explicit
+later coordinator responsibility.
+
 ## Focused evidence and remaining proof
 
 The focused owner builds twice and requires byte-identical WVB, then executes
@@ -168,11 +244,23 @@ effect evidence; and short/long constructor digests.
 The exact 43,690/43,691 count boundary is checked both in Windvale through the
 overflow-safe size function and independently with host `BigInt` arithmetic.
 The fixture intentionally does not retain or execute a 4 MiB catalog merely to
-prove multiplication. A later producer/consumer capacity workload must add a
-representative large WVSS and catalog when it can measure peak memory and both
-compiler products without weakening the ordinary value limit.
+prove multiplication.
 
-This structural evidence does not prove WVSS span authenticity, literal text,
-signature SHA-256 content, declaration completeness, target agreement, System
-profile, semantic types/effects/ownership, Analyzer capacity, native lowering,
-runtime containment, or Windows/Linux qualification.
+The separate canonical-producer owner builds twice, complete-verifies the
+immutable WVB, and executes 25 isolated direct-native cases. They cover strict
+lowercase digest decoding; empty, single, exported, trailing-comma, and paper
+layouts; independent fixed spans and digest; import/ordinary/foreign ordinal
+accounting; within-module and cross-module order; deterministic output; WVSS 1,
+unknown-version, and trailing-input rejection; System/unsafe/ABI/symbol/effect
+requirements; the
+64/65-module boundary; maximum-record arithmetic; canonical result structure;
+and 683 records crossing the 65,536-byte accumulator flush. The flush case
+checks the catalog count and first/last declaration ordinals, so a lost,
+duplicated, or reordered boundary record cannot pass.
+
+A later producer/consumer capacity workload may retain a representative near-
+maximum WVSS and catalog when it can measure peak memory and both compiler
+products without weakening the ordinary value limit. Current focused evidence
+does not claim selected-target agreement, semantic types/effects/ownership,
+WVAE or Analyzer consumption, runtime containment, a full-capacity retained
+workload, or paired Windows/Linux qualification.

@@ -19,7 +19,7 @@ conformance claims:
 - [Language 1.0 localized-source and source-vocabulary working addendum](Windvale-Language-1.0-Localized-Source.md)
 - [Language 1.0 source-profile artifact format candidate](Windvale-Language-1.0-Source-Profile-Formats.md)
 - [Language 1.0 concrete target descriptor](Windvale-Language-1.0-Target-Descriptor.md)
-- [Language 1.0 foreign-declaration catalog](Windvale-Language-1.0-Foreign-Catalog.md)
+- [Language 1.0 foreign-declaration catalog and canonical producer](Windvale-Language-1.0-Foreign-Catalog.md)
 - [Language 1.0 Foundation candidate](Windvale-Language-1.0-Foundation.md)
 - [Language 1.0 Foundation signature registry candidate](Windvale-Language-1.0-Foundation-Registry.md)
 - [Seed language](Seed-Language.md)
