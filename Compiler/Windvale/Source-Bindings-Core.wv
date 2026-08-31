@@ -3560,7 +3560,10 @@ export fn Compilerˉsourceˉbindingsˉphaseˉblock(
                     Bindˉbody, Result
                 );
             }
-            if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Block {
+            if Statement.Kind ==
+                    Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Block ||
+                Statement.Kind ==
+                    Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Unsafe {
                 let Nestedˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset

@@ -15,7 +15,7 @@ Compilerˉvalidateˉsourceˉwir(Input: bytes)
 
 On success, the summary contains module, function-entry, block, operation, temporary, and operand counts plus an independently validated WVIR directory. On failure, the directory is empty and the summary identifies the first deterministic failure by module, related module, WVSD function entry, byte offset, and one-based line/column.
 
-The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, invalid record update, invalid named variant construction, and invalid value blocks. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, values `35` through `37` own an invalid variant literal plus duplicate or missing variant fields, `Invalidˉvalueˉblock = 38` owns a malformed or valueless value-producing control arm, values `39` through `41` own generic resolution, specialization, and bounded-iteration failures, `Invalidˉarray = 42` owns fixed-array construction and access failures, `Invalidˉborrow = 43` owns invalid borrow formation, mode, origin, read-through, or escape, `Invalidˉresource = 44` owns a `using` initializer that is not an admitted resource, and `Invalidˉcallable = 45` owns a named-function value or indirect call outside the closed noncapturing callable profile, without renumbering retained values.
+The status contract distinguishes upstream source-binding rejection, evidence limits, malformed constructed evidence, type mismatch, invalid conditions and returns, missing returns, unreachable statements, invalid data/index/field/operator use, invalid call arguments, invalid local inference, invalid constant evidence, named-record failures, loop-control placement, invalid or non-exhaustive enum/variant matching, unknown variant cases, invalid payload bindings, invalid collection shapes, invalid or consumed builders, an invalid result-propagation contract, invalid unit use, invalid record update, invalid named variant construction, and invalid value blocks. Appended values `23` through `31` own those match, variant, collection, and builder failures, `Invalidˉtry = 32` owns propagation failures, `Invalidˉunit = 33` owns a unit expression outside edition 1, `Invalidˉrecordˉupdate = 34` owns a cross-edition or wrong-nominal-base update, values `35` through `37` own an invalid variant literal plus duplicate or missing variant fields, `Invalidˉvalueˉblock = 38` owns a malformed or valueless value-producing control arm, values `39` through `41` own generic resolution, specialization, and bounded-iteration failures, `Invalidˉarray = 42` owns fixed-array construction and access failures, `Invalidˉborrow = 43` owns invalid borrow formation, mode, origin, read-through, or escape, `Invalidˉresource = 44` owns a `using` initializer that is not an admitted resource, `Invalidˉcallable = 45` owns a named-function value or indirect call outside the closed noncapturing callable profile, `Invalidˉtask = 46` owns a structured-task violation, and `Unsafeˉcontextˉrequired = 47` rejects a direct or indirect unsafe invocation outside a lexical unsafe context, without renumbering retained values.
 
 ## Typed lowering rules
 
@@ -25,7 +25,7 @@ The phase currently lowers:
 - literals including edition-1 `()`, storage-free typed constants, parameters, explicitly typed or initializer-inferred locals, simple or compound assignment, data length/load, positional or named record construction, named variant construction, aggregate fields, enum members, Foundation intrinsics, noncapturing named-function values, functions, and declared capabilities;
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, named variant-field destructuring, variant construction/case tests/field extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
-- expression statements, exact `try` propagation, semantic `using`, `return`, lexical blocks, statement and value-producing `if`/`else if`/`else` and exhaustive enum/variant `match`, `while`, `for`, `break`, and `continue`;
+- expression statements, exact `try` propagation, semantic `using`, `return`, lexical blocks, lexical unsafe statement and value blocks, statement and value-producing `if`/`else if`/`else` and exhaustive enum/variant `match`, `while`, `for`, `break`, and `continue`;
 - exact local callable invocation plus explicit jump, branch, and return terminators.
 
 Shape `0` remains Seed's return-only `void`. Shape `9` is the ordinary edition-1
@@ -538,16 +538,35 @@ the required executable output feature.
 `Functionˉreference = 177` has one WVFT-private callable result shape, no value
 operands, the concrete WVIR function entry in `Target`, and the reduced WVIC
 instance in `Auxiliary`. The target must be a nongeneric function with an
-explicit empty effect clause, no `async` or `unsafe` flag, by-value parameters,
-and a by-value non-`void`, non-`never` result. Independent validation rereads
-the source signature, bindings, profile, prepared function entry, WVCF
-disposition, and authoritative WVFT instance before accepting the reference.
+explicit empty effect clause, by-value parameters, and a by-value non-`void`,
+non-`never` result. Its exact `async` and `unsafe` declaration bits are retained
+in the authoritative WVFT instance rather than erased. Constructing or moving
+the reference does not invoke the function and therefore does not require an
+unsafe context. Independent validation rereads the source signature, bindings,
+profile, prepared function entry, WVCF disposition, flags, and authoritative
+WVFT instance before accepting the reference.
 
 `Callˉindirect = 178` consumes the callable temporary first and then each
 argument in declaration order. `Target` is the reduced WVIC instance and
 `Auxiliary` is zero. Its result and every operand shape must exactly match that
 instance. A local call does not perform overload selection, inferred conversion,
-effect widening, or structural guessing.
+effect widening, or structural guessing. Invoking an instance whose retained
+WVFT flags contain `unsafe` requires a lexical unsafe context at the call site;
+the same rule applies to a direct call of an unsafe function or Foreign
+declaration.
+
+Unsafe statement and value blocks are source-only lexical evidence. WVIR
+construction tracks an internal depth from `0` through `64`, increments it
+while lowering an unsafe block, and restores the enclosing depth on every
+success or failure path. A new ordinary or synthetic function begins at depth
+zero, so an enclosing unsafe block cannot grant ambient unsafe context to a
+nested function body. Marking a function declaration `unsafe` classifies its
+invocation; it does not make the function body an implicit unsafe context.
+Unsafe wrappers add no operation, temporary, operand, block, flag, or WVIR
+version. Equivalent safe and explicitly wrapped bodies therefore publish the
+same structural WVIR counts. This checkpoint controls invocation visibility;
+it is not runtime authority, memory-safety verification, Foreign-call lowering,
+or a native containment boundary.
 
 `Closureˉcreate = 179` has one WVFT-private callable result shape and 1 through
 64 capture operands in declaration order. `Target` is the concrete physical

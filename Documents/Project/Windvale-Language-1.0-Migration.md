@@ -799,6 +799,27 @@ workload, a parallel-capable Windows host, a parallel-capable Linux host,
 paired-host reconstruction, candidate promotion, and broad Qualification remain
 explicit final Slice 7 gates rather than per-edit tests.
 
+### Current Slice 8 lexical unsafe checkpoint
+
+[Decision 0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md)
+implements the first typed-WIR boundary of Slice 8. Statement and value
+`unsafe` blocks establish a compiler-private lexical depth bounded at 64. The
+depth is restored when the block finishes and resets to zero at every new
+ordinary or synthetic function boundary. Direct calls of unsafe functions or
+Foreign declarations and indirect calls through a WVFT instance retaining the
+unsafe bit fail with exact `Unsafeˉcontextˉrequired = 47` outside that context.
+An unsafe declaration does not implicitly make its own body unsafe, and merely
+constructing an unsafe named-function reference does not invoke it.
+
+The wrapper is deliberately erased after checking: it adds no WVIR operation,
+temporary, operand, block, serialized flag, or version. A 13-case focused
+Analyzer-injection harness covers ten valid paths, three exact rejections, and
+two structural-transparency comparisons. This is a bounded implementation
+checkpoint rather than a completed Slice 8 claim. Foundation pointer, aligned
+scratch, and write-region contracts; authenticated Foreign WIR and WVB
+representation; verifier/runtime/native lowering and containment; one migrated
+runtime or OS boundary; and paired-host evidence remain pending.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

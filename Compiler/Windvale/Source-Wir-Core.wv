@@ -66,6 +66,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉresource = 44;
     Invalidˉcallable = 45;
     Invalidˉtask = 46;
+    Unsafeˉcontextˉrequired = 47;
 }
 
 enum Compilerˉsourceˉwirˉterminator {
@@ -402,6 +403,7 @@ record Compilerˉsourceˉwirˉbuild {
     Genericˉevidence: bytes;
     Genericˉinstance: u32;
     Closureˉevidence: bytes;
+    Unsafeˉdepth: u32;
     Failureˉmodule: u32;
     Failureˉrelatedˉmodule: u32;
     Failureˉfunction: u32;
@@ -443,6 +445,7 @@ record Compilerˉsourceˉwirˉvalue {
     Genericˉevidence: bytes;
     Genericˉinstance: u32;
     Closureˉevidence: bytes;
+    Unsafeˉdepth: u32;
     Failureˉmodule: u32;
     Failureˉrelatedˉmodule: u32;
     Failureˉfunction: u32;
@@ -912,6 +915,7 @@ fn Compilerˉsourceˉwirˉwithˉanalysisˉstate(
     Genericˉevidence: bytes,
     Genericˉinstance: u32,
     Closureˉevidence: bytes,
+    Unsafeˉdepth: u32,
     Failureˉmodule: u32,
     Failureˉrelatedˉmodule: u32,
     Failureˉfunction: u32,
@@ -933,7 +937,7 @@ fn Compilerˉsourceˉwirˉwithˉanalysisˉstate(
         Build.Nextˉblock, Currentˉblock, Firstˉoperation, Hasˉcurrentˉblock,
         Bindingˉpayload, Bindingˉentries, Bindingˉparameters,
         Bindingˉlocals, Bindingˉnextˉslot,
-        Genericˉevidence, Genericˉinstance, Closureˉevidence,
+        Genericˉevidence, Genericˉinstance, Closureˉevidence, Unsafeˉdepth,
         Failureˉmodule, Failureˉrelatedˉmodule,
         Failureˉfunction, Failureˉoffset, Failureˉline, Failureˉcolumn
     );
@@ -952,7 +956,7 @@ export fn Compilerˉsourceˉwirˉfusedˉfrom(
         Bindings.Payload, Bindings.Entries, Bindings.Parameters,
         Bindings.Locals, Bindings.Nextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1003,6 +1007,7 @@ fn Compilerˉsourceˉwirˉwithˉdiscoveryˉevidence(
         Discovered.Genericˉevidence,
         Build.Genericˉinstance,
         Discovered.Closureˉevidence,
+        Build.Unsafeˉdepth,
         Build.Failureˉmodule,
         Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction,
@@ -1024,6 +1029,7 @@ fn Compilerˉsourceˉwirˉwithˉclosureˉevidence(
         Build.Bindingˉparameters, Build.Bindingˉlocals,
         Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance, Evidence,
+        Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1323,7 +1329,7 @@ export fn Compilerˉsourceˉwirˉbuildˉempty(
         0u32, 0u32, 0u32, false,
         Empty, 0u32, 0u32, 0u32, 0u32,
         Genericˉevidence, Compilerˉsourceˉwirˉsentinel(),
-        Emptyˉclosures.Evidence,
+        Emptyˉclosures.Evidence, 0u32,
         Modules, Modules, Functions, Bytesˉlength(Input), 0u32, 0u32
     );
 }
@@ -1347,7 +1353,7 @@ export fn Compilerˉsourceˉwirˉbuildˉfailure(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Module, Relatedˉmodule, Function, Offset, Line, Column
     );
 }
@@ -1366,7 +1372,7 @@ fn Compilerˉsourceˉwirˉwithˉgeneric(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Evidence, Instance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1447,7 +1453,7 @@ export fn Compilerˉsourceˉwirˉvalueˉfrom(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn,
@@ -1474,7 +1480,7 @@ export fn Compilerˉsourceˉwirˉvalueˉbuild(
         Value.Bindingˉpayload, Value.Bindingˉentries,
         Value.Bindingˉparameters, Value.Bindingˉlocals, Value.Bindingˉnextˉslot,
         Value.Genericˉevidence, Value.Genericˉinstance,
-        Value.Closureˉevidence,
+        Value.Closureˉevidence, Value.Unsafeˉdepth,
         Value.Failureˉmodule, Value.Failureˉrelatedˉmodule,
         Value.Failureˉfunction, Value.Failureˉoffset,
         Value.Failureˉline, Value.Failureˉcolumn
@@ -1555,7 +1561,7 @@ export fn Compilerˉsourceˉwirˉstartˉfunction(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, 0u32,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1575,10 +1581,44 @@ fn Compilerˉsourceˉwirˉwithˉcurrentˉblock(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+    Build: Compilerˉsourceˉwirˉbuild,
+    Unsafeˉdepth: u32
+) -> Compilerˉsourceˉwirˉbuild {
+    return Compilerˉsourceˉwirˉwithˉanalysisˉstate(
+        Build,
+        Build.Status,
+        Build.Currentˉblock,
+        Build.Currentˉblockˉfirstˉoperation,
+        Build.Hasˉcurrentˉblock,
+        Build.Bindingˉpayload, Build.Bindingˉentries,
+        Build.Bindingˉparameters, Build.Bindingˉlocals,
+        Build.Bindingˉnextˉslot,
+        Build.Genericˉevidence, Build.Genericˉinstance,
+        Build.Closureˉevidence, Unsafeˉdepth,
+        Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
+        Build.Failureˉfunction, Build.Failureˉoffset,
+        Build.Failureˉline, Build.Failureˉcolumn
+    );
+}
+
+fn Compilerˉsourceˉwirˉvalueˉwithˉunsafeˉdepth(
+    Value: Compilerˉsourceˉwirˉvalue,
+    Unsafeˉdepth: u32
+) -> Compilerˉsourceˉwirˉvalue {
+    return Compilerˉsourceˉwirˉvalueˉfrom(
+        Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+            Compilerˉsourceˉwirˉvalueˉbuild(Value), Unsafeˉdepth
+        ),
+        Value.Shape,
+        Value.Temporary
     );
 }
 
@@ -1614,7 +1654,7 @@ fn Compilerˉsourceˉwirˉwithˉreservedˉblocks(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1722,7 +1762,7 @@ export fn Compilerˉsourceˉwirˉappendˉblock(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1806,7 +1846,7 @@ export fn Compilerˉsourceˉwirˉappendˉfunctionˉentry(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -1916,7 +1956,7 @@ export fn Compilerˉsourceˉwirˉmergeˉfunction(
         Function.Bindingˉpayload, Function.Bindingˉentries,
         Function.Bindingˉparameters, Function.Bindingˉlocals, Function.Bindingˉnextˉslot,
         Function.Genericˉevidence, Function.Genericˉinstance,
-        Function.Closureˉevidence,
+        Function.Closureˉevidence, Function.Unsafeˉdepth,
         Function.Failureˉmodule, Function.Failureˉrelatedˉmodule,
         Function.Failureˉfunction, Function.Failureˉoffset,
         Function.Failureˉline, Function.Failureˉcolumn
@@ -2032,7 +2072,7 @@ export fn Compilerˉsourceˉwirˉemit(
         Build.Bindingˉpayload, Build.Bindingˉentries,
         Build.Bindingˉparameters, Build.Bindingˉlocals, Build.Bindingˉnextˉslot,
         Build.Genericˉevidence, Build.Genericˉinstance,
-        Build.Closureˉevidence,
+        Build.Closureˉevidence, Build.Unsafeˉdepth,
         Build.Failureˉmodule, Build.Failureˉrelatedˉmodule,
         Build.Failureˉfunction, Build.Failureˉoffset,
         Build.Failureˉline, Build.Failureˉcolumn
@@ -3772,12 +3812,13 @@ fn Compilerˉsourceˉwirˉadmitˉnamedˉfunctionˉreference(
         Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
             View.Source, Declaration, 1u32, 1u32
         );
+    let Functionˉflags: u32 = Compilerˉsourceˉwirˉfunctionˉflags(
+        View.Source, Declaration
+    );
     if Declaration.Status != Sourceˉdeclarations.Compilerˉparseˉstatus.Valid ||
         Generic.Parameters != 0u32 || !Declaration.Hasˉeffectˉclause ||
         Declaration.Effects != 0u32 ||
-        Compilerˉsourceˉwirˉfunctionˉflags(
-            View.Source, Declaration
-        ) != 0u32 {
+        (Functionˉflags & 4294967292u32) != 0u32 {
         return Compilerˉsourceˉwirˉfunctionˉreferenceˉfailure(Build);
     }
     let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
@@ -3845,8 +3886,12 @@ fn Compilerˉsourceˉwirˉadmitˉnamedˉfunctionˉreference(
         );
     let Admission:
         Compilerˉsourceˉwirˉfunctionˉtypeˉadmission =
-        Compilerˉsourceˉwirˉfunctionˉtypeˉcatalogˉadmit(
-            Catalog, Profile, Resultˉshape, Parameters
+        Compilerˉsourceˉwirˉfunctionˉtypeˉcatalogˉadmitˉexact(
+            Catalog, Functionˉflags, Profile, Resultˉshape,
+            Resultˉmode, 0u32, 0u32,
+            Compilerˉsourceˉwirˉfunctionˉtypeˉparametersˉfromˉshapes(
+                Parameters
+            )
         );
     if !Admission.Valid {
         return Compilerˉsourceˉwirˉfunctionˉreferenceˉfailure(Build);
@@ -7248,6 +7293,51 @@ export fn Compilerˉsourceˉwirˉcompileˉexpression(
         Source, Offset, Line, Column, Endˉoffset, 0u32, 0u32
     );
     if Expression.Kind ==
+            Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Unsafe {
+        if Build.Unsafeˉdepth >= 64u32 {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉvalueˉblock,
+                Build.Currentˉmodule,
+                Expression.Offset, Expression.Line, Expression.Column
+            );
+        }
+        let Unsafeˉposition: Sourceˉbodies.Compilerˉsourceˉposition =
+            Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+                Source, Expression.Offset, Expression.Line, Expression.Column,
+                Expression.Firstˉoffset
+            );
+        let Unsafeˉblock: Sourceˉbodies.Compilerˉsourceˉvalueˉblock =
+            Sourceˉbodies.Compilerˉbodyˉparseˉvalueˉblock(
+                Source,
+                Expression.Firstˉoffset,
+                Unsafeˉposition.Line,
+                Unsafeˉposition.Column,
+                Expression.Offset + Expression.Length,
+                0u32
+            );
+        let Unsafeˉvalue: Compilerˉsourceˉwirˉvalue =
+            Compilerˉsourceˉwirˉcompileˉvalueˉblock(
+                Input, Scan, Symbols,
+                Compilerˉsourceˉwirˉbuildˉbindings(Input, Build),
+                Source,
+                Unsafeˉblock,
+                Unsafeˉposition.Line,
+                Unsafeˉposition.Column,
+                Compilerˉsourceˉwirˉcurrentˉreturnˉshape(
+                    Input, Scan, Symbols, Source, Build
+                ),
+                Compilerˉsourceˉwirˉsentinel(),
+                Compilerˉsourceˉwirˉsentinel(),
+                Compilerˉsourceˉwirˉsentinel(),
+                Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+                    Build, Build.Unsafeˉdepth + 1u32
+                )
+            );
+        return Compilerˉsourceˉwirˉvalueˉwithˉunsafeˉdepth(
+            Unsafeˉvalue, Build.Unsafeˉdepth
+        );
+    }
+    if Expression.Kind ==
             Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Closure {
         return Compilerˉsourceˉwirˉcompileˉclosureˉexpression(
             Input, Scan, Symbols,
@@ -9322,6 +9412,15 @@ fn Compilerˉsourceˉwirˉcompileˉindirectˉcall(
             Expression.Offset, Expression.Line, Expression.Column
         );
     }
+    if (Compilerˉsourceˉwirˉfunctionˉtypeˉflags(
+            Catalog, Instance
+        ) & 2u32) != 0u32 && Build.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Unsafeˉcontextˉrequired,
+            Build.Currentˉmodule,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
     let Reference: Compilerˉsourceˉwirˉvalue =
         Compilerˉsourceˉwirˉemit(
             Build, WIR_OPERATION_LOAD_LOCAL, Local.Shape,
@@ -9434,6 +9533,46 @@ fn Compilerˉsourceˉwirˉcallableˉisˉasync(
 ) -> bool {
     return Callable.Kind ==
         Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction;
+}
+
+fn Compilerˉsourceˉwirˉcallableˉisˉunsafe(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Callable: Sourceˉbindings.Compilerˉsourceˉbindingˉmatch
+) -> bool {
+    if Callable.Kind ==
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Foreign {
+        return true;
+    }
+    if Callable.Kind !=
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Function &&
+        Callable.Kind !=
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction {
+        return false;
+    }
+    let Directoryˉentry: u32 = 16u32 + Callable.Directoryˉentry * 24u32;
+    if Directoryˉentry > Bytesˉlength(Symbols.Directory) ||
+        Bytesˉlength(Symbols.Directory) - Directoryˉentry < 24u32 {
+        return false;
+    }
+    let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Directoryˉentry + 8u32
+    );
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Callable.Module);
+    if Declarationˉoffset >= Bytesˉlength(View.Source) { return false; }
+    var Current: Sourceˉlexer.Compilerˉsourceˉtoken =
+        Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Declarationˉoffset, 1u32, 1u32
+        );
+    if Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Export {
+        Current = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Current.Nextˉoffset,
+            Current.Nextˉline, Current.Nextˉcolumn
+        );
+    }
+    return Current.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Unsafe;
 }
 
 fn Compilerˉsourceˉwirˉtaskˉargumentˉexpression(
@@ -10203,6 +10342,15 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         return Compilerˉsourceˉwirˉfailureˉvalue(
             Build, Compilerˉsourceˉwirˉstatus.Invalidˉargument,
             Callable.Module, Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
+    if Compilerˉsourceˉwirˉcallableˉisˉunsafe(
+            Input, Scan, Symbols, Callable
+        ) && Build.Unsafeˉdepth == 0u32 {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Unsafeˉcontextˉrequired,
+            Callable.Module,
+            Expression.Offset, Expression.Line, Expression.Column
         );
     }
     if Callable.Kind ==
@@ -13215,11 +13363,34 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                 }
                 Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
             }
-            if Statement.Kind == Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Block {
+            if Statement.Kind ==
+                    Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Block ||
+                Statement.Kind ==
+                    Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Unsafe {
+                let Unsafeˉstatement: bool = Statement.Kind ==
+                    Sourceˉbodies.Compilerˉsourceˉstatementˉkind.Unsafe;
+                if Unsafeˉstatement && Result.Unsafeˉdepth >= 64u32 {
+                    return Compilerˉsourceˉwirˉbuildˉfailure(
+                        Result,
+                        Compilerˉsourceˉwirˉstatus.Invalidˉvalueˉblock,
+                        Result.Currentˉmodule,
+                        Result.Currentˉmodule,
+                        Result.Currentˉfunction,
+                        Statement.Offset,
+                        Statement.Line,
+                        Statement.Column
+                    );
+                }
                 let Nestedˉposition: Sourceˉbodies.Compilerˉsourceˉposition = Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
                     Source, Statement.Offset, Statement.Line, Statement.Column,
                     Statement.Firstˉblockˉoffset
                 );
+                var Nestedˉstart: Compilerˉsourceˉwirˉbuild = Result;
+                if Unsafeˉstatement {
+                    Nestedˉstart = Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+                        Result, Result.Unsafeˉdepth + 1u32
+                    );
+                }
                 let Nestedˉcompiled: Compilerˉsourceˉwirˉbuild = Compilerˉsourceˉwirˉcompileˉblock(
                     Input, Scan, Symbols,
                     Bindingˉphase,
@@ -13232,13 +13403,18 @@ export fn Compilerˉsourceˉwirˉcompileˉblock(
                     Continueˉtarget,
                     Breakˉtarget,
                     Loopˉscopeˉoffset,
-                    Result
+                    Nestedˉstart
                 );
                 if Nestedˉcompiled.Status != Compilerˉsourceˉwirˉstatus.Valid {
-                    return Nestedˉcompiled;
+                    return Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+                        Nestedˉcompiled, Result.Unsafeˉdepth
+                    );
                 }
-                Result = Nestedˉcompiled;
-                Bindingˉphase = Compilerˉsourceˉwirˉbuildˉbindings(Input, Nestedˉcompiled);
+                Result = Compilerˉsourceˉwirˉwithˉunsafeˉdepth(
+                    Nestedˉcompiled, Result.Unsafeˉdepth
+                );
+                Bindingˉphase =
+                    Compilerˉsourceˉwirˉbuildˉbindings(Input, Result);
             }
             Cursor = Statement.Nextˉoffset;
             Currentˉline = Statement.Nextˉline;

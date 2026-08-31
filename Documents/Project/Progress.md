@@ -42,7 +42,17 @@ Corresponding Linux evidence, foreign lowering, and runtime containment remain
 pending. The
 shared 482-case Language 1.0 front door passes on Windows and Linux, and its
 corrected owner identity passes the four-case registry stream on both hosts.
-Decision 0893 and the private-binding
+The next local compiler checkpoint now lowers lexical unsafe statement and
+value blocks without adding a WVIR operation or version. Direct unsafe and
+Foreign calls, plus indirect calls through callable evidence retaining the
+unsafe flag, reject outside the exact lexical context with
+`Unsafeˉcontextˉrequired = 47`. A rebuilt current Analyzer passes the dedicated
+13-case harness: ten valid paths, three exact rejections, and two
+safe-versus-wrapped structural-transparency comparisons. This closes the first
+typed-WIR boundary of Slice 8 under
+[Decision 0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md),
+not Foreign lowering, runtime/native containment, a migrated system boundary,
+or paired-host qualification. Decision 0893 and the private-binding
 [Decision 0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md)
 therefore remain Proposed.
 

@@ -1127,6 +1127,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
+    if ($Stem -eq 'Test-Language-1.0-Unsafe-Wir') {
+        Add-Suite 'language-1-callable-semantics'
+        return
+    }
     if ($Stem -in @(
         'Verify-Language-1.0-Owned-Vector-Calls-Wir',
         'Verify-Language-1.0-Using-Wir'

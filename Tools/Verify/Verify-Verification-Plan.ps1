@@ -975,6 +975,15 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 unsafe WIR harness routing'
+        Paths = @(
+            'Tools/Native/Test-Language-1.0-Unsafe-Wir.mjs'
+        )
+        Suites = @('language-1-callable-semantics')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 generic nominal declaration routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
