@@ -1,0 +1,46 @@
+#!wv/1 en@1
+module Foundationˉunsafe;
+profile system;
+platform linux, windows, windvale;
+authority library;
+
+import Foundationˉmemory as Memory;
+
+// These generic records carry canonical source identities for compiler-owned
+// opaque values. Their one physical field is never source-constructible or
+// source-observable: typed WVIR recognizes the exact module, profile, generic
+// arity, name, and layout before rejecting ordinary record operations. Later
+// Foundation intrinsics are the only permitted producers and observers.
+
+export record Foreignˉpointer<T, Abi> {
+    Opaqueˉidentity: u64;
+}
+
+export record Nullableˉforeignˉpointer<T, Abi> {
+    Opaqueˉidentity: u64;
+}
+
+export record Foreignˉscratch<Abi> {
+    Opaqueˉidentity: u64;
+}
+
+export record Foreignˉwriteˉregion<Abi> {
+    Opaqueˉidentity: u64;
+}
+
+export variant Foreignˉmemoryˉfailure {
+    Invalidˉlength(Observed: u64, Maximum: u64);
+    Invalidˉalignment(Observed: u64);
+    Allocation(Error: Memory.Allocationˉfailure);
+    Unsupportedˉabi;
+}
+
+export variant Foreignˉpointerˉfailure {
+    Null;
+    Addressˉoverflow(Start: u64, Length: u64, Addressˉbits: u32);
+    Outˉofˉrange(Start: u64, Length: u64, Ownerˉlength: u64);
+    Misaligned(Start: u64, Requiredˉalignment: u64);
+    Aliasing;
+    Lifetimeˉended;
+    Unsupportedˉabi;
+}

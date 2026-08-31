@@ -67,6 +67,7 @@ export enum Compilerˉsourceˉwirˉstatus {
     Invalidˉcallable = 45;
     Invalidˉtask = 46;
     Unsafeˉcontextˉrequired = 47;
+    Invalidˉunsafeˉvalue = 48;
 }
 
 enum Compilerˉsourceˉwirˉterminator {
@@ -4296,6 +4297,16 @@ fn Compilerˉsourceˉwirˉcompileˉrecordˉpath(
             Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
                 Source, Dot.Nextˉoffset, Dot.Nextˉline, Dot.Nextˉcolumn
             );
+        if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉunsafeˉopaque(
+                Input, Scan, Symbols, Typeˉcatalog, Result.Shape
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Compilerˉsourceˉwirˉvalueˉbuild(Result),
+                Compilerˉsourceˉwirˉstatus.Invalidˉunsafeˉvalue,
+                Result.Currentˉmodule,
+                Member.Offset, Member.Line, Member.Column
+            );
+        }
         var Isˉrecord: bool =
             Result.Shape >= 65536u32 && Result.Shape < 131072u32;
         if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
@@ -4386,6 +4397,15 @@ export fn Compilerˉsourceˉwirˉcompileˉfield(
         let Typeˉcatalog:
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
             Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(Build.Genericˉevidence);
+        if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉunsafeˉopaque(
+                Input, Scan, Symbols, Typeˉcatalog, Local.Shape
+            ) {
+            return Compilerˉsourceˉwirˉfailureˉvalue(
+                Build, Compilerˉsourceˉwirˉstatus.Invalidˉunsafeˉvalue,
+                Build.Currentˉmodule,
+                Expression.Secondˉoffset, Position.Line, Position.Column
+            );
+        }
         var Isˉrecord: bool =
             Local.Shape >= 65536u32 && Local.Shape < 131072u32;
         if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
@@ -5172,6 +5192,15 @@ fn Compilerˉsourceˉwirˉcompileˉgenericˉnamedˉrecord(
             Expression.Offset, Expression.Line, Expression.Column
         );
     }
+    if Compilerˉsourceˉwirˉshapeˉisˉfoundationˉunsafeˉopaque(
+            Input, Scan, Symbols, Catalog, Bound.Shape
+        ) {
+        return Compilerˉsourceˉwirˉfailureˉvalue(
+            Build, Compilerˉsourceˉwirˉstatus.Invalidˉunsafeˉvalue,
+            Bound.Module,
+            Expression.Offset, Expression.Line, Expression.Column
+        );
+    }
     var Result: Compilerˉsourceˉwirˉbuild =
         Compilerˉsourceˉwirˉwithˉgenericˉtypeˉevidence(
             Build, Bound.Catalogˉevidence
@@ -5797,6 +5826,91 @@ fn Compilerˉsourceˉwirˉgenericˉshapeˉisˉexact(
         ) == Secondˉshape;
     }
     return true;
+}
+
+fn Compilerˉsourceˉwirˉshapeˉisˉfoundationˉunsafeˉopaque(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32
+) -> bool {
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Shape
+        ) {
+        return false;
+    }
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+    if Instance >=
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(Catalog) {
+        return false;
+    }
+    let Parameters: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+            Catalog, Instance
+        );
+    if Parameters < 1u32 || Parameters > 2u32 { return false; }
+    let Layout: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayout =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
+            Input, Scan, Symbols, Catalog, Instance
+        );
+    if Layout.Shape != Shape || Layout.Fields != 1u32 || Layout.Items != 1u32 ||
+        Layout.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record ||
+        !Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉisˉvalid(
+            Input, Scan, Symbols, Layout
+        ) {
+        return false;
+    }
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules, Layout.Declaration
+        );
+    if !Nominal.Found || Nominal.Module >= Scan.Modules { return false; }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Nominal.Module);
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    if View.Edition != 1u32 || Header.Profile !=
+            Sourceˉdeclarations.Compilerˉsourceˉprofile.System ||
+        !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉunsafe"
+        ) {
+        return false;
+    }
+    var Expectedˉparameters: u32 = 0u32;
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Foreignˉpointer"
+        ) ||
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Nullableˉforeignˉpointer"
+        ) {
+        Expectedˉparameters = 2u32;
+    }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Foreignˉscratch"
+        ) ||
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Foreignˉwriteˉregion"
+        ) {
+        Expectedˉparameters = 1u32;
+    }
+    if Parameters != Expectedˉparameters { return false; }
+    let Field: Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉfield =
+        Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉlayoutˉrecordˉfield(
+            Input, Scan, Symbols, Layout, 0u32
+        );
+    return Field.Found && Field.Shape == 8u32 &&
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Field.Nameˉoffset, Field.Nameˉlength,
+            "Opaqueˉidentity"
+        );
 }
 
 fn Compilerˉsourceˉwirˉfindˉexactˉgenericˉshape(

@@ -351,6 +351,21 @@ rebuilt compiler-aligned verifier. The analyzer retained 320,920 bytes beneath
 the 4 MiB WVIR ceiling; the emitter retained 97,520 bytes. Linux execution of
 the shortened bootstrap path remains pending before a cross-host claim.
 
+[Decision 0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md)
+then makes unsafe invocation a typed source rule without adding a WVIR runtime
+operation. Thirteen focused cases pass: ten valid, three exact lexical-context
+rejections, and two structural-transparency comparisons.
+
+[Decision 0898](../Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md)
+publishes the first real `Foundationˉunsafe` source module. Its four canonical
+foreign pointer/scratch/region identities are valid in type positions but
+ordinary construction and field observation fail closed with exact typed-WVIR
+status 48. The retained current Analyzer passes ten focused cases: two valid,
+eight rejected, and one noncanonical same-named-record control. Foundation
+operations, authenticated Foreign-call WVIR, WVB/runtime/native lowering,
+containment, a migrated boundary, Linux execution, and final Slice 8
+qualification remain pending.
+
 ### Preserve bounded development feedback
 
 - Use `Tools/Verify/Verify-Changed.ps1` once after a coherent edit.

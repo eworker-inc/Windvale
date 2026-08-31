@@ -1127,7 +1127,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
-    if ($Stem -eq 'Test-Language-1.0-Unsafe-Wir') {
+    if ($Stem -in @(
+        'Test-Language-1.0-Unsafe-Wir',
+        'Test-Language-1.0-Unsafe-Type-Surface'
+    )) {
         Add-Suite 'language-1-callable-semantics'
         return
     }
@@ -1599,6 +1602,10 @@ foreach ($Path in $Paths) {
             'language-1-production-admission-ingress',
             'language-1-authenticated-foreign-binding'
         )
+        continue
+    } elseif ($Path -eq
+        'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md') {
+        Add-Suite 'language-1-callable-semantics'
         continue
     } elseif (Test-LanguageFrozenSourceDesignPath $Path) {
         Add-Suite 'language-1-front-door'
@@ -2690,6 +2697,8 @@ foreach ($Path in $Paths) {
             $Path -eq 'Tests/Fixtures/Project/Language-1.0-Project3-Build.wvproj') {
             Add-Suite 'language-1-front-door'
         }
+    } elseif ($Path -eq 'Libraries/Foundation/Unsafe/Unsafe.wv') {
+        Add-Suite 'language-1-callable-semantics'
     } elseif ($Path -eq 'Libraries/Platform/Filesystem/File.wv') {
         Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path.StartsWith('Libraries/', [StringComparison]::Ordinal) -or
@@ -4077,6 +4086,9 @@ foreach ($Path in $Paths) {
                 Add-Suite 'language-1-authenticated-foreign-binding'
             }
             if ($Path -eq 'Specifications/Compiler-Source-Bindings.md') {
+                Add-Suite 'language-1-callable-semantics'
+            }
+            if ($Path -eq 'Specifications/Compiler-Source-Wir.md') {
                 Add-Suite 'language-1-callable-semantics'
             }
         } elseif ($Path -eq 'Specifications/Windvale-Uefi-Application.md') {

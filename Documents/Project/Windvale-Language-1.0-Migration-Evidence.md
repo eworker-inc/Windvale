@@ -4815,3 +4815,39 @@ and Linux plus the final gate. Neither run executed the 21-case production-
 ingress owner on Linux, so Decision 0893 remains Proposed. This candidate is
 not production-ingress acceptance, foreign semantic lowering, runtime
 containment, Slice 8 completion, or whole-compiler qualification.
+
+## Slice 8 canonical Foundation unsafe type identities
+
+[Decision 0898](../Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md)
+publishes the edition-1 System module `Foundationˉunsafe` with exact
+`Foreignˉpointer<T, Abi>`, `Nullableˉforeignˉpointer<T, Abi>`,
+`Foreignˉscratch<Abi>`, and `Foreignˉwriteˉregion<Abi>` identities plus
+the frozen memory and pointer failure variants. Typed WVIR recognizes the exact
+canonical generic record identity and rejects ordinary construction or field
+observation with appended status `Invalidˉunsafeˉvalue = 48`. A same-named
+noncanonical record remains ordinary. No Foundation unsafe operation, Foreign
+WVIR operation, WVB lowering, runtime behavior, or native ABI is claimed.
+
+The complete current split Analyzer was rebuilt once. Its source-analysis
+phase consumed 2,168,862 source bytes and produced 3,897,912 WVIR bytes. The
+1,584,518-byte Analyzer WVB has SHA-256
+`7deb3588e9fcba32b90ee16b66ffb115a7e96d0603377610e5917e4b72924075`;
+the 51,897,344-byte packaged Windows Analyzer has SHA-256
+`cc0e23d23e8a059862bf350777d9029c9c59dbe2f8103834e46684c3217198de`.
+The paired emitter closure remains below the immutable 4 MiB WVIR limit at
+4,097,080 bytes, leaving 97,224 bytes, and produces a 1,575,772-byte WVB at
+SHA-256
+`51b9075ae1f4f3d5a15ab1e608bfbc56ce6da325a49e4bcbe052d92ea57862a1`.
+
+The injected retained Analyzer passes ten bounded descriptor-free WVSS 2
+cases:
+
+```text
+native language 1 unsafe type surface status=Passed cases=10 valid=2 rejected=8 opaque-identities=4
+```
+
+This is focused local Windows development evidence. The retained Analyzer is
+reused while its compiler inputs remain unchanged. Linux execution,
+authenticated Foreign-call lowering, WVB/verifier/runtime/native containment,
+one migrated runtime or OS boundary, and final Slice 8 qualification remain
+pending.
