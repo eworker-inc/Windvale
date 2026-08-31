@@ -1,0 +1,107 @@
+module Windvaleˉcompilerˉforeignˉbindingˉdriver profile hosted;
+
+import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
+
+capability console.write_line;
+capability diagnostic.write_line;
+capability file.read_bytes;
+capability process.argument;
+capability process.argument_count;
+
+fn Argumentˉequals(Value: text, Expected: text) -> bool {
+    let Left: bytes = Textˉtoˉutf8(Value);
+    let Right: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Pathsˉareˉdistinct() -> bool {
+    if Argumentˉequals(process.argument(0u32), process.argument(1u32)) ||
+        Argumentˉequals(process.argument(0u32), process.argument(2u32)) ||
+        Argumentˉequals(process.argument(1u32), process.argument(2u32)) {
+        return false;
+    }
+    return true;
+}
+
+fn Failure(
+    Bound: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary
+) -> text {
+    var Report: text = "foreign binding status=";
+    Report = Textˉconcat(Report, Enumˉname(Bound.Status));
+    Report = Textˉconcat(Report, " correspondence-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Correspondenceˉstatus));
+    Report = Textˉconcat(Report, " target-status=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Targetˉstatus));
+    Report = Textˉconcat(Report, " symbol-status=");
+    Report = Textˉconcat(Report, Enumˉname(Bound.Symbolˉstatus));
+    Report = Textˉconcat(Report, " binding-status=");
+    Report = Textˉconcat(Report, Enumˉname(Bound.Bindingˉstatus));
+    Report = Textˉconcat(Report, " foreign-count=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Foreignˉcount));
+    Report = Textˉconcat(Report, " failure-module=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Failureˉmodule));
+    Report = Textˉconcat(Report, " failure-declaration=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Failureˉdeclaration));
+    Report = Textˉconcat(Report, " failure-directory-entry=");
+    Report = Textˉconcat(
+        Report, U32ˉformat(Bound.Failureˉdirectoryˉentry)
+    );
+    Report = Textˉconcat(Report, " failure-catalog-record=");
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Failureˉcatalogˉrecord));
+    Report = Textˉconcat(Report, " offset=");
+    return Textˉconcat(Report, U32ˉformat(Bound.Failureˉoffset));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 3u32 {
+        diagnostic.write_line(
+            "Usage: wvbind <input.wvss> <input.wvtd> <input.wvfc>"
+        );
+        return 64;
+    }
+    if !Pathsˉareˉdistinct() {
+        diagnostic.write_line(
+            "foreign binding status=Invalidˉinvocation reason=paths-not-distinct"
+        );
+        return 64;
+    }
+
+    let Sourceˉset: bytes = file.read_bytes(process.argument(0u32));
+    let Target: bytes = file.read_bytes(process.argument(1u32));
+    let Catalog: bytes = file.read_bytes(process.argument(2u32));
+    let Bound: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Foreignˉbinding.Compilerˉbindˉsourceˉforeignˉdeclarations(
+            Sourceˉset, Target, Catalog
+        );
+    if Bound.Status !=
+            Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Valid {
+        diagnostic.write_line(Failure(Bound));
+        return 1;
+    }
+
+    var Report: text = "foreign binding status=Published source-bytes=";
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Sourceˉset)));
+    Report = Textˉconcat(Report, " source-sha256=");
+    Report = Textˉconcat(Report, Bytesˉsha256ˉhex(Sourceˉset));
+    Report = Textˉconcat(Report, " target-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Target)));
+    Report = Textˉconcat(Report, " target-sha256=");
+    Report = Textˉconcat(Report, Bytesˉsha256ˉhex(Target));
+    Report = Textˉconcat(Report, " catalog-bytes=");
+    Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Catalog)));
+    Report = Textˉconcat(Report, " catalog-sha256=");
+    Report = Textˉconcat(Report, Bytesˉsha256ˉhex(Catalog));
+    Report = Textˉconcat(Report, " foreign-count=");
+    console.write_line(
+        Textˉconcat(Report, U32ˉformat(Bound.Foreignˉcount))
+    );
+    return 0;
+}

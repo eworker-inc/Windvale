@@ -29,52 +29,59 @@ const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SPLIT_COMPILER = join(SCRIPT_DIRECTORY, 'Run-Split-Compiler.mjs');
 const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
+const COLD_DOUBLE_BUILD_ENVIRONMENT =
+    'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
+const EXPECTED_COORDINATOR = Object.freeze({
+    bytes: 48_199,
+    sha256: '0133ccbd14f0cdc7e7998c996830424ac3d0f2bec9d38df0d7bfaacb97b69634',
+});
 
-const BOOTSTRAP_PRODUCTS = Object.freeze({
+const PINNED_COMPILER = Object.freeze({
     analyzer: Object.freeze({
         file: 'wvanalyze.wvb',
         role: 'analyzer',
-        bytes: 992_412,
-        sha256: '26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120',
+        bytes: 1_552_090,
+        sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77',
     }),
     emitter: Object.freeze({
         file: 'wvemit.wvb',
         role: 'emitter',
-        bytes: 895_787,
-        sha256: 'ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94',
-    }),
-    bridge: Object.freeze({
-        file: 'wvemit-wvir-1.9-bridge.wvb',
-        role: 'emitter',
-        bytes: 1_146_083,
-        sha256: '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb',
-    }),
-});
-
-// The owner rebuilds every pinned product twice, requires byte-identical WVB,
-// and packages the resulting identity at profile 7 before running ingress cases.
-const EXPECTED_PRODUCTS = Object.freeze({
-    wvadmit: Object.freeze({
-        bytes: 572_926,
-        sha256: 'a9c2e966b84420aaa64de89a232246a15b8fb859ba5ef737e853d2482d5f5831',
-    }),
-    wvauth: Object.freeze({
-        bytes: 91_774,
-        sha256: '88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580',
-    }),
-    wvanalyze: Object.freeze({
-        bytes: 1_552_090,
-        sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77',
-    }),
-    wvemit: Object.freeze({
         bytes: 1_556_434,
         sha256: 'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9',
     }),
 });
 
+// Every run requires the exact recorded portable WVB identities. Native
+// application identities are measured and reported, but remain unpinned until
+// paired Windows/Linux evidence supplies both host values. Development uses the
+// validated shared cache once per product. Explicit qualification builds twice
+// through isolated cold caches and additionally requires WVB byte identity.
+const EXPECTED_PRODUCTS = Object.freeze({
+    wvadmit: Object.freeze({
+        bytes: 572_966,
+        sha256: 'e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e',
+    }),
+    wvauth: Object.freeze({
+        bytes: 93_436,
+        sha256: '6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612',
+    }),
+    wvanalyze: Object.freeze({
+        bytes: 1_573_433,
+        sha256: '23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6',
+    }),
+    wvbind: Object.freeze({
+        bytes: 980_285,
+        sha256: '33ad319280dad9aa7c9ba7888f2c2c7d089b23433db8def9ba7308767d14eb07',
+    }),
+    wvemit: Object.freeze({
+        bytes: 1_575_647,
+        sha256: '0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77',
+    }),
+});
+
 const CASES = Object.freeze([
     'valid-empty-catalog-end-to-end',
-    'foreign-semantics-pending-no-publication',
+    'foreign-lowering-pending-no-publication',
     'deterministic-snapshots-and-products',
     'removed-admitted-source-set-route',
     'raw-project2-system-rejected',
@@ -342,15 +349,35 @@ function Requireˉcompleteˉpins() {
     if (Pinsˉareˉcomplete()) return;
     Reject(
         'production admission ingress pins status=Missing ' +
-        'products=wvadmit,wvauth,wvanalyze,wvemit ' +
+        'products=wvadmit,wvauth,wvanalyze,wvbind,wvemit ' +
         'reason=incomplete-product-identity'
     );
+}
+
+function Getˉproductˉbuildˉmode() {
+    const Requested = process.env[COLD_DOUBLE_BUILD_ENVIRONMENT];
+    Require(Requested === undefined || Requested === '' || Requested === '0' ||
+        Requested === '1',
+    `${COLD_DOUBLE_BUILD_ENVIRONMENT} must be 0 or 1 when set.`);
+    const Coldˉdoubleˉbuild = Requested === '1';
+    return Object.freeze({
+        coldDoubleBuild: Coldˉdoubleˉbuild,
+        name: Coldˉdoubleˉbuild
+            ? 'qualification-cold-double-build'
+            : 'development-cache',
+        buildsPerProduct: Coldˉdoubleˉbuild ? 2 : 1,
+    });
 }
 
 async function Verifyˉcontracts() {
     Require(CASES.length === 21 && new Set(CASES).size === 21,
         'The production-ingress case inventory is not exactly 21 unique cases.');
-    const Split = await readFile(SPLIT_COMPILER, 'utf8');
+    const Splitˉbytes = await readFile(SPLIT_COMPILER);
+    Require(Splitˉbytes.length === EXPECTED_COORDINATOR.bytes &&
+        Sha256(Splitˉbytes) === EXPECTED_COORDINATOR.sha256,
+    `Run-Split-Compiler identity differs: bytes=${Splitˉbytes.length} ` +
+        `sha256=${Sha256(Splitˉbytes)}.`);
+    const Split = Splitˉbytes.toString('utf8');
     const Admission = await readFile(join(
         REPOSITORY_ROOT, 'Tools', 'Windvale.Build',
         'Compiler-Admission-Driver.wv'
@@ -363,10 +390,19 @@ async function Verifyˉcontracts() {
         REPOSITORY_ROOT, 'Tools', 'Windvale.Build',
         'Compiler-Analysis-Driver.wv'
     ), 'utf8');
+    const Binder = await readFile(join(
+        REPOSITORY_ROOT, 'Tools', 'Windvale.Build',
+        'Compiler-Foreign-Binding-Driver.wv'
+    ), 'utf8');
     for (const Required of [
         "'--target-descriptor'", "'--internal-source-set'",
-        "'source-authentication'", "'source-analysis'",
-        'Foreignˉsemanticsˉpending', 'Analyzed.wvss',
+        "'--foreign-binder'", "'source-authentication'",
+        "'source-foreign-binding'", "'source-analysis'",
+        'Foreignˉloweringˉpending', 'Analyzed.wvss',
+        'Buildˉforeignˉbindingˉevidence',
+        'foreign-binder evidence does not exactly match',
+        'retained authenticated inputs',
+        'authenticated foreign catalog requires',
         'The split compiler output must be a new .wvb path.',
         'paths must be distinct.',
         'PUBLICATION_PREFIX', 'Terminateˉprocessˉtree',
@@ -375,6 +411,9 @@ async function Verifyˉcontracts() {
     Require(Split.indexOf("'source-authentication'") <
         Split.indexOf("'source-analysis'"),
     'The split compiler does not authenticate before Analyzer launch.');
+    Require(Split.indexOf("'source-authentication'") <
+        Split.indexOf("'source-foreign-binding'"),
+    'The split compiler does not authenticate before foreign binding.');
     Require(!Split.includes('--admission-token') &&
         !Split.includes('--admission-certificate') &&
         !Split.includes('--admission-cache-key'),
@@ -387,8 +426,12 @@ async function Verifyˉcontracts() {
     'wvauth lacks the source/catalog authentication boundary.');
     for (const Required of [
         'admitted-source-set-route-removed', '--internal-source-set',
+        'Foreignˉrequiresˉauthenticatedˉbinding',
         'RawˉSystemˉprofile', 'Rawˉplatform', 'Rawˉforeign',
     ]) Require(Analyzer.includes(Required), `Analyzer ingress lacks ${Required}.`);
+    for (const Required of [
+        'Usage: wvbind ', 'Compilerˉbindˉsourceˉforeignˉdeclarations',
+    ]) Require(Binder.includes(Required), `Binder ingress lacks ${Required}.`);
 }
 
 async function Removeˉwork(Work, Temporaryˉroot) {
@@ -438,7 +481,9 @@ async function Writeˉsentinelˉinputs(Work) {
     return { ...Paths, lockDigest: '0'.repeat(64) };
 }
 
-async function Writeˉsentinelˉpipeline(Work, Failureˉrole, Destination) {
+async function Writeˉsentinelˉpipeline(
+    Work, Failureˉrole, Destination, Catalogˉrecords = 0
+) {
     const Marker = Role => join(Work, `${Role}-launched`);
     const Fail = Role => Failureˉrole === Role
         ? `await writeFile(${JSON.stringify(Destination)},` +
@@ -453,7 +498,8 @@ async function Writeˉsentinelˉpipeline(Work, Failureˉrole, Destination) {
         `await writeFile(${JSON.stringify(Marker('wvadmit'))},Buffer.alloc(0),` +
         `{flag:'a'});${Admitterˉfailure ??
             "const a=process.argv.slice(2);await copyFile(a[8],a[9]);" +
-            "await copyFile(a[6],a[10]);await writeFile(a[11],Buffer.alloc(48)," +
+            "await copyFile(a[6],a[10]);const c=Buffer.alloc(48);" +
+            `c.writeUInt32LE(${Catalogˉrecords},12);await writeFile(a[11],c,` +
             "{flag:'wx'});await writeFile(a[12],Buffer.alloc(224),{flag:'wx'});" +
             "process.stdout.write('admission ok\\n');"}\n`);
     const Validator = await Writeˉproductˉsentinel(Work, 'Sentinel-validator',
@@ -463,13 +509,27 @@ async function Writeˉsentinelˉpipeline(Work, Failureˉrole, Destination) {
             "process.stdout.write('authentication ok\\n');"}\n`);
     const Analyzer = await Writeˉproductˉsentinel(Work, 'Sentinel-analyzer',
         `import{copyFile,writeFile}from'node:fs/promises';` +
-        `await writeFile(${JSON.stringify(Marker('Analyzer'))},Buffer.alloc(0),` +
-        `{flag:'a'});${Analyzerˉfailure ??
-            "const a=process.argv.slice(2);await copyFile(a[1],a[2]);" +
+        `const a=process.argv.slice(2);await writeFile(` +
+        `${JSON.stringify(Marker('Analyzer'))},Buffer.alloc(0),{flag:'a'});` +
+        `${Analyzerˉfailure ??
+            "await copyFile(a[1],a[2]);" +
             "await writeFile(a[3],Buffer.alloc(104),{flag:'wx'});" +
             "await writeFile(a[4],Buffer.from([1]),{flag:'wx'});" +
             "await writeFile(a[5],Buffer.from([1]),{flag:'wx'});" +
             "process.stdout.write('analysis ok\\n');"}\n`);
+    const Binder = await Writeˉproductˉsentinel(Work, 'Sentinel-binder',
+        `import{createHash}from'node:crypto';` +
+        `import{readFile,writeFile}from'node:fs/promises';` +
+        `const a=process.argv.slice(2);await writeFile(` +
+        `${JSON.stringify(Marker('foreignBinding'))},Buffer.alloc(0),{flag:'a'});` +
+        `const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));` +
+        `const h=b=>createHash('sha256').update(b).digest('hex');` +
+        "process.stdout.write('foreign binding status=Published '+" +
+        "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
+        "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
+        "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
+        "`foreign-count=${c.readUInt32LE(12)}\\n`);\n"
+    );
     const Emitter = await Writeˉproductˉsentinel(Work, 'Sentinel-emitter',
         `import{writeFile}from'node:fs/promises';` +
         `await writeFile(${JSON.stringify(Marker('emitter'))},Buffer.alloc(0),` +
@@ -478,8 +538,9 @@ async function Writeˉsentinelˉpipeline(Work, Failureˉrole, Destination) {
         `process.stdout.write('emission ok\\n');\n`);
     return {
         products: { wvadmit: Admitter, wvauth: Validator,
-            wvanalyze: Analyzer, wvemit: Emitter },
-        markers: ['wvadmit', 'validator', 'Analyzer', 'emitter'].reduce(
+            wvanalyze: Analyzer, wvbind: Binder, wvemit: Emitter },
+        markers: ['wvadmit', 'validator', 'Analyzer', 'foreignBinding',
+            'emitter'].reduce(
             (Result, Role) => ({ ...Result, [Role]: Marker(Role) }), {}
         ),
     };
@@ -692,7 +753,9 @@ async function Caseˉpreflightˉrejections(Work) {
             `${Definition.name} did not take its exact preflight rejection.`);
         Require(!await lstat(Output).then(() => true, () => false),
             `${Definition.name} created a public destination.`);
-        for (const Role of ['wvadmit', 'validator', 'Analyzer', 'emitter']) {
+        for (const Role of [
+            'wvadmit', 'validator', 'foreignBinding', 'Analyzer', 'emitter',
+        ]) {
             Require(!await lstat(Pipeline.markers[Role]).then(
                 () => true, () => false
             ), `${Definition.name} launched ${Role}.`);
@@ -929,7 +992,9 @@ async function Caseˉphaseˉlifecycle(Work, Index, Step) {
     const Expected = Step === 'wvadmit' ? ['wvadmit']
         : Step === 'validator' ? ['wvadmit', 'validator']
             : ['wvadmit', 'validator', 'Analyzer'];
-    for (const Role of ['wvadmit', 'validator', 'Analyzer', 'emitter']) {
+    for (const Role of [
+        'wvadmit', 'validator', 'foreignBinding', 'Analyzer', 'emitter',
+    ]) {
         Require(await lstat(Pipeline.markers[Role]).then(() => true, () => false) ===
             Expected.includes(Role),
         `${Step} failure violated phase sequencing at ${Role}.`);
@@ -1210,9 +1275,310 @@ async function Caseˉvalidatorˉsnapshotˉmutation(Work) {
         );
         Require(Result.code !== 0 &&
             !await lstat(Output).then(() => true, () => false) &&
+            !await lstat(Pipeline.markers.foreignBinding).then(
+                () => true, () => false
+            ) &&
             !await lstat(Pipeline.markers.Analyzer).then(() => true, () => false) &&
             !await lstat(Pipeline.markers.emitter).then(() => true, () => false),
         `A validator ${Name} mutation reached Analyzer, emitter, or publication.`);
+    }
+}
+
+async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
+    const Exactˉwork = join(Work, 'Sentinel-foreign-binding-exact');
+    await mkdir(Exactˉwork);
+    const Exactˉinputs = await Writeˉsentinelˉinputs(Exactˉwork);
+    const Exactˉoutput = join(Exactˉwork, 'Foreign.wvb');
+    const Exactˉpipeline = await Writeˉsentinelˉpipeline(
+        Exactˉwork, null, Exactˉoutput, 1
+    );
+    const Exact = await Runˉsentinelˉcoordinator(
+        Exactˉwork, Exactˉpipeline.products, Exactˉinputs, Exactˉoutput,
+        `${CASES[1]}-exact-evidence`, 5_000
+    );
+    const Exactˉactivity = Exact.output.toString('utf8');
+    const Exactˉauthenticationˉactivity =
+        Exactˉactivity.indexOf('step=source-authentication');
+    const Exactˉbindingˉactivity =
+        Exactˉactivity.indexOf('step=source-foreign-binding');
+    Require(Exact.code !== 0 &&
+        Exact.error.toString('utf8').includes('Foreignˉloweringˉpending') &&
+        Exactˉauthenticationˉactivity >= 0 &&
+        Exactˉbindingˉactivity > Exactˉauthenticationˉactivity &&
+        !Exactˉactivity.includes('step=source-analysis') &&
+        !Exactˉactivity.includes('step=source-emission') &&
+        await lstat(Exactˉpipeline.markers.foreignBinding).then(
+            () => true, () => false
+        ) &&
+        !await lstat(Exactˉpipeline.markers.Analyzer).then(
+            () => true, () => false
+        ) &&
+        !await lstat(Exactˉpipeline.markers.emitter).then(
+            () => true, () => false
+        ) &&
+        !await lstat(Exactˉoutput).then(() => true, () => false),
+    'Exact foreign-binding evidence did not stop at the lowering boundary.');
+
+    const Missingˉbinderˉwork = join(
+        Work, 'Sentinel-foreign-binding-missing-product'
+    );
+    await mkdir(Missingˉbinderˉwork);
+    const Missingˉbinderˉinputs = await Writeˉsentinelˉinputs(
+        Missingˉbinderˉwork
+    );
+    const Missingˉbinderˉoutput = join(Missingˉbinderˉwork, 'Foreign.wvb');
+    const Missingˉbinderˉpipeline = await Writeˉsentinelˉpipeline(
+        Missingˉbinderˉwork, null, Missingˉbinderˉoutput, 1
+    );
+    const Missingˉbinderˉarguments = [
+        SPLIT_COMPILER,
+        Missingˉbinderˉpipeline.products.wvadmit,
+        Missingˉbinderˉpipeline.products.wvauth,
+        Missingˉbinderˉpipeline.products.wvanalyze,
+        Missingˉbinderˉpipeline.products.wvemit,
+        '--source-input-lock', Missingˉbinderˉinputs.lock,
+        Missingˉbinderˉinputs.lockDigest,
+        '--source-profile', Missingˉbinderˉinputs.profile,
+        '--target-descriptor', Missingˉbinderˉinputs.target,
+        Missingˉbinderˉinputs.source, Missingˉbinderˉoutput,
+    ];
+    const Missingˉbinder = await Runˉsentinelˉcoordinator(
+        Missingˉbinderˉwork, Missingˉbinderˉpipeline.products,
+        Missingˉbinderˉinputs, Missingˉbinderˉoutput,
+        `${CASES[1]}-missing-binder`, 5_000, 10_000, true,
+        Missingˉbinderˉarguments
+    );
+    const Missingˉbinderˉdiagnostic = Buffer.concat([
+        Missingˉbinder.output, Missingˉbinder.error,
+    ]).toString('utf8');
+    Require(Missingˉbinder.code !== 0 && Missingˉbinderˉdiagnostic.includes(
+        'The authenticated foreign catalog requires --foreign-binder <wvbind>.'
+    ) && await lstat(Missingˉbinderˉpipeline.markers.wvadmit).then(
+        () => true, () => false
+    ) && await lstat(Missingˉbinderˉpipeline.markers.validator).then(
+        () => true, () => false
+    ) && !await lstat(Missingˉbinderˉpipeline.markers.foreignBinding).then(
+        () => true, () => false
+    ) && !await lstat(Missingˉbinderˉpipeline.markers.Analyzer).then(
+        () => true, () => false
+    ) && !await lstat(Missingˉbinderˉpipeline.markers.emitter).then(
+        () => true, () => false
+    ) && !await lstat(Missingˉbinderˉoutput).then(() => true, () => false),
+    'A nonempty catalog without wvbind crossed the authenticated boundary.');
+
+    const Exactˉevidenceˉsource =
+        "const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));" +
+        "const h=b=>createHash('sha256').update(b).digest('hex');" +
+        "const e='foreign binding status=Published '+" +
+        "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
+        "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
+        "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
+        "`foreign-count=${c.readUInt32LE(12)}\\n`;";
+    for (const [Name, Body, Expectedˉdiagnostic] of [
+        [
+            'missing-evidence', '',
+            'The source-foreign-binding produced invalid success diagnostics.',
+        ],
+        [
+            'malformed-evidence',
+            "process.stdout.write('foreign binding status=Published\\n');",
+            'The foreign-binder evidence does not exactly match the retained ' +
+                'authenticated inputs.',
+        ],
+        [
+            'mismatched-evidence',
+            "process.stdout.write('foreign binding status=Published source-bytes=0 '+" +
+                "'source-sha256='+('0'.repeat(64))+' target-bytes=0 '+" +
+                "'target-sha256='+('0'.repeat(64))+' catalog-bytes=0 '+" +
+                "'catalog-sha256='+('0'.repeat(64))+' foreign-count=0\\n');",
+            'The foreign-binder evidence does not exactly match the retained ' +
+                'authenticated inputs.',
+        ],
+        [
+            'partial-evidence', Exactˉevidenceˉsource +
+                'process.stdout.write(e.slice(0,-1));',
+            'The foreign-binder evidence does not exactly match the retained ' +
+                'authenticated inputs.',
+        ],
+        [
+            'duplicated-evidence', Exactˉevidenceˉsource +
+                'process.stdout.write(e+e);',
+            'The foreign-binder evidence does not exactly match the retained ' +
+                'authenticated inputs.',
+        ],
+        [
+            'extra-evidence', Exactˉevidenceˉsource +
+                "process.stdout.write(e+'extra\\n');",
+            'The foreign-binder evidence does not exactly match the retained ' +
+                'authenticated inputs.',
+        ],
+    ]) {
+        const Caseˉwork = join(Work, `Sentinel-foreign-binding-${Name}`);
+        await mkdir(Caseˉwork);
+        const Inputs = await Writeˉsentinelˉinputs(Caseˉwork);
+        const Output = join(Caseˉwork, 'Foreign.wvb');
+        const Pipeline = await Writeˉsentinelˉpipeline(
+            Caseˉwork, null, Output, 1
+        );
+        Pipeline.products.wvbind = await Writeˉproductˉsentinel(
+            Caseˉwork, `Invalid-foreign-binding-${Name}`,
+            "import{createHash}from'node:crypto';" +
+            "import{readFile,writeFile}from'node:fs/promises';" +
+            `const a=process.argv.slice(2);await writeFile(` +
+            `${JSON.stringify(Pipeline.markers.foreignBinding)},Buffer.alloc(0),` +
+            `{flag:'a'});${Body}\n`
+        );
+        const Result = await Runˉsentinelˉcoordinator(
+            Caseˉwork, Pipeline.products, Inputs, Output,
+            `${CASES[1]}-${Name}`, 5_000
+        );
+        const Diagnostic = Buffer.concat([Result.output, Result.error])
+            .toString('utf8');
+        Require(Result.code !== 0 && Diagnostic.includes(Expectedˉdiagnostic) &&
+            await lstat(Pipeline.markers.foreignBinding).then(
+            () => true, () => false
+        ) && !await lstat(Pipeline.markers.Analyzer).then(
+            () => true, () => false
+        ) && !await lstat(Pipeline.markers.emitter).then(
+            () => true, () => false
+        ) && !await lstat(Output).then(() => true, () => false),
+        `Invalid foreign-binding ${Name} crossed the boundary: ${Diagnostic}`);
+    }
+
+    for (const [Name, Pathˉexpression, Label] of [
+        ['evidence', "join(dirname(a[0]),'Evidence.wvae')", 'admission evidence'],
+        ['source-set', 'a[0]', 'admitted source set'],
+        ['target', 'a[1]', 'admitted target descriptor'],
+        ['catalog', 'a[2]', 'foreign catalog'],
+        ['lock', "join(dirname(a[0]),'Source-Inputs.wvlock')", 'source-input lock'],
+        ['profile', "join(dirname(a[0]),'Source-Profile.wvsp')", 'source profile'],
+    ]) {
+        const Caseˉwork = join(
+            Work, `Sentinel-foreign-binding-retained-${Name}`
+        );
+        await mkdir(Caseˉwork);
+        const Inputs = await Writeˉsentinelˉinputs(Caseˉwork);
+        const Output = join(Caseˉwork, 'Foreign.wvb');
+        const Pipeline = await Writeˉsentinelˉpipeline(
+            Caseˉwork, null, Output, 1
+        );
+        Pipeline.products.wvbind = await Writeˉproductˉsentinel(
+            Caseˉwork, `Mutating-foreign-binding-${Name}`,
+            "import{createHash}from'node:crypto';" +
+            "import{chmod,readFile,writeFile}from'node:fs/promises';" +
+            "import{dirname,join}from'node:path';" +
+            `const a=process.argv.slice(2);await writeFile(` +
+            `${JSON.stringify(Pipeline.markers.foreignBinding)},Buffer.alloc(0),` +
+            "{flag:'a'});const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));" +
+            "const h=b=>createHash('sha256').update(b).digest('hex');" +
+            `const p=${Pathˉexpression};const b=await readFile(p);` +
+            "b[b.length-1]^=1;await chmod(p,0o600);await writeFile(p,b);" +
+            "process.stdout.write('foreign binding status=Published '+" +
+            "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
+            "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
+            "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
+            "`foreign-count=${c.readUInt32LE(12)}\\n`);\n"
+        );
+        const Result = await Runˉsentinelˉcoordinator(
+            Caseˉwork, Pipeline.products, Inputs, Output,
+            `${CASES[1]}-${Name}-retained-mutation`, 5_000
+        );
+        const Diagnostic = Buffer.concat([Result.output, Result.error])
+            .toString('utf8');
+        Require(Result.code !== 0 && Diagnostic.includes(
+            `The retained ${Label} changed between compiler phases.`
+        ) && await lstat(Pipeline.markers.foreignBinding).then(
+            () => true, () => false
+        ) && !await lstat(Pipeline.markers.Analyzer).then(
+            () => true, () => false
+        ) && !await lstat(Pipeline.markers.emitter).then(
+            () => true, () => false
+        ) && !await lstat(Output).then(() => true, () => false),
+        `A post-binding ${Name} mutation escaped its retained-snapshot recheck: ` +
+            Diagnostic);
+    }
+
+    const Failureˉwork = join(Work, 'Sentinel-foreign-binding-failure');
+    await mkdir(Failureˉwork);
+    const Failureˉinputs = await Writeˉsentinelˉinputs(Failureˉwork);
+    const Failureˉoutput = join(Failureˉwork, 'Foreign.wvb');
+    const Failureˉpipeline = await Writeˉsentinelˉpipeline(
+        Failureˉwork, null, Failureˉoutput, 1
+    );
+    Failureˉpipeline.products.wvbind = await Writeˉproductˉsentinel(
+        Failureˉwork, 'Rejecting-foreign-binding',
+        `import{writeFile}from'node:fs/promises';await writeFile(` +
+        `${JSON.stringify(Failureˉpipeline.markers.foreignBinding)},` +
+        "Buffer.alloc(0),{flag:'a'});process.stderr.write('binder rejected\\n');" +
+        'process.exitCode=17;\n'
+    );
+    const Failure = await Runˉsentinelˉcoordinator(
+        Failureˉwork, Failureˉpipeline.products, Failureˉinputs,
+        Failureˉoutput, `${CASES[1]}-binder-failure`, 5_000
+    );
+    Require(Failure.code === 17 &&
+        Failure.error.toString('utf8') === 'binder rejected\n' &&
+        await lstat(Failureˉpipeline.markers.wvadmit).then(
+            () => true, () => false
+        ) && await lstat(Failureˉpipeline.markers.validator).then(
+            () => true, () => false
+        ) && await lstat(Failureˉpipeline.markers.foreignBinding).then(
+            () => true, () => false
+        ) && !await lstat(Failureˉpipeline.markers.Analyzer).then(
+            () => true, () => false
+        ) && !await lstat(Failureˉpipeline.markers.emitter).then(
+            () => true, () => false
+        ) && !await lstat(Failureˉoutput).then(() => true, () => false),
+    'A rejecting foreign binder violated phase order or reached publication.');
+
+    for (const Mode of ['timeout', 'overflow']) {
+        const Caseˉwork = join(Work, `Sentinel-foreign-binding-${Mode}`);
+        await mkdir(Caseˉwork);
+        const Inputs = await Writeˉsentinelˉinputs(Caseˉwork);
+        const Output = join(Caseˉwork, 'Foreign.wvb');
+        const Pipeline = await Writeˉsentinelˉpipeline(
+            Caseˉwork, null, Output, 1
+        );
+        const Descendant = join(Caseˉwork, 'Descendant.pid');
+        Pipeline.products.wvbind = await Writeˉproductˉsentinel(
+            Caseˉwork, `Bounded-foreign-binding-${Mode}`,
+            "import{spawn}from'node:child_process';" +
+            "import{writeFile}from'node:fs/promises';" +
+            `await writeFile(${JSON.stringify(Pipeline.markers.foreignBinding)},` +
+            "Buffer.alloc(0),{flag:'a'});" +
+            "const c=spawn(process.execPath,['-e','setInterval(()=>{},1000)']," +
+            "{stdio:'ignore'});" +
+            `await writeFile(${JSON.stringify(Descendant)},String(c.pid),` +
+            "{flag:'wx'});" +
+            (Mode === 'timeout'
+                ? 'setInterval(()=>{},1000);\n'
+                : "const b=Buffer.alloc(8192,120);" +
+                    'setInterval(()=>process.stdout.write(b),1);\n')
+        );
+        const Result = await Runˉsentinelˉcoordinator(
+            Caseˉwork, Pipeline.products, Inputs, Output,
+            `${CASES[1]}-binder-${Mode}`, Mode === 'timeout' ? 500 : 5_000
+        );
+        const Expectedˉstatus = Mode === 'timeout' ? 'Timeout' : 'Outputˉlimit';
+        const Diagnostic = Result.error.toString('utf8');
+        const Identifier = Number.parseInt(await readFile(Descendant, 'utf8'), 10);
+        Require(Result.code !== 0 &&
+            Diagnostic.includes(`status=${Expectedˉstatus}`) &&
+            Diagnostic.includes('step=source-foreign-binding') &&
+            Number.isSafeInteger(Identifier) && Identifier > 0 &&
+            await Waitˉforˉexit(Identifier) &&
+            await lstat(Pipeline.markers.wvadmit).then(
+                () => true, () => false
+            ) && await lstat(Pipeline.markers.validator).then(
+                () => true, () => false
+            ) && await lstat(Pipeline.markers.foreignBinding).then(
+                () => true, () => false
+            ) && !await lstat(Pipeline.markers.Analyzer).then(
+                () => true, () => false
+            ) && !await lstat(Pipeline.markers.emitter).then(
+                () => true, () => false
+            ) && !await lstat(Output).then(() => true, () => false),
+        `The foreign-binder ${Mode} path violated its bounded phase contract.`);
     }
 }
 
@@ -1222,6 +1588,7 @@ async function Runˉsentinelˉinfrastructure(Work) {
     await Caseˉphaseˉlifecycle(Work, 13, 'wvadmit');
     await Caseˉphaseˉlifecycle(Work, 14, 'validator');
     await Caseˉvalidatorˉsnapshotˉmutation(Work);
+    await Caseˉauthenticatedˉforeignˉbindingˉboundary(Work);
     await Caseˉphaseˉlifecycle(Work, 15, 'Analyzer');
     await Caseˉanalyzerˉsourceˉmismatch(Work);
     await Caseˉpublicationˉlifecycle(Work);
@@ -1269,44 +1636,61 @@ function Constructˉwvss1(Sources) {
     return Result;
 }
 
-async function Buildˉandˉpackageˉproducts(Work) {
+async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
     Requireˉcompleteˉpins();
     const Extension = WINDOWS ? 'cmd' : 'sh';
     const Executableˉextension = WINDOWS ? 'exe' : 'elf';
-    const Package = join(SCRIPT_DIRECTORY, `Package-Segmented-Compiler-Wvb.${Extension}`);
+    const Lowˉlevelˉpackage = join(
+        SCRIPT_DIRECTORY,
+        `Package-Segmented-Compiler-Wvb.${Extension}`
+    );
+    const Cachedˉpackage = join(
+        SCRIPT_DIRECTORY,
+        'Build-Cached-Segmented-Hosted-Wvb.mjs'
+    );
     const Build = join(SCRIPT_DIRECTORY, 'Build-Cached-Split-Project-Wvb.mjs');
     const Writeˉidentity = join(
         SCRIPT_DIRECTORY, 'Write-Split-Compiler-Producer-Identity.mjs'
     );
-    const Bootstrapˉroot = join(
+    const Pinnedˉroot = join(
         REPOSITORY_ROOT, 'Artifacts',
         'Language-1.0-Target-Aware-Emission-Bootstrap', 'Wvb'
     );
-    const Cacheˉroots = [join(Work, 'Cache-A'), join(Work, 'Cache-B')];
+    const Cacheˉroots = Buildˉmode.coldDoubleBuild
+        ? [join(Work, 'Cache-A'), join(Work, 'Cache-B')]
+        : [];
     await Promise.all(Cacheˉroots.map(Cache => mkdir(Cache)));
-    const Buildˉenvironments = Cacheˉroots.map(Cache => ({
-        ...process.env,
-        WINDVALE_NATIVE_CACHE_ROOT: Cache,
-    }));
-    const Bootstrap = {};
-    for (const [Name, Expected] of Object.entries(BOOTSTRAP_PRODUCTS)) {
-        const Wvb = join(Bootstrapˉroot, Expected.file);
+    const Buildˉenvironments = Buildˉmode.coldDoubleBuild
+        ? Cacheˉroots.map(Cache => ({
+            ...process.env,
+            WINDVALE_NATIVE_CACHE_ROOT: Cache,
+        }))
+        : [process.env];
+    process.stdout.write(
+        `production admission products build-mode=${Buildˉmode.name} ` +
+        `builds-per-product=${Buildˉmode.buildsPerProduct} ` +
+        `cache=${Buildˉmode.coldDoubleBuild ? 'isolated-cold' : 'shared'}\n`
+    );
+    const Pinned = {};
+    for (const [Name, Expected] of Object.entries(PINNED_COMPILER)) {
+        const Wvb = join(Pinnedˉroot, Expected.file);
         const Actual = await Evidence(Wvb);
         Require(Actual.bytes === Expected.bytes &&
             Actual.sha256 === Expected.sha256,
-        `bootstrap ${Name} identity differs: bytes=${Actual.bytes} ` +
+        `pinned ${Name} identity differs: bytes=${Actual.bytes} ` +
             `sha256=${Actual.sha256}.`);
         const Application = join(
-            Work, `Bootstrap-${Name}.${Executableˉextension}`
+            Work, `Pinned-${Name}.${Executableˉextension}`
         );
-        await Requireˉsuccess(`bootstrap-${Name}-profile-7-package`, Package,
+        await Requireˉsuccess(
+            `pinned-${Name}-profile-7-package`, Lowˉlevelˉpackage,
             ['7', Wvb, Application, '--development-cache'],
             PACKAGE_TIMEOUT_MILLISECONDS, true);
-        const Identity = join(Work, `Bootstrap-${Name}.identity`);
-        await Requireˉsuccess(`bootstrap-${Name}-identity`, process.execPath,
+        const Identity = join(Work, `Pinned-${Name}.identity`);
+        await Requireˉsuccess(`pinned-${Name}-identity`, process.execPath,
             [Writeˉidentity, Expected.role, Application, Identity],
             BUILD_TIMEOUT_MILLISECONDS);
-        Bootstrap[Name] = { application: Application, identity: Identity };
+        Pinned[Name] = { application: Application, identity: Identity };
     }
     const Projects = {
         wvadmit: join(REPOSITORY_ROOT, 'Projects', 'Tools',
@@ -1315,51 +1699,81 @@ async function Buildˉandˉpackageˉproducts(Work) {
             'Windvale-Compiler-Source-Authenticator.wvproj'),
         wvanalyze: join(REPOSITORY_ROOT, 'Projects', 'Tools',
             'Windvale-Compiler-Analysis-Driver.wvproj'),
+        wvbind: join(REPOSITORY_ROOT, 'Projects', 'Tools',
+            'Windvale-Compiler-Foreign-Binding-Driver.wvproj'),
         wvemit: join(REPOSITORY_ROOT, 'Projects', 'Tools',
             'Windvale-Compiler-Emission-Driver.wvproj'),
     };
     const Applications = {};
+    let Productˉindex = 0;
     const Buildˉproduct = async (
         Name, Project, Analyzer, Emitter
     ) => {
+        Productˉindex += 1;
         const First = join(Work, `${Name}-A.wvb`);
-        const Second = join(Work, `${Name}-B.wvb`);
         const Producerˉarguments = [
             Analyzer.application, Analyzer.identity,
             Emitter.application, Emitter.identity,
         ];
+        process.stdout.write(
+            `START production admission product=${Name} ` +
+            `item=${Productˉindex}/5 build=1/${Buildˉmode.buildsPerProduct} ` +
+            `build-mode=${Buildˉmode.name}\n`
+        );
         await Requireˉsuccess(`${Name}-build-1`, process.execPath,
             [Build, Project, First, ...Producerˉarguments],
             BUILD_TIMEOUT_MILLISECONDS, false, Buildˉenvironments[0]);
-        await Requireˉsuccess(`${Name}-build-2`, process.execPath,
-            [Build, Project, Second, ...Producerˉarguments],
-            BUILD_TIMEOUT_MILLISECONDS, false, Buildˉenvironments[1]);
         const Firstˉidentity = await Evidence(First);
-        const Secondˉidentity = await Evidence(Second);
-        Require(Firstˉidentity.value.equals(Secondˉidentity.value),
-            `${Name} double build is not byte-identical.`);
+        if (Buildˉmode.coldDoubleBuild) {
+            const Second = join(Work, `${Name}-B.wvb`);
+            process.stdout.write(
+                `START production admission product=${Name} ` +
+                `item=${Productˉindex}/5 build=2/2 ` +
+                `build-mode=${Buildˉmode.name}\n`
+            );
+            await Requireˉsuccess(`${Name}-build-2`, process.execPath,
+                [Build, Project, Second, ...Producerˉarguments],
+                BUILD_TIMEOUT_MILLISECONDS, false, Buildˉenvironments[1]);
+            const Secondˉidentity = await Evidence(Second);
+            Require(Firstˉidentity.value.equals(Secondˉidentity.value),
+                `${Name} cold double build is not byte-identical.`);
+        }
         const Expected = EXPECTED_PRODUCTS[Name];
         Require(Firstˉidentity.bytes === Expected.bytes &&
             Firstˉidentity.sha256 === Expected.sha256,
         `${Name} identity differs: bytes=${Firstˉidentity.bytes} ` +
             `sha256=${Firstˉidentity.sha256}.`);
         const Application = join(Work, `${Name}.${Executableˉextension}`);
-        await Requireˉsuccess(`${Name}-profile-7-package`, Package,
-            ['7', First, Application, '--development-cache'],
-            PACKAGE_TIMEOUT_MILLISECONDS, true);
+        if (Name === 'wvanalyze' || Name === 'wvemit') {
+            await Requireˉsuccess(
+                `${Name}-profile-7-package`, Lowˉlevelˉpackage,
+                ['7', First, Application, '--development-cache'],
+                PACKAGE_TIMEOUT_MILLISECONDS, true);
+        } else {
+            await Requireˉsuccess(
+                `${Name}-profile-7-package`, process.execPath,
+                [Cachedˉpackage, '7', First, Application],
+                PACKAGE_TIMEOUT_MILLISECONDS, true);
+        }
         const Applicationˉidentity = await Evidence(Application);
         process.stdout.write(
             `production admission product=${Name} ` +
             `wvb-bytes=${Firstˉidentity.bytes} ` +
             `wvb-sha256=${Firstˉidentity.sha256} ` +
             `application-bytes=${Applicationˉidentity.bytes} ` +
-            `application-sha256=${Applicationˉidentity.sha256}\n`
+            `application-sha256=${Applicationˉidentity.sha256} ` +
+            `build-mode=${Buildˉmode.name} ` +
+            `wvb-identity=Recorded-candidate-match ` +
+            `application-identity=Measured-not-pinned ` +
+            `cold-double-build=${Buildˉmode.coldDoubleBuild
+                ? 'Verified'
+                : 'Not-requested'}\n`
         );
         Applications[Name] = Application;
     };
-    for (const Name of ['wvadmit', 'wvauth', 'wvanalyze']) {
+    for (const Name of ['wvadmit', 'wvauth', 'wvanalyze', 'wvbind']) {
         await Buildˉproduct(
-            Name, Projects[Name], Bootstrap.analyzer, Bootstrap.emitter
+            Name, Projects[Name], Pinned.analyzer, Pinned.emitter
         );
     }
     const Currentˉanalyzerˉidentity = join(Work, 'wvanalyze.identity');
@@ -1373,7 +1787,7 @@ async function Buildˉandˉpackageˉproducts(Work) {
             application: Applications.wvanalyze,
             identity: Currentˉanalyzerˉidentity,
         },
-        Bootstrap.bridge
+        Pinned.emitter
     );
     return Applications;
 }
@@ -1423,6 +1837,7 @@ function Authenticatedˉarguments(Products, Inputs, Source, Output) {
     return [
         SPLIT_COMPILER,
         Products.wvadmit, Products.wvauth, Products.wvanalyze, Products.wvemit,
+        '--foreign-binder', Products.wvbind,
         '--source-input-lock', Inputs.lock, Inputs.lockDigest,
         '--source-profile', Inputs.profile,
         '--target-descriptor', Inputs.target,
@@ -1466,7 +1881,9 @@ async function Writeˉlaunchˉguard(Work, Name, Marker) {
 
 async function Runˉproductionˉcases(Work, Products, Inputs) {
     // Cases 1-13 and 17 are production-only. They intentionally remain behind
-    // the complete four-product double-build pin gate above.
+    // the complete five-product recorded-identity pin gate above.
+    // The two valid outputs prove current-run final-WVB determinism only. They
+    // are not the absent Decision 0893 WVSS/WVCA/WVLB/WVIR/WVB baseline corpus.
     const Runnerˉtemporary = join(Work, 'Runner-Temporary');
     await mkdir(Runnerˉtemporary);
     const Runnerˉenvironment = {
@@ -1502,12 +1919,13 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
         CASES[1]);
     Requireˉcleanˉtermination(Foreign, CASES[1]);
     Require(Foreign.code !== 0 &&
-        Foreign.error.toString('utf8').includes('Foreignˉsemanticsˉpending') &&
+        Foreign.error.toString('utf8').includes('Foreignˉloweringˉpending') &&
         Foreign.output.toString('utf8').includes('step=source-authentication') &&
+        Foreign.output.toString('utf8').includes('step=source-foreign-binding') &&
         !Foreign.output.toString('utf8').includes('step=source-analysis') &&
         !Foreign.output.toString('utf8').includes('step=source-emission') &&
         !await lstat(ForeignOutput).then(() => true, () => false),
-    'The exact foreign route did not stop at named pending semantics.');
+    'The exact foreign route did not stop at named pending lowering.');
     await Requireˉcoordinatorˉcleanup();
 
     const SecondOutput = join(Work, 'Valid-Second.wvb');
@@ -1558,7 +1976,8 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
         const Candidate = join(Work, `Fake-${Fake.slice(2)}.wvb`);
         const Result = await Runˉcoordinator(
             [SPLIT_COMPILER, Products.wvadmit, Products.wvauth,
-                Products.wvanalyze, Products.wvemit, Fake, 'forged',
+                Products.wvanalyze, Products.wvemit,
+                '--foreign-binder', Products.wvbind, Fake, 'forged',
                 Inputs.core, Candidate], CASES[7]);
         Require(Result.code !== 0 && !await lstat(Candidate).then(() => true, () => false),
             `The public coordinator accepted ${Fake}.`);
@@ -1635,6 +2054,7 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
             wvadmit: Mutatingˉadmitter,
             wvauth: Products.wvauth,
             wvanalyze: Guardˉanalyzer,
+            wvbind: Products.wvbind,
             wvemit: Guardˉemitter,
         };
         const Candidate = join(Work, `${Name}.wvb`);
@@ -1727,6 +2147,7 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
         ...Products,
         wvadmit: Oversizedˉadmitter,
         wvanalyze: Guardˉanalyzer,
+        wvbind: Products.wvbind,
         wvemit: Guardˉemitter,
     };
     const OversizedResult = await Runˉcoordinator(
@@ -1763,6 +2184,7 @@ async function Main() {
     if (process.argv.length !== 2) {
         Reject('The production-admission-ingress owner accepts no arguments.');
     }
+    const Buildˉmode = Getˉproductˉbuildˉmode();
     await Verifyˉcontracts();
     const Temporaryˉroot = await realpath(resolve(tmpdir()));
     const Work = await mkdtemp(join(Temporaryˉroot, TEMPORARY_PREFIX));
@@ -1770,15 +2192,22 @@ async function Main() {
     try {
         process.stdout.write('START production admission ingress phase=sentinels item=1/3\n');
         await Runˉsentinelˉinfrastructure(Work);
-        process.stdout.write('PASS  production admission ingress phase=sentinels item=1/3 cases=9\n');
+        process.stdout.write('PASS  production admission ingress phase=sentinels item=1/3 cases=13\n');
         if (process.env.WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY ===
             '1') {
             Passed = true;
             return;
         }
         process.stdout.write('START production admission ingress phase=products item=2/3\n');
-        const Products = await Buildˉandˉpackageˉproducts(Work);
-        process.stdout.write('PASS  production admission ingress phase=products item=2/3 deterministic=Verified profile=7\n');
+        const Products = await Buildˉandˉpackageˉproducts(Work, Buildˉmode);
+        process.stdout.write(
+            'PASS  production admission ingress phase=products item=2/3 ' +
+            `build-mode=${Buildˉmode.name} ` +
+            'wvb-identity=Recorded-candidate-match ' +
+            `cold-double-build=${Buildˉmode.coldDoubleBuild
+                ? 'Verified'
+                : 'Not-requested'} profile=7\n`
+        );
         const Inputs = await Writeˉproductionˉinputs(Work);
         process.stdout.write('START production admission ingress phase=execute item=3/3 cases=21\n');
         await Runˉproductionˉcases(Work, Products, Inputs);
@@ -1789,7 +2218,8 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 production admission ingress status=Passed ' +
-            'cases=21 deterministic=Verified profile=7 final-publication-owner=split-compiler\n'
+            'cases=21 deterministic=Verified profile=7 ' +
+            'final-publication-owner=split-compiler\n'
         );
     }
 }

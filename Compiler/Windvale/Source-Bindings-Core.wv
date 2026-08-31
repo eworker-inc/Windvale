@@ -27,6 +27,7 @@ export enum Compilerˉsourceˉbindingˉstatus {
     Undeclaredˉcapability = 13;
     Unknownˉcall = 14;
     Callˉarity = 15;
+    Invalidˉargument = 16;
 }
 
 export enum Compilerˉsourceˉbindingˉkind {
@@ -48,6 +49,7 @@ export enum Compilerˉsourceˉcallableˉkind {
     Capability = 4;
     Variantˉcase = 5;
     Asynchronousˉfunction = 6;
+    Foreign = 7;
 }
 
 // Base intrinsic identities are the shared typed-WIR operation numbers.
@@ -1782,6 +1784,7 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
         if Kindˉvalue == 4u32 { Callableˉkind = Compilerˉsourceˉcallableˉkind.Record; }
         if Kindˉvalue == 6u32 { Callableˉkind = Compilerˉsourceˉcallableˉkind.Function; }
         if Kindˉvalue == 2u32 { Callableˉkind = Compilerˉsourceˉcallableˉkind.Capability; }
+        if Kindˉvalue == 9u32 { Callableˉkind = Compilerˉsourceˉcallableˉkind.Foreign; }
         if Callableˉkind != Compilerˉsourceˉcallableˉkind.None {
             let Target: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry);
             let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(Symbols.Directory, Entry + 16u32);
@@ -1853,6 +1856,21 @@ export fn Compilerˉsourceˉbindingsˉcallableˉparameter(
     Labelˉoffset: u32,
     Labelˉlength: u32
 ) -> Compilerˉsourceˉparameterˉmatch {
+    if Callable.Kind == Compilerˉsourceˉcallableˉkind.Foreign {
+        if Callable.Items != 3u32 {
+            return Compilerˉsourceˉparameterˉmatch(false, false, Callable.Items);
+        }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Labelˉsource, Labelˉoffset, Labelˉlength, "Destination"
+        ) { return Compilerˉsourceˉparameterˉmatch(true, true, 0u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Labelˉsource, Labelˉoffset, Labelˉlength, "Capacity"
+        ) { return Compilerˉsourceˉparameterˉmatch(true, true, 1u32); }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Labelˉsource, Labelˉoffset, Labelˉlength, "Expectedˉgeneration"
+        ) { return Compilerˉsourceˉparameterˉmatch(true, true, 2u32); }
+        return Compilerˉsourceˉparameterˉmatch(false, true, Callable.Items);
+    }
     if Callable.Kind != Compilerˉsourceˉcallableˉkind.Function &&
         Callable.Kind != Compilerˉsourceˉcallableˉkind.Asynchronousˉfunction {
         return Compilerˉsourceˉparameterˉmatch(
@@ -1918,6 +1936,79 @@ export fn Compilerˉsourceˉbindingsˉcallableˉparameter(
     return Compilerˉsourceˉparameterˉmatch(
         false, true, Callable.Items
     );
+}
+
+fn Compilerˉsourceˉbindingsˉforeignˉnamedˉargumentsˉareˉexact(
+    Callable: Compilerˉsourceˉbindingˉmatch,
+    Source: bytes,
+    Expression: Sourceˉbodies.Compilerˉsourceˉexpression
+) -> bool {
+    if Callable.Kind != Compilerˉsourceˉcallableˉkind.Foreign ||
+        Expression.Operator != Sourceˉlexer.Compilerˉtokenˉkind.Colon {
+        return true;
+    }
+    if Callable.Items != 3u32 || Expression.Items != 3u32 { return false; }
+    var Seen: u32 = 0u32;
+    var Cursor: u32 = Expression.Itemsˉoffset;
+    var Position: Sourceˉbodies.Compilerˉsourceˉposition =
+        Sourceˉbodies.Compilerˉbodyˉpositionˉbetween(
+            Source, Expression.Offset, Expression.Line, Expression.Column,
+            Expression.Itemsˉoffset
+        );
+    var Item: u32 = 0u32;
+    while Item < Expression.Items {
+        let Label: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Cursor, Position.Line, Position.Column,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        var Parameter: u32 = 3u32;
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Source, Label.Offset, Label.Length, "Destination"
+            ) { Parameter = 0u32; }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Source, Label.Offset, Label.Length, "Capacity"
+            ) { Parameter = 1u32; }
+        if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Source, Label.Offset, Label.Length, "Expectedˉgeneration"
+            ) { Parameter = 2u32; }
+        if Parameter >= 3u32 { return false; }
+        let Bit: u32 = 1u32 << Parameter;
+        if (Seen & Bit) != 0u32 { return false; }
+        Seen = Seen | Bit;
+        let Colon: Sourceˉlexer.Compilerˉsourceˉtoken =
+            Sourceˉbodies.Compilerˉbodyˉtoken(
+                Source, Label.Nextˉoffset,
+                Label.Nextˉline, Label.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength
+            );
+        let Argument: Sourceˉbodies.Compilerˉsourceˉexpression =
+            Sourceˉbodies.Compilerˉparseˉexpressionˉvalidated(
+                Source, Colon.Nextˉoffset,
+                Colon.Nextˉline, Colon.Nextˉcolumn,
+                Expression.Itemsˉoffset + Expression.Itemsˉlength,
+                0u32, 0u32
+            );
+        Cursor = Argument.Nextˉoffset;
+        Position = Sourceˉbodies.Compilerˉsourceˉposition(
+            Argument.Nextˉoffset, Argument.Nextˉline, Argument.Nextˉcolumn
+        );
+        if Item + 1u32 < Expression.Items {
+            let Separator: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉbodies.Compilerˉbodyˉtoken(
+                    Source, Cursor, Position.Line, Position.Column,
+                    Expression.Itemsˉoffset + Expression.Itemsˉlength
+                );
+            Cursor = Separator.Nextˉoffset;
+            Position = Sourceˉbodies.Compilerˉsourceˉposition(
+                Separator.Nextˉoffset,
+                Separator.Nextˉline,
+                Separator.Nextˉcolumn
+            );
+        }
+        Item = Item + 1u32;
+    }
+    return Seen == 7u32;
 }
 
 export fn Compilerˉsourceˉbindingsˉfindˉlocalˉcapability(
@@ -2663,12 +2754,34 @@ export fn Compilerˉsourceˉbindingsˉbindˉexpression(
                 Expression.Valueˉoffset, Callˉnameˉposition.Line, Callˉnameˉposition.Column
             );
         }
+        if Callable.Kind == Compilerˉsourceˉcallableˉkind.Foreign &&
+            Expression.Kind ==
+                Sourceˉbodies.Compilerˉsourceˉexpressionˉkind.Explicitˉgenericˉcall {
+            return Compilerˉsourceˉbindingsˉbodyˉfailure(
+                Arguments,
+                Compilerˉsourceˉbindingˉstatus.Unknownˉcall,
+                Module, Callable.Module, Function,
+                Expression.Valueˉoffset,
+                Callˉnameˉposition.Line, Callˉnameˉposition.Column
+            );
+        }
         if Callable.Items != Expression.Items {
             return Compilerˉsourceˉbindingsˉbodyˉfailure(
                 Arguments,
                 Compilerˉsourceˉbindingˉstatus.Callˉarity,
                 Module, Callable.Module, Function,
                 Expression.Valueˉoffset, Callˉnameˉposition.Line, Callˉnameˉposition.Column
+            );
+        }
+        if !Compilerˉsourceˉbindingsˉforeignˉnamedˉargumentsˉareˉexact(
+                Callable, Source, Expression
+            ) {
+            return Compilerˉsourceˉbindingsˉbodyˉfailure(
+                Arguments,
+                Compilerˉsourceˉbindingˉstatus.Invalidˉargument,
+                Module, Callable.Module, Function,
+                Expression.Valueˉoffset,
+                Callˉnameˉposition.Line, Callˉnameˉposition.Column
             );
         }
         return Compilerˉsourceˉbindingsˉbodyˉcounts(

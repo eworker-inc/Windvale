@@ -17,11 +17,16 @@ target-aware hosted `wvadmit` now composes that producer with exact WVTD
 admission and WVAE construction, while the separately built `wvauth`
 independently authenticates every source/catalog record and target predicate.
 The proposed production-ingress candidate carries an authenticated empty
-catalog through its private Analyzer handoff and stops a nonempty catalog at
-exact `Foreignˉsemanticsˉpending` before launching the Analyzer. Exact local
-Windows product pins and the complete focused owner pass; paired-host
-acceptance, semantic FFI binding and lowering, native-symbol binding, runtime
-containment, and foreign execution remain later boundaries.
+catalog through its private Analyzer handoff. For a nonempty catalog it instead
+rechecks all six retained snapshots, invokes the non-authoritative private
+`wvbind`, requires exact digest evidence for the WVSS, WVTD, and WVFC bytes that
+product consumed, rechecks the six snapshots again, and stops at exact
+`Foreignˉloweringˉpending` without launching the Analyzer or emitter. The
+dedicated 24-case authenticated-binding owner and the closure-capture case in
+the callable-semantics owner cover the compiler-owned direct-call-only adapter;
+refreshed product pins, complete hosted-owner reruns, paired-host acceptance,
+foreign lowering, native-symbol binding, runtime containment, and foreign
+execution remain later boundaries.
 
 ## Encoding
 
@@ -248,6 +253,16 @@ the append path bounded at the 43,690-record ceiling and avoids one whole-value
 concatenation per record. A 683-record case crosses the first flush boundary
 and verifies the catalog count plus first and last declaration ordinals.
 
+The private Decision 0895 binding adapter applies a narrower semantic bound
+after complete WVSS/WVFC correspondence: Foreign count must not exceed WVSS
+module count. The one registered Language 1.0 Foreign declaration has one exact
+source name, and function names are unique within each module, so a larger
+catalog cannot complete symbol binding. Rejection uses
+`Catalogˉdirectory`, the module-count sentinel, the Foreign count as the
+failure catalog record, and exact WVFC record-count offset `12`, before source
+symbols are constructed. This does not reduce the WVFC format's independent
+43,690-record structural ceiling.
+
 Producer status values are `VALID` 0, `SOURCE_SET` 1, `ADMITTED_WVSS` 2,
 `PROFILE` 3, `DECLARATION` 4, `ABI_CONTRACT` 5, `SPAN` 6, `DIGEST` 7,
 `RESOURCE_LIMIT` 8, and `CATALOG` 9. The result also carries bounded module,
@@ -304,9 +319,9 @@ checks the catalog count and first/last declaration ordinals, so a lost,
 duplicated, or reordered boundary record cannot pass.
 
 The complete, separately composed `wvauth` consumer builds byte-identically in
-two initially empty split-compiler caches as a 91,774-byte compiler-aligned
+two initially empty split-compiler caches as a 93,436-byte compiler-aligned
 WVB at SHA-256
-`88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580`.
+`6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612`.
 The earlier 108,847-byte historical-monolithic product is not the
 production-ingress pin. Actual-product cases accept the authentic paper
 foreign set and reject missing or extra records, flags, ABI, symbol, signature,
@@ -315,9 +330,9 @@ It neither invokes this canonical producer nor constructs a second complete
 catalog.
 
 A later producer/consumer capacity workload may retain a representative near-
-maximum WVSS and catalog when it can measure peak memory and both compiler
-products without weakening the ordinary value limit. Current focused evidence
-does not claim Analyzer semantic consumption, foreign
-types/effects/ownership lowering, runtime containment, a full-capacity retained
-workload, production-ingress acceptance, or paired Windows/Linux
-qualification.
+maximum WVSS and catalog when it can measure peak memory and the affected
+compiler products without weakening the ordinary value limit. Current focused
+evidence claims only the private `wvbind` semantic checkpoint. It does not claim
+ordinary Analyzer semantic consumption, foreign types/effects/ownership
+lowering, runtime containment, a full-capacity retained workload,
+production-ingress acceptance, or paired Windows/Linux qualification.

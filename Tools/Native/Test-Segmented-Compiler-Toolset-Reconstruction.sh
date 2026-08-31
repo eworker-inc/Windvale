@@ -119,12 +119,12 @@ pass 'SHA WVB staging and private-helper image linking'
 
 failure_step='compiler-scale bootstrap analyzer identity'
 compiler_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
-[[ $(stat -c %s -- "$compiler_wvb") == 992412 ]] || fail
+[[ $(stat -c %s -- "$compiler_wvb") == 1552090 ]] || fail
 printf '%s  %s\n' \
-    26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120 \
+    5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77 \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
 echo 'START segmented compiler toolset reconstruction phase=compiler-scale item=5/5'
-echo 'INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=992412'
+echo 'INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=1552090'
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 failure_step='compiler-scale native staging'
 echo 'START segmented compiler toolset reconstruction phase=compiler-scale step=native-staging'
@@ -136,7 +136,7 @@ failure_step='compiler-scale native staging diagnostic'
 [[ ! -s $test_directory/Compiler-Stage.err ]] || fail
 failure_step='compiler-scale native staging report'
 grep -Fx \
-    'native x64 staging status=Complete object-bytes=31736596 chunks=34 manifest-bytes=432' \
+    'native x64 staging status=Complete object-bytes=50761605 chunks=50 manifest-bytes=624' \
     "$test_directory/Compiler-Stage.out" >/dev/null || fail
 pass 'compiler-scale WVB staging'
 

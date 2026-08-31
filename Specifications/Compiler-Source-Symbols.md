@@ -2,9 +2,16 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current candidate retains Decision 0050's bidirectional nominal identity evidence and Decision 0055's bounded nominal-range lookup, adds typed-constant validation under Decision 0184, and extends that evaluator to `i8`, `i16`, and `u16` under Decision 0768. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces, signature types, and deterministic root constants, and publishes evidence for later semantic phases.
+`Compilerˉsourceˉsymbols` is the portable declaration and signature phase introduced and cross-host qualified under Decision 0033. The current candidate retains Decision 0050's bidirectional nominal identity evidence and Decision 0055's bounded nominal-range lookup, adds typed-constant validation under Decision 0184, extends that evaluator to `i8`, `i16`, and `u16` under Decision 0768, and conditionally represents Foreign declarations under proposed Decision 0895. It consumes one complete, valid, acyclic WVSS 1 graph, validates declaration namespaces, signature types, and deterministic root constants, and publishes evidence for later semantic phases.
 
 It does not bind function bodies, locals, calls, expressions, control flow, construct WIR, or emit WVB.
+
+Conditional Foreign symbol construction remains compiler-owned portable
+semantics under proposed Decision 0895. For a nonempty authenticated catalog,
+the private hosted `wvbind` product invokes that logic with the retained WVSS,
+WVTD, and WVFC; it does not make symbols coordinator-owned or give the binder
+admission authority. The ordinary Analyzer keeps this shared symbol support
+but rejects foreign-bearing internal WVSS input before ordinary publication.
 
 ## Result contract
 
@@ -82,7 +89,7 @@ Success returns aggregate declaration/member counts, a valid WVSD directory, a v
 
 ## Namespace and signature rules
 
-Capability names, value names, nominal type names, and function names each form one global namespace across the complete supplied graph. Data and constants share the value namespace. Records and enums share the nominal namespace. Record constructors and functions share the callable constructor namespace. Function and record names matching a Foundation intrinsic are reserved.
+Capability names, value names, nominal type names, and callable declaration names each form one global namespace across the complete supplied graph. Data and constants share the value namespace. Records and enums share the nominal namespace. Record constructors, ordinary functions, and Foreign declarations share the callable constructor namespace. Ordinary functions and Foreign declarations use the same duplicate-function and reserved-name rules; a Foreign/function or Foreign/record-constructor collision cannot publish symbol evidence.
 
 Capabilities must belong to the implemented catalog. A portable-profile module may not declare capabilities. The aggregate bounds are 32 capabilities, 4,096 data declarations, 4,096 constants, 1,024 nominal types, and 4,096 functions.
 
@@ -188,7 +195,7 @@ Nominal indices are deterministic and independent of source order: all records s
 
 Constants are currently permitted only in WVSS module zero. Their names use ASCII `ALL_CAPS_WITH_UNDERSCORES`; their explicit type is `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `rune`, `bool`, or a visible enum; and their initializer may use matching literals, enum members, earlier constants, parentheses, and the currently admitted exact-type operators. Boolean `&&` and `||` evaluate left to right and skip their right operand when the left value determines the result; invalid, unresolved, or would-overflow syntax on a skipped path therefore does not reject the constant. Calls, data reads, allocation-bearing expressions, evaluated forward/cyclic references, unsupported operators, mismatched types, and checked overflow/underflow fail before symbol evidence is published. Wide integers are evaluated with explicit low/high `u32` limbs; narrow signed constants retain sign plus bounded magnitude until WIR emits their exact named-width two's-complement bits; rune constants retain one already validated Unicode scalar. No width or overflow behavior inherits the host runtime.
 
-## WVSD 1.1 declaration directory
+## Conditional WVSD 1.1 and WVSD 1.2 declaration directory
 
 All integers are unsigned little-endian. The directory contains no padding.
 
@@ -196,32 +203,52 @@ All integers are unsigned little-endian. The directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVSD` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `1` |
+| 6 | 2 | Minor version `1` or `2` |
 | 8 | 4 | Entry count |
 | 12 | 4 | Fixed entry size `24` |
 
-Each entry contains six `u32` fields in this order: WVSS module index, declaration-kind value, declaration byte offset, name byte offset, name byte length, and declaration item count. Imports are excluded. Values `1` through `6` retain import, capability, data, record, enum, and function identity; `Constant = 7` is appended. Entries use canonical WVSS module order and source declaration order.
+Each entry contains six `u32` fields in this order: WVSS module index,
+declaration-kind value, declaration byte offset, name byte offset, name byte
+length, and declaration item count. Imports are excluded. Values `1` through
+`8` retain import, capability, data, record, enum, function, constant, and
+variant identity. `Foreign = 9` is the stable appended Foreign identity; values
+`10` through `12` retain the fixed-array, owned-vector, and immutable-sequence
+identities. Entries use canonical WVSS module order and source declaration
+order.
+
+Source with no Foreign declaration selects WVSD 1.1 and preserves its existing
+bytes. Source containing at least one Foreign declaration selects WVSD 1.2.
+WVSD 1.2 changes no header or entry layout: it requires every parsed Foreign
+declaration to have exactly one canonical kind-9 entry and forbids kind 9 in
+WVSD 1.1. Foreign contributes one directory entry and the total-directory
+bound, but does not increment the ordinary `Functions` count or create a
+function body. The independent source-aware directory validator reparses WVSS
+and requires the selected minor version to agree with whether Foreign occurs.
 
 The directory length must be exactly `16 + EntryCount * 24`. `Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid` remains an exported strict validator that reparses every accepted source as a stream. The normal phase constructs counts and entries together, checks the complete binary shape, and compares every entry with its source declaration during the namespace pass. This preserves an independent canonical comparison without a redundant whole-source traversal.
 
 ## Internal lookup index
 
-`Lookup` is a private `WVSI 1.2` acceleration index. Its 16-byte header
-contains magic `WVSI`, major/minor version `1.2`, the WVSD entry count, and
+`Lookup` is a private conditional `WVSI 1.2` or `WVSI 1.3` acceleration index.
+WVSD 1.1 selects WVSI 1.2; WVSD 1.2 selects WVSI 1.3. Any other pairing is
+invalid. Both versions retain the same layout. Their 16-byte header contains
+magic `WVSI`, the selected major/minor version, the WVSD entry count, and
 bucket count `256`. The header is followed by 256 16-byte ranges. Each range
 contains the first payload index, entry count, prior-record count, and
 prior-enum count for one possible first UTF-8 byte. The bucket payload then
 stores every WVSD directory index exactly once.
 
 Two tables follow the bucket payload. The reverse table contains one `u32` for
-each record and enum in canonical nominal order and maps that ordinal to its
-WVSD directory index. The forward table contains one `u32` for each WVSD entry
-and maps nominal declarations to their canonical ordinal; the total nominal
-count is the nonnominal sentinel. A one-byte metadata entry then follows for
+each record, enum, and variant in canonical record-then-enum-then-variant order;
+within each kind, exact emitted UTF-8 names are strictly increasing. Each
+reverse entry maps that ordinal to one unique WVSD directory index. The forward
+table contains one `u32` for each WVSD entry and maps every nominal declaration
+back to that exact canonical ordinal; every nonnominal entry must equal the
+total-nominal-count sentinel. A one-byte metadata entry then follows for
 every WVSD entry: bit 0 records `export`, bit 1 records an `async` function, and
 bits 2 through 7 are zero. The bounded module-alias matrix follows.
 
-WVSI 1.2 then appends 256 callable ranges of two `u32` fields followed by one
+The index then appends 256 callable ranges of two `u32` fields followed by one
 `u32` WVSD directory index per declaration. A declaration's bucket starts with
 `(Module + UTF8Length) mod 256` and folds each exact name byte as
 `(Hash * 33 + Byte) mod 256`. A query uses its resolved target module and
@@ -229,7 +256,25 @@ unqualified member bytes. A bucket match remains only a candidate: consumers
 still require exact target module, declaration kind where applicable, UTF-8
 byte length, and ordinal byte equality. Hash collisions therefore cannot alter
 name resolution. The cached emitted-name directory and payload follow this
-callable region and retain their separate bounds.
+callable region and retain their separate bounds. WVSI 1.3 places every
+kind-9 Foreign declaration in this same callable index. Its metadata retains
+the export bit but requires the asynchronous bit to be zero for Foreign.
+
+`Compilerˉsourceˉsymbolsˉlookupˉshapeˉisˉvalid` rescans the
+supplied WVSS rather than accepting caller-provided scan offsets, then validates
+the paired WVSD version and shape before trusting the lookup. It checks the exact
+WVSD/WVSI version coupling, module and entry counts, bounded primary and
+callable ranges, in-range payload indices, canonical nominal reverse order and
+uniqueness, exact forward/reverse correspondence, the nonnominal sentinel,
+metadata bits, and the emitted-name directory. Emitted-name offsets must form
+one canonical contiguous payload, each name length is `1..255`, and the final
+name byte must end at the exact lookup length; truncation and trailing bytes
+are rejected.
+
+For a non-root module, a Foreign entry uses emitted-name tag `X`, producing the
+same deterministic form as `__WvM<module>X<foreign-ordinal>`. The distinct tag
+prevents collision with the ordinary function tag `F`; the existing root-name
+collision suffix rule remains unchanged.
 
 Exact nominal lookup searches the reverse table in two bounded passes: first the record range for the requested first UTF-8 byte, then the corresponding enum range. Unequal byte lengths are rejected before ordinal comparison. This preserves record-then-enum identity and avoids scanning unrelated WVSD entries.
 
@@ -240,13 +285,23 @@ Construction is deterministic and total even before duplicate-name rejection.
 The index never changes namespace semantics and is not a separately published
 compatibility format.
 
+The current construction and strict-validation algorithms are bounded but do
+not claim linear scaling. For `D` WVSD entries and `N` nominal entries,
+emitted-name construction, namespace bucket searches, and nominal
+forward/reverse construction have bounded-superlinear worst cases, including
+`O(D^2 + N * D)`. The 256 primary and callable bucket passes are bounded by the
+same entry limits, and an ordinary callable query examines the exact candidates
+in one selected bucket. These private acceleration structures prevent
+source-wide scanning for an individual ordinary lookup; they do not by
+themselves make complete WVSI construction or source-symbol validation linear.
+
 ## Visibility matrix
 
 `Visibility` is exactly `Modules * Modules` bytes in row-major owner/target order. Every byte is zero or one. Each module sees itself and its direct imports; deterministic transitive closure adds indirect imports. With the WVSS limit of 64 modules, the matrix is at most 4,096 bytes. A type declared in module `Target` is accessible from module `Owner` only when the corresponding byte is one.
 
 ## Deterministic processing order
 
-The phase validates in this order: source graph; aggregate counts plus WVSD construction; directory shape; namespaces, canonical entry correspondence, constant names, root-only placement, and capability policy; visibility construction; then constants, records, enums, and function signatures in canonical WVSS module/source order. A constant recursively evaluates only earlier constant declarations, with a depth bound of 64. Within a declaration, members and expression operands are checked in source order. Inputs containing multiple faults receive the first failure under this order.
+The phase validates in this order: source graph; aggregate counts plus WVSD construction; directory and paired lookup shape; namespaces, canonical entry correspondence, constant names, root-only placement, and capability policy; visibility construction; then constants, records, enums, and function signatures in canonical WVSS module/source order. A constant recursively evaluates only earlier constant declarations, with a depth bound of 64. Within a declaration, members and expression operands are checked in source order. Inputs containing multiple faults receive the first failure under this order.
 
 Failure evidence names the current module, a related prior/target module when applicable, declaration kind, name/token byte offset, and one-based line/column. `Modules` is the sentinel when no related module exists.
 
@@ -267,4 +322,4 @@ The candidate demo additionally exercises valid constants, enum and earlier-cons
 source symbols status=Valid modules=8 capabilities=0 data=0 records=31 enums=14 functions=206 fields=344 members=245 parameters=897 directory-bytes=6040 visibility-bytes=64
 ```
 
-The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it advanced the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 added bounded reverse-table lookup and is cross-host qualified at `1a4fca7`. Decision 0058 changed equality-only implementation paths and embedded artifact bytes while preserving the then-current WVSD 1.0 and WVSI 1.1 formats and is cross-host qualified at `5c16547`. WVSD 1.1 and typed constants are new local candidate behavior and do not inherit those cross-host claims.
+The pre-index implementation was qualified at `d57a6d8`, and the first indexed implementation at `bf77f70`. Decision 0050's implementation is qualified at `e37204f`; it advanced the private acceleration contract from `WVSI 1.0` to `WVSI 1.1`. Decision 0055 added bounded reverse-table lookup and is cross-host qualified at `1a4fca7`. Decision 0058 changed equality-only implementation paths and embedded artifact bytes while preserving the then-current WVSD 1.0 and WVSI 1.1 formats and is cross-host qualified at `5c16547`. WVSD 1.1, typed constants, and the proposed conditional WVSD 1.2/WVSI 1.3 Foreign path are candidate behavior and do not inherit those cross-host claims.

@@ -6,6 +6,23 @@
 
 Complete expression types, field ownership, operator/result types, return proof, and WIR construction now belong to `Compilerˉsourceˉwir`; this phase remains the owner of binding identity and diagnostic precedence. It does not emit WVB.
 
+Under proposed Decision 0895, foreign declaration and direct-call binding
+remain compiler-owned portable semantics. The private hosted `wvbind` product
+invokes those semantics after independent authentication and retained-snapshot
+rechecks; extracting that host phase from `wvanalyze` does not transfer binding
+ownership to the coordinator or authenticator. The ordinary Analyzer retains
+the shared binding implementation but rejects a foreign-bearing internal WVSS
+with `Foreignˉrequiresˉauthenticatedˉbinding`.
+
+After complete source-symbol and body-binding validation, the private Foreign
+adapter consumes the exact WVSD entry already paired with each authenticated
+catalog record. That constant-time check requires kind 9, the exact module,
+declaration and name spans, arity three, and the current normalized callable
+facts. It does not resolve the same Foreign name again through the callable
+hash bucket. Ordinary source call expressions continue to use normal WVSI
+callable resolution; this adapter shortcut grants no source name-resolution or
+admission authority.
+
 ## Result contract
 
 ```text
@@ -26,6 +43,7 @@ enum Compilerˉsourceˉbindingˉstatus {
     Undeclaredˉcapability = 13;
     Unknownˉcall = 14;
     Callˉarity = 15;
+    Invalidˉargument = 16;
 }
 
 record Compilerˉsourceˉbindingˉsummary {
@@ -111,14 +129,30 @@ A positional call resolves in this order:
 1. implemented Foundation intrinsic;
 2. record constructor;
 3. function;
-4. declared capability.
+4. Foreign declaration;
+5. declared capability.
+
+The same exact callable-directory lookup may return internal callable kind
+`Foreign = 7` for a kind-9 WVSD entry. Foreign is a direct-call target only. It
+is excluded from ordinary function-reference lookup and therefore cannot be
+bound as a first-class value, captured, stored, returned, passed indirectly,
+or selected as a generic callable argument. An explicit generic call whose
+resolved target is Foreign returns `Unknownˉcall`.
 
 A local or parameter with capability-reference shape is callable and resolves only
 the exact root capability directory entry embedded in that shape. Binding counts
 the callee read plus one capability call and validates catalog arity. It does not
 look at the erased witness payload or select a provider dynamically.
 
-The target must be visible through the WVSD visibility matrix, and the supplied argument count must match the constructor field count, function parameter count, intrinsic arity, or capability arity. Arguments are bound in source order before target failure is reported. A known capability that was not declared returns `Undeclaredˉcapability`; an otherwise absent target returns `Unknownˉcall`.
+The target must be visible through the WVSD visibility matrix, and the supplied argument count must match the constructor field count, function parameter count, Foreign parameter count, intrinsic arity, or capability arity. Arguments are bound in source order before target failure is reported. A known capability that was not declared returns `Undeclaredˉcapability`; an otherwise absent target returns `Unknownˉcall`.
+
+A Foreign target has exact arity three. Positional arguments retain source
+order. A named call accepts exactly the ordinal UTF-8 labels `Destination`,
+`Capacity`, and `Expectedˉgeneration`, mapped to argument indices zero, one,
+and two. Arity mismatch returns retained status `Callˉarity = 15` before
+label-set validation. With arity three, an unknown, duplicate, missing, or
+otherwise non-exact Foreign label set returns appended status
+`Invalidˉargument = 16`; existing status numbers are not renumbered.
 
 Reads, assignments, and calls are deterministic occurrence counts, not optimization or liveness information.
 
@@ -303,7 +337,7 @@ Before publication, `Compilerˉsourceˉbindingsˉdirectoryˉisˉvalid` checks WV
 
 The phase validates source symbols first, then traverses modules, declarations, statements, and expression children in canonical source order. A local initializer is bound before its declaration is appended. Call arguments are bound before the call target and arity. The first failure under this order is returned with current module, related module or sentinel, WVSD function entry, byte offset, and one-based line/column.
 
-One combined full pass constructs local evidence and binds body references. The parameter phase and final publication step are also explicit so typed WVIR construction can carry the same function-private binding state while it lowers statements, resolve an inferred local to the initializer's exact shape, then publish canonical WVLB evidence without a second successful-path body traversal. A standalone WVLB keeps shape `0` for such a local because the binding pass deliberately does not duplicate expression typing. Hot lookups pass the immutable binding payload plus the current function range directly. Global callable lookup uses the prepared target-module-and-name WVSI 1.2 bucket, rejects unequal UTF-8 byte lengths before ordinal comparison, and compares names against absolute offsets in the packed WVSS input. Import-alias lookup stops at the first separator and performs the same allocation-free absolute-span comparison. Nominal shapes use the WVSI forward directory-to-ordinal table rather than rescanning and reranking WVSD. Each function constructs its binding payload privately; bounded groups are merged before publication to avoid quadratic global byte-buffer growth.
+One combined full pass constructs local evidence and binds body references. The parameter phase and final publication step are also explicit so typed WVIR construction can carry the same function-private binding state while it lowers statements, resolve an inferred local to the initializer's exact shape, then publish canonical WVLB evidence without a second successful-path body traversal. A standalone WVLB keeps shape `0` for such a local because the binding pass deliberately does not duplicate expression typing. Hot lookups pass the immutable binding payload plus the current function range directly. Global callable lookup uses the prepared target-module-and-name WVSI 1.2 or WVSI 1.3 bucket paired with the supplied WVSD, rejects unequal UTF-8 byte lengths before ordinal comparison, and compares names against absolute offsets in the packed WVSS input. Import-alias lookup stops at the first separator and performs the same allocation-free absolute-span comparison. Nominal shapes use the WVSI forward directory-to-ordinal table rather than rescanning and reranking WVSD. Each function constructs its binding payload privately; bounded groups are merged before publication to avoid quadratic global byte-buffer growth.
 
 Intrinsic-call lookup dispatches candidates by exact UTF-8 byte length, checks the most common compiler intrinsics first within each length group, and returns on the first match. A nonmatching length does not materialize the candidate text as bytes.
 

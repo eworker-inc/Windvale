@@ -32,7 +32,10 @@ Every named capture must resolve to a lexical local visible at the closure
 expression. Names are unique across the capture list. A closure parameter may
 not duplicate a capture or another parameter. Closure parameters remain
 ordinary immutable parameters; only `borrow mut` produces a mutable captured
-binding.
+binding. Module functions and Foreign declarations are callable symbols, not
+lexical values; neither can enter this lookup. An explicit attempt to capture a
+Foreign name therefore reports `Missingˉcapture` with underlying
+`Unknownˉname` rather than constructing a first-class callable.
 
 `copy` is admitted only for a conservatively proven Copy or shared-immutable
 shape. The current proof admits primitive value shapes except `never`, all
@@ -115,8 +118,9 @@ The maintained native analyzer self-test covers copied, moved, immutably
 borrowed, and mutably borrowed locals; exact outer slot and shape retention;
 missing and duplicate captures; conservative Copy rejection; borrowed async
 rejection; module capability roots as effects rather than captures;
-capture/parameter name conflicts; reconstructed WVLB 1.4 publication; and
-forged valid-status/empty-directory evidence. Its ten selectors reuse one
+capture/parameter name conflicts; exact Foreign-global capture rejection;
+reconstructed WVLB 1.4 publication; and forged valid-status/empty-directory
+evidence. Its twelve selectors reuse one
 compiler-scale segmented application and return `42`.
 
 The front-door compiler-pipeline helper additionally compiles, verifies, and

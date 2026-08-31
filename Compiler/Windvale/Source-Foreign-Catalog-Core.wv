@@ -56,8 +56,51 @@ export record Compilerˉsourceˉforeignˉcatalogˉrecord {
     Signatureˉsha256: bytes;
 }
 
+export record Compilerˉsourceˉforeignˉdigestˉresult {
+    Valid: bool;
+    Value: bytes;
+}
+
 fn Compilerˉsourceˉforeignˉcatalogˉempty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉhexˉnibble(Character: u8) -> u32 {
+    let Value: u32 = U32ˉfromˉu8(Character);
+    if Value >= 48u32 && Value <= 57u32 { return Value - 48u32; }
+    return Value - 87u32;
+}
+
+fn Compilerˉsourceˉforeignˉcatalogˉhexˉisˉlower(Character: u8) -> bool {
+    let Value: u32 = U32ˉfromˉu8(Character);
+    return (Value >= 48u32 && Value <= 57u32) ||
+        (Value >= 97u32 && Value <= 102u32);
+}
+
+export fn Compilerˉsourceˉforeignˉcatalogˉdecodeˉsha256ˉhex(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉdigestˉresult {
+    let Empty: bytes = Compilerˉsourceˉforeignˉcatalogˉempty(Input);
+    if Bytesˉlength(Input) != 64u32 {
+        return Compilerˉsourceˉforeignˉdigestˉresult(false, Empty);
+    }
+    var Value: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let High: u8 = Bytesˉreadˉu8(Input, Index);
+        let Low: u8 = Bytesˉreadˉu8(Input, Index + 1u32);
+        if !Compilerˉsourceˉforeignˉcatalogˉhexˉisˉlower(High) ||
+            !Compilerˉsourceˉforeignˉcatalogˉhexˉisˉlower(Low) {
+            return Compilerˉsourceˉforeignˉdigestˉresult(false, Empty);
+        }
+        let Encoded: bytes = Bytesˉfromˉu16ˉlittle(
+            Compilerˉsourceˉforeignˉcatalogˉhexˉnibble(High) * 16u32 +
+            Compilerˉsourceˉforeignˉcatalogˉhexˉnibble(Low)
+        );
+        Value = Bytesˉconcat(Value, Bytesˉslice(Encoded, 0u32, 1u32));
+        Index = Index + 2u32;
+    }
+    return Compilerˉsourceˉforeignˉdigestˉresult(true, Value);
 }
 
 fn Compilerˉsourceˉforeignˉcatalogˉfailure(

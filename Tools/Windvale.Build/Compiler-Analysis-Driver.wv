@@ -203,6 +203,46 @@ fn Rawˉprecheck(Sourceˉset: bytes) -> u32 {
     return 0u32;
 }
 
+fn Containsˉforeign(Sourceˉset: bytes) -> bool {
+    let Scan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
+        Sourceˉsets.Compilerˉscanˉsourceˉset(Sourceˉset);
+    if Scan.Status != Sourceˉsets.Compilerˉsourceˉsetˉstatus.Valid {
+        return false;
+    }
+    var Module: u32 = 0u32;
+    while Module < Scan.Modules {
+        let View: Sourceˉsets.Compilerˉsourceˉsetˉview =
+            Sourceˉsets.Compilerˉsourceˉsetˉmodule(
+                Sourceˉset, Scan, Module
+            );
+        if View.Status != Sourceˉsets.Compilerˉsourceˉsetˉstatus.Valid {
+            return false;
+        }
+        var Cursor: u32 = 0u32;
+        var Line: u32 = 1u32;
+        var Column: u32 = 1u32;
+        var Reading: bool = true;
+        while Reading {
+            let Token: Sourceˉlexer.Compilerˉsourceˉtoken =
+                Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+                    View.Source, Cursor, Line, Column
+                );
+            if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+                return true;
+            }
+            if Token.Kind == Sourceˉlexer.Compilerˉtokenˉkind.End {
+                Reading = false;
+            } else {
+                Cursor = Token.Nextˉoffset;
+                Line = Token.Nextˉline;
+                Column = Token.Nextˉcolumn;
+            }
+        }
+        Module = Module + 1u32;
+    }
+    return false;
+}
+
 fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
     if Bytesˉlength(Sourceˉset) == 0u32 {
         diagnostic.write_line("source analysis status=Invalidˉinput");
@@ -250,7 +290,15 @@ export fn Main() -> i32 {
             );
             return 64;
         }
-        return Analyze(file.read_bytes(process.argument(1u32)), 2u32);
+        let Internalˉsourceˉset: bytes =
+            file.read_bytes(process.argument(1u32));
+        if Containsˉforeign(Internalˉsourceˉset) {
+            diagnostic.write_line(
+                "source analysis status=Foreignˉrequiresˉauthenticatedˉbinding"
+            );
+            return 1;
+        }
+        return Analyze(Internalˉsourceˉset, 2u32);
     }
     if Arguments < 5u32 {
         diagnostic.write_line(

@@ -23,9 +23,9 @@ const DYNAMIC_CASES = 12;
 const EXPECTED_RUNNER = WINDOWS
     ? { bytes: 5_907_456, sha256: '2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b' }
     : { bytes: 5_906_432, sha256: '611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae' };
-const EXPECTED_BOOTSTRAP_ANALYZER = {
-    bytes: 992_412,
-    sha256: '26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120'
+const EXPECTED_PINNED_ANALYZER = {
+    bytes: 1_552_090,
+    sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77'
 };
 const EXPECTED_CORE = {
     bytes: 24_292,
@@ -547,15 +547,15 @@ try {
         REPOSITORY_ROOT, 'Artifacts', 'Native-Wvb-Runner-Candidate',
         WINDOWS ? 'windows-x64-wvrun.exe' : 'linux-x64-wvrun.elf'
     );
-    const BootstrapAnalyzerWvb = join(
+    const PinnedAnalyzerWvb = join(
         REPOSITORY_ROOT, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
         'Wvb', 'wvanalyze.wvb'
     );
     RequireExact(await Evidence(Runner), EXPECTED_RUNNER, 'WVB runner');
     RequireExact(
-        await Evidence(BootstrapAnalyzerWvb),
-        EXPECTED_BOOTSTRAP_ANALYZER,
-        'bootstrap analyzer'
+        await Evidence(PinnedAnalyzerWvb),
+        EXPECTED_PINNED_ANALYZER,
+        'pinned analyzer'
     );
 
     process.stdout.write('START admission evidence phase=boundaries item=1/6\n');
@@ -564,7 +564,7 @@ try {
     process.stdout.write('START admission evidence phase=capacity item=2/6\n');
     const Analyzer = join(Work, WINDOWS ? 'wvanalyze.exe' : 'wvanalyze.elf');
     await RequireSuccess('analyzer packaging', Package, [
-        '7', BootstrapAnalyzerWvb, Analyzer, '--development-cache'
+        '7', PinnedAnalyzerWvb, Analyzer, '--development-cache'
     ], true);
     const CapacityRoot = 'Tools/Windvale.Build/Compiler-Admission-Evidence-Validator-Driver.wv';
     const CapacitySources = [

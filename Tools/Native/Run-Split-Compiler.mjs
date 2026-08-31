@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import {
     chmod,
@@ -36,9 +36,13 @@ const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 
 if (process.argv.length < 7) Usage();
 
-const Authenticated = process.argv[6] === '--source-input-lock';
+const Hasˉforeignˉbinder = process.argv[6] === '--foreign-binder';
+const Authenticatedˉargumentˉoffset = Hasˉforeignˉbinder ? 8 : 6;
+const Authenticated =
+    process.argv[Authenticatedˉargumentˉoffset] === '--source-input-lock';
 const Admitter = path.resolve(process.argv[2]);
 let Validator = null;
+let Foreignˉbinder = null;
 let Analyzer;
 let Emitter;
 let Arguments;
@@ -46,8 +50,13 @@ if (Authenticated) {
     Validator = path.resolve(process.argv[3]);
     Analyzer = path.resolve(process.argv[4]);
     Emitter = path.resolve(process.argv[5]);
-    Arguments = process.argv.slice(6);
+    if (Hasˉforeignˉbinder) {
+        if (process.argv.length < 10) Usage();
+        Foreignˉbinder = path.resolve(process.argv[7]);
+    }
+    Arguments = process.argv.slice(Authenticatedˉargumentˉoffset);
 } else {
+    if (Hasˉforeignˉbinder) Usage();
     Analyzer = path.resolve(process.argv[3]);
     Emitter = path.resolve(process.argv[4]);
     Arguments = process.argv.slice(5);
@@ -80,6 +89,12 @@ if (Validator !== null) {
     await Requireˉordinaryˉfile(
         Validator, 1, MAXIMUM_PRODUCT_COMMAND_BYTES,
         'source admission validator product'
+    );
+}
+if (Foreignˉbinder !== null) {
+    await Requireˉordinaryˉfile(
+        Foreignˉbinder, 1, MAXIMUM_PRODUCT_COMMAND_BYTES,
+        'source foreign binder product'
     );
 }
 await Requireˉordinaryˉfile(
@@ -313,9 +328,54 @@ try {
             'source profile'
         );
         if (Retained.catalog.bytes.readUInt32LE(12) !== 0) {
+            if (Foreignˉbinder === null) {
+                Reject(
+                    'The authenticated foreign catalog requires ' +
+                    '--foreign-binder <wvbind>.'
+                );
+            }
+            const Bindingˉevidence = await Runˉrequired(
+                Foreignˉbinder,
+                [Sourceˉset, Admittedˉtarget, Catalog],
+                'source-foreign-binding',
+            );
+            const Expectedˉbindingˉevidence =
+                Buildˉforeignˉbindingˉevidence(Retained);
+            if (!Bindingˉevidence.equals(Expectedˉbindingˉevidence)) {
+                Reject(
+                    'The foreign-binder evidence does not exactly match the ' +
+                    'retained authenticated inputs.'
+                );
+            }
+            await Requireˉretainedˉsnapshot(
+                Evidence, Retained.evidence, WVAE_BYTES, WVAE_BYTES,
+                'admission evidence'
+            );
+            await Requireˉretainedˉsnapshot(
+                Sourceˉset, Retained.sourceSet, 37,
+                MAXIMUM_PHASE_VALUE_BYTES, 'admitted source set'
+            );
+            await Requireˉretainedˉsnapshot(
+                Admittedˉtarget, Retained.target,
+                WVTD_MINIMUM_BYTES, WVTD_MAXIMUM_BYTES,
+                'admitted target descriptor'
+            );
+            await Requireˉretainedˉsnapshot(
+                Catalog, Retained.catalog,
+                WVFC_MINIMUM_BYTES, MAXIMUM_PHASE_VALUE_BYTES,
+                'foreign catalog'
+            );
+            await Requireˉretainedˉsnapshot(
+                Lock, Retainedˉinputs.lock, 1, MAXIMUM_LOCK_BYTES,
+                'source-input lock'
+            );
+            await Requireˉretainedˉsnapshot(
+                Profile, Retainedˉinputs.profile, 1, MAXIMUM_PROFILE_BYTES,
+                'source profile'
+            );
             throw new Splitˉcompilerˉfailure(
                 1,
-                Buffer.from('source analysis status=Foreignˉsemanticsˉpending\n'),
+                Buffer.from('source analysis status=Foreignˉloweringˉpending\n'),
             );
         }
         Reports.push(await Runˉrequired(
@@ -494,6 +554,22 @@ function Buildˉwvss1(Sources) {
         Payloadˉoffset += Sources[Index].length;
     }
     return Result;
+}
+
+function Buildˉforeignˉbindingˉevidence(Retained) {
+    const Digest = Value =>
+        createHash('sha256').update(Value).digest('hex');
+    return Buffer.from(
+        'foreign binding status=Published ' +
+        `source-bytes=${Retained.sourceSet.bytes.length} ` +
+        `source-sha256=${Digest(Retained.sourceSet.bytes)} ` +
+        `target-bytes=${Retained.target.bytes.length} ` +
+        `target-sha256=${Digest(Retained.target.bytes)} ` +
+        `catalog-bytes=${Retained.catalog.bytes.length} ` +
+        `catalog-sha256=${Digest(Retained.catalog.bytes)} ` +
+        `foreign-count=${Retained.catalog.bytes.readUInt32LE(12)}\n`,
+        'utf8'
+    );
 }
 
 async function Runˉrequired(Command, Commandˉarguments, Step) {
@@ -1215,7 +1291,8 @@ async function Exists(Candidate) {
 function Usage() {
     Reject(
         'Usage: node Run-Split-Compiler.mjs <admitter> <validator> <analyzer> ' +
-        '<emitter> --source-input-lock <lock> <sha256> --source-profile ' +
+        '<emitter> [--foreign-binder <wvbind>] --source-input-lock <lock> ' +
+        '<sha256> --source-profile ' +
         '<profile> --target-descriptor <target.wvtd> <root.wv> ' +
         '[dependency.wv ...] <output.wvb>; or the retained Project 2 form ' +
         '<admitter> <analyzer> <emitter> <root.wv> [dependency.wv ...] ' +

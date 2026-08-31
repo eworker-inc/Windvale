@@ -176,6 +176,7 @@ profile, and one mandatory target descriptor:
 
 ```text
 Run-Split-Compiler <wvadmit> <wvauth> <wvanalyze> <wvemit>
+    [--foreign-binder <wvbind>]
     --source-input-lock <lock.wvlock> <sha256>
     --source-profile <profile.wvsp>
     --target-descriptor <input.wvtd>
@@ -204,10 +205,44 @@ wvauth <input.wvae> <input.wvss> <input.wvtd> <input.wvfc>
     <input.wvlock> <input.wvsp>
 ```
 
-Only its successful process result permits the coordinator to continue. Until
-foreign binding and lowering are implemented, a validated nonempty catalog
-reports `Foreignˉsemanticsˉpending` and publishes no Analyzer or emitter
-artifact. For an empty catalog, the coordinator rechecks the retained snapshot
+Only its successful process result permits the coordinator to continue. Under
+the proposed Decision 0895 checkpoint, an authenticated nonempty catalog first
+causes the coordinator to recheck all six retained snapshots and then invokes
+the private hosted compiler binder:
+
+```text
+wvbind <input.wvss> <input.wvtd> <input.wvfc>
+```
+
+The compiler-owned adapter in `wvbind` treats WVSS, WVTD, and WVFC as
+untrusted. It validates their structure and source/catalog correspondence,
+requires the exact supported target, constructs conditional WVSD 1.2/WVSI 1.3
+symbols, completes direct-call binding, and checks every normalized Foreign
+callable fact. A successful result is semantic fact evidence only: `wvbind`
+accepts no WVAE, lock, or profile, publishes no authentication marker or
+successor file, and has no admission authority.
+
+Only after complete binding success does `wvbind` write one exact bounded
+canonical line to standard output:
+
+```text
+foreign binding status=Published source-bytes=<decimal-u32> source-sha256=<64-lowercase-hex> target-bytes=<decimal-u32> target-sha256=<64-lowercase-hex> catalog-bytes=<decimal-u32> catalog-sha256=<64-lowercase-hex> foreign-count=<decimal-u32>\n
+```
+
+The lengths and digests describe the three byte values actually consumed by
+`wvbind`; `foreign-count` is the validated WVFC record count. The coordinator
+independently constructs the expected line from its retained WVSS, WVTD, and
+WVFC bytes and requires byte-for-byte equality, including the one final newline
+and the absence of prefix, suffix, alternate spelling, or additional output.
+Under the current input and catalog bounds the exact line is at most 351 UTF-8
+bytes. The coordinator then rechecks all six retained snapshots again, reports
+exact `Foreignˉloweringˉpending`, and launches neither ordinary analysis
+publication nor the emitter. Missing, malformed, mismatched, partial,
+duplicated, extra, or oversized success output is failure, never transferable
+success. Direct `wvbind` invocation produces only non-authoritative digest
+evidence and cannot establish authentication or authorize later publication.
+
+For an empty catalog, the coordinator instead rechecks the retained snapshot
 bytes and invokes the Analyzer's explicitly non-authoritative source-set route:
 
 ```text
@@ -216,7 +251,9 @@ wvanalyze --internal-source-set <input.wvss> <output.wvss>
 ```
 
 The Analyzer treats that WVSS as ordinary untrusted compiler input; neither the
-option nor its path claims admission. It scans and analyzes the source, then
+option nor its path claims admission. This ordinary route explicitly rejects a
+foreign-bearing WVSS with `Foreignˉrequiresˉauthenticatedˉbinding`. It scans
+and analyzes an accepted foreign-free source set, then
 re-publishes the exact consumed WVSS beside WVCA, WVLB, and WVIR. The
 coordinator requires that WVSS to equal its retained authenticated snapshot
 byte for byte before invoking the emitter with the retained original. The
@@ -252,16 +289,29 @@ candidate directory. The runner alone copies and syncs that completed WVB into
 a unique destination-directory candidate and atomically creates the final path
 without overwrite.
 
-These are four bounded front-door products over one semantic compiler. The
-admitter owns Language 1.0 descriptor/profile admission and catalog production;
-the authenticator independently proves the retained snapshot relationship; the
-Analyzer owns ordinary source scanning, symbols, binding, and typed WIR
+The production front door owns five bounded products over one semantic compiler:
+`wvadmit`, `wvauth`, `wvbind`, the Analyzer, and the emitter. A nonempty catalog
+launches the first three and then stops at `Foreignˉloweringˉpending`; an empty
+catalog skips `wvbind` and launches the admitter, authenticator, Analyzer, and
+emitter. The admitter owns Language 1.0 descriptor/profile admission and catalog
+production; the authenticator independently proves the retained snapshot
+relationship; `wvbind` proves only the compiler-owned foreign semantic facts;
+the Analyzer owns ordinary source scanning, symbols, binding, and typed WIR
 construction; and the emitter revalidates all persisted analysis values and
 calls the same prepared backend as the retained one-shot compiler.
 Descriptorless Project 2 input starts at the Analyzer. Descriptor-bearing
 Language 1.0 input starts at the private host coordinator and admitter.
 Optimization is not an implicit command-line mode; a later optimized product
 must have a distinct target and producer identity.
+
+The private `wvbind` product is an additional bounded compiler-owned stop inside
+that same front door, not a public admitted-source interface. Its currently
+supported target is exactly Linux x86-64, little-endian,
+`sysv_amd64_c_v1`, 64 address bits, and no-unwind C scalar-pointer contract
+major `1`. A structure-valid descriptor differing in any selected field is
+unsupported. Foreign call lowering, WVIR/WVLB/WVCA publication for such a call,
+WVB imports, native thunks, and execution containment remain later Slice 8
+work.
 
 The complete compiler-scale Analyzer remains inside Windvale 1.0's fixed 4 MiB
 immutable-`bytes` ceiling. Under the pinned bootstrap transition, the
@@ -281,6 +331,14 @@ Authentication
 stays in dedicated `wvauth` because it is an independent boundary and because
 duplicating the ingress closure did not fit the bootstrap transition, not
 because the current compiler has only 11,376 bytes of measured headroom.
+
+The first candidate that integrated foreign binding and its five foreign-only
+modules into the Analyzer measured 4,193,688 WVIR bytes. That left only 616
+bytes under the 4,194,304-byte immutable-value ceiling and triggered the
+capacity reconsideration. The compiler-owned portable adapter is therefore
+hosted by the separate `wvbind` product; the ordinary Analyzer retains shared
+symbol and binding support plus its explicit foreign-bearing WVSS rejection,
+but not the foreign-only hosted closure.
 
 `Build-Cached-Split-Project-Wvb` is a development-only Project 2 coordinator.
 Its analysis key binds the complete project source closure and exact analyzer

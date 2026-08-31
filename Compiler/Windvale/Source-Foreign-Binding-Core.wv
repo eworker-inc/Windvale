@@ -1,0 +1,498 @@
+module Compilerˉsourceˉforeignˉbinding profile portable;
+
+import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
+import Compilerˉsourceˉforeignˉcatalogˉauthentication as Foreignˉauthentication;
+import Compilerˉsourceˉforeignˉsemantics as Foreignˉsemantics;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+import Compilerˉsourceˉtarget as Target;
+
+// This adapter constructs semantic facts from untrusted source/catalog/target
+// bytes. A Valid result is not admission authority; the production coordinator
+// separately owns authentication and retained-snapshot identity.
+export enum Compilerˉsourceˉforeignˉbindingˉstatus {
+    Valid = 0;
+    Sourceˉstructure = 1;
+    Catalogˉstructure = 2;
+    Sourceˉcorrespondence = 3;
+    Sourceˉsymbols = 4;
+    Sourceˉbindings = 5;
+    Unsupportedˉtarget = 6;
+    Catalogˉdirectory = 7;
+    Callableˉlookup = 8;
+    Callableˉfacts = 9;
+}
+
+export record Compilerˉsourceˉforeignˉbindingˉsummary {
+    Status: Compilerˉsourceˉforeignˉbindingˉstatus;
+    Correspondenceˉstatus: u32;
+    Targetˉstatus: u32;
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus;
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus;
+    Foreignˉcount: u32;
+    Failureˉmodule: u32;
+    Failureˉdeclaration: u32;
+    Failureˉdirectoryˉentry: u32;
+    Failureˉcatalogˉrecord: u32;
+    Failureˉoffset: u32;
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉresult(
+    Status: Compilerˉsourceˉforeignˉbindingˉstatus,
+    Correspondenceˉstatus: u32,
+    Targetˉstatus: u32,
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus,
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
+    Foreignˉcount: u32,
+    Failureˉmodule: u32,
+    Failureˉdeclaration: u32,
+    Failureˉdirectoryˉentry: u32,
+    Failureˉcatalogˉrecord: u32,
+    Failureˉoffset: u32
+) -> Compilerˉsourceˉforeignˉbindingˉsummary {
+    return Compilerˉsourceˉforeignˉbindingˉsummary(
+        Status,
+        Correspondenceˉstatus,
+        Targetˉstatus,
+        Symbolˉstatus,
+        Bindingˉstatus,
+        Foreignˉcount,
+        Failureˉmodule,
+        Failureˉdeclaration,
+        Failureˉdirectoryˉentry,
+        Failureˉcatalogˉrecord,
+        Failureˉoffset
+    );
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉtargetˉisˉexact(
+    Value: Target.Compilerˉsourceˉtargetˉdescriptor
+) -> bool {
+    let Expected: Target.Compilerˉsourceˉtargetˉdescriptor =
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
+    return Value.Buildˉtarget == Expected.Buildˉtarget &&
+        Value.Environment == Expected.Environment &&
+        Value.Architecture == Expected.Architecture &&
+        Value.Abi == Expected.Abi &&
+        Value.Addressˉbits == Expected.Addressˉbits &&
+        Value.Byteˉorder == Expected.Byteˉorder &&
+        Value.Noˉunwindˉcˉscalarˉpointerˉmajor ==
+            Expected.Noˉunwindˉcˉscalarˉpointerˉmajor;
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉtargetˉfailureˉoffset(
+    Value: Target.Compilerˉsourceˉtargetˉdescriptor
+) -> u32 {
+    let Expected: Target.Compilerˉsourceˉtargetˉdescriptor =
+        Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1();
+    if Value.Buildˉtarget != Expected.Buildˉtarget { return 12u32; }
+    if Value.Environment != Expected.Environment { return 16u32; }
+    if Value.Architecture != Expected.Architecture { return 20u32; }
+    if Value.Abi != Expected.Abi { return 24u32; }
+    if Value.Addressˉbits != Expected.Addressˉbits { return 28u32; }
+    if Value.Byteˉorder != Expected.Byteˉorder { return 32u32; }
+    if Value.Noˉunwindˉcˉscalarˉpointerˉmajor !=
+            Expected.Noˉunwindˉcˉscalarˉpointerˉmajor {
+        return 36u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉcallable(
+    Abiˉcontract: u32,
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor
+) -> Foreignˉsemantics.Compilerˉsourceˉforeignˉauthenticatedˉcallable {
+    let Pointer: Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreignˉsemantics.Compilerˉsourceˉforeignˉtype(
+            Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉkind.Foreignˉpointer,
+            Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉkind.U8,
+            Abiˉcontract
+        );
+    let U64ˉtype: Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreignˉsemantics.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉkind.U64
+        );
+    let I64ˉtype: Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉidentity =
+        Foreignˉsemantics.Compilerˉsourceˉforeignˉscalarˉtype(
+            Foreignˉsemantics.Compilerˉsourceˉforeignˉtypeˉkind.I64
+        );
+    return Foreignˉsemantics.Compilerˉsourceˉforeignˉauthenticatedˉcallable(
+        Abiˉcontract,
+        Foreignˉsemantics.COMPILER_SOURCE_FOREIGN_SEMANTICS_SOURCE_NAME_BUFFER_READ,
+        Foreignˉsemantics.COMPILER_SOURCE_FOREIGN_SEMANTICS_EXTERNAL_SYMBOL_BUFFER_READ,
+        true,
+        Foreignˉsemantics.COMPILER_SOURCE_FOREIGN_SEMANTICS_PROFILE_SYSTEM,
+        Foreignˉsemantics.COMPILER_SOURCE_FOREIGN_SEMANTICS_FFI_CALL_EFFECT,
+        Pointer,
+        U64ˉtype,
+        U64ˉtype,
+        I64ˉtype,
+        true,
+        Buildˉtarget.Noˉunwindˉcˉscalarˉpointerˉmajor == 1u32
+    );
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉdirectoryˉcallableˉisˉexact(
+    Directory: bytes,
+    Directoryˉentry: u32,
+    Directoryˉentries: u32,
+    Module: u32,
+    Declarationˉoffset: u32,
+    Nameˉoffset: u32,
+    Nameˉlength: u32
+) -> bool {
+    if Directoryˉentry >= Directoryˉentries { return false; }
+    let Offset: u32 = 16u32 + Directoryˉentry * 24u32;
+    return Bytesˉreadˉu32ˉlittle(Directory, Offset) == Module &&
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32) == 9u32 &&
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 8u32) == Declarationˉoffset &&
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 12u32) == Nameˉoffset &&
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 16u32) == Nameˉlength &&
+        Bytesˉreadˉu32ˉlittle(Directory, Offset + 20u32) == 3u32;
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉrecord(
+    Wvfc: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Correspondenceˉstatus: u32,
+    Targetˉstatus: u32,
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus,
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
+    Catalogˉcount: u32,
+    Directoryˉentries: u32,
+    Recordˉindex: u32,
+    Firstˉdirectoryˉentry: u32
+) -> Compilerˉsourceˉforeignˉbindingˉsummary {
+    var Directoryˉentry: u32 = Firstˉdirectoryˉentry;
+    while Directoryˉentry < Directoryˉentries &&
+        Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, 20u32 + Directoryˉentry * 24u32
+        ) != 9u32 {
+        Directoryˉentry = Directoryˉentry + 1u32;
+    }
+    let Catalogˉoffset: u32 = 48u32 + Recordˉindex * 96u32;
+    if Directoryˉentry >= Directoryˉentries {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉdirectory,
+            Correspondenceˉstatus,
+            Targetˉstatus,
+            Symbolˉstatus,
+            Bindingˉstatus,
+            Catalogˉcount,
+            Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset),
+            Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset + 4u32),
+            Directoryˉentry,
+            Recordˉindex,
+            Catalogˉoffset
+        );
+    }
+
+    let Directoryˉoffset: u32 = 16u32 + Directoryˉentry * 24u32;
+    let Module: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset);
+    let Declaration: u32 = Bytesˉreadˉu32ˉlittle(
+        Wvfc, Catalogˉoffset + 4u32
+    );
+    let Nameˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Wvfc, Catalogˉoffset + 24u32
+    );
+    let Nameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+        Wvfc, Catalogˉoffset + 28u32
+    );
+    if !Compilerˉsourceˉforeignˉbindingˉdirectoryˉcallableˉisˉexact(
+            Symbols.Directory,
+            Directoryˉentry,
+            Directoryˉentries,
+            Module,
+            Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset + 16u32),
+            Nameˉoffset,
+            Nameˉlength
+        ) {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉdirectory,
+            Correspondenceˉstatus,
+            Targetˉstatus,
+            Symbolˉstatus,
+            Bindingˉstatus,
+            Catalogˉcount,
+            Module,
+            Declaration,
+            Directoryˉentry,
+            Recordˉindex,
+            Directoryˉoffset
+        );
+    }
+
+    let Semantic:
+        Foreignˉsemantics.Compilerˉsourceˉforeignˉauthenticatedˉcallable =
+        Compilerˉsourceˉforeignˉbindingˉcallable(
+            Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset + 12u32),
+            Buildˉtarget
+        );
+    if !Foreignˉsemantics.Compilerˉsourceˉforeignˉcallableˉisˉexact(
+            Semantic
+        ) || !Semantic.Noˉretain || !Semantic.Noˉunwind {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Callableˉfacts,
+            Correspondenceˉstatus,
+            Targetˉstatus,
+            Symbolˉstatus,
+            Bindingˉstatus,
+            Catalogˉcount,
+            Module,
+            Declaration,
+            Directoryˉentry,
+            Recordˉindex,
+            Catalogˉoffset + 12u32
+        );
+    }
+
+    return Compilerˉsourceˉforeignˉbindingˉresult(
+        Compilerˉsourceˉforeignˉbindingˉstatus.Valid,
+        Correspondenceˉstatus,
+        Targetˉstatus,
+        Symbolˉstatus,
+        Bindingˉstatus,
+        Catalogˉcount,
+        0u32,
+        0u32,
+        Directoryˉentry + 1u32,
+        Recordˉindex + 1u32,
+        0u32
+    );
+}
+
+export fn Compilerˉbindˉsourceˉforeignˉdeclarations(
+    Wvss: bytes,
+    Wvtd: bytes,
+    Wvfc: bytes
+) -> Compilerˉsourceˉforeignˉbindingˉsummary {
+    let Sourceˉchecked: Sourceˉset.Compilerˉsourceˉsetˉsummary =
+        Sourceˉset.Compilerˉvalidateˉsourceˉset(Wvss);
+    if Sourceˉchecked.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉstructure,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_SOURCE,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            0u32,
+            Sourceˉchecked.Failureˉmodule,
+            0u32, 0u32, 0u32, Sourceˉchecked.Failureˉoffset
+        );
+    }
+    let Catalogˉchecked: Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Foreignˉcatalog.Compilerˉsourceˉforeignˉcatalogˉvalidateˉstructure(Wvfc);
+    if Catalogˉchecked.Status !=
+            Foreignˉcatalog.COMPILER_SOURCE_FOREIGN_CATALOG_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉstructure,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_HEADER,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            0u32, 0u32, 0u32, 0u32, 0u32,
+            Catalogˉchecked.Failureˉoffset
+        );
+    }
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Wvss);
+    if Bytesˉreadˉu32ˉlittle(Wvfc, 24u32) != Scan.Modules {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉstructure,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_INVALID_HEADER,
+            Target.COMPILER_SOURCE_TARGET_STATUS_VALID,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Bytesˉreadˉu32ˉlittle(Wvfc, 12u32),
+            0u32, 0u32, 0u32, 0u32, 24u32
+        );
+    }
+
+    let Targetˉresult: Target.Compilerˉsourceˉtargetˉdescriptorˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉdescriptor(Wvtd);
+    if Targetˉresult.Status != Target.COMPILER_SOURCE_TARGET_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Unsupportedˉtarget,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET,
+            Targetˉresult.Status,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Bytesˉreadˉu32ˉlittle(Wvfc, 12u32),
+            0u32, 0u32, 0u32, 0u32, Targetˉresult.Failureˉoffset
+        );
+    }
+    if !Compilerˉsourceˉforeignˉbindingˉtargetˉisˉexact(
+            Targetˉresult.Value
+        ) {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Unsupportedˉtarget,
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET,
+            Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Bytesˉreadˉu32ˉlittle(Wvfc, 12u32),
+            0u32, 0u32, 0u32, 0u32,
+            Compilerˉsourceˉforeignˉbindingˉtargetˉfailureˉoffset(
+                Targetˉresult.Value
+            )
+        );
+    }
+
+    let Correspondence:
+        Foreignˉauthentication.Compilerˉsourceˉforeignˉauthenticationˉresult =
+        Foreignˉauthentication.Compilerˉauthenticateˉsourceˉforeignˉcatalog(
+            Wvss, Wvtd, Wvfc
+        );
+    if Correspondence.Status !=
+            Foreignˉauthentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉcorrespondence,
+            Correspondence.Status,
+            Correspondence.Targetˉstatus,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Correspondence.Foreignˉcount,
+            Correspondence.Failureˉmodule,
+            Correspondence.Failureˉdeclaration,
+            0u32,
+            Correspondence.Foreignˉcount,
+            Correspondence.Failureˉoffset
+        );
+    }
+
+    if Correspondence.Foreignˉcount > Scan.Modules {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉdirectory,
+            Correspondence.Status,
+            Targetˉresult.Status,
+            Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Correspondence.Foreignˉcount,
+            Scan.Modules,
+            0u32,
+            0u32,
+            Correspondence.Foreignˉcount,
+            12u32
+        );
+    }
+
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Wvss);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉsymbols,
+            Correspondence.Status,
+            Targetˉresult.Status,
+            Symbols.Status,
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid,
+            Correspondence.Foreignˉcount,
+            Symbols.Failureˉmodule,
+            0u32,
+            0u32,
+            0u32,
+            Symbols.Failureˉoffset
+        );
+    }
+    let Bound: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
+            Wvss, Scan, Symbols
+        );
+    if Bound.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉbindings,
+            Correspondence.Status,
+            Targetˉresult.Status,
+            Symbols.Status,
+            Bound.Status,
+            Correspondence.Foreignˉcount,
+            Bound.Failureˉmodule,
+            0u32,
+            Bound.Failureˉfunction,
+            0u32,
+            Bound.Failureˉoffset
+        );
+    }
+
+    let Catalogˉcount: u32 = Bytesˉreadˉu32ˉlittle(Wvfc, 12u32);
+    let Directoryˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Catalogˉcount != Correspondence.Foreignˉcount ||
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉkindˉcount(
+            Symbols.Directory, 9u32
+        ) != Catalogˉcount {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉdirectory,
+            Correspondence.Status,
+            Targetˉresult.Status,
+            Symbols.Status,
+            Bound.Status,
+            Catalogˉcount,
+            0u32, 0u32, Directoryˉentries, Catalogˉcount, 8u32
+        );
+    }
+
+    var Directoryˉentry: u32 = 0u32;
+    var Recordˉindex: u32 = 0u32;
+    while Recordˉindex < Catalogˉcount {
+        let Recordˉresult: Compilerˉsourceˉforeignˉbindingˉsummary =
+            Compilerˉsourceˉforeignˉbindingˉrecord(
+                Wvfc,
+                Symbols,
+                Targetˉresult.Value,
+                Correspondence.Status,
+                Targetˉresult.Status,
+                Symbols.Status,
+                Bound.Status,
+                Catalogˉcount,
+                Directoryˉentries,
+                Recordˉindex,
+                Directoryˉentry
+            );
+        if Recordˉresult.Status !=
+                Compilerˉsourceˉforeignˉbindingˉstatus.Valid {
+            return Recordˉresult;
+        }
+        Directoryˉentry = Recordˉresult.Failureˉdirectoryˉentry;
+        Recordˉindex = Recordˉresult.Failureˉcatalogˉrecord;
+    }
+
+    while Directoryˉentry < Directoryˉentries {
+        if Bytesˉreadˉu32ˉlittle(
+                Symbols.Directory, 20u32 + Directoryˉentry * 24u32
+            ) == 9u32 {
+            return Compilerˉsourceˉforeignˉbindingˉresult(
+                Compilerˉsourceˉforeignˉbindingˉstatus.Catalogˉdirectory,
+                Correspondence.Status,
+                Targetˉresult.Status,
+                Symbols.Status,
+                Bound.Status,
+                Catalogˉcount,
+                Bytesˉreadˉu32ˉlittle(
+                    Symbols.Directory, 16u32 + Directoryˉentry * 24u32
+                ),
+                0u32,
+                Directoryˉentry,
+                Recordˉindex,
+                16u32 + Directoryˉentry * 24u32
+            );
+        }
+        Directoryˉentry = Directoryˉentry + 1u32;
+    }
+
+    return Compilerˉsourceˉforeignˉbindingˉresult(
+        Compilerˉsourceˉforeignˉbindingˉstatus.Valid,
+        Correspondence.Status,
+        Targetˉresult.Status,
+        Symbols.Status,
+        Bound.Status,
+        Catalogˉcount,
+        0u32,
+        0u32,
+        Directoryˉentries,
+        Catalogˉcount,
+        0u32
+    );
+}

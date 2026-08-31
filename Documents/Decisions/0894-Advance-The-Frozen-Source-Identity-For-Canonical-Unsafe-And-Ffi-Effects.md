@@ -2,10 +2,10 @@
 
 ## Status
 
-Proposed provenance-repair checkpoint on 2026-08-30. The exact replacement
-manifest and local deterministic checks must pass before acceptance. Paired
-Windows/Linux development evidence remains part of Decision 0893's acceptance
-gate and must not be inferred from this source-identity repair.
+Accepted provenance-repair checkpoint on 2026-08-30. The exact replacement
+manifest, local deterministic checks, and focused front-door owner pass. Paired
+Windows/Linux production-ingress evidence remains part of Decision 0893's
+acceptance gate and must not be inferred from this source-identity repair.
 
 ## Context
 
@@ -68,6 +68,17 @@ main's focused Language 1.0 verification deterministically red.
 - The same commit then proceeds through Decision 0893's paired Windows/Linux
   development gate; that result is recorded separately and is required before
   claiming cross-host evidence.
+
+Commit `14fd50ea67fed612f7d8fd85b55ef4b9ead48658` supplied the exact
+replacement identity. GitHub run `33339426829` passed all 482 focused
+front-door cases on Windows and Linux and reported
+`generic-specializations-wvb-bytes=531` on both hosts. The jobs then failed
+only because the verification-owner registry still expected the preceding
+473-byte fixture identity. Commit `a32c9e4c` corrected that expected summary;
+run `33340292739` passed all four `verification-owner-stream` cases on both
+hosts and the final gate. This accepts the provenance repair. It does not
+supply Decision 0893's still-pending paired production-ingress owner result or
+complete Slice 8.
 
 ## Consequences
 

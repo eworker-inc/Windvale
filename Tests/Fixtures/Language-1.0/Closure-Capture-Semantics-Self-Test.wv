@@ -253,6 +253,21 @@ fn Missingˉprobe() -> i32 {
     return 42;
 }
 
+fn Foreignˉcaptureˉprobe() -> i32 {
+    let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
+        "module Captureˉforeignˉprogram; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\"; fn Outer() -> i64 { let Local: i64 = 0; let Callback = fn [copy Readˉforeignˉrecord] () -> i64 effects() { return Local; }; return 0; }"
+    );
+    if Summary.Status !=
+            Captures.Compilerˉsourceˉclosureˉcaptureˉstatus.Missingˉcapture {
+        return 66;
+    }
+    if Summary.Bindingˉstatus !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Unknownˉname {
+        return 67;
+    }
+    return 42;
+}
+
 fn Duplicateˉprobe() -> i32 {
     let Summary: Captures.Compilerˉsourceˉclosureˉcaptureˉsummary = Analyze(
         "module Captureˉduplicateˉprogram; profile core; platform linux, windows, windvale; authority application; fn Outer(Input: i32) -> i32 { let Local: i32 = 40; let Callback = fn [copy Local, move Local] () -> i32 effects() { return Local; }; return 42; }"
@@ -600,5 +615,6 @@ export fn Main() -> i32 {
     if Selected == 105u32 { return Invalidˉevidenceˉprobe(); }
     if Selected == 106u32 { return Reconstructedˉphaseˉprobe(); }
     if Selected == 107u32 { return Asyncˉcopyˉprobe(); }
+    if Selected == 108u32 { return Foreignˉcaptureˉprobe(); }
     return 64;
 }

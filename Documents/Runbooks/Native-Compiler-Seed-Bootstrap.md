@@ -24,7 +24,7 @@ and emitter, rebuilds both with that current pair, constructs the current WVB
 verifier, independently verifies both products, and requires byte-for-byte
 Stage 1/Stage 2 equality.
 
-The coordinator reports 18 named phases and 30-second progress while a child is
+The coordinator reports named phases and 30-second progress while a child is
 active. Cold host-container construction is expected to dominate the runtime;
 repeated phase progress is not a compiler retry. Success ends with:
 
@@ -33,19 +33,32 @@ native compiler convergence status=Complete products=2 ... cache=Isolated
 Native compiler bootstrap verification passed.
 ```
 
-The exact products are:
+The exact checked-in bootstrap inputs and currently pinned verifier are:
 
-- analyzer: 1,515,281 bytes, SHA-256
-  `a8687f5ec9337d95ea105b5b2d5feea453a11686251802c14110d1f171a3983a`;
-- emitter: 1,523,514 bytes, SHA-256
-  `61ebad24f080a78059bfe3c2812cdb04978873eb6891d063ac2090876dc06403`;
+- analyzer: 1,552,090 bytes, SHA-256
+  `5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77`;
+- emitter: 1,556,434 bytes, SHA-256
+  `d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9`;
   and
 - current verifier WVB: 399,387 bytes, SHA-256
   `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`.
 
+The analyzer and emitter identities in the final success line are the settled
+current-source outputs. They must match their respective Stage 1 and Stage 2
+bytes exactly, but they need not match the older checked-in bootstrap inputs.
+Record those reported identities with the qualification evidence for the
+source commit under test.
+
 A pass on one host is current-host evidence only. Run the same commit through
 the paired Windows/Linux Qualification jobs before claiming cross-host
 convergence or closing a release checkpoint.
+
+The promoted pair was already fixed-point and cross-host qualified on the
+`c02e6bd4` through `a32c9e4c` lineage. That evidence qualifies the bytes, not
+the newly shortened bootstrap path. The shortened 16-phase path passed locally
+on Windows x64 on 2026-08-31 with an isolated empty cache. Until the same
+implementing commit passes on Linux, report current-host convergence only and
+do not infer cross-host qualification from the earlier three-file transition.
 
 ## Ordinary development
 

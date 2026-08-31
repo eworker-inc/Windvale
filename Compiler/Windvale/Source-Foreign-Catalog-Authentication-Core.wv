@@ -1,6 +1,5 @@
 module Compilerˉsourceˉforeignˉcatalogˉauthentication profile portable;
 
-import Compilerˉadmissionˉevidence as Evidence;
 import Compilerˉsourceˉforeignˉcatalog as Catalog;
 import Compilerˉsourceˉtarget as Target;
 
@@ -753,9 +752,9 @@ fn Compilerˉsourceˉforeignˉauthenticationˉdigestˉequals(
         Signatureˉlength
     );
     let Hex: bytes = Textˉtoˉutf8(Bytesˉsha256ˉhex(Signature));
-    let Decoded: Evidence.Compilerˉadmissionˉevidenceˉresult =
-        Evidence.Compilerˉdecodeˉadmissionˉsha256ˉhex(Hex);
-    if Decoded.Status != Evidence.Compilerˉadmissionˉevidenceˉstatus.Valid ||
+    let Decoded: Catalog.Compilerˉsourceˉforeignˉdigestˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉdecodeˉsha256ˉhex(Hex);
+    if !Decoded.Valid ||
         Bytesˉlength(Decoded.Value) != 32u32 {
         return false;
     }

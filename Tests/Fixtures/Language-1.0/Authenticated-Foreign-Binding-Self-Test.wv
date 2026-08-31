@@ -1,0 +1,440 @@
+module Languageˉoneˉauthenticatedˉforeignˉbindingˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
+import Compilerˉsourceˉforeignˉcatalog as Catalog;
+import Compilerˉsourceˉforeignˉcatalogˉauthentication as Authentication;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉtarget as Target;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Patchˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Bytesˉfromˉu16ˉlittle(Value)),
+        Bytesˉslice(Input, Offset + 2u32, Bytesˉlength(Input) - Offset - 2u32)
+    );
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Bytesˉfromˉu32ˉlittle(Value)),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32)
+    );
+}
+
+fn Declaration() -> text {
+    return "unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\";";
+}
+
+fn Source(Declarationˉtext: text, Body: text) -> bytes {
+    var Value: text = "module Root; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; ";
+    Value = Textˉconcat(Value, Declarationˉtext);
+    return Textˉtoˉutf8(Textˉconcat(Value, Body));
+}
+
+fn Oneˉsourceˉset(Sourceˉbytes: bytes) -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(20u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(36u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes)));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(12u32));
+    return Bytesˉconcat(Value, Sourceˉbytes);
+}
+
+fn Wvtdˉfor(Descriptor: Target.Compilerˉsourceˉtargetˉdescriptor) -> bytes {
+    let Empty: bytes = Textˉtoˉutf8("");
+    let Constructed: Target.Compilerˉsourceˉtargetˉwvtdˉresult =
+        Target.Compilerˉsourceˉtargetˉwvtdˉconstruct(Descriptor, Empty, Empty);
+    return Constructed.Value;
+}
+
+fn Wvtd() -> bytes {
+    return Wvtdˉfor(Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1());
+}
+
+// This is the one-record canonical WVFC fixture for Declaration(). Keeping the
+// exact spans and digest here avoids the producer and SHA-256 library closure.
+fn Catalogˉfixture() -> bytes {
+    let Digest: Catalog.Compilerˉsourceˉforeignˉdigestˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉdecodeˉsha256ˉhex(
+            Textˉtoˉutf8("69ee25f8286d8fb96b9bb3f1f4abb1e7d5fdd9c8c6b5dfa144456151ca7a02d3")
+        );
+    let Record: Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecord(
+            0u32, 0u32,
+            Catalog.COMPILER_SOURCE_FOREIGN_CATALOG_FLAG_UNSAFE,
+            Catalog.COMPILER_SOURCE_FOREIGN_ABI_CONTRACT_BUFFER_SYSV_AMD64_C_V1,
+            91u32, 253u32, 156u32, 21u32, 107u32, 44u32, 312u32, 30u32,
+            153u32, 154u32, 290u32, 17u32, Digest.Value
+        );
+    let Recordˉbytes: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉrecordˉconstruct(1u32, Record);
+    let Catalogˉbytes: Catalog.Compilerˉsourceˉforeignˉcatalogˉresult =
+        Catalog.Compilerˉsourceˉforeignˉcatalogˉconstruct(1u32, Recordˉbytes.Value);
+    return Catalogˉbytes.Value;
+}
+
+fn Bindˉbody(Body: text) -> Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary {
+    let Wvss: bytes = Oneˉsourceˉset(Source(Declaration(), Body));
+    return Foreignˉbinding.Compilerˉbindˉsourceˉforeignˉdeclarations(
+        Wvss, Wvtd(), Catalogˉfixture()
+    );
+}
+
+fn Validˉadapterˉresult(
+    Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary,
+    Directoryˉentries: u32
+) -> bool {
+    return Result.Status == Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Valid &&
+        Result.Correspondenceˉstatus == Authentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID &&
+        Result.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Result.Symbolˉstatus == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Result.Bindingˉstatus == Bindings.Compilerˉsourceˉbindingˉstatus.Valid &&
+        Result.Foreignˉcount == 1u32 && Result.Failureˉmodule == 0u32 &&
+        Result.Failureˉdeclaration == 0u32 &&
+        Result.Failureˉdirectoryˉentry == Directoryˉentries &&
+        Result.Failureˉcatalogˉrecord == 1u32 && Result.Failureˉoffset == 0u32;
+}
+
+fn Lookupˉisˉvalid(
+    Wvss: bytes,
+    Directory: bytes,
+    Lookup: bytes
+) -> bool {
+    return Symbols.Compilerˉsourceˉsymbolsˉlookupˉshapeˉisˉvalid(
+        Wvss,
+        Directory,
+        Lookup,
+        Bytesˉreadˉu32ˉlittle(Wvss, 8u32),
+        Bytesˉreadˉu32ˉlittle(Directory, 8u32)
+    );
+}
+
+fn Callableˉrangesˉoffset(Lookup: bytes, Modules: u32) -> u32 {
+    return Symbols.Compilerˉsourceˉsymbolsˉlookupˉaliasˉoffset(Lookup) +
+        Modules * Modules * 8u32;
+}
+
+fn Nominalˉpayloadˉoffset(Lookup: bytes) -> u32 {
+    return 4112u32 + Bytesˉreadˉu32ˉlittle(Lookup, 8u32) * 4u32;
+}
+
+fn Forwardˉpayloadˉoffset(Lookup: bytes) -> u32 {
+    return Nominalˉpayloadˉoffset(Lookup) +
+        (Bytesˉreadˉu32ˉlittle(Lookup, 4104u32) +
+            Bytesˉreadˉu32ˉlittle(Lookup, 4108u32) +
+            Bytesˉreadˉu32ˉlittle(Lookup, 12u32)) * 4u32;
+}
+
+fn Wrongˉcallableˉbucket(
+    Lookup: bytes,
+    Hash: u32,
+    Modules: u32
+) -> bytes {
+    let Ranges: u32 = Callableˉrangesˉoffset(Lookup, Modules);
+    var Result: bytes = Lookup;
+    if Hash < 255u32 {
+        Result = Patchˉu32(Lookup, Ranges + Hash * 8u32 + 4u32, 0u32);
+        Result = Patchˉu32(Result, Ranges + (Hash + 1u32) * 8u32, 0u32);
+        return Patchˉu32(
+            Result, Ranges + (Hash + 1u32) * 8u32 + 4u32, 1u32
+        );
+    }
+    Result = Patchˉu32(
+        Lookup, Ranges + (Hash - 1u32) * 8u32 + 4u32, 1u32
+    );
+    Result = Patchˉu32(Result, Ranges + Hash * 8u32, 1u32);
+    return Patchˉu32(Result, Ranges + Hash * 8u32 + 4u32, 0u32);
+}
+
+fn Bindingˉfailureˉis(
+    Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary,
+    Status: Bindings.Compilerˉsourceˉbindingˉstatus
+) -> bool {
+    return Result.Status == Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉbindings &&
+        Result.Correspondenceˉstatus == Authentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID &&
+        Result.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Result.Symbolˉstatus == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Result.Bindingˉstatus == Status && Result.Foreignˉcount == 1u32 &&
+        Result.Failureˉmodule == 0u32 && Result.Failureˉdeclaration == 0u32 &&
+        Result.Failureˉdirectoryˉentry == 1u32 &&
+        Result.Failureˉcatalogˉrecord == 0u32 && Result.Failureˉoffset == 431u32;
+}
+
+fn Invocation(Arguments: text) -> text {
+    var Body: text = " fn Invoke(Destination: u64, Capacity: u64, Expectedˉgeneration: u64) -> i64 { return Readˉforeignˉrecord(";
+    Body = Textˉconcat(Body, Arguments);
+    return Textˉconcat(Body, "); }");
+}
+
+fn Caseˉcanonicalˉbinding() -> bool {
+    return Validˉadapterˉresult(Bindˉbody(""), 1u32);
+}
+
+fn Caseˉsymbolˉversions() -> bool {
+    let Emptyˉwvss: bytes = Oneˉsourceˉset(Source("", ""));
+    let Foreignˉwvss: bytes = Oneˉsourceˉset(Source(Declaration(), ""));
+    let Emptyˉsymbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Emptyˉwvss);
+    let Foreignˉsymbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Foreignˉwvss);
+    return Emptyˉsymbols.Status == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Bytesˉreadˉu16ˉlittle(Emptyˉsymbols.Directory, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Emptyˉsymbols.Directory, 6u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Emptyˉsymbols.Lookup, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Emptyˉsymbols.Lookup, 6u32) == 2u32 &&
+        Lookupˉisˉvalid(
+            Emptyˉwvss, Emptyˉsymbols.Directory, Emptyˉsymbols.Lookup
+        ) &&
+        Foreignˉsymbols.Status == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Bytesˉreadˉu16ˉlittle(Foreignˉsymbols.Directory, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Foreignˉsymbols.Directory, 6u32) == 2u32 &&
+        Bytesˉreadˉu16ˉlittle(Foreignˉsymbols.Lookup, 4u32) == 1u32 &&
+        Bytesˉreadˉu16ˉlittle(Foreignˉsymbols.Lookup, 6u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Foreignˉsymbols.Directory, 8u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Foreignˉsymbols.Directory, 20u32) == 9u32 &&
+        Lookupˉisˉvalid(
+            Foreignˉwvss, Foreignˉsymbols.Directory, Foreignˉsymbols.Lookup
+        );
+}
+
+fn Caseˉmixedˉsymbolˉversions() -> bool {
+    let Foreignˉwvss: bytes = Oneˉsourceˉset(Source(Declaration(), ""));
+    let Foreignˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Foreignˉwvss);
+    let Emptyˉwvss: bytes = Oneˉsourceˉset(Source("", ""));
+    let Emptyˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Emptyˉwvss);
+    return !Lookupˉisˉvalid(
+            Foreignˉwvss,
+            Foreignˉvalue.Directory,
+            Patchˉu16(Foreignˉvalue.Lookup, 6u32, 2u32)
+        ) &&
+        !Lookupˉisˉvalid(
+            Emptyˉwvss,
+            Emptyˉvalue.Directory,
+            Patchˉu16(Emptyˉvalue.Lookup, 6u32, 3u32)
+        );
+}
+
+fn Caseˉtrailingˉsymbolˉbytes() -> bool {
+    let Sourceˉbytes: bytes = Source(Declaration(), "");
+    let Wvss: bytes = Oneˉsourceˉset(Sourceˉbytes);
+    let Value: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Wvss);
+    let Trailingˉdirectory: bytes = Bytesˉconcat(Value.Directory, Bytesˉfromˉu16ˉlittle(0u32));
+    let Trailingˉlookup: bytes = Bytesˉconcat(Value.Lookup, Bytesˉfromˉu16ˉlittle(0u32));
+    let Hash: u32 = Symbols.Compilerˉsourceˉsymbolsˉcallableˉhash(
+        Sourceˉbytes, 156u32, 21u32, 0u32
+    );
+    return !Lookupˉisˉvalid(
+            Wvss, Trailingˉdirectory, Value.Lookup
+        ) &&
+        !Lookupˉisˉvalid(
+            Wvss, Value.Directory, Trailingˉlookup
+        ) &&
+        !Lookupˉisˉvalid(
+            Wvss,
+            Value.Directory,
+            Wrongˉcallableˉbucket(Value.Lookup, Hash, 1u32)
+        );
+}
+
+fn Caseˉinvalidˉsymbolˉkind() -> bool {
+    let Wvss: bytes = Oneˉsourceˉset(Source(Declaration(), ""));
+    let Value: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Wvss);
+    let Twoˉwvss: bytes = Oneˉsourceˉset(Source(
+        Declaration(), " fn Other() -> i64 { return 0; }"
+    ));
+    let Two: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Twoˉwvss);
+    let Callableˉpayload: u32 = Callableˉrangesˉoffset(Two.Lookup, 1u32) + 2048u32;
+    let Duplicateˉprimary: bytes = Patchˉu32(
+        Two.Lookup, 4116u32, Bytesˉreadˉu32ˉlittle(Two.Lookup, 4112u32)
+    );
+    let Duplicateˉcallable: bytes = Patchˉu32(
+        Two.Lookup,
+        Callableˉpayload + 4u32,
+        Bytesˉreadˉu32ˉlittle(Two.Lookup, Callableˉpayload)
+    );
+    let Nominalˉwvss: bytes = Oneˉsourceˉset(Source(
+        "",
+        " record Zebra { Value: i32; } record Alpha { Value: i32; } enum Mode: u8 { Ready = 1u8; } variant Choice { None; } fn Plain() -> i64 { return 0; }"
+    ));
+    let Nominalˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Nominalˉwvss);
+    let Nominalˉpayload: u32 = Nominalˉpayloadˉoffset(Nominalˉvalue.Lookup);
+    let Forwardˉpayload: u32 = Forwardˉpayloadˉoffset(Nominalˉvalue.Lookup);
+    let Duplicateˉnominalˉreverse: bytes = Patchˉu32(
+        Nominalˉvalue.Lookup,
+        Nominalˉpayload + 4u32,
+        Bytesˉreadˉu32ˉlittle(Nominalˉvalue.Lookup, Nominalˉpayload)
+    );
+    let Wrongˉnominalˉorderˉfirst: bytes = Patchˉu32(
+        Nominalˉvalue.Lookup, Nominalˉpayload, 0u32
+    );
+    let Wrongˉnominalˉorderˉreverse: bytes = Patchˉu32(
+        Wrongˉnominalˉorderˉfirst, Nominalˉpayload + 4u32, 1u32
+    );
+    let Wrongˉnominalˉorderˉforwardˉfirst: bytes = Patchˉu32(
+        Wrongˉnominalˉorderˉreverse, Forwardˉpayload, 0u32
+    );
+    let Wrongˉnominalˉorder: bytes = Patchˉu32(
+        Wrongˉnominalˉorderˉforwardˉfirst,
+        Forwardˉpayload + 4u32,
+        1u32
+    );
+    let Wrongˉnominalˉforward: bytes = Patchˉu32(
+        Nominalˉvalue.Lookup, Forwardˉpayload + 4u32, 1u32
+    );
+    let Wrongˉnonnominalˉsentinel: bytes = Patchˉu32(
+        Nominalˉvalue.Lookup, Forwardˉpayload + 16u32, 0u32
+    );
+    return !Lookupˉisˉvalid(
+            Wvss, Patchˉu32(Value.Directory, 20u32, 13u32), Value.Lookup
+        ) &&
+        !Lookupˉisˉvalid(
+            Wvss, Patchˉu32(Value.Directory, 16u32, 1u32), Value.Lookup
+        ) &&
+        !Lookupˉisˉvalid(Twoˉwvss, Two.Directory, Duplicateˉprimary) &&
+        !Lookupˉisˉvalid(Twoˉwvss, Two.Directory, Duplicateˉcallable) &&
+        Nominalˉvalue.Status == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Lookupˉisˉvalid(
+            Nominalˉwvss, Nominalˉvalue.Directory, Nominalˉvalue.Lookup
+        ) &&
+        !Lookupˉisˉvalid(
+            Nominalˉwvss, Nominalˉvalue.Directory, Duplicateˉnominalˉreverse
+        ) &&
+        !Lookupˉisˉvalid(
+            Nominalˉwvss, Nominalˉvalue.Directory, Wrongˉnominalˉorder
+        ) &&
+        !Lookupˉisˉvalid(
+            Nominalˉwvss, Nominalˉvalue.Directory, Wrongˉnominalˉforward
+        ) &&
+        !Lookupˉisˉvalid(
+            Nominalˉwvss, Nominalˉvalue.Directory, Wrongˉnonnominalˉsentinel
+        ) &&
+        !Lookupˉisˉvalid(
+            Patchˉu32(Nominalˉwvss, 12u32, 0u32),
+            Nominalˉvalue.Directory,
+            Nominalˉvalue.Lookup
+        );
+}
+
+fn Caseˉvalidˉpositionalˉcall() -> bool {
+    return Validˉadapterˉresult(
+        Bindˉbody(Invocation("Destination, Capacity, Expectedˉgeneration")), 2u32
+    );
+}
+
+fn Caseˉvalidˉnamedˉcall() -> bool {
+    return Validˉadapterˉresult(
+        Bindˉbody(Invocation("Destination: Destination, Capacity: Capacity, Expectedˉgeneration: Expectedˉgeneration")),
+        2u32
+    );
+}
+
+fn Caseˉbadˉlabel() -> bool {
+    return Bindingˉfailureˉis(
+        Bindˉbody(Invocation("Length: Destination, Capacity: Capacity, Expectedˉgeneration: Expectedˉgeneration")),
+        Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉargument
+    );
+}
+
+fn Caseˉmissingˉlabel() -> bool {
+    return Bindingˉfailureˉis(
+        Bindˉbody(Invocation("Destination: Destination, Capacity: Capacity")),
+        Bindings.Compilerˉsourceˉbindingˉstatus.Callˉarity
+    );
+}
+
+fn Caseˉduplicateˉlabel() -> bool {
+    return Bindingˉfailureˉis(
+        Bindˉbody(Invocation("Destination: Destination, Destination: Capacity, Expectedˉgeneration: Expectedˉgeneration")),
+        Bindings.Compilerˉsourceˉbindingˉstatus.Invalidˉargument
+    );
+}
+
+fn Caseˉarity() -> bool {
+    return Bindingˉfailureˉis(
+        Bindˉbody(Invocation("Destination, Capacity, Expectedˉgeneration, Capacity")),
+        Bindings.Compilerˉsourceˉbindingˉstatus.Callˉarity
+    );
+}
+
+fn Caseˉgenericˉrejection() -> bool {
+    let Body: text = " fn Invoke(Destination: u64, Capacity: u64, Expectedˉgeneration: u64) -> i64 { return Readˉforeignˉrecord::<u64>(Destination: Destination, Capacity: Capacity, Expectedˉgeneration: Expectedˉgeneration); }";
+    return Bindingˉfailureˉis(
+        Bindˉbody(Body), Bindings.Compilerˉsourceˉbindingˉstatus.Unknownˉcall
+    );
+}
+
+fn Caseˉcatalogˉrecordˉtamper() -> bool {
+    let Wvss: bytes = Oneˉsourceˉset(Source(Declaration(), ""));
+    let Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Foreignˉbinding.Compilerˉbindˉsourceˉforeignˉdeclarations(
+            Wvss, Wvtd(), Patchˉu32(Catalogˉfixture(), 52u32, 1u32)
+        );
+    return Result.Status == Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Sourceˉcorrespondence &&
+        Result.Correspondenceˉstatus == Authentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_RECORD_DECLARATION &&
+        Result.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
+        Result.Symbolˉstatus == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Result.Bindingˉstatus == Bindings.Compilerˉsourceˉbindingˉstatus.Valid &&
+        Result.Foreignˉcount == 0u32 && Result.Failureˉmodule == 0u32 &&
+        Result.Failureˉdeclaration == 0u32 &&
+        Result.Failureˉdirectoryˉentry == 0u32 &&
+        Result.Failureˉcatalogˉrecord == 0u32 && Result.Failureˉoffset == 52u32;
+}
+
+fn Caseˉunsupportedˉtarget() -> bool {
+    let Wvss: bytes = Oneˉsourceˉset(Source(Declaration(), ""));
+    let Unsupported: bytes = Wvtdˉfor(Target.Compilerˉsourceˉtargetˉwindowsˉx86_64ˉnoneˉv1());
+    let Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Foreignˉbinding.Compilerˉbindˉsourceˉforeignˉdeclarations(
+            Wvss, Unsupported, Catalogˉfixture()
+        );
+    return Result.Status == Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Unsupportedˉtarget &&
+        Result.Correspondenceˉstatus == Authentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_FOREIGN_TARGET &&
+        Result.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_UNSUPPORTED_TARGET &&
+        Result.Symbolˉstatus == Symbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Result.Bindingˉstatus == Bindings.Compilerˉsourceˉbindingˉstatus.Valid &&
+        Result.Foreignˉcount == 1u32 && Result.Failureˉmodule == 0u32 &&
+        Result.Failureˉdeclaration == 0u32 &&
+        Result.Failureˉdirectoryˉentry == 0u32 &&
+        Result.Failureˉcatalogˉrecord == 0u32 && Result.Failureˉoffset == 12u32;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Selected == 97u32 && Caseˉcanonicalˉbinding() { return 42; }
+    if Selected == 98u32 && Caseˉsymbolˉversions() { return 42; }
+    if Selected == 99u32 && Caseˉmixedˉsymbolˉversions() { return 42; }
+    if Selected == 100u32 && Caseˉtrailingˉsymbolˉbytes() { return 42; }
+    if Selected == 101u32 && Caseˉinvalidˉsymbolˉkind() { return 42; }
+    if Selected == 102u32 && Caseˉvalidˉpositionalˉcall() { return 42; }
+    if Selected == 103u32 && Caseˉvalidˉnamedˉcall() { return 42; }
+    if Selected == 104u32 && Caseˉbadˉlabel() { return 42; }
+    if Selected == 105u32 && Caseˉmissingˉlabel() { return 42; }
+    if Selected == 106u32 && Caseˉduplicateˉlabel() { return 42; }
+    if Selected == 107u32 && Caseˉarity() { return 42; }
+    if Selected == 108u32 && Caseˉgenericˉrejection() { return 42; }
+    if Selected == 109u32 && Caseˉcatalogˉrecordˉtamper() { return 42; }
+    if Selected == 110u32 && Caseˉunsupportedˉtarget() { return 42; }
+    return 1;
+}

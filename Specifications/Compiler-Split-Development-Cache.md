@@ -85,28 +85,34 @@ after a producer, measurement, manifest, or lost-race failure, after proving
 that the candidate remains a direct child of the selected family. A successful
 rename clears the temporary path and is preserved.
 
-## Development bootstrap bridge
+## Qualified two-file bootstrap
 
-The Language 1.0 front door retains a portable 992,412-byte analyzer,
-895,787-byte target-aware emitter, and 1,146,083-byte WVIR 1.9 bridge emitter
-under
+The Language 1.0 front door retains the qualified current 1,552,090-byte
+analyzer and 1,556,434-byte target-aware emitter under
 `Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/`. Their manifest binds
-the Decision 0813 checkpoint and Decision 0846 transition, complete cache keys,
-Project 2 closures, source identities, sizes, and digests. The active gate uses
-the original pair to reconstruct and package the current analyzer, assigns it a
-normal role-specific version-2 identity, and then uses that analyzer with the
-validated bridge emitter to reconstruct the current target-aware emitter.
+the Decision 0896 promotion, current Project 2 roots, source identities, sizes,
+and digests. The active gate packages that pair with normal role-specific
+version-2 identities and uses it directly to reconstruct the current analyzer
+and emitter.
 
 The checkpoint is not another compiler source tree, native executable, release
-artifact, or qualification claim. The bridge contains the reader side of the
-atomic 28-byte WVIR transition only; it does not retain an old-format decoder
-in current compiler source. Remove it after a promoted compiler checkpoint can
-consume current WVIR without the transition. The obsolete historical analyzer
-and emitter cannot consume the current WVIR version directly and are no longer
-the final-emission producer.
-The gate also omits the former monolithic compiler-source-set build because its
-result was never consumed; compiler-scale evidence comes from the current split
-analyzer/emitter reconstruction and fixed point.
+artifact, source-admission claim, or fallback compiler. Both promoted products
+consume the current compact WVIR format. The former Decision 0813 pair and
+Decision 0846 bridge remain historical provenance only; keeping them in the
+active inventory would preserve a transition that the current pair no longer
+needs. The gate also omits the former monolithic compiler-source-set build
+because its result was never consumed; compiler-scale evidence comes from the
+current split analyzer/emitter reconstruction and fixed point.
+
+`Build-Current-Split-Project-Wvb.mjs` accepts one through eight ordered
+`<project.wvproj> <output.wvb>` pairs. It packages and identifies the pinned
+pair, reconstructs and identifies the current analyzer/emitter pair once, then
+builds every requested target through that same immutable current identity.
+Output paths must be distinct bounded `.wvb` targets with existing canonical
+parents. A single pair retains the original result line; a multi-project run
+reports each product's size and digest plus one aggregate completion line. This
+bounded batching is a verification-time optimization only: it changes neither
+the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte

@@ -109,6 +109,16 @@ The v8 amendment changes only the exact Language 1.0 semantic-specification
 identity needed to bind canonical `unsafe.address` and `ffi.call` effects; it
 does not rewrite the Decision 0870 manifest or any earlier identity.
 
+Decision 0894 is accepted by paired focused evidence. At commit `14fd50ea`,
+GitHub run `33339426829` passed all 482 `language-1-front-door` cases on
+Windows and Linux, with both hosts reporting
+`generic-specializations-wvb-bytes=531`. Both jobs then stopped only at the
+stale registry expectation of 473 bytes. Commit `a32c9e4c` updated that expected
+identity, and run `33340292739` passed all four
+`verification-owner-stream` cases on both hosts and the final gate. This is
+cross-host evidence for the source-identity repair and shared front door, not
+for the production-ingress owner or complete Slice 8.
+
 `Tests/Native/Language-1.0-Fixture-Inventory.txt` further fixes 16 workload
 bundles containing 72 `.wv` source fixtures and 482,325 source bytes. The
 inventory records the exact source count, byte count, aggregate identity,
@@ -4796,7 +4806,12 @@ produced exact accepted output and no diagnostics. This is observed
 migration-scale evidence, not a byte-identical current-source measurement or
 hard process ceiling.
 
-Paired-host evidence remains pending. Decision 0893 therefore remains
-Proposed; this candidate is not production-ingress acceptance, foreign semantic
-lowering, runtime containment, Slice 8 completion, or whole-compiler
-qualification.
+The shared Language 1.0 front door has paired-host evidence: commit `14fd50ea`
+passed all 482 cases on Windows and Linux in run `33339426829`, including the
+same 531-byte generic-specializations WVB summary. Its only later failure was
+the stale 473-byte registry expectation. Commit `a32c9e4c` corrected that
+identity, and run `33340292739` passed the four-case owner stream on Windows
+and Linux plus the final gate. Neither run executed the 21-case production-
+ingress owner on Linux, so Decision 0893 remains Proposed. This candidate is
+not production-ingress acceptance, foreign semantic lowering, runtime
+containment, Slice 8 completion, or whole-compiler qualification.

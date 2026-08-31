@@ -13,18 +13,18 @@ import { fileURLToPath } from 'node:url';
 
 const MAXIMUM_DIAGNOSTIC_BYTES = 1_048_576;
 const MAXIMUM_INPUT_BYTES = 16_777_216;
+const MAXIMUM_TARGET_PROJECTS = 8;
 const TOOL_TIMEOUT_MILLISECONDS = 600_000;
-const BOOTSTRAP_ANALYZER_BYTES = 992_412;
-const BOOTSTRAP_ANALYZER_SHA256 =
-    '26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120';
-const BOOTSTRAP_EMITTER_BYTES = 895_787;
-const BOOTSTRAP_EMITTER_SHA256 =
-    'ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94';
-const BRIDGE_EMITTER_BYTES = 1_146_083;
-const BRIDGE_EMITTER_SHA256 =
-    '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb';
+const PINNED_ANALYZER_BYTES = 1_552_090;
+const PINNED_ANALYZER_SHA256 =
+    '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77';
+const PINNED_EMITTER_BYTES = 1_556_434;
+const PINNED_EMITTER_SHA256 =
+    'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9';
 
-if (process.argv.length !== 4) {
+const Argumentˉcount = process.argv.length - 2;
+if (Argumentˉcount < 2 || Argumentˉcount % 2 !== 0 ||
+    Argumentˉcount / 2 > MAXIMUM_TARGET_PROJECTS) {
     Usage();
 }
 if (process.arch !== 'x64' ||
@@ -34,43 +34,48 @@ if (process.arch !== 'x64' ||
 
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
-const Project = path.resolve(process.argv[2]);
-const Outputˉargument = path.resolve(process.argv[3]);
-if (path.extname(Project).toLowerCase() !== '.wvproj' ||
-    path.extname(Outputˉargument).toLowerCase() !== '.wvb') {
-    Usage();
+const Targets = [];
+const Outputˉidentities = new Set();
+for (let Index = 2; Index < process.argv.length; Index += 2) {
+    const Project = path.resolve(process.argv[Index]);
+    const Outputˉargument = path.resolve(process.argv[Index + 1]);
+    if (path.extname(Project).toLowerCase() !== '.wvproj' ||
+        path.extname(Outputˉargument).toLowerCase() !== '.wvb') {
+        Usage();
+    }
+    Requireˉordinaryˉfile(Project, 65_536, 'project manifest');
+    const Outputˉparent = Canonicalˉordinaryˉdirectory(
+        path.dirname(Outputˉargument),
+        'output parent',
+    );
+    const Output = path.join(Outputˉparent, path.basename(Outputˉargument));
+    const Outputˉidentity = process.platform === 'win32'
+        ? Output.toLowerCase()
+        : Output;
+    if (Outputˉidentities.has(Outputˉidentity)) {
+        Reject(`Duplicate current split-project output: ${Output}.`);
+    }
+    Outputˉidentities.add(Outputˉidentity);
+    Targets.push({ Project, Output });
 }
-Requireˉordinaryˉfile(Project, 65_536, 'project manifest');
-const Outputˉparent = Canonicalˉordinaryˉdirectory(
-    path.dirname(Outputˉargument),
-    'output parent',
-);
-const Output = path.join(Outputˉparent, path.basename(Outputˉargument));
 
 const Bootstrapˉroot = path.join(
     Repositoryˉroot,
     'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap', 'Wvb',
 );
-const Bootstrapˉanalyzerˉwvb = path.join(Bootstrapˉroot, 'wvanalyze.wvb');
-const Bootstrapˉemitterˉwvb = path.join(Bootstrapˉroot, 'wvemit.wvb');
-const Bridgeˉemitterˉwvb = path.join(Bootstrapˉroot, 'wvemit-wvir-1.9-bridge.wvb');
+const Pinnedˉanalyzerˉwvb = path.join(Bootstrapˉroot, 'wvanalyze.wvb');
+const Pinnedˉemitterˉwvb = path.join(Bootstrapˉroot, 'wvemit.wvb');
 Requireˉexactˉfile(
-    Bootstrapˉanalyzerˉwvb,
-    BOOTSTRAP_ANALYZER_BYTES,
-    BOOTSTRAP_ANALYZER_SHA256,
-    'bootstrap analyzer',
+    Pinnedˉanalyzerˉwvb,
+    PINNED_ANALYZER_BYTES,
+    PINNED_ANALYZER_SHA256,
+    'pinned analyzer',
 );
 Requireˉexactˉfile(
-    Bootstrapˉemitterˉwvb,
-    BOOTSTRAP_EMITTER_BYTES,
-    BOOTSTRAP_EMITTER_SHA256,
-    'bootstrap emitter',
-);
-Requireˉexactˉfile(
-    Bridgeˉemitterˉwvb,
-    BRIDGE_EMITTER_BYTES,
-    BRIDGE_EMITTER_SHA256,
-    'WVIR 1.9 bridge emitter',
+    Pinnedˉemitterˉwvb,
+    PINNED_EMITTER_BYTES,
+    PINNED_EMITTER_SHA256,
+    'pinned emitter',
 );
 
 const Temporaryˉroot = Canonicalˉordinaryˉdirectory(
@@ -82,9 +87,8 @@ const Work = mkdtempSync(path.join(
     'windvale-current-split-project-',
 ));
 const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
-const Bootstrapˉanalyzer = path.join(Work, `Bootstrap-Analyzer${Suffix}`);
-const Bootstrapˉemitter = path.join(Work, `Bootstrap-Emitter${Suffix}`);
-const Bridgeˉemitter = path.join(Work, `Bridge-Emitter${Suffix}`);
+const Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Suffix}`);
+const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
 const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
 const Analyzer = path.join(Work, `Analyzer${Suffix}`);
 const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
@@ -92,69 +96,94 @@ const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
 const Emitter = path.join(Work, `Emitter${Suffix}`);
 const Emitterˉidentity = path.join(Work, 'Emitter.identity');
 let Step = 0;
+const Totalˉsteps = 10 + Targets.length;
 
 try {
-    await Runˉnative('bootstrap-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bootstrapˉanalyzerˉwvb, Bootstrapˉanalyzer, '--development-cache',
+    await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
     ]);
-    await Runˉnative('bootstrap-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bootstrapˉemitterˉwvb, Bootstrapˉemitter, '--development-cache',
+    await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
     ]);
-    const Bootstrapˉanalyzerˉidentity = path.join(
-        Work, 'Bootstrap-Analyzer.identity',
+    const Pinnedˉanalyzerˉidentity = path.join(
+        Work, 'Pinned-Analyzer.identity',
     );
-    const Bootstrapˉemitterˉidentity = path.join(
-        Work, 'Bootstrap-Emitter.identity',
+    const Pinnedˉemitterˉidentity = path.join(
+        Work, 'Pinned-Emitter.identity',
     );
-    await Runˉnode('bootstrap-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
+    await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+        'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
     ]);
-    await Runˉnode('bootstrap-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+    await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+        'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    await Runˉnative('bridge-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bridgeˉemitterˉwvb, Bridgeˉemitter, '--development-cache',
-    ]);
-    const Bridgeˉemitterˉidentity = path.join(Work, 'Bridge-Emitter.identity');
-    await Runˉnode('bridge-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Bridgeˉemitter, Bridgeˉemitterˉidentity,
-    ]);
-    await Runˉnode('current-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('stage1-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
         Analyzerˉwvb,
-        Bootstrapˉanalyzer,
-        Bootstrapˉanalyzerˉidentity,
-        Bootstrapˉemitter,
-        Bootstrapˉemitterˉidentity,
+        Pinnedˉanalyzer,
+        Pinnedˉanalyzerˉidentity,
+        Pinnedˉemitter,
+        Pinnedˉemitterˉidentity,
     ]);
-    await Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('stage1-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Analyzerˉwvb, Analyzer, '--development-cache',
     ]);
-    await Runˉnode('current-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Analyzer, Analyzerˉidentity,
     ]);
-    await Runˉnode('current-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('stage1-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
         Emitterˉwvb,
         Analyzer,
         Analyzerˉidentity,
-        Bridgeˉemitter,
-        Bridgeˉemitterˉidentity,
+        Pinnedˉemitter,
+        Pinnedˉemitterˉidentity,
     ]);
-    await Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Emitterˉwvb, Emitter, '--development-cache',
     ]);
-    await Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('stage1-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,
     ]);
-    await Runˉnode('target-project-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Project, Output, Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
-    ]);
-    const Evidence = Fileˉevidence(Output, 'published WVB', MAXIMUM_INPUT_BYTES);
-    process.stdout.write(
-        `current split project status=Complete steps=${Step} ` +
-        `wvb-bytes=${Evidence.bytes} wvb-sha256=${Evidence.sha256}\n`,
-    );
+    const Evidence = [];
+    for (const [Index, Target] of Targets.entries()) {
+        const Label = Targets.length === 1
+            ? 'target-project-build'
+            : `target-project-build-${Index + 1}`;
+        await Runˉnode(Label, 'Build-Cached-Split-Project-Wvb.mjs', [
+            Target.Project,
+            Target.Output,
+            Analyzer,
+            Analyzerˉidentity,
+            Emitter,
+            Emitterˉidentity,
+        ]);
+        const Targetˉevidence = Fileˉevidence(
+            Target.Output,
+            `published WVB ${Index + 1}`,
+            MAXIMUM_INPUT_BYTES,
+        );
+        Evidence.push(Targetˉevidence);
+        if (Targets.length > 1) {
+            process.stdout.write(
+                `current split project target=${Index + 1}/${Targets.length} ` +
+                `wvb-bytes=${Targetˉevidence.bytes} ` +
+                `wvb-sha256=${Targetˉevidence.sha256}\n`,
+            );
+        }
+    }
+    if (Targets.length === 1) {
+        process.stdout.write(
+            `current split project status=Complete steps=${Step} ` +
+            `wvb-bytes=${Evidence[0].bytes} ` +
+            `wvb-sha256=${Evidence[0].sha256}\n`,
+        );
+    } else {
+        process.stdout.write(
+            `current split projects status=Complete steps=${Step} ` +
+            `projects=${Targets.length}\n`,
+        );
+    }
 } finally {
     const Resolved = path.resolve(Work);
     if (path.dirname(Resolved) !== Temporaryˉroot ||
@@ -192,7 +221,7 @@ async function Runˉnode(Label, Name, Arguments) {
 async function Run(Label, Command, Arguments) {
     Step += 1;
     process.stdout.write(
-        `START current split project step=${Step}/13 phase=${Label}\n`,
+        `START current split project step=${Step}/${Totalˉsteps} phase=${Label}\n`,
     );
     const Result = await new Promise((Resolve, Rejectˉpromise) => {
         const Child = spawn(Command, Arguments, {
@@ -206,7 +235,8 @@ async function Run(Label, Command, Arguments) {
         let Timedˉout = false;
         const Progress = setInterval(() => {
             process.stdout.write(
-                `PROGRESS current split project step=${Step}/13 phase=${Label} ` +
+                `PROGRESS current split project step=${Step}/${Totalˉsteps} ` +
+                `phase=${Label} ` +
                 `elapsed-seconds=${Math.floor((Date.now() - Started) / 1_000)}\n`,
             );
         }, 30_000);
@@ -252,7 +282,7 @@ async function Run(Label, Command, Arguments) {
         );
     }
     process.stdout.write(
-        `PASS  current split project step=${Step}/13 phase=${Label}\n`,
+        `PASS  current split project step=${Step}/${Totalˉsteps} phase=${Label}\n`,
     );
 }
 
@@ -325,7 +355,8 @@ function Sameˉpath(Left, Right) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Build-Current-Split-Project-Wvb.mjs ' +
-        '<project.wvproj> <output.wvb>\n',
+        '<project.wvproj> <output.wvb> ' +
+        '[<project.wvproj> <output.wvb> ...]\n',
     );
     process.exit(64);
 }

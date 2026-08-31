@@ -20,6 +20,7 @@ import {
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
+const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const TESTS = [
@@ -51,7 +52,7 @@ const TESTS = [
     {
         Name: 'closure-captures',
         Project: 'Windvale-Native-Test-Language-1-Closure-Capture-Semantics.wvproj',
-        Selectors: [...'abcdefghijk']
+        Selectors: [...'abcdefghijkl']
     },
     {
         Name: 'closure-lowering-catalog',
@@ -91,6 +92,14 @@ function Runˉcommand(Tool, Argumentsˉvalue) {
             windowsHide: true,
             windowsVerbatimArguments: Isˉcommand
         });
+        const Started = Date.now();
+        const Heartbeat = setInterval(() => {
+            process.stdout.write(
+                `INFO  language 1 callable semantics active ` +
+                `tool=${basename(Tool)} elapsed-ms=${Date.now() - Started}\n`
+            );
+        }, HEARTBEAT_INTERVAL_MILLISECONDS);
+        Heartbeat.unref();
         const Output = [];
         const Errorˉoutput = [];
         var Outputˉbytes = 0;
@@ -114,13 +123,19 @@ function Runˉcommand(Tool, Argumentsˉvalue) {
                 Child.kill();
             }
         });
-        Child.once('error', Rejectˉpromise);
-        Child.once('close', Code => Resolveˉresult({
-            Code,
-            Output: Buffer.concat(Output),
-            Error: Buffer.concat(Errorˉoutput),
-            Exceeded
-        }));
+        Child.once('error', Errorˉvalue => {
+            clearInterval(Heartbeat);
+            Rejectˉpromise(Errorˉvalue);
+        });
+        Child.once('close', Code => {
+            clearInterval(Heartbeat);
+            Resolveˉresult({
+                Code,
+                Output: Buffer.concat(Output),
+                Error: Buffer.concat(Errorˉoutput),
+                Exceeded
+            });
+        });
     });
 }
 
@@ -154,7 +169,7 @@ async function Requireˉprojectˉbuild(Build, Name, Project, Module) {
 
 async function Requireˉpackage(Packager, Test, Module, Application) {
     const Result = await Runˉcommand(
-        Packager, ['1', Module, Application, '--development-cache']
+        process.execPath, [Packager, '1', Module, Application]
     );
     if (Result.Exceeded) {
         Reject(`The ${Test.Name} native package exceeded the output limit.`);
@@ -401,7 +416,7 @@ try {
     const Build = join(SCRIPT_DIRECTORY, `Build-Wvb.${Extension}`);
     const Packager = join(
         SCRIPT_DIRECTORY,
-        `Package-Segmented-Compiler-Wvb.${Extension}`
+        'Build-Cached-Segmented-Hosted-Wvb.mjs'
     );
     const Totalˉitems = TESTS.length * 3 + 5;
     var Item = 0;

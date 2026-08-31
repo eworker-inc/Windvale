@@ -72,11 +72,11 @@ call :pass "SHA WVB staging and private-helper image linking"
 
 set "FailureStep=compiler-scale bootstrap analyzer identity"
 set "CompilerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
-for %%F in ("%CompilerWvb%") do if not "%%~zF"=="992412" goto :failed
-certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120" >nul
+for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1552090" goto :failed
+certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul
 if errorlevel 1 goto :failed
 echo START segmented compiler toolset reconstruction phase=compiler-scale item=5/5
-echo INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=992412
+echo INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=1552090
 set "FailureStep=compiler-scale native staging"
 echo START segmented compiler toolset reconstruction phase=compiler-scale step=native-staging
 "%TestDirectory%\windows-x64-wvstage.exe" "%CompilerWvb%" ^
@@ -86,7 +86,7 @@ if errorlevel 1 goto :failed
 set "FailureStep=compiler-scale native staging diagnostic"
 for %%F in ("%TestDirectory%\Compiler-Stage.err") do if not "%%~zF"=="0" goto :failed
 set "FailureStep=compiler-scale native staging report"
-findstr /b /c:"native x64 staging status=Complete object-bytes=31736596 chunks=34 manifest-bytes=432" "%TestDirectory%\Compiler-Stage.out" >nul
+findstr /b /c:"native x64 staging status=Complete object-bytes=50761605 chunks=50 manifest-bytes=624" "%TestDirectory%\Compiler-Stage.out" >nul
 if errorlevel 1 goto :failed
 call :pass "compiler-scale WVB staging"
 

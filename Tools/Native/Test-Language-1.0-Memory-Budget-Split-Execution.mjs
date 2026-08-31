@@ -17,12 +17,10 @@ const MAXIMUM_WVB_BYTES = 16_777_216;
 const TOOL_TIMEOUT_MILLISECONDS = 600_000;
 const SOURCE_LOCK_SHA256 =
     '9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e';
-const BOOTSTRAP_ANALYZER_SHA256 =
-    '26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120';
-const BOOTSTRAP_EMITTER_SHA256 =
-    'ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94';
-const WVIR_1_9_BRIDGE_EMITTER_SHA256 =
-    '0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb';
+const PINNED_ANALYZER_SHA256 =
+    '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77';
+const PINNED_EMITTER_SHA256 =
+    'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9';
 const EXPECTED_SUCCESS_SHA256 =
     '5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53';
 const EXPECTED_VECTOR_SUCCESS_SHA256 =
@@ -122,17 +120,13 @@ const Profileˉroot = path.join(
 );
 const Sourceˉlock = path.join(Profileˉroot, 'Source-Inputs.wvlock');
 const Sourceˉprofile = path.join(Profileˉroot, 'En-Source-Profile.wvsp');
-const Bootstrapˉanalyzerˉwvb = path.join(
+const Pinnedˉanalyzerˉwvb = path.join(
     Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
     'Wvb', 'wvanalyze.wvb',
 );
-const Bootstrapˉemitterˉwvb = path.join(
+const Pinnedˉemitterˉwvb = path.join(
     Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
     'Wvb', 'wvemit.wvb',
-);
-const Bridgeˉemitterˉwvb = path.join(
-    Repositoryˉroot, 'Artifacts', 'Language-1.0-Target-Aware-Emission-Bootstrap',
-    'Wvb', 'wvemit-wvir-1.9-bridge.wvb',
 );
 const Temporaryˉallocationˉroot = realpathSync.native(os.tmpdir());
 const Work = realpathSync.native(mkdtempSync(path.join(
@@ -147,26 +141,20 @@ try {
     Requireˉordinaryˉfile(Sourceˉlock, 4_194_304, 'source lock');
     Requireˉordinaryˉfile(Sourceˉprofile, 4_194_304, 'source profile');
     Requireˉexactˉfile(
-        Bootstrapˉanalyzerˉwvb, 992_412, BOOTSTRAP_ANALYZER_SHA256,
-        'bootstrap analyzer',
+        Pinnedˉanalyzerˉwvb, 1_552_090, PINNED_ANALYZER_SHA256,
+        'pinned analyzer',
     );
     Requireˉexactˉfile(
-        Bootstrapˉemitterˉwvb, 895_787, BOOTSTRAP_EMITTER_SHA256,
-        'bootstrap emitter',
-    );
-    Requireˉexactˉfile(
-        Bridgeˉemitterˉwvb, 1_146_083, WVIR_1_9_BRIDGE_EMITTER_SHA256,
-        'WVIR 1.9 bridge emitter',
+        Pinnedˉemitterˉwvb, 1_556_434, PINNED_EMITTER_SHA256,
+        'pinned emitter',
     );
 
     const Executableˉsuffix = process.platform === 'win32' ? '.exe' : '.elf';
     const Hostˉtarget = process.platform === 'win32' ? 'windows' : 'linux';
-    const Bootstrapˉanalyzer = path.join(Work, `Bootstrap-Analyzer${Executableˉsuffix}`);
-    const Bootstrapˉemitter = path.join(Work, `Bootstrap-Emitter${Executableˉsuffix}`);
-    const Bridgeˉemitter = path.join(Work, `Bridge-Emitter${Executableˉsuffix}`);
-    const Bootstrapˉanalyzerˉidentity = path.join(Work, 'Bootstrap-Analyzer.identity');
-    const Bootstrapˉemitterˉidentity = path.join(Work, 'Bootstrap-Emitter.identity');
-    const Bridgeˉemitterˉidentity = path.join(Work, 'Bridge-Emitter.identity');
+    const Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Executableˉsuffix}`);
+    const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Executableˉsuffix}`);
+    const Pinnedˉanalyzerˉidentity = path.join(Work, 'Pinned-Analyzer.identity');
+    const Pinnedˉemitterˉidentity = path.join(Work, 'Pinned-Emitter.identity');
     const Admitterˉwvb = path.join(Work, 'Admitter.wvb');
     const Validatorˉwvb = path.join(Work, 'Validator.wvb');
     const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
@@ -183,40 +171,33 @@ try {
     Targetˉdescriptor = path.join(Work, 'Target.wvtd');
     writeFileSync(Targetˉdescriptor, Constructˉtargetˉdescriptor(), { flag: 'wx' });
 
-    Runˉnative('bootstrap-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bootstrapˉanalyzerˉwvb, Bootstrapˉanalyzer, '--development-cache',
+    Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
     ]);
-    Runˉnative('bootstrap-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bootstrapˉemitterˉwvb, Bootstrapˉemitter, '--development-cache',
+    Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+        '7', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
     ]);
-    Runˉnode('bootstrap-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
+    Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+        'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
     ]);
-    Runˉnode('bootstrap-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+    Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+        'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnative('wvir-1.9-bridge-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Bridgeˉemitterˉwvb, Bridgeˉemitter, '--development-cache',
-    ]);
-    Runˉnode('wvir-1.9-bridge-emitter-identity',
-        'Write-Split-Compiler-Producer-Identity.mjs', [
-            'emitter', Bridgeˉemitter, Bridgeˉemitterˉidentity,
-        ]);
     Runˉnode('current-admitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Admission-Driver.wvproj'), Admitterˉwvb,
-        Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
-        Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+        Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
+        Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
     Runˉnode('current-validator-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Source-Authenticator.wvproj'),
         Validatorˉwvb,
-        Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
-        Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+        Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
+        Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
     Runˉnode('current-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Analysis-Driver.wvproj'), Analyzerˉwvb,
-        Bootstrapˉanalyzer, Bootstrapˉanalyzerˉidentity,
-        Bootstrapˉemitter, Bootstrapˉemitterˉidentity,
+        Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
+        Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
     Runˉnative('current-admitter-package', 'Package-Segmented-Compiler-Wvb', [
         '2', Admitterˉwvb, Admitter, '--development-cache',
@@ -233,7 +214,7 @@ try {
     Runˉnode('current-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Emission-Driver.wvproj'), Emitterˉwvb,
         Analyzer, Analyzerˉidentity,
-        Bridgeˉemitter, Bridgeˉemitterˉidentity,
+        Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
     Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Emitterˉwvb, Emitter, '--development-cache',

@@ -13,9 +13,8 @@ set "ProfileRoot=%RepositoryRoot%\Documents\Project\Language-1.0-Localization-Wo
 set "SourceLock=%ProfileRoot%\Source-Inputs.wvlock"
 set "SourceProfile=%ProfileRoot%\En-Source-Profile.wvsp"
 set "SourceLockHash=9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
-set "BootstrapAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
-set "BootstrapEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
-set "BridgeEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit-wvir-1.9-bridge.wvb"
+set "PinnedAnalyzerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
+set "PinnedEmitterWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvemit.wvb"
 set "WINDVALE_SPLIT_COMPILER_ACTIVITY=0"
 for /f "usebackq delims=" %%T in (`node -p "require('node:fs').realpathSync.native(process.argv[1])" "%TEMP%"`) do set "TemporaryRoot=%%T"
 if not defined TemporaryRoot exit /b 1
@@ -103,59 +102,53 @@ for %%F in ("%Work%\Generic-Type-Catalog.wvb") do set "GenericTypeCatalogWvbByte
 echo PASS  language 1 front door step=generic-type-catalog wvb-bytes=%GenericTypeCatalogWvbBytes%
 echo PASS  language 1 front door phase=value-front-end item=3/13
 
-set "FailureStep=compiler-split-bootstrap-identities"
+set "FailureStep=compiler-split-pinned-identities"
 echo START language 1 front door phase=compiler-slice item=4/13
-for %%F in ("%BootstrapAnalyzerWvb%") do if not "%%~zF"=="992412" goto :cleanup
-certutil -hashfile "%BootstrapAnalyzerWvb%" SHA256 | findstr /I /C:"26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120" >nul || goto :cleanup
-for %%F in ("%BootstrapEmitterWvb%") do if not "%%~zF"=="895787" goto :cleanup
-certutil -hashfile "%BootstrapEmitterWvb%" SHA256 | findstr /I /C:"ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94" >nul || goto :cleanup
-for %%F in ("%BridgeEmitterWvb%") do if not "%%~zF"=="1146083" goto :cleanup
-certutil -hashfile "%BridgeEmitterWvb%" SHA256 | findstr /I /C:"0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb" >nul || goto :cleanup
+for %%F in ("%PinnedAnalyzerWvb%") do if not "%%~zF"=="1552090" goto :cleanup
+certutil -hashfile "%PinnedAnalyzerWvb%" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul || goto :cleanup
+for %%F in ("%PinnedEmitterWvb%") do if not "%%~zF"=="1556434" goto :cleanup
+certutil -hashfile "%PinnedEmitterWvb%" SHA256 | findstr /I /C:"d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
-    "%BootstrapAnalyzerWvb%" "%Work%\Bootstrap-Analyzer.exe" --development-cache || goto :cleanup
+    "%PinnedAnalyzerWvb%" "%Work%\Pinned-Analyzer.exe" --development-cache || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
-    "%BootstrapEmitterWvb%" "%Work%\Bootstrap-Emitter.exe" --development-cache || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
-    "%BridgeEmitterWvb%" "%Work%\Bridge-Emitter.exe" --development-cache || goto :cleanup
+    "%PinnedEmitterWvb%" "%Work%\Pinned-Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
-    analyzer "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" || goto :cleanup
+    analyzer "%Work%\Pinned-Analyzer.exe" "%Work%\Pinned-Analyzer.identity" || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
-    emitter "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
-node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
-    emitter "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
+    emitter "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 set "FailureStep=compiler-split-source-sets"
 node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Admission-Driver.wvproj" ^
     "%Work%\Admitter.wvb" ^
-    "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
-    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+    "%Work%\Pinned-Analyzer.exe" "%Work%\Pinned-Analyzer.identity" ^
+    "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Source-Authenticator.wvproj" ^
     "%Work%\Validator.wvb" ^
-    "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
-    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+    "%Work%\Pinned-Analyzer.exe" "%Work%\Pinned-Analyzer.identity" ^
+    "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Analysis-Driver.wvproj" ^
     "%Work%\Analyzer.wvb" ^
-    "%Work%\Bootstrap-Analyzer.exe" "%Work%\Bootstrap-Analyzer.identity" ^
-    "%Work%\Bootstrap-Emitter.exe" "%Work%\Bootstrap-Emitter.identity" || goto :cleanup
+    "%Work%\Pinned-Analyzer.exe" "%Work%\Pinned-Analyzer.identity" ^
+    "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Admitter.wvb") do echo INFO  language 1 admitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Admitter.wvb" SHA256
-for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="572926" goto :cleanup
-certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"a9c2e966b84420aaa64de89a232246a15b8fb859ba5ef737e853d2482d5f5831" >nul || goto :cleanup
+for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="572966" goto :cleanup
+certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e" >nul || goto :cleanup
 for %%F in ("%Work%\Validator.wvb") do echo INFO  language 1 validator wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Validator.wvb" SHA256
-for %%F in ("%Work%\Validator.wvb") do if not "%%~zF"=="91774" goto :cleanup
-certutil -hashfile "%Work%\Validator.wvb" SHA256 | findstr /I /C:"88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580" >nul || goto :cleanup
+for %%F in ("%Work%\Validator.wvb") do if not "%%~zF"=="93436" goto :cleanup
+certutil -hashfile "%Work%\Validator.wvb" SHA256 | findstr /I /C:"6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1552090" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul || goto :cleanup
+for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1573433" goto :cleanup
+certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 ^
-    "%Work%\Admitter.wvb" "%Work%\Admitter.exe" --development-cache || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
-    "%Work%\Validator.wvb" "%Work%\Validator.exe" --development-cache || goto :cleanup
+node "%Native%\Build-Cached-Segmented-Hosted-Wvb.mjs" 2 ^
+    "%Work%\Admitter.wvb" "%Work%\Admitter.exe" || goto :cleanup
+node "%Native%\Build-Cached-Segmented-Hosted-Wvb.mjs" 7 ^
+    "%Work%\Validator.wvb" "%Work%\Validator.exe" || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Analyzer.wvb" "%Work%\Analyzer.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
@@ -232,11 +225,11 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Compiler-Emission-Driver.wvproj" ^
     "%Work%\Emitter.wvb" ^
     "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" ^
-    "%Work%\Bridge-Emitter.exe" "%Work%\Bridge-Emitter.identity" || goto :cleanup
+    "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1556434" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9" >nul || goto :cleanup
+for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1575647" goto :cleanup
+certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^

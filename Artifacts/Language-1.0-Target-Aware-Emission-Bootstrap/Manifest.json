@@ -1,71 +1,42 @@
 {
-  "format": "windvale-language-1-target-aware-emission-bootstrap-3",
-  "status": "development-bootstrap",
-  "sourceDecisions": ["0813", "0846"],
+  "format": "windvale-language-1-target-aware-emission-bootstrap-4",
+  "status": "qualified-bootstrap-promotion",
+  "sourceDecisions": ["0813", "0846", "0876", "0896"],
   "construction": {
-    "family": "project-split-wvb-optimized-v2",
-    "analyzerCacheKey": "31f5613563989a799e97f61b379f62d85eae0d7fd04a315124a9d6898778e2ef",
-    "emitterCacheKey": "93d2f2838ca147788344388dde1e2145538fbf333943dabffb4a25ed3312efd0",
-    "fixedPoint": "the packaged pair reproduced the emitter WVB byte for byte"
+    "family": "project-split-wvb-optimized-v3",
+    "sourceCommit": "c02e6bd47554242b3be0a5fcd16fe9c178ab4d2d",
+    "qualificationCommit": "a32c9e4cd8231014f1698f558226bc95559a2aa1",
+    "fixedPoint": "the current analyzer and emitter each reproduced its own WVB byte for byte",
+    "postPromotionConvergence": "pending on the promotion branch"
   },
   "emitterSource": {
     "path": "Tools/Windvale.Build/Compiler-Emission-Driver.wv",
-    "sha256": "9ddf3e3595c2e38d9b14e73f60aee17c6d0cf4985da17be2c43d4eee74fd984a"
+    "sha256": "6454cdca486f2911f394713e2e6b8eba3279bd7710400e0763bf28c72539ca57"
   },
   "emitterProject": {
     "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
-    "sha256": "c1e8d2eed788b8f1551953217fcc20855eb06f85d5a3dc5585bf2b6645d4272c",
+    "sha256": "611cfe9bcd51aa5196e62970c4a03ffbb57685701b2dc7a59d9c7352833a2449",
     "ordering": "root then ordinal-sorted source directives"
   },
   "analyzerSource": {
     "path": "Tools/Windvale.Build/Compiler-Analysis-Driver.wv",
-    "sha256": "48ccbaeb7d28459ec414c3651266d5b99caa0ed99acce532b5e866124ace7dbf"
+    "sha256": "40e33a41814cf698dbcd20a76c59e81069abc2b9fdbb1526325924d31e76dbc5"
   },
   "analyzerProject": {
     "path": "Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj",
-    "sha256": "b72665646fb263ed5004a6f304e4be466e726093084e068aba579e410af6bfe0",
+    "sha256": "4bbd64459134599ad8e855791d216804cac9f135b54350894c57ec34f6c9b5a0",
     "ordering": "root then ordinal-sorted source directives"
-  },
-  "transitionProducer": {
-    "path": "Artifacts/Native-Compiler-Reconstruction-Candidate/windows-x64/wvcompiler.exe",
-    "bytes": 28172800,
-    "sha256": "a5db938a814471fdacda75efcf57d28934ae52b3b2290732627c14ba173fd70d"
   },
   "analyzerWvb": {
     "path": "Wvb/wvanalyze.wvb",
-    "bytes": 992412,
-    "sha256": "26ea9bccfe8c2763fb887a5a14c2f0a086a27265523c3df84187b361616f9120",
-    "functions": 477,
-    "codeBytes": 811632,
+    "bytes": 1552090,
+    "sha256": "5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77",
     "target": "source-analysis-v1"
   },
   "emitterWvb": {
     "path": "Wvb/wvemit.wvb",
-    "bytes": 895787,
-    "sha256": "ea8ade4774236a84208242a6e17d271077b9a4a94fb40c47ec487d43a97b2b94",
-    "functions": 470,
-    "codeBytes": 742026,
+    "bytes": 1556434,
+    "sha256": "d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9",
     "target": "portable-wvb-optimized-v1"
-  },
-  "wvir19BridgeSource": {
-    "baseCommit": "269294c0a3030bab60160b1c9ad43518430827f6",
-    "construction": "reader-only compact-WVIR transition; the baseline writer still emits 32-byte records",
-    "patchPath": "Wvir-1.9-Bridge.patch",
-    "patchBytes": 29164,
-    "patchSha256": "7e2022e9a8984bdd6ad4e5ec797b27f23eb6527868e1a874d7d04cefe5194a01",
-    "sourceWirCoreSha256": "0c774b9d91ad0222def31ef0cc23a1fcd36af62b20f2df7cb96ece386c522ee7",
-    "sourceWvbCoreSha256": "ee4af71b8e84f8238f1fa8fc9f8b7ce30ebb9b7010fc7ce3bb9725ac3e7d99c9",
-    "sourceWvbTemporarySlotsSha256": "bea5234e68808edec695317713596a20ea0687deff65dfbfae037338c8975fcb"
-  },
-  "wvir19BridgeWvb": {
-    "path": "Wvb/wvemit-wvir-1.9-bridge.wvb",
-    "analysisCacheKey": "707d6728120c1c5223e6dcf09e1e1a4572c8d6e4d08d376b3b41a691239381c0",
-    "emissionCacheKey": "cd19fe3619e5b5f5c2c195e90068c1f4684b25345429cb4ec316fcbafa6dd86b",
-    "bytes": 1146083,
-    "sha256": "0d838b6d983320cf22b9094ef5a4692d6833f1834292863789577e034f6febdb",
-    "functions": 578,
-    "codeBytes": 956835,
-    "target": "portable-wvb-optimized-v1",
-    "wvbVersion": "1.11"
   }
 }

@@ -1,6 +1,6 @@
 # Windvale progress
 
-> Status snapshot: 30 August 2026
+> Status snapshot: 31 August 2026
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -25,16 +25,26 @@ designed by
 [Decision 0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md).
 Target-aware `wvadmit` publishes WVSS, WVTD, WVFC, and WVAE; independent
 six-snapshot `wvauth` publishes no certificate; and the private runner rechecks
-the retained relationship before invoking the non-authoritative Analyzer
-source-set route. A nonempty catalog stops at exact
-`Foreignˉsemanticsˉpending`. For an empty catalog, the runner byte-compares the
-Analyzer's republished WVSS, gives the emitter the retained original, and alone
-atomically publishes the final WVB. Raw Project 2 remains development-only and
-rejects System, platform, and foreign source before analysis. Local Windows
-evidence now pins all four products, passes the complete 21-case focused owner,
-and reproduces Analyzer/emitter stage-2 bytes through the 18-phase convergence
-check. Paired-host evidence, foreign binding/lowering, and runtime containment
-remain pending, so Decision 0893 remains Proposed.
+the retained relationship before selecting the next compiler phase. For a
+nonempty catalog it invokes the non-authoritative private `wvbind`, requires
+exact digest evidence for the retained WVSS, WVTD, and WVFC, rechecks all six
+snapshots again, and stops at exact `Foreignˉloweringˉpending` without launching
+the Analyzer or emitter. For an empty catalog it skips `wvbind`, byte-compares
+the Analyzer's republished WVSS, gives the emitter the retained original, and
+alone atomically publishes the final WVB. The front door therefore owns five
+bounded products overall, although each catalog route launches only four. Raw
+Project 2 remains development-only and rejects System, platform, and foreign
+source before analysis. The 21-case production-ingress owner and dedicated
+24-case authenticated-binding owner, together with the callable owner's exact
+Foreign-capture rejection, cover their separate hosted and semantic boundaries;
+the refreshed product identities and complete local reruns pass on Windows.
+Corresponding Linux evidence, foreign lowering, and runtime containment remain
+pending. The
+shared 482-case Language 1.0 front door passes on Windows and Linux, and its
+corrected owner identity passes the four-case registry stream on both hosts.
+Decision 0893 and the private-binding
+[Decision 0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md)
+therefore remain Proposed.
 
 The coordinator's target-descriptor evolution directly enters the validator
 closure. A narrow retained-analyzer audit reproduces its 191,712-byte WVIR at
@@ -168,9 +178,9 @@ long-name/Unicode mapping remains explicit future work.
 | Exact selected-release recovery | **2/2 hosts** |
 | Published and independently retained recovery assets | **13/13** |
 
-Current work uses a separate 124-owner, 5,911-case native verification registry.
-Its 22,130 LF-only bytes have SHA-256
-`e2a6560134abc1b85d929275dbc9127623c34d7d69511423ec10483d569507da`.
+Current work uses a separate 125-owner, 5,936-case native verification registry.
+Its 22,366 LF-only bytes have SHA-256
+`38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6`.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 
@@ -300,14 +310,17 @@ malformed-within-format-ceiling diagnostics. The planner passed 31 general and
 244 native routing cases. This completes focused current-Windows development
 evidence for the candidate.
 
-The registry has 124 owners and 5,911 cases in 22,130 LF-only bytes at SHA-256
-`b2360e4128778370be5ea152a36f1d9eb054c9add613d7bb3f9152227a037d4a`.
-Its shards contain 1/57, 44/2,823, 38/1,782, and 41/1,249 owners/cases. The
+The registry has 125 owners and 5,936 cases in 22,366 LF-only bytes at SHA-256
+`38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6`.
+Its shards contain 1/57, 45/2,847, 38/1,783, and 41/1,249 owners/cases. The
 subsequent Decision 0893 candidate implements hosted publication and the
 Analyzer handoff. Its exact local product pins and complete owner result pass;
 the planner covers its transitive product dependencies and passes 31 general
-plus 247 native routing cases. Paired-host qualification remains pending beside
-foreign lowering and runtime containment.
+plus 254 native routing cases. Commit `14fd50ea` passed the 482-case front door
+on both hosts in run `33339426829`; commit `a32c9e4c` then passed the corrected
+four-case verification-owner stream on both hosts and the final gate in run
+`33340292739`. The corresponding Linux production-ingress owner result remains
+pending beside foreign lowering and runtime containment.
 
 The pinned bootstrap transition produces 4,182,928 WVIR bytes for the selected
 Analyzer closure, leaving 11,376 bytes, and could not carry duplicated ingress
@@ -316,6 +329,17 @@ exact 2,132,771-byte source set to 3,815,704 WVIR bytes, leaving 378,600 bytes.
 The 18-phase current-compiler convergence check reproduces stage-2 bytes and
 pins the 1,552,090-byte WVB at SHA-256
 `5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77`.
+
+The promoted two-file bootstrap then passed its rewritten 16-phase convergence
+path locally on Windows x64 with an isolated empty cache. The current analyzer
+settled at 1,573,433 bytes and SHA-256
+`23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6`;
+the current emitter settled at 1,575,647 bytes and SHA-256
+`0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77`.
+Both Stage 2 products matched Stage 1 byte for byte and passed the independently
+rebuilt compiler-aligned verifier. The analyzer retained 320,920 bytes beneath
+the 4 MiB WVIR ceiling; the emitter retained 97,520 bytes. Linux execution of
+the shortened bootstrap path remains pending before a cross-host claim.
 
 ### Preserve bounded development feedback
 

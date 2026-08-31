@@ -293,8 +293,8 @@ wrapper in 138,530 ms. The run uses the 24,292-byte core, 191,712-byte WVIR,
 
 The complete, separately composed `wvauth` additionally builds
 byte-identically in two initially empty split-compiler caches as a
-91,774-byte compiler-aligned WVB at SHA-256
-`88eec2e572e03cdd87de3bedc01c555da3a246fd2d160a62246da0d39331f580`.
+93,436-byte compiler-aligned WVB at SHA-256
+`6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612`.
 The earlier 108,847-byte product was constructed by the retained historical
 monolithic compiler and is not the production-ingress pin. Actual-product
 cases accept an authentic foreign set and reject missing and extra records,

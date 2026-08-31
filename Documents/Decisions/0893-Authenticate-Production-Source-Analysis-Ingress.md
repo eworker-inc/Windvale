@@ -5,8 +5,10 @@
 Proposed implementation checkpoint on 2026-08-30. The target-aware hosted
 admitter, complete independent authenticator, Analyzer handoff, host
 coordinator, and focused malformed-input owner now have a local Windows
-implementation result and fixed candidate identities. Paired-host evidence
-must still pass before this decision becomes accepted.
+implementation result and fixed candidate identities. The shared Language 1.0
+front door now passes on Windows and Linux, but the 21-case production-ingress
+owner still lacks the corresponding Linux result. Decision 0893 therefore
+remains Proposed.
 
 ## Context
 
@@ -182,8 +184,15 @@ identities for the hosted admitter, complete `wvauth`, successor Analyzer, and
 emitter; execution of the actual packaged products; the focused 21-case
 production owner; and current split-compiler convergence. Changed-file and
 registry planner checks remain part of the checkpoint gate; the current planner
-passes 31 general and 247 native routing cases. The corresponding Linux report
-is still required before a paired-host claim or acceptance.
+passes 31 general and 247 native routing cases. At commit `14fd50ea`, GitHub
+run `33339426829` passed all 482 `language-1-front-door` cases on Windows and
+Linux before a stale expected fixture-size summary stopped both jobs. Commit
+`a32c9e4c` repaired that owner-registry identity, and run `33340292739` passed
+the four-case `verification-owner-stream` on both hosts plus the final gate.
+Those runs prove the shared front-door and registry repair, but neither ran the
+21-case `language-1-production-admission-ingress` owner on Linux. That exact
+corresponding report is still required before a paired production-ingress
+claim or acceptance.
 
 The owner must include valid empty-catalog compilation, a valid nonempty
 catalog reaching the staged semantic boundary, legacy Analyzer bypass
