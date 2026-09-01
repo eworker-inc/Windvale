@@ -5141,3 +5141,27 @@ This is local Windows development evidence. WVB encoding, malformed WVB
 admission, affine region-lifetime containment, scalar/provider and native
 execution, pointer derivation, authenticated Foreign calls, Linux reproduction,
 and final Slice 8 qualification remain pending.
+
+## Slice 8 candidate WVB 1.36 write-region checkpoint
+
+[Decision 0910](../Decisions/0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md)
+serializes exact WVIR operation 188 as candidate WVB 1.36 opcode `DE` (`222`).
+The 13-byte instruction consumes `Start`, `Length`, and
+`Requiredˉalignment` as ordered `u64` stack values and preserves scratch-local,
+canonical region-Result, and ABI-enum indexes as three `u32` immediates.
+
+The current source-WVB emitter WVB is 1,504,825 bytes at SHA-256
+`75e5f86c75c5dd246e6530d6e888fb2eb7634316f3caf7452a79c60a44aec7ef`.
+The canonical borrowed-parameter candidate is 1,300 bytes at SHA-256
+`c116d5d4a8ec84afe8321da4403e5071cf981f5bb6a9121d0660b7fa33d64eec`.
+The focused matrix completed in 4.7 seconds:
+
+```text
+native language 1 unsafe write region WVIR status=Passed cases=11 valid=4 rejected=7 malformed-wvir=7 malformed-wvb=5 operation=188 minors=27,28 wvb=1.36 opcode=222 published-wvb=2 execution=Closed writer-rejected=1 validator=Verified
+```
+
+This is local Windows writer and independent-byte-reader evidence. The current
+front-door verifier rejects the candidate in its semantic phase. Complete
+compiler verification, lifetime/non-escape and alias proofs, scalar/provider
+and native execution, pointer derivation, authenticated Foreign calls, Linux
+reproduction, and final Slice 8 qualification remain pending.

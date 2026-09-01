@@ -253,6 +253,30 @@ or exposes an address. Mutable borrowing, write-region and pointer operations,
 authenticated Foreign calls, and cross-host containment remain outside this
 profile.
 
+## Candidate WVB 1.36 mutable write-region borrowing
+
+WVB 1.36 inherits the WVB 1.35 System-profile metadata and instruction
+vocabulary and adds one writer-only candidate instruction:
+
+```text
+DE unsafe.write-region.borrow u32 scratch-local index,
+                              u32 region-Result type index,
+                              u32 ABI-enum type index
+```
+
+`DE` is 13 bytes. Before the opcode it consumes three ordered `u64` values:
+`Start`, `Length`, and `Requiredˉalignment`. Its local names the exact owned
+scratch or compiler-authenticated mutable borrowed scratch view. Its Result
+names exactly
+`Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>`, and its ABI
+immediate names the declared enum bound to both scratch and region.
+
+The source writer selects minor 36 only when WVIR operation `188` is present
+and moves the exact Result affinely. This specification does not yet admit
+minor 36 to the complete verifier or any execution consumer. Non-escape,
+exclusive aliasing, branch merge, release, range/alignment failure production,
+and provider behavior require later verified and executable checkpoints.
+
 ## Encoding
 
 - All integers are little-endian.
@@ -268,7 +292,7 @@ profile.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 through 35
+u16      minor version: 11 through 36
 u32      section count: 7
 ```
 

@@ -896,6 +896,19 @@ Windows matrix; seven malformed WVIR mutations reject independently. WVB
 encoding, affine region lifetime containment, provider and native execution,
 pointer derivation, and authenticated Foreign calls remain pending.
 
+[Decision 0910](../Decisions/0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md)
+now preserves that exact operation as candidate WVB 1.36 opcode `DE`. The
+13-byte instruction consumes ordered `u64` start, length, and required
+alignment values and retains direct scratch-local, canonical region-Result,
+and ABI-enum indexes. Exact mutable scratch parameters reuse nominal borrowed
+record shape `28`, while the writer classifies the produced Result as affine.
+The independent reader accepts two publications and rejects five malformed
+WVB mutations. The current front-door verifier still rejects minor 36 at the
+semantic phase. Compiler-aligned lifetime/non-escape verification, provider
+and native execution, pointer derivation, authenticated Foreign calls, one
+migrated runtime or OS boundary, Linux reproduction, and paired-host evidence
+remain pending.
+
 [Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
 removes the compiler-scale staging-memory blocker exposed while rebuilding this
 checkpoint. Each resource is now constructed and written in one scalar-returning

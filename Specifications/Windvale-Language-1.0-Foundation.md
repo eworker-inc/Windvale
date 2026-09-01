@@ -1970,10 +1970,15 @@ and ABI identity while independent validation rejects wrong borrow modes,
 types, labels, effects, or result relationships. This checkpoint does not yet
 encode or execute the borrow.
 
-Write-region bytecode and lifetime containment, pointer operations,
-authenticated Foreign calls, host ABI publication, and cross-host containment
-remain pending. The remaining operations below may appear only with their
-compiler-owned intrinsic semantics and containment evidence.
+The next representation checkpoint serializes that exact WVIR operation as
+candidate WVB 1.36 opcode `DE`. It consumes the three `u64` scalar values and
+carries direct scratch-local, canonical Result-type, and ABI-enum indexes. The
+writer moves the Result affinely, but every current verifier and execution
+consumer remains closed to minor 36. Compiler-aligned lifetime and exclusive-
+alias containment, pointer operations, authenticated Foreign calls, host ABI
+publication, and cross-host containment remain pending. The remaining
+operations below may appear only with their compiler-owned intrinsic semantics
+and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,

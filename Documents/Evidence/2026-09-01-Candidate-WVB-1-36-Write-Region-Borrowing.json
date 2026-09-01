@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-candidate-wvb-1-36-write-region-borrowing",
+  "date": "2026-09-01",
+  "subject": "Candidate WVB 1.36 mutable write-region serialization",
+  "claim": "The Windows source-built compiler publishes deterministic candidate WVB 1.36 opcode 222 for exact mutable write-region borrowing, while the current execution front door remains closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "0678667ccbbcd3c22abc6d674f1b8c1792430aa6"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Language 1.0 analyzer and current source-WVB emitter",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/local-write-region-emitter-v5.wvb Artifacts/local-write-region-analyzer-v3.exe Artifacts/local-write-region-analyzer-v3.identity Artifacts/local-write-region-emitter-v4.exe Artifacts/local-write-region-emitter-v4.identity --symbol-checkpoint",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/local-write-region-emitter-v5.wvb",
+          "size": 1504825,
+          "sha256": "75e5f86c75c5dd246e6530d6e888fb2eb7634316f3caf7452a79c60a44aec7ef"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Candidate WVB 1.36 write-region source, WVIR, byte contract, and closed execution boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs Artifacts/local-write-region-analyzer-v3.exe Artifacts/local-write-region-emitter-v5.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "temporary/candidate-write-region.wvb",
+          "size": 1300,
+          "sha256": "c116d5d4a8ec84afe8321da4403e5071cf981f5bb6a9121d0660b7fa33d64eec"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered four valid and seven rejected source cases, one fail-closed writer case, seven malformed WVIR mutations, and five malformed WVB mutations; it was not the complete native verification-owner plan.",
+    "The complete compiler verifier, scalar provider, native lowerer, pointer derivation, authenticated Foreign-call path, and operating-system consumers do not admit WVB 1.36.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}

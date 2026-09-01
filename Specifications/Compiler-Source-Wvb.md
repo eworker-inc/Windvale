@@ -1029,7 +1029,25 @@ The native x86-64 backend reads the same private field through the validated
 record handle and preserves affine owner availability; neither path exposes a
 backing address.
 
-This is a verified serialization and bounded scalar-execution checkpoint. The
+WVIR 1.27/1.28 operation `188` lowers to candidate WVB 1.36 opcode `DE`
+(`unsafe.write-region.borrow`). The 13-byte instruction consumes `Start`,
+`Length`, and `Requiredˉalignment` as three ordered `u64` stack operands and
+carries three `u32` immediates: direct scratch-local index, canonical
+`Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>` type index, and
+explicit ABI-enum type index. An exact mutable scratch parameter uses nominal
+borrowed-record shape `28`; ordinary mutable owned parameters remain invalid.
+The writer treats the exact Result as affine so it cannot be lowered through
+ordinary copy semantics.
+
+WVB 1.36 is a representation candidate only. The current complete and
+front-door verifiers, runners, native lowerers, launchers, browser host, and OS
+consumers reject it. Compiler-aligned non-escape, exclusive-alias, and branch
+merge proofs must land before execution opens. Range, address-width,
+alignment, lifetime, alias, release, and pointer behavior remain pending
+runtime semantics.
+
+The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
+and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,
 opcode, budget, result, and ABI indexes and rejects seven byte-level mutations.
 The packaged compiler-aligned verifier additionally checks the complete
@@ -1040,8 +1058,9 @@ scalar runner admits only a capability-free System module, lengths 1 through
 zeroes private backing bytes, returns exact validation failures, publishes only
 the non-address-like opaque value `1u64`, and releases remaining ownership at
 invocation teardown. The native x86-64 lowerer implements the same bounded
-scratch, budget-borrow, and scratch-observation matrix. Pointer and write-region
-operations, mutable borrowing, Foreign calls, and cross-host containment remain
+scratch, budget-borrow, and scratch-observation matrix. WVB 1.36 now preserves
+mutable write-region borrowing without opening execution. Pointer derivation,
+verified region containment, Foreign calls, and cross-host containment remain
 pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
