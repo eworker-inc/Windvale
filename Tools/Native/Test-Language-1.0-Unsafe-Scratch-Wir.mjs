@@ -157,6 +157,27 @@ const Cases = [
             'Budget: Memory.Memoryˉbudget', Resultˉtype, Validˉcall, '',
         ),
     },
+    {
+        Name: 'reused-call-budget',
+        Expected: 'emitter-invalid-wir',
+        Source: 'module Languageˉoneˉunsafeˉscratchˉwir; ' + SYSTEM_HEADER +
+            Imports +
+            'fn Consume(Budget: Memory.Memoryˉbudget) -> i32 { return 1; } ' +
+            'export fn Main(Budget: Memory.Memoryˉbudget) -> i32 { ' +
+            'let First: i32 = Consume(Budget); ' +
+            'return First + Consume(Budget); }',
+    },
+    {
+        Name: 'borrow-call-budget',
+        Expected: 'emitter-unsupported-shape',
+        Source: 'module Languageˉoneˉunsafeˉscratchˉwir; ' + SYSTEM_HEADER +
+            Imports +
+            'fn Observe(Budget: borrow Memory.Memoryˉbudget) -> i32 { ' +
+            'return 42; } ' +
+            'export fn Run(Budget: Memory.Memoryˉbudget) -> i32 { ' +
+            'return Observe(borrow Budget); } ' +
+            'export fn Main() -> i32 { return 42; }',
+    },
 ];
 
 const Runtimeˉapplications = [
@@ -212,6 +233,81 @@ const Runtimeˉapplications = [
             'case Result.Result.Valid { Value: _ } { 1 } ' +
             'case Result.Result.Failure { Error: Failure } { ' +
             'Summarize(Failure) } };',
+        ),
+    },
+    {
+        Name: 'call-transfer-success',
+        Source: Runtimeˉapplication(
+            'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
+            'effects(memory.allocate) { ' +
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Scratchˉbudget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 42 } ' +
+            'case Result.Result.Failure { Error: _ } { 1 } }; } ',
+            'return Allocate(Budget);',
+        ),
+    },
+    {
+        Name: 'split-call-transfer-success',
+        Source: Runtimeˉapplication(
+            'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
+            'effects(memory.allocate) { ' +
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Scratchˉbudget, Length: 32u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 42 } ' +
+            'case Result.Result.Failure { Error: _ } { 1 } }; } ',
+            'var Parent: Memory.Memoryˉbudget = Budget; ' +
+            'let Splitˉresult: Result.Result<' +
+            'Memory.Memoryˉbudget, Memory.Allocationˉfailure> = ' +
+            'Memory.Split(borrow mut Parent, 64u64, 1u32); ' +
+            'return match Splitˉresult { ' +
+            'case Result.Result.Valid { Value: Child } { Allocate(Child) } ' +
+            'case Result.Result.Failure { Error: _ } { 2 } };',
+        ),
+    },
+    {
+        Name: 'split-call-budget-refusal',
+        Source: Runtimeˉapplication(
+            'fn Summarizeˉallocation(' +
+            'Allocationˉerror: Memory.Allocationˉfailure) -> i32 { ' +
+            'if Allocationˉerror.Reason == ' +
+            'Memory.Allocationˉreason.Budgetˉexhausted && ' +
+            'Allocationˉerror.Requestedˉbytes == 64u64 && ' +
+            'Allocationˉerror.Availableˉbytes == 32u64 { ' +
+            'return 42; } return 5; } ' +
+            'fn Summarizeˉforeign(' +
+            'Foreignˉerror: Unsafe.Foreignˉmemoryˉfailure) -> i32 { ' +
+            'return match Foreignˉerror { ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉlength { ' +
+            'Observed: _, Maximum: _ } { 2 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉalignment { ' +
+            'Observed: _ } { 3 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Allocation { ' +
+            'Error: Allocationˉerror } { ' +
+            'Summarizeˉallocation(Allocationˉerror) } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Unsupportedˉabi { 4 } }; } ' +
+            'fn Allocateˉbeyondˉchild(' +
+            'Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
+            'effects(memory.allocate) { ' +
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Scratchˉbudget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 1 } ' +
+            'case Result.Result.Failure { Error: Foreignˉerror } { ' +
+            'Summarizeˉforeign(Foreignˉerror) } }; } ',
+            'var Parent: Memory.Memoryˉbudget = Budget; ' +
+            'let Splitˉresult: Result.Result<' +
+            'Memory.Memoryˉbudget, Memory.Allocationˉfailure> = ' +
+            'Memory.Split(borrow mut Parent, 32u64, 1u32); ' +
+            'return match Splitˉresult { ' +
+            'case Result.Result.Valid { Value: Child } { ' +
+            'Allocateˉbeyondˉchild(Child) } ' +
+            'case Result.Result.Failure { Error: _ } { 6 } };',
         ),
     },
 ];
@@ -274,6 +370,31 @@ try {
                 Wvbˉverified += Boundary.Verifier;
             }
             Valid += 1;
+        } else if (Case.Expected === 'emitter-invalid-wir' ||
+            Case.Expected === 'emitter-unsupported-shape') {
+            if (Analysis.Code !== 0 || Analysis.Exceeded) {
+                Reject(
+                    `Unsafe-scratch ownership case ${Case.Name} failed ` +
+                    `analysis with status ${Analysis.Code}.\n` +
+                    Analysis.Diagnostic,
+                );
+            }
+            const Wvb = join(Caseˉdirectory, 'Rejected.wvb');
+            const Emission = await Runˉemitter(
+                Sourceˉoutput, Manifest, Bindings, Wir, Wvb,
+            );
+            const Expectedˉdiagnostic = Case.Expected ===
+                'emitter-invalid-wir'
+                ? 'analysis-status=Invalidˉwir'
+                : 'analysis-status=Valid wvb-status=Unsupportedˉshape';
+            if (Emission.Code !== 1 || Emission.Exceeded || Exists(Wvb) ||
+                !Emission.Diagnostic.includes(Expectedˉdiagnostic)) {
+                Reject(
+                    `Unsafe-scratch ownership rejection ${Case.Name} ` +
+                    `differed.\n${Emission.Diagnostic}`,
+                );
+            }
+            Rejected += 1;
         } else {
             if (Analysis.Code !== 1 || Analysis.Exceeded ||
                 !Analysis.Diagnostic.includes(

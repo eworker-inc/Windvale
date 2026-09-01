@@ -4391,6 +4391,9 @@ fn Compilerˉsourceˉwirˉownershipˉu32ˉset(
 }
 
 fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
     Symbolˉentries: u32,
     Directory: bytes,
@@ -4422,6 +4425,10 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                 WIR_OPERATION_TASK_SCOPE_CONSTRUCT ||
             Bytesˉreadˉu16ˉlittle(Directory, Scanˉentry + 4u32) ==
                 WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
+            Hasˉmemoryˉsplit = true;
+        }
+        if Bytesˉreadˉu32ˉlittle(Directory, Scanˉentry + 8u32) ==
+            805306368u32 {
             Hasˉmemoryˉsplit = true;
         }
         Scanˉindex = Scanˉindex + 1u32;
@@ -4460,6 +4467,7 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
         Slot = Slot + 1u32;
     }
     var Temporaryˉstate: bytes = Bytesˉslice(Directory, 0u32, 0u32);
+    var Temporaryˉorigin: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Temporaryˉblock: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     Blockˉindex = 0u32;
     while Blockˉindex < Range.Blockˉcount {
@@ -4500,11 +4508,20 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
             );
             if Operationˉshape != 0u32 {
                 var Temporaryˉlive: u8 = 0u8;
+                var Temporaryˉsource: u32 =
+                    Wirˉconsumer.Compilerˉsourceˉwirˉsentinel();
                 if Operationˉshape == 805306368u32 {
                     Temporaryˉlive = 1u8;
+                    if Operationˉkind == WIR_OPERATION_LOAD_LOCAL {
+                        Temporaryˉsource = Operationˉtarget;
+                    }
                 }
                 Temporaryˉstate = Bytesˉconcat(
                     Temporaryˉstate, Bytesˉfromˉu8(Temporaryˉlive)
+                );
+                Temporaryˉorigin = Bytesˉconcat(
+                    Temporaryˉorigin,
+                    Bytesˉfromˉu32ˉlittle(Temporaryˉsource)
                 );
                 Temporaryˉblock = Bytesˉconcat(
                     Temporaryˉblock, Bytesˉfromˉu32ˉlittle(Blockˉindex)
@@ -4527,13 +4544,45 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
                     Firstˉoperandˉshape = Operandˉshape;
                 }
                 if Operandˉshape == 805306368u32 {
-                    if Operationˉkind != 8u32 || Operandˉindex != 0u32 ||
+                    var Usesˉbudgetˉtemporary: bool = Operationˉkind == 8u32 &&
+                        Operandˉindex == 0u32;
+                    var Consumesˉbudgetˉslot: bool =
+                        Usesˉbudgetˉtemporary;
+                    if Operationˉkind == WIR_OPERATION_CALL_FUNCTION {
+                        let Parameterˉmode: u32 =
+                            Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                            Input, Scan, Symbols, Bindings,
+                            Operationˉtarget, Operandˉindex
+                        );
+                        if Parameterˉmode !=
+                            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel() {
+                            Usesˉbudgetˉtemporary = true;
+                            Consumesˉbudgetˉslot = Parameterˉmode ==
+                                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+                        }
+                    }
+                    if !Usesˉbudgetˉtemporary ||
                         Bytesˉreadˉu8(
                             Temporaryˉstate, Operandˉtemporary
                         ) != 1u8 || Bytesˉreadˉu32ˉlittle(
                             Temporaryˉblock, Operandˉtemporary * 4u32
                         ) != Blockˉindex {
                         return false;
+                    }
+                    let Budgetˉorigin: u32 = Bytesˉreadˉu32ˉlittle(
+                        Temporaryˉorigin, Operandˉtemporary * 4u32
+                    );
+                    if Consumesˉbudgetˉslot && Budgetˉorigin !=
+                            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel() {
+                        if Budgetˉorigin >= Slotˉcount || Bytesˉreadˉu8(
+                                Slotˉstate, Budgetˉorigin
+                            ) != 1u8 {
+                            return false;
+                        }
+                        Slotˉstate =
+                            Compilerˉsourceˉwirˉownershipˉstateˉset(
+                                Slotˉstate, Budgetˉorigin, 0u8
+                            );
                     }
                     Temporaryˉstate =
                         Compilerˉsourceˉwirˉownershipˉstateˉset(
@@ -4545,12 +4594,11 @@ fn Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
 
             if Operationˉkind == 7u32 &&
                 Operationˉshape == 805306368u32 {
-                if Bytesˉreadˉu8(Slotˉstate, Operationˉtarget) != 1u8 {
+                if Operationˉtarget >= Slotˉcount || Bytesˉreadˉu8(
+                        Slotˉstate, Operationˉtarget
+                    ) != 1u8 {
                     return false;
                 }
-                Slotˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
-                    Slotˉstate, Operationˉtarget, 0u8
-                );
             }
             if Operationˉkind == 8u32 &&
                 Firstˉoperandˉshape == 805306368u32 {
@@ -6653,7 +6701,8 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         return false;
     }
     if !Compilerˉsourceˉwirˉmemoryˉsplitˉownershipˉisˉvalid(
-            Bindings, Symbolˉentries, Directory, Function, Range
+            Input, Scan, Symbols, Bindings, Symbolˉentries,
+            Directory, Function, Range
         ) {
         return false;
     }

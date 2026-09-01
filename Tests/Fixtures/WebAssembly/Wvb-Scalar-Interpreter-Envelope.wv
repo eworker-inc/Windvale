@@ -662,7 +662,8 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
                         if (Moduleˉminor == 23u32 || Moduleˉminor == 24u32 ||
                             Moduleˉminor == 25u32 ||
                             Moduleˉminor == 26u32 ||
-                            Moduleˉminor == 27u32) &&
+                            Moduleˉminor == 27u32 ||
+                            Moduleˉminor == 33u32) &&
                             Variantˉfieldˉshape == 25u32 {
                             Extendedˉvariantˉshape = true;
                         }
