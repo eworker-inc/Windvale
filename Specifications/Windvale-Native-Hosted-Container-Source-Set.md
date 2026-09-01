@@ -20,8 +20,13 @@ geometry.
 wvhostsources <plan.wvcd> <platform.wvhb> <startup.wvsd> <bundle-prefix> <runtime.wvhr> <chunk-prefix> <sources.wvsg>
 ```
 
-The command derives `<bundle-prefix>.response-N` in canonical order. Every
-response must be an exact successful `WVSI 2` envelope whose image extent,
+The command derives `<bundle-prefix>.response-N` in canonical order. Each of
+the eleven identity regions reads only the responses that intersect its exact
+logical extent instead of first repeating a complete response pre-read. Across
+the complete region set, every response contributing source bytes is admitted;
+the compiler-scale native-image region spans the complete current segment
+inventory by itself. Every response that is read must be an exact successful
+`WVSI 2` envelope whose image extent,
 segment offset, segment length, plan bytes, and ten-service count agree with
 the admitted `WVCD 1` plan. The process streams the native-fragment and ten
 service regions from those payloads and recomputes their SHA-256 values against
@@ -65,9 +70,9 @@ argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Source-set WVB | 82,254 | `9b5a64fee4d986f0ec0c490f34bb524f2052b1fe3d028d5b6ae2f7ec12552d97` |
-| Windows application | 1,285,632 | `48bddea0a7e51621d53c2c17b37d45bda346564e0e7bebb43a940361084fb693` |
-| Linux application | 1,286,144 | `57f44f2f53f3805de0e0f4ee358ea23a3f88e7b3594b49fe10a003b95cd46e02` |
+| Source-set WVB | 68,391 | `8618b4f6d57bcb732484848e0c70f53802ab6da5e9feaf82d04976d90a79861b` |
+| Windows application | 1,111,552 | `a5dde70a98151b2aec6fa4eb8300abba917b603a5bce94802f45028a6dba4817` |
+| Linux application | 1,110,016 | `b9954b908b0ea3c83cca31739240e91455eb69ac2ab0069b6475d41c774ee475` |
 
 The Stage 0 recovery compiler and native Project 1 front door produce identical
 WVB bytes. Package layout and identity wiring remain deletion-bound Stage 0

@@ -41,7 +41,7 @@ The module declares exactly `console.write_line`, `diagnostic.write_line`,
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `32` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | hosted profile | `1` through `7` |
+| 16 | 4 | hosted profile | `1` through `8` |
 | 20 | 4 | native entry | Within the planned native fragment |
 | 24 | 8 | reserved | Zero |
 
@@ -85,9 +85,9 @@ bound to the publication plan.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Metadata-request WVB | 69,357 | `b3b7d958e5a2a7569fb982030192ca31876de08c64ee04ce2027655bcbbd084c` |
-| Windows metadata-request tool | 1,105,920 | `1f52c4ec882506876348465c5fa91ba190387f096b79838264f6fc6f7176bb1e` |
-| Linux metadata-request tool | 1,105,920 | `6090e214bea51ac508d0ca511593f93f3f71e02c9671e0cb0b818eb095d08df7` |
+| Metadata-request WVB | 68,433 | `9811e44d1fd8dbfdf8742bd5dd7dffa4fa2130ea4bc65ba4b01f34b6ca31a9d9` |
+| Windows metadata-request tool | 1,093,632 | `b6f550b20072abb5768ac8eb4fdc8dee867e30620ffff5c7a321f1237341e087` |
+| Linux metadata-request tool | 1,093,632 | `fb0fefca471a4208d64b13ab58fce0380acaf810cf9e1211af64322af2ac54b5` |
 
 The WVB reconstructs byte-for-byte through the native Project 1 front door.
 The package writers are deletion-bound Stage 0 target and identity wiring; no

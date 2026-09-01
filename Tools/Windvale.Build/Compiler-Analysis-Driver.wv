@@ -29,14 +29,16 @@ fn Header(Modules: u32) -> bytes {
     );
 }
 
-fn Buildˉsourceˉset(Modules: u32) -> bytes {
+fn Buildˉsourceˉset(Firstˉargument: u32, Modules: u32) -> bytes {
     let Headerˉbytes: u32 = 16u32 + Modules * 8u32;
     var Directory: bytes = Empty();
     var Payload: bytes = Empty();
     var Payloadˉbytes: u32 = 0u32;
     var Index: u32 = 0u32;
     while Index < Modules {
-        let Source: bytes = file.read_bytes(process.argument(Index));
+        let Source: bytes = file.read_bytes(
+            process.argument(Firstˉargument + Index)
+        );
         let Length: u32 = Bytesˉlength(Source);
         if Length == 0u32 ||
             Payloadˉbytes > 4194304u32 - Headerˉbytes ||
@@ -263,6 +265,67 @@ fn Analyze(Sourceˉset: bytes, Outputˉindex: u32) -> i32 {
     return 0;
 }
 
+fn Analyzeˉfromˉsymbolˉcheckpoint(
+    Sourceˉset: bytes,
+    Symbolˉcheckpoint: bytes,
+    Outputˉindex: u32
+) -> i32 {
+    if Bytesˉlength(Sourceˉset) == 0u32 ||
+        Bytesˉlength(Symbolˉcheckpoint) == 0u32 {
+        diagnostic.write_line("source analysis status=Invalidˉinput");
+        return 1;
+    }
+    let Prepared: Analysis.Compilerˉsourceˉanalysis =
+        Analysis.Compilerˉprepareˉsourceˉanalysisˉfromˉsymbolˉcheckpoint(
+            Sourceˉset, Symbolˉcheckpoint
+        );
+    if Prepared.Status !=
+        Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Valid {
+        diagnostic.write_line(Failure(Sourceˉset, Prepared));
+        return 1;
+    }
+    file.write_bytes(process.argument(Outputˉindex), Prepared.Manifest);
+    file.write_bytes(process.argument(Outputˉindex + 1u32), Prepared.Bindings);
+    file.write_bytes(process.argument(Outputˉindex + 2u32), Prepared.Wir);
+    console.write_line(Success(Sourceˉset, Prepared));
+    return 0;
+}
+
+fn Publishˉsymbolˉcheckpoint(
+    Sourceˉset: bytes,
+    Sourceˉoutputˉindex: u32,
+    Symbolˉoutputˉindex: u32
+) -> i32 {
+    if Bytesˉlength(Sourceˉset) == 0u32 {
+        diagnostic.write_line("source analysis status=Invalidˉinput");
+        return 1;
+    }
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        let Failed: Analysis.Compilerˉsourceˉanalysis =
+            Analysis.Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
+                Sourceˉset, Symbols
+            );
+        diagnostic.write_line(Failure(Sourceˉset, Failed));
+        return 1;
+    }
+    let Checkpoint: bytes =
+        Analysis.Compilerˉsourceˉanalysisˉsymbolˉcheckpoint(
+            Sourceˉset, Symbols
+        );
+    if Bytesˉlength(Checkpoint) == 0u32 {
+        diagnostic.write_line("source analysis status=Invalidˉinput");
+        return 1;
+    }
+    file.write_bytes(process.argument(Sourceˉoutputˉindex), Sourceˉset);
+    file.write_bytes(
+        process.argument(Symbolˉoutputˉindex), Checkpoint
+    );
+    console.write_line("source analysis checkpoint=Symbols");
+    return 0;
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
     if Arguments > 0u32 && Argumentˉequals(
@@ -280,6 +343,59 @@ export fn Main() -> i32 {
             "source analysis status=Invalidˉinvocation reason=authenticated-admission-route-removed"
         );
         return 64;
+    }
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-symbol-checkpoint"
+        ) {
+        if Arguments < 4u32 {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 64;
+        }
+        let Checkpointˉmodules: u32 = Arguments - 3u32;
+        if Checkpointˉmodules > 64u32 {
+            diagnostic.write_line("source analysis status=Moduleˉlimit");
+            return 64;
+        }
+        let Checkpointˉsourceˉset: bytes = Buildˉsourceˉset(
+            1u32, Checkpointˉmodules
+        );
+        let Checkpointˉprecheck: u32 = Rawˉprecheck(
+            Checkpointˉsourceˉset
+        );
+        if Checkpointˉprecheck == 1u32 {
+            diagnostic.write_line("source analysis status=Rawˉdescriptor");
+            return 1;
+        }
+        if Checkpointˉprecheck == 2u32 {
+            diagnostic.write_line("source analysis status=RawˉSystemˉprofile");
+            return 1;
+        }
+        if Checkpointˉprecheck == 3u32 {
+            diagnostic.write_line("source analysis status=Rawˉplatform");
+            return 1;
+        }
+        if Checkpointˉprecheck == 4u32 {
+            diagnostic.write_line("source analysis status=Rawˉforeign");
+            return 1;
+        }
+        return Publishˉsymbolˉcheckpoint(
+            Checkpointˉsourceˉset,
+            1u32 + Checkpointˉmodules,
+            2u32 + Checkpointˉmodules
+        );
+    }
+    if Arguments > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-analysis-checkpoint"
+        ) {
+        if Arguments != 6u32 {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 64;
+        }
+        return Analyzeˉfromˉsymbolˉcheckpoint(
+            file.read_bytes(process.argument(1u32)),
+            file.read_bytes(process.argument(2u32)),
+            3u32
+        );
     }
     if Arguments > 0u32 && Argumentˉequals(
             process.argument(0u32), "--internal-source-set"
@@ -311,7 +427,7 @@ export fn Main() -> i32 {
         diagnostic.write_line("source analysis status=Moduleˉlimit");
         return 64;
     }
-    let Sourceˉset: bytes = Buildˉsourceˉset(Modules);
+    let Sourceˉset: bytes = Buildˉsourceˉset(0u32, Modules);
     let Precheck: u32 = Rawˉprecheck(Sourceˉset);
     if Precheck == 1u32 {
         diagnostic.write_line("source analysis status=Rawˉdescriptor");

@@ -50,16 +50,14 @@ semantics or new hosted metadata profile.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Platform-byte WVB | 30,305 | `8038e0762f06d821600eddf9963f5178e9d48bc63f455a2b519c31650623dc3e` |
-| Windows platform-byte producer | 313,856 | `55cac8f961666c0f3bdeb53664e31d15559f58fb238110878a04696e6494e3a2` |
-| Linux platform-byte producer | 311,296 | `e4664a0975f5117fe772a610f7bd02b3e8951d9db24bb67c0436792a21dd339f` |
+| Platform-byte WVB | 30,822 | `23ac48cf838f5091a8f178edc087529627890e5fff632986d0b998b3780dd1e5` |
+| Windows platform-byte producer | 315,392 | `42fb0671b94962f1ce68cbc7452d47f9894568909b9fedc123e5e0dbed553892` |
+| Linux platform-byte producer | 315,392 | `770531840b87326501b16401a0e10760805f761dfc170b883520bdc67d99d206` |
 
-Decision 0492 reconstructs and repins these current candidate identities after
-the Decision 0491 profile-2 layout and shared startup/file-input changes. The
-preceding focused current-host evidence built the public CLI target, executed a
-real plan without loading .NET, matched the retained platform fragment
-byte-for-byte, preserved an existing output on rejection, and rejected an
-input/output alias. Independent Linux execution and grouped qualification remain.
+Decision 0900 reconstructs these current candidate identities after the exact
+Profile-7/8 layout change. Local Windows-host cross-target packaging consumes
+the new plans successfully. Independent Linux execution, cross-host
+reconstruction, promotion, and grouped qualification remain.
 
 ## Retirement boundary
 

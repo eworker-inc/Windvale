@@ -21,6 +21,7 @@ import {
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
+const PACKAGE_CONCURRENCY = 2;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const TESTS = [
@@ -420,12 +421,9 @@ try {
     );
     const Totalˉitems = TESTS.length * 3 + 5;
     var Item = 0;
+    const Products = [];
     for (const Test of TESTS) {
         const Module = join(Work, `${Test.Name}.wvb`);
-        const Application = join(
-            Work,
-            WINDOWS ? `${Test.Name}.exe` : `${Test.Name}.elf`
-        );
 
         Item += 1;
         process.stdout.write(
@@ -439,14 +437,32 @@ try {
             Bytes: Moduleˉbytes.length,
             Digest: createHash('sha256').update(Moduleˉbytes).digest('hex')
         });
+        Products.push({
+            Test,
+            Module,
+            Application: join(
+                Work, WINDOWS ? `${Test.Name}.exe` : `${Test.Name}.elf`
+            )
+        });
+    }
 
-        Item += 1;
-        process.stdout.write(
-            `START language 1 callable semantics phase=package ` +
-            `item=${Item}/${Totalˉitems} test=${Test.Name}\n`
-        );
-        await Requireˉpackage(Packager, Test, Module, Application);
+    for (var Start = 0; Start < Products.length; Start += PACKAGE_CONCURRENCY) {
+        const Batch = Products.slice(Start, Start + PACKAGE_CONCURRENCY);
+        await Promise.all(Batch.map(Product => {
+            Item += 1;
+            process.stdout.write(
+                `START language 1 callable semantics phase=package ` +
+                `item=${Item}/${Totalˉitems} test=${Product.Test.Name} ` +
+                `parallel=${Batch.length}/${PACKAGE_CONCURRENCY}\n`
+            );
+            return Requireˉpackage(
+                Packager, Product.Test, Product.Module, Product.Application
+            );
+        }));
+    }
 
+    for (const Product of Products) {
+        const { Test, Application } = Product;
         Item += 1;
         process.stdout.write(
             `START language 1 callable semantics phase=execute ` +

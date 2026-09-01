@@ -10,7 +10,8 @@ The complete 27 MiB application is never represented as one Windvale `bytes`
 value: a deletion-bound managed relay copies already verified large bundle and
 runtime inputs into Windvale-declared positions.
 
-The contract covers both x64 targets and all seven hosted profiles. It does not
+The contract covers both x64 targets and all eight compiler-family hosted
+profiles. It does not
 change their public container formats, startup WVOs, runtime metadata, service
 bundle, file bytes, virtual-memory policy, or independent PE/ELF verification.
 The same planner is now also available through the standalone
@@ -28,7 +29,7 @@ The request is exactly 4,128 bytes. All integers are little-endian `u32`.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `4,128` |
 | 12 | 4 | target | `1` Windows or `2` Linux |
-| 16 | 4 | hosted profile | `1` through `7` |
+| 16 | 4 | hosted profile | `1` through `8` |
 | 20 | 4 | runtime-header bytes | `4,096` |
 | 24 | 8 | reserved | Zero |
 | 32 | 4,096 | runtime header | Exact Windvale-owned initial header |
@@ -104,7 +105,13 @@ The standalone platform-byte producer selects these same fragments from the
 admitted plan target and emits their exact response through a native
 Windows/Linux process. It adds no second PE/ELF construction implementation.
 
-## Exact retained artifacts
+## Exact retained transition artifacts
+
+The following fragment identities predate Profile 8 and remain historical
+transition inputs. The current compiler-scale process identities are recorded
+by [Decision 0900](../Documents/Decisions/0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md)
+and the digest-bound candidate inventory; they are not silently substituted for
+these retained values.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -117,8 +124,8 @@ Windows/Linux process. It adds no second PE/ELF construction implementation.
 | Hosted-container segmentation WVB | 22,584 | `d6d74f7d27df9f04f02b8eac2e75fde4fc230ba70d198f90b31ad668a06052e6` |
 | Hosted-container segmentation WVNF | 286,727 | `923f7ff4552e0774e613d5805d8fbdbfff9edaa7347108d3d23626b68fe5dee7` |
 
-All four WVB modules reconstruct byte-for-byte through the native project
-front door. Separate fragments are required because the current bootstrap
+At that retained state, all four WVB modules reconstructed byte-for-byte through
+the native project front door. Separate fragments were required because the bootstrap
 source-binding closure rejects the aggregate planner, startup-object parser,
 and both platform byte constructors in one source compilation. This is a
 bounded composition constraint, not a new semantic implementation.

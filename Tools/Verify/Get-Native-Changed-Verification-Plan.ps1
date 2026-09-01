@@ -981,6 +981,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0894-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0901-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
@@ -1119,8 +1120,11 @@ function Add-Os-Suite {
 function Add-Native-Tool-Suite {
     param([Parameter(Mandatory)][string]$Path)
     $Stem = [IO.Path]::GetFileNameWithoutExtension($Path)
-    if ($Stem -eq 'Test-Seed-Native-Front-Door-Reconstruction') {
-        # Deletion tombstone: the mutable-source exact-hash farm is retired.
+    if ($Stem -in @(
+        'Test-Seed-Native-Front-Door-Reconstruction',
+        'Test-Retirement-Suite'
+    )) {
+        # Deletion tombstones: these redundant aggregate entry points are retired.
         $script:RunPlanVerification = $true
         return
     }
@@ -1129,6 +1133,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Test-Language-1.0-Unsafe-Wir',
+        'Test-Language-1.0-Unsafe-Scratch-Wir',
         'Test-Language-1.0-Unsafe-Type-Surface'
     )) {
         Add-Suite 'language-1-callable-semantics'
@@ -1176,26 +1181,15 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -eq 'Build-Cached-Segmented-Hosted-Wvb') {
-        Add-Bytecode-Suites
-        Add-Suite @(
-            'segmented-hosted-wvb-cache',
-            'segmented-compiler-toolset-reconstruction',
-            'wvb-runner-reconstruction',
-            'compiler-split-development',
-            'native-u64-lowering',
-            'database-superblock',
-            'database-durable-commit',
-            'wv-linker-reconstruction',
-            'console-packager-container-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction',
-            'hosted-verifier-publisher-files',
-            'language-1-foreign-catalog-producer',
-            'language-1-source-admission-coordinator',
-            'language-1-foreign-memory-semantics'
-        )
+        Add-Suite 'segmented-hosted-wvb-cache'
+        return
+    }
+    if ($Stem -eq 'Build-Cached-Hosted-Application') {
+        Add-Suite 'segmented-hosted-wvb-cache'
+        return
+    }
+    if ($Stem -eq 'Native-Hosted-Application-Cache-Core') {
+        Add-Suite 'segmented-hosted-wvb-cache'
         return
     }
     if ($Stem -in @(
@@ -1233,6 +1227,7 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -in @(
+        'Generate-Compiler-Artifact-Readers',
         'Split-Project-Source-Ordering-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development',
@@ -1247,7 +1242,6 @@ function Add-Native-Tool-Suite {
     }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
-        'Build-Cached-Hosted-Application',
         'Build-Cached-Hosted-Application-Session',
         'Build-Cached-Linked-Image',
         'Build-Cached-Linked-Image-Set',
@@ -1257,7 +1251,6 @@ function Add-Native-Tool-Suite {
         'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
-        'Native-Hosted-Application-Cache-Core',
         'Native-Project-Cache-Key-Core',
         'Test-Hosted-Application-Session',
         'Test-Linked-Image-Set-Checkpoint',
@@ -1294,8 +1287,7 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Verification-Owner-Stream-Path',
         'Stream-Verification-Owner',
-        'Test-Verification-Owners',
-        'Test-Retirement-Suite'
+        'Test-Verification-Owners'
     )) {
         Add-Suite 'verification-owner-stream'
         $script:RunPlanVerification = $true
@@ -1475,8 +1467,6 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Package-Hosted-Wvb') {
         Add-Suite @(
             'native-u64-lowering',
-            'database-superblock',
-            'database-durable-commit',
             'wv-linker-reconstruction',
             'console-packager-container-reconstruction',
             'wvo-inspector-reconstruction',
@@ -1603,8 +1593,10 @@ foreach ($Path in $Paths) {
             'language-1-authenticated-foreign-binding'
         )
         continue
-    } elseif ($Path -eq
-        'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md') {
+    } elseif ($Path -in @(
+        'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
+        'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md'
+    )) {
         Add-Suite 'language-1-callable-semantics'
         continue
     } elseif (Test-LanguageFrozenSourceDesignPath $Path) {
@@ -2135,6 +2127,7 @@ foreach ($Path in $Paths) {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0894-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0901-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',
@@ -3432,6 +3425,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv',
         'Runtime/Windvale/Native-Hosted-Fixed-Services-Tool.wv',
+        'Runtime/Windvale/Native-Hosted-Container-Runtime-Tool.wv',
         'Runtime/Windvale/Native-Hosted-Orchestration-Control-Core.wv',
         'Runtime/Windvale/Native-Hosted-Source-Geometry-Tool.wv',
         'Runtime/Windvale/Native-Hosted-Tool-Metadata-Request-Tool.wv',

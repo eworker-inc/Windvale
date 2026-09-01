@@ -59,7 +59,8 @@ fn Profileˉmagic(Profile: u32) -> u32 {
     if Profile == 4u32 { return 1279809111u32; }
     if Profile == 5u32 { return 1346917975u32; }
     if Profile == 6u32 { return 1313363543u32; }
-    return 1195923031u32;
+    if Profile == 7u32 { return 1195923031u32; }
+    return 1481135703u32;
 }
 
 fn Profileˉcontainer(Profile: u32) -> u32 {
@@ -73,19 +74,21 @@ fn Profileˉflags(Profile: u32) -> u32 {
 }
 
 fn Textˉarenaˉbytes(Profile: u32) -> u32 {
-    if Profile == 2u32 || Profile == 6u32 || Profile == 7u32 {
+    if Profile == 8u32 { return 435945472u32; }
+    if Profile == 7u32 { return 301465600u32; }
+    if Profile == 2u32 || Profile == 6u32 {
         return 234881024u32;
     }
     return 134217728u32;
 }
 
 fn Instructionˉlimitˉlow(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 0u32; }
+    if Profile == 7u32 || Profile == 8u32 { return 0u32; }
     return 3870457856u32;
 }
 
 fn Instructionˉlimitˉhigh(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 32u32; }
+    if Profile == 7u32 || Profile == 8u32 { return 32u32; }
     return 14u32;
 }
 
@@ -195,7 +198,7 @@ export fn Nativeˉhostedˉtoolˉmetadataˉbuild(Input: bytes) -> bytes {
     let Nativeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 28u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, 32u32);
     if Target < 1u32 || Target > 2u32 ||
-        Profile < 1u32 || Profile > 7u32 ||
+        Profile < 1u32 || Profile > 8u32 ||
         Bundleˉoffset != 4096u32 ||
         Bundleˉbytes == 0u32 || Bundleˉbytes > 67108864u32 ||
         Nativeˉbytes == 0u32 || Nativeˉbytes > 67108864u32 ||

@@ -13,7 +13,7 @@ The host projects already verified bundle extents and raw SHA-256 evidence.
 It independently verifies the returned metadata against the actual service
 bundle before outer-container construction. This version accepts the compiler,
 build-driver, WVA assembler, WV linker, console packager, WVB-to-WVO, and
-hosted-container segmenter profiles.
+hosted-container segmenter and compiler-analysis profiles.
 
 ## Request envelope: `WVHM 1`
 
@@ -26,7 +26,7 @@ service-placement records.
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `576` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | hosted profile | `1` through `7` |
+| 16 | 4 | hosted profile | `1` through `8` |
 | 20 | 4 | bundle offset | Exactly `4,096` |
 | 24 | 4 | bundle bytes | `1` through 64 MiB |
 | 28 | 4 | native-image bytes | `1` through 64 MiB and no larger than the bundle |
@@ -80,8 +80,10 @@ The constructor derives the profile magic, container version, profile flags,
 six canonical capability records, ten canonical service records, target
 adapters, table slots, fixed ABI and profile-owned arena values, and all reserved zeros. It
 copies only the admitted placement extents and raw digests from the request.
-Profile 2 (the compiler build driver) receives a 234,881,024-byte dynamic
-text/byte arena. Profiles 1 and 3 through 7 retain 134,217,728 bytes.
+Profiles 2 and 6 receive a 234,881,024-byte dynamic text/byte arena. Profile 7
+receives 301,465,600 bytes and Profile 8 receives 435,945,472 bytes. Profiles 1
+and 3 through 5 retain 134,217,728 bytes. Profile 8 is exact metadata magic
+`WVHX`, container-format version 11, and flags 9.
 
 ## Windvale owner and retained artifact
 

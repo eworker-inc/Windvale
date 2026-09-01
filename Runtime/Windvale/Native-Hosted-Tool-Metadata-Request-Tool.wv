@@ -55,7 +55,7 @@ fn Metadataˉrequestˉbuild(
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Inputs, 12u32);
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Inputs, 16u32);
     let Nativeˉentry: u32 = Bytesˉreadˉu32ˉlittle(Inputs, 20u32);
-    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 7u32 {
+    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 8u32 {
         return Metadataˉrequestˉempty(Inputs);
     }
 

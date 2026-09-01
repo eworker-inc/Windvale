@@ -12,5 +12,5 @@ node "%ScriptDirectory%Build-Cached-Segmented-Hosted-Wvb.mjs" ^
 exit /b %ERRORLEVEL%
 
 :usage
->&2 echo Usage: Tools\Native\Build-Cached-Segmented-Hosted-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^>
+>&2 echo Usage: Tools\Native\Build-Cached-Segmented-Hosted-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^>
 exit /b 64

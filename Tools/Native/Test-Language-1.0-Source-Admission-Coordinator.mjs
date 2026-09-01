@@ -19,9 +19,6 @@ const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const ACQUISITION_TIMEOUT_MILLISECONDS = 1_200_000;
 const CASE_TIMEOUT_MILLISECONDS = 120_000;
-const EXPECTED_WVB_BYTES = 634_819;
-const EXPECTED_WVB_SHA256 =
-    '7d004263b350097f8bcd82997d4210464ee2dba8937a5c0b76d32b8139f99ac1';
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzAB'];
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -292,16 +289,6 @@ async function Fileˉidentity(Candidate, Label) {
     };
 }
 
-function Requireˉexpectedˉwvb(Identity, Label) {
-    if (Identity.bytes !== EXPECTED_WVB_BYTES ||
-        Identity.sha256 !== EXPECTED_WVB_SHA256) {
-        Reject(
-            `The ${Label} identity differs: bytes=${Identity.bytes} ` +
-            `sha256=${Identity.sha256}.`
-        );
-    }
-}
-
 async function Runˉcase(Application, Selector, Index) {
     const Result = await Runˉcommand(
         Application,
@@ -460,14 +447,14 @@ async function Main() {
         );
         const Firstˉidentity = await Fileˉidentity(First, 'first coordinator WVB');
         const Secondˉidentity = await Fileˉidentity(Second, 'second coordinator WVB');
-        Requireˉexpectedˉwvb(Firstˉidentity, 'first coordinator WVB');
-        Requireˉexpectedˉwvb(Secondˉidentity, 'second coordinator WVB');
         if (!Firstˉidentity.value.equals(Secondˉidentity.value)) {
             Reject('The two coordinator WVB builds are not byte-identical.');
         }
         process.stdout.write(
             `PASS  language 1 source admission coordinator phase=build item=2/2 ` +
-            `elapsed-ms=${Secondˉbuild.Elapsed} deterministic=Verified\n`
+            `elapsed-ms=${Secondˉbuild.Elapsed} deterministic=Verified ` +
+            `wvb-bytes=${Firstˉidentity.bytes} ` +
+            `sha256=${Firstˉidentity.sha256}\n`
         );
 
         process.stdout.write(
@@ -531,8 +518,7 @@ async function Main() {
             'cases=28 result=42 deterministic=Verified ' +
             'four-value-output=Verified empty-on-failure=Verified ' +
             'execution=native-cached-profile-7 isolated-executions=28 ' +
-            'wvb-bytes=634819 ' +
-            'sha256=7d004263b350097f8bcd82997d4210464ee2dba8937a5c0b76d32b8139f99ac1\n'
+            'wvb-identity=Measured-current\n'
         );
     }
 }

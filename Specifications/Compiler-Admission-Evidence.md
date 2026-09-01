@@ -254,22 +254,20 @@ and its direct artifacts carry no admission authority. The emitter writes only
 the private candidate WVB; the runner alone performs no-overwrite atomic
 publication of the final WVB path.
 
-The earlier admission-evidence leaf has fixed development ceilings of 262,144
-WVIR bytes and 262,144 WVB bytes. The refined Windows capacity case publishes
-191,712 WVIR bytes at SHA-256
-`067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`.
-Two independent retained-analyzer runs reproduce the exact WVSS, WVCA, WVLB,
-and WVIR products; the WVCA lengths and counts bind the structurally valid
-WVIR 1.3 directory. Because the directly included target source now requires
-the current compiler, validator WVB construction uses the reconstructed
-`Build-Current-Wvb` front door rather than frozen `Build-Wvb`. The current WVB
-is deterministic and verifier-accepted at 72,600 bytes and SHA-256
-`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`.
-Two current-compiler builds also reproduce the 44-selector fixture exactly as a
-94,839-byte WVB at SHA-256
-`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`;
-the maintained verifier accepts it as compiler-aligned. The final focused owner
-also pins the 24,292-byte portable core WVB at SHA-256
+The admission-evidence leaf has fixed development ceilings of 262,144 WVIR
+bytes and 262,144 WVB bytes. The current Windows capacity case publishes
+180,420 WVIR bytes at SHA-256
+`3ba91dcff8f54a5818f6821359883de3173e88fcdc8e0ab3205b4fea0b26dd57`.
+The WVCA lengths and counts bind the structurally valid WVIR directory. Because
+the directly included target source now requires the current compiler,
+validator WVB construction uses the reconstructed `Build-Current-Wvb` front
+door rather than frozen `Build-Wvb`. Two independent validator builds must be
+byte-identical and remain below the leaf ceiling; the current value is 74,291
+bytes. The 96,530-byte fixture remains bounded and all 44 selectors execute
+through the pinned runner. Historical current-compiler output hashes are not a
+development acceptance gate because an intentional compiler edit changes those
+derived bytes. The focused owner still pins the stable 24,292-byte portable core
+WVB at SHA-256
 `5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`.
 Those leaf ceilings do not set the complete `wvauth` product ceiling.
 Cross-host equality remains required before qualification is claimed.
@@ -286,10 +284,10 @@ module count, digest, lock, and profile rejection. They pass beside the 44
 portable selectors and 15 WVSS structure subcases, for 56 cases total.
 The exact current-closure summary is `PASS admission evidence cases=56
 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
-execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
-wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
-wrapper in 138,530 ms. The run uses the 24,292-byte core, 191,712-byte WVIR,
-72,600-byte validator WVB, and 94,839-byte fixture identities pinned above.
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=180420
+wvb-bytes=74291`. It retains the 24,292-byte core identity, exact validator
+double-build comparison, product and fixture size ceilings, all 12 packaged
+product cases, and all 44 portable-selector cases.
 
 The complete, separately composed `wvauth` additionally builds
 byte-identically in two initially empty split-compiler caches as a

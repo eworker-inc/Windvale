@@ -11,9 +11,10 @@ and zero-tail byte layout. The standalone
 now projects already verified metadata, executes the constructor, verifies the
 response, and writes the raw planner input without a managed runtime bridge.
 
-This version accepts the seven implemented hosted profiles: compiler,
+This version accepts the eight implemented compiler-family hosted profiles: compiler,
 build-driver, WVA assembler, WV linker, console packager, WVB-to-WVO, and the
-hosted-container segmenter authority shared by the transition tools.
+hosted-container segmenter plus compiler-analysis authority shared by the
+transition tools.
 
 ## Request envelope: `WVHR 1`
 
@@ -25,20 +26,22 @@ The request is exactly 1,048 bytes:
 | 4 | 4 | version | `1` |
 | 8 | 4 | total bytes | `1,048` |
 | 12 | 4 | target | `1` Windows x64 or `2` Linux x64 |
-| 16 | 4 | hosted profile | `1` through `7` |
+| 16 | 4 | hosted profile | `1` through `8` |
 | 20 | 4 | reserved | Zero |
 | 24 | 1,024 | hosted metadata | Exact canonical `WVH* 1` record |
 
 Metadata admission requires the profile-specific magic, container version and
 flags; ABI 22, execution-context 7 and service-table 5; exact six-capability
-and ten-service directories; 4,096-byte bundle placement; arena and
-64-billion-instruction bounds; target-correct adapters; ordered, contained
-nonempty service leaves; nonzero digests; and a zero reserved tail. The
-dynamic text/byte arena is exactly 234,881,024 bytes for profile 2 and
-134,217,728 bytes for every other hosted-tool profile. The runtime constructor
-copies that admitted size into execution-context offset 56. File-input table
-offset 40 is an 8,192-byte name stride for profile 2 and the ordinary
-1,048,576-byte stride for every other profile.
+and ten-service directories; 4,096-byte bundle placement; exact profile arena
+and instruction bounds; target-correct adapters; ordered, contained nonempty
+service leaves; nonzero digests; and a zero reserved tail. Profiles 1 through 6
+retain 64 billion instructions; profiles 7 and 8 admit exactly `2^37`.
+Profiles 2 and 6 have a 234,881,024-byte arena, Profile 7 has 301,465,600
+bytes, Profile 8 has 435,945,472 bytes, and profiles 1 and 3 through 5 retain
+134,217,728 bytes. The runtime constructor copies that admitted size into
+execution-context offset 56. Profiles 2 and 6 through 8 use an 8,192-byte name
+stride; other profiles use 1,048,576 bytes. Profile 8 has 32 file-input slots;
+all other profiles retain 64.
 
 ## Response envelope: `WVHS 1`
 

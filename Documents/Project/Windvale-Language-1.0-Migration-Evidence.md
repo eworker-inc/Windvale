@@ -4722,28 +4722,24 @@ snapshot lifecycle integration, foreign binding/lowering, runtime containment,
 and Slice 8 completion remain pending.
 
 The later Decision 0892 target-descriptor change is a direct validator-project
-input. Two narrow retained-analyzer runs reproduce exact 106,530-byte WVSS,
-104-byte WVCA, 13,572-byte WVLB, and 191,712-byte WVIR products. The WVIR has
+input. The current capacity run publishes a 106,530-byte WVSS, 104-byte WVCA,
+13,572-byte WVLB, and 180,420-byte WVIR product. The WVIR has
 SHA-256
-`067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391`;
-its retained WVIR 1.3 section geometry and every WVCA length/count binding are
-exact. The evolved 75-function closure requires `Build-Current-Wvb`; frozen
-`Build-Wvb` reports its total-function binding sentinel. Two current-compiler
-builds produce byte-identical 72,600-byte WVB values at SHA-256
-`706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59`,
-and the maintained verifier accepts the result as compiler-aligned. Two
-current-compiler fixture builds also reproduce byte-identical 94,839-byte WVB
-values at SHA-256
-`5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b`,
-and the maintained verifier accepts that fixture as compiler-aligned. The final
-focused Windows owner additionally pins the 24,292-byte core WVB at SHA-256
+`3ba91dcff8f54a5818f6821359883de3173e88fcdc8e0ab3205b4fea0b26dd57`;
+its retained section geometry and every WVCA length/count binding are exact.
+The evolved closure requires `Build-Current-Wvb`; frozen `Build-Wvb` reports
+its total-function binding sentinel. Two current-compiler validator builds
+produce byte-identical 74,291-byte WVB values below the 262,144-byte leaf
+ceiling. The 96,530-byte fixture remains below the same ceiling and all 44
+selectors execute successfully. Historical derived compiler-output hashes are
+reported during development rather than used as acceptance gates. The focused
+Windows owner still pins the stable 24,292-byte core WVB at SHA-256
 `5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537`,
 packages the current validator, and executes both the actual product and the
 portable selectors. Its exact summary is `PASS admission evidence cases=56
 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15
-execution=native-packaged core-wvb-bytes=24292 wvir-bytes=191712
-wvb-bytes=72600`. The focused suite completes in 137,850 ms and its owner
-wrapper in 138,530 ms. This current local Windows result does not alter the
+execution=native-packaged core-wvb-bytes=24292 wvir-bytes=180420
+wvb-bytes=74291`. This current local Windows result does not alter the
 paired-host, production coordinator/private-snapshot, Analyzer-consumer,
 foreign-lowering, runtime-containment, or complete Slice 8 nonclaims above.
 
@@ -4851,3 +4847,75 @@ reused while its compiler inputs remain unchanged. Linux execution,
 authenticated Foreign-call lowering, WVB/verifier/runtime/native containment,
 one migrated runtime or OS boundary, and final Slice 8 qualification remain
 pending.
+
+## Slice 8 canonical unsafe-scratch typed-WVIR checkpoint
+
+[Decision 0899](../Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md)
+implements the first canonical producer for a Foundation unsafe value. Exact
+`Constructˉscratch::<Abi>(Budget, Length, Alignment)` emits operation 186 only
+when its qualified module, explicit enum ABI, named argument order, memory
+budget slot, `u64` operands, canonical affine result, and `memory.allocate`
+effect all agree. Independent WVIR admission rechecks those relationships.
+WVIR minor 23 carries the operation without generic specializations and minor
+24 carries it with them.
+
+The focused retained-tool run covers two valid and seven rejected source
+programs plus nine malformed WVIR mutations. Its exact summary is:
+
+```text
+native language 1 unsafe scratch WVIR status=Passed cases=9 valid=2 rejected=7 malformed=9 operation=186 effect-check=emitter
+```
+
+The Profile-8 Windows Analyzer is 52,659,712 bytes at SHA-256
+`211caf31790087d81537be5a29700097e57ed87333d7696691cbbb83dd3c3ac0`.
+The optimized emitter analysis publishes 1,557,184 source bytes, 273,740
+binding bytes, and 3,556,880 WVIR bytes. Its 738 functions produce a
+1,479,716-byte WVB at SHA-256
+`8d2ca39f2792210699a2ae11be33b28f44136722b606459b9e1a7fc86d2b98c1`.
+The current reconstructed verifier admits that WVB; the older pinned verifier
+does not, so it is not promoted through the cached front door. After current
+admission, the bounded producer constructs a 30,899,712-byte local Windows
+application at SHA-256
+`713007426ffca090f1981647b09d22464138f849f5513990ec8ed979b5682c53`.
+
+[Decision 0900](../Decisions/0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md)
+records the supporting compiler-scale geometry, 14 deterministic artifact
+readers, symbol/analysis phase checkpoints, and source-set segment-read
+reduction. These are local development identities. Executable operation 186,
+the complete verifier/runtime/native contract, containment, a migrated real
+boundary, Linux reproduction, and final Slice 8 qualification remain pending.
+
+## Slice 8 development-verification balance
+
+The settled local Windows source state passed one changed-file development
+plan containing 34 focused owners. Passing owner results were retained while
+the failed or newly selected owner alone was repaired and rerun; the complete
+plan was not restarted. The final plan reports zero native coverage gaps, no
+database storage checkpoint, and no WebAssembly or qualification escalation.
+The verification planner passes 31 general and 259 native routing cases, and
+the registry stream passes all four filesystem/streaming cases.
+
+Three stale derived-output gates were removed from ordinary development. The
+admission-evidence validator still requires two byte-identical bounded builds,
+the source-admission coordinator still requires two byte-identical bounded
+builds, and production ingress still constructs and executes all five current
+products. Their changing compiler-produced hashes are measured during
+development; explicit cold double-build qualification retains the settled
+identity gate required for promotion. Immutable bootstrap artifacts, format
+goldens, malformed inputs, bounds, and behavioral oracles remain pinned.
+
+The 64-case `language-1-callable-semantics` owner now builds every fixture once
+and packages independent fixtures with a hard concurrency limit of two. All
+seven packages, 40 generated-module semantic executions, 17 verifier cases,
+two native AOT executions, and six native rejection cases remain. Its terminal
+evidence remains:
+
+```text
+native language 1 callable semantics status=Passed cases=64 result=42 modules=11 evidence-bytes=4685253 native-aot-cases=8 evidence-sha256=dd58c92a094e3ed9eaa65b9f9d20c0b95ef9f92774dc36f1f37368b905ccbc65
+```
+
+The verification-owner specification now defines the key needed for persistent
+owner-result reuse and permits only bounded, measured concurrency. The current
+coordinator does not yet persist that result cache; this run resumed owners
+manually. Productizing the same dependency-keyed checkpoint is the next
+verification-workflow optimization and does not expand Slice 8 semantics.

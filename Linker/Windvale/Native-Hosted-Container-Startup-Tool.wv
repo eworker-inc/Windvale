@@ -69,7 +69,7 @@ fn Planˉisˉvalid(Plan: bytes, Target: u32) -> bool {
     if Bytesˉreadˉu32ˉlittle(Plan, 16u32) != 4128u32 { return false; }
     if Bytesˉreadˉu32ˉlittle(Plan, 20u32) != Target { return false; }
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Plan, 24u32);
-    if Profile == 0u32 || Profile > 7u32 { return false; }
+    if Profile == 0u32 || Profile > 8u32 { return false; }
     if Bytesˉreadˉu32ˉlittle(Plan, 44u32) != Expectedˉstartup {
         return false;
     }

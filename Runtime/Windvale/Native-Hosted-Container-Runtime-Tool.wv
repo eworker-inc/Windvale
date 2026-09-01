@@ -53,7 +53,7 @@ fn Profile(Metadataˉbytes: bytes) -> u32 {
     let Container: u32 = Bytesˉreadˉu32ˉlittle(Metadataˉbytes, 16u32);
     if Container == 3u32 { return 1u32; }
     if Container >= 5u32 {
-        if Container <= 10u32 { return Container - 3u32; }
+        if Container <= 11u32 { return Container - 3u32; }
     }
     return 0u32;
 }

@@ -160,6 +160,22 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 
 ## Testing and verification
 
+- Add only the minimum verification needed to protect a distinct contract. Before
+  adding a verifier, prove that an existing focused owner cannot cover the
+  behavior by adding cases. Every retained verifier must own unique behavior,
+  failure evidence, or a required host boundary; merge or remove entry points
+  that merely replay another verifier without adding coverage.
+- Treat implementation and final verification as separate phases. During active
+  implementation, run only the narrow checks required to develop or diagnose
+  the changed behavior. After the coherent change is complete, run one selected
+  final verification plan; do not keep restarting broad verification after each
+  edit, artifact refresh, commit, or push.
+- Make final verification parallel and resumable where independence permits.
+  Cache each owner result by its complete declared inputs, tool identities,
+  command, host, and verifier version. Reuse a passing result when none of those
+  dependencies changed, and rerun only invalidated owners. Never reuse evidence
+  across an undeclared dependency, semantic change, malformed-input boundary,
+  host requirement, or qualification identity.
 - Choose the narrowest reliable verifier for the changed behavior. Verification levels are alternatives, not a ladder: do not run changed-file, Fast, Development, Standard, and Qualification sequentially for the same source state. A passing broader level subsumes its narrower levels.
 - Run a verifier after a coherent edit, not after every small edit. Reuse a passing result while the files relevant to that verifier remain unchanged, and do not rerun it merely because a commit or push is next. After a failure, rerun the narrowest affected selection; run at most one broader final gate when the resulting risk requires it.
 - Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Its change classifier uses a lightweight scope for ordinary documentation and editor-package-only work, a website scope for static site, browser packaging, Cloudflare function, and website-tool changes, a development scope for implementation and specification changes with mapped native owners, and qualification only when explicitly requested or when comparison cannot be resolved safely. Development-scoped changed-file verification maps maintained boundaries to focused native verification owners in canonical order and refuses explicit uncovered gaps; it does not fall back to the complete unfiltered native gate. The website scope runs `Tools/Verify/Verify-Website.ps1`. Managed Stage 0 source and tests are absent from `main`; restore the exact recovery release in a separate workspace only for a named recovery, security, or historical differential investigation. Run focused native OS owners through their verification-owner filters.

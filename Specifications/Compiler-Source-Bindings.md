@@ -364,6 +364,15 @@ WVIR requires an explicit immutable borrow of one live exact `Sourceˉfile`
 local and produces `u64`; direct observation of the entry parameter before its
 move into the local is not admitted by the executable profile.
 
+Before ambient lookup, the exact qualified call
+`Foundationˉunsafe.Constructˉscratch` may select one compiler-supplied
+three-argument intrinsic with WVIR operation identity `186`. The alias must
+resolve to the exact edition-1 System module `Foundationˉunsafe`; a same-named
+member in another module remains an ordinary call. Binding fixes only the call
+identity and arity. Typed WVIR independently requires one explicit enum ABI type
+argument, the exact contextual Foundation Result and unsafe identities, one
+available `Memoryˉbudget` slot, and exact `u64` length and alignment values.
+
 Binding does not use a call's expected result to select an intrinsic or ordinary
 declaration. During typed WVIR construction, an already selected ordinary call
 may receive one exact contextual shape from a declared local, assignment target,

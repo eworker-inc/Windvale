@@ -1934,16 +1934,23 @@ Windvale record.
 The module may be implemented intrinsically, but its public contracts remain
 versioned and independently tested.
 
-The first implementation checkpoint publishes the canonical edition-1
+The type-identity checkpoint publishes the canonical edition-1
 `Foundationˉunsafe` module with the four foreign pointer/scratch/region type
 identities below and the exact two failure variants. Their current one-word
 physical record carrier is compiler-private: typed WVIR requires the exact
 canonical module, profile, name, arity, and layout, then rejects ordinary
 construction and field observation. Same-named records in another module do
-not acquire opacity. No operation below is published yet, so this checkpoint
-does not claim pointer production, scratch allocation, borrowing, Foreign-call
-lowering, serialization, runtime behavior, or native ABI. Those operations may
-appear only with their compiler-owned intrinsic semantics and containment
+not acquire opacity.
+
+The first producer checkpoint additionally publishes exactly
+`Constructˉscratch` through compiler-owned source binding and typed WVIR
+operation `186`. It requires an explicit `Memoryˉbudget`, exact `u64` length
+and alignment, one declared ABI enum, and the canonical affine result. The
+source-WVB boundary still rejects operation `186`, so this checkpoint does not
+claim executable allocation, pointer production, borrowing, Foreign-call
+lowering, serialization, runtime behavior, or native ABI. The remaining
+operations below, and an executable representation for `Constructˉscratch`,
+may appear only with their compiler-owned intrinsic semantics and containment
 evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null

@@ -33,8 +33,8 @@ esac
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 plan="$repository_root/Tests/Native/Verification-Owners.txt"
-plan_bytes=22366
-plan_digest=38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6
+plan_bytes=22307
+plan_digest=9ad8431958621480e99d9eda356268ed3aeb2964270916cdc5c7baeb9e2fadf5
 plan_owners=125
 plan_cases=5936
 plan_shard_1_owners=1

@@ -227,7 +227,7 @@ export async function Getˉhostedˉapplicationˉcacheˉkey(
     if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(namespace)) {
         Reject('The hosted-application cache-key namespace is invalid.');
     }
-    if (!/^[1-7]$/.test(profile)) {
+    if (!/^[1-8]$/.test(profile)) {
         Reject('The hosted-application cache-key profile is invalid.');
     }
     const inputPath = path.resolve(inputArgument);

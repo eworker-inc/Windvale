@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~3"=="" goto :usage
 if not "%~5"=="" goto :usage
-echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
+echo(%~1| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 if /I not "%~x3"==".exe" goto :usage
 set "DevelopmentCache=0"
@@ -77,5 +77,5 @@ rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
 
 :usage
->&2 echo Usage: Tools\Native\Package-Segmented-Compiler-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^> [--development-cache]
+>&2 echo Usage: Tools\Native\Package-Segmented-Compiler-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^> [--development-cache]
 exit /b 64

@@ -13,6 +13,7 @@ import {
     rm,
     rmdir,
     stat,
+    unlink,
     writeFile,
 } from 'node:fs/promises';
 import os from 'node:os';
@@ -37,9 +38,11 @@ const PRODUCER_TIMEOUT_MILLISECONDS = 300_000;
 const HOST = `${process.platform}-${process.arch}`;
 const TEST_HOOKS = Readˉtestˉhooks();
 
-if (process.argv.length !== 8) {
+if ((process.argv.length !== 8 && process.argv.length !== 9) ||
+    (process.argv.length === 9 && process.argv[8] !== '--symbol-checkpoint')) {
     Usage();
 }
+const Symbolˉcheckpointˉanalysis = process.argv.length === 9;
 if (process.arch !== 'x64' ||
     (process.platform !== 'win32' && process.platform !== 'linux')) {
     Reject(`The split compiler cache does not support ${HOST}.`);
@@ -119,6 +122,7 @@ const Analysisˉcheckpoint = await Acquireˉanalysis(
     Orderedˉanalysisˉinputs,
     Analyzerˉpath,
     Analyzerˉidentity,
+    Symbolˉcheckpointˉanalysis,
 );
 
 const Emissionˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
@@ -172,7 +176,14 @@ console.log(
     `wvb-bytes=${Outputˉevidence.bytes} wvb-sha256=${Outputˉevidence.sha256}`,
 );
 
-async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
+async function Acquireˉanalysis(
+    Family,
+    Request,
+    Inputs,
+    Analyzer,
+    Identity,
+    Useˉsymbolˉcheckpoint,
+) {
     const Checkpoint = path.join(Family, Request.key);
     if (await Exists(Checkpoint)) {
         await Validateˉanalysis(Checkpoint, Request.key);
@@ -190,13 +201,51 @@ async function Acquireˉanalysis(Family, Request, Inputs, Analyzer, Identity) {
         );
         await Applyˉtestˉhook('afterTemporaryIdentified', Temporary);
         await Verifyˉproducer(Analyzer, Identity);
-        await Run(Analyzer, [
-            ...Inputs,
-            path.join(Temporary.path, 'Source.wvss'),
-            path.join(Temporary.path, 'Manifest.wvca'),
-            path.join(Temporary.path, 'Bindings.wvlb'),
-            path.join(Temporary.path, 'Wir.wvir'),
-        ], 'analysis');
+        if (Useˉsymbolˉcheckpoint) {
+            const Symbolˉcheckpoint = path.join(
+                Temporary.path,
+                'Symbols.wvsy',
+            );
+            await Run(Analyzer, [
+                '--internal-symbol-checkpoint',
+                ...Inputs,
+                path.join(Temporary.path, 'Source.wvss'),
+                Symbolˉcheckpoint,
+            ], 'analysis-symbols');
+            await Verifyˉproducer(Analyzer, Identity);
+            const Producedˉsymbols = await Fileˉevidence(
+                Symbolˉcheckpoint,
+                'internal symbol checkpoint',
+                MAXIMUM_VALUE_BYTES,
+            );
+            await Run(Analyzer, [
+                '--internal-analysis-checkpoint',
+                path.join(Temporary.path, 'Source.wvss'),
+                Symbolˉcheckpoint,
+                path.join(Temporary.path, 'Manifest.wvca'),
+                path.join(Temporary.path, 'Bindings.wvlb'),
+                path.join(Temporary.path, 'Wir.wvir'),
+            ], 'analysis-wir');
+            await Verifyˉproducer(Analyzer, Identity);
+            const Consumedˉsymbols = await Fileˉevidence(
+                Symbolˉcheckpoint,
+                'consumed internal symbol checkpoint',
+                MAXIMUM_VALUE_BYTES,
+            );
+            if (Producedˉsymbols.bytes !== Consumedˉsymbols.bytes ||
+                Producedˉsymbols.sha256 !== Consumedˉsymbols.sha256) {
+                Reject('The internal symbol checkpoint changed during analysis.');
+            }
+            await unlink(Symbolˉcheckpoint);
+        } else {
+            await Run(Analyzer, [
+                ...Inputs,
+                path.join(Temporary.path, 'Source.wvss'),
+                path.join(Temporary.path, 'Manifest.wvca'),
+                path.join(Temporary.path, 'Bindings.wvlb'),
+                path.join(Temporary.path, 'Wir.wvir'),
+            ], 'analysis');
+        }
         await Verifyˉproducer(Analyzer, Identity);
         const Evidence = await Analysisˉevidence(Temporary.path);
         await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
@@ -235,6 +284,7 @@ async function Reportˉanalysisˉfailureˉoutputs(Directory) {
     }
     for (const Name of [
         'Source.wvss',
+        'Symbols.wvsy',
         'Manifest.wvca',
         'Bindings.wvlb',
         'Wir.wvir',
@@ -978,7 +1028,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Build-Cached-Split-Project-Wvb.mjs ' +
         '<project.wvproj> <output.wvb> <analyzer> <analyzer.identity> ' +
-        '<emitter> <emitter.identity>\n',
+        '<emitter> <emitter.identity> [--symbol-checkpoint]\n',
     );
     process.exit(64);
 }

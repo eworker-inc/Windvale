@@ -16,8 +16,8 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 
 ## Registry identity and grammar
 
-`Tests/Native/Verification-Owners.txt` is 22,366 LF-only bytes with SHA-256
-`38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6`.
+`Tests/Native/Verification-Owners.txt` is 22,307 LF-only bytes with SHA-256
+`9ad8431958621480e99d9eda356268ed3aeb2964270916cdc5c7baeb9e2fadf5`.
 Its first line is exactly:
 
 ```text
@@ -66,9 +66,27 @@ oracle in the development dependency registry, and leave the no-argument owner
 command as the complete qualification contract. A development-mode pass must
 not be reported as the qualification evidence it intentionally omits.
 
-The historical `Test-Retirement-Suite.cmd` and `.sh` paths are compatibility
-entry points that delegate to the current coordinator. New automation and
-documentation use the verification-owner name.
+One coherent source state receives one final selected plan. A failure
+invalidates that owner and owners whose declared inputs changed; it does not
+invalidate unrelated passing owners. A future persistent result cache must key
+each reusable pass by the complete input set, command, verifier version, tool
+identities, host contract, and execution mode. Until that cache is implemented,
+maintainers may resume the explicit owner list manually and must record which
+owners passed on the unchanged source state.
+
+Independent work may run concurrently only under a bounded resource policy.
+Shared compiler reconstruction, cache publication, storage, and other
+contention-heavy owners remain serialized unless measurement proves a safe
+limit. An individual owner may use bounded internal concurrency for independent
+products; `language-1-callable-semantics`, for example, packages at most two
+distinct fixtures at once while preserving all registered cases. Parallelism
+changes scheduling, not the accepted terminal summary or evidence boundary.
+
+The historical `Test-Retirement-Suite.cmd` and `.sh` compatibility aliases were
+removed from `main` because they added no coverage and only delegated to the
+current coordinator. They remain available from the immutable `v0.1.0` tag and
+Git history. Current automation and documentation use the verification-owner
+name.
 
 ## Coordinator contract
 

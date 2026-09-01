@@ -18,7 +18,7 @@ wvhostcontrol metadata <windows|linux> <profile> <native-entry> <output.wvmi>
 wvhostcontrol evidence <sources.wvsg> <output.wvhs>
 ```
 
-`metadata` accepts profiles 1 through 7 and a native entry below the existing
+`metadata` accepts profiles 1 through 8 and a native entry below the existing
 64 MiB segmented native-code ceiling. It writes the exact 32-byte `WVMI 1` record with
 zero reserved fields and no host-supplied bundle offset.
 
@@ -43,10 +43,9 @@ file read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Orchestration-control WVB | 21,214 | `2bb4415cdb5b8f42c00f6d1e760d2aa0b52c5fe47f1617372eefa61c24d325f3` |
-| Native WVO | 219,635 | `955e31d0d6a83ae306f885671ad2c0ad9c9dc09b366917f4c742ba8ad9e087d4` |
-| Windows application | 236,032 | `2aa9fa9ea5d6d7c4860d65734de0fe538877700b9fcea5f6b8ca616e5cb2cd2f` |
-| Linux application | 237,568 | `0bb6d21a928a880bfebdb522918d8aaa147bb3849f42b2c519bbdf2f7ca4a1d0` |
+| Orchestration-control WVB | 16,306 | `3088dc64ee378608020051f4c36b22bdd41754601274eb3939cb788151785a10` |
+| Windows application | 168,960 | `6b6ca35a07c9c4b38a52ce79779691953be34b5c4b27ba0670c3a17e5df955c1` |
+| Linux application | 167,936 | `6620009a07220b3231304b486e5d86ce80e0757db543af755c0b2aa4ccc2512c` |
 
 The native Project 1 front door reproduces the WVB byte for byte, and the
 digest-bound native lowerer reproduces the exact Stage 0 WVO. Package wiring

@@ -1578,6 +1578,30 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
         Compilerˉsourceˉbindingsˉquery(
             Input, Scan, Symbols.Lookup, Owner, Source, Offset, Length
         );
+    if Query.Nameˉlength == 18u32 &&
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength,
+            "Constructˉscratch"
+        ) && Query.Qualified && Query.Aliasˉfound &&
+        Query.Target < Scan.Modules {
+        let Unsafeˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+        let Unsafeˉheader: Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                Unsafeˉview.Source
+            );
+        if Unsafeˉview.Edition == 1u32 && Unsafeˉheader.Profile ==
+                Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Unsafeˉview.Source, Unsafeˉheader.Nameˉoffset,
+                Unsafeˉheader.Nameˉlength, "Foundationˉunsafe"
+            ) {
+            return Compilerˉsourceˉbindingˉmatch(
+                true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+                Query.Target, 3u32, 186u32
+            );
+        }
+    }
     if Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(Source, Query) {
     let Taskˉconstructˉmodule:
         Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =

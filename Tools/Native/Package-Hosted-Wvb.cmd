@@ -5,7 +5,7 @@ set "ImageMode=0"
 if /I "%~1"=="image" goto :image_arguments
 if "%~3"=="" goto :usage
 if not "%~5"=="" goto :usage
-echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
+echo(%~1| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 set "Profile=%~1"
 set "Input=%~f2"
@@ -17,7 +17,7 @@ goto :arguments_ready
 :image_arguments
 if "%~7"=="" goto :usage
 if not "%~9"=="" goto :usage
-echo(%~2| findstr /r /x "[1-7]" >nul || goto :usage
+echo(%~2| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x3"==".wvb" goto :usage
 echo(%~5| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
 echo(%~6| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
@@ -82,7 +82,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
@@ -171,7 +171,13 @@ if errorlevel 1 goto :cleanup
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostruntime.exe" "%TemporaryDirectory%\Metadata.wvhm" "%TemporaryDirectory%\Runtime.wvhr"
 if errorlevel 1 goto :cleanup
-"%Toolset%\windows-x64\wvhostplan.exe" "%TemporaryDirectory%\Runtime.wvhr" "%TemporaryDirectory%\Plan.wvcd"
+set "PublicationPlan=%TemporaryDirectory%\Plan.wvcd"
+if "%Profile%"=="8" (
+    set "PublicationPlan=%TemporaryDirectory%\Publication-Plan.wvcd"
+    "%Toolset%\windows-x64\wvhostplan.exe" "%TemporaryDirectory%\Runtime.wvhr" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Publication-Plan.wvcd"
+) else (
+    "%Toolset%\windows-x64\wvhostplan.exe" "%TemporaryDirectory%\Runtime.wvhr" "%TemporaryDirectory%\Plan.wvcd"
+)
 if errorlevel 1 goto :cleanup
 "%Toolset%\windows-x64\wvhostbytes.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Platform.wvhb"
 if errorlevel 1 goto :cleanup
@@ -197,7 +203,7 @@ echo hosted package step=application-sources status=Started
 if errorlevel 1 goto :cleanup
 echo hosted package step=application-sources status=Complete
 echo hosted package step=application-segment-count status=Started
-"%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" count >"%TemporaryDirectory%\Application-Count.txt"
+"%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%PublicationPlan%" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" count >"%TemporaryDirectory%\Application-Count.txt"
 if errorlevel 1 goto :cleanup
 set "ApplicationCount="
 for /f "tokens=3 delims==" %%N in ('findstr /b /c:"hosted container segment request status=Valid segments=" "%TemporaryDirectory%\Application-Count.txt"') do set "ApplicationCount=%%N"
@@ -208,18 +214,18 @@ echo hosted package step=application-segment-count status=Complete segments=%App
 set /a ApplicationLast=ApplicationCount-1
 for /l %%N in (0,1,%ApplicationLast%) do (
     echo hosted package step=application-segment item=%%N/%ApplicationLast% status=Started
-    "%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%TemporaryDirectory%\Plan.wvcd" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" %%N "%ApplicationSegments%.request-%%N"
+    "%Toolset%\windows-x64\wvhostsegmentrequest.exe" "%PublicationPlan%" "%TemporaryDirectory%\Application-Sources.wvsg" "%ApplicationSources%" %%N "%ApplicationSegments%.request-%%N"
     if errorlevel 1 goto :cleanup
     "%Toolset%\windows-x64\wvhostsegment.exe" "%ApplicationSegments%.request-%%N" "%ApplicationSegments%.response-%%N"
     if errorlevel 1 goto :cleanup
     echo hosted package step=application-segment item=%%N/%ApplicationLast% status=Complete
 )
 echo hosted package step=application-manifest status=Started
-"%Toolset%\windows-x64\wvhostsegmentmanifest.exe" "%TemporaryDirectory%\Plan.wvcd" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm"
+"%Toolset%\windows-x64\wvhostsegmentmanifest.exe" "%PublicationPlan%" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm"
 if errorlevel 1 goto :cleanup
 echo hosted package step=application-manifest status=Complete
 echo hosted package step=publication status=Started
-"%Toolset%\windows-x64\wvhostpublish.exe" "%TemporaryDirectory%\Plan.wvcd" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm" "%Output%"
+"%Toolset%\windows-x64\wvhostpublish.exe" "%PublicationPlan%" "%ApplicationSegments%" "%TemporaryDirectory%\Application-Segments.wvhm" "%Output%"
 set "Result=%ERRORLEVEL%"
 if "%Result%"=="0" echo hosted package step=publication status=Complete
 
@@ -253,6 +259,6 @@ if errorlevel 1 (
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
->&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
+>&2 echo Usage: Tools\Native\Package-Hosted-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^|output.elf^> [windows^|linux]
+>&2 echo    or: Tools\Native\Package-Hosted-Wvb.cmd image ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-chunks-1-through-16^> ^<entry-offset^> ^<output.exe^|output.elf^> [windows^|linux]
 exit /b 64

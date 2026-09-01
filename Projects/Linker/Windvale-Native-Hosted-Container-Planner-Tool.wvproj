@@ -4,5 +4,6 @@ source "Foundation/Byte-Construction.wv"
 source "Linker/Windvale/Native-Hosted-Container-Byte-Construction.wv"
 source "Linker/Windvale/Native-Hosted-Container-Construction-Core.wv"
 source "Linker/Windvale/Native-Hosted-Container-Layout.wv"
+source "Linker/Windvale/Native-Hosted-Container-Segmentation-Core.wv"
 source "Runtime/Windvale/Native-Hosted-Tool-Metadata-Admission.wv"
 emit wvb

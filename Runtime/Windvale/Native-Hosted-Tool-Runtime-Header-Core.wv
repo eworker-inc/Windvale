@@ -22,12 +22,12 @@ fn Zeroes(Input: bytes, Count: u32) -> bytes {
 }
 
 fn Instructionˉlimitˉlow(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 0u32; }
+    if Profile == 7u32 || Profile == 8u32 { return 0u32; }
     return 3870457856u32;
 }
 
 fn Instructionˉlimitˉhigh(Profile: u32) -> u32 {
-    if Profile == 7u32 { return 32u32; }
+    if Profile == 7u32 || Profile == 8u32 { return 32u32; }
     return 14u32;
 }
 
@@ -101,8 +101,16 @@ fn Scratchˉbytes(Target: u32) -> u32 {
 }
 
 fn Nameˉstrideˉbytes(Profile: u32) -> u32 {
-    if Profile == 2u32 || Profile == 6u32 { return 8192u32; }
+    if Profile == 2u32 || Profile == 6u32 ||
+        Profile == 7u32 || Profile == 8u32 {
+        return 8192u32;
+    }
     return 1048576u32;
+}
+
+fn Fileˉinputˉcapacity(Profile: u32) -> u32 {
+    if Profile == 8u32 { return 32u32; }
+    return 64u32;
 }
 
 fn Fileˉinputˉtable(Input: bytes, Target: u32, Profile: u32) -> bytes {
@@ -112,7 +120,7 @@ fn Fileˉinputˉtable(Input: bytes, Target: u32, Profile: u32) -> bytes {
     Result = Appendˉu32(Result, 136u32);
     Result = Appendˉu32(Result, Target);
     Result = Appendˉu64(Result, 0u32, 0u32);
-    Result = Appendˉu32(Result, 64u32);
+    Result = Appendˉu32(Result, Fileˉinputˉcapacity(Profile));
     Result = Appendˉu32(Result, 0u32);
     Result = Appendˉu64(Result, 0u32, 0u32);
     Result = Appendˉu32(Result, Nameˉstrideˉbytes(Profile));
@@ -154,7 +162,7 @@ export fn Nativeˉhostedˉtoolˉruntimeˉheaderˉbuild(Input: bytes) -> bytes {
     let Target: u32 = Bytesˉreadˉu32ˉlittle(Input, 12u32);
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     if Target < 1u32 || Target > 2u32 ||
-        Profile < 1u32 || Profile > 7u32 ||
+        Profile < 1u32 || Profile > 8u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 20u32) != 0u32 {
         return Failure(Input, 4u32, 12u32);
     }

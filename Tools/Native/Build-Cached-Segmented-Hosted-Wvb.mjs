@@ -811,10 +811,10 @@ async function Getˉcheckpointˉfamily() {
 }
 
 async function Main() {
-    if (process.argv.length !== 5 || !/^[1-7]$/u.test(process.argv[2])) {
+    if (process.argv.length !== 5 || !/^[1-8]$/u.test(process.argv[2])) {
         Reject(
             'Usage: node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs ' +
-            `<profile-1-through-7> <input.wvb> <output${OUTPUT_EXTENSION}>`,
+            `<profile-1-through-8> <input.wvb> <output${OUTPUT_EXTENSION}>`,
             64,
         );
     }

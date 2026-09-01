@@ -2,6 +2,7 @@ module Nativeˉhostedˉcontainerˉplannerˉtool profile hosted;
 
 import Linkerˉnativeˉhostedˉcontainerˉbyteˉconstruction as Build;
 import Linkerˉnativeˉhostedˉcontainerˉconstruction as Construction;
+import Linkerˉnativeˉhostedˉcontainerˉsegmentationˉcore as Segmentation;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -29,8 +30,21 @@ fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
 }
 
 fn Usage() -> i32 {
-    diagnostic.write_line("Usage: wvhostplan <runtime.wvhr> <plan.wvcd>");
+    diagnostic.write_line(
+        "Usage: wvhostplan <runtime.wvhr> <plan.wvcd> [publication-plan.wvcd]"
+    );
     return 64;
+}
+
+fn Publicationˉplan(Plan: bytes) -> bytes {
+    if Bytesˉreadˉu32ˉlittle(Plan, 24u32) != 8u32 { return Plan; }
+    let Candidate: bytes = Build.Patchˉu32(Plan, 24u32, 7u32);
+    if !Segmentation.Nativeˉhostedˉcontainerˉplanˉisˉvalid(
+            Bytesˉslice(Candidate, 0u32, 128u32)
+        ) {
+        return Build.Empty(Plan);
+    }
+    return Candidate;
 }
 
 fn Profileˉfromˉcontainer(Container: u32) -> u32 {
@@ -41,6 +55,7 @@ fn Profileˉfromˉcontainer(Container: u32) -> u32 {
     if Container == 8u32 { return 5u32; }
     if Container == 9u32 { return 6u32; }
     if Container == 10u32 { return 7u32; }
+    if Container == 11u32 { return 8u32; }
     return 0u32;
 }
 
@@ -74,11 +89,23 @@ fn Reject() -> i32 {
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 2u32 { return Usage(); }
+    let Argumentˉcount: u32 = process.argument_count();
+    if Argumentˉcount < 2u32 || Argumentˉcount > 3u32 { return Usage(); }
     let Inputˉpath: text = process.argument(0u32);
     let Outputˉpath: text = process.argument(1u32);
     if Bytesˉareˉequal(Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Outputˉpath)) {
         return Usage();
+    }
+    var Publicationˉpath: text = Outputˉpath;
+    if Argumentˉcount == 3u32 {
+        Publicationˉpath = process.argument(2u32);
+        if Bytesˉareˉequal(
+                Textˉtoˉutf8(Inputˉpath), Textˉtoˉutf8(Publicationˉpath)
+            ) || Bytesˉareˉequal(
+                Textˉtoˉutf8(Outputˉpath), Textˉtoˉutf8(Publicationˉpath)
+            ) {
+            return Usage();
+        }
     }
 
     let Runtime: bytes = file.read_bytes(Inputˉpath);
@@ -93,7 +120,12 @@ export fn Main() -> i32 {
         Bytesˉreadˉu32ˉlittle(Plan, 16u32) != Bytesˉlength(Plannerˉrequest) {
         return Reject();
     }
+    let Publication: bytes = Publicationˉplan(Plan);
+    if Bytesˉlength(Publication) != Bytesˉlength(Plan) { return Reject(); }
     file.write_bytes(Outputˉpath, Plan);
+    if Argumentˉcount == 3u32 {
+        file.write_bytes(Publicationˉpath, Publication);
+    }
     console.write_line(
         Textˉconcat(
             Textˉconcat(

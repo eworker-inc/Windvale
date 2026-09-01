@@ -92,11 +92,15 @@ const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
 const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
 const Analyzer = path.join(Work, `Analyzer${Suffix}`);
 const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
+const Checkpointˉanalyzer = path.join(Work, `Checkpoint-Analyzer${Suffix}`);
+const Checkpointˉanalyzerˉidentity = path.join(
+    Work, 'Checkpoint-Analyzer.identity',
+);
 const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
 const Emitter = path.join(Work, `Emitter${Suffix}`);
 const Emitterˉidentity = path.join(Work, 'Emitter.identity');
 let Step = 0;
-const Totalˉsteps = 10 + Targets.length;
+const Totalˉsteps = 12 + Targets.length;
 
 try {
     await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
@@ -131,13 +135,20 @@ try {
     await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Analyzer, Analyzerˉidentity,
     ]);
+    await Runˉnative('stage1-checkpoint-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+        '8', Analyzerˉwvb, Checkpointˉanalyzer, '--development-cache',
+    ]);
+    await Runˉnode('stage1-checkpoint-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+        'analyzer', Checkpointˉanalyzer, Checkpointˉanalyzerˉidentity,
+    ]);
     await Runˉnode('stage1-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
         Emitterˉwvb,
-        Analyzer,
-        Analyzerˉidentity,
+        Checkpointˉanalyzer,
+        Checkpointˉanalyzerˉidentity,
         Pinnedˉemitter,
         Pinnedˉemitterˉidentity,
+        '--symbol-checkpoint',
     ]);
     await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Emitterˉwvb, Emitter, '--development-cache',
@@ -157,6 +168,7 @@ try {
             Analyzerˉidentity,
             Emitter,
             Emitterˉidentity,
+            '--symbol-checkpoint',
         ]);
         const Targetˉevidence = Fileˉevidence(
             Target.Output,

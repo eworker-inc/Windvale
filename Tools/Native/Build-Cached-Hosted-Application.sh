@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 7 || ! $1 =~ ^[1-7]$ || $2 != *.wvb ||
+if [[ $# -ne 7 || ! $1 =~ ^[1-8]$ || $2 != *.wvb ||
       ! $4 =~ ^([1-9]|1[0-6])$ || ! $5 =~ ^(0|[1-9][0-9]*)$ ]]; then
-    echo 'Usage: ./Tools/Native/Build-Cached-Hosted-Application.sh <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-count-1-through-16> <entry> <output.elf|output.exe> <linux|windows>' >&2
+    echo 'Usage: ./Tools/Native/Build-Cached-Hosted-Application.sh <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-count-1-through-16> <entry> <output.elf|output.exe> <linux|windows>' >&2
     exit 64
 fi
 case "$7:$6" in
@@ -55,6 +55,23 @@ checkpoint_directory="$checkpoint_family/$checkpoint_key"
 checkpoint_manifest="$checkpoint_directory/Checkpoint.txt"
 checkpoint_product="$checkpoint_directory/$product_leaf"
 checkpoint_status=Hit
+checkpoint_temporary=
+
+remove_checkpoint_temporary() {
+    [[ -n $checkpoint_temporary ]] || return 0
+    local temporary_parent temporary_leaf
+    temporary_parent=$(CDPATH= cd -- "$(dirname -- "$checkpoint_temporary")" && pwd -P) || return 1
+    temporary_leaf=$(basename -- "$checkpoint_temporary")
+    [[ $temporary_parent == "$checkpoint_family" &&
+       $temporary_leaf == ".new-$checkpoint_key."???????? ]] || return 1
+    rm -f -- \
+        "$checkpoint_temporary/Package.log" \
+        "$checkpoint_temporary/$product_leaf" \
+        "$checkpoint_temporary/Checkpoint.txt"
+    rmdir -- "$checkpoint_temporary" 2>/dev/null || true
+    checkpoint_temporary=
+}
+trap remove_checkpoint_temporary EXIT
 
 measure_file() {
     local candidate=$1
@@ -108,7 +125,8 @@ if [[ ! -e $checkpoint_directory ]]; then
         "application-bytes $candidate_bytes" \
         "application-sha256 $candidate_sha256" \
         > "$checkpoint_temporary/Checkpoint.txt" || exit 1
-    mv -- "$checkpoint_temporary" "$checkpoint_directory" || exit 1
+    mv -T -- "$checkpoint_temporary" "$checkpoint_directory" || exit 1
+    checkpoint_temporary=
     checkpoint_status=Created
 fi
 

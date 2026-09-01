@@ -12,19 +12,22 @@ admission decision, digest, segment, and publication transaction.
 The ordinary compiler-family candidate accepts a WVB whose lowered native fragment fits in one
 nonempty resource of at most 4 MiB. The explicit image-input mode accepts one
 through sixteen canonical fragments, with every nonfinal fragment exactly 4 MiB,
-plus a validated decimal entry. Both modes support the seven compiler-family
-hosted profiles `1` through `7`; they do not alias the separately specified
+plus a validated decimal entry. Both modes support the eight compiler-family
+hosted profiles `1` through `8`; they do not alias the separately specified
 read-only verifier profiles. Both modes construct the established ten-service
 Windows x64 or Linux x64 container. `Package-Segmented-Compiler-Wvb` composes native WVB staging, image
 linking, canonical transport, and this image-input mode without asking a host
 script to decode a Windvale format.
 
 Profiles `1` through `6` retain the 64,000,000,000-instruction execution
-ceiling. Profile `7`, used by the split analyzer and emitter reconstruction,
-has a 137,438,953,472-instruction (`2^37`) ceiling and a
-234,881,024-byte (224 MiB) dynamic text/byte arena. Unlike profiles `2` and `6`,
-profile `7` retains the 1 MiB per-name stride required by the compiler source
-closure rather than selecting their compact 8 KiB stride.
+ceiling. Profiles `7` and `8` have a 137,438,953,472-instruction (`2^37`)
+ceiling. Profile `7`, used by general split emission, has a 301,465,600-byte
+(287.5 MiB) dynamic text/byte arena, 64 file-input slots, and an 8 KiB name
+stride. Profile `8`, selected only for compiler analysis and other explicit
+compiler-scale products, has a 435,945,472-byte (415.75 MiB) arena, 32
+file-input slots, and the same 8 KiB name stride. Both retain the established
+Profile-7 outer runtime extent; Profile 8 trades unused input count for a larger
+arena rather than widening ordinary hosted applications.
 The higher bounds are profile-scoped:
 the earlier measured 1.73 MiB emitter source closure exhausted 64,000,000,000
 during analysis; the 1,931,188-byte compiler closure subsequently left no
@@ -47,7 +50,7 @@ Tools\Native\Package-Segmented-Compiler-Wvb.cmd <profile> <input.wvb> <output.ex
 ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile> <input.wvb> <output.elf> [--development-cache]
 Tools\Native\Construct-Segmented-Compiler-Toolset.cmd <existing-separate-output-directory>
 ./Tools/Native/Construct-Segmented-Compiler-Toolset.sh <existing-separate-output-directory>
-pwsh -NoProfile -File Tools/Native/Measure-Segmented-Compiler-Packaging.ps1 -InputWvb <input.wvb> [-Profile <1-through-7>]
+pwsh -NoProfile -File Tools/Native/Measure-Segmented-Compiler-Packaging.ps1 -InputWvb <input.wvb> [-Profile <1-through-8>]
 ```
 
 Omitting the optional target preserves the original current-host behavior.
@@ -84,7 +87,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 6,927 | `b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35` |
+| `SHA256SUMS` | 6,927 | `c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front
@@ -99,6 +102,12 @@ and public behavior are unchanged; the replacement native applications retain
 the larger compiler-scale hashing and source-set capacity. Packaging no longer
 depends on a parallel ignored overlay directory. The unified toolset reproduces
 the current analyzer, emitter, and 445,196-byte WVB runner exactly.
+
+Decision 0900 refreshes the nine geometry-sensitive tool families, adds the
+exact Profile-7/8 compiler layouts, and introduces a separately validated
+Profile-7 publication-plan header only when a real Profile-8 plan must pass
+through the retained atomic publisher. Platform, startup, source-set, and final
+application geometry continue to come from the real Profile-8 plan.
 
 Decision 0833 rebuilds the nine compiler-family WVBs and both target application
 families after the profile-7 geometry change. Eight application families use

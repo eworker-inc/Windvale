@@ -38,10 +38,12 @@ strict UTF-8 leaf; no new platform assembly or host callback is introduced.
 
 ## Hosted profile and targets
 
-The segmenter owns hosted profile 7 with metadata magic `WVHG`, metadata
-format 1, container-format version 10, and profile flags 8. All Windvale-owned
-metadata, runtime-header, layout, and platform-byte admission paths accept
-profiles 1 through 7 and reject every other value.
+The segmenter application itself owns hosted profile 7 with metadata magic
+`WVHG`, metadata format 1, container-format version 10, and profile flags 8.
+The compiler-analysis profile is 8 with `WVHX`, container-format version 11,
+and flags 9. All Windvale-owned metadata, runtime-header, layout, and
+platform-byte admission paths accept profiles 1 through 8 and reject every
+other value.
 
 The public construction targets are:
 
@@ -56,9 +58,9 @@ existing hosted PE/ELF verifiers before publication.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Segmenter WVB | 24,648 | `dfd98c3935b402b35414cf6ba548cc0ecde47dadc1c847bb32abddce1cf7cddf` |
-| Windows application | 317,440 | `c3026f45af4e070732deef4c0ae0b1a260f2b3535085ea3031eeacee4e1ce79a` |
-| Linux application | 319,488 | `83ef511305fa384f8a873f8e5f46b111045e49b9683b5768a77cf760d31f016d` |
+| Segmenter WVB | 22,566 | `9091550e30db0d63d58b740ded1b6c6cb3992d9159d50ed86b0bb4586658c686` |
+| Windows application | 297,984 | `dc6eab33908aa595adb725efe47716366463d42a956a8271fee75240f2251ee4` |
+| Linux application | 299,008 | `5f370776aea796b247cdefc97dacf6a907715474c37546c8fc0e18183f098b7a` |
 
 The focused current-host evidence reconstructs the WVB through the native
 Project 1 front door, constructs both packages, executes one real bounded

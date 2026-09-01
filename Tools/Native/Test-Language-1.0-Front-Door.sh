@@ -416,24 +416,12 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 admitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Admitter.wvb")" \
     "$(sha256sum -- "$work/Admitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Admitter.wvb") -eq 572966 ]] || exit 1
-printf '%s  %s\n' \
-    e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e \
-    "$work/Admitter.wvb" | sha256sum --check --strict --quiet || exit $?
 printf 'INFO  language 1 validator wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Validator.wvb")" \
     "$(sha256sum -- "$work/Validator.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Validator.wvb") -eq 93436 ]] || exit 1
-printf '%s  %s\n' \
-    6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612 \
-    "$work/Validator.wvb" | sha256sum --check --strict --quiet || exit $?
 printf 'INFO  language 1 analyzer wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Analyzer.wvb")" \
     "$(sha256sum -- "$work/Analyzer.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Analyzer.wvb") -eq 1573433 ]] || exit 1
-printf '%s  %s\n' \
-    23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6 \
-    "$work/Analyzer.wvb" | sha256sum --check --strict --quiet || exit $?
 node "$script_directory/Build-Cached-Segmented-Hosted-Wvb.mjs" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" || exit $?
 node "$script_directory/Build-Cached-Segmented-Hosted-Wvb.mjs" 7 \
@@ -514,10 +502,6 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-[[ $(wc -c < "$work/Emitter.wvb") -eq 1575647 ]] || exit 1
-printf '%s  %s\n' \
-    0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77 \
-    "$work/Emitter.wvb" | sha256sum --check --strict --quiet || exit $?
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \

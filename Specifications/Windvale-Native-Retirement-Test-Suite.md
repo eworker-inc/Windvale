@@ -15,6 +15,8 @@ Those exact historical files remain available from the tag and Git history.
 Ongoing checks are maintained as
 [native verification owners](Windvale-Native-Verification-Owners.md).
 Development selects affected owners; explicit release qualification composes
-the current registry into paired-host shards. The retained retirement command
-paths are compatibility aliases only and must not be described as a new
-retirement claim.
+the current registry into paired-host shards. The redundant retirement command
+aliases are absent from `main`; use `Test-Verification-Owners.cmd` or `.sh` for
+the live coordinator. The old paths remain available from the immutable
+`v0.1.0` tag and Git history and must not be described as a new retirement
+claim.

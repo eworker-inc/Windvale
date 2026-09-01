@@ -62,6 +62,16 @@ does not construct an "admitted" WVSS, invoke the removed public
 sequence. Project 2 remains development-only and its Analyzer precheck rejects a
 `System` profile plus every platform or foreign declaration before analysis.
 
+The optional private `--symbol-checkpoint` route divides that same miss into
+two analyzer invocations. The first publishes the canonical WVSS plus a bounded
+`WVSY 1.0` symbol checkpoint. The second independently admits that checkpoint
+against the unchanged WVSS, revalidates its directory, lookup, visibility, and
+all aggregate counts, and publishes WVCA, WVLB, and WVIR. The coordinator
+compares the checkpoint before and after consumption and removes it before
+atomic cache publication. A cache hit consumes only the same validated final
+phase products; `WVSY` is internal resumable evidence, not a distributable
+compiler format or additional compiler.
+
 The emission cache uses namespace `project-split-wvb-optimized-v3`, binds both
 producer identities and the same closure, and records the exact analysis key
 beside the WVB size and hash. The fixed optimized target therefore participates
@@ -108,6 +118,11 @@ current split analyzer/emitter reconstruction and fixed point.
 `<project.wvproj> <output.wvb>` pairs. It packages and identifies the pinned
 pair, reconstructs and identifies the current analyzer/emitter pair once, then
 builds every requested target through that same immutable current identity.
+The current Analyzer WVB is packaged once under Profile 7 for ordinary target
+analysis and once under Profile 8 for the larger artifact-reader emitter
+closure. Both packages contain the same WVB and have separate executable
+identities. Emitter and requested target analysis use the internal symbol
+checkpoint route; their final WVSS/WVCA/WVLB/WVIR cache contract is unchanged.
 Output paths must be distinct bounded `.wvb` targets with existing canonical
 parents. A single pair retains the original result line; a multi-project run
 reports each product's size and digest plus one aggregate completion line. This

@@ -2,12 +2,12 @@
 set -uo pipefail
 
 image_mode=0
-if [[ ($# -eq 3 || $# -eq 4) && $1 =~ ^[1-7]$ && $2 == *.wvb ]]; then
+if [[ ($# -eq 3 || $# -eq 4) && $1 =~ ^[1-8]$ && $2 == *.wvb ]]; then
     profile=$1
     input_argument=$2
     output_argument=$3
     target=${4:-linux}
-elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-7]$ &&
+elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-8]$ &&
         $3 == *.wvb && $5 =~ ^([1-9]|1[0-6])$ && $6 =~ ^[0-9]+$ ]]; then
     image_mode=1
     profile=$2
@@ -18,8 +18,8 @@ elif [[ ($# -eq 7 || $# -eq 8) && $1 == image && $2 =~ ^[1-7]$ &&
     output_argument=$7
     target=${8:-linux}
 else
-    echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
-    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-7> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
+    echo 'Usage: ./Tools/Native/Package-Hosted-Wvb.sh <profile-1-through-8> <input.wvb> <output.elf|output.exe> [linux|windows]' >&2
+    echo '   or: ./Tools/Native/Package-Hosted-Wvb.sh image <profile-1-through-8> <input.wvb> <chunk-prefix> <fragment-chunks-1-through-16> <entry-offset> <output.elf|output.exe> [linux|windows]' >&2
     exit 64
 fi
 case "$target:$output_argument" in
@@ -96,7 +96,7 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 b15800d907e46c866292302a989584b9825a0594494a529ca96578dab686cb35 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
@@ -172,7 +172,13 @@ enum_source_index=$((fragment_count + 6))
 "$metadata_request_tool" "$temporary_directory/Metadata-Input.wvmi" "$temporary_directory/Publication.wvpq" "$temporary_directory/Evidence.wvhs" "$bundle_sources" "$temporary_directory/Metadata-Request.wvhq" || exit $?
 "$host/wvhostmetadata.elf" "$temporary_directory/Metadata-Request.wvhq" "$temporary_directory/Metadata.wvhm" || exit $?
 "$host/wvhostruntime.elf" "$temporary_directory/Metadata.wvhm" "$temporary_directory/Runtime.wvhr" || exit $?
-"$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" || exit $?
+publication_plan="$temporary_directory/Plan.wvcd"
+if [[ $profile == 8 ]]; then
+    publication_plan="$temporary_directory/Publication-Plan.wvcd"
+    "$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" "$publication_plan" || exit $?
+else
+    "$host/wvhostplan.elf" "$temporary_directory/Runtime.wvhr" "$temporary_directory/Plan.wvcd" || exit $?
+fi
 "$host/wvhostbytes.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Platform.wvhb" || exit $?
 "$host/wvhoststartup.elf" "$temporary_directory/Plan.wvcd" "$startup" "$temporary_directory/Startup.wvsd" || exit $?
 
@@ -193,7 +199,7 @@ echo 'hosted package step=application-sources status=Started'
 "$source_set_tool" "$temporary_directory/Plan.wvcd" "$temporary_directory/Platform.wvhb" "$temporary_directory/Startup.wvsd" "$bundle_segments" "$temporary_directory/Runtime.wvhr" "$application_sources" "$temporary_directory/Application-Sources.wvsg" || exit $?
 echo 'hosted package step=application-sources status=Complete'
 echo 'hosted package step=application-segment-count status=Started'
-"$host/wvhostsegmentrequest.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Application-Sources.wvsg" "$application_sources" count >"$temporary_directory/Application-Count.txt" || exit $?
+"$host/wvhostsegmentrequest.elf" "$publication_plan" "$temporary_directory/Application-Sources.wvsg" "$application_sources" count >"$temporary_directory/Application-Count.txt" || exit $?
 application_count=$(sed -n 's/^hosted container segment request status=Valid segments=//p' "$temporary_directory/Application-Count.txt")
 case "$application_count" in
     ''|*[!0-9]*) echo 'The native application-segment count is invalid.' >&2; exit 1 ;;
@@ -206,14 +212,14 @@ echo "hosted package step=application-segment-count status=Complete segments=$ap
 index=0
 while [[ $index -lt $application_count ]]; do
     echo "hosted package step=application-segment item=$index/$((application_count - 1)) status=Started"
-    "$host/wvhostsegmentrequest.elf" "$temporary_directory/Plan.wvcd" "$temporary_directory/Application-Sources.wvsg" "$application_sources" "$index" "$application_segments.request-$index" || exit $?
+    "$host/wvhostsegmentrequest.elf" "$publication_plan" "$temporary_directory/Application-Sources.wvsg" "$application_sources" "$index" "$application_segments.request-$index" || exit $?
     "$host/wvhostsegment.elf" "$application_segments.request-$index" "$application_segments.response-$index" || exit $?
     echo "hosted package step=application-segment item=$index/$((application_count - 1)) status=Complete"
     index=$((index + 1))
 done
 echo 'hosted package step=application-manifest status=Started'
-"$host/wvhostsegmentmanifest.elf" "$temporary_directory/Plan.wvcd" "$application_segments" "$temporary_directory/Application-Segments.wvhm" || exit $?
+"$host/wvhostsegmentmanifest.elf" "$publication_plan" "$application_segments" "$temporary_directory/Application-Segments.wvhm" || exit $?
 echo 'hosted package step=application-manifest status=Complete'
 echo 'hosted package step=publication status=Started'
-"$host/wvhostpublish.elf" "$temporary_directory/Plan.wvcd" "$application_segments" "$temporary_directory/Application-Segments.wvhm" "$output" || exit $?
+"$host/wvhostpublish.elf" "$publication_plan" "$application_segments" "$temporary_directory/Application-Segments.wvhm" "$output" || exit $?
 echo 'hosted package step=publication status=Complete'

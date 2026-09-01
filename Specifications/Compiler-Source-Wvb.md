@@ -960,6 +960,14 @@ The verifier reconstructs the canonical `Foundationˉtask` and
 edge, consumes a handle at its sole await, and requires an immutable exit policy
 before control leaves the lexical scope.
 
+WVIR 1.23/1.24 operation `186` is an intentional typed-IR-only boundary in the
+current checkpoint. Source WVB validates its exact Foundation result/scratch/
+failure identities, ABI enum, budget slot, two `u64` operands, and affine
+result, then reports `Unsupportedˉoperation` without publishing a WVB. A later
+decision must assign the executable opcode and version together with complete
+WVB verification, runtime, native ABI lowering, failure, and containment
+semantics; it must not reuse an existing allocation opcode by shape alone.
+
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256
 `11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8`.

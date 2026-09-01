@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ ($# -ne 3 && $# -ne 4) || ! $1 =~ ^[1-7]$ ||
+if [[ ($# -ne 3 && $# -ne 4) || ! $1 =~ ^[1-8]$ ||
       $2 != *.wvb || $3 != *.elf ||
       ($# -eq 4 && ${4:-} != --development-cache) ]]; then
-    echo 'Usage: ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf> [--development-cache]' >&2
+    echo 'Usage: ./Tools/Native/Package-Segmented-Compiler-Wvb.sh <profile-1-through-8> <input.wvb> <output.elf> [--development-cache]' >&2
     exit 64
 fi
 development_cache=0

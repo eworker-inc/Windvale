@@ -26,7 +26,8 @@ The phase currently lowers:
 - checked arithmetic including division/remainder, fixed-width bitwise/shift operations, comparison, exact scalar/enum/text/bytes equality, short-circuit Boolean conjunction/disjunction, boolean negation, and signed negation;
 - exhaustive enum/variant match, named variant-field destructuring, variant construction/case tests/field extraction, builder creation/push/freeze, sequence length/index, and `for` lowering;
 - expression statements, exact `try` propagation, semantic `using`, `return`, lexical blocks, lexical unsafe statement and value blocks, statement and value-producing `if`/`else if`/`else` and exhaustive enum/variant `match`, `while`, `for`, `break`, and `continue`;
-- exact local callable invocation plus explicit jump, branch, and return terminators.
+- exact local callable invocation, canonical Foundation unsafe scratch
+  construction, plus explicit jump, branch, and return terminators.
 
 Shape `0` remains Seed's return-only `void`. Shape `9` is the ordinary edition-1
 `unit` value and shape `10` is edition-1 `never`, valid only as a function result.
@@ -49,7 +50,7 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.22`
+The catalog selects the even WVIR minor in the current `1.9` through `1.24`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
@@ -60,7 +61,7 @@ reduced `WVIC 1.0` catalog derived from and checked against those directories.
 Each retained instance contains only the portable profile, result shape, and
 ordered by-value parameter shapes admitted by this executable checkpoint.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. WVIR 1.23 is the non-specialized Foundation unsafe-scratch directory, and WVIR 1.24 combines operation `186` with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -70,7 +71,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `22` selected by the features below |
+| 6 | 2 | Minor version `9` through `24` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -82,19 +83,19 @@ All integers are unsigned little-endian and the directory contains no padding.
 | 40 | 4 | Operand count |
 | 44 | 4 | Operand-entry size `4` |
 
-WVIR 1.17, WVIR 1.19, and WVIR 1.21 append function-type-catalog byte length and
+WVIR 1.17, WVIR 1.19, WVIR 1.21, and WVIR 1.23 append function-type-catalog byte length and
 catalog-layout version `1` at offsets 48 and 52, so function entries begin at
-offset 56. WVIR 1.18, WVIR 1.20, and WVIR 1.22
+offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, and WVIR 1.24
 first retain specialization count/version at offsets 48 and 52, then append
 function-type-catalog byte length/version at offsets 56 and 60, so function
 entries begin at offset 64. Sections follow in their exact order, and the WVIC
 catalog follows the operand section with no padding when its declared length is
-nonzero. The task pair retains the function-type-catalog length/version fields
+nonzero. The task and unsafe-scratch pairs retain the function-type-catalog length/version fields
 even when the length is zero; callable operations still require one complete
 nonempty catalog.
 
 Source without an admitted generic instance or any memory, append, growth,
-callable, closure-environment, or structured-task feature uses that exact
+callable, closure-environment, structured-task, or unsafe-scratch feature uses that exact
 48-byte WVIR 1.9 header. Specialized source without either memory
 operation publishes WVIR 1.10. Either memory operation without specialization publishes WVIR 1.11
 with the same 48-byte header and section positions as 1.9. A module containing
@@ -108,6 +109,10 @@ publishes WVIR 1.18. A `Closureˉcreate` environment without specialization
 publishes WVIR 1.19; the same feature with specialization publishes WVIR 1.20.
 Any operation `180` through `185` without specialization publishes WVIR 1.21;
 the same structured-task vocabulary with specialization publishes WVIR 1.22.
+Operation `186` without specialization publishes WVIR 1.23; the same operation
+with specialization publishes WVIR 1.24. The unsafe-scratch pair may also carry
+structured-task operations and retains the same function-type-catalog header,
+including a zero-length catalog when no callable instance is present.
 The earlier even versions 1.10, 1.12, 1.14, and 1.16 append the
 specialization count at offset 48 and specialization-layout version `1` at offset
 52, and begin the function section at offset 56. Their function-entry count is
@@ -120,7 +125,8 @@ must not contain `173` or `175`. A 1.13/1.14 directory must contain operation
 complete reduced callable catalog. A 1.19/1.20 directory must contain operation
 `179` and one complete reduced callable catalog. A 1.21/1.22 directory must
 contain at least one operation `180` through `185`; lower minors must not contain
-those operations.
+those operations. A 1.23/1.24 directory must contain operation `186`; lower
+minors must not contain that operation.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -158,16 +164,47 @@ compiler boundary for semantic resource cleanup defined below. Value `175` is
 `Foundationˉvectorˉgrowˉreserved`, defined below. Value `176` is
 `Platformˉsourceˉlength`, the exact hosted source-snapshot observation defined
 below. Value `177` is `Functionˉreference`; value `178` is `Callˉindirect`; and
-value `179` is `Closureˉcreate`. They are the last currently admitted
-operations.
+value `179` is `Closureˉcreate`. Values `180` through `185` are the
+structured-task construct, operation-context, spawn, await, cancel, and
+scope-exit family. Value `186` is
+`Foundationˉunsafeˉconstructˉscratch`, defined below.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
+
+### Foundation unsafe scratch construction
+
+Operation `186` is selected only by an explicitly generic qualified call to
+the exact edition-1 System module `Foundationˉunsafe` member
+`Constructˉscratch::<Abi>`. `Abi` must resolve to one declared enum identity.
+The contextual result must be the exact canonical
+`Result<Foreignˉscratch<Abi>, Foreignˉmemoryˉfailure>` identity from the
+canonical Foundation result and unsafe modules. A lookalike module or nominal
+type cannot acquire this operation.
+
+The call takes the named by-value arguments `Budget`, `Length`, and `Alignment`.
+`Budget` must be one available exact `Memoryˉbudget` slot. `Length` and
+`Alignment` each produce an earlier shape-`8` (`u64`) temporary; they are the
+operation's two ordered operands. The result is the private generic result
+shape, `Target` is the budget slot, and `Auxiliary` is the exact enum shape for
+`Abi`. The operation contributes `memory.allocate`. Positive length,
+power-of-two alignment, budget capacity, provider allocation, zeroing, and
+addressability are runtime result conditions rather than compile-time literal
+restrictions.
+
+Independent validation reconstructs the exact Foundation generic identities,
+requires two `u64` operands, proves the budget slot is in range and available,
+proves the ABI auxiliary is a declared enum, and treats the result as affine
+owned evidence. Ordinary record construction and field observation of the
+opaque scratch identity remain invalid. The source-WVB backend deliberately
+reports `Unsupportedˉoperation` for an otherwise valid operation `186` until a
+separate WVB, verifier, runtime, native-lowering, and containment decision owns
+its executable representation.
 
 ## Independent validation
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.9 through 1.22 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.9 through 1.24 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;

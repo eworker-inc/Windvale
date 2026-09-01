@@ -38,7 +38,7 @@ checkpoint. Unknown and duplicate identities reject. `ffi.call` records an
 audited foreign-call effect; it is not a capability, authority grant, provider
 binding, or proof that a foreign library is available.
 
-WVIR operations 171, 172, and 175 contribute `memory.allocate`; operation 174
+WVIR operations 171, 172, 175, and 186 contribute `memory.allocate`; operation 174
 contributes `resource.release`. Operation 62 propagates the exact effect set of
 its direct function target. Operation 63 contributes the canonical capability
 target. Other current operations are effect-free unless a later version adds an

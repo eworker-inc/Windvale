@@ -16,6 +16,8 @@ enum Nativeˉhostedˉcontainerˉsourceˉsetˉstatus {
     Rejected = 1;
 }
 
+const BUNDLE_SEGMENT_BYTES: u32 = 4194104u32;
+
 fn Bytesˉareˉequal(Left: bytes, Right: bytes) -> bool {
     let Length: u32 = Bytesˉlength(Left);
     if Length != Bytesˉlength(Right) { return false; }
@@ -86,22 +88,23 @@ fn Bundleˉregionˉisˉvalid(
         Sha256.Foundationˉsha256ˉbegin(Runtime);
     var Segment: u32 = 0u32;
     while Segment < Admitted.Bundleˉsegments {
-        let Response: bytes = file.read_bytes(
-            Bundleˉresponseˉname(Prefix, Segment)
-        );
-        if !Sourceˉset.Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
-            Admitted, Segment, Response
-        ) {
-            return false;
+        let Segmentˉstart: u32 = Segment * BUNDLE_SEGMENT_BYTES;
+        var Segmentˉbytes: u32 = Admitted.Bundleˉbytes - Segmentˉstart;
+        if Segmentˉbytes > BUNDLE_SEGMENT_BYTES {
+            Segmentˉbytes = BUNDLE_SEGMENT_BYTES;
         }
-        let Segmentˉstart: u32 =
-            Bytesˉreadˉu32ˉlittle(Response, 28u32);
-        let Segmentˉbytes: u32 =
-            Bytesˉreadˉu32ˉlittle(Response, 32u32);
         let Segmentˉend: u32 = Segmentˉstart + Segmentˉbytes;
         let Start: u32 = Maximum(Startˉoffset, Segmentˉstart);
         let End: u32 = Minimum(Endˉoffset, Segmentˉend);
         if Start < End {
+            let Response: bytes = file.read_bytes(
+                Bundleˉresponseˉname(Prefix, Segment)
+            );
+            if !Sourceˉset.Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
+                Admitted, Segment, Response
+            ) {
+                return false;
+            }
             State = Sha256.Foundationˉsha256ˉupdate(
                 State,
                 Bytesˉslice(
@@ -216,9 +219,6 @@ export fn Main() -> i32 {
         if Inputˉaliases(
                 Responseˉpath, Planˉpath, Platformˉpath, Startupˉpath,
                 Runtimeˉpath, Manifestˉpath
-            ) ||
-            !Sourceˉset.Nativeˉhostedˉcontainerˉbundleˉresponseˉisˉvalid(
-                Admitted, Index, file.read_bytes(Responseˉpath)
             ) {
             return Reject();
         }

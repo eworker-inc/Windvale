@@ -590,10 +590,12 @@ fn Compilerˉsourceˉeffectsˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 {
         let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
         if Minor == 10u32 || Minor == 12u32 ||
-            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 {
+            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 ||
+            Minor == 19u32 || Minor == 21u32 || Minor == 23u32 {
             return 56u32;
         }
-        if Minor == 18u32 && Bytesˉlength(Directory) >= 64u32 {
+        if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
+                Minor == 24u32) && Bytesˉlength(Directory) >= 64u32 {
             return 64u32;
         }
     }
@@ -604,8 +606,14 @@ fn Compilerˉsourceˉeffectsˉwirˉfunctionˉtypeˉbytes(
     Directory: bytes
 ) -> u32 {
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor == 17u32 { return Bytesˉreadˉu32ˉlittle(Directory, 48u32); }
-    if Minor == 18u32 { return Bytesˉreadˉu32ˉlittle(Directory, 56u32); }
+    if Minor == 17u32 || Minor == 19u32 || Minor == 21u32 ||
+        Minor == 23u32 {
+        return Bytesˉreadˉu32ˉlittle(Directory, 48u32);
+    }
+    if Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
+        Minor == 24u32 {
+        return Bytesˉreadˉu32ˉlittle(Directory, 56u32);
+    }
     return 0u32;
 }
 
@@ -620,7 +628,7 @@ fn Compilerˉsourceˉeffectsˉwirˉisˉsupported(Directory: bytes) -> bool {
         return false;
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 18u32 { return false; }
+    if Minor < 9u32 || Minor > 24u32 { return false; }
     let Headerˉbytes: u32 =
         Compilerˉsourceˉeffectsˉwirˉheaderˉbytes(Directory);
     if Length < Headerˉbytes ||
@@ -745,6 +753,7 @@ fn Compilerˉsourceˉeffectsˉoperationˉlanguage(Operation: u32) -> u32 {
     if Operation == 183u32 { return EFFECT_TASK_SUSPEND; }
     if Operation == 184u32 { return EFFECT_TASK_CANCEL; }
     if Operation == 185u32 { return EFFECT_RESOURCE_RELEASE; }
+    if Operation == 186u32 { return EFFECT_MEMORY_ALLOCATE; }
     return 0u32;
 }
 

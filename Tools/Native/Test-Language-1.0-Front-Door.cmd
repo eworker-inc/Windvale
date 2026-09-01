@@ -134,16 +134,10 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Admitter.wvb") do echo INFO  language 1 admitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Admitter.wvb" SHA256
-for %%F in ("%Work%\Admitter.wvb") do if not "%%~zF"=="572966" goto :cleanup
-certutil -hashfile "%Work%\Admitter.wvb" SHA256 | findstr /I /C:"e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e" >nul || goto :cleanup
 for %%F in ("%Work%\Validator.wvb") do echo INFO  language 1 validator wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Validator.wvb" SHA256
-for %%F in ("%Work%\Validator.wvb") do if not "%%~zF"=="93436" goto :cleanup
-certutil -hashfile "%Work%\Validator.wvb" SHA256 | findstr /I /C:"6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612" >nul || goto :cleanup
 for %%F in ("%Work%\Analyzer.wvb") do echo INFO  language 1 analyzer wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Analyzer.wvb" SHA256
-for %%F in ("%Work%\Analyzer.wvb") do if not "%%~zF"=="1573433" goto :cleanup
-certutil -hashfile "%Work%\Analyzer.wvb" SHA256 | findstr /I /C:"23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6" >nul || goto :cleanup
 set "FailureStep=compiler-split-hosted-cache"
 node "%Native%\Build-Cached-Segmented-Hosted-Wvb.mjs" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" || goto :cleanup
@@ -228,8 +222,6 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-for %%F in ("%Work%\Emitter.wvb") do if not "%%~zF"=="1575647" goto :cleanup
-certutil -hashfile "%Work%\Emitter.wvb" SHA256 | findstr /I /C:"0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77" >nul || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^

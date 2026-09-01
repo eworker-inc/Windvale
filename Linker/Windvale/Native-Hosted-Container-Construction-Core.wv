@@ -80,8 +80,14 @@ fn Runtimeˉgeometryˉfailure(Runtime: bytes, Target: u32, Profile: u32) -> u32 
         Textˉarenaˉbytes = 234881024u32;
         Nameˉstrideˉbytes = 8192u32;
     } else if Profile == 7u32 {
-        Textˉarenaˉbytes = 234881024u32;
+        Textˉarenaˉbytes = 301465600u32;
+        Nameˉstrideˉbytes = 8192u32;
+    } else if Profile == 8u32 {
+        Textˉarenaˉbytes = 435945472u32;
+        Nameˉstrideˉbytes = 8192u32;
     }
+    var Fileˉinputˉcapacity: u32 = 64u32;
+    if Profile == 8u32 { Fileˉinputˉcapacity = 32u32; }
     var Scratchˉbytes: u32 = 1048577u32;
     if Target == 1u32 { Scratchˉbytes = 2097154u32; }
     if Bytesˉreadˉu32ˉlittle(Runtime, 56u32) != Textˉarenaˉbytes {
@@ -89,6 +95,9 @@ fn Runtimeˉgeometryˉfailure(Runtime: bytes, Target: u32, Profile: u32) -> u32 
     }
     if Bytesˉreadˉu32ˉlittle(Runtime, 304u32) != Nameˉstrideˉbytes {
         return 304u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(Runtime, 288u32) != Fileˉinputˉcapacity {
+        return 288u32;
     }
     if Bytesˉreadˉu32ˉlittle(Runtime, 336u32) != Scratchˉbytes {
         return 336u32;
@@ -240,7 +249,7 @@ fn Nativeˉhostedˉcontainerˉconstruct(Input: bytes) -> bytes {
     let Profile: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
     let Runtimeˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Input, 20u32);
     let Reservedˉone: u32 = Bytesˉreadˉu32ˉlittle(Input, 24u32);
-    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 7u32 ||
+    if Target < 1u32 || Target > 2u32 || Profile < 1u32 || Profile > 8u32 ||
         Runtimeˉbytes != 4096u32 || Reservedˉone != 0u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 28u32) != 0u32 {
         return Failure(Input, 4u32, 12u32);

@@ -16,7 +16,7 @@ and target derivation to the shared portable construction core.
 ## Command contract
 
 ```text
-wvhostplan <runtime.wvhr> <plan.wvcd>
+wvhostplan <runtime.wvhr> <plan.wvcd> [publication-plan.wvcd]
 ```
 
 The runtime header contains canonical hosted metadata at offset 480. The tool
@@ -26,10 +26,19 @@ derives the target and implemented profile from that metadata, builds the exact
 `WVCD 1` response whose envelope, accepted request length, and status are exact.
 
 The implemented container-version mapping is `3 -> 1`, `5 -> 2`, `6 -> 3`,
-`7 -> 4`, `8 -> 5`, `9 -> 6`, and `10 -> 7`. The shared planner independently
+`7 -> 4`, `8 -> 5`, `9 -> 6`, `10 -> 7`, and `11 -> 8`. The shared planner independently
 revalidates the matching target, profile, metadata magic, limits, service
 placements, layout, and target table. An unknown or inconsistent value is
 therefore rejected rather than inferred.
+
+The optional third output is needed by Profile 8 packaging. The tool writes the
+complete real Profile-8 plan to `plan.wvcd` and derives a second
+plan whose only change is profile 7 in the fixed 128-byte publication header.
+It independently validates that header before writing either output. The
+retained atomic publisher consumes that compatibility header; platform bytes,
+startup, source-set geometry, and container bytes continue to use the real
+Profile-8 plan. Other profiles produce an identical publication plan when the
+optional output is requested.
 
 Identical input/output names are rejected with usage status 64. A malformed or
 rejected runtime returns status 2, writes one diagnostic, and leaves an existing
@@ -40,7 +49,8 @@ The module declares exactly `console.write_line`, `diagnostic.write_line`,
 `process.argument_count`. Its native fragment requires the existing nine
 services used by the segmenter. The Stage 0 package uses the established
 compiler-authority host envelope; module and target identities keep planner
-semantics separate, and no new hosted metadata profile is introduced.
+semantics separate. Decision 0900 introduces the exact compiler-analysis
+profile and publication-plan bridge described above.
 
 ## Targets and last candidate identities
 
@@ -49,17 +59,14 @@ semantics separate, and no new hosted metadata profile is introduced.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Planner WVB | 39,534 | `e9c6eaa87574e2ee472dcc8c177bfe4d63baf9c34838894096f490bdde465bc0` |
-| Windows planner | 610,304 | `e7039e5b9397cd33e5a18e9151fe458aaa2cb7a7d92b288f98a93f7a0b0ccfcf` |
-| Linux planner | 610,304 | `edb8f6bf257215309fdad2eee4a18a67e58d2cb8eb9605cbb2067fad3d18ccc9` |
+| Planner WVB | 47,889 | `82581cb918c2528941ac02ca31281f230a84f0afeb01d6b275b112f983ec4cc8` |
+| Windows planner | 718,848 | `0978d70bd0774d89e8669127e90896ac571b6405ab6752b1b655df98bdbcf9b3` |
+| Linux planner | 720,896 | `62ff98d4d50e35bdd0170b398866a170d28f98cf22965b25ca3554ae46aafd08` |
 
-Decision 0492 reconstructs and repins these current candidate identities after
-the Decision 0491 embedded-layout and shared startup/file-input changes. The
-preceding focused current-host evidence built the public CLI target, executed a
-real plan without loading .NET, matched the retained fragment byte-for-byte,
-rejected inconsistent metadata while preserving an existing plan, and rejected
-an input/output alias. Independent Linux execution and grouped qualification
-remain.
+Decision 0900 reconstructs these current candidate identities with Profile 8
+and the bounded publication-plan bridge. Local Windows packaging consumes a
+real plan successfully. Independent Linux execution, cross-host reconstruction,
+promotion, and grouped qualification remain.
 
 ## Retirement boundary
 

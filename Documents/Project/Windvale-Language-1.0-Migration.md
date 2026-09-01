@@ -799,7 +799,7 @@ workload, a parallel-capable Windows host, a parallel-capable Linux host,
 paired-host reconstruction, candidate promotion, and broad Qualification remain
 explicit final Slice 7 gates rather than per-edit tests.
 
-### Current Slice 8 lexical unsafe checkpoint
+### Current Slice 8 unsafe-memory checkpoint
 
 [Decision 0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md)
 implements the first typed-WIR boundary of Slice 8. Statement and value
@@ -814,11 +814,24 @@ constructing an unsafe named-function reference does not invoke it.
 The wrapper is deliberately erased after checking: it adds no WVIR operation,
 temporary, operand, block, serialized flag, or version. A 13-case focused
 Analyzer-injection harness covers ten valid paths, three exact rejections, and
-two structural-transparency comparisons. This is a bounded implementation
-checkpoint rather than a completed Slice 8 claim. Foundation pointer, aligned
-scratch, and write-region contracts; authenticated Foreign WIR and WVB
-representation; verifier/runtime/native lowering and containment; one migrated
-runtime or OS boundary; and paired-host evidence remain pending.
+two structural-transparency comparisons.
+
+[Decision 0898](../Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md)
+publishes the exact compiler-owned pointer, scratch, write-region, and failure
+identities while ordinary construction and field observation remain forbidden.
+[Decision 0899](../Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md)
+then lowers exact `Foundationˉunsafe.Constructˉscratch::<Abi>` to typed WVIR
+operation 186. The operation carries an affine canonical
+`Result<Foreignˉscratch<Abi>, Foreignˉmemoryˉfailure>`, one explicit
+`Memoryˉbudget` slot, `u64` length and alignment operands, and the declared ABI
+enum shape. WVIR 1.23/1.24 and its independent validation are implemented.
+
+The current WVB boundary deliberately returns `Unsupportedˉoperation` after
+validating operation 186. This is a bounded implementation checkpoint rather
+than a completed Slice 8 claim. Executable WVB representation, complete
+verifier/runtime/native lowering, provider containment, write-region borrowing,
+authenticated Foreign calls, one migrated runtime or OS boundary, and
+paired-host evidence remain pending.
 
 ## Removal checkpoint
 

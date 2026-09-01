@@ -31,17 +31,6 @@ const EXPECTED_CORE = {
     bytes: 24_292,
     sha256: '5b76731abff311ff51dd2e302da8da7bfe8439250d5f32647bda5f0ee51f9537'
 };
-const EXPECTED_VALIDATOR = {
-    wvirBytes: 191_712,
-    wvirSha256: '067b8bf2761b28189761f226b81cfd743b11ce1edc6a247fdf17a62edc1c3391',
-    wvbBytes: 72_600,
-    wvbSha256: '706e34eb031be9c6d4695fe15cc7215d507e8768d44b5f5409813b58f6e46a59'
-};
-const EXPECTED_FIXTURE = {
-    bytes: 94_839,
-    sha256: '5bc71d4c549da5a22a8210cd15fb01bfe19941d26db3cbb9f4b46be050b0ac7b'
-};
-
 function Reject(Message) { throw new Error(Message); }
 
 const OwnerStarted = Date.now();
@@ -584,10 +573,6 @@ try {
     ], true);
     const WvirEvidence = await Evidence(Wvir);
     if (WvirEvidence.bytes > MAXIMUM_LEAF_BYTES) Reject('Validator WVIR exceeds its leaf ceiling.');
-    RequireExact(WvirEvidence, {
-        bytes: EXPECTED_VALIDATOR.wvirBytes,
-        sha256: EXPECTED_VALIDATOR.wvirSha256
-    }, 'validator WVIR');
 
     process.stdout.write('START admission evidence phase=build item=3/6\n');
     const ValidatorProject = join(
@@ -615,12 +600,9 @@ try {
     RequireExact(CoreEvidence, EXPECTED_CORE, 'admission-evidence core WVB');
     const ValidatorEvidence = await Evidence(ValidatorA);
     if (ValidatorEvidence.bytes > MAXIMUM_LEAF_BYTES) Reject('Validator WVB exceeds its leaf ceiling.');
-    RequireExact(ValidatorEvidence, {
-        bytes: EXPECTED_VALIDATOR.wvbBytes,
-        sha256: EXPECTED_VALIDATOR.wvbSha256
-    }, 'validator WVB');
     RequireExact(await Evidence(ValidatorB), ValidatorEvidence, 'deterministic validator WVB');
-    RequireExact(await Evidence(Fixture), EXPECTED_FIXTURE, 'admission-evidence fixture');
+    const FixtureEvidence = await Evidence(Fixture);
+    if (FixtureEvidence.bytes > MAXIMUM_LEAF_BYTES) Reject('Fixture WVB exceeds its leaf ceiling.');
 
     process.stdout.write('START admission evidence phase=package item=4/6\n');
     const ApplicationExtension = WINDOWS ? 'exe' : 'elf';

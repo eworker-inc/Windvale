@@ -2,6 +2,8 @@ module Compilerˉsourceˉanalysis profile portable;
 
 import Compilerˉsourceˉanalysisˉcontract as Analysisˉcontract;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
+import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉgraph as Sourceˉgraph;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwir as Sourceˉwir;
@@ -62,12 +64,230 @@ fn Compilerˉsourceˉanalysisˉmanifest(
     return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
 }
 
-export fn Compilerˉprepareˉsourceˉanalysis(
+fn Compilerˉsourceˉanalysisˉsymbolˉcheckpointˉfailure(
     Input: bytes
+) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary {
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉsummaryˉfailure(
+        Input,
+        Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Invalidˉdirectory,
+        Sourceˉgraph.Compilerˉsourceˉgraphˉstatus.Valid,
+        0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32, 0u32, 0u32,
+        0u32, 0u32,
+        Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.End,
+        0u32, 0u32, 0u32
+    );
+}
+
+fn Compilerˉsourceˉanalysisˉbytesˉequal(
+    Left: bytes,
+    Right: bytes
+) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Compilerˉsourceˉanalysisˉsymbolˉcountsˉareˉvalid(
+    Directory: bytes,
+    Capabilities: u32,
+    Data: u32,
+    Records: u32,
+    Enums: u32,
+    Variants: u32,
+    Functions: u32,
+    Fields: u32,
+    Members: u32,
+    Cases: u32,
+    Parameters: u32
+) -> bool {
+    var Countˉcapabilities: u32 = 0u32;
+    var Countˉdata: u32 = 0u32;
+    var Countˉrecords: u32 = 0u32;
+    var Countˉenums: u32 = 0u32;
+    var Countˉvariants: u32 = 0u32;
+    var Countˉfunctions: u32 = 0u32;
+    var Countˉfields: u32 = 0u32;
+    var Countˉmembers: u32 = 0u32;
+    var Countˉcases: u32 = 0u32;
+    var Countˉparameters: u32 = 0u32;
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    var Entry: u32 = 0u32;
+    while Entry < Entries {
+        let Offset: u32 = 16u32 + Entry * 24u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Directory, Offset + 4u32);
+        let Items: u32 = Bytesˉreadˉu32ˉlittle(Directory, Offset + 20u32);
+        if Kind == 2u32 { Countˉcapabilities = Countˉcapabilities + 1u32; }
+        if Kind == 3u32 { Countˉdata = Countˉdata + 1u32; }
+        if Kind == 4u32 {
+            Countˉrecords = Countˉrecords + 1u32;
+            Countˉfields = Countˉfields + Items;
+        }
+        if Kind == 5u32 {
+            Countˉenums = Countˉenums + 1u32;
+            Countˉmembers = Countˉmembers + Items;
+        }
+        if Kind == 8u32 {
+            Countˉvariants = Countˉvariants + 1u32;
+            Countˉcases = Countˉcases + Items;
+        }
+        if Kind == 6u32 {
+            Countˉfunctions = Countˉfunctions + 1u32;
+            Countˉparameters = Countˉparameters + Items;
+        }
+        Entry = Entry + 1u32;
+    }
+    return Countˉcapabilities == Capabilities && Countˉdata == Data &&
+        Countˉrecords == Records && Countˉenums == Enums &&
+        Countˉvariants == Variants && Countˉfunctions == Functions &&
+        Countˉfields == Fields && Countˉmembers == Members &&
+        Countˉcases == Cases && Countˉparameters == Parameters;
+}
+
+export fn Compilerˉsourceˉanalysisˉsymbolˉcheckpoint(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
+) -> bytes {
+    let Empty: bytes = Compilerˉsourceˉanalysisˉempty(Input);
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Empty;
+    }
+    let Directoryˉbytes: u32 = Bytesˉlength(Symbols.Directory);
+    let Visibilityˉbytes: u32 = Bytesˉlength(Symbols.Visibility);
+    let Lookupˉbytes: u32 = Bytesˉlength(Symbols.Lookup);
+    if Directoryˉbytes > 4194224u32 ||
+        Visibilityˉbytes > 4194224u32 - Directoryˉbytes ||
+        Lookupˉbytes >
+            4194224u32 - Directoryˉbytes - Visibilityˉbytes {
+        return Empty;
+    }
+    let Totalˉbytes: u32 = 80u32 + Directoryˉbytes +
+        Visibilityˉbytes + Lookupˉbytes;
+    var Result: bytes = Bytesˉfromˉu8(87u8);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(86u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(83u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu8(89u8));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(80u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Totalˉbytes));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Input)));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Modules));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Capabilities));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Data));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Records));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Enums));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Variants));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Functions));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Fields));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Members));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Cases));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Symbols.Parameters));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Directoryˉbytes));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Visibilityˉbytes));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Lookupˉbytes));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(0u32));
+    Result = Bytesˉconcat(Result, Symbols.Directory);
+    Result = Bytesˉconcat(Result, Symbols.Visibility);
+    return Bytesˉconcat(Result, Symbols.Lookup);
+}
+
+export fn Compilerˉsourceˉanalysisˉsymbolsˉfromˉcheckpoint(
+    Input: bytes,
+    Checkpoint: bytes
+) -> Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary {
+    let Failed: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Compilerˉsourceˉanalysisˉsymbolˉcheckpointˉfailure(Input);
+    let Total: u32 = Bytesˉlength(Checkpoint);
+    if Total < 80u32 ||
+        Bytesˉreadˉu8(Checkpoint, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Checkpoint, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Checkpoint, 2u32) != 83u8 ||
+        Bytesˉreadˉu8(Checkpoint, 3u32) != 89u8 ||
+        Bytesˉreadˉu16ˉlittle(Checkpoint, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Checkpoint, 6u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Checkpoint, 8u32) != 80u32 ||
+        Bytesˉreadˉu32ˉlittle(Checkpoint, 12u32) != Total ||
+        Bytesˉreadˉu32ˉlittle(Checkpoint, 16u32) != Bytesˉlength(Input) ||
+        Bytesˉreadˉu32ˉlittle(Checkpoint, 76u32) != 0u32 {
+        return Failed;
+    }
+    let Directoryˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 64u32);
+    let Visibilityˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 68u32);
+    let Lookupˉbytes: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 72u32);
+    if Directoryˉbytes > Total - 80u32 ||
+        Visibilityˉbytes > Total - 80u32 - Directoryˉbytes ||
+        Lookupˉbytes !=
+            Total - 80u32 - Directoryˉbytes - Visibilityˉbytes {
+        return Failed;
+    }
+    let Modules: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 20u32);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Modules != Scan.Modules || Modules == 0u32 || Modules > 64u32 ||
+        Visibilityˉbytes != Modules * Modules {
+        return Failed;
+    }
+    let Directory: bytes = Bytesˉslice(Checkpoint, 80u32, Directoryˉbytes);
+    let Visibility: bytes = Bytesˉslice(
+        Checkpoint, 80u32 + Directoryˉbytes, Visibilityˉbytes
+    );
+    let Lookup: bytes = Bytesˉslice(
+        Checkpoint,
+        80u32 + Directoryˉbytes + Visibilityˉbytes,
+        Lookupˉbytes
+    );
+    if Directoryˉbytes < 16u32 { return Failed; }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    if !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉisˉvalid(
+            Input, Scan, Directory, Entries
+        ) || !Sourceˉsymbols.Compilerˉsourceˉsymbolsˉlookupˉshapeˉisˉvalid(
+            Input, Directory, Lookup, Modules, Entries
+        ) {
+        return Failed;
+    }
+    let Expectedˉvisibility: bytes =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉvisibility(Input, Scan);
+    if !Compilerˉsourceˉanalysisˉbytesˉequal(
+            Visibility, Expectedˉvisibility
+        ) {
+        return Failed;
+    }
+    let Capabilities: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 24u32);
+    let Data: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 28u32);
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 32u32);
+    let Enums: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 36u32);
+    let Variants: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 40u32);
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 44u32);
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 48u32);
+    let Members: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 52u32);
+    let Cases: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 56u32);
+    let Parameters: u32 = Bytesˉreadˉu32ˉlittle(Checkpoint, 60u32);
+    if !Compilerˉsourceˉanalysisˉsymbolˉcountsˉareˉvalid(
+            Directory, Capabilities, Data, Records, Enums, Variants,
+            Functions, Fields, Members, Cases, Parameters
+        ) {
+        return Failed;
+    }
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉsummaryˉsuccess(
+        Input, Modules, Capabilities, Data, Records, Enums, Variants,
+        Functions, Fields, Members, Cases, Parameters,
+        Directory, Visibility, Lookup
+    );
+}
+
+export fn Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
+    Input: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
 ) -> Compilerˉsourceˉanalysis {
     let Empty: bytes = Compilerˉsourceˉanalysisˉempty(Input);
-    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
-        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
     if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
         return Compilerˉsourceˉanalysis(
             Analysisˉcontract.Compilerˉsourceˉanalysisˉstatus.Sourceˉsymbols,
@@ -101,5 +321,27 @@ export fn Compilerˉprepareˉsourceˉanalysis(
         Symbols.Status, Bindings.Status, Wir.Status,
         Compilerˉsourceˉanalysisˉmanifest(Input, Symbols, Bindings, Wir),
         Bindings.Directory, Wir.Directory
+    );
+}
+
+export fn Compilerˉprepareˉsourceˉanalysisˉfromˉsymbolˉcheckpoint(
+    Input: bytes,
+    Checkpoint: bytes
+) -> Compilerˉsourceˉanalysis {
+    return Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
+        Input,
+        Compilerˉsourceˉanalysisˉsymbolsˉfromˉcheckpoint(
+            Input, Checkpoint
+        )
+    );
+}
+
+export fn Compilerˉprepareˉsourceˉanalysis(
+    Input: bytes
+) -> Compilerˉsourceˉanalysis {
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    return Compilerˉprepareˉsourceˉanalysisˉwithˉsymbols(
+        Input, Symbols
     );
 }

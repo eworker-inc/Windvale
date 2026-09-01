@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 3 || ! $1 =~ ^[1-7]$ || $2 != *.wvb || $3 != *.elf ]]; then
-    echo 'Usage: ./Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh <profile-1-through-7> <input.wvb> <output.elf>' >&2
+if [[ $# -ne 3 || ! $1 =~ ^[1-8]$ || $2 != *.wvb || $3 != *.elf ]]; then
+    echo 'Usage: ./Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh <profile-1-through-8> <input.wvb> <output.elf>' >&2
     exit 64
 fi
 

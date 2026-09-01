@@ -109,6 +109,12 @@ a smaller positional source limit.
     successor products and proves production sequencing, bypass rejection,
     tamper rejection, destination preservation, cleanup, process-tree
     termination, progress, and deterministic accepted output.
+15. Treat recorded successor WVB identities as promotion evidence rather than
+    an inner-loop development gate. Development builds and exercises each
+    current product once through the shared cache and reports any drift. The
+    explicit cold-double-build qualification mode independently rebuilds every
+    product twice, requires byte identity, and requires the settled recorded
+    identities before a promotion claim.
 
 ## Resource geometry
 
@@ -179,9 +185,9 @@ current-source result or a hard process ceiling.
 
 ## Required evidence
 
-Local Windows evidence now includes deterministic double builds and pinned
-identities for the hosted admitter, complete `wvauth`, successor Analyzer, and
-emitter; execution of the actual packaged products; the focused 21-case
+Local Windows evidence includes recorded candidate identities for the hosted
+admitter, complete `wvauth`, successor Analyzer, and emitter; execution of the
+actual packaged products; the focused 21-case
 production owner; and current split-compiler convergence. Changed-file and
 registry planner checks remain part of the checkpoint gate; the current planner
 passes 31 general and 247 native routing cases. At commit `14fd50ea`, GitHub

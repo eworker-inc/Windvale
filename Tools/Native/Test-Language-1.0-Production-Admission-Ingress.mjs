@@ -51,11 +51,13 @@ const PINNED_COMPILER = Object.freeze({
     }),
 });
 
-// Every run requires the exact recorded portable WVB identities. Native
-// application identities are measured and reported, but remain unpinned until
-// paired Windows/Linux evidence supplies both host values. Development uses the
-// validated shared cache once per product. Explicit qualification builds twice
-// through isolated cold caches and additionally requires WVB byte identity.
+// Recorded portable WVB identities are promotion evidence, not an inner-loop
+// development gate. Development measures and reports drift while exercising the
+// current products once through the shared cache. Explicit qualification builds
+// twice through isolated cold caches, requires byte identity between those
+// builds, and requires the settled recorded identities. Native application
+// identities remain measured until paired Windows/Linux evidence supplies both
+// host values.
 const EXPECTED_PRODUCTS = Object.freeze({
     wvadmit: Object.freeze({
         bytes: 572_966,
@@ -1637,7 +1639,7 @@ function Constructˉwvss1(Sources) {
 }
 
 async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
-    Requireˉcompleteˉpins();
+    if (Buildˉmode.coldDoubleBuild) Requireˉcompleteˉpins();
     const Extension = WINDOWS ? 'cmd' : 'sh';
     const Executableˉextension = WINDOWS ? 'exe' : 'elf';
     const Lowˉlevelˉpackage = join(
@@ -1739,10 +1741,13 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
                 `${Name} cold double build is not byte-identical.`);
         }
         const Expected = EXPECTED_PRODUCTS[Name];
-        Require(Firstˉidentity.bytes === Expected.bytes &&
-            Firstˉidentity.sha256 === Expected.sha256,
-        `${Name} identity differs: bytes=${Firstˉidentity.bytes} ` +
-            `sha256=${Firstˉidentity.sha256}.`);
+        const Matchesˉrecorded = Firstˉidentity.bytes === Expected.bytes &&
+            Firstˉidentity.sha256 === Expected.sha256;
+        if (Buildˉmode.coldDoubleBuild) {
+            Require(Matchesˉrecorded,
+                `${Name} qualification identity differs: ` +
+                `bytes=${Firstˉidentity.bytes} sha256=${Firstˉidentity.sha256}.`);
+        }
         const Application = join(Work, `${Name}.${Executableˉextension}`);
         if (Name === 'wvanalyze' || Name === 'wvemit') {
             await Requireˉsuccess(
@@ -1763,7 +1768,9 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             `application-bytes=${Applicationˉidentity.bytes} ` +
             `application-sha256=${Applicationˉidentity.sha256} ` +
             `build-mode=${Buildˉmode.name} ` +
-            `wvb-identity=Recorded-candidate-match ` +
+            `wvb-identity=${Matchesˉrecorded
+                ? 'Recorded-candidate-match'
+                : 'Measured-candidate-drift'} ` +
             `application-identity=Measured-not-pinned ` +
             `cold-double-build=${Buildˉmode.coldDoubleBuild
                 ? 'Verified'
@@ -1880,8 +1887,9 @@ async function Writeˉlaunchˉguard(Work, Name, Marker) {
 }
 
 async function Runˉproductionˉcases(Work, Products, Inputs) {
-    // Cases 1-13 and 17 are production-only. They intentionally remain behind
-    // the complete five-product recorded-identity pin gate above.
+    // Cases 1-13 and 17 are production-only. They exercise the actual five
+    // successor products built above; qualification additionally pins their
+    // settled cross-host portable identities.
     // The two valid outputs prove current-run final-WVB determinism only. They
     // are not the absent Decision 0893 WVSS/WVCA/WVLB/WVIR/WVB baseline corpus.
     const Runnerˉtemporary = join(Work, 'Runner-Temporary');
@@ -2203,7 +2211,9 @@ async function Main() {
         process.stdout.write(
             'PASS  production admission ingress phase=products item=2/3 ' +
             `build-mode=${Buildˉmode.name} ` +
-            'wvb-identity=Recorded-candidate-match ' +
+            `wvb-identity=${Buildˉmode.coldDoubleBuild
+                ? 'Recorded-candidate-match'
+                : 'Measured-current-products'} ` +
             `cold-double-build=${Buildˉmode.coldDoubleBuild
                 ? 'Verified'
                 : 'Not-requested'} profile=7\n`

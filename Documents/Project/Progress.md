@@ -42,19 +42,29 @@ Corresponding Linux evidence, foreign lowering, and runtime containment remain
 pending. The
 shared 482-case Language 1.0 front door passes on Windows and Linux, and its
 corrected owner identity passes the four-case registry stream on both hosts.
-The next local compiler checkpoint now lowers lexical unsafe statement and
-value blocks without adding a WVIR operation or version. Direct unsafe and
-Foreign calls, plus indirect calls through callable evidence retaining the
-unsafe flag, reject outside the exact lexical context with
-`Unsafeˉcontextˉrequired = 47`. A rebuilt current Analyzer passes the dedicated
-13-case harness: ten valid paths, three exact rejections, and two
-safe-versus-wrapped structural-transparency comparisons. This closes the first
-typed-WIR boundary of Slice 8 under
-[Decision 0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md),
-not Foreign lowering, runtime/native containment, a migrated system boundary,
-or paired-host qualification. Decision 0893 and the private-binding
+The current local compiler checkpoint lowers lexical unsafe blocks without an
+IR wrapper, publishes the four canonical Foundation unsafe value identities,
+and lowers exact `Foundationˉunsafe.Constructˉscratch::<Abi>` to typed WVIR
+operation 186 under Decisions
+[0897](../Decisions/0897-Lower-Lexical-Unsafe-Invocation-Contexts.md),
+[0898](../Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md),
+and [0899](../Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md).
+The scratch operation retains an explicit memory budget, `u64` length and
+alignment, declared ABI enum, canonical affine Result, and `memory.allocate`
+effect. The focused harness passes two valid and seven rejected source cases
+plus nine malformed WVIR cases. WVB deliberately reports
+`Unsupportedˉoperation`; executable verifier/runtime/native containment, a
+migrated system boundary, Linux execution, and paired-host qualification remain
+pending. Decision 0893 and the private-binding
 [Decision 0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md)
 therefore remain Proposed.
+
+[Decision 0900](../Decisions/0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md)
+adds the exact Profile-7 emission and Profile-8 analysis geometries, 14
+deterministic target-aware artifact readers, and immutable symbol, manifest,
+binding, and WVIR checkpoints. The local Profile-8 Analyzer and optimized
+emitter package complete; the older pinned verifier still rejects the valid
+emitter WVB, so verifier-front-door promotion remains explicit work.
 
 The coordinator's target-descriptor evolution directly enters the validator
 closure. A narrow retained-analyzer audit reproduces its 191,712-byte WVIR at
@@ -189,8 +199,8 @@ long-name/Unicode mapping remains explicit future work.
 | Published and independently retained recovery assets | **13/13** |
 
 Current work uses a separate 125-owner, 5,936-case native verification registry.
-Its 22,366 LF-only bytes have SHA-256
-`38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6`.
+Its 22,307 LF-only bytes have SHA-256
+`9ad8431958621480e99d9eda356268ed3aeb2964270916cdc5c7baeb9e2fadf5`.
 That evolving coverage is not part of the frozen retirement counter and does
 not reopen the completed dependency gate.
 
@@ -320,8 +330,8 @@ malformed-within-format-ceiling diagnostics. The planner passed 31 general and
 244 native routing cases. This completes focused current-Windows development
 evidence for the candidate.
 
-The registry has 125 owners and 5,936 cases in 22,366 LF-only bytes at SHA-256
-`38c79e6b95e9878e69fd4a0f002bbdf446d605ba0bd9e6a14d7159bab239bde6`.
+The registry has 125 owners and 5,936 cases in 22,307 LF-only bytes at SHA-256
+`9ad8431958621480e99d9eda356268ed3aeb2964270916cdc5c7baeb9e2fadf5`.
 Its shards contain 1/57, 45/2,847, 38/1,783, and 41/1,249 owners/cases. The
 subsequent Decision 0893 candidate implements hosted publication and the
 Analyzer handoff. Its exact local product pins and complete owner result pass;
@@ -369,8 +379,13 @@ qualification remain pending.
 ### Preserve bounded development feedback
 
 - Use `Tools/Verify/Verify-Changed.ps1` once after a coherent edit.
+- During implementation, run only bounded diagnostics or the one exact changed
+  behavior; do not restart broad gates while the source is still moving.
 - Treat a passing affected-owner result as reusable until that owner's declared
   inputs change.
+- Run one final change-aware plan for the settled state. Independent owners
+  should run in parallel and later reuse results keyed by declared inputs,
+  tool identities, command, host, and verifier version.
 - Use development checkpoints only for immutable generated products; always
   rerun the behavior being changed.
 - Keep complete qualification cold, explicit, and bound to one selected source

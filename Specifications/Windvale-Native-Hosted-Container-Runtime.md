@@ -21,7 +21,7 @@ wvhostruntime <metadata.wvhm> <runtime.wvhr>
 
 The metadata input is exactly 1,024 bytes. Its target field selects Windows x64
 or Linux x64. Container version `3` maps to hosted profile 1; versions `5`
-through `10` map to profiles 2 through 7. The shared metadata admission module
+through `11` map to profiles 2 through 8. The shared metadata admission module
 then validates the complete profile, capability, service, adapter, extent,
 digest, limit, and reserved-byte contract before request construction.
 
@@ -48,9 +48,9 @@ services used by the other hosted-container transition tools.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Runtime-header producer WVB | 23,475 | `08533638a689db5b12628ec401c9d4c395507d2dcbda424dc40b36d1c29aa310` |
-| Windows runtime-header producer | 248,832 | `06d035dcd79b2c94fcc4f2ac005db99d1f1df9e4f2386241c84d94534e2a5677` |
-| Linux runtime-header producer | 249,856 | `de729966eca15d95f5ae89b5416c6d3f061635a6634807556ac817b094548604` |
+| Runtime-header producer WVB | 24,074 | `36358e7947ab6a919aa082c7048f37d546a15e38a373eba9d9aa78c3724cdae5` |
+| Windows runtime-header producer | 248,320 | `240cb3436ff36399cd2a9023eb8d8de7c4d87d11deacfa7fc2a209b2bf381d47` |
+| Linux runtime-header producer | 249,856 | `29b223007672db05e87975111c247f2971170f8d579dd2d929e1658c17113732` |
 
 The WVB reconstructs through the native Project 1 front door. Focused
 current-host evidence builds the public CLI target, consumes Windvale-constructed

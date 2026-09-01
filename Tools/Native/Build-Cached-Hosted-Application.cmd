@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 
 if "%~7"=="" goto :usage
 if not "%~8"=="" goto :usage
-echo(%~1| findstr /r /x "[1-7]" >nul || goto :usage
+echo(%~1| findstr /r /x "[1-8]" >nul || goto :usage
 if /I not "%~x2"==".wvb" goto :usage
 echo(%~4| findstr /r /x "[1-9] 1[0-6]" >nul || goto :usage
 echo(%~5| findstr /r /x "[0-9][0-9]*" >nul || goto :usage
@@ -86,18 +86,24 @@ call "%Packager%" image "%Profile%" "%Input%" "%ChunkPrefix%" ^
 if errorlevel 1 (
     >&2 echo The hosted-application cache packager failed.
     if exist "%PackageLog%" type "%PackageLog%" >&2
-    exit /b 1
+    goto :temporary_failed
 )
 del /f /q "%PackageLog%" >nul 2>nul
 call :measure_file "%CandidateProduct%" CandidateBytes CandidateSha256
-if errorlevel 1 exit /b 1
+if errorlevel 1 goto :temporary_failed
 >"%CheckpointTemporary%\Checkpoint.txt" echo windvale-native-hosted-application-checkpoint 1
+if errorlevel 1 goto :temporary_failed
 >>"%CheckpointTemporary%\Checkpoint.txt" echo key %CheckpointKey%
+if errorlevel 1 goto :temporary_failed
 >>"%CheckpointTemporary%\Checkpoint.txt" echo target %Target%
+if errorlevel 1 goto :temporary_failed
 >>"%CheckpointTemporary%\Checkpoint.txt" echo application-bytes %CandidateBytes%
+if errorlevel 1 goto :temporary_failed
 >>"%CheckpointTemporary%\Checkpoint.txt" echo application-sha256 %CandidateSha256%
-move "%CheckpointTemporary%" "%CheckpointDirectory%" >nul
-if errorlevel 1 exit /b 1
+if errorlevel 1 goto :temporary_failed
+ren "%CheckpointTemporary%" "%CheckpointKey%" >nul 2>nul
+if errorlevel 1 goto :temporary_failed
+set "CheckpointTemporary="
 set "CheckpointStatus=Created"
 
 :validate_checkpoint
@@ -163,6 +169,23 @@ exit /b 0
 del /f /q "%KeyOutput%" >nul 2>nul
 exit /b 1
 
+:temporary_failed
+call :remove_checkpoint_temporary
+exit /b 1
+
+:remove_checkpoint_temporary
+if not defined CheckpointTemporary exit /b 0
+for %%D in ("%CheckpointTemporary%\..") do set "CheckpointTemporaryParent=%%~fD"
+if /I not "%CheckpointTemporaryParent%"=="%CheckpointFamily%" exit /b 1
+for %%D in ("%CheckpointTemporary%") do set "CheckpointTemporaryLeaf=%%~nxD"
+echo(%CheckpointTemporaryLeaf%| findstr /r /x /c:"\.new-%CheckpointKey%-[0-9][0-9]*-[0-9][0-9]*" >nul || exit /b 1
+del /f /q "%CheckpointTemporary%\Package.log" >nul 2>nul
+del /f /q "%CheckpointTemporary%\%ProductLeaf%" >nul 2>nul
+del /f /q "%CheckpointTemporary%\Checkpoint.txt" >nul 2>nul
+rmdir "%CheckpointTemporary%" >nul 2>nul
+set "CheckpointTemporary="
+exit /b 0
+
 :usage
->&2 echo Usage: Tools\Native\Build-Cached-Hosted-Application.cmd ^<profile-1-through-7^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-count-1-through-16^> ^<entry^> ^<output.exe^|output.elf^> ^<windows^|linux^>
+>&2 echo Usage: Tools\Native\Build-Cached-Hosted-Application.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<chunk-prefix^> ^<fragment-count-1-through-16^> ^<entry^> ^<output.exe^|output.elf^> ^<windows^|linux^>
 exit /b 64

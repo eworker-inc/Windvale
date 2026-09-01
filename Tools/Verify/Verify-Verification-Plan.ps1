@@ -978,9 +978,11 @@ $NativeCases = @(
         Name = 'Language 1.0 unsafe WIR and type-surface routing'
         Paths = @(
             'Tools/Native/Test-Language-1.0-Unsafe-Wir.mjs',
+            'Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs',
             'Tools/Native/Test-Language-1.0-Unsafe-Type-Surface.mjs',
             'Libraries/Foundation/Unsafe/Unsafe.wv',
-            'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md'
+            'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
+            'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md'
         )
         Suites = @('language-1-callable-semantics')
         Gaps = @()
@@ -1954,28 +1956,56 @@ $NativeCases = @(
             'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.sh',
             'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs'
         )
+        Suites = @('segmented-hosted-wvb-cache')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'legacy hosted application cache routes to focused cache owner'
+        Paths = @(
+            'Tools/Native/Build-Cached-Hosted-Application.cmd',
+            'Tools/Native/Build-Cached-Hosted-Application.sh',
+            'Tools/Native/Native-Hosted-Application-Cache-Core.mjs'
+        )
+        Suites = @('segmented-hosted-wvb-cache')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'retired aggregate verification aliases are deletion tombstones'
+        Paths = @(
+            'Tools/Native/Test-Retirement-Suite.cmd',
+            'Tools/Native/Test-Retirement-Suite.sh'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'hosted WVB packaging excludes unrelated database owners'
+        Paths = @(
+            'Tools/Native/Package-Hosted-Wvb.cmd',
+            'Tools/Native/Package-Hosted-Wvb.sh'
+        )
         Suites = @(
-            'seed',
-            'segmented-compiler-toolset-reconstruction',
-            'segmented-hosted-wvb-cache',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction',
-            'unsafe-wvb',
-            'wvb-containment',
-            'language-1-foreign-catalog-producer',
-            'language-1-source-admission-coordinator',
-            'language-1-foreign-memory-semantics',
             'compiler-split-development',
             'console-packager-container-reconstruction',
             'hosted-verifier-publisher-files',
-            'native-u64-lowering',
-            'database-superblock',
-            'database-durable-commit'
+            'native-u64-lowering'
         )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'compiler artifact reader generator routing'
+        Paths = @('Tools/Native/Generate-Compiler-Artifact-Readers.mjs')
+        Suites = @('wvb-runner-reconstruction', 'compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -3902,7 +3932,11 @@ $NativeCases = @(
             'Tools/Native/Test-Project-Object-Checkpoint.mjs',
             'Tools/Native/Test-Segmented-Project-Checkpoint.mjs'
         )
-        Suites = @('os-x64-code-emission', 'database-storage')
+        Suites = @(
+            'segmented-hosted-wvb-cache',
+            'os-x64-code-emission',
+            'database-storage'
+        )
         Gaps = @()
         VerifyPlan = $false
         OsX64Development = $true
@@ -4265,6 +4299,7 @@ $NativeCases = @(
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0861-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0894-Candidate.txt',
+            'Documents/Project/Windvale-Language-1.0-Source-Amendment-0901-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
