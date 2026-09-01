@@ -884,6 +884,18 @@ or scratch borrowing, pointer and write-region borrowing, authenticated Foreign
 calls, one migrated runtime or OS boundary, Linux reproduction, and paired-host
 evidence remain pending.
 
+[Decision 0909](../Decisions/0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md)
+implements the next typed compiler boundary without prematurely opening
+execution. Exact `Borrowˉwriteˉregion::<Abi>` requires a lexical unsafe context,
+one directly named mutable scratch borrow, three exact `u64` arguments, and the
+canonical ABI-matched region/pointer-failure Result. WVIR operation 188 carries
+the scratch slot, start, length, alignment, and ABI identity; WVIR 1.27/1.28
+carry its non-specialized/specialized forms. Three valid source cases and seven
+wrong-context, borrow, result, ABI, or label cases pass the focused local
+Windows matrix; seven malformed WVIR mutations reject independently. WVB
+encoding, affine region lifetime containment, provider and native execution,
+pointer derivation, and authenticated Foreign calls remain pending.
+
 [Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
 removes the compiler-scale staging-memory blocker exposed while rebuilding this
 checkpoint. Each resource is now constructed and written in one scalar-returning

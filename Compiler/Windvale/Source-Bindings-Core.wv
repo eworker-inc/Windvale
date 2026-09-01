@@ -1630,6 +1630,52 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             );
         }
     }
+    if Query.Nameˉlength == 21u32 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset) == 66u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 1u32) == 111u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 2u32) == 114u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 3u32) == 114u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 4u32) == 111u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 5u32) == 119u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 6u32) == 203u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 7u32) == 137u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 8u32) == 119u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 9u32) == 114u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 10u32) == 105u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 11u32) == 116u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 12u32) == 101u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 13u32) == 203u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 14u32) == 137u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 15u32) == 114u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 16u32) == 101u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 17u32) == 103u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 18u32) == 105u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 19u32) == 111u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 20u32) == 110u8 &&
+        Query.Qualified && Query.Aliasˉfound &&
+        Query.Target < Scan.Modules {
+        let Regionˉunsafeˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+        let Regionˉunsafeˉheader:
+            Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                Regionˉunsafeˉview.Source
+            );
+        if Regionˉunsafeˉview.Edition == 1u32 &&
+                Regionˉunsafeˉheader.Profile ==
+                Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Regionˉunsafeˉview.Source,
+                Regionˉunsafeˉheader.Nameˉoffset,
+                Regionˉunsafeˉheader.Nameˉlength,
+                "Foundationˉunsafe"
+            ) {
+            return Compilerˉsourceˉbindingˉmatch(
+                true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+                Query.Target, 4u32, 188u32
+            );
+        }
+    }
     if Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(Source, Query) {
     let Taskˉconstructˉmodule:
         Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =

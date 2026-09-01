@@ -1134,6 +1134,7 @@ function Add-Native-Tool-Suite {
     if ($Stem -in @(
         'Test-Language-1.0-Unsafe-Wir',
         'Test-Language-1.0-Unsafe-Scratch-Wir',
+        'Test-Language-1.0-Unsafe-Write-Region-Wir',
         'Test-Language-1.0-Unsafe-Type-Surface'
     )) {
         Add-Suite 'language-1-callable-semantics'

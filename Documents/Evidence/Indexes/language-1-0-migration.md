@@ -122,3 +122,4 @@
 | [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4995 |
 | [Slice 8 WVB 1.35 immutable borrowed-scratch observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-135-immutable-borrowed-scratch-observation-checkpoint) | 5030 |
 | [Slice 8 bounded compiler-scale staging checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-compiler-scale-staging-checkpoint) | 5076 |
+| [Slice 8 WVIR mutable write-region borrowing checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvir-mutable-write-region-borrowing-checkpoint) | 5112 |

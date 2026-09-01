@@ -83,7 +83,8 @@ export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 20u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 22u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 24u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 26u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 26u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 28u32) {
         return 64u32;
     }
     if Bytesˉlength(Directory) >= 56u32 &&
@@ -95,7 +96,8 @@ export fn Compilerˉsourceˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 19u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 21u32 ||
          Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 23u32 ||
-         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 25u32) {
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 25u32 ||
+         Bytesˉreadˉu16ˉlittle(Directory, 6u32) == 27u32) {
         return 56u32;
     }
     return 48u32;

@@ -5108,3 +5108,36 @@ Tests: 5, Passed: 5, Failed: 0
 This is local Windows execution plus exact Windows/Linux reconstruction and
 artifact-identity evidence. It is not Linux execution or final paired-host
 qualification, and it does not broaden the Slice 8 semantic claim.
+
+## Slice 8 WVIR mutable write-region borrowing checkpoint
+
+[Decision 0909](../Decisions/0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md)
+adds the exact source and typed-WVIR boundary for
+`Borrowˉwriteˉregion::<Abi>`. The call requires a lexical unsafe context, one
+direct mutable borrow of `Foreignˉscratch<Abi>`, exact `u64` start, length, and
+required-alignment arguments, and the contextual canonical
+`Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>`.
+
+WVIR operation 188 carries the three scalar operands, scratch slot, and ABI
+shape. WVIR 1.27 is its non-specialized envelope and WVIR 1.28 carries the same
+operation with the retained generic catalog. The independent validator rejects
+operation 188 in lower minors, requires it in 1.27/1.28, checks the mutable
+scratch slot and ABI relation, and reconstructs the canonical Result, region,
+and failure identities.
+
+The current-source analyzer was rebuilt once through the split compiler and
+packaged once through the development cache. Its WVB is 1,639,438 bytes at
+SHA-256
+`5b4f3b65bf16bf4e349b9e807b82237493e0a7fc2a24057c438d999452771672`.
+The current emitter/validator WVB is 1,502,152 bytes at SHA-256
+`ecf4663d65e9cab7fae56fdfdac743fa369131bbe7067f52f44741555a56fcab`.
+The focused matrix then completed in 3.7 seconds:
+
+```text
+native language 1 unsafe write region WVIR status=Passed cases=10 valid=3 rejected=7 malformed=7 operation=188 minors=27,28 validator=Verified
+```
+
+This is local Windows development evidence. WVB encoding, malformed WVB
+admission, affine region-lifetime containment, scalar/provider and native
+execution, pointer derivation, authenticated Foreign calls, Linux reproduction,
+and final Slice 8 qualification remain pending.

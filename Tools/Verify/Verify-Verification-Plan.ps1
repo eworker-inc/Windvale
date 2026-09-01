@@ -980,10 +980,12 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Test-Language-1.0-Unsafe-Wir.mjs',
             'Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs',
+            'Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs',
             'Tools/Native/Test-Language-1.0-Unsafe-Type-Surface.mjs',
             'Libraries/Foundation/Unsafe/Unsafe.wv',
             'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
-            'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md'
+            'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md',
+            'Documents/Decisions/0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md'
         )
         Suites = @('language-1-callable-semantics')
         Gaps = @()

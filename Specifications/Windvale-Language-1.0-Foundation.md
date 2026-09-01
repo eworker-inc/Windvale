@@ -1958,11 +1958,22 @@ WVIR operation `187` and WVB 1.35 opcode `DD`. Its argument is an immutable
 borrow of the exact ABI-matched scratch, its result is `u64`, and it has an
 empty effect set. The scalar provider and native x86-64 backend read the
 provider-private retained length in constant time without consuming the owner,
-copying the backing, or exposing its address. Mutable scratch borrowing,
-write-region and pointer operations, authenticated Foreign calls, host ABI
-publication, and cross-host containment remain pending. The remaining
-operations below may appear only with their compiler-owned intrinsic semantics
-and containment evidence.
+copying the backing, or exposing its address.
+
+The mutable-borrow checkpoint publishes exact `Borrowˉwriteˉregion` through
+source binding and typed WVIR operation `188`. Its arguments are one direct
+mutable borrow of the ABI-matched scratch plus exact `u64` start, length, and
+required-alignment values. Its contextual result is the canonical
+`Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>`, and it contributes
+`unsafe.address`. WVIR 1.27/1.28 retain the scratch slot, three scalar operands,
+and ABI identity while independent validation rejects wrong borrow modes,
+types, labels, effects, or result relationships. This checkpoint does not yet
+encode or execute the borrow.
+
+Write-region bytecode and lifetime containment, pointer operations,
+authenticated Foreign calls, host ABI publication, and cross-host containment
+remain pending. The remaining operations below may appear only with their
+compiler-owned intrinsic semantics and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,
