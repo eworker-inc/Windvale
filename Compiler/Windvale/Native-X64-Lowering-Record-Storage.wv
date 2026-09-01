@@ -198,6 +198,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     }
     if Opcode == 189u8 || Opcode == 190u8 || Opcode == 191u8 { return 1u32; }
     if Opcode == 220u8 { return 13u32; }
+    if Opcode == 221u8 { return 9u32; }
     return 0u32;
 }
 
@@ -1159,6 +1160,12 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 )
             );
             Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
+            Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 221u8 {
+            Stackˉrecords = Pushˉscalar(Stackˉrecords);
             Depth = Depth + 1u32;
             Handled = true;
         }

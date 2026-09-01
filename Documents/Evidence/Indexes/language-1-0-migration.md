@@ -120,3 +120,5 @@
 | [Slice 8 affine memory-budget call-transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-affine-memory-budget-call-transfer-checkpoint) | 4923 |
 | [Slice 8 WVB 1.34 immutable borrowed-budget call checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-134-immutable-borrowed-budget-call-checkpoint) | 4967 |
 | [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4995 |
+| [Slice 8 WVB 1.35 immutable borrowed-scratch observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-135-immutable-borrowed-scratch-observation-checkpoint) | 5030 |
+| [Slice 8 bounded compiler-scale staging checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-compiler-scale-staging-checkpoint) | 5076 |

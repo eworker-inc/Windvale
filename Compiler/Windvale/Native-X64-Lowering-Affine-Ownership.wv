@@ -38,6 +38,11 @@ fn Nextˉinstruction(Map: bytes, Cursor: u32, Limit: u32) -> u32 {
     return Result;
 }
 
+fn Readˉborrowˉkind(Localˉborrowˉkinds: bytes, Local: u32) -> u8 {
+    if Bytesˉlength(Localˉborrowˉkinds) == 0u32 { return 0u8; }
+    return Bytesˉreadˉu8(Localˉborrowˉkinds, Local);
+}
+
 fn Available(Low: u32, High: u32, Rank: u32) -> bool {
     if Rank >= 64u32 { return false; }
     if Rank < 32u32 { return ((Low >> Rank) & 1u32) == 1u32; }
@@ -72,11 +77,14 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     Parameters: u32,
     Localˉtypes: bytes,
     Localˉtypeˉidentities: bytes,
+    Localˉborrowˉkinds: bytes,
     Typeˉcount: u32,
     Instructions: bytes
 ) -> bool {
     let Locals: u32 = Bytesˉlength(Localˉtypes);
+    let Borrowˉkinds: u32 = Bytesˉlength(Localˉborrowˉkinds);
     if Bytesˉlength(Localˉtypeˉidentities) != Locals * 4u32 ||
+        (Borrowˉkinds != 0u32 && Borrowˉkinds != Locals) ||
         Bytesˉlength(Instructions) != Codeˉlength || Parameters > Locals {
         return false;
     }
@@ -96,6 +104,19 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Input, Scratchˉresultˉtypes, Resultˉtype
             );
         }
+        if Resultˉopcode == 221u8 {
+            let Lengthˉtypeˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Lengthˉtypeˉlocal >= Locals { return false; }
+            let Lengthˉscratchˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Localˉtypeˉidentities, Lengthˉtypeˉlocal * 4u32
+            );
+            if Lengthˉscratchˉtype >= Typeˉcount { return false; }
+            Scratchˉresultˉtypes = Setˉmapˉbyte(
+                Input, Scratchˉresultˉtypes, Lengthˉscratchˉtype
+            );
+        }
         Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
     }
 
@@ -110,8 +131,10 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         let Identity: u32 = Bytesˉreadˉu32ˉlittle(
             Localˉtypeˉidentities, Local * 4u32
         );
-        var Isˉtracked: bool = Type == 10u8 && Identity == 25u32;
-        if Identity < Typeˉcount &&
+        let Borrowˉkind: u8 = Readˉborrowˉkind(Localˉborrowˉkinds, Local);
+        var Isˉtracked: bool = Borrowˉkind == 0u8 && Type == 10u8 &&
+            Identity == 25u32;
+        if Borrowˉkind == 0u8 && Identity < Typeˉcount &&
             Bytesˉreadˉu8(Scratchˉresultˉtypes, Identity) == 1u8 {
             Isˉtracked = true;
         }
@@ -207,8 +230,29 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                             ) != 36u32 {
                             return false;
                         }
-                    } else if Observerˉopcode != 152u8 {
-                        return false;
+                    } else {
+                        var Borrowˉisˉvalid: bool = false;
+                        if Observerˉopcode == 5u8 {
+                            let Scratchˉviewˉlocal: u32 =
+                                Bytesˉreadˉu32ˉlittle(
+                                Input, Codeˉoffset + Observer + 1u32
+                            );
+                            if Scratchˉviewˉlocal >= Parameters &&
+                                Scratchˉviewˉlocal < Locals && Readˉborrowˉkind(
+                                    Localˉborrowˉkinds, Scratchˉviewˉlocal
+                                ) == 28u8 && Bytesˉreadˉu32ˉlittle(
+                                    Localˉtypeˉidentities,
+                                    Scratchˉviewˉlocal * 4u32
+                                ) == Bytesˉreadˉu32ˉlittle(
+                                    Localˉtypeˉidentities,
+                                    Targetˉlocal * 4u32
+                                ) {
+                                Borrowˉisˉvalid = true;
+                            }
+                        }
+                        if !Borrowˉisˉvalid && Observerˉopcode != 152u8 {
+                            return false;
+                        }
                     }
                 }
                 if Opcode == 205u8 {
@@ -258,6 +302,44 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             Availableˉhigh = Setˉavailableˉhigh(
                 Availableˉhigh, Budgetˉrank, false
             );
+        }
+        if Opcode == 221u8 {
+            let Borrowedˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Borrowedˉscratchˉlocal >= Locals {
+                return false;
+            }
+            let Scratchˉborrowˉkind: u8 = Readˉborrowˉkind(
+                Localˉborrowˉkinds, Borrowedˉscratchˉlocal
+            );
+            if Scratchˉborrowˉkind == 28u8 {
+                let Borrowedˉscratchˉidentity: u32 =
+                    Bytesˉreadˉu32ˉlittle(
+                        Localˉtypeˉidentities,
+                        Borrowedˉscratchˉlocal * 4u32
+                    );
+                if Borrowedˉscratchˉidentity >= Typeˉcount ||
+                    Bytesˉreadˉu8(
+                        Scratchˉresultˉtypes,
+                        Borrowedˉscratchˉidentity
+                    ) != 1u8 {
+                    return false;
+                }
+            } else {
+                if Bytesˉreadˉu8(Tracked, Borrowedˉscratchˉlocal) != 1u8 {
+                    return false;
+                }
+                let Borrowedˉscratchˉrank: u32 = Bytesˉreadˉu32ˉlittle(
+                    Ranks, Borrowedˉscratchˉlocal * 4u32
+                );
+                if !Available(
+                        Availableˉlow, Availableˉhigh,
+                        Borrowedˉscratchˉrank
+                    ) {
+                    return false;
+                }
+            }
         }
         if Opcode == 206u8 {
             let Parent: u32 = Bytesˉreadˉu32ˉlittle(

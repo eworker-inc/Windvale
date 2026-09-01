@@ -114,7 +114,7 @@ echo Progress: step=database-storage-tools item=1/2 detail=verify-build-driver
 call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f
 if errorlevel 1 goto :cleanup
 echo Progress: step=database-storage-tools item=2/2 detail=verify-lowerer
-call :verify_file "%Lowerer%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad
+call :verify_file "%Lowerer%" 9754112 606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6
 if errorlevel 1 goto :cleanup
 set "ToolCheckpoint=Retained"
 set "ProjectWvbCheckpoint=NotBuilt"

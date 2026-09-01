@@ -117,11 +117,11 @@ if errorlevel 1 goto :cleanup
     >"%TemporaryDirectory%\Metadata.txt" 2>"%TemporaryDirectory%\Metadata.err"
 if errorlevel 1 goto :cleanup
 
-call :verify_file "%LowererWvb%" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 "WVB-to-WVO tool WVB"
+call :verify_file "%LowererWvb%" 678601 c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823 "WVB-to-WVO tool WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 8160256 f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad "Windows WVB-to-WVO application"
+call :verify_file "%WindowsApplication%" 9754112 606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6 "Windows WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 8159232 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 "Linux WVB-to-WVO application"
+call :verify_file "%LinuxApplication%" 9752576 377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 "Linux WVB-to-WVO application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%ReturnWvb%" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 "Return-42 WVB"
 if errorlevel 1 goto :cleanup

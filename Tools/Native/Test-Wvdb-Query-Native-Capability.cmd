@@ -43,7 +43,7 @@ echo native wvdb query step=build-current-lowerer
 call "%Native%\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Compiler\Windvale-Native-X64-Lowering-Tool.wvproj" ^
     "%Work%\Lowerer.wvb" || goto :cleanup
-call :verify_file "%Work%\Lowerer.wvb" 567615 77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 "variant-capable lowerer WVB" || goto :cleanup
+call :verify_file "%Work%\Lowerer.wvb" 678601 c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823 "variant-capable lowerer WVB" || goto :cleanup
 
 echo native wvdb query step=package-current-lowerer
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Lowerer.wvb" "%Work%\Lowerer.exe" || goto :cleanup

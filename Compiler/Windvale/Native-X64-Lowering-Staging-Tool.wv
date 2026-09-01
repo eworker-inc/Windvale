@@ -13,6 +13,17 @@ capability process.argument_count;
 
 const STAGING_RESOURCE_BYTES: u32 = 1310720u32;
 
+record Stagingˉchunkˉwrite {
+    Valid: bool;
+    Position: u32;
+    Length: u32;
+    Steps: u32;
+    Nextˉvalid: bool;
+    Nextˉkind: Publication.Compilerˉnativeˉx64ˉpublicationˉkind;
+    Nextˉfunction: u32;
+    Nextˉposition: u32;
+}
+
 fn Empty(Input: bytes) -> bytes {
     return Bytesˉslice(Input, 0u32, 0u32);
 }
@@ -51,6 +62,133 @@ fn Failure(Status: Nativeˉx64.Compilerˉnativeˉx64ˉstatus) -> i32 {
     return 1;
 }
 
+fn Invalidˉchunkˉwrite(
+    Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor
+) -> Stagingˉchunkˉwrite {
+    return Stagingˉchunkˉwrite(
+        false,
+        0u32,
+        0u32,
+        0u32,
+        Cursor.Valid,
+        Cursor.Kind,
+        Cursor.Nextˉfunction,
+        Cursor.Position
+    );
+}
+
+fn Completedˉchunkˉwrite(
+    Position: u32,
+    Length: u32,
+    Steps: u32,
+    Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor
+) -> Stagingˉchunkˉwrite {
+    return Stagingˉchunkˉwrite(
+        true,
+        Position,
+        Length,
+        Steps,
+        Cursor.Valid,
+        Cursor.Kind,
+        Cursor.Nextˉfunction,
+        Cursor.Position
+    );
+}
+
+fn Cursorˉafter(
+    Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep
+) -> Publication.Compilerˉnativeˉx64ˉpublicationˉcursor {
+    return Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+        Step.Nextˉvalid,
+        Step.Nextˉkind,
+        Step.Nextˉfunction,
+        Step.Nextˉposition
+    );
+}
+
+fn Writeˉnextˉchunk(
+    Input: bytes,
+    Plan: Nativeˉx64.Compilerˉnativeˉx64ˉplan,
+    Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions,
+    Initial: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor,
+    Resource: text
+) -> Stagingˉchunkˉwrite {
+    var Cursor: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor = Initial;
+    var Pending: bytes = Empty(Input);
+    var Pendingˉposition: u32 = 0u32;
+    var Steps: u32 = 0u32;
+    while Steps <= Plan.Functionˉcount + 7u32 {
+        let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
+            Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
+                Input,
+                Plan,
+                Regions,
+                Cursor,
+                4194304u32
+            );
+        let Pendingˉbytes: u32 = Bytesˉlength(Pending);
+        if Step.Status ==
+            Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Complete {
+            if Pendingˉbytes == 0u32 {
+                return Invalidˉchunkˉwrite(Cursor);
+            }
+            file.write_bytes(Resource, Pending);
+            return Completedˉchunkˉwrite(
+                Pendingˉposition,
+                Pendingˉbytes,
+                Steps,
+                Cursor
+            );
+        }
+        if Step.Status !=
+                Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
+            !Step.Nextˉvalid {
+            return Invalidˉchunkˉwrite(Cursor);
+        }
+
+        let Length: u32 = Bytesˉlength(Step.Value);
+        if Length == 0u32 {
+            Cursor = Cursorˉafter(Step);
+            Steps = Steps + 1u32;
+        } else {
+            if Pendingˉbytes > 0u32 &&
+                (Step.Kind !=
+                        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code ||
+                    Pendingˉbytes > STAGING_RESOURCE_BYTES ||
+                    Length > STAGING_RESOURCE_BYTES - Pendingˉbytes) {
+                file.write_bytes(Resource, Pending);
+                return Completedˉchunkˉwrite(
+                    Pendingˉposition,
+                    Pendingˉbytes,
+                    Steps,
+                    Cursor
+                );
+            }
+            if Step.Kind !=
+                    Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code {
+                let Next: Publication.Compilerˉnativeˉx64ˉpublicationˉcursor =
+                    Cursorˉafter(Step);
+                file.write_bytes(Resource, Step.Value);
+                return Completedˉchunkˉwrite(
+                    Step.Position,
+                    Length,
+                    Steps + 1u32,
+                    Next
+                );
+            }
+            if Pendingˉbytes == 0u32 {
+                Pendingˉposition = Step.Position;
+                Pending = Step.Value;
+            } else {
+                Pending = Bytesˉconcat(Pending, Step.Value);
+            }
+            Cursor = Cursorˉafter(Step);
+            Steps = Steps + 1u32;
+        }
+    }
+    return Invalidˉchunkˉwrite(Cursor);
+}
+
 export fn Main() -> i32 {
     if process.argument_count() != 3u32 {
         diagnostic.write_line(
@@ -87,7 +225,25 @@ export fn Main() -> i32 {
             );
             return 1;
         }
-        return Failure(Plan.Status);
+        diagnostic.write_line(
+            Textˉconcat(
+                Textˉconcat(
+                    Textˉconcat(
+                        "native x64 staging status=",
+                        Enumˉname(Plan.Status)
+                    ),
+                    Textˉconcat(
+                        " function=",
+                        U32ˉformat(Plan.Failureˉfunction)
+                    )
+                ),
+                Textˉconcat(
+                    " detail=",
+                    U32ˉformat(Plan.Failureˉdetail)
+                )
+            )
+        );
+        return 1;
     }
     let Regions: Publication.Compilerˉnativeˉx64ˉpublicationˉregions =
         Publication.Compilerˉnativeˉx64ˉpublicationˉregionsˉbuild(
@@ -107,93 +263,38 @@ export fn Main() -> i32 {
     var Entries: bytes = Empty(Input);
     var Chunks: u32 = 0u32;
     var Steps: u32 = 0u32;
-    var Pending: bytes = Empty(Input);
-    var Pendingˉposition: u32 = 0u32;
     while Cursor.Kind !=
         Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Complete {
-        let Step: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
-            Publication.Compilerˉnativeˉx64ˉpublicationˉnext(
-                Input,
-                Plan,
-                Regions,
-                Cursor,
-                4194304u32
-            );
-        if Step.Status !=
-                Publication.Compilerˉnativeˉx64ˉpublicationˉstatus.Valid ||
-            !Step.Nextˉvalid {
-            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
-        }
-        let Length: u32 = Bytesˉlength(Step.Value);
-        if Length > 0u32 {
-            let Pendingˉbytes: u32 = Bytesˉlength(Pending);
-            if Pendingˉbytes > 0u32 &&
-                (Step.Kind !=
-                        Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code ||
-                    Pendingˉbytes > STAGING_RESOURCE_BYTES ||
-                    Length > STAGING_RESOURCE_BYTES - Pendingˉbytes) {
-                let Pendingˉresource: text =
-                    Chunkˉresource(Chunkˉprefix, Chunks);
-                if Pathsˉareˉequal(Pendingˉresource, Inputˉpath) ||
-                    Pathsˉareˉequal(Pendingˉresource, Manifestˉpath) {
-                    diagnostic.write_line(
-                        "native x64 staging status=Invalidˉresource"
-                    );
-                    return 2;
-                }
-                file.write_bytes(Pendingˉresource, Pending);
-                Entries = Appendˉu32(Entries, Chunks);
-                Entries = Appendˉu32(Entries, Pendingˉposition);
-                Entries = Appendˉu32(Entries, Pendingˉbytes);
-                Chunks = Chunks + 1u32;
-                Pending = Empty(Input);
-            }
-            if Step.Kind !=
-                    Publication.Compilerˉnativeˉx64ˉpublicationˉkind.Code {
-                let Directˉresource: text =
-                    Chunkˉresource(Chunkˉprefix, Chunks);
-                if Pathsˉareˉequal(Directˉresource, Inputˉpath) ||
-                    Pathsˉareˉequal(Directˉresource, Manifestˉpath) {
-                    diagnostic.write_line(
-                        "native x64 staging status=Invalidˉresource"
-                    );
-                    return 2;
-                }
-                file.write_bytes(Directˉresource, Step.Value);
-                Entries = Appendˉu32(Entries, Chunks);
-                Entries = Appendˉu32(Entries, Step.Position);
-                Entries = Appendˉu32(Entries, Length);
-                Chunks = Chunks + 1u32;
-            } else if Bytesˉlength(Pending) == 0u32 {
-                Pendingˉposition = Step.Position;
-                Pending = Step.Value;
-            } else {
-                Pending = Bytesˉconcat(Pending, Step.Value);
-            }
-        }
-        Cursor = Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
-            Step.Nextˉvalid,
-            Step.Nextˉkind,
-            Step.Nextˉfunction,
-            Step.Nextˉposition
-        );
-        Steps = Steps + 1u32;
-        if Steps > Plan.Functionˉcount + 7u32 {
-            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
-        }
-    }
-    if Bytesˉlength(Pending) > 0u32 {
-        let Finalˉresource: text = Chunkˉresource(Chunkˉprefix, Chunks);
-        if Pathsˉareˉequal(Finalˉresource, Inputˉpath) ||
-            Pathsˉareˉequal(Finalˉresource, Manifestˉpath) {
+        let Resource: text = Chunkˉresource(Chunkˉprefix, Chunks);
+        if Pathsˉareˉequal(Resource, Inputˉpath) ||
+            Pathsˉareˉequal(Resource, Manifestˉpath) {
             diagnostic.write_line("native x64 staging status=Invalidˉresource");
             return 2;
         }
-        file.write_bytes(Finalˉresource, Pending);
+        let Written: Stagingˉchunkˉwrite = Writeˉnextˉchunk(
+            Input,
+            Plan,
+            Regions,
+            Cursor,
+            Resource
+        );
+        if !Written.Valid || Written.Length == 0u32 {
+            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+        }
         Entries = Appendˉu32(Entries, Chunks);
-        Entries = Appendˉu32(Entries, Pendingˉposition);
-        Entries = Appendˉu32(Entries, Bytesˉlength(Pending));
+        Entries = Appendˉu32(Entries, Written.Position);
+        Entries = Appendˉu32(Entries, Written.Length);
         Chunks = Chunks + 1u32;
+        Steps = Steps + Written.Steps;
+        if Steps > Plan.Functionˉcount + 7u32 {
+            return Failure(Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Outputˉlimit);
+        }
+        Cursor = Publication.Compilerˉnativeˉx64ˉpublicationˉcursor(
+            Written.Nextˉvalid,
+            Written.Nextˉkind,
+            Written.Nextˉfunction,
+            Written.Nextˉposition
+        );
     }
     let Complete: Publication.Compilerˉnativeˉx64ˉpublicationˉstep =
         Publication.Compilerˉnativeˉx64ˉpublicationˉnext(

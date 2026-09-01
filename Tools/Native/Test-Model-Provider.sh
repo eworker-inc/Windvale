@@ -49,8 +49,8 @@ echo 'Progress: step=model-provider-tools item=1/2 detail=verify-build-driver'
 verify_file "$build_driver" 30072832 \
     628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit 1
 echo 'Progress: step=model-provider-tools item=2/2 detail=verify-lowerer'
-verify_file "$lowerer" 8159232 \
-    1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit 1
+verify_file "$lowerer" 9752576 \
+    377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 || exit 1
 echo 'PASS  native model provider phase=tools item=1/4'
 
 echo 'START native model provider phase=compile item=2/4'

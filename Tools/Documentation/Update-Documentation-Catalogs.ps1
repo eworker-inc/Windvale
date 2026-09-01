@@ -131,6 +131,13 @@ function Write-Or-CheckGeneratedFile {
         return
     }
 
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $Existing = ConvertTo-LfText ([IO.File]::ReadAllText($Path))
+        if ($Existing -ceq $Normalized) {
+            return
+        }
+    }
+
     $Parent = Split-Path -Parent $Path
     if (!(Test-Path -LiteralPath $Parent -PathType Container)) {
         $null = New-Item -ItemType Directory -Path $Parent

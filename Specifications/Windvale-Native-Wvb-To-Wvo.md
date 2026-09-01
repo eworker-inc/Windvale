@@ -86,9 +86,9 @@ The retained pre-SHA candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB-to-WVO tool WVB | 567,615 | `77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60` |
-| Windows WVB-to-WVO tool | 8,160,256 | `f21a0767685e6e29604625852794ae1118fe41060e639fc690baecb7c60dedad` |
-| Linux WVB-to-WVO tool | 8,159,232 | `1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185` |
+| WVB-to-WVO tool WVB | 678,601 | `c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823` |
+| Windows WVB-to-WVO tool | 9,754,112 | `606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6` |
+| Linux WVB-to-WVO tool | 9,752,576 | `377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703` |
 
 These identities remain the pinned candidate generation while the optional
 SHA-256 source candidate awaits paired-host CI qualification and promotion.

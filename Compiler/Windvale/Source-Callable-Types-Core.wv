@@ -136,10 +136,14 @@ fn Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory: bytes) -> u32 {
     if Bytesˉlength(Directory) >= 56u32 {
         let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
         if Minor == 10u32 || Minor == 12u32 ||
-            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 {
+            Minor == 14u32 || Minor == 16u32 || Minor == 17u32 ||
+            Minor == 19u32 || Minor == 21u32 || Minor == 23u32 ||
+            Minor == 25u32 {
             return 56u32;
         }
-        if Minor == 18u32 && Bytesˉlength(Directory) >= 64u32 {
+        if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
+                Minor == 24u32 || Minor == 26u32) &&
+                Bytesˉlength(Directory) >= 64u32 {
             return 64u32;
         }
     }
@@ -150,8 +154,14 @@ fn Compilerˉsourceˉcallableˉwirˉfunctionˉtypeˉbytes(
     Directory: bytes
 ) -> u32 {
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor == 17u32 { return Bytesˉreadˉu32ˉlittle(Directory, 48u32); }
-    if Minor == 18u32 { return Bytesˉreadˉu32ˉlittle(Directory, 56u32); }
+    if Minor == 17u32 || Minor == 19u32 || Minor == 21u32 ||
+        Minor == 23u32 || Minor == 25u32 {
+        return Bytesˉreadˉu32ˉlittle(Directory, 48u32);
+    }
+    if Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
+        Minor == 24u32 || Minor == 26u32 {
+        return Bytesˉreadˉu32ˉlittle(Directory, 56u32);
+    }
     return 0u32;
 }
 
@@ -169,7 +179,7 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
     }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 18u32 { return false; }
+    if Minor < 9u32 || Minor > 26u32 { return false; }
     let Headerˉbytes: u32 =
         Compilerˉsourceˉcallableˉwirˉheaderˉbytes(Directory);
     if Length < Headerˉbytes { return false; }
@@ -192,7 +202,9 @@ fn Compilerˉsourceˉcallableˉwirˉdirectoryˉisˉusable(
         return false;
     }
     if Minor == 10u32 || Minor == 12u32 ||
-        Minor == 14u32 || Minor == 16u32 || Minor == 18u32 {
+        Minor == 14u32 || Minor == 16u32 || Minor == 18u32 ||
+        Minor == 20u32 || Minor == 22u32 || Minor == 24u32 ||
+        Minor == 26u32 {
         let Instances: u32 = Bytesˉreadˉu32ˉlittle(Directory, 48u32);
         if Instances == 0u32 || Instances > 256u32 ||
             Bytesˉreadˉu32ˉlittle(Directory, 52u32) != 1u32 {

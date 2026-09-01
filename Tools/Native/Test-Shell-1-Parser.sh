@@ -41,7 +41,7 @@ webassembly_project="$repository_root/Projects/Tests/Windvale-Native-Test-Shell-
 lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
 echo 'START native shell 1 parser phase=tools item=1/5'
-verify_file "$lowerer" 8159232 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
+verify_file "$lowerer" 9752576 377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 || exit $?
 echo 'PASS  native shell 1 parser phase=tools item=1/5'
 
 echo 'START native shell 1 parser phase=compile item=2/5'

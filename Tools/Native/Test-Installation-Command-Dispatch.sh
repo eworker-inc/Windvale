@@ -74,8 +74,8 @@ echo 'native installation command dispatch step=lower-wvdb-host item=4/7'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj" \
     "$work/Lowerer.wvb" || exit $?
-verify_file "$work/Lowerer.wvb" 567615 \
-    77ce798c67281e2fa5d576a1d229f8ec947427a092f8720909a09e32e9711e60 || exit 1
+verify_file "$work/Lowerer.wvb" 678601 \
+    c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823 || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Lowerer.wvb" "$work/Lowerer.elf" || exit $?
 "$work/Lowerer.elf" "$work/Wvdb-Query.wvb" "$work/Wvdb-Query.wvo" >/dev/null || exit $?

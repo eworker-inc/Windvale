@@ -86,6 +86,7 @@ const Abi =
 const Resultˉtype =
     'Result.Result<Unsafe.Foreignˉscratch<Hostˉabi>, ' +
     'Unsafe.Foreignˉmemoryˉfailure>';
+const Scratchˉtype = 'Unsafe.Foreignˉscratch<Hostˉabi>';
 const Validˉcall =
     'Unsafe.Constructˉscratch::<Hostˉabi>(' +
     'Budget: Budget, Length: 64u64, Alignment: 16u64)';
@@ -105,6 +106,15 @@ const Cases = [
         Source: Application(
             'Budget: Memory.Memoryˉbudget', Resultˉtype, Validˉcall,
         ),
+    },
+    {
+        Name: 'valid-scratch-length',
+        Expected: 'valid',
+        Syntheticˉlength: true,
+        Source: Application(
+            'Budget: Memory.Memoryˉbudget', Resultˉtype, Validˉcall,
+        ) + ' export fn Measure(Scratch: borrow ' + Scratchˉtype +
+            ') -> u64 { return 63u64; }',
     },
     {
         Name: 'missing-explicit-abi',
@@ -198,6 +208,22 @@ const Cases = [
 ];
 
 const Runtimeˉapplications = [
+    {
+        Name: 'scratch-length-success',
+        Nativeˉexecution: true,
+        Syntheticˉlength: true,
+        Source: Runtimeˉapplication(
+            'fn Measure(Scratch: borrow ' + Scratchˉtype +
+            ') -> u64 { return 63u64; } ',
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Budget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: Scratch } { ' +
+            'if Measure(borrow Scratch) == 64u64 { 42 } else { 2 } } ' +
+            'case Result.Result.Failure { Error: _ } { 1 } };',
+        ),
+    },
     {
         Name: 'success',
         Nativeˉexecution: true,
@@ -397,6 +423,8 @@ var Wvbˉmalformed = 0;
 var Wvbˉverified = 0;
 var Wvbˉbytes = 0;
 var Wvbˉsha256 = '';
+var Lengthˉwvbˉbytes = 0;
+var Lengthˉwvbˉsha256 = '';
 var Borrowedˉbudgetˉrejections = 0;
 try {
     for (let Index = 0; Index < Cases.length; Index += 1) {
@@ -429,10 +457,23 @@ try {
                     `${Analysis.Code}.\n${Analysis.Diagnostic}`,
                 );
             }
+            if (Case.Syntheticˉlength === true) {
+                await Rewriteˉscratchˉlengthˉwir(Wir);
+            }
             const Wirˉbytes = await readFile(Wir);
             if (Case.Name === 'valid-canonical-scratch') {
                 const Layout = Inspectˉvalidˉwir(Wirˉbytes);
                 const Boundary = await Verifyˉemitterˉboundary(
+                    Sourceˉoutput, Manifest, Bindings, Wir, Wirˉbytes,
+                    Layout, Caseˉdirectory,
+                );
+                Malformed += Boundary.Wir;
+                Wvbˉmalformed += Boundary.Wvb;
+                Wvbˉverified += Boundary.Verifier;
+            }
+            if (Case.Name === 'valid-scratch-length') {
+                const Layout = Inspectˉvalidˉlengthˉwir(Wirˉbytes);
+                const Boundary = await Verifyˉlengthˉemitterˉboundary(
                     Sourceˉoutput, Manifest, Bindings, Wir, Wirˉbytes,
                     Layout, Caseˉdirectory,
                 );
@@ -486,8 +527,11 @@ try {
         'native language 1 unsafe scratch WVIR status=Passed ' +
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
         `malformed=${Malformed} wvb-malformed=${Wvbˉmalformed} ` +
-        `operation=186 opcode=220 wvb-minor=33 wvb-bytes=${Wvbˉbytes} ` +
+        `operations=186,187 opcodes=220,221 wvb-minors=33,35 ` +
+        `wvb-bytes=${Wvbˉbytes} ` +
         `wvb-sha256=${Wvbˉsha256} effect-check=emitter ` +
+        `length-wvb-bytes=${Lengthˉwvbˉbytes} ` +
+        `length-wvb-sha256=${Lengthˉwvbˉsha256} ` +
         `runtime=${Runner === undefined ? 'Notˉrequested' : 'Verified'} ` +
         `compiler-verifier-cases=${Wvbˉverified}\n`,
     );
@@ -529,6 +573,9 @@ async function Verifyˉruntime() {
                 `Unsafe-scratch runtime ${Case.Name} analysis failed: ` +
                 `status=${Analysis.Code}.\n${Analysis.Diagnostic}`,
             );
+        }
+        if (Case.Syntheticˉlength === true) {
+            await Rewriteˉscratchˉlengthˉwir(Wir);
         }
         const Emission = await Runˉemitter(
             Sourceˉoutput, Manifest, Bindings, Wir, Wvb,
@@ -810,6 +857,50 @@ function Unsafeˉscratchˉinstructionˉwidth(Opcode) {
     Reject(`The unsafe-scratch ownership trace has opcode ${Opcode}.`);
 }
 
+async function Rewriteˉscratchˉlengthˉwir(Path) {
+    const Input = await readFile(Path);
+    if (Input.length < 56 || Input.length > MAXIMUM_WIR_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
+        Input.readUInt16LE(4) !== 1 ||
+        (Input.readUInt16LE(6) !== 23 && Input.readUInt16LE(6) !== 24)) {
+        Reject('The scratch-length precursor WVIR header differs.');
+    }
+    const Headerˉbytes = Input.readUInt16LE(6) === 24 ? 64 : 56;
+    const Functions = Input.readUInt32LE(8);
+    const Blocks = Input.readUInt32LE(16);
+    const Operations = Input.readUInt32LE(24);
+    const Operationsˉoffset = Headerˉbytes + Functions * 48 + Blocks * 28;
+    if (Operationsˉoffset > Input.length ||
+        Operations > Math.floor((Input.length - Operationsˉoffset) / 28)) {
+        Reject('The scratch-length precursor operation directory is invalid.');
+    }
+    const Constructors = [];
+    const Sentinels = [];
+    for (let Index = 0; Index < Operations; Index += 1) {
+        const Entry = Operationsˉoffset + Index * 28;
+        const Kind = Input.readUInt16LE(Entry + 4);
+        if (Kind === 186) Constructors.push(Entry);
+        if (Kind === 94 && Input.readUInt16LE(Entry + 6) === 0 &&
+            Input.readUInt32LE(Entry + 8) === 8 &&
+            Input.readUInt32LE(Entry + 20) === 63 &&
+            Input.readUInt32LE(Entry + 24) === 0) {
+            Sentinels.push(Entry);
+        }
+    }
+    if (Constructors.length !== 1 || Sentinels.length !== 1) {
+        Reject('The scratch-length precursor operation inventory differs.');
+    }
+    const Abiˉshape = Input.readUInt32LE(Constructors[0] + 24);
+    if (Abiˉshape < 131_072 || Abiˉshape >= 196_608) {
+        Reject('The scratch-length precursor ABI shape differs.');
+    }
+    Input.writeUInt16LE(Input.readUInt16LE(6) === 24 ? 26 : 25, 6);
+    Input.writeUInt16LE(187, Sentinels[0] + 4);
+    Input.writeUInt32LE(0, Sentinels[0] + 20);
+    Input.writeUInt32LE(Abiˉshape, Sentinels[0] + 24);
+    await writeFile(Path, Input);
+}
+
 function Inspectˉvalidˉwir(Input) {
     if (Input.length < 56 || Input.length > MAXIMUM_WIR_BYTES ||
         Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
@@ -878,6 +969,234 @@ function Inspectˉvalidˉwir(Input) {
         Resultˉshape: Temporariesˉoffset + Temporary * 4,
         Lengthˉshape: Temporariesˉoffset + Operandˉtemporaries[0] * 4,
         Alignmentˉshape: Temporariesˉoffset + Operandˉtemporaries[1] * 4,
+    };
+}
+
+function Inspectˉvalidˉlengthˉwir(Input) {
+    if (Input.length < 56 || Input.length > MAXIMUM_WIR_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
+        Input.readUInt16LE(4) !== 1 ||
+        (Input.readUInt16LE(6) !== 25 && Input.readUInt16LE(6) !== 26) ||
+        Input.readUInt32LE(12) !== 48 || Input.readUInt32LE(20) !== 28 ||
+        Input.readUInt32LE(28) !== 28 || Input.readUInt32LE(36) !== 4 ||
+        Input.readUInt32LE(44) !== 4) {
+        Reject('The valid scratch-length analysis did not publish exact WVIR.');
+    }
+    const Headerˉbytes = Input.readUInt16LE(6) === 26 ? 64 : 56;
+    const Functions = Input.readUInt32LE(8);
+    const Blocks = Input.readUInt32LE(16);
+    const Operations = Input.readUInt32LE(24);
+    const Temporaries = Input.readUInt32LE(32);
+    const Operands = Input.readUInt32LE(40);
+    const Operationsˉoffset = Headerˉbytes + Functions * 48 + Blocks * 28;
+    const Temporariesˉoffset = Operationsˉoffset + Operations * 28;
+    const Operandsˉoffset = Temporariesˉoffset + Temporaries * 4;
+    if (Operandsˉoffset + Operands * 4 > Input.length) {
+        Reject('The scratch-length WVIR directories exceed the file.');
+    }
+    const Matches = [];
+    for (let Index = 0; Index < Operations; Index += 1) {
+        const Entry = Operationsˉoffset + Index * 28;
+        if (Input.readUInt16LE(Entry + 4) === 187) {
+            Matches.push({ Entry, Index });
+        }
+    }
+    if (Matches.length !== 1) {
+        Reject('The valid scratch-length WVIR must contain operation 187 once.');
+    }
+    const Operation = Matches[0].Entry;
+    const Temporary = Input.readUInt32LE(Operation + 12);
+    if (Input.readUInt16LE(Operation + 6) !== 0 ||
+        Input.readUInt32LE(Operation + 8) !== 8 ||
+        Temporary >= Temporaries ||
+        Input.readUInt32LE(Operation + 16) > Operands ||
+        Input.readUInt32LE(Operation + 20) !== 0 ||
+        Input.readUInt32LE(Operation + 24) < 131_072 ||
+        Input.readUInt32LE(Operation + 24) >= 196_608 ||
+        Input.readUInt32LE(Temporariesˉoffset + Temporary * 4) !== 8) {
+        Reject('The scratch-length operation header evidence differs.');
+    }
+    return {
+        Operation,
+        Resultˉshape: Temporariesˉoffset + Temporary * 4,
+    };
+}
+
+async function Verifyˉlengthˉemitterˉboundary(
+    Source, Manifest, Bindings, Wir, Valid, Layout, Directory,
+) {
+    const Publishedˉoutput = join(Directory, 'scratch-length.wvb');
+    const Published = await Runˉemitter(
+        Source, Manifest, Bindings, Wir, Publishedˉoutput,
+    );
+    if (Published.Code !== 0 || Published.Exceeded ||
+        !/^source emission status=Published mode=optimized functions=[0-9]+ code-bytes=[0-9]+ module-bytes=[0-9]+\n$/u.test(
+            Published.Diagnostic,
+        ) || !Exists(Publishedˉoutput)) {
+        Reject(
+            'The valid operation-187 WVB publication differed: ' +
+            `status=${Published.Code} diagnostic=${JSON.stringify(
+                Published.Diagnostic,
+            )}.`,
+        );
+    }
+    const Publishedˉbytes = await readFile(Publishedˉoutput);
+    Lengthˉwvbˉbytes = Publishedˉbytes.length;
+    Lengthˉwvbˉsha256 = createHash('sha256')
+        .update(Publishedˉbytes).digest('hex');
+    const Wvbˉlayout = Inspectˉscratchˉlengthˉwvb(Publishedˉbytes);
+    var Verifierˉcases = 0;
+    await Requireˉwvbˉverification(
+        Publishedˉoutput, true, 'valid-scratch-length',
+    );
+    Verifierˉcases += 1;
+    const Otherˉabi = Wvbˉlayout.Typeˉkinds.findIndex(
+        (Kind, Index) => (Kind === 2 || Kind === 7) &&
+            Index !== Wvbˉlayout.Abiˉtype,
+    );
+    if (Otherˉabi < 0) {
+        Reject('The scratch-length fixture lacks a second ABI mutation type.');
+    }
+    const Wvbˉcases = [
+        {
+            Name: 'old-wvb-length-minor',
+            Mutate: Candidate => Candidate.writeUInt16LE(34, 6),
+        },
+        {
+            Name: 'unknown-wvb-length-opcode',
+            Mutate: Candidate => {
+                Candidate[Wvbˉlayout.Lengthˉoperation] = 222;
+            },
+        },
+        {
+            Name: 'missing-wvb-length-operation',
+            Mutate: Candidate => {
+                Candidate[Wvbˉlayout.Lengthˉoperation] = 209;
+            },
+        },
+        {
+            Name: 'invalid-wvb-length-local',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                0xffff_ffff, Wvbˉlayout.Lengthˉoperation + 1,
+            ),
+        },
+        {
+            Name: 'wrong-shape-wvb-length-local',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                1, Wvbˉlayout.Lengthˉoperation + 1,
+            ),
+        },
+        {
+            Name: 'invalid-wvb-length-abi',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Wvbˉlayout.Typeˉcount,
+                Wvbˉlayout.Lengthˉoperation + 5,
+            ),
+        },
+        {
+            Name: 'non-enum-wvb-length-abi',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Wvbˉlayout.Resultˉtype,
+                Wvbˉlayout.Lengthˉoperation + 5,
+            ),
+        },
+        {
+            Name: 'unrelated-wvb-length-abi',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Otherˉabi, Wvbˉlayout.Lengthˉoperation + 5,
+            ),
+        },
+    ];
+    for (let Index = 0; Index < Wvbˉcases.length; Index += 1) {
+        const Case = Wvbˉcases[Index];
+        process.stdout.write(
+            'native language 1 scratch length WVB ' +
+            `malformed-item=${Index + 1}/${Wvbˉcases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Publishedˉbytes);
+        Case.Mutate(Candidate);
+        const Candidateˉpath = join(
+            Directory, `wvb-${Case.Name}.wvb`,
+        );
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉwvbˉverification(Candidateˉpath, false, Case.Name);
+        if (Lowerer !== undefined) {
+            await Requireˉnativeˉrejection(
+                Candidateˉpath,
+                join(Directory, `wvb-${Case.Name}.wvo`),
+                Case.Name,
+            );
+        }
+        Verifierˉcases += 1;
+    }
+    const Invalidˉanalysis =
+        /^source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=[0-9]+ operation=[0-9]+ source-line=[0-9]+\n$/u;
+    const Cases = [
+        {
+            Name: 'old-length-minor',
+            Mutate: Candidate => Candidate.writeUInt16LE(24, 6),
+        },
+        {
+            Name: 'unknown-length-operation',
+            Mutate: Candidate => Candidate.writeUInt16LE(
+                65_535, Layout.Operation + 4,
+            ),
+        },
+        {
+            Name: 'u32-length-result',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                3, Layout.Operation + 8,
+            ),
+        },
+        {
+            Name: 'length-operand',
+            Mutate: Candidate => Candidate.writeUInt16LE(
+                1, Layout.Operation + 6,
+            ),
+        },
+        {
+            Name: 'invalid-length-local',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                0xffff_ffff, Layout.Operation + 20,
+            ),
+        },
+        {
+            Name: 'invalid-length-abi-shape',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                0, Layout.Operation + 24,
+            ),
+        },
+        {
+            Name: 'length-result-temporary-shape-mismatch',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                3, Layout.Resultˉshape,
+            ),
+        },
+    ];
+    for (let Index = 0; Index < Cases.length; Index += 1) {
+        const Case = Cases[Index];
+        process.stdout.write(
+            'native language 1 scratch length WVIR ' +
+            `malformed-item=${Index + 1}/${Cases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Valid);
+        Case.Mutate(Candidate);
+        const Candidateˉpath = join(Directory, `${Case.Name}.wvir`);
+        const Output = join(Directory, `${Case.Name}.wvb`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        Requireˉemitterˉrejection(
+            await Runˉemitter(
+                Source, Manifest, Bindings, Candidateˉpath, Output,
+            ),
+            Invalidˉanalysis, Case.Name, Output,
+        );
+    }
+    return {
+        Wir: Cases.length,
+        Wvb: Wvbˉcases.length,
+        Verifier: Verifierˉcases,
     };
 }
 
@@ -1075,6 +1394,85 @@ async function Verifyˉemitterˉboundary(
         Wir: Cases.length,
         Wvb: Wvbˉcases.length,
         Verifier: Verifierˉcases,
+    };
+}
+
+function Inspectˉscratchˉlengthˉwvb(Input) {
+    if (Input.length < 12 || Input.length > MAXIMUM_WVB_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 35 ||
+        Input.readUInt32LE(8) !== 7) {
+        Reject('The scratch-length WVB header differs.');
+    }
+    const Sections = new Map();
+    var Cursor = 12;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor > Input.length - 8 || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject('The scratch-length WVB section envelope differs.');
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Start = Cursor + 8;
+        if (Start > Input.length || Length > Input.length - Start) {
+            Reject('The scratch-length WVB section exceeds the file.');
+        }
+        Sections.set(Kind, { Start, End: Start + Length });
+        Cursor = Start + Length;
+    }
+    if (Cursor !== Input.length) {
+        Reject('The scratch-length WVB has trailing bytes.');
+    }
+    const Types = Sections.get(7);
+    const Typeˉcount = Input.readUInt32LE(Types.Start);
+    if (Typeˉcount === 0 || Typeˉcount > 65_536) {
+        Reject('The scratch-length WVB type count is invalid.');
+    }
+    const Typeˉkinds = [];
+    Cursor = Types.Start + 4;
+    for (let Index = 0; Index < Typeˉcount; Index += 1) {
+        if (Cursor >= Types.End) {
+            Reject('The scratch-length WVB type directory is truncated.');
+        }
+        Typeˉkinds.push(Input[Cursor]);
+        Cursor = Nextˉwvbˉtype(Input, Cursor, Types.End);
+    }
+    if (Cursor !== Types.End) {
+        Reject('The scratch-length WVB type directory has trailing bytes.');
+    }
+    const Code = Sections.get(5);
+    const Constructors = [];
+    const Lengths = [];
+    for (Cursor = Code.Start; Cursor < Code.End; Cursor += 1) {
+        if (Input[Cursor] === 220 && Cursor <= Code.End - 13) {
+            const Resultˉtype = Input.readUInt32LE(Cursor + 5);
+            const Abiˉtype = Input.readUInt32LE(Cursor + 9);
+            if (Resultˉtype < Typeˉcount && Abiˉtype < Typeˉcount &&
+                Typeˉkinds[Resultˉtype] === 3 &&
+                (Typeˉkinds[Abiˉtype] === 2 ||
+                    Typeˉkinds[Abiˉtype] === 7)) {
+                Constructors.push({ Operation: Cursor, Resultˉtype, Abiˉtype });
+            }
+        }
+        if (Input[Cursor] === 221 && Cursor <= Code.End - 9) {
+            const Abiˉtype = Input.readUInt32LE(Cursor + 5);
+            if (Abiˉtype < Typeˉcount &&
+                (Typeˉkinds[Abiˉtype] === 2 ||
+                    Typeˉkinds[Abiˉtype] === 7)) {
+                Lengths.push({ Operation: Cursor, Abiˉtype });
+            }
+        }
+    }
+    if (Constructors.length !== 1 || Lengths.length !== 1 ||
+        Constructors[0].Abiˉtype !== Lengths[0].Abiˉtype) {
+        Reject('The scratch-length WVB operation relation differs.');
+    }
+    return {
+        Abiˉtype: Lengths[0].Abiˉtype,
+        Constructorˉoperation: Constructors[0].Operation,
+        Lengthˉoperation: Lengths[0].Operation,
+        Resultˉtype: Constructors[0].Resultˉtype,
+        Typeˉcount,
+        Typeˉkinds,
     };
 }
 

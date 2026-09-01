@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.34 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, and WVB 1.34 adds exact immutable borrowed-memory-budget calls; other execution consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.35 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, and WVB 1.35 adds exact immutable borrowed-scratch length observation; other execution consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -31,7 +31,10 @@ The native x86-64 backend admits the same focused matrix under its independent
 verification boundary. WVB 1.34 represents immutable borrowed budget calls
 under
 [Decision 0906](../Documents/Decisions/0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md).
-Neither checkpoint is a cross-host or complete Slice 8 claim.
+WVIR 1.25/1.26 and WVB 1.35 add exact immutable borrowed-scratch length
+observation under
+[Decision 0907](../Documents/Decisions/0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md).
+None of these checkpoints is a cross-host or complete Slice 8 claim.
 
 ## Direct compilation result
 
@@ -1008,6 +1011,24 @@ defined; a parameter load, view take, escape, or noncanonical use rejects.
 WVB 1.34 inherits WVB 1.33 operations when present but does not require `DC` in
 a borrow-only module.
 
+WVIR 1.25/1.26 operation `187` lowers to WVB 1.35 opcode `DD`
+(`unsafe.scratch.length`). The nine-byte instruction carries the exact scratch-
+local index followed by the exact ABI-enum type index, consumes no stack
+operand, produces `u64`, and does not consume the scratch owner. The writer
+emits an immutable scratch helper parameter and compiler-generated view as
+shape `28` with the exact scratch nominal type index. That view is confined to
+the canonical owner-load/view-store/view-load/direct-call sequence and cannot
+be taken, returned, embedded, retained, or passed indirectly.
+
+WVB 1.35 must contain at least one `DD`. Its verifier relates every observed
+scratch nominal and ABI to an exact construction relation, limits length
+operations to 4,096 and distinct relations to 256, and rejects any old minor,
+invalid local, non-enum or unrelated ABI, or missing operation. The scalar
+provider returns the private retained construction length in constant time.
+The native x86-64 backend reads the same private field through the validated
+record handle and preserves affine owner availability; neither path exposes a
+backing address.
+
 This is a verified serialization and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,
 opcode, budget, result, and ABI indexes and rejects seven byte-level mutations.
@@ -1019,8 +1040,8 @@ scalar runner admits only a capability-free System module, lengths 1 through
 zeroes private backing bytes, returns exact validation failures, publishes only
 the non-address-like opaque value `1u64`, and releases remaining ownership at
 invocation teardown. The native x86-64 lowerer implements the same bounded
-scratch and immutable-borrow matrix. Pointer and write-region operations,
-mutable budget borrowing, Foreign calls, and cross-host containment remain
+scratch, budget-borrow, and scratch-observation matrix. Pointer and write-region
+operations, mutable borrowing, Foreign calls, and cross-host containment remain
 pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at

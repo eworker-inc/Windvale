@@ -51,7 +51,7 @@ lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
 echo 'START native network authority phase=tools item=1/4 retained-tools=2'
 verify_file "$build_driver" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit 1
-verify_file "$lowerer" 8159232 1420be3ab40e02a5a7f2e837501c834c80eb8beed6e0c201451b4bda00520185 || exit $?
+verify_file "$lowerer" 9752576 377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 || exit $?
 echo 'PASS  native network authority phase=tools item=1/4'
 
 echo 'START native network authority phase=compile item=2/4'

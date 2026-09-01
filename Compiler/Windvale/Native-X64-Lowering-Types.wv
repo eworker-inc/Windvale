@@ -258,7 +258,8 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
             );
         }
     }
-    if Kind != 7u8 && Kind != 8u8 && Kind != 11u8 && Kind != 35u8 {
+    if Kind != 7u8 && Kind != 8u8 && Kind != 11u8 && Kind != 28u8 &&
+        Kind != 35u8 {
         return Invalidˉshape();
     }
     if !Rangeˉisˉvalid(Limit, Cursor, 5u32) { return Invalidˉshape(); }
@@ -269,7 +270,7 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
         Typeˉindex
     );
     var Type: u8 = Compilerˉnativeˉx64ˉrecordˉtype(Typeˉindex);
-    if Kind == 7u8 {
+    if Kind == 7u8 || Kind == 28u8 {
         if Nominalˉkind != 1u8 { return Invalidˉshape(); }
     } else if Kind == 8u8 {
         if Nominalˉkind != 2u8 && Nominalˉkind != 7u8 {

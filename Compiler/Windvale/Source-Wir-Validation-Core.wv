@@ -206,6 +206,7 @@ const WIR_OPERATION_TASK_AWAIT: u32 = 183u32;
 const WIR_OPERATION_TASK_REQUEST_CANCEL: u32 = 184u32;
 const WIR_OPERATION_TASK_SCOPE_EXIT: u32 = 185u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH: u32 = 186u32;
+const WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH: u32 = 187u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WIR_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
@@ -1923,6 +1924,9 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
         return Shape != 0u32;
     }
+    if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
+        return Shape == 8u32;
+    }
     return false;
 }
 
@@ -2056,6 +2060,9 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == WIR_OPERATION_TASK_SCOPE_EXIT { return Count == 0u32; }
     if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
         return Count == 2u32;
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
+        return Count == 0u32;
     }
     return false;
 }
@@ -3955,6 +3962,11 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
                 Input, Scan, Symbols,
                 Scratchˉresultˉlayout.Shape
             );
+    }
+    if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
+        return Shape == 8u32 && Operandˉcount == 0u32 &&
+            Auxiliary >= 131072u32 + Symbols.Records &&
+            Auxiliary < 131072u32 + Symbols.Records + Symbols.Enums;
     }
     if Operation == 174u32 {
         return Shape == 0u32 && Operandˉcount == 0u32 && Auxiliary == 0u32;
@@ -6262,7 +6274,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
         if Operationˉkind >
-                WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
+                WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
             return false;
         }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
@@ -6401,6 +6413,23 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
                     Bindings, Symbolˉentries, Function,
                     Operationˉtarget
                 ) != 805306368u32 {
+                return false;
+            }
+        }
+        if Operationˉkind ==
+                WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
+            if Operationˉtarget >= Range.Parameters + Range.Locals {
+                return false;
+            }
+            let Scratchˉshape: u32 =
+                Wirˉconsumer.Compilerˉsourceˉwirˉbindingˉshape(
+                    Bindings, Symbolˉentries, Function,
+                    Operationˉtarget
+                );
+            if !Compilerˉsourceˉwirˉfoundationˉunsafeˉscratchˉisˉexact(
+                    Input, Scan, Symbols, Typeˉcatalog,
+                    Scratchˉshape, Operationˉauxiliary
+                ) {
                 return false;
             }
         }
@@ -6734,15 +6763,15 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 24u32 { return false; }
+    if Minor < 9u32 || Minor > 26u32 { return false; }
     if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32 ||
             Minor == 16u32 || Minor == 17u32 || Minor == 19u32 ||
-            Minor == 21u32 || Minor == 23u32) &&
+            Minor == 21u32 || Minor == 23u32 || Minor == 25u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
     if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
-            Minor == 24u32) &&
+            Minor == 24u32 || Minor == 26u32) &&
         Directoryˉlength < 64u32 { return false; }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 48u32 { return false; }
@@ -6783,11 +6812,12 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Instances: u32 = 0u32;
     let Hasˉgenericˉinstances: bool = Minor == 10u32 || Minor == 12u32 ||
         Minor == 14u32 || Minor == 16u32 || Minor == 18u32 ||
-        Minor == 20u32 || Minor == 22u32 || Minor == 24u32;
+        Minor == 20u32 || Minor == 22u32 || Minor == 24u32 ||
+        Minor == 26u32;
     var Hasˉfunctionˉtypes: bool = false;
     if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 ||
             Minor == 15u32 || Minor == 17u32 || Minor == 19u32 ||
-            Minor == 21u32 || Minor == 23u32 {
+            Minor == 21u32 || Minor == 23u32 || Minor == 25u32 {
         var Expectedˉfunctions: u32 = Symbolˉentries;
         if Hasˉsyntheticˉclosures {
             if Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions(
@@ -6895,6 +6925,8 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Hasˉclosureˉenvironment: bool = false;
     var Hasˉtask: bool = false;
     var Hasˉunsafeˉscratch: bool = false;
+    var Hasˉunsafeˉscratchˉconstruct: bool = false;
+    var Hasˉunsafeˉscratchˉlength: bool = false;
     var Closureˉtargets: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Nextˉfunctionˉtype: u32 = 0u32;
     var Operationˉscan: u32 = 0u32;
@@ -6984,6 +7016,12 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         if Scannedˉoperation ==
                 WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH {
             Hasˉunsafeˉscratch = true;
+            Hasˉunsafeˉscratchˉconstruct = true;
+        }
+        if Scannedˉoperation ==
+                WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH {
+            Hasˉunsafeˉscratch = true;
+            Hasˉunsafeˉscratchˉlength = true;
         }
         Operationˉscan = Operationˉscan + 1u32;
     }
@@ -7000,7 +7038,14 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
         return false;
     }
     if Minor <= 22u32 && Hasˉunsafeˉscratch { return false; }
-    if Minor >= 23u32 && !Hasˉunsafeˉscratch { return false; }
+    if (Minor == 23u32 || Minor == 24u32) &&
+        (!Hasˉunsafeˉscratchˉconstruct || Hasˉunsafeˉscratchˉlength) {
+        return false;
+    }
+    if (Minor == 25u32 || Minor == 26u32) &&
+        !Hasˉunsafeˉscratchˉlength {
+        return false;
+    }
     if Hasˉcallable && !Hasˉfunctionˉtypes { return false; }
     if Hasˉfunctionˉtypes && (!Hasˉcallable ||
         Nextˉfunctionˉtype !=

@@ -21,7 +21,7 @@ export fn Hˉlocalˉshapes(
         var Nominal: u32 = 0u32;
         if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
             Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 ||
-            Kind == 35u8 {
+            Kind == 28u8 || Kind == 29u8 || Kind == 30u8 || Kind == 35u8 {
             Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
         }
         Result = Bytesˉconcat(
@@ -31,7 +31,7 @@ export fn Hˉlocalˉshapes(
         Cursor = Cursor + 1u32;
         if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
             Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 ||
-            Kind == 35u8 {
+            Kind == 28u8 || Kind == 29u8 || Kind == 30u8 || Kind == 35u8 {
             Cursor = Cursor + 4u32;
         }
         Index = Index + 1u32;
@@ -95,7 +95,7 @@ export fn Iˉcontrolˉdirectory(
         if Opcode == 106u32 || Opcode == 128u32 || Opcode == 129u32 ||
             (Opcode >= 151u32 && Opcode <= 153u32) || Opcode == 196u32 ||
             Opcode == 201u32 || Opcode == 206u32 || Opcode == 207u32 ||
-            Opcode == 208u32 || Opcode == 211u32 {
+            Opcode == 208u32 || Opcode == 211u32 || Opcode == 221u32 {
             Width = 9u32;
         }
         if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||

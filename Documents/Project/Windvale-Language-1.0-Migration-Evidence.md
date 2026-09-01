@@ -5026,3 +5026,85 @@ owner-result reuse and permits only bounded, measured concurrency. The current
 coordinator does not yet persist that result cache; this run resumed owners
 manually. Productizing the same dependency-keyed checkpoint is the next
 verification-workflow optimization and does not expand Slice 8 semantics.
+
+## Slice 8 WVB 1.35 immutable borrowed-scratch observation checkpoint
+
+[Decision 0907](../Decisions/0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md)
+implements exact `Scratchˉlength::<Abi>` through source binding, typed WVIR,
+WVB publication, the complete compiler-aligned verifier, the source-built
+scalar provider, and native x86-64 lowering. WVIR operation 187 names the
+scratch slot and matching ABI shape without stack operands; WVIR 1.25/1.26
+carry the non-generic/generic forms. WVB 1.35 opcode `DD` carries the exact
+scratch-local and ABI-type indexes in nine bytes and produces one `u64` without
+consuming the owner.
+
+Shape `28` now represents the exact nominal immutable scratch view at this
+boundary. The verifier and native lowerer retain that borrow mode separately
+from the record identity, confine compiler-generated views to their adjacent
+direct call, permit the borrowed helper parameter to execute only `DD`, and
+require every observed scratch/ABI pair to be covered by construction. The
+scalar provider stores the accepted length in the private scratch record;
+native lowering dereferences that validated private field rather than returning
+the record handle. Both paths therefore answer in constant time without
+scanning or copying the backing allocation.
+
+The focused local Windows oracle reports:
+
+```text
+native language 1 unsafe scratch runtime status=Passed cases=9 malformed=7 result=42 native-aot=9/9 native-execution=9/9 native-split-rejections=3 borrowed-budget-rejections=6 allocation=zeroed teardown=bounded
+native language 1 unsafe scratch WVIR status=Passed cases=12 valid=4 rejected=8 malformed=16 wvb-malformed=15 operations=186,187 opcodes=220,221 wvb-minors=33,35 wvb-bytes=1123 wvb-sha256=4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088 effect-check=emitter length-wvb-bytes=1197 length-wvb-sha256=a51338852b01775260182c4254dfc802fe940e840ae5ca4ff4f939e4569f27c7 runtime=Verified compiler-verifier-cases=20
+```
+
+The final current-source 678,601-byte native-lowerer WVB has SHA-256
+`c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823`.
+It is retained by the refreshed WVB-to-WVO candidate alongside a
+9,754,112-byte Windows application at SHA-256
+`606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6`
+and a 9,752,576-byte Linux application at SHA-256
+`377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703`.
+The exact reconstruction owner passes 6/6; the retained Return-42 and
+independent-metadata WVO outputs remain byte-identical.
+The 505,705-byte scalar-runner WVB has SHA-256
+`d18b2ce1f802b5bcfdf95c8a6524b5a2ec6dfd6c1e84ae298daf73b362b599c2`.
+The final current-source 443,840-byte compiler-verifier WVB has SHA-256
+`5a9409437d0a58f1a5fe314ab16ec905b6ffd958938d8981e5f652d83a12110c`.
+These are local Windows development identities, not promoted or paired-host
+artifacts. Mutable borrowing, write regions, pointer derivation, authenticated
+Foreign calls, a migrated real boundary, Linux reproduction, and final Slice 8
+qualification remain pending.
+
+## Slice 8 bounded compiler-scale staging checkpoint
+
+[Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
+corrects the retained-allocation failure discovered while staging the current
+1,552,090-byte analyzer WVB. The earlier candidate produced the first 39
+resources byte for byte and then exhausted its dynamic text arena because all
+immutable coalescing results remained charged to `Main` until process exit.
+The repaired producer constructs and writes one resource in a private helper,
+returns only scalar cursor and manifest evidence, and lets the existing ABI 22
+function checkpoint reclaim the helper's dynamic allocations before the next
+resource. The 1.25 MiB grouping target, 4 MiB value ceiling, 62-resource bound,
+and `WVOP 1.0` bytes are unchanged.
+
+The refreshed staging family is:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| WVO-staging WVB | 705,579 | `257ac6389d5bf9647e989654cb41a1cd3af298caa5f6a12f425bb0764b0caa7e` |
+| Windows WVO-staging application | 10,277,376 | `14e6bcab721fe9eb1f8afc6a362d57196afac8a9acfa5d8dd50fc67ce0eaf3d9` |
+| Linux WVO-staging application | 10,276,864 | `701616a768c205fbb402a8e09d37c95ecffba1c0b93a4297e82d59b39fb6cc9a` |
+
+The exact analyzer now stages to 50,761,605 WVO bytes in 50 resources and a
+624-byte manifest. Every resource and the manifest match the trusted
+predecessor; the manifest SHA-256 is
+`e962868e0780c88c7b13dde98c0bbd2b655dbddeea6863865440c8b28af55780`.
+The refreshed producer self-stages in 15 byte-identical resources, and the
+exact segmented-toolset reconstruction owner reports:
+
+```text
+Tests: 5, Passed: 5, Failed: 0
+```
+
+This is local Windows execution plus exact Windows/Linux reconstruction and
+artifact-identity evidence. It is not Linux execution or final paired-host
+qualification, and it does not broaden the Slice 8 semantic claim.

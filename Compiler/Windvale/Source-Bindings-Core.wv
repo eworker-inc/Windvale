@@ -1602,6 +1602,34 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             );
         }
     }
+    if Query.Nameˉlength == 15u32 &&
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            Source, Query.Nameˉoffset, Query.Nameˉlength,
+            "Scratchˉlength"
+        ) && Query.Qualified && Query.Aliasˉfound &&
+        Query.Target < Scan.Modules {
+        let Lengthˉunsafeˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+        let Lengthˉunsafeˉheader:
+            Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                Lengthˉunsafeˉview.Source
+            );
+        if Lengthˉunsafeˉview.Edition == 1u32 &&
+                Lengthˉunsafeˉheader.Profile ==
+                Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Lengthˉunsafeˉview.Source,
+                Lengthˉunsafeˉheader.Nameˉoffset,
+                Lengthˉunsafeˉheader.Nameˉlength,
+                "Foundationˉunsafe"
+            ) {
+            return Compilerˉsourceˉbindingˉmatch(
+                true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+                Query.Target, 1u32, 187u32
+            );
+        }
+    }
     if Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(Source, Query) {
     let Taskˉconstructˉmodule:
         Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =

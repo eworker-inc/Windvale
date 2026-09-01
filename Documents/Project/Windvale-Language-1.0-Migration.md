@@ -869,10 +869,29 @@ writer, complete verifier, scalar runner, and native x86-64 lowerer preserve
 the caller's shape-`25` owner while confining the view to one canonical direct
 call. The focused program observes the budget, then transfers the same owner to
 a 64-byte scratch allocation and returns `42`; six shape/version corruptions
-reject in both verification and native lowering. Mutable budget borrowing,
-pointer and write-region borrowing, authenticated Foreign calls, one migrated
-runtime or OS boundary, Linux reproduction, and paired-host evidence remain
-pending.
+reject in both verification and native lowering.
+
+[Decision 0907](../Decisions/0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md)
+implements the first safe observation over that constructed scratch. Exact
+`Scratchˉlength::<Abi>(Scratch: borrow Foreignˉscratch<Abi>)` emits WVIR
+operation 187 and WVB 1.35 opcode `DD`, reusing shape `28` only as an exact
+nominal immutable scratch view. The verifier relates each observed scratch to
+its construction ABI, the scalar provider returns its private retained length,
+and native x86-64 lowering reads the same private field in constant time. The
+64-byte program returns `42` through all nine scalar/native cases; eight WVB
+and seven WVIR corruptions reject at their admission boundaries. Mutable budget
+or scratch borrowing, pointer and write-region borrowing, authenticated Foreign
+calls, one migrated runtime or OS boundary, Linux reproduction, and paired-host
+evidence remain pending.
+
+[Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
+removes the compiler-scale staging-memory blocker exposed while rebuilding this
+checkpoint. Each resource is now constructed and written in one scalar-returning
+helper invocation, so its dynamic byte arena is reclaimed before the next
+resource. The exact 1,552,090-byte analyzer stages to 50,761,605 WVO bytes in
+50 resources; every resource and the 624-byte manifest match the trusted
+predecessor. The segmented reconstruction owner passes 5/5. This is a bounded
+compiler-workflow repair and does not expand or complete Slice 8 semantics.
 
 ## Removal checkpoint
 

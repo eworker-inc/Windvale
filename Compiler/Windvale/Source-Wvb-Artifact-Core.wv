@@ -99,6 +99,7 @@ const WVB_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
 const WVB_TASK_FEATURE: u32 = 2097152u32;
 const WVB_UNSAFE_SCRATCH_FEATURE: u32 = 4194304u32;
 const WVB_BORROWED_BUDGET_FEATURE: u32 = 8388608u32;
+const WVB_UNSAFE_SCRATCH_LENGTH_FEATURE: u32 = 16777216u32;
 export record Compilerˉsourceˉwvbˉsummary {
 Status: Compilerˉsourceˉwvbˉstatus;
 Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
@@ -659,11 +660,12 @@ if Operation >= 180u32 && Operation <= 185u32 {
 return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 34u32);
 }
 if Operation == 186u32 { return Compilerˉsourceˉwvbˉlowˉbyte(220u32); }
+if Operation == 187u32 { return Compilerˉsourceˉwvbˉlowˉbyte(221u32); }
 return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
 if Operation >= 1u32 {
-if Operation <= 186u32 { return true; }
+if Operation <= 187u32 { return true; }
 }
 return false;
 }
@@ -726,6 +728,7 @@ Opcodeˉbytes = 13u32;
 }
 if Operation == 185u32 { Opcodeˉbytes = 6u32; }
 if Operation == 186u32 { Opcodeˉbytes = 13u32; }
+if Operation == 187u32 { Opcodeˉbytes = 9u32; }
 var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
 if Shape != 0u32 { Result = Result + 5u32; }
 return Result;
@@ -3423,6 +3426,83 @@ Wir, Shape, Orders
 Shape, Orders
 ) && !Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(Wir, Shape);
 }
+fn Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+Input: bytes,
+Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+Shape: u32
+) -> bool {
+if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+return false;
+}
+let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+Compilerˉsourceˉwvbˉbindingsˉtypeˉcatalog(Bindings.Directory);
+let Instance: u32 =
+Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+if Instance >=
+Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+Catalog
+) || Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+Catalog, Instance
+) != 1u32 {
+return false;
+}
+let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+Symbols.Directory, Scan.Modules,
+Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+Catalog, Instance
+)
+);
+if !Nominal.Found || Nominal.Module >= Scan.Modules || Nominal.Kind !=
+Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+return false;
+}
+let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Nominal.Module);
+let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+return View.Edition == 1u32 && Header.Profile ==
+Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+"Foundationˉunsafe"
+) && Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+"Foreignˉscratch"
+);
+}
+fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input: bytes,
+Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+Wir: bytes,
+Shape: u32,
+Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+return Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
+Wir, Shape, Orders
+) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+Input, Scan, Symbols, Bindings, Shape
+);
+}
+fn Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
+Input: bytes,
+Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+Wir: bytes,
+Shape: u32,
+Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bool {
+return Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
+Wir, Shape, Orders
+) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+Input, Scan, Symbols, Bindings, Shape
+);
+}
 fn Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
 Wir: bytes,
 Shape: u32,
@@ -3836,11 +3916,25 @@ Globalˉoperation
 );
 }
 }
+if Operation == 187u32 {
+let Plannedˉlengthˉabi: u32 =
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Auxiliary, Symbols, Orders
+);
+if Target >= Parameters + Locals || Operands != 0u32 ||
+Shape != 8u32 || Plannedˉlengthˉabi < 131072u32 ||
+Plannedˉlengthˉabi >= 196608u32 {
+return Compilerˉsourceˉwvbˉanalysisˉfailure(
+Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+Globalˉoperation
+);
+}
+}
 if Operation != 171u32 && Operation != 172u32 &&
 Operation != 173u32 && Operation != 180u32 &&
 Operation != 181u32 && Operation != 182u32 &&
 Operation != 183u32 && Operation != 184u32 &&
-Operation != 186u32 &&
+Operation != 186u32 && Operation != 187u32 &&
 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
 Wir, Shape, Orders
 ) &&
@@ -4015,6 +4109,10 @@ Operation = Operation + 28u32;
 return false;
 }
 fn Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉownedˉaggregate(
+Input: bytes,
+Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
 Wir: bytes,
 Firstˉoperation: u32,
 Operationˉcount: u32,
@@ -4028,9 +4126,25 @@ let Temporaries: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
 let Shape: u32 = Bytesˉreadˉu32ˉlittle(
 Wir, Temporaries + (Firstˉtemporary + Temporary) * 4u32
 );
-if !Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
+let Isˉunsafeˉscratch: bool =
+Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+Input, Scan, Symbols, Bindings, Shape
+);
+if !Isˉunsafeˉscratch &&
+!Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
 Wir, Shape, Orders
-) { return false; }
+) {
+return false;
+}
+let Isˉborrowedˉcallˉoperand: bool =
+Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+Input, Scan, Symbols, Bindings, Wir,
+Operations + Firstˉoperation * 28u32,
+Operations + (Firstˉoperation + Operationˉcount) * 28u32,
+Temporary, Shape
+);
+if Isˉunsafeˉscratch { return Isˉborrowedˉcallˉoperand; }
+if Isˉborrowedˉcallˉoperand { return true; }
 var Producer: u32 = 0u32;
 while Producer < Operationˉcount {
 let Entry: u32 = Operations + (Firstˉoperation + Producer) * 28u32;
@@ -4124,8 +4238,8 @@ Temporariesˉoffset +
 (Firstˉtemporary + Operandˉtemporary) * 4u32
 );
 if Operation == 62u32 &&
-(Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
-Wir, Operandˉshape, Orders
+(Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
+Input, Scan, Symbols, Bindings, Wir, Operandˉshape, Orders
 ) || Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
 Input, Scan, Symbols, Bindings, Operandˉshape
 )) {
@@ -4145,8 +4259,8 @@ Temporaryˉmapping
 }
 if (Operation == 17u32 || Operation == 19u32 ||
 Operation == 165u32) &&
-(Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
-Wir, Operandˉshape, Orders
+(Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
+Input, Scan, Symbols, Bindings, Wir, Operandˉshape, Orders
 ) || Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
 Input, Scan, Symbols, Bindings, Operandˉshape
 )) {
@@ -4166,7 +4280,8 @@ Operandˉshape, Symbols, Orders
 if (Plannedˉoperandˉshape >= 327680u32 &&
 Plannedˉoperandˉshape < 393216u32) ||
 (Operation == 8u32 &&
-(Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
+(Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
+Input, Scan, Symbols, Bindings,
 Wir, Operandˉshape, Orders
 ) || Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
 Input, Scan, Symbols, Bindings, Operandˉshape
@@ -4243,8 +4358,8 @@ Compilerˉsourceˉwvbˉdataˉorder(Orders), Target
 }
 if Operation == 7u32 {
 var Loadˉopcode: u8 = 4u8;
-if (Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
-Wir, Shape, Orders
+if (Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
+Input, Scan, Symbols, Bindings, Wir, Shape, Orders
 ) || Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
 Input, Scan, Symbols, Bindings, Shape
 )) && !Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
@@ -4762,6 +4877,18 @@ Auxiliary, Symbols, Orders
 )
 );
 }
+if Operation == 187u32 {
+Result = Bytesˉconcat(Result, Bytesˉfromˉu8(221u8));
+Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Auxiliary, Symbols, Orders
+) - 131072u32
+)
+);
+}
 if Operation >= 11u32 {
 if Operation <= 16u32 {
 Result = Bytesˉconcat(
@@ -5202,8 +5329,8 @@ U32ˉfromˉu8(Bytesˉreadˉu8(Functionˉname, 3u32)) == 110u32 &&
 Isˉexportedˉroot &&
 Parameters == 1u32 && Returnˉshape == 1u32;
 var Features: u32 = Compilerˉsourceˉwvbˉshapeˉfeatures(Returnˉshape);
-if Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
-Wir, Returnˉshape, Orders
+if Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input, Scan, Symbols, Bindings, Wir, Returnˉshape, Orders
 ) {
 Features = Features | 131072u32;
 }
@@ -5219,8 +5346,8 @@ Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(Wir, Returnˉshape) ||
 Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
 Input, Scan, Symbols, Bindings, Returnˉshape
 ) ||
-Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
-Wir, Returnˉshape, Orders
+Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input, Scan, Symbols, Bindings, Wir, Returnˉshape, Orders
 );
 if Returnˉisˉfoundationˉvector { Features = Features | 512u32; }
 if !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
@@ -5248,7 +5375,8 @@ Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir) +
 (Firstˉtemporary + Borrowˉscan) * 4u32
 );
 if Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉownedˉaggregate(
-Wir, Firstˉoperation, Operationˉcount, Firstˉtemporary,
+Input, Scan, Symbols, Bindings, Wir,
+Firstˉoperation, Operationˉcount, Firstˉtemporary,
 Borrowˉscan, Orders
 ) || (Borrowˉshape == 805306368u32 &&
 Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
@@ -5319,6 +5447,10 @@ let Parameterˉmode: u32 =
 Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
 Input, Scan, Symbols, Bindings, Function, Index
 );
+let Isˉunsafeˉscratchˉparameter: bool =
+Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+Input, Scan, Symbols, Bindings, Parameterˉshape
+);
 let Isˉallowedˉbudgetˉparameter: bool =
 Parameterˉshape == 805306368u32 &&
 (Isˉlauncherˉbudgetˉmain ||
@@ -5337,13 +5469,14 @@ Analysis.Failureˉoperation
 );
 }
 Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Parameterˉshape);
-if Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
-Wir, Parameterˉshape, Orders
+if Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input, Scan, Symbols, Bindings, Wir, Parameterˉshape, Orders
 ) {
 Features = Features | 131072u32;
-if Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-Input, Scan, Symbols, Bindings, Function, Index
-) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+if Parameterˉmode !=
+Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+!(Isˉunsafeˉscratchˉparameter && Parameterˉmode ==
+Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE) {
 return Compilerˉsourceˉwvbˉfunctionˉfailure(
 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
 Analysis.Failureˉoperation
@@ -5358,6 +5491,13 @@ if Parameterˉshape == 805306368u32 && Parameterˉmode ==
 Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE {
 Plannedˉparameter = Bytesˉfromˉu8(36u8);
 Features = Features | WVB_BORROWED_BUDGET_FEATURE;
+}
+if Isˉunsafeˉscratchˉparameter && Parameterˉmode ==
+Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE {
+Plannedˉparameter =
+Compilerˉsourceˉwvbˉborrowedˉaggregateˉshape(
+Plannedˉparameter
+);
 }
 if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
 Parameterˉshape, Orders
@@ -5425,8 +5565,8 @@ Analysis.Failureˉoperation
 );
 }
 Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Localˉshape);
-if Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
-Wir, Localˉshape, Orders
+if Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input, Scan, Symbols, Bindings, Wir, Localˉshape, Orders
 ) {
 Features = Features | 131072u32;
 }
@@ -5453,8 +5593,8 @@ Analysis.Failureˉoperation
 );
 }
 Features = Features | Compilerˉsourceˉwvbˉshapeˉfeatures(Temporaryˉshape);
-if Compilerˉsourceˉwvbˉshapeˉisˉnewˉownedˉaggregate(
-Wir, Temporaryˉshape, Orders
+if Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
+Input, Scan, Symbols, Bindings, Wir, Temporaryˉshape, Orders
 ) {
 Features = Features | 131072u32;
 }
@@ -5476,7 +5616,8 @@ Features = Features | WVB_BORROWED_BUDGET_FEATURE;
 }
 if Preserveˉborrowedˉtemporaryˉidentity &&
 Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉownedˉaggregate(
-Wir, Firstˉoperation, Operationˉcount, Firstˉtemporary,
+Input, Scan, Symbols, Bindings, Wir,
+Firstˉoperation, Operationˉcount, Firstˉtemporary,
 Index, Orders
 ) {
 Plannedˉtemporary =
@@ -5558,6 +5699,9 @@ Features = Features | WVB_TASK_FEATURE;
 }
 if Operationˉkind == 186u32 {
 Features = Features | WVB_UNSAFE_SCRATCH_FEATURE;
+}
+if Operationˉkind == 187u32 {
+Features = Features | WVB_UNSAFE_SCRATCH_LENGTH_FEATURE;
 }
 if Operationˉkind == 8u32 {
 let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
@@ -6299,6 +6443,9 @@ Wvbˉminor = 30u32;
 if (Features & WVB_TASK_FEATURE) != 0u32 { Wvbˉminor = 32u32; }
 if (Features & WVB_UNSAFE_SCRATCH_FEATURE) != 0u32 { Wvbˉminor = 33u32; }
 if (Features & WVB_BORROWED_BUDGET_FEATURE) != 0u32 { Wvbˉminor = 34u32; }
+if (Features & WVB_UNSAFE_SCRATCH_LENGTH_FEATURE) != 0u32 {
+Wvbˉminor = 35u32;
+}
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
 Bytecode = Bytesˉconcat(

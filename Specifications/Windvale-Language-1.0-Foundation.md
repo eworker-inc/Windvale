@@ -1946,15 +1946,23 @@ The first producer checkpoint additionally publishes exactly
 `Constructˉscratch` through compiler-owned source binding and typed WVIR
 operation `186`. It requires an explicit `Memoryˉbudget`, exact `u64` length
 and alignment, one declared ABI enum, and the canonical affine result. The
-source backend now serializes that exact operation as WVB 1.33 opcode
-`DC`, preserving the budget-local, construction-Result, and ABI-enum indexes.
-The complete verifier admits that version, and the first source-built scalar
+source backend serializes that exact operation as WVB 1.33 opcode `DC`,
+preserving the budget-local, construction-Result, and ABI-enum indexes. The
+complete verifier admits that version, and the first source-built scalar
 provider executes bounded 1-through-64-byte, at-most-8-aligned construction
 with exact zeroing, failure, private lease, opaque-carrier, and invocation
-teardown behavior. It does not expose a pointer or claim borrowing,
-Foreign-call lowering, native lowering, a host ABI, or cross-host containment.
-The remaining operations below may appear only with their compiler-owned
-intrinsic semantics and containment evidence.
+teardown behavior.
+
+The next observation checkpoint publishes exact `Scratchˉlength` as typed
+WVIR operation `187` and WVB 1.35 opcode `DD`. Its argument is an immutable
+borrow of the exact ABI-matched scratch, its result is `u64`, and it has an
+empty effect set. The scalar provider and native x86-64 backend read the
+provider-private retained length in constant time without consuming the owner,
+copying the backing, or exposing its address. Mutable scratch borrowing,
+write-region and pointer operations, authenticated Foreign calls, host ABI
+publication, and cross-host containment remain pending. The remaining
+operations below may appear only with their compiler-owned intrinsic semantics
+and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,
