@@ -318,7 +318,7 @@ fn Readˉmetadata(
     }
     if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
     var Expectedˉprofile: u8 = 1u8;
-    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
+    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
         Authority == 4u8 {
         Expectedˉprofile = 3u8;
     } else {
@@ -341,7 +341,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
-        Minor < 11u32 || Minor > 35u32 ||
+        Minor < 11u32 || Minor > 36u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
         return Invalid;
     }

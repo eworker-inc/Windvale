@@ -23,21 +23,34 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length < 3 || process.argv.length > 4) Usage();
+if (process.argv.length < 3 || process.argv.length > 5) Usage();
 const Analyzer = await realpath(resolve(process.argv[2]));
 const Analyzerˉstatus = await lstat(Analyzer);
 if (!Analyzerˉstatus.isFile() || Analyzerˉstatus.size <= 0 ||
     Analyzerˉstatus.size > MAXIMUM_TOOL_BYTES) {
     Reject('The unsafe write-region analyzer must be an ordinary canonical file.');
 }
-const Emitter = process.argv.length === 4 ?
+const Emitter = process.argv.length >= 4 ?
     await realpath(resolve(process.argv[3])) : undefined;
+const Compilerˉverifier = process.argv.length === 5 ?
+    await realpath(resolve(process.argv[4])) : undefined;
 var Frontˉdoorˉverifier;
 if (Emitter !== undefined) {
     const Emitterˉstatus = await lstat(Emitter);
     if (!Emitterˉstatus.isFile() || Emitterˉstatus.size <= 0 ||
         Emitterˉstatus.size > MAXIMUM_TOOL_BYTES) {
         Reject('The unsafe write-region emitter must be an ordinary canonical file.');
+    }
+    if (Compilerˉverifier !== undefined) {
+        const Compilerˉverifierˉstatus = await lstat(Compilerˉverifier);
+        if (!Compilerˉverifierˉstatus.isFile() ||
+            Compilerˉverifierˉstatus.size <= 0 ||
+            Compilerˉverifierˉstatus.size > MAXIMUM_TOOL_BYTES) {
+            Reject(
+                'The unsafe write-region compiler verifier must be an ' +
+                'ordinary canonical file.',
+            );
+        }
     }
     const Verifierˉname = process.platform === 'win32' ?
         'wvverify.exe' : 'wvverify.elf';
@@ -112,6 +125,26 @@ function Typeˉapplication() {
         'export fn Main() -> i32 { return 42; }';
 }
 
+function Escapingˉapplication() {
+    return 'module Languageˉoneˉunsafeˉwriteˉregionˉescape; ' +
+        SYSTEM_HEADER + Imports + Abi + 'export fn Escape(Scratch: borrow mut ' +
+        Scratchˉtype + ') -> ' + Regionˉresult +
+        ' effects(unsafe.address) { unsafe { return ' + Validˉcall + '; } } ' +
+        'export fn Main() -> i32 { return 42; }';
+}
+
+function Reusingˉscratchˉapplication() {
+    return 'module Languageˉoneˉunsafeˉwriteˉregionˉreuse; ' +
+        SYSTEM_HEADER + Imports + Abi + 'export fn Reuse(Scratch: borrow mut ' +
+        Scratchˉtype + ') -> i32 effects(unsafe.address) { unsafe { ' +
+        'let Outcome: ' + Regionˉresult + ' = ' + Validˉcall + '; ' +
+        'let Observed: u64 = Unsafe.Scratchˉlength::<Hostˉabi>(' +
+        'Scratch: borrow Scratch); return match Outcome { ' +
+        'case Result.Result.Valid { Value: _ } { 42 } ' +
+        'case Result.Result.Failure { Error: _ } { 1 } }; } } ' +
+        'export fn Main() -> i32 { return 42; }';
+}
+
 const Cases = [
     {
         Name: 'valid-canonical-write-region-type',
@@ -135,6 +168,18 @@ const Cases = [
             true,
             'var Local: ' + Scratchˉtype + ' = Scratch; ',
         ),
+    },
+    {
+        Name: 'analyzer-accepted-verifier-rejected-region-escape',
+        Expected: 'valid',
+        Verifierˉrejected: true,
+        Source: Escapingˉapplication(),
+    },
+    {
+        Name: 'analyzer-accepted-verifier-rejected-scratch-reuse',
+        Expected: 'valid',
+        Verifierˉrejected: true,
+        Source: Reusingˉscratchˉapplication(),
     },
     {
         Name: 'valid-source-unused-mutable-scratch-parameter',
@@ -215,6 +260,7 @@ var Malformed = 0;
 var Malformedˉwvb = 0;
 var Publishedˉwvb = 0;
 var Writerˉrejected = 0;
+var Compilerˉverifierˉcases = 0;
 try {
     for (let Index = 0; Index < Cases.length; Index += 1) {
         const Case = Cases[Index];
@@ -282,7 +328,31 @@ try {
                         );
                     }
                     const Wvbˉbytes = await readFile(Output);
+                    if (Case.Verifierˉrejected === true) {
+                        if (Wvbˉbytes.length < 12 ||
+                            Wvbˉbytes.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+                            Wvbˉbytes.readUInt16LE(4) !== 1 ||
+                            Wvbˉbytes.readUInt16LE(6) !== 36) {
+                            Reject('The escaping write-region WVB header differs.');
+                        }
+                        if (Compilerˉverifier !== undefined) {
+                            await Requireˉcompilerˉverification(
+                                Output, false, Case.Name,
+                            );
+                            Compilerˉverifierˉcases += 1;
+                        }
+                        await Verifyˉexecutionˉremainsˉclosed(Output);
+                        Publishedˉwvb += 1;
+                        Valid += 1;
+                        continue;
+                    }
                     const Wvbˉlayout = Inspectˉwriteˉregionˉwvb(Wvbˉbytes);
+                    if (Compilerˉverifier !== undefined) {
+                        await Requireˉcompilerˉverification(
+                            Output, true, Case.Name,
+                        );
+                        Compilerˉverifierˉcases += 1;
+                    }
                     await Verifyˉexecutionˉremainsˉclosed(Output);
                     Publishedˉwvb += 1;
                     if (Case.Malformed === true) {
@@ -290,7 +360,7 @@ try {
                             Directory, Source, Manifest, Bindings, Wirˉbytes,
                         );
                         Malformedˉwvb += await Verifyˉmalformedˉwvb(
-                            Wvbˉbytes, Wvbˉlayout,
+                            Directory, Wvbˉbytes, Wvbˉlayout,
                         );
                     }
                 }
@@ -316,7 +386,10 @@ try {
         `operation=188 minors=27,28 wvb=1.36 opcode=222 ` +
         `published-wvb=${Publishedˉwvb} execution=Closed ` +
         `writer-rejected=${Writerˉrejected} ` +
-        `validator=${Emitter === undefined ? 'Notˉrequested' : 'Verified'}\n`,
+        `validator=${Emitter === undefined ? 'Notˉrequested' : 'Verified'} ` +
+        `compiler-verifier=${Compilerˉverifier === undefined ?
+            'Notˉrequested' : 'Verified'} ` +
+        `compiler-verifier-cases=${Compilerˉverifierˉcases}\n`,
     );
 } finally {
     await Removeˉwork(Work);
@@ -333,7 +406,32 @@ async function Verifyˉexecutionˉremainsˉclosed(Module) {
     }
 }
 
-async function Verifyˉmalformedˉwvb(Canonical, Layout) {
+async function Requireˉcompilerˉverification(Module, Valid, Label) {
+    const Result = await Runˉtool(Compilerˉverifier, [Module]);
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject(`The write-region compiler verifier ${Label} exceeded its bounds.`);
+    }
+    if (Valid) {
+        if (Result.Code !== 0 || Diagnostic !==
+            'wvb status=Valid profile=compiler-aligned\n') {
+            Reject(
+                `The write-region verifier acceptance ${Label} differed: ` +
+                `status=${Result.Code} ` +
+                `diagnostic=${JSON.stringify(Diagnostic)}.`,
+            );
+        }
+        return;
+    }
+    if (Result.Code === 0 || !Diagnostic.includes('wvb status=Invalid')) {
+        Reject(
+            `The write-region verifier rejection ${Label} differed: ` +
+            `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
+async function Verifyˉmalformedˉwvb(Directory, Canonical, Layout) {
     const Cases = [
         ['old-minor', Value => Value.writeUInt16LE(35, 6)],
         ['unknown-opcode', Value => { Value[Layout.Operation] = 223; }],
@@ -355,12 +453,61 @@ async function Verifyˉmalformedˉwvb(Canonical, Layout) {
         );
         const Candidate = Buffer.from(Canonical);
         Mutate(Candidate);
+        if (Compilerˉverifier !== undefined) {
+            const Candidateˉpath = join(Directory, `Malformed-WVB-${Name}.wvb`);
+            await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+            await Requireˉcompilerˉverification(
+                Candidateˉpath, false, Name,
+            );
+            Compilerˉverifierˉcases += 1;
+        }
         try {
             Inspectˉwriteˉregionˉwvb(Candidate);
         } catch {
             continue;
         }
         Reject(`The malformed write-region WVB was accepted: ${Name}.`);
+    }
+    if (Compilerˉverifier !== undefined) {
+        const Otherˉfailure = Layout.Typeˉkinds.findIndex(
+            (Kind, Index) => Kind === 3 && Index !== Layout.Resultˉtype &&
+                Index !== Layout.Pointerˉfailureˉtype,
+        );
+        if (Otherˉfailure < 0) {
+            Reject('The write-region fixture lacks a failure-type forgery.');
+        }
+        const Semanticˉcases = [
+            ['region-equals-scratch', Value => Value.writeUInt32LE(
+                Layout.Scratchˉtype, Layout.Regionˉtypeˉoffset,
+            )],
+            ['wrong-pointer-failure', Value => Value.writeUInt32LE(
+                Otherˉfailure, Layout.Pointerˉfailureˉoffset,
+            )],
+            ['noncanonical-pointer-failure-case', Value => {
+                Value[Layout.Pointerˉfailureˉcaseˉname] ^= 1;
+            }],
+            ['extract-write-region-payload', Value => {
+                Value[Layout.Caseˉobservation] = 153;
+            }],
+        ];
+        for (let Index = 0; Index < Semanticˉcases.length; Index += 1) {
+            const [Name, Mutate] = Semanticˉcases[Index];
+            process.stdout.write(
+                'native language 1 unsafe write region WVB ' +
+                `semantic-item=${Index + 1}/${Semanticˉcases.length} ` +
+                `case=${Name} status=Started\n`,
+            );
+            const Candidate = Buffer.from(Canonical);
+            Mutate(Candidate);
+            const Candidateˉpath = join(
+                Directory, `Semantic-WVB-${Name}.wvb`,
+            );
+            await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+            await Requireˉcompilerˉverification(
+                Candidateˉpath, false, Name,
+            );
+            Compilerˉverifierˉcases += 1;
+        }
     }
     return Cases.length;
 }
@@ -397,11 +544,13 @@ function Inspectˉwriteˉregionˉwvb(Input) {
         Reject('The write-region WVB type count is invalid.');
     }
     const Typeˉkinds = [];
+    const Typeˉstarts = [];
     Cursor = Types.Start + 4;
     for (let Index = 0; Index < Typeˉcount; Index += 1) {
         if (Cursor >= Types.End) {
             Reject('The write-region WVB type directory is truncated.');
         }
+        Typeˉstarts.push(Cursor);
         Typeˉkinds.push(Input[Cursor]);
         Cursor = Nextˉwvbˉtype(Input, Cursor, Types.End);
     }
@@ -426,8 +575,11 @@ function Inspectˉwriteˉregionˉwvb(Input) {
         if (Parameters > 2_048) {
             Reject('The write-region WVB parameter count is oversized.');
         }
+        const Shapes = [];
         for (let Parameter = 0; Parameter < Parameters; Parameter += 1) {
-            Cursor = Checkedˉwvbˉshape(Input, Cursor, Functions.End);
+            const Shape = Inspectˉwvbˉshape(Input, Cursor, Functions.End);
+            Shapes.push(Shape);
+            Cursor = Shape.End;
         }
         Cursor = Checkedˉwvbˉshape(Input, Cursor, Functions.End);
         const Locals = Checkedˉwvbˉu32(Input, Cursor, Functions.End);
@@ -436,7 +588,9 @@ function Inspectˉwriteˉregionˉwvb(Input) {
             Reject('The write-region WVB local count is oversized.');
         }
         for (let Local = 0; Local < Locals; Local += 1) {
-            Cursor = Checkedˉwvbˉshape(Input, Cursor, Functions.End);
+            const Shape = Inspectˉwvbˉshape(Input, Cursor, Functions.End);
+            Shapes.push(Shape);
+            Cursor = Shape.End;
         }
         Checkedˉwvbˉadvance(Cursor, 12, Functions.End);
         const Offset = Input.readUInt32LE(Cursor);
@@ -450,6 +604,7 @@ function Inspectˉwriteˉregionˉwvb(Input) {
             Start: Code.Start + Offset,
             End: Code.Start + Offset + Length,
             Locals: Parameters + Locals,
+            Shapes,
         });
     }
     if (Cursor !== Functions.End) {
@@ -482,11 +637,94 @@ function Inspectˉwriteˉregionˉwvb(Input) {
     if (Owner === undefined || Matches[0].Scratch >= Owner.Locals) {
         Reject('The write-region WVB scratch local is invalid.');
     }
+    const Scratchˉshape = Owner.Shapes[Matches[0].Scratch];
+    if (Scratchˉshape === undefined ||
+        (Scratchˉshape.Kind !== 7 && Scratchˉshape.Kind !== 28) ||
+        Scratchˉshape.Nominal >= Typeˉcount) {
+        Reject('The write-region WVB scratch type is invalid.');
+    }
+    const Regionˉlayout = Inspectˉwriteˉregionˉresultˉlayout(
+        Input, Typeˉstarts, Matches[0].Resultˉtype, Typeˉcount,
+    );
+    const Caseˉobservations = [];
+    for (Cursor = Owner.Start; Cursor <= Owner.End - 9; Cursor += 1) {
+        if (Input[Cursor] === 152 &&
+            Input.readUInt32LE(Cursor + 1) === Matches[0].Resultˉtype) {
+            Caseˉobservations.push(Cursor);
+        }
+    }
+    if (Caseˉobservations.length !== 1) {
+        Reject('The write-region WVB case observation differs.');
+    }
     return {
         Operation: Matches[0].Operation,
         Resultˉtype: Matches[0].Resultˉtype,
         Abiˉtype: Matches[0].Abiˉtype,
         Typeˉcount,
+        Typeˉkinds,
+        Scratchˉtype: Scratchˉshape.Nominal,
+        Caseˉobservation: Caseˉobservations[0],
+        ...Regionˉlayout,
+    };
+}
+
+function Inspectˉwriteˉregionˉresultˉlayout(
+    Input, Typeˉstarts, Resultˉtype, Typeˉcount,
+) {
+    var Cursor = Typeˉstarts[Resultˉtype];
+    if (Cursor === undefined || Input[Cursor] !== 3) {
+        Reject('The write-region Result type is invalid.');
+    }
+    Cursor = Checkedˉwvbˉstring(Input, Cursor + 1, Input.length);
+    if (Input.readUInt32LE(Cursor) !== 2) {
+        Reject('The write-region Result cases differ.');
+    }
+    Cursor += 4;
+    Cursor = Checkedˉwvbˉstring(Input, Cursor, Input.length);
+    if (Input[Cursor] !== 1) {
+        Reject('The write-region valid case differs.');
+    }
+    Cursor += 1;
+    Cursor = Checkedˉwvbˉstring(Input, Cursor, Input.length);
+    const Regionˉshape = Inspectˉwvbˉshape(Input, Cursor, Input.length);
+    if (Regionˉshape.Kind !== 7 || Regionˉshape.Nominal >= Typeˉcount) {
+        Reject('The write-region valid payload differs.');
+    }
+    const Regionˉtypeˉoffset = Cursor + 1;
+    Cursor = Regionˉshape.End;
+    Cursor = Checkedˉwvbˉstring(Input, Cursor, Input.length);
+    if (Input[Cursor] !== 1) {
+        Reject('The write-region failure case differs.');
+    }
+    Cursor += 1;
+    Cursor = Checkedˉwvbˉstring(Input, Cursor, Input.length);
+    const Failureˉshape = Inspectˉwvbˉshape(Input, Cursor, Input.length);
+    if (Failureˉshape.Kind !== 11 ||
+        Failureˉshape.Nominal >= Typeˉcount) {
+        Reject('The write-region failure payload differs.');
+    }
+    const Pointerˉfailureˉoffset = Cursor + 1;
+    const Pointerˉfailureˉtype = Failureˉshape.Nominal;
+    Cursor = Typeˉstarts[Pointerˉfailureˉtype];
+    if (Cursor === undefined || Input[Cursor] !== 3) {
+        Reject('The write-region pointer failure type differs.');
+    }
+    Cursor = Checkedˉwvbˉstring(Input, Cursor + 1, Input.length);
+    if (Input.readUInt32LE(Cursor) !== 7) {
+        Reject('The write-region pointer failure cases differ.');
+    }
+    Cursor += 4;
+    const Firstˉcaseˉlength = Checkedˉwvbˉu32(
+        Input, Cursor, Input.length,
+    );
+    if (Firstˉcaseˉlength === 0) {
+        Reject('The write-region pointer failure case name is empty.');
+    }
+    return {
+        Regionˉtypeˉoffset,
+        Pointerˉfailureˉoffset,
+        Pointerˉfailureˉtype,
+        Pointerˉfailureˉcaseˉname: Cursor + 4,
     };
 }
 
@@ -556,11 +794,19 @@ function Nextˉwvbˉtype(Input, Start, End) {
 }
 
 function Checkedˉwvbˉshape(Input, Cursor, End) {
+    return Inspectˉwvbˉshape(Input, Cursor, End).End;
+}
+
+function Inspectˉwvbˉshape(Input, Cursor, End) {
     const Kind = Input[Checkedˉwvbˉadvance(Cursor, 1, End) - 1];
+    var Nominal = 0;
+    var Shapeˉend = Cursor + 1;
     if ([7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35].includes(Kind)) {
-        return Checkedˉwvbˉadvance(Cursor + 1, 4, End);
+        Checkedˉwvbˉadvance(Cursor + 1, 4, End);
+        Nominal = Input.readUInt32LE(Cursor + 1);
+        Shapeˉend += 4;
     }
-    return Cursor + 1;
+    return { End: Shapeˉend, Kind, Nominal };
 }
 
 function Checkedˉwvbˉstring(Input, Cursor, End) {
@@ -816,7 +1062,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/' +
         'Test-Language-1.0-Unsafe-Write-Region-Wir.mjs ' +
-        '<analyzer> [emitter]\n',
+        '<analyzer> [emitter] [compiler-verifier]\n',
     );
     process.exit(64);
 }
