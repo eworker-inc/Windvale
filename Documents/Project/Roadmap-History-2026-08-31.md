@@ -508,7 +508,7 @@ release-envelope work now belongs to Milestone 3.
 
 Windvale 0.1 is the first inspectable product release, not the first complete
 operating-system release. Its gate is defined in
-[Packages-Releases-And-Recovery.md](../Architecture/Packages-Releases-And-Recovery.md#recommended-windvale-01-gate).
+[Packages-Releases-And-Recovery.md](../Architecture/Packages-Releases-And-Recovery.md#achieved-windvale-01-gate).
 Recovery and repository-baseline tags remain separate from product versions as
 defined by [Release-Names-And-Tags.md](Release-Names-And-Tags.md).
 

@@ -1,0 +1,10 @@
+windvale-legacy-decision-missing-status 1
+0333-Segmented-Direct-WebAssembly-Compiler.md
+0553-Content-Addressed-Project-Object-Development-Checkpoints.md
+0554-Content-Addressed-Hosted-Application-Development-Checkpoints.md
+0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md
+0648-Segmented-Compiler-Development-Application-Checkpoint.md
+0695-Bound-Fat32-Cluster-Chain-Admission.md
+0722-Boot-Link-Application-Start-Operation-8.md
+0724-Publish-The-Fixed-Application-Start-Child.md
+0746-Separate-Compiler-Development-Smoke-From-Reconstruction.md

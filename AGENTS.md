@@ -129,34 +129,24 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
 
 ## Browser web applications
 
-- Put independently deployable browser applications under `Applications/Web/`
-  and reusable browser-native framework or component code under `Libraries/Web/`.
-  Keep the public website and developer playground under their existing owners.
-- Keep application hosts thin. Compose inert manifests, explicit contracts, and
-  focused components; importing a module must not register global behavior.
-- Give durable application state one explicit owner. Commands request changes
-  from that owner, the owner publishes immutable snapshots and typed change
-  sets, and registered render boundaries update only the affected surface.
-- Dispose listeners, observers, timers, workers, and other resources through an
-  explicit lifecycle scope. A component must not leave work behind after its
-  host is removed.
-- Treat theme and localization data as scoped inputs. Use semantic design tokens,
-  CSS cascade layers, logical layout properties, stable message identifiers, and
-  a documented fallback locale rather than component-global mutable settings.
-- Keep application CSS in the `wv.*` cascade layers and custom properties in the
-  `--wv-*` namespace. Reusable components must not depend on application selectors.
-- Model mutations explicitly. Drafting, validation, execution, and durable save
-  are separate states; do not turn field edits into hidden database or network
-  writes. Never retry an indeterminate mutation without an idempotency contract.
-- Treat every browser/server DTO and persisted browser value as untrusted input.
-  Validate it on both sides of the boundary and keep credentials, native paths,
-  database files, and ambient authority out of browser bundles.
-- An installable PWA is still a browser host. Offline support, background work,
-  caching, and installability must be declared per application and must not imply
-  Windvale OS semantics or unavailable server capabilities.
+Follow the shared
+[browser-application architecture](Documents/Architecture/Browser-Application-Development.md)
+and the nearest scoped `AGENTS.md`. Independently deployable applications belong
+under `Applications/Web/`; reusable browser framework and component code belongs
+under `Libraries/Web/`; the public website and playground keep their existing
+owners. Browser state, lifecycle, mutation, input-validation, styling, and
+capability boundaries must remain explicit.
 
 ## Testing and verification
 
+- A verifier is justified only when its failure could reveal a defect introduced
+  by the change. Before starting it, name the changed contract and the failure
+  signal the check can detect. File-based routing is a conservative hint, not a
+  reason to run unrelated implementation suites.
+- If a selected plan is disproportionate or loses that causal link, stop before
+  or during the run, preserve already completed evidence, and correct the scope,
+  routing, or document ownership. Do not continue merely because the check was
+  selected automatically or has already consumed time.
 - Add only the minimum verification needed to protect a distinct contract. Before
   adding a verifier, prove that an existing focused owner cannot cover the
   behavior by adding cases. Every retained verifier must own unique behavior,
@@ -175,24 +165,24 @@ Carry the established [E-Worker](https://eworker.ca) host-code convention into W
   host requirement, or qualification identity.
 - Choose the narrowest reliable verifier for the changed behavior. Verification levels are alternatives, not a ladder: do not run changed-file, Fast, Development, Standard, and Qualification sequentially for the same source state. A passing broader level subsumes its narrower levels.
 - Run a verifier after a coherent edit, not after every small edit. Reuse a passing result while the files relevant to that verifier remain unchanged, and do not rerun it merely because a commit or push is next. After a failure, rerun the narrowest affected selection; run at most one broader final gate when the resulting risk requires it.
-- Prefer `Tools/Verify/Verify-Changed.ps1` for the Windows inner loop. Its change classifier uses a lightweight scope for ordinary documentation and editor-package-only work, a website scope for static site, browser packaging, Cloudflare function, and website-tool changes, a development scope for implementation and specification changes with mapped native owners, and qualification only when explicitly requested or when comparison cannot be resolved safely. Development-scoped changed-file verification maps maintained boundaries to focused native verification owners in canonical order and refuses explicit uncovered gaps; it does not fall back to the complete unfiltered native gate. The website scope runs `Tools/Verify/Verify-Website.ps1`. Managed Stage 0 source and tests are absent from `main`; restore the exact recovery release in a separate workspace only for a named recovery, security, or historical differential investigation. Run focused native OS owners through their verification-owner filters.
 - Every parser and binary reader needs valid, boundary, truncated, oversized, inconsistent, and malicious-input coverage.
 - Use golden byte fixtures only where exact bytes are part of the contract. Pair them with structural assertions so failures remain diagnosable.
 - Use differential tests when a temporary C backend, reference VM, native backend, or host adapter should implement the same semantics.
 - Test deterministic builds by comparing output bytes, not only behavior.
 - Keep a reference implementation simple enough to act as an oracle even when faster implementations appear.
-- Keep `Tools/Editors/Windvale/` synchronized with changes to the implemented `.wv` lexical surface, and run `Tools/Editors/Verify-Windvale-Editor.ps1` after changing its grammar or package metadata. Keep WVA textual assembly separate from Windvale source classification.
 - Documentation-only changes normally require `git diff --check`, link/path inspection, and review of the changed Markdown.
 - Code changes require the relevant package checks and focused conformance tests once those commands exist.
 - State exactly which broader checks were not run and why.
 
-Windvale Seed code changes normally require one local development verifier, selected in proportion to risk. For a focused change, use the change-aware verifier:
+For an ordinary coherent change, start with the change-aware verifier:
 
 ```powershell
 pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 ```
 
-For a coherent cross-area batch, run `Verify-Changed.ps1` once after the edit has settled; its native planner may select multiple focused owners in canonical order. A named gap must gain a native owner rather than trigger an unfiltered or managed fallback. Use the managed Development, Standard, or Qualification tiers only for explicit recovery/differential evidence or the final retirement gate. Do not run multiple verifier levels for the same unchanged tree. GitHub runs affected focused native owners on both hosts for ordinary implementation and specification pushes and pull requests. Invoke the independent complete dual-host Qualification gate explicitly through workflow dispatch for a release candidate, promotion, security boundary, or deliberate qualification claim; it is not a per-commit gate. Run local broad native, managed comparison, bootstrap, WebAssembly-engine, or live OS-boot gates only when the changed boundary or an explicit qualification claim requires them. Changes to portable semantics, bytecode, serialization, runtime behavior, or golden hashes require reports from both hosts before cross-host conformance is claimed.
+Detailed verifier routing, native-owner selection, editor synchronization, broad
+gates, recovery-only managed checks, and cross-host qualification rules live in
+[`Tools/Verify/AGENTS.md`](Tools/Verify/AGENTS.md).
 
 ## Documentation discipline
 

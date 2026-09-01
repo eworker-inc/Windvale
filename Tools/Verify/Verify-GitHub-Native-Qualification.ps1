@@ -58,6 +58,8 @@ Assert-Workflow (
 
 $ExpectedJobs = @(
     'classify-changes',
+    'linux-documentation',
+    'windows-documentation',
     'lightweight-verifier',
     'website-verifier',
     'windows-development',
@@ -82,6 +84,21 @@ Assert-Workflow (
         [string[]]$ActualJobs,
         [string[]]$ExpectedJobs)
 ) "The GitHub workflow job order differs: $($ActualJobs -join ', ')."
+
+$DocumentationJobs = @('linux-documentation', 'windows-documentation')
+foreach ($Job in $DocumentationJobs) {
+    $Block = Get-JobBlock $Job
+    Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
+        "Documentation job '$Job' does not depend on classification."
+    Assert-Workflow (
+        $Block.Contains(
+            "    if: `${{ needs.classify-changes.outputs.documentation == 'true' }}")
+    ) "Documentation job '$Job' does not use the documentation condition."
+    Assert-Workflow (
+        $Block.Contains(
+            'run: pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1')
+    ) "Documentation job '$Job' does not invoke documentation verification."
+}
 
 $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
@@ -181,9 +198,21 @@ foreach ($Line in $Lines | Where-Object { $_ -match '^\s+uses:\s+' }) {
 }
 
 $Gate = Get-JobBlock 'verification-gate'
-foreach ($Job in @($DevelopmentJobs; $QualificationJobs)) {
+foreach ($Job in @($DocumentationJobs; $DevelopmentJobs; $QualificationJobs)) {
     Assert-Workflow ($Gate -match "(?m)^      - $([regex]::Escape($Job))$") `
         "The verification gate does not depend on '$Job'."
+}
+foreach ($Variable in @(
+    'LINUX_DOCUMENTATION_RESULT',
+    'WINDOWS_DOCUMENTATION_RESULT'
+)) {
+    $SuccessPattern = '(?m)^            test "\$' +
+        [regex]::Escape($Variable) + '" = success$'
+    $SkippedPattern = '(?m)^            test "\$' +
+        [regex]::Escape($Variable) + '" = skipped$'
+    Assert-Workflow (
+        $Gate -match $SuccessPattern -and $Gate -match $SkippedPattern
+    ) "The gate does not enforce both selected and skipped states for '$Variable'."
 }
 foreach ($Variable in @('WINDOWS_DEVELOPMENT_RESULT', 'LINUX_DEVELOPMENT_RESULT')) {
     $SuccessPattern = '(?m)^              test "\$' +
@@ -213,4 +242,4 @@ Assert-Workflow (
 ) 'The retirement inventory still contains a normal managed entry point.'
 Assert-Workflow ($InventoryEntries.Count -eq 0) `
     "The archival inventory contains $($InventoryEntries.Count) direct managed entry points instead of zero."
-Write-Host 'GitHub native workflow verification passed (2 focused development jobs; 6 qualification definitions, 12 matrix-expanded native jobs; 0 managed entry points).'
+Write-Host 'GitHub native workflow verification passed (2 documentation jobs; 2 focused development jobs; 6 qualification definitions, 12 matrix-expanded native jobs; 0 managed entry points).'

@@ -8,7 +8,8 @@ param(
     [switch]$NoFailFast,
     [string]$TimingReportPath,
     [switch]$NoResultCache,
-    [string]$ResultCacheRoot
+    [string]$ResultCacheRoot,
+    [switch]$SkipDocumentationVerification
 )
 
 $ErrorActionPreference = 'Stop'
@@ -109,11 +110,19 @@ if ($LASTEXITCODE -ne 0) {
 $RunDocumentationVerification = @(
     $Paths | Where-Object {
         $_.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
-        $_ -eq 'Documents/Decisions/Legacy-Id-Collisions.txt' -or
-        $_ -eq 'Tools/Verify/Verify-Documentation.ps1'
+        $_.StartsWith('Documents/Evidence/', [StringComparison]::Ordinal) -or
+        $_.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
+        $_ -in @(
+            'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Decisions/Legacy-Id-Collisions.txt',
+            'Documents/Decisions/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Specification-Catalog.json',
+            'Tools/Verify/Verify-Documentation.ps1'
+        )
     }
 ).Count -ne 0
-if ($RunDocumentationVerification) {
+if ($RunDocumentationVerification -and !$SkipDocumentationVerification) {
     & $DocumentationVerifier
 }
 

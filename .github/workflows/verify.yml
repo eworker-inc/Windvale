@@ -22,6 +22,7 @@ jobs:
     outputs:
       scope: ${{ steps.classify.outputs.scope }}
       editor: ${{ steps.classify.outputs.editor }}
+      documentation: ${{ steps.classify.outputs.documentation }}
       base_sha: ${{ steps.classify.outputs.base_sha }}
       head_sha: ${{ steps.classify.outputs.head_sha }}
     steps:
@@ -63,8 +64,45 @@ jobs:
           if ('${{ steps.classify.outputs.editor }}' -notin @('true', 'false')) {
             throw 'Editor verification classification failed.'
           }
+          if ('${{ steps.classify.outputs.documentation }}' -notin @('true', 'false')) {
+            throw 'Documentation verification classification failed.'
+          }
           ./Tools/Verify/Verify-Change-Classification.ps1
           ./Tools/Verify/Verify-Verification-Plan.ps1
+
+  linux-documentation:
+    name: Linux documentation verification
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.documentation == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify documentation
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1
+
+  windows-documentation:
+    name: Windows documentation verification
+    needs: classify-changes
+    if: ${{ needs.classify-changes.outputs.documentation == 'true' }}
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify documentation
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1
 
   lightweight-verifier:
     name: Lightweight verifier
@@ -166,7 +204,7 @@ jobs:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification
 
       - name: Save native development checkpoints
         if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
@@ -208,7 +246,7 @@ jobs:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification
 
       - name: Save native development checkpoints
         if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
@@ -398,6 +436,8 @@ jobs:
     name: Verification gate
     needs:
       - classify-changes
+      - linux-documentation
+      - windows-documentation
       - lightweight-verifier
       - website-verifier
       - windows-development
@@ -416,7 +456,10 @@ jobs:
         shell: bash
         env:
           SCOPE: ${{ needs.classify-changes.outputs.scope }}
+          DOCUMENTATION: ${{ needs.classify-changes.outputs.documentation }}
           CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
+          LINUX_DOCUMENTATION_RESULT: ${{ needs.linux-documentation.result }}
+          WINDOWS_DOCUMENTATION_RESULT: ${{ needs.windows-documentation.result }}
           LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
           WEBSITE_RESULT: ${{ needs.website-verifier.result }}
           WINDOWS_DEVELOPMENT_RESULT: ${{ needs.windows-development.result }}
@@ -429,6 +472,13 @@ jobs:
           LINUX_BOOTSTRAP_RESULT: ${{ needs.linux-bootstrap.result }}
         run: |
           test "$CLASSIFY_RESULT" = success
+          if [ "$DOCUMENTATION" = true ]; then
+            test "$LINUX_DOCUMENTATION_RESULT" = success
+            test "$WINDOWS_DOCUMENTATION_RESULT" = success
+          else
+            test "$LINUX_DOCUMENTATION_RESULT" = skipped
+            test "$WINDOWS_DOCUMENTATION_RESULT" = skipped
+          fi
           case "$SCOPE" in
             lightweight)
               test "$LIGHTWEIGHT_RESULT" = success

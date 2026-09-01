@@ -27,6 +27,10 @@ Repository documentation follows the
 [documentation policy](Documentation-Policy.md). Work under this directory also
 follows [Documents/AGENTS.md](AGENTS.md).
 
+If a Windvale term or evidence word is unfamiliar, use the concise
+[terminology guide](Terminology.md). New exact run records follow the
+[evidence-record guide](Evidence/README.md).
+
 ## Which document owns the answer?
 
 | Question | Primary owner |
@@ -36,8 +40,8 @@ follows [Documents/AGENTS.md](AGENTS.md).
 | What are we building next, and in what order? | [Roadmap](Project/Roadmap.md) |
 | What behavior or binary format is required? | [Specifications](../Specifications/README.md) |
 | Which component owns a responsibility? | [Architecture](Architecture/) |
-| Why was a durable choice made? | [Decisions](Decisions/) |
-| What exact run, host, measurement, or artifact was completed? | Evidence records under [Project](Project/) |
+| Why was a durable choice made? | [Decision catalog](Decisions/README.md) |
+| What exact run, host, measurement, or artifact was completed? | [Evidence records](Evidence/README.md) and historical evidence under [Project](Project/) |
 | How do I build, verify, publish, or recover something? | [Runbooks](Runbooks/) |
 | What changed for release users? | [Changelog](../CHANGELOG.md) |
 

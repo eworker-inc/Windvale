@@ -1525,6 +1525,22 @@ if ($Paths.Count -eq 0) {
 
 foreach ($Path in $Paths) {
     $script:CurrentChangedPath = $Path
+    $IsDocumentationCatalogPath = (
+        $Path.StartsWith('Documents/Evidence/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Specifications/Indexes/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Decisions/Legacy-Missing-Status.txt',
+            'Specifications/AGENTS.md',
+            'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/README.md',
+            'Specifications/Specification-Catalog.json'
+        )
+    )
+    if ($IsDocumentationCatalogPath) {
+        continue
+    }
     if ($OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($Path)) {
         foreach ($OsX64Target in
             $OsX64CodeEmissionDevelopmentTargetsByPath[$Path]) {
@@ -2227,6 +2243,7 @@ foreach ($Path in $Paths) {
             'Get-Native-Changed-Verification-Plan.ps1',
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
+            'Verify-Documentation.ps1',
             'Verify-Dotnet-Retirement-Inventory.ps1',
             'Verify-Native-Development-Dependencies.ps1',
             'Verify-Verification-Plan.ps1'

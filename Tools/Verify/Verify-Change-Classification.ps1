@@ -9,12 +9,14 @@ $Cases = @(
         Paths = @('README.md', 'Documents/Project/Roadmap.md')
         Scope = 'lightweight'
         Editor = $false
+        Documentation = $true
     },
     @{
         Name = 'documentation with editorial image'
         Paths = @('README.md', 'Documents/Project/Images/Windvale-Project-Progress-2026-08-04.png')
         Scope = 'lightweight'
         Editor = $false
+        Documentation = $true
     },
     @{
         Name = 'editor only'
@@ -34,6 +36,7 @@ $Cases = @(
         )
         Scope = 'lightweight'
         Editor = $false
+        Documentation = $true
     },
     @{
         Name = 'website static content'
@@ -61,6 +64,7 @@ $Cases = @(
         Paths = @('Website/site.js', 'README.md')
         Scope = 'website'
         Editor = $false
+        Documentation = $true
     },
     @{
         Name = 'website deployment and function'
@@ -77,12 +81,14 @@ $Cases = @(
         Paths = @('Specifications/Browser-Playground.md', 'Tools/Verify/Verify-Website.ps1')
         Scope = 'website'
         Editor = $false
+        Documentation = $true
     },
     @{
         Name = 'source specification'
         Paths = @('Specifications/Seed-Language.md')
         Scope = 'development'
         Editor = $true
+        Documentation = $true
     },
     @{
         Name = 'runtime implementation'
@@ -105,6 +111,7 @@ $Cases = @(
         )
         Scope = 'development'
         Editor = $true
+        Documentation = $true
     },
     @{
         Name = 'mixed website and compiler implementation'
@@ -123,24 +130,45 @@ $Cases = @(
         Paths = @('Documents/Project/Dotnet-Retirement-Inventory.json')
         Scope = 'development'
         Editor = $false
+    },
+    @{
+        Name = 'generated documentation catalogs'
+        Paths = @(
+            'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Evidence/Evidence-Record.schema.json',
+            'Specifications/Indexes/database.md',
+            'Specifications/Specification-Catalog.json',
+            'Tools/Documentation/Update-Documentation-Catalogs.ps1'
+        )
+        Scope = 'lightweight'
+        Editor = $false
+        Documentation = $true
     }
 )
 
 foreach ($Case in $Cases) {
     $Result = & $Classifier -ChangedPath $Case.Paths -PassThru -Quiet
+    $ExpectedDocumentation = if ($Case.ContainsKey('Documentation')) {
+        $Case.Documentation
+    } else {
+        $false
+    }
     if (
         $Result.Scope -ne $Case.Scope -or
-        $Result.Editor -ne $Case.Editor
+        $Result.Editor -ne $Case.Editor -or
+        $Result.Documentation -ne $ExpectedDocumentation
     ) {
         throw (
             "Classification '$($Case.Name)' expected scope=$($Case.Scope), " +
-            "editor=$($Case.Editor); found scope=$($Result.Scope), editor=$($Result.Editor)."
+            "editor=$($Case.Editor), documentation=$ExpectedDocumentation; " +
+            "found scope=$($Result.Scope), editor=$($Result.Editor), " +
+            "documentation=$($Result.Documentation)."
         )
     }
 }
 
 $Empty = & $Classifier -ChangedPath @() -PassThru -Quiet
-if ($Empty.Scope -ne 'qualification' -or !$Empty.Editor) {
+if ($Empty.Scope -ne 'qualification' -or !$Empty.Editor -or !$Empty.Documentation) {
     throw 'An empty changed-path set did not select qualification and editor verification.'
 }
 
@@ -149,12 +177,14 @@ $Unresolved = & $Classifier `
     -HeadReference 'HEAD' `
     -PassThru `
     -Quiet
-if ($Unresolved.Scope -ne 'qualification' -or !$Unresolved.Editor) {
+if ($Unresolved.Scope -ne 'qualification' -or !$Unresolved.Editor -or
+    !$Unresolved.Documentation) {
     throw 'An unresolved comparison did not fail closed to qualification and editor verification.'
 }
 
 $Forced = & $Classifier -ForceQualification -PassThru -Quiet
-if ($Forced.Scope -ne 'qualification' -or !$Forced.Editor) {
+if ($Forced.Scope -ne 'qualification' -or !$Forced.Editor -or
+    !$Forced.Documentation) {
     throw 'A forced run did not select qualification and editor verification.'
 }
 

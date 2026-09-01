@@ -14,6 +14,7 @@ $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Scope = 'qualification'
 $RunEditorVerification = $true
+$RunDocumentationVerification = $true
 $ResolvedBase = ''
 $ResolvedHead = ''
 $Paths = @()
@@ -48,6 +49,27 @@ function Test-Editor-RelevantPath {
             'Specifications/Compiler-Source-Lexer.md',
             'Specifications/Seed-Language.md',
             'Specifications/Source-Naming.md'
+        )
+    )
+}
+
+function Test-DocumentationRelevantPath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    return (
+        $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
+        $Path.StartsWith('Documents/Evidence/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Documents/Decisions/Decision-Catalog.json',
+            'Documents/Decisions/Legacy-Id-Collisions.txt',
+            'Documents/Decisions/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Specification-Catalog.json',
+            'Tools/Verify/Verify-Documentation.ps1'
         )
     )
 }
@@ -128,6 +150,19 @@ function Test-LightweightPath {
         [string]$Path
     )
 
+    $IsSpecificationCatalogPath = (
+        $Path.StartsWith('Specifications/Indexes/', [StringComparison]::Ordinal) -or
+        $Path -in @(
+            'Specifications/AGENTS.md',
+            'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/README.md',
+            'Specifications/Specification-Catalog.json'
+        )
+    )
+    if ($IsSpecificationCatalogPath) {
+        return $true
+    }
+
     if ((Test-LanguageFrozenSourceDesignPath $Path) -or
         $Path.StartsWith('Specifications/', [StringComparison]::Ordinal)) {
         return $false
@@ -150,8 +185,12 @@ function Test-LightweightPath {
     return (
         $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
         $Path -eq 'LICENSE.md' -or
+        $Path.StartsWith('Documents/Evidence/', [StringComparison]::Ordinal) -or
+        $Path.StartsWith('Tools/Documentation/', [StringComparison]::Ordinal) -or
         $Path -in @(
+            'Documents/Decisions/Decision-Catalog.json',
             'Documents/Decisions/Legacy-Id-Collisions.txt',
+            'Documents/Decisions/Legacy-Missing-Status.txt',
             'Tools/Verify/Classify-Verification-Changes.ps1',
             'Tools/Verify/Verify-Changed.ps1',
             'Tools/Verify/Verify-Change-Classification.ps1',
@@ -245,9 +284,13 @@ if (!$ForceQualification) {
         } else {
             $Scope = 'lightweight'
             $RunEditorVerification = $false
+            $RunDocumentationVerification = $false
             foreach ($Path in $Paths) {
                 if (Test-Editor-RelevantPath $Path) {
                     $RunEditorVerification = $true
+                }
+                if (Test-DocumentationRelevantPath $Path) {
+                    $RunDocumentationVerification = $true
                 }
 
                 if (!(Test-LightweightPath $Path)) {
@@ -265,9 +308,11 @@ if (!$ForceQualification) {
 }
 
 $EditorValue = $RunEditorVerification.ToString().ToLowerInvariant()
+$DocumentationValue = $RunDocumentationVerification.ToString().ToLowerInvariant()
 $OutputLines = @(
     "scope=$Scope",
     "editor=$EditorValue",
+    "documentation=$DocumentationValue",
     "base_sha=$ResolvedBase",
     "head_sha=$ResolvedHead",
     "changed_count=$($Paths.Count)"
@@ -281,6 +326,7 @@ if (![string]::IsNullOrWhiteSpace($GitHubOutputPath)) {
 if (!$Quiet) {
     Write-Host "Verification scope: $Scope"
     Write-Host "Editor verification: $EditorValue"
+    Write-Host "Documentation verification: $DocumentationValue"
     Write-Host "Changed paths: $($Paths.Count)"
     Write-Host "Reason: $Reason"
 }
@@ -288,6 +334,7 @@ if ($PassThru) {
     [pscustomobject]@{
         Scope = $Scope
         Editor = $RunEditorVerification
+        Documentation = $RunDocumentationVerification
         BaseSha = $ResolvedBase
         HeadSha = $ResolvedHead
         ChangedCount = $Paths.Count

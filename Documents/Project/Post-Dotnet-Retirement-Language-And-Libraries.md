@@ -40,7 +40,7 @@ The intended first outcome is one useful application that:
    identities.
 
 This is the application-side complement of the proposed
-[Windvale 0.1 package gate](../Architecture/Packages-Releases-And-Recovery.md#recommended-windvale-01-gate);
+[Windvale 0.1 package gate](../Architecture/Packages-Releases-And-Recovery.md#achieved-windvale-01-gate);
 it is not a claim that a public registry, dynamic runtime linker, desktop, network
 stack, or Windvale OS distribution is ready.
 

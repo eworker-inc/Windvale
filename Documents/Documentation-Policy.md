@@ -62,6 +62,18 @@ New numbered decisions must include an explicit `## Status` section or a
 `- Status:` field near the title. Existing decisions are backfilled only when
 they are already being changed for a substantive reason.
 
+New specifications must include a `## Status` section near the title. The
+status says whether the contract is current, a candidate, proposed,
+experimental, superseded, or historical. The generated specification catalog
+keeps older files without status visible as `Unclassified`; that label means
+"read the document before relying on it," not "accepted."
+
+Active metadata has a review window. Progress is reviewed at least every 45
+days, Roadmap every 90 days, and the other active navigation, architecture, and
+runbook entry points every 180 days. A review may confirm that no prose change
+is needed, but its date must move only after someone actually checks the page
+against its owners.
+
 ## Plain-language structure
 
 Lead with the practical outcome. For a current project or architecture page,
@@ -76,6 +88,34 @@ prefer this order:
 Explain a necessary technical term the first time it appears. Keep exact
 contract language where precision matters, but avoid long noun chains, status
 chronologies, and artifact inventories in overview paragraphs.
+
+Long or commonly used specifications need a short at-a-glance introduction. Put
+it in the specification only when that file is not an identity-bound or frozen
+contract; otherwise put it in the generated specification index so an editorial
+improvement does not change semantic bytes. It answers:
+
+- what this specification controls;
+- which developers or components normally use it;
+- its current status or format version;
+- what it deliberately does not guarantee; and
+- where its behavior is verified.
+
+This introduction is a reading aid, not a second normative contract. Exact
+rules remain in the body of the specification.
+
+## Causal verification
+
+A check is useful only when a failure could expose a defect introduced by the
+change. State that connection before starting a long verifier. A file path can
+suggest an owner, but it is not enough by itself: changing a generated index is
+not a bytecode change, and changing an implementation does not become safe
+because a prose check passes.
+
+If automatic routing selects unrelated or disproportionate work, stop and fix
+the routing, narrow the change, or move editorial text to its proper guide. Do
+not keep a long check running to justify time already spent. Preserve completed
+results, but never report an interrupted or irrelevant suite as required
+evidence for the change.
 
 The active navigation pages have word budgets so they remain useful as human
 and AI context:
@@ -128,10 +168,41 @@ difficult to reverse silently. Routine checkpoints, artifact refreshes, and
 measurements belong in code, specifications, evidence, the changelog, or
 Progress.
 
+The generated [decision catalog](Decisions/README.md) is the entry point for
+status and recent history. The machine-readable catalog uses a full filename
+key, because a decision number alone is not unique for the twelve preserved
+legacy collisions.
+
+## Catalogs and generated indexes
+
+`Tools/Documentation/Update-Documentation-Catalogs.ps1` owns the specification
+domain indexes and the decision catalog. Run it after adding, renaming, or
+changing the title or opening status of a specification or decision. Generated
+files say that they are generated and must not be edited by hand.
+
+Catalog status categories are search aids. The exact opening status copied into
+the machine-readable catalog remains authoritative. In particular,
+`Implemented`, `Verified`, `Qualified`, `Accepted`, and `Released` are not
+interchangeable claims.
+
+## Evidence records
+
+New exact run and artifact evidence belongs under
+[`Documents/Evidence/`](Evidence/README.md). Prefer one small record per claim
+or coherent verification run, with links to the specification and decision it
+supports. Keep large append-only historical evidence where it is; migrate it
+only when a task needs to change its ownership.
+
+The evidence schema records the subject, claim, exact source state, host and
+tool identity, inputs, outputs, result, limitations, and review class. It does
+not treat a passing command, an artifact hash, AI review, human inspection, or
+independent reproduction as substitutes for one another.
+
 ## Verification
 
-`Tools/Verify/Verify-Documentation.ps1` checks maintained Markdown links,
-active-document metadata and word budgets, hash-free active narrative pages,
-new decision status, and the frozen list of legacy decision-number collisions.
-`Tools/Verify/Verify-Changed.ps1` runs it whenever Markdown or documentation
-policy files change.
+`Tools/Verify/Verify-Documentation.ps1` checks maintained Markdown links and
+anchors, exact path casing, active-document metadata, review windows and word
+budgets, hash-free active narrative pages, generated catalog freshness, new
+decision and specification status, and the frozen list of legacy
+decision-number collisions. `Tools/Verify/Verify-Changed.ps1` runs it whenever
+Markdown or documentation-policy files change.
