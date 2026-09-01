@@ -54,10 +54,8 @@ The signed `v0.1.0` preview completed Windvale's initial feasibility phase. Do n
 - C# and .NET supplied the qualified Stage 0 bootstrap but are absent from `main` under Decision 0558. The immutable `stage0-recovery-e5a1a7473c57` release and `Bootstrap/Stage0/README.md` preserve the exact recovery provenance. New source-language semantics belong in `Compiler/Windvale`; any managed recovery or security correction begins in a separate restored workspace and requires a new decision before managed source or a direct `dotnet` entry point may return to `main`.
 - Applications may target shared Windvale contracts, an explicit subset of environments, or one named platform extension. Portability is a per-part promise and a derived artifact property, not a blanket dependency requirement. Host adapters map shared contracts to Windows, Linux, and Windvale OS.
 - Platform-specific capabilities remain explicit and must not leak into parts that claim portability.
-- Running Windvale OS as a guest, accelerating that guest through a host hypervisor, and making Windvale OS a VM host are separate contracts. Preserve the pinned emulation oracle, report the selected engine/provider and full nested topology, prefer physical/root providers for baseline qualification, and keep nested virtualization optional and developer-oriented rather than a build or semantic dependency unless a named decision qualifies nesting itself.
-- Future Windvale VM hosting keeps privileged guest-memory, vCPU, interrupt, DMA, accounting, and teardown enforcement in the kernel/WVA boundary while machine, firmware, device, GPU, compute, and lifecycle policy remains in isolated services.
-- Future Windvale OS networking keeps interrupt, timer, memory, DMA/IOMMU, accounting, and teardown mechanisms in the kernel; isolated drivers own link-device mechanics; one bounded user-space service initially owns standards-based packet, route, UDP, and TCP processing; applications use semantic rights-limited capabilities rather than ambient sockets or raw service protocols.
-- Future remote terminals use a small bounded session protocol over an authenticated secure ordered stream. The first real profile is one connection, one session, and one resource domain; identity and authorization remain separate; no production plaintext, replayable early data, implicit resume, ambient remote-root authority, custom cryptography, or terminal parsing in the kernel or shell is permitted.
+- OS, VM-hosting, guest-networking, and remote-terminal work also follows the
+  focused rules in `Operating-System/AGENTS.md`.
 - The OS is a vertical integration target, not a reason to postpone useful host tools and libraries.
 - Keep bootstrap dependencies explicit. A bootstrap tool may be temporary, but its role and replacement path must be documented.
 - Prefer a small coherent path over parallel compilers, runtimes, object models, or compatibility layers.
@@ -104,9 +102,8 @@ Create these source areas only when implementation begins; do not add empty dire
 - Keep shared filesystem semantics small and exact. Put stronger or platform-specific behavior in separate capability interfaces, and never use one operation name for different partial-write, atomicity, durability, path, or failure guarantees.
 - Mutating I/O must distinguish rejection, exact partial progress, completion, and indeterminate completion. Never retry an indeterminate mutation without a specified idempotency contract.
 - A network stream write reports exact local-provider acceptance, not remote receipt or application commit. Datagram acceptance does not imply delivery. Reconnection must not silently replay an uncertain application mutation.
-- Treat guest images, firmware, VM state, page tables, shared queues, shaders, compute kernels, and device commands as untrusted input. Bound VM exits, interrupts, queues, pinned pages, work, diagnostics, and teardown time while reserving host recovery resources.
-- A VM-management capability does not grant storage, network, display, GPU, accelerator, firmware, host-file, or passthrough authority. Bind each attachment separately and expose whether it is software, paravirtual shared, hardware-partitioned, or exclusive passthrough.
-- Never permit device passthrough or guest/accelerator DMA without measured IOMMU, interrupt-remapping, topology, ownership, reset, range, generation, revocation, and teardown evidence. Disable the attachment when any required guarantee is unavailable.
+- OS-specific guest, virtualization, DMA, and passthrough safety rules live in
+  `Operating-System/AGENTS.md` and apply before work crosses those boundaries.
 - Unsafe operations must be syntactically and contractually visible; do not allow safety-sensitive behavior through ordinary convenience APIs.
 - Treat every loaded module, object file, package, symbol table, relocation, and debug record as untrusted input.
 - Use checked arithmetic for file offsets, memory sizes, indices, and address calculations.
@@ -199,13 +196,16 @@ For a coherent cross-area batch, run `Verify-Changed.ps1` once after the edit ha
 
 ## Documentation discipline
 
-- Put enduring architecture under `Documents/Architecture/`.
-- Put dated decisions under `Documents/Decisions/`, including status, context, decision, consequences, and reconsideration triggers.
-- Put project framing and unresolved product questions under `Documents/Project/`.
-- Distinguish accepted direction from proposals and experiments.
-- Update documentation when semantics, formats, architecture, bootstrap stages, security boundaries, or durable workflows change.
-- Do not record aspirational features as implemented behavior.
-- Treat README overview images and similar graphics as dated editorial snapshots, not generated mirrors of the surrounding prose. Do not update an image merely because README wording or ordinary milestones change. A human or AI maintainer may refresh it periodically when the visual would otherwise become materially misleading; preserve an accurate snapshot date.
+- Follow `Documents/Documentation-Policy.md` for document ownership, status
+  metadata, plain-language structure, hash placement, decision identifiers, and
+  active-context budgets.
+- Work under `Documents/` also follows `Documents/AGENTS.md`.
+- Update documentation when semantics, formats, architecture, bootstrap stages,
+  security boundaries, or durable workflows change. Never describe a proposal
+  or aspiration as implemented behavior.
+- Treat overview images as dated editorial snapshots, not generated mirrors of
+  surrounding prose. Refresh one only when it becomes materially misleading and
+  preserve its snapshot date.
 
 ## Git workflow
 

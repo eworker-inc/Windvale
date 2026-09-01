@@ -25,8 +25,11 @@ $Cases = @(
     @{
         Name = 'classification rule verification only'
         Paths = @(
+            'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Tools/Verify/Verify-Changed.ps1',
             'Tools/Verify/Verify-Change-Classification.ps1',
+            'Tools/Verify/Verify-Documentation.ps1',
             'Tools/Verify/Verify-Verification-Plan.ps1'
         )
         Scope = 'lightweight'

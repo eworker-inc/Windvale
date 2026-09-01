@@ -18,6 +18,8 @@ $WebAssemblyEngineVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly-Engine.
 $WebAssemblyVerifier = Join-Path $PSScriptRoot 'Verify-WebAssembly.ps1'
 $GitHubQualificationVerifier = Join-Path $PSScriptRoot 'Verify-GitHub-Native-Qualification.ps1'
 $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
+$DocumentationVerifier = Join-Path $PSScriptRoot 'Verify-Documentation.ps1'
+$ChangeClassificationVerifier = Join-Path $PSScriptRoot 'Verify-Change-Classification.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 
 if ($PSBoundParameters.ContainsKey('ChangedPath')) {
@@ -83,6 +85,30 @@ if ($PSBoundParameters.ContainsKey('ChangedPath')) {
 }
 if ($LASTEXITCODE -ne 0) {
     throw 'Changed-file whitespace verification failed.'
+}
+
+$RunDocumentationVerification = @(
+    $Paths | Where-Object {
+        $_.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
+        $_ -eq 'Documents/Decisions/Legacy-Id-Collisions.txt' -or
+        $_ -eq 'Tools/Verify/Verify-Documentation.ps1'
+    }
+).Count -ne 0
+if ($RunDocumentationVerification) {
+    & $DocumentationVerifier
+}
+
+$RunChangeClassificationVerification = @(
+    $Paths | Where-Object {
+        $_ -in @(
+            'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Tools/Verify/Verify-Changed.ps1',
+            'Tools/Verify/Verify-Change-Classification.ps1'
+        )
+    }
+).Count -ne 0
+if ($RunChangeClassificationVerification) {
+    & $ChangeClassificationVerifier
 }
 
 if ($Plan.Editor) {

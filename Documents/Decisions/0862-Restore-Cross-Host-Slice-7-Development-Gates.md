@@ -4,8 +4,8 @@
 - Status: Implemented; paired-host development evidence complete
 - Requires: [Decision 0861](0861-Execute-Structured-Tasks-As-Wvb-1.32.md)
 - Refreshes: [Decision 0496](0496-Native-Segmented-Compiler-Toolset-Reconstruction.md),
-  [Decision 0583](0583-Native-Wvb-To-Wvo-Self-Reconstruction.md), and
-  [Decision 0510](0510-Native-Wvb-Runner-Source-Reconstruction.md)
+  [Decision 0497](0497-Native-Wvb-To-Wvo-Reconstruction.md), and
+  [Decision 0509](0509-Native-Wvb-Runner-Source-Reconstruction-And-Step-Reporting.md)
 
 ## Context
 

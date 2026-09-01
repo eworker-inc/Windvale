@@ -1,5 +1,9 @@
 # Windvale project vision
 
+> Status: Current project purpose and long-term direction
+> Authority: Informative framing; accepted decisions own durable commitments
+> Last reviewed: 2026-08-31
+
 ## Purpose
 
 Windvale is an AI-led research and development project building a small,

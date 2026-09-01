@@ -1,7 +1,9 @@
 # Windvale Seed implementation
 
-> Status: Current component ownership after native retirement and managed Stage 0
-> archival. Specifications remain normative for exact formats and behavior.
+> Status: Current Seed component ownership after native retirement and managed
+> Stage 0 archival
+> Authority: Informative architecture; specifications own exact behavior
+> Last reviewed: 2026-08-31
 
 Windvale Seed is one coherent source-to-execution stack. Source, typed semantic
 models, WVB, WVA, WVO, linked images, host containers, and Windvale OS resources
@@ -33,7 +35,11 @@ verified WVO --> link --> flat image --> explicit PE/ELF/OS packaging
 - profile, capability, nominal-type, name, signature, body, local, and call
   validation;
 - typed Windvale IR and stable diagnostics; and
-- deterministic canonical WVB 1.11 emission.
+- deterministic canonical WVB 1.11 emission for the frozen Seed track.
+
+The evolving Language 1.0 compiler uses later versioned WVB contracts. Its
+current structured-task slice is WVB 1.32. That forward track does not redefine
+the Seed recovery contract described here.
 
 Compiler phases communicate through explicit validated models. Source modules,
 imports, declarations, nominal identities, capabilities, functions, data, and

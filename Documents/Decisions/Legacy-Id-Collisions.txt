@@ -1,0 +1,13 @@
+windvale-legacy-decision-id-collisions 1
+0119|0119-Expanded-Wva-X64-Foundation.md|0119-First-Windows-Console-Application.md
+0121|0121-Deterministic-Wva-Scalar-And-Memory-Operands.md|0121-WebAssembly-Calls-With-Structured-Control.md
+0593|0593-First-Record-Durable-Root-Publication.md|0593-Metadata-Aware-Wvb-Inspector-Reconstruction.md
+0599|0599-First-Supervised-Host-Tls-13-Provider.md|0599-Hosted-Local-Database-Service-Composition.md
+0602|0602-Focused-Hosted-Root-Split-Writer.md|0602-Shell-1-Parser-Contract-And-First-Portable-Core.md
+0603|0603-First-Bounded-Database-Schemas-And-Typed-Rows.md|0603-First-Bounded-Https-Client.md
+0606|0606-First-Live-Immutable-Application-Launch-Transaction.md|0606-First-Windvale-Echo-Application.md
+0707|0707-Echo-Independent-Metadata-Package-Migration.md|0707-Group-Transaction-Replacements-By-Parent.md
+0708|0708-Compose-Bounded-Fat32-File-Reads.md|0708-Refresh-Wvdb-Query-Launch-Record-Provider-Leaves.md
+0712|0712-First-Typed-Singleton-Capability-References.md|0712-Group-Replacements-At-Any-Tree-Ancestor.md
+0724|0724-Persist-Hosted-Database-Transactions.md|0724-Publish-The-Fixed-Application-Start-Child.md
+0735|0735-Implement-The-First-Windvale-Scripting-Slice.md|0735-Manifest-Driven-Os-X64-Code-Emission-Verification.md

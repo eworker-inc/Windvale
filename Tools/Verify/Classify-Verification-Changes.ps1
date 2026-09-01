@@ -151,8 +151,11 @@ function Test-LightweightPath {
         $Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
         $Path -eq 'LICENSE.md' -or
         $Path -in @(
+            'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Tools/Verify/Classify-Verification-Changes.ps1',
+            'Tools/Verify/Verify-Changed.ps1',
             'Tools/Verify/Verify-Change-Classification.ps1',
+            'Tools/Verify/Verify-Documentation.ps1',
             'Tools/Verify/Verify-Verification-Plan.ps1'
         ) -or
         $IsDocumentationImage

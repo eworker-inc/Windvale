@@ -3,7 +3,7 @@
 - Date: 2026-08-15
 - Status: Implemented portable contract
 - Defines: [local database service](../../Specifications/Windvale-Database-Local-Service.md)
-- Builds on: [Decision 0575](0575-Single-Writer-Database-Engine-Lifecycle.md), [Decision 0578](0578-Canonical-Logical-Database-Records.md)
+- Builds on: [Decision 0575](0575-Single-Writer-Database-Engine-Lifecycle.md), [Decision 0577](0577-Canonical-Logical-Database-Records.md)
 
 ## Context
 

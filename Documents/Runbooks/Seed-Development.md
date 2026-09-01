@@ -1,5 +1,9 @@
 # Windvale Seed development
 
+> Status: Current native-only Seed development runbook
+> Authority: Informative procedure; tools and specifications own exact contracts
+> Last reviewed: 2026-08-31
+
 This runbook describes the current native-only development loop. Historical
 managed commands belong to the immutable Stage 0 recovery release, not this
 checkout.
