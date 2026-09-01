@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 310 |
+| Accepted | 311 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0903: verify candidate WVB 1.33 without opening execution](0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md) | Accepted |
 | [Decision 0902: represent unsafe scratch construction in candidate WVB 1.33](0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md) | Accepted |
 | [Decision 0901: advance the frozen source identity for unsafe scratch](0901-Advance-The-Frozen-Source-Identity-For-Unsafe-Scratch.md) | Accepted |
 | [Decision 0900: add a compiler-scale hosted geometry and artifact readers](0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md) | Accepted |
@@ -70,7 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0881: close cross-host Slice 7 qualification harness gaps](0881-Close-Cross-Host-Slice-7-Qualification-Harness-Gaps.md) | Accepted |
 | [Decision 0880: complete Slice 7 qualification integration repair](0880-Complete-Slice-7-Qualification-Integration-Repair.md) | Accepted |
 | [Decision 0879: repair final Slice 7 qualification boundaries](0879-Repair-Final-Slice-7-Qualification-Boundaries.md) | Accepted |
-| [Decision 0878: restore exact Slice 7 qualification ownership](0878-Restore-Exact-Slice-7-Qualification-Ownership.md) | Accepted |
 
 ## Superseded or historical records
 

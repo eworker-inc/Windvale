@@ -25,13 +25,15 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length !== 4) Usage();
+if (process.argv.length !== 5) Usage();
 
 const Analyzer = resolve(process.argv[2]);
 const Emitter = resolve(process.argv[3]);
+const Verifier = resolve(process.argv[4]);
 for (const [Tool, Label] of [
     [Analyzer, 'Analyzer'],
     [Emitter, 'emitter'],
+    [Verifier, 'verifier'],
 ]) {
     const Status = await lstat(Tool);
     if (!Status.isFile() || Status.size <= 0 ||
@@ -160,6 +162,7 @@ var Valid = 0;
 var Rejected = 0;
 var Malformed = 0;
 var Wvbˉmalformed = 0;
+var Wvbˉverified = 0;
 var Wvbˉbytes = 0;
 var Wvbˉsha256 = '';
 try {
@@ -202,6 +205,7 @@ try {
                 );
                 Malformed += Boundary.Wir;
                 Wvbˉmalformed += Boundary.Wvb;
+                Wvbˉverified += Boundary.Verifier;
             }
             Valid += 1;
         } else {
@@ -222,7 +226,8 @@ try {
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
         `malformed=${Malformed} wvb-malformed=${Wvbˉmalformed} ` +
         `operation=186 opcode=220 wvb-minor=33 wvb-bytes=${Wvbˉbytes} ` +
-        `wvb-sha256=${Wvbˉsha256} effect-check=emitter\n`,
+        `wvb-sha256=${Wvbˉsha256} effect-check=emitter ` +
+        `compiler-verifier-cases=${Wvbˉverified}\n`,
     );
 } finally {
     await Removeˉwork(Work);
@@ -321,6 +326,11 @@ async function Verifyˉemitterˉboundary(
     Wvbˉbytes = Publishedˉbytes.length;
     Wvbˉsha256 = createHash('sha256').update(Publishedˉbytes).digest('hex');
     const Wvbˉlayout = Inspectˉunsafeˉscratchˉwvb(Publishedˉbytes);
+    var Verifierˉcases = 0;
+    await Requireˉwvbˉverification(
+        Publishedˉoutput, true, 'valid-canonical-scratch',
+    );
+    Verifierˉcases += 1;
     const Wvbˉcases = [
         {
             Name: 'old-wvb-minor',
@@ -365,6 +375,49 @@ async function Verifyˉemitterˉboundary(
         const Candidate = Buffer.from(Publishedˉbytes);
         Case.Mutate(Candidate);
         Requireˉwvbˉcontractˉrejection(Candidate, Case.Name);
+        const Candidateˉpath = join(
+            Directory, `wvb-${Case.Name}.wvb`,
+        );
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉwvbˉverification(Candidateˉpath, false, Case.Name);
+        Verifierˉcases += 1;
+    }
+    const Semanticˉcases = [
+        {
+            Name: 'wrong-shape-wvb-budget-slot',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                1, Wvbˉlayout.Operation + 1,
+            ),
+        },
+        {
+            Name: 'noncanonical-wvb-result-name',
+            Mutate: Candidate => {
+                Candidate[Wvbˉlayout.Resultˉname] ^=
+                    Candidate[Wvbˉlayout.Resultˉname] === 0x58 ? 1 : 0x58;
+            },
+        },
+        {
+            Name: 'noncanonical-wvb-allocation-field',
+            Mutate: Candidate => {
+                Candidate[Wvbˉlayout.Allocationˉfieldˉname] ^= 1;
+            },
+        },
+    ];
+    for (let Index = 0; Index < Semanticˉcases.length; Index += 1) {
+        const Case = Semanticˉcases[Index];
+        process.stdout.write(
+            'native language 1 unsafe scratch WVB ' +
+            `semantic-item=${Index + 1}/${Semanticˉcases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Publishedˉbytes);
+        Case.Mutate(Candidate);
+        const Candidateˉpath = join(
+            Directory, `wvb-${Case.Name}.wvb`,
+        );
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉwvbˉverification(Candidateˉpath, false, Case.Name);
+        Verifierˉcases += 1;
     }
     const Invalidˉanalysis =
         /^source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n$/u;
@@ -437,7 +490,11 @@ async function Verifyˉemitterˉboundary(
             Invalidˉanalysis, Case.Name, Output,
         );
     }
-    return { Wir: Cases.length, Wvb: Wvbˉcases.length };
+    return {
+        Wir: Cases.length,
+        Wvb: Wvbˉcases.length,
+        Verifier: Verifierˉcases,
+    };
 }
 
 function Inspectˉunsafeˉscratchˉwvb(Input) {
@@ -471,12 +528,14 @@ function Inspectˉunsafeˉscratchˉwvb(Input) {
         Reject('The unsafe-scratch WVB type count is invalid.');
     }
     const Typeˉkinds = [];
+    const Typeˉstarts = [];
     Cursor = Types.Start + 4;
     for (let Index = 0; Index < Typeˉcount; Index += 1) {
         if (Cursor >= Types.End) {
             Reject('The unsafe-scratch WVB type directory is truncated.');
         }
         Typeˉkinds.push(Input[Cursor]);
+        Typeˉstarts.push(Cursor);
         Cursor = Nextˉwvbˉtype(Input, Cursor, Types.End);
     }
     if (Cursor !== Types.End) {
@@ -499,10 +558,31 @@ function Inspectˉunsafeˉscratchˉwvb(Input) {
     if (Matches.length !== 1) {
         Reject('The unsafe-scratch WVB must contain one exact opcode 220.');
     }
+    const Resultˉdescriptor = Typeˉstarts[Matches[0].Resultˉtype];
+    const Resultˉnameˉlength = Input.readUInt32LE(Resultˉdescriptor + 1);
+    if (Resultˉnameˉlength === 0) {
+        Reject('The unsafe-scratch WVB result type name is empty.');
+    }
+    const Allocationˉfield = Buffer.from('Reason', 'utf8');
+    const Allocationˉfieldˉname = Input.indexOf(
+        Allocationˉfield, Types.Start,
+    );
+    const Duplicateˉallocationˉfieldˉname = Input.indexOf(
+        Allocationˉfield,
+        Allocationˉfieldˉname + Allocationˉfield.length,
+    );
+    if (Allocationˉfieldˉname < Types.Start ||
+        Allocationˉfieldˉname + Allocationˉfield.length > Types.End ||
+        (Duplicateˉallocationˉfieldˉname >= 0 &&
+            Duplicateˉallocationˉfieldˉname < Types.End)) {
+        Reject('The unsafe-scratch WVB allocation field identity differs.');
+    }
     return {
+        Allocationˉfieldˉname,
         Operation: Matches[0].Operation,
         Resultˉtype: Matches[0].Resultˉtype,
         Abiˉtype: Matches[0].Abiˉtype,
+        Resultˉname: Resultˉdescriptor + 5,
         Typeˉcount,
     };
 }
@@ -621,6 +701,32 @@ function Requireˉemitterˉrejection(Result, Expected, Label, Output) {
     }
 }
 
+async function Requireˉwvbˉverification(Module, Valid, Label) {
+    const Result = await Runˉtool(Verifier, [Module]);
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject(`The unsafe-scratch verifier ${Label} exceeded its bounds.`);
+    }
+    if (Valid) {
+        if (Result.Code !== 0 || Diagnostic !==
+            'wvb status=Valid profile=compiler-aligned\n') {
+            Reject(
+                `The unsafe-scratch verifier acceptance ${Label} differed: ` +
+                `status=${Result.Code} diagnostic=${JSON.stringify(
+                    Diagnostic,
+                )}.`,
+            );
+        }
+        return;
+    }
+    if (Result.Code === 0 || !Diagnostic.includes('wvb status=Invalid')) {
+        Reject(
+            `The unsafe-scratch verifier rejection ${Label} differed: ` +
+            `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
 function Exists(Path) {
     return existsSync(Path);
 }
@@ -723,7 +829,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs ' +
-        '<analyzer> <emitter>\n',
+        '<analyzer> <emitter> <compiler-verifier>\n',
     );
     process.exit(64);
 }

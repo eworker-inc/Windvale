@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module or the explicitly non-executable WVB 1.33 unsafe-scratch publication candidate, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module or the completely verified but explicitly non-executable WVB 1.33 unsafe-scratch candidate, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -23,8 +23,10 @@ exposing a scheduler in source.
 WVIR 1.23/1.24 and candidate WVB 1.33 add only the serialized unsafe-scratch
 construction boundary selected by
 [Decision 0902](../Documents/Decisions/0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md).
-The compiler-aligned verifier, runtime, and native backends still reject that
-candidate version, so successful publication is not an execution claim.
+The compiler-aligned verifier admits that candidate version under
+[Decision 0903](../Documents/Decisions/0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md).
+Runtime and native backends still reject it, so successful verification is not
+an execution claim.
 
 ## Direct compilation result
 
@@ -977,17 +979,21 @@ present, including a module that also contains the inherited task vocabulary.
 Unlike the executable launcher-only budget profiles, candidate 1.33 admits the
 opaque shape `25` as an exact by-value parameter or affine non-parameter local
 in any function. It remains unavailable as a result, borrowed parameter,
-nominal payload, collection element, or Types entry. The prepared WVIR proof
-and writer ownership analysis require `DC` to consume an available budget
-owner in the same function rather than granting allocation authority by
-mentioning the opcode.
+new nominal payload, collection element, or Types entry. The inherited exact
+budget-split Result payload remains valid. The prepared WVIR proof and writer
+ownership analysis require `DC` to consume an available budget owner in the
+same function rather than granting allocation authority by mentioning the
+opcode.
 
-This is a serialization checkpoint, not executable allocation. The focused
-independent contract reader accepts the exact header, section geometry, opcode,
-budget, result, and ABI indexes and rejects six byte-level mutations. The
-complete compiler-aligned verifier, scalar and native runtimes, provider
-containment, failure execution, and teardown remain pending and must not infer
-foreign scratch from an existing allocation opcode by shape alone.
+This is a verified serialization checkpoint, not executable allocation. The
+focused independent contract reader accepts the exact header, section geometry,
+opcode, budget, result, and ABI indexes and rejects six byte-level mutations.
+The packaged compiler-aligned verifier additionally checks the complete
+canonical layouts, typed stack, affine result, budget availability, and bounded
+scratch/ABI relation and rejects three semantic forgeries. Scalar and native
+runtimes, provider containment, failure execution, and teardown remain pending
+and must not infer foreign scratch from an existing allocation opcode by shape
+alone.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

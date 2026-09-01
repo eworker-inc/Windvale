@@ -835,10 +835,17 @@ enum shape. WVIR 1.23/1.24 and its independent validation are implemented.
 now maps operation 186 to opcode `DC`. Its exact budget-local,
 construction-Result, and ABI-enum indexes are serialized and independently
 checked. This is still a bounded implementation checkpoint rather than a
-completed Slice 8 claim: the complete WVB verifier, runtime/native lowering,
-provider containment, write-region borrowing, authenticated Foreign calls, one
-migrated runtime or OS boundary, Linux reproduction, and paired-host evidence
-remain pending.
+completed Slice 8 claim.
+
+[Decision 0903](../Decisions/0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md)
+now admits that candidate through the compiler-aligned structural, semantic,
+typed-stack, control-reachability, and affine-ownership verifier. The verifier
+checks exact materialized Foundation layouts, consumes the named budget owner,
+and bounds each module to 4,096 scratch instructions and 256 distinct
+scratch/ABI bindings. Runtime/native lowering, provider containment,
+write-region borrowing, authenticated Foreign calls, one migrated runtime or
+OS boundary, Linux reproduction, and paired-host evidence remain pending. All
+current execution consumers continue to reject minor 33.
 
 ## Removal checkpoint
 
