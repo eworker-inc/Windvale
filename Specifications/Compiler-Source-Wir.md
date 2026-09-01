@@ -195,10 +195,11 @@ Independent validation reconstructs the exact Foundation generic identities,
 requires two `u64` operands, proves the budget slot is in range and available,
 proves the ABI auxiliary is a declared enum, and treats the result as affine
 owned evidence. Ordinary record construction and field observation of the
-opaque scratch identity remain invalid. The source-WVB backend deliberately
-reports `Unsupportedˉoperation` for an otherwise valid operation `186` until a
-separate WVB, verifier, runtime, native-lowering, and containment decision owns
-its executable representation.
+opaque scratch identity remain invalid. The source-WVB backend maps an
+otherwise valid operation `186` to the explicitly non-executable WVB 1.33
+publication candidate and opcode `DC`, retaining the budget, result, and ABI
+identities as exact instruction immediates. Complete bytecode verification,
+runtime/native lowering, and provider containment remain separate work.
 
 ## Independent validation
 

@@ -1,5 +1,9 @@
 # Windvale Seed to Language 1.0 migration plan
 
+> Status: Current candidate migration plan
+> Authority: Informative; linked specifications and decisions own exact contracts
+> Last reviewed: 2026-08-31
+
 ## Status
 
 This is the candidate repository migration plan required by
@@ -826,12 +830,15 @@ operation 186. The operation carries an affine canonical
 `Memoryˉbudget` slot, `u64` length and alignment operands, and the declared ABI
 enum shape. WVIR 1.23/1.24 and its independent validation are implemented.
 
-The current WVB boundary deliberately returns `Unsupportedˉoperation` after
-validating operation 186. This is a bounded implementation checkpoint rather
-than a completed Slice 8 claim. Executable WVB representation, complete
-verifier/runtime/native lowering, provider containment, write-region borrowing,
-authenticated Foreign calls, one migrated runtime or OS boundary, and
-paired-host evidence remain pending.
+[Decision 0902: represent unsafe scratch construction in candidate WVB
+1.33](../Decisions/0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md)
+now maps operation 186 to opcode `DC`. Its exact budget-local,
+construction-Result, and ABI-enum indexes are serialized and independently
+checked. This is still a bounded implementation checkpoint rather than a
+completed Slice 8 claim: the complete WVB verifier, runtime/native lowering,
+provider containment, write-region borrowing, authenticated Foreign calls, one
+migrated runtime or OS boundary, Linux reproduction, and paired-host evidence
+remain pending.
 
 ## Removal checkpoint
 

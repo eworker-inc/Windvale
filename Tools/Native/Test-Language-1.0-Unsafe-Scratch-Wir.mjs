@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import {
     lstat,
@@ -17,6 +18,7 @@ const MAXIMUM_TOOL_BYTES = 134_217_728;
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_MODULE_BYTES = 1_048_576;
 const MAXIMUM_WIR_BYTES = 4_194_304;
+const MAXIMUM_WVB_BYTES = 16_777_216;
 const ANALYSIS_TIMEOUT_MILLISECONDS = 120_000;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -157,6 +159,9 @@ const Work = await mkdtemp(join(tmpdir(), 'windvale-unsafe-scratch-wir-'));
 var Valid = 0;
 var Rejected = 0;
 var Malformed = 0;
+var Wvbˉmalformed = 0;
+var Wvbˉbytes = 0;
+var Wvbˉsha256 = '';
 try {
     for (let Index = 0; Index < Cases.length; Index += 1) {
         const Case = Cases[Index];
@@ -191,10 +196,12 @@ try {
             const Wirˉbytes = await readFile(Wir);
             const Layout = Inspectˉvalidˉwir(Wirˉbytes);
             if (Case.Name === 'valid-canonical-scratch') {
-                Malformed += await Verifyˉemitterˉboundary(
+                const Boundary = await Verifyˉemitterˉboundary(
                     Sourceˉoutput, Manifest, Bindings, Wir, Wirˉbytes,
                     Layout, Caseˉdirectory,
                 );
+                Malformed += Boundary.Wir;
+                Wvbˉmalformed += Boundary.Wvb;
             }
             Valid += 1;
         } else {
@@ -213,7 +220,9 @@ try {
     process.stdout.write(
         'native language 1 unsafe scratch WVIR status=Passed ' +
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
-        `malformed=${Malformed} operation=186 effect-check=emitter\n`,
+        `malformed=${Malformed} wvb-malformed=${Wvbˉmalformed} ` +
+        `operation=186 opcode=220 wvb-minor=33 wvb-bytes=${Wvbˉbytes} ` +
+        `wvb-sha256=${Wvbˉsha256} effect-check=emitter\n`,
     );
 } finally {
     await Removeˉwork(Work);
@@ -293,12 +302,70 @@ function Inspectˉvalidˉwir(Input) {
 async function Verifyˉemitterˉboundary(
     Source, Manifest, Bindings, Wir, Valid, Layout, Directory,
 ) {
-    const Unsupportedˉoutput = join(Directory, 'unsupported.wvb');
-    Requireˉemitterˉrejection(
-        await Runˉemitter(Source, Manifest, Bindings, Wir, Unsupportedˉoutput),
-        /^source emission status=Valid analysis-status=Valid wvb-status=Unsupportedˉoperation function=[0-9]+ operation=[0-9]+ source-line=[0-9]+\n$/u,
-        'valid operation-186 WVB boundary', Unsupportedˉoutput,
+    const Publishedˉoutput = join(Directory, 'unsafe-scratch.wvb');
+    const Published = await Runˉemitter(
+        Source, Manifest, Bindings, Wir, Publishedˉoutput,
     );
+    if (Published.Code !== 0 || Published.Exceeded ||
+        !/^source emission status=Published mode=optimized functions=[0-9]+ code-bytes=[0-9]+ module-bytes=[0-9]+\n$/u.test(
+            Published.Diagnostic,
+        ) || !Exists(Publishedˉoutput)) {
+        Reject(
+            'The valid operation-186 WVB publication differed: ' +
+            `status=${Published.Code} diagnostic=${JSON.stringify(
+                Published.Diagnostic,
+            )}.`,
+        );
+    }
+    const Publishedˉbytes = await readFile(Publishedˉoutput);
+    Wvbˉbytes = Publishedˉbytes.length;
+    Wvbˉsha256 = createHash('sha256').update(Publishedˉbytes).digest('hex');
+    const Wvbˉlayout = Inspectˉunsafeˉscratchˉwvb(Publishedˉbytes);
+    const Wvbˉcases = [
+        {
+            Name: 'old-wvb-minor',
+            Mutate: Candidate => Candidate.writeUInt16LE(32, 6),
+        },
+        {
+            Name: 'unknown-wvb-opcode',
+            Mutate: Candidate => { Candidate[Wvbˉlayout.Operation] = 221; },
+        },
+        {
+            Name: 'invalid-wvb-budget-slot',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                0xffff_ffff, Wvbˉlayout.Operation + 1,
+            ),
+        },
+        {
+            Name: 'invalid-wvb-result-type',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Wvbˉlayout.Typeˉcount, Wvbˉlayout.Operation + 5,
+            ),
+        },
+        {
+            Name: 'invalid-wvb-abi-type',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Wvbˉlayout.Typeˉcount, Wvbˉlayout.Operation + 9,
+            ),
+        },
+        {
+            Name: 'non-enum-wvb-abi-type',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Wvbˉlayout.Resultˉtype, Wvbˉlayout.Operation + 9,
+            ),
+        },
+    ];
+    for (let Index = 0; Index < Wvbˉcases.length; Index += 1) {
+        const Case = Wvbˉcases[Index];
+        process.stdout.write(
+            'native language 1 unsafe scratch WVB ' +
+            `malformed-item=${Index + 1}/${Wvbˉcases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Publishedˉbytes);
+        Case.Mutate(Candidate);
+        Requireˉwvbˉcontractˉrejection(Candidate, Case.Name);
+    }
     const Invalidˉanalysis =
         /^source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n$/u;
     const Cases = [
@@ -370,7 +437,176 @@ async function Verifyˉemitterˉboundary(
             Invalidˉanalysis, Case.Name, Output,
         );
     }
-    return Cases.length;
+    return { Wir: Cases.length, Wvb: Wvbˉcases.length };
+}
+
+function Inspectˉunsafeˉscratchˉwvb(Input) {
+    if (Input.length < 12 || Input.length > MAXIMUM_WVB_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 33 ||
+        Input.readUInt32LE(8) !== 7) {
+        Reject('The unsafe-scratch WVB header differs.');
+    }
+    const Sections = new Map();
+    var Cursor = 12;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor > Input.length - 8 || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject('The unsafe-scratch WVB section envelope differs.');
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Start = Cursor + 8;
+        if (Start > Input.length || Length > Input.length - Start) {
+            Reject('The unsafe-scratch WVB section exceeds the file.');
+        }
+        Sections.set(Kind, { Start, End: Start + Length });
+        Cursor = Start + Length;
+    }
+    if (Cursor !== Input.length) {
+        Reject('The unsafe-scratch WVB has trailing bytes.');
+    }
+    const Types = Sections.get(7);
+    const Typeˉcount = Input.readUInt32LE(Types.Start);
+    if (Typeˉcount === 0 || Typeˉcount > 65_536) {
+        Reject('The unsafe-scratch WVB type count is invalid.');
+    }
+    const Typeˉkinds = [];
+    Cursor = Types.Start + 4;
+    for (let Index = 0; Index < Typeˉcount; Index += 1) {
+        if (Cursor >= Types.End) {
+            Reject('The unsafe-scratch WVB type directory is truncated.');
+        }
+        Typeˉkinds.push(Input[Cursor]);
+        Cursor = Nextˉwvbˉtype(Input, Cursor, Types.End);
+    }
+    if (Cursor !== Types.End) {
+        Reject('The unsafe-scratch WVB type directory has trailing bytes.');
+    }
+    const Code = Sections.get(5);
+    const Matches = [];
+    for (Cursor = Code.Start; Cursor <= Code.End - 13; Cursor += 1) {
+        if (Input[Cursor] !== 220 || Input.readUInt32LE(Cursor + 1) !== 0) {
+            continue;
+        }
+        const Resultˉtype = Input.readUInt32LE(Cursor + 5);
+        const Abiˉtype = Input.readUInt32LE(Cursor + 9);
+        if (Resultˉtype < Typeˉcount && Abiˉtype < Typeˉcount &&
+            Typeˉkinds[Resultˉtype] === 3 &&
+            (Typeˉkinds[Abiˉtype] === 2 || Typeˉkinds[Abiˉtype] === 7)) {
+            Matches.push({ Operation: Cursor, Resultˉtype, Abiˉtype });
+        }
+    }
+    if (Matches.length !== 1) {
+        Reject('The unsafe-scratch WVB must contain one exact opcode 220.');
+    }
+    return {
+        Operation: Matches[0].Operation,
+        Resultˉtype: Matches[0].Resultˉtype,
+        Abiˉtype: Matches[0].Abiˉtype,
+        Typeˉcount,
+    };
+}
+
+function Nextˉwvbˉtype(Input, Start, End) {
+    const Kind = Input[Start];
+    var Cursor = Start + 1;
+    if (Kind === 8) {
+        Cursor = Checkedˉadvance(Cursor, 1, End);
+        Cursor = Checkedˉshape(Input, Cursor, End);
+        const Parameters = Checkedˉu32(Input, Cursor, End);
+        Cursor += 4;
+        if (Parameters > 64) {
+            Reject('The unsafe-scratch WVB callable arity is oversized.');
+        }
+        for (let Index = 0; Index < Parameters; Index += 1) {
+            Cursor = Checkedˉshape(Input, Cursor, End);
+        }
+        return Checkedˉadvance(Cursor, 10 + Parameters, End);
+    }
+    if (Kind < 1 || Kind > 7) {
+        Reject('The unsafe-scratch WVB type kind is unknown.');
+    }
+    Cursor = Checkedˉstring(Input, Cursor, End);
+    if (Kind === 4) {
+        Cursor = Checkedˉshape(Input, Cursor, End);
+        return Checkedˉadvance(Cursor, 4, End);
+    }
+    if (Kind === 5 || Kind === 6) {
+        return Checkedˉshape(Input, Cursor, End);
+    }
+    if (Kind === 7) {
+        Cursor = Checkedˉadvance(Cursor, 1, End);
+    }
+    const Items = Checkedˉu32(Input, Cursor, End);
+    Cursor += 4;
+    if (Items > 256) {
+        Reject('The unsafe-scratch WVB type item count is oversized.');
+    }
+    for (let Item = 0; Item < Items; Item += 1) {
+        Cursor = Checkedˉstring(Input, Cursor, End);
+        if (Kind === 1) {
+            Cursor = Checkedˉshape(Input, Cursor, End);
+        } else if (Kind === 2) {
+            Cursor = Checkedˉadvance(Cursor, 4, End);
+        } else if (Kind === 7) {
+            Cursor = Checkedˉadvance(Cursor, 1, End);
+        } else {
+            const Encoding = Input[Cursor];
+            Cursor = Checkedˉadvance(Cursor, 1, End);
+            if (Encoding === 1) {
+                Cursor = Checkedˉstring(Input, Cursor, End);
+                Cursor = Checkedˉshape(Input, Cursor, End);
+            } else if (Encoding === 2) {
+                const Fields = Checkedˉu32(Input, Cursor, End);
+                Cursor += 4;
+                if (Fields < 2 || Fields > 64) {
+                    Reject('The unsafe-scratch WVB variant field count is invalid.');
+                }
+                for (let Field = 0; Field < Fields; Field += 1) {
+                    Cursor = Checkedˉstring(Input, Cursor, End);
+                    Cursor = Checkedˉshape(Input, Cursor, End);
+                }
+            } else if (Encoding !== 0) {
+                Reject('The unsafe-scratch WVB variant encoding is invalid.');
+            }
+        }
+    }
+    return Cursor;
+}
+
+function Checkedˉshape(Input, Cursor, End) {
+    const Kind = Input[Checkedˉadvance(Cursor, 1, End) - 1];
+    if ([7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35].includes(Kind)) {
+        return Checkedˉadvance(Cursor + 1, 4, End);
+    }
+    return Cursor + 1;
+}
+
+function Checkedˉstring(Input, Cursor, End) {
+    const Length = Checkedˉu32(Input, Cursor, End);
+    return Checkedˉadvance(Cursor + 4, Length, End);
+}
+
+function Checkedˉu32(Input, Cursor, End) {
+    Checkedˉadvance(Cursor, 4, End);
+    return Input.readUInt32LE(Cursor);
+}
+
+function Checkedˉadvance(Cursor, Length, End) {
+    if (!Number.isSafeInteger(Cursor) || !Number.isSafeInteger(Length) ||
+        Cursor < 0 || Length < 0 || Cursor > End || Length > End - Cursor) {
+        Reject('The unsafe-scratch WVB directory is truncated.');
+    }
+    return Cursor + Length;
+}
+
+function Requireˉwvbˉcontractˉrejection(Input, Label) {
+    try {
+        Inspectˉunsafeˉscratchˉwvb(Input);
+    } catch {
+        return;
+    }
+    Reject(`The malformed unsafe-scratch WVB was accepted: ${Label}.`);
 }
 
 function Requireˉemitterˉrejection(Result, Expected, Label, Output) {

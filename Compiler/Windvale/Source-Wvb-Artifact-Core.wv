@@ -97,6 +97,7 @@ const WVB_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WVB_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WVB_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
 const WVB_TASK_FEATURE: u32 = 2097152u32;
+const WVB_UNSAFE_SCRATCH_FEATURE: u32 = 4194304u32;
 export record Compilerˉsourceˉwvbˉsummary {
 Status: Compilerˉsourceˉwvbˉstatus;
 Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
@@ -656,11 +657,12 @@ if Operation == 179u32 { return Compilerˉsourceˉwvbˉlowˉbyte(213u32); }
 if Operation >= 180u32 && Operation <= 185u32 {
 return Compilerˉsourceˉwvbˉlowˉbyte(Operation + 34u32);
 }
+if Operation == 186u32 { return Compilerˉsourceˉwvbˉlowˉbyte(220u32); }
 return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
 if Operation >= 1u32 {
-if Operation <= 185u32 { return true; }
+if Operation <= 186u32 { return true; }
 }
 return false;
 }
@@ -722,6 +724,7 @@ if Operation == 182u32 || Operation == 183u32 {
 Opcodeˉbytes = 13u32;
 }
 if Operation == 185u32 { Opcodeˉbytes = 6u32; }
+if Operation == 186u32 { Opcodeˉbytes = 13u32; }
 var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
 if Shape != 0u32 { Result = Result + 5u32; }
 return Result;
@@ -3201,7 +3204,8 @@ while Index < Operations {
 let Entry: u32 = Offset + Index * 28u32;
 let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
 if (Operation == 171u32 || Operation == 172u32 ||
-Operation == 180u32 || Operation == 182u32) &&
+Operation == 180u32 || Operation == 182u32 ||
+Operation == 186u32) &&
 Bytesˉreadˉu32ˉlittle(Wir, Entry + 8u32) == Shape {
 return true;
 }
@@ -3812,10 +3816,30 @@ Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
 Globalˉoperation
 );
 }
+if Operation == 186u32 {
+let Plannedˉscratchˉresult: u32 =
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Shape, Symbols, Orders
+);
+let Plannedˉabi: u32 =
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Auxiliary, Symbols, Orders
+);
+if Target >= Parameters + Locals || Operands != 2u32 ||
+Plannedˉscratchˉresult < 196608u32 ||
+Plannedˉscratchˉresult >= 262144u32 ||
+Plannedˉabi < 131072u32 || Plannedˉabi >= 196608u32 {
+return Compilerˉsourceˉwvbˉanalysisˉfailure(
+Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+Globalˉoperation
+);
+}
+}
 if Operation != 171u32 && Operation != 172u32 &&
 Operation != 173u32 && Operation != 180u32 &&
 Operation != 181u32 && Operation != 182u32 &&
 Operation != 183u32 && Operation != 184u32 &&
+Operation != 186u32 &&
 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
 Wir, Shape, Orders
 ) &&
@@ -4717,6 +4741,26 @@ Bytesˉfromˉu32ˉlittle(Auxiliary), 0u32, 1u32
 )
 );
 }
+if Operation == 186u32 {
+Result = Bytesˉconcat(Result, Bytesˉfromˉu8(220u8));
+Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Shape, Symbols, Orders
+) - 196608u32
+)
+);
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Auxiliary, Symbols, Orders
+) - 131072u32
+)
+);
+}
 if Operation >= 11u32 {
 if Operation <= 16u32 {
 Result = Bytesˉconcat(
@@ -5479,6 +5523,9 @@ if Operationˉkind >= 180u32 &&
 Operationˉkind <= 185u32 {
 Features = Features | WVB_TASK_FEATURE;
 }
+if Operationˉkind == 186u32 {
+Features = Features | WVB_UNSAFE_SCRATCH_FEATURE;
+}
 if Operationˉkind == 8u32 {
 let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
 Wir, Operationˉentry + 16u32
@@ -6217,6 +6264,7 @@ Wvbˉminor = 31u32;
 Wvbˉminor = 30u32;
 }
 if (Features & WVB_TASK_FEATURE) != 0u32 { Wvbˉminor = 32u32; }
+if (Features & WVB_UNSAFE_SCRATCH_FEATURE) != 0u32 { Wvbˉminor = 33u32; }
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
 Bytecode = Bytesˉconcat(

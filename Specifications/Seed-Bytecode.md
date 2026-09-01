@@ -82,6 +82,10 @@ portable execution profile schedules accepted children sequentially while
 preserving the same typed outcomes, lexical joins, cancellation state, work and
 call-depth limits, retained completion ownership, and deterministic teardown
 required of a parallel-capable host.
+A separately proposed WVB 1.33 unsafe-scratch publication format is specified
+below. It is emitted by the Language 1.0 source backend and has a focused
+independent format oracle, but it is not part of the currently executable
+1.11-through-1.32 verifier/runtime family.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -110,6 +114,45 @@ source-built native scalar runner implement that transition. Other native,
 browser, WebAssembly-package, and Windvale OS execution consumers retain
 explicit narrower version boundaries until their own lowering or execution
 slices land.
+
+## Proposed WVB 1.33 unsafe-scratch publication
+
+WVB 1.33 is the non-executable serialization candidate for exact
+`Foundationˉunsafe.Constructˉscratch::<Abi>`. Its file header uses major `1`,
+minor `33`, and the unchanged seven-section envelope. It inherits every WVB
+1.32 type and instruction encoding; a module that carries an extended callable
+descriptor retains the WVB 1.32 descriptor trailer unchanged.
+
+The new instruction is:
+
+```text
+DC unsafe.scratch.construct u32 budget-local index,
+                            u32 construction-Result type index,
+                            u32 ABI-enum type index
+```
+
+It consumes ordered `u64` length and alignment stack operands, consumes the
+named available `Memoryˉbudget` local, and produces the exact affine
+`Result<Foreignˉscratch<Abi>, Foreignˉmemoryˉfailure>`. The ABI immediate must
+name the same declared enum identity materialized in the scratch result. Every
+candidate WVB 1.33 module contains at least one `DC`, and `DC` is invalid under
+every earlier minor.
+
+Candidate WVB 1.33 widens shape `25` beyond the earlier launcher-only profiles:
+it may appear as an exact by-value function parameter or an affine
+non-parameter local in any function. It remains invalid as a function result,
+borrowed parameter, nominal field or payload, collection element, or Types
+entry. Calls and local transfers move the opaque owner; ordinary loads never
+copy it. `DC` must name an available shape-`25` parameter or local in its own
+function and consumes that owner on every ordinary Result path. This widening
+defines source publication only; the complete verifier must implement the same
+ownership proof before any WVB 1.33 execution front door opens.
+
+The current source writer and focused contract oracle implement this format.
+The compiler-aligned verifier, interpreter, native lowering, provider binding,
+allocation failure behavior, zero-initialization proof, ownership teardown,
+and containment checks do not yet admit WVB 1.33. No launcher or runtime may
+execute this candidate merely because its section geometry is well formed.
 
 ## Encoding
 
@@ -421,7 +464,7 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 22 fixed array followed by u32 nominal-type index (WVB 1.17 and later)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
-25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals)
+25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals; candidate WVB 1.33 by-value parameters and affine locals)
 26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.32 local only)

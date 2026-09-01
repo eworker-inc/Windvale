@@ -1946,12 +1946,14 @@ The first producer checkpoint additionally publishes exactly
 `Constructˉscratch` through compiler-owned source binding and typed WVIR
 operation `186`. It requires an explicit `Memoryˉbudget`, exact `u64` length
 and alignment, one declared ABI enum, and the canonical affine result. The
-source-WVB boundary still rejects operation `186`, so this checkpoint does not
-claim executable allocation, pointer production, borrowing, Foreign-call
-lowering, serialization, runtime behavior, or native ABI. The remaining
-operations below, and an executable representation for `Constructˉscratch`,
-may appear only with their compiler-owned intrinsic semantics and containment
-evidence.
+source backend now serializes that exact operation as candidate WVB 1.33 opcode
+`DC`, preserving the budget-local, construction-Result, and ABI-enum indexes.
+The complete verifier and every runtime/native consumer still reject that
+candidate version, so this checkpoint does not claim executable allocation,
+pointer production, borrowing, Foreign-call lowering, provider behavior, or
+native ABI. The remaining operations below, and executable semantics for
+`Constructˉscratch`, may appear only with their compiler-owned intrinsic
+semantics and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,

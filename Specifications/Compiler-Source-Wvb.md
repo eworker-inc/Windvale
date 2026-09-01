@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module or the explicitly non-executable WVB 1.33 unsafe-scratch publication candidate, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -20,6 +20,11 @@ structured-task lowering selected by
 The task extension preserves async and effect evidence, affine scope/handle
 ownership, exact generic outcome identities, and runtime bounds without
 exposing a scheduler in source.
+WVIR 1.23/1.24 and candidate WVB 1.33 add only the serialized unsafe-scratch
+construction boundary selected by
+[Decision 0902](../Documents/Decisions/0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md).
+The compiler-aligned verifier, runtime, and native backends still reject that
+candidate version, so successful publication is not an execution claim.
 
 ## Direct compilation result
 
@@ -960,13 +965,29 @@ The verifier reconstructs the canonical `Foundationˉtask` and
 edge, consumes a handle at its sole await, and requires an immutable exit policy
 before control leaves the lexical scope.
 
-WVIR 1.23/1.24 operation `186` is an intentional typed-IR-only boundary in the
-current checkpoint. Source WVB validates its exact Foundation result/scratch/
-failure identities, ABI enum, budget slot, two `u64` operands, and affine
-result, then reports `Unsupportedˉoperation` without publishing a WVB. A later
-decision must assign the executable opcode and version together with complete
-WVB verification, runtime, native ABI lowering, failure, and containment
-semantics; it must not reuse an existing allocation opcode by shape alone.
+WVIR 1.23/1.24 operation `186` lowers to candidate WVB 1.33 opcode `DC`
+(`unsafe.scratch.construct`). The instruction consumes the two ordered `u64`
+length and alignment stack values and carries three little-endian `u32`
+immediates: the consumed budget-local index, the canonical construction-Result
+type index, and the explicit ABI-enum type index. Source WVB validates the exact
+Foundation result/scratch/failure identities, ABI enum, available budget slot,
+operand shapes, and affine result before publication. A WVB 1.33 module must
+contain at least one `DC`; the writer selects 1.33 whenever operation `186` is
+present, including a module that also contains the inherited task vocabulary.
+Unlike the executable launcher-only budget profiles, candidate 1.33 admits the
+opaque shape `25` as an exact by-value parameter or affine non-parameter local
+in any function. It remains unavailable as a result, borrowed parameter,
+nominal payload, collection element, or Types entry. The prepared WVIR proof
+and writer ownership analysis require `DC` to consume an available budget
+owner in the same function rather than granting allocation authority by
+mentioning the opcode.
+
+This is a serialization checkpoint, not executable allocation. The focused
+independent contract reader accepts the exact header, section geometry, opcode,
+budget, result, and ABI indexes and rejects six byte-level mutations. The
+complete compiler-aligned verifier, scalar and native runtimes, provider
+containment, failure execution, and teardown remain pending and must not infer
+foreign scratch from an existing allocation opcode by shape alone.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

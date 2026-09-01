@@ -35,8 +35,8 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 
 | Search status | Specifications |
 | --- | ---: |
-| Candidate | 52 |
-| Current | 27 |
+| Candidate | 53 |
+| Current | 26 |
 | Documented | 227 |
 | Experimental | 3 |
 | Implemented | 36 |
