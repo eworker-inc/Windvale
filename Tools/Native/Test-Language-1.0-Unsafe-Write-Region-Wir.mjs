@@ -23,7 +23,7 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length < 3 || process.argv.length > 5) Usage();
+if (process.argv.length < 3 || process.argv.length > 6) Usage();
 const Analyzer = await realpath(resolve(process.argv[2]));
 const Analyzerˉstatus = await lstat(Analyzer);
 if (!Analyzerˉstatus.isFile() || Analyzerˉstatus.size <= 0 ||
@@ -32,8 +32,10 @@ if (!Analyzerˉstatus.isFile() || Analyzerˉstatus.size <= 0 ||
 }
 const Emitter = process.argv.length >= 4 ?
     await realpath(resolve(process.argv[3])) : undefined;
-const Compilerˉverifier = process.argv.length === 5 ?
+const Compilerˉverifier = process.argv.length >= 5 ?
     await realpath(resolve(process.argv[4])) : undefined;
+const Runner = process.argv.length === 6 ?
+    await realpath(resolve(process.argv[5])) : undefined;
 var Frontˉdoorˉverifier;
 if (Emitter !== undefined) {
     const Emitterˉstatus = await lstat(Emitter);
@@ -49,6 +51,16 @@ if (Emitter !== undefined) {
             Reject(
                 'The unsafe write-region compiler verifier must be an ' +
                 'ordinary canonical file.',
+            );
+        }
+    }
+    if (Runner !== undefined) {
+        const Runnerˉstatus = await lstat(Runner);
+        if (!Runnerˉstatus.isFile() || Runnerˉstatus.size <= 0 ||
+            Runnerˉstatus.size > MAXIMUM_TOOL_BYTES) {
+            Reject(
+                'The unsafe write-region runner must be an ordinary ' +
+                'canonical file.',
             );
         }
     }
@@ -91,6 +103,9 @@ const Regionˉtype = 'Unsafe.Foreignˉwriteˉregion<Hostˉabi>';
 const Pointerˉfailure = 'Unsafe.Foreignˉpointerˉfailure';
 const Regionˉresult =
     'Result.Result<' + Regionˉtype + ', ' + Pointerˉfailure + '>';
+const Scratchˉresult =
+    'Result.Result<' + Scratchˉtype +
+    ', Unsafe.Foreignˉmemoryˉfailure>';
 const Validˉcall =
     'Unsafe.Borrowˉwriteˉregion::<Hostˉabi>(' +
     'Scratch: borrow mut Scratch, Start: 0u64, Length: 64u64, ' +
@@ -253,6 +268,100 @@ const Cases = [
     },
 ];
 
+const Runtimeˉapplications = [
+    {
+        Name: 'success',
+        Call: Runtimeˉcall(8n, 16n, 8n),
+        Summary: '',
+    },
+    {
+        Name: 'zero-length',
+        Call: Runtimeˉcall(0n, 0n, 8n),
+        Summary: Pointerˉsummary(
+            'Outˉofˉrange',
+            'Rangeˉstart == 0u64 && Rangeˉlength == 0u64 && ' +
+                'Ownerˉlength == 64u64',
+        ),
+    },
+    {
+        Name: 'address-overflow',
+        Call: Runtimeˉcall(18_446_744_073_709_551_615n, 2n, 8n),
+        Summary: Pointerˉsummary(
+            'Addressˉoverflow',
+            'Overflowˉstart == 18446744073709551615u64 && ' +
+                'Overflowˉlength == 2u64 && Bits == 64u32',
+        ),
+    },
+    {
+        Name: 'out-of-range',
+        Call: Runtimeˉcall(63n, 2n, 8n),
+        Summary: Pointerˉsummary(
+            'Outˉofˉrange',
+            'Rangeˉstart == 63u64 && Rangeˉlength == 2u64 && ' +
+                'Ownerˉlength == 64u64',
+        ),
+    },
+    {
+        Name: 'misaligned',
+        Call: Runtimeˉcall(1n, 1n, 8n),
+        Summary: Pointerˉsummary(
+            'Misaligned',
+            'Alignmentˉstart == 1u64 && Alignment == 8u64',
+        ),
+    },
+];
+
+function Runtimeˉcall(Start, Length, Alignment) {
+    return 'Unsafe.Borrowˉwriteˉregion::<Hostˉabi>(' +
+        'Scratch: borrow mut Scratch, Start: ' + Start + 'u64, Length: ' +
+        Length + 'u64, Requiredˉalignment: ' + Alignment + 'u64)';
+}
+
+function Pointerˉsummary(Expected, Condition) {
+    const Branch = Name => Expected === Name ?
+        'if ' + Condition + ' { 42 } else { 2 }' : '3';
+    return 'match Failure { ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Null { 3 } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Addressˉoverflow { ' +
+        'Start: Overflowˉstart, Length: Overflowˉlength, ' +
+        'Addressˉbits: Bits } { ' +
+        Branch('Addressˉoverflow') + ' } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Outˉofˉrange { ' +
+        'Start: Rangeˉstart, Length: Rangeˉlength, ' +
+        'Ownerˉlength: Ownerˉlength } { ' +
+        Branch('Outˉofˉrange') + ' } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Misaligned { ' +
+        'Start: Alignmentˉstart, Requiredˉalignment: Alignment } { ' +
+        Branch('Misaligned') + ' } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Aliasing { 3 } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Lifetimeˉended { 3 } ' +
+        'case Unsafe.Foreignˉpointerˉfailure.Unsupportedˉabi { 3 } }';
+}
+
+function Runtimeˉapplication(Call, Summary) {
+    const Failureˉbranch = Summary.length === 0 ?
+        'case Result.Result.Failure { Error: _ } { 3 } ' :
+        'case Result.Result.Failure { Error: Failure } { ' +
+            Summary + ' } ';
+    return 'module Languageˉoneˉunsafeˉwriteˉregionˉruntime; ' +
+        SYSTEM_HEADER + Imports + Abi +
+        'fn Borrow(Value: ' + Scratchˉtype + ') -> i32 ' +
+        'effects(unsafe.address) { var Scratch: ' + Scratchˉtype +
+        ' = Value; unsafe { let Outcome: ' + Regionˉresult + ' = ' + Call +
+        '; return match Outcome { ' +
+        'case Result.Result.Valid { Value: _ } { 42 } ' +
+        Failureˉbranch + '}; } } ' +
+        'export fn Main(Budget: Memory.Memoryˉbudget) -> i32 ' +
+        'effects(memory.allocate, unsafe.address) { ' +
+        'let Constructed: ' + Scratchˉresult + ' = ' +
+        'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+        'Budget: Budget, Length: 64u64, Alignment: 8u64); ' +
+        'return match Constructed { ' +
+        'case Result.Result.Valid { Value: Scratchˉvalue } { ' +
+        'Borrow(Scratchˉvalue) } ' +
+        'case Result.Result.Failure { Error: _ } { 4 } }; }';
+}
+
 const Work = await mkdtemp(join(tmpdir(), 'windvale-unsafe-write-region-wir-'));
 var Valid = 0;
 var Rejected = 0;
@@ -261,6 +370,7 @@ var Malformedˉwvb = 0;
 var Publishedˉwvb = 0;
 var Writerˉrejected = 0;
 var Compilerˉverifierˉcases = 0;
+var Runtimeˉmalformed = 0;
 try {
     for (let Index = 0; Index < Cases.length; Index += 1) {
         const Case = Cases[Index];
@@ -379,12 +489,19 @@ try {
             Rejected += 1;
         }
     }
+    if (Runner !== undefined) {
+        Runtimeˉmalformed = await Verifyˉruntime();
+    }
     process.stdout.write(
         'native language 1 unsafe write region WVIR status=Passed ' +
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
         `malformed-wvir=${Malformed} malformed-wvb=${Malformedˉwvb} ` +
         `operation=188 minors=27,28 wvb=1.36 opcode=222 ` +
-        `published-wvb=${Publishedˉwvb} execution=Closed ` +
+        `published-wvb=${Publishedˉwvb} ` +
+        `legacy-front-door=Closed scalar-provider=${Runner === undefined ?
+            'Notˉrequested' : 'Verified'} ` +
+        `runtime-cases=${Runner === undefined ? 0 : Runtimeˉapplications.length} ` +
+        `runtime-malformed=${Runtimeˉmalformed} ` +
         `writer-rejected=${Writerˉrejected} ` +
         `validator=${Emitter === undefined ? 'Notˉrequested' : 'Verified'} ` +
         `compiler-verifier=${Compilerˉverifier === undefined ?
@@ -393,6 +510,94 @@ try {
     );
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Verifyˉruntime() {
+    const Directory = join(Work, 'runtime');
+    await mkdir(Directory);
+    var Malformed = 0;
+    for (let Index = 0; Index < Runtimeˉapplications.length; Index += 1) {
+        const Case = Runtimeˉapplications[Index];
+        process.stdout.write(
+            'native language 1 unsafe write region runtime ' +
+            `item=${Index + 1}/${Runtimeˉapplications.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Caseˉdirectory = join(Directory, Case.Name);
+        await mkdir(Caseˉdirectory);
+        const Input = join(Caseˉdirectory, 'Source.wvss');
+        const Source = join(Caseˉdirectory, 'Output.wvss');
+        const Manifest = join(Caseˉdirectory, 'Manifest.wvca');
+        const Bindings = join(Caseˉdirectory, 'Bindings.wvlb');
+        const Wir = join(Caseˉdirectory, 'Wir.wvir');
+        const Wvb = join(Caseˉdirectory, 'Runtime.wvb');
+        await writeFile(Input, Sourceˉset([
+            Runtimeˉapplication(Case.Call, Case.Summary),
+            Memoryˉmodule,
+            Resultˉmodule,
+            Unsafeˉmodule,
+        ]), { flag: 'wx' });
+        const Analysis = await Runˉanalyzer([
+            '--internal-source-set', Input,
+            Source, Manifest, Bindings, Wir,
+        ]);
+        if (Analysis.Code !== 0 || Analysis.Exceeded) {
+            Reject(
+                `Unsafe write-region runtime ${Case.Name} analysis failed: ` +
+                `status=${Analysis.Code}.\n${Analysis.Diagnostic}`,
+            );
+        }
+        const Emission = await Runˉtool(Emitter, [
+            Source, Manifest, Bindings, Wir, Wvb,
+        ]);
+        if (Emission.Code !== 0 || Emission.Exceeded) {
+            Reject(
+                `Unsafe write-region runtime ${Case.Name} emission failed: ` +
+                `status=${Emission.Code}.\n${Emission.Diagnostic}`,
+            );
+        }
+        await Requireˉcompilerˉverification(
+            Wvb, true, `runtime-${Case.Name}`,
+        );
+        Compilerˉverifierˉcases += 1;
+        const Execution = await Runˉtool(Runner, [Wvb]);
+        if (Execution.Code !== 0 || Execution.Exceeded ||
+            Execution.Diagnostic.replaceAll('\r\n', '\n') !==
+                'Result: 42\n') {
+            Reject(
+                `Unsafe write-region runtime ${Case.Name} execution ` +
+                `differed: status=${Execution.Code} ` +
+                `diagnostic=${JSON.stringify(Execution.Diagnostic)}.`,
+            );
+        }
+        if (Index === 0) {
+            const Candidate = await readFile(Wvb);
+            const Layout = Inspectˉwriteˉregionˉwvb(Candidate);
+            Candidate[Layout.Operation] = 209;
+            const Missingˉoperation = join(
+                Caseˉdirectory, 'Missing-Write-Region-Operation.wvb',
+            );
+            await writeFile(Missingˉoperation, Candidate, { flag: 'wx' });
+            const Rejected = await Runˉtool(Runner, [Missingˉoperation]);
+            if (Rejected.Code !== 1 || Rejected.Exceeded ||
+                !Rejected.Diagnostic.replaceAll('\r\n', '\n').endsWith(
+                    ' phase=execution\n',
+                )) {
+                Reject(
+                    'Unsafe write-region missing-operation runtime ' +
+                    `rejection differed: status=${Rejected.Code} ` +
+                    `diagnostic=${JSON.stringify(Rejected.Diagnostic)}.`,
+                );
+            }
+            Malformed += 1;
+        }
+    }
+    process.stdout.write(
+        'native language 1 unsafe write region runtime status=Passed ' +
+        `cases=${Runtimeˉapplications.length} malformed=${Malformed} ` +
+        'result=42 allocation=bounded teardown=bounded\n',
+    );
+    return Malformed;
 }
 
 async function Verifyˉexecutionˉremainsˉclosed(Module) {
@@ -488,6 +693,9 @@ async function Verifyˉmalformedˉwvb(Directory, Canonical, Layout) {
             }],
             ['extract-write-region-payload', Value => {
                 Value[Layout.Caseˉobservation] = 153;
+            }],
+            ['extract-write-region-field', Value => {
+                Value[Layout.Caseˉobservation] = 196;
             }],
         ];
         for (let Index = 0; Index < Semanticˉcases.length; Index += 1) {
@@ -1062,7 +1270,7 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/' +
         'Test-Language-1.0-Unsafe-Write-Region-Wir.mjs ' +
-        '<analyzer> [emitter] [compiler-verifier]\n',
+        '<analyzer> [emitter] [compiler-verifier] [runner]\n',
     );
     process.exit(64);
 }

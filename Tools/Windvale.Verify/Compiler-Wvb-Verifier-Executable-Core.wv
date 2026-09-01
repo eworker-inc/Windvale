@@ -1886,7 +1886,7 @@ export fn Hˉvariant(
             0u32
         );
     }
-    if Variantˉkind == 37u32 {
+    if Variantˉkind == 37u32 && Variantˉcaseˉindex != 1u32 {
         return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
     }
     if Fields != 1u32 {
@@ -1956,8 +1956,11 @@ fn Hˉvariantˉfield(
     );
     if (Variantˉkind != 11u32 && Variantˉkind != 28u32 &&
         Variantˉkind != 29u32 && Variantˉkind != 32u32 &&
-        Variantˉkind != 36u32) ||
+        Variantˉkind != 36u32 && Variantˉkind != 37u32) ||
         Bytesˉreadˉu32ˉlittle(Stack, Variantˉoffset + 1u32) != Variantˉtype {
+        return Hˉoperationˉfailure(Stack, Depth);
+    }
+    if Variantˉkind == 37u32 && Caseˉindex != 1u32 {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Fieldˉshape: u32 = 4u32 + Fieldˉindex * 5u32;
