@@ -125,3 +125,4 @@
 | [Slice 8 WVIR mutable write-region borrowing checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvir-mutable-write-region-borrowing-checkpoint) | 5112 |
 | [Slice 8 candidate WVB 1.36 write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-candidate-wvb-136-write-region-checkpoint) | 5145 |
 | [Slice 8 WVB 1.36 compiler-aligned containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-compiler-aligned-containment-checkpoint) | 5169 |
+| [Slice 8 WVB 1.36 bounded scalar write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-bounded-scalar-write-region-checkpoint) | 5207 |

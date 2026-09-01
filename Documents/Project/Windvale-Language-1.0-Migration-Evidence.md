@@ -5203,3 +5203,55 @@ diagnose the two containment failures early, the conservative verifier does
 not expose or execute a region payload, and scalar/provider and native region
 execution, pointer derivation, authenticated Foreign calls, Linux reproduction,
 and final Slice 8 qualification remain pending.
+
+## Slice 8 WVB 1.36 bounded scalar write-region checkpoint
+
+[Decision 0912](../Decisions/0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md)
+embeds the compiler-aligned verifier in every bounded source-built scalar
+runner entry mode and admits opcode `DE` only after it succeeds. Under minor
+36, the opaque scratch record privately carries the existing scalar-heap
+allocation descriptor rather than a native address. The
+provider validates that record, allocation, lease, owner length, and
+construction alignment before checking the requested subrange. Success stores
+only a private `{subrange offset u32, length u32}` descriptor in the opaque
+region record; normal function teardown releases the scratch's one backing
+lease.
+
+The compiler verifier now permits extraction and matching of the Result's
+Failure payload while continuing to reject extraction of the Valid region
+payload through either supported extraction opcode. Five runtime modules cover
+one aligned subrange plus exact zero-length `Outˉofˉrange`, `u64`
+`Addressˉoverflow`, owner `Outˉofˉrange`, and `Misaligned` data. Every module
+passes source analysis, WVB 1.36 emission, compiler-aligned verification, and
+scalar execution with result `42`. Replacing the sole `DE` with an inherited
+same-width operation is rejected before execution.
+
+The source-built compiler verifier is 473,783 WVB bytes at SHA-256
+`76c36d5a341a37e14a162427bef2870ed498cdbf4366abcebb703f8f79f32c7d`;
+its packaged Windows executable is 3,817,984 bytes at SHA-256
+`5bad08c1e6c4bfdbd3195a4a0de6460a6de8c4b710f8a699e6fb1d469358c6d1`.
+The verifier-gated source-built scalar runner is 993,328 WVB bytes at SHA-256
+`2e7f5390c95e74be2abb06c2b2cbb84d789c3d449a7577c40f9de45157a874a6`;
+its three-fragment Windows executable is 10,127,360 bytes at SHA-256
+`c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4`.
+The focused matrix reports:
+
+```text
+native language 1 unsafe write region runtime status=Passed cases=5 malformed=1 result=42 allocation=bounded teardown=bounded
+native language 1 unsafe write region WVIR status=Passed cases=13 valid=6 rejected=7 malformed-wvir=7 malformed-wvb=5 operation=188 minors=27,28 wvb=1.36 opcode=222 published-wvb=4 legacy-front-door=Closed scalar-provider=Verified runtime-cases=5 runtime-malformed=1 writer-rejected=1 validator=Verified compiler-verifier=Verified compiler-verifier-cases=19
+```
+
+The complete inherited WVB 1.33/1.35 scratch oracle also passes 12 source
+cases, 16 malformed WVIR cases, 15 malformed WVB cases, 20 compiler-verifier
+decisions, nine scalar executions, six borrowed-budget mutations, and bounded
+teardown against the same verifier and runner.
+
+This is local Windows scalar-development evidence. The 64-byte extent and
+8-byte alignment are provider bounds rather than language limits. The provider
+does not expose a host address or pointer and cannot perform a Foreign call.
+The separately published front door and native, browser, WebAssembly, package,
+and OS consumers remain closed to WVB 1.36. Native region execution, pointer
+derivation, authenticated no-retain Foreign calls, a migrated real boundary,
+Linux reproduction, and final Slice 8 qualification remain pending. The
+machine-readable evidence is
+[`2026-09-01-WVB-1-36-Bounded-Scalar-Write-Region-Execution.json`](../Evidence/2026-09-01-WVB-1-36-Bounded-Scalar-Write-Region-Execution.json).

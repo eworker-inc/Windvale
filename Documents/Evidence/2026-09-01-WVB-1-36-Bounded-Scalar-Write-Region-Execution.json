@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-wvb-1-36-bounded-scalar-write-region-execution",
+  "date": "2026-09-01",
+  "subject": "WVB 1.36 bounded scalar write-region execution",
+  "claim": "The Windows bounded scalar runner embeds the source-built compiler verifier, admits exact WVB 1.36 write-region construction only after verification, executes one success and four exact validation outcomes, rejects structural and semantic forgeries, preserves conservative lifetime containment, and retains the inherited WVB 1.33/1.35 scratch matrix without exposing a native address.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "fbd06cba633e19ca55acaa17830d7f11b30496bf"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built compiler-aligned WVB 1.36 verifier",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs and Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj artifacts/local-write-region-verifier-v3.wvb artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-analyzer-v3.identity artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-emitter-v5.identity --symbol-checkpoint; Tools/Native/Package-Hosted-Wvb.cmd 2 artifacts/local-write-region-verifier-v3.wvb artifacts/local-write-region-verifier-v3.exe windows",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-write-region-verifier-v3.wvb",
+          "size": 473783,
+          "sha256": "76c36d5a341a37e14a162427bef2870ed498cdbf4366abcebb703f8f79f32c7d"
+        },
+        {
+          "path": "artifacts/local-write-region-verifier-v3.exe",
+          "size": 3817984,
+          "sha256": "5bad08c1e6c4bfdbd3195a4a0de6460a6de8c4b710f8a699e6fb1d469358c6d1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Compiler-verifier-gated source-built bounded WVB scalar runner",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs and Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj artifacts/local-write-region-runner-v3.wvb artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-analyzer-v3.identity artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-emitter-v5.identity --symbol-checkpoint; Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 artifacts/local-write-region-runner-v3.wvb artifacts/local-write-region-runner-v3.exe --development-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-write-region-runner-v3.wvb",
+          "size": 993328,
+          "sha256": "2e7f5390c95e74be2abb06c2b2cbb84d789c3d449a7577c40f9de45157a874a6"
+        },
+        {
+          "path": "artifacts/local-write-region-runner-v3.exe",
+          "size": 10127360,
+          "sha256": "c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB 1.36 source, WVIR, compiler containment, exact scalar outcomes, and malformed rejection",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-verifier-v3.exe artifacts/local-write-region-runner-v3.exe",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Inherited WVB 1.33 construction and WVB 1.35 immutable scratch observation",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-verifier-v3.exe artifacts/local-write-region-runner-v3.exe",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused write-region oracle covered 13 source cases, seven malformed WVIR mutations, five malformed WVB mutations, five semantic WVB forgeries, 19 compiler-verifier decisions, five scalar executions, and one runtime mutation; it was not the complete changed-file development plan.",
+    "The scalar provider is limited to a 64-byte private heap extent and alignment through 8. Those are oracle bounds, not portable Language 1.0 limits.",
+    "The provider carries only private scalar-heap descriptors and exposes no native address, pointer, host handle, or public representation.",
+    "Static verifier containment makes aliasing and stale-region states unreachable in this profile; those exact dynamic failures were not forced by the five scalar cases.",
+    "The published front door, native lowerer, pointer derivation, authenticated Foreign-call path, migrated runtime or OS boundary, browser and WebAssembly hosts, and operating-system consumers do not admit WVB 1.36.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Language-1.0-Foundation.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}

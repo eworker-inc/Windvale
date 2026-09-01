@@ -253,10 +253,10 @@ or exposes an address. Mutable borrowing, write-region and pointer operations,
 authenticated Foreign calls, and cross-host containment remain outside this
 profile.
 
-## Candidate WVB 1.36 mutable write-region borrowing
+## Verified WVB 1.36 bounded scalar write-region borrowing
 
 WVB 1.36 inherits the WVB 1.35 System-profile metadata and instruction
-vocabulary and adds one writer-only candidate instruction:
+vocabulary and adds one instruction:
 
 ```text
 DE unsafe.write-region.borrow u32 scratch-local index,
@@ -282,15 +282,33 @@ construction relation when one is present.
 The verifier consumes three exact `u64` stack values, marks the named scratch
 unavailable through every branch and the remainder of the function, and
 produces an internal affine region-Result value. That value may be moved,
-stored, taken, discarded, and case-tested. It may not be constructed through
-ordinary variant operations, have its payload or fields extracted, cross a
-direct or indirect call, appear in a function signature, or be returned. A
-minor-36 module contains 1 through 4,096 `DE` instructions and at most 256
-distinct 12-byte relation entries.
+stored, taken, discarded, and case-tested. Its Failure payload may be extracted
+and matched to observe exact `Foreignˉpointerˉfailure` data. Its Valid region
+payload and fields remain inaccessible. The Result may not be constructed
+through ordinary variant operations, cross a direct or indirect call, appear
+in a function signature, or be returned. A minor-36 module contains 1 through
+4,096 `DE` instructions and at most 256 distinct 12-byte relation entries.
 
-No execution consumer admits minor 36. Region release, range and alignment
-failure production, provider behavior, pointer derivation, and authenticated
-Foreign calls require later executable checkpoints.
+The bounded scalar runner embeds the compiler-aligned verifier and admits minor
+36 to its provider only after that verifier succeeds.
+For this minor, the private scratch field holds the provider's existing
+eight-byte `{heap offset u32, length u32}` allocation descriptor rather than a
+native address. WVB 1.33-through-1.35 retain their earlier private length
+representation, and `DD` observes the descriptor length under minor 36.
+
+`DE` requires an exact live scratch record, matching heap allocation and lease,
+construction length from 1 through 64, and construction alignment through 8.
+It applies zero-length, `u64` relative/base/exclusive-end overflow, owner-range,
+and requested/actual-alignment checks in that order. Failure constructs exact
+`Outˉofˉrange`, `Addressˉoverflow`, or `Misaligned` data and no region. Success
+stores only a checked `{subrange offset u32, length u32}` descriptor in the
+opaque region record. The region owns no second lease; normal function teardown
+releases the scratch allocation and lease. Compiler containment makes dynamic
+alias and stale-owner cases unreachable in this first scalar profile.
+
+The published front door, native lowerers, launchers, browser and WebAssembly
+hosts, and OS consumers still reject minor 36. Pointer derivation, authenticated
+Foreign calls, and cross-host containment require later checkpoints.
 
 ## Encoding
 

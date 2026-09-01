@@ -1967,18 +1967,19 @@ required-alignment values. Its contextual result is the canonical
 `Result<Foreignˉwriteˉregion<Abi>, Foreignˉpointerˉfailure>`, and it contributes
 `unsafe.address`. WVIR 1.27/1.28 retain the scratch slot, three scalar operands,
 and ABI identity while independent validation rejects wrong borrow modes,
-types, labels, effects, or result relationships. This checkpoint does not yet
-encode or execute the borrow.
+types, labels, effects, or result relationships.
 
-The next representation checkpoint serializes that exact WVIR operation as
-candidate WVB 1.36 opcode `DE`. It consumes the three `u64` scalar values and
-carries direct scratch-local, canonical Result-type, and ABI-enum indexes. The
-writer moves the Result affinely, but every current verifier and execution
-consumer remains closed to minor 36. Compiler-aligned lifetime and exclusive-
-alias containment, pointer operations, authenticated Foreign calls, host ABI
-publication, and cross-host containment remain pending. The remaining
-operations below may appear only with their compiler-owned intrinsic semantics
-and containment evidence.
+The WVB checkpoint serializes that exact WVIR operation as WVB 1.36 opcode
+`DE`. It consumes the three `u64` scalar values and carries direct scratch-local,
+canonical Result-type, and ABI-enum indexes. The compiler-aligned verifier
+contains the Result and scratch affinely, permits observation of exact Failure
+data, and keeps the Valid region payload inaccessible. The bounded scalar
+provider executes zero-length, address-overflow, owner-range, alignment, and
+success outcomes through a private subrange descriptor with no exposed native
+address. Native region lowering, pointer operations, authenticated Foreign
+calls, host ABI publication, and cross-host containment remain pending. The
+remaining operations below may appear only with their compiler-owned intrinsic
+semantics and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,

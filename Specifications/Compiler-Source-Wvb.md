@@ -1029,7 +1029,7 @@ The native x86-64 backend reads the same private field through the validated
 record handle and preserves affine owner availability; neither path exposes a
 backing address.
 
-WVIR 1.27/1.28 operation `188` lowers to candidate WVB 1.36 opcode `DE`
+WVIR 1.27/1.28 operation `188` lowers to WVB 1.36 opcode `DE`
 (`unsafe.write-region.borrow`). The 13-byte instruction consumes `Start`,
 `Length`, and `Requiredˉalignment` as three ordered `u64` stack operands and
 carries three `u32` immediates: direct scratch-local index, canonical
@@ -1039,25 +1039,32 @@ borrowed-record shape `28`; ordinary mutable owned parameters remain invalid.
 The writer treats the exact Result as affine so it cannot be lowered through
 ordinary copy semantics.
 
-The compiler-aligned verifier admits WVB 1.36 without opening execution. It
+The compiler-aligned verifier admits WVB 1.36. It
 requires the exact seven-case pointer failure and canonical region Result,
 keeps scratch and region nominals distinct, and records at most 256 unique
 scratch/region/ABI relations. A reused nominal must retain one relation and a
 scratch construction in the same module must name the same ABI. The verifier
 admits at most 4,096 `DE` instructions and requires at least one in minor 36.
 
-Typed execution consumes the three exact `u64` operands, requires an available
+Typed verification consumes the three exact `u64` operands, requires an available
 owned scratch or compiler-authenticated mutable borrowed scratch parameter,
 and marks that scratch unavailable through branch merge, loops, and function
 exit. The produced region Result has verifier-internal affine kind `37`. It
-may be moved, stored, taken, discarded, and case-tested, but cannot be
-ordinarily constructed, have its payload or fields extracted, cross a call,
-appear in a function signature, or be returned.
+may be moved, stored, taken, discarded, and case-tested. Its Failure payload
+may be extracted and matched; its Valid region payload and fields remain
+inaccessible. It cannot be ordinarily constructed, cross a call, appear in a
+function signature, or be returned.
 
-The front-door verifier, runners, native lowerers, launchers, browser host, and
-OS consumers still reject WVB 1.36. Range, address-width, alignment, exact
-failure construction, lexical release, pointer behavior, and provider state
-remain pending runtime semantics.
+The bounded scalar runner embeds that verifier and admits WVB 1.36 only after
+it succeeds in every runner entry mode. Minor-36 scratch records privately
+carry the existing scalar-heap allocation descriptor, not a native address.
+`DE` validates the live record, exact allocation and
+lease, then applies zero-length, `u64` relative/base/exclusive-end overflow,
+owner-range, and requested/actual-alignment checks in order. It constructs exact
+failure variants or an opaque subrange descriptor and relies on normal scratch
+teardown to release the one backing lease. The separately published front door,
+native lowerers, launchers, browser host, and OS consumers still reject WVB 1.36.
+Pointer derivation, Foreign calls, and cross-host containment remain pending.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1072,9 +1079,10 @@ zeroes private backing bytes, returns exact validation failures, publishes only
 the non-address-like opaque value `1u64`, and releases remaining ownership at
 invocation teardown. The native x86-64 lowerer implements the same bounded
 scratch, budget-borrow, and scratch-observation matrix. WVB 1.36 now preserves
-mutable write-region borrowing and verifies conservative affine containment
-without opening execution. Scalar/provider and native region execution,
-pointer derivation, Foreign calls, and cross-host containment remain pending.
+mutable write-region borrowing, verifies conservative affine containment, and
+executes region construction plus exact range/overflow/alignment results in the
+bounded scalar provider. Native region execution, pointer derivation, Foreign
+calls, and cross-host containment remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256
