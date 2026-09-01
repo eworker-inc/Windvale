@@ -223,7 +223,7 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 32u32 { return Invalid; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 33u32 { return Invalid; }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -431,7 +431,11 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
             return Invalid;
         }
     } else {
-        if Moduleˉprofile != 1u32 { return Invalid; }
+        if Moduleˉprofile != 1u32 &&
+            (Requestˉmajor != 1u32 || Moduleˉminor != 33u32 ||
+                Moduleˉprofile != 3u32) {
+            return Invalid;
+        }
         if Capabilityˉcount != 0u32 { return Invalid; }
     }
 

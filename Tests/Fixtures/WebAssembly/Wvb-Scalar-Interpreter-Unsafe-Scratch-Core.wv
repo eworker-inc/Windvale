@@ -1,0 +1,43 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉunsafeˉscratchˉcore profile portable;
+
+export const MAXIMUM_SCRATCH_BYTES: u64 = 64u64;
+export const MAXIMUM_SCRATCH_ALIGNMENT: u64 = 8u64;
+
+export fn Lengthˉisˉvalid(Length: u64) -> bool {
+    return Length > 0u64 && Length <= MAXIMUM_SCRATCH_BYTES;
+}
+
+export fn Alignmentˉisˉvalid(Alignment: u64) -> bool {
+    return Alignment > 0u64 &&
+        Alignment <= MAXIMUM_SCRATCH_ALIGNMENT &&
+        (Alignment & (Alignment - 1u64)) == 0u64;
+}
+
+export fn Zeroedˉbacking(Length: u64) -> bytes {
+    let Empty: bytes = Bytesˉfromˉu8(0u8);
+    if !Lengthˉisˉvalid(Length) { return Bytesˉslice(Empty, 0u32, 0u32); }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(
+        Bytesˉfromˉu64ˉlittle(Length), 0u32
+    );
+    var Result: bytes = Bytesˉslice(Empty, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Result = Bytesˉconcat(Result, Empty);
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Backingˉisˉzeroed(Value: bytes, Length: u64) -> bool {
+    if !Lengthˉisˉvalid(Length) { return false; }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(
+        Bytesˉfromˉu64ˉlittle(Length), 0u32
+    );
+    if Bytesˉlength(Value) != Count { return false; }
+    var Index: u32 = 0u32;
+    while Index < Count {
+        if Bytesˉreadˉu8(Value, Index) != 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}

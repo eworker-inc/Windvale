@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import {
@@ -25,15 +25,17 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length !== 5) Usage();
+if (process.argv.length !== 5 && process.argv.length !== 6) Usage();
 
 const Analyzer = resolve(process.argv[2]);
 const Emitter = resolve(process.argv[3]);
 const Verifier = resolve(process.argv[4]);
+const Runner = process.argv.length === 6 ? resolve(process.argv[5]) : undefined;
 for (const [Tool, Label] of [
     [Analyzer, 'Analyzer'],
     [Emitter, 'emitter'],
     [Verifier, 'verifier'],
+    ...(Runner === undefined ? [] : [[Runner, 'runner']]),
 ]) {
     const Status = await lstat(Tool);
     if (!Status.isFile() || Status.size <= 0 ||
@@ -157,6 +159,70 @@ const Cases = [
     },
 ];
 
+const Runtimeˉapplications = [
+    {
+        Name: 'success',
+        Source: Runtimeˉapplication(
+            '',
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Budget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 42 } ' +
+            'case Result.Result.Failure { Error: _ } { 1 } };',
+        ),
+    },
+    {
+        Name: 'invalid-length',
+        Source: Runtimeˉapplication(
+            'fn Summarize(Error: Unsafe.Foreignˉmemoryˉfailure) -> i32 { ' +
+            'return match Error { ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉlength { ' +
+            'Observed: Observed, Maximum: Maximum } { ' +
+            'if Observed == 0u64 && Maximum == 64u64 { 42 } else { 2 } } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉalignment { ' +
+            'Observed: _ } { 3 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Allocation { Error: _ } { 4 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Unsupportedˉabi { 5 } }; } ',
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Budget, Length: 0u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 1 } ' +
+            'case Result.Result.Failure { Error: Failure } { ' +
+            'Summarize(Failure) } };',
+        ),
+    },
+    {
+        Name: 'invalid-alignment',
+        Source: Runtimeˉapplication(
+            'fn Summarize(Error: Unsafe.Foreignˉmemoryˉfailure) -> i32 { ' +
+            'return match Error { ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉlength { ' +
+            'Observed: _, Maximum: _ } { 2 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Invalidˉalignment { ' +
+            'Observed: Observed } { ' +
+            'if Observed == 16u64 { 42 } else { 3 } } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Allocation { Error: _ } { 4 } ' +
+            'case Unsafe.Foreignˉmemoryˉfailure.Unsupportedˉabi { 5 } }; } ',
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Budget, Length: 8u64, Alignment: 16u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 1 } ' +
+            'case Result.Result.Failure { Error: Failure } { ' +
+            'Summarize(Failure) } };',
+        ),
+    },
+];
+
+function Runtimeˉapplication(Helpers, Body) {
+    return 'module Languageˉoneˉunsafeˉscratchˉruntime; ' + SYSTEM_HEADER +
+        Imports + Abi + Helpers +
+        'export fn Main(Budget: Memory.Memoryˉbudget) -> i32 ' +
+        'effects(memory.allocate) { ' + Body + ' }';
+}
+
 const Work = await mkdtemp(join(tmpdir(), 'windvale-unsafe-scratch-wir-'));
 var Valid = 0;
 var Rejected = 0;
@@ -221,16 +287,114 @@ try {
             Rejected += 1;
         }
     }
+    if (Runner !== undefined) {
+        await Verifyˉruntime();
+    }
     process.stdout.write(
         'native language 1 unsafe scratch WVIR status=Passed ' +
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
         `malformed=${Malformed} wvb-malformed=${Wvbˉmalformed} ` +
         `operation=186 opcode=220 wvb-minor=33 wvb-bytes=${Wvbˉbytes} ` +
         `wvb-sha256=${Wvbˉsha256} effect-check=emitter ` +
+        `runtime=${Runner === undefined ? 'Notˉrequested' : 'Verified'} ` +
         `compiler-verifier-cases=${Wvbˉverified}\n`,
     );
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Verifyˉruntime() {
+    const Directory = join(Work, 'runtime');
+    await mkdir(Directory);
+    for (let Index = 0; Index < Runtimeˉapplications.length; Index += 1) {
+        const Case = Runtimeˉapplications[Index];
+        process.stdout.write(
+            'native language 1 unsafe scratch runtime ' +
+            `item=${Index + 1}/${Runtimeˉapplications.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Caseˉdirectory = join(Directory, Case.Name);
+        await mkdir(Caseˉdirectory);
+        const Input = join(Caseˉdirectory, 'Source.wvss');
+        const Sourceˉoutput = join(Caseˉdirectory, 'Output.wvss');
+        const Manifest = join(Caseˉdirectory, 'Manifest.wvca');
+        const Bindings = join(Caseˉdirectory, 'Bindings.wvlb');
+        const Wir = join(Caseˉdirectory, 'Wir.wvir');
+        const Wvb = join(Caseˉdirectory, 'Runtime.wvb');
+        await writeFile(Input, Sourceˉset([
+            Case.Source, Memoryˉmodule, Resultˉmodule, Unsafeˉmodule,
+        ]), { flag: 'wx' });
+        const Analysis = await Runˉanalyzer([
+            '--internal-source-set', Input,
+            Sourceˉoutput, Manifest, Bindings, Wir,
+        ]);
+        if (Analysis.Code !== 0 || Analysis.Exceeded) {
+            Reject(
+                `Unsafe-scratch runtime ${Case.Name} analysis failed: ` +
+                `status=${Analysis.Code}.\n${Analysis.Diagnostic}`,
+            );
+        }
+        const Emission = await Runˉemitter(
+            Sourceˉoutput, Manifest, Bindings, Wir, Wvb,
+        );
+        if (Emission.Code !== 0 || Emission.Exceeded || !Exists(Wvb)) {
+            Reject(
+                `Unsafe-scratch runtime ${Case.Name} emission failed: ` +
+                `status=${Emission.Code}.\n${Emission.Diagnostic}`,
+            );
+        }
+        await Requireˉwvbˉverification(Wvb, true, `runtime-${Case.Name}`);
+        const Execution = spawnSync(Runner, [Wvb], {
+            cwd: Work,
+            encoding: 'utf8',
+            windowsHide: true,
+            maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+            timeout: ANALYSIS_TIMEOUT_MILLISECONDS,
+        });
+        if (Execution.error !== undefined || Execution.status !== 0 ||
+            Execution.stdout.replaceAll('\r\n', '\n') !== 'Result: 42\n' ||
+            Execution.stderr.length !== 0) {
+            Reject(
+                `Unsafe-scratch runtime ${Case.Name} execution differed: ` +
+                `status=${Execution.status} ` +
+                `error=${Execution.error?.message ?? 'none'}\n` +
+                `stdout=${Execution.stdout}\nstderr=${Execution.stderr}`,
+            );
+        }
+        if (Case.Name === 'success') {
+            const Candidate = await readFile(Wvb);
+            const Layout = Inspectˉunsafeˉscratchˉwvb(Candidate);
+            Candidate[Layout.Operation] = 209;
+            const Missingˉoperation = join(
+                Caseˉdirectory, 'Missing-Scratch-Operation.wvb',
+            );
+            await writeFile(Missingˉoperation, Candidate, { flag: 'wx' });
+            const Rejected = spawnSync(Runner, [Missingˉoperation], {
+                cwd: Work,
+                encoding: 'utf8',
+                windowsHide: true,
+                maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+                timeout: ANALYSIS_TIMEOUT_MILLISECONDS,
+            });
+            if (Rejected.error !== undefined || Rejected.status !== 1 ||
+                Rejected.stdout.length !== 0 ||
+                !Rejected.stderr.replaceAll('\r\n', '\n').endsWith(
+                    ' phase=execution\n',
+                )) {
+                Reject(
+                    'Unsafe-scratch missing-operation runtime rejection ' +
+                    `differed: status=${Rejected.status} ` +
+                    `error=${Rejected.error?.message ?? 'none'}\n` +
+                    `stdout=${Rejected.stdout}\nstderr=${Rejected.stderr}`,
+                );
+            }
+        }
+    }
+    process.stdout.write(
+        'native language 1 unsafe scratch runtime status=Passed ' +
+        `cases=${Runtimeˉapplications.length} malformed=1 result=42 ` +
+        'allocation=zeroed teardown=bounded\n',
+    );
 }
 
 function Inspectˉvalidˉwir(Input) {
@@ -339,6 +503,10 @@ async function Verifyˉemitterˉboundary(
         {
             Name: 'unknown-wvb-opcode',
             Mutate: Candidate => { Candidate[Wvbˉlayout.Operation] = 221; },
+        },
+        {
+            Name: 'missing-wvb-scratch-operation',
+            Mutate: Candidate => { Candidate[Wvbˉlayout.Operation] = 209; },
         },
         {
             Name: 'invalid-wvb-budget-slot',
@@ -829,7 +997,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs ' +
-        '<analyzer> <emitter> <compiler-verifier>\n',
+        '<analyzer> <emitter> <compiler-verifier> [runner]\n',
     );
     process.exit(64);
 }
