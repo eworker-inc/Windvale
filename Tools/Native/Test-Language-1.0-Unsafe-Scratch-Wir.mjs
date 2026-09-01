@@ -200,6 +200,7 @@ const Cases = [
 const Runtimeˉapplications = [
     {
         Name: 'success',
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             '',
             'let Outcome: ' + Resultˉtype + ' = ' +
@@ -212,6 +213,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'invalid-length',
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             'fn Summarize(Error: Unsafe.Foreignˉmemoryˉfailure) -> i32 { ' +
             'return match Error { ' +
@@ -233,6 +235,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'invalid-alignment',
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             'fn Summarize(Error: Unsafe.Foreignˉmemoryˉfailure) -> i32 { ' +
             'return match Error { ' +
@@ -254,6 +257,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'call-transfer-success',
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
             'effects(memory.allocate) { ' +
