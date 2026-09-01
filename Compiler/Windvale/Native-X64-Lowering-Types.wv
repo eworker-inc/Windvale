@@ -246,9 +246,9 @@ export fn Compilerˉnativeˉx64ˉshapeˉread(
 ) -> Compilerˉnativeˉx64ˉshape {
     if !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
-    if Kind == 25u8 {
+    if Kind == 25u8 || Kind == 36u8 {
         return Compilerˉnativeˉx64ˉshape(
-            true, Cursor + 1u32, 10u8, 25u32
+            true, Cursor + 1u32, 10u8, U32ˉfromˉu8(Kind)
         );
     }
     if U32ˉfromˉu8(Kind) >= 1u32 {

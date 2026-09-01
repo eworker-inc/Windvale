@@ -110,6 +110,7 @@ const WVB_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WVB_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
 const WVB_TASK_FEATURE: u32 = 2097152u32;
 const WVB_UNSAFE_SCRATCH_FEATURE: u32 = 4194304u32;
+const WVB_BORROWED_BUDGET_FEATURE: u32 = 8388608u32;
 
 export record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
@@ -5416,10 +5417,23 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     var Preserveˉborrowedˉtemporaryˉidentity: bool = false;
     var Borrowˉscan: u32 = 0u32;
     while Borrowˉscan < Temporaryˉcount {
+        let Borrowˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+            Wir,
+            Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir) +
+                (Firstˉtemporary + Borrowˉscan) * 4u32
+        );
         if Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉownedˉaggregate(
-            Wir, Firstˉoperation, Operationˉcount, Firstˉtemporary,
-            Borrowˉscan, Orders
-        ) {
+                Wir, Firstˉoperation, Operationˉcount, Firstˉtemporary,
+                Borrowˉscan, Orders
+            ) || (Borrowˉshape == 805306368u32 &&
+                Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                    Input, Scan, Symbols, Bindings, Wir,
+                    Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+                        Firstˉoperation * 28u32,
+                    Compilerˉsourceˉwvbˉoperationsˉoffset(Wir) +
+                        (Firstˉoperation + Operationˉcount) * 28u32,
+                    Borrowˉscan, Borrowˉshape
+                )) {
             Preserveˉborrowedˉtemporaryˉidentity = true;
         }
         Borrowˉscan = Borrowˉscan + 1u32;
@@ -5476,13 +5490,18 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Bindings.Directory,
             Bindingˉpayload + (Firstˉbinding + Index) * 36u32 + 24u32
         );
+        let Parameterˉmode: u32 =
+            Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+                Input, Scan, Symbols, Bindings, Function, Index
+            );
         let Isˉallowedˉbudgetˉparameter: bool =
             Parameterˉshape == 805306368u32 &&
             (Isˉlauncherˉbudgetˉmain ||
              Bytesˉreadˉu16ˉlittle(Wir, 6u32) >= 21u32) &&
-            Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-                Input, Scan, Symbols, Bindings, Function, Index
-            ) == Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+            (Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE ||
+             Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE);
         if !Isˉallowedˉbudgetˉparameter &&
             !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
                 Parameterˉshape, false, Symbols, Orders
@@ -5510,14 +5529,15 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Compilerˉsourceˉwvbˉplannedˉshape(
                 Parameterˉshape, Symbols, Orders
             );
+        if Parameterˉshape == 805306368u32 && Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE {
+            Plannedˉparameter = Bytesˉfromˉu8(36u8);
+            Features = Features | WVB_BORROWED_BUDGET_FEATURE;
+        }
         if Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(
             Parameterˉshape, Orders
         ) {
             Features = Features | 32768u32;
-            let Parameterˉmode: u32 =
-                Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
-                    Input, Scan, Symbols, Bindings, Function, Index
-                );
             if Parameterˉmode >
                     Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_MUTABLE {
                 return Compilerˉsourceˉwvbˉfunctionˉfailure(
@@ -5616,6 +5636,19 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         var Plannedˉtemporary: bytes = Compilerˉsourceˉwvbˉplannedˉshape(
             Temporaryˉshape, Symbols, Orders
         );
+        let Isˉborrowedˉbudgetˉtemporary: bool =
+            Temporaryˉshape == 805306368u32 &&
+            Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
+                Input, Scan, Symbols, Bindings, Wir,
+                Operationsˉoffset + Firstˉoperation * 28u32,
+                Operationsˉoffset +
+                    (Firstˉoperation + Operationˉcount) * 28u32,
+                Index, Temporaryˉshape
+            );
+        if Isˉborrowedˉbudgetˉtemporary {
+            Plannedˉtemporary = Bytesˉfromˉu8(36u8);
+            Features = Features | WVB_BORROWED_BUDGET_FEATURE;
+        }
         if Preserveˉborrowedˉtemporaryˉidentity &&
             Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉownedˉaggregate(
                 Wir, Firstˉoperation, Operationˉcount, Firstˉtemporary,
@@ -6533,6 +6566,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     }
     if (Features & WVB_TASK_FEATURE) != 0u32 { Wvbˉminor = 32u32; }
     if (Features & WVB_UNSAFE_SCRATCH_FEATURE) != 0u32 { Wvbˉminor = 33u32; }
+    if (Features & WVB_BORROWED_BUDGET_FEATURE) != 0u32 { Wvbˉminor = 34u32; }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));
     Bytecode = Bytesˉconcat(

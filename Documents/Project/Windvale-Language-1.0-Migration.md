@@ -861,10 +861,18 @@ admits the canonical `Split` result's budget field. Entry and 64-byte child
 budgets reach an ordinary helper, while a 32-byte child asked for 64 bytes
 returns exact `Budgetˉexhausted` with 64 requested and 32 available. Duplicate
 transfer is rejected before WVB publication. Ordinary immutable budget
-borrowing remains valid through WIR but still returns `Unsupportedˉshape` at
-WVB emission; its encoding, native lowering and containment, pointer and
-write-region borrowing, authenticated Foreign calls, one migrated runtime or
-OS boundary, Linux reproduction, and paired-host evidence remain pending.
+borrowing remains valid through WIR.
+
+[Decision 0906](../Decisions/0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md)
+now serializes that immutable boundary as WVB 1.34 shape `36`. The source
+writer, complete verifier, scalar runner, and native x86-64 lowerer preserve
+the caller's shape-`25` owner while confining the view to one canonical direct
+call. The focused program observes the budget, then transfers the same owner to
+a 64-byte scratch allocation and returns `42`; six shape/version corruptions
+reject in both verification and native lowering. Mutable budget borrowing,
+pointer and write-region borrowing, authenticated Foreign calls, one migrated
+runtime or OS boundary, Linux reproduction, and paired-host evidence remain
+pending.
 
 ## Removal checkpoint
 

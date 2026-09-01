@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 33u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 34u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -56,6 +56,7 @@ export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
         Kind >= 28u32 && Kind <= 30u32 { return true; }
     if Minor >= 29u32 && Kind == 34u32 { return true; }
     if Minor >= 30u32 && Kind == 35u32 { return true; }
+    if Minor == 34u32 && Kind == 36u32 { return true; }
     return ((Minor >= 21u32 && Minor <= 28u32) || Minor >= 32u32) &&
         Kind == 25u32;
 }
@@ -67,7 +68,7 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
-    if Minor < 11u32 || Minor > 33u32 { return 0u32; }
+    if Minor < 11u32 || Minor > 34u32 { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
     var Unsafeˉscratchˉinstructions: u32 = 0u32;
@@ -234,7 +235,7 @@ export fn Scanˉfunction(
             Supported = true;
         }
         if Opcode == 220u32 {
-            if Minor != 33u32 { return 0u32; }
+            if Minor != 33u32 && Minor != 34u32 { return 0u32; }
             Width = 13u32;
             Supported = true;
             Unsafeˉscratchˉinstructions = Unsafeˉscratchˉinstructions + 1u32;

@@ -17,7 +17,9 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    Vector-containing-aggregate ownership extension, the WVB 1.29
    rights-limited source-file snapshot extension, the WVB 1.30 exact
    noncapturing-callable extension, the WVB 1.31 plain-capture closure
-   environment extension, and the WVB 1.32 structured-task extension.
+   environment extension, the WVB 1.32 structured-task extension, the WVB 1.33
+   unsafe-scratch extension, and the WVB 1.34 immutable borrowed-memory-budget
+   call extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -86,6 +88,10 @@ WVB 1.33 unsafe-scratch publication and bounded scalar execution are specified
 below. The Language 1.0 source backend emits it, the complete compiler-aligned
 verifier admits it, and the source-built native scalar runner supplies its
 first capability-free System-profile allocation oracle.
+WVB 1.34 adds one non-owning shape for an immutable borrowed
+`Memoryˉbudget` call. The verifier, scalar runner, and native x86-64 lowerer
+confine that view to one canonical direct-call sequence while preserving the
+caller's shape-`25` owner.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -108,13 +114,16 @@ closure environment. WVB 1.31 is selected when `closure.create` is present
 without structured-task evidence. WVB 1.32 is selected when a task instruction
 or extended callable descriptor is present. WVB 1.33 is selected when
 `unsafe.scratch.construct` is present, including when inherited task evidence
-is also present. The compiler-aligned verifier accepts all twenty-three
+is also present. WVB 1.34 is selected when any function has an immutable
+borrowed `Memoryˉbudget` parameter. The compiler-aligned verifier accepts all
+twenty-four
 versions and never admits an extension under an earlier header. The
-source-built native scalar runner accepts WVB 1.33 only through the bounded
-provider below. Native lowering, browser, WebAssembly-package, published
-front-door artifacts, and Windvale OS consumers retain explicit narrower
-version boundaries until their own lowering, reconstruction, or execution
-slices land.
+source-built native scalar runner accepts WVB 1.33 and WVB 1.34 only through
+the bounded provider below. The native x86-64 lowerer admits the same focused
+unsafe-scratch and immutable-borrow matrix. Browser, WebAssembly-package,
+published front-door artifacts, and Windvale OS consumers retain explicit
+narrower version boundaries until their own reconstruction or execution slices
+land.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -166,8 +175,45 @@ alignment, budget refusal, and heap refusal use the canonical failure shapes.
 The visible scratch carrier is the non-address-like value `1u64`; the backing
 allocation and lease remain private to the interpreter and are finalized by
 invocation teardown. This oracle does not expose a pointer, implement a native
-ABI, grant a capability, or open native, browser, WebAssembly-package,
-published-front-door, or Windvale OS execution.
+ABI, or grant a capability. The separately verified native x86-64 lowerer
+accepts the same bounded scratch subset; browser, WebAssembly-package,
+published-front-door, and Windvale OS execution remain closed.
+
+## Verified WVB 1.34 immutable borrowed memory-budget calls
+
+WVB 1.34 inherits the WVB 1.33 System profile, metadata, type vocabulary,
+instructions, and bounds. It reserves value shape `36` for a non-owning
+immutable view of the exact shape-`25` `Memoryˉbudget` owner. Shape `36` is
+valid only as an immutable borrowed function parameter and as a
+compiler-generated non-parameter local. It is invalid as a function result,
+nominal field or payload, collection element, callable-descriptor shape,
+mutable borrow, or owned value. Every WVB 1.34 module contains at least one
+shape-`36` parameter.
+
+The only local construction is the adjacent sequence:
+
+```text
+local.load  <available shape-25 owner>
+local.store <shape-36 view local>
+local.load  <same shape-36 view local>
+local.load  <zero through 64 remaining argument locals>
+call        <target whose corresponding parameter is shape 36>
+```
+
+The view load cannot be replaced with `local.take`, and no other instruction
+may intervene before the direct call except the bounded remaining argument
+loads. A shape-`36` parameter cannot itself be loaded in this first profile;
+the callee accepts the observation boundary, but no budget-query operation is
+yet defined. Constructing and passing a view does not change the owner's affine
+availability. The caller may subsequently move that same owner once, including
+to `unsafe.scratch.construct`.
+
+The scalar interpreter and native x86-64 backend use one opaque `u64` cell for
+both representations, but validation retains identities `25` and `36`
+separately. The shared cell is an internal carrier, not a public token layout,
+pointer, provider handle, implicit copy, or new allocation authority. WVB 1.34
+may inherit opcode `DC` when present, but a borrow-only module need not contain
+one.
 
 ## Encoding
 
@@ -184,7 +230,7 @@ published-front-door, or Windvale OS execution.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 through 33
+u16      minor version: 11 through 34
 u32      section count: 7
 ```
 
@@ -341,6 +387,9 @@ Major `6` retains the bounded 16-byte request header used by the portable
 entry, requires hosted profile `2`, zero declared capabilities, WVB 1.32, and
 the exact two-parameter signature, and carries no source-file snapshot. Request
 major `5` remains exclusively the source-file snapshot contract.
+WVB 1.33 and WVB 1.34 System-profile execution instead exports exact
+`Main(Memoryˉbudget) -> i32`; shape `36` remains confined to non-exported
+helpers and compiler-generated view locals.
 Future native object formats must define an ASCII-safe external symbol mapping
 separately.
 
@@ -352,7 +401,7 @@ repeat:
   u8     kind: 1 record, 2 i32-backed enum, 3 variant,
                4 fixed array, 5 Vector, 6 Sequence,
                7 u8-backed enum (WVB 1.22 and later),
-               8 callable descriptor (WVB 1.30 through WVB 1.32)
+               8 callable descriptor (WVB 1.30 through WVB 1.34)
   if kind 1 through 7:
     string nominal type name
   if record:
@@ -479,14 +528,15 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 22 fixed array followed by u32 nominal-type index (WVB 1.17 and later)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
-25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals; WVB 1.33 by-value parameters and affine locals)
+25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals; WVB 1.33 and WVB 1.34 by-value parameters and affine locals)
 26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
-28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.32 local only)
-29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.32 local only)
-30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.32 local only)
-34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.32 exact entry and Main locals only)
-35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.32)
+28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.34 local only)
+29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.34 local only)
+30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.34 local only)
+34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.34 under the exact entry rules)
+35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.34)
+36 immutable-borrowed Memoryˉbudget view (WVB 1.34 parameter or compiler-generated local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -1155,7 +1205,7 @@ failure and cannot change successful value semantics.
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
-- The version is WVB 1.11 through 1.33 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28, the exact 1.32 task profile, or the exact 1.33 unsafe-scratch profile, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, a Vector-containing aggregate requires at least 1.28, shape `34` or `source.length` requires 1.29 through 1.33, kind `8`, shape `35`, `function.reference`, or `call.indirect` requires 1.30 through 1.33, `closure.create` requires 1.31 through 1.33, extended callable descriptors or task opcodes require 1.32 or inherited 1.33, and `unsafe.scratch.construct` requires exactly 1.33.
+- The version is WVB 1.11 through 1.34 and the Module metadata presence byte is encoded exactly as specified above; every fixed-integer item requires at least 1.12, every rune item requires at least 1.13, every floating-point item requires at least 1.14, every unit or never item requires at least 1.15, every multi-field variant encoding or field instruction requires at least 1.16, every fixed-array descriptor, shape, construction, or access requires 1.17, every Vector or Sequence descriptor or shape requires at least 1.18, every Vector or Sequence execution operation requires at least 1.19, Vector `local.take` requires at least 1.20, shape `25` requires 1.21 through 1.28, the exact 1.32 task profile, or the exact 1.33/1.34 System profiles, kind `7` requires at least 1.22, `memory_budget.split` requires at least 1.23, fallible reserved Vector construction requires at least 1.24, recoverable Vector append requires at least 1.25, an exact Vector parameter requires at least 1.26, reserved Vector growth requires at least 1.27, a Vector-containing aggregate requires at least 1.28, shape `34` or `source.length` requires 1.29 through 1.34, kind `8`, shape `35`, `function.reference`, or `call.indirect` requires 1.30 through 1.34, `closure.create` requires 1.31 through 1.34, extended callable descriptors or task opcodes require 1.32 or inheritance by 1.33/1.34, `unsafe.scratch.construct` requires 1.33 or inherited 1.34, and shape `36` requires exactly 1.34.
 - Platform scopes, authority, required capabilities, optional capabilities, and capability major versions satisfy the independent module-metadata rules.
 - Every function decodes completely into known instructions.
 - Branch targets identify instruction boundaries in the same function.
@@ -1174,11 +1224,12 @@ Verification is required before execution and rejects a module unless:
 - Every opcode `D0` references a direct non-parameter exact Vector local and exact structurally validated append Result type, consumes one matching scalar item, preserves the Vector and returns that item on capacity refusal, and mutates the Vector exactly once only on success.
 - Every opcode `D1` references a direct non-parameter exact Vector local, a distinct available shape-25 budget slot, and exact structurally validated `Result<unit, Allocationˉfailure>`; consumes one `u64` maximum; preserves both owners on refusal; and swaps the complete backing and lease only on success.
 - Every WVB 1.26-or-later Vector parameter uses exact shape `23`, `26`, or `27` with a matching kind-5 nominal index; borrowed shapes occur nowhere else; calls supply unique evidence to shape `23` and retaining evidence to shapes `26` and `27`; and reverse-order callee cleanup cannot release the caller's preserved owner.
-- Every WVB 1.28 through WVB 1.33 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once in the executable profiles.
+- Every WVB 1.28 through WVB 1.34 owned aggregate is classified recursively and moved as a whole through constructors, stores, calls, and returns; each shape-`28`, `29`, or `30` view is a matching local-only observer sequence and cannot be taken or escape; and teardown releases each reachable nested Vector descriptor exactly once in the executable profiles.
 - Every WVB 1.29 module contains exactly one exported `Main(Platformˉfile.Sourceˉfile) -> i32`, admits shape `34` only in that parameter and its move-owned locals, contains 1 through 64 exact `source.length` instructions over available non-parameter source locals, and cannot construct, copy, return, embed, or expose the source owner. WVB 1.32 admits inherited source-file evidence only where its independent entry/profile constraints remain exact.
 - Every kind-`8` descriptor has the containing module's exact profile, one exact non-`void`/non-`never` result, at most 64 exact parameters, and a terminal position after all nominal types; every shape `35` names one kind-`8` entry; every `function.reference` target exactly matches its descriptor; every `call.indirect` consumes that exact callable plus the descriptor's exact arguments; every `closure.create` has 1 through 64 admitted captures and an exact physical target signature; source publication separately proves the applicable safety, generic, effect, capture, and lifetime restrictions before flattening; every WVB 1.30 module contains at least one `D3` or `D4`; every WVB 1.31 module contains at least one `D5`; and WVB 1.32 validates the exact descriptor trailer plus at least one task operation.
 - Every WVB 1.32 structured-task entry, canonical Foundation identity, construction/spawn/outcome layout, async callable descriptor, effect mask, scope/handle local, origin relation, policy, and affine ownership transition is exact; every accepted child is awaited or joined before scope consumption; and invalid limits, forged handles, repeated await, missing exit, mismatched outcomes, scope escape, and control-flow ownership disagreement reject before execution.
 - Every WVB 1.33 module uses system profile `3`, contains 1 through 4,096 exact `DC` instructions and at most 256 distinct scratch-nominal/ABI bindings, inherits the exact WVB 1.32 callable and task encodings when present, and validates the canonical scratch, Result, foreign-memory failure, allocation-failure, and reason-enum layouts. Each `DC` consumes two `u64` stack values and one available shape-`25` owner, produces one affine scratch Result, names a kind-`2` or kind-`7` ABI enum, and agrees with every other ABI binding for the same scratch nominal. Ordinary record operations cannot construct or expose the opaque scratch token.
+- Every WVB 1.34 module uses system profile `3`, contains at least one shape-`36` parameter, and confines every shape-`36` local to the canonical owner-load/view-store/view-load/direct-call sequence. Shape `36` is invalid in results, nominal payloads, collection elements, callable descriptors, `local.take`, indirect calls, and all non-1.34 modules. Its direct-call target has shape `36` at the exact corresponding parameter position; the source shape-`25` owner remains available. When opcode `DC` is present, the complete WVB 1.33 scratch, ABI, layout, and count rules remain exact.
 - Calls consume the declared parameter types, push one result for every result
   other than `void` or `never`, and push nothing for `void` or `never`.
 - Returns match the function return type; a `never` function has no return
@@ -1195,6 +1246,7 @@ Verification is required before execution and rejects a module unless:
 - Sections: exactly 7
 - WVB 1.33 unsafe-scratch instructions: 4,096
 - WVB 1.33 distinct scratch/ABI bindings: 256
+- WVB 1.34 local loads between a borrowed-budget view and its direct call: 64
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes

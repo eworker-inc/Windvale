@@ -476,7 +476,8 @@ export fn Compilerˉnativeˉx64ˉreadˉstructure(Input: bytes)
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if Minor != 11u32 && Minor != 30u32 && Minor != 31u32 && Minor != 33u32 {
+    if Minor != 11u32 && Minor != 30u32 && Minor != 31u32 &&
+        Minor != 33u32 && Minor != 34u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -630,6 +631,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     var Parameterˉtypes: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Parameterˉtypeˉidentities: bytes =
         Compilerˉnativeˉx64ˉempty(Input);
+    let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     var Parameter: u32 = 0u32;
     while Parameter < Parameters {
         let Parameterˉshape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
@@ -640,6 +642,9 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
                 Types
             );
         if !Parameterˉshape.Valid {
+            return Compilerˉnativeˉx64ˉinvalidˉfunction();
+        }
+        if Parameterˉshape.Identity == 36u32 && Moduleˉminor != 34u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(
@@ -670,6 +675,9 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             Types
         );
     if !Returnˉshape.Valid {
+        return Compilerˉnativeˉx64ˉinvalidˉfunction();
+    }
+    if Returnˉshape.Identity == 36u32 {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
     let Returnˉtype: u8 = Returnˉshape.Type;
@@ -715,6 +723,9 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
                 Types
             );
         if !Localˉshape.Valid {
+            return Compilerˉnativeˉx64ˉinvalidˉfunction();
+        }
+        if Localˉshape.Identity == 36u32 && Moduleˉminor != 34u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉlocalˉtypeˉisˉsupported(
@@ -1345,7 +1356,7 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
         return Callableˉtypes == 0u32 &&
             Referencesˉandˉcalls == 0u32 && Closures == 0u32;
     }
-    if Minor == 33u32 { return true; }
+    if Minor == 33u32 || Minor == 34u32 { return true; }
     if Callableˉtypes == 0u32 { return false; }
     if Minor == 30u32 {
         return Referencesˉandˉcalls > 0u32 && Closures == 0u32;
@@ -7432,6 +7443,126 @@ export fn Compilerˉnativeˉx64ˉcompareˉplannedˉemission(
     );
 }
 
+fn Compilerˉnativeˉx64ˉborrowedˉparameterˉisˉset(
+    Masks: bytes,
+    Function: u32,
+    Parameter: u32
+) -> bool {
+    if Parameter >= 64u32 ||
+        Function >= Bytesˉlength(Masks) / 8u32 {
+        return false;
+    }
+    let Word: u32 = Parameter / 32u32;
+    let Shift: u32 = Parameter % 32u32;
+    return ((Bytesˉreadˉu32ˉlittle(
+        Masks, Function * 8u32 + Word * 4u32
+    ) >> Shift) & 1u32) == 1u32;
+}
+
+fn Compilerˉnativeˉx64ˉborrowedˉbudgetˉcallˉfollows(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Start: u32,
+    Parameterˉcounts: bytes,
+    Borrowedˉparameterˉmasks: bytes
+) -> bool {
+    var Cursor: u32 = Start;
+    var Trailingˉloads: u32 = 0u32;
+    while Cursor < Codeˉlength && Trailingˉloads <= 64u32 {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 64u8 {
+            if 5u32 > Codeˉlength - Cursor { return false; }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Target >= Bytesˉlength(Parameterˉcounts) ||
+                Target >= Bytesˉlength(Borrowedˉparameterˉmasks) / 8u32 {
+                return false;
+            }
+            let Parameters: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+                Parameterˉcounts, Target
+            ));
+            if Trailingˉloads >= Parameters { return false; }
+            return Compilerˉnativeˉx64ˉborrowedˉparameterˉisˉset(
+                Borrowedˉparameterˉmasks,
+                Target,
+                Parameters - Trailingˉloads - 1u32
+            );
+        }
+        if Opcode != 4u8 || 5u32 > Codeˉlength - Cursor {
+            return false;
+        }
+        Cursor = Cursor + 5u32;
+        Trailingˉloads = Trailingˉloads + 1u32;
+    }
+    return false;
+}
+
+fn Compilerˉnativeˉx64ˉborrowedˉbudgetˉusesˉareˉvalid(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Function: Compilerˉnativeˉx64ˉfunction,
+    Parameterˉcounts: bytes,
+    Borrowedˉparameterˉmasks: bytes
+) -> bool {
+    var Cursor: u32 = 0u32;
+    var Previous: u32 = Function.Codeˉlength;
+    while Cursor < Function.Codeˉlength {
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        let Size: u32 = Compilerˉnativeˉx64ˉinstructionˉsize(Opcode);
+        if Size == 0u32 || Size > Function.Codeˉlength - Cursor {
+            return false;
+        }
+        if Opcode == 4u8 || Opcode == 5u8 || Opcode == 205u8 {
+            let Local: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Local >= Function.Locals { return false; }
+            let Identity: u32 = Bytesˉreadˉu32ˉlittle(
+                Function.Localˉtypeˉidentities, Local * 4u32
+            );
+            if Identity == 36u32 {
+                if Opcode == 205u8 || Local < Function.Parameters ||
+                    Previous >= Function.Codeˉlength {
+                    return false;
+                }
+                let Previousˉopcode: u8 = Bytesˉreadˉu8(
+                    Input, Codeˉoffset + Previous
+                );
+                let Previousˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Previous + 1u32
+                );
+                if Opcode == 5u8 {
+                    if Previousˉopcode != 4u8 ||
+                        Previousˉlocal >= Function.Locals ||
+                        Bytesˉreadˉu32ˉlittle(
+                            Function.Localˉtypeˉidentities,
+                            Previousˉlocal * 4u32
+                        ) != 25u32 {
+                        return false;
+                    }
+                } else {
+                    if Previousˉopcode != 5u8 || Previousˉlocal != Local ||
+                        !Compilerˉnativeˉx64ˉborrowedˉbudgetˉcallˉfollows(
+                            Input,
+                            Codeˉoffset,
+                            Function.Codeˉlength,
+                            Cursor + Size,
+                            Parameterˉcounts,
+                            Borrowedˉparameterˉmasks
+                        ) {
+                        return false;
+                    }
+                }
+            }
+        }
+        Previous = Cursor;
+        Cursor = Cursor + Size;
+    }
+    return Cursor == Function.Codeˉlength;
+}
+
 export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     -> Compilerˉnativeˉx64ˉplan {
     let Structure: Compilerˉnativeˉx64ˉstructure =
@@ -7461,7 +7592,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     let Profile: u8 = Bytesˉreadˉu8(Input, Structure.Moduleˉoffset);
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Profile != 1u8 && Profile != 2u8 &&
-        !(Profile == 3u8 && Minor == 33u32) {
+        !(Profile == 3u8 && (Minor == 33u32 || Minor == 34u32)) {
         return Compilerˉnativeˉx64ˉplanˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉprofile
@@ -7616,6 +7747,10 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
 
     var Signatures: bytes = Compilerˉnativeˉx64ˉempty(Input);
     var Functionˉcursors: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Parameterˉcounts: bytes = Compilerˉnativeˉx64ˉempty(Input);
+    var Borrowedˉparameterˉmasks: bytes =
+        Compilerˉnativeˉx64ˉempty(Input);
+    var Borrowedˉparameterˉcount: u32 = 0u32;
     var Functionˉcursor: u32 = Functions.Payloadˉoffset + 4u32;
     var Expectedˉwvbˉcodeˉoffset: u32 = 0u32;
     var Functionˉindex: u32 = 0u32;
@@ -7639,10 +7774,44 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
                 Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
             );
         }
-        if Isˉmain && Minor != 33u32 && Function.Parameters != 0u32 {
+        if Isˉmain && Minor != 33u32 && Minor != 34u32 &&
+            Function.Parameters != 0u32 {
             return Compilerˉnativeˉx64ˉplanˉfailure(
                 Input,
                 Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
+            );
+        }
+        if Minor == 34u32 {
+            Parameterˉcounts = Bytesˉconcat(
+                Parameterˉcounts,
+                Bytesˉslice(
+                    Bytesˉfromˉu32ˉlittle(Function.Parameters), 0u32, 1u32
+                )
+            );
+            var Borrowedˉlow: u32 = 0u32;
+            var Borrowedˉhigh: u32 = 0u32;
+            var Parameter: u32 = 0u32;
+            while Parameter < Function.Parameters {
+                if Bytesˉreadˉu32ˉlittle(
+                        Function.Localˉtypeˉidentities, Parameter * 4u32
+                    ) == 36u32 {
+                    if Parameter < 32u32 {
+                        Borrowedˉlow = Borrowedˉlow | (1u32 << Parameter);
+                    } else {
+                        Borrowedˉhigh = Borrowedˉhigh |
+                            (1u32 << (Parameter - 32u32));
+                    }
+                    Borrowedˉparameterˉcount =
+                        Borrowedˉparameterˉcount + 1u32;
+                }
+                Parameter = Parameter + 1u32;
+            }
+            Borrowedˉparameterˉmasks = Bytesˉconcat(
+                Borrowedˉparameterˉmasks,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Borrowedˉlow),
+                    Bytesˉfromˉu32ˉlittle(Borrowedˉhigh)
+                )
             );
         }
         if Function.Codeˉoffset != Expectedˉwvbˉcodeˉoffset {
@@ -7682,6 +7851,43 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
         );
+    }
+    if Minor == 34u32 {
+        if Bytesˉlength(Parameterˉcounts) != Functionˉcount ||
+            Bytesˉlength(Borrowedˉparameterˉmasks) != Functionˉcount * 8u32 ||
+            Borrowedˉparameterˉcount == 0u32 {
+            return Compilerˉnativeˉx64ˉplanˉfailure(
+                Input,
+                Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
+            );
+        }
+        Functionˉindex = 0u32;
+        while Functionˉindex < Functionˉcount {
+            let Borrowedˉfunction: Compilerˉnativeˉx64ˉfunction =
+                Compilerˉnativeˉx64ˉreadˉfunctionˉat(
+                    Input,
+                    Bytesˉreadˉu32ˉlittle(
+                        Functionˉcursors, Functionˉindex * 4u32
+                    ),
+                    Functionsˉlimit,
+                    Functionˉindex == Mainˉfunction,
+                    Types
+                );
+            if !Borrowedˉfunction.Valid ||
+                !Compilerˉnativeˉx64ˉborrowedˉbudgetˉusesˉareˉvalid(
+                    Input,
+                    Structure.Codeˉoffset + Borrowedˉfunction.Codeˉoffset,
+                    Borrowedˉfunction,
+                    Parameterˉcounts,
+                    Borrowedˉparameterˉmasks
+                ) {
+                return Compilerˉnativeˉx64ˉplanˉfailure(
+                    Input,
+                    Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
+                );
+            }
+            Functionˉindex = Functionˉindex + 1u32;
+        }
     }
     if Expectedˉwvbˉcodeˉoffset != Structure.Codeˉlength {
         return Compilerˉnativeˉx64ˉplanˉfailure(

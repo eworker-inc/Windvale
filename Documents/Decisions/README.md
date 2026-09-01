@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 313 |
+| Accepted | 314 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0906: represent immutable borrowed memory-budget calls in WVB 1.34](0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md) | Accepted |
 | [Decision 0905: transfer affine memory budgets through ordinary calls](0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md) | Accepted |
 | [Decision 0904: execute WVB 1.33 unsafe scratch in a bounded scalar provider](0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0903: verify candidate WVB 1.33 without opening execution](0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md) | Accepted |
@@ -70,7 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0884: preserve the Slice 8 native data bound](0884-Preserve-The-Slice-8-Native-Data-Bound.md) | Accepted |
 | [Decision 0883: open Slice 8 with the exact System/FFI front door](0883-Open-Slice-8-With-The-Exact-System-Ffi-Front-Door.md) | Accepted |
 | [Decision 0882: complete Windvale Language 1.0 Slice 7 qualification](0882-Complete-Windvale-Language-1.0-Slice-7-Qualification.md) | Accepted |
-| [Decision 0881: close cross-host Slice 7 qualification harness gaps](0881-Close-Cross-Host-Slice-7-Qualification-Harness-Gaps.md) | Accepted |
 
 ## Superseded or historical records
 

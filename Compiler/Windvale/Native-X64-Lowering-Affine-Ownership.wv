@@ -185,16 +185,29 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     Ranks, Targetˉlocal * 4u32
                 );
                 if Opcode == 4u8 {
-                    if Bytesˉreadˉu8(Localˉtypes, Targetˉlocal) == 10u8 ||
-                        !Available(Availableˉlow, Availableˉhigh, Rank) {
+                    if !Available(Availableˉlow, Availableˉhigh, Rank) {
                         return false;
                     }
                     let Observer: u32 = Nextˉinstruction(
                         Instructions, Cursor, Codeˉlength
                     );
-                    if Observer >= Codeˉlength || Bytesˉreadˉu8(
+                    if Observer >= Codeˉlength { return false; }
+                    let Observerˉopcode: u8 = Bytesˉreadˉu8(
                         Input, Codeˉoffset + Observer
-                    ) != 152u8 {
+                    );
+                    if Bytesˉreadˉu8(Localˉtypes, Targetˉlocal) == 10u8 {
+                        if Observerˉopcode != 5u8 { return false; }
+                        let Viewˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                            Input, Codeˉoffset + Observer + 1u32
+                        );
+                        if Viewˉlocal < Parameters || Viewˉlocal >= Locals ||
+                            Bytesˉreadˉu8(Localˉtypes, Viewˉlocal) != 10u8 ||
+                            Bytesˉreadˉu32ˉlittle(
+                                Localˉtypeˉidentities, Viewˉlocal * 4u32
+                            ) != 36u32 {
+                            return false;
+                        }
+                    } else if Observerˉopcode != 152u8 {
                         return false;
                     }
                 }

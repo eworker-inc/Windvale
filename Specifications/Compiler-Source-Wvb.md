@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.33 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded scalar unsafe-scratch oracle; other execution consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.34 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, and WVB 1.34 adds exact immutable borrowed-memory-budget calls; other execution consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -27,8 +27,11 @@ The compiler-aligned verifier admits that version under
 [Decision 0903](../Documents/Decisions/0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md).
 The bounded scalar provider executes it under
 [Decision 0904](../Documents/Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md).
-Native lowering and other consumers still reject it, so scalar execution is
-not a native-containment or cross-host claim.
+The native x86-64 backend admits the same focused matrix under its independent
+verification boundary. WVB 1.34 represents immutable borrowed budget calls
+under
+[Decision 0906](../Documents/Decisions/0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md).
+Neither checkpoint is a cross-host or complete Slice 8 claim.
 
 ## Direct compilation result
 
@@ -987,6 +990,24 @@ ownership analysis require `DC` to consume an available budget owner in the
 same function rather than granting allocation authority by mentioning the
 opcode.
 
+An immutable `borrow Memory.Memoryˉbudget` parameter selects WVB 1.34 and is
+serialized as shape `36`. The private WVIR budget shape remains
+`805306368`; only the WVB representation changes. At an ordinary direct call,
+the writer preserves the borrowed temporary's source identity and emits one
+shape-`36` non-parameter local. Its canonical sequence loads the available
+shape-`25` owner, stores and reloads the shape-`36` view, loads at most 64
+remaining arguments, and calls a target whose corresponding parameter is
+shape `36`. The view is non-owning, so the source owner remains available for
+one later transfer or unsafe-scratch construction.
+
+Shape `36` is not emitted for mutable borrowing, results, nominal fields or
+payloads, collection elements, callable descriptors, or indirect calls. A
+WVB 1.34 module has at least one shape-`36` parameter. Borrowed parameters are
+otherwise opaque in this first profile because no budget-query operation is
+defined; a parameter load, view take, escape, or noncanonical use rejects.
+WVB 1.34 inherits WVB 1.33 operations when present but does not require `DC` in
+a borrow-only module.
+
 This is a verified serialization and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,
 opcode, budget, result, and ABI indexes and rejects seven byte-level mutations.
@@ -997,8 +1018,10 @@ scalar runner admits only a capability-free System module, lengths 1 through
 64, and power-of-two alignments through 8. It creates an exact budget lease,
 zeroes private backing bytes, returns exact validation failures, publishes only
 the non-address-like opaque value `1u64`, and releases remaining ownership at
-invocation teardown. Native lowering, pointer and write-region operations,
-Foreign calls, and cross-host containment remain pending.
+invocation teardown. The native x86-64 lowerer implements the same bounded
+scratch and immutable-borrow matrix. Pointer and write-region operations,
+mutable budget borrowing, Foreign calls, and cross-host containment remain
+pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

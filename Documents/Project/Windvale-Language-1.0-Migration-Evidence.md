@@ -4964,6 +4964,34 @@ pointer and write-region operations, authenticated Foreign calls, a migrated
 real boundary, Linux reproduction, and paired-host qualification remain
 pending.
 
+## Slice 8 WVB 1.34 immutable borrowed-budget call checkpoint
+
+[Decision 0906](../Decisions/0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md)
+closes the borrowed-budget publication gap above. The source writer selects
+WVB 1.34, encodes an immutable borrowed parameter and its compiler-generated
+view as shape `36`, and emits the exact owner-load/view-store/view-load/direct-
+call sequence. The complete verifier, scalar runner, and native lowerer retain
+shape `25` as the only owner even though execution carries both identities in
+one opaque scalar cell.
+
+The focused local Windows oracle rebuilds the changed verifier and native
+lowerer, then reports:
+
+```text
+native language 1 unsafe scratch runtime status=Passed cases=8 malformed=7 result=42 native-aot=8/8 native-execution=8/8 native-split-rejections=3 borrowed-budget-rejections=6 allocation=zeroed teardown=bounded
+native language 1 unsafe scratch WVIR status=Passed cases=11 valid=3 rejected=8 malformed=9 wvb-malformed=7 operation=186 opcode=220 wvb-minor=33 wvb-bytes=1123 wvb-sha256=4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088 effect-check=emitter runtime=Verified compiler-verifier-cases=11
+```
+
+The added executable program calls `Observe(borrow Budget)`, checks its result,
+then transfers the same `Budget` to a 64-byte scratch allocation and returns
+`42`. All eight runtime programs lower and execute natively. Six corruptions
+cover an old minor, owner/view shape substitutions, an unknown view shape, a
+view result, and `local.take`; the compiler verifier and the independently
+checking native lowerer reject every one before publication. Mutable borrowing,
+budget-query operations, pointer and write-region borrowing, authenticated
+Foreign calls, a migrated real boundary, Linux reproduction, and paired-host
+qualification remain pending.
+
 ## Slice 8 development-verification balance
 
 The settled local Windows source state passed one changed-file development

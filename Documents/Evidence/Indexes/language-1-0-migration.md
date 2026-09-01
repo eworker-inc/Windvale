@@ -118,4 +118,5 @@
 | [Slice 8 canonical unsafe-scratch typed-WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-unsafe-scratch-typed-wvir-checkpoint) | 4851 |
 | [Slice 8 WVB 1.33 bounded scalar unsafe-scratch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-133-bounded-scalar-unsafe-scratch-checkpoint) | 4888 |
 | [Slice 8 affine memory-budget call-transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-affine-memory-budget-call-transfer-checkpoint) | 4923 |
-| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4967 |
+| [Slice 8 WVB 1.34 immutable borrowed-budget call checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-134-immutable-borrowed-budget-call-checkpoint) | 4967 |
+| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4995 |

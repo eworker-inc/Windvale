@@ -186,7 +186,7 @@ const Cases = [
     },
     {
         Name: 'borrow-call-budget',
-        Expected: 'emitter-unsupported-shape',
+        Expected: 'valid',
         Source: 'module Languageˉoneˉunsafeˉscratchˉwir; ' + SYSTEM_HEADER +
             Imports +
             'fn Observe(Budget: borrow Memory.Memoryˉbudget) -> i32 { ' +
@@ -361,6 +361,25 @@ const Runtimeˉapplications = [
             'case Result.Result.Failure { Error: _ } { 6 } };',
         ),
     },
+    {
+        Name: 'borrow-call-parent-preserved',
+        Nativeˉexecution: true,
+        Source: Runtimeˉapplication(
+            'fn Observe(Budget: borrow Memory.Memoryˉbudget) -> i32 { ' +
+            'return 7; } ' +
+            'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
+            'effects(memory.allocate) { ' +
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Scratchˉbudget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 42 } ' +
+            'case Result.Result.Failure { Error: _ } { 1 } }; } ',
+            'let Observation: i32 = Observe(borrow Budget); ' +
+            'if Observation != 7 { return 2; } ' +
+            'return Allocate(Budget);',
+        ),
+    },
 ];
 
 function Runtimeˉapplication(Helpers, Body) {
@@ -378,6 +397,7 @@ var Wvbˉmalformed = 0;
 var Wvbˉverified = 0;
 var Wvbˉbytes = 0;
 var Wvbˉsha256 = '';
+var Borrowedˉbudgetˉrejections = 0;
 try {
     for (let Index = 0; Index < Cases.length; Index += 1) {
         const Case = Cases[Index];
@@ -410,8 +430,8 @@ try {
                 );
             }
             const Wirˉbytes = await readFile(Wir);
-            const Layout = Inspectˉvalidˉwir(Wirˉbytes);
             if (Case.Name === 'valid-canonical-scratch') {
+                const Layout = Inspectˉvalidˉwir(Wirˉbytes);
                 const Boundary = await Verifyˉemitterˉboundary(
                     Sourceˉoutput, Manifest, Bindings, Wir, Wirˉbytes,
                     Layout, Caseˉdirectory,
@@ -520,6 +540,12 @@ async function Verifyˉruntime() {
             );
         }
         await Requireˉwvbˉverification(Wvb, true, `runtime-${Case.Name}`);
+        if (Case.Name === 'borrow-call-parent-preserved') {
+            Borrowedˉbudgetˉrejections =
+                await Verifyˉborrowedˉbudgetˉwvbˉrejections(
+                    Wvb, Caseˉdirectory,
+                );
+        }
         if (Lowerer !== undefined && Case.Nativeˉaot !== false) {
             const Wvo = join(Caseˉdirectory, 'Runtime.wvo');
             await Requireˉnativeˉlowering(Wvb, Wvo, Case.Name, true);
@@ -583,7 +609,8 @@ async function Verifyˉruntime() {
     }
     process.stdout.write(
         'native language 1 unsafe scratch runtime status=Passed ' +
-        `cases=${Runtimeˉapplications.length} malformed=1 result=42 ` +
+        `cases=${Runtimeˉapplications.length} ` +
+        `malformed=${1 + Borrowedˉbudgetˉrejections} result=42 ` +
         `native-aot=${Lowerer === undefined ? 'Notˉrequested' :
             Runtimeˉapplications.filter(Case => Case.Nativeˉaot !== false).length +
             '/' + Runtimeˉapplications.length} ` +
@@ -591,6 +618,7 @@ async function Verifyˉruntime() {
             Runtimeˉapplications.filter(Case => Case.Nativeˉexecution === true).length +
             '/' + Runtimeˉapplications.length} ` +
         `native-split-rejections=${Lowerer === undefined ? 'Notˉrequested' : 3} ` +
+        `borrowed-budget-rejections=${Borrowedˉbudgetˉrejections} ` +
         'allocation=zeroed teardown=bounded\n',
     );
 }
@@ -619,6 +647,23 @@ async function Requireˉnativeˉlowering(
         !Diagnostic.includes(
             `status=Unsupportedˉcode function=${Expectedˉfunction} ` +
             `detail=${Expectedˉdetail}`,
+        )) {
+        Reject(
+            `The unsafe-scratch native rejection ${Label} differed: ` +
+            `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
+async function Requireˉnativeˉrejection(Wvb, Wvo, Label) {
+    const Result = await Runˉtool(Lowerer, [Wvb, Wvo]);
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject(`The unsafe-scratch native lowerer ${Label} exceeded its bounds.`);
+    }
+    if (Result.Code !== 1 || Exists(Wvo) ||
+        !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u.test(
+            Diagnostic,
         )) {
         Reject(
             `The unsafe-scratch native rejection ${Label} differed: ` +
@@ -1124,6 +1169,186 @@ function Inspectˉunsafeˉscratchˉwvb(Input) {
         Typeˉcount,
         Typeˉkinds,
     };
+}
+
+function Inspectˉborrowedˉbudgetˉwvb(Input) {
+    if (Input.length < 12 || Input.length > MAXIMUM_WVB_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 34 ||
+        Input.readUInt32LE(8) !== 7) {
+        Reject('The borrowed-budget WVB header differs.');
+    }
+    const Sections = new Map();
+    var Cursor = 12;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor > Input.length - 8 || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject('The borrowed-budget WVB section envelope differs.');
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Start = Cursor + 8;
+        if (Start > Input.length || Length > Input.length - Start) {
+            Reject('The borrowed-budget WVB section exceeds the file.');
+        }
+        Sections.set(Kind, { Start, End: Start + Length });
+        Cursor = Start + Length;
+    }
+    if (Cursor !== Input.length) {
+        Reject('The borrowed-budget WVB has trailing bytes.');
+    }
+
+    const Functions = Sections.get(4);
+    const Code = Sections.get(5);
+    const Functionˉcount = Checkedˉu32(Input, Functions.Start, Functions.End);
+    if (Functionˉcount === 0 || Functionˉcount > 65_536) {
+        Reject('The borrowed-budget WVB function count is invalid.');
+    }
+    const Entries = [];
+    const Borrowedˉparameters = [];
+    const Borrowedˉlocals = [];
+    Cursor = Functions.Start + 4;
+    for (let Functionˉindex = 0;
+        Functionˉindex < Functionˉcount; Functionˉindex += 1) {
+        Cursor = Checkedˉstring(Input, Cursor, Functions.End);
+        const Parameterˉcount = Checkedˉu32(Input, Cursor, Functions.End);
+        Cursor += 4;
+        if (Parameterˉcount > 64) {
+            Reject('The borrowed-budget WVB parameter count is oversized.');
+        }
+        const Shapes = [];
+        for (let Parameter = 0; Parameter < Parameterˉcount; Parameter += 1) {
+            const Shape = Cursor;
+            Cursor = Checkedˉshape(Input, Cursor, Functions.End);
+            Shapes.push({ Offset: Shape, Kind: Input[Shape] });
+            if (Input[Shape] === 36) {
+                Borrowedˉparameters.push({
+                    Function: Functionˉindex,
+                    Local: Parameter,
+                    Offset: Shape,
+                });
+            }
+        }
+        const Return = Cursor;
+        Cursor = Checkedˉshape(Input, Cursor, Functions.End);
+        const Localˉcount = Checkedˉu32(Input, Cursor, Functions.End);
+        Cursor += 4;
+        if (Localˉcount > 2048 - Parameterˉcount) {
+            Reject('The borrowed-budget WVB local count is oversized.');
+        }
+        for (let Local = 0; Local < Localˉcount; Local += 1) {
+            const Shape = Cursor;
+            Cursor = Checkedˉshape(Input, Cursor, Functions.End);
+            Shapes.push({ Offset: Shape, Kind: Input[Shape] });
+            if (Input[Shape] === 36) {
+                Borrowedˉlocals.push({
+                    Function: Functionˉindex,
+                    Local: Parameterˉcount + Local,
+                    Offset: Shape,
+                });
+            }
+        }
+        Cursor = Checkedˉadvance(Cursor, 12, Functions.End);
+        const Codeˉoffset = Input.readUInt32LE(Cursor - 12);
+        const Codeˉlength = Input.readUInt32LE(Cursor - 8);
+        if (Codeˉoffset > Code.End - Code.Start ||
+            Codeˉlength > Code.End - Code.Start - Codeˉoffset) {
+            Reject('The borrowed-budget WVB function code range is invalid.');
+        }
+        Entries.push({
+            Parameterˉcount,
+            Return,
+            Shapes,
+            Codeˉstart: Code.Start + Codeˉoffset,
+            Codeˉend: Code.Start + Codeˉoffset + Codeˉlength,
+        });
+    }
+    if (Cursor !== Functions.End || Borrowedˉparameters.length !== 1 ||
+        Borrowedˉlocals.length !== 1) {
+        Reject('The borrowed-budget WVB shape directory differs.');
+    }
+    const Parameter = Borrowedˉparameters[0];
+    const View = Borrowedˉlocals[0];
+    const Function = Entries[View.Function];
+    const Sequences = [];
+    for (Cursor = Function.Codeˉstart;
+        Cursor <= Function.Codeˉend - 20; Cursor += 1) {
+        if (Input[Cursor] !== 4 || Input[Cursor + 5] !== 5 ||
+            Input.readUInt32LE(Cursor + 6) !== View.Local ||
+            Input[Cursor + 10] !== 4 ||
+            Input.readUInt32LE(Cursor + 11) !== View.Local ||
+            Input[Cursor + 15] !== 64 ||
+            Input.readUInt32LE(Cursor + 16) !== Parameter.Function) {
+            continue;
+        }
+        const Owner = Input.readUInt32LE(Cursor + 1);
+        if (Owner >= Function.Shapes.length ||
+            Function.Shapes[Owner].Kind !== 25) {
+            continue;
+        }
+        Sequences.push({ Owner, Start: Cursor });
+    }
+    if (Sequences.length !== 1) {
+        Reject('The borrowed-budget WVB transfer sequence differs.');
+    }
+    return {
+        Parameterˉshape: Parameter.Offset,
+        Parameterˉreturn: Entries[Parameter.Function].Return,
+        Viewˉshape: View.Offset,
+        Ownerˉload: Sequences[0].Start,
+        Viewˉload: Sequences[0].Start + 10,
+    };
+}
+
+async function Verifyˉborrowedˉbudgetˉwvbˉrejections(Published, Directory) {
+    const Bytes = await readFile(Published);
+    const Layout = Inspectˉborrowedˉbudgetˉwvb(Bytes);
+    const Cases = [
+        {
+            Name: 'borrowed-budget-old-minor',
+            Mutate: Candidate => Candidate.writeUInt16LE(33, 6),
+        },
+        {
+            Name: 'borrowed-budget-parameter-owner-shape',
+            Mutate: Candidate => { Candidate[Layout.Parameterˉshape] = 25; },
+        },
+        {
+            Name: 'borrowed-budget-view-owner-shape',
+            Mutate: Candidate => { Candidate[Layout.Viewˉshape] = 25; },
+        },
+        {
+            Name: 'borrowed-budget-unknown-view-shape',
+            Mutate: Candidate => { Candidate[Layout.Viewˉshape] = 37; },
+        },
+        {
+            Name: 'borrowed-budget-return-view',
+            Mutate: Candidate => { Candidate[Layout.Parameterˉreturn] = 36; },
+        },
+        {
+            Name: 'borrowed-budget-view-take',
+            Mutate: Candidate => { Candidate[Layout.Viewˉload] = 205; },
+        },
+    ];
+    for (let Index = 0; Index < Cases.length; Index += 1) {
+        const Case = Cases[Index];
+        process.stdout.write(
+            'native language 1 borrowed budget WVB ' +
+            `malformed-item=${Index + 1}/${Cases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Bytes);
+        Case.Mutate(Candidate);
+        const Candidateˉpath = join(Directory, `${Case.Name}.wvb`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉwvbˉverification(Candidateˉpath, false, Case.Name);
+        if (Lowerer !== undefined) {
+            await Requireˉnativeˉrejection(
+                Candidateˉpath,
+                join(Directory, `${Case.Name}.wvo`),
+                Case.Name,
+            );
+        }
+    }
+    return Cases.length;
 }
 
 function Inspectˉmemoryˉbudgetˉsplitˉwvb(Input) {

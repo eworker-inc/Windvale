@@ -11,6 +11,10 @@ The outer runner binds five capabilities to nine ordered services. The exact
 candidate reconstructs from the complete Project 2 source closure through the
 current split compiler, segmented native staging/link/transport path,
 hosted-verifier profile, and paired Windows/Linux container materializers.
+The same source-built scalar core also owns the focused capability-free System
+oracle for WVB 1.33 unsafe scratch and WVB 1.34 immutable borrowed-memory-budget
+calls. That local Windows evidence is not part of the older profile-5 paired
+artifact identity or a paired-host qualification claim.
 
 The project names its root tool plus the SHA-256, scalar-interpreter, envelope,
 and formatting dependencies in canonical module order. Project paths are
@@ -36,6 +40,24 @@ Segmented staging emits 5,899,132 object bytes across 13 chunks. Linking emits a
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
+
+## WVB 1.33 and WVB 1.34 focused System execution
+
+Execution-request major `1` admits a capability-free System-profile
+`Main(Memoryˉbudget) -> i32` only for the exact WVB 1.33/1.34 verifier-approved
+subset. The provider supplies one fresh bounded budget token. WVB 1.33 may
+consume it through exact unsafe-scratch construction. WVB 1.34 may first create
+one shape-`36` immutable view, pass that view to an exact direct-call parameter,
+and later consume the unchanged shape-`25` owner.
+
+The interpreter carries both identities in the same opaque scalar slot but
+never treats shape `36` as an owner. It rejects shape `36` as a result, field,
+payload, collection element, callable shape, parameter load, `local.take`, or
+noncanonical local use. The focused oracle returns `42` after a borrowed call
+followed by a 64-byte scratch allocation and rejects six shape/version
+corruptions before execution. Mutable borrowing, budget-query operations,
+pointer access, browser packaging, and Windvale OS execution remain outside
+this profile.
 
 ## Construction and execution
 

@@ -449,6 +449,12 @@ explicit immutable borrow may satisfy an observing borrowed parameter, while a
 borrowed budget cannot satisfy a consuming by-value parameter. Source cannot
 construct this value or substitute a forgeable record for it. The numeric shape
 is private compiler evidence rather than a Language ABI value.
+WVB 1.34 serializes an immutable borrowed call boundary as shape `36` while
+retaining shape `25` for the affine owner. That view shape is not a second WVIR
+budget identity: the writer derives it only for a proven borrowed call operand,
+and the verifier confines it to the canonical direct-call sequence. Mutable
+budget borrowing remains source/WVIR evidence only until a write-through WVB
+and native alias contract exists.
 
 The exact `Foundationˉmemory.Split` call has three arguments and is recognized
 only through the canonical edition-1 module identity. Its first argument must be

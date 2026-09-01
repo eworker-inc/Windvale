@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11, 1.30, or 1.31 module, independently verifies the metered scalar-control, nominal, direct-call, selected provider-call, and frame-owned callable subset described below, and emits canonical WVO 1.0. Ordinary modules use ABI 22; an actual admitted provider call selects ABI 23 and execution context 9.
+`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11, 1.30, 1.31, 1.33, or 1.34 module, independently verifies the metered scalar-control, nominal, direct-call, selected provider-call, frame-owned callable, unsafe-scratch, and immutable borrowed-memory-budget subsets described below, and emits canonical WVO 1.0. Ordinary modules use ABI 22; an actual admitted provider call selects ABI 23 and execution context 9.
 
 This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). The Windvale-native compiler is the normal implementation for this accepted subset. Wider recovery and differential evidence remains outside the normal build and execution path.
 
@@ -39,13 +39,31 @@ The status vocabulary is:
 
 The shared lowering core accepts exactly:
 
-- WVB 1.11, 1.30, or 1.31 with seven canonical sections, an explicit absent-metadata byte, no trailing bytes, and a valid module identifier; 1.11 contains no callable descriptor or operation, 1.30 contains at least one `D3` or `D4` and no `D5`, and 1.31 contains at least one `D5`;
-- portable profile with no capabilities, or hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes`, `storage.random_access_v1(u32,u64,u64,u32,bytes)->bytes`, `standard_output.write_v1(bytes)->bytes`, `model.catalog_v1(bytes)->bytes`, and `model.inference_v1(bytes)->bytes` provider signatures when selected by an application; generic service calls retain ABI 22 and provider calls select ABI 23;
+- WVB 1.11, 1.30, 1.31, 1.33, or 1.34 with seven canonical sections, no trailing bytes, and a valid module identifier; 1.11 contains no callable descriptor or operation, 1.30 contains at least one `D3` or `D4` and no `D5`, 1.31 contains at least one `D5`, 1.33 contains exact unsafe-scratch evidence, and 1.34 contains at least one immutable borrowed-budget parameter;
+- portable profile with no capabilities, hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes`, `storage.random_access_v1(u32,u64,u64,u32,bytes)->bytes`, `standard_output.write_v1(bytes)->bytes`, `model.catalog_v1(bytes)->bytes`, and `model.inference_v1(bytes)->bytes` provider signatures when selected by an application, or the exact capability-free System profile for WVB 1.33/1.34; generic service calls retain ABI 22 and provider calls select ABI 23;
 - zero through 128 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 256 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
-- one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes` at any ordinal and every other function non-exported;
+- one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes`, or the exact WVB 1.33/1.34 `Main(Memoryˉbudget) -> i32`, at any ordinal and every other function non-exported;
 - parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those seven primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
 - one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families, including `bytes.sha256_hex`, plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
 - instruction-aligned forward or backward targets, empty stacks at every block edge, complete fixed-point reachability from entry, valid typed local uses and stack effects, an exact declared maximum depth, and a combined local/value frame of at most 2,048 ABI cells. Locals retain WVB's zero-initialized entry semantics.
+
+### WVB 1.33 and WVB 1.34 System profile
+
+WVB 1.33 lowers the exact bounded `unsafe.scratch.construct` operation. The
+backend independently validates the shape-`25` budget owner, canonical result
+and ABI identities, affine availability, and the same length, alignment,
+allocation, and teardown contract used by the scalar oracle before emitting
+native code.
+
+WVB 1.34 additionally maps shape `36` to one internal `u64` cell while retaining
+identity `36` separately from the shape-`25` owner. Shape `36` is admitted only
+as a helper parameter or compiler-generated local, never as a result or nominal
+shape. Every local view is constructed from an available shape-`25` owner and
+used by the adjacent bounded local-load sequence leading to a direct call whose
+corresponding parameter is shape `36`. The view cannot be taken or loaded from
+a parameter. Native affine analysis therefore preserves the owner rather than
+turning the shared scalar representation into a copy. Six independent
+shape/version corruptions reject before WVO publication.
 
 ### Selected callable ABI
 

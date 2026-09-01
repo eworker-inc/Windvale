@@ -334,6 +334,7 @@ fn Readˉfunctionˉdirectory(
     var Parameterˉmodes: bytes = Empty;
     var Totalˉparameterˉcount: u32 = 0u32;
     var Vectorˉparameterˉcount: u32 = 0u32;
+    var Borrowedˉbudgetˉparameterˉcount: u32 = 0u32;
     var Mainˉhasˉmemoryˉbudget: bool = false;
     var Mainˉhasˉsourceˉfile: bool = false;
     var Mainˉhasˉoperationˉcontext: bool = false;
@@ -371,7 +372,7 @@ fn Readˉfunctionˉdirectory(
                 Module, Functionˉcursor
             ));
             if Shapeˉkind == 25u32 {
-                if Moduleˉminor == 33u32 {
+                if Moduleˉminor == 33u32 || Moduleˉminor == 34u32 {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -434,6 +435,11 @@ fn Readˉfunctionˉdirectory(
                 Parameterˉmode = 2u8;
                 Localˉshapeˉkind = 23u32;
             }
+            if Shapeˉkind == 36u32 {
+                Parameterˉmode = 1u8;
+                Borrowedˉbudgetˉparameterˉcount =
+                    Borrowedˉbudgetˉparameterˉcount + 1u32;
+            }
             Parameterˉmodes = Bytesˉconcat(
                 Parameterˉmodes, Bytesˉfromˉu8(Parameterˉmode)
             );
@@ -469,7 +475,7 @@ fn Readˉfunctionˉdirectory(
             Returnˉkind == 25u32 || Returnˉkind == 26u32 ||
             Returnˉkind == 27u32 || Returnˉkind == 28u32 ||
             Returnˉkind == 29u32 || Returnˉkind == 30u32 ||
-            Returnˉkind == 34u32 {
+            Returnˉkind == 34u32 || Returnˉkind == 36u32 {
             return Invalidˉfunctionˉdirectory(Module);
         }
         Functionˉcursor = Functionˉcursor + 1u32;
@@ -501,7 +507,8 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
                 (Shapeˉkind == 25u32 &&
-                    (Moduleˉminor != 33u32 && Moduleˉminor != 32u32 &&
+                    (Moduleˉminor != 34u32 && Moduleˉminor != 33u32 &&
+                        Moduleˉminor != 32u32 &&
                         (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
                         !Mainˉhasˉmemoryˉbudget))) ||
@@ -624,6 +631,8 @@ fn Readˉfunctionˉdirectory(
     if Functionˉcursor != Functionsˉend ||
         Bytesˉlength(Parameterˉmodes) != Totalˉparameterˉcount ||
         (Moduleˉminor == 26u32 && Vectorˉparameterˉcount == 0u32) ||
+        (Moduleˉminor == 34u32 &&
+            Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         (Moduleˉminor == 33u32 && Unsafeˉscratchˉinstructions == 0u32) {
         return Invalidˉfunctionˉdirectory(Module);
     }
@@ -3707,7 +3716,8 @@ fn Executeˉlocal(
         let Shapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
             Localˉshapes, Shapeˉoffset
         );
-        if Shapeˉkind == 25u32 {
+        if Shapeˉkind == 25u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 34u32 {
             return Localˉexecution(
                 false, true, Empty, Empty, Empty, Empty, Producedˉkind
             );
@@ -5516,7 +5526,8 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 220u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 33u32 ||
+        let Scratchˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
+        if (Scratchˉminor != 33u32 && Scratchˉminor != 34u32) ||
             Bytesˉlength(Memoryˉbudgetˉstate) == 0u32 {
             return Invalid;
         }
