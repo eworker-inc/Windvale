@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-compiler-aligned-wvb-1-33-verification",
+  "date": "2026-09-01",
+  "subject": "Compiler-aligned candidate WVB 1.33 unsafe-scratch verification",
+  "claim": "The Windows source-built compiler-aligned verifier accepts the deterministic candidate WVB 1.33 unsafe-scratch module, rejects the focused structural and semantic forgeries, retains sampled earlier-minor admission, and does not open the existing execution front door.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "5945bb19f7b4fb2d72086961ae0616e8b3b42c7e"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built compiler-aligned WVB verifier",
+      "tool": "Tools/Native/Build-Wvb.cmd and Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "Tools/Native/Build-Wvb.cmd Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj artifacts/local-unsafe-scratch-verifier.wvb; Tools/Native/Package-Hosted-Wvb.cmd 2 artifacts/local-unsafe-scratch-verifier.wvb artifacts/local-unsafe-scratch-verifier.exe windows",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-verifier.wvb",
+          "size": 424193,
+          "sha256": "28d97d6fe8664824d68fbf8259355559fdf285e4c8e9347acc2f4f74cb8751d5"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-verifier.exe",
+          "size": 3428352,
+          "sha256": "addc7c2ec24ab4a4297ad6956541c5a8b54f7ebf169ecc22f5440e1778f91797"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Candidate WVB 1.33 source, WVIR, byte contract, and compiler-verifier boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-unsafe-scratch-analyzer.exe artifacts/local-unsafe-scratch-emitter.exe artifacts/local-unsafe-scratch-verifier.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-analyzer.exe",
+          "size": 52659712,
+          "sha256": "211caf31790087d81537be5a29700097e57ed87333d7696691cbbb83dd3c3ac0"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-emitter.exe",
+          "size": 30932992,
+          "sha256": "4ce2ac429a76753140e1e4b6ba07b95628ddec8dd4ffd8c0e58583f822471baf"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-verifier.exe",
+          "size": 3428352,
+          "sha256": "addc7c2ec24ab4a4297ad6956541c5a8b54f7ebf169ecc22f5440e1778f91797"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/unsafe-scratch.wvb",
+          "size": 1123,
+          "sha256": "4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Retained earlier-minor compiler-verifier admission samples",
+      "tool": "artifacts/local-unsafe-scratch-verifier.exe",
+      "command": "artifacts/local-unsafe-scratch-verifier.exe <retained WVB 1.30 callable>; artifacts/local-unsafe-scratch-verifier.exe <retained WVB 1.31 closure>; artifacts/local-unsafe-scratch-verifier.exe artifacts/local-unsafe-scratch-verifier.wvb",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Existing execution and published-verifier fail-closed boundary",
+      "tool": "Artifacts/Native-Front-Door/windows-x64/wvrun.exe and wvverify.exe",
+      "command": "Artifacts/Native-Front-Door/windows-x64/wvrun.exe <candidate-wvb-1.33>; Artifacts/Native-Front-Door/windows-x64/wvverify.exe <candidate-wvb-1.33>",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered two valid and seven rejected source cases, nine malformed WVIR mutations, six structurally malformed WVB mutations, and three semantic WVB forgeries; it was not the complete 12-owner changed-file development plan.",
+    "The retained earlier-minor samples cover WVB 1.11, 1.30, and 1.31, not every admitted minor independently.",
+    "Runtime/provider allocation, zeroing, failure execution, affine teardown, native lowering, containment, and authenticated Foreign calls remain unimplemented for WVB 1.33.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs"
+  ]
+}
