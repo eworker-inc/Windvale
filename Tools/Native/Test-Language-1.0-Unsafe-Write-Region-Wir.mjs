@@ -580,9 +580,8 @@ async function Verifyˉruntime() {
             await writeFile(Missingˉoperation, Candidate, { flag: 'wx' });
             const Rejected = await Runˉtool(Runner, [Missingˉoperation]);
             if (Rejected.Code !== 1 || Rejected.Exceeded ||
-                !Rejected.Diagnostic.replaceAll('\r\n', '\n').endsWith(
-                    ' phase=execution\n',
-                )) {
+                Rejected.Diagnostic.replaceAll('\r\n', '\n') !==
+                    'wvb run status=Invalid phase=compiler-verification\n') {
                 Reject(
                     'Unsafe write-region missing-operation runtime ' +
                     `rejection differed: status=${Rejected.Code} ` +

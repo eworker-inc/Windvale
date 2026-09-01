@@ -3,12 +3,29 @@ module Wvbˉrunnerˉtool profile hosted;
 import WebAssemblyˉwvbˉscalarˉinterpreter as Interpreter;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Metadataˉverifier;
 
 capability console.write_line;
 capability diagnostic.write_line;
 capability file.read_bytes;
 capability process.argument;
 capability process.argument_count;
+
+fn Moduleˉisˉadmitted(Module: bytes) -> bool {
+    if Bytesˉlength(Module) < 8u32 ||
+        Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 {
+        return true;
+    }
+    return Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(Module) == 0u32;
+}
+
+fn Reportˉcompilerˉverificationˉfailure() -> i32 {
+    diagnostic.write_line(
+        "wvb run status=Invalid phase=compiler-verification"
+    );
+    return 1;
+}
 
 fn Buildˉrequest(Module: bytes) -> bytes {
     var Request: bytes = Bytesˉfromˉu32ˉlittle(1230526039u32);
@@ -324,6 +341,9 @@ fn Emitˉlines(Value: bytes, Diagnostic: bool) -> bool {
 }
 
 fn Runˉscript(Module: bytes, Arguments: u32) -> i32 {
+    if !Moduleˉisˉadmitted(Module) {
+        return Reportˉcompilerˉverificationˉfailure();
+    }
     let Request: bytes = Buildˉscriptˉrequest(Module, Arguments);
     if Bytesˉlength(Request) == 0u32 {
         diagnostic.write_line(
@@ -491,6 +511,9 @@ fn Runˉcontextˉentry(
 }
 
 fn Runˉsourceˉfile(Module: bytes, Snapshot: bytes) -> i32 {
+    if !Moduleˉisˉadmitted(Module) {
+        return Reportˉcompilerˉverificationˉfailure();
+    }
     if Bytesˉlength(Snapshot) > 1048576u32 {
         diagnostic.write_line("wvb run status=Sourceˉsnapshotˉtooˉlarge");
         return 64;
@@ -509,6 +532,9 @@ fn Runˉstructuredˉtask(
     Module: bytes,
     Environment: Taskˉenvironment
 ) -> i32 {
+    if !Moduleˉisˉadmitted(Module) {
+        return Reportˉcompilerˉverificationˉfailure();
+    }
     let Includeˉoutput: bool = Isˉstructuredˉtaskˉoutputˉmodule(Module);
     if Includeˉoutput {
         return Runˉcontextˉentry(
@@ -641,6 +667,9 @@ export fn Main() -> i32 {
     let Module: bytes = file.read_bytes(process.argument(0u32));
     if Isˉstructuredˉtaskˉmodule(Module) {
         return Runˉstructuredˉtask(Module, Defaultˉtaskˉenvironment());
+    }
+    if !Moduleˉisˉadmitted(Module) {
+        return Reportˉcompilerˉverificationˉfailure();
     }
     let Request: bytes = Buildˉrequest(Module);
     let Response: bytes = Interpreter.Main(Request);

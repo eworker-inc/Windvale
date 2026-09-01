@@ -1,6 +1,11 @@
 windvale-project 2
 root "Tools/Windvale.Run/Wvb-Runner-Tool.wv"
 source "Foundation/Sha256.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Collection-Core.wv"
 source "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv"
