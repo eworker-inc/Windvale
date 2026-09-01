@@ -1,0 +1,284 @@
+module Compilerˉnativeˉx64ˉloweringˉaffine profile portable;
+
+fn Empty(Input: bytes) -> bytes {
+    return Bytesˉslice(Input, 0u32, 0u32);
+}
+
+fn Zeroˉmap(Input: bytes, Length: u32) -> bytes {
+    var Result: bytes = Empty(Input);
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
+        Cursor = Cursor + 1u32;
+    }
+    return Result;
+}
+
+fn Setˉmapˉbyte(Input: bytes, Map: bytes, Index: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Map, 0u32, Index),
+            Bytesˉfromˉu8(1u8)
+        ),
+        Bytesˉslice(Map, Index + 1u32, Bytesˉlength(Map) - Index - 1u32)
+    );
+}
+
+fn Nextˉinstruction(Map: bytes, Cursor: u32, Limit: u32) -> u32 {
+    var Next: u32 = Cursor + 1u32;
+    var Result: u32 = Limit;
+    while Next < Limit {
+        if Bytesˉreadˉu8(Map, Next) == 0u8 {
+            Next = Next + 1u32;
+        } else {
+            Result = Next;
+            Next = Limit;
+        }
+    }
+    return Result;
+}
+
+fn Available(Low: u32, High: u32, Rank: u32) -> bool {
+    if Rank >= 64u32 { return false; }
+    if Rank < 32u32 { return ((Low >> Rank) & 1u32) == 1u32; }
+    return ((High >> (Rank - 32u32)) & 1u32) == 1u32;
+}
+
+fn Setˉavailableˉlow(
+    Low: u32,
+    Rank: u32,
+    Value: bool
+) -> u32 {
+    if Rank >= 32u32 { return Low; }
+    if Value { return Low | (1u32 << Rank); }
+    return Low & ~(1u32 << Rank);
+}
+
+fn Setˉavailableˉhigh(
+    High: u32,
+    Rank: u32,
+    Value: bool
+) -> u32 {
+    if Rank < 32u32 { return High; }
+    let Shift: u32 = Rank - 32u32;
+    if Value { return High | (1u32 << Shift); }
+    return High & ~(1u32 << Shift);
+}
+
+export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
+    Input: bytes,
+    Codeˉoffset: u32,
+    Codeˉlength: u32,
+    Parameters: u32,
+    Localˉtypes: bytes,
+    Localˉtypeˉidentities: bytes,
+    Typeˉcount: u32,
+    Instructions: bytes
+) -> bool {
+    let Locals: u32 = Bytesˉlength(Localˉtypes);
+    if Bytesˉlength(Localˉtypeˉidentities) != Locals * 4u32 ||
+        Bytesˉlength(Instructions) != Codeˉlength || Parameters > Locals {
+        return false;
+    }
+
+    var Scratchˉresultˉtypes: bytes = Zeroˉmap(Input, Typeˉcount);
+    var Cursor: u32 = 0u32;
+    while Cursor < Codeˉlength {
+        if Bytesˉreadˉu8(Input, Codeˉoffset + Cursor) == 220u8 {
+            let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 5u32
+            );
+            if Resultˉtype >= Typeˉcount { return false; }
+            Scratchˉresultˉtypes = Setˉmapˉbyte(
+                Input, Scratchˉresultˉtypes, Resultˉtype
+            );
+        }
+        Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
+    }
+
+    var Tracked: bytes = Zeroˉmap(Input, Locals);
+    var Ranks: bytes = Empty(Input);
+    var Trackedˉcount: u32 = 0u32;
+    var Availableˉlow: u32 = 0u32;
+    var Availableˉhigh: u32 = 0u32;
+    var Local: u32 = 0u32;
+    while Local < Locals {
+        let Type: u8 = Bytesˉreadˉu8(Localˉtypes, Local);
+        let Identity: u32 = Bytesˉreadˉu32ˉlittle(
+            Localˉtypeˉidentities, Local * 4u32
+        );
+        var Isˉtracked: bool = Type == 10u8 && Identity == 25u32;
+        if Identity < Typeˉcount &&
+            Bytesˉreadˉu8(Scratchˉresultˉtypes, Identity) == 1u8 {
+            Isˉtracked = true;
+        }
+        if Isˉtracked {
+            if Trackedˉcount >= 64u32 { return false; }
+            Tracked = Setˉmapˉbyte(Input, Tracked, Local);
+            Ranks = Bytesˉconcat(Ranks, Bytesˉfromˉu32ˉlittle(Trackedˉcount));
+            if Local < Parameters {
+                Availableˉlow = Setˉavailableˉlow(
+                    Availableˉlow, Trackedˉcount, true
+                );
+                Availableˉhigh = Setˉavailableˉhigh(
+                    Availableˉhigh, Trackedˉcount, true
+                );
+            }
+            Trackedˉcount = Trackedˉcount + 1u32;
+        } else {
+            Ranks = Bytesˉconcat(
+                Ranks, Bytesˉfromˉu32ˉlittle(4294967295u32)
+            );
+        }
+        Local = Local + 1u32;
+    }
+
+    var Branches: bytes = Empty(Input);
+    var Entries: bytes = Empty(Input);
+    var Reachable: bool = true;
+    Cursor = 0u32;
+    while Cursor < Codeˉlength {
+        var Branch: u32 = 0u32;
+        while Branch < Bytesˉlength(Branches) {
+            if Bytesˉreadˉu32ˉlittle(Branches, Branch) == Cursor {
+                let Branchˉlow: u32 = Bytesˉreadˉu32ˉlittle(
+                    Branches, Branch + 4u32
+                );
+                let Branchˉhigh: u32 = Bytesˉreadˉu32ˉlittle(
+                    Branches, Branch + 8u32
+                );
+                if Reachable {
+                    Availableˉlow = Availableˉlow & Branchˉlow;
+                    Availableˉhigh = Availableˉhigh & Branchˉhigh;
+                } else {
+                    Availableˉlow = Branchˉlow;
+                    Availableˉhigh = Branchˉhigh;
+                    Reachable = true;
+                }
+            }
+            Branch = Branch + 12u32;
+        }
+        if !Reachable { return false; }
+
+        Entries = Bytesˉconcat(
+            Entries,
+            Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Cursor),
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Availableˉlow),
+                    Bytesˉfromˉu32ˉlittle(Availableˉhigh)
+                )
+            )
+        );
+
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
+        if Opcode == 4u8 || Opcode == 5u8 || Opcode == 205u8 {
+            let Targetˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Targetˉlocal >= Locals { return false; }
+            if Bytesˉreadˉu8(Tracked, Targetˉlocal) == 1u8 {
+                let Rank: u32 = Bytesˉreadˉu32ˉlittle(
+                    Ranks, Targetˉlocal * 4u32
+                );
+                if Opcode == 4u8 {
+                    if Bytesˉreadˉu8(Localˉtypes, Targetˉlocal) == 10u8 ||
+                        !Available(Availableˉlow, Availableˉhigh, Rank) {
+                        return false;
+                    }
+                    let Observer: u32 = Nextˉinstruction(
+                        Instructions, Cursor, Codeˉlength
+                    );
+                    if Observer >= Codeˉlength || Bytesˉreadˉu8(
+                        Input, Codeˉoffset + Observer
+                    ) != 152u8 {
+                        return false;
+                    }
+                }
+                if Opcode == 205u8 {
+                    if !Available(Availableˉlow, Availableˉhigh, Rank) {
+                        return false;
+                    }
+                    Availableˉlow = Setˉavailableˉlow(
+                        Availableˉlow, Rank, false
+                    );
+                    Availableˉhigh = Setˉavailableˉhigh(
+                        Availableˉhigh, Rank, false
+                    );
+                }
+                if Opcode == 5u8 {
+                    if Available(Availableˉlow, Availableˉhigh, Rank) {
+                        return false;
+                    }
+                    Availableˉlow = Setˉavailableˉlow(
+                        Availableˉlow, Rank, true
+                    );
+                    Availableˉhigh = Setˉavailableˉhigh(
+                        Availableˉhigh, Rank, true
+                    );
+                }
+            }
+        }
+        if Opcode == 220u8 {
+            let Budget: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Budget >= Locals || Bytesˉreadˉu8(Tracked, Budget) != 1u8 ||
+                Bytesˉreadˉu8(Localˉtypes, Budget) != 10u8 ||
+                Bytesˉreadˉu32ˉlittle(
+                    Localˉtypeˉidentities, Budget * 4u32
+                ) != 25u32 {
+                return false;
+            }
+            let Budgetˉrank: u32 = Bytesˉreadˉu32ˉlittle(
+                Ranks, Budget * 4u32
+            );
+            if !Available(Availableˉlow, Availableˉhigh, Budgetˉrank) {
+                return false;
+            }
+            Availableˉlow = Setˉavailableˉlow(
+                Availableˉlow, Budgetˉrank, false
+            );
+            Availableˉhigh = Setˉavailableˉhigh(
+                Availableˉhigh, Budgetˉrank, false
+            );
+        }
+        if Opcode == 48u8 || Opcode == 49u8 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Target > Cursor {
+                Branches = Bytesˉconcat(
+                    Branches,
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Target),
+                        Bytesˉconcat(
+                            Bytesˉfromˉu32ˉlittle(Availableˉlow),
+                            Bytesˉfromˉu32ˉlittle(Availableˉhigh)
+                        )
+                    )
+                );
+            } else {
+                var Entry: u32 = 0u32;
+                var Found: bool = false;
+                while Entry < Bytesˉlength(Entries) {
+                    if Bytesˉreadˉu32ˉlittle(Entries, Entry) == Target {
+                        if Bytesˉreadˉu32ˉlittle(Entries, Entry + 4u32) !=
+                                Availableˉlow || Bytesˉreadˉu32ˉlittle(
+                                Entries, Entry + 8u32
+                            ) != Availableˉhigh {
+                            return false;
+                        }
+                        Found = true;
+                    }
+                    Entry = Entry + 12u32;
+                }
+                if !Found { return false; }
+            }
+            if Opcode == 48u8 { Reachable = false; }
+        }
+        if Opcode == 81u8 { Reachable = false; }
+        Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
+    }
+    return true;
+}

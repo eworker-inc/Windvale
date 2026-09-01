@@ -242,7 +242,8 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
     Input: bytes,
     Cursor: u32,
     Limit: u32,
-    Profile: u8
+    Profile: u8,
+    Minor: u32
 ) -> Compilerˉnativeˉx64ˉmetadata {
     let Invalidˉresult: Compilerˉnativeˉx64ˉmetadata = Invalid(Input);
     let Total: u32 = Bytesˉlength(Input);
@@ -250,6 +251,7 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
     let Presence: u8 = Bytesˉreadˉu8(Input, Cursor);
     var Current: u32 = Cursor + 1u32;
     if Presence == 0u8 {
+        if Minor == 33u32 { return Invalidˉresult; }
         if Current != Limit { return Invalidˉresult; }
         return Compilerˉnativeˉx64ˉmetadata(
             true, false, 0u32, Empty(Input), 0u32, Empty(Input)
@@ -303,15 +305,19 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
         return Invalidˉresult;
     }
     if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
-    var Expectedˉprofile: u8 = 1u8;
-    if Authority == 4u8 {
-        Expectedˉprofile = 3u8;
+    if Minor == 33u32 {
+        if Profile != 3u8 { return Invalidˉresult; }
     } else {
-        if Required.Count != 0u32 || Optional.Count != 0u32 {
-            Expectedˉprofile = 2u8;
+        var Expectedˉprofile: u8 = 1u8;
+        if Authority == 4u8 {
+            Expectedˉprofile = 3u8;
+        } else {
+            if Required.Count != 0u32 || Optional.Count != 0u32 {
+                Expectedˉprofile = 2u8;
+            }
         }
+        if Profile != Expectedˉprofile { return Invalidˉresult; }
     }
-    if Profile != Expectedˉprofile { return Invalidˉresult; }
     return Compilerˉnativeˉx64ˉmetadata(
         true,
         true,
@@ -351,7 +357,7 @@ export fn Compilerˉnativeˉx64ˉmetadataˉnormalize(Input: bytes) -> bytes {
     let Metadataˉoffset: u32 = 25u32 + Nameˉlength;
     let Metadata: Compilerˉnativeˉx64ˉmetadata =
         Compilerˉnativeˉx64ˉmetadataˉread(
-            Input, Metadataˉoffset, Moduleˉend, Profile
+            Input, Metadataˉoffset, Moduleˉend, Profile, Minor
         );
     if !Metadata.Valid { return Invalid; }
     if !Metadata.Present { return Input; }

@@ -361,6 +361,94 @@ fn Emitˉpayload(
     );
 }
 
+fn Emitˉfield(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    let Selection: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+    let Caseˉindex: u32 = Selection / 64u32;
+    let Fieldˉindex: u32 = Selection % 64u32;
+    let Field: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Typeˉindex, Caseˉindex, Fieldˉindex
+        );
+    let Backingˉoffset: u32 =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfieldˉbackingˉoffset(
+            Input, Types, Typeˉindex, Caseˉindex, Fieldˉindex
+        );
+    let Depth: u32 = State.Stackˉdepth - 1u32;
+    let Source: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, Depth * 4u32
+    );
+    var Index: u32 = State.Nextˉi32;
+    if Field.Type == 2u8 { Index = State.Nextˉbool; }
+    if Field.Type == 3u8 { Index = State.Nextˉtext; }
+    if Field.Type == 4u8 { Index = State.Nextˉu8; }
+    if Field.Type == 5u8 || Field.Type == 10u8 { Index = State.Nextˉu32; }
+    if Field.Type == 6u8 { Index = State.Nextˉbytes; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Field.Type) {
+        Index = State.Nextˉenum;
+    }
+    var Target: u32 = Valueˉslot(Shape, Field.Type, Index);
+    var Output: bytes = Typeˉtag(State.Result, Typeˉindex);
+    var Nextˉrecord: u32 = State.Nextˉrecord;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Field.Type) {
+        Target = Shape.Recordˉbase + State.Nextˉrecord;
+        Output = Loadˉrax(Output, Source);
+        Output = Addˉraxˉoffset(Output, Backingˉoffset * 16u32);
+        Output = Storeˉrax(Output, Target);
+        Nextˉrecord = Nextˉrecord + 1u32;
+    } else {
+        Output = Loadˉrdx(Output, Source);
+        Output = Loadˉrecordˉfield(Output, Backingˉoffset, false);
+        Output = Storeˉrax(Output, Target);
+        Output = Loadˉrecordˉfield(Output, Backingˉoffset, true);
+        Output = Storeˉraxˉfield(Output, Target);
+    }
+    var Nextˉi32: u32 = State.Nextˉi32;
+    var Nextˉbool: u32 = State.Nextˉbool;
+    var Nextˉtext: u32 = State.Nextˉtext;
+    var Nextˉu8: u32 = State.Nextˉu8;
+    var Nextˉu32: u32 = State.Nextˉu32;
+    var Nextˉbytes: u32 = State.Nextˉbytes;
+    var Nextˉenum: u32 = State.Nextˉenum;
+    if Field.Type == 1u8 { Nextˉi32 = Nextˉi32 + 1u32; }
+    if Field.Type == 2u8 { Nextˉbool = Nextˉbool + 1u32; }
+    if Field.Type == 3u8 { Nextˉtext = Nextˉtext + 1u32; }
+    if Field.Type == 4u8 { Nextˉu8 = Nextˉu8 + 1u32; }
+    if Field.Type == 5u8 || Field.Type == 10u8 {
+        Nextˉu32 = Nextˉu32 + 1u32;
+    }
+    if Field.Type == 6u8 { Nextˉbytes = Nextˉbytes + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Field.Type) {
+        Nextˉenum = Nextˉenum + 1u32;
+    }
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Output,
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(Field.Type)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        Nextˉi32,
+        Nextˉbool,
+        Nextˉtext,
+        Nextˉu8,
+        Nextˉu32,
+        Nextˉbytes,
+        Nextˉenum,
+        Nextˉrecord
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
     Input: bytes,
     Offset: u32,
@@ -375,6 +463,9 @@ export fn Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
     }
     if Opcode == 152u8 {
         return Emitˉisˉcase(Input, Offset, Shape, State);
+    }
+    if Opcode == 196u8 {
+        return Emitˉfield(Input, Offset, Shape, Types, State);
     }
     return Emitˉpayload(Input, Offset, Shape, Types, State);
 }

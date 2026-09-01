@@ -329,7 +329,7 @@ export fn Compilerˉnativeˉx64ˉemitˉrecordˉinstruction(
     if Instruction.Opcode == 105u8 {
         return Emitˉfield(Instruction, Shape, Types, State);
     }
-    if Instruction.Opcode == 4u8 {
+    if Instruction.Opcode == 4u8 || Instruction.Opcode == 205u8 {
         return Emitˉload(
             Instruction,
             Shape,

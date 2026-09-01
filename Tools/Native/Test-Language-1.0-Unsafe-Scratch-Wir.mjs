@@ -25,17 +25,19 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length !== 5 && process.argv.length !== 6) Usage();
+if (process.argv.length < 5 || process.argv.length > 7) Usage();
 
 const Analyzer = resolve(process.argv[2]);
 const Emitter = resolve(process.argv[3]);
 const Verifier = resolve(process.argv[4]);
-const Runner = process.argv.length === 6 ? resolve(process.argv[5]) : undefined;
+const Runner = process.argv.length >= 6 ? resolve(process.argv[5]) : undefined;
+const Lowerer = process.argv.length === 7 ? resolve(process.argv[6]) : undefined;
 for (const [Tool, Label] of [
     [Analyzer, 'Analyzer'],
     [Emitter, 'emitter'],
     [Verifier, 'verifier'],
     ...(Runner === undefined ? [] : [[Runner, 'runner']]),
+    ...(Lowerer === undefined ? [] : [[Lowerer, 'native lowerer']]),
 ]) {
     const Status = await lstat(Tool);
     if (!Status.isFile() || Status.size <= 0 ||
@@ -251,6 +253,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'split-call-transfer-success',
+        Nativeˉaot: false,
         Source: Runtimeˉapplication(
             'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
             'effects(memory.allocate) { ' +
@@ -271,6 +274,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'split-call-budget-refusal',
+        Nativeˉaot: false,
         Source: Runtimeˉapplication(
             'fn Summarizeˉallocation(' +
             'Allocationˉerror: Memory.Allocationˉfailure) -> i32 { ' +
@@ -465,6 +469,10 @@ async function Verifyˉruntime() {
             );
         }
         await Requireˉwvbˉverification(Wvb, true, `runtime-${Case.Name}`);
+        if (Lowerer !== undefined && Case.Nativeˉaot !== false) {
+            const Wvo = join(Caseˉdirectory, 'Runtime.wvo');
+            await Requireˉnativeˉlowering(Wvb, Wvo, Case.Name, true);
+        }
         const Execution = spawnSync(Runner, [Wvb], {
             cwd: Work,
             encoding: 'utf8',
@@ -485,6 +493,11 @@ async function Verifyˉruntime() {
         if (Case.Name === 'success') {
             const Candidate = await readFile(Wvb);
             const Layout = Inspectˉunsafeˉscratchˉwvb(Candidate);
+            if (Lowerer !== undefined) {
+                await Verifyˉnativeˉownershipˉrejections(
+                    Candidate, Layout, Caseˉdirectory,
+                );
+            }
             Candidate[Layout.Operation] = 209;
             const Missingˉoperation = join(
                 Caseˉdirectory, 'Missing-Scratch-Operation.wvb',
@@ -514,8 +527,86 @@ async function Verifyˉruntime() {
     process.stdout.write(
         'native language 1 unsafe scratch runtime status=Passed ' +
         `cases=${Runtimeˉapplications.length} malformed=1 result=42 ` +
+        `native-aot=${Lowerer === undefined ? 'Notˉrequested' :
+            Runtimeˉapplications.filter(Case => Case.Nativeˉaot !== false).length +
+            '/' + Runtimeˉapplications.length} ` +
         'allocation=zeroed teardown=bounded\n',
     );
+}
+
+async function Requireˉnativeˉlowering(
+    Wvb, Wvo, Label, Valid, Expectedˉdetail = 0,
+) {
+    const Result = await Runˉtool(Lowerer, [Wvb, Wvo]);
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject(`The unsafe-scratch native lowerer ${Label} exceeded its bounds.`);
+    }
+    if (Valid) {
+        if (Result.Code !== 0 || !Exists(Wvo) ||
+            !/^native x64 status=Valid abi=22 code-bytes=[0-9]+ object-bytes=[0-9]+\n$/u.test(
+                Diagnostic,
+            )) {
+            Reject(
+                `The unsafe-scratch native lowering ${Label} differed: ` +
+                `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+            );
+        }
+        return;
+    }
+    if (Result.Code !== 1 || Exists(Wvo) ||
+        !Diagnostic.includes(
+            `status=Unsupportedˉcode function=0 detail=${Expectedˉdetail}`,
+        )) {
+        Reject(
+            `The unsafe-scratch native rejection ${Label} differed: ` +
+            `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
+async function Verifyˉnativeˉownershipˉrejections(
+    Published, Layout, Directory,
+) {
+    const Takes = [];
+    var Cursor = Layout.Codeˉstart;
+    while (Cursor < Layout.Codeˉend) {
+        const Opcode = Published[Cursor];
+        if (Opcode === 205) Takes.push(Cursor);
+        Cursor += Unsafeˉscratchˉinstructionˉwidth(Opcode);
+    }
+    if (Cursor !== Layout.Codeˉend || Takes.length !== 2) {
+        Reject('The unsafe-scratch ownership instruction trace differs.');
+    }
+    const Cases = [
+        {
+            Name: 'copied-affine-result',
+            Mutate: Candidate => { Candidate[Takes[0]] = 4; },
+        },
+        {
+            Name: 'duplicate-affine-take',
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Candidate.readUInt32LE(Takes[0] + 1), Takes[1] + 1,
+            ),
+        },
+    ];
+    for (const Case of Cases) {
+        const Candidate = Buffer.from(Published);
+        Case.Mutate(Candidate);
+        const Wvb = join(Directory, `${Case.Name}.wvb`);
+        const Wvo = join(Directory, `${Case.Name}.wvo`);
+        await writeFile(Wvb, Candidate, { flag: 'wx' });
+        await Requireˉwvbˉverification(Wvb, false, Case.Name);
+        await Requireˉnativeˉlowering(Wvb, Wvo, Case.Name, false, 13);
+    }
+}
+
+function Unsafeˉscratchˉinstructionˉwidth(Opcode) {
+    if (Opcode === 81) return 1;
+    if (Opcode === 129 || Opcode === 152) return 9;
+    if (Opcode === 220) return 13;
+    if ([1, 4, 5, 48, 49, 205].includes(Opcode)) return 5;
+    Reject(`The unsafe-scratch ownership trace has opcode ${Opcode}.`);
 }
 
 function Inspectˉvalidˉwir(Input) {
@@ -868,6 +959,8 @@ function Inspectˉunsafeˉscratchˉwvb(Input) {
     }
     return {
         Allocationˉfieldˉname,
+        Codeˉstart: Code.Start,
+        Codeˉend: Code.End,
         Operation: Matches[0].Operation,
         Resultˉtype: Matches[0].Resultˉtype,
         Abiˉtype: Matches[0].Abiˉtype,
@@ -1118,7 +1211,8 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs ' +
-        '<analyzer> <emitter> <compiler-verifier> [runner]\n',
+        '<analyzer> <emitter> <compiler-verifier> ' +
+        '[runner [native-lowerer]]\n',
     );
     process.exit(64);
 }

@@ -178,13 +178,12 @@ fn Variantˉcreateˉstep(
     State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
 ) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
-    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
+    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Codeˉoffset + Cursor + 5u32
+    );
     let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
         Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
-            Input,
-            Types,
-            Typeˉindex,
-            Caseˉindex
+            Input, Types, Typeˉindex, Caseˉindex
         );
     if !Payload.Valid { return Invalid(Input); }
     let Consumed: Variantˉpayloadˉstate = Consumeˉpayload(
@@ -245,14 +244,22 @@ fn Variantˉinspectˉstep(
         );
     }
     let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 1u32);
-    let Caseˉindex: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
-    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+    let Selection: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Codeˉoffset + Cursor + 5u32
+    );
+    var Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
         Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input, Types, Typeˉindex, Selection
+        );
+    if Opcode == 196u8 {
+        Payload = Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
             Input,
             Types,
             Typeˉindex,
-            Caseˉindex
+            Selection / 64u32,
+            Selection % 64u32
         );
+    }
     if !Payload.Valid || Payload.Type == 0u8 { return Invalid(Input); }
     if !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
         return Compilerˉnativeˉx64ˉvariantˉstorageˉstate(

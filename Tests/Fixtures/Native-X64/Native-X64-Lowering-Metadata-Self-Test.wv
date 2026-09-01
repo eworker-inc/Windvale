@@ -53,7 +53,7 @@ fn Envelope(
 fn Isˉvalid(Input: bytes, Profile: u8) -> bool {
     let Result: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
         Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
-            Input, 0u32, Bytesˉlength(Input), Profile
+            Input, 0u32, Bytesˉlength(Input), Profile, 31u32
         );
     return Result.Valid;
 }
@@ -75,7 +75,7 @@ export fn Main() -> i32 {
     );
     let Validˉresult: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
         Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
-            Valid, 0u32, Bytesˉlength(Valid), 2u8
+            Valid, 0u32, Bytesˉlength(Valid), 2u8, 31u32
         );
     if !Validˉresult.Valid || !Validˉresult.Present { return 1; }
     if Validˉresult.Requiredˉcount != 1u32 ||
@@ -161,5 +161,44 @@ export fn Main() -> i32 {
         ),
         2u8
     ) { return 16; }
+    let Systemˉapplication: bytes = Envelope(
+        1u8,
+        2u8,
+        Platforms(2u32, "linux", "windvale"),
+        Emptyˉrequirements,
+        Emptyˉrequirements
+    );
+    let Systemˉapplicationˉresult:
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Systemˉapplication,
+            0u32,
+            Bytesˉlength(Systemˉapplication),
+            3u8,
+            33u32
+        );
+    if !Systemˉapplicationˉresult.Valid ||
+        !Systemˉapplicationˉresult.Present { return 17; }
+    let Absentˉsystem: bytes = Bytesˉfromˉu8(0u8);
+    let Absentˉsystemˉresult:
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Absentˉsystem,
+            0u32,
+            Bytesˉlength(Absentˉsystem),
+            3u8,
+            33u32
+        );
+    if Absentˉsystemˉresult.Valid { return 18; }
+    let Earlierˉsystemˉresult:
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Systemˉapplication,
+            0u32,
+            Bytesˉlength(Systemˉapplication),
+            3u8,
+            31u32
+        );
+    if Earlierˉsystemˉresult.Valid { return 19; }
     return 0;
 }

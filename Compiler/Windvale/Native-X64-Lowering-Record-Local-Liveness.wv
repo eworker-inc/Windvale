@@ -404,7 +404,7 @@ export fn Compilerˉnativeˉx64ˉplanˉrecordˉlocalˉstorage(
                     Live = Setˉbyte(Live, Storeˉrecord, 0u8);
                 }
             }
-            if Opcode == 4u8 {
+            if Opcode == 4u8 || Opcode == 205u8 {
                 let Loadˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                     Input,
                     Codeˉoffset + Cursor + 1u32

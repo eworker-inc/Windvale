@@ -155,6 +155,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 2u8 { return 2u32; }
     if Opcode == 3u8 { return 5u32; }
     if Opcode == 4u8 { return 5u32; }
+    if Opcode == 205u8 { return 5u32; }
     if Opcode == 5u8 { return 5u32; }
     if Opcode == 6u8 { return 5u32; }
     if Opcode == 7u8 { return 5u32; }
@@ -185,6 +186,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Numeric >= 134u32 && Numeric <= 136u32 { return 1u32; }
     if Numeric >= 143u32 && Numeric <= 148u32 { return 1u32; }
     if Numeric >= 151u32 && Numeric <= 153u32 { return 9u32; }
+    if Opcode == 196u8 { return 9u32; }
     if Opcode == 161u8 || Opcode == 162u8 ||
         Opcode == 165u8 || Opcode == 166u8 { return 1u32; }
     if Numeric >= 173u32 {
@@ -194,6 +196,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
         if Numeric <= 184u32 { return 1u32; }
     }
     if Opcode == 189u8 || Opcode == 190u8 || Opcode == 191u8 { return 1u32; }
+    if Opcode == 220u8 { return 13u32; }
     return 0u32;
 }
 
@@ -834,7 +837,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Handled = true;
         }
 
-        if Opcode == 4u8 {
+        if Opcode == 4u8 || Opcode == 205u8 {
             let Loadˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input,
                 Codeˉoffset + Cursor + 1u32
@@ -1110,7 +1113,57 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Handled = true;
         }
 
-        if Opcode == 151u8 || Opcode == 152u8 || Opcode == 153u8 {
+        if Opcode == 220u8 {
+            if Depth < 2u32 || Blockˉrecordˉvalues >= 256u32 {
+                return Invalid(Input);
+            }
+            let Scratchˉstorageˉlengthˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords,
+                (Depth - 2u32) * 4u32
+            );
+            let Scratchˉstorageˉalignmentˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords,
+                (Depth - 1u32) * 4u32
+            );
+            if Scratchˉstorageˉlengthˉrecord != 4294967295u32 ||
+                Scratchˉstorageˉalignmentˉrecord != 4294967295u32 {
+                return Invalid(Input);
+            }
+            let Scratchˉstorageˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+                Input,
+                Codeˉoffset + Cursor + 5u32
+            );
+            if Scratchˉstorageˉtypeˉindex >= Types.Count ||
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                    Types,
+                    Scratchˉstorageˉtypeˉindex
+                ) != 3u8 {
+                return Invalid(Input);
+            }
+            Depth = Depth - 2u32;
+            Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
+            Resultˉrecord = Scratchˉvalues;
+            Scratchˉvalues = Scratchˉvalues + 1u32;
+            Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
+            if Blockˉrecordˉvalues > Recordˉvalues {
+                Recordˉvalues = Blockˉrecordˉvalues;
+            }
+            Recordˉtypes = Rememberˉrecordˉtype(
+                Input,
+                Recordˉtypes,
+                Types,
+                Resultˉrecord,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
+                    Scratchˉstorageˉtypeˉindex
+                )
+            );
+            Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
+            Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 151u8 || Opcode == 152u8 || Opcode == 153u8 ||
+            Opcode == 196u8 {
             let Variantˉstate:
                 Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉstate =
                 Variantˉstorage.Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(

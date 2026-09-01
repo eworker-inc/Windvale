@@ -198,6 +198,79 @@ fn Analyzeˉinspect(
     );
 }
 
+fn Analyzeˉfield(
+    Input: bytes,
+    Instructionˉoffset: u32,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
+) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    let Typeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Instructionˉoffset + 1u32
+    );
+    let Selection: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Instructionˉoffset + 5u32
+    );
+    let Caseˉindex: u32 = Selection / 64u32;
+    let Fieldˉindex: u32 = Selection % 64u32;
+    if Typeˉindex >= Types.Count || Typeˉindex >= 64u32 ||
+        Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+            Types, Typeˉindex
+        ) != 3u8 || State.Depth == 0u32 || Bytesˉreadˉu8(
+            State.Stack, State.Depth - 1u32
+        ) != Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Typeˉindex) {
+        return Invalid(Input);
+    }
+    let Field: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Typeˉindex, Caseˉindex, Fieldˉindex
+        );
+    if !Field.Valid { return Invalid(Input); }
+    let Depth: u32 = State.Depth - 1u32;
+    let Stack: bytes = Bytesˉconcat(
+        Bytesˉslice(State.Stack, 0u32, Depth),
+        Bytesˉfromˉu8(Field.Type)
+    );
+    var I32ˉvalues: u32 = State.I32ˉvalues;
+    var Boolˉvalues: u32 = State.Boolˉvalues;
+    var Textˉvalues: u32 = State.Textˉvalues;
+    var U8ˉvalues: u32 = State.U8ˉvalues;
+    var U32ˉvalues: u32 = State.U32ˉvalues;
+    var Bytesˉvalues: u32 = State.Bytesˉvalues;
+    var Enumˉvalues: u32 = State.Enumˉvalues;
+    var Recordˉvalues: u32 = State.Recordˉvalues;
+    if Field.Type == 1u8 { I32ˉvalues = I32ˉvalues + 1u32; }
+    if Field.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
+    if Field.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
+    if Field.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
+    if Field.Type == 5u8 || Field.Type == 10u8 {
+        U32ˉvalues = U32ˉvalues + 1u32;
+    }
+    if Field.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉenum(Field.Type) {
+        Enumˉvalues = Enumˉvalues + 1u32;
+    }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Field.Type) {
+        Recordˉvalues = Recordˉvalues + 1u32;
+    }
+    return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+        true,
+        Stack,
+        Depth + 1u32,
+        I32ˉvalues,
+        Boolˉvalues,
+        Textˉvalues,
+        U8ˉvalues,
+        U32ˉvalues,
+        Bytesˉvalues,
+        Enumˉvalues,
+        Recordˉvalues,
+        State.Bodyˉbytes +
+            Variantˉinstructions.Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
+                Field.Type
+            )
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
     Input: bytes,
     Instructionˉoffset: u32,
@@ -207,6 +280,9 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
 ) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
     if Opcode == 151u8 {
         return Analyzeˉcreate(Input, Instructionˉoffset, Types, State);
+    }
+    if Opcode == 196u8 {
+        return Analyzeˉfield(Input, Instructionˉoffset, Types, State);
     }
     return Analyzeˉinspect(Input, Instructionˉoffset, Opcode, Types, State);
 }

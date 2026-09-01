@@ -38,6 +38,48 @@ export fn Main() -> i32 {
         Failureˉreport = Textˉconcat(
             Failureˉreport, U32ˉformat(Plan.Failureˉdetail)
         );
+        if Plan.Status == Nativeˉx64.Compilerˉnativeˉx64ˉstatus.Valid {
+            let Comparison:
+                Nativeˉx64.Compilerˉnativeˉx64ˉemissionˉcomparison =
+                Nativeˉx64.Compilerˉnativeˉx64ˉcompareˉplannedˉemission(
+                    Loweringˉinput,
+                    Plan
+                );
+            Failureˉreport = Textˉconcat(Failureˉreport, " emission-valid=");
+            if Comparison.Valid {
+                Failureˉreport = Textˉconcat(Failureˉreport, "true");
+            } else {
+                Failureˉreport = Textˉconcat(Failureˉreport, "false");
+            }
+            Failureˉreport = Textˉconcat(Failureˉreport, " emission-function=");
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                U32ˉformat(Comparison.Function)
+            );
+            Failureˉreport = Textˉconcat(Failureˉreport, " expected-code=");
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                U32ˉformat(Comparison.Expectedˉcodeˉbytes)
+            );
+            Failureˉreport = Textˉconcat(Failureˉreport, " actual-code=");
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                U32ˉformat(Comparison.Actualˉcodeˉbytes)
+            );
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                " expected-relocations="
+            );
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                U32ˉformat(Comparison.Expectedˉrelocationˉbytes)
+            );
+            Failureˉreport = Textˉconcat(Failureˉreport, " actual-relocations=");
+            Failureˉreport = Textˉconcat(
+                Failureˉreport,
+                U32ˉformat(Comparison.Actualˉrelocationˉbytes)
+            );
+        }
         diagnostic.write_line(Failureˉreport);
         return 1;
     }
