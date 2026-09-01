@@ -6,7 +6,9 @@ param(
     [string[]]$ChangedPath,
     [switch]$PlanOnly,
     [switch]$NoFailFast,
-    [string]$TimingReportPath
+    [string]$TimingReportPath,
+    [switch]$NoResultCache,
+    [string]$ResultCacheRoot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,6 +23,23 @@ $WebsiteVerifier = Join-Path $PSScriptRoot 'Verify-Website.ps1'
 $DocumentationVerifier = Join-Path $PSScriptRoot 'Verify-Documentation.ps1'
 $ChangeClassificationVerifier = Join-Path $PSScriptRoot 'Verify-Change-Classification.ps1'
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
+$ResultCacheTool = Join-Path (
+    Split-Path -Parent $PSScriptRoot) 'Native/Verification-Owner-Result-Cache.mjs'
+
+function Invoke-VerificationResultCache {
+    param(
+        [Parameter(Mandatory)]
+        [string[]]$CacheArgument
+    )
+
+    $Output = @(& node $ResultCacheTool @CacheArgument 2>&1)
+    $ExitCode = $LASTEXITCODE
+    $Text = ($Output | ForEach-Object { $_.ToString() }) -join "`n"
+    if ($ExitCode -ne 0) {
+        throw "Verification result cache command failed: $Text"
+    }
+    return $Text.Trim()
+}
 
 if ($PSBoundParameters.ContainsKey('ChangedPath')) {
     $Paths = @($ChangedPath)
@@ -167,78 +186,183 @@ if ($Plan.Scope -eq 'website') {
     } else {
         Join-Path $RepositoryRoot 'Tools/Native/Test-Verification-Owners.sh'
     }
+    $ResultCacheState = $null
+    if ($Plan.Scope -eq 'development' -and !$NoResultCache -and
+        @($NativePlan.Suites).Count -ne 0) {
+        try {
+            $PrepareArguments = @('prepare', $RepositoryRoot)
+            if ($PSBoundParameters.ContainsKey('ResultCacheRoot')) {
+                $PrepareArguments += $ResultCacheRoot
+            }
+            $ResultCacheState = (
+                Invoke-VerificationResultCache -CacheArgument $PrepareArguments
+            ) | ConvertFrom-Json
+            if ($ResultCacheState.format -ne 'windvale-verification-owner-state-1' -or
+                $ResultCacheState.stateKey -notmatch '^[0-9a-f]{64}$' -or
+                $ResultCacheState.sourceTree -notmatch '^[0-9a-f]{40}(?:[0-9a-f]{24})?$' -or
+                $ResultCacheState.sourceSentinel -notmatch '^[0-9a-f]{64}$') {
+                throw 'Verification result cache returned an invalid state record.'
+            }
+            Write-Host (
+                'Verification result cache status=Ready ' +
+                "state=$($ResultCacheState.stateKey.Substring(0, 12))"
+            )
+        } catch {
+            Write-Warning (
+                'Persistent verification resume is unavailable; owners will run: ' +
+                $_.Exception.Message
+            )
+            $ResultCacheState = $null
+        }
+    }
     foreach ($Suite in $NativePlan.Suites) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
+        $TimingStatus = 'executed'
         try {
+            $OwnerCommand = $Coordinator
+            $OwnerArguments = @('--filter', $Suite)
+            $OwnerMessage = $null
             if ($Suite -eq 'compiler-reconstruction' -and
                 $Plan.Scope -eq 'development') {
-                $DevelopmentOwner = if ($IsWindowsHost) {
+                $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd'
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.sh'
                 }
-                Write-Host (
+                $OwnerArguments = @('--development')
+                $OwnerMessage = (
                     'Native owner compiler-reconstruction ' +
                     'mode=development-smoke')
-                & $DevelopmentOwner --development
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {
-                $DevelopmentOwner = if ($IsWindowsHost) {
+                $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.cmd'
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Source-Containment.sh'
                 }
-                Write-Host 'Native owner source-containment mode=compiler-only'
-                & $DevelopmentOwner --compiler-only
+                $OwnerArguments = @('--compiler-only')
+                $OwnerMessage = 'Native owner source-containment mode=compiler-only'
             } elseif ($Suite -eq 'database-storage' -and
                 $NativePlan.UseDatabaseStorageDevelopment) {
-                $DevelopmentOwner = if ($IsWindowsHost) {
+                $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.cmd'
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.sh'
                 }
                 $DatabaseTarget = $NativePlan.DatabaseStorageDevelopmentTarget
-                Write-Host (
+                $OwnerArguments = @('--development-target', $DatabaseTarget)
+                $OwnerMessage = (
                     'Native owner database-storage mode=development-checkpoint ' +
                     "target=$DatabaseTarget")
-                & $DevelopmentOwner --development-target $DatabaseTarget
             } elseif ($Suite -eq 'libraries' -and
                 $NativePlan.UseLibraryDevelopment) {
-                $DevelopmentOwner = if ($IsWindowsHost) {
+                $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.cmd'
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Libraries.sh'
                 }
                 $LibraryTarget = $NativePlan.LibraryDevelopmentTarget
-                Write-Host (
+                $OwnerArguments = @('--development-target', $LibraryTarget)
+                $OwnerMessage = (
                     'Native owner libraries mode=development-target ' +
                     "target=$LibraryTarget")
-                & $DevelopmentOwner --development-target $LibraryTarget
             } elseif ($Suite -eq 'os-x64-code-emission' -and
                 $NativePlan.UseOsX64CodeEmissionDevelopment) {
-                $DevelopmentOwner = if ($IsWindowsHost) {
+                $OwnerCommand = if ($IsWindowsHost) {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.cmd'
                 } else {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Os-X64-Code-Emission.sh'
                 }
                 $OsX64Target = $NativePlan.OsX64CodeEmissionDevelopmentTarget
                 if ($OsX64Target -eq 'all') {
-                    Write-Host (
+                    $OwnerArguments = @('--development-all')
+                    $OwnerMessage = (
                         'Native owner os-x64-code-emission ' +
                         'mode=development-checkpoint target=all')
-                    & $DevelopmentOwner --development-all
                 } else {
-                    Write-Host (
+                    $OwnerArguments = @('--development-target', $OsX64Target)
+                    $OwnerMessage = (
                         'Native owner os-x64-code-emission ' +
                         "mode=development-checkpoint target=$OsX64Target")
-                    & $DevelopmentOwner --development-target $OsX64Target
                 }
-            } else {
-                & $Coordinator --filter $Suite
             }
+
+            $RelativeOwnerCommand = [IO.Path]::GetRelativePath(
+                $RepositoryRoot,
+                $OwnerCommand
+            ).Replace('\', '/')
+            $OwnerAction = [ordered]@{
+                format = 'windvale-verification-owner-action-1'
+                suite = $Suite
+                command = $RelativeOwnerCommand
+                arguments = @($OwnerArguments)
+                scope = $Plan.Scope
+            } | ConvertTo-Json -Compress
+
+            if ($null -ne $ResultCacheState) {
+                try {
+                    $Probe = Invoke-VerificationResultCache -CacheArgument @(
+                        'probe',
+                        $ResultCacheState.root,
+                        $ResultCacheState.stateKey,
+                        $Suite,
+                        $OwnerAction
+                    )
+                    if ($Probe -eq 'Hit') {
+                        $TimingStatus = 'reused'
+                        Write-Host (
+                            "PASS  native owner $Suite result=Reused " +
+                            'source-state=Exact'
+                        )
+                        continue
+                    }
+                    if ($Probe -ne 'Miss') {
+                        throw "Unexpected cache probe result '$Probe'."
+                    }
+                } catch {
+                    Write-Warning (
+                        "Verification result cache probe failed for '$Suite'; " +
+                        'the owner will run: ' + $_.Exception.Message
+                    )
+                    $ResultCacheState = $null
+                }
+            }
+
+            if ($null -ne $OwnerMessage) {
+                Write-Host $OwnerMessage
+            }
+            & $OwnerCommand @OwnerArguments
             if ($LASTEXITCODE -ne 0) {
                 throw "Native owner '$Suite' exited $LASTEXITCODE."
+            }
+            if ($null -ne $ResultCacheState) {
+                try {
+                    $Publish = Invoke-VerificationResultCache -CacheArgument @(
+                        'publish',
+                        $RepositoryRoot,
+                        $ResultCacheState.root,
+                        $ResultCacheState.stateKey,
+                        $ResultCacheState.sourceTree,
+                        $ResultCacheState.sourceSentinel,
+                        $Suite,
+                        $OwnerAction
+                    )
+                    if ($Publish -eq 'StateChanged') {
+                        Write-Warning (
+                            'Repository inputs changed during verification; ' +
+                            'new passes will not be cached in this run.'
+                        )
+                        $ResultCacheState = $null
+                    } elseif ($Publish -ne 'Stored') {
+                        throw "Unexpected cache publication result '$Publish'."
+                    }
+                } catch {
+                    Write-Warning (
+                        "Verification result cache publication failed for '$Suite': " +
+                        $_.Exception.Message
+                    )
+                }
             }
         } catch {
             $Failures.Add($Suite)
@@ -248,6 +372,7 @@ if ($Plan.Scope -eq 'website') {
             $Timings.Add([pscustomobject]@{
                 name = $Suite
                 elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
+                status = $TimingStatus
             })
         }
     }

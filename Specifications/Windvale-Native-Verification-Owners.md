@@ -17,7 +17,7 @@ and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 ## Registry identity and grammar
 
 `Tests/Native/Verification-Owners.txt` is 22,307 LF-only bytes with SHA-256
-`9ad8431958621480e99d9eda356268ed3aeb2964270916cdc5c7baeb9e2fadf5`.
+`fbe4e17c1efa3edbf1ea0c39b06521dc830ffcc9dd55d5079d8518cd73e4fea2`.
 Its first line is exactly:
 
 ```text
@@ -34,12 +34,12 @@ The digest fixes owner order, commands, declared case counts, qualification
 allocation, and accepted terminal summaries. Each command stem resolves under
 `Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
 
-The current registry contains exactly 125 owners and 5,936 declared cases:
+The current registry contains exactly 125 owners and 5,937 declared cases:
 
 | Qualification shard | Owners | Cases |
 | ---: | ---: | ---: |
 | 1 | 1 | 57 |
-| 2 | 45 | 2,847 |
+| 2 | 45 | 2,848 |
 | 3 | 38 | 1,783 |
 | 4 | 41 | 1,249 |
 
@@ -68,11 +68,43 @@ not be reported as the qualification evidence it intentionally omits.
 
 One coherent source state receives one final selected plan. A failure
 invalidates that owner and owners whose declared inputs changed; it does not
-invalidate unrelated passing owners. A future persistent result cache must key
-each reusable pass by the complete input set, command, verifier version, tool
-identities, host contract, and execution mode. Until that cache is implemented,
-maintainers may resume the explicit owner list manually and must record which
-owners passed on the unchanged source state.
+invalidate unrelated passing owners.
+
+The changed-file front door persists successful development-owner results and
+resumes them automatically. Version 1 is deliberately conservative: its state
+key covers the complete non-ignored Git source tree rather than trying to infer
+a smaller dependency set for each owner. Tracked working-tree changes and
+untracked non-ignored files therefore change the key, while a commit or push
+that leaves the source tree byte-identical does not. Any source-tree change
+invalidates every cached owner result in this first version.
+
+The state key also covers the checkout path, operating-system release,
+architecture, host and boot identity, relevant process environment, Node
+version, and the paths, sizes, and SHA-256 identities of the fixed host-tool set
+used by native owners. Each result key additionally covers the exact suite,
+host command, arguments, verification scope, and result-cache format. The
+tracked diff and untracked-file content sentinel is measured again after a
+passing owner; publication is skipped if it changed while the owner ran. This
+keeps the per-owner confirmation proportional to current edits rather than
+rebuilding the complete source tree after every pass.
+
+Only `Tools/Verify/Verify-Changed.ps1` development runs reuse these results.
+Qualification, direct owner commands, and sharded or complete coordinator runs
+remain fresh. `-NoResultCache` forces a fresh changed-file development run.
+`-ResultCacheRoot <path>` or
+`WINDVALE_VERIFICATION_RESULT_CACHE_ROOT` selects an outside-repository cache
+root for controlled testing; the default is the Windvale local application or
+XDG cache area. Cache setup, probing, or publication failure emits a warning
+and runs the owner normally, so this optimization cannot become a correctness
+dependency.
+
+Pass records are validated ordinary files of at most 16 KiB and are published
+atomically from a same-directory temporary file. Corrupt records become misses.
+The publisher removes only its exact temporary file, including after a
+publication race or failure. Retention is bounded to 16 source states and 512
+records per state; source states older than seven days and recognized temporary
+files older than one hour are removed during preparation. Unexpected linked or
+non-directory paths reject cache use rather than being traversed or removed.
 
 Independent work may run concurrently only under a bounded resource policy.
 Shared compiler reconstruction, cache publication, storage, and other

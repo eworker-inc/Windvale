@@ -51,6 +51,31 @@ does not apply to the same extensions elsewhere.
 Unknown input must never select every owner. The complete coordinator is
 reserved for the final grouped gate, not used as changed-file fallback.
 
+## Persistent development resume
+
+The front door reuses a passing owner automatically when its complete version-1
+result state and exact action match. Preparation measures the complete
+non-ignored Git source tree plus the local host, boot, environment, and fixed
+host-tool identities. The action binds the selected suite, actual command,
+arguments, development scope, and cache format. A tracked-diff and
+untracked-content sentinel must still match after the owner finishes before its
+pass can be published.
+
+Version 1 is intentionally conservative: one source-tree change selects a new
+state and invalidates every prior owner receipt. It does not yet reuse an
+unaffected owner across two different source trees. A commit or push with an
+identical tree retains the state. Repeated or interrupted runs of that exact
+state can therefore skip every owner that already passed, while a failed owner
+runs again.
+
+This optimization applies only to development execution through
+`Verify-Changed.ps1`. Qualification and direct coordinator commands remain
+fresh. `-NoResultCache` forces fresh development execution, while
+`-ResultCacheRoot` provides an outside-repository test root. Any cache error
+degrades to normal owner execution. The exact record validation, publication,
+cleanup, and retention bounds are defined by the
+[verification-owner contract](Windvale-Native-Verification-Owners.md).
+
 The `workspace-project2` lane owns Workspace 1 and Project 2 parsing, workspace
 containment, deterministic source ordering, and native publication. The `libraries`
 lane owns 19 reusable or importing projects, eight conformance builds, and two

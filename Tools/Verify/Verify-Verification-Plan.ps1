@@ -45,6 +45,7 @@ $NativeCases = @(
         Name = 'native verification owner live-stream coordinator'
         Paths = @(
             'Tools/Native/Verification-Owner-Stream-Path.mjs',
+            'Tools/Native/Verification-Owner-Result-Cache.mjs',
             'Tools/Native/Stream-Verification-Owner.mjs',
             'Tools/Native/Test-Verification-Owner-Stream.mjs',
             'Tools/Native/Test-Verification-Owner-Stream.cmd',
@@ -4574,7 +4575,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5936 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5937 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
@@ -4584,6 +4585,32 @@ $CompilerDevelopmentLinux = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.sh')
 $ChangedVerification = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
+$ResultCacheImplementation = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Verification-Owner-Result-Cache.mjs')
+foreach ($Fragment in @(
+    '$Plan.Scope -eq ''development'' -and !$NoResultCache',
+    '''probe''',
+    '''publish''',
+    '''StateChanged''',
+    'source-state=Exact'
+)) {
+    if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "Changed-file result-cache dispatch is missing '$Fragment'."
+    }
+}
+foreach ($Fragment in @(
+    "const CACHE_FAMILY = 'owner-result-v1'",
+    'const MAX_STATE_DIRECTORIES = 16',
+    'const MAX_RESULTS_PER_STATE = 512',
+    'const MAX_RESULT_BYTES = 16 * 1024',
+    'await Measureˉsourceˉsentinel(resolve(Repositoryˉinput))',
+    'return ''StateChanged''',
+    'await rm(Temporary, { force: true })'
+)) {
+    if (!$ResultCacheImplementation.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "Verification result-cache implementation is missing '$Fragment'."
+    }
+}
 foreach ($Contract in @(
     @{
         Name = 'Windows compiler development owner'
@@ -4618,7 +4645,8 @@ foreach ($Contract in @(
             '$Suite -eq ''compiler-reconstruction''',
             '$Plan.Scope -eq ''development''',
             'mode=development-smoke',
-            '& $DevelopmentOwner --development'
+            '$OwnerArguments = @(''--development'')',
+            '& $OwnerCommand @OwnerArguments'
         )
     }
 )) {
@@ -4679,7 +4707,8 @@ foreach ($Contract in @(
             '$Suite -eq ''source-containment''',
             '$NativePlan.UseSourceContainmentCompilerDevelopment',
             'mode=compiler-only',
-            '& $DevelopmentOwner --compiler-only'
+            '$OwnerArguments = @(''--compiler-only'')',
+            '& $OwnerCommand @OwnerArguments'
         )
     }
 )) {

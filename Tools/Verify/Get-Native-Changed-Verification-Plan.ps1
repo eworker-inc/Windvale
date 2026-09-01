@@ -1286,6 +1286,7 @@ function Add-Native-Tool-Suite {
         Add-Suite @('release-envelope', 'offline-package-stage')
     } elseif ($Stem -in @(
         'Verification-Owner-Stream-Path',
+        'Verification-Owner-Result-Cache',
         'Stream-Verification-Owner',
         'Test-Verification-Owners'
     )) {
