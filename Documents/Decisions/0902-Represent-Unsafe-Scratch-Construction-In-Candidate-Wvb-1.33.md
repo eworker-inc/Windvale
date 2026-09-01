@@ -62,10 +62,11 @@ without claiming that the input is executable today.
 ## Implementation standing
 
 The source writer and focused bounded source/WVIR/WVB oracle implement this
-candidate serialization locally on Windows. The durable run record is added
-only after the implementation commit supplies its immutable source identity.
-Linux reconstruction and the complete verifier/runtime/native chain remain
-pending.
+candidate serialization locally on Windows. The exact source identity,
+commands, artifact sizes and hashes, covered cases, and limits are recorded in
+[the candidate WVB 1.33 unsafe-scratch evidence
+record](../Evidence/2026-08-31-Unsafe-Scratch-WVB-1-33.json). Linux
+reconstruction and the complete verifier/runtime/native chain remain pending.
 
 ## Consequences
 

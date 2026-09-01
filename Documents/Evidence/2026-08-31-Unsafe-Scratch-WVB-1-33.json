@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-08-31-unsafe-scratch-wvb-1-33",
+  "date": "2026-08-31",
+  "subject": "Candidate WVB 1.33 unsafe-scratch serialization",
+  "claim": "The Windows source-built compiler reconstructs the updated emitter, publishes one deterministic candidate WVB 1.33 unsafe-scratch fixture, and rejects the bounded source, WVIR, and WVB negative cases exercised by the focused oracle.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "8326212ba50ad58509cce9d03d12b084656fb22e"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Language 1.0 analyzer and optimized source-WVB emitter",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj artifacts/local-unsafe-scratch-analyzer.wvb Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj artifacts/local-unsafe-scratch-emitter.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-emitter.wvb",
+          "size": 1481627,
+          "sha256": "dd3fc450b1577b8a16fafc6309b7eb3cd1f0e8a2f2881bb271e92ea9f7bbfffe"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-emitter.exe",
+          "size": 30932992,
+          "sha256": "4ce2ac429a76753140e1e4b6ba07b95628ddec8dd4ffd8c0e58583f822471baf"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Candidate WVB 1.33 unsafe-scratch source, WVIR, and byte contract",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-unsafe-scratch-analyzer.exe artifacts/local-unsafe-scratch-emitter.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-analyzer.exe",
+          "size": 52659712,
+          "sha256": "211caf31790087d81537be5a29700097e57ed87333d7696691cbbb83dd3c3ac0"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-emitter.exe",
+          "size": 30932992,
+          "sha256": "4ce2ac429a76753140e1e4b6ba07b95628ddec8dd4ffd8c0e58583f822471baf"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/unsafe-scratch.wvb",
+          "size": 1123,
+          "sha256": "4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered two valid and seven rejected source cases, nine malformed WVIR mutations, and six malformed WVB mutations; it was not the complete native verification-owner plan.",
+    "The complete WVB verifier, interpreter, provider allocation and zeroing, ownership teardown, native lowering, and containment paths do not yet admit WVB 1.33.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs"
+  ]
+}
