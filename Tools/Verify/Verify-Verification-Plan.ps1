@@ -4370,7 +4370,8 @@ $NativeCases = @(
         Paths = @(
             'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
             'AGENTS.md',
-            'Documents/Decisions/0458-Native-Changed-File-Verification.md'
+            'Documents/Decisions/0458-Native-Changed-File-Verification.md',
+            'Specifications/Legacy-Status-Classifications.json'
         )
         Suites = @()
         Gaps = @()

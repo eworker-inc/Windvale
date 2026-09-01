@@ -10,10 +10,10 @@ Portable bytecode, execution, command-line behavior, WebAssembly, and inspection
 | --- | --- |
 | [Windvale browser playground host contract](../Browser-Playground.md) | Experimental |
 | [Windvale Seed bytecode specification](../Seed-Bytecode.md) | Current |
-| [Windvale Seed command-line contract](../Seed-CLI.md) | Unclassified |
-| [Windvale Seed conformance](../Seed-Conformance.md) | Unclassified |
-| [Windvale baseline-JIT patch plan](../Windvale-Baseline-Jit-Patch-Plan.md) | Unclassified |
+| [Windvale Seed command-line contract](../Seed-CLI.md) | Documented |
+| [Windvale Seed conformance](../Seed-Conformance.md) | Documented |
+| [Windvale baseline-JIT patch plan](../Windvale-Baseline-Jit-Patch-Plan.md) | Candidate |
 | [Windvale Shell 1](../Windvale-Shell-1.md) | Implemented |
 | [Windvale experimental WebAssembly target](../Windvale-WebAssembly.md) | Experimental |
 | [Windvale `wvdump` core](../Wv-Dump-Core.md) | Documented |
-| [Windvale `wvdump` line report](../Wv-Dump-Report.md) | Unclassified |
+| [Windvale `wvdump` line report](../Wv-Dump-Report.md) | Documented |

@@ -136,8 +136,12 @@ $Cases = @(
         Paths = @(
             'Documents/Decisions/Decision-Catalog.json',
             'Documents/Evidence/Evidence-Record.schema.json',
+            'Documents/Evidence/Evidence-Sources.json',
             'Specifications/Indexes/database.md',
+            'Specifications/Legacy-Status-Classifications.json',
             'Specifications/Specification-Catalog.json',
+            'Tools/Documentation/Documentation-Retrieval-Cases.json',
+            'Tools/Documentation/Test-Documentation-Retrieval.ps1',
             'Tools/Documentation/Update-Documentation-Catalogs.ps1'
         )
         Scope = 'lightweight'

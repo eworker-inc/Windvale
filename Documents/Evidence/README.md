@@ -8,6 +8,13 @@ Evidence records answer a narrow question: what exact claim was checked, for
 which source state, with which inputs, tools, hosts, and result? They are not a
 second progress dashboard and they do not redefine specifications.
 
+## Find existing evidence
+
+Use the generated [historical evidence index](Index.md) to search the older
+append-oriented archives by section. It tells you which source owns the claim,
+what that source is useful for, and what it cannot prove. Open only the linked
+section unless the surrounding history is needed.
+
 ## When to create a record
 
 Create one record for a completed qualification run, reproducibility result,

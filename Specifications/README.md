@@ -4,7 +4,7 @@
 
 Specifications contain the exact contracts used by implementations and verifiers. Start with one domain index, then open only the contract needed for the task. Dated rationale belongs in the [decision catalog](../Documents/Decisions/README.md), while present standing belongs in [Progress](../Documents/Project/Progress.md).
 
-The [machine-readable catalog](Specification-Catalog.json) contains every Markdown specification, its full path, title, domain, normalized search status, and original opening status. A normalized status is only a filter; the specification text remains authoritative.
+The [machine-readable catalog](Specification-Catalog.json) contains every Markdown specification, its full path, title, domain, normalized search status, and supporting status text. `statusSource` appears when the status did not come from the document. A conservative legacy-sidecar classification makes no implementation or qualification claim.
 
 ## Common starting points
 
@@ -35,13 +35,12 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 
 | Search status | Specifications |
 | --- | ---: |
-| Candidate | 50 |
+| Candidate | 52 |
 | Current | 27 |
-| Documented | 180 |
+| Documented | 227 |
 | Experimental | 3 |
-| Implemented | 35 |
+| Implemented | 36 |
 | Proposed | 1 |
 | Superseded | 1 |
-| Unclassified | 50 |
 
-`Unclassified` means an older specification has no recognized opening status. It is a prompt to inspect the document and its decisions, not an acceptance claim. New specifications must state their status explicitly.
+`Documented` can mean that a reviewed legacy sidecar identifies the file as a contract without inferring implementation, verification, qualification, or release. `Unclassified` means neither the document nor the sidecar supplies usable status. New specifications must state their status explicitly.

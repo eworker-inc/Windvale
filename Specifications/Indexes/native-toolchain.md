@@ -10,7 +10,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | --- | --- |
 | [Windvale native fragment artifact (`WVNF 1.0`)](../Native-Fragment-Artifact.md) | Documented |
 | [Windvale native argument-table construction](../Windvale-Native-Argument-Table-Construction.md) | Documented |
-| [Windvale native baseline-JIT publication](../Windvale-Native-Baseline-Jit-Publication.md) | Unclassified |
+| [Windvale native baseline-JIT publication](../Windvale-Native-Baseline-Jit-Publication.md) | Candidate |
 | [Windvale native byte-result admission](../Windvale-Native-Byte-Result-Admission.md) | Current |
 | [Windvale native capability-provider table](../Windvale-Native-Capability-Provider-Table.md) | Candidate |
 | [Windvale native changed-file verification](../Windvale-Native-Changed-Verification.md) | Documented |
@@ -18,7 +18,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native compiler bootstrap and convergence](../Windvale-Native-Compiler-Seed-Bootstrap.md) | Implemented |
 | [Windvale native console-application publisher](../Windvale-Native-Console-Application-Publisher.md) | Candidate |
 | [Windvale native console-application segmented construction](../Windvale-Native-Console-Application-Segmented-Construction.md) | Documented |
-| [Windvale native console-application segmented-size tests](../Windvale-Native-Console-Application-Segmented-Size-Tests.md) | Unclassified |
+| [Windvale native console-application segmented-size tests](../Windvale-Native-Console-Application-Segmented-Size-Tests.md) | Documented |
 | [Windvale native console-container hostile-input tests](../Windvale-Native-Console-Container-Hostile-Input-Tests.md) | Documented |
 | [Windvale native console-container mutation tests](../Windvale-Native-Console-Container-Mutation-Tests.md) | Documented |
 | [Windvale native console-application packager](../Windvale-Native-Console-Packager.md) | Candidate |
@@ -28,7 +28,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native execution context](../Windvale-Native-Execution-Context.md) | Current |
 | [Windvale native file-input-table construction](../Windvale-Native-File-Input-Table-Construction.md) | Documented |
 | [Windvale native file-output-table construction](../Windvale-Native-File-Output-Table-Construction.md) | Documented |
-| [Windvale native file-output boundary](../Windvale-Native-File-Output.md) | Unclassified |
+| [Windvale native file-output boundary](../Windvale-Native-File-Output.md) | Documented |
 | [Windvale native hosted-console container mutation tests](../Windvale-Native-Hosted-Console-Container-Mutation-Tests.md) | Documented |
 | [Windvale native hosted-container construction](../Windvale-Native-Hosted-Container-Construction.md) | Documented |
 | [Windvale native hosted-container metadata constructor](../Windvale-Native-Hosted-Container-Metadata.md) | Documented |
@@ -85,7 +85,7 @@ Windvale-owned native compilers, publishers, runtime services, and their focused
 | [Windvale native source-to-WVB front door](../Windvale-Native-Source-To-Wvb-Front-Door.md) | Candidate |
 | [Windvale native streaming SHA-256 evidence](../Windvale-Native-Streaming-Sha256-Evidence.md) | Documented |
 | [Windvale native test plan](../Windvale-Native-Test-Plan.md) | Candidate |
-| [Windvale native tool checkpoint 1](../Windvale-Native-Tool-Checkpoint.md) | Unclassified |
+| [Windvale native tool checkpoint 1](../Windvale-Native-Tool-Checkpoint.md) | Implemented |
 | [Windvale native verification owners](../Windvale-Native-Verification-Owners.md) | Current |
 | [Windvale native linker application](../Windvale-Native-Wv-Linker.md) | Candidate |
 | [Windvale native WVA assembler rejection tests](../Windvale-Native-Wva-Assembler-Rejection-Tests.md) | Documented |

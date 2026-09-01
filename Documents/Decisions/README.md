@@ -4,34 +4,43 @@
 
 Decisions explain why durable choices were made. They preserve history; they are not a substitute for current specifications or Progress. Search the [machine-readable catalog](Decision-Catalog.json) by title, full key, number, or status, then open the exact record.
 
-The normalized status is a search aid derived from the opening status. The copied `statusText` remains the more exact claim. A number is not a unique key because twelve early number collisions are intentionally preserved.
+The normalized status is a search aid derived from the opening status. The copied `statusText` remains the more exact claim. For twelve duplicated early numbers, use the catalog's full `disambiguationKey` or the exact linked title instead of the number alone.
 
 ## Status summary
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 300 |
+| Accepted | 309 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
 | Recorded | 7 |
 | Superseded | 14 |
-| Unclassified | 9 |
 
 ## Open or unclassified records
 
 - [Decision 0198: Next integrated architecture defaults](0198-Next-Integrated-Architecture-Defaults.md) — Proposed
-- [Decision 0333: Segmented direct WebAssembly compiler](0333-Segmented-Direct-WebAssembly-Compiler.md) — Unclassified
-- [Decision 0553: Content-addressed project-object development checkpoints](0553-Content-Addressed-Project-Object-Development-Checkpoints.md) — Unclassified
-- [Decision 0554: Content-addressed hosted-application development checkpoints](0554-Content-Addressed-Hosted-Application-Development-Checkpoints.md) — Unclassified
-- [Decision 0555: Content-addressed project-WVB development checkpoints](0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md) — Unclassified
-- [Decision 0648: Segmented compiler development application checkpoint](0648-Segmented-Compiler-Development-Application-Checkpoint.md) — Unclassified
-- [Decision 0695: Bound FAT32 cluster-chain admission](0695-Bound-Fat32-Cluster-Chain-Admission.md) — Unclassified
-- [Decision 0722: Boot-link application-start operation 8](0722-Boot-Link-Application-Start-Operation-8.md) — Unclassified
-- [Decision 0724: Publish the fixed application-start child](0724-Publish-The-Fixed-Application-Start-Child.md) — Unclassified
-- [Decision 0746: Separate Compiler Development Smoke From Reconstruction](0746-Separate-Compiler-Development-Smoke-From-Reconstruction.md) — Unclassified
 - [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) — Proposed
 - [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) — Proposed
+
+## Duplicated legacy numbers
+
+These published numbers cannot be renamed safely. The full key shown beside each title is the stable identifier for search, links, and AI retrieval.
+
+| Number | Exact records and stable keys |
+| --- | --- |
+| 0119 | [Decision 0119: Expanded WVA x86-64 foundation](0119-Expanded-Wva-X64-Foundation.md) (`0119-Expanded-Wva-X64-Foundation`)<br>[Decision 0119: First Windows console application target](0119-First-Windows-Console-Application.md) (`0119-First-Windows-Console-Application`) |
+| 0121 | [Decision 0121: Deterministic WVA scalar and memory operands](0121-Deterministic-Wva-Scalar-And-Memory-Operands.md) (`0121-Deterministic-Wva-Scalar-And-Memory-Operands`)<br>[Decision 0121: WebAssembly calls with structured control](0121-WebAssembly-Calls-With-Structured-Control.md) (`0121-WebAssembly-Calls-With-Structured-Control`) |
+| 0593 | [Decision 0593: First-record durable root publication](0593-First-Record-Durable-Root-Publication.md) (`0593-First-Record-Durable-Root-Publication`)<br>[Decision 0593: Metadata-Aware WVB Inspector Reconstruction](0593-Metadata-Aware-Wvb-Inspector-Reconstruction.md) (`0593-Metadata-Aware-Wvb-Inspector-Reconstruction`) |
+| 0599 | [Decision 0599: First supervised host TLS 1.3 provider](0599-First-Supervised-Host-Tls-13-Provider.md) (`0599-First-Supervised-Host-Tls-13-Provider`)<br>[Decision 0599: Hosted local database service composition](0599-Hosted-Local-Database-Service-Composition.md) (`0599-Hosted-Local-Database-Service-Composition`) |
+| 0602 | [Decision 0602: focused hosted root-split writer](0602-Focused-Hosted-Root-Split-Writer.md) (`0602-Focused-Hosted-Root-Split-Writer`)<br>[Decision 0602: Shell 1 parser contract and first portable core](0602-Shell-1-Parser-Contract-And-First-Portable-Core.md) (`0602-Shell-1-Parser-Contract-And-First-Portable-Core`) |
+| 0603 | [Decision 0603: First bounded database schemas and typed rows](0603-First-Bounded-Database-Schemas-And-Typed-Rows.md) (`0603-First-Bounded-Database-Schemas-And-Typed-Rows`)<br>[Decision 0603: First bounded HTTPS client](0603-First-Bounded-Https-Client.md) (`0603-First-Bounded-Https-Client`) |
+| 0606 | [Decision 0606: First live immutable application-launch transaction](0606-First-Live-Immutable-Application-Launch-Transaction.md) (`0606-First-Live-Immutable-Application-Launch-Transaction`)<br>[Decision 0606: First Windvale echo application](0606-First-Windvale-Echo-Application.md) (`0606-First-Windvale-Echo-Application`) |
+| 0707 | [Decision 0707: Echo independent-metadata package migration](0707-Echo-Independent-Metadata-Package-Migration.md) (`0707-Echo-Independent-Metadata-Package-Migration`)<br>[Decision 0707: Group transaction replacements by parent](0707-Group-Transaction-Replacements-By-Parent.md) (`0707-Group-Transaction-Replacements-By-Parent`) |
+| 0708 | [Decision 0708: Compose bounded FAT32 file reads](0708-Compose-Bounded-Fat32-File-Reads.md) (`0708-Compose-Bounded-Fat32-File-Reads`)<br>[Decision 0708: Refresh WVDB Query launch-record provider leaves](0708-Refresh-Wvdb-Query-Launch-Record-Provider-Leaves.md) (`0708-Refresh-Wvdb-Query-Launch-Record-Provider-Leaves`) |
+| 0712 | [Decision 0712: Add first typed singleton capability references](0712-First-Typed-Singleton-Capability-References.md) (`0712-First-Typed-Singleton-Capability-References`)<br>[Decision 0712: Group replacements at any tree ancestor](0712-Group-Replacements-At-Any-Tree-Ancestor.md) (`0712-Group-Replacements-At-Any-Tree-Ancestor`) |
+| 0724 | [Decision 0724: Persist hosted database transactions](0724-Persist-Hosted-Database-Transactions.md) (`0724-Persist-Hosted-Database-Transactions`)<br>[Decision 0724: Publish the fixed application-start child](0724-Publish-The-Fixed-Application-Start-Child.md) (`0724-Publish-The-Fixed-Application-Start-Child`) |
+| 0735 | [Decision 0735: Implement the first Windvale scripting slice](0735-Implement-The-First-Windvale-Scripting-Slice.md) (`0735-Implement-The-First-Windvale-Scripting-Slice`)<br>[Decision 0735: Manifest-driven OS x64 code-emission verification](0735-Manifest-Driven-Os-X64-Code-Emission-Verification.md) (`0735-Manifest-Driven-Os-X64-Code-Emission-Verification`) |
 
 ## Recently numbered records
 

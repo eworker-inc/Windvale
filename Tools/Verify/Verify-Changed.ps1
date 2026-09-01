@@ -117,6 +117,7 @@ $RunDocumentationVerification = @(
             'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Status-Classifications.json',
             'Specifications/Specification-Catalog.json',
             'Tools/Verify/Verify-Documentation.ps1'
         )

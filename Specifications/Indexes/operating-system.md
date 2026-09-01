@@ -47,60 +47,60 @@ Boot, kernel, memory, processes, drivers, filesystems, and Windvale OS services.
 | [Windvale OS WVB admission](../Windvale-Os-Wvb-Admission.md) | Candidate |
 | [Windvale OS checked x86-64 code emission](../Windvale-Os-X64-Code-Emission.md) | Documented |
 | [Windvale OS x86-64 client budget-resource emission](../Windvale-Os-X64-Process-Client-Budget-Resource-Emission.md) | Documented |
-| [Windvale OS x86-64 client-completion cleanup emission](../Windvale-Os-X64-Process-Client-Completion-Cleanup-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client directory-reply delivery emission](../Windvale-Os-X64-Process-Client-Directory-Reply-Delivery-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client directory-request delivery emission](../Windvale-Os-X64-Process-Client-Directory-Request-Delivery-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client directory-resource emission](../Windvale-Os-X64-Process-Client-Directory-Resource-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client directory-validation emission](../Windvale-Os-X64-Process-Client-Directory-Validation-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 completion-cleanup emission](../Windvale-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 completion-finalize resume emission](../Windvale-Os-X64-Process-Client-Generation-Two-Completion-Finalize-Resume-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 directory-reply lifecycle emission](../Windvale-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client directory-request delivery emission](../Windvale-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 endpoint-rebind emission](../Windvale-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client-image emission](../Windvale-Os-X64-Process-Client-Generation-Two-Image-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 init reply-publication resume emission](../Windvale-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client-paging emission](../Windvale-Os-X64-Process-Client-Generation-Two-Paging-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client-record emission](../Windvale-Os-X64-Process-Client-Generation-Two-Record-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client re-entry emission](../Windvale-Os-X64-Process-Client-Generation-Two-Reentry-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client reply-delivery emission](../Windvale-Os-X64-Process-Client-Generation-Two-Reply-Delivery-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client-return/init-transfer emission](../Windvale-Os-X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client return validation emission](../Windvale-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.md) | Unclassified |
-| [Windvale OS x86-64 generation-2 client user-transfer emission](../Windvale-Os-X64-Process-Client-Generation-Two-User-Transfer-Emission.md) | Unclassified |
+| [Windvale OS x86-64 client-completion cleanup emission](../Windvale-Os-X64-Process-Client-Completion-Cleanup-Emission.md) | Documented |
+| [Windvale OS x86-64 client directory-reply delivery emission](../Windvale-Os-X64-Process-Client-Directory-Reply-Delivery-Emission.md) | Documented |
+| [Windvale OS x86-64 client directory-request delivery emission](../Windvale-Os-X64-Process-Client-Directory-Request-Delivery-Emission.md) | Documented |
+| [Windvale OS x86-64 client directory-resource emission](../Windvale-Os-X64-Process-Client-Directory-Resource-Emission.md) | Documented |
+| [Windvale OS x86-64 client directory-validation emission](../Windvale-Os-X64-Process-Client-Directory-Validation-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 completion-cleanup emission](../Windvale-Os-X64-Process-Client-Generation-Two-Completion-Cleanup-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 completion-finalize resume emission](../Windvale-Os-X64-Process-Client-Generation-Two-Completion-Finalize-Resume-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 directory-reply lifecycle emission](../Windvale-Os-X64-Process-Client-Generation-Two-Directory-Reply-Lifecycle-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client directory-request delivery emission](../Windvale-Os-X64-Process-Client-Generation-Two-Directory-Request-Delivery-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 endpoint-rebind emission](../Windvale-Os-X64-Process-Client-Generation-Two-Endpoint-Rebind-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client-image emission](../Windvale-Os-X64-Process-Client-Generation-Two-Image-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 init reply-publication resume emission](../Windvale-Os-X64-Process-Client-Generation-Two-Init-Reply-Publish-Resume-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client-paging emission](../Windvale-Os-X64-Process-Client-Generation-Two-Paging-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client-record emission](../Windvale-Os-X64-Process-Client-Generation-Two-Record-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client re-entry emission](../Windvale-Os-X64-Process-Client-Generation-Two-Reentry-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client reply-delivery emission](../Windvale-Os-X64-Process-Client-Generation-Two-Reply-Delivery-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client-return/init-transfer emission](../Windvale-Os-X64-Process-Client-Generation-Two-Return-Init-Transfer-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client return validation emission](../Windvale-Os-X64-Process-Client-Generation-Two-Return-Validation-Emission.md) | Documented |
+| [Windvale OS x86-64 generation-2 client user-transfer emission](../Windvale-Os-X64-Process-Client-Generation-Two-User-Transfer-Emission.md) | Documented |
 | [Windvale OS x86-64 recyclable-client image emission](../Windvale-Os-X64-Process-Client-Image-Emission.md) | Documented |
-| [Windvale OS x86-64 client-memory recycle emission](../Windvale-Os-X64-Process-Client-Memory-Recycle-Emission.md) | Unclassified |
+| [Windvale OS x86-64 client-memory recycle emission](../Windvale-Os-X64-Process-Client-Memory-Recycle-Emission.md) | Documented |
 | [Windvale OS x86-64 recyclable-client paging emission](../Windvale-Os-X64-Process-Client-Paging-Emission.md) | Documented |
 | [Windvale OS x86-64 client program-resource emission](../Windvale-Os-X64-Process-Client-Program-Resource-Emission.md) | Documented |
-| [Windvale OS x86-64 client-reclamation preflight emission](../Windvale-Os-X64-Process-Client-Reclamation-Preflight-Emission.md) | Unclassified |
+| [Windvale OS x86-64 client-reclamation preflight emission](../Windvale-Os-X64-Process-Client-Reclamation-Preflight-Emission.md) | Documented |
 | [Windvale OS x86-64 recyclable-client record emission](../Windvale-Os-X64-Process-Client-Record-Emission.md) | Documented |
-| [Windvale OS x86-64 client reply-delivery emission](../Windvale-Os-X64-Process-Client-Reply-Delivery-Emission.md) | Unclassified |
+| [Windvale OS x86-64 client reply-delivery emission](../Windvale-Os-X64-Process-Client-Reply-Delivery-Emission.md) | Documented |
 | [Windvale OS x86-64 recyclable-client reservation emission](../Windvale-Os-X64-Process-Client-Reservation-Emission.md) | Documented |
-| [Windvale OS x86-64 client-return and init-transfer emission](../Windvale-Os-X64-Process-Client-Return-Init-Transfer-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client store-resource emission](../Windvale-Os-X64-Process-Client-Store-Resource-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client store-validation emission](../Windvale-Os-X64-Process-Client-Store-Validation-Emission.md) | Unclassified |
-| [Windvale OS x86-64 client user-transfer emission](../Windvale-Os-X64-Process-Client-User-Transfer-Emission.md) | Unclassified |
+| [Windvale OS x86-64 client-return and init-transfer emission](../Windvale-Os-X64-Process-Client-Return-Init-Transfer-Emission.md) | Documented |
+| [Windvale OS x86-64 client store-resource emission](../Windvale-Os-X64-Process-Client-Store-Resource-Emission.md) | Documented |
+| [Windvale OS x86-64 client store-validation emission](../Windvale-Os-X64-Process-Client-Store-Validation-Emission.md) | Documented |
+| [Windvale OS x86-64 client user-transfer emission](../Windvale-Os-X64-Process-Client-User-Transfer-Emission.md) | Documented |
 | [Windvale OS x86-64 process-coordinator initialization emission](../Windvale-Os-X64-Process-Coordinator-Emission.md) | Current |
 | [Windvale OS x86-64 directory-provider allocation emission](../Windvale-Os-X64-Process-Directory-Allocation-Emission.md) | Documented |
-| [Windvale OS x86-64 generation-2 directory reply-publication resume emission](../Windvale-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.md) | Unclassified |
+| [Windvale OS x86-64 generation-2 directory reply-publication resume emission](../Windvale-Os-X64-Process-Directory-Generation-Two-Reply-Publish-Resume-Emission.md) | Documented |
 | [Windvale OS x86-64 directory-provider image emission](../Windvale-Os-X64-Process-Directory-Image-Emission.md) | Documented |
 | [Windvale OS x86-64 directory-provider paging emission](../Windvale-Os-X64-Process-Directory-Paging-Emission.md) | Documented |
 | [Windvale OS x86-64 directory-provider record emission](../Windvale-Os-X64-Process-Directory-Record-Emission.md) | Documented |
-| [Windvale OS x86-64 directory reply-publication resume emission](../Windvale-Os-X64-Process-Directory-Reply-Publish-Resume-Emission.md) | Unclassified |
+| [Windvale OS x86-64 directory reply-publication resume emission](../Windvale-Os-X64-Process-Directory-Reply-Publish-Resume-Emission.md) | Documented |
 | [Windvale OS x86-64 process channel and endpoint emission](../Windvale-Os-X64-Process-Endpoint-Emission.md) | Current |
 | [Windvale OS x86-64 filesystem-machine emission](../Windvale-Os-X64-Process-Filesystem-Machine-Emission.md) | Current |
-| [Windvale OS x86-64 final-state validation epilogue emission](../Windvale-Os-X64-Process-Final-State-Validation-Epilogue-Emission.md) | Unclassified |
+| [Windvale OS x86-64 final-state validation epilogue emission](../Windvale-Os-X64-Process-Final-State-Validation-Epilogue-Emission.md) | Documented |
 | [Windvale OS x86-64 init image and context emission](../Windvale-Os-X64-Process-Image-Emission.md) | Documented |
-| [Windvale OS x86-64 init reply-publication resume emission](../Windvale-Os-X64-Process-Init-Reply-Publish-Resume-Emission.md) | Unclassified |
-| [Windvale OS x86-64 init-return budget-validation emission](../Windvale-Os-X64-Process-Init-Return-Budget-Validation-Emission.md) | Unclassified |
-| [Windvale OS x86-64 init-return and program-validation emission](../Windvale-Os-X64-Process-Init-Return-Program-Validation-Emission.md) | Unclassified |
-| [Windvale OS x86-64 init-return store/directory validation emission](../Windvale-Os-X64-Process-Init-Return-Store-Directory-Validation-Emission.md) | Unclassified |
+| [Windvale OS x86-64 init reply-publication resume emission](../Windvale-Os-X64-Process-Init-Reply-Publish-Resume-Emission.md) | Documented |
+| [Windvale OS x86-64 init-return budget-validation emission](../Windvale-Os-X64-Process-Init-Return-Budget-Validation-Emission.md) | Documented |
+| [Windvale OS x86-64 init-return and program-validation emission](../Windvale-Os-X64-Process-Init-Return-Program-Validation-Emission.md) | Documented |
+| [Windvale OS x86-64 init-return store/directory validation emission](../Windvale-Os-X64-Process-Init-Return-Store-Directory-Validation-Emission.md) | Documented |
 | [Windvale OS x86-64 process memory-allocation emission](../Windvale-Os-X64-Process-Memory-Allocation-Emission.md) | Documented |
 | [Windvale OS x86-64 init process paging emission](../Windvale-Os-X64-Process-Paging-Emission.md) | Documented |
-| [Windvale OS x86-64 privileged-entry emission](../Windvale-Os-X64-Process-Privileged-Entry-Emission.md) | Unclassified |
-| [Windvale OS x86-64 provider-return and init-transfer emission](../Windvale-Os-X64-Process-Provider-Return-Init-Transfer-Emission.md) | Unclassified |
-| [Windvale OS x86-64 provider user-transfer emission](../Windvale-Os-X64-Process-Provider-User-Transfer-Emission.md) | Unclassified |
+| [Windvale OS x86-64 privileged-entry emission](../Windvale-Os-X64-Process-Privileged-Entry-Emission.md) | Documented |
+| [Windvale OS x86-64 provider-return and init-transfer emission](../Windvale-Os-X64-Process-Provider-Return-Init-Transfer-Emission.md) | Documented |
+| [Windvale OS x86-64 provider user-transfer emission](../Windvale-Os-X64-Process-Provider-User-Transfer-Emission.md) | Documented |
 | [Windvale OS x86-64 init process-record emission](../Windvale-Os-X64-Process-Record-Emission.md) | Documented |
-| [Windvale OS x86-64 thread and timer-state emission](../Windvale-Os-X64-Process-Thread-Timer-State-Emission.md) | Unclassified |
-| [Windvale OS x86-64 timer activation emission](../Windvale-Os-X64-Process-Timer-Activation-Emission.md) | Unclassified |
+| [Windvale OS x86-64 thread and timer-state emission](../Windvale-Os-X64-Process-Thread-Timer-State-Emission.md) | Documented |
+| [Windvale OS x86-64 timer activation emission](../Windvale-Os-X64-Process-Timer-Activation-Emission.md) | Documented |
 | [Protected Windvale processes and typed service resources](../Windvale-Protected-Process.md) | Documented |
 | [Windvale system-kernel target](../Windvale-System-Kernel-Target.md) | Documented |
 | [Windvale UEFI application format](../Windvale-Uefi-Application.md) | Current |

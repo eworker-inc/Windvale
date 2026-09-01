@@ -5,11 +5,8 @@ Seed-CLI.md
 Seed-Conformance.md
 Seed-Enums-And-Formatting.md
 Seed-Records.md
-Windvale-Baseline-Jit-Patch-Plan.md
-Windvale-Native-Baseline-Jit-Publication.md
 Windvale-Native-Console-Application-Segmented-Size-Tests.md
 Windvale-Native-File-Output.md
-Windvale-Native-Tool-Checkpoint.md
 Windvale-Os-X64-Process-Client-Completion-Cleanup-Emission.md
 Windvale-Os-X64-Process-Client-Directory-Reply-Delivery-Emission.md
 Windvale-Os-X64-Process-Client-Directory-Request-Delivery-Emission.md

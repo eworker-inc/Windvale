@@ -19,7 +19,7 @@ Windvale Seed is under active pre-1.0 development and is not production-stable. 
 - [Filesystem implementation plan](Documents/Project/Windvale-Filesystem-Implementation-Plan.md) — current host-adapter, FAT32-service, and boot-integration sequence
 - [Seed implementation](Documents/Architecture/Seed-Implementation.md) — component ownership and implemented boundaries
 - [Specification index](Specifications/README.md) — current language, format, runtime, native, and OS contracts
-- [Qualification evidence](Documents/Project/Seed-Verification-Evidence.md) — exact completed cross-host runs and artifact identities
+- [Evidence index](Documents/Evidence/Index.md) — find one exact completed run, measurement, or artifact identity without loading a full archive
 
 ## Working paths
 

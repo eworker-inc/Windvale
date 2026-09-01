@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "current-standing",
+      "question": "What works in Windvale right now?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Project/Progress.md"
+    },
+    {
+      "id": "forward-gates",
+      "question": "What is being built next and in what order?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Project/Roadmap.md"
+    },
+    {
+      "id": "exact-contracts",
+      "question": "Where is exact required behavior defined?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Specifications/README.md"
+    },
+    {
+      "id": "decision-rationale",
+      "question": "Why was a durable design choice made?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Decisions/README.md"
+    },
+    {
+      "id": "historical-evidence",
+      "question": "Where can I find one exact past run or measurement?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Evidence/Index.md"
+    },
+    {
+      "id": "terminology",
+      "question": "What does qualified mean compared with implemented?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Terminology.md"
+    },
+    {
+      "id": "language-contract",
+      "question": "Where are accepted Windvale Language 1.0 semantics?",
+      "startPath": "Specifications/README.md",
+      "expectedPath": "Specifications/Windvale-Language-1.0.md"
+    },
+    {
+      "id": "bytecode-contract",
+      "question": "Where are WVB encoding and verification rules?",
+      "startPath": "Specifications/README.md",
+      "expectedPath": "Specifications/Seed-Bytecode.md"
+    },
+    {
+      "id": "seed-evidence-source",
+      "question": "Which archive contains exact Seed qualification runs?",
+      "startPath": "Documents/Evidence/Index.md",
+      "expectedPath": "Documents/Evidence/Indexes/seed-verification.md"
+    },
+    {
+      "id": "seed-linker-evidence-section",
+      "question": "Where is the WVB 1.6 linker-prerequisite qualification record?",
+      "startPath": "Documents/Evidence/Indexes/seed-verification.md",
+      "expectedPath": "Documents/Project/Seed-Verification-Evidence.md",
+      "expectedAnchor": "wvb-16-linker-prerequisite-qualification",
+      "catalogPath": "Documents/Evidence/Evidence-Catalog.json",
+      "catalogCollection": "sections",
+      "catalogMatch": {
+        "sourceKey": "seed-verification",
+        "anchor": "wvb-16-linker-prerequisite-qualification"
+      }
+    },
+    {
+      "id": "language-migration-evidence-section",
+      "question": "Where is the generic nominal type-identity migration checkpoint?",
+      "startPath": "Documents/Evidence/Indexes/language-1-0-migration.md",
+      "expectedPath": "Documents/Project/Windvale-Language-1.0-Migration-Evidence.md",
+      "expectedAnchor": "slice-4-generic-nominal-type-identity-checkpoint",
+      "catalogPath": "Documents/Evidence/Evidence-Catalog.json",
+      "catalogCollection": "sections",
+      "catalogMatch": {
+        "sourceKey": "language-1-0-migration",
+        "anchor": "slice-4-generic-nominal-type-identity-checkpoint"
+      }
+    },
+    {
+      "id": "duplicated-decision-key",
+      "question": "Which exact Decision 0119 record owns the first Windows console application?",
+      "startPath": "Documents/Decisions/README.md",
+      "expectedPath": "Documents/Decisions/0119-First-Windows-Console-Application.md",
+      "catalogPath": "Documents/Decisions/Decision-Catalog.json",
+      "catalogCollection": "entries",
+      "catalogMatch": {
+        "key": "0119-First-Windows-Console-Application",
+        "numberCollision": true,
+        "disambiguationKey": "0119-First-Windows-Console-Application"
+      }
+    },
+    {
+      "id": "seed-development-runbook",
+      "question": "How should an ordinary coherent change be verified?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Runbooks/Seed-Development.md"
+    },
+    {
+      "id": "component-ownership",
+      "question": "Which Seed component owns each source-to-execution stage?",
+      "startPath": "Documents/README.md",
+      "expectedPath": "Documents/Architecture/Seed-Implementation.md"
+    }
+  ]
+}

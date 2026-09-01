@@ -17,12 +17,16 @@ handbook.
   Link to those records from current narrative pages.
 - Use the evidence-record schema for new durable run or artifact claims. Do not
   expand the old append-only evidence pages for ordinary new work.
-- Regenerate the specification and decision catalogs after changing a title,
-  filename, or opening status that they expose.
+- Regenerate the specification, decision, and evidence catalogs after changing
+  a title, filename, opening status, evidence heading, or routing sidecar that
+  they expose.
 - Never turn a proposal into implemented behavior through wording alone.
 - Preserve historical evidence and superseded decisions. Correct broken facts or
   links, but use a current owner document to explain later standing.
 - Refer to a duplicated legacy decision with its linked title, never by the
   number alone. Do not create a new decision-number collision.
+- Use the generated evidence index to locate one historical claim. Do not load
+  a complete append-only evidence archive when an indexed section answers the
+  question.
 - Run `pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1` after a
   coherent documentation edit.

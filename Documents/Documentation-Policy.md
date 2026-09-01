@@ -64,9 +64,14 @@ they are already being changed for a substantive reason.
 
 New specifications must include a `## Status` section near the title. The
 status says whether the contract is current, a candidate, proposed,
-experimental, superseded, or historical. The generated specification catalog
-keeps older files without status visible as `Unclassified`; that label means
-"read the document before relying on it," not "accepted."
+experimental, superseded, or historical. A reviewed old specification may use
+the conservative `Legacy-Status-Classifications.json` sidecar when changing the
+specification bytes only to add metadata would be unsafe or misleading. A
+sidecar classification describes retrieval status only; it must not infer
+implementation, verification, qualification, or release standing. An older
+file with neither an opening status nor reviewed sidecar metadata remains
+`Unclassified`, which means "read the document before relying on it," not
+"accepted."
 
 Active metadata has a review window. Progress is reviewed at least every 45
 days, Roadmap every 90 days, and the other active navigation, architecture, and
@@ -171,19 +176,22 @@ Progress.
 The generated [decision catalog](Decisions/README.md) is the entry point for
 status and recent history. The machine-readable catalog uses a full filename
 key, because a decision number alone is not unique for the twelve preserved
-legacy collisions.
+legacy collisions. Colliding entries expose `numberCollision` and the full
+`disambiguationKey`; do not invent a short alias that can become ambiguous.
 
 ## Catalogs and generated indexes
 
 `Tools/Documentation/Update-Documentation-Catalogs.ps1` owns the specification
-domain indexes and the decision catalog. Run it after adding, renaming, or
-changing the title or opening status of a specification or decision. Generated
-files say that they are generated and must not be edited by hand.
+domain indexes, decision catalog, and historical evidence index. Run it after
+adding, renaming, or changing a cataloged title, status, evidence heading, or
+routing sidecar. Generated files say that they are generated and must not be
+edited by hand.
 
-Catalog status categories are search aids. The exact opening status copied into
-the machine-readable catalog remains authoritative. In particular,
-`Implemented`, `Verified`, `Qualified`, `Accepted`, and `Released` are not
-interchangeable claims.
+Catalog status categories are search aids. When a document supplies an opening
+status, the copied text remains authoritative. `statusSource` appears when a
+value instead came from a conservative legacy sidecar or is missing. In
+particular, `Documented`, `Implemented`, `Verified`, `Qualified`, `Accepted`, and
+`Released` are not interchangeable claims.
 
 ## Evidence records
 
@@ -192,6 +200,11 @@ New exact run and artifact evidence belongs under
 or coherent verification run, with links to the specification and decision it
 supports. Keep large append-only historical evidence where it is; migrate it
 only when a task needs to change its ownership.
+
+The generated [historical evidence index](Evidence/Index.md) catalogs selected
+level-two and level-three headings from the existing archives. Search the index
+or its machine-readable catalog first and open only the linked section. The
+source registry states what each archive is useful for and what it cannot prove.
 
 The evidence schema records the subject, claim, exact source state, host and
 tool identity, inputs, outputs, result, limitations, and review class. It does
@@ -204,5 +217,7 @@ independent reproduction as substitutes for one another.
 anchors, exact path casing, active-document metadata, review windows and word
 budgets, hash-free active narrative pages, generated catalog freshness, new
 decision and specification status, and the frozen list of legacy
-decision-number collisions. `Tools/Verify/Verify-Changed.ps1` runs it whenever
-Markdown or documentation-policy files change.
+decision-number collisions. It also runs the bounded common-question retrieval
+cases, which prove that entry pages link directly to their expected owner and
+that catalog-specific answers remain searchable. `Tools/Verify/Verify-Changed.ps1`
+runs it whenever Markdown or documentation-policy files change.

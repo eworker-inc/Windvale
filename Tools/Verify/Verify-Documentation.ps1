@@ -9,6 +9,8 @@ $CollisionPath = Join-Path $DecisionDirectory 'Legacy-Id-Collisions.txt'
 $DecisionMissingStatusPath = Join-Path $DecisionDirectory 'Legacy-Missing-Status.txt'
 $SpecificationMissingStatusPath = Join-Path $SpecificationDirectory 'Legacy-Missing-Status.txt'
 $CatalogScript = Join-Path $RepositoryRoot 'Tools/Documentation/Update-Documentation-Catalogs.ps1'
+$RetrievalVerifier = Join-Path `
+    $RepositoryRoot 'Tools/Documentation/Test-Documentation-Retrieval.ps1'
 $Failures = [System.Collections.Generic.List[string]]::new()
 $CheckedLinks = 0
 $CheckedAnchors = 0
@@ -118,7 +120,8 @@ function Get-OpeningStatusText {
     )
 
     for ($Index = 0; $Index -lt [Math]::Min($Lines.Count, 80); $Index++) {
-        if ($Lines[$Index] -match '^[-*]\s+Status:\s*(.+?)\s*$') {
+        if ($Lines[$Index] -match `
+            '^(?:[-*]\s+|>\s*)?(?:\*\*)?Status:(?:\*\*)?\s*(.+?)\s*$') {
             return $Matches[1].Trim()
         }
         if ($Lines[$Index] -notmatch '(?i)^##\s+.*\bstatus\b.*$') {
@@ -484,10 +487,12 @@ if ((Compare-Object $DeclaredCollisions $ActualCollisions).Count -ne 0) {
         'Do not add a collision or silently change published history.')
 }
 
-$DeclaredDecisionMissingStatus = Get-LegacyRegistryEntries `
-    -Path $DecisionMissingStatusPath `
-    -Header 'windvale-legacy-decision-missing-status 1' `
-    -Description 'legacy decision missing-status'
+$DeclaredDecisionMissingStatus = @(
+    Get-LegacyRegistryEntries `
+        -Path $DecisionMissingStatusPath `
+        -Header 'windvale-legacy-decision-missing-status 1' `
+        -Description 'legacy decision missing-status'
+)
 $ActualDecisionMissingStatus = @(
     $DecisionEntries |
         Where-Object {
@@ -510,10 +515,12 @@ $SpecificationFiles = @(
     Get-ChildItem -LiteralPath $SpecificationDirectory -File -Filter '*.md' |
         Where-Object { $_.Name -notin @('README.md', 'AGENTS.md') }
 )
-$DeclaredSpecificationMissingStatus = Get-LegacyRegistryEntries `
-    -Path $SpecificationMissingStatusPath `
-    -Header 'windvale-legacy-specification-missing-status 1' `
-    -Description 'legacy specification missing-status'
+$DeclaredSpecificationMissingStatus = @(
+    Get-LegacyRegistryEntries `
+        -Path $SpecificationMissingStatusPath `
+        -Header 'windvale-legacy-specification-missing-status 1' `
+        -Description 'legacy specification missing-status'
+)
 $ActualSpecificationMissingStatus = @(
     $SpecificationFiles |
         Where-Object {
@@ -543,6 +550,21 @@ if (!(Test-Path -LiteralPath $CatalogScript -PathType Leaf)) {
     } catch {
         Add-DocumentationFailure (
             'Generated documentation catalogs are missing or stale: ' +
+            $_.Exception.Message)
+    }
+}
+
+if (!(Test-Path -LiteralPath $RetrievalVerifier -PathType Leaf)) {
+    Add-DocumentationFailure 'The documentation retrieval verifier is missing.'
+} else {
+    try {
+        $RetrievalOutput = @(& $RetrievalVerifier)
+        foreach ($Line in $RetrievalOutput) {
+            Write-Host $Line
+        }
+    } catch {
+        Add-DocumentationFailure (
+            'Documentation retrieval verification failed: ' +
             $_.Exception.Message)
     }
 }

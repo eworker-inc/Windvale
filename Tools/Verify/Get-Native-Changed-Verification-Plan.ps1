@@ -1534,6 +1534,7 @@ foreach ($Path in $Paths) {
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/AGENTS.md',
             'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Status-Classifications.json',
             'Specifications/README.md',
             'Specifications/Specification-Catalog.json'
         )

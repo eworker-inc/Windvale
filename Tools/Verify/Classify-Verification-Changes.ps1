@@ -68,6 +68,7 @@ function Test-DocumentationRelevantPath {
             'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Documents/Decisions/Legacy-Missing-Status.txt',
             'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Status-Classifications.json',
             'Specifications/Specification-Catalog.json',
             'Tools/Verify/Verify-Documentation.ps1'
         )
@@ -155,6 +156,7 @@ function Test-LightweightPath {
         $Path -in @(
             'Specifications/AGENTS.md',
             'Specifications/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Status-Classifications.json',
             'Specifications/README.md',
             'Specifications/Specification-Catalog.json'
         )
@@ -191,6 +193,7 @@ function Test-LightweightPath {
             'Documents/Decisions/Decision-Catalog.json',
             'Documents/Decisions/Legacy-Id-Collisions.txt',
             'Documents/Decisions/Legacy-Missing-Status.txt',
+            'Specifications/Legacy-Status-Classifications.json',
             'Tools/Verify/Classify-Verification-Changes.ps1',
             'Tools/Verify/Verify-Changed.ps1',
             'Tools/Verify/Verify-Change-Classification.ps1',

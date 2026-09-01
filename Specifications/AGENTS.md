@@ -18,5 +18,8 @@ handbook.
   specification appear complete.
 - After changing a specification filename, title, or opening status, run
   `pwsh -NoProfile -File Tools/Documentation/Update-Documentation-Catalogs.ps1`.
+- `Legacy-Status-Classifications.json` supplies conservative search metadata
+  for reviewed old files whose bytes should not be changed merely to add a
+  status. It must never infer implementation, verification, or qualification.
 - Do not edit `README.md`, `Specification-Catalog.json`, or files under
   `Indexes/` by hand; the catalog generator owns them.

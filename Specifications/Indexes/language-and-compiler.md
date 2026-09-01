@@ -30,13 +30,13 @@ Source syntax, semantics, Foundation contracts, analysis, and compiler inputs.
 | [Windvale split-compiler development cache](../Compiler-Split-Development-Cache.md) | Documented |
 | [Foundation bounded byte construction](../Foundation-Byte-Construction.md) | Current |
 | [Foundation ordinal byte-span ordering](../Foundation-Byte-Ordering.md) | Documented |
-| [Windvale Foundation binary and text primitives](../Foundation-Bytes.md) | Unclassified |
+| [Windvale Foundation binary and text primitives](../Foundation-Bytes.md) | Documented |
 | [Foundation bounded decimal parsing](../Foundation-Decimal-Parsing.md) | Current |
 | [Foundation machine contracts](../Foundation-Machine-Contracts.md) | Documented |
-| [Windvale hosted resource boundary](../Hosted-Resources.md) | Unclassified |
-| [Windvale Seed enums and bounded formatting](../Seed-Enums-And-Formatting.md) | Unclassified |
+| [Windvale hosted resource boundary](../Hosted-Resources.md) | Documented |
+| [Windvale Seed enums and bounded formatting](../Seed-Enums-And-Formatting.md) | Documented |
 | [Windvale Seed language specification](../Seed-Language.md) | Superseded |
-| [Windvale Seed immutable records](../Seed-Records.md) | Unclassified |
+| [Windvale Seed immutable records](../Seed-Records.md) | Documented |
 | [Windvale source naming conventions](../Source-Naming.md) | Candidate |
 | [Windvale compiler build-driver application](../Windvale-Compiler-Build-Driver.md) | Implemented |
 | [Windvale immutable source geometry](../Windvale-Immutable-Source-Geometry.md) | Documented |

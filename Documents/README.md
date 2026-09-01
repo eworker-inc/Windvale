@@ -29,7 +29,9 @@ follows [Documents/AGENTS.md](AGENTS.md).
 
 If a Windvale term or evidence word is unfamiliar, use the concise
 [terminology guide](Terminology.md). New exact run records follow the
-[evidence-record guide](Evidence/README.md).
+[evidence-record guide](Evidence/README.md). To find one older run or
+measurement without loading a complete archive, use the generated
+[historical evidence index](Evidence/Index.md).
 
 ## Which document owns the answer?
 
@@ -41,7 +43,7 @@ If a Windvale term or evidence word is unfamiliar, use the concise
 | What behavior or binary format is required? | [Specifications](../Specifications/README.md) |
 | Which component owns a responsibility? | [Architecture](Architecture/) |
 | Why was a durable choice made? | [Decision catalog](Decisions/README.md) |
-| What exact run, host, measurement, or artifact was completed? | [Evidence records](Evidence/README.md) and historical evidence under [Project](Project/) |
+| What exact run, host, measurement, or artifact was completed? | [Historical evidence index](Evidence/Index.md) and [new evidence records](Evidence/README.md) |
 | How do I build, verify, publish, or recover something? | [Runbooks](Runbooks/) |
 | What changed for release users? | [Changelog](../CHANGELOG.md) |
 
@@ -137,10 +139,9 @@ in machine-readable manifests, signed release checksums, launchers, fixtures,
 or named evidence records. See the
 [hash ownership policy](Documentation-Policy.md#hash-ownership).
 
-The large [Seed verification evidence](Project/Seed-Verification-Evidence.md)
-and [Language 1.0 migration evidence](Project/Windvale-Language-1.0-Migration-Evidence.md)
-records are append-oriented technical history. Read them only when a task needs
-exact reproduction, qualification, or provenance detail.
+The generated [historical evidence index](Evidence/Index.md) points to exact
+sections inside the large append-oriented records. Open a complete archive only
+when a task needs broader reproduction, qualification, or provenance context.
 
 ## Historical catalogs and snapshots
 
