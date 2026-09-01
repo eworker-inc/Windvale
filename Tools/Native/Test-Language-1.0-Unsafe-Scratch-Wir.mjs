@@ -32,12 +32,27 @@ const Emitter = resolve(process.argv[3]);
 const Verifier = resolve(process.argv[4]);
 const Runner = process.argv.length >= 6 ? resolve(process.argv[5]) : undefined;
 const Lowerer = process.argv.length === 7 ? resolve(process.argv[6]) : undefined;
+const Nativeˉextension = process.platform === 'win32' ? 'cmd' : 'sh';
+const Nativeˉchecker = resolve(
+    SCRIPT_DIRECTORY, `Check-Wvo.${Nativeˉextension}`,
+);
+const Nativeˉlinker = resolve(
+    SCRIPT_DIRECTORY, `Link-Wvo.${Nativeˉextension}`,
+);
+const Nativeˉpackager = resolve(
+    SCRIPT_DIRECTORY, `Package-Console.${Nativeˉextension}`,
+);
 for (const [Tool, Label] of [
     [Analyzer, 'Analyzer'],
     [Emitter, 'emitter'],
     [Verifier, 'verifier'],
     ...(Runner === undefined ? [] : [[Runner, 'runner']]),
     ...(Lowerer === undefined ? [] : [[Lowerer, 'native lowerer']]),
+    ...(Lowerer === undefined ? [] : [
+        [Nativeˉchecker, 'native object checker'],
+        [Nativeˉlinker, 'native linker'],
+        [Nativeˉpackager, 'native console packager'],
+    ]),
 ]) {
     const Status = await lstat(Tool);
     if (!Status.isFile() || Status.size <= 0 ||
@@ -253,7 +268,7 @@ const Runtimeˉapplications = [
     },
     {
         Name: 'split-call-transfer-success',
-        Nativeˉaot: false,
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             'fn Allocate(Scratchˉbudget: Memory.Memoryˉbudget) -> i32 ' +
             'effects(memory.allocate) { ' +
@@ -273,8 +288,36 @@ const Runtimeˉapplications = [
         ),
     },
     {
+        Name: 'split-budget-refusal-parent-preserved',
+        Nativeˉexecution: true,
+        Source: Runtimeˉapplication(
+            'fn Allocateˉafterˉrefusal(' +
+            'Scratchˉbudget: Memory.Memoryˉbudget, ' +
+            'Allocationˉerror: Memory.Allocationˉfailure) -> i32 ' +
+            'effects(memory.allocate) { ' +
+            'if Allocationˉerror.Reason != ' +
+            'Memory.Allocationˉreason.Budgetˉexhausted || ' +
+            'Allocationˉerror.Requestedˉbytes != 131072u64 { ' +
+            'return 3; } ' +
+            'let Outcome: ' + Resultˉtype + ' = ' +
+            'Unsafe.Constructˉscratch::<Hostˉabi>(' +
+            'Budget: Scratchˉbudget, Length: 64u64, Alignment: 8u64); ' +
+            'return match Outcome { ' +
+            'case Result.Result.Valid { Value: _ } { 42 } ' +
+            'case Result.Result.Failure { Error: _ } { 4 } }; } ',
+            'var Parent: Memory.Memoryˉbudget = Budget; ' +
+            'let Splitˉresult: Result.Result<' +
+            'Memory.Memoryˉbudget, Memory.Allocationˉfailure> = ' +
+            'Memory.Split(borrow mut Parent, 131072u64, 1u32); ' +
+            'return match Splitˉresult { ' +
+            'case Result.Result.Valid { Value: _ } { 2 } ' +
+            'case Result.Result.Failure { Error: Failure } { ' +
+            'Allocateˉafterˉrefusal(Parent, Failure) } };',
+        ),
+    },
+    {
         Name: 'split-call-budget-refusal',
-        Nativeˉaot: false,
+        Nativeˉexecution: true,
         Source: Runtimeˉapplication(
             'fn Summarizeˉallocation(' +
             'Allocationˉerror: Memory.Allocationˉfailure) -> i32 { ' +
@@ -425,7 +468,11 @@ try {
         `compiler-verifier-cases=${Wvbˉverified}\n`,
     );
 } finally {
-    await Removeˉwork(Work);
+    if (process.env.WINDVALE_KEEP_TEST_WORK === '1') {
+        process.stdout.write(`native language 1 unsafe scratch work=${Work}\n`);
+    } else {
+        await Removeˉwork(Work);
+    }
 }
 
 async function Verifyˉruntime() {
@@ -472,6 +519,12 @@ async function Verifyˉruntime() {
         if (Lowerer !== undefined && Case.Nativeˉaot !== false) {
             const Wvo = join(Caseˉdirectory, 'Runtime.wvo');
             await Requireˉnativeˉlowering(Wvb, Wvo, Case.Name, true);
+            if (Case.Nativeˉexecution === true) {
+                await Requireˉnativeˉexecution(Wvo, Caseˉdirectory, Case.Name);
+            }
+            if (Case.Name === 'split-call-transfer-success') {
+                await Verifyˉnativeˉsplitˉrejections(Wvb, Caseˉdirectory);
+            }
         }
         const Execution = spawnSync(Runner, [Wvb], {
             cwd: Work,
@@ -530,12 +583,16 @@ async function Verifyˉruntime() {
         `native-aot=${Lowerer === undefined ? 'Notˉrequested' :
             Runtimeˉapplications.filter(Case => Case.Nativeˉaot !== false).length +
             '/' + Runtimeˉapplications.length} ` +
+        `native-execution=${Lowerer === undefined ? 'Notˉrequested' :
+            Runtimeˉapplications.filter(Case => Case.Nativeˉexecution === true).length +
+            '/' + Runtimeˉapplications.length} ` +
+        `native-split-rejections=${Lowerer === undefined ? 'Notˉrequested' : 3} ` +
         'allocation=zeroed teardown=bounded\n',
     );
 }
 
 async function Requireˉnativeˉlowering(
-    Wvb, Wvo, Label, Valid, Expectedˉdetail = 0,
+    Wvb, Wvo, Label, Valid, Expectedˉdetail = 0, Expectedˉfunction = 0,
 ) {
     const Result = await Runˉtool(Lowerer, [Wvb, Wvo]);
     const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
@@ -556,11 +613,106 @@ async function Requireˉnativeˉlowering(
     }
     if (Result.Code !== 1 || Exists(Wvo) ||
         !Diagnostic.includes(
-            `status=Unsupportedˉcode function=0 detail=${Expectedˉdetail}`,
+            `status=Unsupportedˉcode function=${Expectedˉfunction} ` +
+            `detail=${Expectedˉdetail}`,
         )) {
         Reject(
             `The unsafe-scratch native rejection ${Label} differed: ` +
             `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
+async function Requireˉnativeˉexecution(Wvo, Directory, Label) {
+    const Checked = await Runˉtool(Nativeˉchecker, [Wvo]);
+    if (Checked.Code !== 0 || Checked.Exceeded) {
+        Reject(
+            `The unsafe-scratch native object check ${Label} differed: ` +
+            `status=${Checked.Code} diagnostic=${JSON.stringify(Checked.Diagnostic)}.`,
+        );
+    }
+    const Image = join(Directory, 'Runtime.bin');
+    const Linked = await Runˉtool(
+        Nativeˉlinker, ['0', 'Main', Image, Wvo],
+    );
+    const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(
+        Linked.Diagnostic.replaceAll('\r\n', '\n'),
+    );
+    if (Linked.Code !== 0 || Linked.Exceeded || Entry === null || !Exists(Image)) {
+        Reject(
+            `The unsafe-scratch native link ${Label} differed: ` +
+            `status=${Linked.Code} diagnostic=${JSON.stringify(Linked.Diagnostic)}.`,
+        );
+    }
+    const Application = join(
+        Directory, process.platform === 'win32' ? 'Runtime.exe' : 'Runtime.elf',
+    );
+    const Target = process.platform === 'win32'
+        ? 'windows-x64-console-v1'
+        : 'linux-x64-console-v1';
+    const Packaged = await Runˉtool(
+        Nativeˉpackager, [Target, Image, Entry[1], Application],
+    );
+    if (Packaged.Code !== 0 || Packaged.Exceeded || !Exists(Application)) {
+        Reject(
+            `The unsafe-scratch native package ${Label} differed: ` +
+            `status=${Packaged.Code} ` +
+            `diagnostic=${JSON.stringify(Packaged.Diagnostic)}.`,
+        );
+    }
+    const Executed = await Runˉtool(Application, []);
+    if (Executed.Code !== 42 || Executed.Exceeded ||
+        Executed.Diagnostic.length !== 0) {
+        Reject(
+            `The unsafe-scratch native execution ${Label} differed: ` +
+            `status=${Executed.Code} ` +
+            `diagnostic=${JSON.stringify(Executed.Diagnostic)}.`,
+        );
+    }
+}
+
+async function Verifyˉnativeˉsplitˉrejections(Wvb, Directory) {
+    const Published = await readFile(Wvb);
+    const Layout = Inspectˉmemoryˉbudgetˉsplitˉwvb(Published);
+    const Cases = [
+        {
+            Name: 'invalid-split-parent',
+            Function: 1,
+            Detail: 13,
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                0xffff_ffff, Layout.Operation + 1,
+            ),
+        },
+        {
+            Name: 'invalid-split-result-type',
+            Function: 1,
+            Detail: 13,
+            Mutate: Candidate => Candidate.writeUInt32LE(
+                Layout.Typeˉcount, Layout.Operation + 5,
+            ),
+        },
+        {
+            Name: 'noncanonical-split-allocation-field',
+            Function: 1,
+            Detail: 1000,
+            Mutate: Candidate => { Candidate[Layout.Allocationˉfieldˉname] ^= 1; },
+        },
+    ];
+    for (let Index = 0; Index < Cases.length; Index += 1) {
+        const Case = Cases[Index];
+        process.stdout.write(
+            'native language 1 unsafe scratch native-split ' +
+            `malformed-item=${Index + 1}/${Cases.length} ` +
+            `case=${Case.Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Published);
+        Case.Mutate(Candidate);
+        const Candidateˉpath = join(Directory, `${Case.Name}.wvb`);
+        const Objectˉpath = join(Directory, `${Case.Name}.wvo`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        await Requireˉnativeˉlowering(
+            Candidateˉpath, Objectˉpath, Case.Name, false,
+            Case.Detail, Case.Function,
         );
     }
 }
@@ -966,7 +1118,26 @@ function Inspectˉunsafeˉscratchˉwvb(Input) {
         Abiˉtype: Matches[0].Abiˉtype,
         Resultˉname: Resultˉdescriptor + 5,
         Typeˉcount,
+        Typeˉkinds,
     };
+}
+
+function Inspectˉmemoryˉbudgetˉsplitˉwvb(Input) {
+    const Layout = Inspectˉunsafeˉscratchˉwvb(Input);
+    const Matches = [];
+    for (let Cursor = Layout.Codeˉstart;
+        Cursor <= Layout.Codeˉend - 9; Cursor += 1) {
+        if (Input[Cursor] !== 206) continue;
+        const Resultˉtype = Input.readUInt32LE(Cursor + 5);
+        if (Resultˉtype < Layout.Typeˉcount &&
+            Layout.Typeˉkinds[Resultˉtype] === 3) {
+            Matches.push(Cursor);
+        }
+    }
+    if (Matches.length !== 1) {
+        Reject('The memory-budget split WVB must contain one exact opcode 206.');
+    }
+    return { ...Layout, Operation: Matches[0] };
 }
 
 function Nextˉwvbˉtype(Input, Start, End) {
@@ -1163,10 +1334,32 @@ function Runˉemitter(Source, Manifest, Bindings, Wir, Output) {
 
 function Runˉtool(Tool, Arguments) {
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
-        const Child = spawn(Tool, Arguments, {
+        if (process.platform === 'win32' && [Tool, ...Arguments].some(
+            Argument => /[\r\n&|<>^%!"]/u.test(Argument)
+        )) {
+            Rejectˉpromise(new Error(
+                'An unsafe-scratch Windows tool argument contains shell metacharacters.',
+            ));
+            return;
+        }
+        const Isˉcommand = process.platform === 'win32' &&
+            Tool.toLowerCase().endsWith('.cmd');
+        const Executable = Isˉcommand
+            ? process.env.ComSpec ?? 'cmd.exe'
+            : Tool;
+        const Toolˉarguments = Isˉcommand
+            ? [
+                '/d', '/v:off', '/s', '/c',
+                `"${[Tool, ...Arguments]
+                    .map(Argument => `"${Argument}"`)
+                    .join(' ')}"`,
+            ]
+            : Arguments;
+        const Child = spawn(Executable, Toolˉarguments, {
             cwd: Work,
             stdio: ['ignore', 'pipe', 'pipe'],
             windowsHide: true,
+            windowsVerbatimArguments: Isˉcommand,
         });
         const Output = [];
         var Outputˉbytes = 0;

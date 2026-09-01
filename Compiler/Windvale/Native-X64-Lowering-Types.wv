@@ -94,6 +94,25 @@ fn Skipˉname(Input: bytes, Cursor: u32, Limit: u32) -> u32 {
     return Cursor + 4u32 + Length;
 }
 
+fn Nameˉequals(Input: bytes, Cursor: u32, Expected: text) -> bool {
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor, 4u32) { return false; }
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    if Length != Bytesˉlength(Expectedˉbytes) ||
+        !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor + 4u32, Length) {
+        return false;
+    }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Input, Cursor + 4u32 + Index) !=
+            Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
 export fn Compilerˉnativeˉx64ˉtypeˉkind(
     Types: Compilerˉnativeˉx64ˉtypes,
     Index: u32
@@ -810,31 +829,107 @@ export fn Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
     return Bytesˉreadˉi32ˉlittle(Input, Cursor + 4u32 + Selectedˉlength);
 }
 
+export fn Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Memberˉindex: u32,
+    Expected: text
+) -> bool {
+    if Typeˉindex >= Types.Count ||
+        Memberˉindex >= Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types, Typeˉindex
+        ) {
+        return false;
+    }
+    let Kind: u8 = Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex);
+    if Kind != 2u8 && Kind != 7u8 { return false; }
+    var Width: u32 = 4u32;
+    if Kind == 7u8 { Width = 1u32; }
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types, Typeˉindex
+    );
+    var Member: u32 = 0u32;
+    while Member < Memberˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return false; }
+        Cursor = Cursor + Width;
+        Member = Member + 1u32;
+    }
+    return Nameˉequals(Input, Cursor, Expected);
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Fieldˉindex: u32
+) -> Compilerˉnativeˉx64ˉshape {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 1u8 ||
+        Fieldˉindex >= Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types, Typeˉindex
+        ) {
+        return Invalidˉshape();
+    }
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types, Typeˉindex
+    );
+    var Field: u32 = 0u32;
+    while Field <= Fieldˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return Invalidˉshape(); }
+        let Shape: Compilerˉnativeˉx64ˉshape =
+            Compilerˉnativeˉx64ˉshapeˉread(
+                Input, Cursor, Bytesˉlength(Input), Types
+            );
+        if !Shape.Valid { return Invalidˉshape(); }
+        if Field == Fieldˉindex { return Shape; }
+        Cursor = Shape.Next;
+        Field = Field + 1u32;
+    }
+    return Invalidˉshape();
+}
+
+export fn Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Fieldˉindex: u32,
+    Expected: text
+) -> bool {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 1u8 ||
+        Fieldˉindex >= Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types, Typeˉindex
+        ) {
+        return false;
+    }
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types, Typeˉindex
+    );
+    var Field: u32 = 0u32;
+    while Field < Fieldˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return false; }
+        Cursor = Skipˉhostedˉshape(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return false; }
+        Field = Field + 1u32;
+    }
+    return Nameˉequals(Input, Cursor, Expected);
+}
+
 export fn Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,
     Typeˉindex: u32,
     Fieldˉindex: u32
 ) -> u8 {
-    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
-        Types,
-        Typeˉindex
+    let Shape: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+        Input, Types, Typeˉindex, Fieldˉindex
     );
-    var Field: u32 = 0u32;
-    while Field <= Fieldˉindex {
-        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
-        let Shape: Compilerˉnativeˉx64ˉshape =
-            Compilerˉnativeˉx64ˉshapeˉread(
-                Input,
-                Cursor,
-                Bytesˉlength(Input),
-                Types
-            );
-        if Field == Fieldˉindex { return Shape.Type; }
-        Cursor = Shape.Next;
-        Field = Field + 1u32;
-    }
-    return 0u8;
+    return Shape.Type;
 }
 
 export fn Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
@@ -913,6 +1008,122 @@ export fn Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
     return Invalidˉshape();
 }
 
+fn Variantˉcaseˉcursor(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Caseˉindex: u32
+) -> u32 {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
+        Caseˉindex >= Compilerˉnativeˉx64ˉtypeˉitemˉcount(
+            Types, Typeˉindex
+        ) {
+        return 0u32;
+    }
+    var Cursor: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types, Typeˉindex
+    );
+    var Case: u32 = 0u32;
+    while Case < Caseˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return 0u32; }
+        let Encoding: u8 = Bytesˉreadˉu8(Input, Cursor);
+        Cursor = Cursor + 1u32;
+        if Encoding == 1u8 {
+            Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+            if Cursor == 0u32 { return 0u32; }
+            Cursor = Skipˉhostedˉshape(
+                Input, Cursor, Bytesˉlength(Input)
+            );
+            if Cursor == 0u32 { return 0u32; }
+        } else if Encoding == 2u8 {
+            if !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor, 4u32) {
+                return 0u32;
+            }
+            let Fields: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+            Cursor = Cursor + 4u32;
+            var Field: u32 = 0u32;
+            while Field < Fields {
+                Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+                if Cursor == 0u32 { return 0u32; }
+                Cursor = Skipˉhostedˉshape(
+                    Input, Cursor, Bytesˉlength(Input)
+                );
+                if Cursor == 0u32 { return 0u32; }
+                Field = Field + 1u32;
+            }
+        } else if Encoding != 0u8 {
+            return 0u32;
+        }
+        Case = Case + 1u32;
+    }
+    return Cursor;
+}
+
+fn Variantˉfieldˉcursor(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Caseˉindex: u32,
+    Fieldˉindex: u32
+) -> u32 {
+    var Cursor: u32 = Variantˉcaseˉcursor(
+        Input, Types, Typeˉindex, Caseˉindex
+    );
+    if Cursor == 0u32 { return 0u32; }
+    Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+    if Cursor == 0u32 { return 0u32; }
+    let Encoding: u8 = Bytesˉreadˉu8(Input, Cursor);
+    Cursor = Cursor + 1u32;
+    var Fields: u32 = 0u32;
+    if Encoding == 1u8 { Fields = 1u32; }
+    if Encoding == 2u8 {
+        if !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor, 4u32) {
+            return 0u32;
+        }
+        Fields = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        Cursor = Cursor + 4u32;
+    }
+    if Fieldˉindex >= Fields { return 0u32; }
+    var Field: u32 = 0u32;
+    while Field < Fieldˉindex {
+        Cursor = Skipˉname(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return 0u32; }
+        Cursor = Skipˉhostedˉshape(Input, Cursor, Bytesˉlength(Input));
+        if Cursor == 0u32 { return 0u32; }
+        Field = Field + 1u32;
+    }
+    return Cursor;
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Caseˉindex: u32,
+    Expected: text
+) -> bool {
+    let Cursor: u32 = Variantˉcaseˉcursor(
+        Input, Types, Typeˉindex, Caseˉindex
+    );
+    return Cursor != 0u32 && Nameˉequals(Input, Cursor, Expected);
+}
+
+export fn Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32,
+    Caseˉindex: u32,
+    Fieldˉindex: u32,
+    Expected: text
+) -> bool {
+    let Cursor: u32 = Variantˉfieldˉcursor(
+        Input, Types, Typeˉindex, Caseˉindex, Fieldˉindex
+    );
+    return Cursor != 0u32 && Nameˉequals(Input, Cursor, Expected);
+}
+
 export fn Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,
@@ -982,6 +1193,121 @@ export fn Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
         Case = Case + 1u32;
     }
     return Invalidˉshape();
+}
+
+export fn Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Resultˉtype: u32
+) -> bool {
+    if Resultˉtype >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Resultˉtype) != 3u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Resultˉtype) != 2u32 ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+            Input, Types, Resultˉtype, 0u32, "Valid"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+            Input, Types, Resultˉtype, 0u32, 0u32, "Value"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+            Input, Types, Resultˉtype, 1u32, "Failure"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+            Input, Types, Resultˉtype, 1u32, 0u32, "Error"
+        ) {
+        return false;
+    }
+    let Valid: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 0u32, 0u32
+        );
+    let Extraˉvalid: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 0u32, 1u32
+        );
+    let Failure: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 1u32, 0u32
+        );
+    let Extraˉfailure: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 1u32, 1u32
+        );
+    if !Valid.Valid || Valid.Type != 10u8 || Valid.Identity != 25u32 ||
+        Extraˉvalid.Valid || !Failure.Valid || Extraˉfailure.Valid ||
+        !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Failure.Type) {
+        return false;
+    }
+
+    let Failureˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+        Failure.Type
+    );
+    if Failureˉtype >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Failureˉtype) != 1u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Failureˉtype) != 3u32 ||
+        !Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(
+            Input, Types, Failureˉtype, 0u32, "Reason"
+        ) ||
+        !Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(
+            Input, Types, Failureˉtype, 1u32, "Requestedˉbytes"
+        ) ||
+        !Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(
+            Input, Types, Failureˉtype, 2u32, "Availableˉbytes"
+        ) {
+        return false;
+    }
+    let Reason: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+            Input, Types, Failureˉtype, 0u32
+        );
+    let Requested: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+            Input, Types, Failureˉtype, 1u32
+        );
+    let Available: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+            Input, Types, Failureˉtype, 2u32
+        );
+    if !Reason.Valid ||
+        !Compilerˉnativeˉx64ˉtypeˉisˉenum(Reason.Type) ||
+        !Requested.Valid || Requested.Type != 10u8 ||
+        !Available.Valid || Available.Type != 10u8 {
+        return false;
+    }
+    let Reasonˉtype: u32 = Compilerˉnativeˉx64ˉenumˉtypeˉindex(
+        Types, Reason.Type
+    );
+    if Reasonˉtype >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Reasonˉtype) != 7u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Reasonˉtype) != 4u32 {
+        return false;
+    }
+    if !Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
+            Input, Types, Reasonˉtype, 0u32, "Budgetˉexhausted"
+        ) || Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+            Input, Types, Reasonˉtype, 0u32
+        ) != 1 {
+        return false;
+    }
+    if !Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
+            Input, Types, Reasonˉtype, 1u32, "Targetˉunaddressable"
+        ) || Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+            Input, Types, Reasonˉtype, 1u32
+        ) != 2 {
+        return false;
+    }
+    if !Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
+            Input, Types, Reasonˉtype, 2u32, "Providerˉunavailable"
+        ) || Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+            Input, Types, Reasonˉtype, 2u32
+        ) != 3 {
+        return false;
+    }
+    return Compilerˉnativeˉx64ˉenumˉmemberˉnameˉis(
+            Input, Types, Reasonˉtype, 3u32, "Fragmented"
+        ) && Compilerˉnativeˉx64ˉenumˉmemberˉvalue(
+            Input, Types, Reasonˉtype, 3u32
+        ) == 4;
 }
 
 fn Compilerˉnativeˉx64ˉvariantˉcaseˉencoding(

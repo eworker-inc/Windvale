@@ -84,7 +84,10 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
     var Scratchˉresultˉtypes: bytes = Zeroˉmap(Input, Typeˉcount);
     var Cursor: u32 = 0u32;
     while Cursor < Codeˉlength {
-        if Bytesˉreadˉu8(Input, Codeˉoffset + Cursor) == 220u8 {
+        let Resultˉopcode: u8 = Bytesˉreadˉu8(
+            Input, Codeˉoffset + Cursor
+        );
+        if Resultˉopcode == 206u8 || Resultˉopcode == 220u8 {
             let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 5u32
             );
@@ -242,6 +245,24 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             Availableˉhigh = Setˉavailableˉhigh(
                 Availableˉhigh, Budgetˉrank, false
             );
+        }
+        if Opcode == 206u8 {
+            let Parent: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Parent >= Locals || Bytesˉreadˉu8(Tracked, Parent) != 1u8 ||
+                Bytesˉreadˉu8(Localˉtypes, Parent) != 10u8 ||
+                Bytesˉreadˉu32ˉlittle(
+                    Localˉtypeˉidentities, Parent * 4u32
+                ) != 25u32 {
+                return false;
+            }
+            let Parentˉrank: u32 = Bytesˉreadˉu32ˉlittle(
+                Ranks, Parent * 4u32
+            );
+            if !Available(Availableˉlow, Availableˉhigh, Parentˉrank) {
+                return false;
+            }
         }
         if Opcode == 48u8 || Opcode == 49u8 {
             let Target: u32 = Bytesˉreadˉu32ˉlittle(

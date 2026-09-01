@@ -156,6 +156,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 3u8 { return 5u32; }
     if Opcode == 4u8 { return 5u32; }
     if Opcode == 205u8 { return 5u32; }
+    if Opcode == 206u8 { return 9u32; }
     if Opcode == 5u8 { return 5u32; }
     if Opcode == 6u8 { return 5u32; }
     if Opcode == 7u8 { return 5u32; }
@@ -1113,7 +1114,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Handled = true;
         }
 
-        if Opcode == 220u8 {
+        if Opcode == 206u8 || Opcode == 220u8 {
             if Depth < 2u32 || Blockˉrecordˉvalues >= 256u32 {
                 return Invalid(Input);
             }
