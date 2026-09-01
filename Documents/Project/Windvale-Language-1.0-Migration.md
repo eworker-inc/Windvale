@@ -852,7 +852,17 @@ initialization, returns canonical validation failures, keeps backing and lease
 state private behind a non-address-like carrier, and finalizes ownership at
 invocation teardown. The focused oracle executes three success/failure cases
 and rejects a forged WVB 1.33 module with no `DC` before bytecode execution.
-Callable budget transfer, native lowering and containment, pointer and
+
+[Decision 0905](../Decisions/0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md)
+closes the by-value callable-budget gap without a format bump. The source-WIR
+validator now records each budget temporary's source slot and consumes that
+slot only when the callee parameter is by-value. The WVB 1.33 scalar envelope
+admits the canonical `Split` result's budget field. Entry and 64-byte child
+budgets reach an ordinary helper, while a 32-byte child asked for 64 bytes
+returns exact `Budgetˉexhausted` with 64 requested and 32 available. Duplicate
+transfer is rejected before WVB publication. Ordinary immutable budget
+borrowing remains valid through WIR but still returns `Unsupportedˉshape` at
+WVB emission; its encoding, native lowering and containment, pointer and
 write-region borrowing, authenticated Foreign calls, one migrated runtime or
 OS boundary, Linux reproduction, and paired-host evidence remain pending.
 

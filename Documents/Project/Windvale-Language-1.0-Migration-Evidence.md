@@ -4920,6 +4920,50 @@ a real migrated boundary, Linux reproduction, and paired-host qualification
 remain pending. The machine-readable local evidence is
 [`2026-09-01-WVB-1-33-Unsafe-Scratch-Scalar-Execution.json`](../Evidence/2026-09-01-WVB-1-33-Unsafe-Scratch-Scalar-Execution.json).
 
+## Slice 8 affine memory-budget call-transfer checkpoint
+
+[Decision 0905](../Decisions/0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md)
+closes the prior by-value callable-budget gap. The source-WIR budget ownership
+pass now activates whenever a function produces private budget shape
+`805306368`, records each temporary's source slot, and defers slot consumption
+until the use is known. A direct by-value call consumes the source slot; a
+valid borrow ends only its temporary view. The independent general owned-value
+validator continues to reject a borrowed value sent to a consuming parameter,
+and a second by-value call is rejected before WVB publication.
+
+No format version changes. Existing WVB local-take and direct-call encodings
+carry the owned budget. The WVB 1.33 scalar envelope now accepts shape `25`
+inside the canonical `Result<Memoryˉbudget, Allocationˉfailure>` variant so a
+child returned by `Split` can reach the executor. An ordinary immutable budget
+call is valid through source and WIR but remains an exact WVB
+`Unsupportedˉshape`; no borrow is silently converted into a move.
+
+The rebuilt emitter is 1,482,938 WVB bytes at SHA-256
+`c0289da13703a975511cca7c6768dc62e6804cc39c981c8becd96d22f4c45824`.
+The rebuilt runner is 498,552 WVB bytes at SHA-256
+`12cf9cf519b31ab73ae77bf33c1adfe85ac4d5456fedf03159177799ad534898`.
+The focused local Windows oracle reports:
+
+```text
+native language 1 unsafe scratch runtime status=Passed cases=6 malformed=1 result=42 allocation=zeroed teardown=bounded
+native language 1 unsafe scratch WVIR status=Passed cases=11 valid=2 rejected=9 malformed=9 wvb-malformed=7 operation=186 opcode=220 wvb-minor=33 wvb-bytes=1123 wvb-sha256=4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088 effect-check=emitter runtime=Verified compiler-verifier-cases=11
+```
+
+The three added executable programs transfer the entry budget, transfer a
+64-byte child, and ask a 32-byte child for a 64-byte scratch allocation. The
+last returns `42` only after checking `Budgetˉexhausted`, 64 requested bytes,
+and 32 available bytes. The added negative case moves one budget twice and is
+rejected as invalid WIR. The complete focused boundary also retains nine
+malformed WVIR cases, seven malformed WVB cases, three semantic WVB mutations,
+eleven compiler-verifier cases, and the inherited runtime forgery rejection.
+
+The machine-readable local evidence is
+[`2026-09-01-WVB-1-33-Affine-Memory-Budget-Call-Transfer.json`](../Evidence/2026-09-01-WVB-1-33-Affine-Memory-Budget-Call-Transfer.json).
+Borrowed-budget WVB encoding, bounded-heap-refusal forcing, native containment,
+pointer and write-region operations, authenticated Foreign calls, a migrated
+real boundary, Linux reproduction, and paired-host qualification remain
+pending.
+
 ## Slice 8 development-verification balance
 
 The settled local Windows source state passed one changed-file development

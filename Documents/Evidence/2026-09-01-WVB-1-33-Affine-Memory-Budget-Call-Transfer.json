@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-wvb-1-33-affine-memory-budget-call-transfer",
+  "date": "2026-09-01",
+  "subject": "Affine Memory_budget transfer through ordinary WVB 1.33 calls",
+  "claim": "The Windows source-built compiler and scalar runner transfer an entry or split child Memory_budget by value through one ordinary direct call, preserve the child's exact limit, reject duplicate transfer, and report exact budget exhaustion.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "102e179ffbef10e587c892f8d50f205432795ee9"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built emitter and WVB 1.33 scalar runner",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs and Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Build the emission driver and WVB runner from their current project manifests with the pinned local split-compiler producers, then package each with the development cache.",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-budget-call-emitter-v3.wvb",
+          "size": 1482938,
+          "sha256": "c0289da13703a975511cca7c6768dc62e6804cc39c981c8becd96d22f4c45824"
+        },
+        {
+          "path": "artifacts/local-budget-call-emitter-v3.exe",
+          "size": 30952448,
+          "sha256": "06a91529cb2501df8fcb62fea25fa8505221141e90afea216c6df85e8c6e49f9"
+        },
+        {
+          "path": "artifacts/local-budget-call-runner.wvb",
+          "size": 498552,
+          "sha256": "12cf9cf519b31ab73ae77bf33c1adfe85ac4d5456fedf03159177799ad534898"
+        },
+        {
+          "path": "artifacts/local-budget-call-runner.exe",
+          "size": 6116352,
+          "sha256": "b048f84febfad3e7b62354f6eda672d63fd143acd058f0cf4e5850819bb711cd"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Compiler, verifier, affine budget, and scalar unsafe-scratch boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-unsafe-scratch-analyzer.exe artifacts/local-budget-call-emitter-v3.exe artifacts/local-unsafe-scratch-verifier.exe artifacts/local-budget-call-runner.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-analyzer.exe",
+          "size": 52659712,
+          "sha256": "211caf31790087d81537be5a29700097e57ed87333d7696691cbbb83dd3c3ac0"
+        },
+        {
+          "path": "artifacts/local-budget-call-emitter-v3.exe",
+          "size": 30952448,
+          "sha256": "06a91529cb2501df8fcb62fea25fa8505221141e90afea216c6df85e8c6e49f9"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-verifier.exe",
+          "size": 3428352,
+          "sha256": "addc7c2ec24ab4a4297ad6956541c5a8b54f7ebf169ecc22f5440e1778f91797"
+        },
+        {
+          "path": "artifacts/local-budget-call-runner.exe",
+          "size": 6116352,
+          "sha256": "b048f84febfad3e7b62354f6eda672d63fd143acd058f0cf4e5850819bb711cd"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/unsafe-scratch.wvb",
+          "size": 1123,
+          "sha256": "4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088"
+        }
+      ],
+      "summary": "source-wir-cases=11 valid=2 rejected=9 malformed-wir=9 malformed-wvb=7 semantic-wvb=3 compiler-verifier-cases=11 runtime-cases=6 runtime-malformed=1 result=42 allocation=zeroed teardown=bounded"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The claim covers by-value direct calls only. An ordinary immutable Memory_budget borrow remains valid through source and WIR but WVB emission returns Unsupported_shape because WVB 1.33 has no borrowed-budget call encoding.",
+    "The bounded scalar provider still limits scratch length to 64 bytes and alignment to 8, exposes no pointer or host address, and keeps backing and lease state interpreter-private.",
+    "The focused run forces child-budget exhaustion but does not force bounded-heap refusal.",
+    "Native lowering, pointer and write-region operations, authenticated Foreign calls, a migrated real boundary, and published-front-door reconstruction remain pending.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction.",
+    "The focused oracle was used instead of the eight-owner changed-file development plan because the broad plan would repeat Seed, lowerer, containment, callable, and memory suites beyond the changed behavior."
+  ],
+  "related": [
+    "Documents/Decisions/0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md",
+    "Documents/Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md",
+    "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+    "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs"
+  ]
+}
