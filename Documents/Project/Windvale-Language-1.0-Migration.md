@@ -842,10 +842,19 @@ now admits that candidate through the compiler-aligned structural, semantic,
 typed-stack, control-reachability, and affine-ownership verifier. The verifier
 checks exact materialized Foundation layouts, consumes the named budget owner,
 and bounds each module to 4,096 scratch instructions and 256 distinct
-scratch/ABI bindings. Runtime/native lowering, provider containment,
+scratch/ABI bindings.
+
+[Decision 0904](../Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md)
+opens the source-built scalar runner's first capability-free System-profile
+provider. It admits 1-through-64-byte requests with power-of-two alignment
+through 8, uses the existing budget lease and bounded heap, checks exact zero
+initialization, returns canonical validation failures, keeps backing and lease
+state private behind a non-address-like carrier, and finalizes ownership at
+invocation teardown. The focused oracle executes three success/failure cases
+and rejects a forged WVB 1.33 module with no `DC` before bytecode execution.
+Callable budget transfer, native lowering and containment, pointer and
 write-region borrowing, authenticated Foreign calls, one migrated runtime or
-OS boundary, Linux reproduction, and paired-host evidence remain pending. All
-current execution consumers continue to reject minor 33.
+OS boundary, Linux reproduction, and paired-host evidence remain pending.
 
 ## Removal checkpoint
 

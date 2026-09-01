@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-wvb-1-33-unsafe-scratch-scalar-execution",
+  "date": "2026-09-01",
+  "subject": "Bounded scalar execution of WVB 1.33 unsafe scratch",
+  "claim": "The Windows source-built scalar runner admits a capability-free System-profile WVB 1.33 module, executes bounded zeroed unsafe-scratch construction and exact validation failures, completes invocation teardown, and rejects a forged WVB 1.33 module whose only scratch opcode was removed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "362e5764b09a570d3523f4fd36ad6e8668be385f"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built WVB 1.33 scalar runner",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs and Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj artifacts/local-unsafe-scratch-runner.wvb artifacts/local-unsafe-scratch-analyzer.exe artifacts/local-unsafe-scratch-analyzer.identity artifacts/local-unsafe-scratch-emitter.exe artifacts/local-unsafe-scratch-emitter.identity --symbol-checkpoint; Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 artifacts/local-unsafe-scratch-runner.wvb artifacts/local-unsafe-scratch-runner.exe --development-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-runner.wvb",
+          "size": 498459,
+          "sha256": "4488721450f10b7d13c0120961787201e11f5232f9d9e376b6673def26ce061a"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-runner.exe",
+          "size": 6115840,
+          "sha256": "5e36455bd63f219a1047aed0e44cf685d4efeed5e1ef78d0189b07ea227a8ea8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Compiler, verifier, and scalar unsafe-scratch boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-unsafe-scratch-analyzer.exe artifacts/local-unsafe-scratch-emitter.exe artifacts/local-unsafe-scratch-verifier.exe artifacts/local-unsafe-scratch-runner.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "artifacts/local-unsafe-scratch-analyzer.exe",
+          "size": 52659712,
+          "sha256": "211caf31790087d81537be5a29700097e57ed87333d7696691cbbb83dd3c3ac0"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-emitter.exe",
+          "size": 30932992,
+          "sha256": "4ce2ac429a76753140e1e4b6ba07b95628ddec8dd4ffd8c0e58583f822471baf"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-verifier.exe",
+          "size": 3428352,
+          "sha256": "addc7c2ec24ab4a4297ad6956541c5a8b54f7ebf169ecc22f5440e1778f91797"
+        },
+        {
+          "path": "artifacts/local-unsafe-scratch-runner.exe",
+          "size": 6115840,
+          "sha256": "5e36455bd63f219a1047aed0e44cf685d4efeed5e1ef78d0189b07ea227a8ea8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/unsafe-scratch.wvb",
+          "size": 1123,
+          "sha256": "4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088"
+        }
+      ],
+      "summary": "cases=9 valid=2 rejected=7 malformed-wvir=9 malformed-wvb=7 runtime-cases=3 runtime-malformed=1 compiler-verifier-cases=11 result=42"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The provider is a bounded scalar oracle: length is at most 64 bytes, alignment is at most 8, backing and leases remain interpreter-private, and no pointer or native address is exposed.",
+    "The executable cases cover success, invalid length, and invalid alignment. The budget-refusal and bounded-heap-refusal construction paths are implemented but were not directly forced by this focused run.",
+    "Moving a Memory_budget through an ordinary source call before scratch construction remains a compiler-emission gap and is not claimed.",
+    "Native lowering, pointer and write-region operations, authenticated Foreign calls, a migrated real boundary, published-front-door reconstruction, and final Slice 8 qualification remain pending.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction.",
+    "The focused oracle was used instead of the broader changed-file development plan because the settled task required only this compiler/runtime boundary and the broader plan would repeat unrelated owners."
+  ],
+  "related": [
+    "Documents/Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Unsafe-Scratch-Core.wv",
+    "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs"
+  ]
+}

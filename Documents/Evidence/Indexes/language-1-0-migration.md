@@ -116,4 +116,5 @@
 | [Slice 8 authenticated production-ingress candidate](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-authenticated-production-ingress-candidate) | 4746 |
 | [Slice 8 canonical Foundation unsafe type identities](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foundation-unsafe-type-identities) | 4815 |
 | [Slice 8 canonical unsafe-scratch typed-WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-unsafe-scratch-typed-wvir-checkpoint) | 4851 |
-| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4888 |
+| [Slice 8 WVB 1.33 bounded scalar unsafe-scratch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-133-bounded-scalar-unsafe-scratch-checkpoint) | 4888 |
+| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4923 |

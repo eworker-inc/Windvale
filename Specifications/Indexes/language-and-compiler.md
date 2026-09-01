@@ -26,7 +26,7 @@ Source syntax, semantics, Foundation contracts, analysis, and compiler inputs.
 | [Windvale source structured-task lowering](../Compiler-Source-Structured-Tasks.md) | Documented |
 | [Windvale compiler declaration and signature symbols](../Compiler-Source-Symbols.md) | Proposed |
 | [Windvale typed source IR](../Compiler-Source-Wir.md) | Documented |
-| [Windvale source-to-WVB backend](../Compiler-Source-Wvb.md) | Candidate |
+| [Windvale source-to-WVB backend](../Compiler-Source-Wvb.md) | Current |
 | [Windvale split-compiler development cache](../Compiler-Split-Development-Cache.md) | Documented |
 | [Foundation bounded byte construction](../Foundation-Byte-Construction.md) | Current |
 | [Foundation ordinal byte-span ordering](../Foundation-Byte-Ordering.md) | Documented |

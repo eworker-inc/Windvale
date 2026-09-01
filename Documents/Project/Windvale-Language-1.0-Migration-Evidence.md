@@ -4885,6 +4885,41 @@ reduction. These are local development identities. Executable operation 186,
 the complete verifier/runtime/native contract, containment, a migrated real
 boundary, Linux reproduction, and final Slice 8 qualification remain pending.
 
+## Slice 8 WVB 1.33 bounded scalar unsafe-scratch checkpoint
+
+[Decision 0904](../Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md)
+opens the source-built scalar runner's first execution oracle for operation
+186 / opcode `DC`. The ordinary runner admits minor 33 only for a
+capability-free System-profile module and requires 1 through 4,096 scratch
+instructions. The provider accepts lengths 1 through 64 and positive
+power-of-two alignments through 8, creates an existing budget lease, constructs
+and checks zero-filled backing, keeps the backing and lease private, publishes
+only the non-address-like carrier `1u64`, and completes the existing root
+budget teardown before returning a successful response.
+
+The rebuilt runner is 498,459 WVB bytes at SHA-256
+`4488721450f10b7d13c0120961787201e11f5232f9d9e376b6673def26ce061a`.
+Its local Windows package is 6,115,840 bytes at SHA-256
+`5e36455bd63f219a1047aed0e44cf685d4efeed5e1ef78d0189b07ea227a8ea8`.
+With those settled tools available, the complete focused compiler/runtime
+oracle finishes in about five seconds and reports:
+
+```text
+native language 1 unsafe scratch runtime status=Passed cases=3 malformed=1 result=42 allocation=zeroed teardown=bounded
+native language 1 unsafe scratch WVIR status=Passed cases=9 valid=2 rejected=7 malformed=9 wvb-malformed=7 operation=186 opcode=220 wvb-minor=33 wvb-bytes=1123 wvb-sha256=4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088 effect-check=emitter runtime=Verified compiler-verifier-cases=11
+```
+
+The three executable modules cover successful zeroed allocation, exact
+`Invalidˉlength`, and exact `Invalidˉalignment`. Replacing the sole `DC` with a
+same-width inherited opcode preserves the outer file geometry but is rejected
+by the complete function-directory scan before bytecode execution. Exact
+budget-refusal and bounded-heap-refusal construction paths exist but were not
+forced by this focused run. Callable budget transfer, native lowering and
+containment, pointer and write-region operations, authenticated Foreign calls,
+a real migrated boundary, Linux reproduction, and paired-host qualification
+remain pending. The machine-readable local evidence is
+[`2026-09-01-WVB-1-33-Unsafe-Scratch-Scalar-Execution.json`](../Evidence/2026-09-01-WVB-1-33-Unsafe-Scratch-Scalar-Execution.json).
+
 ## Slice 8 development-verification balance
 
 The settled local Windows source state passed one changed-file development

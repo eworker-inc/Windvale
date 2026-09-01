@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.32 module or the completely verified but explicitly non-executable WVB 1.33 unsafe-scratch candidate, and returns the bytes without using hosted capabilities. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through 1.33 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded scalar unsafe-scratch oracle; other execution consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -20,13 +20,15 @@ structured-task lowering selected by
 The task extension preserves async and effect evidence, affine scope/handle
 ownership, exact generic outcome identities, and runtime bounds without
 exposing a scheduler in source.
-WVIR 1.23/1.24 and candidate WVB 1.33 add only the serialized unsafe-scratch
-construction boundary selected by
+WVIR 1.23/1.24 and WVB 1.33 add the unsafe-scratch construction boundary
+selected by
 [Decision 0902](../Documents/Decisions/0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md).
-The compiler-aligned verifier admits that candidate version under
+The compiler-aligned verifier admits that version under
 [Decision 0903](../Documents/Decisions/0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md).
-Runtime and native backends still reject it, so successful verification is not
-an execution claim.
+The bounded scalar provider executes it under
+[Decision 0904](../Documents/Decisions/0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md).
+Native lowering and other consumers still reject it, so scalar execution is
+not a native-containment or cross-host claim.
 
 ## Direct compilation result
 
@@ -967,7 +969,7 @@ The verifier reconstructs the canonical `Foundationˉtask` and
 edge, consumes a handle at its sole await, and requires an immutable exit policy
 before control leaves the lexical scope.
 
-WVIR 1.23/1.24 operation `186` lowers to candidate WVB 1.33 opcode `DC`
+WVIR 1.23/1.24 operation `186` lowers to WVB 1.33 opcode `DC`
 (`unsafe.scratch.construct`). The instruction consumes the two ordered `u64`
 length and alignment stack values and carries three little-endian `u32`
 immediates: the consumed budget-local index, the canonical construction-Result
@@ -976,7 +978,7 @@ Foundation result/scratch/failure identities, ABI enum, available budget slot,
 operand shapes, and affine result before publication. A WVB 1.33 module must
 contain at least one `DC`; the writer selects 1.33 whenever operation `186` is
 present, including a module that also contains the inherited task vocabulary.
-Unlike the executable launcher-only budget profiles, candidate 1.33 admits the
+Unlike the earlier launcher-only budget profiles, WVB 1.33 admits the
 opaque shape `25` as an exact by-value parameter or affine non-parameter local
 in any function. It remains unavailable as a result, borrowed parameter,
 new nominal payload, collection element, or Types entry. The inherited exact
@@ -985,15 +987,18 @@ ownership analysis require `DC` to consume an available budget owner in the
 same function rather than granting allocation authority by mentioning the
 opcode.
 
-This is a verified serialization checkpoint, not executable allocation. The
+This is a verified serialization and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,
-opcode, budget, result, and ABI indexes and rejects six byte-level mutations.
+opcode, budget, result, and ABI indexes and rejects seven byte-level mutations.
 The packaged compiler-aligned verifier additionally checks the complete
 canonical layouts, typed stack, affine result, budget availability, and bounded
-scratch/ABI relation and rejects three semantic forgeries. Scalar and native
-runtimes, provider containment, failure execution, and teardown remain pending
-and must not infer foreign scratch from an existing allocation opcode by shape
-alone.
+scratch/ABI relation and rejects three semantic forgeries. The source-built
+scalar runner admits only a capability-free System module, lengths 1 through
+64, and power-of-two alignments through 8. It creates an exact budget lease,
+zeroes private backing bytes, returns exact validation failures, publishes only
+the non-address-like opaque value `1u64`, and releases remaining ownership at
+invocation teardown. Native lowering, pointer and write-region operations,
+Foreign calls, and cross-host containment remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256
