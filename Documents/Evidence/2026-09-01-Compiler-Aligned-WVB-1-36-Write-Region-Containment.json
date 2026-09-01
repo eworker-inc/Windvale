@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-01-compiler-aligned-wvb-1-36-write-region-containment",
+  "date": "2026-09-01",
+  "subject": "Compiler-aligned WVB 1.36 write-region lifetime containment",
+  "claim": "The Windows source-built compiler-aligned verifier accepts exact WVB 1.36 write-region candidates, rejects bounded structural, canonical-layout, lifetime-escape, scratch-reuse, and payload-extraction cases, retains the inherited WVB 1.33/1.35 unsafe-scratch matrix, and leaves execution closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "f5519701bfc8cc5c0c9719275f44de4b24ce4953"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built compiler-aligned WVB verifier",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs and Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj Artifacts/local-write-region-verifier-v1.wvb Artifacts/local-write-region-analyzer-v3.exe Artifacts/local-write-region-analyzer-v3.identity Artifacts/local-write-region-emitter-v5.exe Artifacts/local-write-region-emitter-v5.identity --symbol-checkpoint; Tools/Native/Package-Hosted-Wvb.cmd 2 Artifacts/local-write-region-verifier-v1.wvb Artifacts/local-write-region-verifier-v1.exe windows",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/local-write-region-verifier-v1.wvb",
+          "size": 473392,
+          "sha256": "e7392f22668c53551141cbd8865c362e67038819f984e07373742c6b25810d5c"
+        },
+        {
+          "path": "Artifacts/local-write-region-verifier-v1.exe",
+          "size": 3814912,
+          "sha256": "937ca25af77b17eed141493a4bfb88583a6f01615eb538d710276d1648333c0b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB 1.36 write-region source, WVIR, byte contract, containment, and closed execution boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs Artifacts/local-write-region-analyzer-v3.exe Artifacts/local-write-region-emitter-v5.exe Artifacts/local-write-region-verifier-v1.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "temporary/candidate-write-region.wvb",
+          "size": 1300,
+          "sha256": "c116d5d4a8ec84afe8321da4403e5071cf981f5bb6a9121d0660b7fa33d64eec"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Inherited WVB 1.33 construction and WVB 1.35 immutable scratch observation",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-verifier-v1.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "temporary/unsafe-scratch.wvb",
+          "size": 1123,
+          "sha256": "4adc2329b8d7bd19f07944836cdc8cd937eda65b777673002cd7d2b0d247c088"
+        },
+        {
+          "path": "temporary/unsafe-scratch-length.wvb",
+          "size": 1197,
+          "sha256": "a51338852b01775260182c4254dfc802fe940e840ae5ca4ff4f939e4569f27c7"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused write-region oracle covered 13 source cases, seven malformed WVIR mutations, five malformed WVB mutations, four semantic WVB forgeries, and 13 compiler-verifier decisions; it was not the complete changed-file development plan.",
+    "The source analyzer can still represent the two unsafe escape and scratch-reuse candidates; the compiler-aligned WVB verifier is the current admission boundary that rejects them, and an earlier source diagnostic remains future usability work.",
+    "The verifier conservatively keeps the scratch unavailable through function exit and forbids region payload extraction, so this checkpoint does not execute success or failure behavior.",
+    "WVB synthesized type names do not preserve source generic arguments; the verifier proves exact layouts and consistency of the explicit scratch, region, and ABI relation rather than reconstructing erased generic metadata.",
+    "The scalar provider, native lowerer, pointer derivation, authenticated Foreign-call path, migrated runtime or OS boundary, and operating-system consumers do not admit WVB 1.36.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}

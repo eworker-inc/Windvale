@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 318 |
+| Accepted | 319 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0911: verify WVB 1.36 write-region lifetime containment](0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md) | Accepted |
 | [Decision 0910: represent mutable write-region borrowing in candidate WVB 1.36](0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md) | Accepted |
 | [Decision 0909: lower mutable unsafe write-region borrowing to WVIR](0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md) | Accepted |
 | [Decision 0908: bound compiler-scale staging arena per resource](0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md) | Accepted |
@@ -70,7 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0889: publish the bounded System/FFI foreign-memory semantic oracle](0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md) | Accepted |
 | [Decision 0888: publish the canonical WVFC producer](0888-Publish-The-Canonical-WVFC-Producer.md) | Accepted |
 | [Decision 0887: use a separately bounded admission validator](0887-Use-A-Separately-Bounded-Admission-Validator.md) | Accepted |
-| [Decision 0886: make target and foreign admission a mandatory Language 1.0 phase](0886-Make-Target-And-Foreign-Admission-A-Mandatory-Language-1.0-Phase.md) | Accepted |
 
 ## Superseded or historical records
 

@@ -5165,3 +5165,41 @@ front-door verifier rejects the candidate in its semantic phase. Complete
 compiler verification, lifetime/non-escape and alias proofs, scalar/provider
 and native execution, pointer derivation, authenticated Foreign calls, Linux
 reproduction, and final Slice 8 qualification remain pending.
+
+## Slice 8 WVB 1.36 compiler-aligned containment checkpoint
+
+[Decision 0911](../Decisions/0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md)
+admits the candidate through the compiler-aligned structural, semantic,
+typed-stack, control-flow, and affine-ownership verifier without opening any
+execution consumer. It requires the exact canonical region Result and
+seven-case pointer failure, keeps the scratch and region nominals distinct,
+bounds the explicit scratch/region/ABI relation directory to 256 entries, and
+limits one module to 4,096 `DE` instructions.
+
+The exact Result uses verifier-internal affine kind `37`. It may move through a
+local and be case-tested, but cannot be ordinarily constructed, have its
+payload extracted, cross a call, appear in a function signature, or return.
+The source scratch becomes unavailable at `DE` and remains unavailable through
+branch merge, loops, and function exit.
+
+The source-built verifier is 473,392 WVB bytes at SHA-256
+`e7392f22668c53551141cbd8865c362e67038819f984e07373742c6b25810d5c`.
+Its packaged Windows executable is 3,814,912 bytes at SHA-256
+`937ca25af77b17eed141493a4bfb88583a6f01615eb538d710276d1648333c0b`.
+The focused matrix reports:
+
+```text
+native language 1 unsafe write region WVIR status=Passed cases=13 valid=6 rejected=7 malformed-wvir=7 malformed-wvb=5 operation=188 minors=27,28 wvb=1.36 opcode=222 published-wvb=4 execution=Closed writer-rejected=1 validator=Verified compiler-verifier=Verified compiler-verifier-cases=13
+```
+
+The two additional analyzer-accepted cases deliberately try to return the
+region Result or reuse the scratch while the Result remains live; the complete
+verifier rejects both. The inherited construction/observation matrix also
+passes 12 source cases, 16 malformed WVIR cases, 15 malformed WVB cases, and
+20 compiler-verifier decisions across WVB 1.33 and 1.35.
+
+This is local Windows development evidence. The source analyzer does not yet
+diagnose the two containment failures early, the conservative verifier does
+not expose or execute a region payload, and scalar/provider and native region
+execution, pointer derivation, authenticated Foreign calls, Linux reproduction,
+and final Slice 8 qualification remain pending.

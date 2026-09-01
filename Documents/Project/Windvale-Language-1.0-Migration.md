@@ -909,6 +909,17 @@ and native execution, pointer derivation, authenticated Foreign calls, one
 migrated runtime or OS boundary, Linux reproduction, and paired-host evidence
 remain pending.
 
+[Decision 0911](../Decisions/0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md)
+now admits that candidate through the compiler-aligned verifier without
+opening execution. The verifier checks the exact region Result and seven-case
+pointer failure, retains a bounded explicit scratch/region/ABI relation, moves
+the Result affinely, and makes the source scratch unavailable through every
+branch and function exit. It rejects ordinary payload extraction, call or
+return escape, and scratch reuse. The complete inherited WVB 1.33/1.35 scratch
+oracle remains passing. Scalar/provider and native region execution, pointer
+derivation, authenticated Foreign calls, one migrated runtime or OS boundary,
+Linux reproduction, and paired-host evidence remain pending.
+
 [Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
 removes the compiler-scale staging-memory blocker exposed while rebuilding this
 checkpoint. Each resource is now constructed and written in one scalar-returning

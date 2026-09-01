@@ -272,10 +272,25 @@ names exactly
 immediate names the declared enum bound to both scratch and region.
 
 The source writer selects minor 36 only when WVIR operation `188` is present
-and moves the exact Result affinely. This specification does not yet admit
-minor 36 to the complete verifier or any execution consumer. Non-escape,
-exclusive aliasing, branch merge, release, range/alignment failure production,
-and provider behavior require later verified and executable checkpoints.
+and moves the exact Result affinely. The compiler-aligned verifier now admits
+minor 36 under a non-executable containment profile. It requires the exact
+seven-case `Foreignˉpointerˉfailure`, exact region Result, distinct one-token
+scratch and region nominals, and a kind-`2` or kind-`7` ABI enum. The explicit
+scratch/region/ABI relation is unique in a module and must agree with a scratch
+construction relation when one is present.
+
+The verifier consumes three exact `u64` stack values, marks the named scratch
+unavailable through every branch and the remainder of the function, and
+produces an internal affine region-Result value. That value may be moved,
+stored, taken, discarded, and case-tested. It may not be constructed through
+ordinary variant operations, have its payload or fields extracted, cross a
+direct or indirect call, appear in a function signature, or be returned. A
+minor-36 module contains 1 through 4,096 `DE` instructions and at most 256
+distinct 12-byte relation entries.
+
+No execution consumer admits minor 36. Region release, range and alignment
+failure production, provider behavior, pointer derivation, and authenticated
+Foreign calls require later executable checkpoints.
 
 ## Encoding
 
