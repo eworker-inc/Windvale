@@ -217,7 +217,7 @@ jobs:
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT
+        run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -SharedVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT
 
       - name: Analyze bounded development timing history
         if: ${{ always() }}

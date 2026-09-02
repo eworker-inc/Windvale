@@ -64,6 +64,12 @@ The mapping and fail-closed rules are defined by the
 [native changed-file verification contract](../../Specifications/Windvale-Native-Changed-Verification.md).
 Passing this front door is development feedback, not cross-host qualification.
 
+In automatic dual-host development runs, Linux executes the shared routing-plan
+and GitHub-workflow verifiers. Windows delegates those two repository-contract
+checks to Linux but still runs every selected Windows owner. The aggregate gate
+requires both jobs. `-SharedVerificationOnLinux` is reserved for that workflow
+and rejects in an ordinary local command.
+
 ## Timing calibration
 
 Automatic development jobs carry a bounded per-host history in the existing

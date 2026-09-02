@@ -120,6 +120,11 @@ $DevelopmentConditions = @{
 $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
+    $ExpectedTimingInvocation = if ($Job -eq 'windows-development') {
+        '-AllowIncompleteInfrastructure -SharedVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+    } else {
+        '-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+    }
     Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
         "Development job '$Job' does not depend on classification."
     Assert-Workflow (
@@ -133,7 +138,7 @@ foreach ($Job in $DevelopmentJobs) {
             'run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA')
     ) "Development job '$Job' does not invoke changed-file verification for the classified comparison."
     Assert-Workflow (
-        $Block.Contains('-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT') -and
+        $Block.Contains($ExpectedTimingInvocation) -and
         $Block.Contains(
             'Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS') -and
         $Block.Contains(
@@ -146,6 +151,15 @@ foreach ($Job in $DevelopmentJobs) {
     Assert-Workflow (
         [regex]::Matches($Block, '(?m)^        continue-on-error: true$').Count -eq 5
     ) "Development job '$Job' does not isolate all five optional infrastructure steps."
+    if ($Job -eq 'windows-development') {
+        Assert-Workflow (
+            $Block.Contains('-SharedVerificationOnLinux')
+        ) 'Windows development does not delegate shared verification to Linux.'
+    } else {
+        Assert-Workflow (
+            !$Block.Contains('-SharedVerificationOnLinux')
+        ) 'Linux development incorrectly delegates its shared verification.'
+    }
     Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
         "Development job '$Job' does not pin the Node setup action."
     Assert-Workflow ($Block -match '(?m)^          node-version: 24$') `

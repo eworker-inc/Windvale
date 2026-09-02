@@ -53,6 +53,10 @@ handbook.
   and specification pushes and pull requests. It adds the Windows development
   host only for Windows command, PowerShell, platform, or binary changes. Each
   automatic development job has a 15-minute wall-clock bound.
+- Run platform-neutral routing-plan and GitHub-workflow verification once in the
+  mandatory Linux development job. A conditional Windows peer may delegate only
+  those shared checks; it must retain all selected Windows owner execution, and
+  the aggregate gate must continue requiring both jobs.
 - Invoke the independent complete dual-host Qualification workflow explicitly
   for a release candidate, promotion, security boundary, or deliberate
   qualification claim. It is not a per-commit gate.

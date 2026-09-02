@@ -6,6 +6,8 @@ This contract defines the .NET-free Windows development front door for selecting
 the narrowest owned native verification after a changed-file classification.
 It composes existing native verification owners; it does not redefine their test
 expectations or replace the final dual-host qualification gate.
+Single-execution ownership for shared automatic meta-verification is recorded by
+[Decision 0928](../Documents/Decisions/0928-Run-Shared-Development-Meta-Verification-Once.md).
 
 ## Planning contract
 
@@ -342,8 +344,10 @@ changes it:
 
 1. computes the native plan before mutation or test execution;
 2. refuses any nonempty gap set without invoking .NET;
-3. runs the planner/inventory verifier when selected;
-4. runs the focused GitHub workflow verifier when selected;
+3. runs the planner/inventory verifier when selected, except in the automatic
+   Windows job that explicitly delegates shared verification to its required
+   Linux peer;
+4. runs the focused GitHub workflow verifier under the same shared delegation;
 5. invokes each selected owner through
    `Invoke-WindvaleTests.ps1 -Owner <owner-name>` on both hosts, except that
    development-scoped `compiler-reconstruction` receives `--development`, and
@@ -383,6 +387,14 @@ The runner validates
 Node.js 24 before owner execution, so a failed setup cannot silently run tests
 with an unsupported runtime. Checkout, classification, routing, and classified
 product-test failures remain blocking.
+
+Linux owns the platform-neutral routing-plan and GitHub-workflow verifiers once
+for an automatic development source state. The conditional Windows peer passes
+`-SharedVerificationOnLinux` and omits only those shared checks; it still runs
+the selected Windows owners. The switch rejects outside a GitHub Actions Windows
+development process. The aggregate gate requires both jobs, so a shared-verifier
+failure on Linux remains blocking. This delegation never applies to explicit
+qualification or to host-specific owners.
 
 Automatic runs for the same workflow and ref cancel when a newer push or pull
 request supersedes them. An explicit `workflow_dispatch` qualification run is

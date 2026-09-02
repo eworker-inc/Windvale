@@ -10,7 +10,8 @@ param(
     [switch]$NoResultCache,
     [string]$ResultCacheRoot,
     [switch]$SkipDocumentationVerification,
-    [switch]$AllowIncompleteInfrastructure
+    [switch]$AllowIncompleteInfrastructure,
+    [switch]$SharedVerificationOnLinux
 )
 
 $ErrorActionPreference = 'Stop'
@@ -113,6 +114,14 @@ $NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
         ChangedCount = $Paths.Count
     }
 }
+if ($SharedVerificationOnLinux -and
+    ($Plan.Scope -ne 'development' -or
+        $env:GITHUB_ACTIONS -ne 'true' -or
+        $env:RUNNER_OS -ne 'Windows')) {
+    throw (
+        '-SharedVerificationOnLinux is reserved for automatic Windows ' +
+        'development jobs whose Linux peer runs the shared verifiers.')
+}
 if ($PlanOnly) {
     return
 }
@@ -183,7 +192,7 @@ if ($Plan.Scope -eq 'website') {
     $Failures = [System.Collections.Generic.List[string]]::new()
     $Incomplete = [System.Collections.Generic.List[string]]::new()
     $Timings = [System.Collections.Generic.List[object]]::new()
-    if ($NativePlan.RunPlanVerification) {
+    if ($NativePlan.RunPlanVerification -and !$SharedVerificationOnLinux) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
             & $PlanVerifier
@@ -199,7 +208,8 @@ if ($Plan.Scope -eq 'website') {
         }
     }
 
-    if ($NativePlan.RunGitHubQualificationVerification) {
+    if ($NativePlan.RunGitHubQualificationVerification -and
+        !$SharedVerificationOnLinux) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
             & $GitHubQualificationVerifier
