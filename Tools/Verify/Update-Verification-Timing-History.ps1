@@ -356,11 +356,11 @@ if ([IO.File]::Exists($FullHistoryPath)) {
         'windvale-verification-timing-history-1') {
         throw 'The verification timing history format is invalid.'
     }
-    $HistorySamples = Get-JsonProperty -Object $History -Name 'samples'
-    if ($null -eq $HistorySamples) {
+    $HistorySamplesProperty = $History.PSObject.Properties['samples']
+    if ($null -eq $HistorySamplesProperty) {
         throw 'The verification timing history has no samples.'
     }
-    foreach ($Sample in @($HistorySamples)) {
+    foreach ($Sample in @($HistorySamplesProperty.Value)) {
         $OwnerName = Get-JsonProperty -Object $Sample -Name 'owner'
         $SampleHost = Get-JsonProperty -Object $Sample -Name 'host'
         $ObservedUtc = Get-JsonProperty -Object $Sample -Name 'observedUtc'
@@ -425,17 +425,17 @@ foreach ($File in $InputFiles) {
         -Value (Get-JsonProperty -Object $Report -Name 'startedUtc') `
         -Fallback $File.LastWriteTimeUtc
     $Records = if ($Format -eq 'windvale-verification-run-result-1') {
-        $Value = Get-JsonProperty -Object $Report -Name 'owners'
-        if ($null -eq $Value) {
+        $Property = $Report.PSObject.Properties['owners']
+        if ($null -eq $Property) {
             throw 'A verification run result has no owner records.'
         }
-        @($Value)
+        @($Property.Value)
     } else {
-        $Value = Get-JsonProperty -Object $Report -Name 'entries'
-        if ($null -eq $Value) {
+        $Property = $Report.PSObject.Properties['entries']
+        if ($null -eq $Property) {
             throw 'A changed-verification timing result has no entries.'
         }
-        @($Value | Where-Object {
+        @($Property.Value | Where-Object {
             (Get-JsonProperty -Object $_ -Name 'status') -eq 'executed'
         })
     }

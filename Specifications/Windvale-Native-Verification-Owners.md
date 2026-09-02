@@ -191,6 +191,9 @@ counted and skipped; a file claiming either recognized format must validate
 completely before any output changes. The input is limited to 256 non-linked
 JSON files, 64 KiB each, and 16 MiB total. Recursive discovery stops after 512
 directories or 2,048 filesystem entries.
+An otherwise valid report with an empty owner or entry array is accepted and
+adds no sample; this is the expected result when a development host delegates
+all selected shared checks and has no host-specific owner.
 
 The `windvale-verification-timing-history-1` output retains at most 20 samples
 for each owner and host. Each sample records the registered owner, normalized

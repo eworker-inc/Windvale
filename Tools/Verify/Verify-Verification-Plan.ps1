@@ -4765,6 +4765,15 @@ try {
     [IO.File]::Copy(
         (Join-Path $TimingInputRoot 'windows-1.json'),
         (Join-Path $TimingInputRoot 'duplicate.json'))
+    [IO.File]::WriteAllText(
+        (Join-Path $TimingInputRoot 'empty.json'),
+        (([ordered]@{
+            format = 'windvale-native-changed-verification-timing-2'
+            host = 'Windows'
+            startedUtc = '2026-01-10T00:00:00.0000000Z'
+            entries = @()
+        } | ConvertTo-Json -Depth 4 -Compress) + "`n"),
+        $TimingUtf8)
     $TimingAnalysisRun = @(& pwsh -NoProfile -File $TimingAnalyzer `
         -InputPath $TimingInputRoot -HistoryPath $TimingHistoryPath `
         -AnalysisPath $TimingAnalysisPath 2>&1)
@@ -4785,7 +4794,7 @@ try {
     if ($TimingHistory.format -ne 'windvale-verification-timing-history-1' -or
         @($TimingHistory.samples).Count -ne 10 -or
         $TimingAnalysis.format -ne 'windvale-verification-timing-analysis-1' -or
-        $TimingAnalysis.reportsAccepted -ne 11 -or
+        $TimingAnalysis.reportsAccepted -ne 12 -or
         $TimingAnalysis.samplesAdded -ne 10 -or
         $OwnerTimingAnalysis.Count -ne 1 -or
         $OwnerTimingAnalysis[0].windowsPassingSamples -ne 5 -or
