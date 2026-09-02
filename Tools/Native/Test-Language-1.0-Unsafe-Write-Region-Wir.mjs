@@ -601,7 +601,7 @@ try {
                         Inspectˉwriteˉregionˉwvb(Wvbˉbytes);
                     if (Compilerˉverifier !== undefined) {
                         await Requireˉcompilerˉverification(
-                            Output, Case.Pointer !== true, Case.Name,
+                            Output, true, Case.Name,
                         );
                         Compilerˉverifierˉcases += 1;
                     }
@@ -991,6 +991,13 @@ async function Verifyˉmalformedˉpointerˉwvb(Directory, Canonical, Layout) {
         ['aliased-region-pointer-type', Value => Value.writeUInt32LE(
             Layout.Regionˉtype, Layout.Operation + 5,
         )],
+        ['pointer-take', Value => { Value[Layout.Pointerˉload] = 205; }],
+        ['pointer-call-escape', Value => {
+            Value[Layout.Pointerˉmoveˉstore] = 64;
+        }],
+        ['pointer-move-from-unavailable-local', Value => Value.writeUInt32LE(
+            Layout.Pointerˉsinkˉlocal, Layout.Pointerˉload + 1,
+        )],
     ];
     for (let Index = 0; Index < Cases.length; Index += 1) {
         const [Name, Mutate] = Cases[Index];
@@ -1163,6 +1170,32 @@ function Inspectˉwriteˉregionˉwvb(
             Scratchˉshape.Nominal === Matches[0].Resultˉtype) {
             Reject('The write-pointer WVB region or pointer type is invalid.');
         }
+        const Pointerˉsourceˉstore = Matches[0].Operation + 13;
+        const Pointerˉload = Pointerˉsourceˉstore + 5;
+        const Pointerˉmoveˉstore = Pointerˉload + 5;
+        if (Pointerˉmoveˉstore > Owner.End - 5 ||
+            Input[Pointerˉsourceˉstore] !== 5 ||
+            Input[Pointerˉload] !== 4 || Input[Pointerˉmoveˉstore] !== 5) {
+            Reject('The write-pointer WVB contained move sequence differs.');
+        }
+        const Pointerˉsourceˉlocal = Input.readUInt32LE(
+            Pointerˉsourceˉstore + 1,
+        );
+        const Pointerˉsinkˉlocal = Input.readUInt32LE(
+            Pointerˉmoveˉstore + 1,
+        );
+        if (Pointerˉsourceˉlocal === Pointerˉsinkˉlocal ||
+            Input.readUInt32LE(Pointerˉload + 1) !== Pointerˉsourceˉlocal ||
+            Pointerˉsourceˉlocal >= Owner.Locals ||
+            Pointerˉsinkˉlocal >= Owner.Locals ||
+            Owner.Shapes[Pointerˉsourceˉlocal]?.Kind !== 7 ||
+            Owner.Shapes[Pointerˉsourceˉlocal]?.Nominal !==
+                Matches[0].Resultˉtype ||
+            Owner.Shapes[Pointerˉsinkˉlocal]?.Kind !== 7 ||
+            Owner.Shapes[Pointerˉsinkˉlocal]?.Nominal !==
+                Matches[0].Resultˉtype) {
+            Reject('The write-pointer WVB contained locals differ.');
+        }
         return {
             Operation: Matches[0].Operation,
             Regionˉshape: Scratchˉshape.Start,
@@ -1171,6 +1204,11 @@ function Inspectˉwriteˉregionˉwvb(
             Abiˉtype: Matches[0].Abiˉtype,
             Typeˉcount,
             Typeˉkinds,
+            Pointerˉsourceˉstore,
+            Pointerˉload,
+            Pointerˉmoveˉstore,
+            Pointerˉsourceˉlocal,
+            Pointerˉsinkˉlocal,
         };
     }
     if (Scratchˉshape === undefined ||
