@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 336 |
+| Accepted | 337 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0930: verify routing once during classification](0930-Verify-Routing-Once-During-Classification.md) | Accepted |
 | [Decision 0929: reuse native planner initialization in routing verification](0929-Reuse-Native-Planner-Initialization-In-Routing-Verification.md) | Accepted |
 | [Decision 0928: run shared development meta-verification once](0928-Run-Shared-Development-Meta-Verification-Once.md) | Accepted |
 | [Decision 0927: calibrate verification durations from bounded history](0927-Calibrate-Verification-Durations-From-Bounded-History.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0908: bound compiler-scale staging arena per resource](0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md) | Accepted |
 | [Decision 0907: observe immutable borrowed unsafe scratch in WVB 1.35](0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md) | Accepted |
 | [Decision 0906: represent immutable borrowed memory-budget calls in WVB 1.34](0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md) | Accepted |
-| [Decision 0905: transfer affine memory budgets through ordinary calls](0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md) | Accepted |
 
 ## Superseded or historical records
 

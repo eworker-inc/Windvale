@@ -63,7 +63,8 @@ foreach ($Fragment in @(
     'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
     'name: Select automatic Windows host',
     "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
-    "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'"
+    "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'",
+    './Tools/Verify/Verify-Verification-Plan.ps1'
 )) {
     Assert-Workflow (
         $ClassificationBlock.Contains($Fragment, [StringComparison]::Ordinal)
@@ -121,9 +122,9 @@ $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
     $ExpectedTimingInvocation = if ($Job -eq 'windows-development') {
-        '-AllowIncompleteInfrastructure -SharedVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     } else {
-        '-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
+        '-AllowIncompleteInfrastructure -PlanVerificationInClassification -TimingReportPath $env:VERIFICATION_TIMING_REPORT'
     }
     Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
         "Development job '$Job' does not depend on classification."
@@ -151,14 +152,17 @@ foreach ($Job in $DevelopmentJobs) {
     Assert-Workflow (
         [regex]::Matches($Block, '(?m)^        continue-on-error: true$').Count -eq 5
     ) "Development job '$Job' does not isolate all five optional infrastructure steps."
+    Assert-Workflow (
+        $Block.Contains('-PlanVerificationInClassification')
+    ) "Development job '$Job' does not consume classification-owned plan verification."
     if ($Job -eq 'windows-development') {
         Assert-Workflow (
-            $Block.Contains('-SharedVerificationOnLinux')
-        ) 'Windows development does not delegate shared verification to Linux.'
+            $Block.Contains('-GitHubVerificationOnLinux')
+        ) 'Windows development does not delegate GitHub verification to Linux.'
     } else {
         Assert-Workflow (
-            !$Block.Contains('-SharedVerificationOnLinux')
-        ) 'Linux development incorrectly delegates its shared verification.'
+            !$Block.Contains('-GitHubVerificationOnLinux')
+        ) 'Linux development incorrectly delegates its GitHub verification.'
     }
     Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
         "Development job '$Job' does not pin the Node setup action."

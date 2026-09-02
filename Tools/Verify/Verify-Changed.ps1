@@ -11,7 +11,8 @@ param(
     [string]$ResultCacheRoot,
     [switch]$SkipDocumentationVerification,
     [switch]$AllowIncompleteInfrastructure,
-    [switch]$SharedVerificationOnLinux
+    [switch]$PlanVerificationInClassification,
+    [switch]$GitHubVerificationOnLinux
 )
 
 $ErrorActionPreference = 'Stop'
@@ -114,13 +115,21 @@ $NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
         ChangedCount = $Paths.Count
     }
 }
-if ($SharedVerificationOnLinux -and
+if ($PlanVerificationInClassification -and
+    ($Plan.Scope -ne 'development' -or
+        $env:GITHUB_ACTIONS -ne 'true' -or
+        $env:RUNNER_OS -notin @('Windows', 'Linux'))) {
+    throw (
+        '-PlanVerificationInClassification is reserved for automatic ' +
+        'development jobs whose required classification predecessor passed.')
+}
+if ($GitHubVerificationOnLinux -and
     ($Plan.Scope -ne 'development' -or
         $env:GITHUB_ACTIONS -ne 'true' -or
         $env:RUNNER_OS -ne 'Windows')) {
     throw (
-        '-SharedVerificationOnLinux is reserved for automatic Windows ' +
-        'development jobs whose Linux peer runs the shared verifiers.')
+        '-GitHubVerificationOnLinux is reserved for automatic Windows ' +
+        'development jobs whose Linux peer runs the GitHub verifier.')
 }
 if ($PlanOnly) {
     return
@@ -192,7 +201,8 @@ if ($Plan.Scope -eq 'website') {
     $Failures = [System.Collections.Generic.List[string]]::new()
     $Incomplete = [System.Collections.Generic.List[string]]::new()
     $Timings = [System.Collections.Generic.List[object]]::new()
-    if ($NativePlan.RunPlanVerification -and !$SharedVerificationOnLinux) {
+    if ($NativePlan.RunPlanVerification -and
+        !$PlanVerificationInClassification) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
             & $PlanVerifier
@@ -209,7 +219,7 @@ if ($Plan.Scope -eq 'website') {
     }
 
     if ($NativePlan.RunGitHubQualificationVerification -and
-        !$SharedVerificationOnLinux) {
+        !$GitHubVerificationOnLinux) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         try {
             & $GitHubQualificationVerifier

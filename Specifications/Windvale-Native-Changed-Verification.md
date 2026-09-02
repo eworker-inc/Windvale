@@ -6,8 +6,8 @@ This contract defines the .NET-free Windows development front door for selecting
 the narrowest owned native verification after a changed-file classification.
 It composes existing native verification owners; it does not redefine their test
 expectations or replace the final dual-host qualification gate.
-Single-execution ownership for shared automatic meta-verification is recorded by
-[Decision 0928](../Documents/Decisions/0928-Run-Shared-Development-Meta-Verification-Once.md).
+Single-execution ownership for automatic routing verification is recorded by
+[Decision 0930](../Documents/Decisions/0930-Verify-Routing-Once-During-Classification.md).
 
 ## Planning contract
 
@@ -344,10 +344,11 @@ changes it:
 
 1. computes the native plan before mutation or test execution;
 2. refuses any nonempty gap set without invoking .NET;
-3. runs the planner/inventory verifier when selected, except in the automatic
-   Windows job that explicitly delegates shared verification to its required
-   Linux peer;
-4. runs the focused GitHub workflow verifier under the same shared delegation;
+3. runs the planner/inventory verifier when selected, except in automatic
+   development jobs that explicitly consume the passed verification from their
+   required classification predecessor;
+4. runs the focused GitHub workflow verifier when selected, except in the
+   automatic Windows job that explicitly delegates that check to Linux;
 5. invokes each selected owner through
    `Invoke-WindvaleTests.ps1 -Owner <owner-name>` on both hosts, except that
    development-scoped `compiler-reconstruction` receives `--development`, and
@@ -388,13 +389,16 @@ Node.js 24 before owner execution, so a failed setup cannot silently run tests
 with an unsupported runtime. Checkout, classification, routing, and classified
 product-test failures remain blocking.
 
-Linux owns the platform-neutral routing-plan and GitHub-workflow verifiers once
-for an automatic development source state. The conditional Windows peer passes
-`-SharedVerificationOnLinux` and omits only those shared checks; it still runs
-the selected Windows owners. The switch rejects outside a GitHub Actions Windows
-development process. The aggregate gate requires both jobs, so a shared-verifier
-failure on Linux remains blocking. This delegation never applies to explicit
-qualification or to host-specific owners.
+The mandatory classification job owns platform-neutral routing-plan verification
+once for an automatic source state. Automatic development jobs pass
+`-PlanVerificationInClassification` and omit only that already-passed check;
+the switch rejects outside a GitHub Actions Windows or Linux development process.
+Linux owns the conditional GitHub-workflow verifier. The Windows peer passes
+`-GitHubVerificationOnLinux` and omits only that check; it still runs every
+selected Windows owner. That switch rejects outside a GitHub Actions Windows
+development process. The aggregate gate requires classification and every
+selected development job, so either shared-verifier failure remains blocking.
+Neither delegation applies to explicit qualification or host-specific owners.
 
 Automatic runs for the same workflow and ref cancel when a newer push or pull
 request supersedes them. An explicit `workflow_dispatch` qualification run is
