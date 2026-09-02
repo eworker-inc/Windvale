@@ -219,6 +219,19 @@ jobs:
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT
 
+      - name: Analyze bounded development timing history
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: pwsh
+        env:
+          WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
+          VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
+          VERIFICATION_TIMING_HISTORY: ${{ runner.temp }}/windvale-native-development-cache/verification-timing-history.json
+          VERIFICATION_TIMING_ANALYSIS: ${{ runner.temp }}/windvale-development-timing-analysis.json
+        run: |
+          $null = New-Item -ItemType Directory -Force -Path $env:WINDVALE_NATIVE_CACHE_ROOT
+          pwsh -NoProfile -File Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS
+
       - name: Save native development checkpoints
         if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -233,7 +246,9 @@ jobs:
         continue-on-error: true
         with:
           name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/windvale-development-verification.json
+          path: |
+            ${{ runner.temp }}/windvale-development-verification.json
+            ${{ runner.temp }}/windvale-development-timing-analysis.json
           if-no-files-found: warn
           retention-days: 14
 
@@ -275,6 +290,19 @@ jobs:
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT
 
+      - name: Analyze bounded development timing history
+        if: ${{ always() }}
+        continue-on-error: true
+        shell: pwsh
+        env:
+          WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
+          VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
+          VERIFICATION_TIMING_HISTORY: ${{ runner.temp }}/windvale-native-development-cache/verification-timing-history.json
+          VERIFICATION_TIMING_ANALYSIS: ${{ runner.temp }}/windvale-development-timing-analysis.json
+        run: |
+          $null = New-Item -ItemType Directory -Force -Path $env:WINDVALE_NATIVE_CACHE_ROOT
+          pwsh -NoProfile -File Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS
+
       - name: Save native development checkpoints
         if: ${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -289,7 +317,9 @@ jobs:
         continue-on-error: true
         with:
           name: native-development-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/windvale-development-verification.json
+          path: |
+            ${{ runner.temp }}/windvale-development-verification.json
+            ${{ runner.temp }}/windvale-development-timing-analysis.json
           if-no-files-found: warn
           retention-days: 14
 

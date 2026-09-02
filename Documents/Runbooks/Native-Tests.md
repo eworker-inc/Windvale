@@ -64,6 +64,29 @@ The mapping and fail-closed rules are defined by the
 [native changed-file verification contract](../../Specifications/Windvale-Native-Changed-Verification.md).
 Passing this front door is development feedback, not cross-host qualification.
 
+## Timing calibration
+
+Automatic development jobs carry a bounded per-host history in the existing
+development cache and upload a current analysis beside the timing report. This
+is optional optimization telemetry, not another gate. A missing or corrupt
+history is reported without changing a product-test result.
+
+To analyze one downloaded report or a directory of reports manually, use an
+outside-repository history destination:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Update-Verification-Timing-History.ps1 `
+  -InputPath <report-or-directory> `
+  -HistoryPath <history.json> `
+  -AnalysisPath <analysis.json>
+```
+
+The analysis does not edit `Verification-Owners.txt` or its duration profiles.
+Consider a suggested reduction only after it reports at least five passing
+Windows and five passing Linux samples. Review any timeout before changing an
+allowance. The exact retention, margin, and input-bound rules remain in the
+[native verification-owner contract](../../Specifications/Windvale-Native-Verification-Owners.md).
+
 ## Individual candidate commands
 
 On Windows x64:

@@ -14,6 +14,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$VerificationStartedUtc = [DateTime]::UtcNow
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
 $NativePlanner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
@@ -27,6 +28,25 @@ $ChangeClassificationVerifier = Join-Path $PSScriptRoot 'Verify-Change-Classific
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 $ResultCacheTool = Join-Path (
     Split-Path -Parent $PSScriptRoot) 'Native/Verification-Owner-Result-Cache.mjs'
+
+function Get-VerificationHostName {
+    if ($env:RUNNER_OS -in @('Windows', 'Linux', 'macOS')) {
+        return $env:RUNNER_OS
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::Windows)) {
+        return 'Windows'
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::Linux)) {
+        return 'Linux'
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::OSX)) {
+        return 'macOS'
+    }
+    return [Environment]::OSVersion.Platform.ToString()
+}
 
 function Invoke-VerificationResultCache {
     param(
@@ -477,6 +497,8 @@ if ($Plan.Scope -eq 'website') {
         }
         [pscustomobject]@{
             format = 'windvale-native-changed-verification-timing-2'
+            host = Get-VerificationHostName
+            startedUtc = $VerificationStartedUtc.ToString('O')
             outcome = $OverallOutcome
             incompleteOwners = @($Incomplete)
             entries = @($Timings)

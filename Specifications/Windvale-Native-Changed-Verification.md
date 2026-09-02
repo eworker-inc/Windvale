@@ -359,7 +359,8 @@ changes it:
    outcomes nonblocking for automatic development feedback, without caching or
    treating them as a pass; and
 10. optionally writes `windvale-native-changed-verification-timing-2` JSON with
-    the overall outcome, incomplete owners, and per-owner outcomes and timing.
+    the normalized host, start time, overall outcome, incomplete owners, and
+    per-owner outcomes and timing.
 
 The command is development feedback. Passing it is not Standard, Qualification,
 cross-host, or qualification evidence. A pre-existing output owned by a child
@@ -376,8 +377,9 @@ execution, and cache publication. A classified test failure remains blocking.
 A framework error or owner timeout is retained as `verification-incomplete` and
 warns without asserting that the product code is wrong. It is not a pass,
 cannot populate the result cache, and cannot satisfy qualification.
-Development-only Node setup, checkpoint restore/save, and timing-artifact
-upload steps are nonblocking infrastructure conveniences. The runner validates
+Development-only Node setup, checkpoint restore/save, timing-history analysis,
+and timing-artifact upload steps are nonblocking infrastructure conveniences.
+The runner validates
 Node.js 24 before owner execution, so a failed setup cannot silently run tests
 with an unsupported runtime. Checkout, classification, routing, and classified
 product-test failures remain blocking.
@@ -389,8 +391,12 @@ Linux; it is not repeated on Windows. Explicit qualification retains the four
 fresh native shards, WebAssembly engine verification, and compiler convergence
 on both hosts. Qualification explicitly authorizes the reported longer shard
 plan, fails on every non-passing runner outcome, and retains each structured
-shard result. Development jobs retain their structured timing reports so
-duration profiles can be calibrated from actual runs.
+shard result. Development jobs retain their structured timing reports and
+analysis. Before cache publication, each host appends executed owner outcomes to
+a bounded host-local timing history. History loss or analysis failure cannot
+fail product verification, and the analyzer cannot modify duration policy.
+Profile reduction requires the dual-host sample and margin rules in the native
+owner contract.
 
 ## Verification
 

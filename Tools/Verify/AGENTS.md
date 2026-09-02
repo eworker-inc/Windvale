@@ -78,6 +78,10 @@ handbook.
   summary, output-limit failure, or timeout. An automatic
   `verification-incomplete` result is not passing or reusable evidence, and
   qualification always fails closed.
+- Keep timing history bounded, deduplicated, host-specific, and advisory. Never
+  lower a duration profile automatically or treat timing telemetry as passing
+  verification evidence. Analysis/cache failure remains nonblocking development
+  infrastructure, while the underlying owner outcome keeps its classification.
 - Give every verifier one clear owner, bounded inputs, bounded diagnostics,
   stable progress, and explicit failure behavior.
 - Declare every input, tool identity, host dependency, and verifier version used

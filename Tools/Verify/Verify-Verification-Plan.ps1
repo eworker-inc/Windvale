@@ -77,6 +77,16 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'bounded verification timing calibration'
+        Paths = @(
+            'Tools/Verify/Update-Verification-Timing-History.ps1',
+            'Documents/Decisions/0927-Calibrate-Verification-Durations-From-Bounded-History.md'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'Language 1.0 paper package-data evidence'
         Paths = @(
             'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
@@ -4653,6 +4663,7 @@ try {
     $TestRunnerResult = Get-Content -Raw -LiteralPath $TestRunnerResultPath |
         ConvertFrom-Json
     if ($TestRunnerResult.format -ne 'windvale-verification-run-result-1' -or
+        $TestRunnerResult.host -notin @('Windows', 'Linux', 'macOS') -or
         $TestRunnerResult.outcome -ne 'planned' -or
         $TestRunnerResult.exitCode -ne 0 -or
         $TestRunnerResult.ownersPlanned -ne 1 -or
@@ -4680,6 +4691,132 @@ if ($LASTEXITCODE -ne 64 -or
     throw 'The PowerShell test runner did not refuse an unapproved long run.'
 }
 
+$TimingAnalyzer = Join-Path $PSScriptRoot `
+    'Update-Verification-Timing-History.ps1'
+$TimingAnalysisRoot = Join-Path ([IO.Path]::GetTempPath()) (
+    'windvale-timing-analysis-' + [Guid]::NewGuid().ToString('N'))
+$TimingInputRoot = Join-Path $TimingAnalysisRoot 'input'
+$TimingHistoryPath = Join-Path $TimingAnalysisRoot 'history.json'
+$TimingAnalysisPath = Join-Path $TimingAnalysisRoot 'analysis.json'
+$TimingUtf8 = [Text.UTF8Encoding]::new($false, $true)
+try {
+    $null = [IO.Directory]::CreateDirectory($TimingInputRoot)
+    foreach ($HostName in @('Windows', 'Linux')) {
+        foreach ($SampleIndex in 1..5) {
+            $StartedUtc = [DateTime]::new(
+                2026, 1, $SampleIndex, 0, 0, 0,
+                [DateTimeKind]::Utc).ToString('O')
+            $TimingReport = if ($HostName -eq 'Linux' -and $SampleIndex -eq 5) {
+                [ordered]@{
+                    format = 'windvale-native-changed-verification-timing-2'
+                    host = $HostName
+                    startedUtc = $StartedUtc
+                    entries = @(
+                        [ordered]@{
+                            name = 'wvb-inspector-reconstruction'
+                            status = 'executed'
+                            outcome = 'passed'
+                            elapsedMilliseconds = 5000 + $SampleIndex
+                        },
+                        [ordered]@{
+                            name = 'seed'
+                            status = 'cached'
+                            outcome = 'passed'
+                            elapsedMilliseconds = 1
+                        },
+                        [ordered]@{
+                            name = 'verification-plan'
+                            status = 'executed'
+                            elapsedMilliseconds = 1
+                        }
+                    )
+                }
+            } else {
+                [ordered]@{
+                    format = 'windvale-verification-run-result-1'
+                    host = $HostName
+                    startedUtc = $StartedUtc
+                    owners = @([ordered]@{
+                        name = 'wvb-inspector-reconstruction'
+                        outcome = 'passed'
+                        elapsedMilliseconds = 5000 + $SampleIndex
+                    })
+                }
+            }
+            $TimingReportPath = Join-Path $TimingInputRoot (
+                "$($HostName.ToLowerInvariant())-$SampleIndex.json")
+            [IO.File]::WriteAllText(
+                $TimingReportPath,
+                (($TimingReport | ConvertTo-Json -Depth 6 -Compress) + "`n"),
+                $TimingUtf8)
+        }
+    }
+    [IO.File]::Copy(
+        (Join-Path $TimingInputRoot 'windows-1.json'),
+        (Join-Path $TimingInputRoot 'duplicate.json'))
+    $TimingAnalysisRun = @(& pwsh -NoProfile -File $TimingAnalyzer `
+        -InputPath $TimingInputRoot -HistoryPath $TimingHistoryPath `
+        -AnalysisPath $TimingAnalysisPath 2>&1)
+    if ($LASTEXITCODE -ne 0 -or
+        ($TimingAnalysisRun -join "`n") -notmatch
+            '(?m)^verification timing analysis status=Passed ') {
+        throw (
+            'The verification timing analyzer did not accept bounded dual-host evidence: ' +
+            ($TimingAnalysisRun -join "`n"))
+    }
+    $TimingHistory = Get-Content -Raw -LiteralPath $TimingHistoryPath |
+        ConvertFrom-Json -Depth 12
+    $TimingAnalysis = Get-Content -Raw -LiteralPath $TimingAnalysisPath |
+        ConvertFrom-Json -Depth 12
+    $OwnerTimingAnalysis = @($TimingAnalysis.owners | Where-Object {
+        $_.owner -eq 'wvb-inspector-reconstruction'
+    })
+    if ($TimingHistory.format -ne 'windvale-verification-timing-history-1' -or
+        @($TimingHistory.samples).Count -ne 10 -or
+        $TimingAnalysis.format -ne 'windvale-verification-timing-analysis-1' -or
+        $TimingAnalysis.reportsAccepted -ne 11 -or
+        $TimingAnalysis.samplesAdded -ne 10 -or
+        $OwnerTimingAnalysis.Count -ne 1 -or
+        $OwnerTimingAnalysis[0].windowsPassingSamples -ne 5 -or
+        $OwnerTimingAnalysis[0].linuxPassingSamples -ne 5 -or
+        $OwnerTimingAnalysis[0].action -ne 'downgrade' -or
+        $OwnerTimingAnalysis[0].recommendedProfile -ne 'quick') {
+        throw 'The verification timing analyzer did not produce the conservative profile recommendation.'
+    }
+    $HistoryDigestBeforeInvalidInput = (
+        Get-FileHash -LiteralPath $TimingHistoryPath -Algorithm SHA256).Hash
+    $InvalidTimingReportPath = Join-Path $TimingInputRoot 'invalid.json'
+    $InvalidTimingReport = [ordered]@{
+        format = 'windvale-verification-run-result-1'
+        host = 'Linux'
+        startedUtc = '2026-01-20T00:00:00.0000000Z'
+        owners = @([ordered]@{
+            name = 'wvb-inspector-reconstruction'
+            outcome = 'passed'
+            elapsedMilliseconds = 3700001
+        })
+    }
+    [IO.File]::WriteAllText(
+        $InvalidTimingReportPath,
+        (($InvalidTimingReport | ConvertTo-Json -Depth 6 -Compress) + "`n"),
+        $TimingUtf8)
+    $InvalidTimingRun = @(& pwsh -NoProfile -File $TimingAnalyzer `
+        -InputPath $TimingInputRoot -HistoryPath $TimingHistoryPath `
+        -AnalysisPath $TimingAnalysisPath 2>&1)
+    $HistoryDigestAfterInvalidInput = (
+        Get-FileHash -LiteralPath $TimingHistoryPath -Algorithm SHA256).Hash
+    if ($LASTEXITCODE -eq 0 -or
+        ($InvalidTimingRun -join "`n") -notmatch
+            'Observed elapsed milliseconds is not an integer in the permitted range' -or
+        $HistoryDigestAfterInvalidInput -cne $HistoryDigestBeforeInvalidInput) {
+        throw 'The verification timing analyzer did not reject malformed evidence atomically.'
+    }
+} finally {
+    if ([IO.Directory]::Exists($TimingAnalysisRoot)) {
+        [IO.Directory]::Delete($TimingAnalysisRoot, $true)
+    }
+}
+
 $CompilerDevelopmentWindows = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd')
 $CompilerDevelopmentLinux = Get-Content -Raw -LiteralPath (
@@ -4705,6 +4842,8 @@ foreach ($Fragment in @(
     '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments',
     '$AllowIncompleteInfrastructure',
     '''windvale-native-changed-verification-timing-2''',
+    'host = Get-VerificationHostName',
+    'startedUtc = $VerificationStartedUtc.ToString(''O'')',
     '''verification-incomplete'''
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
@@ -4875,6 +5014,8 @@ $RequiredWorkflowFragments = @(
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
     '-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
+    'Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS',
+    '${{ runner.temp }}/windvale-development-timing-analysis.json',
     'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2',
     'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
 )

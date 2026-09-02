@@ -135,13 +135,17 @@ foreach ($Job in $DevelopmentJobs) {
     Assert-Workflow (
         $Block.Contains('-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT') -and
         $Block.Contains(
+            'Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS') -and
+        $Block.Contains(
+            '${{ runner.temp }}/windvale-development-timing-analysis.json') -and
+        $Block.Contains(
             'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
         $Block.Contains('if-no-files-found: warn') -and
         $Block.Contains('retention-days: 14')
     ) "Development job '$Job' does not retain nonblocking structured timing evidence."
     Assert-Workflow (
-        [regex]::Matches($Block, '(?m)^        continue-on-error: true$').Count -eq 4
-    ) "Development job '$Job' does not isolate all four optional infrastructure steps."
+        [regex]::Matches($Block, '(?m)^        continue-on-error: true$').Count -eq 5
+    ) "Development job '$Job' does not isolate all five optional infrastructure steps."
     Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
         "Development job '$Job' does not pin the Node setup action."
     Assert-Workflow ($Block -match '(?m)^          node-version: 24$') `

@@ -17,6 +17,8 @@ The cross-host runner choice is recorded by
 [Decision 0924](../Documents/Decisions/0924-Use-One-PowerShell-Verification-Owner-Runner.md).
 Structured outcomes and duration policy are recorded by
 [Decision 0926](../Documents/Decisions/0926-Classify-And-Bound-Verification-Owner-Outcomes.md).
+Bounded timing calibration is recorded by
+[Decision 0927](../Documents/Decisions/0927-Calibrate-Verification-Durations-From-Bounded-History.md).
 
 ## Registry grammar and validation
 
@@ -169,13 +171,42 @@ been exposed live. Outcomes are `passed`, `test-failed`, `timed-out`, or
 Invalid owner, shard, or unapproved over-budget selections return `64`.
 The result record format is `windvale-verification-run-result-1`, is capped at
 64 KiB, and records the selected plan, per-owner profile, attempts, elapsed time,
-outcome, and bounded diagnostic. The destination must be a new file in a
+outcome, host family, and bounded diagnostic. The destination must be a new file in a
 non-linked existing parent.
 
 Only a process-launch, stream-I/O, or process-status publication failure
 explicitly marked retryable may use the profile's single retry. A timeout,
 output-limit violation, nonzero owner exit, standard-error output, or
 terminal-summary mismatch is never retried.
+
+## Timing calibration contract
+
+`Tools/Verify/Update-Verification-Timing-History.ps1` accepts one structured
+report or a recursively enumerated report directory. It recognizes only
+`windvale-verification-run-result-1` and
+`windvale-native-changed-verification-timing-2`. Unknown JSON formats are
+counted and skipped; a file claiming either recognized format must validate
+completely before any output changes. The input is limited to 256 non-linked
+JSON files, 64 KiB each, and 16 MiB total. Recursive discovery stops after 512
+directories or 2,048 filesystem entries.
+
+The `windvale-verification-timing-history-1` output retains at most 20 samples
+for each owner and host. Each sample records the registered owner, normalized
+host, observation time, bounded elapsed milliseconds, classified outcome,
+source format, and source-file SHA-256 identity. Replaying the same report does
+not add a sample. Cached changed-file entries and timings that do not name a
+registered owner are not observations. The history is capped at 2 MiB and the
+companion `windvale-verification-timing-analysis-1` output at 256 KiB; both use
+same-directory atomic replacement in explicitly selected non-linked parents.
+
+The analysis requires at least five passing samples from Windows and five from
+Linux before making a profile-change recommendation. A reduction moves only to
+the next smaller profile and requires that its expected duration retain 50
+percent headroom over the observed 95th percentile while its maximum retains 25
+percent over the observed maximum. A timeout suppresses reduction and requests
+review. The analyzer may recommend but never edits the duration or owner
+registry. Timing history is optimization evidence, not a verification pass or
+qualification record.
 
 GitHub runs
 all four qualification shards independently with matrix fail-fast disabled,

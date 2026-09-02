@@ -2328,6 +2328,7 @@ foreach ($Path in $Paths) {
             'Verify-Documentation.ps1',
             'Verify-Dotnet-Retirement-Inventory.ps1',
             'Verify-Native-Development-Dependencies.ps1',
+            'Update-Verification-Timing-History.ps1',
             'Verify-Verification-Plan.ps1'
         )) {
             $RunPlanVerification = $true

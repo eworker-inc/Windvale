@@ -37,6 +37,25 @@ $script:PlannedMaximumSeconds = [long]0
 $script:OwnerResults = [Collections.Generic.List[object]]::new()
 $script:RunReport = $null
 
+function Get-VerificationHostName {
+    if ($env:RUNNER_OS -in @('Windows', 'Linux', 'macOS')) {
+        return $env:RUNNER_OS
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::Windows)) {
+        return 'Windows'
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::Linux)) {
+        return 'Linux'
+    }
+    if ([Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+            [Runtime.InteropServices.OSPlatform]::OSX)) {
+        return 'macOS'
+    }
+    return [Environment]::OSVersion.Platform.ToString()
+}
+
 function Write-UsageFailure {
     param([Parameter(Mandatory)][string]$Message)
 
@@ -312,7 +331,7 @@ function Set-RunReport {
     $script:RunReport = [ordered]@{
         format = 'windvale-verification-run-result-1'
         mode = $script:RunMode
-        host = [Environment]::OSVersion.Platform.ToString()
+        host = Get-VerificationHostName
         outcome = $Outcome
         exitCode = $ExitCode
         startedUtc = $RunStartedUtc.ToString('O')
