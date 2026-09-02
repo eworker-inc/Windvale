@@ -5,11 +5,21 @@ handbook.
 
 ## Change-aware verification
 
+- Run `Verify-Changed.ps1 -PlanOnly` before executing an ordinary local plan.
+  Account for the cold duration of cache preparation, compilation, packaging,
+  reconstruction, test execution, and cleanup against the repository-wide
+  ten-minute development budget. Do not launch an over-budget or unknown-cost
+  owner and wait to discover that it takes hours.
+- A longer run requires explicit advance human approval for a named command and
+  maximum duration, or a named qualification need after disclosing the expected
+  duration. Stop at the approved budget, preserve completed evidence and caches,
+  and never publish an interrupted run as a pass.
 - Treat routing as a proposed evidence plan. Every selected owner needs a causal
   connection between the changed contract and a failure it can detect. Stop and
   correct a disproportionate plan instead of running it mechanically.
-- `Verify-Changed.ps1` is the ordinary local entry point. Run it once after a
-  coherent edit has settled.
+- `Verify-Changed.ps1` is the ordinary local entry point. After reviewing its
+  plan and cost, run it once after a coherent edit has settled when the full plan
+  fits the development budget.
 - The classifier uses lightweight scope for ordinary documentation and
   editor-package-only work, website scope for static site, browser packaging,
   Cloudflare function, and website-tool changes, and development scope for
@@ -41,6 +51,10 @@ handbook.
   qualification claim. It is not a per-commit gate.
 - Run broad native, managed comparison, bootstrap, WebAssembly-engine, or live
   OS-boot gates only when the changed boundary or named claim requires them.
+- Cold bootstrap, reconstruction, or packaging that cannot fit the development
+  budget must be a separately selected qualification product or be replaced by
+  a focused current-source owner with valid reusable inputs. It must not occur
+  as hidden setup inside an ordinary development owner.
 - Portable semantics, bytecode, serialization, runtime behavior, and golden
   hash changes need evidence from both hosts before claiming cross-host
   conformance.

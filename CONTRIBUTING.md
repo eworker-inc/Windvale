@@ -32,16 +32,25 @@ Every contribution must state:
 - The exact machine, AI, human, reproduction, or external review evidence relied
   upon, without implying a broader review class than occurred.
 
-Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require one proportional local verifier. For focused work, use:
+Documentation-only changes normally require `git diff --check`, Markdown link inspection, and direct review of the rendered text. Windvale Seed code changes normally require one proportional local verifier. For focused work, inspect the plan first:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly
 ```
 
-For a coherent cross-area batch, run the same changed-file verifier once after
-the edit settles. Its native planner may select several affected owners in
-canonical order. Do not replace a named mapping gap with an unfiltered or
-managed fallback.
+Local development verification has a default ten-minute total wall-clock
+budget, including cache preparation, compilation, packaging, reconstruction,
+test execution, and cleanup. Execute the proposed plan only when every owner is
+causal and its complete cold duration fits that budget. A longer local run needs
+explicit advance approval naming the command and maximum duration, or a named
+release, security, bootstrap, ABI, or cross-host qualification need after the
+expected duration is disclosed. Stop when the budget is reached or an estimate
+proves materially wrong; do not treat partial execution as a passing result.
+
+For a coherent cross-area batch whose reviewed plan fits the budget, run the
+same changed-file verifier once after the edit settles. Its native planner may
+select several affected owners in canonical order. Do not replace a named
+mapping gap with an unfiltered or managed fallback.
 
 Verification levels are alternatives, not a required sequence. Do not run changed-file, Fast, Development, Standard, and Qualification one after another for the same source state. A passing broader tier subsumes narrower tiers, and remains valid until relevant inputs change; committing or pushing is not a reason to repeat it. After a failed check, rerun the narrowest affected selection and use at most one broader final gate if the risk calls for it.
 

@@ -139,6 +139,19 @@ capability boundaries must remain explicit.
 
 ## Testing and verification
 
+- Local development verification has a default total wall-clock budget of ten
+  minutes, including cache preparation, compilation, packaging, reconstruction,
+  test execution, and cleanup. Before executing changed-file verification,
+  inspect its proposed plan with `Verify-Changed.ps1 -PlanOnly` and do not start
+  an owner whose known or reasonably expected cold duration exceeds the
+  remaining budget.
+- A longer local run requires explicit advance human approval naming the command
+  and maximum duration, or an explicit release, security, bootstrap, ABI, or
+  cross-host qualification request after its expected duration is disclosed.
+  Requests to finish, keep going, or verify a change do not by themselves waive
+  the development budget. Stop a run when the budget is reached or when new
+  evidence shows the estimate was materially wrong; preserve completed evidence
+  and caches, and report that the full verifier did not pass.
 - A verifier is justified only when its failure could reveal a defect introduced
   by the change. Before starting it, name the changed contract and the failure
   signal the check can detect. File-based routing is a conservative hint, not a
@@ -174,11 +187,16 @@ capability boundaries must remain explicit.
 - Code changes require the relevant package checks and focused conformance tests once those commands exist.
 - State exactly which broader checks were not run and why.
 
-For an ordinary coherent change, start with the change-aware verifier:
+For an ordinary coherent change, first inspect the change-aware plan:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly
 ```
+
+Execute the proposed plan only after confirming that every selected owner is
+causal and the complete cold plan fits the local development budget. If it does
+not, select the exact focused owner, correct the routing, or request approval for
+a named longer run instead of launching the plan mechanically.
 
 Detailed verifier routing, native-owner selection, editor synchronization, broad
 gates, recovery-only managed checks, and cross-host qualification rules live in
