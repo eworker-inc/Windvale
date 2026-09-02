@@ -21,7 +21,8 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    unsafe-scratch extension, the WVB 1.34 immutable borrowed-memory-budget
    call extension, the WVB 1.35 immutable borrowed-scratch observation
    extension, the verified WVB 1.36 write-region extension, and the
-   compiler-verified candidate WVB 1.37 contained write-pointer extension.
+   compiler-verified and contained-execution candidate WVB 1.37 write-pointer
+   extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -102,8 +103,9 @@ compiler-aligned verifier, bounded scalar provider, and native x86-64 lowerer
 retain only an affine opaque region and checked logical geometry.
 Candidate WVB 1.37 serializes exact write-pointer derivation from an immutable
 region borrow. The complete compiler-aligned verifier confines the pointer as an
-affine value, while every execution consumer remains closed. This candidate
-forms no address and grants no Foreign-call authority.
+affine value. The bounded scalar provider and native x86-64 lowerer execute the
+contained derivation by carrying only its private logical region descriptor.
+This candidate forms no address and grants no Foreign-call authority.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -133,12 +135,12 @@ borrowed `Memoryˉbudget` parameter. WVB 1.35 is selected when
 `unsafe.write-pointer.borrow` is present. The compiler-aligned verifier accepts
 all twenty-seven versions through candidate WVB 1.37 and never admits an
 extension under an earlier header. The source-built native scalar runner
-accepts WVB 1.33 through WVB 1.36 only through the bounded provider below. The
-native x86-64 lowerer admits the same focused unsafe-scratch, immutable-budget-
-borrow, scratch-observation, and write-region matrix. Browser, WebAssembly-package,
-published front-door artifacts, and Windvale OS consumers retain explicit
-narrower version boundaries until their own reconstruction or execution slices
-land.
+accepts WVB 1.33 through candidate WVB 1.37 only through the bounded provider
+below. The native x86-64 lowerer admits the same focused unsafe-scratch,
+immutable-budget-borrow, scratch-observation, write-region, and contained
+write-pointer matrix. Browser, WebAssembly-package, and Windvale OS consumers
+retain explicit narrower version boundaries until their own reconstruction or
+execution slices land.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -317,12 +319,12 @@ releases the scratch allocation and lease. Compiler containment makes dynamic
 alias and stale-owner cases unreachable in this first scalar profile.
 
 The compiler-verified native x86-64 lowerer admits the same five outcomes while
-retaining only checked logical start and length. The published front door,
-launchers, browser and WebAssembly hosts, and OS consumers retain their narrower
-boundaries. Pointer execution, authenticated Foreign calls, and cross-host
-containment require later checkpoints.
+retaining only checked logical start and length. Browser and WebAssembly hosts
+and OS consumers retain their narrower boundaries. Contained pointer execution
+is defined below; authenticated Foreign calls and cross-host containment require
+later checkpoints.
 
-## Compiler-verified candidate WVB 1.37 contained write-pointer derivation
+## Verified candidate WVB 1.37 contained write-pointer execution
 
 WVB 1.37 inherits the complete WVB 1.36 System-profile metadata and instruction
 vocabulary and adds one candidate instruction:
@@ -359,10 +361,11 @@ record embedding reject. The borrowed region remains available. At most 4,096
 `DF` instructions and 256 explicit region/pointer/ABI relations are admitted in
 one module.
 
-The scalar provider, native lowerer, launcher, published front door, browser,
-WebAssembly host, and Windvale OS consumers still reject minor 37. This
-candidate preserves typed representation only and does not form an address,
-permit pointer escape, or authorize a Foreign call.
+After complete verification, the bounded scalar provider and native x86-64
+lowerer execute `DF` by copying the private packed logical `{start, length}`
+descriptor into pointer-owned storage. The operation forms no address, permits
+no pointer escape, and authorizes no Foreign call. The browser, WebAssembly
+host, and Windvale OS consumers retain their narrower declared boundaries.
 
 ## Encoding
 
@@ -536,12 +539,13 @@ Major `6` retains the bounded 16-byte request header used by the portable
 entry, requires hosted profile `2`, zero declared capabilities, WVB 1.32, and
 the exact two-parameter signature, and carries no source-file snapshot. Request
 major `5` remains exclusively the source-file snapshot contract.
-WVB 1.33 through WVB 1.36 System-profile execution instead exports exact
+WVB 1.33 through WVB 1.37 System-profile execution instead exports exact
 `Main(Memoryˉbudget) -> i32`; shape `36` and the WVB 1.35/1.36 scratch-
 specific parameter uses of shape `28` remain confined to non-exported helpers
 and compiler-generated view locals. Candidate WVB 1.37 additionally admits the
 exact immutable write-region shape-`28` parameter directly targeted by `DF`;
-the module remains non-executable.
+bounded scalar and native x86-64 execution require the complete containment
+rules above.
 Future native object formats must define an ASCII-safe external symbol mapping
 separately.
 

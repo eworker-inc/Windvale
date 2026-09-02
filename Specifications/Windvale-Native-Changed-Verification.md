@@ -123,6 +123,19 @@ independent Windows and Linux bootstrap jobs own cold current analyzer/emitter
 fixed points plus current-verifier admission. Retained historical containers
 are not reconstructed merely because current compiler source changed.
 
+The `native-x64-lowering-development` lane is the ordinary current-source
+WVB-to-WVO feedback boundary. It compiles the complete 648-function native
+lowerer once, materializes its current-host executable through the exact
+development package cache, compares inherited Return-42 and metadata WVO bytes,
+executes one contained WVB 1.37 write-pointer image with result `42`, and rejects
+ten malformed version, operand, nominal, and affine-ownership cases. Normal
+lowerer implementation files and the tool root select this owner. Staging-only
+sources retain segmented toolset reconstruction, while the complete lowerer
+project manifest retains its downstream reconstruction closure. A warm cache
+changes repeated feedback from hours of unrelated owner work to one roughly
+32-second current-source check on the measured Windows host; this is development
+evidence, not paired-host qualification.
+
 The `source-containment` lane likewise separates affected compiler feedback
 from complete dual-oracle evidence. Compiler and direct-compiler-artifact
 changes execute all 500 fixed compiler containment cases through
@@ -207,8 +220,9 @@ compiler as a downstream proxy. The owner reconstructs the current analyzer and
 emitter through the shared content-addressed split pipeline, compiles focused
 programs twice, compares exact WVB bytes, verifies the results independently,
 and executes them. Database storage remains selected for changes to its own
-sources or contracts, shared cache tooling, native lowering that can affect its
-generated images, and deliberate final milestone or qualification evidence.
+sources or contracts, shared cache tooling, and deliberate final milestone or
+qualification evidence. A native-lowerer source edit does not select database
+storage merely because a retained database image was once produced by a lowerer.
 
 The canonical WVFC format and producer retain separate focused owners. A change
 to their shared foreign-catalog contract selects both; producer source, project,

@@ -1134,6 +1134,10 @@ function Add-Native-Tool-Suite {
     if ($Stem -eq 'Test-Source-Containment') {
         $script:SourceContainmentCompilerDevelopmentEligible = $false
     }
+    if ($Stem -eq 'Test-Language-1.0-Unsafe-Write-Region-Wir') {
+        Add-Suite 'native-x64-lowering-development'
+        return
+    }
     if ($Stem -in @(
         'Test-Language-1.0-Unsafe-Wir',
         'Test-Language-1.0-Unsafe-Scratch-Wir',
@@ -2134,7 +2138,12 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite @('seed', 'compiler-reconstruction', 'language-1-front-door')
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
-        Add-Suite @('wvb-to-wvo-reconstruction', 'lowerer-rejections')
+        Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -in @(
+        'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
+        'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64'
+    )) {
+        Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -eq
         'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt') {
         $RunPlanVerification = $true
@@ -3030,6 +3039,7 @@ foreach ($Path in $Paths) {
         Add-Suite 'native-sha256-lowering'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Core.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Affine-Ownership.wv',
         'Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv',
         'Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv',
         'Compiler/Windvale/Native-X64-Lowering-Call-Instructions.wv',
@@ -3041,6 +3051,7 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Enums.wv',
         'Compiler/Windvale/Native-X64-Lowering-Enum-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Layout.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Memory-Budget.wv',
         'Compiler/Windvale/Native-X64-Lowering-Object.wv',
         'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
         'Compiler/Windvale/Native-X64-Lowering-Records.wv',
@@ -3052,57 +3063,23 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv',
         'Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv',
         'Compiler/Windvale/Native-X64-Lowering-Runtime-Descriptors.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Types.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Unsafe-Scratch.wv',
+        'Compiler/Windvale/Native-X64-Lowering-Unsafe-Write-Region.wv'
+    )) {
+        Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Staging-Manifest.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Envelope.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv',
         'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
-        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv',
-        'Compiler/Windvale/Native-X64-Lowering-Static-Data-Instructions.wv',
-        'Compiler/Windvale/Native-X64-Lowering-Types.wv'
+        'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv'
     )) {
-        Add-Compiler-Suites
-        if ($Path -in @(
-            'Compiler/Windvale/Native-X64-Lowering-Core.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Descriptor-Instructions.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Object.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Publication.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Staging-Tool.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations-Native-Bridge.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Relocations.wv',
-            'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv'
-        )) {
-            Add-Suite 'native-sha256-lowering'
-        }
-        Add-Suite 'native-u64-lowering'
-        Add-Suite 'model-provider'
-        Add-Suite 'database-superblock'
-        Add-Suite 'database-durable-commit'
-        Require-Full-Database-Storage
-        Add-Suite 'wvdb-query-capability'
-        Add-Suite 'file-read-application'
         Add-Suite 'segmented-compiler-toolset-reconstruction'
-        Add-Suite @(
-            'wvb-to-wvo-reconstruction',
-            'wv-linker-reconstruction',
-            'wvb-runner-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction'
-        )
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Tool.wv') {
-        Add-Compiler-Suites
-        Add-Suite @(
-            'wvb-to-wvo-reconstruction',
-            'wv-linker-reconstruction',
-            'wvb-runner-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction'
-        )
+        Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Generic-Resolution-Core.wv',
         'Specifications/Compiler-Source-Generic-Resolution.md'
@@ -4232,10 +4209,10 @@ foreach ($Path in $Paths) {
         if ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj') {
             Add-Suite 'native-sha256-lowering'
         }
-    } elseif ($Path -in @(
-        'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj',
-        'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj'
-    )) {
+    } elseif ($Path -eq
+        'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
+        Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering.wvproj') {
         Add-Suite @(
             'wvb-to-wvo-reconstruction',
             'wv-linker-reconstruction',
@@ -4244,9 +4221,6 @@ foreach ($Path in $Paths) {
             'console-publisher-reconstruction',
             'wvo-publisher-reconstruction'
         )
-        if ($Path -eq 'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj') {
-            Add-Suite 'native-sha256-lowering'
-        }
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Model-Protocol.wvproj') {
         Add-Suite 'libraries'
     } elseif ($Path -eq 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj') {

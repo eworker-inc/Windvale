@@ -267,7 +267,7 @@ export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes(
 ) -> u32 {
     // The common instruction-limit charge contributes ten bytes before the
     // 287-byte operation-specific sequence.
-    if Minor == 36u32 { return 300u32; }
+    if Minor == 36u32 || Minor == 37u32 { return 300u32; }
     return 297u32;
 }
 
@@ -277,7 +277,7 @@ export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes(
     // The common instruction-limit charge contributes ten bytes before one
     // record-handle load, its private field-zero observation, and one u64
     // result store.
-    if Minor == 36u32 { return 31u32; }
+    if Minor == 36u32 || Minor == 37u32 { return 31u32; }
     return 29u32;
 }
 
@@ -304,7 +304,8 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉscratchˉlength(
     var Result: bytes = Loadˉraxˉrecordˉfieldˉzero(
         State.Result, Scratchˉlocal
     );
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 36u32 {
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    if Minor == 36u32 || Minor == 37u32 {
         // Writing eax to itself retains the low descriptor word and clears
         // the private construction-alignment word.
         Result = Appendˉbyte(Result, 137u8);
@@ -362,7 +363,8 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉscratch(
                 Resultˉtype,
                 Target,
                 Backing,
-                Bytesˉreadˉu16ˉlittle(Input, 6u32) == 36u32
+                Bytesˉreadˉu16ˉlittle(Input, 6u32) == 36u32 ||
+                    Bytesˉreadˉu16ˉlittle(Input, 6u32) == 37u32
             )
         ),
         Bytesˉconcat(

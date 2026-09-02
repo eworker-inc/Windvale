@@ -980,7 +980,6 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Test-Language-1.0-Unsafe-Wir.mjs',
             'Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs',
-            'Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs',
             'Tools/Native/Test-Language-1.0-Unsafe-Type-Surface.mjs',
             'Libraries/Foundation/Unsafe/Unsafe.wv',
             'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
@@ -989,6 +988,20 @@ $NativeCases = @(
             'Documents/Decisions/0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md'
         )
         Suites = @('language-1-callable-semantics')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Native x64 unsafe write-pointer development routing'
+        Paths = @(
+            'Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs',
+            'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.cmd',
+            'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
+            'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.sh',
+            'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
+            'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64'
+        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -1652,57 +1665,17 @@ $NativeCases = @(
             'Compiler/Windvale/Native-X64-Lowering-Staging-Wvo-Symbols.wv'
         )
         Suites = @(
-            'seed',
             'segmented-compiler-toolset-reconstruction',
-            'wvb-to-wvo-reconstruction',
-            'native-sha256-lowering',
-            'wvb-runner-reconstruction',
-            'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction',
-            'unsafe-wvb',
-            'source-containment',
-            'lowerer-rejections',
-            'console-packager-source-reconstruction',
-            'native-u64-lowering',
-            'model-provider',
-            'file-read-application',
-            'database-superblock',
-            'database-durable-commit',
-            'database-storage',
-            'wvdb-query-capability'
+            'native-x64-lowering-development'
         )
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $false
     },
     @{
-        Name = 'unrelated shared lowerer source excludes native SHA-256 owner'
+        Name = 'shared lowerer source selects current-source development owner'
         Paths = @('Compiler/Windvale/Native-X64-Lowering-Bytes-Concatenation.wv')
-        Suites = @(
-            'seed',
-            'segmented-compiler-toolset-reconstruction',
-            'wvb-to-wvo-reconstruction',
-            'wvb-runner-reconstruction',
-            'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction',
-            'unsafe-wvb',
-            'source-containment',
-            'lowerer-rejections',
-            'console-packager-source-reconstruction',
-            'native-u64-lowering',
-            'model-provider',
-            'file-read-application',
-            'database-superblock',
-            'database-durable-commit',
-            'database-storage',
-            'wvdb-query-capability'
-        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $false
@@ -1791,14 +1764,13 @@ $NativeCases = @(
         )
         Suites = @(
             'wvb-to-wvo-reconstruction',
-            'native-sha256-lowering',
+            'native-x64-lowering-development',
             'wvb-runner-reconstruction',
             'wv-linker-reconstruction',
             'wvo-inspector-reconstruction',
             'console-verifier-reconstruction',
             'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction',
-            'lowerer-rejections'
+            'wvo-publisher-reconstruction'
         )
         Gaps = @()
         VerifyPlan = $false
@@ -1911,20 +1883,7 @@ $NativeCases = @(
     @{
         Name = 'current WVB-to-WVO source root'
         Paths = @('Compiler/Windvale/Native-X64-Lowering-Tool.wv')
-        Suites = @(
-            'seed',
-            'wvb-to-wvo-reconstruction',
-            'wvb-runner-reconstruction',
-            'wv-linker-reconstruction',
-            'wvo-inspector-reconstruction',
-            'console-verifier-reconstruction',
-            'console-publisher-reconstruction',
-            'wvo-publisher-reconstruction',
-            'unsafe-wvb',
-            'source-containment',
-            'lowerer-rejections',
-            'console-packager-source-reconstruction'
-        )
+        Suites = @('native-x64-lowering-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -4542,9 +4501,9 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 126 -or
+if ($VerificationOwnerLines.Count -ne 127 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 125-owner inventory differs.'
+    throw 'The native verification-owner header or exact 126-owner inventory differs.'
 }
 $VerificationOwnerCases = 0
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
@@ -4582,7 +4541,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5938 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5951 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 

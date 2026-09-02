@@ -593,7 +593,7 @@ try {
                             );
                             Compilerˉverifierˉcases += 1;
                         }
-                        await Verifyˉexecutionˉremainsˉclosed(Output);
+                        await Requireˉfrontˉdoorˉverification(Output, false);
                         Publishedˉwvb += 1;
                         Valid += 1;
                         continue;
@@ -607,7 +607,7 @@ try {
                         );
                         Compilerˉverifierˉcases += 1;
                     }
-                    await Verifyˉexecutionˉremainsˉclosed(Output);
+                    await Requireˉfrontˉdoorˉverification(Output, true);
                     Publishedˉwvb += 1;
                     if (Case.Pointer === true) Publishedˉpointerˉwvb += 1;
                     if (Case.Malformed === true) {
@@ -864,13 +864,24 @@ async function Requireˉnativeˉexecution(Wvo, Directory, Label) {
     }
 }
 
-async function Verifyˉexecutionˉremainsˉclosed(Module) {
+async function Requireˉfrontˉdoorˉverification(Module, Valid) {
     const Result = await Runˉtool(Frontˉdoorˉverifier, [Module]);
-    if (Result.Code !== 1 || Result.Exceeded ||
-        !/^wvb status=Invalid phase=semantic\r?\n$/u.test(Result.Diagnostic)) {
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject('The current execution front door exceeded its bounds.');
+    }
+    if (Valid && (Result.Code !== 0 || Diagnostic !==
+            'wvb status=Valid profile=compiler-aligned\n')) {
         Reject(
-            'The current execution front door did not remain closed to ' +
-            `the candidate WVB module.\n${Result.Diagnostic}`,
+            'The current execution front door rejected a valid candidate ' +
+            `WVB module.\n${Result.Diagnostic}`,
+        );
+    }
+    if (!Valid && (Result.Code !== 1 ||
+            !/^wvb status=Invalid phase=[^\n]+\n$/u.test(Diagnostic))) {
+        Reject(
+            'The current execution front door accepted an escaping candidate ' +
+            `WVB module.\n${Result.Diagnostic}`,
         );
     }
 }
@@ -1019,15 +1030,26 @@ async function Verifyˉmalformedˉpointerˉwvb(Directory, Canonical, Layout) {
         );
         const Candidate = Buffer.from(Canonical);
         Mutate(Candidate);
-        if (Compilerˉverifier !== undefined) {
-            const Candidateˉpath = join(
+        let Candidateˉpath;
+        if (Compilerˉverifier !== undefined || Lowerer !== undefined) {
+            Candidateˉpath = join(
                 Directory, `Malformed-Pointer-WVB-${Name}.wvb`,
             );
             await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        }
+        if (Compilerˉverifier !== undefined) {
             await Requireˉcompilerˉverification(
                 Candidateˉpath, false, Name,
             );
             Compilerˉverifierˉcases += 1;
+        }
+        if (Lowerer !== undefined) {
+            await Requireˉnativeˉlowering(
+                Candidateˉpath,
+                join(Directory, `Malformed-Pointer-WVB-${Name}.wvo`),
+                `malformed-pointer-${Name}`,
+                false,
+            );
         }
         try {
             Inspectˉwriteˉpointerˉwvb(Candidate);
@@ -1721,7 +1743,14 @@ function Runˉanalyzer(Arguments) {
 
 function Runˉtool(Tool, Arguments) {
     return new Promise((Resolveˉresult, Rejectˉpromise) => {
-        const Child = spawn(Tool, Arguments, {
+        const Isˉwindowsˉcommand = process.platform === 'win32' &&
+            Tool.toLowerCase().endsWith('.cmd');
+        const Executable = Isˉwindowsˉcommand ?
+            join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'cmd.exe') :
+            Tool;
+        const Toolˉarguments = Isˉwindowsˉcommand ?
+            ['/d', '/s', '/c', Tool, ...Arguments] : Arguments;
+        const Child = spawn(Executable, Toolˉarguments, {
             cwd: Work,
             stdio: ['ignore', 'pipe', 'pipe'],
             windowsHide: true,

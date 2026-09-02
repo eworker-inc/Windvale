@@ -200,6 +200,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 220u8 { return 13u32; }
     if Opcode == 221u8 { return 9u32; }
     if Opcode == 222u8 { return 13u32; }
+    if Opcode == 223u8 { return 13u32; }
     return 0u32;
 }
 
@@ -1214,6 +1215,37 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
                     Regionˉresultˉtype
                 )
+            );
+            Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
+            Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 223u8 {
+            if Blockˉrecordˉvalues >= 256u32 {
+                return Invalid(Input);
+            }
+            let Pointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 5u32
+            );
+            if Pointerˉtype >= Types.Count ||
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                    Types, Pointerˉtype
+                ) != 1u8 {
+                return Invalid(Input);
+            }
+            Resultˉrecord = Scratchˉvalues;
+            Scratchˉvalues = Scratchˉvalues + 1u32;
+            Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
+            if Blockˉrecordˉvalues > Recordˉvalues {
+                Recordˉvalues = Blockˉrecordˉvalues;
+            }
+            Recordˉtypes = Rememberˉrecordˉtype(
+                Input,
+                Recordˉtypes,
+                Types,
+                Resultˉrecord,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtype(Pointerˉtype)
             );
             Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
             Depth = Depth + 1u32;

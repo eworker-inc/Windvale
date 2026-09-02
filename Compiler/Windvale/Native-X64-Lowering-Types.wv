@@ -933,6 +933,65 @@ export fn Compilerˉnativeˉx64ˉrecordˉfieldˉtype(
     return Shape.Type;
 }
 
+fn Synthesizedˉgenericˉnameˉisˉexact(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bool {
+    if Typeˉindex >= Types.Count { return false; }
+    let Items: u32 = Compilerˉnativeˉx64ˉtypeˉitemˉoffset(
+        Types, Typeˉindex
+    );
+    // A synthesized generic identity is exactly nine bytes. The item cursor
+    // follows its four-byte length, nine name bytes, and four-byte item count.
+    if Items < 17u32 { return false; }
+    let Cursor: u32 = Items - 17u32;
+    if !Rangeˉisˉvalid(Bytesˉlength(Input), Cursor, 13u32) ||
+        Bytesˉreadˉu32ˉlittle(Input, Cursor) != 9u32 {
+        return false;
+    }
+    let Prefix: bytes = Textˉtoˉutf8("__WvY");
+    var Prefixˉindex: u32 = 0u32;
+    while Prefixˉindex < 5u32 {
+        if Bytesˉreadˉu8(Input, Cursor + 4u32 + Prefixˉindex) !=
+            Bytesˉreadˉu8(Prefix, Prefixˉindex) {
+            return false;
+        }
+        Prefixˉindex = Prefixˉindex + 1u32;
+    }
+    var Digit: u32 = 0u32;
+    while Digit < 4u32 {
+        let Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+            Input, Cursor + 9u32 + Digit
+        ));
+        if Value < 48u32 || Value > 57u32 { return false; }
+        Digit = Digit + 1u32;
+    }
+    return true;
+}
+
+export fn Compilerˉnativeˉx64ˉunsafeˉtokenˉisˉexact(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> bool {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 1u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Typeˉindex) != 1u32 ||
+        !Synthesizedˉgenericˉnameˉisˉexact(Input, Types, Typeˉindex) ||
+        !Compilerˉnativeˉx64ˉrecordˉfieldˉnameˉis(
+            Input, Types, Typeˉindex, 0u32, "Opaqueˉidentity"
+        ) {
+        return false;
+    }
+    let Field: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉrecordˉfieldˉshape(
+            Input, Types, Typeˉindex, 0u32
+        );
+    return Field.Valid && Field.Type == 10u8 &&
+        Field.Identity == 4294967295u32;
+}
+
 export fn Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,
@@ -1194,6 +1253,61 @@ export fn Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
         Case = Case + 1u32;
     }
     return Invalidˉshape();
+}
+
+export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉvalueˉtype(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Resultˉtype: u32
+) -> u32 {
+    if Resultˉtype >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Resultˉtype) != 3u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Resultˉtype) != 2u32 ||
+        !Synthesizedˉgenericˉnameˉisˉexact(Input, Types, Resultˉtype) ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+            Input, Types, Resultˉtype, 0u32, "Valid"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+            Input, Types, Resultˉtype, 0u32, 0u32, "Value"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+            Input, Types, Resultˉtype, 1u32, "Failure"
+        ) ||
+        !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+            Input, Types, Resultˉtype, 1u32, 0u32, "Error"
+        ) {
+        return Types.Count;
+    }
+    let Value: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 0u32, 0u32
+        );
+    let Extraˉvalue: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 0u32, 1u32
+        );
+    let Failure: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 1u32, 0u32
+        );
+    let Extraˉfailure: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉfield(
+            Input, Types, Resultˉtype, 1u32, 1u32
+        );
+    if !Value.Valid || Extraˉvalue.Valid || !Failure.Valid ||
+        Extraˉfailure.Valid ||
+        !Compilerˉnativeˉx64ˉtypeˉisˉrecord(Value.Type) {
+        return Types.Count;
+    }
+    let Valueˉtype: u32 = Compilerˉnativeˉx64ˉrecordˉtypeˉindex(
+        Value.Type
+    );
+    if !Compilerˉnativeˉx64ˉunsafeˉtokenˉisˉexact(
+            Input, Types, Valueˉtype
+        ) {
+        return Types.Count;
+    }
+    return Valueˉtype;
 }
 
 export fn Compilerˉnativeˉx64ˉmemoryˉbudgetˉresultˉisˉexact(
