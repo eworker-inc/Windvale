@@ -1,5 +1,0 @@
-module WebAssemblyˉconstant profile portable;
-
-export fn Main() -> i32 {
-    return 42;
-}

@@ -1,9 +1,0 @@
-module Webassemblyˉgeneralˉdispatcherˉoverflow profile portable;
-
-fn Add(Left: i32, Right: i32) -> i32 {
-    return Left + Right;
-}
-
-export fn Main() -> i32 {
-    return Add(2147483647, 1);
-}

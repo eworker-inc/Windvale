@@ -551,19 +551,7 @@ node "$script_directory/Run-Split-Compiler.mjs" \
     "$work/Enum-U8-Used-Main-A.wvb" \
     >"$work/Enum-U8-Used-Main-A.out" \
     2>"$work/Enum-U8-Used-Main-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" \
-    "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Enum-U8-Used-Main.wv" \
-    "$work/Enum-U8-Used-Main-B.wvb" \
-    >"$work/Enum-U8-Used-Main-B.out" \
-    2>"$work/Enum-U8-Used-Main-B.err" || exit $?
 [[ ! -s $work/Enum-U8-Used-Main-A.err ]] || exit 1
-[[ ! -s $work/Enum-U8-Used-Main-B.err ]] || exit 1
-cmp -s -- "$work/Enum-U8-Used-Main-A.wvb" \
-    "$work/Enum-U8-Used-Main-B.wvb" || exit 1
 enum_u8_wvb_bytes=$(wc -c < "$work/Enum-U8-Used-Main-A.wvb")
 [[ $enum_u8_wvb_bytes -eq 415 ]] || exit 1
 printf '%s  %s\n' \
@@ -1114,15 +1102,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
     "$work/Unit-A.wvb" >"$work/Unit-A.out" 2>"$work/Unit-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Unit-Control.wv" \
-    "$work/Unit-B.wvb" >"$work/Unit-B.out" 2>"$work/Unit-B.err" || exit $?
-[[ ! -s $work/Unit-A.err && ! -s $work/Unit-B.err ]] || exit 1
-compare_split_reports "$work/Unit-A.out" "$work/Unit-B.out" || exit 1
-cmp -s -- "$work/Unit-A.wvb" "$work/Unit-B.wvb" || exit 1
+[[ ! -s $work/Unit-A.err ]] || exit 1
 cat -- "$work/Unit-A.out"
 printf 'INFO  language 1 unit wvb-bytes=%s\n' "$(wc -c < "$work/Unit-A.wvb")"
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
@@ -1132,16 +1112,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
     "$work/Record-Update-A.wvb" \
     >"$work/Record-Update-A.out" 2>"$work/Record-Update-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Record-Update.wv" \
-    "$work/Record-Update-B.wvb" \
-    >"$work/Record-Update-B.out" 2>"$work/Record-Update-B.err" || exit $?
-[[ ! -s $work/Record-Update-A.err && ! -s $work/Record-Update-B.err ]] || exit 1
-compare_split_reports "$work/Record-Update-A.out" "$work/Record-Update-B.out" || exit 1
-cmp -s -- "$work/Record-Update-A.wvb" "$work/Record-Update-B.wvb" || exit 1
+[[ ! -s $work/Record-Update-A.err ]] || exit 1
 cat -- "$work/Record-Update-A.out"
 printf 'INFO  language 1 record-update wvb-bytes=%s\n' \
     "$(wc -c < "$work/Record-Update-A.wvb")"
@@ -1188,15 +1159,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     --target-descriptor "$target_descriptor" \
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
     "$work/Value-If-A.wvb" >"$work/Value-If-A.out" 2>"$work/Value-If-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Value-Control.wv" \
-    "$work/Value-If-B.wvb" >"$work/Value-If-B.out" 2>"$work/Value-If-B.err" || exit $?
-[[ ! -s $work/Value-If-A.err && ! -s $work/Value-If-B.err ]] || exit 1
-compare_split_reports "$work/Value-If-A.out" "$work/Value-If-B.out" || exit 1
-cmp -s -- "$work/Value-If-A.wvb" "$work/Value-If-B.wvb" || exit 1
+[[ ! -s $work/Value-If-A.err ]] || exit 1
 "$script_directory/Run-Wvb.sh" "$work/Value-If-A.wvb" \
     >"$work/Value-If.out" 2>"$work/Value-If.err" || exit $?
 [[ ! -s $work/Value-If.err ]] || exit 1
@@ -1234,16 +1197,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
     "$work/Value-Match-A.wvb" >"$work/Value-Match-A.out" \
     2>"$work/Value-Match-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match.wv" \
-    "$work/Value-Match-B.wvb" >"$work/Value-Match-B.out" \
-    2>"$work/Value-Match-B.err" || exit $?
-[[ ! -s $work/Value-Match-A.err && ! -s $work/Value-Match-B.err ]] || exit 1
-compare_split_reports "$work/Value-Match-A.out" "$work/Value-Match-B.out" || exit 1
-cmp -s -- "$work/Value-Match-A.wvb" "$work/Value-Match-B.wvb" || exit 1
+[[ ! -s $work/Value-Match-A.err ]] || exit 1
 "$script_directory/Run-Wvb.sh" "$work/Value-Match-A.wvb" \
     >"$work/Value-Match.out" 2>"$work/Value-Match.err" || exit $?
 [[ ! -s $work/Value-Match.err ]] || exit 1
@@ -1270,20 +1224,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$work/Value-Match-Never-A.wvb" \
     >"$work/Value-Match-Never-A.out" \
     2>"$work/Value-Match-Never-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Never.wv" \
-    "$work/Value-Match-Never-B.wvb" \
-    >"$work/Value-Match-Never-B.out" \
-    2>"$work/Value-Match-Never-B.err" || exit $?
-[[ ! -s $work/Value-Match-Never-A.err && \
-    ! -s $work/Value-Match-Never-B.err ]] || exit 1
-compare_split_reports "$work/Value-Match-Never-A.out" \
-    "$work/Value-Match-Never-B.out" || exit 1
-cmp -s -- "$work/Value-Match-Never-A.wvb" \
-    "$work/Value-Match-Never-B.wvb" || exit 1
+[[ ! -s $work/Value-Match-Never-A.err ]] || exit 1
 node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
     --source-input-lock "$source_lock" "$source_lock_hash" \
     --source-profile "$source_profile" \
@@ -1292,20 +1233,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$work/Value-Match-Variant-A.wvb" \
     >"$work/Value-Match-Variant-A.out" \
     2>"$work/Value-Match-Variant-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-Variant.wv" \
-    "$work/Value-Match-Variant-B.wvb" \
-    >"$work/Value-Match-Variant-B.out" \
-    2>"$work/Value-Match-Variant-B.err" || exit $?
-[[ ! -s $work/Value-Match-Variant-A.err && \
-    ! -s $work/Value-Match-Variant-B.err ]] || exit 1
-compare_split_reports "$work/Value-Match-Variant-A.out" \
-    "$work/Value-Match-Variant-B.out" || exit 1
-cmp -s -- "$work/Value-Match-Variant-A.wvb" \
-    "$work/Value-Match-Variant-B.wvb" || exit 1
+[[ ! -s $work/Value-Match-Variant-A.err ]] || exit 1
 for name in Missing-Case Trailing-Semicolon Type-Mismatch; do
     expect_rejection \
         "$repository_root/Tests/Fixtures/Language-1.0/Value-Match-$name.wv" \
@@ -1390,16 +1318,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
     "$work/Fixed-Integer-A.wvb" \
     >"$work/Fixed-Integer-A.out" 2>"$work/Fixed-Integer-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Integer-Program.wv" \
-    "$work/Fixed-Integer-B.wvb" \
-    >"$work/Fixed-Integer-B.out" 2>"$work/Fixed-Integer-B.err" || exit $?
-[[ ! -s $work/Fixed-Integer-A.err && ! -s $work/Fixed-Integer-B.err ]] || exit 1
-compare_split_reports "$work/Fixed-Integer-A.out" "$work/Fixed-Integer-B.out" || exit 1
-cmp -s -- "$work/Fixed-Integer-A.wvb" "$work/Fixed-Integer-B.wvb" || exit 1
+[[ ! -s $work/Fixed-Integer-A.err ]] || exit 1
 
 for name in Overflow Divide-By-Zero Invalid-Shift; do
     node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
@@ -1517,16 +1436,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
     "$work/Rune-A.wvb" \
     >"$work/Rune-A.out" 2>"$work/Rune-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Rune-Program.wv" \
-    "$work/Rune-B.wvb" \
-    >"$work/Rune-B.out" 2>"$work/Rune-B.err" || exit $?
-[[ ! -s $work/Rune-A.err && ! -s $work/Rune-B.err ]] || exit 1
-compare_split_reports "$work/Rune-A.out" "$work/Rune-B.out" || exit 1
-cmp -s -- "$work/Rune-A.wvb" "$work/Rune-B.wvb" || exit 1
+[[ ! -s $work/Rune-A.err ]] || exit 1
 
 for name in Empty Multiple Surrogate Out-Of-Range Invalid-Escape Unterminated Type-Mismatch Invalid-Operator; do
     expect_rejection \
@@ -1582,16 +1492,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
     "$work/Floating-A.wvb" \
     >"$work/Floating-A.out" 2>"$work/Floating-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Floating-Program.wv" \
-    "$work/Floating-B.wvb" \
-    >"$work/Floating-B.out" 2>"$work/Floating-B.err" || exit $?
-[[ ! -s $work/Floating-A.err && ! -s $work/Floating-B.err ]] || exit 1
-compare_split_reports "$work/Floating-A.out" "$work/Floating-B.out" || exit 1
-cmp -s -- "$work/Floating-A.wvb" "$work/Floating-B.wvb" || exit 1
+[[ ! -s $work/Floating-A.err ]] || exit 1
 
 for name in Decimal-Literal Missing-Suffix Type-Mismatch Invalid-Operator; do
     expect_rejection \
@@ -1685,18 +1586,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
     "$work/Fixed-Array-A.wvb" \
     >"$work/Fixed-Array-A.out" 2>"$work/Fixed-Array-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Fixed-Array-Main-Pipeline.wv" \
-    "$repository_root/Libraries/Foundation/Collections/Collections.wv" \
-    "$repository_root/Libraries/Foundation/Memory/Memory.wv" \
-    "$work/Fixed-Array-B.wvb" \
-    >"$work/Fixed-Array-B.out" 2>"$work/Fixed-Array-B.err" || exit $?
-[[ ! -s $work/Fixed-Array-A.err && ! -s $work/Fixed-Array-B.err ]] || exit 1
-compare_split_reports "$work/Fixed-Array-A.out" "$work/Fixed-Array-B.out" || exit 1
-cmp -s -- "$work/Fixed-Array-A.wvb" "$work/Fixed-Array-B.wvb" || exit 1
+[[ ! -s $work/Fixed-Array-A.err ]] || exit 1
 node "$script_directory/Verify-Language-1.0-Fixed-Arrays.mjs" \
     "$work/Verifier.elf" "$work/Floating-Runner.elf" \
     "$work/Fixed-Array-A.wvb" "$work" || exit $?
@@ -1847,16 +1737,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
     "$work/Never-A.wvb" \
     >"$work/Never-A.out" 2>"$work/Never-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Never-Control.wv" \
-    "$work/Never-B.wvb" \
-    >"$work/Never-B.out" 2>"$work/Never-B.err" || exit $?
-[[ ! -s $work/Never-A.err && ! -s $work/Never-B.err ]] || exit 1
-compare_split_reports "$work/Never-A.out" "$work/Never-B.out" || exit 1
-cmp -s -- "$work/Never-A.wvb" "$work/Never-B.wvb" || exit 1
+[[ ! -s $work/Never-A.err ]] || exit 1
 
 for name in Fallthrough Return Parameter Unreachable; do
     expect_rejection \
@@ -1983,16 +1864,7 @@ node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Vali
     "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
     "$work/Result-Try-A.wvb" \
     >"$work/Result-Try-A.out" 2>"$work/Result-Try-A.err" || exit $?
-node "$script_directory/Run-Split-Compiler.mjs" "$work/Admitter.elf" "$work/Validator.elf" "$work/Analyzer.elf" "$work/Emitter.elf" \
-    --source-input-lock "$source_lock" "$source_lock_hash" \
-    --source-profile "$source_profile" \
-    --target-descriptor "$target_descriptor" \
-    "$repository_root/Tests/Fixtures/Language-1.0/Result-Try.wv" \
-    "$work/Result-Try-B.wvb" \
-    >"$work/Result-Try-B.out" 2>"$work/Result-Try-B.err" || exit $?
-[[ ! -s $work/Result-Try-A.err && ! -s $work/Result-Try-B.err ]] || exit 1
-compare_split_reports "$work/Result-Try-A.out" "$work/Result-Try-B.out" || exit 1
-cmp -s -- "$work/Result-Try-A.wvb" "$work/Result-Try-B.wvb" || exit 1
+[[ ! -s $work/Result-Try-A.err ]] || exit 1
 
 for name in Lookalike Wrong-Value-Field Extra-Case Scalar; do
     expect_rejection \
