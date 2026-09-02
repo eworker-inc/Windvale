@@ -4713,9 +4713,15 @@ if (!$DirectCompilerContainmentPlan.UseSourceContainmentCompilerDevelopment -or
 $GitHubVerificationWorkflow = Get-Content -LiteralPath (
     Join-Path $RepositoryRoot '.github/workflows/verify.yml') -Raw
 $RequiredWorkflowFragments = @(
-    'group: verify-${{ github.workflow }}-${{ github.ref }}',
-    'cancel-in-progress: false',
+    "group: verify-`${{ github.workflow }}-`${{ github.ref }}-`${{ github.event_name == 'workflow_dispatch' && 'qualification' || 'automatic' }}",
+    "cancel-in-progress: `${{ github.event_name != 'workflow_dispatch' }}",
     'queue: single',
+    'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
+    'name: Select automatic Windows host',
+    "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
+    "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)`$'",
+    "if: `${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}",
+    'WINDOWS_REQUIRED: ${{ needs.classify-changes.outputs.windows_required }}',
     'uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5',
     'uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5',
     "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}",
@@ -4727,6 +4733,19 @@ $RequiredWorkflowFragments = @(
 foreach ($Fragment in $RequiredWorkflowFragments) {
     if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "The GitHub verification workflow is missing '$Fragment'."
+    }
+}
+if ($GitHubVerificationWorkflow.Contains(
+        'windows-documentation:', [StringComparison]::Ordinal)) {
+    throw 'The GitHub verification workflow still duplicates documentation on Windows.'
+}
+foreach ($JobName in @('windows-development', 'linux-development')) {
+    $JobMatch = [regex]::Match(
+        $GitHubVerificationWorkflow,
+        "(?ms)^  ${JobName}:.*?(?=^  [a-z0-9-]+:|\z)")
+    if (!$JobMatch.Success -or
+        !$JobMatch.Value.Contains('timeout-minutes: 15', [StringComparison]::Ordinal)) {
+        throw "The GitHub $JobName job does not have the 15-minute development bound."
     }
 }
 if ([regex]::Matches(

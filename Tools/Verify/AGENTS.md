@@ -44,8 +44,10 @@ handbook.
   or historical differential investigation.
 - Use managed Development, Standard, or Qualification tiers only for that
   explicit recovery or differential evidence, or for the final retirement gate.
-- GitHub runs affected focused native owners on Windows and Linux for ordinary
-  implementation and specification pushes and pull requests.
+- GitHub runs affected focused native owners on Linux for ordinary implementation
+  and specification pushes and pull requests. It adds the Windows development
+  host only for Windows command, PowerShell, platform, or binary changes. Each
+  automatic development job has a 15-minute wall-clock bound.
 - Invoke the independent complete dual-host Qualification workflow explicitly
   for a release candidate, promotion, security boundary, or deliberate
   qualification claim. It is not a per-commit gate.

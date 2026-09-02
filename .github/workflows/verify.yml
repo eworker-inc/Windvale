@@ -11,8 +11,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  group: verify-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && 'qualification' || 'automatic' }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
   queue: single
 
 jobs:
@@ -23,6 +23,7 @@ jobs:
       scope: ${{ steps.classify.outputs.scope }}
       editor: ${{ steps.classify.outputs.editor }}
       documentation: ${{ steps.classify.outputs.documentation }}
+      windows_required: ${{ steps.host-scope.outputs.windows_required }}
       base_sha: ${{ steps.classify.outputs.base_sha }}
       head_sha: ${{ steps.classify.outputs.head_sha }}
     steps:
@@ -55,6 +56,32 @@ jobs:
           }
           ./Tools/Verify/Classify-Verification-Changes.ps1 @Arguments
 
+      - name: Select automatic Windows host
+        id: host-scope
+        shell: pwsh
+        env:
+          SCOPE: ${{ steps.classify.outputs.scope }}
+          BASE_SHA: ${{ steps.classify.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.classify.outputs.head_sha }}
+        run: |
+          $WindowsRequired = $false
+          if ($env:SCOPE -eq 'development') {
+            $ChangedPaths = @(
+              git diff --name-only --no-renames --diff-filter=ACDMRTUXB `
+                $env:BASE_SHA $env:HEAD_SHA --
+            )
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Git could not enumerate paths for Windows host selection.'
+            }
+            $WindowsRequired = @(
+              $ChangedPaths | Where-Object {
+                $_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:$|[/_.-])' -or
+                $_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'
+              }
+            ).Count -ne 0
+          }
+          "windows_required=$($WindowsRequired.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
       - name: Verify change classification rules
         shell: pwsh
         run: |
@@ -75,23 +102,6 @@ jobs:
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.documentation == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Verify documentation
-        shell: pwsh
-        run: pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1
-
-  windows-documentation:
-    name: Windows documentation verification
-    needs: classify-changes
-    if: ${{ needs.classify-changes.outputs.documentation == 'true' }}
-    runs-on: windows-latest
     timeout-minutes: 5
     steps:
       - name: Check out source
@@ -174,9 +184,9 @@ jobs:
   windows-development:
     name: Windows focused development verification
     needs: classify-changes
-    if: ${{ needs.classify-changes.outputs.scope == 'development' }}
+    if: ${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}
     runs-on: windows-latest
-    timeout-minutes: 75
+    timeout-minutes: 15
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -218,7 +228,7 @@ jobs:
     needs: classify-changes
     if: ${{ needs.classify-changes.outputs.scope == 'development' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 15
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -437,7 +447,6 @@ jobs:
     needs:
       - classify-changes
       - linux-documentation
-      - windows-documentation
       - lightweight-verifier
       - website-verifier
       - windows-development
@@ -457,9 +466,9 @@ jobs:
         env:
           SCOPE: ${{ needs.classify-changes.outputs.scope }}
           DOCUMENTATION: ${{ needs.classify-changes.outputs.documentation }}
+          WINDOWS_REQUIRED: ${{ needs.classify-changes.outputs.windows_required }}
           CLASSIFY_RESULT: ${{ needs.classify-changes.result }}
           LINUX_DOCUMENTATION_RESULT: ${{ needs.linux-documentation.result }}
-          WINDOWS_DOCUMENTATION_RESULT: ${{ needs.windows-documentation.result }}
           LIGHTWEIGHT_RESULT: ${{ needs.lightweight-verifier.result }}
           WEBSITE_RESULT: ${{ needs.website-verifier.result }}
           WINDOWS_DEVELOPMENT_RESULT: ${{ needs.windows-development.result }}
@@ -474,10 +483,8 @@ jobs:
           test "$CLASSIFY_RESULT" = success
           if [ "$DOCUMENTATION" = true ]; then
             test "$LINUX_DOCUMENTATION_RESULT" = success
-            test "$WINDOWS_DOCUMENTATION_RESULT" = success
           else
             test "$LINUX_DOCUMENTATION_RESULT" = skipped
-            test "$WINDOWS_DOCUMENTATION_RESULT" = skipped
           fi
           case "$SCOPE" in
             lightweight)
@@ -507,7 +514,11 @@ jobs:
             development)
               test "$LIGHTWEIGHT_RESULT" = skipped
               test "$WEBSITE_RESULT" = skipped
-              test "$WINDOWS_DEVELOPMENT_RESULT" = success
+              if [ "$WINDOWS_REQUIRED" = true ]; then
+                test "$WINDOWS_DEVELOPMENT_RESULT" = success
+              else
+                test "$WINDOWS_DEVELOPMENT_RESULT" = skipped
+              fi
               test "$LINUX_DEVELOPMENT_RESULT" = success
               test "$WINDOWS_NATIVE_RESULT" = skipped
               test "$LINUX_NATIVE_RESULT" = skipped

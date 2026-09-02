@@ -46,20 +46,33 @@ Assert-Workflow ($Content -notmatch '(?im)Verify-Seed\.(?:ps1|sh)') `
 Assert-Workflow ($Content -notmatch "`t") 'The GitHub workflow contains a tab.'
 Assert-Workflow (
     $Content.Contains(
-        '  group: verify-${{ github.workflow }}-${{ github.ref }}',
+        "  group: verify-`${{ github.workflow }}-`${{ github.ref }}-`${{ github.event_name == 'workflow_dispatch' && 'qualification' || 'automatic' }}",
         [StringComparison]::Ordinal) -and
-    $Content.Contains('  cancel-in-progress: false', [StringComparison]::Ordinal) -and
+    $Content.Contains(
+        "  cancel-in-progress: `${{ github.event_name != 'workflow_dispatch' }}",
+        [StringComparison]::Ordinal) -and
     $Content.Contains('  queue: single', [StringComparison]::Ordinal)
-) 'The GitHub workflow does not preserve one running and one latest pending run per ref.'
+) 'The GitHub workflow does not cancel superseded automatic runs while preserving explicit qualification.'
 Assert-Workflow (
     ([regex]::Matches($Content, '\$\{\{').Count -eq
         [regex]::Matches($Content, '\}\}').Count)
 ) 'The GitHub workflow has unbalanced expression delimiters.'
 
+$ClassificationBlock = Get-JobBlock 'classify-changes'
+foreach ($Fragment in @(
+    'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
+    'name: Select automatic Windows host',
+    "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
+    "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'"
+)) {
+    Assert-Workflow (
+        $ClassificationBlock.Contains($Fragment, [StringComparison]::Ordinal)
+    ) "The change classifier is missing the automatic Windows selection fragment '$Fragment'."
+}
+
 $ExpectedJobs = @(
     'classify-changes',
     'linux-documentation',
-    'windows-documentation',
     'lightweight-verifier',
     'website-verifier',
     'windows-development',
@@ -85,7 +98,7 @@ Assert-Workflow (
         [string[]]$ExpectedJobs)
 ) "The GitHub workflow job order differs: $($ActualJobs -join ', ')."
 
-$DocumentationJobs = @('linux-documentation', 'windows-documentation')
+$DocumentationJobs = @('linux-documentation')
 foreach ($Job in $DocumentationJobs) {
     $Block = Get-JobBlock $Job
     Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
@@ -100,14 +113,21 @@ foreach ($Job in $DocumentationJobs) {
     ) "Documentation job '$Job' does not invoke documentation verification."
 }
 
+$DevelopmentConditions = @{
+    'windows-development' = "    if: `${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}"
+    'linux-development' = "    if: `${{ needs.classify-changes.outputs.scope == 'development' }}"
+}
 $DevelopmentJobs = @('windows-development', 'linux-development')
 foreach ($Job in $DevelopmentJobs) {
     $Block = Get-JobBlock $Job
     Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
         "Development job '$Job' does not depend on classification."
     Assert-Workflow (
-        $Block.Contains("    if: `${{ needs.classify-changes.outputs.scope == 'development' }}")
+        $Block.Contains($DevelopmentConditions[$Job], [StringComparison]::Ordinal)
     ) "Development job '$Job' does not use the focused-development condition."
+    Assert-Workflow (
+        $Block.Contains('    timeout-minutes: 15', [StringComparison]::Ordinal)
+    ) "Development job '$Job' does not enforce the 15-minute automatic bound."
     Assert-Workflow (
         $Block.Contains(
             'run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA')
@@ -202,10 +222,7 @@ foreach ($Job in @($DocumentationJobs; $DevelopmentJobs; $QualificationJobs)) {
     Assert-Workflow ($Gate -match "(?m)^      - $([regex]::Escape($Job))$") `
         "The verification gate does not depend on '$Job'."
 }
-foreach ($Variable in @(
-    'LINUX_DOCUMENTATION_RESULT',
-    'WINDOWS_DOCUMENTATION_RESULT'
-)) {
+foreach ($Variable in @('LINUX_DOCUMENTATION_RESULT')) {
     $SuccessPattern = '(?m)^            test "\$' +
         [regex]::Escape($Variable) + '" = success$'
     $SkippedPattern = '(?m)^            test "\$' +
@@ -214,12 +231,13 @@ foreach ($Variable in @(
         $Gate -match $SuccessPattern -and $Gate -match $SkippedPattern
     ) "The gate does not enforce both selected and skipped states for '$Variable'."
 }
-foreach ($Variable in @('WINDOWS_DEVELOPMENT_RESULT', 'LINUX_DEVELOPMENT_RESULT')) {
-    $SuccessPattern = '(?m)^              test "\$' +
-        [regex]::Escape($Variable) + '" = success$'
-    Assert-Workflow ($Gate -match $SuccessPattern) `
-        "The development branch does not require '$Variable' success."
-}
+Assert-Workflow (
+    $Gate.Contains('          WINDOWS_REQUIRED: ${{ needs.classify-changes.outputs.windows_required }}') -and
+    $Gate.Contains('              if [ "$WINDOWS_REQUIRED" = true ]; then') -and
+    $Gate.Contains('                test "$WINDOWS_DEVELOPMENT_RESULT" = success') -and
+    $Gate.Contains('                test "$WINDOWS_DEVELOPMENT_RESULT" = skipped') -and
+    $Gate.Contains('              test "$LINUX_DEVELOPMENT_RESULT" = success')
+) 'The development gate does not enforce Linux plus conditionally selected Windows results.'
 foreach ($Variable in @(
     'WINDOWS_NATIVE_RESULT',
     'LINUX_NATIVE_RESULT',
@@ -242,4 +260,4 @@ Assert-Workflow (
 ) 'The retirement inventory still contains a normal managed entry point.'
 Assert-Workflow ($InventoryEntries.Count -eq 0) `
     "The archival inventory contains $($InventoryEntries.Count) direct managed entry points instead of zero."
-Write-Host 'GitHub native workflow verification passed (2 documentation jobs; 2 focused development jobs; 6 qualification definitions, 12 matrix-expanded native jobs; 0 managed entry points).'
+Write-Host 'GitHub native workflow verification passed (1 documentation job; Linux-focused development plus conditional Windows; 6 qualification definitions, 12 matrix-expanded native jobs; 0 managed entry points).'

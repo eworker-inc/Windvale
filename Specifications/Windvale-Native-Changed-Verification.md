@@ -359,6 +359,23 @@ The command is development feedback. Passing it is not Standard, Qualification,
 cross-host, or qualification evidence. A pre-existing output owned by a child
 owner retains that owner's preservation contract.
 
+## GitHub automatic verification
+
+Push and pull-request development verification runs the affected plan on a clean
+Linux host. It adds a clean Windows host only when a changed path names a Windows
+or Win32 path token, a Windows command or batch file, a PowerShell script, or an
+`.exe`, `.dll`, or `.pdb` artifact. Both automatic development jobs have a
+15-minute wall-clock limit including checkout, cache restore, tool setup, owner
+execution, and cache publication. A timeout is a failed development result, not
+partial passing evidence.
+
+Automatic runs for the same workflow and ref cancel when a newer push or pull
+request supersedes them. An explicit `workflow_dispatch` qualification run is
+not cancelled by later automatic work. Documentation verification runs once on
+Linux; it is not repeated on Windows. Explicit qualification retains the four
+fresh native shards, WebAssembly engine verification, and compiler convergence
+on both hosts.
+
 ## Verification
 
 `Verify-Verification-Plan.ps1` owns general classification plus native selection
