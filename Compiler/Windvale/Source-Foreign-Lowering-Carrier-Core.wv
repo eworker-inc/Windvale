@@ -1,0 +1,286 @@
+module Compilerˉsourceˉforeignˉloweringˉcarrier profile portable;
+
+import Compilerˉsourceˉtarget as Target;
+
+// WVFB is a private, non-authoritative compiler handoff. Authentication remains
+// a relationship enforced by the coordinator over retained WVSS/WVTD/WVFC.
+export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES: u32 = 56u32;
+export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES: u32 = 80u32;
+export const COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_MAXIMUM_RECORDS: u32 = 64u32;
+
+export enum Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus {
+    Valid = 0;
+    Invalidˉsize = 1;
+    Invalidˉmagic = 2;
+    Invalidˉversion = 3;
+    Invalidˉheader = 4;
+    Invalidˉtarget = 5;
+    Invalidˉcount = 6;
+    Invalidˉrecord = 7;
+    Invalidˉorder = 8;
+    Invalidˉreserved = 9;
+}
+
+export record Compilerˉsourceˉforeignˉloweringˉcarrierˉresult {
+    Status: Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus;
+    Records: u32;
+    Failureˉrecord: u32;
+    Failureˉoffset: u32;
+    Value: bytes;
+}
+
+fn Compilerˉsourceˉforeignˉloweringˉcarrierˉresultˉfrom(
+    Status: Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus,
+    Records: u32,
+    Failureˉrecord: u32,
+    Failureˉoffset: u32,
+    Value: bytes
+) -> Compilerˉsourceˉforeignˉloweringˉcarrierˉresult {
+    return Compilerˉsourceˉforeignˉloweringˉcarrierˉresult(
+        Status, Records, Failureˉrecord, Failureˉoffset, Value
+    );
+}
+
+fn Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+    Input: bytes,
+    Status: Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus,
+    Records: u32,
+    Failureˉrecord: u32,
+    Failureˉoffset: u32
+) -> Compilerˉsourceˉforeignˉloweringˉcarrierˉresult {
+    return Compilerˉsourceˉforeignˉloweringˉcarrierˉresultˉfrom(
+        Status,
+        Records,
+        Failureˉrecord,
+        Failureˉoffset,
+        Bytesˉslice(Input, 0u32, 0u32)
+    );
+}
+
+fn Compilerˉsourceˉforeignˉloweringˉcarrierˉtargetˉisˉexact(
+    Input: bytes
+) -> bool {
+    return Bytesˉreadˉu32ˉlittle(Input, 24u32) ==
+            Target.COMPILER_SOURCE_TARGET_BUILD_LINUX_X86_64_SYSV_AMD64_C_V1 &&
+        Bytesˉreadˉu32ˉlittle(Input, 28u32) ==
+            Target.COMPILER_SOURCE_TARGET_ENVIRONMENT_LINUX &&
+        Bytesˉreadˉu32ˉlittle(Input, 32u32) ==
+            Target.COMPILER_SOURCE_TARGET_ARCHITECTURE_X86_64 &&
+        Bytesˉreadˉu32ˉlittle(Input, 36u32) ==
+            Target.COMPILER_SOURCE_TARGET_ABI_SYSV_AMD64_C_V1 &&
+        Bytesˉreadˉu32ˉlittle(Input, 40u32) == 64u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, 44u32) ==
+            Target.COMPILER_SOURCE_TARGET_BYTE_ORDER_LITTLE &&
+        Bytesˉreadˉu32ˉlittle(Input, 48u32) == 1u32;
+}
+
+fn Compilerˉsourceˉforeignˉloweringˉcarrierˉrecordˉisˉexact(
+    Input: bytes,
+    Offset: u32,
+    Recordˉindex: u32
+) -> bool {
+    return Bytesˉreadˉu32ˉlittle(Input, Offset + 12u32) == Recordˉindex &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 16u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 20u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 24u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 28u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 32u32) == 256u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 36u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 40u32) == 4u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 44u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 48u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 52u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 56u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 60u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Input, Offset + 64u32) == 7u32;
+}
+
+export fn Compilerˉsourceˉforeignˉloweringˉcarrierˉrecord(
+    Module: u32,
+    Declaration: u32,
+    Directoryˉentry: u32,
+    Catalogˉrecord: u32
+) -> bytes {
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(Module);
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Declaration));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Directoryˉentry));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Catalogˉrecord));
+    // ABI, source name, external symbol, System profile, and ffi.call.
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(3u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(256u32));
+    // Three parameters: Foreign pointer<u8, ABI 1>, u64, u64; result i64.
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(3u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(4u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(3u32));
+    // unsafe, no-retain, and no-unwind are all required.
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(7u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+export fn Compilerˉvalidateˉsourceˉforeignˉloweringˉcarrier(
+    Input: bytes
+) -> Compilerˉsourceˉforeignˉloweringˉcarrierˉresult {
+    let Length: u32 = Bytesˉlength(Input);
+    if Length < COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES ||
+        Length > COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+            COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_MAXIMUM_RECORDS *
+            COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉsize,
+            0u32, 0u32, Length
+        );
+    }
+    if Bytesˉreadˉu8(Input, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Input, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Input, 2u32) != 70u8 ||
+        Bytesˉreadˉu8(Input, 3u32) != 66u8 {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉmagic,
+            0u32, 0u32, 0u32
+        );
+    }
+    if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) != 0u32 {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉversion,
+            0u32, 0u32, 4u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 8u32) !=
+            COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 12u32) !=
+            COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Input, 20u32) != Length {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉheader,
+            0u32, 0u32, 8u32
+        );
+    }
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Input, 16u32);
+    if Records == 0u32 ||
+        Records > COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_MAXIMUM_RECORDS ||
+        Length != COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+            Records * COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉcount,
+            Records, 0u32, 16u32
+        );
+    }
+    if !Compilerˉsourceˉforeignˉloweringˉcarrierˉtargetˉisˉexact(Input) {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉtarget,
+            Records, 0u32, 24u32
+        );
+    }
+    if Bytesˉreadˉu32ˉlittle(Input, 52u32) != 0u32 {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+            Input,
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉreserved,
+            Records, 0u32, 52u32
+        );
+    }
+
+    var Recordˉindex: u32 = 0u32;
+    var Previousˉmodule: u32 = 0u32;
+    var Previousˉdirectory: u32 = 0u32;
+    while Recordˉindex < Records {
+        let Offset: u32 = COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+            Recordˉindex * COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES;
+        let Module: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
+        let Declaration: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 4u32);
+        let Directoryˉentry: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 8u32);
+        if Module >= 64u32 || Declaration >= 4096u32 ||
+            !Compilerˉsourceˉforeignˉloweringˉcarrierˉrecordˉisˉexact(
+                Input, Offset, Recordˉindex
+            ) {
+            return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+                Input,
+                Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉrecord,
+                Records, Recordˉindex, Offset
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Input, Offset + 68u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Offset + 72u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Input, Offset + 76u32) != 0u32 {
+            return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+                Input,
+                Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉreserved,
+                Records, Recordˉindex, Offset + 68u32
+            );
+        }
+        if Recordˉindex > 0u32 &&
+            (Module <= Previousˉmodule || Directoryˉentry <= Previousˉdirectory) {
+            return Compilerˉsourceˉforeignˉloweringˉcarrierˉfailure(
+                Input,
+                Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉorder,
+                Records, Recordˉindex, Offset
+            );
+        }
+        Previousˉmodule = Module;
+        Previousˉdirectory = Directoryˉentry;
+        Recordˉindex = Recordˉindex + 1u32;
+    }
+    return Compilerˉsourceˉforeignˉloweringˉcarrierˉresultˉfrom(
+        Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid,
+        Records, Records, 0u32, Input
+    );
+}
+
+export fn Compilerˉsourceˉforeignˉloweringˉcarrierˉconstruct(
+    Buildˉtarget: Target.Compilerˉsourceˉtargetˉdescriptor,
+    Records: u32,
+    Recordˉbytes: bytes
+) -> Compilerˉsourceˉforeignˉloweringˉcarrierˉresult {
+    let Empty: bytes = Bytesˉslice(Recordˉbytes, 0u32, 0u32);
+    if Records == 0u32 ||
+        Records > COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_MAXIMUM_RECORDS ||
+        Bytesˉlength(Recordˉbytes) !=
+            Records * COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES {
+        return Compilerˉsourceˉforeignˉloweringˉcarrierˉresultˉfrom(
+            Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉcount,
+            Records, 0u32, 16u32, Empty
+        );
+    }
+    var Value: bytes = Textˉtoˉutf8("WVFB");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(
+        COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES
+    ));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(
+        COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES
+    ));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Records));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(
+        COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+            Records * COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES
+    ));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Buildˉtarget));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Environment));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Architecture));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Abi));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Addressˉbits));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Buildˉtarget.Byteˉorder));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(
+        Buildˉtarget.Noˉunwindˉcˉscalarˉpointerˉmajor
+    ));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    return Compilerˉvalidateˉsourceˉforeignˉloweringˉcarrier(
+        Bytesˉconcat(Value, Recordˉbytes)
+    );
+}

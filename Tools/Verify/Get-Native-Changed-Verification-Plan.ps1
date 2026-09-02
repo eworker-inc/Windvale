@@ -1619,6 +1619,10 @@ foreach ($Path in $Paths) {
             'language-1-authenticated-foreign-binding'
         )
         continue
+    } elseif ($Path -eq
+        'Documents/Decisions/0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md') {
+        Add-Suite 'language-1-authenticated-foreign-binding'
+        continue
     } elseif ($Path -in @(
         'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
         'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md'
@@ -1684,10 +1688,11 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'language-1-callable-semantics'
         }
-    } elseif ($Path -in @(
-        'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj',
-        'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv'
-    )) {
+    } elseif ($Path -eq
+        'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj') {
+        Add-Suite 'language-1-authenticated-foreign-binding'
+    } elseif ($Path -eq
+        'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv') {
         Add-Suite 'language-1-production-admission-ingress'
     } elseif ($Path -in @(
         'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
@@ -1816,16 +1821,16 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
+        'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
         'Projects/Compiler/Windvale-Source-Foreign-Binding-Core.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj',
+        'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv'
     )) {
         Add-Suite 'language-1-authenticated-foreign-binding'
-        if ($Path -eq 'Compiler/Windvale/Source-Foreign-Binding-Core.wv') {
-            Add-Suite 'language-1-production-admission-ingress'
-        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Admission-Evidence-Core.wv',
         'Compiler/Windvale/Admission-Evidence-Validator-Core.wv',
@@ -4058,6 +4063,9 @@ foreach ($Path in $Paths) {
             Add-Compiler-Suites
             $script:DatabaseStorageDevelopmentEligible = $false
             Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
+        } elseif ($Path -eq
+            'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md') {
+            Add-Suite 'language-1-authenticated-foreign-binding'
         } elseif ($Path -eq 'Specifications/Compiler-Source-Body-Parser.md') {
             Add-Compiler-Suites
             Add-Suite @(

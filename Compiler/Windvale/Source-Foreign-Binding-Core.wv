@@ -3,6 +3,7 @@ module Compilerˉsourceˉforeignˉbinding profile portable;
 import Compilerˉsourceˉbindings as Sourceˉbindings;
 import Compilerˉsourceˉforeignˉcatalog as Foreignˉcatalog;
 import Compilerˉsourceˉforeignˉcatalogˉauthentication as Foreignˉauthentication;
+import Compilerˉsourceˉforeignˉloweringˉcarrier as Foreignˉcarrier;
 import Compilerˉsourceˉforeignˉsemantics as Foreignˉsemantics;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Sourceˉsymbols;
@@ -36,6 +37,7 @@ export record Compilerˉsourceˉforeignˉbindingˉsummary {
     Failureˉdirectoryˉentry: u32;
     Failureˉcatalogˉrecord: u32;
     Failureˉoffset: u32;
+    Loweringˉcarrier: bytes;
 }
 
 fn Compilerˉsourceˉforeignˉbindingˉresult(
@@ -51,6 +53,7 @@ fn Compilerˉsourceˉforeignˉbindingˉresult(
     Failureˉcatalogˉrecord: u32,
     Failureˉoffset: u32
 ) -> Compilerˉsourceˉforeignˉbindingˉsummary {
+    let Empty: bytes = Bytesˉslice(Textˉtoˉutf8(""), 0u32, 0u32);
     return Compilerˉsourceˉforeignˉbindingˉsummary(
         Status,
         Correspondenceˉstatus,
@@ -62,7 +65,33 @@ fn Compilerˉsourceˉforeignˉbindingˉresult(
         Failureˉdeclaration,
         Failureˉdirectoryˉentry,
         Failureˉcatalogˉrecord,
-        Failureˉoffset
+        Failureˉoffset,
+        Empty
+    );
+}
+
+fn Compilerˉsourceˉforeignˉbindingˉwithˉcarrier(
+    Correspondenceˉstatus: u32,
+    Targetˉstatus: u32,
+    Symbolˉstatus: Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus,
+    Bindingˉstatus: Sourceˉbindings.Compilerˉsourceˉbindingˉstatus,
+    Foreignˉcount: u32,
+    Directoryˉentries: u32,
+    Loweringˉcarrier: bytes
+) -> Compilerˉsourceˉforeignˉbindingˉsummary {
+    return Compilerˉsourceˉforeignˉbindingˉsummary(
+        Compilerˉsourceˉforeignˉbindingˉstatus.Valid,
+        Correspondenceˉstatus,
+        Targetˉstatus,
+        Symbolˉstatus,
+        Bindingˉstatus,
+        Foreignˉcount,
+        0u32,
+        0u32,
+        Directoryˉentries,
+        Foreignˉcount,
+        0u32,
+        Loweringˉcarrier
     );
 }
 
@@ -436,6 +465,8 @@ export fn Compilerˉbindˉsourceˉforeignˉdeclarations(
 
     var Directoryˉentry: u32 = 0u32;
     var Recordˉindex: u32 = 0u32;
+    let Emptyˉcarrier: bytes = Bytesˉslice(Wvfc, 0u32, 0u32);
+    var Carrierˉrecords: bytes = Emptyˉcarrier;
     while Recordˉindex < Catalogˉcount {
         let Recordˉresult: Compilerˉsourceˉforeignˉbindingˉsummary =
             Compilerˉsourceˉforeignˉbindingˉrecord(
@@ -455,6 +486,16 @@ export fn Compilerˉbindˉsourceˉforeignˉdeclarations(
                 Compilerˉsourceˉforeignˉbindingˉstatus.Valid {
             return Recordˉresult;
         }
+        let Catalogˉoffset: u32 = 48u32 + Recordˉindex * 96u32;
+        Carrierˉrecords = Bytesˉconcat(
+            Carrierˉrecords,
+            Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉrecord(
+                Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset),
+                Bytesˉreadˉu32ˉlittle(Wvfc, Catalogˉoffset + 4u32),
+                Recordˉresult.Failureˉdirectoryˉentry - 1u32,
+                Recordˉindex
+            )
+        );
         Directoryˉentry = Recordˉresult.Failureˉdirectoryˉentry;
         Recordˉindex = Recordˉresult.Failureˉcatalogˉrecord;
     }
@@ -482,17 +523,35 @@ export fn Compilerˉbindˉsourceˉforeignˉdeclarations(
         Directoryˉentry = Directoryˉentry + 1u32;
     }
 
-    return Compilerˉsourceˉforeignˉbindingˉresult(
-        Compilerˉsourceˉforeignˉbindingˉstatus.Valid,
+    let Carrier:
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉconstruct(
+            Targetˉresult.Value, Catalogˉcount, Carrierˉrecords
+        );
+    if Carrier.Status !=
+            Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉbindingˉresult(
+            Compilerˉsourceˉforeignˉbindingˉstatus.Callableˉfacts,
+            Correspondence.Status,
+            Targetˉresult.Status,
+            Symbols.Status,
+            Bound.Status,
+            Catalogˉcount,
+            0u32,
+            0u32,
+            Directoryˉentries,
+            Carrier.Failureˉrecord,
+            Carrier.Failureˉoffset
+        );
+    }
+
+    return Compilerˉsourceˉforeignˉbindingˉwithˉcarrier(
         Correspondence.Status,
         Targetˉresult.Status,
         Symbols.Status,
         Bound.Status,
         Catalogˉcount,
-        0u32,
-        0u32,
         Directoryˉentries,
-        Catalogˉcount,
-        0u32
+        Carrier.Value
     );
 }

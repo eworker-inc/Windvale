@@ -4,6 +4,7 @@ import Compilerˉsourceˉbindings as Bindings;
 import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
 import Compilerˉsourceˉforeignˉcatalog as Catalog;
 import Compilerˉsourceˉforeignˉcatalogˉauthentication as Authentication;
+import Compilerˉsourceˉforeignˉloweringˉcarrier as Foreignˉcarrier;
 import Compilerˉsourceˉset as Sourceˉset;
 import Compilerˉsourceˉsymbols as Symbols;
 import Compilerˉsourceˉtarget as Target;
@@ -93,6 +94,11 @@ fn Validˉadapterˉresult(
     Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary,
     Directoryˉentries: u32
 ) -> bool {
+    let Carrier:
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Foreignˉcarrier.Compilerˉvalidateˉsourceˉforeignˉloweringˉcarrier(
+            Result.Loweringˉcarrier
+        );
     return Result.Status == Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Valid &&
         Result.Correspondenceˉstatus == Authentication.COMPILER_SOURCE_FOREIGN_AUTH_STATUS_VALID &&
         Result.Targetˉstatus == Target.COMPILER_SOURCE_TARGET_STATUS_VALID &&
@@ -101,7 +107,24 @@ fn Validˉadapterˉresult(
         Result.Foreignˉcount == 1u32 && Result.Failureˉmodule == 0u32 &&
         Result.Failureˉdeclaration == 0u32 &&
         Result.Failureˉdirectoryˉentry == Directoryˉentries &&
-        Result.Failureˉcatalogˉrecord == 1u32 && Result.Failureˉoffset == 0u32;
+        Result.Failureˉcatalogˉrecord == 1u32 && Result.Failureˉoffset == 0u32 &&
+        Carrier.Status ==
+            Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid &&
+        Carrier.Records == 1u32 && Carrier.Failureˉrecord == 1u32 &&
+        Carrier.Failureˉoffset == 0u32 &&
+        Bytesˉlength(Carrier.Value) == 136u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 16u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 24u32) == 4u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 68u32) == 0u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 72u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 88u32) == 256u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 96u32) == 4u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 100u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 104u32) == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 108u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 112u32) == 2u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 116u32) == 3u32 &&
+        Bytesˉreadˉu32ˉlittle(Carrier.Value, 120u32) == 7u32;
 }
 
 fn Lookupˉisˉvalid(
@@ -166,7 +189,19 @@ fn Bindingˉfailureˉis(
         Result.Bindingˉstatus == Status && Result.Foreignˉcount == 1u32 &&
         Result.Failureˉmodule == 0u32 && Result.Failureˉdeclaration == 0u32 &&
         Result.Failureˉdirectoryˉentry == 1u32 &&
-        Result.Failureˉcatalogˉrecord == 0u32 && Result.Failureˉoffset == 431u32;
+        Result.Failureˉcatalogˉrecord == 0u32 && Result.Failureˉoffset == 431u32 &&
+        Bytesˉlength(Result.Loweringˉcarrier) == 0u32;
+}
+
+fn Carrierˉstatus(
+    Value: bytes
+) -> Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus {
+    let Result:
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Foreignˉcarrier.Compilerˉvalidateˉsourceˉforeignˉloweringˉcarrier(
+            Value
+        );
+    return Result.Status;
 }
 
 fn Invocation(Arguments: text) -> text {
@@ -176,7 +211,37 @@ fn Invocation(Arguments: text) -> text {
 }
 
 fn Caseˉcanonicalˉbinding() -> bool {
-    return Validˉadapterˉresult(Bindˉbody(""), 1u32);
+    let Result: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Bindˉbody("");
+    let Carrier: bytes = Result.Loweringˉcarrier;
+    return Validˉadapterˉresult(Result, 1u32) &&
+        Carrierˉstatus(
+            Patchˉu16(Carrier, 0u32, 0u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉmagic &&
+        Carrierˉstatus(
+            Patchˉu16(Carrier, 4u32, 2u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉversion &&
+        Carrierˉstatus(
+            Patchˉu32(Carrier, 8u32, 52u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉheader &&
+        Carrierˉstatus(
+            Patchˉu32(Carrier, 16u32, 0u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉcount &&
+        Carrierˉstatus(
+            Patchˉu32(Carrier, 24u32, 2u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉtarget &&
+        Carrierˉstatus(
+            Patchˉu32(Carrier, 72u32, 2u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉrecord &&
+        Carrierˉstatus(
+            Patchˉu32(Carrier, 124u32, 1u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉreserved &&
+        Carrierˉstatus(
+            Bytesˉslice(Carrier, 0u32, 135u32)
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉheader &&
+        Carrierˉstatus(
+            Bytesˉconcat(Carrier, Bytesˉfromˉu16ˉlittle(0u32))
+        ) == Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Invalidˉheader;
 }
 
 fn Caseˉsymbolˉversions() -> bool {
@@ -420,21 +485,29 @@ fn Selectedˉcase() -> u32 {
     return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
 }
 
+export fn Languageˉoneˉauthenticatedˉforeignˉbindingˉcase(
+    Selected: u32
+) -> bool {
+    if Selected == 97u32 { return Caseˉcanonicalˉbinding(); }
+    if Selected == 98u32 { return Caseˉsymbolˉversions(); }
+    if Selected == 99u32 { return Caseˉmixedˉsymbolˉversions(); }
+    if Selected == 100u32 { return Caseˉtrailingˉsymbolˉbytes(); }
+    if Selected == 101u32 { return Caseˉinvalidˉsymbolˉkind(); }
+    if Selected == 102u32 { return Caseˉvalidˉpositionalˉcall(); }
+    if Selected == 103u32 { return Caseˉvalidˉnamedˉcall(); }
+    if Selected == 104u32 { return Caseˉbadˉlabel(); }
+    if Selected == 105u32 { return Caseˉmissingˉlabel(); }
+    if Selected == 106u32 { return Caseˉduplicateˉlabel(); }
+    if Selected == 107u32 { return Caseˉarity(); }
+    if Selected == 108u32 { return Caseˉgenericˉrejection(); }
+    if Selected == 109u32 { return Caseˉcatalogˉrecordˉtamper(); }
+    if Selected == 110u32 { return Caseˉunsupportedˉtarget(); }
+    return false;
+}
+
 export fn Main() -> i32 {
-    let Selected: u32 = Selectedˉcase();
-    if Selected == 97u32 && Caseˉcanonicalˉbinding() { return 42; }
-    if Selected == 98u32 && Caseˉsymbolˉversions() { return 42; }
-    if Selected == 99u32 && Caseˉmixedˉsymbolˉversions() { return 42; }
-    if Selected == 100u32 && Caseˉtrailingˉsymbolˉbytes() { return 42; }
-    if Selected == 101u32 && Caseˉinvalidˉsymbolˉkind() { return 42; }
-    if Selected == 102u32 && Caseˉvalidˉpositionalˉcall() { return 42; }
-    if Selected == 103u32 && Caseˉvalidˉnamedˉcall() { return 42; }
-    if Selected == 104u32 && Caseˉbadˉlabel() { return 42; }
-    if Selected == 105u32 && Caseˉmissingˉlabel() { return 42; }
-    if Selected == 106u32 && Caseˉduplicateˉlabel() { return 42; }
-    if Selected == 107u32 && Caseˉarity() { return 42; }
-    if Selected == 108u32 && Caseˉgenericˉrejection() { return 42; }
-    if Selected == 109u32 && Caseˉcatalogˉrecordˉtamper() { return 42; }
-    if Selected == 110u32 && Caseˉunsupportedˉtarget() { return 42; }
+    if Languageˉoneˉauthenticatedˉforeignˉbindingˉcase(Selectedˉcase()) {
+        return 42;
+    }
     return 1;
 }

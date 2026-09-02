@@ -1,0 +1,25 @@
+module Languageˉoneˉauthenticatedˉforeignˉbindingˉcombinedˉselfˉtest profile hosted;
+
+import Languageˉoneˉauthenticatedˉforeignˉbindingˉselfˉtest as Core;
+import Languageˉoneˉauthenticatedˉforeignˉbindingˉportableˉselfˉtest as Portable;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    let Selected: u32 = Selectedˉcase();
+    if Core.Languageˉoneˉauthenticatedˉforeignˉbindingˉcase(Selected) ||
+        Portable.Languageˉoneˉauthenticatedˉforeignˉbindingˉportableˉcase(
+            Selected
+        ) {
+        return 42;
+    }
+    return 1;
+}

@@ -17,6 +17,7 @@ Source syntax, semantics, Foundation contracts, analysis, and compiler inputs.
 | [Windvale source closure lowering catalog](../Compiler-Source-Closure-Lowering.md) | Documented |
 | [Windvale source declaration parser](../Compiler-Source-Declaration-Parser.md) | Documented |
 | [Windvale source effect analysis](../Compiler-Source-Effects.md) | Documented |
+| [Compiler source Foreign lowering carrier](../Compiler-Source-Foreign-Lowering-Carrier.md) | Candidate |
 | [Windvale source function-type evidence](../Compiler-Source-Function-Types.md) | Documented |
 | [Windvale source generic resolution evidence](../Compiler-Source-Generic-Resolution.md) | Documented |
 | [Windvale source generic type evidence](../Compiler-Source-Generic-Types.md) | Documented |

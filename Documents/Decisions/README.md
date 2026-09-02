@@ -12,7 +12,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | --- | ---: |
 | Accepted | 330 |
 | Implemented | 484 |
-| Proposed | 3 |
+| Proposed | 4 |
 | Qualified | 94 |
 | Recorded | 7 |
 | Superseded | 14 |
@@ -22,6 +22,7 @@ The normalized status is a search aid derived from the opening status. The copie
 - [Decision 0198: Next integrated architecture defaults](0198-Next-Integrated-Architecture-Defaults.md) — Proposed
 - [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) — Proposed
 - [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) — Proposed
+- [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) — Proposed
 
 ## Duplicated legacy numbers
 
@@ -46,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) | Proposed |
 | [Decision 0922: lower contained WVB 1.37 write pointers and focus native development verification](0922-Lower-Contained-WVB-1.37-Write-Pointers-And-Focus-Native-Development-Verification.md) | Accepted |
 | [Decision 0921: cache complete segmented development packaging](0921-Cache-Complete-Segmented-Development-Packaging.md) | Accepted |
 | [Decision 0920: execute contained WVB 1.37 write pointers in the scalar provider](0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md) | Accepted |
@@ -70,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0901: advance the frozen source identity for unsafe scratch](0901-Advance-The-Frozen-Source-Identity-For-Unsafe-Scratch.md) | Accepted |
 | [Decision 0900: add a compiler-scale hosted geometry and artifact readers](0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md) | Accepted |
 | [Decision 0899: lower canonical unsafe scratch construction to WVIR](0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md) | Accepted |
-| [Decision 0898: publish canonical Foundation unsafe type identities](0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md) | Accepted |
 
 ## Superseded or historical records
 

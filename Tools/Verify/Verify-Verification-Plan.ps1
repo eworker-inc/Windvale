@@ -681,7 +681,7 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 hosted foreign binding driver project routing'
         Paths = @('Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj')
-        Suites = @('language-1-production-admission-ingress')
+        Suites = @('language-1-authenticated-foreign-binding')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -733,11 +733,17 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 authenticated foreign binding owner routing'
         Paths = @(
+            'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
+            'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
+            'Documents/Decisions/0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md',
             'Projects/Compiler/Windvale-Source-Foreign-Binding-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj',
+            'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv',
+            'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.cmd',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.sh'
@@ -748,10 +754,7 @@ $NativeCases = @(
     },
     @{
         Name = 'Language 1.0 authenticated foreign binding production routing'
-        Paths = @(
-            'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
-            'Documents/Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md'
-        )
+        Paths = @('Documents/Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md')
         Suites = @(
             'language-1-production-admission-ingress',
             'language-1-authenticated-foreign-binding'

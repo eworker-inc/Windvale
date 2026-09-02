@@ -22,7 +22,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 
 | Domain | What it covers | Specifications |
 | --- | --- | ---: |
-| [Language and compiler](Indexes/language-and-compiler.md) | Source syntax, semantics, Foundation contracts, analysis, and compiler inputs. | 42 |
+| [Language and compiler](Indexes/language-and-compiler.md) | Source syntax, semantics, Foundation contracts, analysis, and compiler inputs. | 43 |
 | [Bytecode, runtime, and user tools](Indexes/bytecode-runtime-and-tools.md) | Portable bytecode, execution, command-line behavior, WebAssembly, and inspection tools. | 9 |
 | [Assembly, objects, and linking](Indexes/assembly-object-and-linking.md) | Textual assembly, object records, relocation, linking, and native image construction. | 9 |
 | [Native toolchain](Indexes/native-toolchain.md) | Windvale-owned native compilers, publishers, runtime services, and their focused verification. | 95 |
@@ -35,7 +35,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 
 | Search status | Specifications |
 | --- | ---: |
-| Candidate | 53 |
+| Candidate | 54 |
 | Current | 26 |
 | Documented | 227 |
 | Experimental | 3 |

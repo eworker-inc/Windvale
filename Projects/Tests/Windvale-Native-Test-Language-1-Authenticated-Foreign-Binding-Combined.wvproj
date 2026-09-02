@@ -1,5 +1,7 @@
 windvale-project 2
-root "Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv"
+root "Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv"
+source "Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv"
+source "Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv"
 source "Compiler/Windvale/Source-Bindings-Core.wv"
 source "Compiler/Windvale/Source-Body-Parser.wv"
 source "Compiler/Windvale/Source-Declaration-Parser.wv"
