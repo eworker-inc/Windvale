@@ -5430,6 +5430,8 @@ foreach ($Case in $Cases) {
 Write-Host "PASS  verification plan phase=general-routing item=$($Cases.Count)/$($Cases.Count)"
 
 $NativeCaseIndex = 0
+$NativePlannerInitializationCache = @{}
+$NativePlannerCommand = Get-Command -Name $NativePlanner
 Write-Host "START verification plan phase=native-routing item=0/$($NativeCases.Count)"
 foreach ($Case in $NativeCases) {
     $NativeCaseIndex += 1
@@ -5439,7 +5441,11 @@ foreach ($Case in $NativeCases) {
             "PROGRESS verification plan phase=native-routing " +
             "item=$NativeCaseIndex/$($NativeCases.Count) case=$($Case.Name)")
     }
-    $Plan = & $NativePlanner -ChangedPath $Case.Paths -PassThru -Quiet
+    $Plan = & $NativePlannerCommand `
+        -ChangedPath $Case.Paths `
+        -PassThru `
+        -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     $ExpectedWebAssemblyVerification = if ($Case.ContainsKey('VerifyWebAssembly')) {
         $Case.VerifyWebAssembly
     } else {

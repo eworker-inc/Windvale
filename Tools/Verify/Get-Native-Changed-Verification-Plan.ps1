@@ -4,10 +4,31 @@ param(
     [AllowEmptyCollection()]
     [string[]]$ChangedPath,
     [switch]$PassThru,
-    [switch]$Quiet
+    [switch]$Quiet,
+    [hashtable]$InitializationCache
 )
 
 $ErrorActionPreference = 'Stop'
+$InitializationCacheKey = 'native-changed-verification-plan-v1'
+$InitializationVariables = if (
+    $null -ne $InitializationCache -and
+    $InitializationCache.ContainsKey($InitializationCacheKey)) {
+    $InitializationCache[$InitializationCacheKey]
+} else {
+    $null
+}
+if ($null -ne $InitializationVariables) {
+    foreach ($Entry in $InitializationVariables.GetEnumerator()) {
+        Set-Variable -Name $Entry.Key -Value $Entry.Value
+    }
+} else {
+    $InitializationVariableNamesBefore = if ($null -ne $InitializationCache) {
+        [System.Collections.Generic.HashSet[string]]::new(
+            [string[]]@(Get-Variable | ForEach-Object Name),
+            [StringComparer]::Ordinal)
+    } else {
+        $null
+    }
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $SuitePlanPath = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $DurationPlanPath = Join-Path $RepositoryRoot `
@@ -900,6 +921,53 @@ foreach ($Entry in $SuiteEntries) {
     }
     $SuiteByCommand[$Entry.Command] = $Entry.Name
 }
+$BaseOsX64CodeEmissionDevelopmentEligible =
+    $OsX64CodeEmissionDevelopmentEligible
+$BaseLibraryDevelopmentEligible = $LibraryDevelopmentEligible
+$BaseDatabaseStorageDevelopmentEligible = $DatabaseStorageDevelopmentEligible
+if ($null -ne $InitializationCache) {
+    $InitializationVariables = @{}
+    foreach ($Variable in Get-Variable) {
+        if (!$InitializationVariableNamesBefore.Contains($Variable.Name) -and
+            $Variable.Name -notin @(
+                'InitializationVariableNamesBefore',
+                'InitializationVariables',
+                'Variable'
+            )) {
+            $InitializationVariables[$Variable.Name] = $Variable.Value
+        }
+    }
+    $InitializationCache[$InitializationCacheKey] = $InitializationVariables
+}
+}
+
+# Selection state is intentionally fresh for every changed-path set. The optional
+# caller-owned cache contains only the immutable routing registries initialized
+# above and never carries a prior plan's choices into a later plan.
+$SelectedSuites = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$Gaps = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$RunPlanVerification = $false
+$RunWebAssemblyVerification = $false
+$RunWebAssemblyEngineVerification = $false
+$RunGitHubQualificationVerification = $false
+$SourceContainmentCompilerDevelopmentEligible = $true
+$OsX64CodeEmissionDevelopmentEligible =
+    $BaseOsX64CodeEmissionDevelopmentEligible
+$OsX64CodeEmissionDevelopmentRequiresAllTargets = $false
+$SelectedOsX64CodeEmissionDevelopmentTargets =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$LibraryDevelopmentEligible = $BaseLibraryDevelopmentEligible
+$LibraryDevelopmentRequiresAllTargets = $false
+$SelectedLibraryDevelopmentTargets =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$DatabaseStorageDevelopmentEligible =
+    $BaseDatabaseStorageDevelopmentEligible
+$DatabaseDevelopmentRequiresAllTargets = $false
+$SelectedDatabaseDevelopmentTargets =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$script:CurrentChangedPath = $null
 
 function Add-Suite {
     param([Parameter(Mandatory)][string[]]$Name)

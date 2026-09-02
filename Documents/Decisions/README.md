@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 335 |
+| Accepted | 336 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0929: reuse native planner initialization in routing verification](0929-Reuse-Native-Planner-Initialization-In-Routing-Verification.md) | Accepted |
 | [Decision 0928: run shared development meta-verification once](0928-Run-Shared-Development-Meta-Verification-Once.md) | Accepted |
 | [Decision 0927: calibrate verification durations from bounded history](0927-Calibrate-Verification-Durations-From-Bounded-History.md) | Accepted |
 | [Decision 0926: classify and bound verification-owner outcomes](0926-Classify-And-Bound-Verification-Owner-Outcomes.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0907: observe immutable borrowed unsafe scratch in WVB 1.35](0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md) | Accepted |
 | [Decision 0906: represent immutable borrowed memory-budget calls in WVB 1.34](0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md) | Accepted |
 | [Decision 0905: transfer affine memory budgets through ordinary calls](0905-Transfer-Affine-Memory-Budgets-Through-Ordinary-Calls.md) | Accepted |
-| [Decision 0904: execute WVB 1.33 unsafe scratch in a bounded scalar provider](0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md) | Accepted |
 
 ## Superseded or historical records
 
