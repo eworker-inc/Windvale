@@ -13,12 +13,13 @@ not create parallel test implementations.
 
 The historical retirement claim remains frozen at the immutable `v0.1.0` tag
 and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
+The cross-host runner choice is recorded by
+[Decision 0924](../Documents/Decisions/0924-Use-One-PowerShell-Verification-Owner-Runner.md).
 
-## Registry identity and grammar
+## Registry grammar and validation
 
-`Tests/Native/Verification-Owners.txt` is 22,536 LF-only bytes with SHA-256
-`fca37f474e1176352ef0d0e47866a42007ada0b0c86d7617ac96d8fd8bfd1842`.
-Its first line is exactly:
+`Tests/Native/Verification-Owners.txt` is UTF-8, LF-only text with a final
+newline. Its first line is exactly:
 
 ```text
 windvale-native-verification-owners 1
@@ -30,28 +31,26 @@ Every remaining line has five pipe-separated fields:
 owner-name|command-stem|case-count|qualification-shard|expected-summary
 ```
 
-The digest fixes owner order, commands, declared case counts, qualification
-allocation, and accepted terminal summaries. Each command stem resolves under
-`Tools/Native` to matching Windows `.cmd` and Linux `.sh` commands.
-
-The current registry contains exactly 126 owners and 5,951 declared cases:
-
-| Qualification shard | Owners | Cases |
-| ---: | ---: | ---: |
-| 1 | 1 | 57 |
-| 2 | 45 | 2,848 |
-| 3 | 39 | 1,796 |
-| 4 | 41 | 1,250 |
+The runner requires exactly five nonempty fields, unique constrained owner and
+command names, a positive bounded case count, a shard from `1` through `4`, and
+at least one owner in every shard. Each command stem resolves under
+`Tools/Native` to a non-linked Windows `.cmd` or Linux `.sh` command; Linux
+commands must retain executable Git mode. The runner calculates owner, case,
+and shard totals from this validated registry instead of comparing them with
+duplicated constants. Git history identifies the registry used by a development
+run, while qualification evidence records the exact source state.
 
 The manifest is the canonical detailed inventory. Documentation must not copy
 its entire evolving table because duplicated inventories become stale.
 
 ## Invocation modes
 
-`Tools/Native/Test-Verification-Owners.cmd` and `.sh` support:
+`Tools/Verify/Invoke-WindvaleTests.ps1` is the cross-host orchestration entry
+point. It supports:
 
-- `--filter <owner-name>` for one exact development owner;
-- `--shard <1-4>` for one explicit qualification shard; and
+- `-Owner <owner-name>` for one exact development owner;
+- `-Shard <1-4>` for one explicit qualification shard;
+- `-PlanOnly` for registry validation and selection without execution; and
 - no arguments for a deliberate complete local qualification run.
 
 Ordinary development must use the changed-file planner or an exact filter. A
@@ -89,7 +88,7 @@ keeps the per-owner confirmation proportional to current edits rather than
 rebuilding the complete source tree after every pass.
 
 Only `Tools/Verify/Verify-Changed.ps1` development runs reuse these results.
-Qualification, direct owner commands, and sharded or complete coordinator runs
+Qualification, direct owner commands, and sharded or complete runner executions
 remain fresh. `-NoResultCache` forces a fresh changed-file development run.
 `-ResultCacheRoot <path>` or
 `WINDVALE_VERIFICATION_RESULT_CACHE_ROOT` selects an outside-repository cache
@@ -114,16 +113,16 @@ products; `language-1-callable-semantics`, for example, packages at most two
 distinct fixtures at once while preserving all registered cases. Parallelism
 changes scheduling, not the accepted terminal summary or evidence boundary.
 
-The historical `Test-Retirement-Suite.cmd` and `.sh` compatibility aliases were
-removed from `main` because they added no coverage and only delegated to the
-current coordinator. They remain available from the immutable `v0.1.0` tag and
-Git history. Current automation and documentation use the verification-owner
-name.
+The historical `Test-Retirement-Suite.cmd` and `.sh` compatibility aliases and
+the later paired verification-owner coordinators were removed from `main`
+because they added no coverage and duplicated orchestration. They remain
+available from Git history. Current automation and documentation use the
+PowerShell runner and verification-owner name.
 
-## Coordinator contract
+## Runner contract
 
-Before running a selected owner, the coordinator must verify the complete
-registry digest and validate every command and shard entry. For each selected
+Before running a selected owner, the PowerShell runner validates the complete
+registry structure and every host command and shard entry. For each selected
 owner it must:
 
 1. emit bounded progress before invoking the child;
@@ -137,17 +136,22 @@ owner it must:
 7. count cases only from the reviewed registry; and
 8. report owner and total elapsed time outside the semantic child summary.
 
+The transitional runner delegates bounded byte streaming to the existing Node
+stream helper; individual owner implementations remain paired host scripts.
+This keeps behavior unchanged while orchestration converges on PowerShell.
 Owner-log parents are validated component by component with filesystem
 metadata. Symbolic links, junctions, and non-directory components reject;
 different legitimate spellings of the same Windows directory, including an
 NTFS 8.3 ancestor alias, do not constitute link evidence by themselves. The
 registered `verification-owner-stream` owner keeps this boundary executable.
 
-The first child failure stops that coordinator process after its output has
-already been exposed live. Invalid arguments and unknown filters return `64`. GitHub runs all
-four qualification shards independently with matrix fail-fast disabled, then an
-aggregate gate requires both host matrices and the independent WebAssembly and
-compiler-convergence jobs.
+The first child failure stops that runner process after its output has already
+been exposed live. Invalid owner or shard selections return `64`. GitHub runs
+all four qualification shards independently with matrix fail-fast disabled,
+then an aggregate gate requires both host matrices and the independent
+WebAssembly and compiler-convergence jobs. The pinned Debian container installs
+the pinned, checksum-verified PowerShell archive before invoking the same runner
+used on Windows and ordinary Linux hosts.
 
 ## Boundary
 

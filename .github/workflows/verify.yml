@@ -308,8 +308,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Changed-file whitespace verification failed.' }
 
       - name: Run native qualification shard
-        shell: cmd
-        run: Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}
 
   linux-native-suite:
     name: Linux native qualification (${{ matrix.shard }}/4)
@@ -329,7 +329,21 @@ jobs:
         shell: bash
         run: |
           apt-get update
-          apt-get install --yes --no-install-recommends ca-certificates curl git gzip libicu72 tar xz-utils
+          apt-get install --yes --no-install-recommends ca-certificates curl git gzip libgssapi-krb5-2 libicu72 libssl3 libstdc++6 libunwind8 libuuid1 tar xz-utils zlib1g
+          powershell_version=7.6.5
+          powershell_archive="powershell-${powershell_version}-linux-x64.tar.gz"
+          powershell_root=/opt/microsoft/powershell/7
+          curl --fail --location --silent --show-error --retry 3 \
+            --output "/tmp/${powershell_archive}" \
+            "https://github.com/PowerShell/PowerShell/releases/download/v${powershell_version}/${powershell_archive}"
+          echo "b34ab3b19acac1d3d4d0d3cfdb02acf62f457b0b6a962ff008132033f7566844  /tmp/${powershell_archive}" \
+            | sha256sum --check --strict
+          mkdir --parents "$powershell_root"
+          tar --extract --gzip --file "/tmp/${powershell_archive}" --directory "$powershell_root"
+          chmod 0755 "$powershell_root/pwsh"
+          ln --symbolic "$powershell_root/pwsh" /usr/local/bin/pwsh
+          rm --force "/tmp/${powershell_archive}"
+          pwsh -NoLogo -NoProfile -Command '$PSVersionTable.PSVersion.ToString()'
 
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -343,8 +357,8 @@ jobs:
           node-version: 24
 
       - name: Run native qualification shard
-        shell: bash
-        run: ./Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}
+        shell: pwsh
+        run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}
 
   windows-webassembly:
     name: Windows native WebAssembly

@@ -191,11 +191,7 @@ if ($Plan.Scope -eq 'website') {
     }
 
     $IsWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
-    $Coordinator = if ($IsWindowsHost) {
-        Join-Path $RepositoryRoot 'Tools/Native/Test-Verification-Owners.cmd'
-    } else {
-        Join-Path $RepositoryRoot 'Tools/Native/Test-Verification-Owners.sh'
-    }
+    $Coordinator = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
     $ResultCacheState = $null
     if ($Plan.Scope -eq 'development' -and !$NoResultCache -and
         @($NativePlan.Suites).Count -ne 0) {
@@ -230,7 +226,7 @@ if ($Plan.Scope -eq 'website') {
         $TimingStatus = 'executed'
         try {
             $OwnerCommand = $Coordinator
-            $OwnerArguments = @('--filter', $Suite)
+            $OwnerArguments = @('-Owner', $Suite)
             $OwnerMessage = $null
             if ($Suite -eq 'compiler-reconstruction' -and
                 $Plan.Scope -eq 'development') {
@@ -353,7 +349,11 @@ if ($Plan.Scope -eq 'website') {
             if ($null -ne $OwnerMessage) {
                 Write-Host $OwnerMessage
             }
-            & $OwnerCommand @OwnerArguments
+            if ($OwnerCommand -ceq $Coordinator) {
+                & pwsh -NoProfile -File $OwnerCommand @OwnerArguments
+            } else {
+                & $OwnerCommand @OwnerArguments
+            }
             if ($LASTEXITCODE -ne 0) {
                 throw "Native owner '$Suite' exited $LASTEXITCODE."
             }

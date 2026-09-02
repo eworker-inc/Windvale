@@ -42,7 +42,7 @@ $Cases = @(
 )
 $NativeCases = @(
     @{
-        Name = 'native verification owner live-stream coordinator'
+        Name = 'PowerShell test runner and native owner live stream'
         Paths = @(
             'Tools/Native/Verification-Owner-Stream-Path.mjs',
             'Tools/Native/Verification-Owner-Result-Cache.mjs',
@@ -50,10 +50,19 @@ $NativeCases = @(
             'Tools/Native/Test-Verification-Owner-Stream.mjs',
             'Tools/Native/Test-Verification-Owner-Stream.cmd',
             'Tools/Native/Test-Verification-Owner-Stream.sh',
+            'Tools/Verify/Invoke-WindvaleTests.ps1'
+        )
+        Suites = @('verification-owner-stream')
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
+        Name = 'retired paired owner coordinator tombstones'
+        Paths = @(
             'Tools/Native/Test-Verification-Owners.cmd',
             'Tools/Native/Test-Verification-Owners.sh'
         )
-        Suites = @('verification-owner-stream')
+        Suites = @()
         Gaps = @()
         VerifyPlan = $true
     },
@@ -4504,11 +4513,14 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
-if ($VerificationOwnerLines.Count -ne 127 -or
+if ($VerificationOwnerLines.Count -lt 2 -or
     $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
-    throw 'The native verification-owner header or exact 126-owner inventory differs.'
+    throw 'The native verification-owner header or inventory is invalid.'
 }
-$VerificationOwnerCases = 0
+$VerificationOwnerNames = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$VerificationOwnerCommands = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
 foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
     $Fields = $Line -split '\|', 5
@@ -4517,6 +4529,14 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
     }
     $VerificationOwnerEntryCases = 0
     $VerificationOwnerEntryShard = 0
+    if ($Fields[0] -cnotmatch '^[a-z0-9]+(?:[.-][a-z0-9]+)*$' -or
+        !$VerificationOwnerNames.Add($Fields[0])) {
+        throw "Invalid or duplicate native verification-owner name: $Line"
+    }
+    if ($Fields[1] -cnotmatch '^[A-Za-z0-9]+(?:[.-][A-Za-z0-9]+)*$' -or
+        !$VerificationOwnerCommands.Add($Fields[1])) {
+        throw "Invalid or duplicate native verification-owner command: $Line"
+    }
     if (![int]::TryParse($Fields[2], [Globalization.NumberStyles]::None,
             [Globalization.CultureInfo]::InvariantCulture,
             [ref]$VerificationOwnerEntryCases) -or
@@ -4529,7 +4549,9 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         $VerificationOwnerEntryShard -lt 1 -or $VerificationOwnerEntryShard -gt 4) {
         throw "Invalid native qualification shard: $Line"
     }
-    $VerificationOwnerCases += $VerificationOwnerEntryCases
+    if ([string]::IsNullOrWhiteSpace($Fields[4])) {
+        throw "Missing native verification-owner terminal summary: $Line"
+    }
     $null = $VerificationOwnerShards.Add($VerificationOwnerEntryShard)
     $WindowsOwner = "Tools/Native/$($Fields[1]).cmd"
     $LinuxOwner = "Tools/Native/$($Fields[1]).sh"
@@ -4544,8 +4566,24 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5951 -or $VerificationOwnerShards.Count -ne 4) {
-    throw 'The native verification-owner case total or four-shard coverage differs.'
+if ($VerificationOwnerShards.Count -ne 4) {
+    throw 'The native verification-owner registry does not cover all four qualification shards.'
+}
+
+$PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
+$TestRunnerPlan = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+    -Owner verification-owner-stream -PlanOnly 2>&1)
+if ($LASTEXITCODE -ne 0 -or
+    ($TestRunnerPlan -join "`n") -notmatch
+        '(?m)^PLAN  owner=verification-owner-stream command=Test-Verification-Owner-Stream\.(?:cmd|sh) cases=5 shard=2$') {
+    throw 'The PowerShell test runner did not return its focused owner plan.'
+}
+$UnknownOwnerResult = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+    -Owner windvale-unknown-owner -PlanOnly 2>&1)
+if ($LASTEXITCODE -ne 64 -or
+    ($UnknownOwnerResult -join "`n") -notmatch
+        '(?m)^Unknown verification owner: windvale-unknown-owner$') {
+    throw 'The PowerShell test runner did not reject an unknown owner with usage status 64.'
 }
 
 $CompilerDevelopmentWindows = Get-Content -Raw -LiteralPath (
@@ -4565,6 +4603,15 @@ foreach ($Fragment in @(
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "Changed-file result-cache dispatch is missing '$Fragment'."
+    }
+}
+foreach ($Fragment in @(
+    '$Coordinator = Join-Path $PSScriptRoot ''Invoke-WindvaleTests.ps1''',
+    '$OwnerArguments = @(''-Owner'', $Suite)',
+    '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments'
+)) {
+    if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "Changed-file PowerShell test dispatch is missing '$Fragment'."
     }
 }
 foreach ($Fragment in @(
@@ -4730,13 +4777,18 @@ $RequiredWorkflowFragments = @(
     "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}",
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
-    'run: Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}',
-    'run: ./Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}'
+    'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
 )
 foreach ($Fragment in $RequiredWorkflowFragments) {
     if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "The GitHub verification workflow is missing '$Fragment'."
     }
+}
+if ([regex]::Matches(
+        $GitHubVerificationWorkflow,
+        [regex]::Escape(
+            'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}')).Count -ne 2) {
+    throw 'The GitHub qualification workflow does not use the PowerShell test runner on both hosts.'
 }
 if ($GitHubVerificationWorkflow.Contains(
         'windows-documentation:', [StringComparison]::Ordinal)) {

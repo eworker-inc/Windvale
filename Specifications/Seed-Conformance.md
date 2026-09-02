@@ -64,12 +64,8 @@ for the same source state.
 
 One named native owner can be selected directly with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter <owner-name>
-```
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter <owner-name>
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner <owner-name>
 ```
 
 The complete fixed manifest, WebAssembly owner, and compiler convergence run on

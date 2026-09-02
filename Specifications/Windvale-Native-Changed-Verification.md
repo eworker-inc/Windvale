@@ -344,8 +344,8 @@ changes it:
 2. refuses any nonempty gap set without invoking .NET;
 3. runs the planner/inventory verifier when selected;
 4. runs the focused GitHub workflow verifier when selected;
-5. invokes each selected owner through `Test-Verification-Owners.cmd --filter` on
-   Windows or the paired `.sh` coordinator on non-Windows hosts, except that
+5. invokes each selected owner through
+   `Invoke-WindvaleTests.ps1 -Owner <owner-name>` on both hosts, except that
    development-scoped `compiler-reconstruction` receives `--development`, and
    an eligible `database-storage`, `libraries`, or `os-x64-code-emission` owner
    receives its development target, including explicit checkpointed `all` when

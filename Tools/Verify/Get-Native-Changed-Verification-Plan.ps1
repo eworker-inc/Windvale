@@ -1295,10 +1295,12 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -in @(
         'Verification-Owner-Stream-Path',
         'Verification-Owner-Result-Cache',
-        'Stream-Verification-Owner',
-        'Test-Verification-Owners'
+        'Stream-Verification-Owner'
     )) {
         Add-Suite 'verification-owner-stream'
+        $script:RunPlanVerification = $true
+    } elseif ($Stem -eq 'Test-Verification-Owners') {
+        # Deletion tombstone for the replaced paired coordinators.
         $script:RunPlanVerification = $true
     } elseif ($Stem -match 'Os-Process-Object') {
         Add-Suite @('os-process-object', 'os-probe')
@@ -2243,6 +2245,10 @@ foreach ($Path in $Paths) {
             $RunPlanVerification = $true
         } elseif ([IO.Path]::GetFileName($Path) -eq 'Verify-Os-Boot.ps1') {
             Add-Suite 'os-probe'
+        } elseif ([IO.Path]::GetFileName($Path) -eq
+            'Invoke-WindvaleTests.ps1') {
+            Add-Suite 'verification-owner-stream'
+            $RunPlanVerification = $true
         } elseif ([IO.Path]::GetFileName($Path) -in @(
             'Verify-Seed-Native-Console-Aot.ps1',
             'Verify-Seed-Native-Console-Aot.sh'

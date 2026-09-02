@@ -16,7 +16,7 @@ Ongoing checks are maintained as
 [native verification owners](Windvale-Native-Verification-Owners.md).
 Development selects affected owners; explicit release qualification composes
 the current registry into paired-host shards. The redundant retirement command
-aliases are absent from `main`; use `Test-Verification-Owners.cmd` or `.sh` for
-the live coordinator. The old paths remain available from the immutable
-`v0.1.0` tag and Git history and must not be described as a new retirement
-claim.
+aliases and paired verification-owner coordinators are absent from `main`; use
+`pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1` for the live
+runner. The old paths remain available from the immutable `v0.1.0` tag and Git
+history and must not be described as a new retirement claim.

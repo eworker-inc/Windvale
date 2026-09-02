@@ -179,8 +179,8 @@ foreach ($Job in $QualificationJobs) {
 }
 
 $ExpectedCommands = @{
-    'windows-native-suite' = 'Tools\Native\Test-Verification-Owners.cmd --shard ${{ matrix.shard }}'
-    'linux-native-suite' = './Tools/Native/Test-Verification-Owners.sh --shard ${{ matrix.shard }}'
+    'windows-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
+    'linux-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
     'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'
@@ -210,6 +210,17 @@ $PinnedDebian = 'debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838
 foreach ($Job in @('linux-native-suite', 'linux-bootstrap')) {
     Assert-Workflow ((Get-JobBlock $Job).Contains("image: $PinnedDebian")) `
         "Qualification job '$Job' does not use the pinned Debian image."
+}
+$LinuxNativeSuite = Get-JobBlock 'linux-native-suite'
+foreach ($Fragment in @(
+    'libgssapi-krb5-2 libicu72 libssl3 libstdc++6 libunwind8 libuuid1 tar xz-utils zlib1g',
+    'powershell_version=7.6.5',
+    'b34ab3b19acac1d3d4d0d3cfdb02acf62f457b0b6a962ff008132033f7566844',
+    'pwsh -NoLogo -NoProfile -Command ''$PSVersionTable.PSVersion.ToString()'''
+)) {
+    Assert-Workflow (
+        $LinuxNativeSuite.Contains($Fragment, [StringComparison]::Ordinal)
+    ) "The Debian qualification job is missing pinned PowerShell setup fragment '$Fragment'."
 }
 
 foreach ($Line in $Lines | Where-Object { $_ -match '^\s+uses:\s+' }) {

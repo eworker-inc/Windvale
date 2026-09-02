@@ -28,7 +28,8 @@ handbook.
 - Development scope maps maintained boundaries to focused native owners in
   canonical order. Refuse uncovered gaps; do not hide them with an unfiltered
   or managed fallback.
-- Focused native OS owners run through their verification-owner filters.
+- Focused native OS owners run through
+  `Invoke-WindvaleTests.ps1 -Owner <owner-name>`.
 - Non-normative generated indexes and companion summaries belong to
   documentation verification even when they route to a specification. Do not
   weaken routing for an actual semantic, format, limit, or failure-rule change.
@@ -63,6 +64,10 @@ handbook.
 
 ## Verifier implementation
 
+- `Invoke-WindvaleTests.ps1` is the sole cross-host owner coordinator. Do not
+  add another `.cmd`/`.sh` coordinator pair. Existing paired owner scripts are
+  transitional leaf implementations and remain behind the PowerShell runner
+  until they can move without changing their evidence contract.
 - Give every verifier one clear owner, bounded inputs, bounded diagnostics,
   stable progress, and explicit failure behavior.
 - Declare every input, tool identity, host dependency, and verifier version used

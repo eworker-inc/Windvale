@@ -2,7 +2,7 @@
 
 > Status: Current native-only Seed development runbook
 > Authority: Informative procedure; tools and specifications own exact contracts
-> Last reviewed: 2026-08-31
+> Last reviewed: 2026-09-02
 
 This runbook describes the current native-only development loop. Historical
 managed commands belong to the immutable Stage 0 recovery release, not this
@@ -13,7 +13,8 @@ checkout.
 - Windows x64 with the inbox command processor, or Linux x64 with Bash and
   `sha256sum`;
 - PowerShell 7 for repository verification orchestration; and
-- Node.js 24 only for website or WebAssembly owners selected by a change.
+- Node.js 24 for bounded native-owner streaming and any selected website or
+  WebAssembly owner.
 
 The active repository contains no managed projects and requires no .NET SDK.
 Native launchers verify the exact checked-in tools before use.
@@ -38,19 +39,16 @@ Verification levels are alternatives:
 - after a failure, rerun the narrowest affected owner; and
 - run at most one broader final gate when the risk or claim requires it.
 
-Ordinary GitHub pushes and pull requests run affected owners on Windows and
-Linux. The complete four-shard native suite, WebAssembly owner, and compiler
-convergence run only through explicit workflow dispatch for a selected release,
-promotion, bootstrap, security, ABI, or conformance state.
+Ordinary GitHub pushes and pull requests run affected owners on Linux and add
+Windows only for Windows command, PowerShell, platform, or binary changes. The
+complete four-shard native suite, WebAssembly owner, and compiler convergence
+run only through explicit workflow dispatch for a selected release, promotion,
+bootstrap, security, ABI, or conformance state.
 
 To run one named verification owner directly:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter seed-native-front-door
-```
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter seed-native-front-door
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner seed-native-front-door
 ```
 
 This fast owner checks all pinned front-door identities and current-host WVB

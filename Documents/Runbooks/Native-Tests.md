@@ -1,34 +1,28 @@
 # Native test runbook
 
+> Status: Current native verification procedure
+> Authority: Informative procedure; verification specifications own exact contracts
+> Last reviewed: 2026-09-02
+
 This runbook owns the first .NET-free repository test slice accepted by
 [Decision 0218](../Decisions/0218-First-Native-Test-Orchestration.md). Its exact
 inventory and non-claims are defined by the
 [native test-plan contract](../../Specifications/Windvale-Native-Test-Plan.md).
 
-## Verification-owner coordinator
+## Verification-owner runner
 
-The digest-bound coordinator composes every transferred fixed native lane
-without entering the managed Seed harness. On Windows x64, run one focused lane
-with:
+The cross-host PowerShell runner composes every registered native lane without
+entering the managed Seed harness. On Windows or Linux x64, run one focused
+lane with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter unsafe-wvb
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner unsafe-wvb
 ```
 
-On Linux x64:
+GitHub qualification runs four registry-defined disjoint shards on each host:
 
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter unsafe-wvb
-```
-
-GitHub qualification runs four digest-bound disjoint shards on each host:
-
-```bat
-Tools\Native\Test-Verification-Owners.cmd --shard 1
-```
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --shard 1
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1
 ```
 
 Use shard values `1` through `4`. The manifest fixes every assignment, and the
@@ -154,16 +148,10 @@ fixtures; it does not mutate WVB or start .NET.
 The positive assembler-golden lane admits four repository source identities,
 assembles each twice, requires exact success reports and WVO identities, verifies
 the first object independently, and compares both generated objects byte for
-byte. Run it on Windows with:
+byte. Run it on either host with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter assembler-golden
-```
-
-On Linux x64:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter assembler-golden
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner assembler-golden
 ```
 
 Success is:
@@ -176,16 +164,10 @@ Suites: 1, Passed: 1, Failed: 0, Cases: 4
 The WVO differential lane freezes the Stage 0 acceptance decision for 128
 single-byte mutations of the canonical sample plus 128 arbitrary values. It
 includes 32 valid mutations, so this is not a rejection-only corpus. Run only
-this lane on Windows with:
+this lane with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter wvo-differential
-```
-
-or on Linux:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter wvo-differential
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner wvo-differential
 ```
 
 The native verifier must agree on all 32 accepted and 224 rejected rows and
@@ -233,14 +215,8 @@ zero-through-511-byte inputs, then requires exact `WVL1002` plus complete input
 and destination preservation for each public native-linker invocation. Run its
 focused lane with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter linker-hostile
-```
-
-or on Linux:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter linker-hostile
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner linker-hostile
 ```
 
 The command generates no random value while running. Its exact success summary
@@ -302,14 +278,8 @@ The console-container hostile lane expands one digest-bound archive into 128 PE
 and 128 ELF candidates, then drives both suffix-selected portable verifier paths
 through the current-host native console publisher. Run only this lane with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter console-container-hostile
-```
-
-or on Linux:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter console-container-hostile
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner console-container-hostile
 ```
 
 Every manifest-owned case requires exact rejection, empty standard output,
@@ -320,16 +290,10 @@ the run. The exact terminal summary is
 
 The hosted console-container lane uses two fixed valid format-2 applications
 and thirteen exact managed mutations. It does not rebuild either container or
-generate mutations during the run. On Windows use:
+generate mutations during the run. On either host use:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter hosted-console-container-mutations
-```
-
-On Linux use:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter hosted-console-container-mutations
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner hosted-console-container-mutations
 ```
 
 Both valid candidates must publish byte-identically. Every rejected candidate
@@ -339,16 +303,10 @@ summary is `Tests: 15, Passed: 15, Failed: 0`.
 
 The segmented console-size lane uses a separate read-only verifier because each
 first chunk is exactly 4 MiB and cannot be joined with its second chunk into one
-ordinary Windvale byte value. On Windows use:
+ordinary Windvale byte value. On either host use:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter console-segmented-size
-```
-
-On Linux use:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter console-segmented-size
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner console-segmented-size
 ```
 
 The fixed corpus contains the target-marked Windows and Linux maximum-plus-one
@@ -434,17 +392,11 @@ temporary one-byte-over-limit zero-filled input rather than retaining a very
 large fixture.
 
 The WVA differential lane freezes the exact 200-case seeded mutation sequence
-and 69 managed positive register/control/relocation vectors. Run the complete lane on
-Windows with:
+and 69 managed positive register/control/relocation vectors. Run the complete
+lane on either host with:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter wva-differential
-```
-
-or on Linux:
-
-```sh
-./Tools/Native/Test-Verification-Owners.sh --filter wva-differential
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner wva-differential
 ```
 
 The native assembler must match all 199 Stage 0 rejection codes, preserve each
@@ -490,7 +442,7 @@ must reject a fixed invalid WVB, preserve that input and a pre-existing
 destination exactly, and leave no private package directory. The terminal
 summary is `Tests: 2, Passed: 2, Failed: 0`.
 
-These commands are separate from the fixed verification-owner coordinator until
+These commands are separate from the fixed verification-owner runner until
 the hosted-container candidate is promoted. Run the Windows and Linux halves
 from the same fetched commit during the final grouped gate; do not run one host
 script repeatedly or use a passing Windows result as Linux execution evidence.
@@ -529,8 +481,8 @@ assembles three top-level WVA objects natively; links fourteen inputs; and
 packages the exact EFI. Use the focused retirement lane to check all three exact
 constructions plus existing-output preservation:
 
-```bat
-Tools\Native\Test-Verification-Owners.cmd --filter os-probe
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-probe
 ```
 
 The normal object seed is now empty. All eleven formerly frozen objects have
@@ -541,36 +493,36 @@ To exercise the kernel target directly:
 
 ```bat
 Tools\Native\Lower-Os-Kernel-Wvb.cmd input.wvb output.wvo
-Tools\Native\Test-Verification-Owners.cmd --filter os-kernel-target
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-kernel-target
 ```
 
 ```sh
 ./Tools/Native/Lower-Os-Kernel-Wvb.sh input.wvb output.wvo
-./Tools/Native/Test-Verification-Owners.sh --filter os-kernel-target
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-kernel-target
 ```
 
 To construct the process-policy object directly:
 
 ```bat
 Tools\Native\Build-Os-Process-Policy-Object.cmd output.wvo
-Tools\Native\Test-Verification-Owners.cmd --filter os-process-policy
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-process-policy
 ```
 
 ```sh
 ./Tools/Native/Build-Os-Process-Policy-Object.sh output.wvo
-./Tools/Native/Test-Verification-Owners.sh --filter os-process-policy
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-process-policy
 ```
 
 To construct the normal process object directly:
 
 ```bat
 Tools\Native\Build-Os-Process-Object.cmd output.wvo
-Tools\Native\Test-Verification-Owners.cmd --filter os-process-object
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-process-object
 ```
 
 ```sh
 ./Tools/Native/Build-Os-Process-Object.sh output.wvo
-./Tools/Native/Test-Verification-Owners.sh --filter os-process-object
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner os-process-object
 ```
 
 This path regenerates the three embedded images, canonical program, resource
@@ -653,8 +605,8 @@ filter; uncovered maintained paths fail closed instead of selecting Stage 0.
 
 Before running a filter, review its child command, fixtures, and expected
 summary against the changed behavior; update them first if the contract changed.
-Then run only `Test-Verification-Owners.cmd --filter <owner-name>` or its `.sh`
-counterpart once. Reuse that result while relevant inputs remain unchanged. Do
+Then run only `Invoke-WindvaleTests.ps1 -Owner <owner-name>` once. Reuse that
+result while relevant inputs remain unchanged. Do
 not also run the child directly or progress through broader local levels for the
 same source state. Immediately before the final grouped candidate, update from
 the shared branch and run the unfiltered Windows/Linux suite as part of the one
