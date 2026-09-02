@@ -1987,9 +1987,17 @@ argument is an immutable borrow of one directly named canonical
 the exact opaque `Foreignˉpointer<u8, Abi>`. WVIR 1.29/1.30 preserve the region
 slot and ABI identity with zero operands; independent validation rejects wrong
 context, borrow mode, label, element, ABI, result, version, slot, or operation
-relationships. The operation is not yet serialized to WVB and forms no native
-address. Executable pointer operations, authenticated Foreign calls, host ABI
-publication, Linux execution, and paired-host containment remain pending.
+relationships. Candidate WVB 1.37 serializes that operation as 13-byte opcode
+`DF` with direct region-local, canonical pointer-record, and ABI-enum indexes.
+The exact immutable region parameter uses borrowed-record shape `28` only when
+the same function directly targets it with `DF`.
+
+The complete compiler verifier and every execution consumer reject minor 37.
+The candidate therefore forms no native address, cannot escape a region
+lifetime, and grants no dereference or call authority. Complete affine pointer
+verification, provider and native address formation, authenticated Foreign
+calls, host ABI publication, Linux execution, and paired-host containment remain
+pending.
 The remaining operations below may appear only with their compiler-owned
 intrinsic semantics and containment evidence.
 

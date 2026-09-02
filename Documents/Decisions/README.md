@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 323 |
+| Accepted | 325 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,8 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0917: advance the frozen source identity for candidate WVB 1.37](0917-Advance-The-Frozen-Source-Identity-For-Candidate-Wvb-1.37.md) | Accepted |
+| [Decision 0916: represent contained write-pointer derivation in candidate WVB 1.37](0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md) | Accepted |
 | [Decision 0915: advance the frozen source identity for unsafe-memory progress](0915-Advance-The-Frozen-Source-Identity-For-Unsafe-Memory-Progress.md) | Accepted |
 | [Decision 0914: lower canonical unsafe write pointer to WVIR](0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md) | Accepted |
 | [Decision 0913: lower compiler-verified WVB 1.36 write regions to native x64](0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) | Accepted |
@@ -69,8 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) | Proposed |
 | [Decision 0894: advance the frozen source identity for canonical unsafe and FFI effects](0894-Advance-The-Frozen-Source-Identity-For-Canonical-Unsafe-And-Ffi-Effects.md) | Accepted |
 | [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) | Proposed |
-| [Decision 0892: coordinate authenticated source admission](0892-Coordinate-Authenticated-Source-Admission.md) | Accepted |
-| [Decision 0891: promote SHA-capable segmented staging](0891-Promote-Sha-Capable-Segmented-Staging.md) | Accepted |
 
 ## Superseded or historical records
 

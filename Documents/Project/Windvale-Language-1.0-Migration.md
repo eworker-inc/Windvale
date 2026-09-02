@@ -949,6 +949,19 @@ Pointer WVB encoding, lifetime verification, runtime/provider representation,
 native address formation, ordinary generic-call inference, authenticated
 Foreign calls, and Linux reproduction remain pending.
 
+[Decision 0916](../Decisions/0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md)
+now serializes that exact typed operation as candidate WVB 1.37 opcode `DF`.
+The 13-byte instruction consumes no stack value and carries the direct borrowed
+region slot, canonical pointer-record type, and ABI-enum type. The exact
+immutable region parameter is encoded as borrowed-record shape `28` only when
+the same function directly targets it. The independent reader accepts one
+publication and rejects seven old-minor, opcode, index, type, shape, and nominal
+forgeries. The complete source-built compiler verifier and current execution
+front door reject minor 37 as intended. Pointer lifetime verification,
+provider/native address formation, authenticated no-retain Foreign calls,
+ordinary generic-call inference, a migrated real boundary, Linux reproduction,
+and paired-host evidence remain pending.
+
 That database run is a compiler/staging regression result, not a memory-model
 migration claim. It recompiles the current database `.wv` source with the
 current compiler, but the database remains intentionally byte-oriented and

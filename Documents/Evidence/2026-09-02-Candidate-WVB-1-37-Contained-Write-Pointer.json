@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-candidate-wvb-1-37-contained-write-pointer",
+  "date": "2026-09-02",
+  "subject": "Candidate WVB 1.37 contained write-pointer serialization",
+  "claim": "The Windows source-built compiler deterministically publishes candidate WVB 1.37 opcode 223 for exact contained write-pointer derivation, while the complete compiler verifier and execution front door remain closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "bb9a8b456019a0f90f7afdc6b2ad9974e9cbb503"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Language 1.0 current source-WVB emitter deterministic reconstruction",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj artifacts/local-pointer-wvb-emitter.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-pointer-wvb-emitter.wvb",
+          "size": 1514261,
+          "sha256": "22e3c08884df6eaf78ad1d1f940b40c9a1c8b3dc7feafbb2aa439d964e8192f0"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current compiler-aligned verifier deterministic reconstruction",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj artifacts/local-pointer-closed-verifier.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-pointer-closed-verifier.wvb",
+          "size": 473783,
+          "sha256": "76c36d5a341a37e14a162427bef2870ed498cdbf4366abcebb703f8f79f32c7d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Candidate WVB 1.37 write-pointer source, WVIR, byte contract, compiler-verifier closure, and execution closure",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-pointer-analyzer.exe artifacts/local-pointer-wvb-emitter.exe artifacts/local-pointer-closed-verifier.exe",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered seven valid and fifteen rejected source cases, seven malformed write-region WVIR mutations, seven malformed pointer WVIR mutations, five malformed WVB 1.36 mutations, seven malformed WVB 1.37 mutations, and 22 compiler-verifier cases; it was not the complete native verification-owner plan.",
+    "The complete compiler verifier, scalar provider, native lowerer, launcher, published front door, browser, WebAssembly host, and operating-system consumers do not admit WVB 1.37.",
+    "No provider or native address was formed and no authenticated Foreign call was lowered.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}
