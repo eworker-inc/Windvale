@@ -14,6 +14,7 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
@@ -26,6 +27,8 @@ const WINDOWS = process.platform === 'win32';
 const PRODUCT_LEAF = WINDOWS ? 'Product.exe' : 'Product.elf';
 const OUTPUT_LEAF = WINDOWS ? 'Materialized.exe' : 'Materialized.elf';
 const TEMPORARY_PREFIX = 'windvale-segmented-hosted-cache-test-';
+const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
+const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..', '..');
 const temporaryRoot = await realpath(os.tmpdir());
 const allocatedRoot = await mkdtemp(path.join(temporaryRoot, TEMPORARY_PREFIX));
 const testRoot = await realpath(allocatedRoot);
@@ -35,6 +38,7 @@ try {
     const outputRoot = path.join(testRoot, 'output');
     await mkdir(checkpointFamily);
     await mkdir(outputRoot);
+    await Requireˉdevelopmentˉcacheˉrouting(testRoot, outputRoot);
     const inputPath = path.join(testRoot, 'Input.wvb');
     const inputBytes = Buffer.from('bounded segmented hosted cache input\n', 'ascii');
     await writeFile(inputPath, inputBytes);
@@ -303,6 +307,46 @@ try {
         Reject('Refusing to remove an unexpected segmented hosted cache test root.');
     }
     await rm(resolved, { recursive: true, force: true });
+}
+
+async function Requireˉdevelopmentˉcacheˉrouting(directory, outputDirectory) {
+    const input = path.join(directory, 'Invalid.wvb');
+    const output = path.join(
+        outputDirectory,
+        WINDOWS ? 'Invalid.exe' : 'Invalid.elf',
+    );
+    await writeFile(input, Buffer.from('invalid WVB\n', 'ascii'), { flag: 'wx' });
+    const extension = WINDOWS ? 'cmd' : 'sh';
+    const wrapper = path.join(
+        REPOSITORY_ROOT,
+        'Tools',
+        'Native',
+        `Package-Segmented-Compiler-Wvb.${extension}`,
+    );
+    const arguments_ = ['1', input, output, '--development-cache'];
+    const execution = WINDOWS
+        ? spawnSync(process.env.ComSpec ?? 'cmd.exe', [
+            '/d', '/c', 'call', wrapper, ...arguments_,
+        ], {
+            encoding: 'utf8',
+            windowsHide: true,
+        })
+        : spawnSync(wrapper, arguments_, {
+            encoding: 'utf8',
+        });
+    const stdout = (execution.stdout ?? '').replaceAll('\r\n', '\n');
+    const stderr = (execution.stderr ?? '').replaceAll('\r\n', '\n');
+    if (execution.error !== undefined || execution.status !== 1 ||
+        stdout !==
+            'segmented hosted WVB cache step=complete-verification status=Started\n' ||
+        !stderr.includes('complete-verification failed status=1') ||
+        !stderr.includes('wvb status=Invalid') ||
+        await lstat(output).catch(() => null) !== null) {
+        Reject(
+            'The segmented compiler development-cache route did not fail ' +
+            'closed through complete verification.',
+        );
+    }
 }
 
 async function Writeˉproduct(directory, bytes) {

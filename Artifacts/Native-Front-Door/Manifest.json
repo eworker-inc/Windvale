@@ -6,6 +6,7 @@
   "publisherQualification": "https://github.com/eworker-inc/Windvale/actions/runs/30971408639",
   "runnerCommit": "36c4baff385f782700c3df8de1d7dec8db6e2e0b",
   "runnerQualification": "pending",
+  "verifierRefreshDecision": "0920",
   "buildDriverProjectFormat": "workspace-1-project-2",
   "buildDriverQualification": "current-host-focused",
   "assemblerCommit": "3aa5ba27f0ae4f96bc80d8bd521363015e884ab3",
@@ -30,9 +31,9 @@
     {
       "name": "compiler-wvb-verifier-wvb",
       "path": "Wvb/Compiler-Wvb-Verifier.wvb",
-      "target": "canonical-wvb-1.11",
-      "bytes": 152323,
-      "sha256": "06d4010279dce74dba258a5f2533f4a961a767d56f62709f2c13f87d4fdff64f",
+      "target": "canonical-wvb-1.37",
+      "bytes": 493060,
+      "sha256": "a7ed497149a215526f220b0b55c2742a8f203ba1f0c57b47622c2c0d48ef90fe",
       "sourceProject": "Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj"
     },
     {
@@ -79,8 +80,8 @@
       "name": "windows-x64-wvb-verifier",
       "path": "windows-x64/wvverify.exe",
       "target": "windows-x64-verifier-v1",
-      "bytes": 1255936,
-      "sha256": "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
+      "bytes": 3983360,
+      "sha256": "acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {
@@ -127,8 +128,8 @@
       "name": "linux-x64-wvb-verifier",
       "path": "linux-x64/wvverify.elf",
       "target": "linux-x64-verifier-v1",
-      "bytes": 1257472,
-      "sha256": "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",
+      "bytes": 3985408,
+      "sha256": "bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f",
       "sourceWvb": "Wvb/Compiler-Wvb-Verifier.wvb"
     },
     {

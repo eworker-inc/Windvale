@@ -821,7 +821,6 @@ async function Main() {
     const profile = process.argv[2];
     const input = await Requireˉinputˉsnapshot(process.argv[3]);
     const outputPath = await Requireˉoutputˉpath(process.argv[4]);
-    await Completeˉverifyˉinput(input);
     const key = await Getˉcurrentˉcacheˉkey(profile, input);
     await Requireˉinputˉunchanged(input);
     const checkpointFamily = await Getˉcheckpointˉfamily();
@@ -834,6 +833,7 @@ async function Main() {
     });
     let status = 'Hit';
     if (checkpointInformation === null) {
+        await Completeˉverifyˉinput(input);
         status = await Createˉsegmentedˉhostedˉcheckpoint(
             checkpointFamily,
             checkpointDirectory,

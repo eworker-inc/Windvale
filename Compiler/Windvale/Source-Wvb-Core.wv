@@ -3733,6 +3733,8 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉownedˉaggregate(
             Wir, Shape, Orders
         ) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
             Input, Scan, Symbols, Bindings, Shape
+        ) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉwriteˉregion(
+            Input, Scan, Symbols, Bindings, Shape
         );
 }
 
@@ -3748,6 +3750,8 @@ fn Compilerˉsourceˉwvbˉshapeˉrequiresˉownedˉtake(
     return Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
             Wir, Shape, Orders
         ) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
+            Input, Scan, Symbols, Bindings, Shape
+        ) || Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉwriteˉregion(
             Input, Scan, Symbols, Bindings, Shape
         );
 }
@@ -5852,7 +5856,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Features = Features | 131072u32;
             if Parameterˉmode !=
                     Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
-                !Isˉallowedˉscratchˉborrow {
+                !Isˉallowedˉscratchˉborrow &&
+                !Isˉallowedˉwriteˉregionˉborrow {
                 return Compilerˉsourceˉwvbˉfunctionˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                     Analysis.Failureˉoperation

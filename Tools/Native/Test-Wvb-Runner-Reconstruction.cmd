@@ -1,20 +1,30 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+set "Mode=qualification"
+if "%~1"=="" goto :arguments_ready
+if not "%~2"=="" goto :usage
+if /I not "%~1"=="--development" goto :usage
+set "Mode=development"
+
+:arguments_ready
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-Runner-Candidate"
 set "Constructor=%RepositoryRoot%\Tools\Native\Construct-Wvb-Runner-Reconstruction.cmd"
+set "Builder=%RepositoryRoot%\Tools\Native\Build-Current-Split-Project-Wvb.mjs"
+set "Packager=%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd"
+set "SourceProject=%RepositoryRoot%\Projects\Tools\Windvale-Wvb-Runner.wvproj"
 set "Fixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Return-42.wvb"
 set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Return-42.wvo"
 set "Passed=0"
 set "Failed=0"
 
-call :check_file "%Candidate%\Wvb-Runner.wvb" 993328 2e7f5390c95e74be2abb06c2b2cbb84d789c3d449a7577c40f9de45157a874a6
+call :check_file "%Candidate%\Wvb-Runner.wvb" 1020604 05fd4635781f2660922760a1c96cbfd675a7a3ebb74fcd780c965db56f9b9b51
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\windows-x64-wvrun.exe" 10127360 c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4
+call :check_file "%Candidate%\windows-x64-wvrun.exe" 10368512 d5743801003ac0c43ce6b5b2b3c4bb195d8334f84f5a7f84c6e1edd04b8cf7a7
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\linux-x64-wvrun.elf" 10129408 c5db1a90ce58f4807de13ca0082014e9ca09634a9ef487859166f15443e7149d
+call :check_file "%Candidate%\linux-x64-wvrun.elf" 10371072 e63bce623c470418ed3bede36ce2c4c3964c245c78766e45bb71090b637e3d0b
 if errorlevel 1 goto :inventory_failed
 echo PASS candidate inventory
 set /a Passed+=1
@@ -42,6 +52,7 @@ echo Tests: 2, Passed: 1, Failed: 1
 exit /b 1
 :preflight_done
 
+if "%Mode%"=="development" goto :development_reconstruction
 call "%Constructor%" >"%TestDirectory%\Usage.out" 2>"%TestDirectory%\Usage.err"
 if not "%ERRORLEVEL%"=="64" goto :reconstruction_failed
 call :check_file "%TestDirectory%\Usage.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -63,10 +74,24 @@ if errorlevel 1 goto :reconstruction_failed
 echo PASS exact source-built paired reconstruction
 set /a Passed+=1
 goto :reconstruction_done
+
+:development_reconstruction
+node "%Builder%" "%SourceProject%" "%TestDirectory%\Rebuilt\Wvb-Runner.wvb"
+if errorlevel 1 goto :reconstruction_failed
+call "%Packager%" 5 "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" --development-cache
+if errorlevel 1 goto :reconstruction_failed
+call :check_equal "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%Candidate%\Wvb-Runner.wvb"
+if errorlevel 1 goto :reconstruction_failed
+call :check_equal "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Candidate%\windows-x64-wvrun.exe"
+if errorlevel 1 goto :reconstruction_failed
+echo PASS exact source-built current-host development reconstruction
+set /a Passed+=1
+goto :reconstruction_done
+
 :reconstruction_failed
 if exist "%TestDirectory%\Construct.out" type "%TestDirectory%\Construct.out"
 if exist "%TestDirectory%\Construct.err" type "%TestDirectory%\Construct.err" >&2
-echo FAIL exact source-built paired reconstruction
+echo FAIL exact source-built %Mode% reconstruction
 set /a Failed+=1
 :reconstruction_done
 
@@ -87,6 +112,10 @@ set /a Total=Passed+Failed
 echo Tests: %Total%, Passed: %Passed%, Failed: %Failed%
 if not "%Failed%"=="0" exit /b 1
 exit /b 0
+
+:usage
+>&2 echo Usage: Tools\Native\Test-Wvb-Runner-Reconstruction.cmd [--development]
+exit /b 64
 
 :remove_test_directory
 set "WINDVALE_TEST_CLEANUP_ROOT=%TestDirectory%"

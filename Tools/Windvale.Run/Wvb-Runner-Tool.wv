@@ -14,7 +14,8 @@ capability process.argument_count;
 fn Moduleˉisˉadmitted(Module: bytes) -> bool {
     if Bytesˉlength(Module) < 8u32 ||
         Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 ||
-        Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 {
+        (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32) {
         return true;
     }
     return Metadataˉverifier.Compilerˉwvbˉverifyˉmetadata(Module) == 0u32;

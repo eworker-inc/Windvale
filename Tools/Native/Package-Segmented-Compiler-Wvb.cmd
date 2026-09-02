@@ -16,6 +16,7 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Input=%~f2"
 set "Output=%~f3"
+if "%DevelopmentCache%"=="1" goto :development_cache
 
 :allocate
 set "TemporaryDirectory=%TEMP%\windvale-segmented-compiler-package-%RANDOM%-%RANDOM%-%RANDOM%"
@@ -63,11 +64,7 @@ echo(%NativeEntry%| findstr /r /x "[0-9][0-9]*" >nul || goto :cleanup
 echo(%FragmentCount%| findstr /r /x "[1-9] 1[0-6]" >nul || goto :cleanup
 
 echo segmented compiler package step=container fragments=%FragmentCount% entry=%NativeEntry%
-if "%DevelopmentCache%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Build-Cached-Hosted-Application.cmd" %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%" windows
-) else (
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%"
-)
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %~1 "%Input%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% "%Output%"
 set "Result=%ERRORLEVEL%"
 if "%Result%"=="0" echo segmented compiler package status=Complete output=%~nx3
 
@@ -75,6 +72,11 @@ if "%Result%"=="0" echo segmented compiler package status=Complete output=%~nx3
 del /f /q "%TemporaryDirectory%\*" >nul 2>nul
 rmdir "%TemporaryDirectory%" >nul 2>nul
 exit /b %Result%
+
+:development_cache
+call "%RepositoryRoot%\Tools\Native\Build-Cached-Segmented-Hosted-Wvb.cmd" ^
+    %~1 "%Input%" "%Output%"
+exit /b %ERRORLEVEL%
 
 :usage
 >&2 echo Usage: Tools\Native\Package-Segmented-Compiler-Wvb.cmd ^<profile-1-through-8^> ^<input.wvb^> ^<output.exe^> [--development-cache]

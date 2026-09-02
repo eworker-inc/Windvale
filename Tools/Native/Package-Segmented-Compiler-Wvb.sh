@@ -15,6 +15,11 @@ input_directory=$(CDPATH= cd -- "$(dirname -- "$2")" && pwd -P) || exit 64
 input="$input_directory/$(basename -- "$2")"
 output_directory=$(CDPATH= cd -- "$(dirname -- "$3")" && pwd -P) || exit 64
 output="$output_directory/$(basename -- "$3")"
+if [[ $development_cache -eq 1 ]]; then
+    "$script_directory/Build-Cached-Segmented-Hosted-Wvb.sh" \
+        "$1" "$input" "$output"
+    exit $?
+fi
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-segmented-compiler-package.XXXXXXXX") || exit 1
 cleanup() {
@@ -69,13 +74,8 @@ case "$fragment_count" in
 esac
 
 echo "segmented compiler package step=container fragments=$fragment_count entry=$native_entry"
-if [[ $development_cache -eq 1 ]]; then
-    "$script_directory/Build-Cached-Hosted-Application.sh" "$1" "$input" \
-        "$canonical_prefix" "$fragment_count" "$native_entry" "$output" linux
-else
-    "$script_directory/Package-Hosted-Wvb.sh" image "$1" "$input" \
-        "$canonical_prefix" "$fragment_count" "$native_entry" "$output"
-fi
+"$script_directory/Package-Hosted-Wvb.sh" image "$1" "$input" \
+    "$canonical_prefix" "$fragment_count" "$native_entry" "$output"
 result=$?
 [[ $result -eq 0 ]] || exit "$result"
 echo "segmented compiler package status=Complete output=$(basename -- "$output")"

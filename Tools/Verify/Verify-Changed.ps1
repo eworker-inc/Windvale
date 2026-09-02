@@ -243,6 +243,17 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerMessage = (
                     'Native owner compiler-reconstruction ' +
                     'mode=development-smoke')
+            } elseif ($Suite -eq 'wvb-runner-reconstruction' -and
+                $Plan.Scope -eq 'development') {
+                $OwnerCommand = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Wvb-Runner-Reconstruction.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Wvb-Runner-Reconstruction.sh'
+                }
+                $OwnerArguments = @('--development')
+                $OwnerMessage = (
+                    'Native owner wvb-runner-reconstruction ' +
+                    'mode=development-current-host')
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

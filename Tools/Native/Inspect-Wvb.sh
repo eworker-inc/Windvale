@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Front-Door"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n%s  %s\n' \
-    'cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4' \
+    'bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f' \
     'linux-x64/wvverify.elf' \
     'd3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627' \
     'linux-x64/wvdump.elf' | sha256sum --check --strict --quiet); then

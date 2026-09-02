@@ -1890,9 +1890,6 @@ export fn Hˉvariant(
             0u32
         );
     }
-    if Variantˉkind == 37u32 && Variantˉcaseˉindex != 1u32 {
-        return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
-    }
     if Fields != 1u32 {
         return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
     }
@@ -1903,7 +1900,8 @@ export fn Hˉvariant(
     if Variantˉkind == 29u32 && Payloadˉkind == 23u32 {
         Payloadˉkind = 26u32;
     }
-    if (Variantˉkind == 32u32 || Variantˉkind == 36u32) &&
+    if (Variantˉkind == 32u32 || Variantˉkind == 36u32 ||
+        Variantˉkind == 37u32) &&
         Hˉownedˉaggregate(
             Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
             Payloadˉkind,
@@ -1964,9 +1962,6 @@ fn Hˉvariantˉfield(
         Bytesˉreadˉu32ˉlittle(Stack, Variantˉoffset + 1u32) != Variantˉtype {
         return Hˉoperationˉfailure(Stack, Depth);
     }
-    if Variantˉkind == 37u32 && Caseˉindex != 1u32 {
-        return Hˉoperationˉfailure(Stack, Depth);
-    }
     let Fieldˉshape: u32 = 4u32 + Fieldˉindex * 5u32;
     var Producedˉkind: u32 = U32ˉfromˉu8(
         Bytesˉreadˉu8(Variantˉcase, Fieldˉshape)
@@ -1987,7 +1982,8 @@ fn Hˉvariantˉfield(
     ) {
         Producedˉkind = 26u32;
     }
-    if (Variantˉkind == 32u32 || Variantˉkind == 36u32) &&
+    if (Variantˉkind == 32u32 || Variantˉkind == 36u32 ||
+        Variantˉkind == 37u32) &&
         Hˉownedˉaggregate(
         Input, Types, Bytesˉreadˉu32ˉlittle(Input, Types),
         Producedˉkind, Producedˉnominal, Minor
@@ -3296,9 +3292,8 @@ fn Hˉunsafeˉwriteˉpointerˉoperation(
         Input, Functionˉcode + Cursor + 9u32
     );
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
-    if Minor != 37u32 || Region >= Parameterˉcount ||
-        Region >= Localˉslots || Pointerˉtype >= Typeˉcount ||
-        Abiˉtype >= Typeˉcount {
+    if Minor != 37u32 || Region >= Localˉslots ||
+        Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     let Regionˉshape: u32 = Region * 5u32;
@@ -3308,8 +3303,10 @@ fn Hˉunsafeˉwriteˉpointerˉoperation(
     let Regionˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Localˉshapes, Regionˉshape + 1u32
     );
-    if Regionˉkind != 28u32 || Regionˉtype >= Typeˉcount ||
-        Regionˉtype == Pointerˉtype || !Hˉunsafeˉscratchˉisˉexact(
+    if (Regionˉkind != 7u32 &&
+            (Regionˉkind != 28u32 || Region >= Parameterˉcount)) ||
+        Regionˉtype >= Typeˉcount || Regionˉtype == Pointerˉtype ||
+        !Hˉunsafeˉscratchˉisˉexact(
             Input, Types, Typeˉcount, Regionˉtype
         ) || !Hˉunsafeˉscratchˉisˉexact(
             Input, Types, Typeˉcount, Pointerˉtype
@@ -3661,25 +3658,9 @@ fn Hˉlocalˉoperation(
             }
         }
         let Isˉaffineˉresult: bool = Localˉkind == 11u32 &&
-            ((Minor >= 23u32 && Minor <= 37u32 &&
-                Hˉmemoryˉbudgetˉresultˉisˉexact(
-                    Input, Types, Typeˉcount, Localˉnominal
-                )) || (Minor >= 24u32 && Minor <= 37u32 &&
-                Hˉvectorˉresultˉisˉexact(
-                    Input, Types, Typeˉcount, Localˉnominal
-                )) || ((Minor == 32u32 || Minor == 33u32 ||
-                    Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
-                    Minor == 37u32) &&
-                Hˉtaskˉaffineˉresultˉisˉexact(
-                    Input, Types, Typeˉcount, Localˉnominal
-                )) || ((Minor == 33u32 || Minor == 34u32 ||
-                    Minor == 35u32 || Minor == 36u32 || Minor == 37u32) &&
-                Hˉunsafeˉscratchˉresultˉisˉexact(
-                    Input, Types, Typeˉcount, Localˉnominal
-                )) || ((Minor == 36u32 || Minor == 37u32) &&
-                Hˉunsafeˉwriteˉregionˉresultˉisˉexact(
-                    Input, Types, Typeˉcount, Localˉnominal
-                )));
+            Hˉaffineˉresultˉtransferˉkind(
+                Input, Types, Minor, Localˉkind, Localˉnominal
+            ) != Localˉkind;
         if Isˉaffineˉresult {
             if Cursor + 5u32 >= Functionˉcodeˉlength ||
                 U32ˉfromˉu8(Bytesˉreadˉu8(

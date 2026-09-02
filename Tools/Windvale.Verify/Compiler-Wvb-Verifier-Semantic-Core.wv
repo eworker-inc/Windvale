@@ -2226,11 +2226,16 @@ fn Fˉunsafeˉwriteˉpointerˉinstructionˉisˉvalid(
     let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
         Input, Instruction + 9u32
     );
-    if Regionˉlocal >= Parameterˉcount || Pointerˉtype >= Typeˉcount ||
-        Abiˉtype >= Typeˉcount || !Fˉfunctionˉlocalˉshapeˉis(
-            Input, Parameterˉtypes, Parameterˉcount,
-            Localˉtypes, Localˉcount, Regionˉlocal, 28u32
-        ) {
+    if Regionˉlocal >= Parameterˉcount + Localˉcount ||
+        Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount ||
+        (!Fˉfunctionˉlocalˉshapeˉis(
+                Input, Parameterˉtypes, Parameterˉcount,
+                Localˉtypes, Localˉcount, Regionˉlocal, 7u32
+            ) && (Regionˉlocal >= Parameterˉcount ||
+                !Fˉfunctionˉlocalˉshapeˉis(
+                    Input, Parameterˉtypes, Parameterˉcount,
+                    Localˉtypes, Localˉcount, Regionˉlocal, 28u32
+                ))) {
         return false;
     }
     let Regionˉtype: u32 = Fˉunsafeˉscratchˉlocalˉnominal(

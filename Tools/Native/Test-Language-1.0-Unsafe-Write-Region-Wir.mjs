@@ -472,7 +472,9 @@ function Runtimeˉapplication(Call, Summary) {
         'effects(unsafe.address) { var Scratch: ' + Scratchˉtype +
         ' = Value; unsafe { let Outcome: ' + Regionˉresult + ' = ' + Call +
         '; return match Outcome { ' +
-        'case Result.Result.Valid { Value: _ } { 42 } ' +
+        'case Result.Result.Valid { Value: Region } { ' +
+        'let Pointer: ' + Pointerˉtype +
+        ' = Unsafe.Writeˉpointer::<Hostˉabi>(Region: borrow Region); 42 } ' +
         Failureˉbranch + '}; } } ' +
         'export fn Main(Budget: Memory.Memoryˉbudget) -> i32 ' +
         'effects(memory.allocate, unsafe.address) { ' +
@@ -735,10 +737,20 @@ async function Verifyˉruntime() {
         }
         if (Index === 0) {
             const Candidate = await readFile(Wvb);
-            const Layout = Inspectˉwriteˉregionˉwvb(Candidate);
+            const Layout = Inspectˉwriteˉpointerˉwvb(Candidate);
+            if (Layout.Operation < 10 ||
+                Candidate[Layout.Operation - 10] !== 205 ||
+                Candidate[Layout.Operation - 5] !== 5 ||
+                Candidate.readUInt32LE(Layout.Operation - 4) !==
+                    Layout.Regionˉlocal) {
+                Reject(
+                    'The runtime write-region payload was not moved with ' +
+                    'local.take before pointer derivation.',
+                );
+            }
             Candidate[Layout.Operation] = 209;
             const Missingˉoperation = join(
-                Caseˉdirectory, 'Missing-Write-Region-Operation.wvb',
+                Caseˉdirectory, 'Missing-Write-Pointer-Operation.wvb',
             );
             await writeFile(Missingˉoperation, Candidate, { flag: 'wx' });
             const Rejected = await Runˉtool(Runner, [Missingˉoperation]);
@@ -746,7 +758,7 @@ async function Verifyˉruntime() {
                 Rejected.Diagnostic.replaceAll('\r\n', '\n') !==
                     'wvb run status=Invalid phase=compiler-verification\n') {
                 Reject(
-                    'Unsafe write-region missing-operation runtime ' +
+                    'Unsafe write-pointer missing-operation runtime ' +
                     `rejection differed: status=${Rejected.Code} ` +
                     `diagnostic=${JSON.stringify(Rejected.Diagnostic)}.`,
                 );
@@ -754,8 +766,8 @@ async function Verifyˉruntime() {
             if (Lowerer !== undefined) {
                 await Requireˉnativeˉlowering(
                     Missingˉoperation,
-                    join(Caseˉdirectory, 'Missing-Write-Region-Operation.wvo'),
-                    'missing-write-region-operation',
+                    join(Caseˉdirectory, 'Missing-Write-Pointer-Operation.wvo'),
+                    'missing-write-pointer-operation',
                     false,
                 );
             }
@@ -770,7 +782,7 @@ async function Verifyˉruntime() {
         `native-execution=${Lowerer === undefined ? 'Notˉrequested' :
             Runtimeˉapplications.length + '/' + Runtimeˉapplications.length} ` +
         `native-rejections=${Lowerer === undefined ? 'Notˉrequested' : 1} ` +
-        'result=42 allocation=bounded teardown=bounded\n',
+        'result=42 pointer=contained allocation=bounded teardown=bounded\n',
     );
     return Malformed;
 }
@@ -985,8 +997,8 @@ async function Verifyˉmalformedˉpointerˉwvb(Directory, Canonical, Layout) {
         ['invalid-abi-type', Value => Value.writeUInt32LE(
             Layout.Typeˉcount, Layout.Operation + 9,
         )],
-        ['unborrowed-region-shape', Value => {
-            Value[Layout.Regionˉshape] = 7;
+        ['invalid-region-shape', Value => {
+            Value[Layout.Regionˉshape] = 8;
         }],
         ['aliased-region-pointer-type', Value => Value.writeUInt32LE(
             Layout.Regionˉtype, Layout.Operation + 5,
@@ -1125,6 +1137,7 @@ function Inspectˉwriteˉregionˉwvb(
         Ranges.push({
             Start: Code.Start + Offset,
             End: Code.Start + Offset + Length,
+            Parameters,
             Locals: Parameters + Locals,
             Shapes,
         });
@@ -1164,7 +1177,10 @@ function Inspectˉwriteˉregionˉwvb(
     }
     const Scratchˉshape = Owner.Shapes[Matches[0].Scratch];
     if (Pointer) {
-        if (Scratchˉshape === undefined || Scratchˉshape.Kind !== 28 ||
+        if (Scratchˉshape === undefined ||
+            (Scratchˉshape.Kind !== 7 &&
+                (Scratchˉshape.Kind !== 28 ||
+                    Matches[0].Scratch >= Owner.Parameters)) ||
             Scratchˉshape.Nominal >= Typeˉcount ||
             Typeˉkinds[Scratchˉshape.Nominal] !== 1 ||
             Scratchˉshape.Nominal === Matches[0].Resultˉtype) {
@@ -1198,6 +1214,7 @@ function Inspectˉwriteˉregionˉwvb(
         }
         return {
             Operation: Matches[0].Operation,
+            Regionˉlocal: Matches[0].Scratch,
             Regionˉshape: Scratchˉshape.Start,
             Regionˉtype: Scratchˉshape.Nominal,
             Pointerˉtype: Matches[0].Resultˉtype,

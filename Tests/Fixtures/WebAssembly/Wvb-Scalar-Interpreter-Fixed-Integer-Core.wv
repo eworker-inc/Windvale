@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 36u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 37u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -56,7 +56,8 @@ export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
         Kind >= 28u32 && Kind <= 30u32 { return true; }
     if Minor >= 29u32 && Kind == 34u32 { return true; }
     if Minor >= 30u32 && Kind == 35u32 { return true; }
-    if (Minor == 34u32 || Minor == 35u32 || Minor == 36u32) &&
+    if (Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
+            Minor == 37u32) &&
         Kind == 36u32 {
         return true;
     }
@@ -71,12 +72,13 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
-    if Minor < 11u32 || Minor > 36u32 { return 0u32; }
+    if Minor < 11u32 || Minor > 37u32 { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
     var Unsafeˉscratchˉinstructions: u32 = 0u32;
     var Unsafeˉscratchˉlengthˉinstructions: u32 = 0u32;
     var Unsafeˉwriteˉregionˉinstructions: u32 = 0u32;
+    var Unsafeˉwriteˉpointerˉinstructions: u32 = 0u32;
     while Cursor < Length {
         let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
             Module, Offset + Cursor
@@ -241,7 +243,7 @@ export fn Scanˉfunction(
         }
         if Opcode == 220u32 {
             if Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
-                Minor != 36u32 {
+                Minor != 36u32 && Minor != 37u32 {
                 return 0u32;
             }
             Width = 13u32;
@@ -250,7 +252,9 @@ export fn Scanˉfunction(
             if Unsafeˉscratchˉinstructions > 4096u32 { return 0u32; }
         }
         if Opcode == 221u32 {
-            if Minor != 35u32 && Minor != 36u32 { return 0u32; }
+            if Minor != 35u32 && Minor != 36u32 && Minor != 37u32 {
+                return 0u32;
+            }
             Width = 9u32;
             Supported = true;
             Unsafeˉscratchˉlengthˉinstructions =
@@ -260,12 +264,22 @@ export fn Scanˉfunction(
             }
         }
         if Opcode == 222u32 {
-            if Minor != 36u32 { return 0u32; }
+            if Minor != 36u32 && Minor != 37u32 { return 0u32; }
             Width = 13u32;
             Supported = true;
             Unsafeˉwriteˉregionˉinstructions =
                 Unsafeˉwriteˉregionˉinstructions + 1u32;
             if Unsafeˉwriteˉregionˉinstructions > 4096u32 {
+                return 0u32;
+            }
+        }
+        if Opcode == 223u32 {
+            if Minor != 37u32 { return 0u32; }
+            Width = 13u32;
+            Supported = true;
+            Unsafeˉwriteˉpointerˉinstructions =
+                Unsafeˉwriteˉpointerˉinstructions + 1u32;
+            if Unsafeˉwriteˉpointerˉinstructions > 4096u32 {
                 return 0u32;
             }
         }
@@ -281,6 +295,9 @@ export fn Scanˉfunction(
     }
     if Minor == 36u32 {
         Versionˉfeatureˉinstructions = Unsafeˉwriteˉregionˉinstructions;
+    }
+    if Minor == 37u32 {
+        Versionˉfeatureˉinstructions = Unsafeˉwriteˉpointerˉinstructions;
     }
     return Instructions | (Versionˉfeatureˉinstructions << 19u32);
 }

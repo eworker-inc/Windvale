@@ -14,12 +14,12 @@ export async function Testˉwvb(Repositoryˉroot, Cases) {
         win32: [
             "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
             1_255_936,
-            "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
+            "acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6",
         ],
         linux: [
             "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
             1_257_472,
-            "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",
+            "bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f",
         ],
     });
     const Verifier = await Verifyˉartifact(
