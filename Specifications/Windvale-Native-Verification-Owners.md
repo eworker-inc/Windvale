@@ -136,8 +136,10 @@ PowerShell runner and verification-owner name.
 ## Runner contract
 
 Before running a selected owner, the PowerShell runner validates the complete
-registry structure and every host command and shard entry. For each selected
-owner it must:
+registry structure and every host command and shard entry. Node discovery binds
+exactly the first application in host `PATH` order and validates that one
+executable as Node.js 24; multiple installed Node paths must never be combined
+into one command string. For each selected owner it must:
 
 1. emit bounded progress before invoking the child;
 2. invoke exactly the registered host command;

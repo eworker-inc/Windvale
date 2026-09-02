@@ -4649,6 +4649,17 @@ if ($VerificationOwnerProfiles.Count -ne $VerificationDurationProfiles.Count) {
 }
 
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
+$PowerShellTestRunnerSource = Get-Content -Raw -LiteralPath $PowerShellTestRunner
+foreach ($Fragment in @(
+    'Get-Command node -All -CommandType Application',
+    '$Node = $NodeCandidates[0]',
+    '& $Node.Source $StreamHelper'
+)) {
+    if (!$PowerShellTestRunnerSource.Contains(
+            $Fragment, [StringComparison]::Ordinal)) {
+        throw "The PowerShell test runner lacks deterministic Node selection: $Fragment"
+    }
+}
 $TestRunnerResultPath = Join-Path ([IO.Path]::GetTempPath()) (
     'windvale-test-plan-' + [Guid]::NewGuid().ToString('N') + '.json')
 try {

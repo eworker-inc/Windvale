@@ -470,7 +470,14 @@ function Invoke-WindvaleTestRunner {
         return $USAGE_EXIT_CODE
     }
 
-    $Node = Get-Command node -CommandType Application -ErrorAction Stop
+    $NodeCandidates = @(
+        Get-Command node -All -CommandType Application -ErrorAction SilentlyContinue)
+    if ($NodeCandidates.Count -eq 0) {
+        throw 'Node.js 24 is unavailable.'
+    }
+    # Get-Command can return every PATH match on GitHub runners. Preserve PATH
+    # precedence but pass exactly one executable path to the stream helper.
+    $Node = $NodeCandidates[0]
     $NodeVersion = @(& $Node.Source --version 2>&1)
     if ($LASTEXITCODE -ne 0 -or $NodeVersion.Count -ne 1 -or
         $NodeVersion[0] -notmatch '^v24\.[0-9]+\.[0-9]+$') {
