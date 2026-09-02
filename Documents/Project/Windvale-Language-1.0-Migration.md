@@ -2,7 +2,7 @@
 
 > Status: Current candidate migration plan
 > Authority: Informative; linked specifications and decisions own exact contracts
-> Last reviewed: 2026-08-31
+> Last reviewed: 2026-09-02
 
 ## Status
 
@@ -919,6 +919,30 @@ return escape, and scratch reuse. The complete inherited WVB 1.33/1.35 scratch
 oracle remains passing. Scalar/provider and native region execution, pointer
 derivation, authenticated Foreign calls, one migrated runtime or OS boundary,
 Linux reproduction, and paired-host evidence remain pending.
+
+[Decision 0912](../Decisions/0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md)
+opens exact WVB 1.36 write-region validation in the bounded scalar provider.
+Five executions cover aligned success, zero length, address overflow, owner
+range, and alignment rejection after compiler verification. Success retains
+only a private logical subrange descriptor; no native address, pointer, or host
+handle is published.
+
+[Decision 0913](../Decisions/0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md)
+lowers the same five outcomes into one fixed metered native x86-64 sequence and
+preserves the inherited nine-case scratch matrix. The promoted segmented
+toolset, WVB-to-WVO lowerer, and WVB runner reconstruct their Windows and Linux
+candidates byte for byte on Windows. A downstream database run exposed and now
+guards the exact empty-relocation terminal case: the staging producer reaches
+Complete without publishing an empty chunk after the final object bytes.
+
+That database run is a compiler/staging regression result, not a memory-model
+migration claim. It recompiles the current database `.wv` source with the
+current compiler, but the database remains intentionally byte-oriented and
+currently uses the valid immutable `Bytesˉconcat` and `Bytesˉslice` intrinsics.
+It does not yet exercise `Memoryˉbudget`, `Vector`, `Byteˉbuffer`,
+`Bytesˉbuilder`, or unsafe write-region APIs. Required Libraries 1.0 consumers
+must still be migrated and qualified against their explicit memory profiles;
+this is not a request to retain obsolete source or binary compatibility.
 
 [Decision 0908](../Decisions/0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md)
 removes the compiler-scale staging-memory blocker exposed while rebuilding this

@@ -1974,12 +1974,14 @@ The WVB checkpoint serializes that exact WVIR operation as WVB 1.36 opcode
 canonical Result-type, and ABI-enum indexes. The compiler-aligned verifier
 contains the Result and scratch affinely, permits observation of exact Failure
 data, and keeps the Valid region payload inaccessible. The bounded scalar
-provider executes zero-length, address-overflow, owner-range, alignment, and
-success outcomes through a private subrange descriptor with no exposed native
-address. Native region lowering, pointer operations, authenticated Foreign
-calls, host ABI publication, and cross-host containment remain pending. The
-remaining operations below may appear only with their compiler-owned intrinsic
-semantics and containment evidence.
+provider and compiler-verified native x86-64 backend execute zero-length,
+address-overflow, owner-range, alignment, and success outcomes through private
+subrange descriptors with no exposed native address. Native success retains
+only checked logical start and length; it does not form a pointer or grant
+dereference authority. Pointer operations, authenticated Foreign calls, host
+ABI publication, Linux execution, and paired-host containment remain pending.
+The remaining operations below may appear only with their compiler-owned
+intrinsic semantics and containment evidence.
 
 `Foreignˉpointer<T, Abi>` is non-null but remains unsafe and opaque. Non-null
 does not prove alignment, accessible range, initialization, lifetime, aliasing,

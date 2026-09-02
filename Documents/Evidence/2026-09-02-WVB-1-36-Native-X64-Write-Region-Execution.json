@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-wvb-1-36-native-x64-write-region-execution",
+  "date": "2026-09-02",
+  "subject": "WVB 1.36 native x64 write-region execution and tool reconstruction",
+  "claim": "The Windows compiler-aligned path verifies and lowers exact WVB 1.36 Borrow-write-region operations to bounded native x86-64 validation, executes the five required success and failure outcomes without exposing a native address, preserves the inherited scratch matrix, deterministically reconstructs the promoted Windows and Linux candidate artifacts, and preserves relocation-free segmented object publication.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "3f6731b5c64438f3dc8b03b27c4d9159884c3eed"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Compiler-verifier-gated native WVB 1.36 write-region execution",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs and Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-verifier-v3.exe artifacts/local-write-region-runner-v3.exe; node Tools/Native/Test-Language-1.0-Unsafe-Scratch-Wir.mjs artifacts/local-write-region-analyzer-v3.exe artifacts/local-write-region-emitter-v5.exe artifacts/local-write-region-verifier-v3.exe artifacts/local-write-region-runner-v3.exe",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Segmented compiler toolset reconstruction, including relocation-free terminal publication and compiler-scale staging",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter segmented-compiler-toolset-reconstruction",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/Wvo-Staging-Producer.wvb",
+          "size": 728718,
+          "sha256": "80694188b3f62f27851f8e21d04bcd9450bea01f2fc5fb4e67dfe9b137f77d2b"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/windows-x64-wvstage.exe",
+          "size": 10601984,
+          "sha256": "e7ce71d35c2439ecf592206cd76b3b1d884bffc6f464e865a228cbf7c3230aae"
+        },
+        {
+          "path": "Artifacts/Native-Segmented-Compiler-Toolset-Candidate/linux-x64-wvstage.elf",
+          "size": 10604544,
+          "sha256": "131b50ed4da1b3e9514a846730495c2341b1fad62c5ff13d9547953eab503e0e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB-to-WVO candidate reconstruction",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter wvb-to-wvo-reconstruction",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.wvb",
+          "size": 701436,
+          "sha256": "124f968f6d1e6aa71ce3cd9136a4c4df2db6022253404286979fd6c0e26cfe97"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.exe",
+          "size": 10075136,
+          "sha256": "22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf",
+          "size": 10076160,
+          "sha256": "9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB runner candidate reconstruction",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter wvb-runner-reconstruction",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/Wvb-Runner.wvb",
+          "size": 993328,
+          "sha256": "2e7f5390c95e74be2abb06c2b2cbb84d789c3d449a7577c40f9de45157a874a6"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
+          "size": 10127360,
+          "sha256": "c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
+          "size": 10129408,
+          "sha256": "c5db1a90ce58f4807de13ca0082014e9ca09634a9ef487859166f15443e7149d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current-source database regression through the refreshed compiler and native staging path",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter database-storage",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Installed-command dispatch through refreshed compiler artifacts",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter installation-command-dispatch",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVDB Query native capability path through refreshed compiler artifacts",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter wvdb-query-capability",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The native success result retains only checked logical start and length. It does not derive or expose a native pointer and does not authorize a Foreign call.",
+    "The Linux executables were reconstructed byte for byte on Windows but were not executed on a Linux host in this checkpoint; paired-host qualification remains pending.",
+    "The final verification was causal and resumable across affected owners rather than one uninterrupted execution of every repository owner.",
+    "The database owner recompiles current database source and protects database behavior plus compiler/staging integration. The database implementation still uses the current immutable bytes intrinsics and does not exercise Memory-budget, Vector, Byte-buffer, Bytes-builder, or unsafe write-region APIs; this result is not Libraries 1.0 memory-model qualification.",
+    "Pointer derivation, authenticated no-retain Foreign calls, one migrated runtime or operating-system boundary, browser and WebAssembly consumers, and Windvale OS consumers remain pending."
+  ],
+  "related": [
+    "Documents/Decisions/0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Language-1.0-Foundation.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+    "Tools/Native/Test-Segmented-Compiler-Toolset-Reconstruction.cmd"
+  ]
+}
