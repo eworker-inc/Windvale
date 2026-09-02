@@ -53,6 +53,10 @@ products.
 
 ## Measured result
 
+Implementation commit
+`4537c4ca132d1ad9b381238d750b6152230b015d` contains the native lowering,
+focused owner, routing, fixtures, and accepted contract updates.
+
 On the Windows x64 development host, the current 717,047-byte, 648-function
 lowerer WVB compiled in 31 through 35 seconds. Cold current-host packaging took
 about 93 through 100 seconds; an exact warm package hit reduced the complete
@@ -60,6 +64,9 @@ about 93 through 100 seconds; an exact warm package hit reduced the complete
 the already built lowerer completed in 19.4 seconds with five native lowering
 and execution cases. Verification-plan self-tests passed 31 general and 260
 native routing cases.
+
+The machine-readable evidence is
+[`2026-09-02-WVB-1-37-Native-Pointer-And-Focused-Verification.json`](../Evidence/2026-09-02-WVB-1-37-Native-Pointer-And-Focused-Verification.json).
 
 ## Consequences
 

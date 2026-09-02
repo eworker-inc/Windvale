@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-wvb-1-37-native-pointer-and-focused-verification",
+  "date": "2026-09-02",
+  "subject": "Contained WVB 1.37 native pointer lowering and focused current-source verification",
+  "claim": "Implementation commit 4537c4ca132d1ad9b381238d750b6152230b015d lowers the compiler-confined WVB 1.37 write-pointer descriptor to native x86-64 without forming a host address, and its Windows development owner builds the current 648-function lowerer and completes 13 focused cases in 36.85 seconds instead of selecting 21 unrelated owners.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "4537c4ca132d1ad9b381238d750b6152230b015d"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current-source native x86-64 lowerer development owner",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools\\Native\\Test-Verification-Owners.cmd --filter native-x64-lowering-development",
+      "result": "Passed",
+      "elapsedMilliseconds": 36850,
+      "inputs": [
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 22536,
+          "sha256": "fca37f474e1176352ef0d0e47866a42007ada0b0c86d7617ac96d8fd8bfd1842"
+        },
+        {
+          "path": "Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64",
+          "size": 1455,
+          "sha256": "28c3119dcb4b1253d876ec1d96e949f89a02d26235e1281e38c68a79a7b87317"
+        },
+        {
+          "path": "Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64",
+          "size": 2355,
+          "sha256": "3e59b34eb682a70b55e8dacc5abc421bfd64ae3ad6b75dd08aab254785ea52cd"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Changed-file owner selection and registry policy",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Documentation catalogs, retrieval, links, anchors, and active contracts",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The pointer contains only a private packed logical start/length descriptor; no host address or Foreign-call authority is formed.",
+    "The focused owner ran on Windows only; Linux execution and paired-host qualification remain pending.",
+    "The development package cache is not release evidence and fresh deterministic reconstruction remains required at qualification.",
+    "The owner covers current-source compilation, two inherited exact WVO identities, one WVB 1.37 native execution, and ten malformed cases; additional lowerer-owned behavior still requires its own representative cases as that behavior changes.",
+    "Authenticated no-retain Foreign lowering, one real migrated system boundary, required Libraries 1.0 profiles, and final qualification remain pending."
+  ],
+  "related": [
+    "Documents/Decisions/0922-Lower-Contained-WVB-1.37-Write-Pointers-And-Focus-Native-Development-Verification.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Native-X64-Lowering.md",
+    "Specifications/Windvale-Native-Changed-Verification.md",
+    "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs"
+  ]
+}
