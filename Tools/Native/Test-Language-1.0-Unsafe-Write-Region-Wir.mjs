@@ -130,6 +130,7 @@ const Abi =
     'enum Otherˉabi: u8 { Witness = 1u8; } ';
 const Scratchˉtype = 'Unsafe.Foreignˉscratch<Hostˉabi>';
 const Regionˉtype = 'Unsafe.Foreignˉwriteˉregion<Hostˉabi>';
+const Pointerˉtype = 'Unsafe.Foreignˉpointer<u8, Hostˉabi>';
 const Pointerˉfailure = 'Unsafe.Foreignˉpointerˉfailure';
 const Regionˉresult =
     'Result.Result<' + Regionˉtype + ', ' + Pointerˉfailure + '>';
@@ -140,6 +141,8 @@ const Validˉcall =
     'Unsafe.Borrowˉwriteˉregion::<Hostˉabi>(' +
     'Scratch: borrow mut Scratch, Start: 0u64, Length: 64u64, ' +
     'Requiredˉalignment: 8u64)';
+const Validˉpointerˉcall =
+    'Unsafe.Writeˉpointer::<Hostˉabi>(Region: borrow Region)';
 
 function Application(
     Scratchˉparameter,
@@ -170,6 +173,22 @@ function Typeˉapplication() {
         'export fn Main() -> i32 { return 42; }';
 }
 
+function Pointerˉapplication(
+    Regionˉparameter,
+    Call = Validˉpointerˉcall,
+    Resultˉtype = Pointerˉtype,
+    Unsafeˉcontext = true,
+) {
+    const Body = Unsafeˉcontext ?
+        'unsafe { let Pointer: ' + Resultˉtype + ' = ' + Call +
+            '; return 42; }' :
+        'let Pointer: ' + Resultˉtype + ' = ' + Call + '; return 42;';
+    return 'module Languageˉoneˉunsafeˉwriteˉpointer; ' + SYSTEM_HEADER +
+        Imports + Abi + 'export fn Derive(' + Regionˉparameter +
+        ') -> i32 effects(unsafe.address) { ' + Body + ' } ' +
+        'export fn Main() -> i32 { return 42; }';
+}
+
 function Escapingˉapplication() {
     return 'module Languageˉoneˉunsafeˉwriteˉregionˉescape; ' +
         SYSTEM_HEADER + Imports + Abi + 'export fn Escape(Scratch: borrow mut ' +
@@ -196,6 +215,81 @@ const Cases = [
         Expected: 'valid',
         Typeˉonly: true,
         Source: Typeˉapplication(),
+    },
+    {
+        Name: 'valid-canonical-write-pointer',
+        Expected: 'valid',
+        Pointer: true,
+        Malformedˉpointer: true,
+        Writerˉrejected: true,
+        Source: Pointerˉapplication('Region: borrow ' + Regionˉtype),
+    },
+    {
+        Name: 'write-pointer-outside-unsafe-context',
+        Expected: 'Unsafeˉcontextˉrequired',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall,
+            Pointerˉtype,
+            false,
+        ),
+    },
+    {
+        Name: 'write-pointer-by-value-argument',
+        Expected: 'Invalidˉborrow',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall.replace('borrow Region', 'Region'),
+        ),
+    },
+    {
+        Name: 'write-pointer-mutable-borrow-argument',
+        Expected: 'Invalidˉborrow',
+        Source: Pointerˉapplication(
+            'Region: borrow mut ' + Regionˉtype,
+            Validˉpointerˉcall.replace('borrow Region', 'borrow mut Region'),
+        ),
+    },
+    {
+        Name: 'write-pointer-wrong-region-abi',
+        Expected: 'Invalidˉargument',
+        Source: Pointerˉapplication(
+            'Region: borrow Unsafe.Foreignˉwriteˉregion<Otherˉabi>',
+        ),
+    },
+    {
+        Name: 'write-pointer-wrong-result-abi',
+        Expected: 'Genericˉresolution',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall,
+            'Unsafe.Foreignˉpointer<u8, Otherˉabi>',
+        ),
+    },
+    {
+        Name: 'write-pointer-wrong-result-element',
+        Expected: 'Genericˉresolution',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall,
+            'Unsafe.Foreignˉpointer<u32, Hostˉabi>',
+        ),
+    },
+    {
+        Name: 'write-pointer-wrong-explicit-abi',
+        Expected: 'Genericˉresolution',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall.replace('Hostˉabi', 'Otherˉabi'),
+        ),
+    },
+    {
+        Name: 'write-pointer-wrong-region-label',
+        Expected: 'Invalidˉborrow',
+        Source: Pointerˉapplication(
+            'Region: borrow ' + Regionˉtype,
+            Validˉpointerˉcall.replace('Region: borrow', 'Value: borrow'),
+        ),
     },
     {
         Name: 'valid-canonical-write-region',
@@ -396,6 +490,7 @@ const Work = await mkdtemp(join(tmpdir(), 'windvale-unsafe-write-region-wir-'));
 var Valid = 0;
 var Rejected = 0;
 var Malformed = 0;
+var Malformedˉpointer = 0;
 var Malformedˉwvb = 0;
 var Publishedˉwvb = 0;
 var Writerˉrejected = 0;
@@ -432,27 +527,43 @@ try {
                     `status ${Analysis.Code}.\n${Analysis.Diagnostic}`,
                 );
             }
+            var Wirˉbytes = null;
+            if (Case.Typeˉonly !== true &&
+                (Case.Writerˉrejected !== true || Case.Pointer === true)) {
+                Wirˉbytes = await readFile(Wir);
+                if (Case.Pointer === true) {
+                    Inspectˉvalidˉpointerˉwir(Wirˉbytes);
+                } else {
+                    Inspectˉvalidˉwir(Wirˉbytes);
+                }
+            }
             if (Case.Writerˉrejected === true) {
                 if (Emitter !== undefined) {
                     const Output = join(Directory, 'Rejected.wvb');
                     const Emission = await Runˉtool(Emitter, [
                         Source, Manifest, Bindings, Wir, Output,
                     ]);
+                    const Expectedˉwriterˉstatus = Case.Pointer === true ?
+                        'wvb-status=Unsupportedˉoperation' :
+                        'wvb-status=Unsupportedˉshape';
                     if (Emission.Code !== 1 || Emission.Exceeded ||
                         !Emission.Diagnostic.includes(
-                            'wvb-status=Unsupportedˉshape',
+                            Expectedˉwriterˉstatus,
                         )) {
                         Reject(
-                            'The unused mutable scratch parameter did not ' +
+                            `The WVIR-only case ${Case.Name} did not ` +
                             'remain outside candidate WVB 1.36.\n' +
                             Emission.Diagnostic,
                         );
                     }
                     Writerˉrejected += 1;
+                    if (Case.Malformedˉpointer === true) {
+                        Malformedˉpointer += await Verifyˉmalformedˉpointerˉwir(
+                            Directory, Source, Manifest, Bindings, Wirˉbytes,
+                        );
+                    }
                 }
             } else if (Case.Typeˉonly !== true) {
-                const Wirˉbytes = await readFile(Wir);
-                Inspectˉvalidˉwir(Wirˉbytes);
                 if (Emitter !== undefined) {
                     const Output = join(Directory, 'Candidate.wvb');
                     const Emission = await Runˉtool(Emitter, [
@@ -503,6 +614,11 @@ try {
                             Directory, Wvbˉbytes, Wvbˉlayout,
                         );
                     }
+                    if (Case.Malformedˉpointer === true) {
+                        Malformedˉpointer += await Verifyˉmalformedˉpointerˉwir(
+                            Directory, Source, Manifest, Bindings, Wirˉbytes,
+                        );
+                    }
                 }
             }
             Valid += 1;
@@ -525,8 +641,10 @@ try {
     process.stdout.write(
         'native language 1 unsafe write region WVIR status=Passed ' +
         `cases=${Cases.length} valid=${Valid} rejected=${Rejected} ` +
-        `malformed-wvir=${Malformed} malformed-wvb=${Malformedˉwvb} ` +
-        `operation=188 minors=27,28 wvb=1.36 opcode=222 ` +
+        `malformed-wvir=${Malformed} ` +
+        `malformed-pointer-wvir=${Malformedˉpointer} ` +
+        `malformed-wvb=${Malformedˉwvb} ` +
+        `operations=188,189 minors=27,28,29,30 wvb=1.36 opcode=222 ` +
         `published-wvb=${Publishedˉwvb} ` +
         `legacy-front-door=Closed scalar-provider=${Runner === undefined ?
             'Notˉrequested' : 'Verified'} ` +
@@ -1229,6 +1347,107 @@ function Inspectˉvalidˉwir(Input) {
     }
 }
 
+function Inspectˉvalidˉpointerˉwir(Input) {
+    if (Input.length < 64 || Input.length > MAXIMUM_WIR_BYTES ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVIR' ||
+        Input.readUInt16LE(4) !== 1 ||
+        (Input.readUInt16LE(6) !== 29 && Input.readUInt16LE(6) !== 30) ||
+        Input.readUInt32LE(12) !== 48 || Input.readUInt32LE(20) !== 28 ||
+        Input.readUInt32LE(28) !== 28 || Input.readUInt32LE(36) !== 4 ||
+        Input.readUInt32LE(44) !== 4) {
+        Reject('The valid write-pointer analysis did not publish exact WVIR.');
+    }
+    const Headerˉbytes = Input.readUInt16LE(6) === 30 ? 64 : 56;
+    const Functions = Input.readUInt32LE(8);
+    const Blocks = Input.readUInt32LE(16);
+    const Operations = Input.readUInt32LE(24);
+    const Temporaries = Input.readUInt32LE(32);
+    const Operands = Input.readUInt32LE(40);
+    const Operationsˉoffset = Headerˉbytes + Functions * 48 + Blocks * 28;
+    const Temporariesˉoffset = Operationsˉoffset + Operations * 28;
+    const Operandsˉoffset = Temporariesˉoffset + Temporaries * 4;
+    if (Operandsˉoffset > Input.length ||
+        Operands > Math.floor((Input.length - Operandsˉoffset) / 4)) {
+        Reject('The write-pointer WVIR directories exceed the file.');
+    }
+    const Matches = [];
+    for (let Index = 0; Index < Operations; Index += 1) {
+        const Entry = Operationsˉoffset + Index * 28;
+        if (Input.readUInt16LE(Entry + 4) === 189) Matches.push(Entry);
+    }
+    if (Matches.length !== 1) {
+        Reject('The valid write-pointer WVIR must contain operation 189 once.');
+    }
+    const Operation = Matches[0];
+    const Operationˉindex = (Operation - Operationsˉoffset) / 28;
+    var Localˉlimit = 0;
+    for (let Index = 0; Index < Functions; Index += 1) {
+        const Function = Headerˉbytes + Index * 48;
+        const First = Input.readUInt32LE(Function + 12);
+        const Count = Input.readUInt32LE(Function + 16);
+        if (Operationˉindex >= First && Operationˉindex - First < Count) {
+            Localˉlimit = Input.readUInt32LE(Function + 36) +
+                Input.readUInt32LE(Function + 40);
+        }
+    }
+    const Shape = Input.readUInt32LE(Operation + 8);
+    const Temporary = Input.readUInt32LE(Operation + 12);
+    const Firstˉoperand = Input.readUInt32LE(Operation + 16);
+    const Target = Input.readUInt32LE(Operation + 20);
+    const Abiˉshape = Input.readUInt32LE(Operation + 24);
+    if (Input.readUInt16LE(Operation + 6) !== 0 || Shape < 0x8000_0000 ||
+        Temporary >= Temporaries || Firstˉoperand > Operands ||
+        Target >= Localˉlimit || Abiˉshape < 131_072 ||
+        Abiˉshape >= 196_608 ||
+        Input.readUInt32LE(Temporariesˉoffset + Temporary * 4) !== Shape) {
+        Reject('The write-pointer operation header evidence differs.');
+    }
+}
+
+async function Verifyˉmalformedˉpointerˉwir(
+    Directory,
+    Source,
+    Manifest,
+    Bindings,
+    Canonical,
+) {
+    const Operation = Findˉwriteˉpointerˉoperation(Canonical);
+    const Operands = Canonical.readUInt32LE(40);
+    const Mutations = [
+        ['pointer-lower-minor', Value => Value.writeUInt16LE(28, 6)],
+        ['pointer-wrong-operation', Value => Value.writeUInt16LE(188, Operation + 4)],
+        ['pointer-wrong-operand-count', Value => Value.writeUInt16LE(1, Operation + 6)],
+        ['pointer-wrong-result-shape', Value => Value.writeUInt32LE(8, Operation + 8)],
+        ['pointer-wrong-first-operand', Value => Value.writeUInt32LE(Operands + 1, Operation + 16)],
+        ['pointer-wrong-region-slot', Value => Value.writeUInt32LE(0xffff_ffff, Operation + 20)],
+        ['pointer-wrong-abi-shape', Value => Value.writeUInt32LE(3, Operation + 24)],
+    ];
+    for (let Index = 0; Index < Mutations.length; Index += 1) {
+        const [Name, Mutate] = Mutations[Index];
+        process.stdout.write(
+            'native language 1 unsafe write pointer malformed ' +
+            `item=${Index + 1}/${Mutations.length} case=${Name} ` +
+            'status=Started\n',
+        );
+        const Candidate = Buffer.from(Canonical);
+        Mutate(Candidate);
+        const Wir = join(Directory, `Malformed-${Name}.wvir`);
+        const Output = join(Directory, `Malformed-${Name}.wvb`);
+        await writeFile(Wir, Candidate, { flag: 'wx' });
+        const Emission = await Runˉtool(Emitter, [
+            Source, Manifest, Bindings, Wir, Output,
+        ]);
+        if (Emission.Code !== 1 || Emission.Exceeded ||
+            !Emission.Diagnostic.includes('analysis-status=Invalidˉwir')) {
+            Reject(
+                `Malformed write-pointer case ${Name} was not rejected by ` +
+                `independent WVIR validation.\n${Emission.Diagnostic}`,
+            );
+        }
+    }
+    return Mutations.length;
+}
+
 async function Verifyˉmalformedˉwir(
     Directory,
     Source,
@@ -1291,6 +1510,28 @@ function Findˉwriteˉregionˉoperation(Input) {
     }
     if (Found === -1) {
         Reject('The valid write-region WVIR is missing operation 188.');
+    }
+    return Found;
+}
+
+function Findˉwriteˉpointerˉoperation(Input) {
+    const Headerˉbytes = Input.readUInt16LE(6) === 30 ? 64 : 56;
+    const Functions = Input.readUInt32LE(8);
+    const Blocks = Input.readUInt32LE(16);
+    const Operations = Input.readUInt32LE(24);
+    const Operationsˉoffset = Headerˉbytes + Functions * 48 + Blocks * 28;
+    var Found = -1;
+    for (let Index = 0; Index < Operations; Index += 1) {
+        const Entry = Operationsˉoffset + Index * 28;
+        if (Input.readUInt16LE(Entry + 4) === 189) {
+            if (Found !== -1) {
+                Reject('The valid write-pointer WVIR contains duplicate operation 189.');
+            }
+            Found = Entry;
+        }
+    }
+    if (Found === -1) {
+        Reject('The valid write-pointer WVIR is missing operation 189.');
     }
     return Found;
 }

@@ -1676,6 +1676,45 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             );
         }
     }
+    if Query.Nameˉlength == 14u32 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset) == 87u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 1u32) == 114u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 2u32) == 105u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 3u32) == 116u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 4u32) == 101u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 5u32) == 203u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 6u32) == 137u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 7u32) == 112u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 8u32) == 111u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 9u32) == 105u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 10u32) == 110u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 11u32) == 116u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 12u32) == 101u8 &&
+        Bytesˉreadˉu8(Source, Query.Nameˉoffset + 13u32) == 114u8 &&
+        Query.Qualified && Query.Aliasˉfound &&
+        Query.Target < Scan.Modules {
+        let Pointerˉunsafeˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Query.Target);
+        let Pointerˉunsafeˉheader:
+            Sourceˉdeclarations.Compilerˉsourceˉheader =
+            Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(
+                Pointerˉunsafeˉview.Source
+            );
+        if Pointerˉunsafeˉview.Edition == 1u32 &&
+                Pointerˉunsafeˉheader.Profile ==
+                Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+                Pointerˉunsafeˉview.Source,
+                Pointerˉunsafeˉheader.Nameˉoffset,
+                Pointerˉunsafeˉheader.Nameˉlength,
+                "Foundationˉunsafe"
+            ) {
+            return Compilerˉsourceˉbindingˉmatch(
+                true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+                Query.Target, 1u32, 189u32
+            );
+        }
+    }
     if Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(Source, Query) {
     let Taskˉconstructˉmodule:
         Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
