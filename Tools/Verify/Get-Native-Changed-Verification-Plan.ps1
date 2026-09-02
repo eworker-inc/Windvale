@@ -1625,6 +1625,13 @@ foreach ($Path in $Paths) {
         'Documents/Decisions/0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md') {
         Add-Suite 'language-1-authenticated-foreign-binding'
         continue
+    } elseif ($Path -eq
+        'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md') {
+        Add-Suite @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
+        continue
     } elseif ($Path -in @(
         'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
         'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md'
@@ -1695,7 +1702,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'language-1-authenticated-foreign-binding'
     } elseif ($Path -eq
         'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv') {
-        Add-Suite 'language-1-production-admission-ingress'
+        Add-Suite @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
     } elseif ($Path -in @(
         'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
         'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
@@ -4071,7 +4081,10 @@ foreach ($Path in $Paths) {
             Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
         } elseif ($Path -eq
             'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md') {
-            Add-Suite 'language-1-authenticated-foreign-binding'
+            Add-Suite @(
+                'language-1-production-admission-ingress',
+                'language-1-authenticated-foreign-binding'
+            )
         } elseif ($Path -eq 'Specifications/Compiler-Source-Body-Parser.md') {
             Add-Compiler-Suites
             Add-Suite @(

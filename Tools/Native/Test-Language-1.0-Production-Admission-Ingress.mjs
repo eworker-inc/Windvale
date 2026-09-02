@@ -32,8 +32,8 @@ const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
 const EXPECTED_COORDINATOR = Object.freeze({
-    bytes: 48_199,
-    sha256: '0133ccbd14f0cdc7e7998c996830424ac3d0f2bec9d38df0d7bfaacb97b69634',
+    bytes: 52_088,
+    sha256: 'fa052cd49fb03189bf5be6016e70ec2a0ee4e007b5a248496ab62c8a1e57cb19',
 });
 
 const PINNED_COMPILER = Object.freeze({
@@ -401,6 +401,7 @@ async function Verifyˉcontracts() {
         "'--foreign-binder'", "'source-authentication'",
         "'source-foreign-binding'", "'source-analysis'",
         'Foreignˉloweringˉpending', 'Analyzed.wvss',
+        'Foreign-Bindings.wvfb', 'Requireˉforeignˉloweringˉcarrier',
         'Buildˉforeignˉbindingˉevidence',
         'foreign-binder evidence does not exactly match',
         'retained authenticated inputs',
@@ -433,6 +434,8 @@ async function Verifyˉcontracts() {
     ]) Require(Analyzer.includes(Required), `Analyzer ingress lacks ${Required}.`);
     for (const Required of [
         'Usage: wvbind ', 'Compilerˉbindˉsourceˉforeignˉdeclarations',
+        'file.write_bytes(process.argument(3u32), Bound.Loweringˉcarrier)',
+        'carrier-sha256=',
     ]) Require(Binder.includes(Required), `Binder ingress lacks ${Required}.`);
 }
 
@@ -477,10 +480,32 @@ async function Writeˉsentinelˉinputs(Work) {
     await Promise.all([
         writeFile(Paths.lock, 'lock', { flag: 'wx' }),
         writeFile(Paths.profile, 'profile', { flag: 'wx' }),
-        writeFile(Paths.target, Buffer.alloc(64), { flag: 'wx' }),
+        writeFile(Paths.target, Constructˉwvtd(), { flag: 'wx' }),
         writeFile(Paths.source, 'module Sentinel;', { flag: 'wx' }),
     ]);
     return { ...Paths, lockDigest: '0'.repeat(64) };
+}
+
+function Sentinelˉforeignˉbindingˉvalues() {
+    return "const[s,t,c]=await Promise.all(a.slice(0,3).map(p=>readFile(p)));" +
+        "const n=c.readUInt32LE(12);const b=Buffer.alloc(56+n*80);" +
+        "b.write('WVFB',0,4,'ascii');b.writeUInt16LE(1,4);" +
+        "b.writeUInt32LE(56,8);b.writeUInt32LE(80,12);" +
+        "b.writeUInt32LE(n,16);b.writeUInt32LE(b.length,20);" +
+        "for(let i=0;i<7;i++)b.writeUInt32LE(t.readUInt32LE(12+i*4),24+i*4);" +
+        "const f=[1,1,1,3,256,3,4,1,1,2,2,3,7,0,0,0];" +
+        "for(let i=0;i<n;i++){const o=56+i*80;const q=48+i*96;" +
+        "b.writeUInt32LE(c.readUInt32LE(q),o);" +
+        "b.writeUInt32LE(c.readUInt32LE(q+4),o+4);" +
+        "b.writeUInt32LE(i,o+8);b.writeUInt32LE(i,o+12);" +
+        "for(let j=0;j<f.length;j++)b.writeUInt32LE(f[j],o+16+j*4);}" +
+        "let published=b;const h=x=>createHash('sha256').update(x).digest('hex');" +
+        "const evidence=()=>('foreign binding status=Published '+" +
+        "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
+        "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
+        "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
+        "`carrier-bytes=${published.length} carrier-sha256=${h(published)} `+" +
+        "`foreign-count=${n}\\n`);";
 }
 
 async function Writeˉsentinelˉpipeline(
@@ -495,15 +520,24 @@ async function Writeˉsentinelˉpipeline(
     const Admitterˉfailure = Fail('wvadmit');
     const Validatorˉfailure = Fail('validator');
     const Analyzerˉfailure = Fail('Analyzer');
+    const Admitterˉbody = Admitterˉfailure ??
+        "const a=process.argv.slice(2);await copyFile(a[8],a[9]);" +
+        "await copyFile(a[6],a[10]);" +
+        `const c=Constructˉcatalog(${Catalogˉrecords});` +
+        "await writeFile(a[11],c,{flag:'wx'});" +
+        "await writeFile(a[12],Buffer.alloc(224),{flag:'wx'});" +
+        "process.stdout.write('admission ok\\n');";
     const Admitter = await Writeˉproductˉsentinel(Work, 'Sentinel-admitter',
         `import{copyFile,writeFile}from'node:fs/promises';` +
         `await writeFile(${JSON.stringify(Marker('wvadmit'))},Buffer.alloc(0),` +
-        `{flag:'a'});${Admitterˉfailure ??
-            "const a=process.argv.slice(2);await copyFile(a[8],a[9]);" +
-            "await copyFile(a[6],a[10]);const c=Buffer.alloc(48);" +
-            `c.writeUInt32LE(${Catalogˉrecords},12);await writeFile(a[11],c,` +
-            "{flag:'wx'});await writeFile(a[12],Buffer.alloc(224),{flag:'wx'});" +
-            "process.stdout.write('admission ok\\n');"}\n`);
+        `{flag:'a'});${Admitterˉbody}\n` +
+        "function Constructˉcatalog(n){const c=Buffer.alloc(48+n*96);" +
+        "c.write('WVFC',0,4,'ascii');c.writeUInt16LE(1,4);" +
+        "c.writeUInt32LE(c.length,8);c.writeUInt32LE(n,12);" +
+        "c.writeUInt32LE(96,16);c.writeUInt32LE(48,20);" +
+        "c.writeUInt32LE(1,24);for(let i=0;i<n;i++){const o=48+i*96;" +
+        "c.writeUInt32LE(i,o+4);c.writeUInt32LE(1,o+8);" +
+        "c.writeUInt32LE(1,o+12);}return c;}\n");
     const Validator = await Writeˉproductˉsentinel(Work, 'Sentinel-validator',
         `import{writeFile}from'node:fs/promises';` +
         `await writeFile(${JSON.stringify(Marker('validator'))},Buffer.alloc(0),` +
@@ -524,13 +558,9 @@ async function Writeˉsentinelˉpipeline(
         `import{readFile,writeFile}from'node:fs/promises';` +
         `const a=process.argv.slice(2);await writeFile(` +
         `${JSON.stringify(Marker('foreignBinding'))},Buffer.alloc(0),{flag:'a'});` +
-        `const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));` +
-        `const h=b=>createHash('sha256').update(b).digest('hex');` +
-        "process.stdout.write('foreign binding status=Published '+" +
-        "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
-        "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
-        "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
-        "`foreign-count=${c.readUInt32LE(12)}\\n`);\n"
+        Sentinelˉforeignˉbindingˉvalues() +
+        "await writeFile(a[3],published,{flag:'wx'});" +
+        "process.stdout.write(evidence());\n"
     );
     const Emitter = await Writeˉproductˉsentinel(Work, 'Sentinel-emitter',
         `import{writeFile}from'node:fs/promises';` +
@@ -1368,14 +1398,9 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
     ) && !await lstat(Missingˉbinderˉoutput).then(() => true, () => false),
     'A nonempty catalog without wvbind crossed the authenticated boundary.');
 
-    const Exactˉevidenceˉsource =
-        "const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));" +
-        "const h=b=>createHash('sha256').update(b).digest('hex');" +
-        "const e='foreign binding status=Published '+" +
-        "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
-        "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
-        "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
-        "`foreign-count=${c.readUInt32LE(12)}\\n`;";
+    const Exactˉevidenceˉsource = Sentinelˉforeignˉbindingˉvalues() +
+        "await writeFile(a[3],published,{flag:'wx'});" +
+        "const e=evidence();";
     for (const [Name, Body, Expectedˉdiagnostic] of [
         [
             'missing-evidence', '',
@@ -1397,20 +1422,17 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
                 'authenticated inputs.',
         ],
         [
-            'partial-evidence', Exactˉevidenceˉsource +
-                'process.stdout.write(e.slice(0,-1));',
+            'partial-evidence', 'process.stdout.write(e.slice(0,-1));',
             'The foreign-binder evidence does not exactly match the retained ' +
                 'authenticated inputs.',
         ],
         [
-            'duplicated-evidence', Exactˉevidenceˉsource +
-                'process.stdout.write(e+e);',
+            'duplicated-evidence', 'process.stdout.write(e+e);',
             'The foreign-binder evidence does not exactly match the retained ' +
                 'authenticated inputs.',
         ],
         [
-            'extra-evidence', Exactˉevidenceˉsource +
-                "process.stdout.write(e+'extra\\n');",
+            'extra-evidence', "process.stdout.write(e+'extra\\n');",
             'The foreign-binder evidence does not exactly match the retained ' +
                 'authenticated inputs.',
         ],
@@ -1428,7 +1450,9 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
             "import{readFile,writeFile}from'node:fs/promises';" +
             `const a=process.argv.slice(2);await writeFile(` +
             `${JSON.stringify(Pipeline.markers.foreignBinding)},Buffer.alloc(0),` +
-            `{flag:'a'});${Body}\n`
+            `{flag:'a'});${Name === 'missing-evidence'
+                ? ''
+                : Exactˉevidenceˉsource}${Body}\n`
         );
         const Result = await Runˉsentinelˉcoordinator(
             Caseˉwork, Pipeline.products, Inputs, Output,
@@ -1445,6 +1469,74 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
             () => true, () => false
         ) && !await lstat(Output).then(() => true, () => false),
         `Invalid foreign-binding ${Name} crossed the boundary: ${Diagnostic}`);
+    }
+
+    for (const [Name, Mutation, Writeˉcarrier, Expectedˉdiagnostic] of [
+        [
+            'missing-carrier', '', false,
+            'The foreign lowering carrier is not a bounded ordinary file',
+        ],
+        [
+            'truncated-carrier',
+            'published=published.subarray(0,published.length-1);', true,
+            'The foreign lowering carrier is not a bounded ordinary file',
+        ],
+        [
+            'wrong-carrier-target',
+            'published=Buffer.from(published);published.writeUInt32LE(1,24);',
+            true,
+            'The foreign lowering carrier target does not match the retained ' +
+                'authenticated target.',
+        ],
+        [
+            'remapped-carrier-record',
+            'published=Buffer.from(published);published.writeUInt32LE(1,56);',
+            true,
+            'The foreign lowering carrier records do not match the retained ' +
+                'authenticated catalog.',
+        ],
+        [
+            'unsupported-carrier-fact',
+            'published=Buffer.from(published);published.writeUInt32LE(0,72);',
+            true,
+            'The foreign lowering carrier contains an unsupported normalized ' +
+                'callable fact.',
+        ],
+    ]) {
+        const Caseˉwork = join(Work, `Sentinel-foreign-binding-${Name}`);
+        await mkdir(Caseˉwork);
+        const Inputs = await Writeˉsentinelˉinputs(Caseˉwork);
+        const Output = join(Caseˉwork, 'Foreign.wvb');
+        const Pipeline = await Writeˉsentinelˉpipeline(
+            Caseˉwork, null, Output, 1
+        );
+        Pipeline.products.wvbind = await Writeˉproductˉsentinel(
+            Caseˉwork, `Invalid-foreign-binding-${Name}`,
+            "import{createHash}from'node:crypto';" +
+            "import{readFile,writeFile}from'node:fs/promises';" +
+            `const a=process.argv.slice(2);await writeFile(` +
+            `${JSON.stringify(Pipeline.markers.foreignBinding)},Buffer.alloc(0),` +
+            "{flag:'a'});" + Sentinelˉforeignˉbindingˉvalues() + Mutation +
+            (Writeˉcarrier
+                ? "await writeFile(a[3],published,{flag:'wx'});"
+                : '') +
+            "process.stdout.write(evidence());\n"
+        );
+        const Result = await Runˉsentinelˉcoordinator(
+            Caseˉwork, Pipeline.products, Inputs, Output,
+            `${CASES[1]}-${Name}`, 5_000
+        );
+        const Diagnostic = Buffer.concat([Result.output, Result.error])
+            .toString('utf8');
+        Require(Result.code !== 0 && Diagnostic.includes(Expectedˉdiagnostic) &&
+            await lstat(Pipeline.markers.foreignBinding).then(
+                () => true, () => false
+            ) && !await lstat(Pipeline.markers.Analyzer).then(
+                () => true, () => false
+            ) && !await lstat(Pipeline.markers.emitter).then(
+                () => true, () => false
+            ) && !await lstat(Output).then(() => true, () => false),
+        `Invalid foreign carrier ${Name} crossed the boundary: ${Diagnostic}`);
     }
 
     for (const [Name, Pathˉexpression, Label] of [
@@ -1471,15 +1563,12 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
             "import{dirname,join}from'node:path';" +
             `const a=process.argv.slice(2);await writeFile(` +
             `${JSON.stringify(Pipeline.markers.foreignBinding)},Buffer.alloc(0),` +
-            "{flag:'a'});const[s,t,c]=await Promise.all(a.map(p=>readFile(p)));" +
-            "const h=b=>createHash('sha256').update(b).digest('hex');" +
-            `const p=${Pathˉexpression};const b=await readFile(p);` +
-            "b[b.length-1]^=1;await chmod(p,0o600);await writeFile(p,b);" +
-            "process.stdout.write('foreign binding status=Published '+" +
-            "`source-bytes=${s.length} source-sha256=${h(s)} `+" +
-            "`target-bytes=${t.length} target-sha256=${h(t)} `+" +
-            "`catalog-bytes=${c.length} catalog-sha256=${h(c)} `+" +
-            "`foreign-count=${c.readUInt32LE(12)}\\n`);\n"
+            "{flag:'a'});" + Sentinelˉforeignˉbindingˉvalues() +
+            "await writeFile(a[3],published,{flag:'wx'});" +
+            `const p=${Pathˉexpression};const mutated=await readFile(p);` +
+            "mutated[mutated.length-1]^=1;await chmod(p,0o600);" +
+            "await writeFile(p,mutated);" +
+            "process.stdout.write(evidence());\n"
         );
         const Result = await Runˉsentinelˉcoordinator(
             Caseˉwork, Pipeline.products, Inputs, Output,

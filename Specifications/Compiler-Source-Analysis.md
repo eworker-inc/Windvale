@@ -211,7 +211,7 @@ causes the coordinator to recheck all six retained snapshots and then invokes
 the private hosted compiler binder:
 
 ```text
-wvbind <input.wvss> <input.wvtd> <input.wvfc>
+wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>
 ```
 
 The compiler-owned adapter in `wvbind` treats WVSS, WVTD, and WVFC as
@@ -219,28 +219,34 @@ untrusted. It validates their structure and source/catalog correspondence,
 requires the exact supported target, constructs conditional WVSD 1.2/WVSI 1.3
 symbols, completes direct-call binding, and checks every normalized Foreign
 callable fact. A successful result is semantic fact evidence only: `wvbind`
-accepts no WVAE, lock, or profile, publishes no authentication marker or
-successor file, and has no admission authority.
+accepts no WVAE, lock, or profile, publishes no authentication marker, and has
+no admission authority. Its one successor WVFB is a private typed-fact carrier,
+not authentication material.
 
 Only after complete binding success does `wvbind` write one exact bounded
 canonical line to standard output:
 
 ```text
-foreign binding status=Published source-bytes=<decimal-u32> source-sha256=<64-lowercase-hex> target-bytes=<decimal-u32> target-sha256=<64-lowercase-hex> catalog-bytes=<decimal-u32> catalog-sha256=<64-lowercase-hex> foreign-count=<decimal-u32>\n
+foreign binding status=Published source-bytes=<decimal-u32> source-sha256=<64-lowercase-hex> target-bytes=<decimal-u32> target-sha256=<64-lowercase-hex> catalog-bytes=<decimal-u32> catalog-sha256=<64-lowercase-hex> carrier-bytes=<decimal-u32> carrier-sha256=<64-lowercase-hex> foreign-count=<decimal-u32>\n
 ```
 
 The lengths and digests describe the three byte values actually consumed by
-`wvbind`; `foreign-count` is the validated WVFC record count. The coordinator
-independently constructs the expected line from its retained WVSS, WVTD, and
-WVFC bytes and requires byte-for-byte equality, including the one final newline
-and the absence of prefix, suffix, alternate spelling, or additional output.
-Under the current input and catalog bounds the exact line is at most 351 UTF-8
-bytes. The coordinator then rechecks all six retained snapshots again, reports
+`wvbind` and the one WVFB value it produced; `foreign-count` is the validated
+WVFC record count. The coordinator requires the output path to be a new,
+bounded, single-link private file and independently validates the WVFB header,
+exact length, target identity, record order, catalog correlation, and supported
+lowering facts before retaining it. It then constructs the expected line from
+its retained WVSS, WVTD, WVFC, and WVFB bytes and requires byte-for-byte
+equality, including the one final newline and the absence of prefix, suffix,
+alternate spelling, or additional output. Under the current input and catalog
+bounds the exact line is at most 447 UTF-8 bytes. The coordinator then rechecks
+all six retained input snapshots and the retained WVFB snapshot again, reports
 exact `Foreignˉloweringˉpending`, and launches neither ordinary analysis
-publication nor the emitter. Missing, malformed, mismatched, partial,
-duplicated, extra, or oversized success output is failure, never transferable
-success. Direct `wvbind` invocation produces only non-authoritative digest
-evidence and cannot establish authentication or authorize later publication.
+publication nor the emitter. A missing, linked, malformed, mismatched, partial,
+duplicated, extra, or oversized carrier or success output is failure, never
+transferable success. Direct `wvbind` invocation produces only
+non-authoritative digest evidence and a private semantic carrier; it cannot
+establish authentication or authorize later publication.
 
 For an empty catalog, the coordinator instead rechecks the retained snapshot
 bytes and invokes the Analyzer's explicitly non-authoritative source-set route:
@@ -305,8 +311,10 @@ Optimization is not an implicit command-line mode; a later optimized product
 must have a distinct target and producer identity.
 
 The private `wvbind` product is an additional bounded compiler-owned stop inside
-that same front door, not a public admitted-source interface. Its currently
-supported target is exactly Linux x86-64, little-endian,
+that same front door, not a public admitted-source interface. The coordinator
+now retains its independently validated WVFB output but does not pass it to the
+Analyzer or emitter. Its currently supported target is exactly Linux x86-64,
+little-endian,
 `sysv_amd64_c_v1`, 64 address bits, and no-unwind C scalar-pointer contract
 major `1`. A structure-valid descriptor differing in any selected field is
 unsupported. Foreign call lowering, WVIR/WVLB/WVCA publication for such a call,

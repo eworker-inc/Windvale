@@ -4,9 +4,11 @@
 
 Candidate private compiler-phase contract, WVFB 1.0, on 2026-09-02. The
 compiler-owned binder constructs and independently validates this carrier after
-complete source, target, catalog, symbol, and body binding. No production
-coordinator or emitter consumes it yet, so authenticated Foreign-call lowering
-and execution remain unavailable.
+complete source, target, catalog, symbol, and body binding. The hosted driver
+publishes it only to a coordinator-selected private path, and the coordinator
+independently validates and retains that exact file. No Analyzer or emitter
+consumes it yet, so authenticated Foreign-call lowering and execution remain
+unavailable.
 
 ## Purpose and authority
 
@@ -23,8 +25,8 @@ retained authenticated inputs and independently match its records to the paired
 WVLB/WVIR identities before it may guide lowering.
 
 All integers are unsigned little-endian values. All reserved fields must be
-zero. The complete value is exactly `56 + RecordCount * 80` bytes and is bounded
-to 5,176 bytes.
+zero. The complete value is exactly `56 + RecordCount * 80` bytes, is at least
+136 bytes, and is bounded to 5,176 bytes.
 
 ## Header
 
@@ -101,11 +103,39 @@ record, and byte offset. An invalid result returns an empty value. Successful
 validation returns the unchanged input bytes, record count, record-count
 sentinel as the failure record, and zero failure offset.
 
-## Current containment
+## Hosted publication and current containment
 
-The current binder returns WVFB only on complete success and returns an empty
-carrier for every failure. The existing `wvbind` driver still publishes only
-its retained-input digest line, and the production coordinator still stops at
-`Foreignˉloweringˉpending`. WVFB 1.0 does not add a WVIR operation, WVB import,
-runtime operation, native thunk, symbol resolution, dynamic-library load, or
-provider call.
+The binder returns WVFB only on complete success and returns an empty carrier
+for every failure. The hosted driver accepts exactly:
+
+```text
+wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>
+```
+
+All four paths must be distinct. Only after complete binding does the driver
+write the carrier and one exact standard-output line:
+
+```text
+foreign binding status=Published source-bytes=<u32> source-sha256=<hex> target-bytes=<u32> target-sha256=<hex> catalog-bytes=<u32> catalog-sha256=<hex> carrier-bytes=<u32> carrier-sha256=<hex> foreign-count=<u32>\n
+```
+
+The line is at most 447 UTF-8 bytes under the current input bounds. It names the
+bytes consumed and produced by that invocation but remains non-authoritative.
+
+The production coordinator supplies a new path inside its private phase
+directory. After `wvbind` exits successfully, it requires one ordinary,
+single-link, 136-through-5,176-byte file and makes it read-only. It independently
+checks the complete WVFB header and record geometry; exact retained WVTD target
+tuple; record count; WVFC module, declaration, and record mapping; strictly
+increasing module and WVSD directory identities; and every fixed callable fact.
+It snapshots the carrier, constructs the expected evidence line from its own
+retained WVSS, WVTD, WVFC, and WVFB bytes, requires byte-for-byte equality, and
+then rechecks the original six authenticated snapshots plus WVFB identity and
+bytes. Any missing, aliased, linked, malformed, substituted, or changed carrier
+fails closed and the private tree is removed.
+
+The coordinator still stops at `Foreignˉloweringˉpending` without launching the
+Analyzer or emitter. Direct `wvbind` invocation cannot establish the preceding
+authentication relationship or grant authority. WVFB 1.0 does not add a WVIR
+operation, WVB import, runtime operation, native thunk, symbol resolution,
+dynamic-library load, or provider call.

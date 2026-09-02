@@ -697,7 +697,10 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 hosted foreign binding driver source routing'
         Paths = @('Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv')
-        Suites = @('language-1-production-admission-ingress')
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -752,7 +755,6 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv',
-            'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.cmd',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.sh'
@@ -762,8 +764,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Language 1.0 authenticated foreign lowering carrier contract routing'
+        Paths = @('Specifications/Compiler-Source-Foreign-Lowering-Carrier.md')
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 authenticated foreign binding production routing'
-        Paths = @('Documents/Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md')
+        Paths = @(
+            'Documents/Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md',
+            'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md'
+        )
         Suites = @(
             'language-1-production-admission-ingress',
             'language-1-authenticated-foreign-binding'

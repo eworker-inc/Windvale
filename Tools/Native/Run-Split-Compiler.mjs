@@ -28,6 +28,12 @@ const WVTD_MINIMUM_BYTES = 64;
 const WVTD_MAXIMUM_BYTES = 320;
 const WVAE_BYTES = 224;
 const WVFC_MINIMUM_BYTES = 48;
+const WVFB_HEADER_BYTES = 56;
+const WVFB_RECORD_BYTES = 80;
+const WVFB_MINIMUM_BYTES = WVFB_HEADER_BYTES + WVFB_RECORD_BYTES;
+const WVFB_MAXIMUM_RECORDS = 64;
+const WVFB_MAXIMUM_BYTES =
+    WVFB_HEADER_BYTES + WVFB_MAXIMUM_RECORDS * WVFB_RECORD_BYTES;
 const PRODUCER_TIMEOUT_MILLISECONDS = Readˉproducerˉtimeout();
 const TEST_HOOKS = Readˉtestˉhooks();
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
@@ -214,6 +220,7 @@ try {
         const Admittedˉtarget = path.join(Temporary, 'Admitted.wvtd');
         const Catalog = path.join(Temporary, 'Catalog.wvfc');
         const Evidence = path.join(Temporary, 'Evidence.wvae');
+        const Foreignˉcarrier = path.join(Temporary, 'Foreign-Bindings.wvfb');
 
         const Inputˉsourceˉbytes = Buildˉwvss1(Inputˉsnapshots.sources);
         await Writeˉprivateˉsnapshot(
@@ -336,11 +343,24 @@ try {
             }
             const Bindingˉevidence = await Runˉrequired(
                 Foreignˉbinder,
-                [Sourceˉset, Admittedˉtarget, Catalog],
+                [Sourceˉset, Admittedˉtarget, Catalog, Foreignˉcarrier],
                 'source-foreign-binding',
             );
+            await Requireˉprivateˉphaseˉfile(
+                Foreignˉcarrier, WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
+                Temporary, 'foreign lowering carrier'
+            );
+            const Retainedˉcarrier = await Readˉordinaryˉsnapshot(
+                Foreignˉcarrier, WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
+                'foreign lowering carrier'
+            );
+            Requireˉforeignˉloweringˉcarrier(
+                Retainedˉcarrier.bytes, Retained
+            );
             const Expectedˉbindingˉevidence =
-                Buildˉforeignˉbindingˉevidence(Retained);
+                Buildˉforeignˉbindingˉevidence(
+                    Retained, Retainedˉcarrier.bytes
+                );
             if (!Bindingˉevidence.equals(Expectedˉbindingˉevidence)) {
                 Reject(
                     'The foreign-binder evidence does not exactly match the ' +
@@ -372,6 +392,11 @@ try {
             await Requireˉretainedˉsnapshot(
                 Profile, Retainedˉinputs.profile, 1, MAXIMUM_PROFILE_BYTES,
                 'source profile'
+            );
+            await Requireˉretainedˉsnapshot(
+                Foreignˉcarrier, Retainedˉcarrier,
+                WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
+                'foreign lowering carrier'
             );
             throw new Splitˉcompilerˉfailure(
                 1,
@@ -556,7 +581,7 @@ function Buildˉwvss1(Sources) {
     return Result;
 }
 
-function Buildˉforeignˉbindingˉevidence(Retained) {
+function Buildˉforeignˉbindingˉevidence(Retained, Carrier) {
     const Digest = Value =>
         createHash('sha256').update(Value).digest('hex');
     return Buffer.from(
@@ -567,9 +592,69 @@ function Buildˉforeignˉbindingˉevidence(Retained) {
         `target-sha256=${Digest(Retained.target.bytes)} ` +
         `catalog-bytes=${Retained.catalog.bytes.length} ` +
         `catalog-sha256=${Digest(Retained.catalog.bytes)} ` +
+        `carrier-bytes=${Carrier.length} ` +
+        `carrier-sha256=${Digest(Carrier)} ` +
         `foreign-count=${Retained.catalog.bytes.readUInt32LE(12)}\n`,
         'utf8'
     );
+}
+
+function Requireˉforeignˉloweringˉcarrier(Carrier, Retained) {
+    const Catalogˉcount = Retained.catalog.bytes.readUInt32LE(12);
+    const Expectedˉbytes = WVFB_HEADER_BYTES + Catalogˉcount * WVFB_RECORD_BYTES;
+    if (Catalogˉcount < 1 || Catalogˉcount > WVFB_MAXIMUM_RECORDS ||
+        Carrier.length !== Expectedˉbytes ||
+        Carrier.subarray(0, 4).toString('ascii') !== 'WVFB' ||
+        Carrier.readUInt16LE(4) !== 1 || Carrier.readUInt16LE(6) !== 0 ||
+        Carrier.readUInt32LE(8) !== WVFB_HEADER_BYTES ||
+        Carrier.readUInt32LE(12) !== WVFB_RECORD_BYTES ||
+        Carrier.readUInt32LE(16) !== Catalogˉcount ||
+        Carrier.readUInt32LE(20) !== Carrier.length ||
+        Carrier.readUInt32LE(52) !== 0) {
+        Reject(
+            'The foreign lowering carrier does not have the exact retained shape.'
+        );
+    }
+    for (let Field = 0; Field < 7; Field += 1) {
+        if (Carrier.readUInt32LE(24 + Field * 4) !==
+            Retained.target.bytes.readUInt32LE(12 + Field * 4)) {
+            Reject(
+                'The foreign lowering carrier target does not match the ' +
+                'retained authenticated target.'
+            );
+        }
+    }
+    let Previousˉmodule = -1;
+    let Previousˉdirectory = -1;
+    const Expectedˉfacts = [1, 1, 1, 3, 256, 3, 4, 1, 1, 2, 2, 3, 7, 0, 0, 0];
+    for (let Record = 0; Record < Catalogˉcount; Record += 1) {
+        const Offset = WVFB_HEADER_BYTES + Record * WVFB_RECORD_BYTES;
+        const Catalogˉoffset = 48 + Record * 96;
+        const Module = Carrier.readUInt32LE(Offset);
+        const Declaration = Carrier.readUInt32LE(Offset + 4);
+        const Directory = Carrier.readUInt32LE(Offset + 8);
+        if (Module !== Retained.catalog.bytes.readUInt32LE(Catalogˉoffset) ||
+            Declaration !== Retained.catalog.bytes.readUInt32LE(
+                Catalogˉoffset + 4
+            ) || Carrier.readUInt32LE(Offset + 12) !== Record ||
+            Module <= Previousˉmodule || Directory <= Previousˉdirectory) {
+            Reject(
+                'The foreign lowering carrier records do not match the ' +
+                'retained authenticated catalog.'
+            );
+        }
+        for (let Fact = 0; Fact < Expectedˉfacts.length; Fact += 1) {
+            if (Carrier.readUInt32LE(Offset + 16 + Fact * 4) !==
+                Expectedˉfacts[Fact]) {
+                Reject(
+                    'The foreign lowering carrier contains an unsupported ' +
+                    'normalized callable fact.'
+                );
+            }
+        }
+        Previousˉmodule = Module;
+        Previousˉdirectory = Directory;
+    }
 }
 
 async function Runˉrequired(Command, Commandˉarguments, Step) {
