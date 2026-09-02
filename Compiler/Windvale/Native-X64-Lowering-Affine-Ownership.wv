@@ -95,7 +95,8 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
         let Resultˉopcode: u8 = Bytesˉreadˉu8(
             Input, Codeˉoffset + Cursor
         );
-        if Resultˉopcode == 206u8 || Resultˉopcode == 220u8 {
+        if Resultˉopcode == 206u8 || Resultˉopcode == 220u8 ||
+            Resultˉopcode == 222u8 {
             let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
                 Input, Codeˉoffset + Cursor + 5u32
             );
@@ -117,6 +118,19 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                 Input, Scratchˉresultˉtypes, Lengthˉscratchˉtype
             );
         }
+        if Resultˉopcode == 222u8 {
+            let Regionˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Regionˉscratchˉlocal >= Locals { return false; }
+            let Regionˉscratchˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Localˉtypeˉidentities, Regionˉscratchˉlocal * 4u32
+            );
+            if Regionˉscratchˉtype >= Typeˉcount { return false; }
+            Scratchˉresultˉtypes = Setˉmapˉbyte(
+                Input, Scratchˉresultˉtypes, Regionˉscratchˉtype
+            );
+        }
         Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
     }
 
@@ -136,6 +150,12 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             Identity == 25u32;
         if Borrowˉkind == 0u8 && Identity < Typeˉcount &&
             Bytesˉreadˉu8(Scratchˉresultˉtypes, Identity) == 1u8 {
+            Isˉtracked = true;
+        }
+        if Local < Parameters && Borrowˉkind == 28u8 &&
+            Identity < Typeˉcount && Bytesˉreadˉu8(
+                Scratchˉresultˉtypes, Identity
+            ) == 1u8 {
             Isˉtracked = true;
         }
         if Isˉtracked {
@@ -313,7 +333,17 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             let Scratchˉborrowˉkind: u8 = Readˉborrowˉkind(
                 Localˉborrowˉkinds, Borrowedˉscratchˉlocal
             );
-            if Scratchˉborrowˉkind == 28u8 {
+            if Bytesˉreadˉu8(Tracked, Borrowedˉscratchˉlocal) == 1u8 {
+                let Borrowedˉscratchˉrank: u32 = Bytesˉreadˉu32ˉlittle(
+                    Ranks, Borrowedˉscratchˉlocal * 4u32
+                );
+                if !Available(
+                        Availableˉlow, Availableˉhigh,
+                        Borrowedˉscratchˉrank
+                    ) {
+                    return false;
+                }
+            } else if Scratchˉborrowˉkind == 28u8 {
                 let Borrowedˉscratchˉidentity: u32 =
                     Bytesˉreadˉu32ˉlittle(
                         Localˉtypeˉidentities,
@@ -326,20 +356,33 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                     ) != 1u8 {
                     return false;
                 }
-            } else {
-                if Bytesˉreadˉu8(Tracked, Borrowedˉscratchˉlocal) != 1u8 {
-                    return false;
-                }
-                let Borrowedˉscratchˉrank: u32 = Bytesˉreadˉu32ˉlittle(
-                    Ranks, Borrowedˉscratchˉlocal * 4u32
-                );
-                if !Available(
-                        Availableˉlow, Availableˉhigh,
-                        Borrowedˉscratchˉrank
-                    ) {
-                    return false;
-                }
+            } else { return false; }
+        }
+        if Opcode == 222u8 {
+            let Writeˉregionˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 1u32
+            );
+            if Writeˉregionˉscratchˉlocal >= Locals ||
+                Bytesˉreadˉu8(
+                    Tracked, Writeˉregionˉscratchˉlocal
+                ) != 1u8 {
+                return false;
             }
+            let Regionˉscratchˉrank: u32 = Bytesˉreadˉu32ˉlittle(
+                Ranks, Writeˉregionˉscratchˉlocal * 4u32
+            );
+            if !Available(
+                    Availableˉlow, Availableˉhigh,
+                    Regionˉscratchˉrank
+                ) {
+                return false;
+            }
+            Availableˉlow = Setˉavailableˉlow(
+                Availableˉlow, Regionˉscratchˉrank, false
+            );
+            Availableˉhigh = Setˉavailableˉhigh(
+                Availableˉhigh, Regionˉscratchˉrank, false
+            );
         }
         if Opcode == 206u8 {
             let Parent: u32 = Bytesˉreadˉu32ˉlittle(

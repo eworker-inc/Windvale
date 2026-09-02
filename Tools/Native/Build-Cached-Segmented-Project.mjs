@@ -37,7 +37,7 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'windows-x64-wvstage.exe'),
-            sha256: '14e6bcab721fe9eb1f8afc6a362d57196afac8a9acfa5d8dd50fc67ce0eaf3d9'
+            sha256: 'e7ce71d35c2439ecf592206cd76b3b1d884bffc6f464e865a228cbf7c3230aae'
         },
         {
             name: 'segmented compiler-image linker',
@@ -54,7 +54,7 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'linux-x64-wvstage.elf'),
-            sha256: '701616a768c205fbb402a8e09d37c95ecffba1c0b93a4297e82d59b39fb6cc9a'
+            sha256: '131b50ed4da1b3e9514a846730495c2341b1fad62c5ff13d9547953eab503e0e'
         },
         {
             name: 'segmented compiler-image linker',

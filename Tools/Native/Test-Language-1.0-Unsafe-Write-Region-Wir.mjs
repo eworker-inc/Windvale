@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import {
     lstat,
     mkdir,
@@ -23,7 +24,7 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SYSTEM_HEADER =
     'profile system; platform linux, windows, windvale; authority application; ';
 
-if (process.argv.length < 3 || process.argv.length > 6) Usage();
+if (process.argv.length < 3 || process.argv.length > 7) Usage();
 const Analyzer = await realpath(resolve(process.argv[2]));
 const Analyzerˉstatus = await lstat(Analyzer);
 if (!Analyzerˉstatus.isFile() || Analyzerˉstatus.size <= 0 ||
@@ -34,8 +35,20 @@ const Emitter = process.argv.length >= 4 ?
     await realpath(resolve(process.argv[3])) : undefined;
 const Compilerˉverifier = process.argv.length >= 5 ?
     await realpath(resolve(process.argv[4])) : undefined;
-const Runner = process.argv.length === 6 ?
+const Runner = process.argv.length >= 6 ?
     await realpath(resolve(process.argv[5])) : undefined;
+const Lowerer = process.argv.length === 7 ?
+    await realpath(resolve(process.argv[6])) : undefined;
+const Nativeˉextension = process.platform === 'win32' ? 'cmd' : 'sh';
+const Nativeˉchecker = resolve(
+    SCRIPT_DIRECTORY, `Check-Wvo.${Nativeˉextension}`,
+);
+const Nativeˉlinker = resolve(
+    SCRIPT_DIRECTORY, `Link-Wvo.${Nativeˉextension}`,
+);
+const Nativeˉpackager = resolve(
+    SCRIPT_DIRECTORY, `Package-Console.${Nativeˉextension}`,
+);
 var Frontˉdoorˉverifier;
 if (Emitter !== undefined) {
     const Emitterˉstatus = await lstat(Emitter);
@@ -60,6 +73,23 @@ if (Emitter !== undefined) {
             Runnerˉstatus.size > MAXIMUM_TOOL_BYTES) {
             Reject(
                 'The unsafe write-region runner must be an ordinary ' +
+                'canonical file.',
+            );
+        }
+    }
+    for (const [Tool, Label] of [
+        ...(Lowerer === undefined ? [] : [[Lowerer, 'native lowerer']]),
+        ...(Lowerer === undefined ? [] : [
+            [Nativeˉchecker, 'native object checker'],
+            [Nativeˉlinker, 'native linker'],
+            [Nativeˉpackager, 'native console packager'],
+        ]),
+    ]) {
+        const Status = await lstat(Tool);
+        if (!Status.isFile() || Status.size <= 0 ||
+            Status.size > MAXIMUM_TOOL_BYTES || await realpath(Tool) !== Tool) {
+            Reject(
+                `The unsafe write-region ${Label} must be an ordinary ` +
                 'canonical file.',
             );
         }
@@ -500,6 +530,8 @@ try {
         `published-wvb=${Publishedˉwvb} ` +
         `legacy-front-door=Closed scalar-provider=${Runner === undefined ?
             'Notˉrequested' : 'Verified'} ` +
+        `native-x64=${Lowerer === undefined ?
+            'Notˉrequested' : 'Verified'} ` +
         `runtime-cases=${Runner === undefined ? 0 : Runtimeˉapplications.length} ` +
         `runtime-malformed=${Runtimeˉmalformed} ` +
         `writer-rejected=${Writerˉrejected} ` +
@@ -560,6 +592,11 @@ async function Verifyˉruntime() {
             Wvb, true, `runtime-${Case.Name}`,
         );
         Compilerˉverifierˉcases += 1;
+        if (Lowerer !== undefined) {
+            const Wvo = join(Caseˉdirectory, 'Runtime.wvo');
+            await Requireˉnativeˉlowering(Wvb, Wvo, Case.Name, true);
+            await Requireˉnativeˉexecution(Wvo, Caseˉdirectory, Case.Name);
+        }
         const Execution = await Runˉtool(Runner, [Wvb]);
         if (Execution.Code !== 0 || Execution.Exceeded ||
             Execution.Diagnostic.replaceAll('\r\n', '\n') !==
@@ -588,15 +625,105 @@ async function Verifyˉruntime() {
                     `diagnostic=${JSON.stringify(Rejected.Diagnostic)}.`,
                 );
             }
+            if (Lowerer !== undefined) {
+                await Requireˉnativeˉlowering(
+                    Missingˉoperation,
+                    join(Caseˉdirectory, 'Missing-Write-Region-Operation.wvo'),
+                    'missing-write-region-operation',
+                    false,
+                );
+            }
             Malformed += 1;
         }
     }
     process.stdout.write(
         'native language 1 unsafe write region runtime status=Passed ' +
         `cases=${Runtimeˉapplications.length} malformed=${Malformed} ` +
+        `native-aot=${Lowerer === undefined ? 'Notˉrequested' :
+            Runtimeˉapplications.length + '/' + Runtimeˉapplications.length} ` +
+        `native-execution=${Lowerer === undefined ? 'Notˉrequested' :
+            Runtimeˉapplications.length + '/' + Runtimeˉapplications.length} ` +
+        `native-rejections=${Lowerer === undefined ? 'Notˉrequested' : 1} ` +
         'result=42 allocation=bounded teardown=bounded\n',
     );
     return Malformed;
+}
+
+async function Requireˉnativeˉlowering(Wvb, Wvo, Label, Valid) {
+    const Result = await Runˉtool(Lowerer, [Wvb, Wvo]);
+    const Diagnostic = Result.Diagnostic.replaceAll('\r\n', '\n');
+    if (Result.Exceeded) {
+        Reject(`The unsafe write-region native lowerer ${Label} exceeded its bounds.`);
+    }
+    if (Valid) {
+        if (Result.Code !== 0 || !Exists(Wvo) ||
+            !/^native x64 status=Valid abi=22 code-bytes=[0-9]+ object-bytes=[0-9]+\n$/u.test(
+                Diagnostic,
+            )) {
+            Reject(
+                `The unsafe write-region native lowering ${Label} differed: ` +
+                `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+            );
+        }
+        return;
+    }
+    if (Result.Code !== 1 || Exists(Wvo) ||
+        !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u.test(
+            Diagnostic,
+        )) {
+        Reject(
+            `The unsafe write-region native rejection ${Label} differed: ` +
+            `status=${Result.Code} diagnostic=${JSON.stringify(Diagnostic)}.`,
+        );
+    }
+}
+
+async function Requireˉnativeˉexecution(Wvo, Directory, Label) {
+    const Checked = await Runˉtool(Nativeˉchecker, [Wvo]);
+    if (Checked.Code !== 0 || Checked.Exceeded) {
+        Reject(
+            `The unsafe write-region native object check ${Label} differed: ` +
+            `status=${Checked.Code} diagnostic=${JSON.stringify(Checked.Diagnostic)}.`,
+        );
+    }
+    const Image = join(Directory, 'Runtime.bin');
+    const Linked = await Runˉtool(
+        Nativeˉlinker, ['0', 'Main', Image, Wvo],
+    );
+    const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(
+        Linked.Diagnostic.replaceAll('\r\n', '\n'),
+    );
+    if (Linked.Code !== 0 || Linked.Exceeded || Entry === null || !Exists(Image)) {
+        Reject(
+            `The unsafe write-region native link ${Label} differed: ` +
+            `status=${Linked.Code} diagnostic=${JSON.stringify(Linked.Diagnostic)}.`,
+        );
+    }
+    const Application = join(
+        Directory, process.platform === 'win32' ? 'Runtime.exe' : 'Runtime.elf',
+    );
+    const Target = process.platform === 'win32'
+        ? 'windows-x64-console-v1'
+        : 'linux-x64-console-v1';
+    const Packaged = await Runˉtool(
+        Nativeˉpackager, [Target, Image, Entry[1], Application],
+    );
+    if (Packaged.Code !== 0 || Packaged.Exceeded || !Exists(Application)) {
+        Reject(
+            `The unsafe write-region native package ${Label} differed: ` +
+            `status=${Packaged.Code} ` +
+            `diagnostic=${JSON.stringify(Packaged.Diagnostic)}.`,
+        );
+    }
+    const Executed = await Runˉtool(Application, []);
+    if (Executed.Code !== 42 || Executed.Exceeded ||
+        Executed.Diagnostic.length !== 0) {
+        Reject(
+            `The unsafe write-region native execution ${Label} differed: ` +
+            `status=${Executed.Code} ` +
+            `diagnostic=${JSON.stringify(Executed.Diagnostic)}.`,
+        );
+    }
 }
 
 async function Verifyˉexecutionˉremainsˉclosed(Module) {
@@ -1269,9 +1396,13 @@ function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/' +
         'Test-Language-1.0-Unsafe-Write-Region-Wir.mjs ' +
-        '<analyzer> [emitter] [compiler-verifier] [runner]\n',
+        '<analyzer> [emitter] [compiler-verifier] [runner] [native-lowerer]\n',
     );
     process.exit(64);
+}
+
+function Exists(Path) {
+    return existsSync(Path);
 }
 
 function Reject(Message) {

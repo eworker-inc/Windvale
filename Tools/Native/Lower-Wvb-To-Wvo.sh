@@ -18,7 +18,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    '377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703' \
+    '9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37' \
     'Wvb-To-Wvo.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVB-to-WVO lowerer artifact digest is invalid.' >&2
     exit 1

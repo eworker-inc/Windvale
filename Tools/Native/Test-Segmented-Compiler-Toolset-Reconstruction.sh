@@ -18,6 +18,8 @@ fail() {
     echo "FAIL  step=$failure_step"
     for diagnostic in \
         Sha-Build.err Sha-Stage.out Sha-Stage.err Sha-Link.out Sha-Link.err \
+        Empty-Relocation-Build.err Empty-Relocation-Stage.out \
+        Empty-Relocation-Stage.err \
         Compiler-Stage.out Compiler-Stage.err; do
         if [[ -n ${test_directory:-} && -f $test_directory/$diagnostic ]]; then
             cat -- "$test_directory/$diagnostic"
@@ -64,26 +66,26 @@ trap cleanup EXIT
 echo 'INFO  segmented compiler toolset reconstruction step=construction status=Complete'
 
 failure_step='WVO staging producer identity'
-echo 'START segmented compiler toolset reconstruction phase=WVO-staging-producer item=1/5'
+echo 'START segmented compiler toolset reconstruction phase=WVO-staging-producer item=1/6'
 verify_family Wvo-Staging-Producer.wvb \
     windows-x64-wvstage.exe linux-x64-wvstage.elf || fail
 pass 'WVO staging producer reconstruction'
 
 failure_step='compiler-image staging identity'
-echo 'START segmented compiler toolset reconstruction phase=compiler-image-staging item=2/5'
+echo 'START segmented compiler toolset reconstruction phase=compiler-image-staging item=2/6'
 verify_family Compiler-Image-Staging.wvb \
     windows-x64-wvlinkstage.exe linux-x64-wvlinkstage.elf || fail
 pass 'compiler-image staging reconstruction'
 
 failure_step='compiler-image transport identity'
-echo 'START segmented compiler toolset reconstruction phase=compiler-image-transport item=3/5'
+echo 'START segmented compiler toolset reconstruction phase=compiler-image-transport item=3/6'
 verify_family Compiler-Image-Canonical-Transport.wvb \
     windows-x64-wvimagetransport.exe linux-x64-wvimagetransport.elf || fail
 pass 'compiler-image transport reconstruction'
 
 failure_step='SHA staging smoke build'
 sha_wvb="$test_directory/Sha256-Smoke.wvb"
-echo 'START segmented compiler toolset reconstruction phase=SHA-staging item=4/5 step=build'
+echo 'START segmented compiler toolset reconstruction phase=SHA-staging item=4/6 step=build'
 "$script_directory/Build-Wvb.sh" \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj" \
     "$sha_wvb" >"$test_directory/Sha-Build.out" \
@@ -117,13 +119,36 @@ grep -Fx \
     "$test_directory/Sha-Link.out" >/dev/null || fail
 pass 'SHA WVB staging and private-helper image linking'
 
+failure_step='empty-relocation staging build'
+empty_relocation_wvb="$test_directory/Empty-Relocation.wvb"
+echo 'START segmented compiler toolset reconstruction phase=empty-relocation-staging item=5/6 step=build'
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" \
+    "$empty_relocation_wvb" >"$test_directory/Empty-Relocation-Build.out" \
+    2>"$test_directory/Empty-Relocation-Build.err" || fail
+[[ $(stat -c %s -- "$empty_relocation_wvb") == 174 ]] || fail
+printf '%s  %s\n' \
+    7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 \
+    "$empty_relocation_wvb" | sha256sum --check --strict --quiet || fail
+failure_step='empty-relocation WVO native staging'
+"$test_directory/linux-x64-wvstage.elf" "$empty_relocation_wvb" \
+    "$test_directory/Empty-Relocation-Object" \
+    "$test_directory/Empty-Relocation-Object.wvop" \
+    >"$test_directory/Empty-Relocation-Stage.out" \
+    2>"$test_directory/Empty-Relocation-Stage.err" || fail
+[[ ! -s $test_directory/Empty-Relocation-Stage.err ]] || fail
+grep -Fx \
+    'native x64 staging status=Complete object-bytes=479 chunks=3 manifest-bytes=60' \
+    "$test_directory/Empty-Relocation-Stage.out" >/dev/null || fail
+pass 'empty-relocation WVB staging completion'
+
 failure_step='compiler-scale bootstrap analyzer identity'
 compiler_wvb="$repository_root/Artifacts/Language-1.0-Target-Aware-Emission-Bootstrap/Wvb/wvanalyze.wvb"
 [[ $(stat -c %s -- "$compiler_wvb") == 1552090 ]] || fail
 printf '%s  %s\n' \
     5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77 \
     "$compiler_wvb" | sha256sum --check --strict --quiet || fail
-echo 'START segmented compiler toolset reconstruction phase=compiler-scale item=5/5'
+echo 'START segmented compiler toolset reconstruction phase=compiler-scale item=6/6'
 echo 'INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=1552090'
 chmod +x "$test_directory/linux-x64-wvstage.elf" || fail
 failure_step='compiler-scale native staging'

@@ -9,7 +9,10 @@ const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 1024 * 1024;
 const MAXIMUM_LEAF_BYTES = 262_144;
 const MAXIMUM_APPLICATION_BYTES = 64 * 1024 * 1024;
-const CHILD_TIMEOUT_MILLISECONDS = 180_000;
+// Refreshed compiler-scale native staging crossed the former 180-second
+// ceiling on Windows. Retain a bounded five-minute child limit within the
+// unchanged 20-minute owner limit.
+const CHILD_TIMEOUT_MILLISECONDS = 300_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 10 * 60_000;
 const PRODUCT_TIMEOUT_MILLISECONDS = 30_000;
 const OVERALL_TIMEOUT_MILLISECONDS = 20 * 60_000;
@@ -21,8 +24,8 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR'];
 const DYNAMIC_CASES = 12;
 const EXPECTED_RUNNER = WINDOWS
-    ? { bytes: 5_907_456, sha256: '2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b' }
-    : { bytes: 5_906_432, sha256: '611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae' };
+    ? { bytes: 10_127_360, sha256: 'c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4' }
+    : { bytes: 10_129_408, sha256: 'c5db1a90ce58f4807de13ca0082014e9ca09634a9ef487859166f15443e7149d' };
 const EXPECTED_PINNED_ANALYZER = {
     bytes: 1_552_090,
     sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77'

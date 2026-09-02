@@ -304,8 +304,8 @@ echo 'Progress: step=database-storage-tools item=1/2 detail=verify-build-driver'
 verify_file "$build_driver" 30072832 \
     628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit $?
 echo 'Progress: step=database-storage-tools item=2/2 detail=verify-lowerer'
-verify_file "$lowerer" 9752576 \
-    377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 || exit $?
+verify_file "$lowerer" 10076160 \
+    9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 || exit $?
 tool_checkpoint=Retained
 project_wvb_checkpoint=NotBuilt
 

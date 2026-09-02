@@ -251,7 +251,8 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
     let Presence: u8 = Bytesˉreadˉu8(Input, Cursor);
     var Current: u32 = Cursor + 1u32;
     if Presence == 0u8 {
-        if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 {
+        if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
+            Minor == 36u32 {
             return Invalidˉresult;
         }
         if Current != Limit { return Invalidˉresult; }
@@ -307,7 +308,8 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
         return Invalidˉresult;
     }
     if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
-    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 {
+    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
+        Minor == 36u32 {
         if Profile != 3u8 { return Invalidˉresult; }
     } else {
         var Expectedˉprofile: u8 = 1u8;

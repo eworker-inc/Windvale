@@ -199,6 +199,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 189u8 || Opcode == 190u8 || Opcode == 191u8 { return 1u32; }
     if Opcode == 220u8 { return 13u32; }
     if Opcode == 221u8 { return 9u32; }
+    if Opcode == 222u8 { return 13u32; }
     return 0u32;
 }
 
@@ -1166,6 +1167,55 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
 
         if Opcode == 221u8 {
             Stackˉrecords = Pushˉscalar(Stackˉrecords);
+            Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 222u8 {
+            if Depth < 3u32 || Blockˉrecordˉvalues >= 256u32 {
+                return Invalid(Input);
+            }
+            let Startˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 3u32) * 4u32
+            );
+            let Lengthˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 2u32) * 4u32
+            );
+            let Alignmentˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 1u32) * 4u32
+            );
+            if Startˉrecord != 4294967295u32 ||
+                Lengthˉrecord != 4294967295u32 ||
+                Alignmentˉrecord != 4294967295u32 {
+                return Invalid(Input);
+            }
+            let Regionˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 5u32
+            );
+            if Regionˉresultˉtype >= Types.Count ||
+                Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                    Types, Regionˉresultˉtype
+                ) != 3u8 {
+                return Invalid(Input);
+            }
+            Depth = Depth - 3u32;
+            Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
+            Resultˉrecord = Scratchˉvalues;
+            Scratchˉvalues = Scratchˉvalues + 1u32;
+            Blockˉrecordˉvalues = Blockˉrecordˉvalues + 1u32;
+            if Blockˉrecordˉvalues > Recordˉvalues {
+                Recordˉvalues = Blockˉrecordˉvalues;
+            }
+            Recordˉtypes = Rememberˉrecordˉtype(
+                Input,
+                Recordˉtypes,
+                Types,
+                Resultˉrecord,
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
+                    Regionˉresultˉtype
+                )
+            );
+            Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
             Depth = Depth + 1u32;
             Handled = true;
         }

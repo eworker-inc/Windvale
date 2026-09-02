@@ -228,7 +228,7 @@ set "Packager=%Work%\Console-Packager.exe"
 set "ConsolePublisher=%Work%\wvappublish.exe"
 call :verify_digest "%BuildDriver%" 65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec || exit /b 1
 call :verify_digest "%WvbPublisher%" b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421 || exit /b 1
-call :verify_digest "%Lowerer%" 606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6 || exit /b 1
+call :verify_digest "%Lowerer%" 22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea || exit /b 1
 call :verify_digest "%WvoPublisher%" 76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910 || exit /b 1
 call :verify_digest "%Linker%" f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0 || exit /b 1
 call :verify_digest "%Packager%" 0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2 || exit /b 1

@@ -171,8 +171,8 @@ check_file "$test_directory/Publisher-Promoter.bin" 658339 \
     2> "$test_directory/Wvb-Publisher-Build.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Build.err" \
     'WVB publisher source build wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvb" 408545 \
-    525779efa3e19a3874919e1f51a5d33e93cdc825e67835b6ab5d9878d08e2275 \
+check_file "$test_directory/Wvb-Publisher.wvb" 482941 \
+    3e1cc8670eaf6e5f6ec62d3dcaf19c4823d58e78ae7874c25fd7574f27fcc9f4 \
     'metadata-aware WVB publisher candidate' || fail
 "$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
     "$test_directory/Wvb-Publisher.wvb" \
@@ -181,8 +181,8 @@ check_file "$test_directory/Wvb-Publisher.wvb" 408545 \
     2> "$test_directory/Wvb-Publisher-Lower.err" || fail
 check_empty "$test_directory/Wvb-Publisher-Lower.err" \
     'WVB publisher native lowering wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvo" 3317775 \
-    0369818eed1af26a353da91167687d6ea29b564aaa84877120c4f7d27d8f7ec6 \
+check_file "$test_directory/Wvb-Publisher.wvo" 3905388 \
+    d173b1842523fe071cd43df7e5cc92e88f031cad7e88911e5cfc5c8500bbe37f \
     'metadata-aware WVB publisher object candidate' || fail
 "$repository_root/Tools/Native/Link-Wvo.sh" 0 Main \
     "$test_directory/Wvb-Publisher.bin" "$test_directory/Wvb-Publisher.wvo" \
@@ -192,8 +192,8 @@ check_empty "$test_directory/Wvb-Publisher-Link.err" \
     'WVB publisher native link wrote a diagnostic' || fail
 grep -Fx 'entry name=Main address=0' \
     "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.bin" 3311953 \
-    68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4 \
+check_file "$test_directory/Wvb-Publisher.bin" 3897160 \
+    b104bc4c2fc438c3db007f974e9d9ffda56274142ca06d1eb007b76e2f77993a \
     'linked metadata-aware WVB publisher fragment' || fail
 pass 'metadata-aware publisher source and refreshed construction inventory'
 

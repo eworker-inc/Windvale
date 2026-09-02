@@ -1,0 +1,364 @@
+module Compilerˉnativeˉx64ˉloweringˉunsafeˉwriteˉregion profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉtypes as Nominalˉtypes;
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
+
+fn Empty() -> bytes {
+    let Zero: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Zero, 0u32, 0u32);
+}
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrcx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrdx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉscratchˉdescriptor(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Slot * 16u32);
+    Output = Appendˉbyte(Output, 77u8);
+    Output = Appendˉbyte(Output, 139u8);
+    return Appendˉbyte(Output, 0u8);
+}
+
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrcx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrdx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉr9(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 140u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉr8(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉimmediate(Result: bytes, Slot: u32, Value: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 199u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    Output = Appendˉu32(Output, Slot * 16u32);
+    return Appendˉu32(Output, Value);
+}
+
+fn Frameˉaddress(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 141u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Conditionalˉjump(Result: bytes, Condition: u8, Target: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 15u8);
+    Output = Appendˉbyte(Output, Condition);
+    return Appendˉu32(
+        Output, Relativeˉu32(Target, Bytesˉlength(Output) + 4u32)
+    );
+}
+
+fn Jump(Result: bytes, Target: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 233u8);
+    return Appendˉu32(
+        Output, Relativeˉu32(Target, Bytesˉlength(Output) + 4u32)
+    );
+}
+
+fn Prefix(
+    Startˉslot: u32,
+    Lengthˉslot: u32,
+    Alignmentˉslot: u32,
+    Scratchˉslot: u32,
+    Outˉofˉrangeˉtarget: u32,
+    Addressˉoverflowˉtarget: u32,
+    Misalignedˉtarget: u32
+) -> bytes {
+    var Output: bytes = Loadˉrax(Empty(), Startˉslot);
+    Output = Loadˉrcx(Output, Lengthˉslot);
+    Output = Loadˉrdx(Output, Alignmentˉslot);
+    Output = Loadˉscratchˉdescriptor(Output, Scratchˉslot);
+
+    // r9 is the zero-extended owner length; r10 is the retained construction
+    // alignment from the private WVB 1.36 descriptor.
+    Output = Appendˉbyte(Output, 69u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 77u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 194u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 234u8);
+    Output = Appendˉbyte(Output, 32u8);
+
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 201u8);
+    Output = Conditionalˉjump(Output, 132u8, Outˉofˉrangeˉtarget);
+
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 1u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Conditionalˉjump(
+        Output, 130u8, Addressˉoverflowˉtarget
+    );
+
+    Output = Appendˉbyte(Output, 77u8);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Conditionalˉjump(Output, 135u8, Outˉofˉrangeˉtarget);
+
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 210u8);
+    Output = Conditionalˉjump(Output, 132u8, Misalignedˉtarget);
+
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Conditionalˉjump(Output, 133u8, Misalignedˉtarget);
+
+    Output = Appendˉbyte(Output, 76u8);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 210u8);
+    Output = Conditionalˉjump(Output, 135u8, Misalignedˉtarget);
+
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 208u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 33u8);
+    Output = Appendˉbyte(Output, 192u8);
+    return Conditionalˉjump(Output, 133u8, Misalignedˉtarget);
+}
+
+fn Success(Result: bytes, Backing: u32, Finish: u32) -> bytes {
+    var Output: bytes = Storeˉimmediate(Result, Backing, 0u32);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 193u8);
+    Output = Appendˉbyte(Output, 225u8);
+    Output = Appendˉbyte(Output, 32u8);
+    Output = Appendˉbyte(Output, 73u8);
+    Output = Appendˉbyte(Output, 9u8);
+    Output = Appendˉbyte(Output, 200u8);
+    Output = Storeˉr8(Output, Backing + 2u32);
+    return Jump(Output, Finish);
+}
+
+fn Outˉofˉrange(Result: bytes, Backing: u32, Finish: u32) -> bytes {
+    var Output: bytes = Storeˉimmediate(Result, Backing, 1u32);
+    Output = Storeˉimmediate(Output, Backing + 2u32, 2u32);
+    Output = Storeˉrax(Output, Backing + 4u32);
+    Output = Storeˉrcx(Output, Backing + 5u32);
+    Output = Storeˉr9(Output, Backing + 6u32);
+    return Jump(Output, Finish);
+}
+
+fn Addressˉoverflow(Result: bytes, Backing: u32, Finish: u32) -> bytes {
+    var Output: bytes = Storeˉimmediate(Result, Backing, 1u32);
+    Output = Storeˉimmediate(Output, Backing + 2u32, 1u32);
+    Output = Storeˉrax(Output, Backing + 4u32);
+    Output = Storeˉrcx(Output, Backing + 5u32);
+    Output = Storeˉimmediate(Output, Backing + 6u32, 64u32);
+    return Jump(Output, Finish);
+}
+
+fn Misaligned(Result: bytes, Backing: u32) -> bytes {
+    var Output: bytes = Storeˉimmediate(Result, Backing, 1u32);
+    Output = Storeˉimmediate(Output, Backing + 2u32, 3u32);
+    Output = Storeˉrax(Output, Backing + 4u32);
+    return Storeˉrdx(Output, Backing + 5u32);
+}
+
+fn Emitˉmachine(
+    Startˉslot: u32,
+    Lengthˉslot: u32,
+    Alignmentˉslot: u32,
+    Scratchˉslot: u32,
+    Resultˉtype: u32,
+    Target: u32,
+    Backing: u32
+) -> bytes {
+    let Prefixˉbytes: u32 = 123u32;
+    let Successˉbytes: u32 = 35u32;
+    let Outˉofˉrangeˉbytes: u32 = 53u32;
+    let Addressˉoverflowˉbytes: u32 = 57u32;
+    let Misalignedˉbytes: u32 = 40u32;
+    let Successˉtarget: u32 = Prefixˉbytes;
+    let Outˉofˉrangeˉtarget: u32 = Successˉtarget + Successˉbytes;
+    let Addressˉoverflowˉtarget: u32 =
+        Outˉofˉrangeˉtarget + Outˉofˉrangeˉbytes;
+    let Misalignedˉtarget: u32 =
+        Addressˉoverflowˉtarget + Addressˉoverflowˉbytes;
+    let Finish: u32 = Misalignedˉtarget + Misalignedˉbytes;
+
+    var Output: bytes = Prefix(
+        Startˉslot,
+        Lengthˉslot,
+        Alignmentˉslot,
+        Scratchˉslot,
+        Outˉofˉrangeˉtarget,
+        Addressˉoverflowˉtarget,
+        Misalignedˉtarget
+    );
+    Output = Success(Output, Backing, Finish);
+    Output = Outˉofˉrange(Output, Backing, Finish);
+    Output = Addressˉoverflow(Output, Backing, Finish);
+    Output = Misaligned(Output, Backing);
+
+    Output = Appendˉbyte(Output, 65u8);
+    Output = Appendˉbyte(Output, 184u8);
+    Output = Appendˉu32(Output, Resultˉtype);
+    Output = Frameˉaddress(Output, Backing);
+    return Storeˉrax(Output, Target);
+}
+
+export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes() -> u32 {
+    // The common instruction-limit charge contributes ten bytes before the
+    // 330-byte operation-specific sequence.
+    return 340u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉunsafeˉwriteˉregion(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Depth: u32 = State.Stackˉdepth - 3u32;
+    let Startˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, Depth * 4u32
+    );
+    let Lengthˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, (Depth + 1u32) * 4u32
+    );
+    let Alignmentˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, (Depth + 2u32) * 4u32
+    );
+    let Scratchˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Offset + 1u32
+    );
+    let Resultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Offset + 5u32
+    );
+    let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
+    let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+        Storage.Scratchˉoffsets, State.Nextˉrecord * 4u32
+    );
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Bytesˉconcat(
+            State.Result,
+            Emitˉmachine(
+                Startˉslot,
+                Lengthˉslot,
+                Alignmentˉslot,
+                Scratchˉslot,
+                Resultˉtype,
+                Target,
+                Backing
+            )
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Resultˉtype)
+            )
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Target)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord + 1u32
+    );
+}

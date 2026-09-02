@@ -91,7 +91,7 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 408545 525779efa3e19a3874919e1f51a5d33e93cdc825e67835b6ab5d9878d08e2275 "metadata-aware WVB publisher candidate"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 482941 3e1cc8670eaf6e5f6ec62d3dcaf19c4823d58e78ae7874c25fd7574f27fcc9f4 "metadata-aware WVB publisher candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
     "%TestDirectory%\Wvb-Publisher.wvb" ^
@@ -100,7 +100,7 @@ call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 3317775 0369818eed1af26a353da91167687d6ea29b564aaa84877120c4f7d27d8f7ec6 "metadata-aware WVB publisher object candidate"
+call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 3905388 d173b1842523fe071cd43df7e5cc92e88f031cad7e88911e5cfc5c8500bbe37f "metadata-aware WVB publisher object candidate"
 if errorlevel 1 goto :failed
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TestDirectory%\Wvb-Publisher.bin" "%TestDirectory%\Wvb-Publisher.wvo" >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
 if errorlevel 1 goto :failed
@@ -108,7 +108,7 @@ call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native
 if errorlevel 1 goto :failed
 findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.bin" 3311953 68b89b056159791b07e63d0dfeaf9f731069979f5749fa83e47ce50b68c5e7c4 "linked metadata-aware WVB publisher fragment"
+call :check_file "%TestDirectory%\Wvb-Publisher.bin" 3897160 b104bc4c2fc438c3db007f974e9d9ffda56274142ca06d1eb007b76e2f77993a "linked metadata-aware WVB publisher fragment"
 if errorlevel 1 goto :failed
 call :pass "metadata-aware publisher source and refreshed construction inventory"
 

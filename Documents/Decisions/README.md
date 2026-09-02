@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 320 |
+| Accepted | 321 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0913: lower compiler-verified WVB 1.36 write regions to native x64](0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) | Accepted |
 | [Decision 0912: execute WVB 1.36 write regions in a bounded scalar provider](0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0911: verify WVB 1.36 write-region lifetime containment](0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md) | Accepted |
 | [Decision 0910: represent mutable write-region borrowing in candidate WVB 1.36](0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md) | Accepted |
@@ -70,7 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0891: promote SHA-capable segmented staging](0891-Promote-Sha-Capable-Segmented-Staging.md) | Accepted |
 | [Decision 0890: lower bytes.sha256_hex in the native x64 backend](0890-Lower-Bytes-Sha256-Hex-In-The-Native-X64-Backend.md) | Accepted |
 | [Decision 0889: publish the bounded System/FFI foreign-memory semantic oracle](0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md) | Accepted |
-| [Decision 0888: publish the canonical WVFC producer](0888-Publish-The-Canonical-WVFC-Producer.md) | Accepted |
 
 ## Superseded or historical records
 

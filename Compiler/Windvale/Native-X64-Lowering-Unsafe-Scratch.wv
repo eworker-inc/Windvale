@@ -193,10 +193,12 @@ fn Emitˉmachine(
     Budgetˉslot: u32,
     Resultˉtype: u32,
     Target: u32,
-    Backing: u32
+    Backing: u32,
+    Packedˉdescriptor: bool
 ) -> bytes {
     let Prefixˉbytes: u32 = 98u32;
-    let Successˉbytes: u32 = 29u32;
+    var Successˉbytes: u32 = 29u32;
+    if Packedˉdescriptor { Successˉbytes = 32u32; }
     let Invalidˉlengthˉbytes: u32 = 49u32;
     let Invalidˉalignmentˉbytes: u32 = 37u32;
     let Budgetˉbytes: u32 = 52u32;
@@ -214,13 +216,26 @@ fn Emitˉmachine(
         Budgetˉrefusal
     );
     Output = Storeˉimmediate(Output, Backing, 0u32);
+    if Packedˉdescriptor {
+        // WVB 1.36 retains the admitted construction alignment beside the
+        // bounded length. Both values are at most 32 bits in this provider.
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 193u8);
+        Output = Appendˉbyte(Output, 225u8);
+        Output = Appendˉbyte(Output, 32u8);
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 9u8);
+        Output = Appendˉbyte(Output, 200u8);
+    }
     Output = Storeˉrax(Output, Backing + 2u32);
-    // Preserve the qualified block geometry after replacing the old
-    // immediate sentinel with the exact length carried in rax.
-    Output = Appendˉbyte(Output, 144u8);
-    Output = Appendˉbyte(Output, 144u8);
-    Output = Appendˉbyte(Output, 144u8);
-    Output = Appendˉbyte(Output, 144u8);
+    if !Packedˉdescriptor {
+        // Preserve the qualified block geometry after replacing the old
+        // immediate sentinel with the exact length carried in rax.
+        Output = Appendˉbyte(Output, 144u8);
+        Output = Appendˉbyte(Output, 144u8);
+        Output = Appendˉbyte(Output, 144u8);
+        Output = Appendˉbyte(Output, 144u8);
+    }
     Output = Jump(Output, Finish);
 
     Output = Storeˉimmediate(Output, Backing, 1u32);
@@ -247,16 +262,22 @@ fn Emitˉmachine(
     return Storeˉrax(Output, Target);
 }
 
-export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes(
+    Minor: u32
+) -> u32 {
     // The common instruction-limit charge contributes ten bytes before the
     // 287-byte operation-specific sequence.
+    if Minor == 36u32 { return 300u32; }
     return 297u32;
 }
 
-export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes(
+    Minor: u32
+) -> u32 {
     // The common instruction-limit charge contributes ten bytes before one
     // record-handle load, its private field-zero observation, and one u64
     // result store.
+    if Minor == 36u32 { return 31u32; }
     return 29u32;
 }
 
@@ -283,6 +304,12 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉscratchˉlength(
     var Result: bytes = Loadˉraxˉrecordˉfieldˉzero(
         State.Result, Scratchˉlocal
     );
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) == 36u32 {
+        // Writing eax to itself retains the low descriptor word and clears
+        // the private construction-alignment word.
+        Result = Appendˉbyte(Result, 137u8);
+        Result = Appendˉbyte(Result, 192u8);
+    }
     Result = Storeˉrax(Result, Target);
     return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
         Result,
@@ -334,7 +361,8 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉscratch(
                 Budgetˉslot,
                 Resultˉtype,
                 Target,
-                Backing
+                Backing,
+                Bytesˉreadˉu16ˉlittle(Input, 6u32) == 36u32
             )
         ),
         Bytesˉconcat(

@@ -10,11 +10,11 @@ set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Retur
 set "Passed=0"
 set "Failed=0"
 
-call :check_file "%Candidate%\Wvb-Runner.wvb" 482767 fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f
+call :check_file "%Candidate%\Wvb-Runner.wvb" 993328 2e7f5390c95e74be2abb06c2b2cbb84d789c3d449a7577c40f9de45157a874a6
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\windows-x64-wvrun.exe" 5907456 2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b
+call :check_file "%Candidate%\windows-x64-wvrun.exe" 10127360 c7e7a917622698a511ebb8b478c8075d943feaf987d0aae56c9b7c8cab21c5e4
 if errorlevel 1 goto :inventory_failed
-call :check_file "%Candidate%\linux-x64-wvrun.elf" 5906432 611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae
+call :check_file "%Candidate%\linux-x64-wvrun.elf" 10129408 c5db1a90ce58f4807de13ca0082014e9ca09634a9ef487859166f15443e7149d
 if errorlevel 1 goto :inventory_failed
 echo PASS candidate inventory
 set /a Passed+=1

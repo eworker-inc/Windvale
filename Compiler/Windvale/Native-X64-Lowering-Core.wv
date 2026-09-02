@@ -15,6 +15,7 @@ import Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis as Variantˉanalysis;
 import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉmemoryˉbudget as Memoryˉbudget;
 import Compilerˉnativeˉx64ˉloweringˉunsafeˉscratch as Unsafeˉscratch;
+import Compilerˉnativeˉx64ˉloweringˉunsafeˉwriteˉregion as Unsafeˉwriteˉregion;
 import Compilerˉnativeˉx64ˉloweringˉcallˉinstructions as Callˉinstructions;
 import Compilerˉnativeˉx64ˉloweringˉcallˉarguments as Callˉarguments;
 import Compilerˉnativeˉx64ˉloweringˉdescriptors as Descriptors;
@@ -478,7 +479,8 @@ export fn Compilerˉnativeˉx64ˉreadˉstructure(Input: bytes)
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Minor != 11u32 && Minor != 30u32 && Minor != 31u32 &&
-        Minor != 33u32 && Minor != 34u32 && Minor != 35u32 {
+        Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
+        Minor != 36u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -650,10 +652,12 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         }
         let Parameterˉkind: u8 = Bytesˉreadˉu8(Input, Signatureˉcursor);
         if Parameterˉkind == 36u8 &&
-            Moduleˉminor != 34u32 && Moduleˉminor != 35u32 {
+            Moduleˉminor != 34u32 && Moduleˉminor != 35u32 &&
+            Moduleˉminor != 36u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
-        if Parameterˉkind == 28u8 && Moduleˉminor != 35u32 {
+        if Parameterˉkind == 28u8 && Moduleˉminor != 35u32 &&
+            Moduleˉminor != 36u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(
@@ -669,7 +673,8 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             Parameterˉtypeˉidentities,
             Bytesˉfromˉu32ˉlittle(Parameterˉshape.Identity)
         );
-        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 {
+        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
+            Moduleˉminor == 36u32 {
             var Parameterˉborrowˉkind: u8 = 0u8;
             if Parameterˉkind == 28u8 || Parameterˉkind == 36u8 {
                 Parameterˉborrowˉkind = Parameterˉkind;
@@ -749,10 +754,11 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         }
         let Localˉkind: u8 = Bytesˉreadˉu8(Input, Declaredˉcursor);
         if Localˉkind == 36u8 && Moduleˉminor != 34u32 &&
-            Moduleˉminor != 35u32 {
+            Moduleˉminor != 35u32 && Moduleˉminor != 36u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
-        if Localˉkind == 28u8 && Moduleˉminor != 35u32 {
+        if Localˉkind == 28u8 && Moduleˉminor != 35u32 &&
+            Moduleˉminor != 36u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉlocalˉtypeˉisˉsupported(
@@ -766,7 +772,8 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
             Declaredˉtypeˉidentities,
             Bytesˉfromˉu32ˉlittle(Localˉshape.Identity)
         );
-        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 {
+        if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
+            Moduleˉminor == 36u32 {
             var Localˉborrowˉkind: u8 = 0u8;
             if Localˉkind == 28u8 || Localˉkind == 36u8 {
                 Localˉborrowˉkind = Localˉkind;
@@ -790,7 +797,8 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     if Codeˉlength > 131072u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     if Maximumˉstack > 1024u32 { return Compilerˉnativeˉx64ˉinvalidˉfunction(); }
     var Localˉborrowˉkinds: bytes = Compilerˉnativeˉx64ˉempty(Input);
-    if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 {
+    if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
+        Moduleˉminor == 36u32 {
         Localˉborrowˉkinds = Bytesˉconcat(
             Parameterˉborrowˉkinds,
             Declaredˉborrowˉkinds
@@ -1337,6 +1345,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 206u8 { return 9u32; }
     if Opcode == 220u8 { return 13u32; }
     if Opcode == 221u8 { return 9u32; }
+    if Opcode == 222u8 { return 13u32; }
     if Compilerˉnativeˉx64ˉisˉu64ˉbitwise(Opcode) { return 1u32; }
     return 0u32;
 }
@@ -1383,6 +1392,7 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
 
     var Referencesˉandˉcalls: u32 = 0u32;
     var Closures: u32 = 0u32;
+    var Writeˉregions: u32 = 0u32;
     var Cursor: u32 = 0u32;
     while Cursor < Codeˉlength {
         let Opcode: u8 = Bytesˉreadˉu8(Input, Codeˉoffset + Cursor);
@@ -1396,13 +1406,19 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
             Closures = Closures + 1u32;
             if Closures > 65536u32 { return false; }
         }
+        if Opcode == 222u8 {
+            Writeˉregions = Writeˉregions + 1u32;
+            if Writeˉregions > 4096u32 { return false; }
+        }
         Cursor = Cursor + Size;
     }
+    if Writeˉregions > 0u32 && Minor != 36u32 { return false; }
     if Minor == 11u32 {
         return Callableˉtypes == 0u32 &&
             Referencesˉandˉcalls == 0u32 && Closures == 0u32;
     }
     if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 { return true; }
+    if Minor == 36u32 { return Writeˉregions > 0u32; }
     if Callableˉtypes == 0u32 { return false; }
     if Minor == 30u32 {
         return Referencesˉandˉcalls > 0u32 && Closures == 0u32;
@@ -1986,7 +2002,9 @@ fn Compilerˉnativeˉx64ˉanalyzeˉnominalˉvalueˉinstruction(
         Depth = Depth + 1u32;
         Recordˉvalues = Recordˉvalues + 1u32;
         Bodyˉbytes = Bodyˉbytes +
-            Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes();
+            Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes(
+                Bytesˉreadˉu16ˉlittle(Input, 6u32)
+            );
     }
     if Opcode == 221u8 {
         let Lengthˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
@@ -2019,7 +2037,64 @@ fn Compilerˉnativeˉx64ˉanalyzeˉnominalˉvalueˉinstruction(
         Depth = Depth + 1u32;
         U32ˉvalues = U32ˉvalues + 1u32;
         Bodyˉbytes = Bodyˉbytes +
-            Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes();
+            Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes(
+                Bytesˉreadˉu16ˉlittle(Input, 6u32)
+            );
+    }
+    if Opcode == 222u8 {
+        if Depth < 3u32 ||
+            Bytesˉreadˉu8(Stack, Depth - 3u32) != 10u8 ||
+            Bytesˉreadˉu8(Stack, Depth - 2u32) != 10u8 ||
+            Bytesˉreadˉu8(Stack, Depth - 1u32) != 10u8 {
+            return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
+        }
+        let Regionˉscratchˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Instructionˉoffset + 1u32
+        );
+        let Regionˉresultˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Instructionˉoffset + 5u32
+        );
+        let Regionˉabiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Input, Instructionˉoffset + 9u32
+        );
+        if Regionˉscratchˉlocal >=
+                Bytesˉlength(Localˉtypeˉidentities) / 4u32 ||
+            Regionˉresultˉtype >= Types.Count ||
+            Regionˉabiˉtype >= Types.Count {
+            return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
+        }
+        let Regionˉscratchˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+            Localˉtypeˉidentities, Regionˉscratchˉlocal * 4u32
+        );
+        if Regionˉscratchˉtype >= Types.Count ||
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                Types, Regionˉscratchˉtype
+            ) != 1u8 ||
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                Types, Regionˉresultˉtype
+            ) != 3u8 {
+            return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
+        }
+        let Regionˉabiˉkind: u8 =
+            Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉkind(
+                Types, Regionˉabiˉtype
+            );
+        if Regionˉabiˉkind != 2u8 && Regionˉabiˉkind != 7u8 {
+            return Compilerˉnativeˉx64ˉinvalidˉblockˉvalueˉstate(Input);
+        }
+        Depth = Depth - 3u32;
+        Stack = Bytesˉconcat(
+            Bytesˉslice(Stack, 0u32, Depth),
+            Bytesˉfromˉu8(
+                Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(
+                    Regionˉresultˉtype
+                )
+            )
+        );
+        Depth = Depth + 1u32;
+        Recordˉvalues = Recordˉvalues + 1u32;
+        Bodyˉbytes = Bodyˉbytes +
+            Unsafeˉwriteˉregion.Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes();
     }
     return Compilerˉnativeˉx64ˉblockˉvalueˉstate(
         Stack,
@@ -2503,7 +2578,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
             Compilerˉnativeˉx64ˉrecordˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) ||
             Opcode == 206u8 ||
-            Opcode == 220u8 || Opcode == 221u8 {
+            Opcode == 220u8 || Opcode == 221u8 || Opcode == 222u8 {
             let Valueˉstate: bytes = Compilerˉnativeˉx64ˉblockˉvalueˉstate(
                 Stack,
                 Depth,
@@ -4172,10 +4247,17 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
         return Memoryˉbudget.Compilerˉnativeˉx64ˉmemoryˉbudgetˉsplitˉbytes();
     }
     if Opcode == 220u8 {
-        return Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes();
+        return Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉbytes(
+            Bytesˉreadˉu16ˉlittle(Input, 6u32)
+        );
     }
     if Opcode == 221u8 {
-        return Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes();
+        return Unsafeˉscratch.Compilerˉnativeˉx64ˉunsafeˉscratchˉlengthˉbytes(
+            Bytesˉreadˉu16ˉlittle(Input, 6u32)
+        );
+    }
+    if Opcode == 222u8 {
+        return Unsafeˉwriteˉregion.Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes();
     }
     if Opcode == 212u8 {
         let Callableˉtype: u32 = Bytesˉreadˉu32ˉlittle(
@@ -5131,6 +5213,48 @@ fn Compilerˉnativeˉx64ˉemitˉrecordˉbackedˉstep(
                 Scratchˉrecordˉbase,
                 Scratchˉpersistentˉbase,
                 Scratchˉpersistentˉbase + Analysis.Recordˉpersistentˉfields
+            ),
+            Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage(
+                true,
+                Analysis.Recordˉpersistentˉoffsets,
+                Bytesˉslice(
+                    Analysis.Recordˉscratchˉoffsets,
+                    Scratchˉbase * 4u32,
+                    Bytesˉlength(Analysis.Recordˉscratchˉoffsets) -
+                        Scratchˉbase * 4u32
+                ),
+                Analysis.Recordˉscratchˉblockˉoffsets,
+                Analysis.Recordˉpersistentˉfields,
+                Analysis.Recordˉscratchˉfields,
+                Analysis.Recordˉslots
+            ),
+            State
+        );
+    }
+    if Opcode == 222u8 {
+        let Regionˉrecordˉbase: u32 = Function.Locals +
+            Analysis.I32ˉslots + Analysis.Boolˉslots + Analysis.Textˉslots +
+            Analysis.U8ˉslots + Analysis.U32ˉslots + Analysis.Bytesˉslots +
+            Analysis.Enumˉslots;
+        let Regionˉpersistentˉbase: u32 = Regionˉrecordˉbase +
+            Analysis.Recordˉslots +
+            Compilerˉnativeˉx64ˉdescriptorˉresultˉslots(
+                Function.Returnˉtype
+            );
+        return Unsafeˉwriteˉregion.Compilerˉnativeˉx64ˉemitˉunsafeˉwriteˉregion(
+            Input,
+            Offset,
+            Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout(
+                Function.Locals,
+                Analysis.I32ˉslots,
+                Analysis.Boolˉslots,
+                Analysis.Textˉslots,
+                Analysis.U8ˉslots,
+                Analysis.U32ˉslots,
+                Analysis.Bytesˉslots,
+                Regionˉrecordˉbase,
+                Regionˉpersistentˉbase,
+                Regionˉpersistentˉbase + Analysis.Recordˉpersistentˉfields
             ),
             Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage(
                 true,
@@ -6636,7 +6760,7 @@ export fn Compilerˉnativeˉx64ˉemitˉcontrolˉcode(
             Compilerˉnativeˉx64ˉrecordˉoperation(Opcode) ||
             Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) ||
             Opcode == 206u8 ||
-            Opcode == 220u8 || Opcode == 221u8;
+            Opcode == 220u8 || Opcode == 221u8 || Opcode == 222u8;
         if Opcode == 4u8 || Opcode == 5u8 || Opcode == 205u8 {
             let Recordˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
                 Input,
@@ -7724,7 +7848,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Profile != 1u8 && Profile != 2u8 &&
         !(Profile == 3u8 && (Minor == 33u32 || Minor == 34u32 ||
-            Minor == 35u32)) {
+            Minor == 35u32 || Minor == 36u32)) {
         return Compilerˉnativeˉx64ˉplanˉfailure(
             Input,
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉprofile
@@ -7908,8 +8032,8 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
                 200u32
             );
         }
-        if Isˉmain && Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
-            Function.Parameters != 0u32 {
+        if Isˉmain && Minor != 33u32 && Minor != 34u32 &&
+            Minor != 35u32 && Minor != 36u32 && Function.Parameters != 0u32 {
             return Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
                 Input,
                 Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction,
@@ -7917,7 +8041,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
                 201u32
             );
         }
-        if Minor == 34u32 || Minor == 35u32 {
+        if Minor == 34u32 || Minor == 35u32 || Minor == 36u32 {
             Parameterˉcounts = Bytesˉconcat(
                 Parameterˉcounts,
                 Bytesˉslice(
@@ -7995,7 +8119,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
             Compilerˉnativeˉx64ˉstatus.Unsupportedˉfunction
         );
     }
-    if Minor == 34u32 || Minor == 35u32 {
+    if Minor == 34u32 || Minor == 35u32 || Minor == 36u32 {
         if Bytesˉlength(Parameterˉcounts) != Functionˉcount ||
             Bytesˉlength(Borrowedˉparameterˉmasks) != Functionˉcount * 8u32 ||
             (Minor == 34u32 && Borrowedˉparameterˉcount == 0u32) {

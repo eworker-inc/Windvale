@@ -51,7 +51,7 @@ lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
 
 echo 'START native network connect stream phase=tools item=1/4 retained-tools=2'
 verify_file "$build_driver" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit 1
-verify_file "$lowerer" 9752576 377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703 || exit $?
+verify_file "$lowerer" 10076160 9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 || exit $?
 echo 'PASS  native network connect stream phase=tools item=1/4'
 
 echo 'START native network connect stream phase=compile item=2/4'

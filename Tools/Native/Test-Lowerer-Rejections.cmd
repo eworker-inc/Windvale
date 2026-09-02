@@ -35,7 +35,7 @@ if errorlevel 1 goto :failed
 
 call :run_case "malformed" "%Invalid%" "cb4866cce34d859dabe8d8823f7ad391daed579cdcd61fd6ecbd4e5c324d78dc"
 if errorlevel 1 goto :failed
-call :run_case "unsupported-function" "%Unsupported%" "0e5a4dc04f822ab0afe79fe48d5126ffbdc825a2abe47f7b7a0bfd67b12830e5"
+call :run_case "unsupported-function" "%Unsupported%" "61809bce801de982479c0d6350d24097adaec418c4aaf5df2b76f285da777d60"
 if errorlevel 1 goto :failed
 
 call :cleanup

@@ -137,7 +137,7 @@ run_case \
 run_case \
     'unsupported-function' \
     "$unsupported" \
-    '0e5a4dc04f822ab0afe79fe48d5126ffbdc825a2abe47f7b7a0bfd67b12830e5' || {
+    '61809bce801de982479c0d6350d24097adaec418c4aaf5df2b76f285da777d60' || {
         echo "Tests: $total, Passed: $passed, Failed: $((total - passed))" >&2
         exit 1
     }

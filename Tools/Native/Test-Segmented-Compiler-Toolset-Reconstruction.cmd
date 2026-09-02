@@ -22,26 +22,26 @@ if errorlevel 1 goto :failed
 echo INFO  segmented compiler toolset reconstruction step=construction status=Complete
 
 set "FailureStep=WVO staging producer identity"
-echo START segmented compiler toolset reconstruction phase=WVO-staging-producer item=1/5
+echo START segmented compiler toolset reconstruction phase=WVO-staging-producer item=1/6
 call :verify_family Wvo-Staging-Producer.wvb windows-x64-wvstage.exe linux-x64-wvstage.elf
 if errorlevel 1 goto :failed
 call :pass "WVO staging producer reconstruction"
 
 set "FailureStep=compiler-image staging identity"
-echo START segmented compiler toolset reconstruction phase=compiler-image-staging item=2/5
+echo START segmented compiler toolset reconstruction phase=compiler-image-staging item=2/6
 call :verify_family Compiler-Image-Staging.wvb windows-x64-wvlinkstage.exe linux-x64-wvlinkstage.elf
 if errorlevel 1 goto :failed
 call :pass "compiler-image staging reconstruction"
 
 set "FailureStep=compiler-image transport identity"
-echo START segmented compiler toolset reconstruction phase=compiler-image-transport item=3/5
+echo START segmented compiler toolset reconstruction phase=compiler-image-transport item=3/6
 call :verify_family Compiler-Image-Canonical-Transport.wvb windows-x64-wvimagetransport.exe linux-x64-wvimagetransport.elf
 if errorlevel 1 goto :failed
 call :pass "compiler-image transport reconstruction"
 
 set "FailureStep=SHA staging smoke build"
 set "ShaWvb=%TestDirectory%\Sha256-Smoke.wvb"
-echo START segmented compiler toolset reconstruction phase=SHA-staging item=4/5 step=build
+echo START segmented compiler toolset reconstruction phase=SHA-staging item=4/6 step=build
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj" ^
     "%ShaWvb%" >"%TestDirectory%\Sha-Build.out" 2>"%TestDirectory%\Sha-Build.err"
@@ -70,12 +70,32 @@ findstr /b /c:"segmented compiler image staging status=Complete image-bytes=2672
 if errorlevel 1 goto :failed
 call :pass "SHA WVB staging and private-helper image linking"
 
+set "FailureStep=empty-relocation staging build"
+set "EmptyRelocationWvb=%TestDirectory%\Empty-Relocation.wvb"
+echo START segmented compiler toolset reconstruction phase=empty-relocation-staging item=5/6 step=build
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Wvb-To-Wvo-Return-42.wvproj" ^
+    "%EmptyRelocationWvb%" >"%TestDirectory%\Empty-Relocation-Build.out" 2>"%TestDirectory%\Empty-Relocation-Build.err"
+if errorlevel 1 goto :failed
+for %%F in ("%EmptyRelocationWvb%") do if not "%%~zF"=="174" goto :failed
+certutil -hashfile "%EmptyRelocationWvb%" SHA256 | findstr /I /C:"7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31" >nul
+if errorlevel 1 goto :failed
+set "FailureStep=empty-relocation WVO native staging"
+"%TestDirectory%\windows-x64-wvstage.exe" "%EmptyRelocationWvb%" ^
+    "%TestDirectory%\Empty-Relocation-Object" "%TestDirectory%\Empty-Relocation-Object.wvop" ^
+    >"%TestDirectory%\Empty-Relocation-Stage.out" 2>"%TestDirectory%\Empty-Relocation-Stage.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Empty-Relocation-Stage.err") do if not "%%~zF"=="0" goto :failed
+findstr /b /c:"native x64 staging status=Complete object-bytes=479 chunks=3 manifest-bytes=60" "%TestDirectory%\Empty-Relocation-Stage.out" >nul
+if errorlevel 1 goto :failed
+call :pass "empty-relocation WVB staging completion"
+
 set "FailureStep=compiler-scale bootstrap analyzer identity"
 set "CompilerWvb=%RepositoryRoot%\Artifacts\Language-1.0-Target-Aware-Emission-Bootstrap\Wvb\wvanalyze.wvb"
 for %%F in ("%CompilerWvb%") do if not "%%~zF"=="1552090" goto :failed
 certutil -hashfile "%CompilerWvb%" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul
 if errorlevel 1 goto :failed
-echo START segmented compiler toolset reconstruction phase=compiler-scale item=5/5
+echo START segmented compiler toolset reconstruction phase=compiler-scale item=6/6
 echo INFO  segmented compiler toolset reconstruction phase=compiler-scale step=input-identity status=Complete bytes=1552090
 set "FailureStep=compiler-scale native staging"
 echo START segmented compiler toolset reconstruction phase=compiler-scale step=native-staging
@@ -130,6 +150,9 @@ if defined TestDirectory (
     if exist "%TestDirectory%\Sha-Stage.err" type "%TestDirectory%\Sha-Stage.err"
     if exist "%TestDirectory%\Sha-Link.out" type "%TestDirectory%\Sha-Link.out"
     if exist "%TestDirectory%\Sha-Link.err" type "%TestDirectory%\Sha-Link.err"
+    if exist "%TestDirectory%\Empty-Relocation-Build.err" type "%TestDirectory%\Empty-Relocation-Build.err"
+    if exist "%TestDirectory%\Empty-Relocation-Stage.out" type "%TestDirectory%\Empty-Relocation-Stage.out"
+    if exist "%TestDirectory%\Empty-Relocation-Stage.err" type "%TestDirectory%\Empty-Relocation-Stage.err"
     if exist "%TestDirectory%\Compiler-Stage.out" type "%TestDirectory%\Compiler-Stage.out"
     if exist "%TestDirectory%\Compiler-Stage.err" type "%TestDirectory%\Compiler-Stage.err"
 )

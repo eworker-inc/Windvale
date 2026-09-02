@@ -8,30 +8,31 @@
   "constructionDecision": "0583",
   "structuredTaskRefreshDecision": "0862",
   "unsafeScratchObservationRefreshDecision": "0907",
+  "unsafeWriteRegionRefreshDecision": "0913",
   "applicationConstruction": "native-segmented-self-reconstruction",
   "artifacts": [
     {
       "name": "wvb-to-wvo-tool-wvb",
       "path": "Wvb-To-Wvo.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 678601,
-      "sha256": "c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823",
+      "bytes": 701436,
+      "sha256": "124f968f6d1e6aa71ce3cd9136a4c4df2db6022253404286979fd6c0e26cfe97",
       "sourceProject": "Windvale-Native-X64-Lowering-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.exe",
       "target": "windows-x64-wvb-to-wvo-v1",
-      "bytes": 9754112,
-      "sha256": "606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6",
+      "bytes": 10075136,
+      "sha256": "22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {
       "name": "linux-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.elf",
       "target": "linux-x64-wvb-to-wvo-v1",
-      "bytes": 9752576,
-      "sha256": "377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703",
+      "bytes": 10076160,
+      "sha256": "9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {
