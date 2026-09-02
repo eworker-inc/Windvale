@@ -108,6 +108,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0901-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0915-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0917-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt'
     )
 }

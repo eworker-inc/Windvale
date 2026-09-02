@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.37 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, and candidate WVB 1.37 serializes contained write-pointer derivation without opening verification or execution; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.37 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, and candidate WVB 1.37 serializes and compiler-verifies contained write-pointer derivation without opening execution; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -37,7 +37,9 @@ observation under
 WVB 1.36 preserves and executes exact write-region validation, while candidate
 WVB 1.37 represents contained write-pointer derivation under
 [Decision 0916](../Documents/Decisions/0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md).
-The complete verifier and every execution consumer remain closed to 1.37.
+[Decision 0918](../Documents/Decisions/0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md)
+admits that exact derivation through the complete compiler-aligned verifier.
+Every execution consumer remains closed to 1.37.
 None of these checkpoints is a cross-host or complete Slice 8 claim.
 
 ## Direct compilation result
@@ -1085,9 +1087,16 @@ publication. The focused independent WVB reader additionally requires a
 shape-`28` region local naming a kind-`1` record, a distinct kind-`1` pointer
 record, and a kind-`2` or kind-`7` ABI enum. It rejects old-minor,
 unknown-opcode, invalid-index, invalid-type, unborrowed-shape, and aliased-
-nominal mutations. The complete compiler verifier and every execution consumer
-reject minor 37. WVB 1.37 therefore preserves typed representation only: it
-forms no address and grants no call or dereference authority.
+nominal mutations. The complete compiler-aligned verifier admits the exact
+direct-parameter derivation and represents the opaque pointer as internal affine
+kind `38`. It permits direct discard or the compiler-generated
+`local.store`/`local.load`/`local.store` consuming move, intersects local
+availability at forward joins, requires exact state at backedges, and rejects
+`local.take`, load from an unavailable pointer local, call/return escape, and
+record embedding. The region remains available as an immutable borrow. One
+module is bounded to 4,096 `DF` instructions and 256 explicit pointer relations.
+Every execution consumer still rejects minor 37, so no address is formed and no
+call or dereference authority is granted.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1105,9 +1114,9 @@ scratch, budget-borrow, and scratch-observation matrix. WVB 1.36 now preserves
 mutable write-region borrowing, verifies conservative affine containment, and
 executes region construction plus exact range/overflow/alignment results in the
 bounded scalar provider and native x86-64 lowerer. Candidate WVB 1.37 now
-preserves contained pointer derivation while the complete verifier and
-execution paths remain closed. Pointer lifetime verification, address
-formation, Foreign calls, and cross-host containment remain pending.
+preserves contained pointer derivation through complete compiler-aligned
+verification while every execution path remains closed. Provider and native
+address formation, Foreign calls, and cross-host containment remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

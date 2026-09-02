@@ -5255,3 +5255,33 @@ derivation, authenticated no-retain Foreign calls, a migrated real boundary,
 Linux reproduction, and final Slice 8 qualification remain pending. The
 machine-readable evidence is
 [`2026-09-01-WVB-1-36-Bounded-Scalar-Write-Region-Execution.json`](../Evidence/2026-09-01-WVB-1-36-Bounded-Scalar-Write-Region-Execution.json).
+
+## Slice 8 WVB 1.37 compiler-aligned pointer containment checkpoint
+
+[Decision 0918](../Decisions/0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md)
+admits candidate opcode `DF` through the complete compiler-aligned metadata,
+structural, semantic, typed-stack, control-flow, and ownership verifier without
+opening execution. The exact direct shape-`28` region parameter remains an
+immutable borrow. The produced opaque pointer uses verifier-internal affine kind
+`38` and may be discarded or moved through the exact compiler-generated
+`local.store`/`local.load`/`local.store` sequence. Its load consumes source-local
+availability; it cannot be taken, copied, loaded again, embedded, passed to a
+call, returned, or merged through an ownership disagreement.
+
+The current source-built verifier reconstructs twice as 494,934 WVB bytes at
+SHA-256
+`3108026889d28c5088e14c2fa73fe8b24e190ad94695030cee3959d697642c2d`.
+Its packaged Windows executable is 3,996,160 bytes at SHA-256
+`5ee4f626be8c8dc4f638d146fc99e506318f230160d641b209a5a4b3bfee907b`.
+The focused matrix reports:
+
+```text
+native language 1 unsafe write region WVIR status=Passed cases=22 valid=7 rejected=15 malformed-wvir=7 malformed-pointer-wvir=7 malformed-wvb=5 malformed-pointer-wvb=10 operations=188,189 minors=27,28,29,30 wvb=1.36,1.37 opcodes=222,223 published-wvb=5 published-pointer-wvb=1 legacy-front-door=Closed scalar-provider=Notˉrequested native-x64=Notˉrequested runtime-cases=0 runtime-malformed=0 writer-rejected=1 validator=Verified compiler-verifier=Verified compiler-verifier-cases=25
+```
+
+This is local Windows compiler-verification evidence. The scalar provider,
+native lowerer, launchers, browser, WebAssembly, packages, and OS consumers
+remain closed to WVB 1.37. Provider/native address formation, authenticated
+no-retain Foreign calls, a migrated real boundary, Linux reproduction, and final
+Slice 8 qualification remain pending. The machine-readable evidence is
+[`2026-09-02-Compiler-Aligned-WVB-1-37-Write-Pointer-Containment.json`](../Evidence/2026-09-02-Compiler-Aligned-WVB-1-37-Write-Pointer-Containment.json).

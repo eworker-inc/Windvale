@@ -1992,12 +1992,16 @@ relationships. Candidate WVB 1.37 serializes that operation as 13-byte opcode
 The exact immutable region parameter uses borrowed-record shape `28` only when
 the same function directly targets it with `DF`.
 
-The complete compiler verifier and every execution consumer reject minor 37.
-The candidate therefore forms no native address, cannot escape a region
-lifetime, and grants no dereference or call authority. Complete affine pointer
-verification, provider and native address formation, authenticated Foreign
-calls, host ABI publication, Linux execution, and paired-host containment remain
-pending.
+The complete compiler-aligned verifier admits the exact direct-parameter
+derivation as an affine pointer value. It allows direct discard or the
+compiler-generated consuming move between two exact pointer locals and rejects
+`local.take`, copying, unavailable-local use, call or return escape, and record
+embedding. The verifier bounds a module to 4,096 pointer derivations and 256
+explicit region/pointer/ABI relations. Every execution consumer still rejects
+minor 37. The candidate therefore forms no native address and grants no
+dereference or call authority. Provider and native address formation,
+authenticated Foreign calls, host ABI publication, Linux execution, and
+paired-host containment remain pending.
 The remaining operations below may appear only with their compiler-owned
 intrinsic semantics and containment evidence.
 

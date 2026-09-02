@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 325 |
+| Accepted | 327 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,8 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0919: advance the frozen source identity for WVB 1.37 containment](0919-Advance-The-Frozen-Source-Identity-For-WVB-1.37-Containment.md) | Accepted |
+| [Decision 0918: verify WVB 1.37 write-pointer lifetime containment](0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md) | Accepted |
 | [Decision 0917: advance the frozen source identity for candidate WVB 1.37](0917-Advance-The-Frozen-Source-Identity-For-Candidate-Wvb-1.37.md) | Accepted |
 | [Decision 0916: represent contained write-pointer derivation in candidate WVB 1.37](0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md) | Accepted |
 | [Decision 0915: advance the frozen source identity for unsafe-memory progress](0915-Advance-The-Frozen-Source-Identity-For-Unsafe-Memory-Progress.md) | Accepted |
@@ -69,8 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0897: lower lexical unsafe invocation contexts](0897-Lower-Lexical-Unsafe-Invocation-Contexts.md) | Accepted |
 | [Decision 0896: promote the qualified current split compiler as the two-file bootstrap](0896-Promote-The-Qualified-Current-Split-Compiler-As-The-Two-File-Bootstrap.md) | Accepted |
 | [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) | Proposed |
-| [Decision 0894: advance the frozen source identity for canonical unsafe and FFI effects](0894-Advance-The-Frozen-Source-Identity-For-Canonical-Unsafe-And-Ffi-Effects.md) | Accepted |
-| [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) | Proposed |
 
 ## Superseded or historical records
 

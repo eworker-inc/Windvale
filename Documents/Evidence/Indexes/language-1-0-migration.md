@@ -126,3 +126,4 @@
 | [Slice 8 candidate WVB 1.36 write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-candidate-wvb-136-write-region-checkpoint) | 5145 |
 | [Slice 8 WVB 1.36 compiler-aligned containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-compiler-aligned-containment-checkpoint) | 5169 |
 | [Slice 8 WVB 1.36 bounded scalar write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-bounded-scalar-write-region-checkpoint) | 5207 |
+| [Slice 8 WVB 1.37 compiler-aligned pointer containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-137-compiler-aligned-pointer-containment-checkpoint) | 5259 |

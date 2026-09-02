@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-compiler-aligned-wvb-1-37-write-pointer-containment",
+  "date": "2026-09-02",
+  "subject": "Compiler-aligned WVB 1.37 write-pointer lifetime containment",
+  "claim": "The Windows source-built compiler-aligned verifier accepts exact candidate WVB 1.37 contained write-pointer derivation, enforces an affine two-local move and non-escape boundary, rejects bounded structural and semantic mutations, retains inherited WVB 1.36 admission, and leaves every execution consumer closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "e54087aa48d22dd369fb03a1f0c748d42f10f929"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Source-built compiler-aligned WVB verifier deterministic reconstruction",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj artifacts/local-pointer-contained-verifier.wvb artifacts/local-write-pointer-analyzer.exe artifacts/local-write-pointer-analyzer.identity artifacts/local-pointer-wvb-emitter.exe artifacts/local-pointer-wvb-emitter.identity --symbol-checkpoint; node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Wvb-Verifier.wvproj artifacts/local-pointer-contained-verifier-repeat.wvb artifacts/local-write-pointer-analyzer.exe artifacts/local-write-pointer-analyzer.identity artifacts/local-pointer-wvb-emitter.exe artifacts/local-pointer-wvb-emitter.identity --symbol-checkpoint",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-pointer-contained-verifier.wvb",
+          "size": 494934,
+          "sha256": "3108026889d28c5088e14c2fa73fe8b24e190ad94695030cee3959d697642c2d"
+        },
+        {
+          "path": "artifacts/local-pointer-contained-verifier-repeat.wvb",
+          "size": 494934,
+          "sha256": "3108026889d28c5088e14c2fa73fe8b24e190ad94695030cee3959d697642c2d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Packaged compiler-aligned WVB verifier",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 7 artifacts/local-pointer-contained-verifier.wvb artifacts/local-pointer-contained-verifier.exe --development-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-pointer-contained-verifier.exe",
+          "size": 3996160,
+          "sha256": "5ee4f626be8c8dc4f638d146fc99e506318f230160d641b209a5a4b3bfee907b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB 1.37 write-pointer source, WVIR, byte contract, complete compiler containment, and closed execution boundary",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-pointer-analyzer.exe artifacts/local-pointer-wvb-emitter.exe artifacts/local-pointer-contained-verifier.exe",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "temporary/valid-canonical-write-pointer/Candidate.wvb",
+          "size": 1076,
+          "sha256": "289f9e338f7922e91be3526239bf5e06d9d5ef701d4d87a003d7fab14adec47f"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered 22 source cases, seven malformed write-region WVIR mutations, seven malformed pointer WVIR mutations, five malformed WVB 1.36 mutations, ten malformed WVB 1.37 mutations, and 25 compiler-verifier decisions; it was not the complete changed-file development plan.",
+    "The verifier admits the exact direct borrowed-region parameter and compiler-generated pointer move. It does not yet admit arbitrary pointer control flow, multiple live derived pointers, or a general region-local source.",
+    "The scalar provider, native lowerer, launcher, published front door, browser, WebAssembly host, package, and operating-system consumers still reject WVB 1.37.",
+    "No provider or native address was formed and no authenticated Foreign call was lowered.",
+    "The final verifier source was rebuilt byte-identically through the declared cached split-compiler inputs and packaged successfully; the complete 13-step bootstrap wrapper was not rerun after the last cohesive extraction.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction."
+  ],
+  "related": [
+    "Documents/Decisions/0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}

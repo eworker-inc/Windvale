@@ -11,14 +11,14 @@ import { TextDecoder } from "node:util";
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, "..", "..");
-const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Source-Amendment-0917-Candidate.txt";
+const FREEZE_PATH = "Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt";
 const INVENTORY_PATH = "Tests/Native/Language-1.0-Fixture-Inventory.txt";
-const FREEZE_BYTES = 3780;
-const FREEZE_SHA256 = "b468c7b2f39e1df2e5e644906f5a8db08d3e8eac15598df50eea78f40814dcab";
+const FREEZE_BYTES = 3789;
+const FREEZE_SHA256 = "6654ca1e547dc73d0b1d48bc69d1bd365156f20dd0277f8bb28f589b1c74cb6e";
 const COMPLETE_COUNT = 251;
-const COMPLETE_BYTES = 1775892;
+const COMPLETE_BYTES = 1776773;
 const COMPLETE_STREAM_BYTES = 46260;
-const COMPLETE_SHA256 = "0d5e6ef4d9bef7c7d2686905a79ff01490a65302ab3b99efcdd5652aef9b60d0";
+const COMPLETE_SHA256 = "cf16aa868688a2dfa1dad099fad497e71b0f0be40e38d02a1e7d8ff7e185b888";
 
 function Fail(message) {
     throw new Error(message);

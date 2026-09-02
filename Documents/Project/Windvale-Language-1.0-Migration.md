@@ -956,11 +956,20 @@ region slot, canonical pointer-record type, and ABI-enum type. The exact
 immutable region parameter is encoded as borrowed-record shape `28` only when
 the same function directly targets it. The independent reader accepts one
 publication and rejects seven old-minor, opcode, index, type, shape, and nominal
-forgeries. The complete source-built compiler verifier and current execution
-front door reject minor 37 as intended. Pointer lifetime verification,
-provider/native address formation, authenticated no-retain Foreign calls,
-ordinary generic-call inference, a migrated real boundary, Linux reproduction,
-and paired-host evidence remain pending.
+forgeries.
+
+[Decision 0918](../Decisions/0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md)
+now admits that candidate through the complete source-built compiler verifier
+without opening execution. Verifier-internal affine kind `38` may be discarded
+directly or moved through the exact compiler-generated two-local sequence. It
+cannot be taken, copied, loaded after consumption, embedded, called, returned,
+or carried across a control-flow ownership disagreement. The immutable region
+borrow remains available, while 4,096 pointer instructions and 256 explicit
+region/pointer/ABI relations bound one module. The focused 22-case source and
+malformed-input matrix reports 25 compiler-verifier decisions. Provider/native
+address formation, authenticated no-retain Foreign calls, ordinary generic-call
+inference, a migrated real boundary, Linux reproduction, and paired-host
+evidence remain pending.
 
 That database run is a compiler/staging regression result, not a memory-model
 migration claim. It recompiles the current database `.wv` source with the
