@@ -113,6 +113,7 @@ const WVB_UNSAFE_SCRATCH_FEATURE: u32 = 4194304u32;
 const WVB_BORROWED_BUDGET_FEATURE: u32 = 8388608u32;
 const WVB_UNSAFE_SCRATCH_LENGTH_FEATURE: u32 = 16777216u32;
 const WVB_UNSAFE_WRITE_REGION_FEATURE: u32 = 33554432u32;
+const WVB_UNSAFE_WRITE_POINTER_FEATURE: u32 = 67108864u32;
 
 export record Compilerˉsourceˉwvbˉsummary {
     Status: Compilerˉsourceˉwvbˉstatus;
@@ -699,11 +700,12 @@ export fn Compilerˉsourceˉwvbˉopcode(Operation: u32) -> bytes {
     if Operation == 186u32 { return Compilerˉsourceˉwvbˉlowˉbyte(220u32); }
     if Operation == 187u32 { return Compilerˉsourceˉwvbˉlowˉbyte(221u32); }
     if Operation == 188u32 { return Compilerˉsourceˉwvbˉlowˉbyte(222u32); }
+    if Operation == 189u32 { return Compilerˉsourceˉwvbˉlowˉbyte(223u32); }
     return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
     if Operation >= 1u32 {
-        if Operation <= 188u32 { return true; }
+        if Operation <= 189u32 { return true; }
     }
     return false;
 }
@@ -769,6 +771,7 @@ export fn Compilerˉsourceˉwvbˉoperationˉlength(
     if Operation == 186u32 { Opcodeˉbytes = 13u32; }
     if Operation == 187u32 { Opcodeˉbytes = 9u32; }
     if Operation == 188u32 { Opcodeˉbytes = 13u32; }
+    if Operation == 189u32 { Opcodeˉbytes = 13u32; }
     var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
     if Shape != 0u32 { Result = Result + 5u32; }
     return Result;
@@ -3388,6 +3391,25 @@ fn Compilerˉsourceˉwvbˉfunctionˉhasˉwriteˉregionˉtarget(
     return false;
 }
 
+fn Compilerˉsourceˉwvbˉfunctionˉhasˉwriteˉpointerˉtarget(
+    Wir: bytes,
+    Firstˉoperation: u32,
+    Operationˉcount: u32,
+    Target: u32
+) -> bool {
+    let Operations: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+    var Index: u32 = 0u32;
+    while Index < Operationˉcount {
+        let Entry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32) == 189u32 &&
+            Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32) == Target {
+            return true;
+        }
+        Index = Index + 1u32;
+    }
+    return false;
+}
+
 fn Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -3647,6 +3669,54 @@ fn Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(
         ) && Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
             View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
             "Foreignˉscratch"
+        );
+}
+
+fn Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉwriteˉregion(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Shape: u32
+) -> bool {
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return false;
+    }
+    let Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwvbˉbindingsˉtypeˉcatalog(Bindings.Directory);
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape);
+    if Instance >=
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+                Catalog
+            ) || Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉparameters(
+                Catalog, Instance
+            ) != 1u32 {
+        return false;
+    }
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+                Catalog, Instance
+            )
+        );
+    if !Nominal.Found || Nominal.Module >= Scan.Modules || Nominal.Kind !=
+            Sourceˉdeclarations.Compilerˉsourceˉdeclarationˉkind.Record {
+        return false;
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Nominal.Module);
+    let Header: Sourceˉdeclarations.Compilerˉsourceˉheader =
+        Sourceˉdeclarations.Compilerˉparseˉheaderˉvalidated(View.Source);
+    return View.Edition == 1u32 && Header.Profile ==
+            Sourceˉdeclarations.Compilerˉsourceˉprofile.System &&
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Header.Nameˉoffset, Header.Nameˉlength,
+            "Foundationˉunsafe"
+        ) && Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(
+            View.Source, Nominal.Nameˉoffset, Nominal.Nameˉlength,
+            "Foreignˉwriteˉregion"
         );
 }
 
@@ -4135,12 +4205,32 @@ export fn Compilerˉsourceˉwvbˉanalyzeˉfunction(
                     );
                 }
             }
+            if Operation == 189u32 {
+                let Plannedˉpointer: u32 =
+                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                        Shape, Symbols, Orders
+                    );
+                let Plannedˉpointerˉabi: u32 =
+                    Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                        Auxiliary, Symbols, Orders
+                    );
+                if Target >= Parameters + Locals || Operands != 0u32 ||
+                    Plannedˉpointer < 65536u32 ||
+                    Plannedˉpointer >= 131072u32 ||
+                    Plannedˉpointerˉabi < 131072u32 ||
+                    Plannedˉpointerˉabi >= 196608u32 {
+                    return Compilerˉsourceˉwvbˉanalysisˉfailure(
+                        Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                        Globalˉoperation
+                    );
+                }
+            }
             if Operation != 171u32 && Operation != 172u32 &&
                 Operation != 173u32 && Operation != 180u32 &&
                 Operation != 181u32 && Operation != 182u32 &&
                 Operation != 183u32 && Operation != 184u32 &&
                 Operation != 186u32 && Operation != 187u32 &&
-                Operation != 188u32 &&
+                Operation != 188u32 && Operation != 189u32 &&
                 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
                     Wir, Shape, Orders
                 ) &&
@@ -5123,6 +5213,26 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
             )
         );
     }
+    if Operation == 189u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(223u8));
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                    Shape, Symbols, Orders
+                ) - 65536u32
+            )
+        );
+        Result = Bytesˉconcat(
+            Result,
+            Bytesˉfromˉu32ˉlittle(
+                Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+                    Auxiliary, Symbols, Orders
+                ) - 131072u32
+            )
+        );
+    }
     if Operation >= 11u32 {
         if Operation <= 16u32 {
             Result = Bytesˉconcat(
@@ -5701,6 +5811,16 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 Compilerˉsourceˉwvbˉfunctionˉhasˉwriteˉregionˉtarget(
                     Wir, Firstˉoperation, Operationˉcount, Index
                 )));
+        let Isˉunsafeˉwriteˉregionˉparameter: bool =
+            Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉwriteˉregion(
+                Input, Scan, Symbols, Bindings, Parameterˉshape
+            );
+        let Isˉallowedˉwriteˉregionˉborrow: bool =
+            Isˉunsafeˉwriteˉregionˉparameter && Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE &&
+            Compilerˉsourceˉwvbˉfunctionˉhasˉwriteˉpointerˉtarget(
+                Wir, Firstˉoperation, Operationˉcount, Index
+            );
         let Isˉallowedˉbudgetˉparameter: bool =
             Parameterˉshape == 805306368u32 &&
             (Isˉlauncherˉbudgetˉmain ||
@@ -5713,6 +5833,13 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             !Compilerˉsourceˉwvbˉshapeˉisˉsupported(
                 Parameterˉshape, false, Symbols, Orders
             ) {
+            return Compilerˉsourceˉwvbˉfunctionˉfailure(
+                Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+                Analysis.Failureˉoperation
+            );
+        }
+        if Isˉunsafeˉwriteˉregionˉparameter &&
+            !Isˉallowedˉwriteˉregionˉborrow {
             return Compilerˉsourceˉwvbˉfunctionˉfailure(
                 Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                 Analysis.Failureˉoperation
@@ -5742,6 +5869,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             Features = Features | WVB_BORROWED_BUDGET_FEATURE;
         }
         if Isˉallowedˉscratchˉborrow {
+            Plannedˉparameter =
+                Compilerˉsourceˉwvbˉborrowedˉaggregateˉshape(
+                    Plannedˉparameter
+                );
+        }
+        if Isˉallowedˉwriteˉregionˉborrow {
             Plannedˉparameter =
                 Compilerˉsourceˉwvbˉborrowedˉaggregateˉshape(
                     Plannedˉparameter
@@ -5954,6 +6087,9 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 }
                 if Operationˉkind == 188u32 {
                     Features = Features | WVB_UNSAFE_WRITE_REGION_FEATURE;
+                }
+                if Operationˉkind == 189u32 {
+                    Features = Features | WVB_UNSAFE_WRITE_POINTER_FEATURE;
                 }
                 if Operationˉkind == 8u32 {
                     let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
@@ -6792,6 +6928,9 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     }
     if (Features & WVB_UNSAFE_WRITE_REGION_FEATURE) != 0u32 {
         Wvbˉminor = 36u32;
+    }
+    if (Features & WVB_UNSAFE_WRITE_POINTER_FEATURE) != 0u32 {
+        Wvbˉminor = 37u32;
     }
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
     Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));

@@ -221,7 +221,6 @@ const Cases = [
         Expected: 'valid',
         Pointer: true,
         Malformedˉpointer: true,
-        Writerˉrejected: true,
         Source: Pointerˉapplication('Region: borrow ' + Regionˉtype),
     },
     {
@@ -492,7 +491,9 @@ var Rejected = 0;
 var Malformed = 0;
 var Malformedˉpointer = 0;
 var Malformedˉwvb = 0;
+var Malformedˉpointerˉwvb = 0;
 var Publishedˉwvb = 0;
+var Publishedˉpointerˉwvb = 0;
 var Writerˉrejected = 0;
 var Compilerˉverifierˉcases = 0;
 var Runtimeˉmalformed = 0;
@@ -543,16 +544,14 @@ try {
                     const Emission = await Runˉtool(Emitter, [
                         Source, Manifest, Bindings, Wir, Output,
                     ]);
-                    const Expectedˉwriterˉstatus = Case.Pointer === true ?
-                        'wvb-status=Unsupportedˉoperation' :
-                        'wvb-status=Unsupportedˉshape';
+                    const Expectedˉwriterˉstatus = 'wvb-status=Unsupportedˉshape';
                     if (Emission.Code !== 1 || Emission.Exceeded ||
                         !Emission.Diagnostic.includes(
                             Expectedˉwriterˉstatus,
                         )) {
                         Reject(
                             `The WVIR-only case ${Case.Name} did not ` +
-                            'remain outside candidate WVB 1.36.\n' +
+                            'remain outside the candidate WVB formats.\n' +
                             Emission.Diagnostic,
                         );
                     }
@@ -574,7 +573,7 @@ try {
                             Emission.Diagnostic,
                         )) {
                         Reject(
-                            'The candidate WVB 1.36 publication differed.\n' +
+                            'The candidate WVB publication differed.\n' +
                             Emission.Diagnostic,
                         );
                     }
@@ -597,15 +596,18 @@ try {
                         Valid += 1;
                         continue;
                     }
-                    const Wvbˉlayout = Inspectˉwriteˉregionˉwvb(Wvbˉbytes);
+                    const Wvbˉlayout = Case.Pointer === true ?
+                        Inspectˉwriteˉpointerˉwvb(Wvbˉbytes) :
+                        Inspectˉwriteˉregionˉwvb(Wvbˉbytes);
                     if (Compilerˉverifier !== undefined) {
                         await Requireˉcompilerˉverification(
-                            Output, true, Case.Name,
+                            Output, Case.Pointer !== true, Case.Name,
                         );
                         Compilerˉverifierˉcases += 1;
                     }
                     await Verifyˉexecutionˉremainsˉclosed(Output);
                     Publishedˉwvb += 1;
+                    if (Case.Pointer === true) Publishedˉpointerˉwvb += 1;
                     if (Case.Malformed === true) {
                         Malformed += await Verifyˉmalformedˉwir(
                             Directory, Source, Manifest, Bindings, Wirˉbytes,
@@ -617,6 +619,9 @@ try {
                     if (Case.Malformedˉpointer === true) {
                         Malformedˉpointer += await Verifyˉmalformedˉpointerˉwir(
                             Directory, Source, Manifest, Bindings, Wirˉbytes,
+                        );
+                        Malformedˉpointerˉwvb += await Verifyˉmalformedˉpointerˉwvb(
+                            Directory, Wvbˉbytes, Wvbˉlayout,
                         );
                     }
                 }
@@ -644,8 +649,11 @@ try {
         `malformed-wvir=${Malformed} ` +
         `malformed-pointer-wvir=${Malformedˉpointer} ` +
         `malformed-wvb=${Malformedˉwvb} ` +
-        `operations=188,189 minors=27,28,29,30 wvb=1.36 opcode=222 ` +
+        `malformed-pointer-wvb=${Malformedˉpointerˉwvb} ` +
+        `operations=188,189 minors=27,28,29,30 ` +
+        `wvb=1.36,1.37 opcodes=222,223 ` +
         `published-wvb=${Publishedˉwvb} ` +
+        `published-pointer-wvb=${Publishedˉpointerˉwvb} ` +
         `legacy-front-door=Closed scalar-provider=${Runner === undefined ?
             'Notˉrequested' : 'Verified'} ` +
         `native-x64=${Lowerer === undefined ?
@@ -850,7 +858,7 @@ async function Verifyˉexecutionˉremainsˉclosed(Module) {
         !/^wvb status=Invalid phase=semantic\r?\n$/u.test(Result.Diagnostic)) {
         Reject(
             'The current execution front door did not remain closed to ' +
-            `candidate WVB 1.36.\n${Result.Diagnostic}`,
+            `the candidate WVB module.\n${Result.Diagnostic}`,
         );
     }
 }
@@ -964,10 +972,65 @@ async function Verifyˉmalformedˉwvb(Directory, Canonical, Layout) {
     return Cases.length;
 }
 
-function Inspectˉwriteˉregionˉwvb(Input) {
+async function Verifyˉmalformedˉpointerˉwvb(Directory, Canonical, Layout) {
+    const Cases = [
+        ['old-minor', Value => Value.writeUInt16LE(36, 6)],
+        ['unknown-opcode', Value => { Value[Layout.Operation] = 224; }],
+        ['invalid-region-local', Value => Value.writeUInt32LE(
+            0xffff_ffff, Layout.Operation + 1,
+        )],
+        ['invalid-pointer-type', Value => Value.writeUInt32LE(
+            Layout.Typeˉcount, Layout.Operation + 5,
+        )],
+        ['invalid-abi-type', Value => Value.writeUInt32LE(
+            Layout.Typeˉcount, Layout.Operation + 9,
+        )],
+        ['unborrowed-region-shape', Value => {
+            Value[Layout.Regionˉshape] = 7;
+        }],
+        ['aliased-region-pointer-type', Value => Value.writeUInt32LE(
+            Layout.Regionˉtype, Layout.Operation + 5,
+        )],
+    ];
+    for (let Index = 0; Index < Cases.length; Index += 1) {
+        const [Name, Mutate] = Cases[Index];
+        process.stdout.write(
+            'native language 1 unsafe write pointer WVB ' +
+            `item=${Index + 1}/${Cases.length} case=${Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Canonical);
+        Mutate(Candidate);
+        if (Compilerˉverifier !== undefined) {
+            const Candidateˉpath = join(
+                Directory, `Malformed-Pointer-WVB-${Name}.wvb`,
+            );
+            await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+            await Requireˉcompilerˉverification(
+                Candidateˉpath, false, Name,
+            );
+            Compilerˉverifierˉcases += 1;
+        }
+        try {
+            Inspectˉwriteˉpointerˉwvb(Candidate);
+        } catch {
+            continue;
+        }
+        Reject(`The malformed write-pointer WVB was accepted: ${Name}.`);
+    }
+    return Cases.length;
+}
+
+function Inspectˉwriteˉpointerˉwvb(Input) {
+    return Inspectˉwriteˉregionˉwvb(Input, 37, 223, true);
+}
+
+function Inspectˉwriteˉregionˉwvb(
+    Input, Expectedˉminor = 36, Expectedˉopcode = 222, Pointer = false,
+) {
     if (Input.length < 12 || Input.length > MAXIMUM_WVB_BYTES ||
         Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
-        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 36 ||
+        Input.readUInt16LE(4) !== 1 ||
+        Input.readUInt16LE(6) !== Expectedˉminor ||
         Input.readUInt32LE(8) !== 7) {
         Reject('The write-region WVB header differs.');
     }
@@ -1065,11 +1128,11 @@ function Inspectˉwriteˉregionˉwvb(Input) {
 
     const Matches = [];
     for (Cursor = Code.Start; Cursor <= Code.End - 13; Cursor += 1) {
-        if (Input[Cursor] !== 222) continue;
+        if (Input[Cursor] !== Expectedˉopcode) continue;
         const Resultˉtype = Input.readUInt32LE(Cursor + 5);
         const Abiˉtype = Input.readUInt32LE(Cursor + 9);
         if (Resultˉtype < Typeˉcount && Abiˉtype < Typeˉcount &&
-            Typeˉkinds[Resultˉtype] === 3 &&
+            Typeˉkinds[Resultˉtype] === (Pointer ? 1 : 3) &&
             (Typeˉkinds[Abiˉtype] === 2 || Typeˉkinds[Abiˉtype] === 7)) {
             Matches.push({
                 Operation: Cursor,
@@ -1080,7 +1143,10 @@ function Inspectˉwriteˉregionˉwvb(Input) {
         }
     }
     if (Matches.length !== 1) {
-        Reject('The write-region WVB must contain one exact opcode 222.');
+        Reject(
+            'The write-region WVB must contain one exact opcode ' +
+            `${Expectedˉopcode}.`,
+        );
     }
     const Owner = Ranges.find(Range =>
         Matches[0].Operation >= Range.Start &&
@@ -1090,6 +1156,23 @@ function Inspectˉwriteˉregionˉwvb(Input) {
         Reject('The write-region WVB scratch local is invalid.');
     }
     const Scratchˉshape = Owner.Shapes[Matches[0].Scratch];
+    if (Pointer) {
+        if (Scratchˉshape === undefined || Scratchˉshape.Kind !== 28 ||
+            Scratchˉshape.Nominal >= Typeˉcount ||
+            Typeˉkinds[Scratchˉshape.Nominal] !== 1 ||
+            Scratchˉshape.Nominal === Matches[0].Resultˉtype) {
+            Reject('The write-pointer WVB region or pointer type is invalid.');
+        }
+        return {
+            Operation: Matches[0].Operation,
+            Regionˉshape: Scratchˉshape.Start,
+            Regionˉtype: Scratchˉshape.Nominal,
+            Pointerˉtype: Matches[0].Resultˉtype,
+            Abiˉtype: Matches[0].Abiˉtype,
+            Typeˉcount,
+            Typeˉkinds,
+        };
+    }
     if (Scratchˉshape === undefined ||
         (Scratchˉshape.Kind !== 7 && Scratchˉshape.Kind !== 28) ||
         Scratchˉshape.Nominal >= Typeˉcount) {
@@ -1250,6 +1333,7 @@ function Checkedˉwvbˉshape(Input, Cursor, End) {
 }
 
 function Inspectˉwvbˉshape(Input, Cursor, End) {
+    const Start = Cursor;
     const Kind = Input[Checkedˉwvbˉadvance(Cursor, 1, End) - 1];
     var Nominal = 0;
     var Shapeˉend = Cursor + 1;
@@ -1258,7 +1342,7 @@ function Inspectˉwvbˉshape(Input, Cursor, End) {
         Nominal = Input.readUInt32LE(Cursor + 1);
         Shapeˉend += 4;
     }
-    return { End: Shapeˉend, Kind, Nominal };
+    return { Start, End: Shapeˉend, Kind, Nominal };
 }
 
 function Checkedˉwvbˉstring(Input, Cursor, End) {
