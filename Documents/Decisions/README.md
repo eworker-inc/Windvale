@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 327 |
+| Accepted | 329 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,8 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0921: cache complete segmented development packaging](0921-Cache-Complete-Segmented-Development-Packaging.md) | Accepted |
+| [Decision 0920: execute contained WVB 1.37 write pointers in the scalar provider](0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md) | Accepted |
 | [Decision 0919: advance the frozen source identity for WVB 1.37 containment](0919-Advance-The-Frozen-Source-Identity-For-WVB-1.37-Containment.md) | Accepted |
 | [Decision 0918: verify WVB 1.37 write-pointer lifetime containment](0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md) | Accepted |
 | [Decision 0917: advance the frozen source identity for candidate WVB 1.37](0917-Advance-The-Frozen-Source-Identity-For-Candidate-Wvb-1.37.md) | Accepted |
@@ -69,8 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0899: lower canonical unsafe scratch construction to WVIR](0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md) | Accepted |
 | [Decision 0898: publish canonical Foundation unsafe type identities](0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md) | Accepted |
 | [Decision 0897: lower lexical unsafe invocation contexts](0897-Lower-Lexical-Unsafe-Invocation-Contexts.md) | Accepted |
-| [Decision 0896: promote the qualified current split compiler as the two-file bootstrap](0896-Promote-The-Qualified-Current-Split-Compiler-As-The-Two-File-Bootstrap.md) | Accepted |
-| [Decision 0895: bind authenticated foreign declarations in a private compiler phase](0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) | Proposed |
 
 ## Superseded or historical records
 

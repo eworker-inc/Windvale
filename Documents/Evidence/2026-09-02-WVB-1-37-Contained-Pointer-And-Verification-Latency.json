@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-wvb-1-37-contained-pointer-and-verification-latency",
+  "date": "2026-09-02",
+  "subject": "Contained WVB 1.37 pointer execution and bounded development verification reuse",
+  "claim": "The Windows source-built compiler verifier and scalar runner execute contained WVB 1.37 write-pointer derivation without exposing a host address, publish deterministic Windows and Linux artifact bytes, and reduce exact repeated runner development verification from minutes to seconds while retaining fresh paired-host qualification.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "91eb4115e1c7edd719d2614cb3299391d137cc39"
+  },
+  "artifacts": [
+    {
+      "path": "Artifacts/Native-Front-Door/Wvb/Compiler-Wvb-Verifier.wvb",
+      "size": 493060,
+      "sha256": "a7ed497149a215526f220b0b55c2742a8f203ba1f0c57b47622c2c0d48ef90fe"
+    },
+    {
+      "path": "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
+      "size": 3983360,
+      "sha256": "acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6"
+    },
+    {
+      "path": "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
+      "size": 3985408,
+      "sha256": "bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f"
+    },
+    {
+      "path": "Artifacts/Native-Wvb-Runner-Candidate/Wvb-Runner.wvb",
+      "size": 1020604,
+      "sha256": "05fd4635781f2660922760a1c96cbfd675a7a3ebb74fcd780c965db56f9b9b51"
+    },
+    {
+      "path": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
+      "size": 10368512,
+      "sha256": "d5743801003ac0c43ce6b5b2b3c4bb195d8334f84f5a7f84c6e1edd04b8cf7a7"
+    },
+    {
+      "path": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
+      "size": 10371072,
+      "sha256": "e63bce623c470418ed3bede36ce2c4c3964c245c78766e45bb71090b637e3d0b"
+    }
+  ],
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "WVB 1.37 source, malformed-input, compiler-verifier, and scalar pointer execution",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-pointer-analyzer.exe artifacts/local-pointer-wvb-emitter-v4.exe artifacts/local-pointer-execution-verifier-final.exe artifacts/local-write-pointer-runner-final.exe",
+      "result": "Passed",
+      "cases": 22,
+      "compilerVerifierCases": 30,
+      "runtimeCases": 5,
+      "runtimeMalformedCases": 1,
+      "runtimeResult": 42
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Segmented hosted cache safety and compiler-packager routing",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools/Native/Test-Verification-Owners.cmd --filter segmented-hosted-wvb-cache",
+      "result": "Passed",
+      "cases": 10,
+      "elapsedMilliseconds": 4210
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Small hosted-WVB cold and warm cache comparison",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 1 artifacts/local-cache-routing-generic-calls.wvb <output.exe> --development-cache",
+      "result": "Passed",
+      "coldMilliseconds": 127497,
+      "warmMilliseconds": 625,
+      "byteIdentical": true
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current-host runner development reconstruction",
+      "tool": "Tools/Native/Test-Wvb-Runner-Reconstruction.cmd",
+      "command": "Tools/Native/Test-Wvb-Runner-Reconstruction.cmd --development",
+      "result": "Passed",
+      "coldPopulationMilliseconds": 2552223,
+      "warmMilliseconds": 9294,
+      "cases": 3
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Fresh paired-host runner artifact reconstruction",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools/Native/Test-Verification-Owners.cmd --filter wvb-runner-reconstruction",
+      "result": "Passed",
+      "priorMilliseconds": 1183030,
+      "optimizedMilliseconds": 167220,
+      "cases": 3
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Compiler-only randomized source containment",
+      "tool": "Tools/Native/Test-Source-Containment.cmd",
+      "command": "Tools/Native/Test-Source-Containment.cmd --compiler-only",
+      "result": "Passed",
+      "cases": 500
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Language 1 source and compiler front door",
+      "tool": "Tools/Native/Test-Verification-Owners.cmd",
+      "command": "Tools/Native/Test-Verification-Owners.cmd --filter language-1-front-door",
+      "result": "Passed",
+      "cases": 482,
+      "elapsedMilliseconds": 666160
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The pointer is a private scalar-provider logical capability token carrying a bounded region descriptor, not a host address.",
+    "Opcode 223 is not yet lowered to native x64 and no authenticated no-retain Foreign call has executed.",
+    "The Windows host constructed deterministic Linux artifact bytes, but those artifacts were not executed on Linux in this run.",
+    "The 42-minute cold compiler checkpoint population remains too slow and identifies cold hosted-source/container generation as a separate performance target.",
+    "Database, unrelated library, model-provider, and operating-system suites were deliberately not run because they cannot reveal a defect in the changed pointer execution or cache-routing contracts.",
+    "Required Libraries 1.0 profiles and final Windows/Linux qualification remain pending."
+  ],
+  "related": [
+    "Documents/Decisions/0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md",
+    "Documents/Decisions/0921-Cache-Complete-Segmented-Development-Packaging.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+    "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tools/Native/Test-Wvb-Runner-Reconstruction.cmd"
+  ]
+}
