@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 321 |
+| Accepted | 323 |
 | Implemented | 484 |
 | Proposed | 3 |
 | Qualified | 94 |
@@ -46,6 +46,8 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0915: advance the frozen source identity for unsafe-memory progress](0915-Advance-The-Frozen-Source-Identity-For-Unsafe-Memory-Progress.md) | Accepted |
+| [Decision 0914: lower canonical unsafe write pointer to WVIR](0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md) | Accepted |
 | [Decision 0913: lower compiler-verified WVB 1.36 write regions to native x64](0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) | Accepted |
 | [Decision 0912: execute WVB 1.36 write regions in a bounded scalar provider](0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0911: verify WVB 1.36 write-region lifetime containment](0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md) | Accepted |
@@ -69,8 +71,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0893: authenticate production source-analysis ingress](0893-Authenticate-Production-Source-Analysis-Ingress.md) | Proposed |
 | [Decision 0892: coordinate authenticated source admission](0892-Coordinate-Authenticated-Source-Admission.md) | Accepted |
 | [Decision 0891: promote SHA-capable segmented staging](0891-Promote-Sha-Capable-Segmented-Staging.md) | Accepted |
-| [Decision 0890: lower bytes.sha256_hex in the native x64 backend](0890-Lower-Bytes-Sha256-Hex-In-The-Native-X64-Backend.md) | Accepted |
-| [Decision 0889: publish the bounded System/FFI foreign-memory semantic oracle](0889-Publish-The-Bounded-System-Ffi-Foreign-Memory-Semantic-Oracle.md) | Accepted |
 
 ## Superseded or historical records
 

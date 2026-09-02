@@ -1978,8 +1978,18 @@ provider and compiler-verified native x86-64 backend execute zero-length,
 address-overflow, owner-range, alignment, and success outcomes through private
 subrange descriptors with no exposed native address. Native success retains
 only checked logical start and length; it does not form a pointer or grant
-dereference authority. Pointer operations, authenticated Foreign calls, host
-ABI publication, Linux execution, and paired-host containment remain pending.
+dereference authority.
+
+The next typed compiler checkpoint publishes exact
+`Writeˉpointer::<Abi>(Region: borrow Region)` as WVIR operation `189`. The
+argument is an immutable borrow of one directly named canonical
+`Foreignˉwriteˉregion<Abi>` parameter or local, and the contextual result is
+the exact opaque `Foreignˉpointer<u8, Abi>`. WVIR 1.29/1.30 preserve the region
+slot and ABI identity with zero operands; independent validation rejects wrong
+context, borrow mode, label, element, ABI, result, version, slot, or operation
+relationships. The operation is not yet serialized to WVB and forms no native
+address. Executable pointer operations, authenticated Foreign calls, host ABI
+publication, Linux execution, and paired-host containment remain pending.
 The remaining operations below may appear only with their compiler-owned
 intrinsic semantics and containment evidence.
 

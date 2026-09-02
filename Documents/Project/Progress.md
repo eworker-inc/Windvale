@@ -49,9 +49,9 @@ materially misleading.
 
 | Boundary | Standing | What works | What is missing or next |
 | --- | :---: | --- | --- |
-| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The current unsafe-memory checkpoint reaches compiler-verified native WVB 1.36 write-region validation. | Complete pointer derivation, the authenticated System/FFI call path, one migrated real boundary, exact compiler reconstruction, and paired-host qualification. |
+| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The unsafe-memory path executes compiler-verified native WVB 1.36 write-region validation, and exact pointer derivation now reaches independently validated WVIR 1.30. | Encode, verify, and execute contained pointer derivation; complete the authenticated System/FFI call path, one migrated real boundary, and paired-host qualification. |
 | Slice 8 source admission | Candidate | The target-aware admitter, independent authenticator, and private foreign-binding phase validate retained source, target, catalog, and admission evidence. The ordinary front door passes on Windows and Linux; the newer production-ingress and binding candidates pass locally on Windows. | Add the missing Linux results, lower authenticated foreign calls, contain them in verifier/runtime/native execution, and migrate one real system boundary. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain Proposed. |
-| Unsafe Foundation slice | Candidate | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, and exact write-region validation execute through WVB 1.36 in the scalar provider and compiler-verified native x86-64 lowering. Decision [0913](../Decisions/0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) preserves only private logical geometry and exposes no address. | Add pointer derivation, authenticated Foreign calls, a migrated real boundary, Linux execution, and paired-host qualification. |
+| Unsafe Foundation slice | Candidate | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, and exact write-region validation execute through WVB 1.36 in the scalar provider and compiler-verified native x86-64 lowering. Exact `Writeˉpointer::<Abi>` now binds and lowers to independently validated WVIR 1.30 under [Decision 0914](../Decisions/0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md), without forming an address. | Add the pointer WVB/verifier/runtime/native path, authenticated Foreign calls, a migrated real boundary, Linux execution, and paired-host qualification. |
 | Compiler scale | Candidate | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct their current Windows and Linux candidates byte for byte on Windows. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. | Reproduce the current candidates on Linux, complete source-compiler convergence, and run paired-host qualification. |
 | Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. The current database remains a useful bounded byte-oriented consumer and recompiles through the current compiler. | Migrate and qualify the required real consumers against explicit 1.0 memory and collection APIs where their profile requires them. The current database uses immutable `bytes`; its passing storage suite does not prove `Memoryˉbudget`, `Vector`, `Byteˉbuffer`, `Bytesˉbuilder`, or unsafe-region adoption. Finish the required API set and assign explicit platform and capability scopes. |
 | WVDB 1.0 | Candidate | Upper-layer identity, tables, typed relationships, indexes, queries, transactions, storage profiles, types, documents/graphs, and backup direction are accepted. Existing storage and service slices remain useful implementation evidence. | Finish normative storage, durability, backup/restore, service, operations, and conformance contracts, then reconcile the implementation against them. |
@@ -69,8 +69,9 @@ Two active tracks intentionally use different bytecode generations:
 - The evolving Language 1.0 compiler uses later versioned WVB contracts, with
   the executable structured-task slice at WVB 1.32 and the current unsafe-memory
   checkpoint at WVB 1.36. The compiler-aligned scalar and native x86-64 paths
-  execute bounded write-region validation; pointer-producing, WebAssembly, and
-  other consumers retain narrower declared boundaries.
+  execute bounded write-region validation. Typed pointer derivation reaches
+  WVIR 1.30 only; pointer-producing WVB, WebAssembly, and other consumers retain
+  narrower declared boundaries.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -89,8 +90,8 @@ claim.
 
 ## Immediate next results
 
-1. Derive a contained native pointer from the verified region without allowing
-   escape or implicit authority.
+1. Encode, verify, and execute a contained pointer derived from the verified
+   region without allowing escape or implicit authority.
 2. Lower one authenticated no-retain Foreign call, migrate one real system
    boundary, and reproduce the Slice 8 path on Linux.
 3. Continue the required Libraries and WVDB 1.0 specifications through useful

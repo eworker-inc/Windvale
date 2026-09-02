@@ -985,7 +985,8 @@ $NativeCases = @(
             'Libraries/Foundation/Unsafe/Unsafe.wv',
             'Documents/Decisions/0898-Publish-Canonical-Foundation-Unsafe-Type-Identities.md',
             'Documents/Decisions/0899-Lower-Canonical-Unsafe-Scratch-Construction-To-Wvir.md',
-            'Documents/Decisions/0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md'
+            'Documents/Decisions/0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md',
+            'Documents/Decisions/0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md'
         )
         Suites = @('language-1-callable-semantics')
         Gaps = @()
@@ -4303,6 +4304,7 @@ $NativeCases = @(
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0870-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0894-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0901-Candidate.txt',
+            'Documents/Project/Windvale-Language-1.0-Source-Amendment-0915-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )
@@ -4578,7 +4580,7 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
-if ($VerificationOwnerCases -ne 5937 -or $VerificationOwnerShards.Count -ne 4) {
+if ($VerificationOwnerCases -ne 5938 -or $VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner case total or four-shard coverage differs.'
 }
 
@@ -4897,7 +4899,7 @@ $OsX64OwnerContracts = @(
             'windows-x64-wvappublish.exe',
             '65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec',
             'b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421',
-            '606486f4e800df858a74245596e87d58ebf0e169f9e9288be7d2f4208afd77e6',
+            '22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea',
             '76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910',
             'f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0',
             '0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2',
@@ -4944,7 +4946,7 @@ $OsX64OwnerContracts = @(
             'linux-x64-wvappublish.elf',
             'd228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969',
             'b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af',
-            '377675961465fbfa2b2038ed5cf301ef483907d642355a6b6ebf42d23fa29703',
+            '9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37',
             '2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2',
             '8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a',
             'd399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af',

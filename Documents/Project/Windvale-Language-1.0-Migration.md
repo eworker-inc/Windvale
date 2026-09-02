@@ -935,6 +935,20 @@ candidates byte for byte on Windows. A downstream database run exposed and now
 guards the exact empty-relocation terminal case: the staging producer reaches
 Complete without publishing an empty chunk after the final object bytes.
 
+[Decision 0914](../Decisions/0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md)
+implements the next typed compiler boundary while keeping execution closed.
+Exact `Writeˉpointer::<Abi>` requires a lexical unsafe context, one directly
+named immutable borrow of `Foreignˉwriteˉregion<Abi>`, and the contextual
+canonical `Foreignˉpointer<u8, Abi>` result. WVIR operation 189 carries the
+region slot and ABI identity with zero operands; WVIR 1.29/1.30 carry its
+non-specialized/specialized forms. One valid pointer case and eight exact
+source rejections pass alongside seven independently rejected malformed pointer
+WVIR mutations and the inherited write-region matrix. The analyzer and emitter
+reconstruct their exact WVB products byte for byte through the current pair.
+Pointer WVB encoding, lifetime verification, runtime/provider representation,
+native address formation, ordinary generic-call inference, authenticated
+Foreign calls, and Linux reproduction remain pending.
+
 That database run is a compiler/staging regression result, not a memory-model
 migration claim. It recompiles the current database `.wv` source with the
 current compiler, but the database remains intentionally byte-oriented and

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-02-wvir-1-30-write-pointer-derivation",
+  "date": "2026-09-02",
+  "subject": "WVIR 1.30 canonical write-pointer derivation and compiler reconstruction",
+  "claim": "The current Windows source compiler binds and lowers the exact explicitly generic Foundation unsafe Write-pointer call to typed WVIR operation 189, independently rejects malformed pointer relationships, keeps WVB and execution closed, and reconstructs the analyzer and emitter byte for byte through the current split compiler pair.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "48abac8b92435973c010104db4ca5521f3cde745"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Canonical source and independent WVIR write-pointer validation",
+      "tool": "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs artifacts/local-write-pointer-analyzer.exe artifacts/local-write-pointer-emitter.exe",
+      "result": "Passed",
+      "summary": "cases=22 valid=7 rejected=15 malformed-wvir=7 malformed-pointer-wvir=7 malformed-wvb=5 writer-rejected=2 validator=Verified"
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Current split-compiler reconstruction and fixed-point output identity",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj artifacts/local-write-pointer-analyzer.wvb Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj artifacts/local-write-pointer-emitter.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "artifacts/local-write-pointer-analyzer.wvb",
+          "size": 1647988,
+          "sha256": "904a11ba14d70239a09f63b483464ddb4a623c42978462dd73818a1d5fa18dde"
+        },
+        {
+          "path": "artifacts/local-write-pointer-emitter.wvb",
+          "size": 1509519,
+          "sha256": "deb65933e8ed643ea74df64980e4f1c60de34219f2f2df861b779a52efd17bbc"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Operation 189 is a typed WVIR checkpoint only. Source WVB reports valid analysis followed by Unsupported-operation; no WVB opcode, verifier admission, runtime representation, native address, or dereference authority exists yet.",
+    "The current source checkpoint requires an explicit Abi generic argument and an exact contextual Foreign-pointer result. General generic call-result inference and the paper corpus shorthand remain pending.",
+    "The analyzer uses exactly 256 static-data entries, the unchanged native staging maximum. Future analyzer growth must reuse or remove an entry, split an owned boundary, or deliberately revise the bound with separate evidence.",
+    "Only local Windows execution is recorded. Linux reconstruction, Linux execution, and paired-host qualification remain pending.",
+    "Authenticated no-retain Foreign calls, one migrated runtime or operating-system boundary, and the required Libraries 1.0 consumer migrations remain pending."
+  ],
+  "related": [
+    "Documents/Decisions/0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md",
+    "Specifications/Compiler-Source-Wir.md",
+    "Specifications/Windvale-Language-1.0-Foundation.md",
+    "Tools/Native/Test-Language-1.0-Unsafe-Write-Region-Wir.mjs"
+  ]
+}
