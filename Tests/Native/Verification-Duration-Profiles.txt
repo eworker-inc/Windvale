@@ -1,0 +1,5 @@
+windvale-native-verification-duration-profiles 1
+quick|15|300|1
+standard|60|600|1
+slow|300|600|1
+very-slow|900|3600|1

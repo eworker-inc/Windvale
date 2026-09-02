@@ -29,7 +29,9 @@ pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1
 
 Use `-PlanOnly` when you only need to inspect the affected owners. The planner
 selects focused native suites in canonical order and refuses unmapped active
-boundaries. It does not fall back to an unfiltered or managed gate.
+boundaries. The owner runner also reports expected and maximum duration and
+refuses an execution expected to exceed ten minutes unless `-AllowLongRun` is
+explicit. It does not fall back to an unfiltered or managed gate.
 
 Verification levels are alternatives:
 
@@ -44,6 +46,11 @@ Windows only for Windows command, PowerShell, platform, or binary changes. The
 complete four-shard native suite, WebAssembly owner, and compiler convergence
 run only through explicit workflow dispatch for a selected release, promotion,
 bootstrap, security, ABI, or conformance state.
+
+Automatic development distinguishes product-test failures from verification
+infrastructure failures. A product-test failure blocks the run. A timeout or
+framework error produces retained `verification-incomplete` timing evidence and
+a warning; it is not a pass and cannot satisfy explicit qualification.
 
 To run one named verification owner directly:
 

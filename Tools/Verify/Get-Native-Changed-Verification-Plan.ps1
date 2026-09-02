@@ -10,6 +10,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $SuitePlanPath = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
+$DurationPlanPath = Join-Path $RepositoryRoot `
+    'Tests/Native/Verification-Duration-Profiles.txt'
 $SelectedSuites = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $Gaps = [System.Collections.Generic.HashSet[string]]::new(
@@ -826,25 +828,66 @@ foreach ($ContractPath in @(
     $null = $DatabaseDevelopmentPaths.Add($ContractPath)
 }
 
+$DurationPlanLines = @(Get-Content -LiteralPath $DurationPlanPath)
+if ($DurationPlanLines.Count -lt 2 -or
+    $DurationPlanLines[0] -ne
+        'windvale-native-verification-duration-profiles 1') {
+    throw 'The native verification duration-profile header differs.'
+}
+$DurationProfiles = @{}
+foreach ($Line in $DurationPlanLines | Select-Object -Skip 1) {
+    $Fields = $Line -split '\|', 4
+    $ExpectedSeconds = 0
+    $MaximumSeconds = 0
+    $InfrastructureRetries = 0
+    if ($Fields.Count -ne 4 -or
+        $Fields[0] -cnotmatch '^[a-z]+(?:-[a-z]+)*$' -or
+        $DurationProfiles.ContainsKey($Fields[0]) -or
+        ![int]::TryParse($Fields[1], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$ExpectedSeconds) -or
+        ![int]::TryParse($Fields[2], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$MaximumSeconds) -or
+        ![int]::TryParse($Fields[3], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$InfrastructureRetries) -or
+        $ExpectedSeconds -lt 1 -or $ExpectedSeconds -gt 3600 -or
+        $MaximumSeconds -lt $ExpectedSeconds -or $MaximumSeconds -gt 3600 -or
+        $InfrastructureRetries -lt 0 -or $InfrastructureRetries -gt 1) {
+        throw "Malformed native verification duration profile: $Line"
+    }
+    $DurationProfiles[$Fields[0]] = [pscustomobject]@{
+        ExpectedSeconds = $ExpectedSeconds
+        MaximumSeconds = $MaximumSeconds
+    }
+}
+
 $SuitePlanLines = @(Get-Content -LiteralPath $SuitePlanPath)
 if ($SuitePlanLines.Count -lt 2 -or
-    $SuitePlanLines[0] -ne 'windvale-native-verification-owners 1') {
+    $SuitePlanLines[0] -ne 'windvale-native-verification-owners 2') {
     throw 'The native verification-owner header differs.'
 }
 $SuiteEntries = @(
     $SuitePlanLines |
         Select-Object -Skip 1 |
         ForEach-Object {
-            $Fields = $_ -split '\|', 5
-            if ($Fields.Count -ne 5) {
+            $Fields = $_ -split '\|', 6
+            if ($Fields.Count -ne 6) {
                 throw "Malformed native verification-owner entry: $_"
             }
             if ($Fields[3] -notin @('1', '2', '3', '4')) {
                 throw "Invalid native qualification shard: $_"
             }
+            if (!$DurationProfiles.ContainsKey($Fields[4])) {
+                throw "Unknown native verification duration profile: $_"
+            }
+            $Duration = $DurationProfiles[$Fields[4]]
             [pscustomobject]@{
                 Name = $Fields[0]
                 Command = $Fields[1]
+                ExpectedSeconds = $Duration.ExpectedSeconds
+                MaximumSeconds = $Duration.MaximumSeconds
             }
         }
 )
@@ -2188,6 +2231,7 @@ foreach ($Path in $Paths) {
         'Tests/Native/Retirement-Suite.txt',
         'Tests/Native/Library-Development-Targets.txt',
         'Tests/Native/Verification-Owners.txt',
+        'Tests/Native/Verification-Duration-Profiles.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
         'Tools/Verify/Verify-Seed-Native-Front-Door.sh'
@@ -4361,6 +4405,20 @@ foreach ($Path in $Paths) {
 }
 
 $OrderedSuites = @($SuiteEntries.Name | Where-Object { $SelectedSuites.Contains($_) })
+$SelectedSuiteEntries = @(
+    $SuiteEntries | Where-Object { $SelectedSuites.Contains($_.Name) })
+$SelectedExpectedSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
+    [long]0
+} else {
+    [long](($SelectedSuiteEntries |
+        Measure-Object -Property ExpectedSeconds -Sum).Sum)
+}
+$SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
+    [long]0
+} else {
+    [long](($SelectedSuiteEntries |
+        Measure-Object -Property MaximumSeconds -Sum).Sum)
+}
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
@@ -4511,6 +4569,8 @@ $SourceContainmentDevelopmentMode = if (
 }
 if (!$Quiet) {
     Write-Host "Native owners: [$($OrderedSuites -join ', ')]"
+    Write-Host "Native owner expected seconds: $SelectedExpectedSeconds"
+    Write-Host "Native owner maximum seconds: $SelectedMaximumSeconds"
     Write-Host "Native coverage gaps: [$($OrderedGaps -join ', ')]"
     Write-Host "Plan verification: $($RunPlanVerification.ToString().ToLowerInvariant())"
     Write-Host "WebAssembly engine verification: $($RunWebAssemblyEngineVerification.ToString().ToLowerInvariant())"
@@ -4527,6 +4587,8 @@ if (!$Quiet) {
 if ($PassThru) {
     [pscustomobject]@{
         Suites = $OrderedSuites
+        ExpectedSeconds = $SelectedExpectedSeconds
+        MaximumSeconds = $SelectedMaximumSeconds
         Gaps = $OrderedGaps
         RunPlanVerification = $RunPlanVerification
         RunWebAssemblyEngineVerification = $RunWebAssemblyEngineVerification

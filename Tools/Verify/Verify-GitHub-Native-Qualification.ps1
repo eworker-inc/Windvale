@@ -132,6 +132,16 @@ foreach ($Job in $DevelopmentJobs) {
         $Block.Contains(
             'run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA')
     ) "Development job '$Job' does not invoke changed-file verification for the classified comparison."
+    Assert-Workflow (
+        $Block.Contains('-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT') -and
+        $Block.Contains(
+            'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
+        $Block.Contains('if-no-files-found: warn') -and
+        $Block.Contains('retention-days: 14')
+    ) "Development job '$Job' does not retain nonblocking structured timing evidence."
+    Assert-Workflow (
+        [regex]::Matches($Block, '(?m)^        continue-on-error: true$').Count -eq 4
+    ) "Development job '$Job' does not isolate all four optional infrastructure steps."
     Assert-Workflow ($Block -match '(?m)^        uses: actions/setup-node@[0-9a-f]{40} # v[0-9]') `
         "Development job '$Job' does not pin the Node setup action."
     Assert-Workflow ($Block -match '(?m)^          node-version: 24$') `
@@ -179,8 +189,8 @@ foreach ($Job in $QualificationJobs) {
 }
 
 $ExpectedCommands = @{
-    'windows-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
-    'linux-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
+    'windows-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
+    'linux-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
     'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'
@@ -191,6 +201,12 @@ foreach ($Job in @('windows-native-suite', 'linux-native-suite')) {
     $Block = Get-JobBlock $Job
     Assert-Workflow ($Block -match '(?m)^    strategy:\n      fail-fast: false\n      max-parallel: 4\n      matrix:\n        shard: \[1, 2, 3, 4\]$') `
         "Retirement job '$Job' does not declare the exact four-shard matrix."
+    Assert-Workflow (
+        $Block.Contains(
+            'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
+        $Block.Contains('if-no-files-found: warn') -and
+        $Block.Contains('retention-days: 30')
+    ) "Qualification job '$Job' does not retain its structured owner result."
 }
 foreach ($Job in $ExpectedCommands.Keys) {
     $Block = Get-JobBlock $Job

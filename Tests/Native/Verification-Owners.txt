@@ -1,127 +1,127 @@
-windvale-native-verification-owners 1
-verification-owner-stream|Test-Verification-Owner-Stream|5|2|verification owner stream status=Passed cases=5
-seed|Test-Seed|26|2|Tests: 26, Passed: 26, Failed: 0
-seed-native-front-door|Test-Seed-Native-Front-Door|1|2|Tests: 1, Passed: 1, Failed: 0
-seed-native-console-aot|Test-Seed-Native-Console-Aot|1|2|Tests: 1, Passed: 1, Failed: 0
-compiler-reconstruction|Test-Compiler-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
-segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|6|4|Tests: 6, Passed: 6, Failed: 0
-segmented-hosted-wvb-cache|Test-Cached-Segmented-Hosted-Wvb|10|4|segmented hosted WVB cache test cases=10 status=Passed deadline-tree-termination=Passed output-bound-termination=Passed termination-failure-settle=Passed forced-failure-cleanup=Passed publication-cleanup=Passed prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed race-cleanup=Passed executable-materialization=Passed
-wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|Tests: 6, Passed: 6, Failed: 0
-native-sha256-lowering|Test-Native-Sha256|8|3|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected
-native-x64-lowering-development|Test-Native-Unsafe-Write-Pointer-Lowering|13|3|native unsafe write pointer lowering status=Passed cases=13 valid=3 malformed=10 native-execution=1 compiler-source=current package-cache=development
-wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
-scripting|Test-Scripting|6|2|Tests: 6, Passed: 6, Failed: 0
-wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|Tests: 3, Passed: 3, Failed: 0
-wvb-inspector-reconstruction|Test-Wvb-Inspector-Reconstruction|4|3|Tests: 4, Passed: 4, Failed: 0
-wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|4|Tests: 3, Passed: 3, Failed: 0
-console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|2|Tests: 3, Passed: 3, Failed: 0
-console-publisher-reconstruction|Test-Console-Application-Publisher-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
-wvo-publisher-reconstruction|Test-Wvo-Publisher-Reconstruction|2|2|Tests: 2, Passed: 2, Failed: 0
-baseline-jit|Test-Baseline-Jit|6|2|Tests: 6, Passed: 6, Failed: 0
-unsafe-wvb|Test-Wvb-Unsafe-Rejections|20|3|Tests: 20, Passed: 20, Failed: 0
-wvb-containment|Test-Wvb-Containment|1000|2|Tests: 1000, Passed: 1000, Failed: 0
-wvo-read-only|Test-Wvo-Read-Only-Rejections|13|4|Tests: 13, Passed: 13, Failed: 0
-wvo-differential|Test-Wvo-Differential|256|3|Tests: 256, Passed: 256, Failed: 0
-wvo-containment|Test-Wvo-Containment|500|4|Tests: 500, Passed: 500, Failed: 0
-wvo-hostile-size|Test-Wvo-Hostile-Size|5|3|Tests: 5, Passed: 5, Failed: 0
-assembler-rejections|Test-Assembler-Rejections|11|2|Tests: 11, Passed: 11, Failed: 0
-assembler-golden|Test-Assembler-Golden|4|4|Tests: 4, Passed: 4, Failed: 0
-wva-differential|Test-Wva-Differential|269|3|Tests: 269, Passed: 269, Failed: 0
-source-containment|Test-Source-Containment|500|3|Tests: 500, Passed: 500, Failed: 0
-generic-nominal-declarations|Test-Generic-Nominal-Declarations|12|2|native generic nominal declarations status=Passed cases=12 result=42
-generic-nominal-type-binding|Test-Generic-Nominal-Type-Binding|59|2|native generic nominal type binding status=Passed cases=59 result=42
-generic-nominal-type-layout|Test-Generic-Nominal-Type-Layout|21|2|native generic nominal type layout status=Passed cases=21 result=42
-generic-nominal-type-materialization|Test-Generic-Nominal-Type-Materialization|28|2|native generic nominal type materialization status=Passed cases=28 result=42
-generic-nominal-wvlb-carrier|Test-Generic-Nominal-Wvlb-Carrier|20|2|native generic nominal WVLB carrier status=Passed cases=20 result=42
-language-1-front-door|Test-Language-1.0-Front-Door|482|2|native language 1 front door status=Passed cases=482 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=242 enum-dead-type-wvb-bytes=217 enum-u8-wvb-bytes=415 generic-type-catalog-wvb-bytes=69038 generic-nominal-variant-wvb-bytes=947 value-if-wvb-bytes=529 value-match-wvb-bytes=588 value-match-never-wvb-bytes=422 unit-wvb-bytes=731 never-wvb-bytes=853 record-update-wvb-bytes=1116 enum-i32-wvb-bytes=427 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=1148 floating-wvb-bytes=2809 fixed-array-wvb-bytes=916 vector-sequence-type-wvb-bytes=978 vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=1013 vector-read-freeze-wvb-bytes=1740 multi-field-variant-wvb-bytes=918 typed-failure-wvb-bytes=1430 foundation-generic-wvb-bytes=3143 generic-specializations-wvb-bytes=531
-language-1-effect-clause-front-end|Test-Language-1.0-Effect-Clause-Front-End|20|2|native language 1 effect clause front end status=Passed cases=20 result=42 deterministic=Verified isolated-executions=20
-language-1-system-ffi-front-end|Test-Language-1.0-System-Ffi-Front-End|46|2|native language 1 system FFI front end status=Passed cases=46 result=42 deterministic=Verified execution=native-package isolated-executions=46 wvb-bytes=503387 sha256=b501b19826cf4b91044e95fce100ed06103b45f34a9a7db30cef45126ca2628c
-language-1-system-ffi-unsafe-context|Test-Language-1.0-System-Ffi-Unsafe-Context|24|2|native language 1 system FFI unsafe context status=Passed cases=24 result=42 deterministic=Verified execution=native-packaged isolated-executions=24 wvb-bytes=455236 sha256=dec13607910e27445049e482ba4212cb9cc274f61aceb97bd6ae3ed127a08813
-language-1-foreign-catalog-format|Test-Language-1.0-Foreign-Catalog-Format|40|2|native language 1 foreign catalog status=Passed cases=40 result=42 deterministic=Verified isolated-executions=40 boundary-count=43690 wvb-bytes=37199 sha256=61899cb85201f8dd2b8710a84f0ada3854768610fb92bd2931e655d98c30fd33
-language-1-admission-evidence-format|Test-Language-1.0-Admission-Evidence-Format|56|2|PASS admission evidence cases=56 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15 execution=native-packaged core-wvb-bytes=24292 wvir-bytes=180420 wvb-bytes=74291
-language-1-foreign-catalog-producer|Test-Language-1.0-Foreign-Catalog-Producer|25|2|native language 1 foreign catalog producer status=Passed cases=25 result=42 deterministic=Verified complete-verifier=Passed accumulator-records=683 wvb-bytes=518755 sha256=e930239f2b02f840fbfe92fc64cfa8409aeb38955a52dd16d1a73a8f62062db7
-language-1-source-admission-coordinator|Test-Language-1.0-Source-Admission-Coordinator|28|2|native language 1 source admission coordinator status=Passed cases=28 result=42 deterministic=Verified four-value-output=Verified empty-on-failure=Verified execution=native-cached-profile-7 isolated-executions=28 wvb-identity=Measured-current
-language-1-production-admission-ingress|Test-Language-1.0-Production-Admission-Ingress|21|2|native language 1 production admission ingress status=Passed cases=21 deterministic=Verified profile=7 final-publication-owner=split-compiler
-language-1-authenticated-foreign-binding|Test-Language-1.0-Authenticated-Foreign-Binding|24|2|native language 1 authenticated foreign binding status=Passed cases=24 fixtures=2 result=42 execution=native-profile-7 isolated-executions=24
-language-1-foreign-memory-semantics|Test-Language-1.0-Foreign-Memory-Semantics|30|2|native language 1 foreign memory semantics status=Passed cases=30 result=42 deterministic=Verified execution=native-cached-profile-7 isolated-executions=29 rule-level-cases=29 source-graph-rejections=1 dispatch-probes=4 wvb-bytes=147912 sha256=1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003
-language-1-using-front-end|Test-Language-1.0-Using-Front-End|18|3|native language 1 using front end status=Passed cases=18 result=42 deterministic=Verified execution=native-packaged wvb-bytes=406715 sha256=f81e973ac7ee7f7e3929d6d587a44efd35ff10e497177104eda41d17b851c184
-language-1-callable-semantics|Test-Language-1.0-Callable-Semantics|64|3|native language 1 callable semantics status=Passed cases=64 result=42 modules=11 evidence-bytes=4728782 native-aot-cases=8 evidence-sha256=bcd5492d505d399c4b3ca276ae0b5802a8c855fa34d0c2791da394a6fa4b7d9c
-language-1-memory-budget-accounting|Test-Language-1.0-Memory-Budget-Accounting|29|2|native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=37445
-language-1-memory-budget-split-execution|Test-Language-1.0-Memory-Budget-Split-Execution|172|3|native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed cases=172 valid=24 malformed=69 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 structured-task-cases=33 structured-task-runtime-cases=46 task-environment-cases=17 task-environment-rejections=9 callable-runner-cases=2 async-call-await-cases=7 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05 structured-task-wvb-bytes=4231 structured-task-sha256=11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8 task-completion-order-wvb-bytes=6544 task-completion-order-sha256=6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c task-provider-recovery-wvb-bytes=12297 task-provider-recovery-sha256=eb8dc8047fd2ddd7e7eb98c7e443396ac5e9d240fabb060acb88769888d4f067 task-environment-wvb-bytes=5057 task-environment-sha256=a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090
-language-1-parallel-task-scheduler|Test-Bounded-Parallel-Task-Scheduler|49|2|bounded parallel task scheduler status=Passed cases=49 workers=4 completion-order=3,1,0,2 join-order=0,1,2,3 result=42 transcript-sha256=ec46e8f65ee74954a51180781f35d37e1d1b36dda92e4c4ac2872a1b0eefb576
-compiler-split-development|Test-Compiler-Split-Development|4|3|compiler split development status=Passed cases=4 target=portable-wvb-optimized-v1 optimized-wvb-bytes=308 complete-wvb-bytes=395 cleanup=Verified
-lowerer-rejections|Test-Lowerer-Rejections|2|3|Tests: 2, Passed: 2, Failed: 0
-linker-rejections|Test-Linker-Rejections|10|4|Tests: 10, Passed: 10, Failed: 0
-linker-hostile|Test-Linker-Hostile-Inputs|200|2|Tests: 200, Passed: 200, Failed: 0
-linker-map-limit|Test-Linker-Map-Limit|1|2|Tests: 1, Passed: 1, Failed: 0
-console-packager-rejections|Test-Console-Packager-Rejections|3|2|Tests: 3, Passed: 3, Failed: 0
-console-container-hostile|Test-Console-Container-Hostile-Inputs|256|4|Tests: 256, Passed: 256, Failed: 0
-console-container-mutations|Test-Console-Container-Mutations|19|3|Tests: 19, Passed: 19, Failed: 0
-hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|2|Tests: 15, Passed: 15, Failed: 0
-console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|3|Tests: 2, Passed: 2, Failed: 0
-console-segmented-construction|Test-Console-Application-Segmented-Construction|2|3|Tests: 2, Passed: 2, Failed: 0
-console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|4|Tests: 2, Passed: 2, Failed: 0
-console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|4|Tests: 4, Passed: 4, Failed: 0
-publisher-rejections|Test-Publisher-Rejections|4|3|Tests: 4, Passed: 4, Failed: 0
-hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|16|4|Tests: 16, Passed: 16, Failed: 0
-uefi-packager|Test-Uefi-Packager|3|2|Tests: 3, Passed: 3, Failed: 0
-wvo-export-renamer|Test-Wvo-Export-Renamer|4|4|Tests: 4, Passed: 4, Failed: 0
-os-probe-object|Test-Os-Probe-Object-Producer|11|3|Tests: 11, Passed: 11, Failed: 0
-os-kernel-target|Test-Os-Kernel-Target|7|2|Tests: 7, Passed: 7, Failed: 0
-os-process-policy|Test-Os-Process-Policy-Object|2|3|Tests: 2, Passed: 2, Failed: 0
-os-process-object|Test-Os-Process-Object|2|4|Tests: 2, Passed: 2, Failed: 0
-os-x64-filesystem-machine-emission|Test-Os-X64-Process-Filesystem-Machine-Emission|3|2|native os x64 filesystem machine emission status=Passed cases=3 geometry=85/81/48/33
-os-x64-code-emission|Test-Os-X64-Code-Emission|336|2|native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
-os-resource-domain|Test-Os-Resource-Domain|12|2|native os resource domain status=Passed projects=2 behavior=2 cases=12
-os-application-launch|Test-Os-Application-Launch|69|2|native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified
-os-provider-images|Test-Os-Provider-Images|8|2|native os provider images status=Passed services=2 readiness=host-specific cases=8
-os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|26|2|native os provider launch transaction status=Passed projects=3 behavior=14 cases=26
-os-endpoint-transfer|Test-Os-Endpoint-Transfer-Profile|29|3|native os endpoint transfer profiles status=Passed projects=2 cases=29 profiles=3 max-pages=17 local-result=47 cross-host-images=Verified
-filesystem-semantics|Test-Filesystem-Semantics|18|3|native filesystem semantics status=Passed cases=18 local-result=42 cross-host-images=Verified
-os-filesystem-service|Test-Os-Filesystem-Service|19|2|native os filesystem service status=Passed cases=19 local-result=43 cross-host-images=Verified
-os-fat32-volume|Test-Os-Fat32-Volume-Admission|80|3|native os fat32 volume chain directory and file-read admission status=Passed projects=7 cases=80 local-result=47 cross-host-images=Verified
-os-fat32-block-read|Test-Os-Fat32-Block-Read|59|3|native os fat32 block image and exchange lifecycle status=Passed projects=5 cases=59 local-result=47 cross-host-images=Verified
-os-fat32-file-read|Test-Os-Fat32-File-Read-Transaction|18|3|native os fat32 file read transaction status=Passed projects=3 cases=18 exchanges=2 local-result=47 cross-host-images=Verified
-bounded-operation|Test-Bounded-Operation|12|2|native bounded operation status=Passed cases=12 local-result=44 cross-host-images=Verified
-os-network-authority|Test-Network-Authority|18|2|native network authority status=Passed cases=18 local-result=45 cross-host-images=Verified
-os-services|Test-Os-Services|10|4|native os services status=Passed projects=8 behavior=2 cases=10
-os-probe|Test-Os-Probe|4|3|Tests: 4, Passed: 4, Failed: 0
-aot-chain|Test-Aot-Chain|1|4|native aot chain status=Passed result=42
-native-u64-lowering|Test-Native-U64-Lowering|1|4|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
-model-provider|Test-Model-Provider|11|4|native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
-external-model-reference|Test-External-Model-Reference|24|4|external model reference status=Passed providers=3 cases=24 live-calls=0 secrets=0
-operation-core|Test-Bounded-Operation-Core|10|4|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
-standard-byte-output|Test-Standard-Byte-Output-Core|10|4|native standard byte output status=Passed cases=10 local-result=42 cross-host-images=Verified
-file-read-application|Test-File-Read-Application|32|4|native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified
-shell-one-parser|Test-Shell-1-Parser|47|4|native shell 1 parser status=Passed cases=47 local-result=42 webassembly-smoke=11 cross-host-images=Verified
-echo-application|Test-Echo-Application|9|3|native Windvale echo status=Passed cases=9 capabilities=3 metadata=Present wvb=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 cross-host-applications=Verified
-echo-command-launch|Test-Echo-Command-Launch|10|4|native echo command launch status=Passed cases=10 executions=2 integrity-rejections=3 policy-rejections=4 resolution-rejections=1 private-cleanup=Verified
-network-authority|Test-Network-Address-Authority|12|4|native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified
-network-connect-stream|Test-Network-Connect-Stream-Core|13|4|native network connect stream status=Passed cases=13 local-result=42 cross-host-images=Verified
-host-network-provider|Test-Host-Network-Provider|25|4|host network provider status=Passed platforms=2 cases=25 current-host=Verified public-network=0 credentials=0
-host-tls-provider|Test-Host-Tls-Provider|15|4|host tls provider status=Passed platforms=2 cases=15 current-host=Verified public-network=0 credentials=0 tls=1.3
-bounded-https|Test-Bounded-Https|29|4|bounded https status=Passed platforms=2 cases=29 current-host=Verified public-network=0 credentials=0 redirects-followed=0
-protected-credential|Test-Protected-Credential|16|4|protected credential status=Passed providers=3 cases=16 current-host=Verified plaintext-files=0 exported-secrets=0 public-network=0
-external-model-gateway|Test-External-Model-Gateway|30|4|external model gateway status=Passed providers=3 cases=30 child-process=Verified differential=Verified public-network=0 real-credentials=0
-model-chat|Test-Model-Chat|21|4|model chat status=Passed providers=3 cases=21 live-calls=0 real-credentials=0 secrets-in-arguments=0 automatic-retries=0
-native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|native external model gateway status=Passed cases=14 local-result=0 cross-host-images=Verified public-network=0 real-credentials=0
-database-superblock|Test-Database-Superblock|13|4|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
-database-durable-commit|Test-Database-Durable-Commit|12|4|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
-database-storage|Test-Database-Storage|57|1|native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
-workspace-project2|Test-Workspace-Project2|10|4|native workspace/project test status=Complete cases=10
-libraries|Test-Libraries|29|3|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
-packages|Test-Wvdb-Query-Package|11|3|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11
-package-format|Test-Package-Format|82|3|native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12
-installation-activation|Test-Installation-Activation|16|3|native installation activation status=Passed cases=16 records=3 current=5cb7a15cb4f585d3aca474c4acdb35f55e6b6a4660aeee1d568db719f62742d3
-offline-generation-lifecycle|Test-Offline-Generation-Lifecycle|27|2|native offline lifecycle composition status=Passed cases=27 planner=12 lifecycle=15 generations=2 activations=3 rollback=Verified uninstall=Verified preservation=2
-offline-package-uninstall|Test-Offline-Package-Uninstall|14|2|native offline package uninstall status=Passed cases=14 transactions=2 recoveries=2 safety-rejections=6 preservation=2 idempotent=Verified
-installation-command-resolution|Test-Installation-Command-Resolution|8|3|native installation command resolution status=Passed cases=8 commands=2 cross-host-generations=Verified
-installation-command-dispatch|Test-Installation-Command-Dispatch|9|4|native installation command dispatch status=Passed cases=9 commands=2 executions=2 integrity-rejections=4 policy-rejections=3
-installation-generation-publication|Test-Installation-Generation-Publication|8|3|native installation generation publication status=Passed cases=8 generation=c8b8daac8f5298b8c3cab1ba46312ddbe09d6f1718972599872eb901a482f261 bytes=377
-package-bundle|Test-Package-Bundle|12|3|native package bundle status=Passed cases=12 applications=2 bundles=2 objects=9 shared=1 idempotent=Verified
-installers|Test-Installers|8|3|native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified
-installer-repository|Test-Installer-Repository|12|3|native installer repository status=Passed cases=12 profiles=4 targets=2 objects=15 blobs=15 deterministic=Verified selection=Verified tamper=Rejected
-wvdb-query-capability|Test-Wvdb-Query-Native-Capability|6|3|native wvdb query capability status=Passed cases=6 capabilities=5 wvb=77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b cross-host-images=Verified
-release-envelope|Test-Release-Envelope|17|4|native release envelope status=Passed cases=17 signatures=4 artifacts=12 packages=2 protected-private-keys=2
-offline-package-stage|Test-Offline-Package-Stage|8|4|native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected
-wvdb-approval|Test-Wvdb-Approval-Records|13|4|native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1
+windvale-native-verification-owners 2
+verification-owner-stream|Test-Verification-Owner-Stream|6|2|quick|verification owner stream status=Passed cases=6
+seed|Test-Seed|26|2|quick|Tests: 26, Passed: 26, Failed: 0
+seed-native-front-door|Test-Seed-Native-Front-Door|1|2|quick|Tests: 1, Passed: 1, Failed: 0
+seed-native-console-aot|Test-Seed-Native-Console-Aot|1|2|quick|Tests: 1, Passed: 1, Failed: 0
+compiler-reconstruction|Test-Compiler-Reconstruction|3|3|very-slow|Tests: 3, Passed: 3, Failed: 0
+segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|6|4|very-slow|Tests: 6, Passed: 6, Failed: 0
+segmented-hosted-wvb-cache|Test-Cached-Segmented-Hosted-Wvb|10|4|quick|segmented hosted WVB cache test cases=10 status=Passed deadline-tree-termination=Passed output-bound-termination=Passed termination-failure-settle=Passed forced-failure-cleanup=Passed publication-cleanup=Passed prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed race-cleanup=Passed executable-materialization=Passed
+wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|6|3|standard|Tests: 6, Passed: 6, Failed: 0
+native-sha256-lowering|Test-Native-Sha256|8|3|quick|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected
+native-x64-lowering-development|Test-Native-Unsafe-Write-Pointer-Lowering|13|3|slow|native unsafe write pointer lowering status=Passed cases=13 valid=3 malformed=10 native-execution=1 compiler-source=current package-cache=development
+wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|slow|Tests: 3, Passed: 3, Failed: 0
+scripting|Test-Scripting|6|2|quick|Tests: 6, Passed: 6, Failed: 0
+wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|standard|Tests: 3, Passed: 3, Failed: 0
+wvb-inspector-reconstruction|Test-Wvb-Inspector-Reconstruction|4|3|standard|Tests: 4, Passed: 4, Failed: 0
+wvo-inspector-reconstruction|Test-Wvo-Inspector-Reconstruction|3|4|standard|Tests: 3, Passed: 3, Failed: 0
+console-verifier-reconstruction|Test-Console-Verifier-Reconstruction|3|2|standard|Tests: 3, Passed: 3, Failed: 0
+console-publisher-reconstruction|Test-Console-Application-Publisher-Reconstruction|4|4|standard|Tests: 4, Passed: 4, Failed: 0
+wvo-publisher-reconstruction|Test-Wvo-Publisher-Reconstruction|2|2|standard|Tests: 2, Passed: 2, Failed: 0
+baseline-jit|Test-Baseline-Jit|6|2|quick|Tests: 6, Passed: 6, Failed: 0
+unsafe-wvb|Test-Wvb-Unsafe-Rejections|20|3|quick|Tests: 20, Passed: 20, Failed: 0
+wvb-containment|Test-Wvb-Containment|1000|2|standard|Tests: 1000, Passed: 1000, Failed: 0
+wvo-read-only|Test-Wvo-Read-Only-Rejections|13|4|quick|Tests: 13, Passed: 13, Failed: 0
+wvo-differential|Test-Wvo-Differential|256|3|standard|Tests: 256, Passed: 256, Failed: 0
+wvo-containment|Test-Wvo-Containment|500|4|standard|Tests: 500, Passed: 500, Failed: 0
+wvo-hostile-size|Test-Wvo-Hostile-Size|5|3|quick|Tests: 5, Passed: 5, Failed: 0
+assembler-rejections|Test-Assembler-Rejections|11|2|quick|Tests: 11, Passed: 11, Failed: 0
+assembler-golden|Test-Assembler-Golden|4|4|quick|Tests: 4, Passed: 4, Failed: 0
+wva-differential|Test-Wva-Differential|269|3|standard|Tests: 269, Passed: 269, Failed: 0
+source-containment|Test-Source-Containment|500|3|slow|Tests: 500, Passed: 500, Failed: 0
+generic-nominal-declarations|Test-Generic-Nominal-Declarations|12|2|quick|native generic nominal declarations status=Passed cases=12 result=42
+generic-nominal-type-binding|Test-Generic-Nominal-Type-Binding|59|2|quick|native generic nominal type binding status=Passed cases=59 result=42
+generic-nominal-type-layout|Test-Generic-Nominal-Type-Layout|21|2|quick|native generic nominal type layout status=Passed cases=21 result=42
+generic-nominal-type-materialization|Test-Generic-Nominal-Type-Materialization|28|2|quick|native generic nominal type materialization status=Passed cases=28 result=42
+generic-nominal-wvlb-carrier|Test-Generic-Nominal-Wvlb-Carrier|20|2|quick|native generic nominal WVLB carrier status=Passed cases=20 result=42
+language-1-front-door|Test-Language-1.0-Front-Door|482|2|very-slow|native language 1 front door status=Passed cases=482 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=3 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=242 enum-dead-type-wvb-bytes=217 enum-u8-wvb-bytes=415 generic-type-catalog-wvb-bytes=69038 generic-nominal-variant-wvb-bytes=947 value-if-wvb-bytes=529 value-match-wvb-bytes=588 value-match-never-wvb-bytes=422 unit-wvb-bytes=731 never-wvb-bytes=853 record-update-wvb-bytes=1116 enum-i32-wvb-bytes=427 fixed-integer-wvb-bytes=5335 rune-wvb-bytes=1148 floating-wvb-bytes=2809 fixed-array-wvb-bytes=916 vector-sequence-type-wvb-bytes=978 vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=1013 vector-read-freeze-wvb-bytes=1740 multi-field-variant-wvb-bytes=918 typed-failure-wvb-bytes=1430 foundation-generic-wvb-bytes=3143 generic-specializations-wvb-bytes=531
+language-1-effect-clause-front-end|Test-Language-1.0-Effect-Clause-Front-End|20|2|quick|native language 1 effect clause front end status=Passed cases=20 result=42 deterministic=Verified isolated-executions=20
+language-1-system-ffi-front-end|Test-Language-1.0-System-Ffi-Front-End|46|2|quick|native language 1 system FFI front end status=Passed cases=46 result=42 deterministic=Verified execution=native-package isolated-executions=46 wvb-bytes=503387 sha256=b501b19826cf4b91044e95fce100ed06103b45f34a9a7db30cef45126ca2628c
+language-1-system-ffi-unsafe-context|Test-Language-1.0-System-Ffi-Unsafe-Context|24|2|quick|native language 1 system FFI unsafe context status=Passed cases=24 result=42 deterministic=Verified execution=native-packaged isolated-executions=24 wvb-bytes=455236 sha256=dec13607910e27445049e482ba4212cb9cc274f61aceb97bd6ae3ed127a08813
+language-1-foreign-catalog-format|Test-Language-1.0-Foreign-Catalog-Format|40|2|quick|native language 1 foreign catalog status=Passed cases=40 result=42 deterministic=Verified isolated-executions=40 boundary-count=43690 wvb-bytes=37199 sha256=61899cb85201f8dd2b8710a84f0ada3854768610fb92bd2931e655d98c30fd33
+language-1-admission-evidence-format|Test-Language-1.0-Admission-Evidence-Format|56|2|quick|PASS admission evidence cases=56 portable-selectors=44 dynamic-cases=12 wvss-structure-subcases=15 execution=native-packaged core-wvb-bytes=24292 wvir-bytes=180420 wvb-bytes=74291
+language-1-foreign-catalog-producer|Test-Language-1.0-Foreign-Catalog-Producer|25|2|quick|native language 1 foreign catalog producer status=Passed cases=25 result=42 deterministic=Verified complete-verifier=Passed accumulator-records=683 wvb-bytes=518755 sha256=e930239f2b02f840fbfe92fc64cfa8409aeb38955a52dd16d1a73a8f62062db7
+language-1-source-admission-coordinator|Test-Language-1.0-Source-Admission-Coordinator|28|2|quick|native language 1 source admission coordinator status=Passed cases=28 result=42 deterministic=Verified four-value-output=Verified empty-on-failure=Verified execution=native-cached-profile-7 isolated-executions=28 wvb-identity=Measured-current
+language-1-production-admission-ingress|Test-Language-1.0-Production-Admission-Ingress|21|2|quick|native language 1 production admission ingress status=Passed cases=21 deterministic=Verified profile=7 final-publication-owner=split-compiler
+language-1-authenticated-foreign-binding|Test-Language-1.0-Authenticated-Foreign-Binding|24|2|quick|native language 1 authenticated foreign binding status=Passed cases=24 fixtures=2 result=42 execution=native-profile-7 isolated-executions=24
+language-1-foreign-memory-semantics|Test-Language-1.0-Foreign-Memory-Semantics|30|2|quick|native language 1 foreign memory semantics status=Passed cases=30 result=42 deterministic=Verified execution=native-cached-profile-7 isolated-executions=29 rule-level-cases=29 source-graph-rejections=1 dispatch-probes=4 wvb-bytes=147912 sha256=1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003
+language-1-using-front-end|Test-Language-1.0-Using-Front-End|18|3|quick|native language 1 using front end status=Passed cases=18 result=42 deterministic=Verified execution=native-packaged wvb-bytes=406715 sha256=f81e973ac7ee7f7e3929d6d587a44efd35ff10e497177104eda41d17b851c184
+language-1-callable-semantics|Test-Language-1.0-Callable-Semantics|64|3|quick|native language 1 callable semantics status=Passed cases=64 result=42 modules=11 evidence-bytes=4728782 native-aot-cases=8 evidence-sha256=bcd5492d505d399c4b3ca276ae0b5802a8c855fa34d0c2791da394a6fa4b7d9c
+language-1-memory-budget-accounting|Test-Language-1.0-Memory-Budget-Accounting|29|2|quick|native language 1 memory budget accounting status=Passed cases=29 result=42 state-bytes=2616 capacity=65 lease-token-bytes=28 wvb-bytes=37445
+language-1-memory-budget-split-execution|Test-Language-1.0-Memory-Budget-Split-Execution|172|3|standard|native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed cases=172 valid=24 malformed=69 owned-call-cases=4 owned-aggregate-source-cases=5 using-cases=12 using-releases=7 source-file-cases=12 structured-task-cases=33 structured-task-runtime-cases=46 task-environment-cases=17 task-environment-rejections=9 callable-runner-cases=2 async-call-await-cases=7 result=42 split-wvb-bytes=752 split-sha256=5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53 vector-wvb-bytes=1107 vector-sha256=881bcbabc9620188964a63601490ad81acf63587f70501443d97447cdd45f7c5 append-wvb-bytes=3096 append-sha256=6478cc8b302e91caa54ff3aea835ef3ea1c1722161cd4f12aa587aa432b6918f grow-wvb-bytes=3628 grow-sha256=30de39bdd12ad7718ad1fb465b14bc42f8463b6ecfc6ba1f10494cb6e67c5b59 owned-call-wvb-bytes=1733 owned-call-sha256=ab79d05bb03afddbe6430adc127c8cdf084ea6499b16e3e25ebb3e477c408387 owned-aggregate-wvb-bytes=1538 owned-aggregate-sha256=b9810655b33c79cf980ea05f7fbca5511d3c34219f37e1b6a046a630a3e1c395 using-fallthrough-wvb-bytes=1211 using-fallthrough-sha256=f541cd186564d1e696820a53c4a17baf50ba0d393dbb4bc8b1c381960b595257 source-file-wvb-bytes=373 source-file-sha256=01065b752d7ea6d64e3bf36bdd4d8a0d2e5b7faf6794de173580003ed3935d05 structured-task-wvb-bytes=4231 structured-task-sha256=11a2bed917a9a30dc12fc565b0cc93e2731ee8b48c8bd2b6d1f54ebe97a145c8 task-completion-order-wvb-bytes=6544 task-completion-order-sha256=6b6eb29ae5b711358e582c42d2667ab21c0861ac1ca5b1bc70b3ab575711c80c task-provider-recovery-wvb-bytes=12297 task-provider-recovery-sha256=eb8dc8047fd2ddd7e7eb98c7e443396ac5e9d240fabb060acb88769888d4f067 task-environment-wvb-bytes=5057 task-environment-sha256=a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090
+language-1-parallel-task-scheduler|Test-Bounded-Parallel-Task-Scheduler|49|2|quick|bounded parallel task scheduler status=Passed cases=49 workers=4 completion-order=3,1,0,2 join-order=0,1,2,3 result=42 transcript-sha256=ec46e8f65ee74954a51180781f35d37e1d1b36dda92e4c4ac2872a1b0eefb576
+compiler-split-development|Test-Compiler-Split-Development|4|3|slow|compiler split development status=Passed cases=4 target=portable-wvb-optimized-v1 optimized-wvb-bytes=308 complete-wvb-bytes=395 cleanup=Verified
+lowerer-rejections|Test-Lowerer-Rejections|2|3|quick|Tests: 2, Passed: 2, Failed: 0
+linker-rejections|Test-Linker-Rejections|10|4|quick|Tests: 10, Passed: 10, Failed: 0
+linker-hostile|Test-Linker-Hostile-Inputs|200|2|standard|Tests: 200, Passed: 200, Failed: 0
+linker-map-limit|Test-Linker-Map-Limit|1|2|quick|Tests: 1, Passed: 1, Failed: 0
+console-packager-rejections|Test-Console-Packager-Rejections|3|2|quick|Tests: 3, Passed: 3, Failed: 0
+console-container-hostile|Test-Console-Container-Hostile-Inputs|256|4|standard|Tests: 256, Passed: 256, Failed: 0
+console-container-mutations|Test-Console-Container-Mutations|19|3|quick|Tests: 19, Passed: 19, Failed: 0
+hosted-console-container-mutations|Test-Hosted-Console-Container-Mutations|15|2|quick|Tests: 15, Passed: 15, Failed: 0
+console-segmented-size|Test-Console-Application-Segmented-Size-Boundaries|2|3|quick|Tests: 2, Passed: 2, Failed: 0
+console-segmented-construction|Test-Console-Application-Segmented-Construction|2|3|quick|Tests: 2, Passed: 2, Failed: 0
+console-packager-source-reconstruction|Test-Console-Packager-Source-Reconstruction|2|4|standard|Tests: 2, Passed: 2, Failed: 0
+console-packager-container-reconstruction|Test-Console-Packager-Container-Reconstruction|4|4|standard|Tests: 4, Passed: 4, Failed: 0
+publisher-rejections|Test-Publisher-Rejections|4|3|quick|Tests: 4, Passed: 4, Failed: 0
+hosted-verifier-publisher-files|Test-Hosted-Verifier-Publisher-File-Pipeline|16|4|quick|Tests: 16, Passed: 16, Failed: 0
+uefi-packager|Test-Uefi-Packager|3|2|quick|Tests: 3, Passed: 3, Failed: 0
+wvo-export-renamer|Test-Wvo-Export-Renamer|4|4|quick|Tests: 4, Passed: 4, Failed: 0
+os-probe-object|Test-Os-Probe-Object-Producer|11|3|quick|Tests: 11, Passed: 11, Failed: 0
+os-kernel-target|Test-Os-Kernel-Target|7|2|quick|Tests: 7, Passed: 7, Failed: 0
+os-process-policy|Test-Os-Process-Policy-Object|2|3|quick|Tests: 2, Passed: 2, Failed: 0
+os-process-object|Test-Os-Process-Object|2|4|quick|Tests: 2, Passed: 2, Failed: 0
+os-x64-filesystem-machine-emission|Test-Os-X64-Process-Filesystem-Machine-Emission|3|2|quick|native os x64 filesystem machine emission status=Passed cases=3 geometry=85/81/48/33
+os-x64-code-emission|Test-Os-X64-Code-Emission|336|2|slow|native os x64 code emission status=Passed projects=56 cases=336 local-results=50/51/52/53/54/55/56/57/58/59/60/61/62/63/64/65/66/67/68/69/70/71/72/73/74/75/76/77/78/79/80/81/82/83/84/85/86/87/88/89/90/91/92/93/94/95/96/97/98/99/100/101/102/103/104/105 cross-host-images=Verified source-owned-bytes=33826 relocation-fields=569
+os-resource-domain|Test-Os-Resource-Domain|12|2|quick|native os resource domain status=Passed projects=2 behavior=2 cases=12
+os-application-launch|Test-Os-Application-Launch|69|2|quick|native os application launch status=Passed projects=7 native-leaves=3 behavior=8 cases=69 local-results=47,48,49 cross-host-images=Verified
+os-provider-images|Test-Os-Provider-Images|8|2|quick|native os provider images status=Passed services=2 readiness=host-specific cases=8
+os-provider-launch-transaction|Test-Os-Provider-Launch-Transaction|26|2|quick|native os provider launch transaction status=Passed projects=3 behavior=14 cases=26
+os-endpoint-transfer|Test-Os-Endpoint-Transfer-Profile|29|3|quick|native os endpoint transfer profiles status=Passed projects=2 cases=29 profiles=3 max-pages=17 local-result=47 cross-host-images=Verified
+filesystem-semantics|Test-Filesystem-Semantics|18|3|quick|native filesystem semantics status=Passed cases=18 local-result=42 cross-host-images=Verified
+os-filesystem-service|Test-Os-Filesystem-Service|19|2|quick|native os filesystem service status=Passed cases=19 local-result=43 cross-host-images=Verified
+os-fat32-volume|Test-Os-Fat32-Volume-Admission|80|3|quick|native os fat32 volume chain directory and file-read admission status=Passed projects=7 cases=80 local-result=47 cross-host-images=Verified
+os-fat32-block-read|Test-Os-Fat32-Block-Read|59|3|quick|native os fat32 block image and exchange lifecycle status=Passed projects=5 cases=59 local-result=47 cross-host-images=Verified
+os-fat32-file-read|Test-Os-Fat32-File-Read-Transaction|18|3|quick|native os fat32 file read transaction status=Passed projects=3 cases=18 exchanges=2 local-result=47 cross-host-images=Verified
+bounded-operation|Test-Bounded-Operation|12|2|quick|native bounded operation status=Passed cases=12 local-result=44 cross-host-images=Verified
+os-network-authority|Test-Network-Authority|18|2|quick|native network authority status=Passed cases=18 local-result=45 cross-host-images=Verified
+os-services|Test-Os-Services|10|4|quick|native os services status=Passed projects=8 behavior=2 cases=10
+os-probe|Test-Os-Probe|4|3|quick|Tests: 4, Passed: 4, Failed: 0
+aot-chain|Test-Aot-Chain|1|4|quick|native aot chain status=Passed result=42
+native-u64-lowering|Test-Native-U64-Lowering|1|4|quick|native u64 lowering status=Passed local-result=42 database-page=42 cross-host-images=Verified
+model-provider|Test-Model-Provider|11|4|quick|native model provider status=Passed cases=11 local-result=0 cross-host-images=Verified
+external-model-reference|Test-External-Model-Reference|24|4|quick|external model reference status=Passed providers=3 cases=24 live-calls=0 secrets=0
+operation-core|Test-Bounded-Operation-Core|10|4|quick|native bounded operation status=Passed cases=10 local-result=42 cross-host-images=Verified
+standard-byte-output|Test-Standard-Byte-Output-Core|10|4|quick|native standard byte output status=Passed cases=10 local-result=42 cross-host-images=Verified
+file-read-application|Test-File-Read-Application|32|4|quick|native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified
+shell-one-parser|Test-Shell-1-Parser|47|4|quick|native shell 1 parser status=Passed cases=47 local-result=42 webassembly-smoke=11 cross-host-images=Verified
+echo-application|Test-Echo-Application|9|3|quick|native Windvale echo status=Passed cases=9 capabilities=3 metadata=Present wvb=b83890661281e79b17d14c49e7b971e37701c8112310b7b5f1f3f05e035dc713 cross-host-applications=Verified
+echo-command-launch|Test-Echo-Command-Launch|10|4|quick|native echo command launch status=Passed cases=10 executions=2 integrity-rejections=3 policy-rejections=4 resolution-rejections=1 private-cleanup=Verified
+network-authority|Test-Network-Address-Authority|12|4|quick|native network authority status=Passed cases=12 local-result=42 cross-host-images=Verified
+network-connect-stream|Test-Network-Connect-Stream-Core|13|4|quick|native network connect stream status=Passed cases=13 local-result=42 cross-host-images=Verified
+host-network-provider|Test-Host-Network-Provider|25|4|quick|host network provider status=Passed platforms=2 cases=25 current-host=Verified public-network=0 credentials=0
+host-tls-provider|Test-Host-Tls-Provider|15|4|quick|host tls provider status=Passed platforms=2 cases=15 current-host=Verified public-network=0 credentials=0 tls=1.3
+bounded-https|Test-Bounded-Https|29|4|quick|bounded https status=Passed platforms=2 cases=29 current-host=Verified public-network=0 credentials=0 redirects-followed=0
+protected-credential|Test-Protected-Credential|16|4|quick|protected credential status=Passed providers=3 cases=16 current-host=Verified plaintext-files=0 exported-secrets=0 public-network=0
+external-model-gateway|Test-External-Model-Gateway|30|4|quick|external model gateway status=Passed providers=3 cases=30 child-process=Verified differential=Verified public-network=0 real-credentials=0
+model-chat|Test-Model-Chat|21|4|quick|model chat status=Passed providers=3 cases=21 live-calls=0 real-credentials=0 secrets-in-arguments=0 automatic-retries=0
+native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|quick|native external model gateway status=Passed cases=14 local-result=0 cross-host-images=Verified public-network=0 real-credentials=0
+database-superblock|Test-Database-Superblock|13|4|quick|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
+database-durable-commit|Test-Database-Durable-Commit|12|4|quick|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified
+database-storage|Test-Database-Storage|57|1|very-slow|native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
+workspace-project2|Test-Workspace-Project2|10|4|quick|native workspace/project test status=Complete cases=10
+libraries|Test-Libraries|29|3|slow|native libraries status=Passed projects=19 conformance-builds=8 negative=2 cases=29
+packages|Test-Wvdb-Query-Package|11|3|quick|native package status=Passed packages=2 builds=4 inspection=2 negative=3 preservation=1 cases=11
+package-format|Test-Package-Format|82|3|quick|native package format status=Passed result=42 modules=6 builds=7 groups=82 cross-host-images=12
+installation-activation|Test-Installation-Activation|16|3|quick|native installation activation status=Passed cases=16 records=3 current=5cb7a15cb4f585d3aca474c4acdb35f55e6b6a4660aeee1d568db719f62742d3
+offline-generation-lifecycle|Test-Offline-Generation-Lifecycle|27|2|quick|native offline lifecycle composition status=Passed cases=27 planner=12 lifecycle=15 generations=2 activations=3 rollback=Verified uninstall=Verified preservation=2
+offline-package-uninstall|Test-Offline-Package-Uninstall|14|2|quick|native offline package uninstall status=Passed cases=14 transactions=2 recoveries=2 safety-rejections=6 preservation=2 idempotent=Verified
+installation-command-resolution|Test-Installation-Command-Resolution|8|3|quick|native installation command resolution status=Passed cases=8 commands=2 cross-host-generations=Verified
+installation-command-dispatch|Test-Installation-Command-Dispatch|9|4|quick|native installation command dispatch status=Passed cases=9 commands=2 executions=2 integrity-rejections=4 policy-rejections=3
+installation-generation-publication|Test-Installation-Generation-Publication|8|3|quick|native installation generation publication status=Passed cases=8 generation=c8b8daac8f5298b8c3cab1ba46312ddbe09d6f1718972599872eb901a482f261 bytes=377
+package-bundle|Test-Package-Bundle|12|3|quick|native package bundle status=Passed cases=12 applications=2 bundles=2 objects=9 shared=1 idempotent=Verified
+installers|Test-Installers|8|3|quick|native installer status=Passed cases=8 channels=2 archives=4 reproducible=Verified host-install=Verified
+installer-repository|Test-Installer-Repository|12|3|quick|native installer repository status=Passed cases=12 profiles=4 targets=2 objects=15 blobs=15 deterministic=Verified selection=Verified tamper=Rejected
+wvdb-query-capability|Test-Wvdb-Query-Native-Capability|6|3|quick|native wvdb query capability status=Passed cases=6 capabilities=5 wvb=77cb6034402942734be316b9a135d6c1b46ace5cb43a198b2aafe2d1b098027b cross-host-images=Verified
+release-envelope|Test-Release-Envelope|17|4|quick|native release envelope status=Passed cases=17 signatures=4 artifacts=12 packages=2 protected-private-keys=2
+offline-package-stage|Test-Offline-Package-Stage|8|4|quick|native offline package stage status=Passed cases=8 packages=2 policy-records=8 generations=2 published=1 artifacts=14 deterministic=Verified tamper=Rejected
+wvdb-approval|Test-Wvdb-Approval-Records|13|4|quick|native application approval status=Passed cases=13 applications=2 records=6 capabilities=10 targets=4 executions=1

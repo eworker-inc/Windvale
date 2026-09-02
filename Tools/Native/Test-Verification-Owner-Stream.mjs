@@ -3,14 +3,16 @@ import {
     mkdirSync,
     mkdtempSync,
     readdirSync,
+    readFileSync,
     rmSync,
     symlinkSync,
     utimesSync,
     writeFileSync,
 } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
     Requireˉordinaryˉdirectoryˉpath,
     Requireˉordinaryˉnewˉpath,
@@ -27,6 +29,11 @@ if (process.argv.length !== 2) {
         'Usage: node Tools/Native/Test-Verification-Owner-Stream.mjs\n'
     );
     process.exit(64);
+}
+
+if (process.env.WINDVALE_VERIFICATION_OWNER_TIMEOUT_FIXTURE === '1') {
+    await new Promise(Resolve => setTimeout(Resolve, 10_000));
+    process.exit(0);
 }
 
 const Work = mkdtempSync(path.join(
@@ -72,11 +79,64 @@ try {
     await Verifyˉresultˉcache(Work);
     Pass('persistent-result-cache');
 
+    Verifyˉboundedˉownerˉtimeout(Work);
+    Pass('bounded-owner-timeout');
+
     process.stdout.write(
-        'verification owner stream status=Passed cases=5\n'
+        'verification owner stream status=Passed cases=6\n'
     );
 } finally {
     rmSync(Work, { recursive: true, force: true });
+}
+
+function Verifyˉboundedˉownerˉtimeout(Work) {
+    const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
+    const Helper = path.join(Scriptˉdirectory, 'Stream-Verification-Owner.mjs');
+    const Owner = path.join(
+        Scriptˉdirectory,
+        process.platform === 'win32'
+            ? 'Test-Verification-Owner-Stream.cmd'
+            : 'Test-Verification-Owner-Stream.sh',
+    );
+    const Output = path.join(Work, 'Timeout.out');
+    const Error = path.join(Work, 'Timeout.err');
+    const Status = path.join(Work, 'Timeout.json');
+    const Result = spawnSync(
+        process.execPath,
+        [Helper, Output, Error, Owner, '100', Status],
+        {
+            encoding: 'utf8',
+            env: {
+                ...process.env,
+                WINDVALE_VERIFICATION_OWNER_TIMEOUT_FIXTURE: '1',
+            },
+            maxBuffer: 64 * 1024,
+            timeout: 10_000,
+            windowsHide: true,
+        },
+    );
+    if (Result.error !== undefined || Result.status !== 124 ||
+        Result.signal !== null || Result.stderr !== '') {
+        Reject(
+            `The bounded owner did not report a clean timeout: ` +
+            `status=${Result.status ?? 'null'} ` +
+            `signal=${Result.signal ?? 'none'} ` +
+            `error=${Result.error?.message ?? 'none'} ` +
+            `stderr=${JSON.stringify(Result.stderr)}`,
+        );
+    }
+    const Record = JSON.parse(readFileSync(Status, 'utf8'));
+    if (Record.format !== 'windvale-verification-owner-process-1' ||
+        Record.outcome !== 'timed-out' ||
+        Record.category !== 'deadline' ||
+        Record.retryable !== false ||
+        Record.exitCode !== null ||
+        !Number.isSafeInteger(Record.elapsedMilliseconds) ||
+        Record.elapsedMilliseconds < 100 ||
+        Record.elapsedMilliseconds > 8_000 ||
+        Record.stdoutBytes !== 0 || Record.stderrBytes !== 0) {
+        Reject('The bounded owner timeout status record is invalid.');
+    }
 }
 
 async function Verifyˉresultˉcache(Work) {

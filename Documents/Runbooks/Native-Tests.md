@@ -13,26 +13,38 @@ inventory and non-claims are defined by the
 
 The cross-host PowerShell runner composes every registered native lane without
 entering the managed Seed harness. On Windows or Linux x64, run one focused
-lane with:
+lane by inspecting its cost first:
 
 ```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner unsafe-wvb -PlanOnly
 pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner unsafe-wvb
 ```
 
 GitHub qualification runs four registry-defined disjoint shards on each host:
 
 ```powershell
-pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1 -PlanOnly
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1 -AllowLongRun
 ```
 
 Use shard values `1` through `4`. The manifest fixes every assignment, and the
 final verification gate requires all four shards on both hosts. The ordinary
-no-argument command remains available as the sequential complete-plan oracle.
+no-argument command remains available as the sequential complete-plan oracle,
+but it requires `-AllowLongRun` after its expected duration has been reviewed
+and explicitly approved.
 
-The canonical owner names, commands, case counts, qualification shards, and
-terminal summaries live only in `Tests/Native/Verification-Owners.txt`. Do not
-copy that evolving inventory into this runbook. Inspect the manifest or ask the
-changed-file planner for the affected owner.
+The canonical owner names, commands, case counts, qualification shards,
+duration profiles, and terminal summaries live only in
+`Tests/Native/Verification-Owners.txt`. Profile durations and infrastructure
+retry allowances live in `Tests/Native/Verification-Duration-Profiles.txt`. Do
+not copy either evolving inventory into this runbook. `-PlanOnly` reports the
+selected owner and aggregate expected and maximum seconds without executing it.
+
+Use `-ResultPath <new-json-path>` when a machine-readable record is required.
+The result distinguishes `test-failed`, `timed-out`, and `framework-error`.
+Only a retryable infrastructure failure receives one retry; assertions and
+timeouts do not. A result marked `verification-incomplete` is not passing
+evidence.
 
 ## Changed-file front door
 
@@ -595,8 +607,8 @@ managed recovery step to the native development path.
 
 ## Current boundary
 
-The 75-owner, 3,647-case registry is the complete native qualification plan,
-not an inner-loop repository verifier. It covers result, runtime-failure,
+The evolving owner registry is the complete native qualification plan, not an
+inner-loop repository verifier. It covers result, runtime-failure,
 malformed-WVB/WVO, WVO and WVA differential, assembler, lowerer, linker,
 console/UEFI packager, publisher, OS, package, database, and AOT-chain contracts.
 WebAssembly and compiler convergence remain separate explicit qualification

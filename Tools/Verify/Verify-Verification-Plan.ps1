@@ -67,6 +67,16 @@ $NativeCases = @(
         VerifyPlan = $true
     },
     @{
+        Name = 'verification owner registry and duration policy'
+        Paths = @(
+            'Tests/Native/Verification-Owners.txt',
+            'Tests/Native/Verification-Duration-Profiles.txt'
+        )
+        Suites = @()
+        Gaps = @()
+        VerifyPlan = $true
+    },
+    @{
         Name = 'Language 1.0 paper package-data evidence'
         Paths = @(
             'Documents/Project/Language-1.0-Paper-Corpus/07-Gui-Retained-State/Package-Data/Theme.wvtheme'
@@ -4526,20 +4536,56 @@ Write-Host 'START verification plan phase=contracts item=1/3'
 & $RetirementInventoryVerifier -Quiet
 & $DevelopmentDependencyVerifier -Quiet
 
+$VerificationDurationPlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Verification-Duration-Profiles.txt'
+$VerificationDurationLines = @(Get-Content -LiteralPath $VerificationDurationPlan)
+if ($VerificationDurationLines.Count -lt 2 -or
+    $VerificationDurationLines[0] -ne
+        'windvale-native-verification-duration-profiles 1') {
+    throw 'The native verification duration-profile registry is invalid.'
+}
+$VerificationDurationProfiles = @{}
+foreach ($Line in $VerificationDurationLines | Select-Object -Skip 1) {
+    $Fields = $Line -split '\|', 4
+    $ExpectedSeconds = 0
+    $MaximumSeconds = 0
+    $InfrastructureRetries = 0
+    if ($Fields.Count -ne 4 -or
+        $Fields[0] -cnotmatch '^[a-z]+(?:-[a-z]+)*$' -or
+        $VerificationDurationProfiles.ContainsKey($Fields[0]) -or
+        ![int]::TryParse($Fields[1], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$ExpectedSeconds) -or
+        ![int]::TryParse($Fields[2], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$MaximumSeconds) -or
+        ![int]::TryParse($Fields[3], [Globalization.NumberStyles]::None,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [ref]$InfrastructureRetries) -or
+        $ExpectedSeconds -lt 1 -or $ExpectedSeconds -gt 3600 -or
+        $MaximumSeconds -lt $ExpectedSeconds -or $MaximumSeconds -gt 3600 -or
+        $InfrastructureRetries -lt 0 -or $InfrastructureRetries -gt 1) {
+        throw "Invalid native verification duration profile: $Line"
+    }
+    $VerificationDurationProfiles[$Fields[0]] = $true
+}
+
 $VerificationOwnerPlan = Join-Path $RepositoryRoot 'Tests/Native/Verification-Owners.txt'
 $VerificationOwnerLines = @(Get-Content -LiteralPath $VerificationOwnerPlan)
 if ($VerificationOwnerLines.Count -lt 2 -or
-    $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 1') {
+    $VerificationOwnerLines[0] -ne 'windvale-native-verification-owners 2') {
     throw 'The native verification-owner header or inventory is invalid.'
 }
 $VerificationOwnerNames = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $VerificationOwnerCommands = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
+$VerificationOwnerProfiles = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
 foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
-    $Fields = $Line -split '\|', 5
-    if ($Fields.Count -ne 5) {
+    $Fields = $Line -split '\|', 6
+    if ($Fields.Count -ne 6) {
         throw "Malformed native verification-owner entry: $Line"
     }
     $VerificationOwnerEntryCases = 0
@@ -4564,7 +4610,11 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
         $VerificationOwnerEntryShard -lt 1 -or $VerificationOwnerEntryShard -gt 4) {
         throw "Invalid native qualification shard: $Line"
     }
-    if ([string]::IsNullOrWhiteSpace($Fields[4])) {
+    if (!$VerificationDurationProfiles.ContainsKey($Fields[4])) {
+        throw "Unknown native verification duration profile: $Line"
+    }
+    $null = $VerificationOwnerProfiles.Add($Fields[4])
+    if ([string]::IsNullOrWhiteSpace($Fields[5])) {
         throw "Missing native verification-owner terminal summary: $Line"
     }
     $null = $VerificationOwnerShards.Add($VerificationOwnerEntryShard)
@@ -4584,14 +4634,37 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
 if ($VerificationOwnerShards.Count -ne 4) {
     throw 'The native verification-owner registry does not cover all four qualification shards.'
 }
+if ($VerificationOwnerProfiles.Count -ne $VerificationDurationProfiles.Count) {
+    throw 'Not every native verification duration profile is assigned.'
+}
 
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
-$TestRunnerPlan = @(& pwsh -NoProfile -File $PowerShellTestRunner `
-    -Owner verification-owner-stream -PlanOnly 2>&1)
-if ($LASTEXITCODE -ne 0 -or
-    ($TestRunnerPlan -join "`n") -notmatch
-        '(?m)^PLAN  owner=verification-owner-stream command=Test-Verification-Owner-Stream\.(?:cmd|sh) cases=5 shard=2$') {
-    throw 'The PowerShell test runner did not return its focused owner plan.'
+$TestRunnerResultPath = Join-Path ([IO.Path]::GetTempPath()) (
+    'windvale-test-plan-' + [Guid]::NewGuid().ToString('N') + '.json')
+try {
+    $TestRunnerPlan = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+        -Owner verification-owner-stream -PlanOnly `
+        -ResultPath $TestRunnerResultPath 2>&1)
+    if ($LASTEXITCODE -ne 0 -or
+        ($TestRunnerPlan -join "`n") -notmatch
+            '(?m)^PLAN  owner=verification-owner-stream command=Test-Verification-Owner-Stream\.(?:cmd|sh) cases=6 shard=2 duration-profile=quick expected-seconds=15 maximum-seconds=300$') {
+        throw 'The PowerShell test runner did not return its bounded focused owner plan.'
+    }
+    $TestRunnerResult = Get-Content -Raw -LiteralPath $TestRunnerResultPath |
+        ConvertFrom-Json
+    if ($TestRunnerResult.format -ne 'windvale-verification-run-result-1' -or
+        $TestRunnerResult.outcome -ne 'planned' -or
+        $TestRunnerResult.exitCode -ne 0 -or
+        $TestRunnerResult.ownersPlanned -ne 1 -or
+        $TestRunnerResult.casesPlanned -ne 6 -or
+        $TestRunnerResult.expectedSeconds -ne 15 -or
+        $TestRunnerResult.maximumSeconds -ne 300) {
+        throw 'The PowerShell test runner did not write its structured plan result.'
+    }
+} finally {
+    if ([IO.File]::Exists($TestRunnerResultPath)) {
+        [IO.File]::Delete($TestRunnerResultPath)
+    }
 }
 $UnknownOwnerResult = @(& pwsh -NoProfile -File $PowerShellTestRunner `
     -Owner windvale-unknown-owner -PlanOnly 2>&1)
@@ -4599,6 +4672,12 @@ if ($LASTEXITCODE -ne 64 -or
     ($UnknownOwnerResult -join "`n") -notmatch
         '(?m)^Unknown verification owner: windvale-unknown-owner$') {
     throw 'The PowerShell test runner did not reject an unknown owner with usage status 64.'
+}
+$UnapprovedLongRun = @(& pwsh -NoProfile -File $PowerShellTestRunner 2>&1)
+if ($LASTEXITCODE -ne 64 -or
+    ($UnapprovedLongRun -join "`n") -notmatch
+        '(?m)^Selected plan expects [0-9]+ seconds, which exceeds the 600-second local development budget\.') {
+    throw 'The PowerShell test runner did not refuse an unapproved long run.'
 }
 
 $CompilerDevelopmentWindows = Get-Content -Raw -LiteralPath (
@@ -4623,7 +4702,10 @@ foreach ($Fragment in @(
 foreach ($Fragment in @(
     '$Coordinator = Join-Path $PSScriptRoot ''Invoke-WindvaleTests.ps1''',
     '$OwnerArguments = @(''-Owner'', $Suite)',
-    '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments'
+    '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments',
+    '$AllowIncompleteInfrastructure',
+    '''windvale-native-changed-verification-timing-2''',
+    '''verification-incomplete'''
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "Changed-file PowerShell test dispatch is missing '$Fragment'."
@@ -4792,7 +4874,9 @@ $RequiredWorkflowFragments = @(
     "if: `${{ always() && steps.native-development-cache.outputs.cache-hit != 'true' }}",
     'if ([string]::IsNullOrWhiteSpace($env:BASE_SHA) -or',
     'git diff --check HEAD^ HEAD --',
-    'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}'
+    '-AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT',
+    'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2',
+    'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
 )
 foreach ($Fragment in $RequiredWorkflowFragments) {
     if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {
@@ -4802,7 +4886,7 @@ foreach ($Fragment in $RequiredWorkflowFragments) {
 if ([regex]::Matches(
         $GitHubVerificationWorkflow,
         [regex]::Escape(
-            'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }}')).Count -ne 2) {
+            'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT')).Count -ne 2) {
     throw 'The GitHub qualification workflow does not use the PowerShell test runner on both hosts.'
 }
 if ($GitHubVerificationWorkflow.Contains(

@@ -30,6 +30,10 @@ handbook.
   or managed fallback.
 - Focused native OS owners run through
   `Invoke-WindvaleTests.ps1 -Owner <owner-name>`.
+- Every verification owner must name one registered duration profile. Inspect
+  the aggregate expected and maximum seconds in `-PlanOnly`; never bypass an
+  over-budget refusal without the advance approval required by the root
+  handbook.
 - Non-normative generated indexes and companion summaries belong to
   documentation verification even when they route to a specification. Do not
   weaken routing for an actual semantic, format, limit, or failure-rule change.
@@ -68,6 +72,12 @@ handbook.
   add another `.cmd`/`.sh` coordinator pair. Existing paired owner scripts are
   transitional leaf implementations and remain behind the PowerShell runner
   until they can move without changing their evidence contract.
+- Preserve the structured distinction between `test-failed`, `timed-out`, and
+  `framework-error`. Retry only a stream failure explicitly classified as
+  retryable infrastructure; never retry an assertion, owner exit, malformed
+  summary, output-limit failure, or timeout. An automatic
+  `verification-incomplete` result is not passing or reusable evidence, and
+  qualification always fails closed.
 - Give every verifier one clear owner, bounded inputs, bounded diagnostics,
   stable progress, and explicit failure behavior.
 - Declare every input, tool identity, host dependency, and verifier version used

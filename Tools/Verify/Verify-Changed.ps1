@@ -9,7 +9,8 @@ param(
     [string]$TimingReportPath,
     [switch]$NoResultCache,
     [string]$ResultCacheRoot,
-    [switch]$SkipDocumentationVerification
+    [switch]$SkipDocumentationVerification,
+    [switch]$AllowIncompleteInfrastructure
 )
 
 $ErrorActionPreference = 'Stop'
@@ -95,6 +96,9 @@ $NativePlan = if ($Plan.Scope -in @('development', 'qualification')) {
 if ($PlanOnly) {
     return
 }
+if ($AllowIncompleteInfrastructure -and $Plan.Scope -ne 'development') {
+    throw '-AllowIncompleteInfrastructure is valid only for development scope.'
+}
 
 if ($PSBoundParameters.ContainsKey('ChangedPath')) {
     git -C $RepositoryRoot diff --check
@@ -157,6 +161,7 @@ if ($Plan.Scope -eq 'website') {
 
     Write-Warning 'Changed-file verification is native development feedback, not conformance or qualification evidence.'
     $Failures = [System.Collections.Generic.List[string]]::new()
+    $Incomplete = [System.Collections.Generic.List[string]]::new()
     $Timings = [System.Collections.Generic.List[object]]::new()
     if ($NativePlan.RunPlanVerification) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
@@ -224,6 +229,9 @@ if ($Plan.Scope -eq 'website') {
     foreach ($Suite in $NativePlan.Suites) {
         $Stopwatch = [Diagnostics.Stopwatch]::StartNew()
         $TimingStatus = 'executed'
+        $TimingOutcome = 'passed'
+        $OwnerExitCode = 0
+        $StopAfterOwner = $false
         try {
             $OwnerCommand = $Coordinator
             $OwnerArguments = @('-Owner', $Suite)
@@ -354,10 +362,28 @@ if ($Plan.Scope -eq 'website') {
             } else {
                 & $OwnerCommand @OwnerArguments
             }
-            if ($LASTEXITCODE -ne 0) {
-                throw "Native owner '$Suite' exited $LASTEXITCODE."
+            $OwnerExitCode = $LASTEXITCODE
+            $OwnerSucceeded = $OwnerExitCode -eq 0
+            if (!$OwnerSucceeded -and $OwnerCommand -ceq $Coordinator -and
+                $OwnerExitCode -ne 1) {
+                $TimingOutcome = if ($OwnerExitCode -eq 124) {
+                    'timed-out'
+                } else {
+                    'framework-error'
+                }
+                $Incomplete.Add($Suite)
+                Write-Warning (
+                    "Native owner '$Suite' is verification-incomplete " +
+                    "outcome=$TimingOutcome exit=$OwnerExitCode. " +
+                    'No passing evidence was recorded.')
+                if (!$AllowIncompleteInfrastructure) {
+                    $StopAfterOwner = $true
+                }
+            } elseif (!$OwnerSucceeded) {
+                $TimingOutcome = 'test-failed'
+                throw "Native owner '$Suite' exited $OwnerExitCode."
             }
-            if ($null -ne $ResultCacheState) {
+            if ($OwnerSucceeded -and $null -ne $ResultCacheState) {
                 try {
                     $Publish = Invoke-VerificationResultCache -CacheArgument @(
                         'publish',
@@ -386,16 +412,22 @@ if ($Plan.Scope -eq 'website') {
                 }
             }
         } catch {
+            if ($TimingOutcome -eq 'passed') {
+                $TimingOutcome = 'framework-error'
+            }
             $Failures.Add($Suite)
-            if (!$NoFailFast) { throw }
+            if (!$NoFailFast) { $StopAfterOwner = $true }
         } finally {
             $Stopwatch.Stop()
             $Timings.Add([pscustomobject]@{
                 name = $Suite
                 elapsedMilliseconds = $Stopwatch.ElapsedMilliseconds
                 status = $TimingStatus
+                outcome = $TimingOutcome
+                exitCode = $OwnerExitCode
             })
         }
+        if ($StopAfterOwner) { break }
     }
 
     if ($NativePlan.RunWebAssemblyEngineVerification) {
@@ -436,14 +468,32 @@ if ($Plan.Scope -eq 'website') {
             !(Test-Path -LiteralPath $TimingParent -PathType Container)) {
             throw 'The native changed-file timing-report parent does not exist.'
         }
+        $OverallOutcome = if ($Failures.Count -ne 0) {
+            'failed'
+        } elseif ($Incomplete.Count -ne 0) {
+            'verification-incomplete'
+        } else {
+            'passed'
+        }
         [pscustomobject]@{
-            format = 'windvale-native-changed-verification-timing-1'
+            format = 'windvale-native-changed-verification-timing-2'
+            outcome = $OverallOutcome
+            incompleteOwners = @($Incomplete)
             entries = @($Timings)
         } | ConvertTo-Json -Depth 4 |
             Set-Content -LiteralPath $TimingReportPath -Encoding utf8
     }
     if ($Failures.Count -ne 0) {
         throw "Native changed-file verification failed: $($Failures -join ', ')."
+    }
+    if ($Incomplete.Count -ne 0) {
+        $Message = (
+            'Native changed-file verification is incomplete: ' +
+            ($Incomplete -join ', ') + '.')
+        if (!$AllowIncompleteInfrastructure) {
+            throw $Message
+        }
+        Write-Warning "$Message Automatic development feedback remains nonblocking."
     }
 } else {
     Write-Host 'Changed-file verification passed without native owner execution.'

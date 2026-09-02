@@ -15,6 +15,8 @@ The historical retirement claim remains frozen at the immutable `v0.1.0` tag
 and in [the retirement archive](Windvale-Native-Retirement-Test-Suite.md).
 The cross-host runner choice is recorded by
 [Decision 0924](../Documents/Decisions/0924-Use-One-PowerShell-Verification-Owner-Runner.md).
+Structured outcomes and duration policy are recorded by
+[Decision 0926](../Documents/Decisions/0926-Classify-And-Bound-Verification-Owner-Outcomes.md).
 
 ## Registry grammar and validation
 
@@ -22,23 +24,30 @@ The cross-host runner choice is recorded by
 newline. Its first line is exactly:
 
 ```text
-windvale-native-verification-owners 1
+windvale-native-verification-owners 2
 ```
 
-Every remaining line has five pipe-separated fields:
+Every remaining line has six pipe-separated fields:
 
 ```text
-owner-name|command-stem|case-count|qualification-shard|expected-summary
+owner-name|command-stem|case-count|qualification-shard|duration-profile|expected-summary
 ```
 
-The runner requires exactly five nonempty fields, unique constrained owner and
-command names, a positive bounded case count, a shard from `1` through `4`, and
-at least one owner in every shard. Each command stem resolves under
+The runner requires exactly six nonempty fields, unique constrained owner and
+command names, a positive bounded case count, a shard from `1` through `4`, a
+known duration profile, and at least one owner in every shard. Each command stem resolves under
 `Tools/Native` to a non-linked Windows `.cmd` or Linux `.sh` command; Linux
 commands must retain executable Git mode. The runner calculates owner, case,
 and shard totals from this validated registry instead of comparing them with
 duplicated constants. Git history identifies the registry used by a development
 run, while qualification evidence records the exact source state.
+
+`Tests/Native/Verification-Duration-Profiles.txt` is the canonical bounded
+policy table. Each profile defines conservative expected seconds, enforced
+maximum seconds, and zero or one retry for an explicitly retryable
+infrastructure failure. Every profile must be used. Expected durations are
+planning allowances, not performance claims; structured run results provide the
+measurements used to recalibrate them.
 
 The manifest is the canonical detailed inventory. Documentation must not copy
 its entire evolving table because duplicated inventories become stale.
@@ -51,6 +60,9 @@ point. It supports:
 - `-Owner <owner-name>` for one exact development owner;
 - `-Shard <1-4>` for one explicit qualification shard;
 - `-PlanOnly` for registry validation and selection without execution; and
+- `-ResultPath <new-json-path>` for a bounded machine-readable result;
+- `-AllowLongRun` for an approved plan whose aggregate expected duration exceeds
+  the ten-minute local development budget; and
 - no arguments for a deliberate complete local qualification run.
 
 Ordinary development must use the changed-file planner or an exact filter. A
@@ -130,15 +142,21 @@ owner it must:
 3. stream child output live while retaining at most 8 MiB separately for each
    output channel;
 4. after 30 seconds without complete-line child activity, emit an external
-   heartbeat, capped at 240 lines and excluded from the retained child log;
-5. require exit code `0` and empty standard error;
-6. require the last nonempty output line to equal the registered summary;
-7. count cases only from the reviewed registry; and
-8. report owner and total elapsed time outside the semantic child summary.
+   heartbeat, capped at 120 lines and excluded from the retained child log;
+5. terminate the complete owner process tree at the profile's total maximum,
+   including any infrastructure retry, and bound the post-termination settle
+   interval;
+6. require exit code `0` and empty standard error;
+7. require the last nonempty output line to equal the registered summary;
+8. count cases only from the reviewed registry; and
+9. report owner and total elapsed time outside the semantic child summary.
 
 The transitional runner delegates bounded byte streaming to the existing Node
 stream helper; individual owner implementations remain paired host scripts.
 This keeps behavior unchanged while orchestration converges on PowerShell.
+The helper returns a bounded `windvale-verification-owner-process-1` status
+record describing normal exit, timeout, or framework failure; the PowerShell
+runner validates that record before interpreting owner output.
 Owner-log parents are validated component by component with filesystem
 metadata. Symbolic links, junctions, and non-directory components reject;
 different legitimate spellings of the same Windows directory, including an
@@ -146,7 +164,20 @@ NTFS 8.3 ancestor alias, do not constitute link evidence by themselves. The
 registered `verification-owner-stream` owner keeps this boundary executable.
 
 The first child failure stops that runner process after its output has already
-been exposed live. Invalid owner or shard selections return `64`. GitHub runs
+been exposed live. Outcomes are `passed`, `test-failed`, `timed-out`, or
+`framework-error`; process exit codes are respectively `0`, `1`, `124`, and `2`.
+Invalid owner, shard, or unapproved over-budget selections return `64`.
+The result record format is `windvale-verification-run-result-1`, is capped at
+64 KiB, and records the selected plan, per-owner profile, attempts, elapsed time,
+outcome, and bounded diagnostic. The destination must be a new file in a
+non-linked existing parent.
+
+Only a process-launch, stream-I/O, or process-status publication failure
+explicitly marked retryable may use the profile's single retry. A timeout,
+output-limit violation, nonzero owner exit, standard-error output, or
+terminal-summary mismatch is never retried.
+
+GitHub runs
 all four qualification shards independently with matrix fail-fast disabled,
 then an aggregate gate requires both host matrices and the independent
 WebAssembly and compiler-convergence jobs. The pinned Debian container installs

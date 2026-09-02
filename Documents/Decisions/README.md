@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 332 |
+| Accepted | 333 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0926: classify and bound verification-owner outcomes](0926-Classify-And-Bound-Verification-Owner-Outcomes.md) | Accepted |
 | [Decision 0925: publish and retain the authenticated Foreign lowering carrier](0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md) | Accepted |
 | [Decision 0924: use one PowerShell verification-owner runner](0924-Use-One-PowerShell-Verification-Owner-Runner.md) | Accepted |
 | [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) | Proposed |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0904: execute WVB 1.33 unsafe scratch in a bounded scalar provider](0904-Execute-Wvb-1.33-Unsafe-Scratch-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0903: verify candidate WVB 1.33 without opening execution](0903-Verify-Candidate-Wvb-1.33-Without-Opening-Execution.md) | Accepted |
 | [Decision 0902: represent unsafe scratch construction in candidate WVB 1.33](0902-Represent-Unsafe-Scratch-Construction-In-Candidate-Wvb-1.33.md) | Accepted |
-| [Decision 0901: advance the frozen source identity for unsafe scratch](0901-Advance-The-Frozen-Source-Identity-For-Unsafe-Scratch.md) | Accepted |
 
 ## Superseded or historical records
 

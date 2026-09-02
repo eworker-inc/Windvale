@@ -352,8 +352,14 @@ changes it:
    more than one OS x64 project is affected;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
-7. stops at the first failure unless `-NoFailFast` is explicit; and
-8. optionally writes `windvale-native-changed-verification-timing-1` JSON.
+7. stops at the first test failure unless `-NoFailFast` is explicit;
+8. classifies runner exit `1` as a product-test failure and runner exit `2` or
+   `124` as verification-incomplete framework or timeout evidence;
+9. permits `-AllowIncompleteInfrastructure` to keep only those incomplete
+   outcomes nonblocking for automatic development feedback, without caching or
+   treating them as a pass; and
+10. optionally writes `windvale-native-changed-verification-timing-2` JSON with
+    the overall outcome, incomplete owners, and per-owner outcomes and timing.
 
 The command is development feedback. Passing it is not Standard, Qualification,
 cross-host, or qualification evidence. A pre-existing output owned by a child
@@ -366,15 +372,25 @@ Linux host. It adds a clean Windows host only when a changed path names a Window
 or Win32 path token, a Windows command or batch file, a PowerShell script, or an
 `.exe`, `.dll`, or `.pdb` artifact. Both automatic development jobs have a
 15-minute wall-clock limit including checkout, cache restore, tool setup, owner
-execution, and cache publication. A timeout is a failed development result, not
-partial passing evidence.
+execution, and cache publication. A classified test failure remains blocking.
+A framework error or owner timeout is retained as `verification-incomplete` and
+warns without asserting that the product code is wrong. It is not a pass,
+cannot populate the result cache, and cannot satisfy qualification.
+Development-only Node setup, checkpoint restore/save, and timing-artifact
+upload steps are nonblocking infrastructure conveniences. The runner validates
+Node.js 24 before owner execution, so a failed setup cannot silently run tests
+with an unsupported runtime. Checkout, classification, routing, and classified
+product-test failures remain blocking.
 
 Automatic runs for the same workflow and ref cancel when a newer push or pull
 request supersedes them. An explicit `workflow_dispatch` qualification run is
 not cancelled by later automatic work. Documentation verification runs once on
 Linux; it is not repeated on Windows. Explicit qualification retains the four
 fresh native shards, WebAssembly engine verification, and compiler convergence
-on both hosts.
+on both hosts. Qualification explicitly authorizes the reported longer shard
+plan, fails on every non-passing runner outcome, and retains each structured
+shard result. Development jobs retain their structured timing reports so
+duration profiles can be calibrated from actual runs.
 
 ## Verification
 
