@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-authenticated-foreign-scalar-execution",
+  "date": "2026-09-03",
+  "subject": "Post-analysis authenticated Foreign lowering and bounded scalar execution of WVB 1.38",
+  "claim": "Implementation commit 98334495cc7c501e1262a5939ebf68f473e55745 makes the Windows production compiler analyze generic Foreign-call source before constructing and pairing WVFB, then executes the emitted registered WVB 1.38 call through the bounded scalar provider for both success and stale-generation outcomes.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "98334495cc7c501e1262a5939ebf68f473e55745"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Authenticated generic source admission, post-analysis WVFB construction and pairing, WVB 1.38 verification, and bounded scalar provider execution",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-production-admission-ingress -AllowLongRun",
+      "result": "Passed",
+      "cases": 23,
+      "elapsedMilliseconds": 158741
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is Windows-local development evidence; Linux reproduction, cold double reconstruction, and paired-host qualification remain pending.",
+    "The bounded scalar provider implements only registered binding identity 1 with fixed generation 42 and exact 64-byte destination geometry.",
+    "No native address was formed, no symbol or dynamic library was resolved, and no external machine code executed.",
+    "The native x86-64 lowerer, launchers, browser, WebAssembly host, package path, and Windvale OS remain closed to WVB 1.38 execution.",
+    "The wvbind and wvrun identities are measured development candidates and have not been promoted as settled cross-host identities.",
+    "The focused causal owner was run instead of the 58.5-minute changed-file plan, whose additional owners protect unaffected compiler, database, WebAssembly, and packaging contracts."
+  ],
+  "related": [
+    "Documents/Decisions/0936-Build-Foreign-Lowering-Evidence-After-Typed-Analysis.md",
+    "Documents/Decisions/0937-Execute-Authenticated-WVB-1.38-Foreign-Calls-In-The-Bounded-Scalar-Provider.md",
+    "Specifications/Compiler-Source-Analysis.md",
+    "Specifications/Compiler-Source-Foreign-Lowering-Carrier.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Native-Wvb-Runner.md",
+    "Tools/Native/Run-Split-Compiler.mjs",
+    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs"
+  ]
+}

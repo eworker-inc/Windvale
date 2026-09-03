@@ -4,13 +4,13 @@
 
 Candidate private compiler-phase contract, WVFB 1.0, implemented locally on
 Windows on 2026-09-03. The
-compiler-owned binder constructs and independently validates this carrier after
-complete source, target, catalog, symbol, and body binding. The hosted driver
-publishes it only to a coordinator-selected private path, and the coordinator
-independently validates and retains that exact file. The authenticated
-coordinator now runs the Analyzer and uses the same binder executable to pair
-every retained carrier record and typed WVIR Foreign call before stopping at
-WVB emission. No WVB or execution consumer accepts the call yet.
+generic-aware Analyzer completes body binding first. A focused compiler-owned
+builder then constructs the carrier from validated source, target, catalog, and
+symbol facts and pairs it with the typed WVIR before publishing only to a
+coordinator-selected private path. The coordinator independently validates,
+retains, and re-pairs that exact file before WVB emission. The complete verifier
+and source-built bounded scalar provider now accept registered WVB 1.38 binding
+`1`; native and other execution consumers remain closed.
 
 ## Purpose and authority
 
@@ -20,12 +20,12 @@ closure into the size-constrained Analyzer. It is an internal compiler value,
 not a distributable module, authentication certificate, capability grant,
 provider handle, native address, or execution authority.
 
-The private binder constructs WVFB only while it holds the WVSS, WVTD, and WVFC
-values that it completely validated. A valid WVFB by itself proves only its own
-shape. The implemented cross-process pairer binds it to a symbol directory
-reconstructed from the retained WVSS and matches every typed Foreign call in
-the paired WVIR. The coordinator retains the authenticated inputs and rechecks
-their exact bytes after pairing.
+The private builder constructs WVFB only while it holds the WVSS, WVTD, WVFC,
+and typed WVIR values that it completely validated or paired. A valid WVFB by
+itself proves only its own shape. The implemented cross-process pairer binds it
+to a symbol directory reconstructed from the retained WVSS and matches every
+typed Foreign call in the paired WVIR. The coordinator retains the
+authenticated inputs and rechecks their exact bytes after pairing.
 
 All integers are unsigned little-endian values. All reserved fields must be
 zero. The complete value is exactly `56 + RecordCount * 80` bytes, is at least
@@ -130,15 +130,20 @@ a native symbol, or authorize WVB publication.
 
 ## Hosted publication and current containment
 
-The binder returns WVFB only on complete success and returns an empty carrier
-for every failure. The hosted driver accepts exactly:
+The production lowering builder returns WVFB only on complete success and
+returns an empty carrier for every failure. After the Analyzer completes typed
+and generic-aware analysis, the hosted driver accepts exactly:
 
 ```text
-wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>
+wvbind --internal-bind-analyzed <input.wvss> <input.wvtd>
+    <input.wvfc> <input.wvir> <output.wvfb>
 ```
 
-All four paths must be distinct. Only after complete binding does the driver
-write the carrier and one exact standard-output line:
+All five paths must be distinct. The driver validates the source, target,
+catalog, symbols, and registered callable facts without repeating body or
+generic binding. It then pairs the candidate carrier with the supplied typed
+WVIR. Only after complete construction and pairing does it write the carrier
+and one exact standard-output line:
 
 ```text
 foreign binding status=Published source-bytes=<u32> source-sha256=<hex> target-bytes=<u32> target-sha256=<hex> catalog-bytes=<u32> catalog-sha256=<hex> carrier-bytes=<u32> carrier-sha256=<hex> foreign-count=<u32>\n
@@ -148,8 +153,8 @@ The line is at most 447 UTF-8 bytes under the current input bounds. It names the
 bytes consumed and produced by that invocation but remains non-authoritative.
 
 The production coordinator supplies a new path inside its private phase
-directory. After the binding form of `wvbind` exits successfully, it requires
-one ordinary,
+directory. After the Analyzer and construction form of `wvbind` exit
+successfully, it requires one ordinary,
 single-link, 136-through-5,176-byte file and makes it read-only. It independently
 checks the complete WVFB header and record geometry; exact retained WVTD target
 tuple; record count; WVFC module, declaration, and record mapping; strictly
@@ -160,9 +165,9 @@ then rechecks the original six authenticated snapshots plus WVFB identity and
 bytes. Any missing, aliased, linked, malformed, substituted, or changed carrier
 fails closed and the private tree is removed.
 
-The coordinator next launches the Analyzer's private foreign-source-set route,
-requires its WVSS copy to equal the retained source set, and retains its WVCA,
-WVLB, and WVIR files. It then re-enters the existing binder executable:
+The coordinator has already required the Analyzer's WVSS copy to equal the
+retained source set and retained its WVCA, WVLB, and WVIR files. It now
+re-enters the existing binder executable for an independent pairing check:
 
 ```text
 wvbind --internal-pair-analysis <input.wvss> <input.wvfb> <input.wvir>
@@ -187,6 +192,7 @@ The ordinary emitter form rejects Foreign-bearing source, and direct use of
 `wvbind`, the private emitter switch, or WVFB cannot establish the preceding
 authentication relationship or grant authority. Candidate WVB 1.38 records
 registered binding identity `1`; it does not embed WVFB, grant a capability,
-resolve a native symbol, create a native thunk, load a dynamic library, or call
-a provider. The complete verifier and all execution consumers remain closed to
-minor 38.
+resolve a native symbol, create a native thunk, or load a dynamic library. The
+complete verifier admits the exact call, and the source-built bounded scalar
+provider executes identity `1` against private logical heap state. Native and
+all other execution consumers remain closed to minor 38.

@@ -205,26 +205,44 @@ wvauth <input.wvae> <input.wvss> <input.wvtd> <input.wvfc>
     <input.wvlock> <input.wvsp>
 ```
 
-Only its successful process result permits the coordinator to continue. An
-authenticated nonempty catalog first
-causes the coordinator to recheck all six retained snapshots and then invokes
-the private hosted compiler binder:
+Only its successful process result permits the coordinator to continue. For an
+authenticated nonempty catalog, the coordinator rechecks all six retained
+snapshots and invokes the Analyzer's private Foreign route:
 
 ```text
-wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>
+wvanalyze --internal-foreign-source-set <input.wvss> <output.wvss>
+    <output.wvca> <output.wvlb> <output.wvir>
 ```
 
-The compiler-owned adapter in `wvbind` treats WVSS, WVTD, and WVFC as
-untrusted. It validates their structure and source/catalog correspondence,
-requires the exact supported target, constructs conditional WVSD 1.2/WVSI 1.3
-symbols, completes direct-call binding, and checks every normalized Foreign
-callable fact. A successful result is semantic fact evidence only: `wvbind`
-accepts no WVAE, lock, or profile, publishes no authentication marker, and has
-no admission authority. Its one successor WVFB is a private typed-fact carrier,
+The switch is matched without retaining another static text value in the
+compiler-scale Analyzer. It is not a public admission claim: the coordinator
+alone supplies the already retained WVSS, and direct use produces only ordinary
+untrusted analysis files. The Analyzer validates and republishes that WVSS and
+constructs the same WVCA, WVLB, and WVIR products as its ordinary analysis
+pipeline, including generic-aware body binding and typed `Callˉforeign`
+operation `190`.
+
+After requiring the republished WVSS to equal the retained source set, the
+coordinator invokes the private hosted lowering builder:
+
+```text
+wvbind --internal-bind-analyzed <input.wvss> <input.wvtd>
+    <input.wvfc> <input.wvir> <output.wvfb>
+```
+
+The compiler-owned adapter treats WVSS, WVTD, WVFC, and WVIR as untrusted. It
+validates source and catalog structure and correspondence, requires the exact
+supported target, constructs conditional WVSD 1.2/WVSI 1.3 symbols, checks
+every normalized Foreign callable fact, constructs a candidate WVFB, and pairs
+every carrier record with the supplied typed WVIR before publication. It does
+not repeat source body or generic binding; the Analyzer owns those production
+semantics. A successful result is semantic fact evidence only: `wvbind` accepts
+no WVAE, lock, or profile, publishes no authentication marker, and has no
+admission authority. Its one successor WVFB is a private typed-fact carrier,
 not authentication material.
 
-Only after complete binding success does `wvbind` write one exact bounded
-canonical line to standard output:
+Only after complete construction and pairing success does `wvbind` write one
+exact bounded canonical line to standard output:
 
 ```text
 foreign binding status=Published source-bytes=<decimal-u32> source-sha256=<64-lowercase-hex> target-bytes=<decimal-u32> target-sha256=<64-lowercase-hex> catalog-bytes=<decimal-u32> catalog-sha256=<64-lowercase-hex> carrier-bytes=<decimal-u32> carrier-sha256=<64-lowercase-hex> foreign-count=<decimal-u32>\n
@@ -245,26 +263,11 @@ linked, malformed, mismatched, partial, duplicated, extra, or oversized carrier
 or success output is failure, never transferable success. Direct `wvbind`
 invocation produces only non-authoritative digest evidence and a private
 semantic carrier; it cannot establish authentication or authorize later
-publication.
+publication. The former pre-analysis four-path command is intentionally
+unsupported.
 
-For that authenticated nonempty catalog only, the coordinator next invokes the
-Analyzer's private Foreign route:
-
-```text
-wvanalyze --internal-foreign-source-set <input.wvss> <output.wvss>
-    <output.wvca> <output.wvlb> <output.wvir>
-```
-
-The switch is matched without retaining another static text value in the
-compiler-scale Analyzer. It is not a public admission claim: the coordinator
-alone supplies the already retained WVSS, and direct use produces only ordinary
-untrusted analysis files. The Analyzer validates and republishes that WVSS and
-constructs the same WVCA, WVLB, and WVIR products as its ordinary analysis
-pipeline, including typed `Callˉforeign` operation `190`.
-
-After requiring the republished WVSS to equal the retained source set, the
-coordinator re-enters the existing binder product instead of adding a sixth
-executable:
+After retaining WVFB, the coordinator re-enters the same product for an
+independent pairing check instead of adding another executable:
 
 ```text
 wvbind --internal-pair-analysis <input.wvss> <input.wvfb> <input.wvir>
@@ -349,10 +352,10 @@ overwrite.
 
 The production front door owns five bounded products over one semantic compiler:
 `wvadmit`, `wvauth`, `wvbind`, the Analyzer, and the emitter. A nonempty catalog
-launches the admitter, authenticator, binding form of `wvbind`, Analyzer, and
-pairing form of `wvbind`, then the emitter's private paired-Foreign form; an
-empty catalog skips `wvbind` and launches the admitter, authenticator, Analyzer,
-and ordinary emitter.
+launches the admitter, authenticator, Analyzer, post-analysis construction form
+of `wvbind`, and pairing form of `wvbind`, then the emitter's private paired-
+Foreign form; an empty catalog skips `wvbind` and launches the admitter,
+authenticator, Analyzer, and ordinary emitter.
 The admitter owns Language 1.0 descriptor/profile admission and catalog
 production; the authenticator independently proves the retained snapshot
 relationship; `wvbind` proves the compiler-owned foreign semantic facts and
@@ -367,15 +370,17 @@ must have a distinct target and producer identity.
 
 The private `wvbind` product is an additional bounded compiler-owned stop inside
 that same front door, not a public admitted-source interface. The coordinator
-retains its independently validated WVFB output, does not pass it to the
-Analyzer, and passes it to the emitter only after typed pairing succeeds. Its
+runs it only after Analyzer completion, retains its independently validated
+WVFB output, and passes it to the emitter only after the second typed-pairing
+check succeeds. Its
 currently supported target is exactly Linux x86-64, little-endian,
 `sysv_amd64_c_v1`, 64 address bits, and no-unwind C scalar-pointer contract
 major `1`. A structure-valid descriptor differing in any selected field is
 unsupported. Typed WVIR and candidate WVB 1.38 publication for the exact
-registered call are implemented. Complete WVB verifier containment, native
-symbol resolution and ABI invocation, and runtime containment remain later
-Slice 8 work.
+registered call are implemented. Complete WVB verifier containment and bounded
+scalar-provider execution are implemented locally on Windows. Native symbol
+resolution and ABI invocation, a real migrated boundary, and Linux
+qualification remain later Slice 8 work.
 
 The complete compiler-scale Analyzer remains inside Windvale 1.0's fixed 4 MiB
 immutable-`bytes` ceiling. Under the pinned bootstrap transition, the

@@ -111,8 +111,10 @@ Candidate WVB 1.38 serializes the first authenticated and paired registered
 Foreign call. Its instruction carries a stable binding identity plus exact
 pointer-record and ABI-enum type identities; it does not carry a symbol string,
 address, library path, capability, or authentication certificate. The complete
-compiler-aligned verifier admits this exact candidate while every execution
-consumer remains closed to this version.
+compiler-aligned verifier admits this exact candidate. The source-built bounded
+scalar provider executes only registered binding `1` against private logical
+heap state; native and every other execution consumer remain closed to this
+version.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -423,10 +425,15 @@ or disagreement at a control-flow join. These checks establish static
 containment and the exact dynamic-check inputs; they do not prove the runtime
 generation value.
 
-The scalar provider, native lowerer, launchers, browser, WebAssembly, package,
-and OS consumers reject minor 38. They must add their own provider binding,
-generation check, symbol resolution, ABI invocation, and terminal-containment
-rules before opening execution.
+After complete verification, the source-built bounded scalar provider admits
+only registered binding identity `1`. It validates the private logical pointer
+against one live 64-byte allocation, exact 64-byte capacity, and eight-byte
+alignment. Provider generation `42` with expected generation `42` writes the
+exact 24-byte buffer-source record and returns `24`; any other expected
+generation writes observed generation `42` and returns `-3`. This path forms no
+native address and resolves no symbol. The native lowerer, launchers, browser,
+WebAssembly host, package, and OS consumers reject minor 38 until they add their
+own binding, symbol-resolution, ABI-invocation, and terminal-containment rules.
 
 ## Encoding
 
@@ -1437,10 +1444,12 @@ failure and cannot change successful value semantics.
 ## Verification
 
 The complete compiler-aligned verifier currently admits WVB 1.11 through
-candidate WVB 1.38. WVB 1.38 remains verification-only: every runtime and
-native execution consumer rejects it. The focused independent 1.38 reader
-remains a separate source-publication oracle and is not a substitute for the
-complete metadata, typed-stack, control-flow, and affine-lifetime checks.
+candidate WVB 1.38. The source-built bounded scalar provider additionally
+executes only the exact WVB 1.38 registered binding `1` described above; native
+and every other execution consumer retain their narrower boundaries. The
+focused independent 1.38 reader remains a separate source-publication oracle
+and is not a substitute for the complete metadata, typed-stack, control-flow,
+and affine-lifetime checks.
 
 Verification is required before execution and rejects a module unless:
 

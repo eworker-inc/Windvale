@@ -710,20 +710,21 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 hosted foreign binding driver project routing'
         Paths = @('Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj')
-        Suites = @(
-            'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding'
-        )
+        Suites = @('language-1-production-admission-ingress')
         Gaps = @()
         VerifyPlan = $false
     },
     @{
         Name = 'Language 1.0 hosted foreign binding driver source routing'
         Paths = @('Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv')
-        Suites = @(
-            'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding'
-        )
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 post-analysis foreign lowering builder routing'
+        Paths = @('Compiler/Windvale/Source-Foreign-Lowering-Builder-Core.wv')
+        Suites = @('language-1-production-admission-ingress')
         Gaps = @()
         VerifyPlan = $false
     },

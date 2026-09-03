@@ -13,9 +13,11 @@ current split compiler, segmented native staging/link/transport path,
 hosted-verifier profile, and paired Windows/Linux container materializers.
 The same source-built scalar core also owns the focused capability-free System
 oracle for WVB 1.33 unsafe scratch, WVB 1.34 immutable borrowed-memory-budget
-calls, and WVB 1.35 immutable borrowed-scratch length observation. That local
-Windows evidence is not part of the older profile-5 paired
-artifact identity or a paired-host qualification claim.
+calls, WVB 1.35 immutable borrowed-scratch length observation, WVB 1.36
+write-region validation, WVB 1.37 logical write-pointer derivation, and the
+registered WVB 1.38 scalar provider. That local Windows evidence is not part of
+the older profile-5 paired artifact identity or a paired-host qualification
+claim.
 
 The project names its root tool plus the SHA-256, scalar-interpreter, envelope,
 and formatting dependencies in canonical module order. Project paths are
@@ -26,9 +28,10 @@ Project 1 semantics.
 
 ## Current exact products
 
-The following table is the current profile-5 runner candidate. Independent
-Windows/Linux reconstruction reproduces all three identities; the pending
-qualification field advances only after the final Slice 7 Qualification gate.
+The following table is the last promoted profile-5 paired-host runner
+candidate. Independent Windows/Linux reconstruction reproduces all three
+identities. It remains the packaged reconstruction baseline while newer
+source-built System execution work awaits its own paired-host promotion.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
@@ -36,16 +39,23 @@ qualification field advances only after the final Slice 7 Qualification gate.
 | Windows application | 5,907,456 | `2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b` |
 | Linux application | 5,906,432 | `611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae` |
 
+The WVB 1.38-capable source-built development candidate is 1,040,878 WVB bytes
+at SHA-256
+`4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b`.
+Its measured local Windows application is 10,547,712 bytes at SHA-256
+`8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972`.
+These values are not settled cross-host identities.
+
 Segmented staging emits 5,899,132 object bytes across 13 chunks. Linking emits a
 5,889,164-byte native image with entry offset 150,541; canonical transport
 reduces that image to two chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
 
-## WVB 1.33 through WVB 1.35 focused System execution
+## WVB 1.33 through WVB 1.38 focused System execution
 
 Execution-request major `1` admits a capability-free System-profile
-`Main(Memoryˉbudget) -> i32` only for the exact WVB 1.33 through WVB 1.35 verifier-approved
+`Main(Memoryˉbudget) -> i32` only for the exact WVB 1.33 through WVB 1.38 verifier-approved
 subset. The provider supplies one fresh bounded budget token. WVB 1.33 may
 consume it through exact unsafe-scratch construction. WVB 1.34 may first create
 one shape-`36` immutable view, pass that view to an exact direct-call parameter,
@@ -60,8 +70,19 @@ noncanonical local use. The focused oracle returns `42` after a borrowed call
 followed by a 64-byte scratch allocation and rejects six shape/version
 corruptions before execution. The WVB 1.35 oracle returns `42` after observing
 the exact 64-byte construction length and rejects eight additional opcode,
-local, and ABI corruptions before execution. Mutable borrowing, pointer access,
-browser packaging, and Windvale OS execution remain outside this profile.
+local, and ABI corruptions before execution. WVB 1.36 validates and constructs
+the bounded mutable write region. WVB 1.37 derives only a private logical
+pointer descriptor without forming an address.
+
+WVB 1.38 executes only registered binding identity `1` after the complete
+compiler-aligned verifier succeeds. The provider requires the logical pointer
+to name one live 64-byte allocation with 64-byte capacity and eight-byte
+alignment. Provider generation `42` with expected generation `42` writes the
+exact 24-byte record and returns `24`; a mismatch writes observed generation
+`42` and returns `-3`. The pointer is consumed affinely. No symbol is resolved,
+no native address is formed, and no external code is invoked. Native ABI
+execution, browser packaging, WebAssembly hosting, and Windvale OS execution
+remain outside this profile.
 
 ## Construction and execution
 
@@ -90,8 +111,10 @@ remains `Result: <i32>`. Reporting adds one
 `Instructions: <u32>` line; the canonical Sum fixture reports result `29` and
 exactly `203` instructions.
 
-The current source-built runner accepts WVB 1.11 through 1.32. Its shared scalar
-interpreter implements the WVB 1.12 `i8`, `i16`, and `u16` family with the exact
+The current source-built runner accepts the ordinary portable WVB 1.11-through-
+1.32 command profile plus the exact focused System subsets through WVB 1.38
+described above. Its shared scalar interpreter implements the WVB 1.12 `i8`,
+`i16`, and `u16` family with the exact
 checked overflow, division-by-zero, and shift traps from Decision 0768. The bounded
 instruction-directory scan and fixed-integer evaluator live in focused modules
 to keep the main interpreter below compiler/lowerer function limits; they are

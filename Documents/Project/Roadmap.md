@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-08-31
+> Last reviewed: 2026-09-03
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -51,12 +51,10 @@ Completion requires:
 
 Immediate sequence:
 
-1. promote the current compiler-scale verifier and reconstruct the Analyzer and
-   emitter;
-2. finish WVB, verifier, runtime, and native containment for the first unsafe
-   scratch operation;
-3. lower one authenticated Foreign call through the accepted ABI rules;
-4. migrate one real system boundary; and
+1. lower the verified registered Foreign call through the native ABI rules;
+2. migrate one real system boundary onto that authenticated path;
+3. reproduce the current compiler, scalar provider, and native path on Linux;
+4. close any remaining frozen-language conformance gaps; and
 5. run the final paired-host slice and Language 1.0 gates.
 
 ### 2. Complete required Libraries 1.0 profiles

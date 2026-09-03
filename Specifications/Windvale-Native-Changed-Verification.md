@@ -252,17 +252,19 @@ claim a filesystem `wvadmit` or `wvauth` product.
 The separate `language-1-production-admission-ingress` owner claims that hosted
 boundary. Its default development mode builds target-aware `wvadmit`, complete
 independent `wvauth`, private `wvbind`, the successor Analyzer, and the matching
-current emitter once each through the validated shared development cache. It
-requires each WVB to match its exact recorded size and SHA-256 identity, packages
-the real products, and executes the private runner through 21 bounded acceptance,
-tamper, bypass, sequencing, publication, cleanup, timeout, output-limit, and
-progress cases. This reduces the owner from ten cold product compilations to at
-most five on an empty development cache, while normal development runs can reuse
+current emitter, compiler-aligned verifier, and source-built runner once each
+through the validated shared development cache. It measures each WVB against
+its recorded candidate identity, packages the real products, and executes the
+private runner through 23 bounded acceptance, tamper, bypass, sequencing,
+publication, cleanup, timeout, output-limit, progress, and scalar-provider
+cases. This reduces the owner from fourteen cold product compilations to at most
+seven on an empty development cache, while normal development runs can reuse
 valid cached checkpoints.
 
-Changes limited to the hosted `wvbind` driver source or its tool project select
-only `language-1-production-admission-ingress`. That owner builds, packages, and
-executes the real private product. The portable
+Changes limited to the post-analysis lowering builder, hosted `wvbind` driver
+source, or its tool project select only
+`language-1-production-admission-ingress`. That owner builds and executes the
+real private product in the complete production sequence. The portable
 `language-1-authenticated-foreign-binding` owner exercises the shared binding
 core fixture instead, while `language-1-front-door` and
 `compiler-split-development` do not currently build or execute `wvbind`.
@@ -273,19 +275,19 @@ hosted driver boundary.
 Set
 `WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD=1` for the explicit
 qualification mode. That mode gives each build pass its own isolated empty cache,
-builds all five products twice, requires the two WVB values for each product to
+builds all seven products twice, requires the two WVB values for each product to
 be byte-identical, and still requires the recorded size and SHA-256 identity
 before packaging or execution. A shared-cache hit is evidence for the recorded
 candidate identity, not a same-run cold double-build proof. The owner emits its
 selected build mode and per-product build progress. Only the mode-specific
 `cold-double-build=Verified` result claims same-run cold reproducibility. Direct
-changes to the five product entry-point drivers, their project manifests, the
+changes to the seven product entry-point drivers, their project manifests, the
 runner, the cached split-project builder, the focused owner, or Decision 0893
 select this owner. The development-only admission helper and target-descriptor
 writer select the front-
 door owner that executes them.
 Shared parser, coordinator, format, producer, and compiler sources retain their
-narrow semantic owners; they do not force five cold double builds merely because
+narrow semantic owners; they do not force seven cold double builds merely because
 they occur in a pinned product closure. Exact product identities are refreshed
 at an explicit production checkpoint. The production owner does not replace the
 shared semantic owners.
@@ -300,7 +302,7 @@ dependency-keyed project cache to compile the current combined binding
 fixtures, focused typed-WVIR fixture, and `wvbind` source. Compiler-scale
 products therefore use the resumable symbol checkpoint only after the current
 Analyzer that implements that private route exists. The owner packages two
-profile-7 native applications and executes 26 isolated selectors across four
+profile-7 native applications and executes 27 isolated selectors across four
 logical fixtures.
 The dedicated compiler-reconstruction gate owns self-hosted compiler rebuilding;
 this focused semantic owner does not duplicate that work before every selector.
@@ -321,7 +323,7 @@ return type.
 The callable-semantics owner separately
 proves at the owning closure-capture phase that a Foreign global cannot enter an
 explicit capture. The ordinary Analyzer's fail-closed foreign-input guard
-belongs to the production-ingress owner, not these 26 selectors. Direct adapter,
+belongs to the production-ingress owner, not these 27 selectors. Direct adapter,
 either fixture/project, owner, or Decision 0895 changes select this owner.
 Changes to the adapter implementation, Decision 0895, `wvbind`, or its runner
 integration also select the production-ingress owner because digest evidence,

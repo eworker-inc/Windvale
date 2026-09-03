@@ -1810,18 +1810,12 @@ foreach ($Path in $Paths) {
         )) {
             Add-Suite 'language-1-callable-semantics'
         }
-    } elseif ($Path -eq
-        'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj') {
-        Add-Suite @(
-            'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding'
-        )
-    } elseif ($Path -eq
-        'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv') {
-        Add-Suite @(
-            'language-1-production-admission-ingress',
-            'language-1-authenticated-foreign-binding'
-        )
+    } elseif ($Path -in @(
+        'Compiler/Windvale/Source-Foreign-Lowering-Builder-Core.wv',
+        'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj',
+        'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv'
+    )) {
+        Add-Suite 'language-1-production-admission-ingress'
     } elseif ($Path -in @(
         'Projects/Tools/Windvale-Compiler-Analysis-Driver.wvproj',
         'Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj',
