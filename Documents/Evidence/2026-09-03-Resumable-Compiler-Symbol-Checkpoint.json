@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-resumable-compiler-symbol-checkpoint",
+  "date": "2026-09-03",
+  "subject": "Content-addressed resumable compiler symbol checkpoint",
+  "claim": "Implementation commit 2cfd292202d2bbf0425b7457c6f94ada5dc81f9a preserves independently validated WVSS and WVSY bytes after a later analysis failure, reuses them only under their complete declared identity, and rejects corrupted symbol bytes without publishing final analysis output.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "2cfd292202d2bbf0425b7457c6f94ada5dc81f9a"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Split-project development cache and ten-case internal sentinel",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner compiler-split-development",
+      "result": "Passed",
+      "elapsedMilliseconds": 6240
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Changed-file verification owner routing",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is Windows-local development-cache evidence, not fresh compiler reconstruction or paired-host qualification.",
+    "The focused sentinel proves safe reuse and corruption rejection; it does not claim that cold analysis or emission is fast.",
+    "WVSY remains private resumable evidence and is excluded from the final analysis cache and distributable compiler products.",
+    "No source semantics, WVIR bytes, WVB bytes, runtime behavior, or native ABI contract changes because of this cache boundary."
+  ],
+  "related": [
+    "Documents/Decisions/0931-Preserve-Resumable-Compiler-Symbol-Checkpoints.md",
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs"
+  ]
+}

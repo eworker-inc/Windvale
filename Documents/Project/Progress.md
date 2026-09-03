@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 2 September 2026
+> Status: Current project snapshot as of 3 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-02
+> Last reviewed: 2026-09-03
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -49,10 +49,10 @@ materially misleading.
 
 | Boundary | Standing | What works | What is missing or next |
 | --- | :---: | --- | --- |
-| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The unsafe-memory path executes exact write-region validation and contained write-pointer derivation through candidate WVB 1.37 in the bounded scalar provider and native x86-64 lowering, without forming a host address. | Complete the authenticated System/FFI call path, one migrated real boundary, and paired-host qualification. |
-| Slice 8 source admission | Candidate | The target-aware admitter, independent authenticator, and private foreign-binding phase validate retained source, target, catalog, and admission evidence. The ordinary front door passes on Windows and Linux; the newer production-ingress and binding candidates pass locally on Windows. | Add the missing Linux results, lower authenticated foreign calls, contain them in verifier/runtime/native execution, and migrate one real system boundary. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain Proposed. |
+| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The unsafe-memory path executes exact write-region validation and contained write-pointer derivation through candidate WVB 1.37 in the bounded scalar provider and native x86-64 lowering, without forming a host address. A resolved three-argument Foreign invocation now reaches independently validated [WVIR 1.31 operation `190`](../Evidence/2026-09-03-WVIR-1-31-Typed-Foreign-Call.json). | Pair the typed operation with retained authenticated Foreign facts, encode and contain it through WVB/runtime/native execution, migrate one real boundary, and complete paired-host qualification. |
+| Slice 8 source admission | Candidate | The target-aware admitter, independent authenticator, private Foreign-binding phase, and retained WVFB carrier validate the source, target, catalog, admission evidence, and no-retain/no-unwind facts. The Analyzer now distinguishes a typed Foreign call from an ordinary call and validates its exact pointer/ABI signature. The ordinary front door passes on Windows and Linux; the newer production-ingress, binding, and WVIR candidates pass locally on Windows. | Correlate WVIR operation `190` with the exact retained WVFB record, add WVB and native ABI containment, migrate a real system boundary, and reproduce the newer path on Linux. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain Proposed. |
 | Unsafe Foundation slice | Candidate | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, exact write-region validation, and contained `Writeˉpointer::<Abi>` derivation execute through candidate WVB 1.37 in the scalar provider and native x86-64 lowering. The pointer remains a private logical descriptor with affine non-escape and no address or Foreign-call authority. | Add authenticated Foreign calls, migrate a real boundary, execute on Linux, and complete paired-host qualification. |
-| Compiler scale | Candidate | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct their current Windows and Linux candidates byte for byte on Windows. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. Ordinary native-lowerer edits now build the current 648-function compiler once and run a 13-case current-source development gate in about 32 seconds on a warm Windows cache. | Reproduce the current candidates on Linux, complete source-compiler convergence, keep improving cold construction latency, and run paired-host qualification. |
+| Compiler scale | Candidate | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct their current Windows and Linux candidates byte for byte on Windows. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. Ordinary native-lowerer edits now build the current 648-function compiler once and run a 13-case current-source development gate in about 32 seconds on a warm Windows cache. Split-project compilation also preserves an independently validated [source/symbol checkpoint](../Evidence/2026-09-03-Resumable-Compiler-Symbol-Checkpoint.json) when later analysis fails, so a safe retry need not repeat completed symbol work. | Reproduce the current candidates on Linux, complete source-compiler convergence, profile and improve remaining cold analysis/emission latency, and run paired-host qualification. |
 | Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. The current database remains a useful bounded byte-oriented consumer and recompiles through the current compiler. | Migrate and qualify the required real consumers against explicit 1.0 memory and collection APIs where their profile requires them. The current database uses immutable `bytes`; its passing storage suite does not prove `Memoryˉbudget`, `Vector`, `Byteˉbuffer`, `Bytesˉbuilder`, or unsafe-region adoption. Finish the required API set and assign explicit platform and capability scopes. |
 | WVDB 1.0 | Candidate | Upper-layer identity, tables, typed relationships, indexes, queries, transactions, storage profiles, types, documents/graphs, and backup direction are accepted. Existing storage and service slices remain useful implementation evidence. | Finish normative storage, durability, backup/restore, service, operations, and conformance contracts, then reconcile the implementation against them. |
 | Packages and services | Active | Immutable packages, release admission, installers, offline activation, rollback, command resolution, and rights-limited execution are established foundations. | Define and qualify the complete 1.0 service lifecycle, support, migration, update, compatibility, and recovery promises. |
@@ -90,10 +90,11 @@ claim.
 
 ## Immediate next results
 
-1. Lower one authenticated no-retain Foreign call without allowing pointer
-   escape or implicit authority.
-2. Migrate one real system
-   boundary, and reproduce the Slice 8 path on Linux.
+1. Pair the typed Foreign-call WVIR operation with its exact retained WVFB
+   record, then encode, verify, contain, and lower it without pointer escape or
+   implicit authority.
+2. Migrate one real system boundary and reproduce the newer Slice 8 path on
+   Linux.
 3. Continue the required Libraries and WVDB 1.0 specifications through useful
    consumers.
 4. Run one real bounded Windvale OS filesystem-provider request with complete

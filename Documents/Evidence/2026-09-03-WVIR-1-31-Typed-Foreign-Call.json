@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-wvir-1-31-typed-foreign-call",
+  "date": "2026-09-03",
+  "subject": "Typed Foreign-call construction and independent WVIR 1.31 validation",
+  "claim": "Implementation commit 2cfd292202d2bbf0425b7457c6f94ada5dc81f9a emits a resolved three-argument Foreign invocation as WVIR 1.31 operation 190 and independently validates its exact canonical pointer, ABI, scalar, result, target, and reserved-field contract on the Windows development host.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "2cfd292202d2bbf0425b7457c6f94ada5dc81f9a"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Authenticated Foreign binding and typed WVIR semantic owner",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-authenticated-foreign-binding -AllowLongRun",
+      "result": "Passed",
+      "elapsedMilliseconds": 470874
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Changed-file verification owner routing",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The 26-case owner ran on Windows only; Linux reproduction and paired-host qualification remain pending.",
+    "WVIR does not authenticate the native symbol, ABI spelling, no-retain promise, or no-unwind promise; production lowering must pair operation 190 with the exact retained WVFB record.",
+    "Operation 190 has no WVB encoding in this checkpoint and the source-WVB backend returns Unsupported_operation after standalone WVIR validation.",
+    "No Foreign function executes, no host address is formed, and no library or capability authority is granted.",
+    "The full 15-owner changed-file plan was not run because unrelated owners could not reveal a defect in this focused source-WVIR boundary."
+  ],
+  "related": [
+    "Documents/Decisions/0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md",
+    "Specifications/Compiler-Source-Wir.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs"
+  ]
+}
