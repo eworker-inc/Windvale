@@ -102,6 +102,7 @@ const WVB_BORROWED_BUDGET_FEATURE: u32 = 8388608u32;
 const WVB_UNSAFE_SCRATCH_LENGTH_FEATURE: u32 = 16777216u32;
 const WVB_UNSAFE_WRITE_REGION_FEATURE: u32 = 33554432u32;
 const WVB_UNSAFE_WRITE_POINTER_FEATURE: u32 = 67108864u32;
+const WVB_FOREIGN_CALL_FEATURE: u32 = 134217728u32;
 export record Compilerˉsourceˉwvbˉsummary {
 Status: Compilerˉsourceˉwvbˉstatus;
 Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
@@ -665,11 +666,12 @@ if Operation == 186u32 { return Compilerˉsourceˉwvbˉlowˉbyte(220u32); }
 if Operation == 187u32 { return Compilerˉsourceˉwvbˉlowˉbyte(221u32); }
 if Operation == 188u32 { return Compilerˉsourceˉwvbˉlowˉbyte(222u32); }
 if Operation == 189u32 { return Compilerˉsourceˉwvbˉlowˉbyte(223u32); }
+if Operation == 190u32 { return Compilerˉsourceˉwvbˉlowˉbyte(224u32); }
 return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
 if Operation >= 1u32 {
-if Operation <= 189u32 { return true; }
+if Operation <= 190u32 { return true; }
 }
 return false;
 }
@@ -735,6 +737,7 @@ if Operation == 186u32 { Opcodeˉbytes = 13u32; }
 if Operation == 187u32 { Opcodeˉbytes = 9u32; }
 if Operation == 188u32 { Opcodeˉbytes = 13u32; }
 if Operation == 189u32 { Opcodeˉbytes = 13u32; }
+if Operation == 190u32 { Opcodeˉbytes = 13u32; }
 var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
 if Shape != 0u32 { Result = Result + 5u32; }
 return Result;
@@ -4063,6 +4066,49 @@ Globalˉoperation
 );
 }
 }
+if Operation == 190u32 {
+let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+Symbols.Directory, 8u32
+);
+var Plannedˉforeignˉpointer: u32 = 4294967295u32;
+if Operands == 3u32 {
+let Foreignˉfirstˉtemporary: u32 =
+Bytesˉreadˉu32ˉlittle(
+Wir,
+Compilerˉsourceˉwvbˉoperandsˉoffset(Wir) +
+Bytesˉreadˉu32ˉlittle(
+Wir, Operationˉentry + 16u32
+) * 4u32
+);
+let Foreignˉpointerˉshape: u32 =
+Bytesˉreadˉu32ˉlittle(
+Wir,
+Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir) +
+(Bytesˉreadˉu32ˉlittle(
+Wir, Functionˉentry + 20u32
+) + Foreignˉfirstˉtemporary) * 4u32
+);
+Plannedˉforeignˉpointer =
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Foreignˉpointerˉshape, Symbols, Orders
+);
+}
+if Target >= Symbolˉentries || Operands != 3u32 ||
+Shape != 7u32 || Auxiliary != 0u32 ||
+Plannedˉforeignˉpointer < 65536u32 ||
+Plannedˉforeignˉpointer >= 131072u32 ||
+Bytesˉreadˉu32ˉlittle(
+Symbols.Directory, 16u32 + Target * 24u32 + 4u32
+) != 9u32 ||
+Bytesˉreadˉu32ˉlittle(
+Symbols.Directory, 16u32 + Target * 24u32 + 20u32
+) != 3u32 {
+return Compilerˉsourceˉwvbˉanalysisˉfailure(
+Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+Globalˉoperation
+);
+}
+}
 if Operation != 171u32 && Operation != 172u32 &&
 Operation != 173u32 && Operation != 180u32 &&
 Operation != 181u32 && Operation != 182u32 &&
@@ -5063,6 +5109,41 @@ Auxiliary, Symbols, Orders
 )
 );
 }
+if Operation == 190u32 {
+let Foreignˉpointerˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Operandsˉoffset + Firstˉoperand * 4u32
+);
+let Foreignˉpointerˉshape: u32 = Bytesˉreadˉu32ˉlittle(
+Wir,
+Temporariesˉoffset +
+(Firstˉtemporary + Foreignˉpointerˉtemporary) * 4u32
+);
+let Foreignˉtypeˉcatalog:
+Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+Compilerˉsourceˉwvbˉbindingsˉtypeˉcatalog(Bindings.Directory);
+let Foreignˉabiˉshape: u32 =
+Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+Foreignˉtypeˉcatalog, Foreignˉpointerˉshape, 1u32
+);
+Result = Bytesˉconcat(Result, Bytesˉfromˉu8(224u8));
+Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Foreignˉpointerˉshape, Symbols, Orders
+) - 65536u32
+)
+);
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Foreignˉabiˉshape, Symbols, Orders
+) - 131072u32
+)
+);
+}
 if Operation >= 11u32 {
 if Operation <= 16u32 {
 Result = Bytesˉconcat(
@@ -5914,6 +5995,9 @@ Features = Features | WVB_UNSAFE_WRITE_REGION_FEATURE;
 if Operationˉkind == 189u32 {
 Features = Features | WVB_UNSAFE_WRITE_POINTER_FEATURE;
 }
+if Operationˉkind == 190u32 {
+Features = Features | WVB_FOREIGN_CALL_FEATURE;
+}
 if Operationˉkind == 8u32 {
 let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
 Wir, Operationˉentry + 16u32
@@ -6662,6 +6746,9 @@ Wvbˉminor = 36u32;
 }
 if (Features & WVB_UNSAFE_WRITE_POINTER_FEATURE) != 0u32 {
 Wvbˉminor = 37u32;
+}
+if (Features & WVB_FOREIGN_CALL_FEATURE) != 0u32 {
+Wvbˉminor = 38u32;
 }
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));

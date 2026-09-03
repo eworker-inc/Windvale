@@ -1,6 +1,7 @@
 module Windvaleˉcompilerˉemissionˉdriver profile hosted;
 
 import Compilerˉsourceˉemission as Emission;
+import Compilerˉsourceˉsymbols as Symbols;
 import Compilerˉsourceˉwvb as Sourceˉwvb;
 
 capability console.write_line;
@@ -47,9 +48,215 @@ fn Success(Result: Emission.Compilerˉsourceˉemission) -> text {
     );
 }
 
+fn Argumentˉequals(Value: text, Expected: text) -> bool {
+    let Left: bytes = Textˉtoˉutf8(Value);
+    let Right: bytes = Textˉtoˉutf8(Expected);
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Pathsˉareˉdistinct(First: u32, Count: u32) -> bool {
+    var Left: u32 = First;
+    while Left < First + Count {
+        var Right: u32 = Left + 1u32;
+        while Right < First + Count {
+            if Argumentˉequals(
+                    process.argument(Left), process.argument(Right)
+                ) {
+                return false;
+            }
+            Right = Right + 1u32;
+        }
+        Left = Left + 1u32;
+    }
+    return true;
+}
+
+fn Symbolsˉhaveˉforeign(
+    Summary: Symbols.Compilerˉsourceˉsymbolˉsummary
+) -> bool {
+    if Summary.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return false;
+    }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Summary.Directory, 8u32);
+    var Entry: u32 = 0u32;
+    while Entry < Entries {
+        if Bytesˉreadˉu32ˉlittle(
+                Summary.Directory, 16u32 + Entry * 24u32 + 4u32
+            ) == 9u32 {
+            return true;
+        }
+        Entry = Entry + 1u32;
+    }
+    return false;
+}
+
+fn Foreignˉcarrierˉisˉexact(Carrier: bytes) -> bool {
+    let Length: u32 = Bytesˉlength(Carrier);
+    if Length < 136u32 || Length > 5176u32 ||
+        Bytesˉreadˉu8(Carrier, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Carrier, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Carrier, 2u32) != 70u8 ||
+        Bytesˉreadˉu8(Carrier, 3u32) != 66u8 ||
+        Bytesˉreadˉu16ˉlittle(Carrier, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Carrier, 6u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 8u32) != 56u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 12u32) != 80u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 20u32) != Length ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 24u32) != 4u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 28u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 32u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 36u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 40u32) != 64u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 44u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 48u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Carrier, 52u32) != 0u32 {
+        return false;
+    }
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Carrier, 16u32);
+    if Records == 0u32 || Records > 64u32 ||
+        Length != 56u32 + Records * 80u32 {
+        return false;
+    }
+    var Record: u32 = 0u32;
+    var Previousˉmodule: u32 = 0u32;
+    var Previousˉdirectory: u32 = 0u32;
+    while Record < Records {
+        let Offset: u32 = 56u32 + Record * 80u32;
+        let Module: u32 = Bytesˉreadˉu32ˉlittle(Carrier, Offset);
+        let Declaration: u32 = Bytesˉreadˉu32ˉlittle(
+            Carrier, Offset + 4u32
+        );
+        let Directory: u32 = Bytesˉreadˉu32ˉlittle(Carrier, Offset + 8u32);
+        if Module >= 64u32 || Declaration >= 4096u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 12u32) != Record ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 16u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 20u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 24u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 28u32) != 3u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 32u32) != 256u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 36u32) != 3u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 40u32) != 4u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 44u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 48u32) != 1u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 52u32) != 2u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 56u32) != 2u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 60u32) != 3u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 64u32) != 7u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 68u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 72u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Carrier, Offset + 76u32) != 0u32 ||
+            (Record > 0u32 &&
+                (Module <= Previousˉmodule || Directory <= Previousˉdirectory)) {
+            return false;
+        }
+        Previousˉmodule = Module;
+        Previousˉdirectory = Directory;
+        Record = Record + 1u32;
+    }
+    return true;
+}
+
+fn Foreignˉpairingˉisˉexact(
+    Carrier: bytes,
+    Summary: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Wir: bytes
+) -> bool {
+    if !Foreignˉcarrierˉisˉexact(Carrier) ||
+        Summary.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return false;
+    }
+    let Directory: bytes = Summary.Directory;
+    let Directoryˉlength: u32 = Bytesˉlength(Directory);
+    if Directoryˉlength < 16u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 24u32 {
+        return false;
+    }
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    if Symbolˉentries > (Directoryˉlength - 16u32) / 24u32 ||
+        Directoryˉlength != 16u32 + Symbolˉentries * 24u32 {
+        return false;
+    }
+    let Wirˉlength: u32 = Bytesˉlength(Wir);
+    if Wirˉlength < 56u32 || Bytesˉreadˉu8(Wir, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Wir, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Wir, 2u32) != 73u8 ||
+        Bytesˉreadˉu8(Wir, 3u32) != 82u8 ||
+        Bytesˉreadˉu16ˉlittle(Wir, 4u32) != 1u32 {
+        return false;
+    }
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Wir, 6u32);
+    var Headerˉbytes: u32 = 0u32;
+    if Minor == 31u32 { Headerˉbytes = 56u32; }
+    if Minor == 32u32 { Headerˉbytes = 64u32; }
+    if Headerˉbytes == 0u32 || Wirˉlength < Headerˉbytes { return false; }
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Wir, 8u32);
+    if Functions > (Wirˉlength - Headerˉbytes) / 48u32 { return false; }
+    let Blocksˉoffset: u32 = Headerˉbytes + Functions * 48u32;
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Wir, 16u32);
+    if Blocks > (Wirˉlength - Blocksˉoffset) / 28u32 { return false; }
+    let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Wir, 24u32);
+    if Operations > (Wirˉlength - Operationsˉoffset) / 28u32 {
+        return false;
+    }
+    let Records: u32 = Bytesˉreadˉu32ˉlittle(Carrier, 16u32);
+    var Foreignˉsymbols: u32 = 0u32;
+    var Symbol: u32 = 0u32;
+    while Symbol < Symbolˉentries {
+        let Symbolˉoffset: u32 = 16u32 + Symbol * 24u32;
+        if Bytesˉreadˉu32ˉlittle(
+                Directory, Symbolˉoffset + 4u32
+            ) == 9u32 {
+            if Foreignˉsymbols >= Records { return false; }
+            let Recordˉoffset: u32 = 56u32 + Foreignˉsymbols * 80u32;
+            if Bytesˉreadˉu32ˉlittle(Carrier, Recordˉoffset + 8u32) != Symbol ||
+                Bytesˉreadˉu32ˉlittle(Carrier, Recordˉoffset) !=
+                    Bytesˉreadˉu32ˉlittle(Directory, Symbolˉoffset) ||
+                Bytesˉreadˉu32ˉlittle(Directory, Symbolˉoffset + 20u32) != 3u32 {
+                return false;
+            }
+            Foreignˉsymbols = Foreignˉsymbols + 1u32;
+        }
+        Symbol = Symbol + 1u32;
+    }
+    if Foreignˉsymbols != Records { return false; }
+    var Calls: u32 = 0u32;
+    var Operation: u32 = 0u32;
+    while Operation < Operations {
+        let Offset: u32 = Operationsˉoffset + Operation * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Wir, Offset + 4u32) == 190u32 {
+            Calls = Calls + 1u32;
+            if Calls > 4096u32 { return false; }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Offset + 20u32);
+            var Record: u32 = 0u32;
+            while Record < Records && Bytesˉreadˉu32ˉlittle(
+                Carrier, 56u32 + Record * 80u32 + 8u32
+            ) != Target {
+                Record = Record + 1u32;
+            }
+            if Record >= Records { return false; }
+        }
+        Operation = Operation + 1u32;
+    }
+    return true;
+}
+
 export fn Main() -> i32 {
     let Arguments: u32 = process.argument_count();
-    if Arguments != 5u32 {
+    let Privateˉforeign: bool = Arguments == 7u32 && Argumentˉequals(
+        process.argument(0u32), "--internal-paired-foreign-source"
+    );
+    if Arguments != 5u32 && !Privateˉforeign {
         diagnostic.write_line(
             Textˉconcat(
                 "Usage: wvemit <input.wvss> <input.wvca> <input.wvlb> ",
@@ -58,13 +265,48 @@ export fn Main() -> i32 {
         );
         return 64;
     }
-    let Input: bytes = file.read_bytes(process.argument(0u32));
+    var Sourceˉargument: u32 = 0u32;
+    var Manifestˉargument: u32 = 1u32;
+    var Bindingsˉargument: u32 = 2u32;
+    var Wirˉargument: u32 = 3u32;
+    var Outputˉargument: u32 = 4u32;
+    if Privateˉforeign {
+        if !Pathsˉareˉdistinct(1u32, 6u32) {
+            diagnostic.write_line(
+                "source emission status=Invalidˉinvocation reason=paths-not-distinct"
+            );
+            return 64;
+        }
+        Sourceˉargument = 1u32;
+        Manifestˉargument = 2u32;
+        Bindingsˉargument = 3u32;
+        Wirˉargument = 4u32;
+        Outputˉargument = 6u32;
+    }
+    let Input: bytes = file.read_bytes(process.argument(Sourceˉargument));
+    let Wir: bytes = file.read_bytes(process.argument(Wirˉargument));
+    let Sourceˉsymbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if !Privateˉforeign && Symbolsˉhaveˉforeign(Sourceˉsymbols) {
+        diagnostic.write_line(
+            "source emission status=Foreignˉrequiresˉauthenticatedˉpairing"
+        );
+        return 1;
+    }
+    if Privateˉforeign {
+        if !Foreignˉpairingˉisˉexact(
+                file.read_bytes(process.argument(5u32)), Sourceˉsymbols, Wir
+            ) {
+            diagnostic.write_line("source emission status=Foreignˉpairingˉinvalid");
+            return 1;
+        }
+    }
     let Result: Emission.Compilerˉsourceˉemission =
         Emission.Compilerˉemitˉsourceˉanalysis(
             Input,
-            file.read_bytes(process.argument(1u32)),
-            file.read_bytes(process.argument(2u32)),
-            file.read_bytes(process.argument(3u32)),
+            file.read_bytes(process.argument(Manifestˉargument)),
+            file.read_bytes(process.argument(Bindingsˉargument)),
+            Wir,
             true
         );
     if Result.Status != Emission.Compilerˉsourceˉemissionˉstatus.Valid ||
@@ -73,7 +315,9 @@ export fn Main() -> i32 {
         diagnostic.write_line(Failure(Result));
         return 1;
     }
-    file.write_bytes(process.argument(4u32), Result.Compilation.Bytecode);
+    file.write_bytes(
+        process.argument(Outputˉargument), Result.Compilation.Bytecode
+    );
     console.write_line(Success(Result));
     return 0;
 }

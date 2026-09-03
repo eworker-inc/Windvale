@@ -211,6 +211,7 @@ try {
     const Wir = path.join(Temporary, 'Wir.wvir');
     const Product = path.join(Temporary, 'Product.wvb');
     const Reports = [];
+    let Foreignˉemission = null;
 
     if (Authenticated) {
         const Inputˉsourceˉset = path.join(Temporary, 'Input.wvss');
@@ -475,10 +476,15 @@ try {
                 WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
                 'foreign lowering carrier'
             );
-            throw new Splitˉcompilerˉfailure(
-                1,
-                Buffer.from('source emission status=Foreignˉwvbˉpending\n'),
-            );
+            Foreignˉemission = {
+                carrier: { path: Foreignˉcarrier, snapshot: Retainedˉcarrier },
+                catalog: { path: Catalog, snapshot: Retained.catalog },
+                evidence: { path: Evidence, snapshot: Retained.evidence },
+                lock: { path: Lock, snapshot: Retainedˉinputs.lock },
+                profile: { path: Profile, snapshot: Retainedˉinputs.profile },
+                sourceSet: { path: Sourceˉset, snapshot: Retained.sourceSet },
+                target: { path: Admittedˉtarget, snapshot: Retained.target },
+            };
         }
     } else {
         Reports.push(await Runˉrequired(
@@ -502,12 +508,51 @@ try {
     await Requireˉprivateˉphaseˉfile(
         Wir, 1, MAXIMUM_PHASE_VALUE_BYTES, Temporary, 'source WIR'
     );
+    const Emissionˉarguments = Foreignˉemission === null
+        ? [Sourceˉset, Manifest, Bindings, Wir, Product]
+        : [
+            '--internal-paired-foreign-source', Sourceˉset, Manifest,
+            Bindings, Wir, Foreignˉemission.carrier.path, Product,
+        ];
     Reports.push(await Runˉrequired(
-        Emitter, [Sourceˉset, Manifest, Bindings, Wir, Product], 'source-emission'
+        Emitter, Emissionˉarguments, 'source-emission'
     ));
     await Requireˉprivateˉphaseˉfile(
         Product, 1, MAXIMUM_WVB_BYTES, Temporary, 'split compiler product'
     );
+    if (Foreignˉemission !== null) {
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.evidence.path, Foreignˉemission.evidence.snapshot,
+            WVAE_BYTES, WVAE_BYTES, 'admission evidence'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.sourceSet.path,
+            Foreignˉemission.sourceSet.snapshot,
+            37, MAXIMUM_PHASE_VALUE_BYTES, 'admitted source set'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.target.path, Foreignˉemission.target.snapshot,
+            WVTD_MINIMUM_BYTES, WVTD_MAXIMUM_BYTES,
+            'admitted target descriptor'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.catalog.path, Foreignˉemission.catalog.snapshot,
+            WVFC_MINIMUM_BYTES, MAXIMUM_PHASE_VALUE_BYTES, 'foreign catalog'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.lock.path, Foreignˉemission.lock.snapshot,
+            1, MAXIMUM_LOCK_BYTES, 'source-input lock'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.profile.path, Foreignˉemission.profile.snapshot,
+            1, MAXIMUM_PROFILE_BYTES, 'source profile'
+        );
+        await Requireˉretainedˉsnapshot(
+            Foreignˉemission.carrier.path, Foreignˉemission.carrier.snapshot,
+            WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
+            'foreign lowering carrier'
+        );
+    }
 
     Publicationˉcandidate = path.join(
         Outputˉparent,

@@ -208,6 +208,16 @@ Source, Functionˉtoken.Nextˉoffset,
 Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
 );
 }
+if Functionˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Foreign {
+let Abi: Sourceˉlexer.Compilerˉsourceˉtoken =
+Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+Source, Functionˉtoken.Nextˉoffset,
+Functionˉtoken.Nextˉline, Functionˉtoken.Nextˉcolumn
+);
+Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
+Source, Abi.Nextˉoffset, Abi.Nextˉline, Abi.Nextˉcolumn
+);
+}
 if Functionˉtoken.Kind == Sourceˉlexer.Compilerˉtokenˉkind.Async {
 Functionˉtoken = Sourceˉlexer.Compilerˉlexˉnextˉafterˉscan(
 Source, Functionˉtoken.Nextˉoffset,
