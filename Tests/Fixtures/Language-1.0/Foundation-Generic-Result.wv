@@ -99,6 +99,20 @@ fn Observeˉoption(Value: Option.Option<u32>) -> i32 {
 }
 
 export fn Main() -> i32 {
+    let Presentˉvalue: Option.Option<u32> = Present();
+    let Absentˉvalue: Option.Option<u32> = Absent();
+    if !Option.Isˉpresent(borrow Presentˉvalue) { return 1; }
+    if Option.Isˉpresent(borrow Absentˉvalue) { return 2; }
+    let Validˉvalue: Result.Result<i32, u32> = Read(false);
+    let Failureˉvalue: Result.Result<i32, u32> = Read(true);
+    if !Result.Isˉvalid(borrow Validˉvalue) { return 3; }
+    if Result.Isˉfailure(borrow Validˉvalue) { return 4; }
+    if Result.Isˉvalid(borrow Failureˉvalue) { return 5; }
+    if !Result.Isˉfailure(borrow Failureˉvalue) { return 6; }
+    if Observeˉoption(Presentˉvalue) != 42 { return 7; }
+    if Observeˉoption(Absentˉvalue) != 0 { return 8; }
+    if Observeˉresult(Validˉvalue) != 42 { return 9; }
+    if Observeˉresult(Failureˉvalue) != 42 { return 10; }
     if Observeˉresult(Forward(false)) != 42 { return 1; }
     if Observeˉresult(Forward(true)) != 42 { return 2; }
     if Observeˉresult(Statementˉforward()) != 42 { return 3; }

@@ -32,7 +32,8 @@ with complete-suite reconciliation accepted by
 Localized-source reconciliation is accepted by
 [Decision 0766](../Documents/Decisions/0766-Complete-Language-1.0-Localized-Source-Reconciliation.md).
 It specifies the standard nominal values and protocols required for one coherent
-Language 1.0 surface. It is not the currently implemented Foundation library.
+Language 1.0 surface. It is not a claim that the complete Foundation library is
+implemented; individually named implementation checkpoints may cover a subset.
 
 The implemented Seed Foundation contracts remain separately owned by
 [Foundation bytes](Foundation-Bytes.md),
@@ -130,6 +131,11 @@ effect-free `fn(T) -> U`, evaluates it once only for `Present`, and preserves
 `Absent` without calling it. An effectful transform is written as an explicit
 `match`; edition 1 does not add effect-polymorphic convenience calls.
 
+The compiler observation checkpoint defines `Isˉpresent` as a canonical,
+compiler-supplied immutable observation lowered to the ordinary variant case
+test. The remaining `Borrow`, `Borrowˉmut`, `Take`, and `Map` declarations are
+still candidate library work and are not implied by that checkpoint.
+
 No operation traps merely because the option is absent. An explicit
 `Requireˉpresent` contract may trap only when its source precondition proves
 presence and names that precondition in diagnostics.
@@ -163,6 +169,11 @@ one exact effect-free `fn(T) -> U`; mapping the failure side accepts one exact
 effect-free `fn(E) -> F`. The selected side is evaluated once and the other
 owned payload passes through unchanged. Effectful transforms use explicit
 `match`; no operation is selected through overload or result inference.
+
+The compiler observation checkpoint defines `Isˉvalid` and `Isˉfailure` as
+canonical, compiler-supplied immutable observations lowered to ordinary variant
+case tests. The payload-borrow and mapping declarations remain candidate
+library work.
 
 `Result<unit, E>` is the standard recoverable no-data completion. A function that
 cannot fail returns `unit`, not `Result<unit, never>`.

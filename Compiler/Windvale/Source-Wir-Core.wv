@@ -268,6 +268,13 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH: u32 = 187u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_BORROW_WRITE_REGION: u32 = 188u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
 const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
+// Callable-only identities are replaced before typed-WIR publication.
+const COMPILER_SOURCE_INTRINSIC_FOUNDATION_OPTION_IS_PRESENT: u32 =
+    4026531841u32;
+const COMPILER_SOURCE_INTRINSIC_FOUNDATION_RESULT_IS_VALID: u32 =
+    4026531842u32;
+const COMPILER_SOURCE_INTRINSIC_FOUNDATION_RESULT_IS_FAILURE: u32 =
+    4026531843u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 16u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 12u32;
 const WIR_FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
@@ -1283,6 +1290,57 @@ export fn Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvector(
     return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉisˉkind(
         Catalog, Shape, 11u32
     );
+}
+
+export fn Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvalue(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32,
+    Family: u32
+) -> bool {
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
+        return false;
+    }
+    let Instance: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(
+            Shape
+        );
+    if Instance >= Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Catalog
+        ) {
+        return false;
+    }
+    let Declaration: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstanceˉdeclaration(
+            Catalog, Instance
+        );
+    let Nominal: Sourceˉsymbols.Compilerˉsourceˉsymbolˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdirectoryˉentry(
+            Symbols.Directory, Scan.Modules, Declaration
+        );
+    return Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉgenericˉfamily(
+        Input, Scan, Nominal
+    ) == Family;
+}
+
+fn Compilerˉsourceˉwirˉfoundationˉvalueˉfamily(Intrinsic: u32) -> u32 {
+    if Intrinsic == COMPILER_SOURCE_INTRINSIC_FOUNDATION_OPTION_IS_PRESENT {
+        return 1u32;
+    }
+    if Intrinsic == COMPILER_SOURCE_INTRINSIC_FOUNDATION_RESULT_IS_VALID ||
+        Intrinsic == COMPILER_SOURCE_INTRINSIC_FOUNDATION_RESULT_IS_FAILURE {
+        return 2u32;
+    }
+    return 0u32;
+}
+
+fn Compilerˉsourceˉwirˉfoundationˉvalueˉcase(Intrinsic: u32) -> u32 {
+    if Intrinsic == COMPILER_SOURCE_INTRINSIC_FOUNDATION_RESULT_IS_FAILURE {
+        return 1u32;
+    }
+    return 0u32;
 }
 
 export fn Compilerˉsourceˉwirˉfoundationˉcollectionˉelementˉshape(
@@ -2563,6 +2621,15 @@ export fn Compilerˉsourceˉwirˉcallableˉsignatureˉconcrete(
     Genericˉinstance: u32
 ) -> Compilerˉsourceˉwirˉsignature {
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic {
+        if Compilerˉsourceˉwirˉfoundationˉvalueˉfamily(
+                Callable.Directoryˉentry
+            ) != 0u32 {
+            return Compilerˉsourceˉwirˉsignature(
+                0u32, 4u32, Compilerˉsourceˉwirˉsentinel(), 0u32,
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE,
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE
+            );
+        }
         if Callable.Directoryˉentry ==
                 WIR_OPERATION_FOUNDATION_SEQUENCE_LENGTH {
             return Compilerˉsourceˉwirˉsignature(
@@ -11478,6 +11545,15 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT) {
         Foundationˉsequenceˉoperation = Callable.Directoryˉentry;
     }
+    var Foundationˉvalueˉintrinsic: u32 = 0u32;
+    if Callable.Kind ==
+            Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic &&
+        Compilerˉsourceˉwirˉfoundationˉvalueˉfamily(
+            Callable.Directoryˉentry
+        ) != 0u32 {
+        Foundationˉvalueˉintrinsic = Callable.Directoryˉentry;
+    }
+    var Foundationˉvalueˉshape: u32 = 0u32;
     var Foundationˉsequenceˉshape: u32 = 0u32;
     var Foundationˉsequenceˉelement: u32 = 0u32;
     var Foundationˉvectorˉoperation: u32 = 0u32;
@@ -11804,7 +11880,31 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Compilerˉsourceˉwirˉsentinel()
             );
         var Expected: u32 = Argumentˉsignature.Parameterˉshape;
-        if Foundationˉsequenceˉoperation != 0u32 && Item == 0u32 {
+        if Foundationˉvalueˉintrinsic != 0u32 && Item == 0u32 {
+            let Valueˉcatalog:
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+                Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Value.Genericˉevidence
+                );
+            if !Compilerˉsourceˉwirˉshapeˉisˉfoundationˉvalue(
+                    Input, Scan, Symbols, Valueˉcatalog,
+                    Value.Shape,
+                    Compilerˉsourceˉwirˉfoundationˉvalueˉfamily(
+                        Foundationˉvalueˉintrinsic
+                    )
+                ) {
+                return Compilerˉsourceˉwirˉfailureˉvalue(
+                    Compilerˉsourceˉwirˉvalueˉbuild(Value),
+                    Compilerˉsourceˉwirˉstatus.Invalidˉargument,
+                    Callable.Module,
+                    Callˉargument.Offset,
+                    Callˉargument.Line,
+                    Callˉargument.Column
+                );
+            }
+            Foundationˉvalueˉshape = Value.Shape;
+            Expected = Value.Shape;
+        } else if Foundationˉsequenceˉoperation != 0u32 && Item == 0u32 {
             let Sequenceˉcatalog:
                 Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
                 Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
@@ -12021,7 +12121,15 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
         ) + Genericˉinstance;
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Intrinsic {
-        if Foundationˉsequenceˉoperation != 0u32 {
+        if Foundationˉvalueˉintrinsic != 0u32 {
+            Operation = WIR_OPERATION_VARIANT_IS_CASE;
+            Target = Compilerˉsourceˉwirˉvariantˉtarget(
+                Foundationˉvalueˉshape
+            );
+            Auxiliary = Compilerˉsourceˉwirˉfoundationˉvalueˉcase(
+                Foundationˉvalueˉintrinsic
+            );
+        } else if Foundationˉsequenceˉoperation != 0u32 {
             Operation = Foundationˉsequenceˉoperation;
             Target = Foundationˉsequenceˉshape;
             if Operation == WIR_OPERATION_FOUNDATION_SEQUENCE_ELEMENT {
@@ -12031,7 +12139,7 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Operation = Callable.Directoryˉentry;
             Target = Compilerˉsourceˉwirˉsentinel();
         }
-        Auxiliary = 0u32;
+        if Foundationˉvalueˉintrinsic == 0u32 { Auxiliary = 0u32; }
     }
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Record {
         Operation = WIR_OPERATION_RECORD_CREATE;

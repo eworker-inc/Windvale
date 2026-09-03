@@ -127,15 +127,23 @@ payload validation instead of bypassing variant validation.
 A named signature type resolves by exact ordinal UTF-8 name against the global nominal namespace. The owner module must be the declaration module or transitively import it. Record fields may contain primitives, enums, or immutable records; another nominal kind returns `Invalidˉfieldˉtype`. Variant fields may contain implemented ordinary value shapes or their own admitted type parameter. Function parameters and results may also use an exact required root capability name. Its type binding retains that root capability's WVSD directory entry. Capability references are rejected as record fields, variant payloads, and collection elements; an optional-only metadata entry does not produce a required capability type. A nested record field preserves the referenced nominal identity and does not imply mutability, aliasing, or an ambient allocation capability.
 
 Language 1.0 recognizes two exact Foundation declaration identities. The edition-1
-module `Foundationˉoption` must export exactly `Option<T>` with ordered cases
-`Present(Value: T)` and `Absent`. The edition-1 module
-`Foundationˉresult` must export exactly `Result<T, E>` with ordered cases
-`Valid(Value: T)` and `Failure(Error: E)`. Uses supply exactly one or two
+module `Foundationˉoption` must source-declare exactly the exported `Option<T>`
+type with ordered cases `Present(Value: T)` and `Absent`. The edition-1 module
+`Foundationˉresult` must source-declare exactly the exported `Result<T, E>` type
+with ordered cases `Valid(Value: T)` and `Failure(Error: E)`. Uses supply exactly one or two
 arguments respectively and enter the ordinary bounded WVGT catalog. A bare or
 wrong-arity use is rejected. Variant construction requires explicit complete
 arguments, just like user-defined generic nominal construction. The exact
 Result identity additionally authorizes `try`; no Foundation-only concrete
 shape, catalog, or WVB encoding exists.
+
+The compiler-supplied `Option.Isˉpresent`, `Result.Isˉvalid`, and
+`Result.Isˉfailure` call spellings preserve those type-only source modules. A
+callable query must be qualified through a resolved import alias, name the exact
+member, and target the corresponding edition-1 canonical module. A same-shaped
+variant or same-spelled member in another module does not acquire the intrinsic.
+The symbol gate returns only the canonical owner; generic instance validation
+and immutable-borrow enforcement remain later typed-lowering responsibilities.
 
 The first Slice 4 function-lowering checkpoints additionally admit a bounded
 function-generic subset. A type parameter may be the complete parameter or

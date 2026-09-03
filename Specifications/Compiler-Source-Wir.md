@@ -482,6 +482,16 @@ layout and rejects a mismatched template, case, field, arity, packed identity,
 operand, or result. No unresolved generic parameter or runtime lookup enters
 published WIR or WVB.
 
+The compiler-supplied `Option.Isˉpresent`, `Result.Isˉvalid`, and
+`Result.Isˉfailure` calls accept exactly one immutable borrow of the matching
+canonical generic variant instance and return `bool`. Typed lowering
+reconstructs the instance's Foundation family from WVGT, rejects a lookalike or
+an Option/Result family mismatch, and emits the existing `Variantˉcase = 66`
+operation. `Isˉpresent` and `Isˉvalid` test declaration-order case `0`;
+`Isˉfailure` tests case `1`. The private concrete variant shape remains the
+operation target, the call does not consume its operand, and no new WVIR or WVB
+operation is introduced.
+
 A dotted local record path emits one `Recordˉfield = 18` operation per segment
 in source order. Each intermediate result must retain an exact record nominal
 shape; a scalar or enum before the final segment is an invalid field target.
