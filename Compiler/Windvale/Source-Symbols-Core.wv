@@ -2024,7 +2024,19 @@ export fn Compilerˉsourceˉsymbolsˉfoundationˉvalueˉmodule(
         Expectedˉname = "Isˉfailure";
         Expectedˉmodule = "Foundationˉresult";
     }
-    if Intrinsic < 1u32 || Intrinsic > 3u32 ||
+    if Intrinsic == 4u32 {
+        Expectedˉname = "Borrow";
+        Expectedˉmodule = "Foundationˉoption";
+    }
+    if Intrinsic == 5u32 {
+        Expectedˉname = "Borrowˉvalid";
+        Expectedˉmodule = "Foundationˉresult";
+    }
+    if Intrinsic == 6u32 {
+        Expectedˉname = "Borrowˉfailure";
+        Expectedˉmodule = "Foundationˉresult";
+    }
+    if Intrinsic < 1u32 || Intrinsic > 6u32 ||
         !Compilerˉsourceˉsymbolsˉnameˉequals(
             Source, Query.Nameˉoffset, Query.Nameˉlength,
             Expectedˉname

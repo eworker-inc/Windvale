@@ -133,8 +133,12 @@ effect-free `fn(T) -> U`, evaluates it once only for `Present`, and preserves
 
 The compiler observation checkpoint defines `Isˉpresent` as a canonical,
 compiler-supplied immutable observation lowered to the ordinary variant case
-test. The remaining `Borrow`, `Borrowˉmut`, `Take`, and `Map` declarations are
-still candidate library work and are not implied by that checkpoint.
+test. The payload-borrow checkpoint additionally admits canonical
+`Option.Borrow(borrow Owner)` for one direct named owner and exposes its payload
+only through an ephemeral `Option<borrow T>` match view. Typed validation keeps
+the owner frozen through function exit and rejects view or payload escape,
+duplication, consuming use, and serialization. This checkpoint ends at WVIR;
+WVB execution, `Borrowˉmut`, `Take`, and `Map` remain candidate library work.
 
 No operation traps merely because the option is absent. An explicit
 `Requireˉpresent` contract may trap only when its source precondition proves
@@ -172,8 +176,13 @@ owned payload passes through unchanged. Effectful transforms use explicit
 
 The compiler observation checkpoint defines `Isˉvalid` and `Isˉfailure` as
 canonical, compiler-supplied immutable observations lowered to ordinary variant
-case tests. The payload-borrow and mapping declarations remain candidate
-library work.
+case tests. The payload-borrow checkpoint additionally admits canonical
+`Result.Borrowˉvalid(borrow Owner)` and
+`Result.Borrowˉfailure(borrow Owner)`. Each produces an ephemeral
+`Option<borrow T>` or `Option<borrow E>` match view under the same direct-owner,
+owner-freezing, non-escape, and no-serialization rules as `Option.Borrow`.
+Executable WVB lowering and the mapping declarations remain candidate library
+work.
 
 `Result<unit, E>` is the standard recoverable no-data completion. A function that
 cannot fail returns `unit`, not `Result<unit, never>`.

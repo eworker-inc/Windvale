@@ -52,9 +52,15 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.32`
+The catalog selects the even WVIR minor in the current `1.9` through `1.34`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
+
+Foundation payload borrowing additionally reserves ephemeral shapes
+`0x80000200..0x800002ff`. Each shape maps by its low eight bits to one exact
+canonical `Option<T>` WVGT instance. It represents `Option<borrow T>` only
+inside typed lowering and validation: it is not a source-nameable nominal, an
+ABI identity, or a serializable runtime value.
 
 WVFT callable shapes occupy the adjacent compiler-private range
 `0x80000100..0x800001ff`. WVIR never serializes the complete WVFT or WVCF
@@ -63,7 +69,7 @@ reduced `WVIC 1.0` catalog derived from and checked against those directories.
 Each retained instance contains only the portable profile, result shape, and
 ordered by-value parameter shapes admitted by this executable checkpoint.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. WVIR 1.23 is the non-specialized Foundation unsafe-scratch construction directory, and WVIR 1.24 combines operation `186` with the specialization envelope. WVIR 1.25 is the non-specialized immutable scratch-observation directory, and WVIR 1.26 combines operation `187` with the specialization envelope. WVIR 1.27 is the non-specialized mutable write-region-borrowing directory, and WVIR 1.28 combines operation `188` with the specialization envelope. WVIR 1.29 is the non-specialized contained write-pointer directory, and WVIR 1.30 combines operation `189` with the specialization envelope. WVIR 1.31 is the non-specialized typed-Foreign-call directory, and WVIR 1.32 combines operation `190` with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. WVIR 1.23 is the non-specialized Foundation unsafe-scratch construction directory, and WVIR 1.24 combines operation `186` with the specialization envelope. WVIR 1.25 is the non-specialized immutable scratch-observation directory, and WVIR 1.26 combines operation `187` with the specialization envelope. WVIR 1.27 is the non-specialized mutable write-region-borrowing directory, and WVIR 1.28 combines operation `188` with the specialization envelope. WVIR 1.29 is the non-specialized contained write-pointer directory, and WVIR 1.30 combines operation `189` with the specialization envelope. WVIR 1.31 is the non-specialized typed-Foreign-call directory, and WVIR 1.32 combines operation `190` with the specialization envelope. WVIR 1.33 is the non-specialized Foundation payload-borrow directory, and WVIR 1.34 combines operation `191` with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -73,7 +79,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `32` selected by the features below |
+| 6 | 2 | Minor version `9` through `34` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -85,9 +91,9 @@ All integers are unsigned little-endian and the directory contains no padding.
 | 40 | 4 | Operand count |
 | 44 | 4 | Operand-entry size `4` |
 
-WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, WVIR 1.29, and WVIR 1.31 append function-type-catalog byte length and
+WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, WVIR 1.29, WVIR 1.31, and WVIR 1.33 append function-type-catalog byte length and
 catalog-layout version `1` at offsets 48 and 52, so function entries begin at
-offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, WVIR 1.30, and WVIR 1.32
+offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, WVIR 1.30, WVIR 1.32, and WVIR 1.34
 first retain specialization count/version at offsets 48 and 52, then append
 function-type-catalog byte length/version at offsets 56 and 60, so function
 entries begin at offset 64. Sections follow in their exact order, and the WVIC
@@ -119,7 +125,9 @@ operation with specialization publishes WVIR 1.28. Operation `189` without
 specialization publishes WVIR 1.29; the same operation with specialization
 publishes WVIR 1.30. Operation `190` without specialization publishes WVIR
 1.31; the same operation with specialization publishes WVIR 1.32. The
-Foreign-call pair may also carry earlier features. The unsafe-memory pairs may also carry
+operation `191` without specialization publishes WVIR 1.33; the same operation
+with specialization publishes WVIR 1.34. The payload-borrow pair may also carry
+earlier features. The Foreign-call pair may also carry earlier features. The unsafe-memory pairs may also carry
 structured-task operations and retain the same function-type-catalog header,
 including a zero-length catalog when no callable instance is present.
 The earlier even versions 1.10, 1.12, 1.14, and 1.16 append the
@@ -142,7 +150,8 @@ also contain operation `186`, and must not contain operation `188` or `189`. A
 `186` and `187`, and must not contain operation `189`. A 1.29/1.30 directory
 must contain operation `189` and may also contain operations `186` through
 `188`. A 1.31/1.32 directory must contain operation `190` and may also contain
-earlier operations.
+earlier operations. A 1.33/1.34 directory must contain operation `191` and may
+also contain earlier operations; a lower minor must reject operation `191`.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -187,6 +196,7 @@ scope-exit family. Value `186` is
 `Foundationˉunsafeˉscratchˉlength`; both are defined below. Values `188` and
 `189` are mutable write-region borrowing and contained write-pointer
 derivation. Value `190` is the typed Foreign call defined below.
+Value `191` is the Foundation payload-borrow operation defined below.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -313,16 +323,51 @@ and matching ABI enum; it is not an authentication certificate. Complete WVB
 verification, provider execution, and native ABI invocation remain later
 checkpoints.
 
+### Foundation payload borrowing
+
+Operation `191` is selected only by `Option.Borrow`, `Result.Borrowˉvalid`, or
+`Result.Borrowˉfailure` resolved through the exact edition-1 canonical
+`Foundationˉoption` or `Foundationˉresult` module. The call supplies exactly
+one explicitly immutable-borrowed direct name. A temporary expression, mutable
+borrow, by-value argument, same-shaped lookalike, or same-spelled foreign member
+does not acquire this operation.
+
+The operation has zero operands. `Target` is the source Option or Result
+parameter/local slot. `Auxiliary` is `1` for the Option payload, `2` for the
+Result valid payload, and `3` for the Result failure payload. The result is the
+ephemeral borrowed-Option shape paired with the exact canonical
+`Option<Payload>` WVGT instance. Independent validation reconstructs both
+canonical generic families and requires the selected Option payload argument
+to equal the source Option payload or the selected Result type argument.
+
+The ephemeral result may be consumed only by exhaustive Option matching. A
+projected payload is a non-owning alias: it may be bound once by that pattern,
+projected further, variant-tested, or passed to an exact immutable-borrow
+parameter.
+It may not be returned, copied into another local, consumed by value, captured,
+placed in an aggregate, sent to a task, or used by an indirect call. The source
+owner remains frozen from operation `191` through function exit; assignment,
+release, mutable observation, or consuming use after the borrow rejects. The
+proof is bounded to at most 64 blocks, 64 slots, 4,096 operations, and 4,096
+temporaries for any function containing this operation. Borrowed projections
+are explicitly excluded from the owned-vector transfer state, so observation
+does not manufacture ownership or a second release obligation.
+
+WVIR 1.33/1.34 are compiler checkpoints only. Source WVB rejects operation
+`191` and its ephemeral shapes until a separately specified verified runtime
+representation and non-escape lowering exist.
+
 ## Independent validation
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.9 through 1.32 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.9 through 1.34 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;
 - prior-temporary use, local slots, inferred-local establishment by a non-void first store, consistent later local loads/stores, data and nominal identities, field/member/case indices, variant field counts and exact field shapes, collection descriptors, builder transitions, call targets, arity, dynamic parameter/result shapes, ordinary unit values, and return-only never shapes;
-- value-phi placement as the first operation of its join block, two distinct valid predecessor blocks, two exact same-shape operands owned by those predecessors, a result of that same non-void/non-never shape, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join; and
+- value-phi placement as the first operation of its join block, two distinct valid predecessor blocks, two exact same-shape operands owned by those predecessors, a result of that same non-void/non-never shape, an unconditional jump from both predecessors to the join, and no branch or third predecessor targeting that join;
+- canonical Foundation payload-borrow identities, exact selected payload relationships, bounded owner freezing, borrowed-view match-only use, non-owning projection propagation, and rejection of escape, duplication, mutation, or forged borrowed shapes; and
 - rejection of trailing bytes and corrupted function, block, operation, temporary, or operand entries.
 
 Construction uses function-private payloads. At most 16 consecutive completed

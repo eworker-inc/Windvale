@@ -137,13 +137,15 @@ arguments, just like user-defined generic nominal construction. The exact
 Result identity additionally authorizes `try`; no Foundation-only concrete
 shape, catalog, or WVB encoding exists.
 
-The compiler-supplied `Option.Isˉpresent`, `Result.Isˉvalid`, and
-`Result.Isˉfailure` call spellings preserve those type-only source modules. A
-callable query must be qualified through a resolved import alias, name the exact
-member, and target the corresponding edition-1 canonical module. A same-shaped
-variant or same-spelled member in another module does not acquire the intrinsic.
-The symbol gate returns only the canonical owner; generic instance validation
-and immutable-borrow enforcement remain later typed-lowering responsibilities.
+The compiler-supplied `Option.Isˉpresent`, `Option.Borrow`,
+`Result.Isˉvalid`, `Result.Isˉfailure`, `Result.Borrowˉvalid`, and
+`Result.Borrowˉfailure` call spellings preserve those type-only source modules.
+A callable query must be qualified through a resolved import alias, name the
+exact member, and target the corresponding edition-1 canonical module. A
+same-shaped variant or same-spelled member in another module does not acquire
+the intrinsic. The symbol gate returns only the canonical owner; generic
+instance validation, direct-owner enforcement, and immutable-borrow lifetime
+proof remain later typed-lowering responsibilities.
 
 The first Slice 4 function-lowering checkpoints additionally admit a bounded
 function-generic subset. A type parameter may be the complete parameter or

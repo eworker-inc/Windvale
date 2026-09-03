@@ -157,6 +157,105 @@ fn Foundationˉvalueˉborrowˉrejection() -> bool {
         Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉborrow;
 }
 
+fn Foundationˉvalueˉpayloadˉborrows() -> i32 {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉborrowˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; import Foundationˉresult as Result; record Payload { Code: u32; } fn Readˉpayload(Value: borrow Payload) -> u32 { return Value.Code; } fn Readˉu32(Value: borrow u32) -> u32 { return Value; } export fn Main() -> i32 { let Maybe: Option.Option<Payload> = Option.Option.Present<Payload> { Value: Payload { Code: 30u32 } }; let Valid: Result.Result<Payload, u32> = Result.Result.Valid<Payload, u32> { Value: Payload { Code: 7u32 } }; let Failure: Result.Result<Payload, u32> = Result.Result.Failure<Payload, u32> { Error: 5u32 }; var Total: u32 = 0u32; match Option.Borrow(borrow Maybe) { case Option.Option.Present { Value: Item } { Total = Total + Readˉpayload(borrow Item); } case Option.Option.Absent { } } match Result.Borrowˉvalid(borrow Valid) { case Option.Option.Present { Value: Item } { Total = Total + Readˉpayload(borrow Item); } case Option.Option.Absent { } } match Result.Borrowˉfailure(borrow Failure) { case Option.Option.Present { Value: Error } { Total = Total + Readˉu32(borrow Error); } case Option.Option.Absent { } } if Total != 42u32 { return 1; } return 42; }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉthree(Root, Optionˉsource(), Resultˉsource())
+        );
+    if Summary.Status != Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid {
+        return 10;
+    }
+    if Bytesˉreadˉu16ˉlittle(Summary.Directory, 6u32) != 33u32 ||
+        Bytesˉreadˉu32ˉlittle(Summary.Directory, 48u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Summary.Directory, 52u32) != 1u32 {
+        return 11;
+    }
+    let Blocksˉoffset: u32 = 56u32 + Summary.Functions * 48u32;
+    let Operationsˉoffset: u32 = Blocksˉoffset + Summary.Blocks * 28u32;
+    var Borrowˉkinds: u32 = 1u32;
+    var Operation: u32 = 0u32;
+    while Operation < Summary.Operations {
+        let Entry: u32 = Operationsˉoffset + Operation * 28u32;
+        if Bytesˉreadˉu16ˉlittle(Summary.Directory, Entry + 4u32) == 191u32 {
+            if Bytesˉreadˉu16ˉlittle(Summary.Directory, Entry + 6u32) != 0u32 {
+                return 12;
+            }
+            let Shape: u32 = Bytesˉreadˉu32ˉlittle(
+                Summary.Directory, Entry + 8u32
+            );
+            if Shape < 2147484160u32 || Shape >= 2147484416u32 {
+                return 13;
+            }
+            let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+                Summary.Directory, Entry + 24u32
+            );
+            if Kind < 1u32 || Kind > 3u32 {
+                return 14;
+            }
+            let Marker: u32 = 1u32 + Kind * 8u32;
+            if Borrowˉkinds / Marker * Marker == Borrowˉkinds { return 14; }
+            Borrowˉkinds = Borrowˉkinds * Marker;
+        }
+        Operation = Operation + 1u32;
+    }
+    if Borrowˉkinds != 3825u32 { return 15; }
+    return 42;
+}
+
+fn Foundationˉvalueˉpayloadˉborrowˉlookalikeˉrejection() -> bool {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉlookalikeˉtest; profile core; platform linux, windows, windvale; authority application; import Lookalikeˉoption as Option; export fn Main() -> i32 { let Value: Option.Option<u32> = Option.Option.Absent<u32> {}; match Option.Borrow(borrow Value) { case Option.Option.Present { Value: Item } { return 1; } case Option.Option.Absent { return 42; } } }";
+    let Lookalike: text = "#!wv/1 en@1\nmodule Lookalikeˉoption; profile core; platform linux, windows, windvale; authority library; export variant Option<T> { Present(Value: T); Absent; }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉtwo(Root, Lookalike)
+        );
+    return Summary.Status ==
+            Sourceˉwir.Compilerˉsourceˉwirˉstatus.Sourceˉbindings &&
+        Summary.Bindingˉstatus ==
+            Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Unknownˉcall;
+}
+
+fn Foundationˉvalueˉpayloadˉborrowˉmodeˉrejection() -> bool {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉmodeˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; export fn Main() -> i32 { let Value: Option.Option<u32> = Option.Option.Absent<u32> {}; match Option.Borrow(Value) { case Option.Option.Present { Value: Item } { return 1; } case Option.Option.Absent { return 42; } } }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉtwo(Root, Optionˉsource())
+        );
+    return Summary.Status ==
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉborrow;
+}
+
+fn Foundationˉvalueˉborrowˉviewˉstorageˉrejection() -> bool {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉborrowˉviewˉstorageˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; export fn Main() -> i32 { let Value: Option.Option<u32> = Option.Option.Absent<u32> {}; let Borrowed = Option.Borrow(borrow Value); match Borrowed { case Option.Option.Present { Value: Item } { return 1; } case Option.Option.Absent { return 42; } } }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉtwo(Root, Optionˉsource())
+        );
+    return Summary.Status ==
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+}
+
+fn Foundationˉvalueˉpayloadˉescapeˉrejection() -> bool {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉescapeˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; record Payload { Code: u32; } fn Escape(Value: borrow Option.Option<Payload>) -> Payload { return match Option.Borrow(borrow Value) { case Option.Option.Present { Value: Item } { Item } case Option.Option.Absent { Payload { Code: 0u32 } } }; } export fn Main() -> i32 { let Value: Option.Option<Payload> = Option.Option.Absent<Payload> {}; let Escaped: Payload = Escape(borrow Value); if Escaped.Code != 0u32 { return 1; } return 42; }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉtwo(Root, Optionˉsource())
+        );
+    return Summary.Status ==
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+}
+
+fn Foundationˉvalueˉpayloadˉownerˉmutationˉrejection() -> bool {
+    let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉmutationˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; export fn Main() -> i32 { var Value: Option.Option<u32> = Option.Option.Present<u32> { Value: 42u32 }; match Option.Borrow(borrow Value) { case Option.Option.Present { Value: _ } { } case Option.Option.Absent { return 2; } } Value = Option.Option.Absent<u32> {}; return 42; }";
+    let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
+        Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
+            Sourceˉsetˉtwo(Root, Optionˉsource())
+        );
+    return Summary.Status ==
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+}
+
 export fn Main() -> i32 {
     let Input: bytes = Sourceˉset(
         "module Genericˉidentity profile portable; fn Identity<Type>(Value: Type) -> Type { return Value; } export fn Main() -> i32 { let Initial: i32 = 42; let Inferred: i32 = Identity(Initial); return Identity::<i32>(Inferred); }"
@@ -178,5 +277,13 @@ export fn Main() -> i32 {
     if !Foundationˉvalueˉlookalikeˉrejection() { return 5; }
     if !Foundationˉvalueˉfamilyˉrejection() { return 6; }
     if !Foundationˉvalueˉborrowˉrejection() { return 7; }
+    if Foundationˉvalueˉpayloadˉborrows() != 42 { return 8; }
+    if !Foundationˉvalueˉpayloadˉborrowˉlookalikeˉrejection() {
+        return 9;
+    }
+    if !Foundationˉvalueˉpayloadˉborrowˉmodeˉrejection() { return 10; }
+    if !Foundationˉvalueˉborrowˉviewˉstorageˉrejection() { return 11; }
+    if !Foundationˉvalueˉpayloadˉescapeˉrejection() { return 12; }
+    if !Foundationˉvalueˉpayloadˉownerˉmutationˉrejection() { return 13; }
     return 42;
 }

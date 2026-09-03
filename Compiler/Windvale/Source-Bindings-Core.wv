@@ -84,6 +84,9 @@ const COMPILER_SOURCE_INTRINSIC_U64_FROM_U32: u32 = 128u32;
 const COMPILER_SOURCE_INTRINSIC_OPTION_IS_PRESENT: u32 = 4026531841u32;
 const COMPILER_SOURCE_INTRINSIC_RESULT_IS_VALID: u32 = 4026531842u32;
 const COMPILER_SOURCE_INTRINSIC_RESULT_IS_FAILURE: u32 = 4026531843u32;
+const COMPILER_SOURCE_INTRINSIC_OPTION_BORROW: u32 = 4026531844u32;
+const COMPILER_SOURCE_INTRINSIC_RESULT_BORROW_VALID: u32 = 4026531845u32;
+const COMPILER_SOURCE_INTRINSIC_RESULT_BORROW_FAILURE: u32 = 4026531846u32;
 
 export record Compilerˉsourceˉbindingˉmatch {
     Found: bool;
@@ -1533,6 +1536,7 @@ fn Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(
     let First: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
         Source, Query.Nameˉoffset
     ));
+    if Query.Nameˉlength == 6u32 { return First == 66u32; }
     if Query.Nameˉlength == 5u32 {
         return First == 65u32 || First == 83u32;
     }
@@ -1543,10 +1547,13 @@ fn Compilerˉsourceˉbindingsˉnameˉisˉspecialˉintrinsic(
     if Query.Nameˉlength == 12u32 {
         return First == 83u32 || First == 86u32;
     }
+    if Query.Nameˉlength == 13u32 { return First == 66u32; }
     if Query.Nameˉlength == 14u32 {
         return First == 83u32 || First == 86u32;
     }
-    if Query.Nameˉlength == 15u32 { return First == 82u32; }
+    if Query.Nameˉlength == 15u32 {
+        return First == 66u32 || First == 82u32;
+    }
     if Query.Nameˉlength == 16u32 { return First == 83u32; }
     if Query.Nameˉlength == 17u32 { return First == 86u32; }
     if Query.Nameˉlength == 18u32 { return First == 79u32; }
@@ -1760,6 +1767,45 @@ export fn Compilerˉsourceˉbindingsˉfindˉcallable(
             true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
             Resultˉfailureˉmodule.Index, 1u32,
             COMPILER_SOURCE_INTRINSIC_RESULT_IS_FAILURE
+        );
+    }
+    let Optionˉborrowˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉvalueˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 4u32
+        );
+    if Optionˉborrowˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Optionˉborrowˉmodule.Index, 1u32,
+            COMPILER_SOURCE_INTRINSIC_OPTION_BORROW
+        );
+    }
+    let Resultˉborrowˉvalidˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉvalueˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 5u32
+        );
+    if Resultˉborrowˉvalidˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Resultˉborrowˉvalidˉmodule.Index, 1u32,
+            COMPILER_SOURCE_INTRINSIC_RESULT_BORROW_VALID
+        );
+    }
+    let Resultˉborrowˉfailureˉmodule:
+        Sourceˉgraph.Compilerˉsourceˉgraphˉmatch =
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉfoundationˉvalueˉmodule(
+            Input, Scan, Symbols.Lookup, Owner,
+            Source, Offset, Length, 6u32
+        );
+    if Resultˉborrowˉfailureˉmodule.Found {
+        return Compilerˉsourceˉbindingˉmatch(
+            true, true, Compilerˉsourceˉcallableˉkind.Intrinsic,
+            Resultˉborrowˉfailureˉmodule.Index, 1u32,
+            COMPILER_SOURCE_INTRINSIC_RESULT_BORROW_FAILURE
         );
     }
     let Taskˉconstructˉmodule:
