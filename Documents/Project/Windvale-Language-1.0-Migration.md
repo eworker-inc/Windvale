@@ -1022,6 +1022,27 @@ identical. Exact evidence is recorded in
 Complete WVB 1.38 verification, provider/native execution, a migrated real
 boundary, Linux reproduction, and paired-host qualification remain pending.
 
+[Decision 0935](../Decisions/0935-Verify-Contained-WVB-1.38-Foreign-Calls.md)
+now admits the exact candidate through the complete compiler-aligned metadata,
+structural, semantic, typed-stack, control-flow, and affine-ownership verifier.
+The verifier requires System metadata, registered binding identity `1`, exact
+pointer and ABI types, one through 4,096 `E0` instructions, at most 256 distinct
+pointer/ABI relations, and consistency with inherited `DF` relations. It
+consumes the pointer only through the canonical pointer/capacity/generation
+load sequence and prevents reuse, overwrite, return, call escape, or
+control-flow ownership disagreement.
+
+The focused production-ingress owner passes 21 cases in 162.788 seconds on the
+local Windows host. The source-built verifier is 502,386 bytes at SHA-256
+`742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4`
+and packages successfully after the System-operation dispatcher was extracted
+to preserve the native lowerer's fewer-than-2,048-local function bound. The
+canonical WVB 1.38 publication passes, while seven structural and three
+typed/affine operand mutations fail. Every execution consumer remains closed;
+provider/native execution, a migrated real boundary, Linux reproduction, and
+paired-host qualification remain pending. Exact evidence is recorded in
+[`2026-09-03-Compiler-Aligned-WVB-1-38-Foreign-Call-Containment.json`](../Evidence/2026-09-03-Compiler-Aligned-WVB-1-38-Foreign-Call-Containment.json).
+
 ## Removal checkpoint
 
 Seed removal occurs only when:

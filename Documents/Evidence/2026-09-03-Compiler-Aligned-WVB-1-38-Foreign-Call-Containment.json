@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-compiler-aligned-wvb-1-38-foreign-call-containment",
+  "date": "2026-09-03",
+  "subject": "Compiler-aligned WVB 1.38 registered Foreign-call containment",
+  "claim": "Implementation commit 1e12b2f24f42a121a0d10c6e908592d15bbd4b9a makes the Windows source-built compiler-aligned verifier accept the exact registered WVB 1.38 Foreign call, enforce typed and affine pointer containment, reject ten focused mutations, and keep every execution consumer closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "1e12b2f24f42a121a0d10c6e908592d15bbd4b9a"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Authenticated WVB 1.38 publication, complete compiler verification, mutation containment, deterministic publication, and closed execution boundary",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-production-admission-ingress -AllowLongRun",
+      "result": "Passed",
+      "cases": 21,
+      "elapsedMilliseconds": 162788,
+      "outputs": [
+        {
+          "path": "temporary/wvverify-A.wvb",
+          "size": 502386,
+          "sha256": "742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4"
+        },
+        {
+          "path": "temporary/wvverify.exe",
+          "size": 4063232,
+          "sha256": "8076bc5c0a289e87bf883cf36b25c2481a40cc17a58c07ec32a3ee5bac6fe86d"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The focused oracle covered 21 production-ingress cases, including canonical complete verification, seven structural WVB mutations, and three typed or affine operand substitutions; it was not the complete changed-file development plan.",
+    "The verifier proves exact operand types and affine pointer availability. The provider must still compare the expected generation value with live state at runtime.",
+    "The published front door, scalar provider, native lowerer, launchers, browser, WebAssembly, package, and operating-system consumers still reject WVB 1.38.",
+    "No native address or symbol was resolved, no Foreign function executed, and no capability or library authority was granted.",
+    "The run is local Windows development evidence and does not claim Linux reproduction, paired-host conformance, qualification, release, or independent reproduction.",
+    "The broader changed-file plan selected unrelated inherited runtime and library owners because shared verifier files are conservatively routed; those deliberately closed consumers were not rerun for this verification-only checkpoint."
+  ],
+  "related": [
+    "Documents/Decisions/0935-Verify-Contained-WVB-1.38-Foreign-Calls.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+    "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+    "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+  ]
+}

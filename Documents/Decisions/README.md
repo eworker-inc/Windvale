@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 341 |
+| Accepted | 342 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0935: verify contained WVB 1.38 Foreign calls](0935-Verify-Contained-WVB-1.38-Foreign-Calls.md) | Accepted |
 | [Decision 0934: represent paired Foreign calls in candidate WVB 1.38](0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md) | Accepted |
 | [Decision 0933: pair authenticated Foreign calls before WVB emission](0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md) | Accepted |
 | [Decision 0932: represent typed Foreign calls in WVIR 1.31](0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0913: lower compiler-verified WVB 1.36 write regions to native x64](0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) | Accepted |
 | [Decision 0912: execute WVB 1.36 write regions in a bounded scalar provider](0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0911: verify WVB 1.36 write-region lifetime containment](0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md) | Accepted |
-| [Decision 0910: represent mutable write-region borrowing in candidate WVB 1.36](0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md) | Accepted |
 
 ## Superseded or historical records
 

@@ -13,9 +13,9 @@ recovery, paired runner reconstruction, candidate promotion, bounded
 parallel-capable Windows/Linux execution, and exact paired-host Qualification.
 Slice 8 System and FFI work now has exact target enforcement, unsafe-memory
 execution through contained write pointers, authenticated Foreign admission,
-typed WVIR, retained pairing, and deterministic candidate WVB 1.38 publication.
-Complete Foreign-call verification, provider/native execution, one migrated
-real boundary, and paired-host qualification remain. The
+typed WVIR, retained pairing, deterministic candidate WVB 1.38 publication,
+and complete compiler-aligned Foreign-call containment. Provider/native
+execution, one migrated real boundary, and paired-host qualification remain. The
 existing compiler admits an edition-1 source descriptor only through an
 explicitly supplied, hash-pinned source-input lock and composite source
 profile. It
@@ -5322,3 +5322,43 @@ runtime/provider execution, native symbol resolution and ABI invocation, a
 migrated real boundary, Linux reproduction, and final Slice 8 qualification
 remain pending. The machine-readable evidence is
 [`2026-09-03-Paired-Foreign-Wvb-1-38.json`](../Evidence/2026-09-03-Paired-Foreign-Wvb-1-38.json).
+
+## Slice 8 WVB 1.38 compiler-aligned Foreign-call containment checkpoint
+
+[Decision 0935](../Decisions/0935-Verify-Contained-WVB-1.38-Foreign-Calls.md)
+admits candidate opcode `E0` through the complete compiler-aligned metadata,
+structural, semantic, typed-stack, control-flow, and ownership verifier. WVB
+1.38 inherits the WVB 1.37 System contract while retaining its declared minor
+for the `E0`-only gate. Each call uses registered binding identity `1`, an exact
+canonical pointer record, a kind-`2` or kind-`7` ABI enum, and a bounded
+pointer/ABI relation consistent with any inherited `DF` relation.
+
+Typed-stack verification consumes affine internal pointer kind `38`, `u64`
+capacity, and `u64` expected generation and produces `i64`. A pointer local can
+be loaded only as the first of exactly three consecutive compiler-shaped loads
+before a matching `E0`; the ownership pass then consumes its availability and
+rejects reuse, overwrite, escape, and forward-join or backedge disagreement.
+The expected generation remains a dynamic provider check and is not claimed as
+a statically known value.
+
+Implementation commit `1e12b2f24f42a121a0d10c6e908592d15bbd4b9a`
+passes the 21-case `language-1-production-admission-ingress` owner in 162.788
+seconds on the local Windows host. The canonical authenticated publication
+passes the current verifier. Seven minor/opcode/binding/index/type structural
+mutations and three pointer/capacity/generation stack-kind mutations reject.
+The source-built verifier is 502,386 bytes at SHA-256
+`742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4`;
+its packaged Windows application is 4,063,232 bytes at SHA-256
+`8076bc5c0a289e87bf883cf36b25c2481a40cc17a58c07ec32a3ee5bac6fe86d`.
+Extracting the bounded System-operation selection from the main executable pass
+keeps the generated verifier below the native lowerer's explicit 2,048-local
+function boundary without widening that safety limit.
+
+This is local Windows compiler-verification evidence. The published front door,
+scalar provider, native lowerer, launchers, browser, WebAssembly, packages, and
+OS consumers remain closed to WVB 1.38. No native address or symbol was
+resolved, no Foreign code executed, and no capability or library authority was
+granted. Provider/native execution, one migrated real boundary, Linux
+reproduction, and final Slice 8 qualification remain pending. The
+machine-readable evidence is
+[`2026-09-03-Compiler-Aligned-WVB-1-38-Foreign-Call-Containment.json`](../Evidence/2026-09-03-Compiler-Aligned-WVB-1-38-Foreign-Call-Containment.json).

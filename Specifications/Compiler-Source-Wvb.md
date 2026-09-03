@@ -46,7 +46,9 @@ execute only its private logical descriptor in the bounded scalar provider and
 native x86-64 lowerer. Candidate WVB 1.38 adds the paired Foreign-call
 publication boundary selected by
 [Decision 0934](../Documents/Decisions/0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md).
-The complete verifier and every execution consumer remain closed to 1.38.
+[Decision 0935](../Documents/Decisions/0935-Verify-Contained-WVB-1.38-Foreign-Calls.md)
+admits that exact call through the complete compiler-aligned verifier while
+every execution consumer remains closed to 1.38.
 None of these checkpoints is a cross-host or complete Slice 8 claim.
 
 ## Direct compilation result
@@ -1145,10 +1147,13 @@ The focused independent WVB 1.38 reader checks the exact seven-section
 envelope, type/function/code bounds, registered binding, pointer and ABI kinds,
 and one emitted `E0` fixture. It rejects old-minor, unknown-opcode,
 unregistered-binding, invalid-index, invalid-kind, and swapped pointer/ABI
-mutations. The complete compiler-aligned verifier, scalar provider, native
-lowerer, launchers, browser, WebAssembly, packages, and OS consumers still
-reject minor 38. Verifier containment, the runtime provider, native symbol
-resolution and ABI invocation remain separate later checkpoints.
+mutations. The complete compiler-aligned verifier now additionally enforces
+System metadata, the inherited WVB 1.37 contract,
+bounded pointer/ABI relations, exact typed-stack order, affine pointer-local
+availability, and the canonical pointer/capacity/generation load sequence. The
+scalar provider, native lowerer, launchers, browser, WebAssembly, packages, and
+OS consumers still reject minor 38. Runtime provider binding, native symbol
+resolution, and ABI invocation remain separate later checkpoints.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1168,9 +1173,10 @@ executes region construction plus exact range/overflow/alignment results in the
 bounded scalar provider and native x86-64 lowerer. Candidate WVB 1.37 preserves
 contained pointer derivation through complete compiler-aligned verification and
 executes only its private logical descriptor in those two bounded paths.
-Candidate WVB 1.38 publishes the paired registered Foreign call while complete
-verification and every execution path remain closed. Native address formation,
-Foreign invocation, and cross-host containment remain pending.
+Candidate WVB 1.38 publishes the paired registered Foreign call and passes the
+complete compiler-aligned verifier while every execution path remains closed.
+Native address formation, Foreign invocation, and cross-host containment remain
+pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256
