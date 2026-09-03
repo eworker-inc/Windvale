@@ -303,12 +303,15 @@ by-value modes. WVIR 1.31/1.32 require at least one operation `190`; lower
 minors reject it.
 
 WVIR alone does not authenticate the declaration's native symbol, ABI spelling,
-no-retain promise, or no-unwind promise. Production consumption must pair the
+no-retain promise, or no-unwind promise. Production consumption pairs the
 operation with the exact retained WVFB record already authenticated for the
-same source module and declaration. That coordinator pairing and WVB/native
-lowering are later checkpoints. Until then, the source-WVB backend rejects a
-valid operation `190` as `Unsupportedˉoperation` rather than treating it as
-malformed WVIR.
+same source module and declaration. Only that retained coordinator relationship
+may invoke the private emitter form, which independently rechecks WVFB against
+WVSD and WVIR and serializes operation `190` as candidate WVB 1.38 opcode `E0`.
+The WVB carries registered binding identity `1`, the exact pointer-record type,
+and matching ABI enum; it is not an authentication certificate. Complete WVB
+verification, provider execution, and native ABI invocation remain later
+checkpoints.
 
 ## Independent validation
 

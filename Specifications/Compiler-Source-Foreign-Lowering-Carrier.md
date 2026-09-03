@@ -176,9 +176,17 @@ foreign pairing status=Validated records=<u32> calls=<u32>\n
 ```
 
 Only after that process succeeds does the coordinator recheck the original six
-authenticated snapshots and retained WVFB again. It then stops at exact
-`source emission status=Foreignˉwvbˉpending` without launching the emitter or
-copying a final file. Direct `wvbind` invocation cannot establish the preceding
-authentication relationship or grant authority. WVFB 1.0 and this pairing
-checkpoint do not add a WVB import, runtime operation, native thunk, symbol
-resolution, dynamic-library load, or provider call.
+authenticated snapshots and retained WVFB again. It then invokes the emitter's
+private paired-Foreign form with the retained WVSS, WVFB, and Analyzer products.
+The emitter independently reconstructs source symbols, validates the exact
+WVFB/WVSD/WVIR pairing, and emits candidate WVB 1.38 only on complete agreement.
+The coordinator validates the private product, rechecks all six authenticated
+snapshots plus WVFB after emission, and only then publishes it atomically.
+
+The ordinary emitter form rejects Foreign-bearing source, and direct use of
+`wvbind`, the private emitter switch, or WVFB cannot establish the preceding
+authentication relationship or grant authority. Candidate WVB 1.38 records
+registered binding identity `1`; it does not embed WVFB, grant a capability,
+resolve a native symbol, create a native thunk, load a dynamic library, or call
+a provider. The complete verifier and all execution consumers remain closed to
+minor 38.

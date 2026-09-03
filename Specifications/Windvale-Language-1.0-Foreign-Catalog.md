@@ -22,12 +22,15 @@ rechecks all six retained snapshots, invokes the non-authoritative private
 `wvbind`, requires exact digest evidence for the WVSS, WVTD, and WVFC bytes that
 product consumed, launches the private Analyzer route, and uses the pairing form
 of the same binder to correlate every typed WVIR Foreign call with the retained
-WVFB carrier. It rechecks all retained snapshots and stops at exact
-`Foreignˉwvbˉpending` without launching the emitter. The dedicated 27-case,
-five-fixture authenticated-binding owner and 21-case production-ingress owner
-cover the compiler-owned adapter and real hosted path. WVB encoding, paired-host
-acceptance, native-symbol binding, runtime containment, and foreign execution
-remain later boundaries.
+WVFB carrier. It rechecks all retained snapshots, invokes the private emitter
+form, and rechecks them again before atomically publishing candidate WVB 1.38.
+The emitter independently repeats the exact carrier/symbol/WVIR relationship
+check and writes registered binding identity `1`; neither the candidate module
+nor possession of WVFB proves authentication or grants authority. The dedicated
+27-case, five-fixture authenticated-binding owner and 21-case production-ingress
+owner cover the compiler-owned adapter and real hosted path. Complete WVB 1.38
+verification, paired-host acceptance, native-symbol binding, runtime
+containment, and foreign execution remain later boundaries.
 
 ## Encoding
 

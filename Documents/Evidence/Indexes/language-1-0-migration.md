@@ -11,119 +11,120 @@
 | Section | Source line |
 | --- | ---: |
 | [Status](../../Project/Windvale-Language-1.0-Migration-Evidence.md#status) | 3 |
-| [Frozen source identity](../../Project/Windvale-Language-1.0-Migration-Evidence.md#frozen-source-identity) | 85 |
-| [First compiler path](../../Project/Windvale-Language-1.0-Migration-Evidence.md#first-compiler-path) | 133 |
-| [Slice 2 primitive, unit, and never checkpoints](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-primitive-unit-and-never-checkpoints) | 198 |
-| [Slice 2 value-producing `if`](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-value-producing-if) | 282 |
-| [Slice 2 value-producing `match`](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-value-producing-match) | 322 |
-| [Slice 3 typed failure completion](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-typed-failure-completion) | 365 |
-| [Slice 3 compiler-capacity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-compiler-capacity-checkpoint) | 423 |
-| [Slice 3 analysis/emission phase checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-analysisemission-phase-checkpoint) | 442 |
-| [Slice 4 direct generic function lowering checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-direct-generic-function-lowering-checkpoint) | 486 |
-| [Slice 4 bounded generic collection checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-bounded-generic-collection-checkpoint) | 534 |
-| [Slice 4 multiple concrete specialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-multiple-concrete-specialization-checkpoint) | 611 |
-| [Slice 4 generic nominal type identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-type-identity-checkpoint) | 647 |
-| [Slice 4 generic nominal declaration ownership checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-declaration-ownership-checkpoint) | 679 |
-| [Slice 4 recursive generic nominal type-binding checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-recursive-generic-nominal-type-binding-checkpoint) | 708 |
-| [Slice 4 generic nominal layout-substitution checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-layout-substitution-checkpoint) | 740 |
-| [Slice 4 generic nominal materialization-plan checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-materialization-plan-checkpoint) | 768 |
-| [Slice 4 generic nominal WVB Types-serialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-wvb-types-serialization-checkpoint) | 798 |
-| [Slice 4 generic nominal WVLB-carrier checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-wvlb-carrier-checkpoint) | 831 |
-| [Slice 4 main generic nominal analysis checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-main-generic-nominal-analysis-checkpoint) | 901 |
-| [Slice 4 main generic nominal WVB materialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-main-generic-nominal-wvb-materialization-checkpoint) | 951 |
-| [Slice 4 packed keyword dispatch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-packed-keyword-dispatch-checkpoint) | 1002 |
-| [Slice 4 source-graph frontier checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-source-graph-frontier-checkpoint) | 1039 |
-| [Slice 2 named variant fields](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-named-variant-fields) | 1096 |
-| [Slice 2 fixed integers, runes, and floating point](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-fixed-integers-runes-and-floating-point) | 1149 |
-| [Focused verification owner](../../Project/Windvale-Language-1.0-Migration-Evidence.md#focused-verification-owner) | 1197 |
-| [Pre-slice compiler baseline](../../Project/Windvale-Language-1.0-Migration-Evidence.md#pre-slice-compiler-baseline) | 1237 |
-| [Slice 1 compiler measurement](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-1-compiler-measurement) | 1275 |
-| [Current-driver bootstrap boundary](../../Project/Windvale-Language-1.0-Migration-Evidence.md#current-driver-bootstrap-boundary) | 1298 |
-| [Measurement limitation and next checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#measurement-limitation-and-next-checkpoint) | 1315 |
-| [Slice 4 executable generic record checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-executable-generic-record-checkpoint) | 1343 |
-| [Slice 4 generic nominal function-body checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-function-body-checkpoint) | 1407 |
-| [Slice 4 generic nominal declaration-layout dependency checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-declaration-layout-dependency-checkpoint) | 1457 |
-| [Slice 4 generic nominal variant execution checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-variant-execution-checkpoint) | 1512 |
-| [Slice 4 Foundation generic unification checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-foundation-generic-unification-checkpoint) | 1573 |
-| [Slice 4 fixed-array and WVB 1.17 checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-fixed-array-and-wvb-117-checkpoint) | 1626 |
-| [Borrow parser and call-scoped semantic checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#borrow-parser-and-call-scoped-semantic-checkpoint) | 1690 |
-| [Slice 4 Vector and Sequence type-identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-type-identity-checkpoint) | 1744 |
-| [Slice 4 Vector and Sequence function-value checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-function-value-checkpoint) | 1778 |
-| [Slice 4 Vector and Sequence WVB 1.18 type checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-wvb-118-type-checkpoint) | 1812 |
-| [Slice 4 Vector and Sequence WVB 1.19 runtime checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-wvb-119-runtime-checkpoint) | 1868 |
-| [Slice 4/5 owned Vector local transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-owned-vector-local-transfer-checkpoint) | 1925 |
-| [Slice 4 exact Foundation Sequence read checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-exact-foundation-sequence-read-checkpoint) | 1979 |
-| [Slice 4/5 exact Foundation Vector read and freeze checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-exact-foundation-vector-read-and-freeze-checkpoint) | 2038 |
-| [Slice 4/5 exact collection result-context checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-exact-collection-result-context-checkpoint) | 2095 |
-| [Slice 4/5 canonical Memory budget identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-canonical-memory-budget-identity-checkpoint) | 2139 |
-| [Slice 4 exact enum-backing and bounded compiler-capacity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-exact-enum-backing-and-bounded-compiler-capacity-checkpoint) | 2180 |
-| [Slice 5 launcher memory-budget transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-launcher-memory-budget-transfer-checkpoint) | 2268 |
-| [Slice 5 exact `u8` enum representation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-exact-u8-enum-representation-checkpoint) | 2333 |
-| [Slice 5 memory-budget Split WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-memory-budget-split-wvir-checkpoint) | 2375 |
-| [Slice 5 bounded memory-budget accounting oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-bounded-memory-budget-accounting-oracle) | 2431 |
-| [Slice 5 executable memory-budget Split checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-executable-memory-budget-split-checkpoint) | 2478 |
-| [Slice 5 effect-clause front-end prerequisite](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-effect-clause-front-end-prerequisite) | 2524 |
-| [Slice 5 `using` statement front-end checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-using-statement-front-end-checkpoint) | 2576 |
-| [Fallible Vector-construction typed-WVIR evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#fallible-vector-construction-typed-wvir-evidence) | 2627 |
-| [Generation-safe allocation-lease accounting evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#generation-safe-allocation-lease-accounting-evidence) | 2672 |
-| [Executable fallible Vector-construction evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-fallible-vector-construction-evidence) | 2706 |
-| [Executable recoverable Vector-append evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-recoverable-vector-append-evidence) | 2740 |
-| [Owned Vector calls and forward-join evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#owned-vector-calls-and-forward-join-evidence) | 2780 |
-| [Executable owned Vector call evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-owned-vector-call-evidence) | 2814 |
-| [Compact WVIR operation-record evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#compact-wvir-operation-record-evidence) | 2853 |
-| [Semantic using and exact loop-ownership evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#semantic-using-and-exact-loop-ownership-evidence) | 2896 |
-| [Transactional reserved Vector-growth evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#transactional-reserved-vector-growth-evidence) | 2954 |
-| [Aggregate-owned-field evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#aggregate-owned-field-evidence) | 3005 |
-| [Hosted source-resource evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#hosted-source-resource-evidence) | 3048 |
-| [Callable front-end and static-semantics checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#callable-front-end-and-static-semantics-checkpoint) | 3093 |
-| [Executable noncapturing-callable checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-noncapturing-callable-checkpoint) | 3152 |
-| [Compiler phase-closure performance evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#compiler-phase-closure-performance-evidence) | 3198 |
-| [Executable plain-capture environment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-plain-capture-environment-checkpoint) | 3229 |
-| [Deterministic source closure-target planning checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#deterministic-source-closure-target-planning-checkpoint) | 3297 |
-| [Reconstructible closure-local binding phase checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#reconstructible-closure-local-binding-phase-checkpoint) | 3331 |
-| [Synthetic closure binding-directory checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#synthetic-closure-binding-directory-checkpoint) | 3367 |
-| [Integrated source closure and native callable checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#integrated-source-closure-and-native-callable-checkpoint) | 3403 |
-| [Slice 7 sequential structured-task checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-sequential-structured-task-checkpoint) | 3467 |
-| [Slice 7 cross-host development-gate repair](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-cross-host-development-gate-repair) | 3537 |
-| [Slice 7 completion-slot reservation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-completion-slot-reservation-checkpoint) | 3632 |
-| [Slice 7 retained-memory admission checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-retained-memory-admission-checkpoint) | 3678 |
-| [Slice 7 task-environment observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-task-environment-observation-checkpoint) | 3731 |
-| [Slice 7 task-environment request checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-task-environment-request-checkpoint) | 3781 |
-| [Slice 7 queued multi-child scheduler checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-queued-multi-child-scheduler-checkpoint) | 3840 |
-| [Slice 7 externally observable completion-order checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-externally-observable-completion-order-checkpoint) | 3890 |
-| [Slice 7 explicit async provider-recovery checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-explicit-async-provider-recovery-checkpoint) | 3938 |
-| [Slice 7 compiler-analysis cost checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-compiler-analysis-cost-checkpoint) | 3987 |
-| [Slice 7 bounded generic WIR development oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-generic-wir-development-oracle) | 4014 |
-| [Slice 7 bounded compiler-scale analysis checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-compiler-scale-analysis-checkpoint) | 4072 |
-| [Slice 7 complete runner promotion checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-complete-runner-promotion-checkpoint) | 4107 |
-| [Slice 7 bounded parallel-host checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-parallel-host-checkpoint) | 4133 |
-| [Slice 7 split compiler convergence checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-split-compiler-convergence-checkpoint) | 4160 |
-| [Slice 7 qualification-boundary correction](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-qualification-boundary-correction) | 4191 |
-| [Slice 7 exact qualification ownership repair](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-exact-qualification-ownership-repair) | 4213 |
-| [Slice 7 final paired-host qualification](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-final-paired-host-qualification) | 4284 |
-| [Slice 8 exact System/FFI front door](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-exact-systemffi-front-door) | 4305 |
-| [Slice 8 compiler-scale staging coalescing](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-compiler-scale-staging-coalescing) | 4324 |
-| [Slice 8 mandatory admission and exact target descriptor](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-mandatory-admission-and-exact-target-descriptor) | 4350 |
-| [Slice 8 System unsafe context](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-system-unsafe-context) | 4373 |
-| [Slice 8 exact foreign-declaration catalog format](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-exact-foreign-declaration-catalog-format) | 4399 |
-| [Slice 8 canonical foreign-call effect](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foreign-call-effect) | 4422 |
-| [Slice 8 canonical foreign-catalog producer](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foreign-catalog-producer) | 4450 |
-| [Slice 8 bounded foreign-memory semantic oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-foreign-memory-semantic-oracle) | 4487 |
-| [Slice 8 native SHA-256 lowering candidate](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-native-sha-256-lowering-candidate) | 4545 |
-| [Slice 8 SHA-capable segmented staging promotion](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-sha-capable-segmented-staging-promotion) | 4589 |
-| [Slice 8 authenticated source-admission coordinator](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-authenticated-source-admission-coordinator) | 4631 |
-| [Slice 8 packaged admission-validator execution](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-packaged-admission-validator-execution) | 4692 |
-| [Slice 8 authenticated production-ingress candidate](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-authenticated-production-ingress-candidate) | 4746 |
-| [Slice 8 canonical Foundation unsafe type identities](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foundation-unsafe-type-identities) | 4815 |
-| [Slice 8 canonical unsafe-scratch typed-WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-unsafe-scratch-typed-wvir-checkpoint) | 4851 |
-| [Slice 8 WVB 1.33 bounded scalar unsafe-scratch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-133-bounded-scalar-unsafe-scratch-checkpoint) | 4888 |
-| [Slice 8 affine memory-budget call-transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-affine-memory-budget-call-transfer-checkpoint) | 4923 |
-| [Slice 8 WVB 1.34 immutable borrowed-budget call checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-134-immutable-borrowed-budget-call-checkpoint) | 4967 |
-| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4995 |
-| [Slice 8 WVB 1.35 immutable borrowed-scratch observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-135-immutable-borrowed-scratch-observation-checkpoint) | 5030 |
-| [Slice 8 bounded compiler-scale staging checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-compiler-scale-staging-checkpoint) | 5076 |
-| [Slice 8 WVIR mutable write-region borrowing checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvir-mutable-write-region-borrowing-checkpoint) | 5112 |
-| [Slice 8 candidate WVB 1.36 write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-candidate-wvb-136-write-region-checkpoint) | 5145 |
-| [Slice 8 WVB 1.36 compiler-aligned containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-compiler-aligned-containment-checkpoint) | 5169 |
-| [Slice 8 WVB 1.36 bounded scalar write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-bounded-scalar-write-region-checkpoint) | 5207 |
-| [Slice 8 WVB 1.37 compiler-aligned pointer containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-137-compiler-aligned-pointer-containment-checkpoint) | 5259 |
+| [Frozen source identity](../../Project/Windvale-Language-1.0-Migration-Evidence.md#frozen-source-identity) | 88 |
+| [First compiler path](../../Project/Windvale-Language-1.0-Migration-Evidence.md#first-compiler-path) | 136 |
+| [Slice 2 primitive, unit, and never checkpoints](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-primitive-unit-and-never-checkpoints) | 201 |
+| [Slice 2 value-producing `if`](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-value-producing-if) | 285 |
+| [Slice 2 value-producing `match`](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-value-producing-match) | 325 |
+| [Slice 3 typed failure completion](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-typed-failure-completion) | 368 |
+| [Slice 3 compiler-capacity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-compiler-capacity-checkpoint) | 426 |
+| [Slice 3 analysis/emission phase checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-3-analysisemission-phase-checkpoint) | 445 |
+| [Slice 4 direct generic function lowering checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-direct-generic-function-lowering-checkpoint) | 489 |
+| [Slice 4 bounded generic collection checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-bounded-generic-collection-checkpoint) | 537 |
+| [Slice 4 multiple concrete specialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-multiple-concrete-specialization-checkpoint) | 614 |
+| [Slice 4 generic nominal type identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-type-identity-checkpoint) | 650 |
+| [Slice 4 generic nominal declaration ownership checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-declaration-ownership-checkpoint) | 682 |
+| [Slice 4 recursive generic nominal type-binding checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-recursive-generic-nominal-type-binding-checkpoint) | 711 |
+| [Slice 4 generic nominal layout-substitution checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-layout-substitution-checkpoint) | 743 |
+| [Slice 4 generic nominal materialization-plan checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-materialization-plan-checkpoint) | 771 |
+| [Slice 4 generic nominal WVB Types-serialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-wvb-types-serialization-checkpoint) | 801 |
+| [Slice 4 generic nominal WVLB-carrier checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-wvlb-carrier-checkpoint) | 834 |
+| [Slice 4 main generic nominal analysis checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-main-generic-nominal-analysis-checkpoint) | 904 |
+| [Slice 4 main generic nominal WVB materialization checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-main-generic-nominal-wvb-materialization-checkpoint) | 954 |
+| [Slice 4 packed keyword dispatch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-packed-keyword-dispatch-checkpoint) | 1005 |
+| [Slice 4 source-graph frontier checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-source-graph-frontier-checkpoint) | 1042 |
+| [Slice 2 named variant fields](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-named-variant-fields) | 1099 |
+| [Slice 2 fixed integers, runes, and floating point](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-2-fixed-integers-runes-and-floating-point) | 1152 |
+| [Focused verification owner](../../Project/Windvale-Language-1.0-Migration-Evidence.md#focused-verification-owner) | 1200 |
+| [Pre-slice compiler baseline](../../Project/Windvale-Language-1.0-Migration-Evidence.md#pre-slice-compiler-baseline) | 1240 |
+| [Slice 1 compiler measurement](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-1-compiler-measurement) | 1278 |
+| [Current-driver bootstrap boundary](../../Project/Windvale-Language-1.0-Migration-Evidence.md#current-driver-bootstrap-boundary) | 1301 |
+| [Measurement limitation and next checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#measurement-limitation-and-next-checkpoint) | 1318 |
+| [Slice 4 executable generic record checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-executable-generic-record-checkpoint) | 1346 |
+| [Slice 4 generic nominal function-body checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-function-body-checkpoint) | 1410 |
+| [Slice 4 generic nominal declaration-layout dependency checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-declaration-layout-dependency-checkpoint) | 1460 |
+| [Slice 4 generic nominal variant execution checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-generic-nominal-variant-execution-checkpoint) | 1515 |
+| [Slice 4 Foundation generic unification checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-foundation-generic-unification-checkpoint) | 1576 |
+| [Slice 4 fixed-array and WVB 1.17 checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-fixed-array-and-wvb-117-checkpoint) | 1629 |
+| [Borrow parser and call-scoped semantic checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#borrow-parser-and-call-scoped-semantic-checkpoint) | 1693 |
+| [Slice 4 Vector and Sequence type-identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-type-identity-checkpoint) | 1747 |
+| [Slice 4 Vector and Sequence function-value checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-function-value-checkpoint) | 1781 |
+| [Slice 4 Vector and Sequence WVB 1.18 type checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-wvb-118-type-checkpoint) | 1815 |
+| [Slice 4 Vector and Sequence WVB 1.19 runtime checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-vector-and-sequence-wvb-119-runtime-checkpoint) | 1871 |
+| [Slice 4/5 owned Vector local transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-owned-vector-local-transfer-checkpoint) | 1928 |
+| [Slice 4 exact Foundation Sequence read checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-exact-foundation-sequence-read-checkpoint) | 1982 |
+| [Slice 4/5 exact Foundation Vector read and freeze checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-exact-foundation-vector-read-and-freeze-checkpoint) | 2041 |
+| [Slice 4/5 exact collection result-context checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-exact-collection-result-context-checkpoint) | 2098 |
+| [Slice 4/5 canonical Memory budget identity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-45-canonical-memory-budget-identity-checkpoint) | 2142 |
+| [Slice 4 exact enum-backing and bounded compiler-capacity checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-4-exact-enum-backing-and-bounded-compiler-capacity-checkpoint) | 2183 |
+| [Slice 5 launcher memory-budget transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-launcher-memory-budget-transfer-checkpoint) | 2271 |
+| [Slice 5 exact `u8` enum representation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-exact-u8-enum-representation-checkpoint) | 2336 |
+| [Slice 5 memory-budget Split WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-memory-budget-split-wvir-checkpoint) | 2378 |
+| [Slice 5 bounded memory-budget accounting oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-bounded-memory-budget-accounting-oracle) | 2434 |
+| [Slice 5 executable memory-budget Split checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-executable-memory-budget-split-checkpoint) | 2481 |
+| [Slice 5 effect-clause front-end prerequisite](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-effect-clause-front-end-prerequisite) | 2527 |
+| [Slice 5 `using` statement front-end checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-5-using-statement-front-end-checkpoint) | 2579 |
+| [Fallible Vector-construction typed-WVIR evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#fallible-vector-construction-typed-wvir-evidence) | 2630 |
+| [Generation-safe allocation-lease accounting evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#generation-safe-allocation-lease-accounting-evidence) | 2675 |
+| [Executable fallible Vector-construction evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-fallible-vector-construction-evidence) | 2709 |
+| [Executable recoverable Vector-append evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-recoverable-vector-append-evidence) | 2743 |
+| [Owned Vector calls and forward-join evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#owned-vector-calls-and-forward-join-evidence) | 2783 |
+| [Executable owned Vector call evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-owned-vector-call-evidence) | 2817 |
+| [Compact WVIR operation-record evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#compact-wvir-operation-record-evidence) | 2856 |
+| [Semantic using and exact loop-ownership evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#semantic-using-and-exact-loop-ownership-evidence) | 2899 |
+| [Transactional reserved Vector-growth evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#transactional-reserved-vector-growth-evidence) | 2957 |
+| [Aggregate-owned-field evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#aggregate-owned-field-evidence) | 3008 |
+| [Hosted source-resource evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#hosted-source-resource-evidence) | 3051 |
+| [Callable front-end and static-semantics checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#callable-front-end-and-static-semantics-checkpoint) | 3096 |
+| [Executable noncapturing-callable checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-noncapturing-callable-checkpoint) | 3155 |
+| [Compiler phase-closure performance evidence](../../Project/Windvale-Language-1.0-Migration-Evidence.md#compiler-phase-closure-performance-evidence) | 3201 |
+| [Executable plain-capture environment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#executable-plain-capture-environment-checkpoint) | 3232 |
+| [Deterministic source closure-target planning checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#deterministic-source-closure-target-planning-checkpoint) | 3300 |
+| [Reconstructible closure-local binding phase checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#reconstructible-closure-local-binding-phase-checkpoint) | 3334 |
+| [Synthetic closure binding-directory checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#synthetic-closure-binding-directory-checkpoint) | 3370 |
+| [Integrated source closure and native callable checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#integrated-source-closure-and-native-callable-checkpoint) | 3406 |
+| [Slice 7 sequential structured-task checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-sequential-structured-task-checkpoint) | 3470 |
+| [Slice 7 cross-host development-gate repair](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-cross-host-development-gate-repair) | 3540 |
+| [Slice 7 completion-slot reservation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-completion-slot-reservation-checkpoint) | 3635 |
+| [Slice 7 retained-memory admission checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-retained-memory-admission-checkpoint) | 3681 |
+| [Slice 7 task-environment observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-task-environment-observation-checkpoint) | 3734 |
+| [Slice 7 task-environment request checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-task-environment-request-checkpoint) | 3784 |
+| [Slice 7 queued multi-child scheduler checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-queued-multi-child-scheduler-checkpoint) | 3843 |
+| [Slice 7 externally observable completion-order checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-externally-observable-completion-order-checkpoint) | 3893 |
+| [Slice 7 explicit async provider-recovery checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-explicit-async-provider-recovery-checkpoint) | 3941 |
+| [Slice 7 compiler-analysis cost checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-compiler-analysis-cost-checkpoint) | 3990 |
+| [Slice 7 bounded generic WIR development oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-generic-wir-development-oracle) | 4017 |
+| [Slice 7 bounded compiler-scale analysis checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-compiler-scale-analysis-checkpoint) | 4075 |
+| [Slice 7 complete runner promotion checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-complete-runner-promotion-checkpoint) | 4110 |
+| [Slice 7 bounded parallel-host checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-bounded-parallel-host-checkpoint) | 4136 |
+| [Slice 7 split compiler convergence checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-split-compiler-convergence-checkpoint) | 4163 |
+| [Slice 7 qualification-boundary correction](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-qualification-boundary-correction) | 4194 |
+| [Slice 7 exact qualification ownership repair](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-exact-qualification-ownership-repair) | 4216 |
+| [Slice 7 final paired-host qualification](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-7-final-paired-host-qualification) | 4287 |
+| [Slice 8 exact System/FFI front door](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-exact-systemffi-front-door) | 4308 |
+| [Slice 8 compiler-scale staging coalescing](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-compiler-scale-staging-coalescing) | 4327 |
+| [Slice 8 mandatory admission and exact target descriptor](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-mandatory-admission-and-exact-target-descriptor) | 4353 |
+| [Slice 8 System unsafe context](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-system-unsafe-context) | 4376 |
+| [Slice 8 exact foreign-declaration catalog format](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-exact-foreign-declaration-catalog-format) | 4402 |
+| [Slice 8 canonical foreign-call effect](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foreign-call-effect) | 4425 |
+| [Slice 8 canonical foreign-catalog producer](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foreign-catalog-producer) | 4453 |
+| [Slice 8 bounded foreign-memory semantic oracle](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-foreign-memory-semantic-oracle) | 4490 |
+| [Slice 8 native SHA-256 lowering candidate](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-native-sha-256-lowering-candidate) | 4548 |
+| [Slice 8 SHA-capable segmented staging promotion](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-sha-capable-segmented-staging-promotion) | 4592 |
+| [Slice 8 authenticated source-admission coordinator](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-authenticated-source-admission-coordinator) | 4634 |
+| [Slice 8 packaged admission-validator execution](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-packaged-admission-validator-execution) | 4695 |
+| [Slice 8 authenticated production-ingress candidate](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-authenticated-production-ingress-candidate) | 4749 |
+| [Slice 8 canonical Foundation unsafe type identities](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-foundation-unsafe-type-identities) | 4818 |
+| [Slice 8 canonical unsafe-scratch typed-WVIR checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-canonical-unsafe-scratch-typed-wvir-checkpoint) | 4854 |
+| [Slice 8 WVB 1.33 bounded scalar unsafe-scratch checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-133-bounded-scalar-unsafe-scratch-checkpoint) | 4891 |
+| [Slice 8 affine memory-budget call-transfer checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-affine-memory-budget-call-transfer-checkpoint) | 4926 |
+| [Slice 8 WVB 1.34 immutable borrowed-budget call checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-134-immutable-borrowed-budget-call-checkpoint) | 4970 |
+| [Slice 8 development-verification balance](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-development-verification-balance) | 4998 |
+| [Slice 8 WVB 1.35 immutable borrowed-scratch observation checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-135-immutable-borrowed-scratch-observation-checkpoint) | 5033 |
+| [Slice 8 bounded compiler-scale staging checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-bounded-compiler-scale-staging-checkpoint) | 5079 |
+| [Slice 8 WVIR mutable write-region borrowing checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvir-mutable-write-region-borrowing-checkpoint) | 5115 |
+| [Slice 8 candidate WVB 1.36 write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-candidate-wvb-136-write-region-checkpoint) | 5148 |
+| [Slice 8 WVB 1.36 compiler-aligned containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-compiler-aligned-containment-checkpoint) | 5172 |
+| [Slice 8 WVB 1.36 bounded scalar write-region checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-136-bounded-scalar-write-region-checkpoint) | 5210 |
+| [Slice 8 WVB 1.37 compiler-aligned pointer containment checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-wvb-137-compiler-aligned-pointer-containment-checkpoint) | 5262 |
+| [Slice 8 candidate WVB 1.38 paired Foreign-call publication checkpoint](../../Project/Windvale-Language-1.0-Migration-Evidence.md#slice-8-candidate-wvb-138-paired-foreign-call-publication-checkpoint) | 5292 |

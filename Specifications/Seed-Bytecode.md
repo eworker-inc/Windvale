@@ -22,7 +22,8 @@ memory-budget entry extension, the WVB 1.22 exact `u8`-backed-enum extension,
    call extension, the WVB 1.35 immutable borrowed-scratch observation
    extension, the verified WVB 1.36 write-region extension, and the
    compiler-verified and contained-execution candidate WVB 1.37 write-pointer
-   extension.
+   extension, and the source-publication candidate WVB 1.38 registered
+   Foreign-call extension.
 Windvale is in early
 development and does not preserve obsolete experimental WVB encodings unless a
 named compatibility case is approved. WVB 1.11 includes 64-bit scalars,
@@ -106,6 +107,11 @@ region borrow. The complete compiler-aligned verifier confines the pointer as an
 affine value. The bounded scalar provider and native x86-64 lowerer execute the
 contained derivation by carrying only its private logical region descriptor.
 This candidate forms no address and grants no Foreign-call authority.
+Candidate WVB 1.38 serializes the first authenticated and paired registered
+Foreign call. Its instruction carries a stable binding identity plus exact
+pointer-record and ABI-enum type identities; it does not carry a symbol string,
+address, library path, capability, or authentication certificate. The complete
+verifier and every execution consumer remain closed to this version.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -132,15 +138,17 @@ is also present. WVB 1.34 is selected when any function has an immutable
 borrowed `Memoryˉbudget` parameter. WVB 1.35 is selected when
 `unsafe.scratch.length` is present. WVB 1.36 is selected when
 `unsafe.write-region.borrow` is present. Candidate WVB 1.37 is selected when
-`unsafe.write-pointer.borrow` is present. The compiler-aligned verifier accepts
-all twenty-seven versions through candidate WVB 1.37 and never admits an
+`unsafe.write-pointer.borrow` is present. Candidate WVB 1.38 is selected when
+`foreign.call` is present. The compiler-aligned verifier accepts all twenty-seven
+versions through candidate WVB 1.37 and never admits an
 extension under an earlier header. The source-built native scalar runner
 accepts WVB 1.33 through candidate WVB 1.37 only through the bounded provider
 below. The native x86-64 lowerer admits the same focused unsafe-scratch,
 immutable-budget-borrow, scratch-observation, write-region, and contained
-write-pointer matrix. Browser, WebAssembly-package, and Windvale OS consumers
-retain explicit narrower version boundaries until their own reconstruction or
-execution slices land.
+write-pointer matrix. Candidate WVB 1.38 has only source-writer and focused
+independent structural-reader evidence; the complete verifier, scalar and native
+execution, browser, WebAssembly-package, and Windvale OS consumers retain
+explicit narrower version boundaries until their own slices land.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -367,6 +375,47 @@ descriptor into pointer-owned storage. The operation forms no address, permits
 no pointer escape, and authorizes no Foreign call. The browser, WebAssembly
 host, and Windvale OS consumers retain their narrower declared boundaries.
 
+## Candidate WVB 1.38 paired registered Foreign-call publication
+
+WVB 1.38 inherits the WVB 1.37 System-profile metadata and instruction
+vocabulary and adds one candidate instruction:
+
+```text
+E0 foreign.call u32 registered-binding identity,
+                u32 pointer-record type index,
+                u32 ABI-enum type index
+```
+
+`E0` is 13 bytes. It consumes an exact non-null
+`Foreignˉpointer<u8, Abi>`, `u64` capacity, and `u64` expected generation in
+that order and produces exact `i64`. The pointer immediate names a kind-`1`
+record and the ABI immediate names its kind-`2` or kind-`7` enum argument.
+Registered binding identity `1` denotes the exact
+`windvale.paper.buffer_source.sysv_amd64_c_v1` contract: native symbol
+`wv_paper_buffer_source_read_v1`, SysV AMD64 C v1, System profile,
+`ffi.call`, unsafe, no-retain, no-unwind, those three by-value arguments, and
+the exact `i64` result. Zero and every other identity are unregistered in this
+candidate.
+
+The writer selects minor 38 only when reachable WVIR operation `190` is
+present, and every minor-38 module contains at least one `E0`. The authenticated
+production coordinator admits at most 4,096 paired calls, invokes a private
+emitter form, and rechecks the six retained authenticated snapshots plus WVFB
+before and after emission. The emitter independently validates WVFB against the
+source-symbol directory and every typed Foreign call. Neither WVFB nor WVB
+proves that the coordinator performed those steps, so direct possession of
+either value grants no capability or native-call authority.
+
+The focused independent reader validates the exact header, seven sections,
+bounded type/function/code geometry, identity `1`, pointer-record kind, and ABI
+enum kind. It rejects an earlier minor, an unknown opcode, an unregistered
+binding, invalid type indices, wrong type kinds, and swapped pointer/ABI
+indices. This is source-publication evidence, not admission to execution. The
+complete compiler-aligned verifier, scalar provider, native lowerer, launchers,
+browser, WebAssembly, package, and OS consumers reject minor 38. They must add
+their own containment, provider-binding, symbol-resolution, and ABI-invocation
+rules before opening execution.
+
 ## Encoding
 
 - All integers are little-endian.
@@ -382,7 +431,7 @@ host, and Windvale OS consumers retain their narrower declared boundaries.
 ```text
 4 bytes  magic: 57 56 42 31 (ASCII WVB1)
 u16      major version: 1
-u16      minor version: 11 through 37
+u16      minor version: 11 through 38
 u32      section count: 7
 ```
 
@@ -684,15 +733,15 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 22 fixed array followed by u32 nominal-type index (WVB 1.17 and later)
 23 Vector followed by u32 nominal-type index (WVB 1.18 and later)
 24 Sequence followed by u32 nominal-type index (WVB 1.18 and later)
-25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals; WVB 1.33 through WVB 1.37 by-value parameters and affine locals)
+25 Memoryˉbudget opaque owner (WVB 1.21 through 1.28 and WVB 1.32 exact entries; WVB 1.23 through 1.28 and WVB 1.32 Main locals; WVB 1.33 through WVB 1.38 by-value parameters and affine locals)
 26 immutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
 27 mutable-borrowed Vector parameter followed by u32 nominal-type index (WVB 1.26 and later)
-28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.37 local only, except the exact scratch helper parameters in WVB 1.35/1.36 and exact immutable write-region parameter in WVB 1.37)
-29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.37 local only)
-30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.37 local only)
-34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.37 under the exact entry rules)
-35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.37)
-36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.37 parameter or compiler-generated local only)
+28 borrowed record view followed by u32 nominal-type index (WVB 1.28 through 1.38 local only, except the exact scratch helper parameters in WVB 1.35/1.36 and exact immutable write-region parameter in WVB 1.37/1.38)
+29 borrowed variant view followed by u32 nominal-type index (WVB 1.28 through 1.38 local only)
+30 borrowed fixed-array view followed by u32 nominal-type index (WVB 1.28 through 1.38 local only)
+34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.38 under the exact entry rules)
+35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.38)
+36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.38 parameter or compiler-generated local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -735,7 +784,7 @@ kind-1 record, kind-3 variant, or kind-4 fixed array that recursively contains a
 kind-5 Vector. They are invalid as ordinary parameters, results, declared source
 locals, fields, payloads, collection elements, or Types entries. WVB 1.35 and
 1.36 admit only their exact borrowed scratch helper parameter, and candidate WVB
-1.37 admits only its exact immutable write-region parameter for opcode `DF`.
+1.37/1.38 admits only the exact immutable write-region parameter for opcode `DF`.
 These shapes do not encode a pointer or an independently storable value. The
 verifier confines every admitted view to its exact generated sequence, including
 the WVB 1.37 region parameter and affine pointer move.
@@ -775,7 +824,7 @@ function, result, nominal payload, collection element, or Types entry. It is
 move-only: `local.take` transfers its available ownership evidence, ordinary
 loads never copy it, and a store cannot overwrite an available owner. Source
 cannot construct it or expose its representation.
-WVB 1.30 through WVB 1.37 retain those confinement rules whenever shape `34`
+WVB 1.30 through WVB 1.38 retain those confinement rules whenever shape `34`
 is present.
 
 `i64`, `u64`, `i8`, `i16`, `u16`, `rune`, `f32`, and `f64` are ordinary scalar
@@ -790,18 +839,19 @@ before WVB 1.16. Shape byte 22, type kind 4, and opcodes `C5` and `C6` are
 invalid before WVB 1.17. Shape bytes 23 and 24 and type kinds 5 and 6 are
 invalid before WVB 1.18. Opcodes `C7` through `CC` are invalid before WVB
 1.19, opcode `CD` is invalid before WVB 1.20, opcode `CE` is invalid before
-WVB 1.23, opcode `CF` is recognized in WVB 1.24 through 1.37, opcode `D0` is
-recognized in WVB 1.25 through 1.37, and opcode `D1` is recognized in WVB 1.27
-through 1.37. Their budget-entry ownership preconditions remain exact, so the
+WVB 1.23, opcode `CF` is recognized in WVB 1.24 through 1.38, opcode `D0` is
+recognized in WVB 1.25 through 1.38, and opcode `D1` is recognized in WVB 1.27
+through 1.38. Their budget-entry ownership preconditions remain exact, so the
 WVB 1.29 source-file entry cannot execute them. Opcode `D2` and shape byte `34`
-are valid in WVB 1.29 through 1.37. Type kind `8`, shape byte `35`, and opcodes
-`D3` and `D4` are valid in WVB 1.30 through WVB 1.37. Opcode `D5` is valid in
-WVB 1.31 through WVB 1.37. Opcodes `D6` through `DB` and the extended kind-`8`
-descriptor trailer are valid in WVB 1.32 through WVB 1.37. Opcode `DC` and
+are valid in WVB 1.29 through 1.38. Type kind `8`, shape byte `35`, and opcodes
+`D3` and `D4` are valid in WVB 1.30 through WVB 1.38. Opcode `D5` is valid in
+WVB 1.31 through WVB 1.38. Opcodes `D6` through `DB` and the extended kind-`8`
+descriptor trailer are valid in WVB 1.32 through WVB 1.38. Opcode `DC` and
 shape byte `25` under the System-profile rules are valid in WVB 1.33 through
-WVB 1.37. Shape byte `36` is valid in WVB 1.34 through WVB 1.37. Opcode `DD`
-is valid in WVB 1.35 through WVB 1.37, opcode `DE` in WVB 1.36 and candidate
-WVB 1.37, and opcode `DF` only in WVB 1.37. Type kind `7` is valid in
+WVB 1.38. Shape byte `36` is valid in WVB 1.34 through WVB 1.38. Opcode `DD`
+is valid in WVB 1.35 through WVB 1.38, opcode `DE` in WVB 1.36 through
+WVB 1.38, opcode `DF` in WVB 1.37 and 1.38, and opcode `E0` only in WVB 1.38.
+Type kind `7` is valid in
 WVB 1.22 and later, and every WVB 1.22 module
 contains at least one kind-7 descriptor so an earlier vocabulary is never
 published under an unnecessarily high version. Every WVB 1.23 module contains
@@ -819,7 +869,7 @@ least one exact extended callable descriptor. Every WVB 1.33 module contains at
 least one `DC`, every WVB 1.34 module contains at least one shape-`36`
 parameter, every WVB 1.35 module contains at least one `DD`, every WVB 1.36
 module contains at least one `DE`, and every candidate WVB 1.37 module contains
-at least one `DF`.
+at least one `DF`. Every candidate WVB 1.38 module contains at least one `E0`.
 Each later version admits
 the complete instruction and type vocabulary of every earlier version, subject
 to that version's ownership rules.
@@ -988,7 +1038,8 @@ DB task.scope.exit  u32 scope-local index, u8 policy: 0 join, 1 cancel_join, 2 f
 DC unsafe.scratch.construct u32 budget-local index, u32 construction-Result type index, u32 ABI-enum type index; consumes u64 length and alignment plus the budget owner and produces the exact affine Result
 DD unsafe.scratch.length u32 scratch-local index, u32 ABI-enum type index; observes an exact owned or immutable borrowed scratch and produces u64 without consuming it
 DE unsafe.write-region.borrow u32 scratch-local index, u32 region-Result type index, u32 ABI-enum type index; consumes u64 start, length, and required alignment, consumes the exact scratch owner or mutable view, and produces the canonical affine Result
-DF unsafe.write-pointer.borrow u32 region-local index, u32 pointer-record type index, u32 ABI-enum type index; WVB 1.37 only, consumes no stack value and produces the exact opaque pointer
+DF unsafe.write-pointer.borrow u32 region-local index, u32 pointer-record type index, u32 ABI-enum type index; WVB 1.37 and 1.38, consumes no stack value and produces the exact opaque pointer
+E0 foreign.call     u32 registered-binding identity, u32 pointer-record type index, u32 ABI-enum type index; WVB 1.38 only, consumes pointer, u64 capacity, and u64 expected generation and produces i64
 
 30 jump            u32 absolute byte offset in the function
 31 branch.false    u32 absolute byte offset; consumes bool
@@ -1372,6 +1423,12 @@ failure and cannot change successful value semantics.
 
 ## Verification
 
+The complete compiler-aligned verifier currently admits WVB 1.11 through 1.37.
+It rejects candidate WVB 1.38 before execution. The focused independent 1.38
+reader checks only the publication structure and `E0` categorical immediates
+listed above; it is not a substitute for complete metadata, typed-stack,
+control-flow, affine-lifetime, capability, provider, or ABI-call verification.
+
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
@@ -1443,6 +1500,8 @@ Verification is required before execution and rejects a module unless:
 - WVB 1.36 distinct scratch/region/ABI relations: 256
 - WVB 1.37 unsafe write-pointer instructions: 4,096
 - WVB 1.37 distinct region/pointer/ABI relations: 256
+- WVB 1.38 paired Foreign calls admitted by the source coordinator: 4,096
+- WVB 1.38 registered binding identities: exactly one, identity `1`
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes

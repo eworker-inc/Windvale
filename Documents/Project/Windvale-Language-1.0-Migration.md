@@ -2,7 +2,7 @@
 
 > Status: Current candidate migration plan
 > Authority: Informative; linked specifications and decisions own exact contracts
-> Last reviewed: 2026-09-02
+> Last reviewed: 2026-09-03
 
 ## Status
 
@@ -990,20 +990,36 @@ predecessor. The segmented reconstruction owner passes 5/5. This is a bounded
 compiler-workflow repair and does not expand or complete Slice 8 semantics.
 
 [Decision 0933](../Decisions/0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md)
-now joins the authenticated source-admission path to the typed Foreign-call
+joined the authenticated source-admission path to the typed Foreign-call
 checkpoint. A private Analyzer form builds ordinary WVCA, WVLB, and WVIR from
-the retained foreign-bearing WVSS. The existing binder executable then
+the retained foreign-bearing WVSS. The binder executable then
 reconstructs WVSD, validates WVFB and the bounded WVIR table geometry, matches
 each kind-9 Foreign symbol to one carrier record, and requires every operation
-`190` target to name one of those records. The coordinator rechecks all six
-authenticated snapshots plus WVFB and stops at exact
-`Foreignˉwvbˉpending`; it does not launch the emitter or publish WVB.
+`190` target to name one of those records. That checkpoint stopped before WVB
+emission.
 
 The five-fixture authenticated owner passes 27 isolated selectors, and the
-21-case production-ingress owner passes the real two-module generic-pointer
-path on the local Windows host. Exact evidence is recorded in
+earlier 21-case production-ingress run passed the real two-module generic-
+pointer pairing path on the local Windows host. Exact evidence is recorded in
 [`2026-09-03-Authenticated-Foreign-Wvir-Pairing.json`](../Evidence/2026-09-03-Authenticated-Foreign-Wvir-Pairing.json).
-WVB encoding and verification, provider/native execution, a migrated real
+
+[Decision 0934](../Decisions/0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md)
+now extends that retained relationship through source publication. The ordinary
+five-path emitter rejects Foreign-bearing source. After successful pairing, the
+coordinator rechecks its six authenticated snapshots plus WVFB and invokes a
+private seven-argument emitter route. The emitter independently repeats the
+WVFB/WVSD/WVIR correlation and serializes operation `190` as candidate WVB 1.38
+opcode `E0` with registered binding identity `1`, the exact pointer-record type,
+and the matching ABI enum. The coordinator rechecks every retained input again
+after emission before atomic publication.
+
+The 21-case production-ingress owner passes this exact path in 85.973 seconds on
+the local Windows host. Its independent reader accepts the canonical
+publication, rejects seven malformed WVB mutations, proves the complete verifier
+still rejects minor 38, and requires a second authenticated build to be byte
+identical. Exact evidence is recorded in
+[`2026-09-03-Paired-Foreign-Wvb-1-38.json`](../Evidence/2026-09-03-Paired-Foreign-Wvb-1-38.json).
+Complete WVB 1.38 verification, provider/native execution, a migrated real
 boundary, Linux reproduction, and paired-host qualification remain pending.
 
 ## Removal checkpoint

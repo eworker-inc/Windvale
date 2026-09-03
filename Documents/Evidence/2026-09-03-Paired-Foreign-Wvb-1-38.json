@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-paired-foreign-wvb-1-38",
+  "date": "2026-09-03",
+  "subject": "Authenticated paired Foreign-call publication as candidate WVB 1.38",
+  "claim": "Implementation commit e23a34060ce824c96a0b469816cb5a54ef08c8e8 makes the Windows production compiler publish deterministic candidate WVB 1.38 opcode 224 for the exact retained and paired registered Foreign call, while the complete compiler verifier and every execution consumer remain closed.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "e23a34060ce824c96a0b469816cb5a54ef08c8e8"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Production admission, authenticated pairing, candidate WVB 1.38 publication, mutation containment, and deterministic second build",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-production-admission-ingress -AllowLongRun",
+      "result": "Passed",
+      "cases": 21,
+      "elapsedMilliseconds": 85973
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is Windows-local development evidence; Linux reproduction and paired-host qualification remain pending.",
+    "The focused independent reader checks the candidate WVB 1.38 publication structure and seven malformed categorical mutations; it is not the complete compiler-aligned verifier.",
+    "The existing compiler-aligned verifier rejects WVB 1.38, and no scalar provider, native lowerer, launcher, browser, WebAssembly, package, or operating-system consumer executes the candidate.",
+    "No native symbol was resolved, no host address was formed, no Foreign function executed, and no capability or library authority was granted.",
+    "The focused causal owner was run instead of the broader changed-file plan, whose additional owners protect unaffected compiler and consumer contracts."
+  ],
+  "related": [
+    "Documents/Decisions/0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Analysis.md",
+    "Specifications/Compiler-Source-Foreign-Lowering-Carrier.md",
+    "Tools/Native/Run-Split-Compiler.mjs",
+    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs"
+  ]
+}

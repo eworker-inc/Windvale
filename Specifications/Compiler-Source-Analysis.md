@@ -280,11 +280,10 @@ calls and writes no artifact. On success it emits exactly:
 foreign pairing status=Validated records=<u32> calls=<u32>\n
 ```
 
-The coordinator finally rechecks the six authenticated snapshots and retained
-WVFB again, reports exact `source emission status=Foreignˉwvbˉpending`, and
-launches no emitter. Analysis pairing therefore closes the authenticated typed-
-fact correlation boundary without creating WVB, native-call, provider, or
-capability authority.
+The coordinator next rechecks the six authenticated snapshots and retained WVFB
+and invokes the emitter's private paired-Foreign route. Analysis pairing closes
+the authenticated typed-fact correlation boundary; it does not itself create
+WVB, native-call, provider, or capability authority.
 
 For an empty catalog, the coordinator instead rechecks the retained snapshot
 bytes and invokes the Analyzer's explicitly non-authoritative source-set route:
@@ -320,24 +319,40 @@ foreign declaration. The former public `--admitted-source-set` route is
 removed; possession of one serialized source set cannot bypass production
 authentication.
 
-The hosted emitter accepts exactly that persisted set and writes one
-unoptimized portable WVB candidate:
+The hosted emitter's ordinary form accepts exactly that persisted set and writes
+one unoptimized portable WVB candidate:
 
 ```text
 wvemit <input.wvss> <input.wvca> <input.wvlb> <input.wvir> <output.wvb>
 ```
 
-In the authenticated route, `input.wvss` is the retained original rather than
-the Analyzer's republished copy. The emitter writes only inside the private
-candidate directory. The runner alone copies and syncs that completed WVB into
-a unique destination-directory candidate and atomically creates the final path
-without overwrite.
+That ordinary form rejects a Foreign-bearing source set with exact
+`Foreignˉrequiresˉauthenticatedˉpairing`. The authenticated route instead uses:
+
+```text
+wvemit --internal-paired-foreign-source <input.wvss> <input.wvca>
+    <input.wvlb> <input.wvir> <input.wvfb> <output.wvb>
+```
+
+Its `input.wvss` is the retained original rather than the Analyzer's republished
+copy. In addition to ordinary WVCA/WVLB/WVIR validation, the emitter
+independently reconstructs source symbols and requires the WVFB records to match
+the complete kind-`9` WVSD directory and every operation `190` target before
+candidate WVB 1.38 emission. The private route does not authenticate those
+inputs by itself.
+
+The emitter writes only inside the private candidate directory. After emission,
+the coordinator rechecks the six original authenticated snapshots plus WVFB a
+second time. The runner alone copies and syncs that completed WVB into a unique
+destination-directory candidate and atomically creates the final path without
+overwrite.
 
 The production front door owns five bounded products over one semantic compiler:
 `wvadmit`, `wvauth`, `wvbind`, the Analyzer, and the emitter. A nonempty catalog
 launches the admitter, authenticator, binding form of `wvbind`, Analyzer, and
-pairing form of `wvbind`, then stops at `Foreignˉwvbˉpending`; an empty catalog
-skips `wvbind` and launches the admitter, authenticator, Analyzer, and emitter.
+pairing form of `wvbind`, then the emitter's private paired-Foreign form; an
+empty catalog skips `wvbind` and launches the admitter, authenticator, Analyzer,
+and ordinary emitter.
 The admitter owns Language 1.0 descriptor/profile admission and catalog
 production; the authenticator independently proves the retained snapshot
 relationship; `wvbind` proves the compiler-owned foreign semantic facts and
@@ -352,14 +367,15 @@ must have a distinct target and producer identity.
 
 The private `wvbind` product is an additional bounded compiler-owned stop inside
 that same front door, not a public admitted-source interface. The coordinator
-now retains its independently validated WVFB output but does not pass it to the
-Analyzer or emitter. Its currently supported target is exactly Linux x86-64,
-little-endian,
+retains its independently validated WVFB output, does not pass it to the
+Analyzer, and passes it to the emitter only after typed pairing succeeds. Its
+currently supported target is exactly Linux x86-64, little-endian,
 `sysv_amd64_c_v1`, 64 address bits, and no-unwind C scalar-pointer contract
 major `1`. A structure-valid descriptor differing in any selected field is
-unsupported. Foreign call lowering, WVIR/WVLB/WVCA publication for such a call,
-WVB imports, native thunks, and execution containment remain later Slice 8
-work.
+unsupported. Typed WVIR and candidate WVB 1.38 publication for the exact
+registered call are implemented. Complete WVB verifier containment, native
+symbol resolution and ABI invocation, and runtime containment remain later
+Slice 8 work.
 
 The complete compiler-scale Analyzer remains inside Windvale 1.0's fixed 4 MiB
 immutable-`bytes` ceiling. Under the pinned bootstrap transition, the

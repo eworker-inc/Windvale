@@ -11,8 +11,11 @@ Migration Slices 1 through 7 are complete. Slice 7 has bounded sequential
 execution, observable completion order, explicit child-provider generation
 recovery, paired runner reconstruction, candidate promotion, bounded
 parallel-capable Windows/Linux execution, and exact paired-host Qualification.
-Slice 8 System and FFI work has begun with one exact compiler front-door seam.
-Target enforcement, typed lowering, linking, and foreign execution remain. The
+Slice 8 System and FFI work now has exact target enforcement, unsafe-memory
+execution through contained write pointers, authenticated Foreign admission,
+typed WVIR, retained pairing, and deterministic candidate WVB 1.38 publication.
+Complete Foreign-call verification, provider/native execution, one migrated
+real boundary, and paired-host qualification remain. The
 existing compiler admits an edition-1 source descriptor only through an
 explicitly supplied, hash-pinned source-input lock and composite source
 profile. It
@@ -5285,3 +5288,37 @@ remain closed to WVB 1.37. Provider/native address formation, authenticated
 no-retain Foreign calls, a migrated real boundary, Linux reproduction, and final
 Slice 8 qualification remain pending. The machine-readable evidence is
 [`2026-09-02-Compiler-Aligned-WVB-1-37-Write-Pointer-Containment.json`](../Evidence/2026-09-02-Compiler-Aligned-WVB-1-37-Write-Pointer-Containment.json).
+
+## Slice 8 candidate WVB 1.38 paired Foreign-call publication checkpoint
+
+[Decision 0934](../Decisions/0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md)
+extends the authenticated production path through deterministic source
+publication. The ordinary emitter rejects Foreign-bearing WVSS. After the
+existing binder pairs every kind-`9` WVSD entry and WVIR operation `190` with
+the retained WVFB record, the coordinator rechecks all six authenticated
+snapshots plus WVFB and invokes the private paired-Foreign emitter route.
+
+The emitter independently repeats the bounded WVFB/WVSD/WVIR relationship check
+before prepared emission. Candidate WVB 1.38 opcode `E0` (`224`) consumes the
+exact `Foreignˉpointer<u8, Abi>`, `u64` capacity, and `u64` expected generation,
+produces `i64`, and carries registered binding identity `1`, the canonical
+pointer-record Types index, and matching ABI-enum Types index. It carries no
+native address, symbol text, library path, capability, or authentication
+certificate. After emission the coordinator rechecks all retained inputs again
+before atomic publication.
+
+Implementation commit `e23a34060ce824c96a0b469816cb5a54ef08c8e8` passes the
+21-case `language-1-production-admission-ingress` owner in 85.973 seconds on the
+local Windows host. The independent reader accepts the canonical seven-section
+minor-38 publication and rejects seven old-minor, opcode, binding, index, and
+type-kind mutations. A post-emission WVFB mutation prevents publication. A
+second complete authenticated build publishes byte-identical WVB, and the
+existing `wvverify` rejects the candidate as invalid, preserving execution
+closure.
+
+This is local Windows source-publication evidence. The focused reader is not the
+complete compiler-aligned verifier. Complete WVB 1.38 containment,
+runtime/provider execution, native symbol resolution and ABI invocation, a
+migrated real boundary, Linux reproduction, and final Slice 8 qualification
+remain pending. The machine-readable evidence is
+[`2026-09-03-Paired-Foreign-Wvb-1-38.json`](../Evidence/2026-09-03-Paired-Foreign-Wvb-1-38.json).

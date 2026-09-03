@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.37 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, and candidate WVB 1.37 serializes and compiler-verifies contained write-pointer derivation without opening execution; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.38 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, and candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -39,7 +39,14 @@ WVB 1.37 represents contained write-pointer derivation under
 [Decision 0916](../Documents/Decisions/0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md).
 [Decision 0918](../Documents/Decisions/0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md)
 admits that exact derivation through the complete compiler-aligned verifier.
-Every execution consumer remains closed to 1.37.
+[Decision 0920](../Documents/Decisions/0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md)
+and
+[Decision 0922](../Documents/Decisions/0922-Lower-Contained-WVB-1.37-Write-Pointers-And-Focus-Native-Development-Verification.md)
+execute only its private logical descriptor in the bounded scalar provider and
+native x86-64 lowerer. Candidate WVB 1.38 adds the paired Foreign-call
+publication boundary selected by
+[Decision 0934](../Documents/Decisions/0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md).
+The complete verifier and every execution consumer remain closed to 1.38.
 None of these checkpoints is a cross-host or complete Slice 8 claim.
 
 ## Direct compilation result
@@ -1095,15 +1102,53 @@ availability at forward joins, requires exact state at backedges, and rejects
 `local.take`, load from an unavailable pointer local, call/return escape, and
 record embedding. The region remains available as an immutable borrow. One
 module is bounded to 4,096 `DF` instructions and 256 explicit pointer relations.
-Every execution consumer still rejects minor 37, so no address is formed and no
-call or dereference authority is granted.
+The bounded scalar provider and native x86-64 lowerer execute only the private
+logical region descriptor, so no address is formed and no call or dereference
+authority is granted.
 
-WVIR 1.31/1.32 operation `190` has no WVB encoding in this checkpoint. The
-source-WVB operation vocabulary remains capped at operation `189`; after the
-standalone WVIR validator accepts a well-formed typed Foreign call, prepared
-emission deterministically returns `Unsupportedˉoperation`. Import-table
-publication, authenticated WVFB pairing, the native ABI thunk, and execution
-containment are separate later checkpoints.
+WVIR 1.31/1.32 operation `190` lowers to candidate WVB 1.38 opcode `E0`
+(`foreign.call`). Ordinary operand emission first loads the exact
+`Foreignˉpointer<u8, Abi>`, `u64` capacity, and `u64` expected generation in
+declaration order. The 13-byte `E0` instruction then carries three `u32`
+immediates: registered binding identity `1`, the canonical pointer-record Types
+index, and the matching ABI-enum Types index. It consumes those three values and
+produces exact `i64`; the ordinary result-temporary store follows the
+instruction.
+
+The writer accepts only a kind-`9`, arity-three Foreign target with zero
+auxiliary data and the exact typed operand/result relationship already required
+by WVIR. It recovers the ABI enum from the pointer's generic type arguments,
+materializes the pointer record and ABI enum in Types, and selects minor 38 when
+at least one reachable operation `190` is emitted. Identity `1` denotes only the
+registered `windvale.paper.buffer_source.sysv_amd64_c_v1` binding and therefore
+the exact `wv_paper_buffer_source_read_v1` SysV AMD64 C, unsafe, no-retain,
+no-unwind three-argument contract. WVB carries the registry identity, not a
+native symbol string, address, path, or authentication certificate.
+
+The ordinary five-path `wvemit` form rejects every Foreign-bearing WVSS with
+`Foreignˉrequiresˉauthenticatedˉpairing`. The production coordinator instead
+uses the private seven-argument form only after source admission,
+authentication, binding, typed analysis, and WVFB-to-WVIR pairing:
+
+```text
+wvemit --internal-paired-foreign-source <input.wvss> <input.wvca>
+    <input.wvlb> <input.wvir> <input.wvfb> <output.wvb>
+```
+
+The emitter independently validates the exact WVFB/WVSD/WVIR relationship
+before calling prepared emission. The coordinator rechecks the original six
+authenticated snapshots plus WVFB both before and after emission, and only then
+publishes the private WVB candidate. The private switch and WVFB remain
+non-authoritative when invoked outside that retained coordinator relationship.
+
+The focused independent WVB 1.38 reader checks the exact seven-section
+envelope, type/function/code bounds, registered binding, pointer and ABI kinds,
+and one emitted `E0` fixture. It rejects old-minor, unknown-opcode,
+unregistered-binding, invalid-index, invalid-kind, and swapped pointer/ABI
+mutations. The complete compiler-aligned verifier, scalar provider, native
+lowerer, launchers, browser, WebAssembly, packages, and OS consumers still
+reject minor 38. Verifier containment, the runtime provider, native symbol
+resolution and ABI invocation remain separate later checkpoints.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1120,10 +1165,12 @@ invocation teardown. The native x86-64 lowerer implements the same bounded
 scratch, budget-borrow, and scratch-observation matrix. WVB 1.36 now preserves
 mutable write-region borrowing, verifies conservative affine containment, and
 executes region construction plus exact range/overflow/alignment results in the
-bounded scalar provider and native x86-64 lowerer. Candidate WVB 1.37 now
-preserves contained pointer derivation through complete compiler-aligned
-verification while every execution path remains closed. Provider and native
-address formation, Foreign calls, and cross-host containment remain pending.
+bounded scalar provider and native x86-64 lowerer. Candidate WVB 1.37 preserves
+contained pointer derivation through complete compiler-aligned verification and
+executes only its private logical descriptor in those two bounded paths.
+Candidate WVB 1.38 publishes the paired registered Foreign call while complete
+verification and every execution path remain closed. Native address formation,
+Foreign invocation, and cross-host containment remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

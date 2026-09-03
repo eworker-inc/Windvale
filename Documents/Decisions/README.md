@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 340 |
+| Accepted | 341 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0934: represent paired Foreign calls in candidate WVB 1.38](0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md) | Accepted |
 | [Decision 0933: pair authenticated Foreign calls before WVB emission](0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md) | Accepted |
 | [Decision 0932: represent typed Foreign calls in WVIR 1.31](0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md) | Accepted |
 | [Decision 0931: preserve resumable compiler symbol checkpoints](0931-Preserve-Resumable-Compiler-Symbol-Checkpoints.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0912: execute WVB 1.36 write regions in a bounded scalar provider](0912-Execute-WVB-1.36-Write-Regions-In-A-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0911: verify WVB 1.36 write-region lifetime containment](0911-Verify-WVB-1.36-Write-Region-Lifetime-Containment.md) | Accepted |
 | [Decision 0910: represent mutable write-region borrowing in candidate WVB 1.36](0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md) | Accepted |
-| [Decision 0909: lower mutable unsafe write-region borrowing to WVIR](0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md) | Accepted |
 
 ## Superseded or historical records
 
