@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-03-authenticated-foreign-wvir-pairing",
+  "date": "2026-09-03",
+  "subject": "Authenticated WVFB-to-WVIR Foreign-call pairing before WVB emission",
+  "claim": "Implementation commit 7f59c65f390e16cac13425700a159e7e42643ff1 admits a retained authenticated Foreign-bearing source set into typed analysis, pairs each kind-9 WVSD symbol and WVIR operation 190 target with the exact retained WVFB carrier, rechecks the retained snapshots, and stops without publishing WVB on the Windows development host.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "7f59c65f390e16cac13425700a159e7e42643ff1"
+  },
+  "runs": [
+    {
+      "host": "Windows x64 local development host",
+      "target": "Authenticated Foreign binding and isolated WVFB-to-WVIR pairing owner",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-authenticated-foreign-binding -AllowLongRun",
+      "result": "Passed",
+      "elapsedMilliseconds": 101909
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Production admission, analysis, pairing, and no-publication path",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner language-1-production-admission-ingress -AllowLongRun",
+      "result": "Passed",
+      "elapsedMilliseconds": 455506
+    },
+    {
+      "host": "Windows x64 local development host",
+      "target": "Changed-file verification owner routing",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 24640
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is Windows-local development evidence; Linux reproduction and paired-host qualification remain pending.",
+    "The final authenticated-binding run reused unchanged compiler products and is not a cold deterministic reconstruction measurement.",
+    "The pairer independently validates the carrier, source-symbol directory shape, and WVIR table geometry it consumes; it does not replace complete WVIR validation by the compiler pipeline.",
+    "No WVB Foreign-call encoding exists in this checkpoint, no Foreign function executes, no host address is formed, and no capability or library authority is granted.",
+    "The full changed-file plan was not run because its additional owners protect unaffected contracts; the two focused causal owners and routing verifier were run instead."
+  ],
+  "related": [
+    "Documents/Decisions/0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md",
+    "Specifications/Compiler-Source-Analysis.md",
+    "Specifications/Compiler-Source-Foreign-Lowering-Carrier.md",
+    "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs"
+  ]
+}

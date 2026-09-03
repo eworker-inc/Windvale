@@ -989,6 +989,23 @@ resource. The exact 1,552,090-byte analyzer stages to 50,761,605 WVO bytes in
 predecessor. The segmented reconstruction owner passes 5/5. This is a bounded
 compiler-workflow repair and does not expand or complete Slice 8 semantics.
 
+[Decision 0933](../Decisions/0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md)
+now joins the authenticated source-admission path to the typed Foreign-call
+checkpoint. A private Analyzer form builds ordinary WVCA, WVLB, and WVIR from
+the retained foreign-bearing WVSS. The existing binder executable then
+reconstructs WVSD, validates WVFB and the bounded WVIR table geometry, matches
+each kind-9 Foreign symbol to one carrier record, and requires every operation
+`190` target to name one of those records. The coordinator rechecks all six
+authenticated snapshots plus WVFB and stops at exact
+`Foreignˉwvbˉpending`; it does not launch the emitter or publish WVB.
+
+The five-fixture authenticated owner passes 27 isolated selectors, and the
+21-case production-ingress owner passes the real two-module generic-pointer
+path on the local Windows host. Exact evidence is recorded in
+[`2026-09-03-Authenticated-Foreign-Wvir-Pairing.json`](../Evidence/2026-09-03-Authenticated-Foreign-Wvir-Pairing.json).
+WVB encoding and verification, provider/native execution, a migrated real
+boundary, Linux reproduction, and paired-host qualification remain pending.
+
 ## Removal checkpoint
 
 Seed removal occurs only when:
