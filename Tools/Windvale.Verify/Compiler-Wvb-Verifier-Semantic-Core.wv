@@ -55,6 +55,12 @@ export fn Aˉidentifier(Input: bytes) -> bytes {
     return Input;
 }
 
+fn Bˉeffectiveˉminor(Input: bytes) -> u32 {
+    let Declared: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    if Declared == 38u32 { return 37u32; }
+    return Declared;
+}
+
 fn Bˉextendedˉshape(Minor: u32, Kind: u32) -> bool {
     if Kind >= 14u32 && Kind <= 16u32 {
         return Minor >= 12u32 && Minor <= 37u32;
@@ -435,18 +441,24 @@ export fn Bˉstructure(Input: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 2u32)) != 66u32 { return Invalid; }
     if U32ˉfromˉu8(Bytesˉreadˉu8(Input, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 { return Invalid; }
-    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if Minor != 11u32 && Minor != 12u32 && Minor != 13u32 &&
-        Minor != 14u32 && Minor != 15u32 && Minor != 16u32 &&
-        Minor != 17u32 && Minor != 18u32 && Minor != 19u32 &&
-        Minor != 20u32 && Minor != 21u32 && Minor != 22u32 &&
-        Minor != 23u32 && Minor != 24u32 && Minor != 25u32 &&
-        Minor != 26u32 && Minor != 27u32 && Minor != 28u32 &&
-        Minor != 29u32 && Minor != 30u32 && Minor != 31u32 &&
-        Minor != 32u32 && Minor != 33u32 && Minor != 34u32 &&
-        Minor != 35u32 && Minor != 36u32 && Minor != 37u32 {
+    let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    if Declaredˉminor != 11u32 && Declaredˉminor != 12u32 &&
+        Declaredˉminor != 13u32 && Declaredˉminor != 14u32 &&
+        Declaredˉminor != 15u32 && Declaredˉminor != 16u32 &&
+        Declaredˉminor != 17u32 && Declaredˉminor != 18u32 &&
+        Declaredˉminor != 19u32 && Declaredˉminor != 20u32 &&
+        Declaredˉminor != 21u32 && Declaredˉminor != 22u32 &&
+        Declaredˉminor != 23u32 && Declaredˉminor != 24u32 &&
+        Declaredˉminor != 25u32 && Declaredˉminor != 26u32 &&
+        Declaredˉminor != 27u32 && Declaredˉminor != 28u32 &&
+        Declaredˉminor != 29u32 && Declaredˉminor != 30u32 &&
+        Declaredˉminor != 31u32 && Declaredˉminor != 32u32 &&
+        Declaredˉminor != 33u32 && Declaredˉminor != 34u32 &&
+        Declaredˉminor != 35u32 && Declaredˉminor != 36u32 &&
+        Declaredˉminor != 37u32 && Declaredˉminor != 38u32 {
         return Invalid;
     }
+    let Minor: u32 = Bˉeffectiveˉminor(Input);
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;
@@ -913,6 +925,10 @@ export fn Bˉstructure(Input: bytes) -> bytes {
                 }
                 if Raw == 223u32 {
                     if Minor != 37u32 { return Invalid; }
+                    Width = 13u32;
+                }
+                if Raw == 224u32 {
+                    if Declaredˉminor != 38u32 { return Invalid; }
                     Width = 13u32;
                 }
                 if Width == 0u32 { return Invalid; }
@@ -1407,7 +1423,7 @@ export fn Dˉdata(Input: bytes) -> bytes {
 
 export fn Eˉfunctions(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Minor: u32 = Bˉeffectiveˉminor(Input);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
     var Functionsˉpayload: u32 = 0u32;
@@ -2370,6 +2386,93 @@ fn Fˉunsafeˉwriteˉpointerˉrelationsˉareˉconsistent(
     return true;
 }
 
+fn Fˉforeignˉcallˉrelations(
+    Input: bytes,
+    Instruction: u32,
+    Declaredˉminor: u32,
+    Types: u32,
+    Typeˉcount: u32,
+    Relations: bytes
+) -> bytes {
+    let Binding: u32 = Bytesˉreadˉu32ˉlittle(Input, Instruction + 1u32);
+    let Pointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Instruction + 5u32
+    );
+    let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Input, Instruction + 9u32
+    );
+    if Declaredˉminor != 38u32 || Binding != 1u32 ||
+        Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount ||
+        !Executableˉverifier.Hˉunsafeˉscratchˉisˉexact(
+            Input, Types, Typeˉcount, Pointerˉtype
+        ) {
+        return Bytesˉslice(Input, 0u32, 1u32);
+    }
+    let Abiˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
+        Input, Bˉtypeˉat(Input, Types, Abiˉtype)
+    ));
+    if Abiˉkind != 2u32 && Abiˉkind != 7u32 {
+        return Bytesˉslice(Input, 0u32, 1u32);
+    }
+    var Relation: u32 = 0u32;
+    var Found: bool = false;
+    while Relation < Bytesˉlength(Relations) {
+        let Existingˉpointer: u32 = Bytesˉreadˉu32ˉlittle(
+            Relations, Relation
+        );
+        let Existingˉabi: u32 = Bytesˉreadˉu32ˉlittle(
+            Relations, Relation + 4u32
+        );
+        if (Existingˉpointer == Pointerˉtype && Existingˉabi != Abiˉtype) ||
+            (Existingˉabi == Abiˉtype && Existingˉpointer != Pointerˉtype) {
+            return Bytesˉslice(Input, 0u32, 1u32);
+        }
+        if Existingˉpointer == Pointerˉtype && Existingˉabi == Abiˉtype {
+            Found = true;
+        }
+        Relation = Relation + 8u32;
+    }
+    if Found { return Relations; }
+    if Bytesˉlength(Relations) >= 2048u32 {
+        return Bytesˉslice(Input, 0u32, 1u32);
+    }
+    return Bytesˉconcat(
+        Relations,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Pointerˉtype),
+            Bytesˉfromˉu32ˉlittle(Abiˉtype)
+        )
+    );
+}
+
+fn Fˉforeignˉcallˉrelationsˉareˉconsistent(
+    Pointerˉrelations: bytes,
+    Foreignˉrelations: bytes
+) -> bool {
+    var Foreignˉrelation: u32 = 0u32;
+    while Foreignˉrelation < Bytesˉlength(Foreignˉrelations) {
+        let Foreignˉpointer: u32 = Bytesˉreadˉu32ˉlittle(
+            Foreignˉrelations, Foreignˉrelation
+        );
+        let Foreignˉabi: u32 = Bytesˉreadˉu32ˉlittle(
+            Foreignˉrelations, Foreignˉrelation + 4u32
+        );
+        var Pointerˉrelation: u32 = 0u32;
+        while Pointerˉrelation < Bytesˉlength(Pointerˉrelations) {
+            if Bytesˉreadˉu32ˉlittle(
+                    Pointerˉrelations, Pointerˉrelation + 4u32
+                ) == Foreignˉpointer && Bytesˉreadˉu32ˉlittle(
+                    Pointerˉrelations, Pointerˉrelation + 8u32
+                ) != Foreignˉabi {
+                return false;
+            }
+            Pointerˉrelation = Pointerˉrelation + 12u32;
+        }
+        Foreignˉrelation = Foreignˉrelation + 8u32;
+    }
+    return true;
+}
+
 fn Fˉboundaryˉinstructionˉwidth(Opcode: u32) -> u32 {
     if Opcode == 2u32 || Opcode == 8u32 { return 2u32; }
     if Opcode == 1u32 || (Opcode >= 3u32 && Opcode <= 7u32) ||
@@ -2391,7 +2494,7 @@ fn Fˉboundaryˉinstructionˉwidth(Opcode: u32) -> u32 {
     if Opcode == 221u32 { return 9u32; }
     if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||
         Opcode == 217u32 || Opcode == 220u32 || Opcode == 222u32 ||
-        Opcode == 223u32 {
+        Opcode == 223u32 || Opcode == 224u32 {
         return 13u32;
     }
     if Opcode == 219u32 { return 6u32; }
@@ -2649,7 +2752,8 @@ fn Fˉexportsˉareˉvalid(
 
 export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Minor: u32 = Bˉeffectiveˉminor(Input);
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;
     var Capabilitiesˉpayload: u32 = 0u32;
@@ -2759,6 +2863,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     var Unsafeˉscratchˉlengthˉinstructions: u32 = 0u32;
     var Unsafeˉwriteˉregionˉinstructions: u32 = 0u32;
     var Unsafeˉwriteˉpointerˉinstructions: u32 = 0u32;
+    var Foreignˉcallˉinstructions: u32 = 0u32;
     var Unsafeˉscratchˉabiˉrelations: bytes =
         Bytesˉslice(Input, 0u32, 0u32);
     var Unsafeˉscratchˉlengthˉrelations: bytes =
@@ -2766,6 +2871,8 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     var Unsafeˉwriteˉregionˉrelations: bytes =
         Bytesˉslice(Input, 0u32, 0u32);
     var Unsafeˉwriteˉpointerˉrelations: bytes =
+        Bytesˉslice(Input, 0u32, 0u32);
+    var Foreignˉcallˉrelations: bytes =
         Bytesˉslice(Input, 0u32, 0u32);
     while Functionˉindex < Functionˉcount {
         Nameˉlength = Bytesˉreadˉu32ˉlittle(Input, Functionˉcursor);
@@ -2881,6 +2988,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             if Opcode == 221u32 { Width = 9u32; }
             if Opcode == 222u32 { Width = 13u32; }
             if Opcode == 223u32 { Width = 13u32; }
+            if Opcode == 224u32 { Width = 13u32; }
             Operand = 0u32;
             if Width >= 5u32 {
                 Operand = Bytesˉreadˉu32ˉlittle(
@@ -2893,7 +3001,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 Opcode == 209u32 || Opcode == 211u32 || Opcode == 213u32 ||
                 (Opcode >= 214u32 && Opcode <= 218u32) ||
                 Opcode == 220u32 || Opcode == 221u32 || Opcode == 222u32 ||
-                Opcode == 223u32 ||
+                Opcode == 223u32 || Opcode == 224u32 ||
                 (Opcode >= 151u32 && Opcode <= 153u32) {
                 Secondˉoperand = Bytesˉreadˉu32ˉlittle(
                     Input,
@@ -2901,7 +3009,8 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 );
             }
             if Opcode == 213u32 || Opcode == 216u32 || Opcode == 217u32 ||
-                Opcode == 220u32 || Opcode == 222u32 || Opcode == 223u32 {
+                Opcode == 220u32 || Opcode == 222u32 || Opcode == 223u32 ||
+                Opcode == 224u32 {
                 Thirdˉoperand = Bytesˉreadˉu32ˉlittle(
                     Input,
                     Codeˉpayload + Codeˉoffset + Cursor + 9u32
@@ -3103,6 +3212,18 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
                 if Unsafeˉwriteˉpointerˉinstructions > 4096u32 {
                     return Invalid;
                 }
+            }
+            if Opcode == 224u32 {
+                Foreignˉcallˉrelations = Fˉforeignˉcallˉrelations(
+                    Input, Codeˉpayload + Codeˉoffset + Cursor,
+                    Declaredˉminor, Typesˉpayload, Typeˉcount,
+                    Foreignˉcallˉrelations
+                );
+                if Bytesˉlength(Foreignˉcallˉrelations) % 8u32 != 0u32 {
+                    return Invalid;
+                }
+                Foreignˉcallˉinstructions = Foreignˉcallˉinstructions + 1u32;
+                if Foreignˉcallˉinstructions > 4096u32 { return Invalid; }
             }
             if Opcode == 64u32 {
                 if Operand >= Functionˉcount { return Invalid; }
@@ -3308,7 +3429,11 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     if Minor == 36u32 && Unsafeˉwriteˉregionˉinstructions == 0u32 {
         return Invalid;
     }
-    if Minor == 37u32 && Unsafeˉwriteˉpointerˉinstructions == 0u32 {
+    if Declaredˉminor == 37u32 &&
+        Unsafeˉwriteˉpointerˉinstructions == 0u32 {
+        return Invalid;
+    }
+    if Declaredˉminor == 38u32 && Foreignˉcallˉinstructions == 0u32 {
         return Invalid;
     }
     if !Fˉunsafeˉscratchˉrelationsˉareˉcovered(
@@ -3326,6 +3451,12 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     if !Fˉunsafeˉwriteˉpointerˉrelationsˉareˉconsistent(
             Unsafeˉwriteˉregionˉrelations,
             Unsafeˉwriteˉpointerˉrelations
+        ) {
+        return Invalid;
+    }
+    if !Fˉforeignˉcallˉrelationsˉareˉconsistent(
+            Unsafeˉwriteˉpointerˉrelations,
+            Foreignˉcallˉrelations
         ) {
         return Invalid;
     }
@@ -3463,7 +3594,7 @@ fn Gˉtypeˉrangesˉread(
 
 export fn Gˉtypes(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    let Minor: u32 = Bˉeffectiveˉminor(Input);
     let Moduleˉprofile: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, 20u32));
     var Header: u32 = 12u32;
     var Section: u32 = 1u32;

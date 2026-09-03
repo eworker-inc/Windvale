@@ -68,16 +68,20 @@ const EXPECTED_PRODUCTS = Object.freeze({
         sha256: '6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612',
     }),
     wvanalyze: Object.freeze({
-        bytes: 1_573_433,
-        sha256: '23d9ec0c223d214a69fcb4179abec5b3b9a6d579d8557f3ccf4248c2904267b6',
+        bytes: 1_650_588,
+        sha256: '91fbdc08a60a4f319b6281f804c415e91e5776121155171dfa7e63821efc84b7',
     }),
     wvbind: Object.freeze({
-        bytes: 980_285,
-        sha256: '33ad319280dad9aa7c9ba7888f2c2c7d089b23433db8def9ba7308767d14eb07',
+        bytes: 988_400,
+        sha256: 'b73bb2af6da7f05632387c8c1f1c4d7085c49ce406c02aaf1be3a1baa45ad545',
     }),
     wvemit: Object.freeze({
-        bytes: 1_575_647,
-        sha256: '0972defc2debdad47cd36268516c15d947a364b93aede84f0b55cf17ad061d77',
+        bytes: 1_538_934,
+        sha256: '1e4aadaa6d2f7f4e99eed4d025d6f0181e8cec33ef4673d1b677ae5211c3b0f7',
+    }),
+    wvverify: Object.freeze({
+        bytes: 502_386,
+        sha256: '742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4',
     }),
 });
 
@@ -293,10 +297,20 @@ function Inspectˉforeignˉwvb(Input) {
             if (Binding === 1 && Pointerˉtype < Typeˉcount &&
                 Abiˉtype < Typeˉcount && Typeˉkinds[Pointerˉtype] === 1 &&
                 (Typeˉkinds[Abiˉtype] === 2 || Typeˉkinds[Abiˉtype] === 7) &&
-                Cursor <= Range.End - 18 && Input[Cursor + 13] === 5) {
+                Cursor >= Range.Start + 15 && Cursor <= Range.End - 18 &&
+                Input[Cursor - 15] === 4 && Input[Cursor - 10] === 4 &&
+                Input[Cursor - 5] === 4 && Input[Cursor + 13] === 5) {
+                const Pointerˉlocal = Input.readUInt32LE(Cursor - 14);
+                const Capacityˉlocal = Input.readUInt32LE(Cursor - 9);
+                const Generationˉlocal = Input.readUInt32LE(Cursor - 4);
+                if (Pointerˉlocal === Capacityˉlocal ||
+                    Pointerˉlocal === Generationˉlocal) {
+                    Reject('The Foreign WVB pointer operand local is aliased.');
+                }
                 Matches.push({
                     Operation: Cursor, Binding, Pointerˉtype, Abiˉtype,
-                    Typeˉcount,
+                    Typeˉcount, Pointerˉlocal, Capacityˉlocal,
+                    Generationˉlocal,
                 });
             }
         }
@@ -307,8 +321,8 @@ function Inspectˉforeignˉwvb(Input) {
     return Matches[0];
 }
 
-function Verifyˉmalformedˉforeignˉwvb(Canonical, Layout) {
-    const Cases = [
+function Foreignˉwvbˉstructuralˉmutations(Layout) {
+    return [
         ['old-minor', Value => Value.writeUInt16LE(37, 6)],
         ['unknown-opcode', Value => { Value[Layout.Operation] = 225; }],
         ['unregistered-binding', Value => Value.writeUInt32LE(
@@ -327,6 +341,10 @@ function Verifyˉmalformedˉforeignˉwvb(Canonical, Layout) {
             Layout.Abiˉtype, Layout.Operation + 5
         )],
     ];
+}
+
+function Verifyˉmalformedˉforeignˉwvb(Canonical, Layout) {
+    const Cases = Foreignˉwvbˉstructuralˉmutations(Layout);
     for (const [Name, Mutate] of Cases) {
         const Candidate = Buffer.from(Canonical);
         Mutate(Candidate);
@@ -338,6 +356,62 @@ function Verifyˉmalformedˉforeignˉwvb(Canonical, Layout) {
         Reject(`The malformed Foreign WVB was accepted: ${Name}.`);
     }
     return Cases.length;
+}
+
+async function Verifyˉcompilerˉforeignˉwvb(
+    Verifier, Canonicalˉpath, Canonical, Layout, Work
+) {
+    const Valid = await Runˉbounded(
+        Verifier, [Canonicalˉpath], 'foreign-wvb-current-verifier',
+        CASE_TIMEOUT_MILLISECONDS
+    );
+    Requireˉcleanˉtermination(Valid, 'foreign-wvb-current-verifier');
+    const Validˉdiagnostic = Buffer.concat([
+        Valid.output, Valid.error,
+    ]).toString('utf8').replaceAll('\r\n', '\n');
+    Require(Valid.code === 0 && Validˉdiagnostic ===
+        'wvb status=Valid profile=compiler-aligned\n',
+    `The current compiler verifier rejected canonical WVB 1.38: ${
+        JSON.stringify(Validˉdiagnostic)
+    }.`);
+
+    const Cases = [
+        ...Foreignˉwvbˉstructuralˉmutations(Layout),
+        ['pointer-stack-kind', Value => Value.writeUInt32LE(
+            Layout.Capacityˉlocal, Layout.Operation - 14
+        )],
+        ['capacity-stack-kind', Value => Value.writeUInt32LE(
+            Layout.Pointerˉlocal, Layout.Operation - 9
+        )],
+        ['generation-stack-kind', Value => Value.writeUInt32LE(
+            Layout.Pointerˉlocal, Layout.Operation - 4
+        )],
+    ];
+    for (let Index = 0; Index < Cases.length; Index += 1) {
+        const [Name, Mutate] = Cases[Index];
+        process.stdout.write(
+            `production admission Foreign verifier item=${Index + 1}/` +
+            `${Cases.length} case=${Name} status=Started\n`
+        );
+        const Candidate = Buffer.from(Canonical);
+        Mutate(Candidate);
+        const Candidateˉpath = join(Work, `Foreign-Malformed-${Name}.wvb`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        const Rejected = await Runˉbounded(
+            Verifier, [Candidateˉpath], `foreign-wvb-${Name}`,
+            CASE_TIMEOUT_MILLISECONDS
+        );
+        Requireˉcleanˉtermination(Rejected, `foreign-wvb-${Name}`);
+        const Diagnostic = Buffer.concat([
+            Rejected.output, Rejected.error,
+        ]).toString('utf8').replaceAll('\r\n', '\n');
+        Require(Rejected.code === 1 &&
+            /^wvb status=Invalid phase=[^\n]+\n$/u.test(Diagnostic),
+        `The current compiler verifier accepted malformed WVB 1.38 ${Name}: ${
+            JSON.stringify(Diagnostic)
+        }.`);
+    }
+    return Cases.length + 1;
 }
 
 function Processˉisˉlive(Child) {
@@ -576,7 +650,7 @@ function Requireˉcompleteˉpins() {
     if (Pinsˉareˉcomplete()) return;
     Reject(
         'production admission ingress pins status=Missing ' +
-        'products=wvadmit,wvauth,wvanalyze,wvbind,wvemit ' +
+        'products=wvadmit,wvauth,wvanalyze,wvbind,wvemit,wvverify ' +
         'reason=incomplete-product-identity'
     );
 }
@@ -2096,6 +2170,9 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         SCRIPT_DIRECTORY,
         'Build-Cached-Segmented-Hosted-Wvb.mjs'
     );
+    const Hostedˉpackage = join(
+        SCRIPT_DIRECTORY, `Package-Hosted-Wvb.${Extension}`
+    );
     const Build = join(SCRIPT_DIRECTORY, 'Build-Cached-Split-Project-Wvb.mjs');
     const Writeˉidentity = join(
         SCRIPT_DIRECTORY, 'Write-Split-Compiler-Producer-Identity.mjs'
@@ -2151,6 +2228,8 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             'Windvale-Compiler-Foreign-Binding-Driver.wvproj'),
         wvemit: join(REPOSITORY_ROOT, 'Projects', 'Tools',
             'Windvale-Compiler-Emission-Driver.wvproj'),
+        wvverify: join(REPOSITORY_ROOT, 'Projects', 'Tools',
+            'Windvale-Compiler-Wvb-Verifier.wvproj'),
     };
     const Applications = {};
     let Productˉindex = 0;
@@ -2165,7 +2244,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         ];
         process.stdout.write(
             `START production admission product=${Name} ` +
-            `item=${Productˉindex}/5 build=1/${Buildˉmode.buildsPerProduct} ` +
+            `item=${Productˉindex}/6 build=1/${Buildˉmode.buildsPerProduct} ` +
             `build-mode=${Buildˉmode.name}\n`
         );
         await Requireˉsuccess(`${Name}-build-1`, process.execPath,
@@ -2176,7 +2255,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             const Second = join(Work, `${Name}-B.wvb`);
             process.stdout.write(
                 `START production admission product=${Name} ` +
-                `item=${Productˉindex}/5 build=2/2 ` +
+                `item=${Productˉindex}/6 build=2/2 ` +
                 `build-mode=${Buildˉmode.name}\n`
             );
             await Requireˉsuccess(`${Name}-build-2`, process.execPath,
@@ -2199,6 +2278,11 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             await Requireˉsuccess(
                 `${Name}-profile-7-package`, Lowˉlevelˉpackage,
                 ['7', First, Application, '--development-cache'],
+                PACKAGE_TIMEOUT_MILLISECONDS, true);
+        } else if (Name === 'wvverify') {
+            await Requireˉsuccess(
+                `${Name}-profile-2-package`, Hostedˉpackage,
+                ['2', First, Application, WINDOWS ? 'windows' : 'linux'],
                 PACKAGE_TIMEOUT_MILLISECONDS, true);
         } else {
             await Requireˉsuccess(
@@ -2241,6 +2325,22 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             identity: Currentˉanalyzerˉidentity,
         },
         Pinned.emitter
+    );
+    const Currentˉemitterˉidentity = join(Work, 'wvemit.identity');
+    await Requireˉsuccess('wvemit-current-identity', process.execPath,
+        [Writeˉidentity, 'emitter', Applications.wvemit,
+            Currentˉemitterˉidentity],
+        BUILD_TIMEOUT_MILLISECONDS);
+    await Buildˉproduct(
+        'wvverify', Projects.wvverify,
+        {
+            application: Applications.wvanalyze,
+            identity: Currentˉanalyzerˉidentity,
+        },
+        {
+            application: Applications.wvemit,
+            identity: Currentˉemitterˉidentity,
+        }
     );
     return Applications;
 }
@@ -2351,7 +2451,7 @@ async function Writeˉlaunchˉguard(Work, Name, Marker) {
 }
 
 async function Runˉproductionˉcases(Work, Products, Inputs) {
-    // Cases 1-13 and 17 are production-only. They exercise the actual five
+    // Cases 1-13 and 17 are production-only. They exercise the actual six
     // successor products built above; qualification additionally pins their
     // settled cross-host portable identities.
     // The two valid outputs prove current-run final-WVB determinism only. They
@@ -2409,6 +2509,10 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
     const Malformedˉforeignˉwvb = Verifyˉmalformedˉforeignˉwvb(
         Foreignˉbytes, Foreignˉlayout
     );
+    const Compilerˉforeignˉwvb = await Verifyˉcompilerˉforeignˉwvb(
+        Products.wvverify, ForeignOutput, Foreignˉbytes,
+        Foreignˉlayout, Work
+    );
     const Frontˉdoorˉverifier = await realpath(join(
         REPOSITORY_ROOT, 'Artifacts', 'Native-Front-Door',
         WINDOWS ? 'windows-x64' : 'linux-x64',
@@ -2452,6 +2556,8 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
     process.stdout.write(
         `production admission foreign-wvb status=Passed minor=38 opcode=224 ` +
         `binding=${Foreignˉlayout.Binding} malformed=${Malformedˉforeignˉwvb} ` +
+        `compiler-verifier-cases=${Compilerˉforeignˉwvb} ` +
+        'current-verifier=Verified published-front-door=Closed ' +
         'execution=Closed deterministic=Verified\n'
     );
 
