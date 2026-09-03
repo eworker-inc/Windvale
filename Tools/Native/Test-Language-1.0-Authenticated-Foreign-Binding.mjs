@@ -18,11 +18,23 @@ const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const FIXTURES = Object.freeze([
     Object.freeze({
         name: 'core',
+        application: 'combined',
         selectors: Object.freeze([...'abcdefghijklmn']),
     }),
     Object.freeze({
         name: 'portable',
+        application: 'combined',
         selectors: Object.freeze([...'opqrstuvwx']),
+    }),
+    Object.freeze({
+        name: 'typed-wir',
+        application: 'typed-wir',
+        selectors: Object.freeze(['y']),
+    }),
+    Object.freeze({
+        name: 'typed-wir-validation',
+        application: 'combined',
+        selectors: Object.freeze(['z']),
     }),
 ]);
 const SELECTORS = FIXTURES.flatMap(Fixture =>
@@ -360,9 +372,9 @@ async function Main() {
     await Runˉterminationˉprobe();
     if (Probeˉonly) return;
     const Selectorˉvalues = SELECTORS.map(Item => Item.Selector);
-    if (FIXTURES.length !== 2 || SELECTORS.length !== 24 ||
+    if (FIXTURES.length !== 4 || SELECTORS.length !== 26 ||
         new Set(Selectorˉvalues).size !== SELECTORS.length ||
-        Selectorˉvalues.some(Selector => !/^[a-x]$/u.test(Selector))) {
+        Selectorˉvalues.some(Selector => !/^[a-z]$/u.test(Selector))) {
         Reject('The authenticated foreign-binding selector inventory is invalid.');
     }
 
@@ -408,26 +420,50 @@ async function Main() {
                 'Windvale-Compiler-Foreign-Binding-Driver.wvproj'
             ),
         };
-        const Buildˉproducts = [Combined, Driver];
+        const Typedˉwir = {
+            name: 'typed-wir',
+            Application: join(
+                Work,
+                WINDOWS ? 'Typed-Foreign-Call-Wir.exe' : 'Typed-Foreign-Call-Wir.elf'
+            ),
+            Product: join(Work, 'Typed-Foreign-Call-Wir.wvb'),
+            Project: join(
+                REPOSITORY_ROOT,
+                'Projects', 'Tests',
+                'Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj'
+            ),
+        };
+        const Buildˉproducts = [Typedˉwir, Combined, Driver];
+        const Packageˉproducts = [Combined, Typedˉwir];
+        const Applicationˉbyˉfixture = new Map([
+            ['combined', Combined.Application],
+            ['typed-wir', Typedˉwir.Application],
+        ]);
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=build item=1/3 fixtures=2 products=2\n'
+            'phase=build item=1/3 fixtures=4 products=3\n'
         );
+        const Buildˉstarted = Date.now();
+        const Buildˉarguments = [Build];
+        for (const Item of Buildˉproducts) {
+            Buildˉarguments.push(Item.Project, Item.Product);
+        }
         const Buildˉresult = await Runˉcommand(
             process.execPath,
-            [
-                Build,
-                ...Buildˉproducts.flatMap(Item => [Item.Project, Item.Product]),
-            ],
+            Buildˉarguments,
             BUILD_TIMEOUT_MILLISECONDS,
             true,
-            'build'
+            'build-current-products'
         );
-        Requireˉcleanˉresult(Buildˉresult, 'foreign-binding build', 0);
+        Requireˉcleanˉresult(
+            Buildˉresult,
+            'foreign-binding current products build',
+            0
+        );
         if (Buildˉresult.Error.length !== 0) {
             Reject(
-                'The foreign-binding build wrote to stderr.\n' +
+                'The foreign-binding current products build wrote to stderr.\n' +
                 Buildˉresult.Error.toString('utf8')
             );
         }
@@ -446,57 +482,70 @@ async function Main() {
         }
         process.stdout.write(
             `PASS  language 1 authenticated foreign binding phase=build ` +
-            `item=1/3 elapsed-ms=${Buildˉresult.Elapsed} fixtures=2 products=2\n`
+            `item=1/3 elapsed-ms=${Date.now() - Buildˉstarted} ` +
+            `fixtures=4 products=3\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=package item=2/3 fixtures=2 applications=1\n'
+            'phase=package item=2/3 fixtures=4 applications=2\n'
         );
-        const Packageˉresult = await Runˉcommand(
-            process.execPath,
-            [Package, '7', Combined.Product, Combined.Application],
-            PACKAGE_TIMEOUT_MILLISECONDS,
-            true,
-            'package'
-        );
-        Requireˉcleanˉresult(
-            Packageˉresult,
-            'foreign-binding combined package',
-            0
-        );
-        if (Packageˉresult.Error.length !== 0) {
-            Reject(
-                'The foreign-binding combined package wrote to stderr.\n' +
-                Packageˉresult.Error.toString('utf8')
+        const Packageˉstarted = Date.now();
+        var Applicationˉbytes = 0;
+        for (const Item of Packageˉproducts) {
+            const Packageˉresult = await Runˉcommand(
+                process.execPath,
+                [Package, '7', Item.Product, Item.Application],
+                PACKAGE_TIMEOUT_MILLISECONDS,
+                true,
+                `package-${Item.name}`
             );
-        }
-        const Applicationˉinformation = await lstat(Combined.Application);
-        if (!Applicationˉinformation.isFile() ||
-            Applicationˉinformation.isSymbolicLink() ||
-            Applicationˉinformation.size < 1 ||
-            Applicationˉinformation.size > MAXIMUM_APPLICATION_BYTES) {
-            Reject('The packaged foreign-binding combined application is invalid.');
+            Requireˉcleanˉresult(
+                Packageˉresult,
+                `foreign-binding ${Item.name} package`,
+                0
+            );
+            if (Packageˉresult.Error.length !== 0) {
+                Reject(
+                    `The foreign-binding ${Item.name} package wrote to stderr.\n` +
+                    Packageˉresult.Error.toString('utf8')
+                );
+            }
+            const Applicationˉinformation = await lstat(Item.Application);
+            if (!Applicationˉinformation.isFile() ||
+                Applicationˉinformation.isSymbolicLink() ||
+                Applicationˉinformation.size < 1 ||
+                Applicationˉinformation.size > MAXIMUM_APPLICATION_BYTES) {
+                Reject(
+                    `The packaged foreign-binding ${Item.name} application is invalid.`
+                );
+            }
+            Applicationˉbytes += Applicationˉinformation.size;
         }
         process.stdout.write(
             'PASS  language 1 authenticated foreign binding ' +
-            `phase=package item=2/3 elapsed-ms=${Packageˉresult.Elapsed} ` +
-            `fixtures=2 applications=1 ` +
-            `application-bytes=${Applicationˉinformation.size}\n`
+            `phase=package item=2/3 elapsed-ms=${Date.now() - Packageˉstarted} ` +
+            `fixtures=4 applications=2 application-bytes=${Applicationˉbytes}\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=execute item=3/3 cases=24 fixtures=2\n'
+            'phase=execute item=3/3 cases=26 fixtures=4\n'
         );
         for (const [Index, Item] of SELECTORS.entries()) {
             process.stdout.write(
                 `START language 1 authenticated foreign binding ` +
-                `phase=execute case=${Index + 1}/24 ` +
+                `phase=execute case=${Index + 1}/${SELECTORS.length} ` +
                 `fixture=${Item.Fixture.name} selector=${Item.Selector}\n`
             );
+            const Application = Applicationˉbyˉfixture.get(
+                Item.Fixture.application
+            );
+            if (Application === undefined) {
+                Reject(`Unknown fixture application: ${Item.Fixture.application}.`);
+            }
             const Result = await Runˉcommand(
-                Combined.Application,
+                Application,
                 [Item.Selector],
                 CASE_TIMEOUT_MILLISECONDS,
                 false,
@@ -516,7 +565,7 @@ async function Main() {
             }
             process.stdout.write(
                 `PASS  language 1 authenticated foreign binding ` +
-                `phase=execute case=${Index + 1}/24 ` +
+                `phase=execute case=${Index + 1}/${SELECTORS.length} ` +
                 `fixture=${Item.Fixture.name} selector=${Item.Selector} ` +
                 `elapsed-ms=${Result.Elapsed}\n`
             );
@@ -542,8 +591,8 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 authenticated foreign binding status=Passed ' +
-            'cases=24 fixtures=2 result=42 execution=native-profile-7 ' +
-            'isolated-executions=24\n'
+            'cases=26 fixtures=4 result=42 execution=native-profile-7 ' +
+            'isolated-executions=26\n'
         );
     }
 }

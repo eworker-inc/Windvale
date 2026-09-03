@@ -1098,6 +1098,13 @@ module is bounded to 4,096 `DF` instructions and 256 explicit pointer relations.
 Every execution consumer still rejects minor 37, so no address is formed and no
 call or dereference authority is granted.
 
+WVIR 1.31/1.32 operation `190` has no WVB encoding in this checkpoint. The
+source-WVB operation vocabulary remains capped at operation `189`; after the
+standalone WVIR validator accepts a well-formed typed Foreign call, prepared
+emission deterministically returns `Unsupportedˉoperation`. Import-table
+publication, authenticated WVFB pairing, the native ABI thunk, and execution
+containment are separate later checkpoints.
+
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,

@@ -772,9 +772,12 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Validation-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.cmd',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.sh'

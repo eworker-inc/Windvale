@@ -1,0 +1,136 @@
+module Languageˉoneˉtypedˉforeignˉcallˉwirˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉwir as Wir;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Appendˉsourceˉentry(Value: bytes, Offset: u32, Length: u32) -> bytes {
+    var Result: bytes = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Offset)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Length));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+}
+
+fn Twoˉsourceˉsetˉv2(First: bytes, Second: bytes) -> bytes {
+    let Payloadˉoffset: u32 = 56u32;
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(40u32));
+    Value = Appendˉsourceˉentry(
+        Value, Payloadˉoffset, Bytesˉlength(First)
+    );
+    Value = Appendˉsourceˉentry(
+        Value,
+        Payloadˉoffset + Bytesˉlength(First),
+        Bytesˉlength(Second)
+    );
+    return Bytesˉconcat(Bytesˉconcat(Value, First), Second);
+}
+
+fn Caseˉtypedˉforeignˉcallˉwir() -> i32 {
+    let Root: bytes = Textˉtoˉutf8(
+        "module Root; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; import Foundationˉunsafe as Unsafe; enum Bufferˉsourceˉabi: u8 { Witness = 1u8; } unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) as \"wv_paper_buffer_source_read_v1\"; fn Invoke(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) { let Status: i64 = unsafe { Readˉforeignˉrecord(Destination: Destination, Capacity: Capacity, Expectedˉgeneration: Expectedˉgeneration) }; return Status; }"
+    );
+    let Unsafeˉsource: bytes = Textˉtoˉutf8(
+        "module Foundationˉunsafe; profile system; platform linux, windows, windvale; authority library; export record Foreignˉpointer<T, Abi> { Opaqueˉidentity: u64; }"
+    );
+    let Input: bytes = Twoˉsourceˉsetˉv2(Root, Unsafeˉsource);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolsˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbolsˉvalue.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 101;
+    }
+    let Compilation: Wir.Compilerˉsourceˉwirˉcompilation =
+        Wir.Compilerˉprepareˉsourceˉwirˉproductˉwithˉsymbols(
+            Input, Scan, Symbolsˉvalue
+        );
+    let Summary: Wir.Compilerˉsourceˉwirˉsummary =
+        Wir.Compilerˉsourceˉwirˉcompilationˉsummary(Compilation);
+    let Bindingˉsummary: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Wir.Compilerˉsourceˉwirˉcompilationˉbindings(
+            Symbolsˉvalue, Compilation
+        );
+    if Summary.Status != Wir.Compilerˉsourceˉwirˉstatus.Valid { return 102; }
+    if Bindingˉsummary.Status != Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return 103;
+    }
+    if Bytesˉreadˉu16ˉlittle(Summary.Directory, 6u32) != 31u32 { return 104; }
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉvalue.Directory, 8u32
+    );
+    var Foreignˉentry: u32 = Symbolˉentries;
+    var Functionˉentry: u32 = Symbolˉentries;
+    var Symbolˉindex: u32 = 0u32;
+    while Symbolˉindex < Symbolˉentries {
+        let Symbolˉentry: u32 = 16u32 + Symbolˉindex * 24u32;
+        let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+            Symbolsˉvalue.Directory, Symbolˉentry + 4u32
+        );
+        if Kind == 9u32 { Foreignˉentry = Symbolˉindex; }
+        if Kind == 6u32 { Functionˉentry = Symbolˉindex; }
+        Symbolˉindex = Symbolˉindex + 1u32;
+    }
+    let Blocksˉoffset: u32 = 56u32 + Summary.Functions * 48u32;
+    let Operationsˉoffset: u32 = Blocksˉoffset + Summary.Blocks * 28u32;
+    var Foreignˉoperation: u32 = Summary.Operations;
+    var Operationˉindex: u32 = 0u32;
+    while Operationˉindex < Summary.Operations {
+        let Operationˉentry: u32 =
+            Operationsˉoffset + Operationˉindex * 28u32;
+        if Bytesˉreadˉu16ˉlittle(
+                Summary.Directory, Operationˉentry + 4u32
+            ) == 190u32 {
+            if Foreignˉoperation != Summary.Operations { return 107; }
+            Foreignˉoperation = Operationˉindex;
+        }
+        Operationˉindex = Operationˉindex + 1u32;
+    }
+    if Foreignˉentry >= Symbolˉentries { return 105; }
+    if Functionˉentry >= Symbolˉentries { return 106; }
+    if Foreignˉoperation >= Summary.Operations { return 108; }
+    let Foreignˉoffset: u32 = Operationsˉoffset + Foreignˉoperation * 28u32;
+    if Bytesˉreadˉu16ˉlittle(
+            Summary.Directory, Foreignˉoffset + 6u32
+        ) != 3u32 {
+        return 109;
+    }
+    if Bytesˉreadˉu32ˉlittle(
+            Summary.Directory, Foreignˉoffset + 8u32
+        ) != 7u32 {
+        return 110;
+    }
+    if Bytesˉreadˉu32ˉlittle(
+            Summary.Directory, Foreignˉoffset + 20u32
+        ) != Foreignˉentry {
+        return 111;
+    }
+    if Bytesˉreadˉu32ˉlittle(
+            Summary.Directory, Foreignˉoffset + 24u32
+        ) != 0u32 {
+        return 112;
+    }
+    return 42;
+}
+
+fn Selectedˉcase() -> u32 {
+    if process.argument_count() != 1u32 { return 0u32; }
+    let Argument: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Argument) != 1u32 { return 0u32; }
+    return U32ˉfromˉu8(Bytesˉreadˉu8(Argument, 0u32));
+}
+
+export fn Main() -> i32 {
+    if Selectedˉcase() == 121u32 { return Caseˉtypedˉforeignˉcallˉwir(); }
+    return 1;
+}

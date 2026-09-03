@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 337 |
+| Accepted | 339 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,8 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0932: represent typed Foreign calls in WVIR 1.31](0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md) | Accepted |
+| [Decision 0931: preserve resumable compiler symbol checkpoints](0931-Preserve-Resumable-Compiler-Symbol-Checkpoints.md) | Accepted |
 | [Decision 0930: verify routing once during classification](0930-Verify-Routing-Once-During-Classification.md) | Accepted |
 | [Decision 0929: reuse native planner initialization in routing verification](0929-Reuse-Native-Planner-Initialization-In-Routing-Verification.md) | Accepted |
 | [Decision 0928: run shared development meta-verification once](0928-Run-Shared-Development-Meta-Verification-Once.md) | Accepted |
@@ -70,8 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0910: represent mutable write-region borrowing in candidate WVB 1.36](0910-Represent-Mutable-Write-Region-Borrowing-In-Candidate-Wvb-1.36.md) | Accepted |
 | [Decision 0909: lower mutable unsafe write-region borrowing to WVIR](0909-Lower-Mutable-Unsafe-Write-Region-Borrowing-To-Wvir.md) | Accepted |
 | [Decision 0908: bound compiler-scale staging arena per resource](0908-Bound-Compiler-Scale-Staging-Arena-Per-Resource.md) | Accepted |
-| [Decision 0907: observe immutable borrowed unsafe scratch in WVB 1.35](0907-Observe-Immutable-Borrowed-Unsafe-Scratch-In-Wvb-1.35.md) | Accepted |
-| [Decision 0906: represent immutable borrowed memory-budget calls in WVB 1.34](0906-Represent-Immutable-Borrowed-Memory-Budget-Calls-In-Wvb-1.34.md) | Accepted |
 
 ## Superseded or historical records
 

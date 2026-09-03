@@ -267,6 +267,7 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH: u32 = 186u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH: u32 = 187u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_BORROW_WRITE_REGION: u32 = 188u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
+const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 16u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 12u32;
 const WIR_FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
@@ -12041,6 +12042,11 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
     if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Capability {
         Operation = WIR_OPERATION_CALL_CAPABILITY;
     }
+    if Callable.Kind == Sourceˉbindings.Compilerˉsourceˉcallableˉkind.Foreign {
+        Operation = WIR_OPERATION_CALL_FOREIGN;
+        Target = Callable.Directoryˉentry;
+        Auxiliary = 0u32;
+    }
     if Signature.Returnˉmode !=
             Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
         return Compilerˉsourceˉwirˉfailureˉvalue(
@@ -15506,6 +15512,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
     var Hasˉunsafeˉscratchˉlength: bool = false;
     var Hasˉunsafeˉwriteˉregion: bool = false;
     var Hasˉunsafeˉwriteˉpointer: bool = false;
+    var Hasˉforeignˉcall: bool = false;
     let Operationˉpayload: bytes =
         Compilerˉsourceˉwirˉchunkedˉpayloadˉmaterialize(
             Build.Operationˉpayload, Build.Operationˉpending
@@ -15551,11 +15558,18 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
             Hasˉunsafeˉscratch = true;
             Hasˉunsafeˉwriteˉpointer = true;
         }
+        if Headerˉoperation == WIR_OPERATION_CALL_FOREIGN {
+            Hasˉforeignˉcall = true;
+        }
         Operationˉindex = Operationˉindex + 1u32;
     }
     var Result: bytes = Textˉtoˉutf8("WVIR");
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
-    if Hasˉunsafeˉwriteˉpointer && Instances > 0u32 {
+    if Hasˉforeignˉcall && Instances > 0u32 {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(32u32));
+    } else if Hasˉforeignˉcall {
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(31u32));
+    } else if Hasˉunsafeˉwriteˉpointer && Instances > 0u32 {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(30u32));
     } else if Hasˉunsafeˉwriteˉpointer {
         Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(29u32));
@@ -15615,7 +15629,7 @@ export fn Compilerˉsourceˉwirˉheader(Build: Compilerˉsourceˉwirˉbuild) -> 
         Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
     }
     if Functionˉtypeˉinstances > 0u32 || Hasˉtask ||
-        Hasˉunsafeˉscratch {
+        Hasˉunsafeˉscratch || Hasˉforeignˉcall {
         var Functionˉtypeˉbytes: u32 = 0u32;
         if Functionˉtypeˉinstances > 0u32 {
             Functionˉtypeˉbytes = Bytesˉlength(

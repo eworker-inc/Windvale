@@ -209,6 +209,7 @@ const WIR_OPERATION_FOUNDATION_UNSAFE_CONSTRUCT_SCRATCH: u32 = 186u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_SCRATCH_LENGTH: u32 = 187u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_BORROW_WRITE_REGION: u32 = 188u32;
 const WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER: u32 = 189u32;
+const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
 const WIR_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WIR_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WIR_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
@@ -2152,6 +2153,7 @@ export fn Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
     if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER {
         return Shape != 0u32;
     }
+    if Operation == WIR_OPERATION_CALL_FOREIGN { return Shape == 7u32; }
     return false;
 }
 
@@ -2295,6 +2297,7 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
     if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER {
         return Count == 0u32;
     }
+    if Operation == WIR_OPERATION_CALL_FOREIGN { return Count == 3u32; }
     return false;
 }
 
@@ -2483,6 +2486,14 @@ export fn Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
         return Shape == 8u32;
     }
     if Operation == WIR_OPERATION_FOUNDATION_UNSAFE_BORROW_WRITE_REGION {
+        return Shape == 8u32;
+    }
+    if Operation == WIR_OPERATION_CALL_FOREIGN {
+        if Index == 0u32 {
+            return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+                Shape
+            );
+        }
         return Shape == 8u32;
     }
     return true;
@@ -3175,6 +3186,52 @@ fn Compilerˉsourceˉwirˉvariantˉfieldˉbyˉindex(
     return Compilerˉsourceˉwirˉmember(false, 0u32, 0u32);
 }
 
+export fn Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Target: u32,
+    Auxiliary: u32,
+    Index: u32
+) -> u32 {
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Target >= Symbolˉentries || Auxiliary != 0u32 || Index >= 3u32 {
+        return 0u32;
+    }
+    let Targetˉentry: u32 = 16u32 + Target * 24u32;
+    if Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Targetˉentry + 4u32
+        ) != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Targetˉentry + 20u32
+        ) != 3u32 {
+        return 0u32;
+    }
+    let Targetˉmodule: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Targetˉentry
+    );
+    if Targetˉmodule >= Scan.Modules { return 0u32; }
+    let Targetˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Targetˉmodule);
+    let Targetˉdeclarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Targetˉentry + 8u32
+    );
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉbindingsˉtypeˉcatalog(Bindings.Directory);
+    let Signature: Compilerˉsourceˉwirˉsignature =
+        Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
+            Input, Scan, Symbols, Targetˉmodule, Targetˉview.Source,
+            Targetˉdeclarationˉoffset, Index,
+            Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty(),
+            Typeˉcatalog,
+            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel()
+        );
+    return Signature.Parameterˉshape;
+}
+
 export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -3336,6 +3393,11 @@ export fn Compilerˉsourceˉwirˉdynamicˉoperandˉshape(
         if Targetˉkind != 2u32 { return 0u32; }
         return Wirˉconsumer.Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
             Targetˉview.Source, Targetˉnameˉoffset, Targetˉnameˉlength, Index
+        );
+    }
+    if Operation == WIR_OPERATION_CALL_FOREIGN {
+        return Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbols, Bindings, Target, Auxiliary, Index
         );
     }
     return 0u32;
@@ -4138,6 +4200,94 @@ fn Compilerˉsourceˉwirˉmutableˉborrowˉslotˉisˉvalid(
         ) == Slot;
 }
 
+export fn Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Shape: u32,
+    Operandˉcount: u32,
+    Target: u32,
+    Auxiliary: u32
+) -> bool {
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, 8u32
+    );
+    if Target >= Symbolˉentries || Auxiliary != 0u32 ||
+        Operandˉcount != 3u32 || Shape != 7u32 {
+        return false;
+    }
+    let Foreignˉentry: u32 = 16u32 + Target * 24u32;
+    if Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Foreignˉentry + 4u32
+        ) != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Symbols.Directory, Foreignˉentry + 20u32
+        ) != 3u32 {
+        return false;
+    }
+    let Foreignˉmodule: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Foreignˉentry
+    );
+    if Foreignˉmodule >= Scan.Modules { return false; }
+    let Foreignˉview: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Foreignˉmodule);
+    let Foreignˉdeclaration: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbols.Directory, Foreignˉentry + 8u32
+    );
+    let Emptyˉgeneric: Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalog =
+        Sourceˉgenerics.Compilerˉsourceˉgenericˉcatalogˉempty();
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉbindingsˉtypeˉcatalog(Bindings.Directory);
+    let Destination: Compilerˉsourceˉwirˉsignature =
+        Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
+            Input, Scan, Symbols, Foreignˉmodule,
+            Foreignˉview.Source, Foreignˉdeclaration, 0u32,
+            Emptyˉgeneric, Typeˉcatalog,
+            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel()
+        );
+    let Capacity: Compilerˉsourceˉwirˉsignature =
+        Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
+            Input, Scan, Symbols, Foreignˉmodule,
+            Foreignˉview.Source, Foreignˉdeclaration, 1u32,
+            Emptyˉgeneric, Typeˉcatalog,
+            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel()
+        );
+    let Generation: Compilerˉsourceˉwirˉsignature =
+        Compilerˉsourceˉwirˉfunctionˉsignatureˉconcrete(
+            Input, Scan, Symbols, Foreignˉmodule,
+            Foreignˉview.Source, Foreignˉdeclaration, 2u32,
+            Emptyˉgeneric, Typeˉcatalog,
+            Wirˉconsumer.Compilerˉsourceˉwirˉsentinel()
+        );
+    if !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(
+            Destination.Parameterˉshape
+        ) {
+        return false;
+    }
+    let Abiˉshape: u32 =
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉshapeˉtypeˉargument(
+            Typeˉcatalog, Destination.Parameterˉshape, 1u32
+        );
+    return Compilerˉsourceˉwirˉfoundationˉunsafeˉpointerˉisˉexact(
+            Input, Scan, Symbols, Typeˉcatalog,
+            Destination.Parameterˉshape, Abiˉshape
+        ) &&
+        Capacity.Parameterˉshape == 8u32 &&
+        Generation.Parameterˉshape == 8u32 &&
+        Destination.Returnˉshape == 7u32 &&
+        Capacity.Returnˉshape == 7u32 &&
+        Generation.Returnˉshape == 7u32 &&
+        Destination.Parameterˉmode ==
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+        Capacity.Parameterˉmode ==
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+        Generation.Parameterˉmode ==
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+        Destination.Returnˉmode ==
+            Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE;
+}
+
 export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -4616,6 +4766,12 @@ export fn Compilerˉsourceˉwirˉdynamicˉresultˉisˉvalid(
         if !Field.Found { return false; }
         if Operandˉcount != 1u32 { return false; }
         return Shape == Field.Shape;
+    }
+    if Operation == WIR_OPERATION_CALL_FOREIGN {
+        return Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbols, Bindings, Shape,
+            Operandˉcount, Target, Auxiliary
+        );
     }
     if Operation == 62u32 {
         if Target >= Bytesˉreadˉu32ˉlittle(Directory, 8u32) { return false; }
@@ -6322,6 +6478,7 @@ fn Compilerˉsourceˉwirˉdynamicˉoperandˉshapeˉisˉvalid(
 ) -> bool {
     if Operationˉkind == 17u32 || Operationˉkind == 62u32 ||
         Operationˉkind == 63u32 ||
+        Operationˉkind == WIR_OPERATION_CALL_FOREIGN ||
         Operationˉkind == WIR_OPERATION_CALL_INDIRECT ||
         Operationˉkind == 65u32 || Operationˉkind == 165u32 ||
         Operationˉkind == 166u32 ||
@@ -6577,8 +6734,7 @@ export fn Compilerˉsourceˉwirˉfunctionˉoperationsˉareˉvalid(
         if Globalˉoperation < Ownerˉblockˉfirst { return false; }
         if Globalˉoperation - Ownerˉblockˉfirst >= Ownerˉblockˉcount { return false; }
         if Operationˉkind == 0u32 { return false; }
-        if Operationˉkind >
-                WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER {
+        if Operationˉkind > WIR_OPERATION_CALL_FOREIGN {
             return false;
         }
         if !Compilerˉsourceˉwirˉshapeˉisˉvalidˉwithˉgenericˉtypes(
@@ -7105,17 +7261,17 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     ) { return false; }
     if Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 { return false; }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Directory, 6u32);
-    if Minor < 9u32 || Minor > 30u32 { return false; }
+    if Minor < 9u32 || Minor > 32u32 { return false; }
     if (Minor == 10u32 || Minor == 12u32 || Minor == 14u32 ||
             Minor == 16u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
-            Minor == 27u32 || Minor == 29u32) &&
+            Minor == 27u32 || Minor == 29u32 || Minor == 31u32) &&
         Directoryˉlength < 56u32 {
         return false;
     }
     if (Minor == 18u32 || Minor == 20u32 || Minor == 22u32 ||
             Minor == 24u32 || Minor == 26u32 || Minor == 28u32 ||
-            Minor == 30u32) &&
+            Minor == 30u32 || Minor == 32u32) &&
         Directoryˉlength < 64u32 { return false; }
     let Functionˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
     if Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 48u32 { return false; }
@@ -7157,12 +7313,13 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     let Hasˉgenericˉinstances: bool = Minor == 10u32 || Minor == 12u32 ||
         Minor == 14u32 || Minor == 16u32 || Minor == 18u32 ||
         Minor == 20u32 || Minor == 22u32 || Minor == 24u32 ||
-        Minor == 26u32 || Minor == 28u32 || Minor == 30u32;
+        Minor == 26u32 || Minor == 28u32 || Minor == 30u32 ||
+        Minor == 32u32;
     var Hasˉfunctionˉtypes: bool = false;
     if Minor == 9u32 || Minor == 11u32 || Minor == 13u32 ||
             Minor == 15u32 || Minor == 17u32 || Minor == 19u32 ||
             Minor == 21u32 || Minor == 23u32 || Minor == 25u32 ||
-            Minor == 27u32 || Minor == 29u32 {
+            Minor == 27u32 || Minor == 29u32 || Minor == 31u32 {
         var Expectedˉfunctions: u32 = Symbolˉentries;
         if Hasˉsyntheticˉclosures {
             if Closureˉbindings.Compilerˉsourceˉbindingsˉclosuresˉbaseˉfunctions(
@@ -7274,6 +7431,7 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     var Hasˉunsafeˉscratchˉlength: bool = false;
     var Hasˉunsafeˉwriteˉregion: bool = false;
     var Hasˉunsafeˉwriteˉpointer: bool = false;
+    var Hasˉforeignˉcall: bool = false;
     var Closureˉtargets: bytes = Bytesˉslice(Directory, 0u32, 0u32);
     var Nextˉfunctionˉtype: u32 = 0u32;
     var Operationˉscan: u32 = 0u32;
@@ -7379,6 +7537,9 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
                 WIR_OPERATION_FOUNDATION_UNSAFE_WRITE_POINTER {
             Hasˉunsafeˉwriteˉpointer = true;
         }
+        if Scannedˉoperation == WIR_OPERATION_CALL_FOREIGN {
+            Hasˉforeignˉcall = true;
+        }
         Operationˉscan = Operationˉscan + 1u32;
     }
     if Hasˉsyntheticˉclosures &&
@@ -7410,6 +7571,10 @@ export fn Compilerˉsourceˉwirˉdirectoryˉisˉvalid(
     if Minor <= 28u32 && Hasˉunsafeˉwriteˉpointer { return false; }
     if (Minor == 29u32 || Minor == 30u32) &&
         !Hasˉunsafeˉwriteˉpointer {
+        return false;
+    }
+    if Minor <= 30u32 && Hasˉforeignˉcall { return false; }
+    if (Minor == 31u32 || Minor == 32u32) && !Hasˉforeignˉcall {
         return false;
     }
     if Hasˉcallable && !Hasˉfunctionˉtypes { return false; }

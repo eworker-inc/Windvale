@@ -64,13 +64,19 @@ sequence. Project 2 remains development-only and its Analyzer precheck rejects a
 
 The optional private `--symbol-checkpoint` route divides that same miss into
 two analyzer invocations. The first publishes the canonical WVSS plus a bounded
-`WVSY 1.0` symbol checkpoint. The second independently admits that checkpoint
-against the unchanged WVSS, revalidates its directory, lookup, visibility, and
-all aggregate counts, and publishes WVCA, WVLB, and WVIR. The coordinator
-compares the checkpoint before and after consumption and removes it before
-atomic cache publication. A cache hit consumes only the same validated final
-phase products; `WVSY` is internal resumable evidence, not a distributable
-compiler format or additional compiler.
+`WVSY 1.0` symbol checkpoint into the separate
+`project-symbols-wvsy-v1` cache family. Its manifest binds the complete analysis
+request key and exact size and SHA-256 evidence for both values. The second
+copies those validated values into its private candidate, independently admits
+the checkpoint against the unchanged WVSS, revalidates its directory, lookup,
+visibility, and all aggregate counts, and publishes WVCA, WVLB, and WVIR. The
+coordinator compares both copied values before and after consumption and removes
+the private copies before final atomic cache publication. A retry can therefore
+reuse completed symbol work after a later-phase interruption without admitting
+stale source, producer, project, or dependency state. Final analysis cache hits
+still consume only the same validated WVSS/WVCA/WVLB/WVIR products; `WVSY` is
+internal resumable evidence, not a distributable compiler format or additional
+compiler.
 
 The emission cache uses namespace `project-split-wvb-optimized-v3`, binds both
 producer identities and the same closure, and records the exact analysis key
@@ -131,11 +137,13 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, then forces a producer-identity failure and proves that
-no temporary checkpoint directory remains. Its cache sentinel also executes
-instrumented producers and proves the root-first raw Project 2 argument and
-WVSS/WVCA/WVLB/WVIR output order. It deliberately does not rebuild three large
-compiler products already covered by the Language 1.0 front door.
+complete counterpart, and executes a ten-case cache sentinel. The sentinel
+proves module ordering, identity publication, failure cleanup, replacement and
+quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
+Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
+after a later analysis failure, and fail-closed WVSY corruption handling. It
+deliberately does not rebuild three large compiler products already covered by
+the Language 1.0 front door.
 Compiler analysis/emission core changes select that broader semantic gate once;
 split adapter, identity, and cache changes select this focused owner. Full
 storage, OS, complete native, and paired-host qualification remain final

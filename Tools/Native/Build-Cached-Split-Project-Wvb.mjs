@@ -116,8 +116,12 @@ const Analysisˉfamily = await Prepareˉfamily(
     Cacheˉroot,
     'project-analysis-wvca-v3',
 );
+const Symbolˉfamily = Symbolˉcheckpointˉanalysis
+    ? await Prepareˉfamily(Cacheˉroot, 'project-symbols-wvsy-v1')
+    : null;
 const Analysisˉcheckpoint = await Acquireˉanalysis(
     Analysisˉfamily,
+    Symbolˉfamily,
     Analysisˉrequest,
     Orderedˉanalysisˉinputs,
     Analyzerˉpath,
@@ -178,6 +182,7 @@ console.log(
 
 async function Acquireˉanalysis(
     Family,
+    Symbolˉfamily,
     Request,
     Inputs,
     Analyzer,
@@ -202,17 +207,29 @@ async function Acquireˉanalysis(
         await Applyˉtestˉhook('afterTemporaryIdentified', Temporary);
         await Verifyˉproducer(Analyzer, Identity);
         if (Useˉsymbolˉcheckpoint) {
+            if (Symbolˉfamily === null) {
+                Reject('The split compiler symbol cache is unavailable.');
+            }
+            const Cachedˉsymbols = await Acquireˉsymbols(
+                Symbolˉfamily, Request, Inputs, Analyzer, Identity,
+            );
             const Symbolˉcheckpoint = path.join(
                 Temporary.path,
                 'Symbols.wvsy',
             );
-            await Run(Analyzer, [
-                '--internal-symbol-checkpoint',
-                ...Inputs,
+            await copyFile(
+                path.join(Cachedˉsymbols, 'Source.wvss'),
                 path.join(Temporary.path, 'Source.wvss'),
+            );
+            await copyFile(
+                path.join(Cachedˉsymbols, 'Symbols.wvsy'),
                 Symbolˉcheckpoint,
-            ], 'analysis-symbols');
-            await Verifyˉproducer(Analyzer, Identity);
+            );
+            const Producedˉsource = await Fileˉevidence(
+                path.join(Temporary.path, 'Source.wvss'),
+                'cached internal source set',
+                MAXIMUM_VALUE_BYTES,
+            );
             const Producedˉsymbols = await Fileˉevidence(
                 Symbolˉcheckpoint,
                 'internal symbol checkpoint',
@@ -227,14 +244,23 @@ async function Acquireˉanalysis(
                 path.join(Temporary.path, 'Wir.wvir'),
             ], 'analysis-wir');
             await Verifyˉproducer(Analyzer, Identity);
+            const Consumedˉsource = await Fileˉevidence(
+                path.join(Temporary.path, 'Source.wvss'),
+                'consumed internal source set',
+                MAXIMUM_VALUE_BYTES,
+            );
             const Consumedˉsymbols = await Fileˉevidence(
                 Symbolˉcheckpoint,
                 'consumed internal symbol checkpoint',
                 MAXIMUM_VALUE_BYTES,
             );
-            if (Producedˉsymbols.bytes !== Consumedˉsymbols.bytes ||
+            if (Producedˉsource.bytes !== Consumedˉsource.bytes ||
+                Producedˉsource.sha256 !== Consumedˉsource.sha256 ||
+                Producedˉsymbols.bytes !== Consumedˉsymbols.bytes ||
                 Producedˉsymbols.sha256 !== Consumedˉsymbols.sha256) {
-                Reject('The internal symbol checkpoint changed during analysis.');
+                Reject(
+                    'The internal source or symbol checkpoint changed during analysis.',
+                );
             }
             await unlink(Symbolˉcheckpoint);
         } else {
@@ -267,6 +293,64 @@ async function Acquireˉanalysis(
     } catch (Error) {
         Failure = Error;
         await Reportˉanalysisˉfailureˉoutputs(Temporary?.path ?? '');
+        throw Error;
+    } finally {
+        await Removeˉtemporaryˉpreservingˉfailure(
+            Family,
+            Request.key,
+            Temporary,
+            Failure,
+        );
+    }
+}
+
+async function Acquireˉsymbols(Family, Request, Inputs, Analyzer, Identity) {
+    const Checkpoint = path.join(Family, Request.key);
+    if (await Exists(Checkpoint)) {
+        await Validateˉsymbols(Checkpoint, Request.key);
+        console.log(
+            `split project step=analysis-symbols cache=Hit key=${Request.key}`,
+        );
+        return Checkpoint;
+    }
+    let Temporary = null;
+    let Failure = null;
+    try {
+        Temporary = await Allocateˉtemporary(Family, Request.key);
+        Temporary = await Identifyˉtemporaryˉallocation(
+            Family,
+            Request.key,
+            Temporary,
+        );
+        await Verifyˉproducer(Analyzer, Identity);
+        await Run(Analyzer, [
+            '--internal-symbol-checkpoint',
+            ...Inputs,
+            path.join(Temporary.path, 'Source.wvss'),
+            path.join(Temporary.path, 'Symbols.wvsy'),
+        ], 'analysis-symbols');
+        await Verifyˉproducer(Analyzer, Identity);
+        const Evidence = await Symbolˉevidence(Temporary.path);
+        await Requireˉnativeˉprojectˉcacheˉrequestˉunchanged(Request);
+        await Writeˉcheckpoint(
+            Temporary.path,
+            Symbolˉmanifest(Request.key, Evidence),
+        );
+        try {
+            await rename(Temporary.path, Checkpoint);
+            Temporary = null;
+        } catch (error) {
+            if (error?.code !== 'EEXIST' && error?.code !== 'ENOTEMPTY') {
+                throw error;
+            }
+        }
+        await Validateˉsymbols(Checkpoint, Request.key);
+        console.log(
+            `split project step=analysis-symbols cache=Created key=${Request.key}`,
+        );
+        return Checkpoint;
+    } catch (Error) {
+        Failure = Error;
         throw Error;
     } finally {
         await Removeˉtemporaryˉpreservingˉfailure(
@@ -475,6 +559,19 @@ async function Validateˉanalysis(Checkpoint, Key) {
     }
 }
 
+async function Validateˉsymbols(Checkpoint, Key) {
+    await Requireˉordinaryˉdirectory(Checkpoint, 'symbol checkpoint');
+    const Evidence = await Symbolˉevidence(Checkpoint);
+    const Actual = await Readˉbounded(
+        path.join(Checkpoint, 'Checkpoint.txt'),
+        'symbol checkpoint manifest',
+        MAXIMUM_MANIFEST_BYTES,
+    );
+    if (!Actual.equals(Buffer.from(Symbolˉmanifest(Key, Evidence), 'ascii'))) {
+        Reject('The symbol checkpoint manifest is invalid.');
+    }
+}
+
 async function Validateˉemission(Checkpoint, Key, Analysisˉkey) {
     await Requireˉordinaryˉdirectory(Checkpoint, 'emission checkpoint');
     const Evidence = await Fileˉevidence(
@@ -525,6 +622,21 @@ async function Analysisˉevidence(Directory) {
     };
 }
 
+async function Symbolˉevidence(Directory) {
+    return {
+        Source: await Fileˉevidence(
+            path.join(Directory, 'Source.wvss'),
+            'WVSS symbol value',
+            MAXIMUM_VALUE_BYTES,
+        ),
+        Symbols: await Fileˉevidence(
+            path.join(Directory, 'Symbols.wvsy'),
+            'WVSY symbol value',
+            MAXIMUM_VALUE_BYTES,
+        ),
+    };
+}
+
 function Analysisˉmanifest(Key, Evidence) {
     return `windvale-project-analysis-checkpoint 1\n` +
         `key ${Key}\n` +
@@ -532,6 +644,13 @@ function Analysisˉmanifest(Key, Evidence) {
         Evidenceˉline('manifest', Evidence.Manifest) +
         Evidenceˉline('bindings', Evidence.Bindings) +
         Evidenceˉline('wir', Evidence.Wir);
+}
+
+function Symbolˉmanifest(Key, Evidence) {
+    return `windvale-project-symbol-checkpoint 1\n` +
+        `key ${Key}\n` +
+        Evidenceˉline('source', Evidence.Source) +
+        Evidenceˉline('symbols', Evidence.Symbols);
 }
 
 function Emissionˉmanifest(Key, Analysisˉkey, Evidence) {
@@ -753,6 +872,7 @@ async function Writeˉcheckpoint(Directory, Text) {
     await writeFile(Destination, Text, { encoding: 'ascii', flag: 'wx' });
     const Entries = [
         'Source.wvss',
+        'Symbols.wvsy',
         'Manifest.wvca',
         'Bindings.wvlb',
         'Wir.wvir',

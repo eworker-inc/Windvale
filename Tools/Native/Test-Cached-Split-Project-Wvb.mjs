@@ -520,13 +520,15 @@ try {
             Childˉdiagnostic(Rawˉresult),
         );
     }
+    await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
     console.log(
-        'split project cache test cases=8 status=Passed ' +
+        'split project cache test cases=10 status=Passed ' +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
         'quarantine-boundary-race=Passed non-error-primary=Passed ' +
-        'raw-project2-route=Passed',
+        'raw-project2-route=Passed symbol-resume=Passed ' +
+        'symbol-corruption=Rejected',
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -602,6 +604,148 @@ async function Writeˉtestˉproducer(Directory, Stem, Program) {
         await chmod(Producer, 0o755);
     }
     return Producer;
+}
+
+async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {
+    const Record = path.join(Testˉroot, 'symbol-checkpoint-phases.txt');
+    const Failureˉmarker = path.join(
+        Testˉroot,
+        'symbol-checkpoint-analysis-failed.txt',
+    );
+    const Analyzer = await Writeˉtestˉproducer(
+        Testˉroot,
+        'Symbol-Checkpoint-Analyzer',
+        `import { appendFile, writeFile } from 'node:fs/promises';\n` +
+        `const args=process.argv.slice(2);\n` +
+        `const record=process.env.WINDVALE_TEST_PHASE_RECORD;\n` +
+        `const marker=process.env.WINDVALE_TEST_FAIL_ANALYSIS_ONCE;\n` +
+        `if(typeof record!=='string'||record.length===0)throw new Error('missing phase record');\n` +
+        `if(args[0]==='--internal-symbol-checkpoint'){\n` +
+        `if(args.length<4)throw new Error('unexpected symbol argument count');\n` +
+        `await appendFile(record,'symbols\\n');\n` +
+        `await writeFile(args.at(-2),Buffer.from('WVSS'));\n` +
+        `await writeFile(args.at(-1),Buffer.from('WVSY'));\n` +
+        `process.stdout.write('test symbols status=Passed\\n');}\n` +
+        `else if(args[0]==='--internal-analysis-checkpoint'){\n` +
+        `if(args.length!==6)throw new Error('unexpected analysis argument count');\n` +
+        `await appendFile(record,'analysis\\n');\n` +
+        `let fail=false;try{await writeFile(marker,'failed\\n',{flag:'wx'});fail=true;}` +
+        `catch(error){if(error?.code!=='EEXIST')throw error;}\n` +
+        `if(fail)throw new Error('forced analysis-wir failure');\n` +
+        `await writeFile(args[3],Buffer.alloc(104,0x41));\n` +
+        `await writeFile(args[4],Buffer.from('WVLB'));\n` +
+        `await writeFile(args[5],Buffer.from('WVIR'));\n` +
+        `process.stdout.write('test analysis status=Passed\\n');}\n` +
+        `else throw new Error('unexpected analyzer mode');\n`,
+    );
+    const Emitter = await Writeˉtestˉproducer(
+        Testˉroot,
+        'Symbol-Checkpoint-Emitter',
+        `import { appendFile, writeFile } from 'node:fs/promises';\n` +
+        `const args=process.argv.slice(2);\n` +
+        `const record=process.env.WINDVALE_TEST_PHASE_RECORD;\n` +
+        `if(args.length!==5)throw new Error('unexpected emitter argument count');\n` +
+        `await appendFile(record,'emission\\n');\n` +
+        `await writeFile(args[4],Buffer.from([0x57]));\n` +
+        `process.stdout.write('test emitter status=Passed\\n');\n`,
+    );
+    const Analyzerˉidentity = path.join(
+        Testˉroot,
+        'symbol-checkpoint-analyzer.identity',
+    );
+    const Emitterˉidentity = path.join(
+        Testˉroot,
+        'symbol-checkpoint-emitter.identity',
+    );
+    Writeˉidentity('analyzer', Analyzer, Analyzerˉidentity);
+    Writeˉidentity('emitter', Emitter, Emitterˉidentity);
+    const Cacheˉroot = path.join(Testˉroot, 'symbol-checkpoint-cache');
+    const Output = path.join(Outputˉroot, 'Symbol-Checkpoint-Product.wvb');
+    const Arguments = [
+        CACHE_SCRIPT,
+        PROJECT,
+        Output,
+        Analyzer,
+        Analyzerˉidentity,
+        Emitter,
+        Emitterˉidentity,
+        '--symbol-checkpoint',
+    ];
+    const Environment = {
+        ...process.env,
+        WINDVALE_NATIVE_CACHE_ROOT: Cacheˉroot,
+        WINDVALE_TEST_PHASE_RECORD: Record,
+        WINDVALE_TEST_FAIL_ANALYSIS_ONCE: Failureˉmarker,
+    };
+    const First = spawnSync(process.execPath, Arguments, {
+        cwd: REPOSITORY_ROOT,
+        encoding: 'utf8',
+        env: Environment,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: FAILURE_TIMEOUT_MILLISECONDS,
+        windowsHide: true,
+    });
+    if (First.status === 0 || !First.stderr.includes(
+        'split compiler analysis-wir producer exited with status'
+    ) || await readFile(Record, 'ascii') !== 'symbols\nanalysis\n') {
+        Reject(
+            'The later analysis failure did not preserve one completed ' +
+            `symbol phase: ${Childˉdiagnostic(First)}`,
+        );
+    }
+    const Symbolˉfamily = path.join(
+        Cacheˉroot,
+        'project-symbols-wvsy-v1',
+        HOST,
+    );
+    const Symbolˉentries = (await readdir(Symbolˉfamily, {
+        withFileTypes: true,
+    })).filter(Entry => Entry.isDirectory() && !Entry.name.startsWith('.'));
+    if (Symbolˉentries.length !== 1) {
+        Reject('The completed symbol phase did not publish one checkpoint.');
+    }
+    const Symbols = path.join(
+        Symbolˉfamily,
+        Symbolˉentries[0].name,
+        'Symbols.wvsy',
+    );
+    await writeFile(Symbols, Buffer.from('BAD!'));
+    const Corrupt = spawnSync(process.execPath, Arguments, {
+        cwd: REPOSITORY_ROOT,
+        encoding: 'utf8',
+        env: Environment,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: FAILURE_TIMEOUT_MILLISECONDS,
+        windowsHide: true,
+    });
+    if (Corrupt.status === 0 || !Corrupt.stderr.includes(
+        'The symbol checkpoint manifest is invalid.'
+    ) || await readFile(Record, 'ascii') !== 'symbols\nanalysis\n') {
+        Reject(
+            'A corrupted symbol checkpoint was executed or accepted: ' +
+            Childˉdiagnostic(Corrupt),
+        );
+    }
+    await writeFile(Symbols, Buffer.from('WVSY'));
+    const Retry = spawnSync(process.execPath, Arguments, {
+        cwd: REPOSITORY_ROOT,
+        encoding: 'utf8',
+        env: Environment,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: FAILURE_TIMEOUT_MILLISECONDS,
+        windowsHide: true,
+    });
+    if (Retry.status !== 0 || Retry.stderr !== '' ||
+        !Retry.stdout.includes('step=analysis-symbols cache=Hit') ||
+        await readFile(Record, 'ascii') !==
+            'symbols\nanalysis\nanalysis\nemission\n' ||
+        !(await readFile(Output)).equals(Buffer.from([0x57])) ||
+        (await Findˉtemporaryˉdirectories(Cacheˉroot)).length !== 0) {
+        Reject(
+            'The retry did not reuse the symbol checkpoint and complete: ' +
+            Childˉdiagnostic(Retry),
+        );
+    }
 }
 
 async function Writeˉcleanupˉtestˉpreload(Directory) {

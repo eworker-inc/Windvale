@@ -1,0 +1,314 @@
+module Languageˉoneˉtypedˉforeignˉcallˉwirˉvalidationˉselfˉtest profile portable;
+
+import Compilerˉsourceˉbindings as Bindings;
+import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
+import Compilerˉsourceˉdeclarationˉparser as Declarations;
+import Compilerˉsourceˉgenericˉlowering as Genericˉfunctions;
+import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉtypeˉbinding;
+import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
+import Compilerˉsourceˉlexer as Lexer;
+import Compilerˉsourceˉset as Sourceˉset;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉwirˉvalidation as Validation;
+
+fn Appendˉsourceˉentry(Value: bytes, Offset: u32, Length: u32) -> bytes {
+    var Result: bytes = Bytesˉconcat(
+        Value, Bytesˉfromˉu32ˉlittle(Offset)
+    );
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Length));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(12u32));
+}
+
+fn Twoˉsourceˉsetˉv2(First: bytes, Second: bytes) -> bytes {
+    let Payloadˉoffset: u32 = 56u32;
+    var Value: bytes = Textˉtoˉutf8("WVSS");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(40u32));
+    Value = Appendˉsourceˉentry(
+        Value, Payloadˉoffset, Bytesˉlength(First)
+    );
+    Value = Appendˉsourceˉentry(
+        Value,
+        Payloadˉoffset + Bytesˉlength(First),
+        Bytesˉlength(Second)
+    );
+    return Bytesˉconcat(Bytesˉconcat(Value, First), Second);
+}
+
+fn Unsafeˉsource() -> bytes {
+    return Textˉtoˉutf8(
+        "module Foundationˉunsafe; profile system; platform linux, windows, windvale; authority library; export record Foreignˉpointer<T, Abi> { Opaqueˉidentity: u64; }"
+    );
+}
+
+fn Sourceˉsetˉwithˉsignature(
+    Destination: text,
+    Returnˉtype: text
+) -> bytes {
+    var Root: text =
+        "module Root; profile system; platform linux.x86_64.sysv_amd64_c_v1; authority application; import Foundationˉunsafe as Unsafe; enum Bufferˉsourceˉabi: u8 { Witness = 1u8; } unsafe foreign \"windvale.paper.buffer_source.sysv_amd64_c_v1\" fn Readˉforeignˉrecord(Destination: ";
+    Root = Textˉconcat(Root, Destination);
+    Root = Textˉconcat(
+        Root,
+        ", Capacity: u64, Expectedˉgeneration: u64) -> "
+    );
+    Root = Textˉconcat(Root, Returnˉtype);
+    Root = Textˉconcat(
+        Root,
+        " effects(ffi.call) as \"wv_paper_buffer_source_read_v1\"; fn Local() -> i64 { return 42i64; }"
+    );
+    return Twoˉsourceˉsetˉv2(Textˉtoˉutf8(Root), Unsafeˉsource());
+}
+
+fn Paddedˉu64ˉtype() -> text {
+    var Result: text = "u64";
+    while Bytesˉlength(Textˉtoˉutf8(Result)) < 48u32 {
+        Result = Textˉconcat(Result, " ");
+    }
+    return Result;
+}
+
+fn Symbolˉofˉkind(
+    Summary: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Kind: u32
+) -> u32 {
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(Summary.Directory, 8u32);
+    var Index: u32 = 0u32;
+    while Index < Entries {
+        if Bytesˉreadˉu32ˉlittle(
+                Summary.Directory, 16u32 + Index * 24u32 + 4u32
+            ) == Kind {
+            return Index;
+        }
+        Index = Index + 1u32;
+    }
+    return Entries;
+}
+
+fn Bindingsˉwithˉforeignˉgenericˉtypes(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbolsˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary
+) -> Bindings.Compilerˉsourceˉbindingˉsummary {
+    let Phase: Bindings.Compilerˉsourceˉbindingˉphase =
+        Bindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Input, Scan, Symbolsˉvalue, true
+        );
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉvalue.Directory, 8u32
+    );
+    let Foreign: u32 = Symbolˉofˉkind(Symbolsˉvalue, 9u32);
+    if Foreign >= Entries {
+        return Bindings.Compilerˉsourceˉbindingsˉfinishˉphase(
+            Input, Scan, Symbolsˉvalue, Phase
+        );
+    }
+    let Foreignˉentry: u32 = 16u32 + Foreign * 24u32;
+    let Module: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉvalue.Directory, Foreignˉentry
+    );
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, Module);
+    let Declarationˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉvalue.Directory, Foreignˉentry + 8u32
+    );
+    let Declaration: Declarations.Compilerˉsourceˉdeclaration =
+        Declarations.Compilerˉparseˉnextˉdeclarationˉvalidated(
+            View.Source, Declarationˉoffset, 1u32, 1u32, true
+        );
+    let Generic: Symbols.Compilerˉsourceˉfunctionˉgeneric =
+        Symbols.Compilerˉsourceˉsymbolsˉfunctionˉgeneric(
+            View.Source, Declaration, 1u32, 1u32
+        );
+    let Left: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Generic.Signatureˉoffset,
+            Generic.Signatureˉline, Generic.Signatureˉcolumn
+        );
+    let Parameter: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Left.Nextˉoffset, Left.Nextˉline, Left.Nextˉcolumn
+        );
+    let Colon: Lexer.Compilerˉsourceˉtoken =
+        Lexer.Compilerˉlexˉnextˉafterˉscan(
+            View.Source, Parameter.Nextˉoffset,
+            Parameter.Nextˉline, Parameter.Nextˉcolumn
+        );
+    let Parameterˉtype: Lexer.Compilerˉsourceˉtoken =
+        Declarations.Compilerˉsourceˉparameterˉtypeˉstart(
+            View.Source, Colon.Nextˉoffset,
+            Colon.Nextˉline, Colon.Nextˉcolumn
+        );
+    let Bound: Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbind(
+            Input, Scan, Symbolsˉvalue, Module, View.Source,
+            Parameterˉtype.Offset, Parameterˉtype.Line,
+            Parameterˉtype.Column, 0u32, 0u32, 0u32, 0u32,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty()
+        );
+    if Bound.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Bindings.Compilerˉsourceˉbindingsˉfinishˉphase(
+            Input, Scan, Symbolsˉvalue, Phase
+        );
+    }
+    return Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉfinishˉspecializedˉphaseˉproduct(
+        Input, Scan, Symbolsˉvalue, Phase, Symbolsˉvalue.Functions,
+        Genericˉfunctions.Compilerˉsourceˉgenericˉcatalogˉempty(),
+        Genericˉtypeˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
+            Bound
+        )
+    );
+}
+
+fn Signatureˉisˉrejected(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbolsˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindingsˉvalue: Bindings.Compilerˉsourceˉbindingˉsummary
+) -> bool {
+    let Foreign: u32 = Symbolˉofˉkind(Symbolsˉvalue, 9u32);
+    return !Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+        Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+        7u32, 3u32, Foreign, 0u32
+    );
+}
+
+export fn Languageˉoneˉtypedˉforeignˉcallˉwirˉvalidationˉcase() -> i32 {
+    let Input: bytes = Sourceˉsetˉwithˉsignature(
+        "Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>", "i64"
+    );
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbolsˉvalue: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Symbolsˉvalue.Status != Symbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 101;
+    }
+    let Bindingsˉvalue: Bindings.Compilerˉsourceˉbindingˉsummary =
+        Bindingsˉwithˉforeignˉgenericˉtypes(
+            Input, Scan, Symbolsˉvalue
+        );
+    if Bindingsˉvalue.Status !=
+            Bindings.Compilerˉsourceˉbindingˉstatus.Valid {
+        return 102;
+    }
+    if Bytesˉreadˉu16ˉlittle(Bindingsˉvalue.Directory, 6u32) != 3u32 {
+        return 103;
+    }
+    let Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Genericˉbindings.Compilerˉsourceˉbindingsˉgenericˉtypesˉtypeˉcatalog(
+            Bindingsˉvalue.Directory
+        );
+    if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉinstances(
+            Typeˉcatalog
+        ) == 0u32 {
+        return 104;
+    }
+    let Entries: u32 = Bytesˉreadˉu32ˉlittle(
+        Symbolsˉvalue.Directory, 8u32
+    );
+    let Foreign: u32 = Symbolˉofˉkind(Symbolsˉvalue, 9u32);
+    let Function: u32 = Symbolˉofˉkind(Symbolsˉvalue, 6u32);
+    if Foreign >= Entries || Function >= Entries ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
+            190u32, 7u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉresultˉisˉvalid(
+            190u32, 8u32
+        ) ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
+            190u32, 3u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉcountˉisˉvalid(
+            190u32, 2u32
+        ) {
+        return 105;
+    }
+    let Destination: u32 =
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Foreign, 0u32, 0u32
+        );
+    let Capacity: u32 =
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Foreign, 0u32, 1u32
+        );
+    let Generation: u32 =
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Foreign, 0u32, 2u32
+        );
+    if Destination == 0u32 || Capacity != 8u32 || Generation != 8u32 ||
+        !Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
+            190u32, 0u32, Destination
+        ) ||
+        Validation.Compilerˉsourceˉwirˉoperationˉoperandˉshapeˉisˉvalid(
+            190u32, 0u32, Capacity
+        ) {
+        return 106;
+    }
+    if Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Function, 0u32, 0u32
+        ) != 0u32 ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Foreign, 1u32, 0u32
+        ) != 0u32 ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉparameterˉshape(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            Foreign, 0u32, 3u32
+        ) != 0u32 {
+        return 107;
+    }
+    if !Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            7u32, 3u32, Foreign, 0u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            8u32, 3u32, Foreign, 0u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            7u32, 2u32, Foreign, 0u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            7u32, 3u32, Function, 0u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            7u32, 3u32, Entries, 0u32
+        ) ||
+        Validation.Compilerˉsourceˉwirˉforeignˉcallˉisˉvalid(
+            Input, Scan, Symbolsˉvalue, Bindingsˉvalue,
+            7u32, 3u32, Foreign, 1u32
+        ) {
+        return 108;
+    }
+    let Invalidˉdestination: bytes = Sourceˉsetˉwithˉsignature(
+        Paddedˉu64ˉtype(), "i64"
+    );
+    if Bytesˉlength(Invalidˉdestination) != Bytesˉlength(Input) ||
+        !Signatureˉisˉrejected(
+            Invalidˉdestination, Scan, Symbolsˉvalue, Bindingsˉvalue
+        ) {
+        return 109;
+    }
+    let Invalidˉreturn: bytes = Sourceˉsetˉwithˉsignature(
+        "Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>", "u64"
+    );
+    if Bytesˉlength(Invalidˉreturn) != Bytesˉlength(Input) ||
+        !Signatureˉisˉrejected(
+            Invalidˉreturn, Scan, Symbolsˉvalue, Bindingsˉvalue
+        ) {
+        return 110;
+    }
+    return 42;
+}

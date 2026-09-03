@@ -291,19 +291,37 @@ at an explicit production checkpoint. The production owner does not replace the
 shared semantic owners.
 
 The separate `language-1-authenticated-foreign-binding` owner claims the
-compiler-owned semantic adapter rather than the hosted authentication boundary.
-It reconstructs one current split-compiler pair, uses that identity to build two
-bounded fixtures, packages two profile-7 native applications, and executes 24
-isolated selectors. Those cases cover canonical binding; accepted declaration
+compiler-owned semantic adapter and typed Foreign-call WVIR boundary rather
+than the hosted authentication boundary. Through the canonical batched current
+split-project builder, it verifies and packages the qualified pinned pair,
+reconstructs the current Analyzer, packages that current Analyzer with the
+compiler-scale profile 8, reconstructs the current Emitter, and uses the
+dependency-keyed project cache to compile the current combined binding
+fixtures, focused typed-WVIR fixture, and `wvbind` source. Compiler-scale
+products therefore use the resumable symbol checkpoint only after the current
+Analyzer that implements that private route exists. The owner packages two
+profile-7 native applications and executes 26 isolated selectors across four
+logical fixtures.
+The dedicated compiler-reconstruction gate owns self-hosted compiler rebuilding;
+this focused semantic owner does not duplicate that work before every selector.
+Those cases cover canonical binding; accepted declaration
 layouts; foreign-free and foreign-bearing WVSD/WVSI version selection; complete
 serialized-symbol malformations; callable-namespace collisions and import
 visibility; exact positional and named calls; the full zero-through-four arity
 matrix; first-class value, indirect, and generic-call rejection; catalog order,
 correspondence, and normalized-fact tampering; unsupported targets; and the
-early Foreign-count semantic bound. The callable-semantics owner separately
+early Foreign-count semantic bound. The final selector compiles a real
+`Foundationˉunsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>` call to WVIR 1.31
+operation `190` and checks its exact result shape, operand count, Foreign target,
+and zero reserved field. The final validator selector independently accepts the
+exact result, arity, authenticated target, reserved field, pointer parameter,
+two `u64` parameters, and `i64` return contract; it rejects altered result,
+arity, target kind/range, reserved field, parameter index, pointer type, and
+return type.
+The callable-semantics owner separately
 proves at the owning closure-capture phase that a Foreign global cannot enter an
 explicit capture. The ordinary Analyzer's fail-closed foreign-input guard
-belongs to the production-ingress owner, not these 24 selectors. Direct adapter,
+belongs to the production-ingress owner, not these 26 selectors. Direct adapter,
 either fixture/project, owner, or Decision 0895 changes select this owner.
 Changes to the adapter implementation, Decision 0895, `wvbind`, or its runner
 integration also select the production-ingress owner because digest evidence,

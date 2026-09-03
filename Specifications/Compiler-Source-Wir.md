@@ -28,8 +28,8 @@ The phase currently lowers:
 - expression statements, exact `try` propagation, semantic `using`, `return`, lexical blocks, lexical unsafe statement and value blocks, statement and value-producing `if`/`else if`/`else` and exhaustive enum/variant `match`, `while`, `for`, `break`, and `continue`;
 - exact local callable invocation, canonical Foundation unsafe scratch
   construction and observation, checked mutable write-region borrowing,
-  contained write-pointer derivation, plus explicit jump, branch, and return
-  terminators.
+  contained write-pointer derivation, typed Foreign calls, plus explicit jump,
+  branch, and return terminators.
 
 Shape `0` remains Seed's return-only `void`. Shape `9` is the ordinary edition-1
 `unit` value and shape `10` is edition-1 `never`, valid only as a function result.
@@ -52,7 +52,7 @@ Main analysis may additionally retain private WVGT shapes
 `0x80000000..0x800000ff` in function returns, parameter/local operations, and
 temporary evidence. Such a shape is valid only when its zero-based instance is
 present in the exact WVGT catalog embedded by the paired WVLB 1.3 directory.
-The catalog selects the even WVIR minor in the current `1.9` through `1.30`
+The catalog selects the even WVIR minor in the current `1.9` through `1.32`
 family; it is not a runtime identity. Source WVB must materialize and replace
 every private shape before publishing bytecode.
 
@@ -63,7 +63,7 @@ reduced `WVIC 1.0` catalog derived from and checked against those directories.
 Each retained instance contains only the portable profile, result shape, and
 ordered by-value parameter shapes admitted by this executable checkpoint.
 
-Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. WVIR 1.23 is the non-specialized Foundation unsafe-scratch construction directory, and WVIR 1.24 combines operation `186` with the specialization envelope. WVIR 1.25 is the non-specialized immutable scratch-observation directory, and WVIR 1.26 combines operation `187` with the specialization envelope. WVIR 1.27 is the non-specialized mutable write-region-borrowing directory, and WVIR 1.28 combines operation `188` with the specialization envelope. WVIR 1.29 is the non-specialized contained write-pointer directory, and WVIR 1.30 combines operation `189` with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
+Each result-producing operation receives the next function-local temporary ID. Operands may refer only to earlier temporaries in the same function. Basic-block IDs are function-local and canonical in construction order. WVIR 1.9 function entries align one-for-one with WVSD declaration entries; non-function declarations have all-zero function entries. WVIR 1.10 retains those positions, leaves a generic declaration's source position as an all-zero placeholder, and appends concrete specialization entries after the complete WVSD directory in WVGC catalog order. WVIR 1.11 is the corresponding non-specialized directory when operation `171` or `172` is present; WVIR 1.12 combines either operation with the 1.10 specialization envelope. WVIR 1.13 is the non-specialized directory when operation `173` is present, and WVIR 1.14 combines append with the specialization envelope. WVIR 1.15 is the non-specialized directory when operation `175` is present, and WVIR 1.16 combines growth with the specialization envelope. WVIR 1.17 is the non-specialized callable directory, and WVIR 1.18 combines callable evidence with the specialization envelope. WVIR 1.19 is the non-specialized plain-capture environment directory, and WVIR 1.20 combines that evidence with the specialization envelope. WVIR 1.21 is the non-specialized structured-task directory, and WVIR 1.22 combines structured-task operations with the specialization envelope. WVIR 1.23 is the non-specialized Foundation unsafe-scratch construction directory, and WVIR 1.24 combines operation `186` with the specialization envelope. WVIR 1.25 is the non-specialized immutable scratch-observation directory, and WVIR 1.26 combines operation `187` with the specialization envelope. WVIR 1.27 is the non-specialized mutable write-region-borrowing directory, and WVIR 1.28 combines operation `188` with the specialization envelope. WVIR 1.29 is the non-specialized contained write-pointer directory, and WVIR 1.30 combines operation `189` with the specialization envelope. WVIR 1.31 is the non-specialized typed-Foreign-call directory, and WVIR 1.32 combines operation `190` with the specialization envelope. Operation `174` is valid in the lowest family member otherwise selected by the module; it does not introduce another feature envelope. WVIR 1.1 through 1.8 are rejected rather than retained through a parallel decoder.
 
 ## WVIR 1 binary directory
 
@@ -73,7 +73,7 @@ All integers are unsigned little-endian and the directory contains no padding.
 | ---: | ---: | --- |
 | 0 | 4 | ASCII magic `WVIR` |
 | 4 | 2 | Major version `1` |
-| 6 | 2 | Minor version `9` through `30` selected by the features below |
+| 6 | 2 | Minor version `9` through `32` selected by the features below |
 | 8 | 4 | Function-entry count |
 | 12 | 4 | Function-entry size `48` |
 | 16 | 4 | Block count |
@@ -85,9 +85,9 @@ All integers are unsigned little-endian and the directory contains no padding.
 | 40 | 4 | Operand count |
 | 44 | 4 | Operand-entry size `4` |
 
-WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, and WVIR 1.29 append function-type-catalog byte length and
+WVIR 1.17, WVIR 1.19, WVIR 1.21, WVIR 1.23, WVIR 1.25, WVIR 1.27, WVIR 1.29, and WVIR 1.31 append function-type-catalog byte length and
 catalog-layout version `1` at offsets 48 and 52, so function entries begin at
-offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, and WVIR 1.30
+offset 56. WVIR 1.18, WVIR 1.20, WVIR 1.22, WVIR 1.24, WVIR 1.26, WVIR 1.28, WVIR 1.30, and WVIR 1.32
 first retain specialization count/version at offsets 48 and 52, then append
 function-type-catalog byte length/version at offsets 56 and 60, so function
 entries begin at offset 64. Sections follow in their exact order, and the WVIC
@@ -117,7 +117,9 @@ publishes WVIR 1.25; the same operation with specialization publishes WVIR
 1.26. Operation `188` without specialization publishes WVIR 1.27; the same
 operation with specialization publishes WVIR 1.28. Operation `189` without
 specialization publishes WVIR 1.29; the same operation with specialization
-publishes WVIR 1.30. The unsafe-memory pairs may also carry
+publishes WVIR 1.30. Operation `190` without specialization publishes WVIR
+1.31; the same operation with specialization publishes WVIR 1.32. The
+Foreign-call pair may also carry earlier features. The unsafe-memory pairs may also carry
 structured-task operations and retain the same function-type-catalog header,
 including a zero-length catalog when no callable instance is present.
 The earlier even versions 1.10, 1.12, 1.14, and 1.16 append the
@@ -139,7 +141,8 @@ also contain operation `186`, and must not contain operation `188` or `189`. A
 1.27/1.28 directory must contain operation `188`, may also contain operations
 `186` and `187`, and must not contain operation `189`. A 1.29/1.30 directory
 must contain operation `189` and may also contain operations `186` through
-`188`.
+`188`. A 1.31/1.32 directory must contain operation `190` and may also contain
+earlier operations.
 
 Each 48-byte function entry contains twelve `u32` fields: module, first block/count, first operation/count, first temporary/count, first operand/count, parameter count, local count, and return shape.
 
@@ -181,7 +184,9 @@ value `179` is `Closureˉcreate`. Values `180` through `185` are the
 structured-task construct, operation-context, spawn, await, cancel, and
 scope-exit family. Value `186` is
 `Foundationˉunsafeˉconstructˉscratch`, and value `187` is
-`Foundationˉunsafeˉscratchˉlength`; both are defined below.
+`Foundationˉunsafeˉscratchˉlength`; both are defined below. Values `188` and
+`189` are mutable write-region borrowing and contained write-pointer
+derivation. Value `190` is the typed Foreign call defined below.
 
 The numeric mapping is frozen by `Compilerˉsourceˉwirˉoperation` and verified by the focused demo. Adding an operation requires updating its result shape, operand arity and shapes, target/auxiliary contract, demo coverage, this specification, and both native qualification scripts.
 
@@ -274,17 +279,42 @@ and region identities, their opaque one-`u64` layouts, the `u8` element, and
 the ABI relationship. WVIR 1.29/1.30 require at least one operation `189`;
 earlier unsafe-memory operations may also be present.
 
-This checkpoint publishes no WVB instruction and forms no machine address. The
-source-WVB backend accepts the analysis and reports `Unsupportedˉoperation`.
-WVB encoding, affine pointer/region lifetime containment, runtime/provider
-representation, native lowering, authenticated no-retain Foreign calls, and
-ordinary generic-call inference remain separate later boundaries.
+Candidate WVB 1.37 serializes operation `189` as the non-executing
+`unsafe.write-pointer.borrow` instruction after compiler-aligned affine
+validation. Execution consumers still reject WVB 1.37, so this checkpoint forms
+no machine address. Provider representation, native address formation,
+authenticated no-retain Foreign calls, and ordinary generic-call inference
+remain separate later boundaries.
+
+### Typed Foreign call
+
+Operation `190` is selected only for a resolved Foreign declaration called
+inside a lexical unsafe context. It consumes exactly three by-value operands in
+declaration order: the exact `Foundationˉunsafe.Foreignˉpointer<u8, Abi>` value,
+an exact `u64` capacity, and an exact `u64` expected generation. Its result is
+exact `i64`. `Target` is the declaration's canonical WVSD Foreign entry and
+`Auxiliary` is zero.
+
+Independent validation reconstructs the declaration signature from the source
+graph, requires a kind-`9` WVSD target with three parameters, and verifies the
+canonical Foundation pointer identity, its one-`u64` opaque layout, the `u8`
+element argument, the shared explicit ABI enum, the two `u64` scalars, and all
+by-value modes. WVIR 1.31/1.32 require at least one operation `190`; lower
+minors reject it.
+
+WVIR alone does not authenticate the declaration's native symbol, ABI spelling,
+no-retain promise, or no-unwind promise. Production consumption must pair the
+operation with the exact retained WVFB record already authenticated for the
+same source module and declaration. That coordinator pairing and WVB/native
+lowering are later checkpoints. Until then, the source-WVB backend rejects a
+valid operation `190` as `Unsupportedˉoperation` rather than treating it as
+malformed WVIR.
 
 ## Independent validation
 
 `Compilerˉsourceˉwirˉdirectoryˉisˉvalid` verifies:
 
-- magic, selected 1.9 through 1.30 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
+- magic, selected 1.9 through 1.32 version, exact feature-to-minor correspondence, fixed entry sizes, bounded counts, exact section offsets, and exact total length;
 - canonical function ranges aligned with WVSD and WVLB, including generic placeholders, appended catalog-order specializations, parameter/local counts, and substituted source return shapes;
 - canonical block IDs and ownership, gap-free operation coverage, valid targets, and terminator value types;
 - operation ownership and kind, result shape, temporary sequencing, and operand sequencing;
