@@ -1,6 +1,6 @@
 module Windvaleˉcompilerˉforeignˉbindingˉdriver profile hosted;
 
-import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
+import Compilerˉsourceˉforeignˉloweringˉbuilder as Loweringˉbuilder;
 import Compilerˉsourceˉforeignˉloweringˉpairing as Pairing;
 import Compilerˉsourceˉsymbols as Symbols;
 
@@ -25,14 +25,20 @@ fn Argumentˉequals(Value: text, Expected: text) -> bool {
     return true;
 }
 
-fn Pathsˉareˉdistinct() -> bool {
-    if Argumentˉequals(process.argument(0u32), process.argument(1u32)) ||
-        Argumentˉequals(process.argument(0u32), process.argument(2u32)) ||
-        Argumentˉequals(process.argument(0u32), process.argument(3u32)) ||
-        Argumentˉequals(process.argument(1u32), process.argument(2u32)) ||
-        Argumentˉequals(process.argument(1u32), process.argument(3u32)) ||
-        Argumentˉequals(process.argument(2u32), process.argument(3u32)) {
-        return false;
+fn Argumentsˉareˉdistinct(First: u32, Count: u32) -> bool {
+    var Left: u32 = 0u32;
+    while Left < Count {
+        var Right: u32 = Left + 1u32;
+        while Right < Count {
+            if Argumentˉequals(
+                    process.argument(First + Left),
+                    process.argument(First + Right)
+                ) {
+                return false;
+            }
+            Right = Right + 1u32;
+        }
+        Left = Left + 1u32;
     }
     return true;
 }
@@ -82,7 +88,7 @@ fn Pairˉanalysis() -> i32 {
 }
 
 fn Failure(
-    Bound: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary
+    Bound: Loweringˉbuilder.Compilerˉsourceˉforeignˉbindingˉsummary
 ) -> text {
     var Report: text = "foreign binding status=";
     Report = Textˉconcat(Report, Enumˉname(Bound.Status));
@@ -93,7 +99,7 @@ fn Failure(
     Report = Textˉconcat(Report, " symbol-status=");
     Report = Textˉconcat(Report, Enumˉname(Bound.Symbolˉstatus));
     Report = Textˉconcat(Report, " binding-status=");
-    Report = Textˉconcat(Report, Enumˉname(Bound.Bindingˉstatus));
+    Report = Textˉconcat(Report, U32ˉformat(Bound.Bindingˉstatus));
     Report = Textˉconcat(Report, " foreign-count=");
     Report = Textˉconcat(Report, U32ˉformat(Bound.Foreignˉcount));
     Report = Textˉconcat(Report, " failure-module=");
@@ -110,38 +116,16 @@ fn Failure(
     return Textˉconcat(Report, U32ˉformat(Bound.Failureˉoffset));
 }
 
-export fn Main() -> i32 {
-    if process.argument_count() == 4u32 &&
-        Argumentˉisˉpairˉanalysis(process.argument(0u32)) {
-        return Pairˉanalysis();
-    }
-    if process.argument_count() != 4u32 {
-        diagnostic.write_line(
-            "Usage: wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>"
-        );
-        return 64;
-    }
-    if !Pathsˉareˉdistinct() {
-        diagnostic.write_line(
-            "foreign binding status=Invalidˉinvocation reason=paths-not-distinct"
-        );
-        return 64;
-    }
-
-    let Sourceˉset: bytes = file.read_bytes(process.argument(0u32));
-    let Target: bytes = file.read_bytes(process.argument(1u32));
-    let Catalog: bytes = file.read_bytes(process.argument(2u32));
-    let Bound: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
-        Foreignˉbinding.Compilerˉbindˉsourceˉforeignˉdeclarations(
-            Sourceˉset, Target, Catalog
-        );
-    if Bound.Status !=
-            Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉstatus.Valid {
-        diagnostic.write_line(Failure(Bound));
-        return 1;
-    }
-
-    file.write_bytes(process.argument(3u32), Bound.Loweringˉcarrier);
+fn Publish(
+    Sourceˉset: bytes,
+    Target: bytes,
+    Catalog: bytes,
+    Bound: Loweringˉbuilder.Compilerˉsourceˉforeignˉbindingˉsummary,
+    Outputˉargument: u32
+) -> i32 {
+    file.write_bytes(
+        process.argument(Outputˉargument), Bound.Loweringˉcarrier
+    );
 
     var Report: text = "foreign binding status=Published source-bytes=";
     Report = Textˉconcat(Report, U32ˉformat(Bytesˉlength(Sourceˉset)));
@@ -168,4 +152,68 @@ export fn Main() -> i32 {
         Textˉconcat(Report, U32ˉformat(Bound.Foreignˉcount))
     );
     return 0;
+}
+
+fn Bindˉanalyzed() -> i32 {
+    if process.argument_count() != 6u32 {
+        diagnostic.write_line(
+            "Usage: wvbind --internal-bind-analyzed <input.wvss> <input.wvtd> <input.wvfc> <input.wvir> <output.wvfb>"
+        );
+        return 64;
+    }
+    if !Argumentsˉareˉdistinct(1u32, 5u32) {
+        diagnostic.write_line(
+            "foreign binding status=Invalidˉinvocation reason=paths-not-distinct"
+        );
+        return 64;
+    }
+
+    let Sourceˉset: bytes = file.read_bytes(process.argument(1u32));
+    let Target: bytes = file.read_bytes(process.argument(2u32));
+    let Catalog: bytes = file.read_bytes(process.argument(3u32));
+    let Bound: Loweringˉbuilder.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Loweringˉbuilder.Compilerˉbuildˉsourceˉforeignˉloweringˉcarrier(
+            Sourceˉset, Target, Catalog
+        );
+    if Bound.Status !=
+            Loweringˉbuilder.Compilerˉsourceˉforeignˉbindingˉstatus.Valid {
+        diagnostic.write_line(Failure(Bound));
+        return 1;
+    }
+
+    let Symbolsˉresult: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset);
+    let Paired: Pairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Pairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Bound.Loweringˉcarrier,
+            Symbolsˉresult,
+            file.read_bytes(process.argument(4u32))
+        );
+    if Paired.Status !=
+            Pairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Valid {
+        diagnostic.write_line(
+            Textˉconcat(
+                "foreign binding status=Invalidˉanalyzedˉwir pairing-status=",
+                Enumˉname(Paired.Status)
+            )
+        );
+        return 1;
+    }
+    return Publish(Sourceˉset, Target, Catalog, Bound, 5u32);
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() == 4u32 &&
+        Argumentˉisˉpairˉanalysis(process.argument(0u32)) {
+        return Pairˉanalysis();
+    }
+    if process.argument_count() > 0u32 && Argumentˉequals(
+            process.argument(0u32), "--internal-bind-analyzed"
+        ) {
+        return Bindˉanalyzed();
+    }
+    diagnostic.write_line(
+        "Usage: wvbind --internal-bind-analyzed <input.wvss> <input.wvtd> <input.wvfc> <input.wvir> <output.wvfb>"
+    );
+    return 64;
 }

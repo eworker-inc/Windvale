@@ -16,7 +16,7 @@ export fn Scanˉfixedˉinteger(
     Remaining: u32,
     Minor: u32
 ) -> u32 {
-    if Minor < 12u32 || Minor > 37u32 || Remaining < 3u32 { return 0u32; }
+    if Minor < 12u32 || Minor > 38u32 || Remaining < 3u32 { return 0u32; }
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 1u32));
     let Operation: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Offset + 2u32));
     if Kind < 14u32 || Kind > 16u32 || Operation > 18u32 { return 0u32; }
@@ -57,7 +57,7 @@ export fn Shapeˉisˉsupported(Kind: u32, Minor: u32) -> bool {
     if Minor >= 29u32 && Kind == 34u32 { return true; }
     if Minor >= 30u32 && Kind == 35u32 { return true; }
     if (Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
-            Minor == 37u32) &&
+            Minor == 37u32 || Minor == 38u32) &&
         Kind == 36u32 {
         return true;
     }
@@ -72,13 +72,14 @@ export fn Scanˉfunction(
     Minor: u32,
     Requestˉmajor: u32
 ) -> u32 {
-    if Minor < 11u32 || Minor > 37u32 { return 0u32; }
+    if Minor < 11u32 || Minor > 38u32 { return 0u32; }
     var Cursor: u32 = 0u32;
     var Instructions: u32 = 0u32;
     var Unsafeˉscratchˉinstructions: u32 = 0u32;
     var Unsafeˉscratchˉlengthˉinstructions: u32 = 0u32;
     var Unsafeˉwriteˉregionˉinstructions: u32 = 0u32;
     var Unsafeˉwriteˉpointerˉinstructions: u32 = 0u32;
+    var Foreignˉcallˉinstructions: u32 = 0u32;
     while Cursor < Length {
         let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(
             Module, Offset + Cursor
@@ -114,12 +115,15 @@ export fn Scanˉfunction(
             Supported = true;
         }
         if Opcode == 106u32 { Width = 9u32; Supported = true; }
+        if Opcode == 128u32 { Width = 9u32; Supported = true; }
         if Opcode >= 107u32 && Opcode <= 125u32 { Supported = true; }
         if Opcode == 129u32 {
             Width = 9u32;
             Supported = true;
         }
+        if Opcode == 133u32 { Supported = true; }
         if Opcode >= 134u32 && Opcode <= 136u32 { Supported = true; }
+        if Opcode == 137u32 || Opcode == 138u32 { Supported = true; }
         if Opcode >= 143u32 && Opcode <= 148u32 { Supported = true; }
         if Opcode >= 151u32 && Opcode <= 153u32 {
             Width = 9u32;
@@ -243,7 +247,7 @@ export fn Scanˉfunction(
         }
         if Opcode == 220u32 {
             if Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
-                Minor != 36u32 && Minor != 37u32 {
+                Minor != 36u32 && Minor != 37u32 && Minor != 38u32 {
                 return 0u32;
             }
             Width = 13u32;
@@ -252,7 +256,8 @@ export fn Scanˉfunction(
             if Unsafeˉscratchˉinstructions > 4096u32 { return 0u32; }
         }
         if Opcode == 221u32 {
-            if Minor != 35u32 && Minor != 36u32 && Minor != 37u32 {
+            if Minor != 35u32 && Minor != 36u32 && Minor != 37u32 &&
+                Minor != 38u32 {
                 return 0u32;
             }
             Width = 9u32;
@@ -264,7 +269,9 @@ export fn Scanˉfunction(
             }
         }
         if Opcode == 222u32 {
-            if Minor != 36u32 && Minor != 37u32 { return 0u32; }
+            if Minor != 36u32 && Minor != 37u32 && Minor != 38u32 {
+                return 0u32;
+            }
             Width = 13u32;
             Supported = true;
             Unsafeˉwriteˉregionˉinstructions =
@@ -274,7 +281,7 @@ export fn Scanˉfunction(
             }
         }
         if Opcode == 223u32 {
-            if Minor != 37u32 { return 0u32; }
+            if Minor != 37u32 && Minor != 38u32 { return 0u32; }
             Width = 13u32;
             Supported = true;
             Unsafeˉwriteˉpointerˉinstructions =
@@ -282,6 +289,13 @@ export fn Scanˉfunction(
             if Unsafeˉwriteˉpointerˉinstructions > 4096u32 {
                 return 0u32;
             }
+        }
+        if Opcode == 224u32 {
+            if Minor != 38u32 { return 0u32; }
+            Width = 13u32;
+            Supported = true;
+            Foreignˉcallˉinstructions = Foreignˉcallˉinstructions + 1u32;
+            if Foreignˉcallˉinstructions > 4096u32 { return 0u32; }
         }
         if !Supported || Width > Length - Cursor { return 0u32; }
         Cursor = Cursor + Width;
@@ -298,6 +312,9 @@ export fn Scanˉfunction(
     }
     if Minor == 37u32 {
         Versionˉfeatureˉinstructions = Unsafeˉwriteˉpointerˉinstructions;
+    }
+    if Minor == 38u32 {
+        Versionˉfeatureˉinstructions = Foreignˉcallˉinstructions;
     }
     return Instructions | (Versionˉfeatureˉinstructions << 19u32);
 }
@@ -501,12 +518,14 @@ export fn Executeˉscalar(
             Bytesˉconcat(Stack, Bytesˉconcat(Zeroˉvalue, Zeroˉvalue))
         );
     }
-    if Opcode == 129u32 ||
+    if Opcode == 128u32 || Opcode == 129u32 ||
+        Opcode == 133u32 ||
         (Opcode >= 134u32 && Opcode <= 136u32) ||
+        Opcode == 137u32 || Opcode == 138u32 ||
         (Opcode >= 143u32 && Opcode <= 148u32) ||
         (Opcode >= 179u32 && Opcode <= 184u32) ||
         Opcode == 191u32 {
-        if Opcode == 129u32 {
+        if Opcode == 128u32 || Opcode == 129u32 {
             return Execution(
                 36u8, 0u32,
                 Bytesˉconcat(
@@ -531,7 +550,7 @@ export fn Executeˉscalar(
             );
         }
         var Operands: u32 = 2u32;
-        if Opcode == 182u32 { Operands = 1u32; }
+        if Opcode == 133u32 || Opcode == 182u32 { Operands = 1u32; }
         if Stackˉdescriptorˉcount < Operands {
             return Bytesˉslice(Stack, 0u32, 0u32);
         }
@@ -555,9 +574,14 @@ export fn Executeˉscalar(
             );
         }
         var Value: u64 = 0u64;
+        if Opcode == 133u32 && Left != 0u64 {
+            Value = 18446744073709551615u64 - Left + 1u64;
+        }
         if Opcode == 134u32 { Value = Left + Right; }
         if Opcode == 135u32 { Value = Left - Right; }
         if Opcode == 136u32 { Value = Left * Right; }
+        if Opcode == 137u32 && Left == Right { Value = 1u64; }
+        if Opcode == 138u32 && Left != Right { Value = 1u64; }
         if Opcode == 143u32 && Left == Right { Value = 1u64; }
         if Opcode == 144u32 && Left != Right { Value = 1u64; }
         if Opcode == 145u32 && Left < Right { Value = 1u64; }

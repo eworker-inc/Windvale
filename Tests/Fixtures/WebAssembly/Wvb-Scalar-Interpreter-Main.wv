@@ -24,13 +24,13 @@ data Stackˉeffects: bytes = [
     1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     6, 6, 6, 6, 6, 6, 6, 6, 0, 0, 4, 6, 6, 13, 13, 13,
     13, 14, 6, 5, 13, 13, 5, 14, 13, 13, 13, 13, 13, 13, 0, 0,
-    0, 4, 0, 0, 0, 0, 6, 6, 6, 0, 0, 0, 0, 0, 0, 6,
+    4, 4, 0, 0, 0, 5, 6, 6, 6, 6, 6, 0, 0, 0, 0, 6,
     6, 6, 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6,
     6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 6, 6,
     5, 6, 6, 6, 6, 6, 5, 6, 6, 0, 0, 0, 0, 0, 13, 5,
     4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
@@ -374,7 +374,7 @@ fn Readˉfunctionˉdirectory(
             if Shapeˉkind == 25u32 {
                 if Moduleˉminor == 33u32 || Moduleˉminor == 34u32 ||
                     Moduleˉminor == 35u32 || Moduleˉminor == 36u32 ||
-                    Moduleˉminor == 37u32 {
+                    Moduleˉminor == 37u32 || Moduleˉminor == 38u32 {
                     if Functionˉindex == Mainˉindex {
                         if Parameterˉcount != 1u32 || Shapeˉindex != 0u32 ||
                             Mainˉhasˉmemoryˉbudget {
@@ -422,7 +422,8 @@ fn Readˉfunctionˉdirectory(
                 Shapeˉkind == 21u32 || Shapeˉkind == 29u32 ||
                 Shapeˉkind == 30u32 ||
                 (Shapeˉkind == 28u32 && Moduleˉminor != 35u32 &&
-                    Moduleˉminor != 36u32 && Moduleˉminor != 37u32) {
+                    Moduleˉminor != 36u32 && Moduleˉminor != 37u32 &&
+                    Moduleˉminor != 38u32) {
                 return Invalidˉfunctionˉdirectory(Module);
             }
             var Parameterˉmode: u8 = 0u8;
@@ -515,7 +516,7 @@ fn Readˉfunctionˉdirectory(
                 (Shapeˉkind == 25u32 &&
                     (Moduleˉminor != 34u32 && Moduleˉminor != 33u32 &&
                         Moduleˉminor != 35u32 && Moduleˉminor != 36u32 &&
-                        Moduleˉminor != 37u32 &&
+                        Moduleˉminor != 37u32 && Moduleˉminor != 38u32 &&
                         Moduleˉminor != 32u32 &&
                         (Moduleˉminor < 23u32 || Moduleˉminor > 28u32 ||
                         Functionˉindex != Mainˉindex ||
@@ -642,7 +643,8 @@ fn Readˉfunctionˉdirectory(
         (Moduleˉminor == 34u32 &&
             Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         ((Moduleˉminor == 33u32 || Moduleˉminor == 35u32 ||
-            Moduleˉminor == 36u32 || Moduleˉminor == 37u32) &&
+            Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
+            Moduleˉminor == 38u32) &&
             Versionˉfeatureˉinstructions == 0u32) {
         return Invalidˉfunctionˉdirectory(Module);
     }
@@ -1865,7 +1867,8 @@ fn Executeˉunsafeˉscratchˉconstruct(
                 }
                 var Scratchˉidentity: bytes = Bytesˉfromˉu64ˉlittle(Length);
                 if Bytesˉreadˉu16ˉlittle(Module, 6u32) == 36u32 ||
-                    Bytesˉreadˉu16ˉlittle(Module, 6u32) == 37u32 {
+                    Bytesˉreadˉu16ˉlittle(Module, 6u32) == 37u32 ||
+                    Bytesˉreadˉu16ˉlittle(Module, 6u32) == 38u32 {
                     if Bytesˉlength(Allocation.Descriptor) != 8u32 ||
                         (Bytesˉreadˉu32ˉlittle(
                             Allocation.Descriptor, 0u32
@@ -2002,7 +2005,8 @@ fn Executeˉunsafeˉscratchˉlength(
     }
     var Length: u64 = Bytesˉreadˉu64ˉlittle(Records, Slot * 8u32);
     if Bytesˉreadˉu16ˉlittle(Module, 6u32) == 36u32 ||
-        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 37u32 {
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 37u32 ||
+        Bytesˉreadˉu16ˉlittle(Module, 6u32) == 38u32 {
         Length = U64ˉfromˉu32(Bytesˉreadˉu32ˉlittle(
             Records, Slot * 8u32 + 4u32
         ));
@@ -2482,6 +2486,157 @@ fn Executeˉunsafeˉwriteˉpointer(
         Bytesˉconcat(Initialˉstack, Pointerˉallocation.Handle),
         Pointerˉallocation.Metadata,
         Pointerˉallocation.Values
+    );
+}
+
+record Foreignˉcallˉexecution {
+    Valid: bool;
+    Stack: bytes;
+    Heap: bytes;
+}
+
+fn Invalidˉforeignˉcall(
+    Module: bytes,
+    Initialˉheap: bytes
+) -> Foreignˉcallˉexecution {
+    return Foreignˉcallˉexecution(
+        false, Bytesˉslice(Module, 0u32, 0u32), Initialˉheap
+    );
+}
+
+fn Foreignˉproviderˉrecord() -> bytes {
+    var Record: bytes = Bytesˉfromˉu32ˉlittle(1229346391u32);
+    Record = Bytesˉconcat(Record, Bytesˉfromˉu32ˉlittle(66049u32));
+    Record = Bytesˉconcat(Record, Bytesˉfromˉu64ˉlittle(42u64));
+    Record = Bytesˉconcat(Record, Bytesˉfromˉu32ˉlittle(4u32));
+    return Bytesˉconcat(Record, Bytesˉfromˉu32ˉlittle(4022250974u32));
+}
+
+fn Executeˉforeignˉcall(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Typeˉcount: u32,
+    Payload: u32,
+    Initialˉstack: bytes,
+    Initialˉheap: bytes,
+    Heapˉallocations: bytes,
+    Heapˉallocationˉcount: u32,
+    Recordˉmetadata: bytes,
+    Records: bytes
+) -> Foreignˉcallˉexecution {
+    let Stackˉlength: u32 = Bytesˉlength(Initialˉstack);
+    if Stackˉlength < 24u32 ||
+        Bytesˉlength(Typeˉoffsets) != Typeˉcount * 4u32 ||
+        Bytesˉlength(Heapˉallocations) != Heapˉallocationˉcount * 12u32 {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+    let Binding: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+    let Pointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+        Module, Payload + 5u32
+    );
+    let Abiˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 9u32);
+    if Binding != 1u32 || Pointerˉtype >= Typeˉcount ||
+        Abiˉtype >= Typeˉcount {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+    let Abiˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets, Abiˉtype * 4u32
+    );
+    let Abiˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Abiˉcursor));
+    let Pointerˉdirectory: bytes = Aggregateˉfieldˉdirectory(
+        Module, Typeˉoffsets, Pointerˉtype + 1u32
+    );
+    if (Abiˉkind != 2u32 && Abiˉkind != 7u32) ||
+        Bytesˉlength(Pointerˉdirectory) != 8u32 ||
+        Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 0u32) != 1u32 ||
+        U32ˉfromˉu8(Bytesˉreadˉu8(
+            Module, Fieldˉshapeˉat(
+                Module,
+                Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 4u32),
+                0u32
+            )
+        )) != 10u32 {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+
+    let Pointer: bytes = Bytesˉslice(
+        Initialˉstack, Stackˉlength - 24u32, 8u32
+    );
+    let Pointerˉslot: u32 = Bytesˉreadˉu32ˉlittle(Pointer, 0u32);
+    let Pointerˉowner: u32 = Bytesˉreadˉu32ˉlittle(Pointer, 4u32);
+    if Pointerˉslot == 4294967295u32 || Pointerˉslot >= 768u32 ||
+        Pointerˉowner != Pointerˉtype + 1u32 ||
+        Pointerˉslot * 8u32 > Bytesˉlength(Recordˉmetadata) ||
+        8u32 > Bytesˉlength(Recordˉmetadata) - Pointerˉslot * 8u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Recordˉmetadata, Pointerˉslot * 8u32
+        ) != Pointerˉowner ||
+        Bytesˉreadˉu32ˉlittle(
+            Recordˉmetadata, Pointerˉslot * 8u32 + 4u32
+        ) != 1u32 ||
+        Pointerˉslot * 8u32 > Bytesˉlength(Records) ||
+        8u32 > Bytesˉlength(Records) - Pointerˉslot * 8u32 {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+    let Descriptor: bytes = Bytesˉslice(
+        Records, Pointerˉslot * 8u32, 8u32
+    );
+    let Allocationˉindex: u32 = Descriptorˉallocationˉindex(
+        Heapˉallocations, Heapˉallocationˉcount, Descriptor
+    );
+    if Allocationˉindex == 4294967295u32 {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+    let Allocationˉentry: u32 = Allocationˉindex * 12u32;
+    let Destination: u32 = Bytesˉreadˉu32ˉlittle(Descriptor, 0u32);
+    let Destinationˉlength: u32 = Bytesˉreadˉu32ˉlittle(Descriptor, 4u32);
+    let Capacity: u64 = Bytesˉreadˉu64ˉlittle(
+        Initialˉstack, Stackˉlength - 16u32
+    );
+    let Expectedˉgeneration: u64 = Bytesˉreadˉu64ˉlittle(
+        Initialˉstack, Stackˉlength - 8u32
+    );
+    if Destinationˉlength != 64u32 || Capacity != 64u64 ||
+        (Destination & 7u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Heapˉallocations, Allocationˉentry
+        ) != Destination ||
+        Bytesˉreadˉu32ˉlittle(
+            Heapˉallocations, Allocationˉentry + 4u32
+        ) != 64u32 ||
+        Bytesˉreadˉu32ˉlittle(
+            Heapˉallocations, Allocationˉentry + 8u32
+        ) == 0u32 ||
+        Destination > Bytesˉlength(Initialˉheap) ||
+        64u32 > Bytesˉlength(Initialˉheap) - Destination {
+        return Invalidˉforeignˉcall(Module, Initialˉheap);
+    }
+
+    var Written: bytes = Foreignˉproviderˉrecord();
+    var Status: u64 = 24u64;
+    if Expectedˉgeneration != 42u64 {
+        Written = Bytesˉfromˉu64ˉlittle(42u64);
+        Status = 18446744073709551613u64;
+    }
+    let Writtenˉlength: u32 = Bytesˉlength(Written);
+    let Heap: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉheap, 0u32, Destination),
+            Written
+        ),
+        Bytesˉslice(
+            Initialˉheap,
+            Destination + Writtenˉlength,
+            Bytesˉlength(Initialˉheap) - Destination - Writtenˉlength
+        )
+    );
+    return Foreignˉcallˉexecution(
+        true,
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉstack, 0u32, Stackˉlength - 24u32),
+            Bytesˉfromˉu64ˉlittle(Status)
+        ),
+        Heap
     );
 }
 
@@ -4300,7 +4455,8 @@ fn Executeˉlocal(
             (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 34u32 &&
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 35u32 &&
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 &&
-                Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32) {
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 &&
+                Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32) {
             return Localˉexecution(
                 false, true, Empty, Empty, Empty, Empty, Producedˉkind
             );
@@ -6112,7 +6268,7 @@ fn Executeˉextended(
         let Scratchˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
         if (Scratchˉminor != 33u32 && Scratchˉminor != 34u32 &&
                 Scratchˉminor != 35u32 && Scratchˉminor != 36u32 &&
-                Scratchˉminor != 37u32) ||
+                Scratchˉminor != 37u32 && Scratchˉminor != 38u32) ||
             Bytesˉlength(Memoryˉbudgetˉstate) == 0u32 {
             return Invalid;
         }
@@ -6144,7 +6300,8 @@ fn Executeˉextended(
     if Payloadˉlength == 221u32 {
         if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 35u32 &&
             Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 &&
-            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 {
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32 {
             return Invalid;
         }
         let Scratchˉlength: bytes = Executeˉunsafeˉscratchˉlength(
@@ -6163,7 +6320,8 @@ fn Executeˉextended(
 
     if Payloadˉlength == 222u32 {
         if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 36u32 &&
-            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 {
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32 {
             return Invalid;
         }
         let Regionˉresult: Unsafeˉwriteˉregionˉexecution =
@@ -6185,7 +6343,8 @@ fn Executeˉextended(
     }
 
     if Payloadˉlength == 223u32 {
-        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 37u32 &&
+            Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32 {
             return Invalid;
         }
         let Pointerˉresult: Unsafeˉwriteˉregionˉexecution =
@@ -6201,6 +6360,25 @@ fn Executeˉextended(
         Stackˉconsumed = 0u32;
         Stackˉproduced = true;
         Stackˉproducedˉkind = 2u32;
+        Aggregateˉinstructions = Aggregateˉinstructions + 13u32;
+        Mainˉfound = true;
+    }
+
+    if Payloadˉlength == 224u32 {
+        if Bytesˉreadˉu16ˉlittle(Module, 6u32) != 38u32 {
+            return Invalid;
+        }
+        let Foreignˉresult: Foreignˉcallˉexecution = Executeˉforeignˉcall(
+            Module, Typeˉoffsets, Typeˉcount, Payload, Stack, Heap,
+            Heapˉallocations, Heapˉallocationˉcount,
+            Recordˉmetadata, Records
+        );
+        if !Foreignˉresult.Valid { return Invalid; }
+        Stack = Foreignˉresult.Stack;
+        Heap = Foreignˉresult.Heap;
+        Stackˉconsumed = 3u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 1u32;
         Aggregateˉinstructions = Aggregateˉinstructions + 13u32;
         Mainˉfound = true;
     }
@@ -9193,41 +9371,50 @@ export fn Main(Request: bytes) -> bytes {
             Mainˉfound = true;
         }
 
-        var Isˉu64ˉinstruction: bool = Payloadˉlength == 129u32;
+        var Isˉwideˉintegerˉinstruction: bool =
+            Payloadˉlength == 128u32 || Payloadˉlength == 129u32;
+        if Payloadˉlength == 133u32 {
+            Isˉwideˉintegerˉinstruction = true;
+        }
         if Payloadˉlength >= 134u32 && Payloadˉlength <= 136u32 {
-            Isˉu64ˉinstruction = true;
+            Isˉwideˉintegerˉinstruction = true;
+        }
+        if Payloadˉlength == 137u32 || Payloadˉlength == 138u32 {
+            Isˉwideˉintegerˉinstruction = true;
         }
         if Payloadˉlength >= 143u32 && Payloadˉlength <= 148u32 {
-            Isˉu64ˉinstruction = true;
+            Isˉwideˉintegerˉinstruction = true;
         }
         if Payloadˉlength >= 179u32 && Payloadˉlength <= 184u32 {
-            Isˉu64ˉinstruction = true;
+            Isˉwideˉintegerˉinstruction = true;
         }
-        if Payloadˉlength == 191u32 { Isˉu64ˉinstruction = true; }
-        if Isˉu64ˉinstruction {
-            let U64ˉexecutionˉresult: bytes = Fixed.Executeˉscalar(
+        if Payloadˉlength == 191u32 {
+            Isˉwideˉintegerˉinstruction = true;
+        }
+        if Isˉwideˉintegerˉinstruction {
+            let Wideˉexecutionˉresult: bytes = Fixed.Executeˉscalar(
                 Module,
                 Payload,
                 Stack,
                 Stackˉdescriptorˉcount,
                 Zeroˉvalue
             );
-            if Bytesˉlength(U64ˉexecutionˉresult) < 5u32 { return Invalid; }
-            let U64ˉmetadata: u32 = U32ˉfromˉu8(
-                Bytesˉreadˉu8(U64ˉexecutionˉresult, 0u32)
+            if Bytesˉlength(Wideˉexecutionˉresult) < 5u32 { return Invalid; }
+            let Wideˉmetadata: u32 = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Wideˉexecutionˉresult, 0u32)
             );
             Sectionˉkind = Bytesˉreadˉu32ˉlittle(
-                U64ˉexecutionˉresult,
+                Wideˉexecutionˉresult,
                 1u32
             );
             Stack = Bytesˉslice(
-                U64ˉexecutionˉresult,
+                Wideˉexecutionˉresult,
                 5u32,
-                Bytesˉlength(U64ˉexecutionˉresult) - 5u32
+                Bytesˉlength(Wideˉexecutionˉresult) - 5u32
             );
-            Stackˉconsumed = U64ˉmetadata & 3u32;
+            Stackˉconsumed = Wideˉmetadata & 3u32;
             Aggregateˉinstructions = Aggregateˉinstructions +
-                (U64ˉmetadata >> 2u32);
+                (Wideˉmetadata >> 2u32);
             Mainˉfound = true;
         }
 

@@ -336,16 +336,61 @@ try {
             'source profile'
         );
         let Retainedˉcarrier = null;
-        if (Retained.catalog.bytes.readUInt32LE(12) !== 0) {
+        const Hasˉforeignˉcatalog =
+            Retained.catalog.bytes.readUInt32LE(12) !== 0;
+        if (Hasˉforeignˉcatalog) {
             if (Foreignˉbinder === null) {
                 Reject(
                     'The authenticated foreign catalog requires ' +
                     '--foreign-binder <wvbind>.'
                 );
             }
+        }
+        const Analysisˉarguments = !Hasˉforeignˉcatalog
+            ? [
+                '--internal-source-set', Sourceˉset, Analyzedˉsourceˉset,
+                Manifest, Bindings, Wir,
+            ]
+            : [
+                '--internal-foreign-source-set', Sourceˉset,
+                Analyzedˉsourceˉset, Manifest, Bindings, Wir,
+            ];
+        Reports.push(await Runˉrequired(
+            Analyzer, Analysisˉarguments,
+            'source-analysis',
+        ));
+        await Requireˉprivateˉphaseˉfile(
+            Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES,
+            Temporary, 'analyzed source set'
+        );
+        await Requireˉretainedˉsnapshot(
+            Sourceˉset, Retained.sourceSet, 37, MAXIMUM_PHASE_VALUE_BYTES,
+            'admitted source set'
+        );
+        const Analyzedˉsnapshot = await Readˉordinaryˉsnapshot(
+            Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES,
+            'analyzed source set'
+        );
+        if (!Analyzedˉsnapshot.bytes.equals(Retained.sourceSet.bytes)) {
+            Reject('The Analyzer republished a different admitted source set.');
+        }
+        if (Hasˉforeignˉcatalog) {
+            await Requireˉprivateˉphaseˉfile(
+                Manifest, 104, 104, Temporary, 'source analysis manifest'
+            );
+            await Requireˉprivateˉphaseˉfile(
+                Bindings, 1, MAXIMUM_PHASE_VALUE_BYTES,
+                Temporary, 'source binding evidence'
+            );
+            await Requireˉprivateˉphaseˉfile(
+                Wir, 1, MAXIMUM_PHASE_VALUE_BYTES, Temporary, 'source WIR'
+            );
             const Bindingˉevidence = await Runˉrequired(
                 Foreignˉbinder,
-                [Sourceˉset, Admittedˉtarget, Catalog, Foreignˉcarrier],
+                [
+                    '--internal-bind-analyzed', Sourceˉset,
+                    Admittedˉtarget, Catalog, Wir, Foreignˉcarrier,
+                ],
                 'source-foreign-binding',
             );
             await Requireˉprivateˉphaseˉfile(
@@ -399,46 +444,6 @@ try {
                 Foreignˉcarrier, Retainedˉcarrier,
                 WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
                 'foreign lowering carrier'
-            );
-        }
-        const Analysisˉarguments = Retainedˉcarrier === null
-            ? [
-                '--internal-source-set', Sourceˉset, Analyzedˉsourceˉset,
-                Manifest, Bindings, Wir,
-            ]
-            : [
-                '--internal-foreign-source-set', Sourceˉset,
-                Analyzedˉsourceˉset, Manifest, Bindings, Wir,
-            ];
-        Reports.push(await Runˉrequired(
-            Analyzer, Analysisˉarguments,
-            'source-analysis',
-        ));
-        await Requireˉprivateˉphaseˉfile(
-            Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES,
-            Temporary, 'analyzed source set'
-        );
-        await Requireˉretainedˉsnapshot(
-            Sourceˉset, Retained.sourceSet, 37, MAXIMUM_PHASE_VALUE_BYTES,
-            'admitted source set'
-        );
-        const Analyzedˉsnapshot = await Readˉordinaryˉsnapshot(
-            Analyzedˉsourceˉset, 37, MAXIMUM_PHASE_VALUE_BYTES,
-            'analyzed source set'
-        );
-        if (!Analyzedˉsnapshot.bytes.equals(Retained.sourceSet.bytes)) {
-            Reject('The Analyzer republished a different admitted source set.');
-        }
-        if (Retainedˉcarrier !== null) {
-            await Requireˉprivateˉphaseˉfile(
-                Manifest, 104, 104, Temporary, 'source analysis manifest'
-            );
-            await Requireˉprivateˉphaseˉfile(
-                Bindings, 1, MAXIMUM_PHASE_VALUE_BYTES,
-                Temporary, 'source binding evidence'
-            );
-            await Requireˉprivateˉphaseˉfile(
-                Wir, 1, MAXIMUM_PHASE_VALUE_BYTES, Temporary, 'source WIR'
             );
             Reports.push(await Runˉrequired(
                 Foreignˉbinder,
