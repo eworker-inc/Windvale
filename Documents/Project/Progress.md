@@ -49,9 +49,9 @@ materially misleading.
 
 | Boundary | Standing | What works | What is missing or next |
 | --- | :---: | --- | --- |
-| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The unsafe-memory path executes exact write-region validation and contained write-pointer derivation through candidate WVB 1.37 in the bounded scalar provider and native x86-64 lowering, without forming a host address. The authenticated three-argument Foreign invocation now reaches deterministic [candidate WVB 1.38 publication](../Evidence/2026-09-03-Paired-Foreign-Wvb-1-38.json) as registered opcode `E0`. | Admit and contain WVB 1.38 through the complete verifier, runtime/provider, and native ABI path; migrate one real boundary; and complete paired-host qualification. |
-| Slice 8 source admission | Candidate | The target-aware admitter, independent authenticator, private Foreign-binding phase, and retained WVFB carrier validate the source, target, catalog, admission evidence, and no-retain/no-unwind facts. The private Analyzer builds typed operation `190`; the binder pairs every symbol and call to retained WVFB; and the private emitter independently rechecks that pairing before candidate WVB 1.38 publication. The coordinator rechecks all retained snapshots before and after emission. The ordinary front door passes on Windows and Linux; the newer production-ingress, pairing, and publication path passes locally on Windows. | Add complete WVB 1.38 verifier containment, runtime/provider and native ABI execution, migrate a real system boundary, and reproduce the newer path on Linux. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain Proposed. |
-| Unsafe Foundation slice | Candidate | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, exact write-region validation, and contained `Writeˉpointer::<Abi>` derivation execute through candidate WVB 1.37 in the scalar provider and native x86-64 lowering. The pointer remains a private logical descriptor with affine non-escape; candidate WVB 1.38 can consume it only in the registered, paired Foreign-call encoding. | Verify and execute the registered call without pointer escape, migrate a real boundary, execute on Linux, and complete paired-host qualification. |
+| Language 1.0 | Candidate | The frozen design covers values, control flow, typed failure, generics, collections, ownership, borrowing, elastic memory budgets, hosted source access, callables, closures, and bounded structured tasks. The unsafe-memory path executes exact write-region validation and contained write-pointer derivation through candidate WVB 1.37 in the bounded scalar provider and native x86-64 lowering, without forming a host address. The authenticated three-argument Foreign invocation reaches deterministic [candidate WVB 1.38 publication](../Evidence/2026-09-03-Paired-Foreign-Wvb-1-38.json) as registered opcode `E0`, and the complete compiler-aligned verifier now admits it with exact type, stack, control-flow, and affine-pointer containment. | Execute the verified WVB 1.38 call through the bounded runtime/provider and native ABI path; migrate one real boundary; and complete paired-host qualification. |
+| Slice 8 source admission | Candidate | The target-aware admitter, independent authenticator, private Foreign-binding phase, and retained WVFB carrier validate the source, target, catalog, admission evidence, and no-retain/no-unwind facts. The private Analyzer builds typed operation `190`; the binder pairs every symbol and call to retained WVFB; and the private emitter independently rechecks that pairing before candidate WVB 1.38 publication. The coordinator rechecks all retained snapshots before and after emission. The complete compiler-aligned verifier now reconstructs the registered binding and consumes the pointer affinely. The ordinary front door passes on Windows and Linux; the newer production-ingress, pairing, publication, and verification path passes locally on Windows. | Add runtime/provider and native ABI execution, migrate a real system boundary, and reproduce the newer path on Linux. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain Proposed. |
+| Unsafe Foundation slice | Candidate | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, exact write-region validation, and contained `Writeˉpointer::<Abi>` derivation execute through candidate WVB 1.37 in the scalar provider and native x86-64 lowering. The pointer remains a private logical descriptor with affine non-escape; candidate WVB 1.38 consumes it only in the registered, paired Foreign-call encoding after complete compiler-aligned verification. | Execute the registered call without pointer escape, migrate a real boundary, execute on Linux, and complete paired-host qualification. |
 | Compiler scale | Candidate | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct their current Windows and Linux candidates byte for byte on Windows. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. Ordinary native-lowerer edits now build the current 648-function compiler once and run a 13-case current-source development gate in about 32 seconds on a warm Windows cache. Split-project compilation also preserves an independently validated [source/symbol checkpoint](../Evidence/2026-09-03-Resumable-Compiler-Symbol-Checkpoint.json) when later analysis fails, so a safe retry need not repeat completed symbol work. | Reproduce the current candidates on Linux, complete source-compiler convergence, profile and improve remaining cold analysis/emission latency, and run paired-host qualification. |
 | Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. The current database remains a useful bounded byte-oriented consumer and recompiles through the current compiler. | Migrate and qualify the required real consumers against explicit 1.0 memory and collection APIs where their profile requires them. The current database uses immutable `bytes`; its passing storage suite does not prove `Memoryˉbudget`, `Vector`, `Byteˉbuffer`, `Bytesˉbuilder`, or unsafe-region adoption. Finish the required API set and assign explicit platform and capability scopes. |
 | WVDB 1.0 | Candidate | Upper-layer identity, tables, typed relationships, indexes, queries, transactions, storage profiles, types, documents/graphs, and backup direction are accepted. Existing storage and service slices remain useful implementation evidence. | Finish normative storage, durability, backup/restore, service, operations, and conformance contracts, then reconcile the implementation against them. |
@@ -71,9 +71,10 @@ Two active tracks intentionally use different bytecode generations:
   execution checkpoint at candidate WVB 1.37. The compiler-aligned scalar and native
   x86-64 paths execute bounded write-region validation and contained pointer
   derivation without forming an address. The source compiler additionally
-  publishes authenticated and paired calls as candidate WVB 1.38, while the
-  complete verifier and every execution consumer remain closed to that version.
-  WebAssembly and other consumers retain narrower declared boundaries.
+  publishes authenticated and paired calls as candidate WVB 1.38, and the
+  complete compiler-aligned verifier admits the exact registered call with
+  affine-pointer containment. Every execution consumer remains closed to that
+  version. WebAssembly and other consumers retain narrower declared boundaries.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -92,17 +93,15 @@ claim.
 
 ## Immediate next results
 
-1. Admit candidate WVB 1.38 through the complete compiler-aligned verifier with
-   affine pointer and registered-binding containment.
-2. Execute and lower that verified call through the bounded provider and native
+1. Execute and lower the verified WVB 1.38 call through the bounded provider and native
    ABI without pointer escape or implicit authority.
-3. Migrate one real system boundary and reproduce the newer Slice 8 path on
+2. Migrate one real system boundary and reproduce the newer Slice 8 path on
    Linux.
-4. Continue the required Libraries and WVDB 1.0 specifications through useful
+3. Continue the required Libraries and WVDB 1.0 specifications through useful
    consumers.
-5. Run one real bounded Windvale OS filesystem-provider request with complete
+4. Run one real bounded Windvale OS filesystem-provider request with complete
    rollback and teardown.
-6. Preserve predictable development feedback and reserve full qualification for
+5. Preserve predictable development feedback and reserve full qualification for
    deliberately selected release, security, bootstrap, ABI, or conformance
    states.
 
