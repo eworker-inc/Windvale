@@ -152,6 +152,19 @@ fn Argumentˉequals(Value: text, Expected: text) -> bool {
     return true;
 }
 
+fn Argumentˉisˉforeignˉsourceˉset(Value: text) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Value);
+    return Bytesˉlength(Bytes) == 29u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 0u32) == 1852386605u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 4u32) == 1852990836u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 8u32) == 1714252897u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 12u32) == 1768256111u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 16u32) == 1932357223u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 20u32) == 1668445551u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 24u32) == 1702047077u32 &&
+        Bytesˉreadˉu8(Bytes, 28u32) == 116u8;
+}
+
 fn Rawˉprecheck(Sourceˉset: bytes) -> u32 {
     let Scan: Sourceˉsets.Compilerˉsourceˉsetˉscan =
         Sourceˉsets.Compilerˉscanˉsourceˉset(Sourceˉset);
@@ -395,6 +408,23 @@ export fn Main() -> i32 {
             file.read_bytes(process.argument(1u32)),
             file.read_bytes(process.argument(2u32)),
             3u32
+        );
+    }
+    if Arguments > 0u32 &&
+        Argumentˉisˉforeignˉsourceˉset(process.argument(0u32)) {
+        if Arguments != 6u32 {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 64;
+        }
+        let Foreignˉsourceˉset: bytes =
+            file.read_bytes(process.argument(1u32));
+        if !Containsˉforeign(Foreignˉsourceˉset) {
+            diagnostic.write_line("source analysis status=Invalidˉinput");
+            return 1;
+        }
+        return Analyze(
+            Foreignˉsourceˉset,
+            2u32
         );
     }
     if Arguments > 0u32 && Argumentˉequals(

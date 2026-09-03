@@ -16,17 +16,18 @@ producer over validated descriptor-free `WVSS 2` source snapshots. The
 target-aware hosted `wvadmit` now composes that producer with exact WVTD
 admission and WVAE construction, while the separately built `wvauth`
 independently authenticates every source/catalog record and target predicate.
-The proposed production-ingress candidate carries an authenticated empty
+The production-ingress candidate carries an authenticated empty
 catalog through its private Analyzer handoff. For a nonempty catalog it instead
 rechecks all six retained snapshots, invokes the non-authoritative private
 `wvbind`, requires exact digest evidence for the WVSS, WVTD, and WVFC bytes that
-product consumed, rechecks the six snapshots again, and stops at exact
-`Foreignˉloweringˉpending` without launching the Analyzer or emitter. The
-dedicated 24-case authenticated-binding owner and the closure-capture case in
-the callable-semantics owner cover the compiler-owned direct-call-only adapter;
-refreshed product pins, complete hosted-owner reruns, paired-host acceptance,
-foreign lowering, native-symbol binding, runtime containment, and foreign
-execution remain later boundaries.
+product consumed, launches the private Analyzer route, and uses the pairing form
+of the same binder to correlate every typed WVIR Foreign call with the retained
+WVFB carrier. It rechecks all retained snapshots and stops at exact
+`Foreignˉwvbˉpending` without launching the emitter. The dedicated 27-case,
+five-fixture authenticated-binding owner and 21-case production-ingress owner
+cover the compiler-owned adapter and real hosted path. WVB encoding, paired-host
+acceptance, native-symbol binding, runtime containment, and foreign execution
+remain later boundaries.
 
 ## Encoding
 

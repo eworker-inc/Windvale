@@ -11,7 +11,7 @@ Project 2 remains a narrower development route.
 - one fixed 104-byte `WVCA 1.0` manifest;
 - one canonical `WVLB 1.1`, function-specialized `WVLB 1.2`, or combined
   specialization-evidence `WVLB 1.3` binding directory; and
-- one canonical `WVIR 1.9` through `WVIR 1.22` typed source directory, with the
+- one canonical `WVIR 1.9` through `WVIR 1.32` typed source directory, with the
   exact ordinary/specialized, memory/append/growth, callable, closure, and
   structured-task feature pairing defined by WVIR.
 
@@ -205,8 +205,8 @@ wvauth <input.wvae> <input.wvss> <input.wvtd> <input.wvfc>
     <input.wvlock> <input.wvsp>
 ```
 
-Only its successful process result permits the coordinator to continue. Under
-the proposed Decision 0895 checkpoint, an authenticated nonempty catalog first
+Only its successful process result permits the coordinator to continue. An
+authenticated nonempty catalog first
 causes the coordinator to recheck all six retained snapshots and then invokes
 the private hosted compiler binder:
 
@@ -240,13 +240,51 @@ its retained WVSS, WVTD, WVFC, and WVFB bytes and requires byte-for-byte
 equality, including the one final newline and the absence of prefix, suffix,
 alternate spelling, or additional output. Under the current input and catalog
 bounds the exact line is at most 447 UTF-8 bytes. The coordinator then rechecks
-all six retained input snapshots and the retained WVFB snapshot again, reports
-exact `Foreignˉloweringˉpending`, and launches neither ordinary analysis
-publication nor the emitter. A missing, linked, malformed, mismatched, partial,
-duplicated, extra, or oversized carrier or success output is failure, never
-transferable success. Direct `wvbind` invocation produces only
-non-authoritative digest evidence and a private semantic carrier; it cannot
-establish authentication or authorize later publication.
+all six retained input snapshots and the retained WVFB snapshot. A missing,
+linked, malformed, mismatched, partial, duplicated, extra, or oversized carrier
+or success output is failure, never transferable success. Direct `wvbind`
+invocation produces only non-authoritative digest evidence and a private
+semantic carrier; it cannot establish authentication or authorize later
+publication.
+
+For that authenticated nonempty catalog only, the coordinator next invokes the
+Analyzer's private Foreign route:
+
+```text
+wvanalyze --internal-foreign-source-set <input.wvss> <output.wvss>
+    <output.wvca> <output.wvlb> <output.wvir>
+```
+
+The switch is matched without retaining another static text value in the
+compiler-scale Analyzer. It is not a public admission claim: the coordinator
+alone supplies the already retained WVSS, and direct use produces only ordinary
+untrusted analysis files. The Analyzer validates and republishes that WVSS and
+constructs the same WVCA, WVLB, and WVIR products as its ordinary analysis
+pipeline, including typed `Callˉforeign` operation `190`.
+
+After requiring the republished WVSS to equal the retained source set, the
+coordinator re-enters the existing binder product instead of adding a sixth
+executable:
+
+```text
+wvbind --internal-pair-analysis <input.wvss> <input.wvfb> <input.wvir>
+```
+
+This mode reconstructs and validates source symbols, requires exact conditional
+WVSD 1.2 geometry, validates WVFB, bounds the WVIR function/block/operation
+tables, matches every kind-9 symbol to one carrier record, and requires every
+operation `190` target to match a carrier record. It allows at most 4,096 such
+calls and writes no artifact. On success it emits exactly:
+
+```text
+foreign pairing status=Validated records=<u32> calls=<u32>\n
+```
+
+The coordinator finally rechecks the six authenticated snapshots and retained
+WVFB again, reports exact `source emission status=Foreignˉwvbˉpending`, and
+launches no emitter. Analysis pairing therefore closes the authenticated typed-
+fact correlation boundary without creating WVB, native-call, provider, or
+capability authority.
 
 For an empty catalog, the coordinator instead rechecks the retained snapshot
 bytes and invokes the Analyzer's explicitly non-authoritative source-set route:
@@ -297,14 +335,16 @@ without overwrite.
 
 The production front door owns five bounded products over one semantic compiler:
 `wvadmit`, `wvauth`, `wvbind`, the Analyzer, and the emitter. A nonempty catalog
-launches the first three and then stops at `Foreignˉloweringˉpending`; an empty
-catalog skips `wvbind` and launches the admitter, authenticator, Analyzer, and
-emitter. The admitter owns Language 1.0 descriptor/profile admission and catalog
+launches the admitter, authenticator, binding form of `wvbind`, Analyzer, and
+pairing form of `wvbind`, then stops at `Foreignˉwvbˉpending`; an empty catalog
+skips `wvbind` and launches the admitter, authenticator, Analyzer, and emitter.
+The admitter owns Language 1.0 descriptor/profile admission and catalog
 production; the authenticator independently proves the retained snapshot
-relationship; `wvbind` proves only the compiler-owned foreign semantic facts;
-the Analyzer owns ordinary source scanning, symbols, binding, and typed WIR
-construction; and the emitter revalidates all persisted analysis values and
-calls the same prepared backend as the retained one-shot compiler.
+relationship; `wvbind` proves the compiler-owned foreign semantic facts and
+their later typed-analysis correlation; the Analyzer owns ordinary source
+scanning, symbols, binding, and typed WIR construction; and the emitter
+revalidates all persisted analysis values and calls the same prepared backend
+as the retained one-shot compiler.
 Descriptorless Project 2 input starts at the Analyzer. Descriptor-bearing
 Language 1.0 input starts at the private host coordinator and admitter.
 Optimization is not an implicit command-line mode; a later optimized product

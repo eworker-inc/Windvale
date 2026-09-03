@@ -424,9 +424,17 @@ export fn Compilerˉbindˉsourceˉforeignˉdeclarations(
             Symbols.Failureˉoffset
         );
     }
+    // The binder owns complete name/callable/body binding but does not publish
+    // WVLB. Generic-type catalog construction and the corresponding newer WVLB
+    // form remain Analyzer-owned; requiring the legacy WVLB 1.1 validator here
+    // would reject an otherwise valid Foreign-pointer parameter after binding.
+    let Bindingˉphase: Sourceˉbindings.Compilerˉsourceˉbindingˉphase =
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉphaseˉwithˉbody(
+            Wvss, Scan, Symbols, true
+        );
     let Bound: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary =
-        Sourceˉbindings.Compilerˉsourceˉbindingsˉfromˉsymbols(
-            Wvss, Scan, Symbols
+        Sourceˉbindings.Compilerˉsourceˉbindingsˉfinishˉphaseˉproduct(
+            Wvss, Scan, Symbols, Bindingˉphase
         );
     if Bound.Status != Sourceˉbindings.Compilerˉsourceˉbindingˉstatus.Valid {
         return Compilerˉsourceˉforeignˉbindingˉresult(

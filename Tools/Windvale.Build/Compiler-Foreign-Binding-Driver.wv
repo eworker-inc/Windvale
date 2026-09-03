@@ -1,6 +1,8 @@
 module Windvaleˉcompilerˉforeignˉbindingˉdriver profile hosted;
 
 import Compilerˉsourceˉforeignˉbinding as Foreignˉbinding;
+import Compilerˉsourceˉforeignˉloweringˉpairing as Pairing;
+import Compilerˉsourceˉsymbols as Symbols;
 
 capability console.write_line;
 capability diagnostic.write_line;
@@ -35,6 +37,50 @@ fn Pathsˉareˉdistinct() -> bool {
     return true;
 }
 
+fn Argumentˉisˉpairˉanalysis(Value: text) -> bool {
+    let Bytes: bytes = Textˉtoˉutf8(Value);
+    return Bytesˉlength(Bytes) == 24u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 0u32) == 1852386605u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 4u32) == 1852990836u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 8u32) == 1882025057u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 12u32) == 762472801u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 16u32) == 1818324577u32 &&
+        Bytesˉreadˉu32ˉlittle(Bytes, 20u32) == 1936290681u32;
+}
+
+fn Pairˉanalysis() -> i32 {
+    if Argumentˉequals(process.argument(1u32), process.argument(2u32)) ||
+        Argumentˉequals(process.argument(1u32), process.argument(3u32)) ||
+        Argumentˉequals(process.argument(2u32), process.argument(3u32)) {
+        diagnostic.write_line(
+            "foreign binding status=Invalidˉinvocation reason=paths-not-distinct"
+        );
+        return 64;
+    }
+    let Sourceˉset: bytes = file.read_bytes(process.argument(1u32));
+    let Paired: Pairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Pairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            file.read_bytes(process.argument(2u32)),
+            Symbols.Compilerˉvalidateˉsourceˉsymbols(Sourceˉset),
+            file.read_bytes(process.argument(3u32))
+        );
+    if Paired.Status !=
+            Pairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Valid {
+        diagnostic.write_line(
+            Textˉconcat(
+                "foreign pairing status=",
+                Enumˉname(Paired.Status)
+            )
+        );
+        return 1;
+    }
+    var Report: text = "foreign pairing status=Validated records=";
+    Report = Textˉconcat(Report, U32ˉformat(Paired.Records));
+    Report = Textˉconcat(Report, " calls=");
+    console.write_line(Textˉconcat(Report, U32ˉformat(Paired.Calls)));
+    return 0;
+}
+
 fn Failure(
     Bound: Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary
 ) -> text {
@@ -65,6 +111,10 @@ fn Failure(
 }
 
 export fn Main() -> i32 {
+    if process.argument_count() == 4u32 &&
+        Argumentˉisˉpairˉanalysis(process.argument(0u32)) {
+        return Pairˉanalysis();
+    }
     if process.argument_count() != 4u32 {
         diagnostic.write_line(
             "Usage: wvbind <input.wvss> <input.wvtd> <input.wvfc> <output.wvfb>"

@@ -710,7 +710,10 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 hosted foreign binding driver project routing'
         Paths = @('Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj')
-        Suites = @('language-1-authenticated-foreign-binding')
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -765,17 +768,17 @@ $NativeCases = @(
     @{
         Name = 'Language 1.0 authenticated foreign binding owner routing'
         Paths = @(
-            'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
-            'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
             'Documents/Decisions/0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md',
             'Projects/Compiler/Windvale-Source-Foreign-Binding-Core.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Lowering-Pairing.wvproj',
             'Projects/Tests/Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv',
+            'Tests/Fixtures/Language-1.0/Foreign-Lowering-Pairing-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Validation-Self-Test.wv',
             'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Self-Test.wv',
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.cmd',
@@ -783,6 +786,20 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.sh'
         )
         Suites = @('language-1-authenticated-foreign-binding')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Language 1.0 authenticated foreign pairing production routing'
+        Paths = @(
+            'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
+            'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
+            'Compiler/Windvale/Source-Foreign-Lowering-Pairing-Core.wv'
+        )
+        Suites = @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -800,7 +817,8 @@ $NativeCases = @(
         Name = 'Language 1.0 authenticated foreign binding production routing'
         Paths = @(
             'Documents/Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md',
-            'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md'
+            'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md',
+            'Documents/Decisions/0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md'
         )
         Suites = @(
             'language-1-production-admission-ingress',

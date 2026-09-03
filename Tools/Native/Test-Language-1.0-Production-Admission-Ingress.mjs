@@ -32,8 +32,8 @@ const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
 const EXPECTED_COORDINATOR = Object.freeze({
-    bytes: 52_088,
-    sha256: 'fa052cd49fb03189bf5be6016e70ec2a0ee4e007b5a248496ab62c8a1e57cb19',
+    bytes: 54_394,
+    sha256: '648d7cc8ecc841be9bff50b5118a0606df70823a68b5ae595b9bc8ec1636149f',
 });
 
 const PINNED_COMPILER = Object.freeze({
@@ -83,7 +83,7 @@ const EXPECTED_PRODUCTS = Object.freeze({
 
 const CASES = Object.freeze([
     'valid-empty-catalog-end-to-end',
-    'foreign-lowering-pending-no-publication',
+    'foreign-analysis-paired-wvb-pending-no-publication',
     'deterministic-snapshots-and-products',
     'removed-admitted-source-set-route',
     'raw-project2-system-rejected',
@@ -400,7 +400,9 @@ async function Verifyˉcontracts() {
         "'--target-descriptor'", "'--internal-source-set'",
         "'--foreign-binder'", "'source-authentication'",
         "'source-foreign-binding'", "'source-analysis'",
-        'Foreignˉloweringˉpending', 'Analyzed.wvss',
+        "'source-foreign-pairing'", "'--internal-pair-analysis'",
+        'Foreignˉwvbˉpending', 'Analyzed.wvss',
+        "'--internal-foreign-source-set'",
         'Foreign-Bindings.wvfb', 'Requireˉforeignˉloweringˉcarrier',
         'Buildˉforeignˉbindingˉevidence',
         'foreign-binder evidence does not exactly match',
@@ -429,11 +431,14 @@ async function Verifyˉcontracts() {
     'wvauth lacks the source/catalog authentication boundary.');
     for (const Required of [
         'admitted-source-set-route-removed', '--internal-source-set',
+        'Argumentˉisˉforeignˉsourceˉset',
         'Foreignˉrequiresˉauthenticatedˉbinding',
         'RawˉSystemˉprofile', 'Rawˉplatform', 'Rawˉforeign',
     ]) Require(Analyzer.includes(Required), `Analyzer ingress lacks ${Required}.`);
     for (const Required of [
         'Usage: wvbind ', 'Compilerˉbindˉsourceˉforeignˉdeclarations',
+        'Argumentˉisˉpairˉanalysis',
+        'Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing',
         'file.write_bytes(process.argument(3u32), Bound.Loweringˉcarrier)',
         'carrier-sha256=',
     ]) Require(Binder.includes(Required), `Binder ingress lacks ${Required}.`);
@@ -528,7 +533,7 @@ async function Writeˉsentinelˉpipeline(
         "await writeFile(a[12],Buffer.alloc(224),{flag:'wx'});" +
         "process.stdout.write('admission ok\\n');";
     const Admitter = await Writeˉproductˉsentinel(Work, 'Sentinel-admitter',
-        `import{copyFile,writeFile}from'node:fs/promises';` +
+        `import{copyFile,readFile,writeFile}from'node:fs/promises';` +
         `await writeFile(${JSON.stringify(Marker('wvadmit'))},Buffer.alloc(0),` +
         `{flag:'a'});${Admitterˉbody}\n` +
         "function Constructˉcatalog(n){const c=Buffer.alloc(48+n*96);" +
@@ -558,9 +563,14 @@ async function Writeˉsentinelˉpipeline(
         `import{readFile,writeFile}from'node:fs/promises';` +
         `const a=process.argv.slice(2);await writeFile(` +
         `${JSON.stringify(Marker('foreignBinding'))},Buffer.alloc(0),{flag:'a'});` +
-        Sentinelˉforeignˉbindingˉvalues() +
+        "if(a[0]==='--internal-pair-analysis'){" +
+        "const s=await readFile(a[1]),c=await readFile(a[2]),w=await readFile(a[3]);" +
+        "if(!s.length||c.subarray(0,4).toString('ascii')!=='WVFB'||!w.length)" +
+        "throw Error('pairing input');" +
+        "process.stdout.write('foreign pairing status=Validated records=1 calls=1\\n');" +
+        "}else{" + Sentinelˉforeignˉbindingˉvalues() +
         "await writeFile(a[3],published,{flag:'wx'});" +
-        "process.stdout.write(evidence());\n"
+        "process.stdout.write(evidence());}\n"
     );
     const Emitter = await Writeˉproductˉsentinel(Work, 'Sentinel-emitter',
         `import{writeFile}from'node:fs/promises';` +
@@ -586,9 +596,10 @@ async function Runˉsentinelˉcoordinator(
     Captureˉlimit = MAXIMUM_OUTPUT_BYTES,
     Expectˉretainedˉprivateˉtree = false
 ) {
-    const Temporary = join(Work, `Runner-Temporary-${Activity.replace(
-        /[^A-Za-z0-9-]/gu, '-'
-    )}`);
+    const Activityˉkey = createHash('sha256').update(Activity).digest('hex').slice(
+        0, 16
+    );
+    const Temporary = join(Work, `Runner-${Activityˉkey}`);
     await mkdir(Temporary);
     const Environment = {
         ...process.env,
@@ -1333,23 +1344,83 @@ async function Caseˉauthenticatedˉforeignˉbindingˉboundary(Work) {
         Exactˉactivity.indexOf('step=source-authentication');
     const Exactˉbindingˉactivity =
         Exactˉactivity.indexOf('step=source-foreign-binding');
+    const Exactˉanalysisˉactivity =
+        Exactˉactivity.indexOf('step=source-analysis');
+    const Exactˉpairingˉactivity =
+        Exactˉactivity.indexOf('step=source-foreign-pairing');
     Require(Exact.code !== 0 &&
-        Exact.error.toString('utf8').includes('Foreignˉloweringˉpending') &&
+        Exact.error.toString('utf8').includes('Foreignˉwvbˉpending') &&
         Exactˉauthenticationˉactivity >= 0 &&
         Exactˉbindingˉactivity > Exactˉauthenticationˉactivity &&
-        !Exactˉactivity.includes('step=source-analysis') &&
+        Exactˉanalysisˉactivity > Exactˉbindingˉactivity &&
+        Exactˉpairingˉactivity > Exactˉanalysisˉactivity &&
         !Exactˉactivity.includes('step=source-emission') &&
         await lstat(Exactˉpipeline.markers.foreignBinding).then(
             () => true, () => false
         ) &&
-        !await lstat(Exactˉpipeline.markers.Analyzer).then(
+        await lstat(Exactˉpipeline.markers.Analyzer).then(
             () => true, () => false
         ) &&
         !await lstat(Exactˉpipeline.markers.emitter).then(
             () => true, () => false
         ) &&
         !await lstat(Exactˉoutput).then(() => true, () => false),
-    'Exact foreign-binding evidence did not stop at the lowering boundary.');
+    'Exact foreign-binding evidence did not reach paired analysis and stop before WVB.');
+
+    const Mutatedˉcarrierˉwork = join(
+        Work, 'Sentinel-carrier-mutation'
+    );
+    await mkdir(Mutatedˉcarrierˉwork);
+    const Mutatedˉcarrierˉinputs = await Writeˉsentinelˉinputs(
+        Mutatedˉcarrierˉwork
+    );
+    const Mutatedˉcarrierˉoutput = join(
+        Mutatedˉcarrierˉwork, 'Foreign.wvb'
+    );
+    const Mutatedˉcarrierˉpipeline = await Writeˉsentinelˉpipeline(
+        Mutatedˉcarrierˉwork, null, Mutatedˉcarrierˉoutput, 1
+    );
+    Mutatedˉcarrierˉpipeline.products.wvanalyze =
+        await Writeˉproductˉsentinel(
+            Mutatedˉcarrierˉwork, 'Mutating-foreign-pairing-analyzer',
+            "import{chmod,copyFile,readFile,writeFile}from'node:fs/promises';" +
+            "import{dirname,join}from'node:path';" +
+            "const a=process.argv.slice(2);" +
+            `await writeFile(${JSON.stringify(
+                Mutatedˉcarrierˉpipeline.markers.Analyzer
+            )},Buffer.alloc(0),{flag:'a'});` +
+            "await copyFile(a[1],a[2]);" +
+            "await writeFile(a[3],Buffer.alloc(104),{flag:'wx'});" +
+            "await writeFile(a[4],Buffer.from([1]),{flag:'wx'});" +
+            "await writeFile(a[5],Buffer.from([1]),{flag:'wx'});" +
+            "const p=join(dirname(a[1]),'Foreign-Bindings.wvfb');" +
+            "const c=await readFile(p);c[c.length-1]^=1;" +
+            "await chmod(p,0o600);await writeFile(p,c);" +
+            "process.stdout.write('analysis pairing ok\\n');\n"
+        );
+    const Mutatedˉcarrier = await Runˉsentinelˉcoordinator(
+        Mutatedˉcarrierˉwork, Mutatedˉcarrierˉpipeline.products,
+        Mutatedˉcarrierˉinputs, Mutatedˉcarrierˉoutput,
+        'foreign-carrier-mutation', 5_000
+    );
+    const Mutatedˉcarrierˉdiagnostic = Buffer.concat([
+        Mutatedˉcarrier.output, Mutatedˉcarrier.error,
+    ]).toString('utf8');
+    Require(Mutatedˉcarrier.code !== 0 &&
+        Mutatedˉcarrierˉdiagnostic.includes(
+            'The retained foreign lowering carrier changed between compiler phases.'
+        ) && await lstat(
+            Mutatedˉcarrierˉpipeline.markers.Analyzer
+        ).then(() => true, () => false) &&
+        !await lstat(Mutatedˉcarrierˉpipeline.markers.emitter).then(
+            () => true, () => false
+        ) && !await lstat(Mutatedˉcarrierˉoutput).then(
+            () => true, () => false
+        ),
+    'A post-pairing carrier mutation escaped the retained-snapshot recheck: ' +
+        `code=${Mutatedˉcarrier.code} diagnostic=${JSON.stringify(
+            Mutatedˉcarrierˉdiagnostic
+        )}.`);
 
     const Missingˉbinderˉwork = join(
         Work, 'Sentinel-foreign-binding-missing-product'
@@ -1906,11 +1977,26 @@ async function Writeˉproductionˉinputs(Work) {
     const Foreignˉsource = Buffer.from(
         '#!wv/1 en@1\nmodule Root; profile system; ' +
         'platform linux.x86_64.sysv_amd64_c_v1; authority application; ' +
+        'import Foundationˉunsafe as Unsafe; ' +
+        'enum Bufferˉsourceˉabi: u8 { Witness = 1u8; } ' +
         'unsafe foreign "windvale.paper.buffer_source.sysv_amd64_c_v1" ' +
         'fn Readˉforeignˉrecord(Destination: ' +
         'Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, ' +
         'Expectedˉgeneration: u64) -> i64 effects(ffi.call) as ' +
-        '"wv_paper_buffer_source_read_v1";', 'utf8'
+        '"wv_paper_buffer_source_read_v1"; ' +
+        'fn Invoke(Destination: ' +
+        'Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, ' +
+        'Expectedˉgeneration: u64) -> i64 effects(ffi.call) { ' +
+        'let Status: i64 = unsafe { Readˉforeignˉrecord(' +
+        'Destination: Destination, Capacity: Capacity, ' +
+        'Expectedˉgeneration: Expectedˉgeneration) }; return Status; }',
+        'utf8'
+    );
+    const Foreignˉunsafeˉsource = Buffer.from(
+        '#!wv/1 en@1\nmodule Foundationˉunsafe; profile system; ' +
+        'platform linux, windows, windvale; authority library; ' +
+        'export record Foreignˉpointer<T, Abi> { Opaqueˉidentity: u64; }',
+        'utf8'
     );
     const Paths = {
         lock: join(Work, 'Source-Inputs.wvlock'),
@@ -1918,6 +2004,7 @@ async function Writeˉproductionˉinputs(Work) {
         target: join(Work, 'Target.wvtd'),
         core: join(Work, 'Core.wv'),
         foreign: join(Work, 'Foreign.wv'),
+        foreignUnsafe: join(Work, 'Foreign-Unsafe.wv'),
     };
     await Promise.all([
         writeFile(Paths.lock, Lock, { flag: 'wx' }),
@@ -1925,11 +2012,13 @@ async function Writeˉproductionˉinputs(Work) {
         writeFile(Paths.target, Constructˉwvtd(), { flag: 'wx' }),
         writeFile(Paths.core, Coreˉsource, { flag: 'wx' }),
         writeFile(Paths.foreign, Foreignˉsource, { flag: 'wx' }),
+        writeFile(Paths.foreignUnsafe, Foreignˉunsafeˉsource, { flag: 'wx' }),
     ]);
     return { ...Paths, lockDigest: Sha256(Lock), Coreˉsource, Foreignˉsource };
 }
 
 function Authenticatedˉarguments(Products, Inputs, Source, Output) {
+    const Sources = Array.isArray(Source) ? Source : [Source];
     return [
         SPLIT_COMPILER,
         Products.wvadmit, Products.wvauth, Products.wvanalyze, Products.wvemit,
@@ -1937,7 +2026,7 @@ function Authenticatedˉarguments(Products, Inputs, Source, Output) {
         '--source-input-lock', Inputs.lock, Inputs.lockDigest,
         '--source-profile', Inputs.profile,
         '--target-descriptor', Inputs.target,
-        Source, Output,
+        ...Sources, Output,
     ];
 }
 
@@ -2012,17 +2101,24 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
 
     const ForeignOutput = join(Work, 'Foreign.wvb');
     const Foreign = await Runˉcoordinator(
-        Authenticatedˉarguments(Products, Inputs, Inputs.foreign, ForeignOutput),
+        Authenticatedˉarguments(
+            Products, Inputs,
+            [Inputs.foreign, Inputs.foreignUnsafe], ForeignOutput
+        ),
         CASES[1]);
     Requireˉcleanˉtermination(Foreign, CASES[1]);
     Require(Foreign.code !== 0 &&
-        Foreign.error.toString('utf8').includes('Foreignˉloweringˉpending') &&
+        Foreign.error.toString('utf8').includes('Foreignˉwvbˉpending') &&
         Foreign.output.toString('utf8').includes('step=source-authentication') &&
         Foreign.output.toString('utf8').includes('step=source-foreign-binding') &&
-        !Foreign.output.toString('utf8').includes('step=source-analysis') &&
+        Foreign.output.toString('utf8').includes('step=source-analysis') &&
+        Foreign.output.toString('utf8').includes('step=source-foreign-pairing') &&
         !Foreign.output.toString('utf8').includes('step=source-emission') &&
         !await lstat(ForeignOutput).then(() => true, () => false),
-    'The exact foreign route did not stop at named pending lowering.');
+    'The exact foreign route did not reach paired analysis and stop before WVB: ' +
+        `code=${Foreign.code} stdout=${JSON.stringify(
+            Foreign.output.toString('utf8')
+        )} stderr=${JSON.stringify(Foreign.error.toString('utf8'))}.`);
     await Requireˉcoordinatorˉcleanup();
 
     const SecondOutput = join(Work, 'Valid-Second.wvb');

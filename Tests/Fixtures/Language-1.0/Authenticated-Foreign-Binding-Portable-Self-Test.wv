@@ -292,6 +292,28 @@ fn Caseˉacceptedˉlayouts() -> bool {
     let Exportedˉwvss: bytes = Oneˉsourceˉset(Exported);
     let Exportedˉsymbols: Symbols.Compilerˉsourceˉsymbolˉsummary =
         Symbols.Compilerˉvalidateˉsourceˉsymbols(Exportedˉwvss);
+    let Typedˉbody: text = Textˉconcat(
+        "import Foundationˉunsafe as Unsafe; enum Bufferˉsourceˉabi: u8 { Witness = 1u8; } ",
+        Canonicalˉdeclaration()
+    );
+    let Typedˉroot: bytes = Source(
+        "Root", "application",
+        Textˉconcat(
+            Typedˉbody,
+            " fn Invoke(Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>, Capacity: u64, Expectedˉgeneration: u64) -> i64 effects(ffi.call) { let Status: i64 = unsafe { Readˉforeignˉrecord(Destination: Destination, Capacity: Capacity, Expectedˉgeneration: Expectedˉgeneration) }; return Status; }"
+        )
+    );
+    let Typedˉunsafe: bytes = Textˉtoˉutf8(
+        "module Foundationˉunsafe; profile system; platform linux, windows, windvale; authority library; export record Foreignˉpointer<T, Abi> { Opaqueˉidentity: u64; }"
+    );
+    let Typedˉbinding:
+        Foreignˉbinding.Compilerˉsourceˉforeignˉbindingˉsummary =
+        Bind(
+            Twoˉsourceˉset(Typedˉroot, Typedˉunsafe),
+            Catalogˉone(
+                Typedˉroot, 2u32, 0u32, 2u32, 253u32, false, 0u32
+            )
+        );
     return Validˉresult(Bind(
             Oneˉsourceˉset(Canonical),
             Catalogˉone(Canonical, 1u32, 0u32, 0u32, 253u32, false, 0u32)
@@ -307,7 +329,7 @@ fn Caseˉacceptedˉlayouts() -> bool {
         Validˉresult(Bind(
             Exportedˉwvss,
             Catalogˉone(Exported, 1u32, 0u32, 0u32, 253u32, true, 0u32)
-        ), 1u32, 1u32) &&
+        ), 1u32, 1u32) && Validˉresult(Typedˉbinding, 1u32, 4u32) &&
         Bytesˉreadˉu16ˉlittle(Exportedˉsymbols.Directory, 6u32) == 2u32 &&
         Bytesˉreadˉu16ˉlittle(Exportedˉsymbols.Lookup, 6u32) == 3u32 &&
         Symbols.Compilerˉsourceˉsymbolsˉlookupˉisˉexported(

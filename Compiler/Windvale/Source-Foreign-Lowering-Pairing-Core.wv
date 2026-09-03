@@ -1,0 +1,204 @@
+module Compilerˉsourceˉforeignˉloweringˉpairing profile portable;
+
+import Compilerˉsourceˉforeignˉloweringˉcarrier as Carrierˉformat;
+import Compilerˉsourceˉsymbols as Sourceˉsymbols;
+
+const WIR_OPERATION_CALL_FOREIGN: u32 = 190u32;
+const WIR_OPERATION_ENTRY_BYTES: u32 = 28u32;
+const WIR_FOREIGN_CALL_LIMIT: u32 = 4096u32;
+
+export enum Compilerˉsourceˉforeignˉloweringˉpairingˉstatus {
+    Valid = 0;
+    Invalidˉcarrier = 1;
+    Invalidˉsymbols = 2;
+    Invalidˉwir = 3;
+    Foreignˉcount = 4;
+    Foreignˉrecord = 5;
+    Foreignˉoperation = 6;
+    Callˉlimit = 7;
+}
+
+export record Compilerˉsourceˉforeignˉloweringˉpairingˉresult {
+    Status: Compilerˉsourceˉforeignˉloweringˉpairingˉstatus;
+    Records: u32;
+    Calls: u32;
+}
+
+// This validator pairs a structurally valid private WVFB with the WVSD and
+// WVIR produced from the same retained source set. The coordinator owns the
+// authoritative WVSS/WVTD/WVFC relationship and rechecks those snapshots.
+export fn Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+    Carrier: bytes,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Wir: bytes
+) -> Compilerˉsourceˉforeignˉloweringˉpairingˉresult {
+    let Carrierˉchecked:
+        Carrierˉformat.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Carrierˉformat.Compilerˉvalidateˉsourceˉforeignˉloweringˉcarrier(
+            Carrier
+        );
+    if Carrierˉchecked.Status !=
+            Carrierˉformat.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉcarrier,
+            Carrierˉchecked.Records, 0u32
+        );
+    }
+    let Records: u32 = Carrierˉchecked.Records;
+    if Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉsymbols,
+            Records, 0u32
+        );
+    }
+    let Directory: bytes = Symbols.Directory;
+    let Directoryˉlength: u32 = Bytesˉlength(Directory);
+    if Directoryˉlength < 16u32 ||
+        Bytesˉreadˉu8(Directory, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Directory, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Directory, 2u32) != 83u8 ||
+        Bytesˉreadˉu8(Directory, 3u32) != 68u8 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 4u32) != 1u32 ||
+        Bytesˉreadˉu16ˉlittle(Directory, 6u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Directory, 12u32) != 24u32 {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉsymbols,
+            Records, 0u32
+        );
+    }
+    let Symbolˉentries: u32 = Bytesˉreadˉu32ˉlittle(Directory, 8u32);
+    if Symbolˉentries > (Directoryˉlength - 16u32) / 24u32 ||
+        Directoryˉlength != 16u32 + Symbolˉentries * 24u32 {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉsymbols,
+            Records, 0u32
+        );
+    }
+    let Wirˉlength: u32 = Bytesˉlength(Wir);
+    if Wirˉlength < 56u32 || Bytesˉreadˉu8(Wir, 0u32) != 87u8 ||
+        Bytesˉreadˉu8(Wir, 1u32) != 86u8 ||
+        Bytesˉreadˉu8(Wir, 2u32) != 73u8 ||
+        Bytesˉreadˉu8(Wir, 3u32) != 82u8 ||
+        Bytesˉreadˉu16ˉlittle(Wir, 4u32) != 1u32 {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir,
+            Records, 0u32
+        );
+    }
+    let Minor: u32 = Bytesˉreadˉu16ˉlittle(Wir, 6u32);
+    var Headerˉbytes: u32 = 0u32;
+    if Minor == 31u32 { Headerˉbytes = 56u32; }
+    if Minor == 32u32 { Headerˉbytes = 64u32; }
+    if Headerˉbytes == 0u32 || Wirˉlength < Headerˉbytes {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir,
+            Records, 0u32
+        );
+    }
+    let Functions: u32 = Bytesˉreadˉu32ˉlittle(Wir, 8u32);
+    if Functions > (Wirˉlength - Headerˉbytes) / 48u32 {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir,
+            Records, 0u32
+        );
+    }
+    let Blocksˉoffset: u32 = Headerˉbytes + Functions * 48u32;
+    let Blocks: u32 = Bytesˉreadˉu32ˉlittle(Wir, 16u32);
+    if Blocks > (Wirˉlength - Blocksˉoffset) / 28u32 {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir,
+            Records, 0u32
+        );
+    }
+    let Operationsˉoffset: u32 = Blocksˉoffset + Blocks * 28u32;
+    let Operations: u32 = Bytesˉreadˉu32ˉlittle(Wir, 24u32);
+    if Operations >
+            (Wirˉlength - Operationsˉoffset) / WIR_OPERATION_ENTRY_BYTES {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir,
+            Records, 0u32
+        );
+    }
+
+    var Foreignˉsymbols: u32 = 0u32;
+    var Symbolˉindex: u32 = 0u32;
+    while Symbolˉindex < Symbolˉentries {
+        let Symbolˉoffset: u32 = 16u32 + Symbolˉindex * 24u32;
+        if Bytesˉreadˉu32ˉlittle(
+                Directory, Symbolˉoffset + 4u32
+            ) == 9u32 {
+            if Foreignˉsymbols >= Records {
+                return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+                    Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉcount,
+                    Records, 0u32
+                );
+            }
+            let Recordˉoffset: u32 =
+                Carrierˉformat.COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+                Foreignˉsymbols *
+                    Carrierˉformat.COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES;
+            if Bytesˉreadˉu32ˉlittle(Carrier, Recordˉoffset + 8u32) !=
+                    Symbolˉindex ||
+                Bytesˉreadˉu32ˉlittle(Carrier, Recordˉoffset) !=
+                    Bytesˉreadˉu32ˉlittle(Directory, Symbolˉoffset) ||
+                Bytesˉreadˉu32ˉlittle(
+                    Directory, Symbolˉoffset + 20u32
+                ) != 3u32 {
+                return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+                    Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉrecord,
+                    Records, 0u32
+                );
+            }
+            Foreignˉsymbols = Foreignˉsymbols + 1u32;
+        }
+        Symbolˉindex = Symbolˉindex + 1u32;
+    }
+    if Foreignˉsymbols != Records {
+        return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+            Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉcount,
+            Records, 0u32
+        );
+    }
+
+    var Calls: u32 = 0u32;
+    var Operationˉindex: u32 = 0u32;
+    while Operationˉindex < Operations {
+        let Operationˉoffset: u32 = Operationsˉoffset +
+            Operationˉindex * WIR_OPERATION_ENTRY_BYTES;
+        if Bytesˉreadˉu16ˉlittle(Wir, Operationˉoffset + 4u32) ==
+                WIR_OPERATION_CALL_FOREIGN {
+            Calls = Calls + 1u32;
+            if Calls > WIR_FOREIGN_CALL_LIMIT {
+                return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+                    Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Callˉlimit,
+                    Records, Calls
+                );
+            }
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(
+                Wir, Operationˉoffset + 20u32
+            );
+            var Recordˉindex: u32 = 0u32;
+            while Recordˉindex < Records &&
+                Bytesˉreadˉu32ˉlittle(
+                    Carrier,
+                    Carrierˉformat.COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_HEADER_BYTES +
+                        Recordˉindex *
+                            Carrierˉformat.COMPILER_SOURCE_FOREIGN_LOWERING_CARRIER_RECORD_BYTES +
+                        8u32
+                ) != Target {
+                Recordˉindex = Recordˉindex + 1u32;
+            }
+            if Recordˉindex >= Records {
+                return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+                    Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉoperation,
+                    Records, Calls
+                );
+            }
+        }
+        Operationˉindex = Operationˉindex + 1u32;
+    }
+    return Compilerˉsourceˉforeignˉloweringˉpairingˉresult(
+        Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Valid,
+        Records, Calls
+    );
+}

@@ -1,0 +1,206 @@
+module Languageˉoneˉforeignˉloweringˉpairingˉselfˉtest profile hosted;
+
+import Compilerˉsourceˉforeignˉloweringˉcarrier as Foreignˉcarrier;
+import Compilerˉsourceˉforeignˉloweringˉpairing as Foreignˉpairing;
+import Compilerˉsourceˉsymbols as Symbols;
+import Compilerˉsourceˉtarget as Target;
+
+capability process.argument;
+capability process.argument_count;
+
+fn Patchˉu16(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu16ˉlittle(Value)
+        ),
+        Bytesˉslice(
+            Input, Offset + 2u32,
+            Bytesˉlength(Input) - Offset - 2u32
+        )
+    );
+}
+
+fn Patchˉu32(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Input, 0u32, Offset),
+            Bytesˉfromˉu32ˉlittle(Value)
+        ),
+        Bytesˉslice(
+            Input, Offset + 4u32,
+            Bytesˉlength(Input) - Offset - 4u32
+        )
+    );
+}
+
+fn Symbolˉdirectory() -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVSD");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(2u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(24u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(9u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(3u32));
+}
+
+fn Wir(Callˉtarget: u32) -> bytes {
+    var Value: bytes = Textˉtoˉutf8("WVIR");
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(1u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(31u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(56u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(56u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(1u32));
+    var Headerˉword: u32 = 0u32;
+    while Headerˉword < 7u32 {
+        Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+        Headerˉword = Headerˉword + 1u32;
+    }
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(190u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu16ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Callˉtarget));
+    return Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 {
+        return 10;
+    }
+    let Selector: bytes = Textˉtoˉutf8(process.argument(0u32));
+    if Bytesˉlength(Selector) != 1u32 ||
+        Bytesˉreadˉu8(Selector, 0u32) != 65u8 {
+        return 10;
+    }
+    let Foreignˉrecord: bytes =
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉrecord(
+            0u32, 1u32, 0u32, 0u32
+        );
+    let Carrier:
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉconstruct(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            1u32, Foreignˉrecord
+        );
+    if Carrier.Status !=
+            Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid {
+        return 1;
+    }
+    let Directory: bytes = Symbolˉdirectory();
+    let Empty: bytes = Bytesˉslice(Directory, 0u32, 0u32);
+    let Symbolˉsummary: Symbols.Compilerˉsourceˉsymbolˉsummary =
+        Symbols.Compilerˉsourceˉsymbolsˉsummaryˉsuccess(
+            Directory,
+            1u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+            1u32, 0u32, 0u32, 0u32, 3u32,
+            Directory, Empty, Empty
+        );
+    let Validˉwir: bytes = Wir(0u32);
+    let Paired:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Carrier.Value, Symbolˉsummary, Validˉwir
+        );
+    if Paired.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Valid ||
+        Paired.Records != 1u32 || Paired.Calls != 1u32 {
+        return 2;
+    }
+    let Wrongˉdirectory:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Patchˉu32(Carrier.Value, 64u32, 1u32),
+            Symbolˉsummary, Validˉwir
+        );
+    if Wrongˉdirectory.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉrecord {
+        return 3;
+    }
+    let Wrongˉmodule:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Patchˉu32(Carrier.Value, 56u32, 1u32),
+            Symbolˉsummary, Validˉwir
+        );
+    if Wrongˉmodule.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉrecord {
+        return 4;
+    }
+    let Invalidˉcarrier:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Patchˉu32(Carrier.Value, 52u32, 1u32),
+            Symbolˉsummary, Validˉwir
+        );
+    if Invalidˉcarrier.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉcarrier {
+        return 5;
+    }
+    let Invalidˉsymbols:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Carrier.Value,
+            Symbols.Compilerˉsourceˉsymbolsˉsummaryˉsuccess(
+                Patchˉu16(Directory, 6u32, 1u32),
+                1u32, 0u32, 0u32, 0u32, 0u32, 0u32,
+                1u32, 0u32, 0u32, 0u32, 3u32,
+                Patchˉu16(Directory, 6u32, 1u32), Empty, Empty
+            ),
+            Validˉwir
+        );
+    if Invalidˉsymbols.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉsymbols {
+        return 6;
+    }
+    let Wrongˉminor:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Carrier.Value, Symbolˉsummary, Patchˉu16(Validˉwir, 6u32, 29u32)
+        );
+    if Wrongˉminor.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Invalidˉwir {
+        return 7;
+    }
+    let Wrongˉoperation:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Carrier.Value, Symbolˉsummary, Wir(1u32)
+        );
+    if Wrongˉoperation.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉoperation {
+        return 8;
+    }
+    let Extraˉrecord: bytes =
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉrecord(
+            1u32, 2u32, 1u32, 1u32
+        );
+    let Extraˉcarrier:
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉresult =
+        Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉconstruct(
+            Target.Compilerˉsourceˉtargetˉlinuxˉx86_64ˉsysvˉamd64ˉcˉv1(),
+            2u32, Bytesˉconcat(Foreignˉrecord, Extraˉrecord)
+        );
+    if Extraˉcarrier.Status !=
+            Foreignˉcarrier.Compilerˉsourceˉforeignˉloweringˉcarrierˉstatus.Valid {
+        return 9;
+    }
+    let Wrongˉcount:
+        Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉresult =
+        Foreignˉpairing.Compilerˉvalidateˉsourceˉforeignˉloweringˉpairing(
+            Extraˉcarrier.Value, Symbolˉsummary, Validˉwir
+        );
+    if Wrongˉcount.Status !=
+            Foreignˉpairing.Compilerˉsourceˉforeignˉloweringˉpairingˉstatus.Foreignˉcount {
+        return 10;
+    }
+    return 42;
+}

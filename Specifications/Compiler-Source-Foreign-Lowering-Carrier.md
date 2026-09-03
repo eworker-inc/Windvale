@@ -2,13 +2,15 @@
 
 ## Status
 
-Candidate private compiler-phase contract, WVFB 1.0, on 2026-09-02. The
+Candidate private compiler-phase contract, WVFB 1.0, implemented locally on
+Windows on 2026-09-03. The
 compiler-owned binder constructs and independently validates this carrier after
 complete source, target, catalog, symbol, and body binding. The hosted driver
 publishes it only to a coordinator-selected private path, and the coordinator
-independently validates and retains that exact file. No Analyzer or emitter
-consumes it yet, so authenticated Foreign-call lowering and execution remain
-unavailable.
+independently validates and retains that exact file. The authenticated
+coordinator now runs the Analyzer and uses the same binder executable to pair
+every retained carrier record and typed WVIR Foreign call before stopping at
+WVB emission. No WVB or execution consumer accepts the call yet.
 
 ## Purpose and authority
 
@@ -20,9 +22,10 @@ provider handle, native address, or execution authority.
 
 The private binder constructs WVFB only while it holds the WVSS, WVTD, and WVFC
 values that it completely validated. A valid WVFB by itself proves only its own
-shape. Any later cross-process consumer must bind it to the coordinator's
-retained authenticated inputs and independently match its records to the paired
-WVLB/WVIR identities before it may guide lowering.
+shape. The implemented cross-process pairer binds it to a symbol directory
+reconstructed from the retained WVSS and matches every typed Foreign call in
+the paired WVIR. The coordinator retains the authenticated inputs and rechecks
+their exact bytes after pairing.
 
 All integers are unsigned little-endian values. All reserved fields must be
 zero. The complete value is exactly `56 + RecordCount * 80` bytes, is at least
@@ -80,8 +83,8 @@ record position.
 
 The record deliberately contains semantic identities instead of source text,
 native symbol bytes, a host address, or a library path. The binder has already
-matched those identities to the exact WVFC record and WVSD entry; a later
-lowerer must still match the paired compiler products.
+matched those identities to the exact WVFC record and WVSD entry; the pairing
+phase matches that entry to the typed compiler product before WVB emission.
 
 ## Validation and failure order
 
@@ -103,6 +106,28 @@ record, and byte offset. An invalid result returns an empty value. Successful
 validation returns the unchanged input bytes, record count, record-count
 sentinel as the failure record, and zero failure offset.
 
+## Authenticated analysis pairing
+
+The private pairing function consumes one structurally valid WVFB, one valid
+source-symbol summary reconstructed from the retained WVSS, and one Analyzer-
+produced WVIR. It returns only status plus the carrier-record and Foreign-call
+counts; it publishes no transferable certificate or successor file.
+
+The pairer requires conditional WVSD 1.2 with its exact 16-byte header,
+24-byte entries, complete length, and one or more kind-9 Foreign entries. Those
+entries must match the WVFB records one for one and in source order by module,
+WVSD directory index, and fixed arity three. It accepts only WVIR 1.31 or 1.32,
+bounds the 48-byte function, 28-byte block, and 28-byte operation tables before
+reading them, and scans at most the declared operation count. Every operation
+`190` target must identify one retained WVFB record. One WVIR is limited to
+4,096 typed Foreign calls; a 4,097th call fails with `Callˉlimit`.
+
+Failures distinguish invalid carrier, symbol, or WVIR structure; carrier/symbol
+count or record disagreement; an unmatched Foreign operation; and the call
+limit. This phase proves correlation only. It does not authenticate a source
+set by itself, validate every unrelated WVIR field, grant a capability, resolve
+a native symbol, or authorize WVB publication.
+
 ## Hosted publication and current containment
 
 The binder returns WVFB only on complete success and returns an empty carrier
@@ -123,7 +148,8 @@ The line is at most 447 UTF-8 bytes under the current input bounds. It names the
 bytes consumed and produced by that invocation but remains non-authoritative.
 
 The production coordinator supplies a new path inside its private phase
-directory. After `wvbind` exits successfully, it requires one ordinary,
+directory. After the binding form of `wvbind` exits successfully, it requires
+one ordinary,
 single-link, 136-through-5,176-byte file and makes it read-only. It independently
 checks the complete WVFB header and record geometry; exact retained WVTD target
 tuple; record count; WVFC module, declaration, and record mapping; strictly
@@ -134,8 +160,25 @@ then rechecks the original six authenticated snapshots plus WVFB identity and
 bytes. Any missing, aliased, linked, malformed, substituted, or changed carrier
 fails closed and the private tree is removed.
 
-The coordinator still stops at `Foreignˉloweringˉpending` without launching the
-Analyzer or emitter. Direct `wvbind` invocation cannot establish the preceding
-authentication relationship or grant authority. WVFB 1.0 does not add a WVIR
-operation, WVB import, runtime operation, native thunk, symbol resolution,
-dynamic-library load, or provider call.
+The coordinator next launches the Analyzer's private foreign-source-set route,
+requires its WVSS copy to equal the retained source set, and retains its WVCA,
+WVLB, and WVIR files. It then re-enters the existing binder executable:
+
+```text
+wvbind --internal-pair-analysis <input.wvss> <input.wvfb> <input.wvir>
+```
+
+All three paths must be distinct. The driver validates source symbols from WVSS,
+applies the pairing contract above, writes no file, and emits exactly:
+
+```text
+foreign pairing status=Validated records=<u32> calls=<u32>\n
+```
+
+Only after that process succeeds does the coordinator recheck the original six
+authenticated snapshots and retained WVFB again. It then stops at exact
+`source emission status=Foreignˉwvbˉpending` without launching the emitter or
+copying a final file. Direct `wvbind` invocation cannot establish the preceding
+authentication relationship or grant authority. WVFB 1.0 and this pairing
+checkpoint do not add a WVB import, runtime operation, native thunk, symbol
+resolution, dynamic-library load, or provider call.

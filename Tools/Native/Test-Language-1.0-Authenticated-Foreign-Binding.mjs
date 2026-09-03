@@ -36,6 +36,11 @@ const FIXTURES = Object.freeze([
         application: 'combined',
         selectors: Object.freeze(['z']),
     }),
+    Object.freeze({
+        name: 'pairing',
+        application: 'pairing',
+        selectors: Object.freeze(['A']),
+    }),
 ]);
 const SELECTORS = FIXTURES.flatMap(Fixture =>
     Fixture.selectors.map(Selector => ({ Fixture, Selector }))
@@ -372,9 +377,9 @@ async function Main() {
     await Runˉterminationˉprobe();
     if (Probeˉonly) return;
     const Selectorˉvalues = SELECTORS.map(Item => Item.Selector);
-    if (FIXTURES.length !== 4 || SELECTORS.length !== 26 ||
+    if (FIXTURES.length !== 5 || SELECTORS.length !== 27 ||
         new Set(Selectorˉvalues).size !== SELECTORS.length ||
-        Selectorˉvalues.some(Selector => !/^[a-z]$/u.test(Selector))) {
+        Selectorˉvalues.some(Selector => !/^[A-Za-z]$/u.test(Selector))) {
         Reject('The authenticated foreign-binding selector inventory is invalid.');
     }
 
@@ -433,16 +438,32 @@ async function Main() {
                 'Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj'
             ),
         };
-        const Buildˉproducts = [Typedˉwir, Combined, Driver];
-        const Packageˉproducts = [Combined, Typedˉwir];
+        const Pairing = {
+            name: 'pairing',
+            Application: join(
+                Work,
+                WINDOWS
+                    ? 'Foreign-Lowering-Pairing.exe'
+                    : 'Foreign-Lowering-Pairing.elf'
+            ),
+            Product: join(Work, 'Foreign-Lowering-Pairing.wvb'),
+            Project: join(
+                REPOSITORY_ROOT,
+                'Projects', 'Tests',
+                'Windvale-Native-Test-Language-1-Foreign-Lowering-Pairing.wvproj'
+            ),
+        };
+        const Buildˉproducts = [Typedˉwir, Combined, Driver, Pairing];
+        const Packageˉproducts = [Combined, Typedˉwir, Pairing];
         const Applicationˉbyˉfixture = new Map([
             ['combined', Combined.Application],
             ['typed-wir', Typedˉwir.Application],
+            ['pairing', Pairing.Application],
         ]);
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=build item=1/3 fixtures=4 products=3\n'
+            'phase=build item=1/3 fixtures=5 products=4\n'
         );
         const Buildˉstarted = Date.now();
         const Buildˉarguments = [Build];
@@ -483,12 +504,12 @@ async function Main() {
         process.stdout.write(
             `PASS  language 1 authenticated foreign binding phase=build ` +
             `item=1/3 elapsed-ms=${Date.now() - Buildˉstarted} ` +
-            `fixtures=4 products=3\n`
+            `fixtures=5 products=4\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=package item=2/3 fixtures=4 applications=2\n'
+            'phase=package item=2/3 fixtures=5 applications=3\n'
         );
         const Packageˉstarted = Date.now();
         var Applicationˉbytes = 0;
@@ -525,12 +546,12 @@ async function Main() {
         process.stdout.write(
             'PASS  language 1 authenticated foreign binding ' +
             `phase=package item=2/3 elapsed-ms=${Date.now() - Packageˉstarted} ` +
-            `fixtures=4 applications=2 application-bytes=${Applicationˉbytes}\n`
+            `fixtures=5 applications=3 application-bytes=${Applicationˉbytes}\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=execute item=3/3 cases=26 fixtures=4\n'
+            'phase=execute item=3/3 cases=27 fixtures=5\n'
         );
         for (const [Index, Item] of SELECTORS.entries()) {
             process.stdout.write(
@@ -591,8 +612,8 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 authenticated foreign binding status=Passed ' +
-            'cases=26 fixtures=4 result=42 execution=native-profile-7 ' +
-            'isolated-executions=26\n'
+            'cases=27 fixtures=5 result=42 execution=native-profile-7 ' +
+            'isolated-executions=27\n'
         );
     }
 }

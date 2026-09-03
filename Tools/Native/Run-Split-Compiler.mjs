@@ -334,6 +334,7 @@ try {
             Profile, Retainedˉinputs.profile, 1, MAXIMUM_PROFILE_BYTES,
             'source profile'
         );
+        let Retainedˉcarrier = null;
         if (Retained.catalog.bytes.readUInt32LE(12) !== 0) {
             if (Foreignˉbinder === null) {
                 Reject(
@@ -350,7 +351,7 @@ try {
                 Foreignˉcarrier, WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
                 Temporary, 'foreign lowering carrier'
             );
-            const Retainedˉcarrier = await Readˉordinaryˉsnapshot(
+            Retainedˉcarrier = await Readˉordinaryˉsnapshot(
                 Foreignˉcarrier, WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
                 'foreign lowering carrier'
             );
@@ -398,17 +399,18 @@ try {
                 WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
                 'foreign lowering carrier'
             );
-            throw new Splitˉcompilerˉfailure(
-                1,
-                Buffer.from('source analysis status=Foreignˉloweringˉpending\n'),
-            );
         }
-        Reports.push(await Runˉrequired(
-            Analyzer,
-            [
+        const Analysisˉarguments = Retainedˉcarrier === null
+            ? [
                 '--internal-source-set', Sourceˉset, Analyzedˉsourceˉset,
                 Manifest, Bindings, Wir,
-            ],
+            ]
+            : [
+                '--internal-foreign-source-set', Sourceˉset,
+                Analyzedˉsourceˉset, Manifest, Bindings, Wir,
+            ];
+        Reports.push(await Runˉrequired(
+            Analyzer, Analysisˉarguments,
             'source-analysis',
         ));
         await Requireˉprivateˉphaseˉfile(
@@ -425,6 +427,58 @@ try {
         );
         if (!Analyzedˉsnapshot.bytes.equals(Retained.sourceSet.bytes)) {
             Reject('The Analyzer republished a different admitted source set.');
+        }
+        if (Retainedˉcarrier !== null) {
+            await Requireˉprivateˉphaseˉfile(
+                Manifest, 104, 104, Temporary, 'source analysis manifest'
+            );
+            await Requireˉprivateˉphaseˉfile(
+                Bindings, 1, MAXIMUM_PHASE_VALUE_BYTES,
+                Temporary, 'source binding evidence'
+            );
+            await Requireˉprivateˉphaseˉfile(
+                Wir, 1, MAXIMUM_PHASE_VALUE_BYTES, Temporary, 'source WIR'
+            );
+            Reports.push(await Runˉrequired(
+                Foreignˉbinder,
+                ['--internal-pair-analysis', Sourceˉset, Foreignˉcarrier, Wir],
+                'source-foreign-pairing',
+            ));
+            await Requireˉretainedˉsnapshot(
+                Evidence, Retained.evidence, WVAE_BYTES, WVAE_BYTES,
+                'admission evidence'
+            );
+            await Requireˉretainedˉsnapshot(
+                Sourceˉset, Retained.sourceSet, 37,
+                MAXIMUM_PHASE_VALUE_BYTES, 'admitted source set'
+            );
+            await Requireˉretainedˉsnapshot(
+                Admittedˉtarget, Retained.target,
+                WVTD_MINIMUM_BYTES, WVTD_MAXIMUM_BYTES,
+                'admitted target descriptor'
+            );
+            await Requireˉretainedˉsnapshot(
+                Catalog, Retained.catalog,
+                WVFC_MINIMUM_BYTES, MAXIMUM_PHASE_VALUE_BYTES,
+                'foreign catalog'
+            );
+            await Requireˉretainedˉsnapshot(
+                Lock, Retainedˉinputs.lock, 1, MAXIMUM_LOCK_BYTES,
+                'source-input lock'
+            );
+            await Requireˉretainedˉsnapshot(
+                Profile, Retainedˉinputs.profile, 1, MAXIMUM_PROFILE_BYTES,
+                'source profile'
+            );
+            await Requireˉretainedˉsnapshot(
+                Foreignˉcarrier, Retainedˉcarrier,
+                WVFB_MINIMUM_BYTES, WVFB_MAXIMUM_BYTES,
+                'foreign lowering carrier'
+            );
+            throw new Splitˉcompilerˉfailure(
+                1,
+                Buffer.from('source emission status=Foreignˉwvbˉpending\n'),
+            );
         }
     } else {
         Reports.push(await Runˉrequired(

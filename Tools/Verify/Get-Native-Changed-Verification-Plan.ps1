@@ -1736,8 +1736,10 @@ foreach ($Path in $Paths) {
         'Documents/Decisions/0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md') {
         Add-Suite 'language-1-authenticated-foreign-binding'
         continue
-    } elseif ($Path -eq
-        'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md') {
+    } elseif ($Path -in @(
+        'Documents/Decisions/0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md',
+        'Documents/Decisions/0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md'
+    )) {
         Add-Suite @(
             'language-1-production-admission-ingress',
             'language-1-authenticated-foreign-binding'
@@ -1810,7 +1812,10 @@ foreach ($Path in $Paths) {
         }
     } elseif ($Path -eq
         'Projects/Tools/Windvale-Compiler-Foreign-Binding-Driver.wvproj') {
-        Add-Suite 'language-1-authenticated-foreign-binding'
+        Add-Suite @(
+            'language-1-production-admission-ingress',
+            'language-1-authenticated-foreign-binding'
+        )
     } elseif ($Path -eq
         'Tools/Windvale.Build/Compiler-Foreign-Binding-Driver.wv') {
         Add-Suite @(
@@ -1945,18 +1950,28 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
         'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
+        'Compiler/Windvale/Source-Foreign-Lowering-Pairing-Core.wv',
         'Projects/Compiler/Windvale-Source-Foreign-Binding-Core.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Portable.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Language-1-Foreign-Lowering-Pairing.wvproj',
         'Projects/Tests/Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj',
         'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Combined-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Portable-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Authenticated-Foreign-Binding-Self-Test.wv',
+        'Tests/Fixtures/Language-1.0/Foreign-Lowering-Pairing-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Validation-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Typed-Foreign-Call-Wir-Self-Test.wv'
     )) {
         Add-Suite 'language-1-authenticated-foreign-binding'
+        if ($Path -in @(
+            'Compiler/Windvale/Source-Foreign-Binding-Core.wv',
+            'Compiler/Windvale/Source-Foreign-Lowering-Carrier-Core.wv',
+            'Compiler/Windvale/Source-Foreign-Lowering-Pairing-Core.wv'
+        )) {
+            Add-Suite 'language-1-production-admission-ingress'
+        }
     } elseif ($Path -in @(
         'Compiler/Windvale/Admission-Evidence-Core.wv',
         'Compiler/Windvale/Admission-Evidence-Validator-Core.wv',
