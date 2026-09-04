@@ -162,9 +162,9 @@ foreach ($Job in $DevelopmentJobs) {
             $Block.Contains('-GitHubVerificationOnLinux')
         ) 'Windows development does not delegate GitHub verification to Linux.'
         Assert-Workflow (
-            $Block.Contains('          TEMP: ${{ runner.temp }}') -and
-            $Block.Contains('          TMP: ${{ runner.temp }}')
-        ) 'Windows development does not bind the canonical runner temporary root.'
+            !$Block.Contains('          TEMP: ${{ runner.temp }}') -and
+            !$Block.Contains('          TMP: ${{ runner.temp }}')
+        ) 'Windows development overrides the runner-owned process temporary root.'
     } else {
         Assert-Workflow (
             !$Block.Contains('-GitHubVerificationOnLinux')
@@ -216,9 +216,9 @@ foreach ($Job in $QualificationJobs) {
     ) "Qualification job '$Job' consults development checkpoint state."
     if ($Job.StartsWith('windows-', [StringComparison]::Ordinal)) {
         Assert-Workflow (
-            $Block.Contains('          TEMP: ${{ runner.temp }}') -and
-            $Block.Contains('          TMP: ${{ runner.temp }}')
-        ) "Qualification job '$Job' does not bind the canonical runner temporary root."
+            !$Block.Contains('          TEMP: ${{ runner.temp }}') -and
+            !$Block.Contains('          TMP: ${{ runner.temp }}')
+        ) "Qualification job '$Job' overrides the runner-owned process temporary root."
     }
 }
 
