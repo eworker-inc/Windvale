@@ -404,6 +404,7 @@ jobs:
         run: |
           apt-get update
           apt-get install --yes --no-install-recommends ca-certificates curl git gzip libgssapi-krb5-2 libicu72 libssl3 libstdc++6 libunwind8 libuuid1 tar xz-utils zlib1g
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           powershell_version=7.6.5
           powershell_archive="powershell-${powershell_version}-linux-x64.tar.gz"
           powershell_root=/opt/microsoft/powershell/7
@@ -525,6 +526,7 @@ jobs:
         run: |
           apt-get update
           apt-get install --yes --no-install-recommends ca-certificates git gzip libicu72 tar
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

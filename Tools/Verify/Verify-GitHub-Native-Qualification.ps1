@@ -248,8 +248,13 @@ foreach ($Job in $QualificationJobs) {
 
 $PinnedDebian = 'debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818'
 foreach ($Job in @('linux-native-suite', 'linux-bootstrap')) {
-    Assert-Workflow ((Get-JobBlock $Job).Contains("image: $PinnedDebian")) `
+    $Block = Get-JobBlock $Job
+    Assert-Workflow ($Block.Contains("image: $PinnedDebian")) `
         "Qualification job '$Job' does not use the pinned Debian image."
+    Assert-Workflow (
+        $Block.Contains(
+            'git config --global --add safe.directory "$GITHUB_WORKSPACE"')
+    ) "Qualification job '$Job' does not trust its container checkout."
 }
 $LinuxNativeSuite = Get-JobBlock 'linux-native-suite'
 foreach ($Fragment in @(

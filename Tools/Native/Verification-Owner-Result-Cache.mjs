@@ -102,6 +102,14 @@ function Requireˉcontained(Path, Parent) {
     return Resolvedˉpath;
 }
 
+function Isˉinsideˉorˉequal(Path, Parent) {
+    const Relative = relative(resolve(Parent), resolve(Path));
+    return Relative.length === 0 ||
+        (Relative !== '..' &&
+            !Relative.startsWith(`..${sep}`) &&
+            !isAbsolute(Relative));
+}
+
 async function Ensureˉordinaryˉdirectory(Path) {
     const Resolved = resolve(Path);
     const Root = parse(Resolved).root;
@@ -500,7 +508,8 @@ export async function Prepareˉverificationˉresultˉcache(
     Repositoryˉinput,
     Cacheˉrootˉinput,
 ) {
-    const Repository = await realpath(resolve(Repositoryˉinput));
+    const Repositoryˉlexical = resolve(Repositoryˉinput);
+    const Repository = await realpath(Repositoryˉlexical);
     const Top = await realpath(await Runˉgit(
         Repository,
         ['rev-parse', '--show-toplevel'],
@@ -518,11 +527,8 @@ export async function Prepareˉverificationˉresultˉcache(
     };
     const Stateˉkey = Digest(JSON.stringify(Stateˉdescriptor));
     const Rootˉinput = resolve(Cacheˉrootˉinput ?? Defaultˉcacheˉroot());
-    const Cacheˉrelative = relative(Repository, Rootˉinput);
-    if (Cacheˉrelative.length === 0 ||
-        (Cacheˉrelative !== '..' &&
-            !Cacheˉrelative.startsWith(`..${sep}`) &&
-            !isAbsolute(Cacheˉrelative))) {
+    if (Isˉinsideˉorˉequal(Rootˉinput, Repository) ||
+        Isˉinsideˉorˉequal(Rootˉinput, Repositoryˉlexical)) {
         throw new Error(
             'Verification result cache root must remain outside the repository.'
         );

@@ -178,6 +178,26 @@ async function Verifyˉresultˉcache(Work) {
     if (existsSync(Insideˉrepository)) {
         Reject('Rejected result-cache setup left a directory in the repository.');
     }
+    const Repositoryˉalias = path.join(Work, 'Repository-Alias');
+    symlinkSync(
+        Repository,
+        Repositoryˉalias,
+        process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    const Insideˉaliasedˉrepository = path.join(
+        Repositoryˉalias,
+        'Aliased-Result-Cache',
+    );
+    await Requireˉrejection(
+        () => Prepareˉverificationˉresultˉcache(
+            Repositoryˉalias,
+            Insideˉaliasedˉrepository,
+        ),
+        'Verification result cache root must remain outside the repository.',
+    );
+    if (existsSync(Insideˉaliasedˉrepository)) {
+        Reject('Rejected aliased result-cache setup left a directory in the repository.');
+    }
     const Linkedˉcache = path.join(Work, 'Link', 'Verification-Result-Cache');
     await Requireˉrejection(
         () => Prepareˉverificationˉresultˉcache(Repository, Linkedˉcache),
