@@ -29,14 +29,14 @@ trap cleanup EXIT
 total=0
 passed=0
 IFS= read -r header < "$plan"
-if [[ $header != 'windvale-native-tests 5' ]]; then
+if [[ $header != 'windvale-native-tests 6' ]]; then
     echo 'The native test plan header is invalid.' >&2
     exit 1
 fi
 
 while IFS='|' read -r name input_kind input expected_hash expected_kind expected_value; do
     [[ -n $name ]] || continue
-    [[ $name != 'windvale-native-tests 5' ]] || continue
+    [[ $name != 'windvale-native-tests 6' ]] || continue
     total=$((total + 1))
     output="$temporary_directory/Current.wvb"
     build_output="$temporary_directory/Build.out"

@@ -406,9 +406,32 @@ async function Requireˉprocessˉstopped(pid) {
             }
             throw error;
         }
+        if (!WINDOWS) {
+            const state = await Readˉlinuxˉprocessˉstate(pid);
+            if (state === null || state === 'Z' || state === 'X') {
+                return;
+            }
+        }
         await Delay(25);
     }
     Reject(`A bounded producer process remains alive: ${pid}`);
+}
+
+async function Readˉlinuxˉprocessˉstate(pid) {
+    const record = await readFile(`/proc/${pid}/stat`, 'ascii').catch(error => {
+        if (error?.code === 'ENOENT') {
+            return null;
+        }
+        throw error;
+    });
+    if (record === null) {
+        return null;
+    }
+    const commandEnd = record.lastIndexOf(') ');
+    if (commandEnd < 0 || commandEnd + 2 >= record.length) {
+        Reject(`The bounded producer process state is malformed: ${pid}`);
+    }
+    return record[commandEnd + 2];
 }
 
 async function Forceˉstopˉtestˉprocess(pid) {

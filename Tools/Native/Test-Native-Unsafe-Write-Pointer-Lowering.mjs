@@ -51,7 +51,10 @@ const Foreignˉproviderˉsource = join(
     Repositoryˉroot, 'Tests', 'Native', 'X64-Paper-Buffer-Source.wva',
 );
 
-const Work = await mkdtemp(join(tmpdir(), 'windvale-write-pointer-lowering-'));
+const Work = await realpath(await mkdtemp(join(
+    tmpdir(),
+    'windvale-write-pointer-lowering-',
+)));
 try {
     const Canonical = await Readˉfixture(
         join(Fixtureˉdirectory, 'Unsafe-Write-Pointer.wvb.b64'),
@@ -343,10 +346,13 @@ try {
                 Rejected.Output);
         }
     }
+    if (Foreignˉexecutions !== (Target === 'linux' ? 2 : 0)) {
+        Reject('The host-specific Foreign execution count differed.');
+    }
     process.stdout.write(
         'native unsafe write pointer lowering status=Passed cases=25 ' +
-        'valid=5 malformed=20 native-execution=' +
-        `${1 + Foreignˉexecutions} foreign-links=2 compiler-source=current ` +
+        'valid=5 malformed=20 native-execution=1 ' +
+        'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
 } finally {
