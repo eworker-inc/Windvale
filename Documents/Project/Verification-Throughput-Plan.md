@@ -95,6 +95,15 @@ owner dependency, planner gap, repository, host identity, or global cache-proof
 input. A subsequent result-cache implementation change exercised that last
 barrier and reran all six cases in 16,188 ms rather than reusing the receipt.
 
+The first compiler-owner boundary is now implemented. The 492-case
+`language-1-front-door` owner exposes a 329-case development checkpoint covering
+frozen source evidence, descriptor construction, value-front-end behavior, and
+the first generic products. A focused Windows run completed in 235,533 ms. The
+historical complete owner took 2,761,285 ms on Windows, so the selected feedback
+path removes 91.47 percent of that observed wait while leaving the no-argument
+qualification command and summary unchanged. This is one local measurement;
+paired CI evidence and further product sharing remain pending.
+
 Ten hosted dependency edges are now explicit in the same database inventory.
 A focused hosted request expands its transitive prerequisites in topological
 order; for example, `HostEngine` selects `HostStorage`, `HostTreeReader`, then
@@ -152,7 +161,7 @@ security and failure isolation is redundant would be unsafe.
 
 | Priority | Owner or group | Current signal | Next bounded change |
 | ---: | --- | --- | --- |
-| 1 | `language-1-front-door` | 46.02 minutes Windows, 39.37 minutes Linux, 492 cases, 237 helper references | Extract a versioned case/product inventory; construct each exact compiler product once; map all 492 claims before deleting copied host blocks. |
+| 1 | `language-1-front-door` | 46.02 minutes Windows, 39.37 minutes Linux; 329-case development checkpoint measured at 3.93 minutes on Windows | Measure the checkpoint on both CI hosts, then merge the four overlapping generic-nominal products behind one attributed self-test without weakening the 492-case qualification owner. |
 | 2 | `wvb-runner-reconstruction` | 28.49 minutes Windows and 43.20 minutes Linux for three cases | Separate immutable construction products from the three reconstruction claims and find the Linux-specific critical phase. |
 | 3 | `language-1-memory-budget-split-execution` | 41.13 minutes Windows and 42.83 minutes Linux for 172 cases | Inventory product acquisition versus selector execution and share only immutable packages across the retained behavior cases. |
 | 4 | `database-storage` | 41.00 minutes Windows, 20.94 minutes Linux, 57 cases, 86 helper references across 66 visible projects | Finish hosted construction ownership and execute the inventory as a shared dependency graph; keep fresh state for recovery and mutation. |

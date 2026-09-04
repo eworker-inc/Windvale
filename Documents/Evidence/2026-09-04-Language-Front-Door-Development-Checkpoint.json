@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-language-front-door-development-checkpoint",
+  "date": "2026-09-04",
+  "subject": "Bounded Language 1 front-door development checkpoint",
+  "claim": "On the implementation host, the exact candidate Windows wrapper passed the frozen-fixture, descriptor, and value-front-end phases and reported 329 development cases in 235,533 ms. The no-argument 492-case qualification path was not executed by this run.",
+  "source": {
+    "kind": "Other",
+    "value": "Git commit dd26af64ae9b1239987f42fafdd02f9d9ba1fe03 plus the exact candidate input identified in runs[0].inputs"
+  },
+  "runs": [
+    {
+      "host": "Local Windows x64 implementation host",
+      "target": "Language 1 front-door development phases 1 through 3",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development",
+      "result": "Passed",
+      "elapsedMilliseconds": 235533,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+          "size": 129885,
+          "sha256": "642f7dc9454e4e581751167b912b03987678966ecf90529241a6beb94e7d6b0c"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is one local Windows observation, not a stable performance threshold or a paired-host result.",
+    "The run used the host's existing valid native development caches where the invoked producers permit them; it is not a clean-machine timing.",
+    "The 163 qualification-only cases after phase 3 were intentionally not executed, and this result cannot support a Qualified claim.",
+    "The historical 2,761,285 ms complete-owner timing came from GitHub Actions run 33894696448 at an earlier qualified source commit and is used only as a baseline comparison."
+  ],
+  "related": [
+    "Documents/Decisions/0955-Add-A-Bounded-Language-Front-Door-Development-Checkpoint.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Windvale-Native-Verification-Owners.md",
+    "Documents/Evidence/2026-09-04-Native-Qualification-Owner-Timings.json",
+    "https://github.com/eworker-inc/Windvale/actions/runs/33894696448"
+  ]
+}

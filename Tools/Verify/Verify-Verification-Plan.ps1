@@ -5300,6 +5300,10 @@ $CompilerDevelopmentWindows = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.cmd')
 $CompilerDevelopmentLinux = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Compiler-Reconstruction.sh')
+$Language1FrontDoorWindows = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.cmd')
+$Language1FrontDoorLinux = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.sh')
 $ChangedVerification = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
 $ResultCacheImplementation = Get-Content -Raw -LiteralPath (
@@ -5405,6 +5409,39 @@ foreach ($Contract in @(
             '$OwnerArguments = @(''--development'')',
             '& $OwnerCommand @OwnerArguments'
         )
+    },
+    @{
+        Name = 'Windows Language 1 front-door development owner'
+        Text = $Language1FrontDoorWindows
+        Required = @(
+            'Test-Language-1.0-Front-Door.cmd [--development]',
+            'if "%Development%"=="1"',
+            'phase=value-front-end item=3/13',
+            'development status=Passed cases=329',
+            'status=Passed cases=492'
+        )
+    },
+    @{
+        Name = 'Linux Language 1 front-door development owner'
+        Text = $Language1FrontDoorLinux
+        Required = @(
+            'Test-Language-1.0-Front-Door.sh [--development]',
+            'if [[ $development == true ]]',
+            'phase=value-front-end item=3/13',
+            'development status=Passed cases=329',
+            'status=Passed cases=492'
+        )
+    },
+    @{
+        Name = 'changed-file Language 1 front-door development dispatch'
+        Text = $ChangedVerification
+        Required = @(
+            '$Suite -eq ''language-1-front-door''',
+            '$Plan.Scope -eq ''development''',
+            'mode=development-front-end cases=329 expected-seconds=240',
+            '$OwnerArguments = @(''--development'')',
+            '& $OwnerCommand @OwnerArguments'
+        )
     }
 )) {
     foreach ($Fragment in $Contract.Required) {
@@ -5412,6 +5449,19 @@ foreach ($Contract in @(
             throw "$($Contract.Name) is missing '$Fragment'."
         }
     }
+}
+
+$Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet
+if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
+    $Language1FrontDoorDevelopmentPlan.Suites.Count -ne 1 -or
+    $Language1FrontDoorDevelopmentPlan.Suites[0] -ne 'language-1-front-door' -or
+    $Language1FrontDoorDevelopmentPlan.ExpectedSeconds -ne 240 -or
+    $Language1FrontDoorDevelopmentPlan.MaximumSeconds -ne 600 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentCaseCount -ne 329 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 240 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentMaximumSeconds -ne 600) {
+    throw 'The Language 1 front-door development checkpoint plan differs.'
 }
 
 $SourceContainmentWindows = Get-Content -Raw -LiteralPath (

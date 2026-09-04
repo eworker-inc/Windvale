@@ -353,6 +353,17 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerMessage = (
                     'Native owner wvb-runner-reconstruction ' +
                     'mode=development-candidate-smoke')
+            } elseif ($Suite -eq 'language-1-front-door' -and
+                $Plan.Scope -eq 'development') {
+                $OwnerCommand = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.sh'
+                }
+                $OwnerArguments = @('--development')
+                $OwnerMessage = (
+                    'Native owner language-1-front-door ' +
+                    'mode=development-front-end cases=329 expected-seconds=240')
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

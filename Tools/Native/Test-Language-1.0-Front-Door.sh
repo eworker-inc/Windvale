@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Language-1.0-Front-Door.sh' >&2
+development=false
+if [[ $# -eq 1 && $1 == --development ]]; then
+    development=true
+elif [[ $# -ne 0 ]]; then
+    echo 'Usage: ./Tools/Native/Test-Language-1.0-Front-Door.sh [--development]' >&2
     exit 64
 fi
 
@@ -376,6 +379,11 @@ generic_type_catalog_wvb_bytes=$(wc -c < "$work/Generic-Type-Catalog.wvb")
 printf 'PASS  language 1 front door step=generic-type-catalog wvb-bytes=%s\n' \
     "$generic_type_catalog_wvb_bytes"
 echo 'PASS  language 1 front door phase=value-front-end item=3/13'
+if [[ $development == true ]]; then
+    printf 'native language 1 front door development status=Passed cases=329 frozen-inputs=251 source-fixtures=72 descriptor-cases=33 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 generic-type-catalog-wvb-bytes=%s\n' \
+        "$generic_type_catalog_wvb_bytes"
+    exit 0
+fi
 
 echo 'START language 1 front door phase=compiler-slice item=4/13'
 [[ $(wc -c < "$pinned_analyzer_wvb") -eq 1552090 ]] || exit 1

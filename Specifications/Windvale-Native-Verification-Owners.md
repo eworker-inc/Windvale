@@ -133,6 +133,15 @@ oracle in the development dependency registry, and leave the no-argument owner
 command as the complete qualification contract. A development-mode pass must
 not be reported as the qualification evidence it intentionally omits.
 
+`language-1-front-door` uses this boundary. Its `--development` invocation
+executes the frozen migration fixtures, target-descriptor product, value front
+end, and first generic declaration, call, resolution, and type-catalog products.
+It reports 329 cases and 72 separately inventoried source fixtures, then stops
+before the compiler-scale, numeric, sequence, ownership, and Foundation phases.
+The no-argument invocation remains the 492-case qualification owner. Changed-
+file development must never substitute the 329-case result for that complete
+owner receipt.
+
 One coherent source state receives one final selected plan. A failure
 invalidates that owner and owners whose declared inputs changed; it does not
 invalidate unrelated passing owners.

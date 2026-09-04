@@ -4643,6 +4643,22 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
     [long](($SelectedSuiteEntries |
         Measure-Object -Property MaximumSeconds -Sum).Sum)
 }
+$Language1FrontDoorDevelopmentExpectedSeconds = [long]240
+$Language1FrontDoorDevelopmentMaximumSeconds = [long]600
+$Language1FrontDoorDevelopmentEligible =
+    $SelectedSuites.Contains('language-1-front-door')
+if ($Language1FrontDoorDevelopmentEligible) {
+    $Language1FrontDoorSuiteEntry = @(
+        $SelectedSuiteEntries | Where-Object Name -eq 'language-1-front-door')[0]
+    $SelectedExpectedSeconds = [long](
+        $SelectedExpectedSeconds -
+            $Language1FrontDoorSuiteEntry.ExpectedSeconds +
+            $Language1FrontDoorDevelopmentExpectedSeconds)
+    $SelectedMaximumSeconds = [long](
+        $SelectedMaximumSeconds -
+            $Language1FrontDoorSuiteEntry.MaximumSeconds +
+            $Language1FrontDoorDevelopmentMaximumSeconds)
+}
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
@@ -4905,6 +4921,22 @@ if (!$Quiet) {
     Write-Host "WebAssembly verification: $($RunWebAssemblyVerification.ToString().ToLowerInvariant())"
     Write-Host "GitHub qualification verification: $($RunGitHubQualificationVerification.ToString().ToLowerInvariant())"
     Write-Host "Source containment development mode: $SourceContainmentDevelopmentMode"
+    Write-Host (
+        'Language 1 front-door development checkpoint: ' +
+        $Language1FrontDoorDevelopmentEligible.ToString().ToLowerInvariant())
+    if ($Language1FrontDoorDevelopmentEligible) {
+        Write-Host 'Language 1 front-door development cases: 329'
+        Write-Host (
+            'Language 1 front-door development expected seconds: ' +
+            $Language1FrontDoorDevelopmentExpectedSeconds)
+        Write-Host (
+            'Language 1 front-door development maximum seconds: ' +
+            $Language1FrontDoorDevelopmentMaximumSeconds)
+    } else {
+        Write-Host 'Language 1 front-door development cases: not-applicable'
+        Write-Host 'Language 1 front-door development expected seconds: not-applicable'
+        Write-Host 'Language 1 front-door development maximum seconds: not-applicable'
+    }
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Database storage development checkpoint: $((
@@ -4945,6 +4977,13 @@ if ($PassThru) {
         UseSourceContainmentCompilerDevelopment = (
             $SelectedSuites.Contains('source-containment') -and
             $SourceContainmentCompilerDevelopmentEligible)
+        UseLanguage1FrontDoorDevelopment =
+            $Language1FrontDoorDevelopmentEligible
+        Language1FrontDoorDevelopmentCaseCount = 329
+        Language1FrontDoorDevelopmentExpectedSeconds =
+            $Language1FrontDoorDevelopmentExpectedSeconds
+        Language1FrontDoorDevelopmentMaximumSeconds =
+            $Language1FrontDoorDevelopmentMaximumSeconds
         UseOsX64CodeEmissionDevelopment = (
             $SelectedSuites.Contains('os-x64-code-emission') -and
             $OsX64CodeEmissionDevelopmentEligible)
