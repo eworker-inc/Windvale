@@ -64,6 +64,8 @@ foreach ($Fragment in @(
     'name: Select automatic Windows host',
     "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
     "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'",
+    'uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
+    'node-version: 24',
     './Tools/Verify/Verify-Verification-Plan.ps1'
 )) {
     Assert-Workflow (
