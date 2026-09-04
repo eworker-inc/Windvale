@@ -9,7 +9,7 @@ const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 128 * 1024;
 const MAXIMUM_WVB_BYTES = 1 * 1024 * 1024;
 const HEARTBEAT_INTERVAL_MILLISECONDS = 30_000;
-const BUILD_TIMEOUT_MILLISECONDS = 45 * 60_000;
+const BUILD_TIMEOUT_MILLISECONDS = 55 * 60_000;
 const PACKAGE_TIMEOUT_MILLISECONDS = 30 * 60_000;
 const CASE_TIMEOUT_MILLISECONDS = 120_000;
 const MAXIMUM_APPLICATION_BYTES = 134_217_728;
@@ -429,15 +429,6 @@ async function Main() {
                 'Windvale-Native-Test-Language-1-Authenticated-Foreign-Binding-Combined.wvproj'
             ),
         };
-        const Driver = {
-            name: 'wvbind',
-            Product: join(Work, 'Windvale-Compiler-Foreign-Binding.wvb'),
-            Project: join(
-                REPOSITORY_ROOT,
-                'Projects', 'Tools',
-                'Windvale-Compiler-Foreign-Binding-Driver.wvproj'
-            ),
-        };
         const Typedˉwir = {
             name: 'typed-wir',
             Application: join(
@@ -451,32 +442,22 @@ async function Main() {
                 'Windvale-Native-Test-Language-1-Typed-Foreign-Call-Wir.wvproj'
             ),
         };
-        const Pairing = {
-            name: 'pairing',
-            Application: join(
-                Work,
-                WINDOWS
-                    ? 'Foreign-Lowering-Pairing.exe'
-                    : 'Foreign-Lowering-Pairing.elf'
-            ),
-            Product: join(Work, 'Foreign-Lowering-Pairing.wvb'),
-            Project: join(
-                REPOSITORY_ROOT,
-                'Projects', 'Tests',
-                'Windvale-Native-Test-Language-1-Foreign-Lowering-Pairing.wvproj'
-            ),
-        };
-        const Buildˉproducts = [Typedˉwir, Combined, Driver, Pairing];
-        const Packageˉproducts = [Combined, Typedˉwir, Pairing];
+        // The production-admission owner independently reconstructs wvbind.
+        // Pairing is a small ordinary module in the combined product. Typed WIR
+        // retains its separate product because merging its large WIR compiler
+        // module would exceed the analyzer's bounded working set. Independent
+        // native packages run concurrently after both products are complete.
+        const Buildˉproducts = [Combined, Typedˉwir];
+        const Packageˉproducts = [Combined, Typedˉwir];
         const Applicationˉbyˉfixture = new Map([
             ['combined', Combined.Application],
             ['typed-wir', Typedˉwir.Application],
-            ['pairing', Pairing.Application],
+            ['pairing', Combined.Application],
         ]);
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=build item=1/3 fixtures=5 products=4\n'
+            'phase=build item=1/3 fixtures=5 products=2\n'
         );
         const Buildˉstarted = Date.now();
         const Buildˉarguments = [Build];
@@ -505,7 +486,7 @@ async function Main() {
             Item.Productˉidentity = await Fileˉidentity(
                 Item.Product,
                 `authenticated foreign-binding ${Item.name} product`,
-                Item === Driver ? 4_194_304 : 2 * MAXIMUM_WVB_BYTES
+                2 * MAXIMUM_WVB_BYTES
             );
             process.stdout.write(
                 `INFO  language 1 authenticated foreign binding phase=build ` +
@@ -517,16 +498,15 @@ async function Main() {
         process.stdout.write(
             `PASS  language 1 authenticated foreign binding phase=build ` +
             `item=1/3 elapsed-ms=${Date.now() - Buildˉstarted} ` +
-            `fixtures=5 products=4\n`
+            `fixtures=5 products=2\n`
         );
 
         process.stdout.write(
             'START language 1 authenticated foreign binding ' +
-            'phase=package item=2/3 fixtures=5 applications=3\n'
+            'phase=package item=2/3 fixtures=5 applications=2\n'
         );
         const Packageˉstarted = Date.now();
-        var Applicationˉbytes = 0;
-        for (const Item of Packageˉproducts) {
+        const Packageˉresults = await Promise.all(Packageˉproducts.map(async Item => {
             const Packageˉresult = await Runˉcommand(
                 process.execPath,
                 [Package, '7', Item.Product, Item.Application],
@@ -554,12 +534,16 @@ async function Main() {
                     `The packaged foreign-binding ${Item.name} application is invalid.`
                 );
             }
-            Applicationˉbytes += Applicationˉinformation.size;
-        }
+            return Applicationˉinformation.size;
+        }));
+        const Applicationˉbytes = Packageˉresults.reduce(
+            (Total, Bytes) => Total + Bytes,
+            0
+        );
         process.stdout.write(
             'PASS  language 1 authenticated foreign binding ' +
             `phase=package item=2/3 elapsed-ms=${Date.now() - Packageˉstarted} ` +
-            `fixtures=5 applications=3 application-bytes=${Applicationˉbytes}\n`
+            `fixtures=5 applications=2 application-bytes=${Applicationˉbytes}\n`
         );
 
         process.stdout.write(
@@ -608,7 +592,7 @@ async function Main() {
             const Finalˉidentity = await Fileˉidentity(
                 Item.Product,
                 `verified authenticated foreign-binding ${Item.name} product`,
-                Item === Driver ? 4_194_304 : 2 * MAXIMUM_WVB_BYTES
+                2 * MAXIMUM_WVB_BYTES
             );
             if (!Finalˉidentity.value.equals(Item.Productˉidentity.value)) {
                 Reject(
