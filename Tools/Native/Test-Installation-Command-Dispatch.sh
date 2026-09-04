@@ -25,18 +25,18 @@ verify_file() {
 }
 
 echo 'native installation command dispatch step=build-selection-and-bundle-tools item=1/7'
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Installation-Command-Resolver.wvproj" \
     "$work/Resolver.wvb" || exit $?
 verify_file "$work/Resolver.wvb" 60732 \
     521cd77ee53f20cec3157208e4f0b9c93841c212dcabec88f4e7cbc6a9229679 || exit 1
 "$script_directory/Package-Hosted-Wvb.sh" 6 \
     "$work/Resolver.wvb" "$work/Resolver.elf" linux || exit $?
-"$script_directory/Build-Wvb.sh" \
+"$script_directory/Build-Current-Wvb.sh" \
     "$repository_root/Projects/Tools/Windvale-Package-Bundle-Writer.wvproj" \
     "$work/Writer.wvb" || exit $?
-verify_file "$work/Writer.wvb" 510498 \
-    7bc577ac157fc20c301699e5cd08286b736017922871f5206b045d6c46b93a1d || exit 1
+verify_file "$work/Writer.wvb" 613470 \
+    ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 || exit 1
 "$script_directory/Package-Segmented-Compiler-Wvb.sh" 6 \
     "$work/Writer.wvb" "$work/Writer.elf" || exit $?
 

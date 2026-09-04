@@ -3,3 +3,4 @@ quick|15|300|1
 standard|60|600|1
 slow|300|600|1
 very-slow|900|3600|1
+hour-scale|2700|3600|1

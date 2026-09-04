@@ -16,11 +16,11 @@ mkdir "%Work%" || exit /b 1
 set "Result=1"
 
 echo native installation command dispatch step=build-selection-and-bundle-tools item=1/7
-call "%Native%\Build-Wvb.cmd" ^
+call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Command-Resolver.wvproj" ^
     "%Work%\Resolver.wvb" || goto :cleanup
 call "%Native%\Package-Hosted-Wvb.cmd" 6 "%Work%\Resolver.wvb" "%Work%\Resolver.exe" windows || goto :cleanup
-call "%Native%\Build-Wvb.cmd" ^
+call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
 call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 6 "%Work%\Writer.wvb" "%Work%\Writer.exe" || goto :cleanup

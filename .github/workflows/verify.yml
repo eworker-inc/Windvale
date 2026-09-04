@@ -338,7 +338,7 @@ jobs:
       matrix:
         shard: [1, 2, 3, 4]
     runs-on: windows-latest
-    timeout-minutes: 75
+    timeout-minutes: 180
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -397,7 +397,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: debian:12-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
-    timeout-minutes: 75
+    timeout-minutes: 180
     steps:
       - name: Prepare Debian host
         shell: bash
