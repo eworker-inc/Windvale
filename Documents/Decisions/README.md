@@ -13,7 +13,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Accepted | 350 |
 | Implemented | 494 |
 | Proposed | 4 |
-| Qualified | 94 |
+| Qualified | 95 |
 | Recorded | 7 |
 | Superseded | 14 |
 
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0954: balance qualification shards by paired-host timings](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md) | Qualified |
 | [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
 | [Decision 0952: rank and trial overlapping database products](0952-Rank-And-Trial-Overlapping-Database-Products.md) | Implemented |
 | [Decision 0951: coalesce complete database bundles in development](0951-Coalesce-Complete-Database-Bundles-In-Development.md) | Implemented |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0932: represent typed Foreign calls in WVIR 1.31](0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md) | Accepted |
 | [Decision 0931: preserve resumable compiler symbol checkpoints](0931-Preserve-Resumable-Compiler-Symbol-Checkpoints.md) | Accepted |
 | [Decision 0930: verify routing once during classification](0930-Verify-Routing-Once-During-Classification.md) | Accepted |
-| [Decision 0929: reuse native planner initialization in routing verification](0929-Reuse-Native-Planner-Initialization-In-Routing-Verification.md) | Accepted |
 
 ## Superseded or historical records
 

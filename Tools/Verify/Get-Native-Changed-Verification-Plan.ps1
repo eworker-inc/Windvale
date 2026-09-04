@@ -2441,6 +2441,7 @@ foreach ($Path in $Paths) {
         'Tests/Native/Library-Development-Targets.txt',
         'Tests/Native/Verification-Owners.txt',
         'Tests/Native/Verification-Duration-Profiles.txt',
+        'Tests/Native/Qualification-Owner-Timing-Baseline.txt',
         'Tests/Native/Development-Owner-Dependencies.txt',
         'Tools/Verify/Verify-Seed-Native-Front-Door.ps1',
         'Tools/Verify/Verify-Seed-Native-Front-Door.sh'

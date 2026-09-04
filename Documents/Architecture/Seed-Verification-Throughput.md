@@ -433,6 +433,15 @@ byte comparison, lowering, linking, cross-target packaging, and current-host
 execution of their actual products. The fifth is the durable-database behavior
 owner, which no longer rebuilds a lowerer before exercising its 12 cases.
 
+Qualification scheduling now retains the complete paired-host owner timings from
+the accepted Language 1.0 run. The 126-owner baseline showed that equal sums of
+coarse duration profiles still projected a 6,547,869 ms critical shard. Moving
+six independent owners without changing their commands, cases, profiles, or
+timeouts produces historical projections of 4,655,707 ms on Windows and
+4,521,081 ms on Linux. The planner validates all 252 timing values and reports
+declared timeout policy separately from observed scheduling work; a new paired
+run is still required before the projection becomes a measurement.
+
 Database target selection now preserves independent unions instead of turning
 every multi-closure change into the complete development owner. The current
 planner selects three cases for `Local-Database-Put.wv`, four for

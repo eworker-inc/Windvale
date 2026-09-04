@@ -21,6 +21,8 @@ Bounded timing calibration is recorded by
 [Decision 0927](../Documents/Decisions/0927-Calibrate-Verification-Durations-From-Bounded-History.md).
 Complete-work inventory and evidence-graph ownership are recorded by
 [Decision 0947](../Documents/Decisions/0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md).
+Measured paired-host shard placement is recorded by
+[Decision 0954](../Documents/Decisions/0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md).
 
 ## Registry grammar and validation
 
@@ -66,15 +68,36 @@ paths, long-owner concentration, statically visible project overlap,
 registered-owner invocation edges, and selected common pipeline-helper call
 sites. The machine record retains the statically resolved project paths and
 per-helper counts for every owner. `--json` emits that versioned record;
-`--owners` emits one canonical owner row per registry entry. The planner never
-launches an owner.
+`--owners` emits one canonical owner row per registry entry, and `--timings`
+emits the retained paired-host elapsed values. The planner never launches an
+owner.
 
-The four qualification shards target the arithmetic ideal of the current
-declared expected work. The planner reports the minimum and critical-path shard,
-their spread, and parallel-efficiency basis points. The static contract binds
-each shard summary and asks `Invoke-WindvaleTests.ps1 -Shard <n> -PlanOnly` for
-the same selection. Shard identity is scheduling metadata, not semantic
-ownership; reassigning an owner changes neither its cases nor its evidence.
+`Tests/Native/Qualification-Owner-Timing-Baseline.txt` is the versioned
+scheduling baseline. After its format header it identifies one exact source
+commit, GitHub Actions run, and date. A comparison row identifies the exact
+preceding registry commit and its projected critical path, followed by the exact
+column header:
+
+```text
+owner|cases|windows-elapsed-ms|linux-elapsed-ms
+```
+
+It must contain every current owner exactly once with the current case count and
+positive elapsed values from one complete passed result on each host. A missing,
+extra, duplicate, malformed, or case-inconsistent row fails planning. The source
+identity states when the observation was made; it does not imply that later
+owner implementations have the same duration.
+
+The four qualification shards target the arithmetic ideal of the latest exact
+paired-host timing baseline while retaining declared duration profiles as
+conservative planning and timeout policy. The planner reports declared totals,
+observed Windows and Linux totals, both host critical paths, the arithmetic
+lower bound, and parallel-efficiency basis points. These categories must remain
+separate: an observed elapsed value does not silently lower an enforced timeout.
+The static contract binds each shard summary and asks
+`Invoke-WindvaleTests.ps1 -Shard <n> -PlanOnly` for the same selection. Shard
+identity is scheduling metadata, not semantic ownership; reassigning an owner
+changes neither its cases nor its evidence.
 
 These static references locate work to measure; they do not prove two
 constructions have identical inputs and do not authorize deleting a test. An

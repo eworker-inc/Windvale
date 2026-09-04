@@ -5,6 +5,7 @@
   remains pending
 - Extends: [Decision 0550](0550-Measured-Native-Retirement-Sharding.md)
 - Supports: [Decision 0947](0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md)
+- Extended by: [Decision 0954](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md)
 
 ## Context
 

@@ -16,6 +16,12 @@ const PROFILE_INVENTORY = join(
     'Native',
     'Verification-Duration-Profiles.txt',
 );
+const TIMING_INVENTORY = join(
+    REPOSITORY_ROOT,
+    'Tests',
+    'Native',
+    'Qualification-Owner-Timing-Baseline.txt',
+);
 const PIPELINE_MARKERS = [
     'Build-Current-Wvb',
     'Build-Wvb',
@@ -202,6 +208,61 @@ for (const [Index, Line] of Readˉlines(
     });
 }
 
+const TimingLines = Readˉlines(
+    TIMING_INVENTORY,
+    'windvale-native-qualification-owner-timings 1',
+    'qualification timing inventory',
+);
+const TimingMetadata = TimingLines.shift()?.split('|') ?? [];
+if (TimingMetadata.length !== 4 || TimingMetadata[0] !== 'source' ||
+    !/^[0-9a-f]{40}$/u.test(TimingMetadata[1]) ||
+    !/^[1-9][0-9]*$/u.test(TimingMetadata[2]) ||
+    !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(TimingMetadata[3])) {
+    Fail('qualification timing source metadata is malformed');
+}
+const TimingComparison = TimingLines.shift()?.split('|') ?? [];
+if (TimingComparison.length !== 3 || TimingComparison[0] !== 'comparison' ||
+    !/^[0-9a-f]{40}$/u.test(TimingComparison[1])) {
+    Fail('qualification timing comparison metadata is malformed');
+}
+const PriorObservedCriticalPathMilliseconds = Positiveˉinteger(
+    TimingComparison[2],
+    'qualification timing comparison critical path milliseconds',
+);
+if (TimingLines.shift() !==
+    'owner|cases|windows-elapsed-ms|linux-elapsed-ms') {
+    Fail('qualification timing column header is invalid');
+}
+const OwnerByName = new Map(Owners.map(Owner => [Owner.Name, Owner]));
+const TimedOwners = new Set();
+for (const [Index, Line] of TimingLines.entries()) {
+    const Fields = Line.split('|');
+    const Owner = OwnerByName.get(Fields[0]);
+    if (Fields.length !== 4 || Owner === undefined ||
+        TimedOwners.has(Fields[0])) {
+        Fail(`qualification timing row ${Index + 5} is malformed`);
+    }
+    const Cases = Positiveˉinteger(
+        Fields[1],
+        `qualification timing row ${Index + 5} cases`,
+    );
+    if (Cases !== Owner.Cases) {
+        Fail(`qualification timing row ${Index + 5} case count differs`);
+    }
+    Owner.ObservedWindowsMilliseconds = Positiveˉinteger(
+        Fields[2],
+        `qualification timing row ${Index + 5} Windows elapsed milliseconds`,
+    );
+    Owner.ObservedLinuxMilliseconds = Positiveˉinteger(
+        Fields[3],
+        `qualification timing row ${Index + 5} Linux elapsed milliseconds`,
+    );
+    TimedOwners.add(Owner.Name);
+}
+if (TimedOwners.size !== Owners.length) {
+    Fail('qualification timing inventory does not cover every owner');
+}
+
 const Shards = [1, 2, 3, 4].map(Shard => {
     const Selected = Owners.filter(Owner => Owner.Shard === Shard);
     return {
@@ -214,6 +275,14 @@ const Shards = [1, 2, 3, 4].map(Shard => {
         ),
         MaximumSeconds: Selected.reduce(
             (Total, Owner) => Total + Owner.MaximumSeconds,
+            0,
+        ),
+        ObservedWindowsMilliseconds: Selected.reduce(
+            (Total, Owner) => Total + Owner.ObservedWindowsMilliseconds,
+            0,
+        ),
+        ObservedLinuxMilliseconds: Selected.reduce(
+            (Total, Owner) => Total + Owner.ObservedLinuxMilliseconds,
             0,
         ),
     };
@@ -322,6 +391,41 @@ const DeclaredParallelEfficiencyBasisPoints = Math.floor(
     (TotalExpectedSeconds * 10000) /
         (Shards.length * DeclaredCriticalPathExpectedSeconds),
 );
+const ObservedWindowsTotalMilliseconds = Owners.reduce(
+    (Total, Owner) => Total + Owner.ObservedWindowsMilliseconds,
+    0,
+);
+const ObservedLinuxTotalMilliseconds = Owners.reduce(
+    (Total, Owner) => Total + Owner.ObservedLinuxMilliseconds,
+    0,
+);
+const ObservedWindowsCriticalPathMilliseconds = Math.max(
+    ...Shards.map(Shard => Shard.ObservedWindowsMilliseconds),
+);
+const ObservedLinuxCriticalPathMilliseconds = Math.max(
+    ...Shards.map(Shard => Shard.ObservedLinuxMilliseconds),
+);
+const ObservedCriticalPathMilliseconds = Math.max(
+    ObservedWindowsCriticalPathMilliseconds,
+    ObservedLinuxCriticalPathMilliseconds,
+);
+const IdealObservedCriticalPathMilliseconds = Math.ceil(Math.max(
+    ObservedWindowsTotalMilliseconds,
+    ObservedLinuxTotalMilliseconds,
+) / Shards.length);
+const ObservedWindowsParallelEfficiencyBasisPoints = Math.floor(
+    (ObservedWindowsTotalMilliseconds * 10000) /
+        (Shards.length * ObservedWindowsCriticalPathMilliseconds),
+);
+const ObservedLinuxParallelEfficiencyBasisPoints = Math.floor(
+    (ObservedLinuxTotalMilliseconds * 10000) /
+        (Shards.length * ObservedLinuxCriticalPathMilliseconds),
+);
+const ObservedCombinedParallelEfficiencyBasisPoints = Math.floor(
+    ((ObservedWindowsTotalMilliseconds + ObservedLinuxTotalMilliseconds) *
+        10000) /
+        (Shards.length * 2 * ObservedCriticalPathMilliseconds),
+);
 const LongOwners = Owners.filter(Owner => Owner.ExpectedSeconds >= 900);
 const OwnerAnalysis = Owners.map(Owner => ({
     Name: Owner.Name,
@@ -337,9 +441,16 @@ const OwnerAnalysis = Owners.map(Owner => ({
     Projects: Owner.Projects,
     PipelineCallSites: Owner.PipelineCallSites,
     PipelineUses: Owner.PipelineUses,
+    ObservedWindowsMilliseconds: Owner.ObservedWindowsMilliseconds,
+    ObservedLinuxMilliseconds: Owner.ObservedLinuxMilliseconds,
 }));
 const Summary = {
-    Format: 'windvale-qualification-work-plan-2',
+    Format: 'windvale-qualification-work-plan-3',
+    TimingSourceCommit: TimingMetadata[1],
+    TimingRunId: TimingMetadata[2],
+    TimingDate: TimingMetadata[3],
+    TimingComparisonCommit: TimingComparison[1],
+    PriorObservedCriticalPathMilliseconds,
     Owners: Owners.length,
     Cases: Owners.reduce((Total, Owner) => Total + Owner.Cases, 0),
     TotalExpectedSeconds,
@@ -351,6 +462,15 @@ const Summary = {
     IdealShardExpectedSeconds,
     ShardExpectedSpreadSeconds,
     DeclaredParallelEfficiencyBasisPoints,
+    ObservedWindowsTotalMilliseconds,
+    ObservedLinuxTotalMilliseconds,
+    ObservedWindowsCriticalPathMilliseconds,
+    ObservedLinuxCriticalPathMilliseconds,
+    ObservedCriticalPathMilliseconds,
+    IdealObservedCriticalPathMilliseconds,
+    ObservedWindowsParallelEfficiencyBasisPoints,
+    ObservedLinuxParallelEfficiencyBasisPoints,
+    ObservedCombinedParallelEfficiencyBasisPoints,
     LongOwners: LongOwners.length,
     LongOwnerExpectedSeconds: LongOwners.reduce(
         (Total, Owner) => Total + Owner.ExpectedSeconds,
@@ -376,6 +496,16 @@ const Summary = {
             Right.ExpectedSeconds - Left.ExpectedSeconds ||
             Left.Name.localeCompare(Right.Name))
         .slice(0, 20),
+    TopObservedOwners: [...OwnerAnalysis]
+        .sort((Left, Right) =>
+            Math.max(
+                Right.ObservedWindowsMilliseconds,
+                Right.ObservedLinuxMilliseconds,
+            ) - Math.max(
+                Left.ObservedWindowsMilliseconds,
+                Left.ObservedLinuxMilliseconds,
+            ) || Left.Name.localeCompare(Right.Name))
+        .slice(0, 20),
     RepeatedProjects,
     NestedOwnerEdges,
     PipelineUses: [...PipelineUses.entries()].map(([Marker, Entry]) => ({
@@ -394,6 +524,14 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
             `${Owner.ExpectedSeconds}|${Owner.MaximumSeconds}|${Owner.Command}\n`,
         );
     }
+} else if (process.argv.length === 3 && process.argv[2] === '--timings') {
+    for (const Owner of Owners) {
+        process.stdout.write(
+            `${Owner.Name}|${Owner.Shard}|${Owner.Cases}|` +
+            `${Owner.ObservedWindowsMilliseconds}|` +
+            `${Owner.ObservedLinuxMilliseconds}|${Owner.Command}\n`,
+        );
+    }
 } else if (process.argv.length === 2) {
     process.stdout.write(
         `${Summary.Format} owners=${Summary.Owners} cases=${Summary.Cases} ` +
@@ -404,6 +542,15 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
         `ideal-shard-expected-seconds=${Summary.IdealShardExpectedSeconds} ` +
         `shard-expected-spread-seconds=${Summary.ShardExpectedSpreadSeconds} ` +
         `parallel-efficiency-basis-points=${Summary.DeclaredParallelEfficiencyBasisPoints} ` +
+        `timing-source-commit=${Summary.TimingSourceCommit} ` +
+        `timing-run=${Summary.TimingRunId} ` +
+        `timing-comparison-commit=${Summary.TimingComparisonCommit} ` +
+        `prior-observed-critical-path-ms=${Summary.PriorObservedCriticalPathMilliseconds} ` +
+        `observed-windows-total-ms=${Summary.ObservedWindowsTotalMilliseconds} ` +
+        `observed-linux-total-ms=${Summary.ObservedLinuxTotalMilliseconds} ` +
+        `observed-critical-path-ms=${Summary.ObservedCriticalPathMilliseconds} ` +
+        `observed-ideal-critical-path-ms=${Summary.IdealObservedCriticalPathMilliseconds} ` +
+        `observed-parallel-efficiency-bps=${Summary.ObservedCombinedParallelEfficiencyBasisPoints} ` +
         `dual-host-expected-work-seconds=${Summary.DualHostExpectedWorkSeconds} ` +
         `long-owners=${Summary.LongOwners} ` +
         `long-owner-expected-seconds=${Summary.LongOwnerExpectedSeconds} ` +
@@ -415,7 +562,9 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
         process.stdout.write(
             `qualification shard=${Shard.Shard} owners=${Shard.Owners} ` +
             `cases=${Shard.Cases} expected-seconds=${Shard.ExpectedSeconds} ` +
-            `maximum-seconds=${Shard.MaximumSeconds}\n`,
+            `maximum-seconds=${Shard.MaximumSeconds} ` +
+            `observed-windows-ms=${Shard.ObservedWindowsMilliseconds} ` +
+            `observed-linux-ms=${Shard.ObservedLinuxMilliseconds}\n`,
         );
     }
     for (const Owner of Summary.TopExpectedOwners.slice(0, 10)) {
@@ -425,7 +574,16 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
             `maximum-seconds=${Owner.MaximumSeconds} ` +
             `analysis-files=${Owner.AnalysisFiles} source-lines=${Owner.SourceLines} ` +
             `unique-projects=${Owner.UniqueProjects} ` +
-            `pipeline-call-sites=${Owner.PipelineCallSites}\n`,
+            `pipeline-call-sites=${Owner.PipelineCallSites} ` +
+            `observed-windows-ms=${Owner.ObservedWindowsMilliseconds} ` +
+            `observed-linux-ms=${Owner.ObservedLinuxMilliseconds}\n`,
+        );
+    }
+    for (const Owner of Summary.TopObservedOwners.slice(0, 10)) {
+        process.stdout.write(
+            `qualification observed-owner name=${Owner.Name} shard=${Owner.Shard} ` +
+            `cases=${Owner.Cases} windows-ms=${Owner.ObservedWindowsMilliseconds} ` +
+            `linux-ms=${Owner.ObservedLinuxMilliseconds}\n`,
         );
     }
     process.stdout.write(
@@ -440,7 +598,8 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
     }
 } else {
     process.stderr.write(
-        'Usage: node Tools/Verify/Plan-Qualification-Work.mjs [--json|--owners]\n',
+        'Usage: node Tools/Verify/Plan-Qualification-Work.mjs ' +
+        '[--json|--owners|--timings]\n',
     );
     process.exit(64);
 }

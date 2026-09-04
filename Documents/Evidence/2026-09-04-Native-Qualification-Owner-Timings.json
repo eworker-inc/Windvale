@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-native-qualification-owner-timings",
+  "date": "2026-09-04",
+  "subject": "Paired-host native qualification owner timing baseline",
+  "claim": "The successful complete qualification run for source commit 47dd3d69fef8a0ac5b894885b0a1917e21033622 produced one passed machine result for every one of the 126 native owners on both Windows and Debian. The retained timing manifest records all 252 owner elapsed measurements and supports a scheduling-only six-owner shard reassignment whose historical critical path is 4,655,707 ms rather than 6,547,869 ms under the immediately preceding assignment.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "47dd3d69fef8a0ac5b894885b0a1917e21033622"
+  },
+  "runs": [
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "All 126 registered native owners across four independent qualification shards",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard <1-4> -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 6687687
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "All 126 registered native owners across four independent qualification shards",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard <1-4> -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 5669525
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is one paired-host observation on GitHub-hosted hardware, not a stable enforced performance threshold.",
+    "The six-owner reassignment is a projection over exact historical owner durations; it requires a later paired-host qualification run to measure the new critical path.",
+    "Database-storage implementation and scheduling changed after the source commit, so its retained duration is deliberately conservative historical evidence rather than a current timing claim.",
+    "Shard reassignment changes scheduling metadata only. It does not remove, merge, cache, or weaken an owner, case, command, timeout, or qualification result.",
+    "The retained manifest contains elapsed durations and case counts, not the full workflow logs or generated products. GitHub Actions run 33894696448 remains the immutable external run record."
+  ],
+  "related": [
+    "Tests/Native/Qualification-Owner-Timing-Baseline.txt",
+    "Tests/Native/Verification-Owners.txt",
+    "Tools/Verify/Plan-Qualification-Work.mjs",
+    "Documents/Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md",
+    "Documents/Decisions/0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md",
+    "https://github.com/eworker-inc/Windvale/actions/runs/33894696448"
+  ]
+}

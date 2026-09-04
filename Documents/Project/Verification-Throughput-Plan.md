@@ -76,12 +76,15 @@ checkpoints and 2,130 ms with project, link, and application cache hits. Full-
 owner changes report focused development estimates as `not-applicable` instead
 of the misleading value zero.
 
-The existing four qualification jobs are now balanced without adding
-same-machine concurrency. Each shard carries 4,890 declared expected seconds,
-reducing the expected critical path from 7,545 to 4,890 seconds (35.19 percent)
-and the maximum-profile critical path from 27,300 to 24,600 seconds. This is a
-plan-level improvement pending measured paired-host execution; all 126 owners
-and 5,981 cases remain selected.
+The completed paired-host qualification now supplies one exact elapsed value for
+every owner on Windows and Linux. It showed that the equal 4,890-second profile
+assignment still projected a 6,547,869 ms critical shard because broad duration
+classes are timeout policy, not accurate weights. Reassigning six independent
+owners produces projected shard maxima of 4,655,707 ms on Windows and 4,521,081
+ms on Linux, 28.90 percent below the preceding measured projection and only
+4.01 percent above the arithmetic lower bound. This is a scheduling-only
+projection pending a run of the new assignment; all 126 owners and 5,981 cases
+remain selected.
 
 Compatible development-result reuse is also implemented as a bounded candidate.
 One focused six-case owner first executed in 15,682 ms; after four unrelated
@@ -109,22 +112,21 @@ points without executing qualification.
 
 The current registry contains 126 owners and 5,981 declared cases. Its coarse
 duration profiles sum to 19,560 expected seconds per host (5 hours 26 minutes)
-and 79,200 maximum seconds. Four-way shard parallelism reduces the declared
-expected critical path to 7,545 seconds (2 hours 5 minutes 45 seconds), while
-the slowest shard's summed maximum remains 27,300 seconds (7 hours 35 minutes).
-Paired hosts represent 39,120 expected seconds of aggregate compute even when
-they run concurrently.
+and 79,200 maximum seconds. The measured assignment intentionally has an uneven
+declared distribution: 2,535, 4,950, 4,815, and 7,260 expected seconds. Those
+values remain conservative timeout-policy categories and are not used as claims
+about current wall time.
 
-These figures describe declared profiles, not measured current runtime. They
-are still enough to expose prioritization: ten owners at or above 900 expected
-seconds account for 13,440 seconds, or 68.71 percent of all expected owner work.
-The two largest declarations are `language-1-authenticated-foreign-binding` at
-3,540 seconds and `database-storage` at 2,700 seconds. Shard 2 is the current
-declared critical path at 7,545 seconds, compared with 3,900, 4,890, and 3,225
-seconds for shards 1, 3, and 4.
+The exact completed qualification baseline contains 17,904,835 ms of Windows
+owner work and 16,467,401 ms of Linux owner work. Its owner ranking is very
+different from the profile ranking: `language-1-front-door` took 2,761,285 ms on
+Windows, `wvb-runner-reconstruction` took 2,592,004 ms on Linux,
+`language-1-memory-budget-split-execution` took 2,569,776 ms on Linux, and
+`database-storage` took 2,460,171 ms on Windows. The timing manifest remains a
+single qualified observation, not an enforced regression threshold.
 
-The planner exposes one analysis row for every owner. The initial scan covered
-277 wrapper/orchestration files, 44,327 source lines, and 209 distinct
+The planner exposes one analysis row for every owner. The current scan covers
+277 wrapper/orchestration files, 44,525 source lines, and 215 distinct
 owner-to-project references, so the long-owner ranking can be drilled into
 without starting any of the owners.
 
@@ -139,7 +141,7 @@ than obvious owner nesting.
 
 The long-owner shape is not uniform. `language-1-front-door` contains 237
 references to the selected common pipeline helpers across its two host scripts,
-while database storage contains 86 across 64 statically visible projects. Those
+while database storage contains 86 across 66 statically visible projects. Those
 are immediate graph-extraction candidates. In contrast,
 `language-1-authenticated-foreign-binding` exposes one segmented construction
 helper and reports 27 isolated executions. Its next step is phase timing and an
@@ -150,11 +152,11 @@ security and failure isolation is redundant would be unsafe.
 
 | Priority | Owner or group | Current signal | Next bounded change |
 | ---: | --- | --- | --- |
-| 1 | `language-1-front-door` | 492 cases, 900 declared seconds, 237 selected helper references | Extract a versioned case/product inventory; construct each exact compiler product once; map all 492 claims before deleting copied host blocks. |
-| 2 | `language-1-authenticated-foreign-binding` | 27 cases, 3,540 declared seconds, two products and 27 isolated processes | Record build/package/execute phase time and peak memory; preserve process isolation, then use only measured capacity-safe concurrency or shared immutable packages. |
-| 3 | `database-storage` | 57 cases, 2,700 declared seconds, 86 helper references across 64 visible projects | Finish hosted construction ownership and execute the inventory as a shared dependency graph; keep fresh state for recovery and mutation. |
-| 4 | Remaining seven 900-second owners | Widely different case counts and only 0–22 selected helper references each | Add node timing first; distinguish compiler construction from verifier computation and process startup before choosing merge, batching, or concurrency. |
-| 5 | Four qualification shards | All four now carry 4,890 expected seconds | Replace profile weights with measured host history before another rebalance; keep execution isolated by runner. |
+| 1 | `language-1-front-door` | 46.02 minutes Windows, 39.37 minutes Linux, 492 cases, 237 helper references | Extract a versioned case/product inventory; construct each exact compiler product once; map all 492 claims before deleting copied host blocks. |
+| 2 | `wvb-runner-reconstruction` | 28.49 minutes Windows and 43.20 minutes Linux for three cases | Separate immutable construction products from the three reconstruction claims and find the Linux-specific critical phase. |
+| 3 | `language-1-memory-budget-split-execution` | 41.13 minutes Windows and 42.83 minutes Linux for 172 cases | Inventory product acquisition versus selector execution and share only immutable packages across the retained behavior cases. |
+| 4 | `database-storage` | 41.00 minutes Windows, 20.94 minutes Linux, 57 cases, 86 helper references across 66 visible projects | Finish hosted construction ownership and execute the inventory as a shared dependency graph; keep fresh state for recovery and mutation. |
+| 5 | `language-1-authenticated-foreign-binding` | 28.01 minutes Windows and 24.56 minutes Linux, with 27 isolated processes | Record build/package/execute phase time and peak memory; preserve process isolation, then use only measured capacity-safe concurrency or shared immutable packages. |
 
 This order is based on expected critical-path contribution and visible work
 shape, not on test count alone. A high case count can be cheap when cases share
@@ -389,5 +391,12 @@ Independent warm `publication` and `recovery` selections took 2,100 and 1,980
 ms respectively, proving that a partial selection does not consume the bundle.
 The non-identical transaction leaf-groups/pages trial passed its focused cold
 qualification node in 56,140 ms, then created development checkpoints in 59,540
-ms and completed the unchanged warm development path in 2,990 ms.
-Linux and complete paired-host measurements remain pending.
+ms and completed the unchanged warm development path in 2,990 ms. The root-
+split/depth-two bundle passed its qualification node in 59,990 ms, created
+development checkpoints in 58,470 ms, and completed unchanged in 2,860 ms.
+
+The qualified paired-host owner receipts contain 17,904,835 ms of Windows work
+and 16,467,401 ms of Linux work. The measured six-owner shard assignment projects
+that historical work onto a 4,655,707 ms critical path, versus 6,547,869 ms under
+the immediately preceding mapping. Execution of the new shard assignment and
+complete paired-host measurement of the database graph remain pending.

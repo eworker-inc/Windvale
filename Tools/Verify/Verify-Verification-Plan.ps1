@@ -71,6 +71,7 @@ $NativeCases = @(
         Paths = @(
             'Tests/Native/Verification-Owners.txt',
             'Tests/Native/Verification-Duration-Profiles.txt',
+            'Tests/Native/Qualification-Owner-Timing-Baseline.txt',
             'Tools/Verify/Plan-Qualification-Work.mjs'
         )
         Suites = @()
@@ -4873,19 +4874,35 @@ $QualificationWorkPlanner = Join-Path $RepositoryRoot `
 $QualificationWorkPlan = (& node $QualificationWorkPlanner --json) |
     ConvertFrom-Json
 if ($LASTEXITCODE -ne 0 -or
-    $QualificationWorkPlan.Format -ne 'windvale-qualification-work-plan-2' -or
+    $QualificationWorkPlan.Format -ne 'windvale-qualification-work-plan-3' -or
     $QualificationWorkPlan.Owners -ne 126 -or
     $QualificationWorkPlan.Cases -ne 5981 -or
     $QualificationWorkPlan.TotalExpectedSeconds -ne 19560 -or
     $QualificationWorkPlan.TotalMaximumSeconds -ne 79200 -or
     $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
         2 * $QualificationWorkPlan.TotalExpectedSeconds -or
-    $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 4890 -or
-    $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 24600 -or
-    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 4890 -or
+    $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 7260 -or
+    $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 25200 -or
+    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 2535 -or
     $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4890 -or
-    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 0 -or
-    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 10000 -or
+    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4725 -or
+    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6735 -or
+    $QualificationWorkPlan.TimingSourceCommit -ne
+        '47dd3d69fef8a0ac5b894885b0a1917e21033622' -or
+    $QualificationWorkPlan.TimingRunId -ne '33894696448' -or
+    $QualificationWorkPlan.TimingDate -ne '2026-09-04' -or
+    $QualificationWorkPlan.TimingComparisonCommit -ne
+        'adf6e6bfe9a4d8222f28a6e169827551cccf4469' -or
+    $QualificationWorkPlan.PriorObservedCriticalPathMilliseconds -ne 6547869 -or
+    $QualificationWorkPlan.ObservedWindowsTotalMilliseconds -ne 17904835 -or
+    $QualificationWorkPlan.ObservedLinuxTotalMilliseconds -ne 16467401 -or
+    $QualificationWorkPlan.ObservedWindowsCriticalPathMilliseconds -ne 4655707 -or
+    $QualificationWorkPlan.ObservedLinuxCriticalPathMilliseconds -ne 4521081 -or
+    $QualificationWorkPlan.ObservedCriticalPathMilliseconds -ne 4655707 -or
+    $QualificationWorkPlan.IdealObservedCriticalPathMilliseconds -ne 4476209 -or
+    $QualificationWorkPlan.ObservedWindowsParallelEfficiencyBasisPoints -ne 9614 -or
+    $QualificationWorkPlan.ObservedLinuxParallelEfficiencyBasisPoints -ne 9105 -or
+    $QualificationWorkPlan.ObservedCombinedParallelEfficiencyBasisPoints -ne 9228 -or
     $QualificationWorkPlan.LongOwners -ne 10 -or
     $QualificationWorkPlan.LongOwnerExpectedSeconds -ne 13440 -or
     $QualificationWorkPlan.OwnerAnalysis.Count -ne
@@ -4917,6 +4934,13 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
         'language-1-front-door' -or
     $QualificationWorkPlan.TopExpectedOwners[5].PipelineCallSites -ne 237 -or
+    $QualificationWorkPlan.TopObservedOwners[0].Name -ne
+        'language-1-front-door' -or
+    $QualificationWorkPlan.TopObservedOwners[1].Name -ne
+        'wvb-runner-reconstruction' -or
+    $QualificationWorkPlan.TopObservedOwners[2].Name -ne
+        'language-1-memory-budget-split-execution' -or
+    $QualificationWorkPlan.TopObservedOwners[3].Name -ne 'database-storage' -or
     $QualificationWorkPlan.RepeatedProjects.Count -ne 11 -or
     $QualificationWorkPlan.NestedOwnerEdges.Count -ne 0 -or
     $QualificationWorkPlan.PipelineUses.Count -ne 19) {
@@ -4924,12 +4948,12 @@ if ($LASTEXITCODE -ne 0 -or
 }
 $QualificationShardSignature = @(
     $QualificationWorkPlan.Shards | ForEach-Object {
-        "$($_.Shard)|$($_.Owners)|$($_.Cases)|$($_.ExpectedSeconds)|$($_.MaximumSeconds)"
+        "$($_.Shard)|$($_.Owners)|$($_.Cases)|$($_.ExpectedSeconds)|$($_.MaximumSeconds)|$($_.ObservedWindowsMilliseconds)|$($_.ObservedLinuxMilliseconds)"
     }
 ) -join ','
 if ($QualificationShardSignature -cne
-    '1|10|780|4890|13200,2|39|2140|4890|24600,3|39|1809|4890|24600,4|38|1252|4890|16800') {
-    throw "The balanced qualification shard assignment differs: $QualificationShardSignature"
+    '1|13|766|2535|11100|4610402|4077157,2|40|2147|4950|25200|4041125|4521081,3|37|1794|4815|23700|4597601|4504598,4|36|1274|7260|19200|4655707|3364565') {
+    throw "The measured qualification shard assignment differs: $QualificationShardSignature"
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
@@ -4969,6 +4993,17 @@ if ($LASTEXITCODE -ne 0 -or
         'wvdb-approval|4|13|quick|15|300|',
         [StringComparison]::Ordinal)) {
     throw 'The complete qualification owner rows differ.'
+}
+$QualificationWorkTimings = @(& node $QualificationWorkPlanner --timings)
+if ($LASTEXITCODE -ne 0 -or
+    $QualificationWorkTimings.Count -ne $QualificationWorkPlan.Owners -or
+    !$QualificationWorkTimings[0].StartsWith(
+        'verification-owner-stream|2|6|20316|5881|',
+        [StringComparison]::Ordinal) -or
+    !$QualificationWorkTimings[-1].StartsWith(
+        'wvdb-approval|4|13|1815|587|',
+        [StringComparison]::Ordinal)) {
+    throw 'The complete qualification timing rows differ.'
 }
 
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
@@ -5012,29 +5047,30 @@ try {
         [IO.File]::Delete($TestRunnerResultPath)
     }
 }
-$BalancedShardPlans = @(
-    @{ Shard = 1; Owners = 10; Cases = 780; MaximumSeconds = 13200 },
-    @{ Shard = 2; Owners = 39; Cases = 2140; MaximumSeconds = 24600 },
-    @{ Shard = 3; Owners = 39; Cases = 1809; MaximumSeconds = 24600 },
-    @{ Shard = 4; Owners = 38; Cases = 1252; MaximumSeconds = 16800 }
+$MeasuredShardPlans = @(
+    @{ Shard = 1; Owners = 13; Cases = 766; ExpectedSeconds = 2535; MaximumSeconds = 11100 },
+    @{ Shard = 2; Owners = 40; Cases = 2147; ExpectedSeconds = 4950; MaximumSeconds = 25200 },
+    @{ Shard = 3; Owners = 37; Cases = 1794; ExpectedSeconds = 4815; MaximumSeconds = 23700 },
+    @{ Shard = 4; Owners = 36; Cases = 1274; ExpectedSeconds = 7260; MaximumSeconds = 19200 }
 )
-foreach ($BalancedShardPlan in $BalancedShardPlans) {
+foreach ($MeasuredShardPlan in $MeasuredShardPlans) {
     $ShardPlanOutput = @(& pwsh -NoProfile -File $PowerShellTestRunner `
-        -Shard $BalancedShardPlan.Shard -PlanOnly 2>&1)
+        -Shard $MeasuredShardPlan.Shard -PlanOnly 2>&1)
     $ShardPlanRows = @(
         $ShardPlanOutput | Where-Object { $_ -match '^PLAN  owner=' })
     $ExpectedShardSummary = (
-        "Verification plan mode=shard:$($BalancedShardPlan.Shard) " +
-        "owners=$($BalancedShardPlan.Owners) " +
-        "cases=$($BalancedShardPlan.Cases) expected-seconds=4890 " +
-        "maximum-seconds=$($BalancedShardPlan.MaximumSeconds) ")
+        "Verification plan mode=shard:$($MeasuredShardPlan.Shard) " +
+        "owners=$($MeasuredShardPlan.Owners) " +
+        "cases=$($MeasuredShardPlan.Cases) " +
+        "expected-seconds=$($MeasuredShardPlan.ExpectedSeconds) " +
+        "maximum-seconds=$($MeasuredShardPlan.MaximumSeconds) ")
     if ($LASTEXITCODE -ne 0 -or
-        $ShardPlanRows.Count -ne $BalancedShardPlan.Owners -or
+        $ShardPlanRows.Count -ne $MeasuredShardPlan.Owners -or
         !($ShardPlanOutput -join "`n").Contains(
             $ExpectedShardSummary, [StringComparison]::Ordinal)) {
         throw (
-            "Qualification shard $($BalancedShardPlan.Shard) did not expose " +
-            'the balanced runner plan.')
+            "Qualification shard $($MeasuredShardPlan.Shard) did not expose " +
+            'the measured runner plan.')
     }
 }
 $TailPlanResultPath = Join-Path ([IO.Path]::GetTempPath()) (

@@ -109,11 +109,13 @@ claim.
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   5,981 cases; ten long owners account for 68.71 percent of the declared work.
-   Reassigning only 16 owner shard fields now gives every existing qualification
-   job 4,890 expected seconds, down from a 7,545-second critical path, while the
-   maximum-profile critical path falls from 27,300 to 24,600 seconds. Consolidation now
-   proceeds by unique failure signal and measured critical-path contribution.
+   5,981 cases. The accepted paired-host run now supplies all 252 owner timings;
+   it revealed that equal profile totals still projected a 6,547,869 ms critical
+   shard. Six scheduling-only owner moves reduce that historical projection to
+   4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower
+   bound, without changing an owner, case, command, profile, or timeout. A new
+   paired run must measure that projection. Consolidation proceeds by unique
+   failure signal and measured critical-path contribution.
    Compatible-state development reuse now preserves an unaffected passing owner
    across planner-proved unrelated trees: a six-case owner executed in 15.68
    seconds, then reused that receipt after four documentation-only changes.
