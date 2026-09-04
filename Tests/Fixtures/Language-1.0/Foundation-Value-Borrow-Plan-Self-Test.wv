@@ -1,0 +1,111 @@
+module Foundationˉvalueˉborrowˉplanˉselfˉtest profile portable;
+
+import Compilerˉsourceˉwvbˉfoundationˉborrows as Borrows;
+
+fn Operation(Kind: u32, Result: u32, Target: u32, First: u32, Count: u32) -> bytes {
+    var Bytes: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu16ˉlittle(Kind));
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu16ˉlittle(Count));
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu32ˉlittle(0u32));
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu32ˉlittle(Result));
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu32ˉlittle(First));
+    Bytes = Bytesˉconcat(Bytes, Bytesˉfromˉu32ˉlittle(Target));
+    return Bytesˉconcat(Bytes, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Plan(
+    Operations: bytes, Operands: bytes, Temporaries: u32, Slots: u32,
+    Parameters: bytes, Calls: bytes
+) -> Borrows.Borrowˉplan {
+    return Borrows.Build(
+        Bytesˉconcat(Operations, Operands), 0u32, Bytesˉlength(Operations),
+        0u32, Bytesˉlength(Operations) / 28u32, Temporaries, Slots, Parameters, Calls
+    );
+}
+
+fn Isˉvalid(Value: Borrows.Borrowˉplan) -> bool { return Value.Valid; }
+
+export fn Main() -> i32 {
+    let Empty: bytes = Borrows.Zeroes(0u32);
+    let Zero: bytes = Bytesˉfromˉu8(0u8);
+    let One: bytes = Bytesˉfromˉu8(1u8);
+    let Two: bytes = Bytesˉfromˉu8(2u8);
+    let Operandˉzero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let Plain: Borrows.Borrowˉplan = Plan(Empty, Empty, 2u32, 2u32, Empty, Borrows.Zeroes(2u32));
+    if !Plain.Valid || Plain.Hasˉborrow ||
+        Bytesˉlength(Plain.Temporaryˉstate) != 2u32 || Bytesˉlength(Plain.Slotˉstate) != 2u32 {
+        return 1;
+    }
+    let Parameter: Borrows.Borrowˉplan = Plan(
+        Operation(7u32, 0u32, 0u32, 0u32, 0u32), Empty, 1u32, 1u32, One, Zero
+    );
+    if !Parameter.Valid || !Parameter.Hasˉborrow ||
+        Bytesˉreadˉu8(Parameter.Temporaryˉstate, 0u32) != 2u8 ||
+        Bytesˉreadˉu8(Parameter.Slotˉstate, 0u32) != 1u8 { return 2; }
+    let Call: Borrows.Borrowˉplan = Plan(Empty, Empty, 1u32, 1u32, Empty, Two);
+    if !Call.Valid || !Call.Hasˉborrow ||
+        Bytesˉreadˉu8(Call.Temporaryˉstate, 0u32) != 2u8 ||
+        Bytesˉreadˉu8(Call.Frozenˉslots, 0u32) != 0u8 { return 3; }
+    let Borrow: bytes = Operation(191u32, 0u32, 1u32, 0u32, 0u32);
+    let Owner: Borrows.Borrowˉplan = Plan(Borrow, Empty, 1u32, 2u32, Empty, Zero);
+    if !Owner.Valid || Bytesˉreadˉu8(Owner.Temporaryˉstate, 0u32) != 1u8 ||
+        Bytesˉreadˉu8(Owner.Frozenˉslots, 1u32) != 1u8 ||
+        Bytesˉreadˉu8(Owner.Slotˉstate, 1u32) != 0u8 { return 4; }
+    var Chain: bytes = Bytesˉconcat(Borrow, Operation(164u32, 1u32, 0u32, 0u32, 1u32));
+    Chain = Bytesˉconcat(Chain, Operation(8u32, 4294967295u32, 2u32, 1u32, 1u32));
+    Chain = Bytesˉconcat(Chain, Operation(7u32, 2u32, 2u32, 0u32, 0u32));
+    let Operands: bytes = Bytesˉconcat(Operandˉzero, Bytesˉfromˉu32ˉlittle(1u32));
+    let Forward: Borrows.Borrowˉplan = Plan(Chain, Operands, 3u32, 3u32, Empty, Borrows.Zeroes(3u32));
+    if !Forward.Valid || Bytesˉreadˉu8(Forward.Temporaryˉstate, 1u32) != 3u8 ||
+        Bytesˉreadˉu8(Forward.Temporaryˉstate, 2u32) != 2u8 ||
+        Bytesˉreadˉu8(Forward.Slotˉstate, 2u32) != 1u8 { return 5; }
+    let Field: Borrows.Borrowˉplan = Plan(
+        Operation(18u32, 1u32, 0u32, 0u32, 1u32), Operandˉzero,
+        2u32, 0u32, Empty, Bytesˉconcat(Two, Zero)
+    );
+    if !Field.Valid || Bytesˉreadˉu8(Field.Temporaryˉstate, 1u32) != 2u8 { return 6; }
+    let Mixed: Borrows.Borrowˉplan = Plan(
+        Operation(7u32, 0u32, 1u32, 0u32, 0u32), Empty, 1u32, 2u32, One, Zero
+    );
+    if !Mixed.Valid || Bytesˉreadˉu8(Mixed.Temporaryˉstate, 0u32) != 0u8 { return 7; }
+    let Frozen: Borrows.Borrowˉplan = Plan(
+        Bytesˉconcat(Operation(7u32, 1u32, 1u32, 0u32, 0u32), Borrow),
+        Empty, 2u32, 2u32, Empty, Borrows.Zeroes(2u32)
+    );
+    if !Frozen.Valid || Bytesˉreadˉu8(Frozen.Temporaryˉstate, 1u32) != 2u8 { return 8; }
+    let Stored: Borrows.Borrowˉplan = Plan(
+        Operation(8u32, 4294967295u32, 0u32, 0u32, 1u32), Operandˉzero,
+        1u32, 1u32, Empty, Two
+    );
+    if !Stored.Valid || Bytesˉreadˉu8(Stored.Slotˉstate, 0u32) != 1u8 ||
+        Bytesˉreadˉu8(Stored.Temporaryˉstate, 0u32) != 3u8 { return 9; }
+    let Maximum: Borrows.Borrowˉplan = Plan(
+        Empty, Empty, 4096u32, 4096u32, Empty, Borrows.Zeroes(4096u32)
+    );
+    if !Maximum.Valid || Bytesˉlength(Maximum.Frozenˉslots) != 4096u32 ||
+        Bytesˉreadˉu8(Maximum.Slotˉstate, 4095u32) != 0u8 ||
+        Bytesˉlength(Borrows.Zeroes(4097u32)) != 0u32 { return 10; }
+    if Isˉvalid(Plan(Empty, Empty, 4097u32, 0u32, Empty, Empty)) ||
+        Isˉvalid(Plan(Empty, Empty, 0u32, 4097u32, Empty, Empty)) ||
+        Isˉvalid(Plan(Empty, Empty, 0u32, 0u32, One, Empty)) ||
+        Isˉvalid(Plan(Empty, Empty, 1u32, 0u32, Empty, Empty)) ||
+        Isˉvalid(Plan(Empty, Empty, 0u32, 1u32, Two, Empty)) ||
+        Isˉvalid(Plan(Empty, Empty, 1u32, 0u32, Empty, One)) { return 11; }
+    if Isˉvalid(Borrows.Build(Borrows.Zeroes(27u32), 0u32, 0u32, 0u32, 1u32, 0u32, 0u32, Empty, Empty)) {
+        return 12;
+    }
+    if Isˉvalid(Borrows.Build(Empty, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty)) ||
+        Isˉvalid(Borrows.Build(Empty, 0u32, 1u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty)) ||
+        Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 4294967295u32, 0u32, 0u32, 0u32, Empty, Empty)) {
+        return 13;
+    }
+    if Isˉvalid(Plan(Borrow, Empty, 1u32, 1u32, Empty, Zero)) ||
+        Isˉvalid(Plan(Borrow, Empty, 0u32, 2u32, Empty, Empty)) { return 14; }
+    if Isˉvalid(Plan(Operation(18u32, 0u32, 0u32, 0u32, 1u32), Bytesˉfromˉu32ˉlittle(1u32),
+        1u32, 0u32, Empty, Two)) ||
+        Isˉvalid(Plan(Operation(8u32, 4294967295u32, 1u32, 0u32, 1u32), Operandˉzero,
+        1u32, 1u32, Empty, Two)) { return 15; }
+    if Isˉvalid(Plan(Operation(18u32, 0u32, 0u32, 4294967295u32, 1u32), Operandˉzero,
+        1u32, 0u32, Empty, Two)) { return 16; }
+    return 42;
+}

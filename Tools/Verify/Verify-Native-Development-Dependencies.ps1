@@ -12,6 +12,7 @@ $Owners = @(
     'generic-nominal-type-layout',
     'generic-nominal-type-materialization',
     'language-1-front-door',
+    'language-1-memory-budget-split-execution',
     'os-x64-code-emission',
     'seed-native-front-door',
     'source-containment',
@@ -98,6 +99,9 @@ foreach ($Owner in $Owners) {
             $Plan.Suites -contains 'generic-nominal-type-materialization'
         }
         'language-1-front-door' { $Plan.Suites -contains 'language-1-front-door' }
+        'language-1-memory-budget-split-execution' {
+            $Plan.Suites -contains 'language-1-memory-budget-split-execution'
+        }
         'os-x64-code-emission' { $Plan.Suites -contains 'os-x64-code-emission' }
         'seed-native-front-door' { $Plan.Suites -contains 'seed-native-front-door' }
         'source-containment' { $Plan.Suites -contains 'source-containment' }

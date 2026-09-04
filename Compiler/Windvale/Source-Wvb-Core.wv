@@ -13,6 +13,7 @@ import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Compilerˉsourceˉwirˉconsumer as Sourceˉwir;
 import Compilerˉsourceˉwvbˉgenericˉnominalˉtypes as Genericˉnominalˉtypes;
 import Compilerˉsourceˉwvbˉtemporaryˉslots as Temporaryˉslots;
+import Compilerˉsourceˉwvbˉfoundationˉborrows as Foundationˉborrows;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 export enum Compilerˉsourceˉwvbˉstatus {
@@ -68,12 +69,6 @@ record Compilerˉsourceˉwvbˉanalysis {
     Failureˉoperation: u32;
 }
 
-record Compilerˉsourceˉwvbˉfoundationˉborrowˉplan {
-    Hasˉborrow: bool;
-    Temporaryˉstate: bytes;
-    Slotˉstate: bytes;
-    Frozenˉslots: bytes;
-}
 
 record Compilerˉsourceˉwvbˉfunctionˉencoding {
     Status: Compilerˉsourceˉwvbˉstatus;
@@ -4623,133 +4618,90 @@ fn Compilerˉsourceˉwvbˉborrowedˉaggregateˉshape(
     );
 }
 
-fn Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-    State: bytes,
-    Index: u32,
-    Value: u8
-) -> bytes {
-    if Index >= Bytesˉlength(State) { return State; }
-    return Bytesˉconcat(
-        Bytesˉconcat(
-            Bytesˉslice(State, 0u32, Index),
-            Bytesˉfromˉu8(Value)
-        ),
-        Bytesˉslice(
-            State, Index + 1u32,
-            Bytesˉlength(State) - Index - 1u32
-        )
+
+fn Compilerˉsourceˉwvbˉparameterˉisˉfoundationˉborrow(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
+    Function: u32,
+    Parameter: u32
+) -> bool {
+    if Sourceˉwir.Compilerˉsourceˉwirˉfunctionˉparameterˉborrowˉmode(
+        Input, Scan, Symbols, Bindings, Function, Parameter
+    ) != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_IMMUTABLE {
+        return false;
+    }
+    let Shape: u32 = Sourceˉwir.Compilerˉsourceˉwirˉbindingˉshape(
+        Bindings, Bytesˉreadˉu32ˉlittle(Symbols.Directory, 8u32), Function, Parameter
     );
+    return Shape != 805306368u32 && Shape != 805306369u32 &&
+        !Compilerˉsourceˉwvbˉshapeˉisˉownedˉvector(Shape, Orders) &&
+        !Compilerˉsourceˉwvbˉshapeˉisˉtaskˉowner(Input, Scan, Symbols, Bindings, Shape) &&
+        !Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉscratch(Input, Scan, Symbols, Bindings, Shape) &&
+        !Compilerˉsourceˉwvbˉshapeˉisˉunsafeˉwriteˉregion(Input, Scan, Symbols, Bindings, Shape);
 }
 
 fn Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Orders: Compilerˉsourceˉwvbˉsymbolˉorders,
     Wir: bytes,
     Firstˉoperation: u32,
     Operationˉcount: u32,
     Temporaryˉcount: u32,
-    Slotˉcount: u32
-) -> Compilerˉsourceˉwvbˉfoundationˉborrowˉplan {
+    Slotˉcount: u32,
+    Parameterˉborrows: bytes,
+    Foundationˉborrowˉmodule: bool
+) -> Foundationˉborrows.Borrowˉplan {
     let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
-    var Temporaryˉstate: bytes = Empty;
-    var Temporary: u32 = 0u32;
-    while Temporary < Temporaryˉcount {
-        Temporaryˉstate = Bytesˉconcat(
-            Temporaryˉstate, Bytesˉfromˉu8(0u8)
-        );
-        Temporary = Temporary + 1u32;
-    }
-    var Slotˉstate: bytes = Empty;
-    var Frozenˉslots: bytes = Empty;
-    var Slot: u32 = 0u32;
-    while Slot < Slotˉcount {
-        Slotˉstate = Bytesˉconcat(Slotˉstate, Bytesˉfromˉu8(0u8));
-        Frozenˉslots = Bytesˉconcat(
-            Frozenˉslots, Bytesˉfromˉu8(0u8)
-        );
-        Slot = Slot + 1u32;
-    }
+    let Unborrowed: Foundationˉborrows.Borrowˉplan =
+        Foundationˉborrows.Borrowˉplan(true, false, Empty, Empty, Empty);
+    if !Foundationˉborrowˉmodule { return Unborrowed; }
+    var Callˉborrows: bytes = Foundationˉborrows.Zeroes(Temporaryˉcount);
     let Operations: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
     var Hasˉborrow: bool = false;
     var Index: u32 = 0u32;
-    while Index < Operationˉcount {
-        let Scanˉentry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
-        if Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 4u32) == 191u32 {
-            let Owner: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Scanˉentry + 20u32
-            );
-            Frozenˉslots = Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                Frozenˉslots, Owner, 1u8
-            );
+    while Index < Bytesˉlength(Parameterˉborrows) {
+        if Bytesˉreadˉu8(Parameterˉborrows, Index) != 0u8 {
             Hasˉborrow = true;
         }
         Index = Index + 1u32;
-    }
-    if !Hasˉborrow {
-        return Compilerˉsourceˉwvbˉfoundationˉborrowˉplan(
-            false, Temporaryˉstate, Slotˉstate, Frozenˉslots
-        );
     }
     Index = 0u32;
     while Index < Operationˉcount {
         let Entry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
         let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
-        let Resultˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Entry + 12u32
-        );
-        let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
-            Wir, Entry + 16u32
-        );
-        let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
-            Wir, Entry + 6u32
-        );
-        let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
-        if Kind == 191u32 {
-            Temporaryˉstate =
-                Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                    Temporaryˉstate, Resultˉtemporary, 1u8
-                );
-        } else if Kind == 7u32 && Target < Slotˉcount &&
-            Resultˉtemporary < Temporaryˉcount &&
-            (Bytesˉreadˉu8(Slotˉstate, Target) == 1u8 ||
-                Bytesˉreadˉu8(Frozenˉslots, Target) == 1u8) {
-            Temporaryˉstate =
-                Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                    Temporaryˉstate, Resultˉtemporary, 2u8
-                );
-        } else if (Kind == 18u32 || Kind == 67u32 || Kind == 164u32 ||
-                Kind == 166u32 || Kind == 168u32) &&
-            Operandˉcount > 0u32 && Resultˉtemporary < Temporaryˉcount {
-            let Aggregate: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operands + Firstˉoperand * 4u32
-            );
-            if Aggregate < Temporaryˉcount &&
-                Bytesˉreadˉu8(Temporaryˉstate, Aggregate) != 0u8 {
-                Temporaryˉstate =
-                    Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                        Temporaryˉstate, Resultˉtemporary, 2u8
+        if Kind == 191u32 { Hasˉborrow = true; }
+        if Kind == 62u32 {
+            let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
+            let First: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 16u32);
+            let Count: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 6u32);
+            var Operand: u32 = 0u32;
+            while Operand < Count {
+                if Compilerˉsourceˉwvbˉparameterˉisˉfoundationˉborrow(
+                    Input, Scan, Symbols, Bindings, Orders, Target, Operand
+                ) {
+                    Hasˉborrow = true;
+                    Callˉborrows = Foundationˉborrows.Setˉstate(
+                        Callˉborrows,
+                        Bytesˉreadˉu32ˉlittle(Wir, Operands + (First + Operand) * 4u32),
+                        2u8
                     );
-            }
-        }
-        if Kind == 8u32 && Operandˉcount > 0u32 && Target < Slotˉcount {
-            let Stored: u32 = Bytesˉreadˉu32ˉlittle(
-                Wir, Operands + Firstˉoperand * 4u32
-            );
-            if Stored < Temporaryˉcount &&
-                Bytesˉreadˉu8(Temporaryˉstate, Stored) == 2u8 {
-                Slotˉstate =
-                    Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                        Slotˉstate, Target, 1u8
-                    );
-                Temporaryˉstate =
-                    Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
-                        Temporaryˉstate, Stored, 3u8
-                    );
+                }
+                Operand = Operand + 1u32;
             }
         }
         Index = Index + 1u32;
     }
-    return Compilerˉsourceˉwvbˉfoundationˉborrowˉplan(
-        true, Temporaryˉstate, Slotˉstate, Frozenˉslots
+    if !Hasˉborrow { return Unborrowed; }
+    return Foundationˉborrows.Build(
+        Wir, Operations, Operands, Firstˉoperation, Operationˉcount,
+        Temporaryˉcount, Slotˉcount, Parameterˉborrows, Callˉborrows
     );
 }
 
@@ -4776,7 +4728,7 @@ fn Compilerˉsourceˉwvbˉfoundationˉborrowedˉpayloadˉshape(
 }
 
 fn Compilerˉsourceˉwvbˉtemporaryˉhasˉfoundationˉborrow(
-    Borrowˉplan: Compilerˉsourceˉwvbˉfoundationˉborrowˉplan,
+    Borrowˉplan: Foundationˉborrows.Borrowˉplan,
     Temporary: u32
 ) -> bool {
     return Temporary < Bytesˉlength(Borrowˉplan.Temporaryˉstate) &&
@@ -4798,7 +4750,7 @@ export fn Compilerˉsourceˉwvbˉemitˉoperation(
     Locals: u32,
     Firstˉtemporary: u32,
     Temporaryˉmapping: bytes,
-    Borrowˉplan: Compilerˉsourceˉwvbˉfoundationˉborrowˉplan
+    Borrowˉplan: Foundationˉborrows.Borrowˉplan
 ) -> bytes {
     let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
     let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
@@ -5972,7 +5924,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     Wir: bytes,
     Function: u32,
     Codeˉoffset: u32,
-    Emitˉcode: bool
+    Emitˉcode: bool,
+    Foundationˉborrowˉmodule: bool
 ) -> Compilerˉsourceˉwvbˉfunctionˉencoding {
     let Analysis: Compilerˉsourceˉwvbˉanalysis =
         Compilerˉsourceˉwvbˉanalyzeˉfunction(
@@ -6055,12 +6008,35 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
     let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
     let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
     let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
-    let Foundationˉborrowˉplan:
-        Compilerˉsourceˉwvbˉfoundationˉborrowˉplan =
-        Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
-            Wir, Firstˉoperation, Operationˉcount, Temporaryˉcount,
-            Parameters + Locals
+    var Foundationˉparameterˉborrows: bytes = Compilerˉsourceˉwvbˉempty(Wir);
+    var Parameterˉindex: u32 = 0u32;
+    while Parameterˉindex < Parameters {
+        var Borrowed: u8 = 0u8;
+        if Foundationˉborrowˉmodule &&
+            Compilerˉsourceˉwvbˉparameterˉisˉfoundationˉborrow(
+                Input, Scan, Symbols, Bindings, Orders, Function, Parameterˉindex
+            ) {
+            Borrowed = 1u8;
+        }
+        Foundationˉparameterˉborrows = Bytesˉconcat(
+            Foundationˉparameterˉborrows, Bytesˉfromˉu8(Borrowed)
         );
+        Parameterˉindex = Parameterˉindex + 1u32;
+    }
+    let Foundationˉborrowˉplan:
+        Foundationˉborrows.Borrowˉplan =
+        Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
+            Input, Scan, Symbols, Bindings, Orders,
+            Wir, Firstˉoperation, Operationˉcount, Temporaryˉcount,
+            Parameters + Locals, Foundationˉparameterˉborrows,
+            Foundationˉborrowˉmodule
+        );
+    if !Foundationˉborrowˉplan.Valid {
+        return Compilerˉsourceˉwvbˉfunctionˉfailure(
+            Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉoperation,
+            Analysis.Failureˉoperation
+        );
+    }
     if Foundationˉborrowˉplan.Hasˉborrow {
         Features = Features | WVB_FOUNDATION_VALUE_BORROW_FEATURE;
     }
@@ -6205,7 +6181,8 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
             if Parameterˉmode !=
                     Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
                 !Isˉallowedˉscratchˉborrow &&
-                !Isˉallowedˉwriteˉregionˉborrow {
+                !Isˉallowedˉwriteˉregionˉborrow &&
+                Bytesˉreadˉu8(Foundationˉparameterˉborrows, Index) == 0u8 {
                 return Compilerˉsourceˉwvbˉfunctionˉfailure(
                     Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
                     Analysis.Failureˉoperation
@@ -6260,6 +6237,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
                 );
             }
         }
+        if Bytesˉreadˉu8(Foundationˉparameterˉborrows, Index) != 0u8 {
+            Plannedˉparameter =
+                Compilerˉsourceˉwvbˉfoundationˉborrowedˉpayloadˉshape(
+                    Plannedˉparameter
+                );
+        }
         Metadata = Bytesˉconcat(
             Metadata, Plannedˉparameter
         );
@@ -6307,7 +6290,7 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         var Plannedˉlocal: bytes = Compilerˉsourceˉwvbˉplannedˉshape(
             Localˉshape, Symbols, Orders
         );
-        if Bytesˉreadˉu8(
+        if Foundationˉborrowˉplan.Hasˉborrow && Bytesˉreadˉu8(
                 Foundationˉborrowˉplan.Slotˉstate,
                 Parameters + Index
             ) == 1u8 {
@@ -6343,11 +6326,12 @@ export fn Compilerˉsourceˉwvbˉencodeˉfunction(
         var Plannedˉtemporary: bytes = Compilerˉsourceˉwvbˉplannedˉshape(
             Temporaryˉshape, Symbols, Orders
         );
-        let Foundationˉborrowˉstate: u32 = U32ˉfromˉu8(
-            Bytesˉreadˉu8(
-                Foundationˉborrowˉplan.Temporaryˉstate, Index
-            )
-        );
+        var Foundationˉborrowˉstate: u32 = 0u32;
+        if Foundationˉborrowˉplan.Hasˉborrow {
+            Foundationˉborrowˉstate = U32ˉfromˉu8(
+                Bytesˉreadˉu8(Foundationˉborrowˉplan.Temporaryˉstate, Index)
+            );
+        }
         if Foundationˉborrowˉstate == 1u32 {
             Plannedˉtemporary =
                 Compilerˉsourceˉwvbˉfoundationˉborrowedˉoptionˉshape(
@@ -7151,7 +7135,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                         Symbols, Bindings, Orders, Textˉplan,
                         Wirˉsummary.Directory,
                         Validationˉfunction,
-                        0u32, false
+                        0u32, false, false
                     );
                 if Validationˉencoding.Status !=
                     Compilerˉsourceˉwvbˉstatus.Valid {
@@ -7175,6 +7159,32 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
     var Codeˉoffset: u32 = 0u32;
     var Functionˉrank: u32 = 0u32;
     var Features: u32 = Typeˉencoding.Features;
+    // One reachable-operation scan selects the module contract. Parameter
+    // identity comes from declarations, never caller order or a fixed point.
+    var Foundationˉborrowˉmodule: bool = false;
+    var Borrowˉfunction: u32 = 0u32;
+    while Borrowˉfunction < Emissionˉfunctions {
+        let Borrowˉentry: u32 = Sourceˉwir.Compilerˉsourceˉwirˉfunctionsˉoffset(
+            Wirˉsummary.Directory
+        ) + Compilerˉsourceˉwvbˉorderedˉsymbol(
+            Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Borrowˉfunction
+        ) * 48u32;
+        var Borrowˉoperation: u32 = Bytesˉreadˉu32ˉlittle(
+            Wirˉsummary.Directory, Borrowˉentry + 12u32
+        );
+        let Borrowˉend: u32 = Borrowˉoperation + Bytesˉreadˉu32ˉlittle(
+            Wirˉsummary.Directory, Borrowˉentry + 16u32
+        );
+        while Borrowˉoperation < Borrowˉend {
+            if Bytesˉreadˉu16ˉlittle(
+                Wirˉsummary.Directory,
+                Compilerˉsourceˉwvbˉoperationsˉoffset(Wirˉsummary.Directory) +
+                    Borrowˉoperation * 28u32 + 4u32
+            ) == 191u32 { Foundationˉborrowˉmodule = true; }
+            Borrowˉoperation = Borrowˉoperation + 1u32;
+        }
+        Borrowˉfunction = Borrowˉfunction + 1u32;
+    }
     while Functionˉrank < Emissionˉfunctions {
         let Functionˉentry: u32 = Compilerˉsourceˉwvbˉorderedˉsymbol(
             Compilerˉsourceˉwvbˉfunctionˉorder(Emissionˉorders), Functionˉrank
@@ -7210,7 +7220,7 @@ export fn Compilerˉemitˉpreparedˉsourceˉwvb(
                 Input, Scan, Functionˉview.Source, Functionˉheader,
                 Symbols, Bindings, Emissionˉorders, Textˉplan,
                 Wirˉsummary.Directory,
-                Functionˉentry, Codeˉoffset, true
+                Functionˉentry, Codeˉoffset, true, Foundationˉborrowˉmodule
             );
         if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
             return Compilerˉsourceˉwvbˉsummaryˉfailure(

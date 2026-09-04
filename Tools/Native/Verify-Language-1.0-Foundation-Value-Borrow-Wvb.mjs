@@ -1,4 +1,5 @@
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const MAXIMUM_WVB_BYTES = 16_777_216;
@@ -36,17 +37,28 @@ const Mutations = [
     ['option-type-out-of-range', Candidateˉmutation(
         Bytesˉa, Bytes => Bytes.writeUInt32LE(Layout.typeCount, Layout.opcodes[0] + 5),
     )],
+    ['record-parameter-loses-borrow', Removeˉshapeˉwrapper(Bytesˉa, Layout.recordParameter)],
+    ['scalar-parameter-loses-borrow', Removeˉshapeˉwrapper(Bytesˉa, Layout.scalarParameter)],
+    ['record-parameter-wrong-type', Candidateˉmutation(Bytesˉa, Bytes =>
+        Bytes.writeUInt32LE(Layout.typeCount, Layout.recordParameter + 2))],
+    ['call-target-out-of-range', Candidateˉmutation(Bytesˉa, Bytes =>
+        Bytes.writeUInt32LE(Layout.functionCount, Layout.calls[0] + 1))],
+    ['call-operand-out-of-range', Candidateˉmutation(Bytesˉa, Bytes =>
+        Bytes.writeUInt32LE(4096, Layout.calls[0] - 4))],
+    ['call-operand-loses-borrow', Removeˉshapeˉwrapper(Bytesˉa, Layout.callOperand)],
 ];
 for (const [Label, Bytes] of Mutations) {
     Requireˉrejected(Bytes, Label);
 }
 
 process.stdout.write(
-    'foundation value borrow WVB status=Passed cases=12 ' +
+    'foundation value borrow WVB status=Passed cases=20 ' +
     `functions=${Layout.functionCount} types=${Layout.typeCount} ` +
     `opcodes=${Layout.opcodes.length} borrowed-option-shapes=${Layout.viewShapes} ` +
     `borrowed-payload-shapes=${Layout.payloadShapes} ` +
-    `wvb-bytes=${Bytesˉa.length}\n`,
+    `borrowed-call-cases=8 direct-calls=${Layout.calls.length} ` +
+    `wvb-bytes=${Bytesˉa.length} ` +
+    `wvb-sha256=${createHash('sha256').update(Bytesˉa).digest('hex')}\n`,
 );
 
 function Inspectˉcandidate(Bytes) {
@@ -60,6 +72,25 @@ function Inspectˉcandidate(Bytes) {
     const Types = Parseˉtypes(Bytes, Sections[7]);
     const Functions = Parseˉfunctions(Bytes, Sections[4]);
     const Opcodes = [];
+    const Calls = [];
+    let Callˉoperand = null;
+    const Borrowˉhelpers = ['Readˉpayload', 'Readˉu32', 'Forwardˉpayload', 'Forwardˉu32'];
+    for (const Name of Borrowˉhelpers) {
+        const Function = Functions.find(Entry => Entry.name === Name);
+        if (!Function || Function.parameters.length !== 1 ||
+            Function.parameters[0].kind !== 37 ||
+            Function.parameters[0].inner.kind !== (Name.endsWith('payload') ? 7 : 5) ||
+            (Name.endsWith('payload') &&
+                Types[Function.parameters[0].inner.typeIndex]?.name !== 'Payload') ||
+            !Function.locals.some(Shape => Shapeˉequal(Shape, Function.parameters[0]))) {
+            Reject(`The ${Name} declaration or forwarded payload identity differs.`);
+        }
+    }
+    const Owned = Functions.find(Entry => Entry.name === 'Readˉowned');
+    if (!Owned || Owned.parameters.length !== 1 || Owned.parameters[0].kind !== 5 ||
+        Functions.some(Function => Function.result.kind === 37)) {
+        Reject('Borrow metadata escaped into an owned parameter or function result.');
+    }
     let Viewˉshapes = 0;
     let Payloadˉshapes = 0;
     for (const Function of Functions) {
@@ -121,6 +152,20 @@ function Inspectˉcandidate(Bytes) {
                 }
                 Opcodes.push(Cursor);
             }
+            if (Opcode === 64) {
+                const Target = Bytes.readUInt32LE(Cursor + 1);
+                const Callee = Functions[Target];
+                if (!Callee || Callee.parameters.length !== 1 || Cursor - 5 < Codeˉstart ||
+                    Bytes[Cursor - 5] !== 4) {
+                    Reject('A direct payload helper call has invalid geometry.');
+                }
+                const Argument = Slots[Bytes.readUInt32LE(Cursor - 4)];
+                if (!Argument || !Shapeˉequal(Argument, Callee.parameters[0])) {
+                    Reject('A direct helper call loses its exact parameter identity.');
+                }
+                if (Argument.kind === 37) Callˉoperand ??= Argument.start;
+                Calls.push(Cursor);
+            }
             Cursor += Width;
         }
         if (Cursor !== Codeˉend) {
@@ -129,7 +174,7 @@ function Inspectˉcandidate(Bytes) {
     }
     const Projections = Opcodes.map(Offset => Bytes.readUInt32LE(Offset + 9));
     if (Opcodes.length !== 3 || Projections.join(',') !== '1,2,3' ||
-        Viewˉshapes < 3 || Payloadˉshapes < 3) {
+        Viewˉshapes < 3 || Payloadˉshapes < 3 || Calls.length !== 8 || Callˉoperand === null) {
         Reject(
             'The Foundation value-borrow WVB shape or opcode inventory differs: ' +
             `opcodes=${Opcodes.length} projections=${Projections.join(',')} ` +
@@ -142,6 +187,10 @@ function Inspectˉcandidate(Bytes) {
         opcodes: Opcodes,
         viewShapes: Viewˉshapes,
         payloadShapes: Payloadˉshapes,
+        calls: Calls,
+        callOperand: Callˉoperand,
+        recordParameter: Functions.find(Function => Function.name === 'Readˉpayload').parameters[0].start,
+        scalarParameter: Functions.find(Function => Function.name === 'Readˉu32').parameters[0].start,
     };
 }
 
@@ -180,7 +229,8 @@ function Parseˉfunctions(Bytes, Section) {
             Parameters.push(Shape);
             Cursor = Shape.end;
         }
-        Cursor = Readˉshape(Bytes, Cursor).end;
+        const Return = Readˉshape(Bytes, Cursor);
+        Cursor = Return.end;
         const Localˉcount = Readˉu32(Bytes, Cursor, 'local count');
         Cursor += 4;
         if (Localˉcount > 4096) Reject('A function local count is invalid.');
@@ -196,6 +246,7 @@ function Parseˉfunctions(Bytes, Section) {
         Result.push({
             name: Name.value,
             parameters: Parameters,
+            result: Return,
             locals: Locals,
             codeOffset: Bytes.readUInt32LE(Cursor),
             codeLength: Bytes.readUInt32LE(Cursor + 4),
@@ -269,26 +320,27 @@ function Parseˉtypes(Bytes, Section) {
     return Result;
 }
 
-function Readˉshape(Bytes, Offset) {
-    if (Offset >= Bytes.length) Reject('A WVB shape is truncated.');
+function Readˉshape(Bytes, Offset, Depth = 0) {
+    if (Offset >= Bytes.length || Depth > 64) Reject('A WVB shape is truncated or too deep.');
     const Kind = Bytes[Offset];
     const Nominal = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35]
         .includes(Kind);
     if (Nominal) {
         if (Offset + 5 > Bytes.length) Reject('A nominal WVB shape is truncated.');
-        return { kind: Kind, typeIndex: Bytes.readUInt32LE(Offset + 1), end: Offset + 5 };
+        return { kind: Kind, start: Offset, typeIndex: Bytes.readUInt32LE(Offset + 1), end: Offset + 5 };
     }
     if (Kind === 37) {
-        const Inner = Readˉshape(Bytes, Offset + 1);
-        return { kind: Kind, inner: Inner, typeIndex: null, end: Inner.end };
+        const Inner = Readˉshape(Bytes, Offset + 1, Depth + 1);
+        if (Inner.kind === 37) Reject('A payload shape cannot contain another borrow.');
+        return { kind: Kind, start: Offset, inner: Inner, typeIndex: null, end: Inner.end };
     }
     if (Kind === 12 || Kind === 13) {
-        const Inner = Readˉshape(Bytes, Offset + 1);
+        const Inner = Readˉshape(Bytes, Offset + 1, Depth + 1);
         if (Inner.end + 4 > Bytes.length) Reject('A collection shape is truncated.');
-        return { kind: Kind, inner: Inner, typeIndex: null, end: Inner.end + 4 };
+        return { kind: Kind, start: Offset, inner: Inner, typeIndex: null, end: Inner.end + 4 };
     }
     if (Kind > 36) Reject(`The WVB shape kind ${Kind} is unknown.`);
-    return { kind: Kind, typeIndex: null, end: Offset + 1 };
+    return { kind: Kind, start: Offset, typeIndex: null, end: Offset + 1 };
 }
 
 function Readˉstring(Bytes, Offset) {
@@ -360,6 +412,16 @@ function Shapeˉequal(Left, Right) {
 function Candidateˉmutation(Source, Mutate) {
     const Result = Buffer.from(Source);
     Mutate(Result);
+    return Result;
+}
+
+function Removeˉshapeˉwrapper(Source, Offset) {
+    const Section = Parseˉsections(Source)[4];
+    if (Source[Offset] !== 37 || Offset < Section.payload || Offset >= Section.payload + Section.length) {
+        Reject('The shape-removal probe must target a borrowed function shape.');
+    }
+    const Result = Buffer.concat([Source.subarray(0, Offset), Source.subarray(Offset + 1)]);
+    Result.writeUInt32LE(Section.length - 1, Section.payload - 4);
     return Result;
 }
 

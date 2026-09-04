@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
     lstatSync,
@@ -65,13 +66,29 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
+const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
+    process.argv[2] === '--foundation-borrow';
+const Foundationˉplanˉonly = process.argv.length === 3 &&
+    process.argv[2] === '--foundation-borrow-plan';
+const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly;
+let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
+if (Foundationˉonly && process.argv.length === 5) {
+    if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
+        Number(process.argv[4]) > 3600) {
+        process.stderr.write('The explicit development maximum must be 1 through 3600 seconds.\n');
+        process.exit(64);
+    }
+    Maximumˉrunˉmilliseconds = Number(process.argv[4]) * 1000;
+}
+const Started = Date.now();
 const Inspectionˉonly =
     Inspectionˉmode === '--inspect-structured-task' ||
     Inspectionˉmode === '--inspect-function-limits';
-if (process.argv.length !== 2 && !Inspectionˉonly) {
+if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
-        '[(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
+        '[--foundation-borrow-plan|--foundation-borrow [--maximum-seconds <seconds>]|' +
+        '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
 }
@@ -136,8 +153,47 @@ const Temporaryˉroot = path.dirname(Work);
 let Step = 0;
 let Validator = null;
 let Targetˉdescriptor = null;
+let Borrowˉplanˉbytes = null;
 
 try {
+    await Runˉfoundationˉplan();
+    if (!Foundationˉplanˉonly) await Runˉpublicationˉandˉexecution();
+} finally {
+    const Resolved = path.resolve(Work);
+    if (path.dirname(Resolved) !== Temporaryˉroot ||
+        !path.basename(Resolved).startsWith('windvale-memory-budget-split-execution-')) {
+        Reject(`Refusing to remove unexpected test directory: ${Resolved}.`);
+    }
+    rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
+}
+if (Developmentˉonly) {
+    const Elapsed = Date.now() - Started;
+    if (Elapsed > Maximumˉrunˉmilliseconds) {
+        Reject('The focused Foundation borrow development budget expired during cleanup.');
+    }
+    process.stdout.write(
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉonly ? 39 : 16} ` +
+        `selection=${Foundationˉonly ? 'publication' : 'plan'} qualification=false candidate-execution=false ` +
+        `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} ` +
+        `elapsed-ms=${Elapsed}\n`,
+    );
+}
+
+async function Runˉfoundationˉplan() {
+    const Planˉwvb = path.join(Work, 'Borrow-Plan.wvb');
+    await Runˉnative('foundation-borrow-plan-build', 'Build-Cached-Project-Wvb', [
+        Testˉproject('Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj'), Planˉwvb,
+    ]);
+    Borrowˉplanˉbytes = readFileSync(Planˉwvb);
+    const Planˉapplication = path.join(Work, `Borrow-Plan.${process.platform === 'win32' ? 'exe' : 'elf'}`);
+    await Runˉnative('foundation-borrow-plan-package', 'Package-Segmented-Compiler-Wvb', [
+        '1', Planˉwvb, Planˉapplication, '--development-cache',
+    ]);
+    const Planˉresult = await Run('foundation-borrow-plan-execute', Planˉapplication, [], 42);
+    if (Planˉresult !== '') Reject('The Foundation borrow plan self-test emitted unexpected output.');
+}
+
+async function Runˉpublicationˉandˉexecution() {
     Requireˉordinaryˉfile(Sourceˉlock, 4_194_304, 'source lock');
     Requireˉordinaryˉfile(Sourceˉprofile, 4_194_304, 'source profile');
     Requireˉexactˉfile(
@@ -177,93 +233,106 @@ try {
     Targetˉdescriptor = path.join(Work, 'Target.wvtd');
     writeFileSync(Targetˉdescriptor, Constructˉtargetˉdescriptor(), { flag: 'wx' });
 
-    Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
     ]);
-    Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
     ]);
-    Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
     ]);
-    Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnode('current-admitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('current-admitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Admission-Driver.wvproj'), Admitterˉwvb,
         Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
         Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnode('current-validator-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('current-validator-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Source-Authenticator.wvproj'),
         Validatorˉwvb,
         Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
         Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnode('current-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('current-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Analysis-Driver.wvproj'), Analyzerˉwvb,
         Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
         Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnative('current-admitter-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('current-admitter-package', 'Package-Segmented-Compiler-Wvb', [
         '2', Admitterˉwvb, Admitter, '--development-cache',
     ]);
-    Runˉnative('current-validator-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('current-validator-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Validatorˉwvb, Validator, '--development-cache',
     ]);
-    Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
         '7', Analyzerˉwvb, Analyzer, '--development-cache',
     ]);
-    Runˉnode('current-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('current-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Analyzer, Analyzerˉidentity,
     ]);
-    Runˉnode('current-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('current-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Compiler-Emission-Driver.wvproj'), Emitterˉwvb,
         Analyzer, Analyzerˉidentity,
         Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
-    Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '8', Emitterˉwvb, Emitter, '--development-cache',
     ]);
-    Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+    await Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,
     ]);
-    Runˉnode(
-        'async-call-await-conformance',
-        'Verify-Language-1.0-Async-Call-Await.mjs',
-        [
-            Admitter, Validator, Analyzer, Emitter,
-            Sourceˉlock, SOURCE_LOCK_SHA256, Sourceˉprofile,
-            Targetˉdescriptor, Work,
-        ],
-    );
-    Runˉnode(
-        'owned-vector-calls-and-joins-wir',
-        'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
-        [
-            Admitter, Validator, Analyzer, Emitter,
-            Targetˉdescriptor, Work, Ownedˉaggregateˉsuccessˉa,
-        ],
-    );
-    Runˉnode(
-        'using-semantics-wir',
-        'Verify-Language-1.0-Using-Wir.mjs',
-        [Admitter, Validator, Analyzer, Emitter, Targetˉdescriptor, Work],
-    );
-    Compileˉfoundationˉvalueˉborrow(
+    if (!Foundationˉonly) {
+        await Runˉnode(
+            'async-call-await-conformance',
+            'Verify-Language-1.0-Async-Call-Await.mjs',
+            [
+                Admitter, Validator, Analyzer, Emitter,
+                Sourceˉlock, SOURCE_LOCK_SHA256, Sourceˉprofile,
+                Targetˉdescriptor, Work,
+            ],
+        );
+        await Runˉnode(
+            'owned-vector-calls-and-joins-wir',
+            'Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
+            [
+                Admitter, Validator, Analyzer, Emitter,
+                Targetˉdescriptor, Work, Ownedˉaggregateˉsuccessˉa,
+            ],
+        );
+        await Runˉnode(
+            'using-semantics-wir',
+            'Verify-Language-1.0-Using-Wir.mjs',
+            [Admitter, Validator, Analyzer, Emitter, Targetˉdescriptor, Work],
+        );
+    }
+    await Compileˉfoundationˉvalueˉborrow(
         'foundation-value-borrow-a-compile', Admitter, Analyzer, Emitter,
         Foundationˉvalueˉborrowˉa,
     );
-    Compileˉfoundationˉvalueˉborrow(
+    await Compileˉfoundationˉvalueˉborrow(
         'foundation-value-borrow-b-compile', Admitter, Analyzer, Emitter,
         Foundationˉvalueˉborrowˉb,
     );
-    Runˉnode(
+    await Runˉnode(
         'foundation-value-borrow-wvb-inspection',
         'Verify-Language-1.0-Foundation-Value-Borrow-Wvb.mjs',
         [Foundationˉvalueˉborrowˉa, Foundationˉvalueˉborrowˉb],
     );
+    await Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Pinnedˉemitter);
 
+    if (Foundationˉonly) {
+        const Legacy = path.join(Work, 'Unchanged-Memory-Budget.wvb');
+        await Compile('unchanged-earlier-bytecode', Admitter, Analyzer, Emitter,
+            'Memory-Budget-Split-Executable.wv', Legacy);
+        const Bytes = readFileSync(Legacy);
+        if (Bytes.length !== 752 || Digest(Bytes) !== EXPECTED_SUCCESS_SHA256) {
+            Reject('An unaffected earlier WVB contract changed.');
+        }
+        return;
+    }
     const Successˉa = path.join(Work, 'Success-A.wvb');
     const Successˉb = path.join(Work, 'Success-B.wvb');
     const Failure = path.join(Work, 'Failure.wvb');
@@ -322,91 +391,91 @@ try {
             ? 'Structured-Task-Runtime-Self-Test.exe'
             : 'Structured-Task-Runtime-Self-Test.elf',
     );
-    Compile('success-a-compile', Admitter, Analyzer, Emitter,
+    await Compile('success-a-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉa);
-    Compile('success-b-compile', Admitter, Analyzer, Emitter,
+    await Compile('success-b-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Executable.wv', Successˉb);
-    Compile('failure-compile', Admitter, Analyzer, Emitter,
+    await Compile('failure-compile', Admitter, Analyzer, Emitter,
         'Memory-Budget-Split-Failure-Executable.wv', Failure);
-    Compileˉvector('vector-success-a-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-success-a-compile', Admitter, Analyzer, Emitter,
         'Vector-Construct-Reserved-Executable.wv', Vectorˉsuccessˉa);
-    Compileˉvector('vector-success-b-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-success-b-compile', Admitter, Analyzer, Emitter,
         'Vector-Construct-Reserved-Executable.wv', Vectorˉsuccessˉb);
-    Compileˉvector('vector-failure-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-failure-compile', Admitter, Analyzer, Emitter,
         'Vector-Construct-Reserved-Failure-Executable.wv', Vectorˉfailure);
-    Compileˉvector('vector-zero-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-zero-compile', Admitter, Analyzer, Emitter,
         'Vector-Construct-Reserved-Zero-Executable.wv', Vectorˉzero);
-    Compileˉvector('vector-append-success-a-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-append-success-a-compile', Admitter, Analyzer, Emitter,
         'Vector-Append-Executable.wv', Appendˉsuccessˉa);
-    Compileˉvector('vector-append-success-b-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-append-success-b-compile', Admitter, Analyzer, Emitter,
         'Vector-Append-Executable.wv', Appendˉsuccessˉb);
-    Compileˉvector('vector-grow-success-a-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-grow-success-a-compile', Admitter, Analyzer, Emitter,
         'Vector-Grow-Reserved-Executable.wv', Growˉsuccessˉa);
-    Compileˉvector('vector-grow-success-b-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('vector-grow-success-b-compile', Admitter, Analyzer, Emitter,
         'Vector-Grow-Reserved-Executable.wv', Growˉsuccessˉb);
-    Compileˉvector('owned-call-success-a-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('owned-call-success-a-compile', Admitter, Analyzer, Emitter,
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉa);
-    Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('owned-call-success-b-compile', Admitter, Analyzer, Emitter,
         'Owned-Vector-Calls-And-Joins-Wir.wv', Ownedˉcallˉsuccessˉb);
-    Compileˉvector(
+    await Compileˉvector(
         'owned-aggregate-success-b-compile', Admitter, Analyzer, Emitter,
         'Owned-Aggregate-Vector-Executable.wv', Ownedˉaggregateˉsuccessˉb,
     );
-    Compileˉvector('using-fallthrough-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('using-fallthrough-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Fallthrough-Wir.wv', Usingˉfallthrough);
-    Compileˉvector('using-nested-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('using-nested-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Nested-Return-Wir.wv', Usingˉnested);
-    Compileˉvector('using-try-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('using-try-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Try-Propagation-Wir.wv', Usingˉtry);
-    Compileˉvector('using-loop-compile', Admitter, Analyzer, Emitter,
+    await Compileˉvector('using-loop-compile', Admitter, Analyzer, Emitter,
         'Using-Vector-Loop-Exits-Wir.wv', Usingˉloop);
-    Compileˉsourceˉfile(
+    await Compileˉsourceˉfile(
         'source-file-a-compile', Admitter, Analyzer, Emitter, Sourceˉfileˉa,
     );
-    Compileˉsourceˉfile(
+    await Compileˉsourceˉfile(
         'source-file-b-compile', Admitter, Analyzer, Emitter, Sourceˉfileˉb,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-a-compile', Admitter, Analyzer, Emitter,
         'Structured-Tasks-Executable.wv', Structuredˉtaskˉa,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-b-compile', Admitter, Analyzer, Emitter,
         'Structured-Tasks-Executable.wv', Structuredˉtaskˉb,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-trap-compile', Admitter, Analyzer, Emitter,
         'Structured-Task-Trap-Executable.wv', Structuredˉtaskˉtrap,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-retained-result-compile', Admitter, Analyzer, Emitter,
         'Structured-Task-Retained-Result-Executable.wv',
         Structuredˉtaskˉretainedˉresult,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-work-limit-compile', Admitter, Analyzer, Emitter,
         'Structured-Task-Work-Limit-Executable.wv',
         Structuredˉtaskˉworkˉlimit,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-call-depth-limit-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Call-Depth-Limit-Executable.wv',
         Structuredˉtaskˉcallˉdepthˉlimit,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-memory-limit-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Memory-Limit-Executable.wv',
         Structuredˉtaskˉmemoryˉlimit,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-four-child-cancellation-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Four-Child-Cancellation-Executable.wv',
         Structuredˉtaskˉfourˉchildˉcancellation,
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-completion-order-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Completion-Order-Executable.wv',
@@ -420,7 +489,7 @@ try {
         EXPECTED_STRUCTURED_TASK_COMPLETION_ORDER_SHA256,
         'structured-task completion-order fixture',
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-provider-recovery-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Provider-Recovery-Executable.wv',
@@ -434,7 +503,7 @@ try {
         EXPECTED_STRUCTURED_TASK_PROVIDER_RECOVERY_SHA256,
         'structured-task provider-recovery fixture',
     );
-    Compileˉtask(
+    await Compileˉtask(
         'structured-task-environment-compile',
         Admitter, Analyzer, Emitter,
         'Structured-Task-Environment-Executable.wv',
@@ -449,7 +518,7 @@ try {
         EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256,
         'structured-task environment fixture',
     );
-    Runˉnode(
+    await Runˉnode(
         'structured-task-runtime-self-test-build',
         'Build-Cached-Split-Project-Wvb.mjs',
         [
@@ -461,7 +530,7 @@ try {
             Emitter, Emitterˉidentity,
         ],
     );
-    Runˉnative(
+    await Runˉnative(
         'structured-task-runtime-self-test-package',
         'Package-Hosted-Wvb',
         [
@@ -627,10 +696,10 @@ try {
     );
     const Verifierˉwvb = path.join(Work, 'Verifier.wvb');
     const Verifier = path.join(Work, `Verifier${Executableˉsuffix}`);
-    Runˉnative('verifier-build', 'Build-Wvb', [
+    await Runˉnative('verifier-build', 'Build-Wvb', [
         Project('Windvale-Compiler-Wvb-Verifier.wvproj'), Verifierˉwvb,
     ]);
-    Runˉnative('verifier-package', 'Package-Hosted-Wvb', [
+    await Runˉnative('verifier-package', 'Package-Hosted-Wvb', [
         '2', Verifierˉwvb, Verifier, Hostˉtarget,
     ]);
     Requireˉvalid(Verifier, Successˉa, 'successful Split module');
@@ -984,12 +1053,12 @@ try {
     const Runnerˉimageˉmanifest = path.join(Work, 'Runner-Image.wvli');
     const Runnerˉcanonicalˉprefix = path.join(Work, 'Runner-Canonical');
     const Runnerˉcanonicalˉmanifest = path.join(Work, 'Runner-Canonical.wvli');
-    Runˉnode('runner-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('runner-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         Project('Windvale-Wvb-Runner.wvproj'), Runnerˉwvb,
         Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
     ]);
     Requireˉnativeˉfunctionˉlimits(readFileSync(Runnerˉwvb));
-    Runˉnode('runner-stager-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+    await Runˉnode('runner-stager-build', 'Build-Cached-Split-Project-Wvb.mjs', [
         path.join(
             Repositoryˉroot, 'Projects', 'Compiler',
             'Windvale-Native-X64-Lowering-Staging-Tool.wvproj',
@@ -997,17 +1066,17 @@ try {
         Runnerˉstagerˉwvb,
         Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity,
     ]);
-    Runˉnative('runner-stager-package', 'Package-Segmented-Compiler-Wvb', [
+    await Runˉnative('runner-stager-package', 'Package-Segmented-Compiler-Wvb', [
         '6', Runnerˉstagerˉwvb, Runnerˉstager, '--development-cache',
     ]);
-    Run('runner-stage', Runnerˉstager, [
+    await Run('runner-stage', Runnerˉstager, [
         Runnerˉwvb, Runnerˉobjectˉprefix, Runnerˉobjectˉmanifest,
     ]);
-    Runˉnative('runner-link', 'Link-Staged-Compiler-Wvo', [
+    await Runˉnative('runner-link', 'Link-Staged-Compiler-Wvo', [
         Runnerˉobjectˉprefix, Runnerˉobjectˉmanifest,
         Runnerˉimageˉprefix, Runnerˉimageˉmanifest,
     ]);
-    const Runnerˉtransportˉreport = Runˉnative(
+    const Runnerˉtransportˉreport = await Runˉnative(
         'runner-transport', 'Transport-Compiler-Image', [
             Runnerˉimageˉprefix, Runnerˉimageˉmanifest,
             Runnerˉcanonicalˉprefix, Runnerˉcanonicalˉmanifest,
@@ -1031,11 +1100,11 @@ try {
         Runnerˉfragments < 1 || Runnerˉfragments > 16) {
         Reject('The runner compiler-image transport bounds differ.');
     }
-    Runˉnative('runner-package', 'Package-Hosted-Wvb', [
+    await Runˉnative('runner-package', 'Package-Hosted-Wvb', [
         'image', '5', Runnerˉwvb, Runnerˉcanonicalˉprefix,
         String(Runnerˉfragments), String(Runnerˉentry), Runner, Hostˉtarget,
     ]);
-    Runˉnode(
+    await Runˉnode(
         'callable-runner-compatibility',
         'Verify-Language-1.0-Callable-Runner.mjs',
         [Runner],
@@ -1179,7 +1248,7 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${163 + Growˉmalformedˉcases.length +
+        `cases=${189 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1192,7 +1261,7 @@ try {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-value-borrow-wvb-cases=12 foundation-value-borrow-opcodes=3 ' +
+        'foundation-borrow-plan-cases=16 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -1222,13 +1291,6 @@ try {
         `task-environment-wvb-bytes=${Structuredˉtaskˉenvironmentˉbytes.length} ` +
         `task-environment-sha256=${Digest(Structuredˉtaskˉenvironmentˉbytes)}\n`,
     );
-} finally {
-    const Resolved = path.resolve(Work);
-    if (path.dirname(Resolved) !== Temporaryˉroot ||
-        !path.basename(Resolved).startsWith('windvale-memory-budget-split-execution-')) {
-        Reject(`Refusing to remove unexpected test directory: ${Resolved}.`);
-    }
-    rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
 
 function Project(Name) {
@@ -1251,8 +1313,8 @@ function Constructˉtargetˉdescriptor() {
     return Result;
 }
 
-function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
-    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+async function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
+    await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
@@ -1264,14 +1326,14 @@ function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     ]);
 }
 
-function Compileˉfoundationˉvalueˉborrow(
+async function Compileˉfoundationˉvalueˉborrow(
     Label,
     Admitter,
     Analyzer,
     Emitter,
     Output,
 ) {
-    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+    await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
@@ -1290,8 +1352,60 @@ function Compileˉfoundationˉvalueˉborrow(
     ]);
 }
 
-function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
-    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+async function Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Referenceˉemitter) {
+    // 1,100 assignments produce more than 4,096 WVIR operations without a borrow.
+    const Body = '    var Value: i32 = 42;\n' +
+        '    Value = Value + 0;\n'.repeat(1_100) + '    return Value;\n';
+    const Plainˉsource = path.join(Work, 'Large-Borrow-Free.wv');
+    const Mixedˉsource = path.join(Work, 'Large-Borrow-Free-Mixed.wv');
+    const Plainˉoutput = path.join(Work, 'Large-Borrow-Free.wvb');
+    const Referenceˉoutput = path.join(Work, 'Large-Borrow-Free-Reference.wvb');
+    const Mixedˉoutput = path.join(Work, 'Large-Borrow-Free-Mixed.wvb');
+    writeFileSync(Plainˉsource,
+        '#!wv/1 en@1\nmodule Largeˉborrowˉfreeˉtest;\nprofile core;\n' +
+        'platform linux, windows, windvale;\nauthority application;\n' +
+        `export fn Main() -> i32 {\n${Body}}\n`, { flag: 'wx' });
+    const Borrowˉsource = readFileSync(path.join(Repositoryˉroot,
+        'Tests', 'Fixtures', 'Language-1.0', 'Foundation-Value-Payload-Borrow-Wvb.wv'), 'utf8');
+    writeFileSync(Mixedˉsource,
+        Borrowˉsource + `\nexport fn Largeˉborrowˉfree() -> i32 {\n${Body}}\n`, { flag: 'wx' });
+    for (const [Label, Source, Selectedˉemitter, Output] of [
+        ['large-borrow-free-current', Plainˉsource, Emitter, Plainˉoutput],
+        ['large-borrow-free-reference', Plainˉsource, Referenceˉemitter, Referenceˉoutput],
+        ['large-borrow-free-mixed', Mixedˉsource, Emitter, Mixedˉoutput],
+    ]) {
+        const Dependencies = Source === Mixedˉsource ? [
+            path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Option.wv'),
+            path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
+        ] : [];
+        await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+            Admitter, Validator, Analyzer, Selectedˉemitter,
+            '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+            '--source-profile', Sourceˉprofile,
+            '--target-descriptor', Targetˉdescriptor,
+            Source, ...Dependencies, Output,
+        ]);
+    }
+    const Plain = readFileSync(Plainˉoutput);
+    const Reference = readFileSync(Referenceˉoutput);
+    const Mixed = readFileSync(Mixedˉoutput);
+    const Main = Parseˉfunctionˉentries(Plain, Parseˉsections(Plain)[4])
+        .find(Function => Function.name === 'Main');
+    if (!Plain.equals(Reference) || Plain.readUInt16LE(6) >= 39 ||
+        !Main || Main.codeLength < 33_000 || Main.localCount < 3_000 ||
+        Main.localCount > 4_096) {
+        Reject('Borrow planning changed a large unaffected function or weakened the regression workload.');
+    }
+    if (Mixed.readUInt16LE(6) !== 39 || Mixed.length <= Plain.length) {
+        Reject('A borrow-free function cannot coexist with the candidate borrow feature.');
+    }
+    process.stdout.write('PASS foundation borrow writer large-borrow-free-cases=2 ' +
+        `assignments=1100 code-bytes=${Main.codeLength} local-slots=${Main.localCount} ` +
+        `reference-byte-identical=true wvb-bytes=${Plain.length} sha256=${Digest(Plain)}\n`);
+}
+
+async function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
+    await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
@@ -1307,8 +1421,8 @@ function Compileˉvector(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     ]);
 }
 
-function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
-    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+async function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
+    await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
@@ -1324,8 +1438,8 @@ function Compileˉsourceˉfile(Label, Admitter, Analyzer, Emitter, Output) {
     ]);
 }
 
-function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
-    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+async function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
+    await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
         '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
         '--source-profile', Sourceˉprofile,
@@ -1344,44 +1458,43 @@ function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
     ]);
 }
 
-function Runˉnative(Label, Name, Arguments) {
+async function Runˉnative(Label, Name, Arguments) {
     const Extension = process.platform === 'win32' ? '.cmd' : '.sh';
     const Script = path.join(Scriptˉdirectory, `${Name}${Extension}`);
     Requireˉordinaryˉfile(Script, 4_194_304, `${Name} script`);
     if (process.platform === 'win32') {
-        return Run(Label, process.env.ComSpec ?? 'cmd.exe', [
-            '/d', '/c', 'call', Script, ...Arguments,
-        ]);
+        return await Run(Label, Script, Arguments);
     }
-    return Run(Label, 'bash', [Script, ...Arguments]);
+    return await Run(Label, 'bash', [Script, ...Arguments]);
 }
 
-function Runˉnode(Label, Name, Arguments) {
-    Run(Label, process.execPath, [path.join(Scriptˉdirectory, Name), ...Arguments]);
+async function Runˉnode(Label, Name, Arguments) {
+    await Run(Label, process.execPath, [path.join(Scriptˉdirectory, Name), ...Arguments]);
 }
 
-function Run(Label, Command, Arguments) {
+async function Run(Label, Command, Arguments, Expected = 0) {
+    const Remaining = Developmentˉonly ? Maximumˉrunˉmilliseconds - (Date.now() - Started) :
+        TOOL_TIMEOUT_MILLISECONDS;
+    if (Remaining <= 0) Reject('The focused Foundation borrow development budget expired.');
     Step += 1;
+    const Stepˉnumber = Step;
+    const Start = Date.now();
     process.stdout.write(
-        `START language 1 memory budget split execution step=${Step} phase=${Label}\n`,
+        `START language 1 memory budget split execution step=${Stepˉnumber} phase=${Label}\n`,
     );
-    const Result = spawnSync(Command, Arguments, {
-        encoding: 'utf8',
-        windowsHide: true,
-        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
-        timeout: TOOL_TIMEOUT_MILLISECONDS,
-    });
-    if (Result.error !== undefined || Result.status !== 0 ||
-        Result.stderr.length !== 0) {
+    const Result = await Runˉdevelopmentˉcommand(
+        Command, Arguments, Start + Remaining, Developmentˉonly, MAXIMUM_DIAGNOSTIC_BYTES,
+    );
+    if (Result.Code !== Expected || Result.Error.length !== 0) {
         Reject(
-            `${Label} failed: status=${Result.status} error=${Result.error?.message ?? ''}\n` +
-            `stdout=${Result.stdout}\nstderr=${Result.stderr}`,
+            `${Label} failed: status=${Result.Code}\n` +
+            `stdout=${Result.Output}\nstderr=${Result.Error}`,
         );
     }
     process.stdout.write(
-        `PASS  language 1 memory budget split execution step=${Step} phase=${Label}\n`,
+        `PASS  language 1 memory budget split execution step=${Stepˉnumber} phase=${Label} elapsed-ms=${Date.now() - Start}\n`,
     );
-    return Result.stdout;
+    return Result.Output;
 }
 
 function Requireˉvalid(Verifier, Candidate, Label) {

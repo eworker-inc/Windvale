@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv"
+source "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv"
+emit wvb

@@ -467,28 +467,34 @@ The Option type immediate names the exact `Option<borrow T>` view and cannot be
 used to infer or convert a payload type.
 
 Shape `37` recursively wraps the exact payload shape of a compiler-generated
-temporary or non-parameter local that retains non-owning payload provenance.
-It is not a pointer or independently storable owner. The current writer freezes
-every directly named owner through function exit, propagates borrowed provenance
-through the generated case-test, payload-projection, and local-store path,
-preserves temporary identity, and suppresses ownership-taking loads for those
-values. Functions are bounded by the already validated 64-block, 4,096-slot,
-4,096-operation, and 4,096-temporary envelopes.
+temporary/local or ordinary immutable-borrow parameter that retains non-owning
+provenance. It is not a pointer or independently storable owner. The writer uses
+declaration-derived parameter modes and exact bound types to preserve the same
+identity in direct-call arguments and parameters, including borrowed forwarding.
+By-value parameters and function results remain ordinary shapes.
+
+The current writer freezes every owner directly named by `E1` through function
+exit, propagates borrowed provenance through the generated case-test,
+payload-projection, and local-store path, preserves temporary identity, and
+suppresses ownership-taking loads for those values. The source validator keeps
+the 64-block `E1` bound; the planner bounds source slots, operations, and
+temporaries to 4,096 each. Borrow-free functions skip the planner and retain
+their ordinary limits and temporary allocation.
 
 The writer selects minor 39 only when reachable WVIR operation `191` is
 present. The focused independent reader accepts at most 16 MiB, validates the
 exact header and seven sections, three projection forms, exact Option/Result
-relationships, shape-`29` views, recursive shape-`37` payload locals, code
-ranges, and deterministic duplicate output. Six mutations cover the earlier
-minor, unknown opcode, zero and unknown projections, invalid owner, and invalid
-Option index. This is bounded source-publication evidence, not complete
+relationships, shape-`29` views, recursive shape-`37` payload locals and direct
+call parameters/arguments, code ranges, and deterministic duplicate output.
+Twelve mutations cover instruction, projection, owner, Option index, parameter
+and argument wrapper, nominal identity, call target, and argument-local
+boundaries. This is bounded source-publication evidence, not complete
 verification or execution evidence.
 
-The candidate does not yet encode shape `37` in the corresponding callee
-parameter when a borrowed payload is passed through a direct helper call.
-Therefore no complete-verifier, runtime, native, WebAssembly, package, or OS
-consumer admits minor 39. That cross-call representation, complete typed-stack
-and lifetime verification, and runtime execution are the next checkpoints.
+No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
+admits minor 39. Complete typed-stack/lifetime verification and runtime
+execution are the next checkpoints. Direct-call publication does not qualify
+indirect calls, arbitrary payload classes, or Linux reproduction.
 
 ## Encoding
 
@@ -817,7 +823,7 @@ profile requires an async, safe, zero-parameter callable whose result is exact
 34 Platformˉfile.Sourceˉfile opaque owner (WVB 1.29 through 1.39 under the exact entry rules)
 35 callable value followed by u32 kind-8 callable-type index (WVB 1.30 through WVB 1.39)
 36 immutable-borrowed Memoryˉbudget view (WVB 1.34 through WVB 1.39 parameter or compiler-generated local only)
-37 recursively encoded immutable borrowed payload shape (WVB 1.39 compiler-generated non-parameter local only)
+37 recursively encoded immutable borrowed payload shape (WVB 1.39 ordinary immutable-borrow parameter or compiler-generated local only)
 ```
 
 `void` and `never` are valid only as return types. `unit` is an ordinary value
@@ -866,14 +872,16 @@ These shapes do not encode a pointer or an independently storable value. The
 verifier confines every admitted view to its exact generated sequence, including
 the WVB 1.37 region parameter and affine pointer move.
 
-Candidate WVB 1.39 additionally permits shape `37` only in a
-compiler-generated non-parameter local or temporary-local entry. The byte is
-followed recursively by the exact borrowed payload's planned value shape. It is
-invalid in parameters, results, source-declared locals, fields, variant payload
-declarations, collection elements, callable descriptors, and Types entries.
-The focused fixture covers primitive and nominal-record payloads; wider payload
-classes require their own evidence. The complete verifier does not yet admit
-this shape.
+Candidate WVB 1.39 additionally permits shape `37` in an ordinary immutable-borrow
+parameter or compiler-generated non-parameter local/temporary entry. The byte is
+followed recursively by the exact borrowed payload's planned value shape; nested
+shape-`37` wrappers are invalid. It is invalid in by-value parameters, results,
+ordinary owned source locals, fields, variant payload declarations, collection
+elements, callable descriptors, and Types entries. Existing special-purpose
+borrow shapes keep their own contracts. The focused fixture covers `u32` and
+nominal-record payloads, plain-owner arguments, and direct borrowed forwarding;
+wider payload classes require their own evidence. The complete verifier does
+not yet admit this shape.
 
 Shape `25` is not a general value shape. In WVB 1.21 or 1.22 it occurs at most
 once: as parameter zero of the one-parameter function named `Main`. WVB 1.21

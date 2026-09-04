@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-foundation-borrow-plan-development",
+  "date": "2026-09-04",
+  "subject": "Small current-source tests for Foundation borrow planning",
+  "claim": "Sixteen bounded borrow-planner cases passed on Windows. Creating the small native package took 10,748 ms; the final warm runner completed in 1,691 ms, including cleanup. A temporary source defect rebuilt its products and failed with the expected native case result 2 rather than reusing passing behavior. This claim excludes compiler integration and candidate WVB 1.39 admission.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 3c781190b8260e481910e19b09e8c463c6092f47. The final warm run inputs are identified below. The initial package-creation observation used the preceding synchronous runner with the same planner, fixture, project, and WVB bytes; the runner was then refactored to share bounded asynchronous child-process handling. The deliberate planner mutation was removed before the warm run."
+  },
+  "runs": [
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Sixteen planner cases, first native package construction in the existing cache",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-plan",
+      "result": "Passed",
+      "elapsedMilliseconds": 10748
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Temporarily clear borrowed-load provenance; require native case result 2 and wrapper rejection. Changed project construction took 1,795 ms and changed native packaging 10,930 ms.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Memory-Budget-Split-Execution.cmd --foundation-borrow-plan; require exit 1 after seeded source defect",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Restored planner, content-keyed product reuse, fresh native execution of all sixteen cases, and cleanup",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Memory-Budget-Split-Execution.cmd --foundation-borrow-plan",
+      "result": "Passed",
+      "elapsedMilliseconds": 1691,
+      "inputs": [
+        { "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv", "size": 6090, "sha256": "330098f55e819ff52dd9e81643bd7eab17b8584104b8b7b8fefe7672182415ae" },
+        { "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv", "size": 6114, "sha256": "4a3941ba156b2e774b2a1f8e5c30deb57af028e35f4ef9acb0629251e1bca892" },
+        { "path": "Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj", "size": 169, "sha256": "cd1dd33d4a67bf925206d26e21e8816910e9348de2a2019208a33c47f9b2a54e" },
+        { "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs", "size": 113711, "sha256": "bff78d4995ff80d1bb93401888cfe62b8621419660b439fd11b4ae6d95734ca8" },
+        { "path": "Tools/Native/Development-Command-Core.mjs", "size": 3714, "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8" }
+      ],
+      "outputs": [
+        { "path": "Borrow-Plan.wvb", "size": 17928, "sha256": "d55437e23078b7b64c56d1f3f49ca971d92acf38cc5abc9e7a420ccb56b0364a" }
+      ]
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Final changed-file dispatch with owner-result reuse disabled: selected planner ran all sixteen cases in 1,296 ms; complete command including classification and editor check finished in 3,779 ms",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv -NoResultCache",
+      "result": "Passed",
+      "elapsedMilliseconds": 3779
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Shared child-process implementation: all 329 existing front-end development claims, with fresh behavioral execution",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows x64; PowerShell 7",
+      "target": "Final contracts, positive and excluded planner selections, shared runner fault checks, declared development dependencies, 31 general routing cases, and 280 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Approved twenty-minute candidate publication attempt, interrupted after completing only the pinned analyzer package when the remaining cold plan was disproportionate",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow --maximum-seconds 1200",
+      "result": "Incomplete"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "These are local development observations, not stable performance thresholds, clean-machine bootstrap timings, Linux reproduction, or cross-host qualification.",
+    "The draft cross-call WVB writer, new structural publication probes, complete WVB 1.39 verification, scalar execution, native lowering, WebAssembly, and consumer migration are not validated by these planner cases. The complete 208-case owner was not run.",
+    "An initial test source used duplicate function-local names and was rejected before execution; those names were repaired. The bounded interpreter then exited 66. The retained check uses the ordinary native test path without increasing interpreter or compiler limits.",
+    "The planner consumes already validated WVIR and declaration-derived parameter/call masks. Its index and allocation checks are not a replacement for full WVIR or WVB admission.",
+    "The interrupted publication attempt used the earlier writer and synchronous runner, before extracting the pure planner. Its completed 50,753,536-byte pinned analyzer package remains cached; partial packages and the interrupted attempt are not passing evidence.",
+    "Peak memory was not measured for the small native planner check. It enforces 4,096 operations, temporaries, and slots, and bounded input ranges. No seeded defect remains in the source."
+  ],
+  "related": [
+    "Specifications/Windvale-Native-Verification-Owners.md",
+    "Documents/Decisions/0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md",
+    "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+    "Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj"
+  ]
+}

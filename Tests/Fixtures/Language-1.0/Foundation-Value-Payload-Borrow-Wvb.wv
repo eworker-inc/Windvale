@@ -19,7 +19,24 @@ fn Readˉu32(Value: borrow u32) -> u32 {
     return Value;
 }
 
+fn Forwardˉpayload(Value: borrow Payload) -> u32 {
+    return Readˉpayload(borrow Value);
+}
+
+fn Forwardˉu32(Value: borrow u32) -> u32 {
+    return Readˉu32(borrow Value);
+}
+
+fn Readˉowned(Value: u32) -> u32 {
+    return Value;
+}
+
 export fn Main() -> i32 {
+    let Plain: Payload = Payload { Code: 42u32 };
+    let Plainˉnumber: u32 = 42u32;
+    if Forwardˉpayload(borrow Plain) != 42u32 { return 2; }
+    if Forwardˉu32(borrow Plainˉnumber) != 42u32 { return 3; }
+    if Readˉowned(Plainˉnumber) != 42u32 { return 4; }
     let Maybe: Option.Option<Payload> = Option.Option.Present<Payload> {
         Value: Payload { Code: 30u32 }
     };
@@ -32,7 +49,7 @@ export fn Main() -> i32 {
     var Total: u32 = 0u32;
     match Option.Borrow(borrow Maybe) {
         case Option.Option.Present { Value: Item } {
-            Total = Total + Readˉpayload(borrow Item);
+            Total = Total + Forwardˉpayload(borrow Item);
         }
         case Option.Option.Absent { }
     }
@@ -44,7 +61,7 @@ export fn Main() -> i32 {
     }
     match Result.Borrowˉfailure(borrow Failure) {
         case Option.Option.Present { Value: Error } {
-            Total = Total + Readˉu32(borrow Error);
+            Total = Total + Forwardˉu32(borrow Error);
         }
         case Option.Option.Absent { }
     }

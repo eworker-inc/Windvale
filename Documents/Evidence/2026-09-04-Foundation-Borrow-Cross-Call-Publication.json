@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-foundation-borrow-cross-call-publication",
+  "date": "2026-09-04",
+  "subject": "Candidate WVB 1.39 borrowed identity across direct calls",
+  "claim": "The focused Windows publication selection passed 39 cases in 15,345 ms warm. Exact borrowed parameter and argument metadata survives direct forwarding, earlier bytecode remains unchanged, and large borrow-free functions retain their prior limits. This is source-publication evidence, not WVB 1.39 runtime admission.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 3c781190b8260e481910e19b09e8c463c6092f47. Final writer and verifier inputs are identified below. The source writer's borrow-free guard was corrected before its analysis snapshot and native emitter construction. The first successful cold run used the preceding 113,711-byte owner runner (SHA-256 bff78d4995ff80d1bb93401888cfe62b8621419660b439fd11b4ae6d95734ca8); the final runner adds two large-function regressions and streamed child progress without changing compiler inputs. Output names identify temporary products, not committed release artifacts."
+  },
+  "runs": [
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Approved one-hour publication check: 37 cases, including missing native compiler package construction. Pinned analyzer and several project WVB products were already cached.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow --maximum-seconds 3600",
+      "result": "Passed",
+      "elapsedMilliseconds": 1740955,
+      "outputs": [
+        {
+          "path": "Emitter.wvb",
+          "size": 1573930,
+          "sha256": "1c34c741ebf9975cd4e3585eef8f635ef94aac1df3267e16c3afae607eb2fac9"
+        },
+        {
+          "path": "Emitter.exe",
+          "size": 32319488,
+          "sha256": "6c7b86a7905de96863cd63e13f925ceedc045ec3bbcab50c97346a86a800047e"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Expanded selection: borrowing cases passed, but the first large standalone fixture incorrectly supplied unused library modules and was rejected by source-graph admission before emission.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow",
+      "result": "Failed"
+    },
+    {
+      "host": "Local Windows x64; Node.js 24.19.0",
+      "target": "Final 39-case selection with corrected fixture dependencies: native planner 16, structural publication 20, large borrow-free regressions 2, unchanged earlier bytecode 1. All compiler products were cache hits; source fixtures were compiled and behavior checked afresh.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow",
+      "result": "Passed",
+      "elapsedMilliseconds": 15345,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 303554,
+          "sha256": "ab42904200cac35be4cd09f1bad4aeba216efed233fe4d790108cf32930e37c3"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 227610,
+          "sha256": "cf0365986e4b807ca49bf9d869f10fb18770c0b8d889253ec3f5e1b190afee34"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 6090,
+          "sha256": "330098f55e819ff52dd9e81643bd7eab17b8584104b8b7b8fefe7672182415ae"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj",
+          "size": 1849,
+          "sha256": "b786cce77c265239c0f5c15135280a51d9c3031e0bd8e09bb6e9b4c35304ebd3"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv",
+          "size": 2010,
+          "sha256": "65fc7f54801996a54140467b4fed360f5ca0009a1d20eaeb03dd64beeee44e54"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 117009,
+          "sha256": "7c004efd1a795f680a482c9d7bc2c9acc627f726fc3f2a02bae63c415d485c5b"
+        },
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Foundation-Value-Borrow-Wvb.mjs",
+          "size": 20150,
+          "sha256": "4b866fe829e360c1bf072945dd45e50e21e3dfa834b6258ca2f31fb7c46e547c"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "compiler-emission/Source.wvss",
+          "size": 1647993,
+          "sha256": "64b203619f64554be1af07a06987647c26520f5beee89aa943d5473d83cdad69"
+        },
+        {
+          "path": "compiler-emission/Wir.wvir",
+          "size": 3803648,
+          "sha256": "a8a5bca8bbf281b5ae1543bb80aef52e30f90e648080dabb5649838edac37ccd"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Foundation-Value-Borrow-A.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        },
+        {
+          "path": "Foundation-Value-Borrow-B.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        },
+        {
+          "path": "Large-Borrow-Free.wvb",
+          "size": 54146,
+          "sha256": "087bcae2535b74cc0d7b8cabe87ac16041fb26c581ce1dfc1079d8a8e62fde39"
+        },
+        {
+          "path": "Large-Borrow-Free-Reference.wvb",
+          "size": 54146,
+          "sha256": "087bcae2535b74cc0d7b8cabe87ac16041fb26c581ce1dfc1079d8a8e62fde39"
+        },
+        {
+          "path": "Large-Borrow-Free-Mixed.wvb",
+          "size": 55977
+        },
+        {
+          "path": "Unchanged-Memory-Budget.wvb",
+          "size": 752,
+          "sha256": "5678409a9b9bba47dd37a6f3d26f0666a7c27d2e86d6ff320a78b8fdcbec8f53"
+        },
+        {
+          "path": "Borrow-Plan.wvb",
+          "size": 17928,
+          "sha256": "d55437e23078b7b64c56d1f3f49ca971d92acf38cc5abc9e7a420ccb56b0364a"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows x64; PowerShell 7 and Node.js 24.19.0",
+      "target": "Final routing and framework checks: 31 general cases, 280 native cases, positive and excluded planner selections, development dependencies, and shared command fault checks",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows x64; PowerShell 7",
+      "target": "Final documentation: 1,587 Markdown files, 5,694 links, 462 anchors, 14 retrieval cases, and current catalogs",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Windows development evidence only. No Linux reproduction, clean-machine bootstrap, independent reproduction, complete 210-case owner, or broad qualification was run.",
+    "The complete compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly, package, and OS consumers still reject WVB 1.39. The native execution here is the planner self-test, not execution of candidate borrowed payload bytecode.",
+    "The structural reader checks six functions, four types, three E1 instructions, three borrowed Option-view locals, twenty borrowed-payload local/parameter shapes, and eight direct calls. It is bounded to 16 MiB and is not a complete typed-stack or lifetime verifier.",
+    "The direct-call fixture covers nominal records and u32, plain-owner arguments, and borrowed forwarding. It does not qualify arbitrary payload types, indirect calls, exclusive borrowing, take, mapping, or consumer migration.",
+    "The large-function workload uses 1,100 assignments and retains 50,636 code bytes with 3,303 local slots. Standalone bytes match the pinned emitter. The mixed module compiled successfully but was not executed.",
+    "Cold and warm observations use different case counts because two regression cases were added after the initial build. They measure content-keyed product reuse, not a like-for-like compiler algorithm speedup. No stable performance threshold or complete process-tree peak-memory measurement is claimed.",
+    "The earlier approved twenty-minute interruption remains incomplete evidence in the separate planner record. Completed caches were reused; partial products were not treated as passing."
+  ],
+  "related": [
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-04-Foundation-Borrow-Plan-Development.json",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Native-Verification-Owners.md"
+  ]
+}

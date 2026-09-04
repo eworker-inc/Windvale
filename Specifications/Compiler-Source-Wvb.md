@@ -1192,34 +1192,50 @@ The emitter independently reconstructs the exact Option/Result relationship
 from typed WVIR and the canonical generic materialization plan. It marks the
 module with the Foundation-value-borrow feature and selects minor 39 only when
 operation `191` is emitted. Shape `29` carries the ephemeral borrowed Option
-view. New recursive shape `37` carries the exact non-owning payload shape only
-for compiler-generated temporary and local entries.
+view. Recursive shape `37` carries the exact non-owning payload shape in
+compiler-generated temporary/local entries and corresponding ordinary immutable
+borrow parameters. Parameter identity comes from the declared parameter mode
+and exact bound type, not inference from callers. Existing budget, source-file,
+Vector, task, scratch, and write-region representations are not replaced.
 
 Before emitting a function, one bounded linear plan scans its already validated
 WVIR. It freezes each direct owner named by operation `191`, preserves temporary
 identity, propagates payload-borrow provenance through generated local loads,
 variant case/payload operations, and stores, and avoids `local.take` for those
-non-owning values. A function remains inside the existing bounds of 64 blocks,
-4,096 combined slots, 4,096 operations, and 4,096 temporaries. The plan has no
-global state and changes no unaffected WVB bytes.
+non-owning values. Direct-call argument temporaries receive the exact same
+shape-`37` identity as their callee's immutable parameter, including a plain
+owner passed to that parameter and forwarding through another borrowed helper.
+Owned parameters and function results do not acquire borrow metadata.
+
+The source validator retains its 64-block bound for functions containing
+operation `191`; the extracted planner bounds combined source slots, operations,
+and temporaries to 4,096 each. A function without a borrowed parameter, borrowed
+call argument, or operation `191` skips that planner and retains ordinary
+temporary allocation and limits. The plan has no global state or fixed-point
+inference and changes no unaffected WVB bytes.
 
 `Foundation-Value-Payload-Borrow-Wvb.wv` exercises all three projections with
 both a nominal-record payload and `u32`. Two compilations compare byte for byte.
 The independent reader requires WVB 1.39, seven canonical sections, three `E1`
 instructions in projection order `1,2,3`, at least three shape-`29` view locals,
 at least three shape-`37` payload locals, exact Option/Result type relationships,
-and bounded function/code geometry. It rejects six byte mutations covering the
-prior minor, unknown opcode, zero and unknown projection, invalid owner slot,
-and invalid Option type index. Together with deterministic equality these are
-12 new focused cases.
+and bounded function/code geometry. It also checks four direct/forwarding helper
+parameter identities, eight exact direct-call argument identities, and an
+unchanged by-value parameter. Twelve byte mutations cover the original
+instruction/owner/type boundaries plus missing borrow wrappers, wrong parameter
+nominal identity, invalid call targets, and invalid argument locals. These are
+20 focused structural cases. Separate native planner cases exercise the actual
+Windvale implementation; large borrow-free functions preserve earlier output
+and coexist with the candidate feature. See
+[Decision 0958: direct-call borrow identity](../Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md)
+and its linked exact evidence.
 
-This checkpoint deliberately stops at source publication. A direct helper call
-that receives a borrowed payload does not yet encode shape `37` in the callee's
-corresponding parameter metadata. The complete compiler-aligned verifier,
-scalar runtime, native lowerer, WebAssembly targets, packages, and Windvale OS
-therefore reject minor 39. Cross-call parameter identity, complete typed-stack
-and lifetime verification, runtime execution, and Linux reproduction are the
-next required checkpoints; this candidate does not claim them.
+This checkpoint deliberately stops at source publication. The complete
+compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
+packages, and Windvale OS still reject minor 39. Complete typed-stack and
+lifetime verification, runtime execution, and Linux reproduction are the next
+required checkpoints. Indirect-call combinations and wider payload classes are
+not qualified by the direct-call fixture.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The

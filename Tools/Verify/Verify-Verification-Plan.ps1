@@ -108,6 +108,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Shared bounded development command lifecycle'
+        Paths = @('Tools/Native/Development-Command-Core.mjs')
+        Suites = @('language-1-front-door', 'language-1-memory-budget-split-execution')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 Foundation generic typed-failure owner'
         Paths = @(
             'Libraries/Foundation/Values/Option.wv',
@@ -225,6 +232,9 @@ $NativeCases = @(
             'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
             'Tools/Native/Verify-Language-1.0-Async-Call-Await.mjs',
             'Tools/Native/Verify-Language-1.0-Owned-Vector-Calls-Wir.mjs',
+            'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
+            'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
+            'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
             'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
         Suites = @('language-1-memory-budget-split-execution')
@@ -4978,12 +4988,12 @@ $QualificationPipelineExpected = @{
     'Link-Wvo' = '39|124'
     'Package-Hosted-Wvb' = '19|111'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '21|57'
+    'Package-Segmented-Compiler-Wvb' = '21|58'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|82'
+    'Run-Split-Compiler' = '3|83'
     'Run-Authenticated-Source-Admission' = '1|30'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
@@ -5474,6 +5484,32 @@ if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 330 -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentMaximumSeconds -ne 600) {
     throw 'The Language 1 front-door development checkpoint plan differs.'
+}
+
+foreach ($BorrowPath in @(
+    'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
+    'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv'
+)) {
+    $BorrowPlan = & $NativePlanner -ChangedPath $BorrowPath -PassThru -Quiet
+    if (!$BorrowPlan.UseFoundationBorrowPlanDevelopment -or
+        $BorrowPlan.ExpectedSeconds -ne 30 -or $BorrowPlan.MaximumSeconds -ne 600 -or
+        $BorrowPlan.Suites.Count -ne 1 -or $BorrowPlan.Gaps.Count -ne 0) {
+        throw "The focused Foundation borrow plan differs for '$BorrowPath'."
+    }
+}
+foreach ($OtherBorrowPath in @(
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tools/Native/Development-Command-Core.mjs'
+)) {
+    $BorrowPlan = & $NativePlanner -ChangedPath @(
+        'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv', $OtherBorrowPath
+    ) -PassThru -Quiet
+    if ($BorrowPlan.UseFoundationBorrowPlanDevelopment) {
+        throw "Foundation planning hid integration changes in '$OtherBorrowPath'."
+    }
 }
 
 $FrontEndRunner = Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'

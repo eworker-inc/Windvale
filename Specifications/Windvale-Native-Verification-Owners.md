@@ -167,6 +167,38 @@ oracle in the development dependency registry, and leave the no-argument owner
 command as the complete qualification contract. A development-mode pass must
 not be reported as the qualification evidence it intentionally omits.
 
+The memory-budget split-execution owner also has a 16-case
+`--foundation-borrow-plan` development selection. It builds the actual bounded
+borrow-planning module as a small native test project, reuses content-keyed WVB
+and package products, and executes the behavior afresh. The changed-file
+dispatcher selects it only when every changed native path is the planner,
+its self-test, or its project manifest. Changes to the WVB writer, publication
+fixture, owner runner, or shared command runner do not receive that narrowed
+selection. Its planning allowance is 30 seconds; its total deadline remains
+600 seconds, including preparation and cleanup. The existing owner retains
+these cases in its complete no-argument invocation.
+
+`--foundation-borrow` separately selects the 39-case planner and candidate
+publication checkpoint, including deterministic compilation, structural
+mutations, an unchanged earlier-bytecode fixture, and two large borrow-free
+function regressions. Those regressions retain 1,100 assignments alone and beside
+borrowed payloads, and compare the standalone output with the pinned emitter.
+It still needs the
+current split compiler and may require cold compiler-scale packaging. It is
+not a seconds-scale check on a cold host. The Node entry point accepts
+`--maximum-seconds <seconds>` in the range 1 through 3600 for this selection;
+using more than the ordinary budget requires advance human approval.
+Neither selection proves complete WVB 1.39 verification or execution.
+
+Both the front-end runner and this owner use
+`Tools/Native/Development-Command-Core.mjs` for child-process deadlines,
+bounded diagnostics, progress, and process-tree termination. The front-end
+limit stays 64 KiB; the split-execution owner retains a 1 MiB limit. The
+caller must check the returned exit code, output, and diagnostics. Passing
+development summaries follow successful cleanup. The split-execution development
+selections stream bounded child progress, so cache hits and inner build phases
+are visible before the outer phase completes.
+
 `language-1-front-door` uses this boundary. Its `--development` invocation
 executes the frozen migration fixtures, target-descriptor product, value front
 end, and first generic declaration, call, resolution, and type-catalog products.
