@@ -57,7 +57,7 @@
           "mode": "0755"
         },
         {
-          "source": "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
+          "source": "Artifacts/Native-Wvb-Verifier-0.1.0/windows-x64-wvverify.exe",
           "path": "bin/wvverify.exe",
           "bytes": 1255936,
           "sha256": "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
@@ -116,7 +116,7 @@
           "mode": "0755"
         },
         {
-          "source": "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
+          "source": "Artifacts/Native-Wvb-Verifier-0.1.0/linux-x64-wvverify.elf",
           "path": "bin/wvverify",
           "bytes": 1257472,
           "sha256": "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",

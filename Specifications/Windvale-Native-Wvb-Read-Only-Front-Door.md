@@ -42,14 +42,14 @@ managed contracts.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `Wvb/Compiler-Wvb-Verifier.wvb` | 152,323 | `06d4010279dce74dba258a5f2533f4a961a767d56f62709f2c13f87d4fdff64f` |
+| `Wvb/Compiler-Wvb-Verifier.wvb` | 493,060 | `a7ed497149a215526f220b0b55c2742a8f203ba1f0c57b47622c2c0d48ef90fe` |
 | `Wvb/Wvb-Inspector.wvb` | 76,527 | `293be3267ff95f9272e96684e036a5647abc060f2bc87a9e654beac7140af753` |
-| `windows-x64/wvverify.exe` | 1,255,936 | `a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871` |
+| `windows-x64/wvverify.exe` | 3,983,360 | `acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6` |
 | `windows-x64/wvdump.exe` | 795,136 | `61512dae2941607b93da7d29dd59f973c690f0fec3ba24f772f2101c87ed5381` |
-| `linux-x64/wvverify.elf` | 1,257,472 | `cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4` |
+| `linux-x64/wvverify.elf` | 3,985,408 | `bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f` |
 | `linux-x64/wvdump.elf` | 794,624 | `d3215e8345bf5cd9f3265b8421cf57d456ae605c5493fcc215a3e11daab44627` |
 
-The verifier artifacts retain their previously qualified identities. The inspector WVB reuses the existing complete Windvale `Wv-Dump-Core.wv` implementation rather than introducing a second parser or report generator.
+The verifier artifacts carry the current source-reconstructed identities. The inspector WVB reuses the existing complete Windvale `Wv-Dump-Core.wv` implementation rather than introducing a second parser or report generator.
 
 ## Recovery boundary
 

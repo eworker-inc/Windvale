@@ -331,19 +331,32 @@ async function Removeˉwork(Work, Temporaryˉroot) {
     await rm(Work, { recursive: true, force: false, maxRetries: 2 });
 }
 
-function Processˉidentifierˉisˉlive(Processˉidentifier) {
+async function Processˉidentifierˉisˉlive(Processˉidentifier) {
     try {
         process.kill(Processˉidentifier, 0);
-        return true;
     } catch (Errorˉvalue) {
         if (Errorˉvalue.code === 'ESRCH') return false;
         throw Errorˉvalue;
     }
+    if (WINDOWS) return true;
+    const Record = await readFile(
+        `/proc/${Processˉidentifier}/stat`, 'ascii'
+    ).catch(Errorˉvalue => {
+        if (Errorˉvalue.code === 'ENOENT') return null;
+        throw Errorˉvalue;
+    });
+    if (Record === null) return false;
+    const Commandˉend = Record.lastIndexOf(') ');
+    if (Commandˉend < 0 || Commandˉend + 2 >= Record.length) {
+        Reject(`The termination probe process state is malformed: ${Processˉidentifier}.`);
+    }
+    const State = Record[Commandˉend + 2];
+    return State !== 'Z' && State !== 'X';
 }
 
 async function Waitˉforˉprocessˉexit(Processˉidentifier) {
     const Deadline = Date.now() + 1_000;
-    while (Processˉidentifierˉisˉlive(Processˉidentifier)) {
+    while (await Processˉidentifierˉisˉlive(Processˉidentifier)) {
         if (Date.now() >= Deadline) return false;
         await new Promise(Resolveˉwait => setTimeout(Resolveˉwait, 25));
     }

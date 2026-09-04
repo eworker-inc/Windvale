@@ -4,10 +4,10 @@
   "channel": "development",
   "repository": {
     "format": "windvale-installer-repository-input-1",
-    "expectedIndexBytes": 3548,
-    "expectedIndexSha256": "7200b729d0a3d35717420444ce5398bd222327f3d3b6588dc82d2ad624e31775",
+    "expectedIndexBytes": 3550,
+    "expectedIndexSha256": "dd205bce6648641ca52e365dcf1ffb62e21821956006c5b25b610a9007dc9b9b",
     "expectedBlobCount": 15,
-    "expectedBlobBytes": 11003293,
+    "expectedBlobBytes": 14254723,
     "profiles": [
       {
         "id": "developer",
@@ -43,9 +43,9 @@
       "id": "windows-x64",
       "archive": "windvale-0.2.0-dev.1-windows-x64.zip",
       "archiveFormat": "zip-deflate-1",
-      "expectedArchiveBytes": 5516228,
-      "expectedArchiveSha256": "e71218d21d28c42cf6e3e69531686fd5fe2b79f25e4cb2b0489593d733b029b6",
-      "expectedPayloadSha256": "8b86e348597ed34718308efe5565bb9ba26d3f226dd3b7f45185ca203cc7d2ef",
+      "expectedArchiveBytes": 7141616,
+      "expectedArchiveSha256": "f793284af2f5d145f74b4b242ee7fa93abf563a0bb89e7ea797fecffbc9ebcd5",
+      "expectedPayloadSha256": "3812641a6f73200d6b21a2471a11d70faf9c35b91d7949daedecf2d3899ffd8a",
       "files": [
         {
           "component": "compiler",
@@ -75,8 +75,8 @@
           "component": "runner",
           "source": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
           "path": "bin/wvrun.exe",
-          "bytes": 5907456,
-          "sha256": "2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b",
+          "bytes": 10547712,
+          "sha256": "8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972",
           "mode": "0755"
         },
         {
@@ -91,8 +91,8 @@
           "component": "verifier",
           "source": "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
           "path": "bin/wvverify.exe",
-          "bytes": 1255936,
-          "sha256": "a1dc701cc8d5ace0a680a15e19435c48b3bccde3cf6197bfdd07ee04a4bf9871",
+          "bytes": 3983360,
+          "sha256": "acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6",
           "mode": "0755"
         },
         {
@@ -109,9 +109,9 @@
       "id": "linux-x64",
       "archive": "windvale-0.2.0-dev.1-linux-x64.tar.gz",
       "archiveFormat": "tar-gzip-deflate-1",
-      "expectedArchiveBytes": 5511747,
-      "expectedArchiveSha256": "eff1bd1aa4354099f3ff6ce625d00136d53db02436ae90b2415f2629fc6d5839",
-      "expectedPayloadSha256": "de150890e0cd959b98d283a0df3b170775bf7eeb690422e3b20822b0ee2319c7",
+      "expectedArchiveBytes": 7136441,
+      "expectedArchiveSha256": "c237a4d2bd28151e5ef2366d3dc12e1586f77badf2c2d6f9b230f508d90e0209",
+      "expectedPayloadSha256": "69b5cf4fb4d8f46f977c1b7b423e9339d32be258d82feeb69b8e3a0485031906",
       "files": [
         {
           "component": "compiler",
@@ -141,8 +141,8 @@
           "component": "runner",
           "source": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
           "path": "bin/wvrun",
-          "bytes": 5906432,
-          "sha256": "611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae",
+          "bytes": 10547200,
+          "sha256": "4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e",
           "mode": "0755"
         },
         {
@@ -157,8 +157,8 @@
           "component": "verifier",
           "source": "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
           "path": "bin/wvverify",
-          "bytes": 1257472,
-          "sha256": "cb77e47f1d69530a16c661deecd91640764a13994d75c4994780e488e938b1f4",
+          "bytes": 3985408,
+          "sha256": "bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f",
           "mode": "0755"
         },
         {

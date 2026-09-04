@@ -10,8 +10,9 @@ const MAXIMUM_OUTPUT_BYTES = 1024 * 1024;
 const MAXIMUM_LEAF_BYTES = 262_144;
 const MAXIMUM_APPLICATION_BYTES = 64 * 1024 * 1024;
 // Refreshed compiler-scale native staging crossed the former 180-second
-// ceiling on Windows. Retain a bounded five-minute child limit within the
-// unchanged 20-minute owner limit.
+// ceiling on Windows. Retain a bounded five-minute ordinary child limit and
+// allow compiler-package construction ten minutes within the unchanged
+// 20-minute owner limit.
 const CHILD_TIMEOUT_MILLISECONDS = 300_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 10 * 60_000;
 const PRODUCT_TIMEOUT_MILLISECONDS = 30_000;
@@ -267,19 +268,32 @@ function TimeoutDescription(Result) {
     return `the ${Scope} of ${Result.TimeoutMilliseconds} ms`;
 }
 
-function ProcessIdentifierIsLive(ProcessIdentifier) {
+async function ProcessIdentifierIsLive(ProcessIdentifier) {
     try {
         process.kill(ProcessIdentifier, 0);
-        return true;
     } catch (ErrorValue) {
         if (ErrorValue.code === 'ESRCH') return false;
         throw ErrorValue;
     }
+    if (WINDOWS) return true;
+    const Record = await readFile(
+        `/proc/${ProcessIdentifier}/stat`, 'ascii'
+    ).catch(ErrorValue => {
+        if (ErrorValue.code === 'ENOENT') return null;
+        throw ErrorValue;
+    });
+    if (Record === null) return false;
+    const CommandEnd = Record.lastIndexOf(') ');
+    if (CommandEnd < 0 || CommandEnd + 2 >= Record.length) {
+        Reject(`The termination probe process state is malformed: ${ProcessIdentifier}.`);
+    }
+    const State = Record[CommandEnd + 2];
+    return State !== 'Z' && State !== 'X';
 }
 
 async function WaitForProcessExit(ProcessIdentifier) {
     const Deadline = Date.now() + 1_000;
-    while (ProcessIdentifierIsLive(ProcessIdentifier)) {
+    while (await ProcessIdentifierIsLive(ProcessIdentifier)) {
         if (Date.now() >= Deadline) return false;
         await new Promise(ResolveWait => setTimeout(ResolveWait, 25));
     }
@@ -559,7 +573,7 @@ try {
     const Analyzer = join(Work, WINDOWS ? 'wvanalyze.exe' : 'wvanalyze.elf');
     await RequireSuccess('analyzer packaging', Package, [
         '7', PinnedAnalyzerWvb, Analyzer, '--development-cache'
-    ], true);
+    ], true, CONSTRUCTION_TIMEOUT_MILLISECONDS);
     const CapacityRoot = 'Tools/Windvale.Build/Compiler-Admission-Evidence-Validator-Driver.wv';
     const CapacitySources = [
         'Compiler/Windvale/Admission-Evidence-Core.wv',

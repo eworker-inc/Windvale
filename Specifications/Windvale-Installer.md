@@ -93,8 +93,8 @@ directory, an input outside `Distribution/Installers/`, or an existing output.
 
 | Channel | Target | Artifact | Bytes | SHA-256 | Payload manifest SHA-256 |
 | --- | --- | --- | ---: | --- | --- |
-| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 5,516,228 | `e71218d21d28c42cf6e3e69531686fd5fe2b79f25e4cb2b0489593d733b029b6` | `8b86e348597ed34718308efe5565bb9ba26d3f226dd3b7f45185ca203cc7d2ef` |
-| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 5,511,747 | `eff1bd1aa4354099f3ff6ce625d00136d53db02436ae90b2415f2629fc6d5839` | `de150890e0cd959b98d283a0df3b170775bf7eeb690422e3b20822b0ee2319c7` |
+| development | Windows x64 | `windvale-0.2.0-dev.1-windows-x64.zip` | 7,141,616 | `f793284af2f5d145f74b4b242ee7fa93abf563a0bb89e7ea797fecffbc9ebcd5` | `3812641a6f73200d6b21a2471a11d70faf9c35b91d7949daedecf2d3899ffd8a` |
+| development | Linux x64 | `windvale-0.2.0-dev.1-linux-x64.tar.gz` | 7,136,441 | `c237a4d2bd28151e5ef2366d3dc12e1586f77badf2c2d6f9b230f508d90e0209` | `69b5cf4fb4d8f46f977c1b7b423e9339d32be258d82feeb69b8e3a0485031906` |
 | stable | Windows x64 | `windvale-0.1.0-windows-x64.zip` | 43,234,311 | `3f6f633e17fd5d29799ffcec91a6855f7076df9102f8a61c95bdaf760ddb54a1` | `e30fd560a1fc9701d21bd407d8bf51a58b969c331ad7a6498ecf8bceed9d0d7f` |
 | stable | Linux x64 | `windvale-0.1.0-linux-x64.tar.gz` | 43,246,838 | `17d0982384ac73c251aeb5ee4fa5cfd7e3b82070abee77c321be6be07d068a63` | `1321e44a32b39d25dc3063bffdfda9cbca4890a66c25343f3dc7ad00fe1f8ddf` |
 

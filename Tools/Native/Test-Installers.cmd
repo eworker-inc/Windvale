@@ -21,7 +21,7 @@ set "ReleaseInput=Distribution/Installers/Windvale-Release-Installer.json"
 set "DevelopmentWindowsArchive=windvale-0.2.0-dev.1-windows-x64.zip"
 set "DevelopmentLinuxArchive=windvale-0.2.0-dev.1-linux-x64.tar.gz"
 set "DevelopmentPackageDirectory=windvale-0.2.0-dev.1-windows-x64"
-set "DevelopmentPayload=8b86e348597ed34718308efe5565bb9ba26d3f226dd3b7f45185ca203cc7d2ef"
+set "DevelopmentPayload=3812641a6f73200d6b21a2471a11d70faf9c35b91d7949daedecf2d3899ffd8a"
 set "WindowsArchive=windvale-0.1.0-windows-x64.zip"
 set "LinuxArchive=windvale-0.1.0-linux-x64.tar.gz"
 set "PackageDirectory=windvale-0.1.0-windows-x64"
@@ -38,8 +38,8 @@ fc /b "%Work%\First-Development\%DevelopmentWindowsArchive%" "%Work%\Second-Deve
 fc /b "%Work%\First-Development\%DevelopmentLinuxArchive%" "%Work%\Second-Development\%DevelopmentLinuxArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%WindowsArchive%" "%Work%\Second-Release\%WindowsArchive%" >nul || goto :cleanup
 fc /b "%Work%\First-Release\%LinuxArchive%" "%Work%\Second-Release\%LinuxArchive%" >nul || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 5516228 e71218d21d28c42cf6e3e69531686fd5fe2b79f25e4cb2b0489593d733b029b6 "Windows development installer" || goto :cleanup
-call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 5511747 eff1bd1aa4354099f3ff6ce625d00136d53db02436ae90b2415f2629fc6d5839 "Linux development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentWindowsArchive%" 7141616 f793284af2f5d145f74b4b242ee7fa93abf563a0bb89e7ea797fecffbc9ebcd5 "Windows development installer" || goto :cleanup
+call :verify_file "%Work%\First-Development\%DevelopmentLinuxArchive%" 7136441 c237a4d2bd28151e5ef2366d3dc12e1586f77badf2c2d6f9b230f508d90e0209 "Linux development installer" || goto :cleanup
 call :verify_file "%Work%\First-Release\%WindowsArchive%" 43234311 3f6f633e17fd5d29799ffcec91a6855f7076df9102f8a61c95bdaf760ddb54a1 "Windows release installer" || goto :cleanup
 call :verify_file "%Work%\First-Release\%LinuxArchive%" 43246838 17d0982384ac73c251aeb5ee4fa5cfd7e3b82070abee77c321be6be07d068a63 "Linux release installer" || goto :cleanup
 

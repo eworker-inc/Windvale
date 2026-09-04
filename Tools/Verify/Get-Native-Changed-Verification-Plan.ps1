@@ -3883,6 +3883,10 @@ foreach ($Path in $Paths) {
         [StringComparison]::Ordinal)) {
         Add-Suite 'installers'
     } elseif ($Path.StartsWith(
+        'Artifacts/Native-Wvb-Verifier-0.1.0/',
+        [StringComparison]::Ordinal)) {
+        Add-Suite 'installers'
+    } elseif ($Path.StartsWith(
         'Artifacts/Native-Wvo-Publisher-Candidate/',
         [StringComparison]::Ordinal)) {
         Add-Suite 'wvo-publisher-reconstruction'

@@ -212,7 +212,7 @@ The current WVB 1.11 reconstruction candidate is 1,226,240 bytes with SHA-256 `3
 
 `windows-x64-wvb-inspector-v1` uses the same outer PE and read-only host imports with metadata profile `4`. Its current corrected-backend candidate is 793,600 bytes with SHA-256 `31b958fa446e7b4776ba1db0469a6c9ab32c53d960f55a476a6a202cd322194c`.
 
-`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current segmented source reconstruction candidate is 5,907,456 bytes with SHA-256 `2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b`.
+`windows-x64-wvb-runner-v1` uses metadata profile `5`. The current segmented source reconstruction candidate is 10,547,712 bytes with SHA-256 `8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972`.
 
 `windows-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,037,312 bytes with SHA-256 `5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03`.
 
@@ -233,7 +233,7 @@ The current WVB 1.11 reconstruction candidate is 1,224,704 bytes with SHA-256 `e
 
 `linux-x64-wvb-inspector-v1` uses the same static outer ELF and metadata profile `4`. Its current corrected-backend candidate is 794,624 bytes with SHA-256 `cc87e9b7dc9bd74d5e14ab079c94cec9e77669953e301d9d32c06c3cefff9f9e`.
 
-`linux-x64-wvb-runner-v1` uses metadata profile `5`. The current segmented source reconstruction candidate is 5,906,432 bytes with SHA-256 `611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae`.
+`linux-x64-wvb-runner-v1` uses metadata profile `5`. The current segmented source reconstruction candidate is 10,547,200 bytes with SHA-256 `4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e`.
 
 `linux-x64-wvo-inspector-v1` uses metadata profile `6`. Its current bounded-reporting source candidate is 1,036,288 bytes with SHA-256 `fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840`.
 
