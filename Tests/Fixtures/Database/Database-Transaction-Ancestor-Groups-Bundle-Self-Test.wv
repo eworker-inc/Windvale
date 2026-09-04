@@ -1,0 +1,10 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉgroupsˉbundle profile portable;
+
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉgroups as Groups;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉgroupsˉdepthˉfour as Depthˉfour;
+
+export fn Main() -> i32 {
+    if Groups.Main() != 0 { return 1; }
+    if Depthˉfour.Main() != 0 { return 2; }
+    return 0;
+}

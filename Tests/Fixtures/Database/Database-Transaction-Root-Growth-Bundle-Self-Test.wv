@@ -1,0 +1,10 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowthˉbundle profile portable;
+
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowth as Rootˉgrowth;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉrootˉgrowthˉmultiˉlevel as Multiˉlevel;
+
+export fn Main() -> i32 {
+    if Rootˉgrowth.Main() != 0 { return 1; }
+    if Multiˉlevel.Main() != 0 { return 2; }
+    return 0;
+}

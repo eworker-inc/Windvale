@@ -18,7 +18,10 @@ import {
     Requireˉordinaryˉnewˉpath,
 } from './Verification-Owner-Stream-Path.mjs';
 import {
+    Confirmˉverificationˉsourceˉstate,
+    Getˉverificationˉchangedˉpaths,
     Getˉverificationˉresultˉpath,
+    Listˉverificationˉresultˉcandidates,
     Prepareˉverificationˉresultˉcache,
     Probeˉverificationˉresult,
     Publishˉverificationˉresult,
@@ -207,7 +210,30 @@ async function Verifyˉresultˉcache(Work) {
         Reject('Rejected linked result-cache setup wrote through its link.');
     }
 
-    const First = await Prepareˉverificationˉresultˉcache(Repository, Cache);
+    const [First, Concurrentˉfirst] = await Promise.all([
+        Prepareˉverificationˉresultˉcache(Repository, Cache),
+        Prepareˉverificationˉresultˉcache(Repository, Cache),
+    ]);
+    if (First.format !== 'windvale-verification-owner-state-1' ||
+        !/^[0-9a-f]{64}$/u.test(First.repositoryKey) ||
+        !/^[0-9a-f]{64}$/u.test(First.hostKey) ||
+        Concurrentˉfirst.stateKey !== First.stateKey ||
+        Concurrentˉfirst.sourceTree !== First.sourceTree) {
+        Reject('The prepared verification state identity differs.');
+    }
+    const Preparedˉstate = path.join(
+        Cache, 'owner-result-v1', First.stateKey,
+    );
+    if (readdirSync(Preparedˉstate).some(
+        Name => Name.startsWith('.state-new-')
+    )) {
+        Reject('Concurrent state preparation retained temporary debris.');
+    }
+    if (!(await Confirmˉverificationˉsourceˉstate(
+        Repository, First.sourceSentinel
+    ))) {
+        Reject('The prepared verification source state was not confirmable.');
+    }
     if (await Probeˉverificationˉresult(
         First.root, First.stateKey, Owner, Action
     )) {
@@ -287,6 +313,59 @@ async function Verifyˉresultˉcache(Work) {
             Changed.root, Changed.stateKey, Owner, Action
         )) {
         Reject('Changed source reused an earlier verification result.');
+    }
+    if (await Confirmˉverificationˉsourceˉstate(
+        Repository, First.sourceSentinel
+    ) || !(await Confirmˉverificationˉsourceˉstate(
+        Repository, Changed.sourceSentinel
+    ))) {
+        Reject('Verification source-state confirmation did not detect the change.');
+    }
+    const Candidates = await Listˉverificationˉresultˉcandidates(
+        Changed.root,
+        Changed.stateKey,
+        Changed.repositoryKey,
+        Changed.hostKey,
+        Owner,
+        Action,
+    );
+    if (Candidates.format !== 'windvale-verification-owner-candidates-1' ||
+        Candidates.candidates.length !== 1 ||
+        Candidates.candidates[0].stateKey !== First.stateKey ||
+        Candidates.candidates[0].sourceTree !== First.sourceTree ||
+        !Number.isSafeInteger(Candidates.candidates[0].modifiedMilliseconds)) {
+        Reject('The compatible-state candidate inventory differs.');
+    }
+    const Changedˉpaths = await Getˉverificationˉchangedˉpaths(
+        Repository,
+        First.sourceTree,
+        Changed.sourceTree,
+    );
+    if (Changedˉpaths.format !==
+            'windvale-verification-owner-changed-paths-1' ||
+        Changedˉpaths.paths.length !== 1 ||
+        Changedˉpaths.paths[0] !== 'Source.txt') {
+        Reject('The compatible-state changed-path inventory differs.');
+    }
+    const Wrongˉhost = await Listˉverificationˉresultˉcandidates(
+        Changed.root,
+        Changed.stateKey,
+        Changed.repositoryKey,
+        '0'.repeat(64),
+        Owner,
+        Action,
+    );
+    const Wrongˉrepository = await Listˉverificationˉresultˉcandidates(
+        Changed.root,
+        Changed.stateKey,
+        '0'.repeat(64),
+        Changed.hostKey,
+        Owner,
+        Action,
+    );
+    if (Wrongˉhost.candidates.length !== 0 ||
+        Wrongˉrepository.candidates.length !== 0) {
+        Reject('A compatible-state candidate crossed its host or repository.');
     }
     if (await Publishˉverificationˉresult(
         Repository,

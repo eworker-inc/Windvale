@@ -10,9 +10,12 @@ development=0
 prepare_only=0
 development_target=all
 qualification_target=all
+qualification_step_target=
+qualification_support_steps=0
 if [[ $# -eq 1 && $1 == --development ]]; then
     development=1
-elif [[ $# -eq 2 && $1 == --development-target ]]; then
+elif [[ $# -eq 2 &&
+    ($1 == --development-target || $1 == --development-target-set) ]]; then
     development=1
     development_target=$2
 elif [[ $# -eq 1 && $1 == --prepare-development-tools ]]; then
@@ -22,106 +25,81 @@ elif [[ $# -eq 1 && $1 == --qualification-portable ]]; then
     qualification_target=portable
 elif [[ $# -eq 1 && $1 == --qualification-hosted ]]; then
     qualification_target=hosted
+elif [[ $# -eq 2 && $1 == --qualification-step ]]; then
+    qualification_target=focused
+    qualification_step_target=$2
 else
-    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--development-target <target>|--prepare-development-tools|--qualification-portable|--qualification-hosted]' >&2
+    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--development-target <target>|--development-target-set <target+...>|--prepare-development-tools|--qualification-portable|--qualification-hosted|--qualification-step <step>]' >&2
     exit 64
 fi
 
-case "$development_target" in
-    all)
-        selected_cases=50
-        ;;
-    tree-node|logical-record|typed-row|secondary-index|secondary-index-mutations|transaction-mutations|transaction-leaf-rewrite|query-ir|sql-lowerer|json-value|json-protocol|local-service|collection-catalog|bootstrap|single-leaf|branch-split|root-split|depth-two|depth-three|depth-three-upsert|tree-path-upsert|tree-path-delete|host-storage)
-        selected_cases=1
-        ;;
-    transaction-branch-pages)
-        selected_cases=5
-        ;;
-    transaction-ancestor-groups)
-        selected_cases=6
-        ;;
-    transaction-ancestor-pages)
-        selected_cases=4
-        ;;
-    transaction-root-growth)
-        selected_cases=4
-        ;;
-    transaction-tree-completion)
-        selected_cases=2
-        ;;
-    transaction-commit)
-        selected_cases=2
-        ;;
-    transaction-parent-groups)
-        selected_cases=6
-        ;;
-    transaction-leaf-pages)
-        selected_cases=7
-        ;;
-    transaction-branch-partition)
-        selected_cases=13
-        ;;
-    transaction-leaf-groups)
-        selected_cases=8
-        ;;
-    transaction-leaf-partition)
-        selected_cases=9
-        ;;
-    transaction-paths)
-        selected_cases=13
-        ;;
-    transaction)
-        selected_cases=20
-        ;;
-    host-tree-reader)
-        selected_cases=2
-        ;;
-    host-tree-delete)
-        selected_cases=4
-        ;;
-    tree-scan)
-        selected_cases=4
-        ;;
-    host-tree-scan)
-        selected_cases=3
-        ;;
-    json)
-        selected_cases=2
-        ;;
-    typed-query)
-        selected_cases=2
-        ;;
-    query-sql)
-        selected_cases=2
-        ;;
-    typed-query-sql)
-        selected_cases=3
-        ;;
-    host-root-writer)
-        selected_cases=2
-        ;;
-    host-local-service)
-        selected_cases=2
-        ;;
-    engine|host-tree-writer|persistent-transaction-writer)
-        selected_cases=3
-        ;;
-    *)
-        echo "Unknown database development target: $development_target" >&2
-        exit 64
-        ;;
-esac
-if ((prepare_only == 1)); then
+development_case_set=
+development_bundle_set=
+development_bundled_case_set=
+if ((development == 0 || prepare_only == 1)); then
     selected_cases=0
+    selected_executions=0
+else
+    development_plan=$(node \
+        "$script_directory/Plan-Database-Storage-Development.mjs" \
+        "$development_target") || exit $?
+    IFS='|' read -r development_plan_format development_target \
+        selected_cases selected_executions development_cases \
+        development_bundles development_bundled_cases <<< "$development_plan"
+    if [[ $development_plan_format != \
+            windvale-database-storage-development-plan-2 ||
+        ! $selected_cases =~ ^[0-9]+$ ||
+        ! $selected_executions =~ ^[0-9]+$ ||
+        -z $development_cases ]]; then
+        echo 'The database development case plan is malformed.' >&2
+        exit 1
+    fi
+    development_case_set=,$development_cases,
+    if [[ $development_bundles != - ]]; then
+        development_bundle_set=,$development_bundles,
+    fi
+    if [[ $development_bundled_cases != - ]]; then
+        development_bundled_case_set=,$development_bundled_cases,
+    fi
 fi
-progress_total=$((selected_cases + 1))
+progress_total=$((selected_executions + 1))
 progress_current=1
 qualification_step=0
-qualification_steps=60
-if [[ $qualification_target == portable ]]; then
-    qualification_steps=49
-elif [[ $qualification_target == hosted ]]; then
-    qualification_steps=11
+qualification_steps=0
+qualification_cases=0
+qualification_prerequisites=0
+qualification_portable_steps=0
+qualification_hosted_steps=0
+qualification_portable_cases=0
+qualification_hosted_cases=0
+if ((development == 0)); then
+    qualification_counts=$(node \
+        "$script_directory/Plan-Database-Storage-Qualification.mjs" \
+        --counts) || exit $?
+    IFS='|' read -r qualification_plan_format qualification_steps \
+        qualification_cases qualification_prerequisites \
+        qualification_portable_steps qualification_hosted_steps \
+        qualification_portable_cases qualification_hosted_cases \
+        <<< "$qualification_counts"
+    if [[ $qualification_plan_format != \
+            windvale-database-storage-qualification-counts-1 ||
+        ! $qualification_steps =~ ^[0-9]+$ ||
+        ! $qualification_cases =~ ^[0-9]+$ ||
+        ! $qualification_prerequisites =~ ^[0-9]+$ ||
+        ! $qualification_portable_steps =~ ^[0-9]+$ ||
+        ! $qualification_hosted_steps =~ ^[0-9]+$ ||
+        ! $qualification_portable_cases =~ ^[0-9]+$ ||
+        ! $qualification_hosted_cases =~ ^[0-9]+$ ]]; then
+        echo 'The database qualification count plan is malformed.' >&2
+        exit 1
+    fi
+    if [[ $qualification_target == portable ]]; then
+        qualification_steps=$qualification_portable_steps
+    elif [[ $qualification_target == hosted ]]; then
+        qualification_steps=$qualification_hosted_steps
+    elif [[ -n $qualification_step_target ]]; then
+        qualification_steps=0
+    fi
 fi
 
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -361,7 +339,6 @@ verify_segmented_target() {
     start_qualification_step "$1"
     local label=$1 project_path=$2
     local first_wvb="$temporary_directory/$label-Segmented-First.wvb"
-    local second_wvb="$temporary_directory/$label-Segmented-Second.wvb"
     local object_prefix="$temporary_directory/$label-Object"
     local object_manifest="$temporary_directory/$label-Object.wvop"
     local image_prefix="$temporary_directory/$label-Staged-Image"
@@ -396,11 +373,10 @@ verify_segmented_target() {
         [[ $project_checkpoint == Created || $project_checkpoint == Hit ]] || return 1
         link_checkpoint=$project_checkpoint
     else
+        # Portable database behavior binds one admitted construction. Aggregate
+        # qualification owns compiler construction reproducibility separately.
         "$build_driver" --workspace "$workspace_path" --project "$project_path" \
             "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" \
-            "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
         "$script_directory/Stage-Compiler-Wvb.sh" \
             "$first_wvb" "$object_prefix" "$object_manifest" \
             > "$stage_report" || return $?
@@ -446,20 +422,15 @@ verify_segmented_target() {
         echo "PASS  native database storage development step=portable-segmented-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint application=linux-$application_checkpoint"
         portable_project_checkpoints+="$label:$project_checkpoint/link-$link_checkpoint,"
         portable_application_checkpoints+="$label:linux-$application_checkpoint,"
-    else
-        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-            "$first_wvb" "$canonical_prefix" "$fragment_count" "$entry_offset" \
-            "$windows_application" windows >/dev/null || return $?
     fi
 }
 
 verify_target() {
     start_qualification_step "$1"
     local label=$1 project_path=$2
+    local case_names=${3:-$label}
     local first_wvb="$temporary_directory/$label-First.wvb"
-    local second_wvb="$temporary_directory/$label-Second.wvb"
     local first_wvo="$temporary_directory/$label-First.wvo"
-    local second_wvo="$temporary_directory/$label-Second.wvo"
     local image="$temporary_directory/$label.bin"
     local image_prefix="$temporary_directory/$label-Image"
     local map="$temporary_directory/$label.map"
@@ -480,12 +451,10 @@ verify_target() {
             "$project_cache_report")
         [[ $project_checkpoint == Created || $project_checkpoint == Hit ]] || return 1
     else
+        # Portable database behavior binds one admitted construction. Aggregate
+        # qualification owns compiler and lowerer reproducibility separately.
         "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
         "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
     fi
     if ((development == 0)); then
         "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
@@ -533,13 +502,9 @@ verify_target() {
 
     if ((development == 1)); then
         local target_elapsed_ms=$(((SECONDS - target_start) * 1000))
-        echo "PASS  native database storage development step=portable-target item=$progress_current/$progress_total target=$development_target case=$label elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint application=linux-$linux_application_checkpoint"
+        echo "PASS  native database storage development step=portable-target item=$progress_current/$progress_total target=$development_target cases=$case_names elapsed-ms=$target_elapsed_ms project=$project_checkpoint link=$link_checkpoint application=linux-$linux_application_checkpoint"
         portable_project_checkpoints+="$label:$project_checkpoint/link-$link_checkpoint,"
         portable_application_checkpoints+="$label:linux-$linux_application_checkpoint,"
-    else
-        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-            "$first_wvb" "$image_prefix" 1 "$entry_offset" "$windows_application" windows \
-            >/dev/null || return $?
     fi
 }
 
@@ -601,9 +566,6 @@ verify_storage_lowering() {
         return 1
     fi
 
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$image_prefix" 1 "$entry_offset" \
-        "$windows_application" windows >/dev/null || return $?
 }
 
 verify_host_storage_interruption() {
@@ -1746,15 +1708,11 @@ verify_persistent_transaction_writer() {
 }
 
 verify_development_target() {
-    local label=$1 target=$2 project=$3 group selected=0
-    shift 3
-    if [[ $development_target == all || $development_target == "$target" ]]; then
-        selected=1
+    local label=$1 target=$2 project=$3
+    if ! development_case_selected "$label"; then
+        return 0
     fi
-    for group in "$@"; do
-        if [[ $development_target == "$group" ]]; then selected=1; fi
-    done
-    if ((selected == 0)); then
+    if development_case_bundled "$label"; then
         return 0
     fi
     progress_current=$((progress_current + 1))
@@ -1765,16 +1723,22 @@ verify_development_target() {
     }
 }
 
-verify_segmented_development_target() {
-    local label=$1 target=$2 project=$3 group selected=0
-    shift 3
-    if [[ $development_target == all || $development_target == "$target" ]]; then
-        selected=1
+verify_development_bundle() {
+    local label=$1 target=$2 project=$3 case_names=$4
+    if ! development_bundle_selected "$label"; then
+        return 0
     fi
-    for group in "$@"; do
-        if [[ $development_target == "$group" ]]; then selected=1; fi
-    done
-    if ((selected == 0)); then
+    progress_current=$((progress_current + 1))
+    echo "START native database storage development step=$target item=$progress_current/$progress_total target=$development_target cases=$case_names"
+    verify_target "$label" "$project" "$case_names" || {
+        echo "The native database storage development $target bundle stage failed." >&2
+        return 1
+    }
+}
+
+verify_segmented_development_target() {
+    local label=$1 target=$2 project=$3
+    if ! development_case_selected "$label"; then
         return 0
     fi
     progress_current=$((progress_current + 1))
@@ -1783,6 +1747,18 @@ verify_segmented_development_target() {
         echo "The native database storage development $target segmented stage failed." >&2
         return 1
     }
+}
+
+development_case_selected() {
+    [[ $development_case_set == *,$1,* ]]
+}
+
+development_case_bundled() {
+    [[ $development_bundled_case_set == *,$1,* ]]
+}
+
+development_bundle_selected() {
+    [[ $development_bundle_set == *,$1,* ]]
 }
 
 verify_development_host_targets() {
@@ -1795,10 +1771,7 @@ verify_development_host_targets() {
     engine_elapsed_ms=0
     host_tree_writer_elapsed_ms=0
     persistent_transaction_writer_elapsed_ms=0
-    case "$development_target" in
-        all|host-storage|host-root-writer|host-local-service|host-tree-reader|host-tree-delete|host-tree-scan|tree-scan|engine|host-tree-writer|persistent-transaction-writer) ;;
-        *) return 0 ;;
-    esac
+    if ! development_case_selected HostStorage; then return 0; fi
 
     progress_current=$((progress_current + 1))
     host_storage_start=$SECONDS
@@ -1810,10 +1783,7 @@ verify_development_host_targets() {
         }
     host_storage_elapsed_ms=$(((SECONDS - host_storage_start) * 1000))
     echo "PASS  native database storage development step=host-storage item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_storage_elapsed_ms project=$project_checkpoint_host_storage application=$application_checkpoint_host_storage"
-    [[ $development_target != host-storage ]] || return 0
-
-    if [[ $development_target == all ||
-        $development_target == host-root-writer ]]; then
+    if development_case_selected HostRootWriter; then
         progress_current=$((progress_current + 1))
         host_root_writer_start=$SECONDS
         echo "START native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target"
@@ -1831,11 +1801,9 @@ verify_development_host_targets() {
             }
         host_root_writer_elapsed_ms=$(((SECONDS - host_root_writer_start) * 1000))
         echo "PASS  native database storage development step=host-root-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_root_writer_elapsed_ms project=$project_checkpoint_host_root_writer application=$application_checkpoint_host_root_writer"
-        [[ $development_target != host-root-writer ]] || return 0
     fi
 
-    if [[ $development_target == all ||
-        $development_target == host-local-service ]]; then
+    if development_case_selected HostLocalService; then
         progress_current=$((progress_current + 1))
         host_local_service_start=$SECONDS
         echo "START native database storage development step=host-local-service item=$progress_current/$progress_total target=$development_target"
@@ -1847,37 +1815,22 @@ verify_development_host_targets() {
             }
         host_local_service_elapsed_ms=$(((SECONDS - host_local_service_start) * 1000))
         echo "PASS  native database storage development step=host-local-service item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_local_service_elapsed_ms project=$project_checkpoint_host_local_service application=$application_checkpoint_host_local_service"
-        [[ $development_target != host-local-service ]] || return 0
     fi
 
-    progress_current=$((progress_current + 1))
-    host_tree_reader_start=$SECONDS
-    echo "START native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target"
-    verify_host_tree_reader \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || {
-            echo 'The native database storage development host-tree-reader stage failed.' >&2
-            return 1
-        }
-    host_tree_reader_elapsed_ms=$(((SECONDS - host_tree_reader_start) * 1000))
-    echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
-    [[ $development_target != host-tree-reader ]] || return 0
-
-    if [[ $development_target == persistent-transaction-writer ]]; then
+    if development_case_selected HostTreeReader; then
         progress_current=$((progress_current + 1))
-        persistent_transaction_writer_start=$SECONDS
-        echo "START native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target"
-        verify_persistent_transaction_writer \
-            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || {
-                echo 'The native database storage development persistent transaction-writer stage failed.' >&2
+        host_tree_reader_start=$SECONDS
+        echo "START native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target"
+        verify_host_tree_reader \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || {
+                echo 'The native database storage development host-tree-reader stage failed.' >&2
                 return 1
             }
-        persistent_transaction_writer_elapsed_ms=$(((SECONDS - persistent_transaction_writer_start) * 1000))
-        echo "PASS  native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$persistent_transaction_writer_elapsed_ms project=$project_checkpoint_persistent_transaction_writer application=$application_checkpoint_persistent_transaction_writer"
-        return 0
+        host_tree_reader_elapsed_ms=$(((SECONDS - host_tree_reader_start) * 1000))
+        echo "PASS  native database storage development step=host-tree-reader item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_reader_elapsed_ms project=$project_checkpoint_host_tree_reader application=$application_checkpoint_host_tree_reader"
     fi
 
-    if [[ $development_target == all ||
-        $development_target == host-tree-delete ]]; then
+    if development_case_selected HostTreeDelete; then
         progress_current=$((progress_current + 1))
         host_tree_delete_start=$SECONDS
         echo "START native database storage development step=host-tree-delete item=$progress_current/$progress_total target=$development_target"
@@ -1888,12 +1841,9 @@ verify_development_host_targets() {
             }
         host_tree_delete_elapsed_ms=$(((SECONDS - host_tree_delete_start) * 1000))
         echo "PASS  native database storage development step=host-tree-delete item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_delete_elapsed_ms project=$project_checkpoint_host_tree_delete application=$application_checkpoint_host_tree_delete"
-        [[ $development_target != host-tree-delete ]] || return 0
     fi
 
-    if [[ $development_target == all ||
-        $development_target == host-tree-scan ||
-        $development_target == tree-scan ]]; then
+    if development_case_selected HostTreeScan; then
         progress_current=$((progress_current + 1))
         host_tree_scan_start=$SECONDS
         echo "START native database storage development step=host-tree-scan item=$progress_current/$progress_total target=$development_target"
@@ -1904,11 +1854,9 @@ verify_development_host_targets() {
             }
         host_tree_scan_elapsed_ms=$(((SECONDS - host_tree_scan_start) * 1000))
         echo "PASS  native database storage development step=host-tree-scan item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_scan_elapsed_ms project=$project_checkpoint_host_tree_scan application=$application_checkpoint_host_tree_scan"
-        [[ $development_target != host-tree-scan &&
-            $development_target != tree-scan ]] || return 0
     fi
 
-    if [[ $development_target != host-tree-writer ]]; then
+    if development_case_selected Engine; then
         progress_current=$((progress_current + 1))
         engine_start=$SECONDS
         echo "START native database storage development step=engine item=$progress_current/$progress_total target=$development_target"
@@ -1919,41 +1867,140 @@ verify_development_host_targets() {
             }
         engine_elapsed_ms=$(((SECONDS - engine_start) * 1000))
         echo "PASS  native database storage development step=engine item=$progress_current/$progress_total target=$development_target elapsed-ms=$engine_elapsed_ms project=$project_checkpoint_engine application=$application_checkpoint_engine"
-        [[ $development_target != engine ]] || return 0
     fi
 
-    progress_current=$((progress_current + 1))
-    host_tree_writer_start=$SECONDS
-    echo "START native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target"
-    verify_host_tree_writer \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || {
-            echo 'The native database storage development host-tree-writer stage failed.' >&2
-            return 1
-        }
-    verify_host_logical_tree_writer \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || {
-            echo 'The native database storage development logical tree-writer stage failed.' >&2
-            return 1
-        }
-    host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
-    echo "PASS  native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_writer_elapsed_ms project=$project_checkpoint_host_tree_writer application=$application_checkpoint_host_tree_writer"
-    [[ $development_target != host-tree-writer ]] || return 0
+    if development_case_selected HostTreeWriter; then
+        progress_current=$((progress_current + 1))
+        host_tree_writer_start=$SECONDS
+        echo "START native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target"
+        verify_host_tree_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || {
+                echo 'The native database storage development host-tree-writer stage failed.' >&2
+                return 1
+            }
+        verify_host_logical_tree_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || {
+                echo 'The native database storage development logical tree-writer stage failed.' >&2
+                return 1
+            }
+        host_tree_writer_elapsed_ms=$(((SECONDS - host_tree_writer_start) * 1000))
+        echo "PASS  native database storage development step=host-tree-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$host_tree_writer_elapsed_ms project=$project_checkpoint_host_tree_writer application=$application_checkpoint_host_tree_writer"
+    fi
 
-    progress_current=$((progress_current + 1))
-    persistent_transaction_writer_start=$SECONDS
-    echo "START native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target"
-    verify_persistent_transaction_writer \
-        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || {
-            echo 'The native database storage development persistent transaction-writer stage failed.' >&2
+    if development_case_selected PersistentTransactionWriter; then
+        progress_current=$((progress_current + 1))
+        persistent_transaction_writer_start=$SECONDS
+        echo "START native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target"
+        verify_persistent_transaction_writer \
+            "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || {
+                echo 'The native database storage development persistent transaction-writer stage failed.' >&2
+                return 1
+            }
+        persistent_transaction_writer_elapsed_ms=$(((SECONDS - persistent_transaction_writer_start) * 1000))
+        echo "PASS  native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$persistent_transaction_writer_elapsed_ms project=$project_checkpoint_persistent_transaction_writer application=$application_checkpoint_persistent_transaction_writer"
+    fi
+}
+
+dispatch_qualification_step() {
+    local label=$1
+    local handler=$2
+    local project_1="$repository_root/$3"
+    local project_2="$repository_root/$4"
+    local project_3="$repository_root/$5"
+    local cases=$6
+    local started=$SECONDS
+    case "$handler" in
+        project)
+            verify_target "$label" "$project_1" || return $?
+            ;;
+        segmented-project)
+            verify_segmented_target "$label" "$project_1" || return $?
+            ;;
+        storage-lowering)
+            verify_storage_lowering "$project_1" || return $?
+            ;;
+        host-storage)
+            verify_host_storage "$project_1" || return $?
+            ;;
+        host-root-writer)
+            verify_host_root_writer "$project_1" || return $?
+            ;;
+        host-root-split-writer)
+            verify_host_root_split_writer "$project_1" "$project_2" "$project_3" || return $?
+            ;;
+        host-local-service)
+            verify_host_local_service "$project_1" "$project_2" || return $?
+            ;;
+        host-tree-reader)
+            verify_host_tree_reader "$project_1" || return $?
+            ;;
+        host-tree-delete)
+            verify_host_tree_delete "$project_1" || return $?
+            ;;
+        host-tree-scan)
+            verify_host_tree_scan "$project_1" || return $?
+            ;;
+        host-engine)
+            verify_host_engine "$project_1" || return $?
+            ;;
+        host-tree-writer)
+            verify_host_tree_writer "$project_1" || return $?
+            ;;
+        host-logical-tree-writer)
+            verify_host_logical_tree_writer "$project_1" "$project_2" || return $?
+            ;;
+        persistent-transaction-writer)
+            verify_persistent_transaction_writer "$project_1" || return $?
+            ;;
+        *)
+            echo "Unknown database qualification handler: $handler." >&2
             return 1
-        }
-    persistent_transaction_writer_elapsed_ms=$(((SECONDS - persistent_transaction_writer_start) * 1000))
-    echo "PASS  native database storage development step=persistent-transaction-writer item=$progress_current/$progress_total target=$development_target elapsed-ms=$persistent_transaction_writer_elapsed_ms project=$project_checkpoint_persistent_transaction_writer application=$application_checkpoint_persistent_transaction_writer"
+            ;;
+    esac
+    echo "PASS  native database qualification step=$label item=$qualification_step/$qualification_steps cases=$cases elapsed-ms=$(((SECONDS - started) * 1000)) handler=$handler"
+}
+
+run_qualification_lane() {
+    local lane=$1
+    local expected_steps
+    local plan_file="$temporary_directory/Qualification-$lane.plan"
+    local executed=0
+    local label handler project_1 project_2 project_3 cases extra
+    if [[ $lane == portable ]]; then
+        expected_steps=$qualification_portable_steps
+    else
+        expected_steps=$qualification_hosted_steps
+    fi
+    node "$script_directory/Plan-Database-Storage-Qualification.mjs" \
+        --rows "$lane" >"$plan_file" || return $?
+    while IFS='|' read -r label handler project_1 project_2 project_3 cases extra; do
+        if [[ -z $label || -z $handler || -z $project_1 ||
+            -z $project_2 || -z $project_3 || -z $cases || -n $extra ]]; then
+            echo "The database qualification $lane row plan is malformed." >&2
+            return 1
+        fi
+        dispatch_qualification_step "$label" "$handler" \
+            "$project_1" "$project_2" "$project_3" "$cases" || return $?
+        executed=$((executed + 1))
+    done <"$plan_file"
+    if ((executed != expected_steps)); then
+        echo "The database qualification $lane plan executed $executed steps, expected $expected_steps." >&2
+        return 1
+    fi
 }
 
 if ((development == 1)); then
     portable_start=$SECONDS
+    verify_development_bundle PublicationRecovery publication-recovery \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj" \
+        Publication,Recovery || exit $?
+    verify_development_target Publication publication \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
+    verify_development_target Recovery recovery \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
+    verify_development_target SingleWriter single-writer \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
     verify_development_target TreeNode tree-node \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" tree-scan || exit $?
     verify_development_target LogicalRecord logical-record \
@@ -1970,6 +2017,9 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" transaction || exit $?
     verify_development_target TransactionPaths transaction-paths \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj" transaction || exit $?
+    verify_development_bundle TransactionLeafGroupsPagesBundle transaction-leaf-groups-pages \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj" \
+        TransactionLeafGroups,TransactionLeafPages || exit $?
     verify_development_target TransactionLeafGroups transaction-leaf-groups \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj" transaction transaction-paths transaction-leaf-partition || exit $?
     verify_development_target TransactionLeafPartition transaction-leaf-partition \
@@ -1994,18 +2044,27 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj" \
         transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
         transaction-leaf-pages transaction-branch-partition transaction-parent-groups || exit $?
+    verify_development_bundle TransactionAncestorGroupsBundle transaction-ancestor-groups \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj" \
+        TransactionAncestorGroups,TransactionAncestorGroupsDepthFour || exit $?
     verify_development_target TransactionAncestorGroups transaction-ancestor-groups \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups.wvproj" \
         transaction transaction-paths transaction-branch-partition || exit $?
     verify_development_target TransactionAncestorGroupsDepthFour transaction-ancestor-groups \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Depth-Four.wvproj" \
         transaction transaction-paths transaction-branch-partition || exit $?
+    verify_development_bundle TransactionAncestorPagesBundle transaction-ancestor-pages \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj" \
+        TransactionAncestorPages,TransactionAncestorPagesIntermediate || exit $?
     verify_development_target TransactionAncestorPages transaction-ancestor-pages \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj" \
         transaction transaction-paths transaction-branch-partition transaction-ancestor-groups || exit $?
     verify_development_target TransactionAncestorPagesIntermediate transaction-ancestor-pages \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj" \
         transaction transaction-paths transaction-branch-partition transaction-ancestor-groups || exit $?
+    verify_development_bundle TransactionRootGrowthBundle transaction-root-growth \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj" \
+        TransactionRootGrowth,TransactionRootGrowthMultiLevel || exit $?
     verify_development_target TransactionRootGrowth transaction-root-growth \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj" \
         transaction transaction-branch-partition || exit $?
@@ -2048,6 +2107,9 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
     verify_development_target BranchSplit branch-split \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
+    verify_development_bundle RootSplitDepthTwoBundle root-split-depth-two \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj" \
+        RootSplit,DepthTwo || exit $?
     verify_development_target RootSplit root-split \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
     verify_development_target DepthTwo depth-two \
@@ -2062,144 +2124,63 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj" host-tree-delete || exit $?
     portable_elapsed_ms=$(((SECONDS - portable_start) * 1000))
     verify_development_host_targets || exit $?
+    if ((progress_current != progress_total)); then
+        echo "The database development plan executed $((progress_current - 1)) steps, expected $selected_executions." >&2
+        exit 1
+    fi
     development_elapsed_ms=$(((SECONDS - development_start) * 1000))
     echo "native database storage development timing target=$development_target tools-ms=$tools_elapsed_ms portable-ms=$portable_elapsed_ms host-storage-ms=$host_storage_elapsed_ms host-root-writer-ms=$host_root_writer_elapsed_ms host-local-service-ms=$host_local_service_elapsed_ms host-tree-reader-ms=$host_tree_reader_elapsed_ms host-tree-delete-ms=$host_tree_delete_elapsed_ms host-tree-scan-ms=$host_tree_scan_elapsed_ms engine-ms=$engine_elapsed_ms host-tree-writer-ms=$host_tree_writer_elapsed_ms persistent-transaction-writer-ms=$persistent_transaction_writer_elapsed_ms total-ms=$development_elapsed_ms"
-    echo "native database storage development status=Passed target=$development_target cases=$selected_cases local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeDelete:$project_checkpoint_host_tree_delete,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer,PersistentTransactionWriter:$project_checkpoint_persistent_transaction_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeDelete:$application_checkpoint_host_tree_delete,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer,PersistentTransactionWriter:$application_checkpoint_persistent_transaction_writer"
+    echo "native database storage development status=Passed target=$development_target cases=$selected_cases executions=$selected_executions local-results=0 tools=$tool_checkpoint project-wvb=$project_wvb_checkpoint portable-projects=$portable_project_checkpoints portable-applications=$portable_application_checkpoints projects=HostStorage:$project_checkpoint_host_storage,HostRootWriter:$project_checkpoint_host_root_writer,HostLocalService:$project_checkpoint_host_local_service,HostTreeReader:$project_checkpoint_host_tree_reader,HostTreeDelete:$project_checkpoint_host_tree_delete,HostTreeScan:$project_checkpoint_host_tree_scan,Engine:$project_checkpoint_engine,HostTreeWriter:$project_checkpoint_host_tree_writer,PersistentTransactionWriter:$project_checkpoint_persistent_transaction_writer applications=HostStorage:$application_checkpoint_host_storage,HostRootWriter:$application_checkpoint_host_root_writer,HostLocalService:$application_checkpoint_host_local_service,HostTreeReader:$application_checkpoint_host_tree_reader,HostTreeDelete:$application_checkpoint_host_tree_delete,HostTreeScan:$application_checkpoint_host_tree_scan,Engine:$application_checkpoint_engine,HostTreeWriter:$application_checkpoint_host_tree_writer,PersistentTransactionWriter:$application_checkpoint_persistent_transaction_writer"
+    exit 0
+fi
+
+if [[ -n $qualification_step_target ]]; then
+    qualification_step_plan="$temporary_directory/Qualification-Focused.plan"
+    WINDVALE_DATABASE_QUALIFICATION_STEP=$qualification_step_target \
+        node "$script_directory/Plan-Database-Storage-Qualification.mjs" \
+        --closure-env >"$qualification_step_plan" || exit $?
+    qualification_steps=$(wc -l <"$qualification_step_plan") || exit $?
+    case "$qualification_steps" in
+        ''|*[!0-9]*|0) echo 'The focused database qualification plan selected no steps.' >&2; exit 1 ;;
+    esac
+    qualification_step_rows=0
+    qualification_step_cases=
+    while IFS='|' read -r label handler project_1 project_2 project_3 cases extra; do
+        if [[ -z $label || -z $handler || -z $project_1 ||
+            -z $project_2 || -z $project_3 || -z $cases || -n $extra ]]; then
+            echo 'The focused database qualification row is malformed.' >&2
+            exit 1
+        fi
+        dispatch_qualification_step "$label" "$handler" \
+            "$project_1" "$project_2" "$project_3" "$cases" || exit $?
+        if [[ $label == "$qualification_step_target" ]]; then
+            qualification_step_cases=$cases
+        fi
+        qualification_step_rows=$((qualification_step_rows + 1))
+    done <"$qualification_step_plan"
+    if ((qualification_step_rows != qualification_steps)) ||
+        [[ -z $qualification_step_cases ]]; then
+        echo "The focused database qualification plan returned an invalid $qualification_step_rows-step closure." >&2
+        exit 1
+    fi
+    qualification_support_steps=$((qualification_steps - 1))
+    echo "native database storage qualification step status=Passed step=$qualification_step_target cases=$qualification_step_cases support-steps=$qualification_support_steps local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated"
     exit 0
 fi
 
 if [[ $qualification_target != hosted ]]; then
-verify_target Nested \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
-verify_target Publication \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj" || exit $?
-verify_target Recovery \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj" || exit $?
-verify_target SingleWriter \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj" || exit $?
-verify_target TreeNode \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj" || exit $?
-verify_target LogicalRecord \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj" || exit $?
-verify_target TypedRow \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj" || exit $?
-verify_target SecondaryIndex \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index.wvproj" || exit $?
-verify_target SecondaryIndexMutations \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Secondary-Index-Mutations.wvproj" || exit $?
-verify_target TransactionMutations \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Mutations.wvproj" || exit $?
-verify_target TransactionLeafRewrite \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" || exit $?
-verify_target TransactionPaths \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj" || exit $?
-verify_target TransactionLeafGroups \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj" || exit $?
-verify_target TransactionLeafPartition \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj" || exit $?
-verify_target TransactionLeafPages \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj" || exit $?
-verify_target TransactionBranchPartition \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj" || exit $?
-verify_target TransactionParentGroups \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" || exit $?
-verify_target TransactionBranchPages \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj" || exit $?
-verify_target TransactionBranchPagesValidation \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj" || exit $?
-verify_target TransactionBranchPagesDepthThree \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj" || exit $?
-verify_target TransactionAncestorGroups \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups.wvproj" || exit $?
-verify_target TransactionAncestorGroupsDepthFour \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Depth-Four.wvproj" || exit $?
-verify_target TransactionAncestorPages \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj" || exit $?
-verify_target TransactionAncestorPagesIntermediate \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj" || exit $?
-verify_target TransactionRootGrowth \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj" || exit $?
-verify_target TransactionRootGrowthMultiLevel \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj" || exit $?
-verify_segmented_target TransactionTreeCompletion \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj" || exit $?
-verify_segmented_target TransactionTreeCompletionRootGrowth \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj" || exit $?
-verify_target TransactionCommitCapacity \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj" || exit $?
-verify_segmented_target TransactionCommit \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Commit.wvproj" || exit $?
-verify_target QueryIr \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Query-Ir.wvproj" || exit $?
-verify_target SqlLowerer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Sql-Lowerer.wvproj" || exit $?
-verify_target JsonValue \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Value.wvproj" || exit $?
-verify_target JsonProtocol \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Json-Protocol.wvproj" || exit $?
-verify_target LocalService \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Local-Database-Service.wvproj" || exit $?
-verify_target CollectionCatalog \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Collection-Catalog.wvproj" || exit $?
-verify_target Bootstrap \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Bootstrap.wvproj" || exit $?
-verify_target SingleLeaf \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj" || exit $?
-verify_target BranchSplit \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj" || exit $?
-verify_target RootSplit \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj" || exit $?
-verify_target DepthTwo \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj" || exit $?
-verify_target DepthThree \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj" || exit $?
-verify_target DepthThreeUpsert \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj" || exit $?
-verify_target TreePathUpsert \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj" || exit $?
-verify_target TreePathDelete \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Tree-Path-Delete.wvproj" || exit $?
-verify_target ProviderTable \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Capability-Provider-Table.wvproj" || exit $?
-verify_target ProviderCall \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Provider-Call.wvproj" || exit $?
-verify_target Context9 \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
-verify_storage_lowering \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+    run_qualification_lane portable || exit $?
 fi
 if [[ $qualification_target == portable ]]; then
-    echo 'native database storage portable status=Passed cases=46 local-results=0 cross-host-images=Verified'
+    echo "native database storage portable status=Passed cases=$qualification_portable_cases local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated"
     exit 0
 fi
-verify_host_storage \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
-verify_host_root_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Writer.wvproj" || exit $?
-verify_host_root_split_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Fill.wvproj" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-verify_host_local_service \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Put.wvproj" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Local-Get.wvproj" || exit $?
-verify_host_tree_reader \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj" || exit $?
-verify_host_tree_delete \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Delete.wvproj" || exit $?
-verify_host_tree_scan \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Scan.wvproj" || exit $?
-verify_host_engine \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj" || exit $?
-verify_host_tree_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj" || exit $?
-verify_host_logical_tree_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
-verify_persistent_transaction_writer \
-    "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || exit $?
+if [[ $qualification_target != portable ]]; then
+    run_qualification_lane hosted || exit $?
+fi
 if [[ $qualification_target == hosted ]]; then
-    echo 'native database storage hosted status=Passed cases=11 local-results=0 cross-host-images=Verified'
+    echo "native database storage hosted status=Passed cases=$qualification_hosted_cases local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated"
     exit 0
 fi
-echo 'native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified'
+echo "native database storage status=Passed cases=$qualification_cases local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated"
+exit 0

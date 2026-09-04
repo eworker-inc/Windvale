@@ -16,7 +16,7 @@ import {
 import { constants as Fileˉconstants, createReadStream } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { promisify } from 'node:util';
+import { promisify, TextDecoder } from 'node:util';
 import {
     arch,
     homedir,
@@ -44,7 +44,15 @@ const Executeˉfile = promisify(execFile);
 const CACHE_FAMILY = 'owner-result-v1';
 const STATE_FORMAT = 'windvale-verification-owner-state-1';
 const RESULT_FORMAT = 'windvale-verification-owner-result-1';
+const STATE_RECORD_FORMAT = 'windvale-verification-owner-state-record-1';
+const CANDIDATE_FORMAT = 'windvale-verification-owner-candidates-1';
+const CHANGED_PATH_FORMAT = 'windvale-verification-owner-changed-paths-1';
+const STATE_RECORD_NAME = 'State.json';
+const MAX_STATE_RECORD_BYTES = 4 * 1024;
+const MAX_CHANGED_PATHS = 65_536;
+const MAX_CACHE_FAMILY_ENTRIES = 2_048;
 const MAX_STATE_DIRECTORIES = 16;
+const MAX_COMPATIBLE_CANDIDATES = 15;
 const MAX_RESULTS_PER_STATE = 512;
 const MAX_RESULT_BYTES = 16 * 1024;
 const MAX_STATE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -54,6 +62,7 @@ const GIT_TREE = /^[0-9a-f]{40}(?:[0-9a-f]{24})?$/;
 const OWNER_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const RESULT_NAME = /^[0-9a-f]{64}\.json$/;
 const TEMPORARY_NAME = /^\.new-[0-9a-f]{64}-[0-9]+-[0-9a-f-]{36}$/;
+const STATE_TEMPORARY_NAME = /^\.state-new-[0-9]+-[0-9a-f-]{36}$/;
 const WINDOWS = platform() === 'win32';
 
 let Hostˉidentityˉpromise;
@@ -449,6 +458,11 @@ async function Pruneˉstateˉcontents(Stateˉdirectory, Now) {
             if (Now - Metadata.mtimeMs > MAX_TEMPORARY_AGE_MS) {
                 await rm(Path, { force: true });
             }
+        } else if (Entry.isFile() && STATE_TEMPORARY_NAME.test(Entry.name)) {
+            const Metadata = await stat(Path);
+            if (Now - Metadata.mtimeMs > MAX_TEMPORARY_AGE_MS) {
+                await rm(Path, { force: true });
+            }
         }
     }
     Results.sort((Left, Right) => Right.Time - Left.Time);
@@ -504,6 +518,85 @@ function Resultˉpath(Root, Stateˉkey, Owner, Action) {
     };
 }
 
+function Stateˉrecordˉpath(Stateˉdirectory) {
+    return join(Stateˉdirectory, STATE_RECORD_NAME);
+}
+
+async function Readˉstateˉrecord(Stateˉdirectory) {
+    const Path = Stateˉrecordˉpath(Stateˉdirectory);
+    let Metadata;
+    try {
+        Metadata = await lstat(Path);
+    } catch (Errorˉvalue) {
+        if (Errorˉvalue?.code === 'ENOENT') return null;
+        throw Errorˉvalue;
+    }
+    if (!Metadata.isFile() || Metadata.isSymbolicLink() ||
+        Metadata.size < 1 || Metadata.size > MAX_STATE_RECORD_BYTES) {
+        return null;
+    }
+    let Record;
+    try {
+        Record = JSON.parse(await readFile(Path, 'utf8'));
+    } catch {
+        return null;
+    }
+    if (Record === null || typeof Record !== 'object' ||
+        Object.keys(Record).sort().join(',') !==
+            'format,hostKey,repositoryKey,sourceTree,stateKey' ||
+        Record.format !== STATE_RECORD_FORMAT ||
+        !HEX_DIGEST.test(Record.hostKey) ||
+        !HEX_DIGEST.test(Record.repositoryKey) ||
+        !GIT_TREE.test(Record.sourceTree) ||
+        !HEX_DIGEST.test(Record.stateKey)) {
+        return null;
+    }
+    return Record;
+}
+
+async function Ensureˉstateˉrecord(Stateˉdirectory, Expected) {
+    const Path = Stateˉrecordˉpath(Stateˉdirectory);
+    const Payload = Buffer.from(`${JSON.stringify(Expected)}\n`, 'utf8');
+    if (Payload.length > MAX_STATE_RECORD_BYTES) {
+        throw new Error('Verification result-cache state record exceeds its bound.');
+    }
+    const Existing = await Readˉstateˉrecord(Stateˉdirectory);
+    if (Existing !== null) {
+        if (JSON.stringify(Existing) !== JSON.stringify(Expected)) {
+            throw new Error('Verification result-cache state record differs.');
+        }
+        return;
+    }
+    const Temporary = join(
+        Stateˉdirectory,
+        `.state-new-${process.pid}-${randomUUID()}`,
+    );
+    let File;
+    try {
+        File = await open(Temporary, 'wx', 0o600);
+        await File.writeFile(Payload);
+        await File.sync();
+        await File.close();
+        File = undefined;
+        try {
+            await rename(Temporary, Path);
+        } catch (Errorˉvalue) {
+            if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES'].includes(
+                Errorˉvalue?.code
+            )) {
+                throw Errorˉvalue;
+            }
+        }
+    } finally {
+        await File?.close();
+        await rm(Temporary, { force: true });
+    }
+    const Actual = await Readˉstateˉrecord(Stateˉdirectory);
+    if (Actual === null || JSON.stringify(Actual) !== JSON.stringify(Expected)) {
+        throw new Error('Verification result-cache state record differs.');
+    }
+}
+
 export async function Prepareˉverificationˉresultˉcache(
     Repositoryˉinput,
     Cacheˉrootˉinput,
@@ -517,13 +610,22 @@ export async function Prepareˉverificationˉresultˉcache(
     if (Top !== Repository) {
         throw new Error('Verification cache repository root is not the Git root.');
     }
+    const Sentinelˉbefore = await Measureˉsourceˉsentinel(Repository);
     const Sourceˉtree = await Measureˉsourceˉtree(Repository);
     const Sourceˉsentinel = await Measureˉsourceˉsentinel(Repository);
+    if (Sourceˉsentinel !== Sentinelˉbefore) {
+        throw new Error(
+            'Repository inputs changed while the verification state was measured.'
+        );
+    }
+    const Hostˉidentity = await Measureˉhostˉidentity();
+    const Hostˉkey = Digest(JSON.stringify(Hostˉidentity));
+    const Repositoryˉkey = Digest(Repository);
     const Stateˉdescriptor = {
         format: STATE_FORMAT,
         repository: Repository,
         sourceTree: Sourceˉtree,
-        host: await Measureˉhostˉidentity(),
+        host: Hostˉidentity,
     };
     const Stateˉkey = Digest(JSON.stringify(Stateˉdescriptor));
     const Rootˉinput = resolve(Cacheˉrootˉinput ?? Defaultˉcacheˉroot());
@@ -539,6 +641,13 @@ export async function Prepareˉverificationˉresultˉcache(
     const Stateˉdirectory = await Ensureˉordinaryˉdirectory(
         join(Family, Stateˉkey)
     );
+    await Ensureˉstateˉrecord(Stateˉdirectory, {
+        format: STATE_RECORD_FORMAT,
+        stateKey: Stateˉkey,
+        sourceTree: Sourceˉtree,
+        repositoryKey: Repositoryˉkey,
+        hostKey: Hostˉkey,
+    });
     const Now = new Date();
     await utimes(Stateˉdirectory, Now, Now);
     return {
@@ -547,6 +656,8 @@ export async function Prepareˉverificationˉresultˉcache(
         stateKey: Stateˉkey,
         sourceTree: Sourceˉtree,
         sourceSentinel: Sourceˉsentinel,
+        repositoryKey: Repositoryˉkey,
+        hostKey: Hostˉkey,
     };
 }
 
@@ -596,6 +707,119 @@ export async function Probeˉverificationˉresult(
         return false;
     }
     return true;
+}
+
+export async function Listˉverificationˉresultˉcandidates(
+    Root,
+    Currentˉstateˉkey,
+    Repositoryˉkey,
+    Hostˉkey,
+    Owner,
+    Action,
+) {
+    Requireˉdigest(Currentˉstateˉkey, 'Current state key');
+    Requireˉdigest(Repositoryˉkey, 'Repository key');
+    Requireˉdigest(Hostˉkey, 'Host key');
+    Requireˉowner(Owner);
+    Requireˉaction(Action);
+    const Cacheˉroot = await Ensureˉordinaryˉdirectory(resolve(Root));
+    const Family = await Ensureˉordinaryˉdirectory(
+        join(Cacheˉroot, CACHE_FAMILY),
+    );
+    const Entries = await readdir(Family, { withFileTypes: true });
+    if (Entries.length > MAX_CACHE_FAMILY_ENTRIES) {
+        throw new Error('Verification result-cache family exceeds its entry bound.');
+    }
+    const States = [];
+    for (const Entry of Entries) {
+        if (Entry.name === Currentˉstateˉkey ||
+            !HEX_DIGEST.test(Entry.name) || Entry.isSymbolicLink() ||
+            !Entry.isDirectory()) {
+            continue;
+        }
+        const Stateˉdirectory = join(Family, Entry.name);
+        const Record = await Readˉstateˉrecord(Stateˉdirectory);
+        if (Record === null || Record.stateKey !== Entry.name ||
+            Record.repositoryKey !== Repositoryˉkey ||
+            Record.hostKey !== Hostˉkey ||
+            !(await Probeˉverificationˉresult(
+                Root, Entry.name, Owner, Action
+            ))) {
+            continue;
+        }
+        const Metadata = await stat(Stateˉdirectory);
+        States.push({
+            stateKey: Record.stateKey,
+            sourceTree: Record.sourceTree,
+            modifiedMilliseconds: Math.trunc(Metadata.mtimeMs),
+        });
+    }
+    States.sort((Left, Right) =>
+        Right.modifiedMilliseconds - Left.modifiedMilliseconds ||
+        Left.stateKey.localeCompare(Right.stateKey));
+    return {
+        format: CANDIDATE_FORMAT,
+        candidates: States.slice(0, MAX_COMPATIBLE_CANDIDATES),
+    };
+}
+
+export async function Getˉverificationˉchangedˉpaths(
+    Repositoryˉinput,
+    Fromˉtree,
+    Toˉtree,
+) {
+    if (!GIT_TREE.test(Fromˉtree) || !GIT_TREE.test(Toˉtree)) {
+        throw new Error('Verification compatibility requires two Git tree identities.');
+    }
+    const Repository = await realpath(resolve(Repositoryˉinput));
+    const Top = await realpath(await Runˉgit(
+        Repository,
+        ['rev-parse', '--show-toplevel'],
+    ));
+    if (Top !== Repository) {
+        throw new Error('Verification compatibility repository root is not the Git root.');
+    }
+    const Output = await Runˉgitˉbytes(Repository, [
+        'diff',
+        '--name-only',
+        '-z',
+        '--no-renames',
+        '--diff-filter=ACDMRTUXB',
+        Fromˉtree,
+        Toˉtree,
+        '--',
+    ]);
+    const Rawˉpaths = Splitˉnulˉpaths(Output);
+    if (Rawˉpaths.length > MAX_CHANGED_PATHS) {
+        throw new Error('Verification compatibility changed-path count exceeds its bound.');
+    }
+    const Decoder = new TextDecoder('utf-8', { fatal: true });
+    const Paths = Rawˉpaths.map(Raw => {
+        const Path = Decoder.decode(Raw);
+        if (Path.length === 0 || Path.includes('\\') || Path.startsWith('/') ||
+            Path.split('/').some(Part =>
+                Part.length === 0 || Part === '.' || Part === '..')) {
+            throw new Error('Git returned an invalid verification changed path.');
+        }
+        return Path;
+    });
+    return { format: CHANGED_PATH_FORMAT, paths: Paths };
+}
+
+export async function Confirmˉverificationˉsourceˉstate(
+    Repositoryˉinput,
+    Sourceˉsentinel,
+) {
+    Requireˉdigest(Sourceˉsentinel, 'Source sentinel');
+    const Repository = await realpath(resolve(Repositoryˉinput));
+    const Top = await realpath(await Runˉgit(
+        Repository,
+        ['rev-parse', '--show-toplevel'],
+    ));
+    if (Top !== Repository) {
+        throw new Error('Verification confirmation repository root is not the Git root.');
+    }
+    return (await Measureˉsourceˉsentinel(Repository)) === Sourceˉsentinel;
 }
 
 export async function Publishˉverificationˉresult(
@@ -676,6 +900,10 @@ function Failˉusage() {
         'Usage: node Tools/Native/Verification-Owner-Result-Cache.mjs ' +
         'prepare <repository-root> [cache-root] | ' +
         'probe <cache-root> <state-key> <owner> <action> | ' +
+        'candidates <cache-root> <current-state-key> <repository-key> ' +
+        '<host-key> <owner> <action> | ' +
+        'changes <repository-root> <from-tree> <to-tree> | ' +
+        'confirm <repository-root> <source-sentinel> | ' +
         'publish <repository-root> <cache-root> <state-key> ' +
         '<source-tree> <source-sentinel> <owner> <action>\n'
     );
@@ -700,6 +928,32 @@ async function Main() {
                 process.argv[5],
                 process.argv[6],
             ) ? 'Hit' : 'Miss') + '\n'
+        );
+    } else if (Operation === 'candidates' && process.argv.length === 9) {
+        process.stdout.write(JSON.stringify(
+            await Listˉverificationˉresultˉcandidates(
+                process.argv[3],
+                process.argv[4],
+                process.argv[5],
+                process.argv[6],
+                process.argv[7],
+                process.argv[8],
+            )
+        ) + '\n');
+    } else if (Operation === 'changes' && process.argv.length === 6) {
+        process.stdout.write(JSON.stringify(
+            await Getˉverificationˉchangedˉpaths(
+                process.argv[3],
+                process.argv[4],
+                process.argv[5],
+            )
+        ) + '\n');
+    } else if (Operation === 'confirm' && process.argv.length === 5) {
+        process.stdout.write(
+            (await Confirmˉverificationˉsourceˉstate(
+                process.argv[3],
+                process.argv[4],
+            ) ? 'Unchanged' : 'Changed') + '\n'
         );
     } else if (Operation === 'publish' && process.argv.length === 10) {
         process.stdout.write(

@@ -19,6 +19,8 @@ Structured outcomes and duration policy are recorded by
 [Decision 0926](../Documents/Decisions/0926-Classify-And-Bound-Verification-Owner-Outcomes.md).
 Bounded timing calibration is recorded by
 [Decision 0927](../Documents/Decisions/0927-Calibrate-Verification-Durations-From-Bounded-History.md).
+Complete-work inventory and evidence-graph ownership are recorded by
+[Decision 0947](../Documents/Decisions/0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md).
 
 ## Registry grammar and validation
 
@@ -54,6 +56,35 @@ measurements used to recalibrate them.
 The manifest is the canonical detailed inventory. Documentation must not copy
 its entire evolving table because duplicated inventories become stale.
 
+## Qualification work planning
+
+`Tools/Verify/Plan-Qualification-Work.mjs` validates the canonical owner and
+duration registries plus both host commands for every owner. When
+`Tools/Native/<command-stem>.mjs` exists, the planner also reads that ordinary
+same-named orchestration module. It reports declared owner work, shard critical
+paths, long-owner concentration, statically visible project overlap,
+registered-owner invocation edges, and selected common pipeline-helper call
+sites. The machine record retains the statically resolved project paths and
+per-helper counts for every owner. `--json` emits that versioned record;
+`--owners` emits one canonical owner row per registry entry. The planner never
+launches an owner.
+
+The four qualification shards target the arithmetic ideal of the current
+declared expected work. The planner reports the minimum and critical-path shard,
+their spread, and parallel-efficiency basis points. The static contract binds
+each shard summary and asks `Invoke-WindvaleTests.ps1 -Shard <n> -PlanOnly` for
+the same selection. Shard identity is scheduling metadata, not semantic
+ownership; reassigning an owner changes neither its cases nor its evidence.
+
+These static references locate work to measure; they do not prove two
+constructions have identical inputs and do not authorize deleting a test. An
+owner is a scheduling and diagnostic boundary, not necessarily a unique
+construction boundary. Merging or removing an owner or case requires an
+explicit mapping from each old failure signal to a retained claim. Immutable
+construction and admission may be shared only under complete input and producer
+identity. Mutable execution, malformed-input handling, recovery, revocation,
+race, and hostile-input claims retain fresh bounded state.
+
 ## Invocation modes
 
 `Tools/Verify/Invoke-WindvaleTests.ps1` is the cross-host orchestration entry
@@ -84,20 +115,28 @@ invalidates that owner and owners whose declared inputs changed; it does not
 invalidate unrelated passing owners.
 
 The changed-file front door persists successful development-owner results and
-resumes them automatically. Version 1 is deliberately conservative: its state
-key covers the complete non-ignored Git source tree rather than trying to infer
-a smaller dependency set for each owner. Tracked working-tree changes and
-untracked non-ignored files therefore change the key, while a commit or push
-that leaves the source tree byte-identical does not. Any source-tree change
-invalidates every cached owner result in this first version.
+resumes them automatically. Its exact state key covers the complete non-ignored
+Git source tree. Tracked working-tree changes and untracked non-ignored files
+therefore change that key, while a commit or push that leaves the source bytes
+identical does not.
+
+After an exact miss, a bounded compatible-state lookup may reuse an earlier
+receipt from the same repository and host identity only when the current native
+planner accepts every changed path with no gap and does not select that owner.
+The version-2 owner action binds the exact registry row, and global changes to
+the registry, planners, dispatcher, coordinator, cache, or process-stream proof
+disable cross-state reuse. The current source sentinel is rechecked before the
+compatible result is published into the exact current state. Any uncertainty
+runs the owner normally.
 
 The state key also covers the checkout path, operating-system release,
 architecture, host and boot identity, relevant process environment, Node
 version, and the paths, sizes, and SHA-256 identities of the fixed host-tool set
 used by native owners. Each result key additionally covers the exact suite,
 host command, arguments, verification scope, and result-cache format. The
-tracked diff and untracked-file content sentinel is measured again after a
-passing owner; publication is skipped if it changed while the owner ran. This
+tracked diff and untracked-file content sentinel brackets tree preparation, is
+reconfirmed before exact reuse, and is measured again after a passing owner;
+publication is skipped if it changed while the owner ran. This
 keeps the per-owner confirmation proportional to current edits rather than
 rebuilding the complete source tree after every pass.
 
@@ -113,6 +152,10 @@ dependency.
 
 Pass records are validated ordinary files of at most 16 KiB and are published
 atomically from a same-directory temporary file. Corrupt records become misses.
+Each retained state has one ordinary state record of at most 4 KiB binding its
+tree, repository, host, and state identities; missing or malformed state records
+are never compatible candidates, and invalid current-state metadata disables
+cache use for that development run.
 The publisher removes only its exact temporary file, including after a
 publication race or failure. Retention is bounded to 16 source states and 512
 records per state; source states older than seven days and recognized temporary

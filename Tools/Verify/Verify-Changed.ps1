@@ -17,6 +17,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$LOCAL_DEVELOPMENT_BUDGET_SECONDS = 600
 $VerificationStartedUtc = [DateTime]::UtcNow
 $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Planner = Join-Path $PSScriptRoot 'Get-Verification-Plan.ps1'
@@ -31,6 +32,19 @@ $ChangeClassificationVerifier = Join-Path $PSScriptRoot 'Verify-Change-Classific
 $EditorVerifier = Join-Path (Split-Path -Parent $PSScriptRoot) 'Editors/Verify-Windvale-Editor.ps1'
 $ResultCacheTool = Join-Path (
     Split-Path -Parent $PSScriptRoot) 'Native/Verification-Owner-Result-Cache.mjs'
+$VerificationOwnerRegistry = Join-Path $RepositoryRoot `
+    'Tests/Native/Verification-Owners.txt'
+$CompatibleResultCacheBarrierPaths = @(
+    'Tests/Native/Verification-Owners.txt',
+    'Tests/Native/Verification-Duration-Profiles.txt',
+    'Tools/Native/Stream-Verification-Owner.mjs',
+    'Tools/Native/Verification-Owner-Result-Cache.mjs',
+    'Tools/Native/Verification-Owner-Stream-Path.mjs',
+    'Tools/Verify/Get-Native-Changed-Verification-Plan.ps1',
+    'Tools/Verify/Get-Verification-Plan.ps1',
+    'Tools/Verify/Invoke-WindvaleTests.ps1',
+    'Tools/Verify/Verify-Changed.ps1'
+)
 
 function Get-VerificationHostName {
     if ($env:RUNNER_OS -in @('Windows', 'Linux', 'macOS')) {
@@ -64,6 +78,18 @@ function Invoke-VerificationResultCache {
         throw "Verification result cache command failed: $Text"
     }
     return $Text.Trim()
+}
+
+function Get-Sha256Text {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Value
+    )
+
+    $Bytes = [Text.UTF8Encoding]::new($false).GetBytes($Value)
+    return [Convert]::ToHexString(
+        [Security.Cryptography.SHA256]::HashData($Bytes)
+    ).ToLowerInvariant()
 }
 
 if ($PSBoundParameters.ContainsKey('ChangedPath')) {
@@ -238,7 +264,30 @@ if ($Plan.Scope -eq 'website') {
 
     $IsWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
     $Coordinator = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
+    $OwnerContractHashes = @{}
+    if (@($NativePlan.Suites).Count -ne 0) {
+        $OwnerLines = [IO.File]::ReadAllLines($VerificationOwnerRegistry)
+        if ($OwnerLines.Count -lt 2 -or
+            $OwnerLines[0] -cne 'windvale-native-verification-owners 2') {
+            throw 'The verification-owner registry header differs.'
+        }
+        foreach ($OwnerLine in @($OwnerLines | Select-Object -Skip 1)) {
+            $OwnerFields = $OwnerLine -split '\|', 6
+            if ($OwnerFields.Count -ne 6 -or
+                [string]::IsNullOrWhiteSpace($OwnerFields[0]) -or
+                $OwnerContractHashes.ContainsKey($OwnerFields[0])) {
+                throw "The verification-owner registry row is malformed: $OwnerLine"
+            }
+            $OwnerContractHashes[$OwnerFields[0]] = Get-Sha256Text $OwnerLine
+        }
+        foreach ($SelectedOwner in @($NativePlan.Suites)) {
+            if (!$OwnerContractHashes.ContainsKey($SelectedOwner)) {
+                throw "The selected native owner is not registered: $SelectedOwner"
+            }
+        }
+    }
     $ResultCacheState = $null
+    $CompatibleResultPlanCache = @{}
     if ($Plan.Scope -eq 'development' -and !$NoResultCache -and
         @($NativePlan.Suites).Count -ne 0) {
         try {
@@ -252,7 +301,9 @@ if ($Plan.Scope -eq 'website') {
             if ($ResultCacheState.format -ne 'windvale-verification-owner-state-1' -or
                 $ResultCacheState.stateKey -notmatch '^[0-9a-f]{64}$' -or
                 $ResultCacheState.sourceTree -notmatch '^[0-9a-f]{40}(?:[0-9a-f]{24})?$' -or
-                $ResultCacheState.sourceSentinel -notmatch '^[0-9a-f]{64}$') {
+                $ResultCacheState.sourceSentinel -notmatch '^[0-9a-f]{64}$' -or
+                $ResultCacheState.repositoryKey -notmatch '^[0-9a-f]{64}$' -or
+                $ResultCacheState.hostKey -notmatch '^[0-9a-f]{64}$') {
                 throw 'Verification result cache returned an invalid state record.'
             }
             Write-Host (
@@ -320,10 +371,26 @@ if ($Plan.Scope -eq 'website') {
                     Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.sh'
                 }
                 $DatabaseTarget = $NativePlan.DatabaseStorageDevelopmentTarget
-                $OwnerArguments = @('--development-target', $DatabaseTarget)
+                $DatabaseCases = $NativePlan.DatabaseStorageDevelopmentCaseCount
+                $DatabaseExecutions =
+                    $NativePlan.DatabaseStorageDevelopmentExecutionCount
+                $DatabaseBundles =
+                    $NativePlan.DatabaseStorageDevelopmentBundleCount
+                $DatabasePortableCases =
+                    $NativePlan.DatabaseStorageDevelopmentPortableCaseCount
+                $DatabaseHostedCases =
+                    $NativePlan.DatabaseStorageDevelopmentHostedCaseCount
+                $DatabaseExpectedSeconds =
+                    $NativePlan.DatabaseStorageDevelopmentExpectedSeconds
+                $OwnerArguments = @('--development-target-set', $DatabaseTarget)
                 $OwnerMessage = (
                     'Native owner database-storage mode=development-checkpoint ' +
-                    "target=$DatabaseTarget")
+                    "target=$DatabaseTarget cases=$DatabaseCases " +
+                    "executions=$DatabaseExecutions " +
+                    "bundles=$DatabaseBundles " +
+                    "portable-cases=$DatabasePortableCases " +
+                    "hosted-cases=$DatabaseHostedCases " +
+                    "expected-seconds=$DatabaseExpectedSeconds")
             } elseif ($Suite -eq 'libraries' -and
                 $NativePlan.UseLibraryDevelopment) {
                 $OwnerCommand = if ($IsWindowsHost) {
@@ -362,13 +429,15 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerCommand
             ).Replace('\', '/')
             $OwnerAction = [ordered]@{
-                format = 'windvale-verification-owner-action-1'
+                format = 'windvale-verification-owner-action-2'
                 suite = $Suite
                 command = $RelativeOwnerCommand
                 arguments = @($OwnerArguments)
                 scope = $Plan.Scope
+                ownerContractSha256 = $OwnerContractHashes[$Suite]
             } | ConvertTo-Json -Compress
 
+            $ResultCacheReused = $false
             if ($null -ne $ResultCacheState) {
                 try {
                     $Probe = Invoke-VerificationResultCache -CacheArgument @(
@@ -379,15 +448,142 @@ if ($Plan.Scope -eq 'website') {
                         $OwnerAction
                     )
                     if ($Probe -eq 'Hit') {
-                        $TimingStatus = 'reused'
-                        Write-Host (
-                            "PASS  native owner $Suite result=Reused " +
-                            'source-state=Exact'
-                        )
-                        continue
-                    }
-                    if ($Probe -ne 'Miss') {
+                        $Confirmation = Invoke-VerificationResultCache `
+                            -CacheArgument @(
+                                'confirm',
+                                $RepositoryRoot,
+                                $ResultCacheState.sourceSentinel
+                            )
+                        if ($Confirmation -eq 'Unchanged') {
+                            $TimingStatus = 'reused'
+                            Write-Host (
+                                "PASS  native owner $Suite result=Reused " +
+                                'source-state=Exact'
+                            )
+                            $ResultCacheReused = $true
+                        } elseif ($Confirmation -eq 'Changed') {
+                            Write-Warning (
+                                'Repository inputs changed before exact result ' +
+                                'reuse; the owner will run.')
+                            $ResultCacheState = $null
+                        } else {
+                            throw "Unexpected source-state confirmation '$Confirmation'."
+                        }
+                    } elseif ($Probe -ne 'Miss') {
                         throw "Unexpected cache probe result '$Probe'."
+                    } else {
+                        $CandidateRecord = (
+                            Invoke-VerificationResultCache -CacheArgument @(
+                                'candidates',
+                                $ResultCacheState.root,
+                                $ResultCacheState.stateKey,
+                                $ResultCacheState.repositoryKey,
+                                $ResultCacheState.hostKey,
+                                $Suite,
+                                $OwnerAction
+                            )
+                        ) | ConvertFrom-Json
+                        $Candidates = @($CandidateRecord.candidates)
+                        if ($CandidateRecord.format -ne
+                                'windvale-verification-owner-candidates-1' -or
+                            $Candidates.Count -gt 15) {
+                            throw 'Verification result cache returned invalid candidates.'
+                        }
+                        foreach ($Candidate in $Candidates) {
+                            if ($Candidate.stateKey -notmatch '^[0-9a-f]{64}$' -or
+                                $Candidate.sourceTree -notmatch
+                                    '^[0-9a-f]{40}(?:[0-9a-f]{24})?$') {
+                                throw 'Verification result cache returned an invalid candidate.'
+                            }
+                            $Compatibility = $CompatibleResultPlanCache[$Candidate.sourceTree]
+                            if ($null -eq $Compatibility) {
+                                $ChangeRecord = (
+                                    Invoke-VerificationResultCache -CacheArgument @(
+                                        'changes',
+                                        $RepositoryRoot,
+                                        $Candidate.sourceTree,
+                                        $ResultCacheState.sourceTree
+                                    )
+                                ) | ConvertFrom-Json
+                                $CandidatePaths = @($ChangeRecord.paths)
+                                if ($ChangeRecord.format -ne
+                                        'windvale-verification-owner-changed-paths-1' -or
+                                    $CandidatePaths.Count -gt 65536 -or
+                                    @($CandidatePaths | Where-Object {
+                                        $_ -isnot [string] -or
+                                        [string]::IsNullOrWhiteSpace($_)
+                                    }).Count -ne 0) {
+                                    throw 'Verification compatibility paths are invalid.'
+                                }
+                                $Barrier = @($CandidatePaths | Where-Object {
+                                    $CompatibleResultCacheBarrierPaths -ccontains $_
+                                }).Count -ne 0
+                                $DeltaPlan = if ($Barrier -or
+                                    $CandidatePaths.Count -eq 0) {
+                                    $null
+                                } else {
+                                    & $NativePlanner `
+                                        -ChangedPath $CandidatePaths `
+                                        -PassThru `
+                                        -Quiet
+                                }
+                                $Compatibility = [pscustomobject]@{
+                                    PathCount = $CandidatePaths.Count
+                                    Barrier = $Barrier
+                                    Plan = $DeltaPlan
+                                }
+                                $CompatibleResultPlanCache[$Candidate.sourceTree] =
+                                    $Compatibility
+                            }
+                            if ($Compatibility.Barrier -or
+                                $null -eq $Compatibility.Plan -or
+                                @($Compatibility.Plan.Gaps).Count -ne 0 -or
+                                @($Compatibility.Plan.Suites) -contains $Suite) {
+                                continue
+                            }
+                            $CandidateProbe = Invoke-VerificationResultCache `
+                                -CacheArgument @(
+                                    'probe',
+                                    $ResultCacheState.root,
+                                    $Candidate.stateKey,
+                                    $Suite,
+                                    $OwnerAction
+                                )
+                            if ($CandidateProbe -ne 'Hit') {
+                                continue
+                            }
+                            $Promotion = Invoke-VerificationResultCache `
+                                -CacheArgument @(
+                                    'publish',
+                                    $RepositoryRoot,
+                                    $ResultCacheState.root,
+                                    $ResultCacheState.stateKey,
+                                    $ResultCacheState.sourceTree,
+                                    $ResultCacheState.sourceSentinel,
+                                    $Suite,
+                                    $OwnerAction
+                                )
+                            if ($Promotion -eq 'StateChanged') {
+                                Write-Warning (
+                                    'Repository inputs changed during compatible ' +
+                                    'result reuse; the owner will run.')
+                                $ResultCacheState = $null
+                                break
+                            }
+                            if ($Promotion -ne 'Stored') {
+                                throw "Unexpected compatible result publication '$Promotion'."
+                            }
+                            $TimingStatus = 'reused'
+                            $ResultCacheReused = $true
+                            Write-Host (
+                                "PASS  native owner $Suite result=Reused " +
+                                'source-state=Compatible ' +
+                                "changed-paths=$($Compatibility.PathCount) " +
+                                'from-state=' +
+                                $Candidate.stateKey.Substring(0, 12)
+                            )
+                            break
+                        }
                     }
                 } catch {
                     Write-Warning (
@@ -397,9 +593,30 @@ if ($Plan.Scope -eq 'website') {
                     $ResultCacheState = $null
                 }
             }
+            if ($ResultCacheReused) {
+                continue
+            }
 
             if ($null -ne $OwnerMessage) {
                 Write-Host $OwnerMessage
+            }
+            if ($Suite -eq 'database-storage' -and
+                $NativePlan.UseDatabaseStorageDevelopment -and
+                $NativePlan.DatabaseStorageDevelopmentExpectedSeconds -gt
+                    $LOCAL_DEVELOPMENT_BUDGET_SECONDS -and
+                !$AllowLongRun) {
+                $BudgetMessage = (
+                    'The focused database development plan selects ' +
+                    "$($NativePlan.DatabaseStorageDevelopmentCaseCount) cases " +
+                    "in $($NativePlan.DatabaseStorageDevelopmentExecutionCount) executions " +
+                    'and expects ' +
+                    "$($NativePlan.DatabaseStorageDevelopmentExpectedSeconds) " +
+                    'seconds, which exceeds the ' +
+                    "$LOCAL_DEVELOPMENT_BUDGET_SECONDS-second local budget. " +
+                    'Inspect -PlanOnly, narrow the changed-path set, or pass ' +
+                    '-AllowLongRun only for an approved named longer run.')
+                Write-Warning $BudgetMessage
+                throw $BudgetMessage
             }
             if ($OwnerCommand -ceq $Coordinator) {
                 & pwsh -NoProfile -File $OwnerCommand @OwnerArguments

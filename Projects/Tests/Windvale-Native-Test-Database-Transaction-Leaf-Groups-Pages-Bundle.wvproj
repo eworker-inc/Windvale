@@ -1,0 +1,16 @@
+windvale-project 2
+root "Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Pages-Bundle-Self-Test.wv"
+source "Foundation/Byte-Construction.wv"
+source "Foundation/Sha256-Compression.wv"
+source "Foundation/Sha256-Streaming.wv"
+source "Libraries/Database/Durable-Page.wv"
+source "Libraries/Database/Durable-Superblock.wv"
+source "Libraries/Database/Transaction-Leaf-Groups.wv"
+source "Libraries/Database/Transaction-Leaf-Pages.wv"
+source "Libraries/Database/Transaction-Leaf-Partition.wv"
+source "Libraries/Database/Transaction-Mutations.wv"
+source "Libraries/Database/Transaction-Paths.wv"
+source "Libraries/Database/Tree-Node.wv"
+source "Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Self-Test.wv"
+source "Tests/Fixtures/Database/Database-Transaction-Leaf-Pages-Self-Test.wv"
+emit wvb

@@ -103,14 +103,45 @@ claim.
    existing implementation against them.
 4. Run one real bounded Windvale OS filesystem-provider request with complete
    rollback and teardown.
-5. Preserve predictable development feedback and reserve full qualification for
-   deliberately selected release, security, bootstrap, ABI, or conformance
-   states.
-6. Reduce the `database-storage` qualification owner's cold cost. Its repaired
-   57-case path passed on both hosts in the final gate, but took about 21 minutes
-   on Debian and 41 minutes on Windows. Correctness is qualified; removing or
-   caching redundant work and keeping active-case timeout evidence remain a
-   verification-workflow performance task.
+5. Execute the [verification throughput redesign](Verification-Throughput-Plan.md):
+   make ordinary affected feedback complete in seconds where practical, make
+   cold qualification scale with unique construction plus behavior rather than
+   cases multiplied by the complete pipeline, and reserve full qualification
+   for deliberately selected release, security, bootstrap, ABI, or conformance
+   states. The new complete-work planner inventories all 126 native owners and
+   5,981 cases; ten long owners account for 68.71 percent of the declared work.
+   Reassigning only 16 owner shard fields now gives every existing qualification
+   job 4,890 expected seconds, down from a 7,545-second critical path, while the
+   maximum-profile critical path falls from 27,300 to 24,600 seconds. Consolidation now
+   proceeds by unique failure signal and measured critical-path contribution.
+   Compatible-state development reuse now preserves an unaffected passing owner
+   across planner-proved unrelated trees: a six-case owner executed in 15.68
+   seconds, then reused that receipt after four documentation-only changes.
+   Qualification remains fresh.
+6. Finish the cold `database-storage` qualification-workflow repair. Development
+   now uses a shared 53-case inventory and exact multi-target unions: the
+   publication/recovery/single-writer set passed three cases in 77.03 seconds,
+   while the portable and hosted local-service closure passed its three cases in
+   193.52 seconds. Oversized focused plans now stop at the ten-minute development
+   budget unless a longer run is explicit. Cold qualification now has one shared
+   host inventory with 57 logical cases in 54 execution steps; six safe case
+   pairs share products, and portable steps delegate unused opposite-host
+   packaging plus private A/B construction. The publication/recovery product
+   passed the resulting current-host path in 38.31 seconds, down from 46.15
+   seconds before construction delegation. The ancestor-groups and ancestor-pages
+   bundles also passed their two retained cases in 51.64 and 61.15 seconds.
+   Development binds all six bundle memberships to qualification and plans all
+   53 behaviors as 47 executions. The publication/recovery pair took
+   44.85 seconds to create its development checkpoints and 2.13 seconds on the
+   unchanged warm path; one-member selections remained independent. The first
+   non-identical overlap bundle now combines transaction leaf groups and pages;
+   it passed the focused qualification path in 56.14 seconds and its warm
+   development path in 2.99 seconds without raising a capacity limit. The
+   root-split/depth-two bundle passed qualification in 59.99 seconds and its warm
+   development path in 2.86 seconds, also without raising a capacity limit.
+   Build-once dependency reuse, hosted
+   ownership, capacity-aware bundling, complete Windows/Linux bounds, and
+   structured timeout results remain.
 
 ## How to verify ordinary work
 

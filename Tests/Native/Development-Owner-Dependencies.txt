@@ -37,6 +37,8 @@ database-storage|producer|Tools/Native/Get-Native-Hosted-Application-Cache-Key.m
 database-storage|producer|Tools/Native/Get-Native-Project-Cache-Key.mjs
 database-storage|producer|Tools/Native/Native-Hosted-Application-Cache-Core.mjs
 database-storage|producer|Tools/Native/Native-Project-Cache-Key-Core.mjs
+database-storage|producer|Tools/Native/Plan-Database-Storage-Development.mjs
+database-storage|producer|Tools/Native/Plan-Database-Storage-Qualification.mjs
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj
@@ -45,7 +47,12 @@ database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Host-Storag
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Reader.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj
+database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj
+database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj
+database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj
 database-storage|source|Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj
+database-storage|source|Tests/Native/Database-Storage-Development-Cases.txt
+database-storage|source|Tests/Native/Database-Storage-Qualification-Steps.txt
 os-x64-code-emission|artifact|Artifacts/Native-Front-Door/SHA256SUMS
 os-x64-code-emission|checkpoint|project-wvb-v2
 os-x64-code-emission|producer|Tools/Native/Build-Cached-Os-X64-Project-Wvbs.mjs

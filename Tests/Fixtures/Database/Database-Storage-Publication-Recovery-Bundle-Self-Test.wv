@@ -1,0 +1,10 @@
+module Windvaleˉnativeˉtestˉdatabaseˉstorageˉpublicationˉrecoveryˉbundle profile portable;
+
+import Databaseˉstorageˉpublicationˉselfˉtest as Publication;
+import Databaseˉstorageˉrecoveryˉselfˉtest as Recovery;
+
+export fn Main() -> i32 {
+    if Publication.Main() != 0 { return 1; }
+    if Recovery.Main() != 0 { return 2; }
+    return 0;
+}

@@ -1,0 +1,10 @@
+module Databaseˉrootˉsplitˉdepthˉtwoˉbundleˉselfˉtest profile portable;
+
+import Databaseˉrootˉsplitˉselfˉtest as RootSplit;
+import Databaseˉdepthˉtwoˉupsertˉselfˉtest as DepthTwo;
+
+export fn Main() -> i32 {
+    if RootSplit.Main() != 0 { return 1; }
+    if DepthTwo.Main() != 0 { return 2; }
+    return 0;
+}

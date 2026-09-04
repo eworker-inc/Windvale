@@ -140,5 +140,6 @@ if (Failed !== undefined) {
 
 process.stdout.write(
     'native database storage status=Passed cases=57 local-results=0 ' +
-    'cross-host-images=Verified\n'
+    'current-host-behavior=Verified portable-reproducibility=Delegated ' +
+    'cross-target-packaging=Delegated\n'
 );

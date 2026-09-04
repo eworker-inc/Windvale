@@ -1,0 +1,10 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpagesˉbundle profile portable;
+
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpages as Pages;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉancestorˉpagesˉintermediate as Intermediate;
+
+export fn Main() -> i32 {
+    if Pages.Main() != 0 { return 1; }
+    if Intermediate.Main() != 0 { return 2; }
+    return 0;
+}

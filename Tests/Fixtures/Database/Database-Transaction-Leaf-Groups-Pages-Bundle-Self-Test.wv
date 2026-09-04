@@ -1,0 +1,10 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉgroupsˉpagesˉbundle profile portable;
+
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉgroups as LeafGroups;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉleafˉpages as LeafPages;
+
+export fn Main() -> i32 {
+    if LeafGroups.Main() != 0 { return 1; }
+    if LeafPages.Main() != 0 { return 2; }
+    return 0;
+}

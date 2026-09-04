@@ -201,6 +201,9 @@ $SelectedDatabaseDevelopmentTargets = [System.Collections.Generic.HashSet[string
 $DatabaseDevelopmentPaths = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $DatabaseDevelopmentTargetProjects = [ordered]@{
+    'publication' = 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj'
+    'recovery' = 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj'
+    'single-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj'
     'tree-node' = 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj'
     'logical-record' = 'Projects/Tests/Windvale-Native-Test-Database-Logical-Record.wvproj'
     'typed-row' = 'Projects/Tests/Windvale-Native-Test-Database-Typed-Row.wvproj'
@@ -242,6 +245,58 @@ $DatabaseDevelopmentTargetProjects = [ordered]@{
     'engine' = 'Projects/Tests/Windvale-Native-Test-Database-Engine.wvproj'
     'host-tree-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Host-Tree-Writer.wvproj'
     'persistent-transaction-writer' = 'Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj'
+}
+$DatabaseDevelopmentCasePlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Database-Storage-Development-Cases.txt'
+$DatabaseDevelopmentCaseLines = if (
+    Test-Path -LiteralPath $DatabaseDevelopmentCasePlan -PathType Leaf) {
+    @(Get-Content -LiteralPath $DatabaseDevelopmentCasePlan)
+} else {
+    @()
+}
+$DatabaseDevelopmentCases = [System.Collections.Generic.List[object]]::new()
+$DatabaseDevelopmentCaseNames = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+$DatabaseDevelopmentCaseSelectors =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+if ($DatabaseDevelopmentCaseLines.Count -ne 54 -or
+    $DatabaseDevelopmentCaseLines[0] -ne
+        'windvale-database-storage-development-cases 3') {
+    $DatabaseStorageDevelopmentEligible = $false
+}
+foreach ($Line in @($DatabaseDevelopmentCaseLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    $Selectors = if ($Fields.Count -in @(3, 4)) { @($Fields[2].Split(',')) } else { @() }
+    $Bundle = if ($Fields.Count -eq 4) { $Fields[3] } else { '-' }
+    if ($Fields.Count -notin @(3, 4) -or
+        $Fields[0] -cnotmatch '^[A-Z][A-Za-z0-9]*$' -or
+        $Fields[1] -cnotmatch '^(?:portable|hosted)$' -or
+        $Selectors.Count -eq 0 -or
+        @($Selectors | Where-Object {
+            $_ -cnotmatch '^[a-z0-9][a-z0-9-]*$'
+        }).Count -ne 0 -or
+        @($Selectors | Sort-Object -Unique).Count -ne $Selectors.Count -or
+        ($Bundle -ne '-' -and
+            ($Bundle -cnotmatch '^[A-Z][A-Za-z0-9]*$' -or
+             $Fields[1] -ne 'portable')) -or
+        !$DatabaseDevelopmentCaseNames.Add($Fields[0])) {
+        $DatabaseStorageDevelopmentEligible = $false
+        continue
+    }
+    foreach ($Selector in $Selectors) {
+        $null = $DatabaseDevelopmentCaseSelectors.Add($Selector)
+    }
+    $DatabaseDevelopmentCases.Add([pscustomobject]@{
+        Name = $Fields[0]
+        Kind = $Fields[1]
+        Selectors = $Selectors
+        Bundle = $Bundle
+    })
+}
+if (@($DatabaseDevelopmentTargetProjects.Keys | Where-Object {
+        !$DatabaseDevelopmentCaseSelectors.Contains($_)
+    }).Count -ne 0) {
+    $DatabaseStorageDevelopmentEligible = $false
 }
 $DatabaseDevelopmentTargetsByPath = @{}
 foreach ($TargetEntry in $DatabaseDevelopmentTargetProjects.GetEnumerator()) {
@@ -632,6 +687,53 @@ foreach ($DatabasePerformancePath in @(
     $null = $DatabaseDevelopmentTargetsByPath[$DatabasePerformancePath].Add(
         'host-root-writer')
 }
+# Transaction-commit boundaries deliberately own their two direct development
+# cases. Later hosted-project closure discovery must not widen them again.
+foreach ($TransactionCommitPath in $TransactionCommitBoundaryPaths) {
+    $DatabaseDevelopmentTargetsByPath[$TransactionCommitPath].Clear()
+    $null = $DatabaseDevelopmentTargetsByPath[$TransactionCommitPath].Add(
+        'transaction-commit')
+}
+$DatabaseBundledDevelopmentTargets = [ordered]@{
+    'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj' =
+        @('publication', 'recovery')
+    'Tests/Fixtures/Database/Database-Storage-Publication-Recovery-Bundle-Self-Test.wv' =
+        @('publication', 'recovery')
+    'Projects/Tests/Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj' =
+        @('root-split-depth-two-bundle')
+    'Tests/Fixtures/Database/Database-Root-Split-Depth-Two-Bundle-Self-Test.wv' =
+        @('root-split-depth-two-bundle')
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj' =
+        @('transaction-leaf-groups-pages-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Pages-Bundle-Self-Test.wv' =
+        @('transaction-leaf-groups-pages-bundle')
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj' =
+        @('transaction-root-growth-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Root-Growth-Bundle-Self-Test.wv' =
+        @('transaction-root-growth-bundle')
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj' =
+        @('transaction-ancestor-groups-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Ancestor-Groups-Bundle-Self-Test.wv' =
+        @('transaction-ancestor-groups-bundle')
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj' =
+        @('transaction-ancestor-pages-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-Bundle-Self-Test.wv' =
+        @('transaction-ancestor-pages-bundle')
+}
+foreach ($DatabaseBundledDevelopmentEntry in
+    $DatabaseBundledDevelopmentTargets.GetEnumerator()) {
+    if (@($DatabaseBundledDevelopmentEntry.Value | Where-Object {
+            !$DatabaseDevelopmentCaseSelectors.Contains($_)
+        }).Count -ne 0) {
+        $DatabaseStorageDevelopmentEligible = $false
+    }
+    $DatabaseDevelopmentTargetsByPath[$DatabaseBundledDevelopmentEntry.Key] =
+        [System.Collections.Generic.HashSet[string]]::new(
+            [string[]]$DatabaseBundledDevelopmentEntry.Value,
+            [StringComparer]::Ordinal)
+    $null = $DatabaseDevelopmentPaths.Add(
+        $DatabaseBundledDevelopmentEntry.Key)
+}
 $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Bootstrap.md' = @('bootstrap', 'engine')
     'Specifications/Windvale-Database-Collection-Catalog.md' = @('collection-catalog')
@@ -674,6 +776,9 @@ $DatabaseDevelopmentContractTargets = @{
     'Specifications/Windvale-Database-Persistent-Transaction-Writer.md' = @('persistent-transaction-writer')
 }
 $DatabaseDevelopmentProjects = @(
+    'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj',
+    'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Node.wvproj',
     'Projects/Libraries/Windvale-Library-Database-Tree-Leaf-Scan.wvproj',
     'Projects/Libraries/Windvale-Library-Durable-Tree-Scan.wvproj',
@@ -1380,6 +1485,8 @@ function Add-Native-Tool-Suite {
         'Test-Linked-Image-Set-Checkpoint',
         'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
+        'Plan-Database-Storage-Development',
+        'Plan-Database-Storage-Qualification',
         'Test-Database-Storage'
     )) {
         $script:DatabaseDevelopmentRequiresAllTargets = $true
@@ -2304,6 +2411,12 @@ foreach ($Path in $Paths) {
         $RunPlanVerification = $true
         Add-Suite 'os-x64-code-emission'
     } elseif ($Path -in @(
+        'Tests/Native/Database-Storage-Development-Cases.txt',
+        'Tests/Native/Database-Storage-Qualification-Steps.txt'
+    )) {
+        $RunPlanVerification = $true
+        Require-Full-Database-Storage
+    } elseif ($Path -in @(
         '.gitattributes',
         'Documents/Project/Dotnet-Retirement-Inventory.json',
         'Documents/Project/Stage0-Recovery-Dependencies.json',
@@ -2419,6 +2532,7 @@ foreach ($Path in $Paths) {
             'Classify-Verification-Changes.ps1',
             'Get-Verification-Plan.ps1',
             'Get-Native-Changed-Verification-Plan.ps1',
+            'Plan-Qualification-Work.mjs',
             'Verify-Changed.ps1',
             'Verify-Change-Classification.ps1',
             'Verify-Documentation.ps1',
@@ -2907,6 +3021,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Rewrite-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Paths-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Pages-Bundle-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Partition-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Leaf-Pages-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Transaction-Branch-Partition-Self-Test.wv' -or
@@ -2928,6 +3043,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Tests/Fixtures/Database/Database-Single-Leaf-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Branch-Split-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Root-Split-Self-Test.wv' -or
+        $Path -eq 'Tests/Fixtures/Database/Database-Root-Split-Depth-Two-Bundle-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Two-Upsert-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Three-Root-Growth-Self-Test.wv' -or
         $Path -eq 'Tests/Fixtures/Database/Database-Depth-Three-Upsert-Self-Test.wv' -or
@@ -2955,6 +3071,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Superblock.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Durable-Commit.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Storage-Recovery.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Single-Writer-Commit.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Tree-Node.wvproj' -or
@@ -2964,6 +3081,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Paths.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj' -or
@@ -2985,6 +3103,7 @@ foreach ($Path in $Paths) {
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Branch-Split.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Root-Split.wvproj' -or
+        $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj' -or
         $Path -eq 'Projects/Tests/Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj' -or
@@ -4526,6 +4645,7 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -eq 1 -and
     $SelectedDatabaseDevelopmentTargets.Contains('transaction-commit')) {
     $DatabaseDevelopmentTarget = 'transaction-commit'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
@@ -4646,11 +4766,114 @@ if (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Contains('host-tree-delete')) {
     $DatabaseDevelopmentTarget = 'host-tree-delete'
 } elseif (!$DatabaseDevelopmentRequiresAllTargets -and
+    $SelectedDatabaseDevelopmentTargets.Count -gt 1) {
+    $DatabaseDevelopmentTarget = @(
+        $SelectedDatabaseDevelopmentTargets | Sort-Object
+    ) -join '+'
+} elseif (!$DatabaseDevelopmentRequiresAllTargets -and
     $SelectedDatabaseDevelopmentTargets.Count -eq 1) {
     $DatabaseDevelopmentTarget = @(
-        $DatabaseDevelopmentTargetProjects.Keys |
-            Where-Object { $SelectedDatabaseDevelopmentTargets.Contains($_) }
-    )[0]
+        $SelectedDatabaseDevelopmentTargets | Sort-Object)[0]
+}
+if (!$SelectedSuites.Contains('database-storage')) {
+    $DatabaseDevelopmentTarget = 'all'
+}
+$DatabaseDevelopmentTargetSet =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$DatabaseDevelopmentSelectedTargets = if (
+    $DatabaseDevelopmentTarget -eq 'all') {
+    @('all')
+} else {
+    @($DatabaseDevelopmentTarget.Split('+'))
+}
+foreach ($DatabaseDevelopmentSelectedTarget in
+    $DatabaseDevelopmentSelectedTargets) {
+    $null = $DatabaseDevelopmentTargetSet.Add(
+        $DatabaseDevelopmentSelectedTarget)
+}
+$DatabaseStorageDevelopmentCaseCount = 0
+$DatabaseStorageDevelopmentPortableCaseCount = 0
+$DatabaseStorageDevelopmentHostedCaseCount = 0
+$DatabaseStorageDevelopmentSelectedCaseNames =
+    [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$DatabaseSuiteSelected = $SelectedSuites.Contains('database-storage')
+foreach ($DatabaseDevelopmentCase in $DatabaseDevelopmentCases) {
+    $CaseSelected = (
+        $DatabaseSuiteSelected -and
+        $DatabaseDevelopmentTargetSet.Contains('all'))
+    if (!$CaseSelected) {
+        foreach ($DatabaseDevelopmentSelector in
+            $DatabaseDevelopmentCase.Selectors) {
+            if ($DatabaseDevelopmentTargetSet.Contains(
+                    $DatabaseDevelopmentSelector)) {
+                $CaseSelected = $true
+                break
+            }
+        }
+    }
+    if ($CaseSelected) {
+        $DatabaseStorageDevelopmentCaseCount++
+        $null = $DatabaseStorageDevelopmentSelectedCaseNames.Add(
+            $DatabaseDevelopmentCase.Name)
+        if ($DatabaseDevelopmentCase.Kind -eq 'portable') {
+            $DatabaseStorageDevelopmentPortableCaseCount++
+        } else {
+            $DatabaseStorageDevelopmentHostedCaseCount++
+        }
+    }
+}
+$DatabaseStorageDevelopmentBundleCount = 0
+$DatabaseStorageDevelopmentBundledCaseCount = 0
+foreach ($DatabaseBundleGroup in @(
+    $DatabaseDevelopmentCases |
+        Where-Object Bundle -ne '-' |
+        Group-Object Bundle)) {
+    $SelectedBundleCases = @($DatabaseBundleGroup.Group | Where-Object {
+        $DatabaseStorageDevelopmentSelectedCaseNames.Contains($_.Name)
+    })
+    if ($SelectedBundleCases.Count -eq $DatabaseBundleGroup.Count) {
+        $DatabaseStorageDevelopmentBundleCount++
+        $DatabaseStorageDevelopmentBundledCaseCount +=
+            $DatabaseBundleGroup.Count
+    }
+}
+$DatabaseStorageDevelopmentExecutionCount =
+    $DatabaseStorageDevelopmentCaseCount -
+    $DatabaseStorageDevelopmentBundledCaseCount +
+    $DatabaseStorageDevelopmentBundleCount
+$DatabaseStorageDevelopmentPortableExecutionCount =
+    $DatabaseStorageDevelopmentPortableCaseCount -
+    $DatabaseStorageDevelopmentBundledCaseCount +
+    $DatabaseStorageDevelopmentBundleCount
+$DatabaseStorageDevelopmentHostedExecutionCount =
+    $DatabaseStorageDevelopmentHostedCaseCount
+if ($DatabaseSuiteSelected -and
+    $DatabaseStorageDevelopmentCaseCount -eq $DatabaseDevelopmentCases.Count) {
+    $DatabaseDevelopmentTarget = 'all'
+}
+if ($DatabaseSuiteSelected -and $DatabaseStorageDevelopmentCaseCount -eq 0) {
+    $DatabaseStorageDevelopmentEligible = $false
+}
+$DatabaseStorageDevelopmentExpectedSeconds = [long]0
+$DatabaseStorageDevelopmentMaximumSeconds = [long]0
+if ($DatabaseSuiteSelected -and $DatabaseStorageDevelopmentEligible) {
+    # Cold portable executions have measured near 30-45 seconds. Hosted cases
+    # also construct native images, so keep their estimate and bound independently.
+    $DatabaseStorageDevelopmentExpectedSeconds = [long](
+        20 + (45 * $DatabaseStorageDevelopmentPortableExecutionCount) +
+            (90 * $DatabaseStorageDevelopmentHostedExecutionCount))
+    $DatabaseStorageDevelopmentMaximumSeconds = [long][Math]::Min(
+        3600,
+        120 + (90 * $DatabaseStorageDevelopmentPortableExecutionCount) +
+            (180 * $DatabaseStorageDevelopmentHostedExecutionCount))
+    $DatabaseSuiteEntry = @(
+        $SelectedSuiteEntries | Where-Object Name -eq 'database-storage')[0]
+    $SelectedExpectedSeconds = [long](
+        $SelectedExpectedSeconds - $DatabaseSuiteEntry.ExpectedSeconds +
+            $DatabaseStorageDevelopmentExpectedSeconds)
+    $SelectedMaximumSeconds = [long](
+        $SelectedMaximumSeconds - $DatabaseSuiteEntry.MaximumSeconds +
+            $DatabaseStorageDevelopmentMaximumSeconds)
 }
 $OsX64CodeEmissionDevelopmentTarget = 'all'
 if (!$OsX64CodeEmissionDevelopmentRequiresAllTargets -and
@@ -4687,6 +4910,26 @@ if (!$Quiet) {
         $SelectedSuites.Contains('database-storage') -and
         $DatabaseStorageDevelopmentEligible).ToString().ToLowerInvariant())"
     Write-Host "Database storage development target: $DatabaseDevelopmentTarget"
+    Write-Host "Database storage development cases: $DatabaseStorageDevelopmentCaseCount"
+    Write-Host "Database storage development executions: $DatabaseStorageDevelopmentExecutionCount"
+    Write-Host "Database storage development bundles: $DatabaseStorageDevelopmentBundleCount"
+    Write-Host (
+        'Database storage development portable cases: ' +
+        $DatabaseStorageDevelopmentPortableCaseCount)
+    Write-Host (
+        'Database storage development hosted cases: ' +
+        $DatabaseStorageDevelopmentHostedCaseCount)
+    if ($DatabaseSuiteSelected -and $DatabaseStorageDevelopmentEligible) {
+        Write-Host (
+            'Database storage development expected seconds: ' +
+            $DatabaseStorageDevelopmentExpectedSeconds)
+        Write-Host (
+            'Database storage development maximum seconds: ' +
+            $DatabaseStorageDevelopmentMaximumSeconds)
+    } else {
+        Write-Host 'Database storage development expected seconds: not-applicable'
+        Write-Host 'Database storage development maximum seconds: not-applicable'
+    }
 }
 if ($PassThru) {
     [pscustomobject]@{
@@ -4714,6 +4957,19 @@ if ($PassThru) {
             $SelectedSuites.Contains('database-storage') -and
             $DatabaseStorageDevelopmentEligible)
         DatabaseStorageDevelopmentTarget = $DatabaseDevelopmentTarget
+        DatabaseStorageDevelopmentCaseCount = $DatabaseStorageDevelopmentCaseCount
+        DatabaseStorageDevelopmentExecutionCount =
+            $DatabaseStorageDevelopmentExecutionCount
+        DatabaseStorageDevelopmentBundleCount =
+            $DatabaseStorageDevelopmentBundleCount
+        DatabaseStorageDevelopmentPortableCaseCount =
+            $DatabaseStorageDevelopmentPortableCaseCount
+        DatabaseStorageDevelopmentHostedCaseCount =
+            $DatabaseStorageDevelopmentHostedCaseCount
+        DatabaseStorageDevelopmentExpectedSeconds =
+            $DatabaseStorageDevelopmentExpectedSeconds
+        DatabaseStorageDevelopmentMaximumSeconds =
+            $DatabaseStorageDevelopmentMaximumSeconds
         ChangedCount = $Paths.Count
     }
 }

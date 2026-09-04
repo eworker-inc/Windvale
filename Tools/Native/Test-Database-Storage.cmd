@@ -10,11 +10,19 @@ set "Development=0"
 set "PrepareOnly=0"
 set "DevelopmentTarget=all"
 set "QualificationTarget=all"
+set "QualificationStepTarget="
+set "QualificationSupportSteps=0"
 if /I "%~1"=="--development" (
     if not "%~2"=="" goto :usage
     set "Development=1"
 )
 if /I "%~1"=="--development-target" (
+    if "%~2"=="" goto :usage
+    if not "%~3"=="" goto :usage
+    set "Development=1"
+    set "DevelopmentTarget=%~2"
+)
+if /I "%~1"=="--development-target-set" (
     if "%~2"=="" goto :usage
     if not "%~3"=="" goto :usage
     set "Development=1"
@@ -33,51 +41,89 @@ if /I "%~1"=="--qualification-hosted" (
     if not "%~2"=="" goto :usage
     set "QualificationTarget=hosted"
 )
+if /I "%~1"=="--qualification-step" (
+    if "%~2"=="" goto :usage
+    if not "%~3"=="" goto :usage
+    set "QualificationTarget=focused"
+    set "QualificationStepTarget=%~2"
+)
 if "%Development%"=="0" if /I "%QualificationTarget%"=="all" goto :usage
 
 :arguments_ready
 
-set "SelectedCases=50"
-if /I not "%DevelopmentTarget%"=="all" set "SelectedCases="
-for %%T in (
-    tree-node logical-record typed-row secondary-index secondary-index-mutations transaction-mutations transaction-leaf-rewrite query-ir sql-lowerer json-value json-protocol local-service collection-catalog bootstrap single-leaf
-    branch-split root-split depth-two depth-three depth-three-upsert
-    tree-path-upsert tree-path-delete host-storage
-) do if /I "%DevelopmentTarget%"=="%%T" set "SelectedCases=1"
-if /I "%DevelopmentTarget%"=="transaction-branch-pages" set "SelectedCases=5"
-if /I "%DevelopmentTarget%"=="transaction-ancestor-groups" set "SelectedCases=6"
-if /I "%DevelopmentTarget%"=="transaction-ancestor-pages" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="transaction-root-growth" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="transaction-tree-completion" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="transaction-commit" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="transaction-parent-groups" set "SelectedCases=6"
-if /I "%DevelopmentTarget%"=="transaction-leaf-pages" set "SelectedCases=7"
-if /I "%DevelopmentTarget%"=="transaction-branch-partition" set "SelectedCases=13"
-if /I "%DevelopmentTarget%"=="transaction-leaf-groups" set "SelectedCases=8"
-if /I "%DevelopmentTarget%"=="transaction-paths" set "SelectedCases=13"
-if /I "%DevelopmentTarget%"=="transaction-leaf-partition" set "SelectedCases=9"
-if /I "%DevelopmentTarget%"=="transaction" set "SelectedCases=20"
-if /I "%DevelopmentTarget%"=="host-tree-reader" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="host-tree-delete" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="host-tree-scan" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="tree-scan" set "SelectedCases=4"
-if /I "%DevelopmentTarget%"=="json" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="typed-query" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="query-sql" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="typed-query-sql" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="host-root-writer" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="host-local-service" set "SelectedCases=2"
-if /I "%DevelopmentTarget%"=="engine" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="host-tree-writer" set "SelectedCases=3"
-if /I "%DevelopmentTarget%"=="persistent-transaction-writer" set "SelectedCases=3"
-if not defined SelectedCases goto :usage
+set "DevelopmentCaseSet="
+set "DevelopmentBundleSet=,"
+set "DevelopmentBundledCaseSet=,"
+if "%Development%"=="0" set "SelectedCases=0"
+if "%Development%"=="0" set "SelectedExecutions=0"
+if "%Development%"=="0" goto :development_plan_ready
 if "%PrepareOnly%"=="1" set "SelectedCases=0"
-set /a ProgressTotal=SelectedCases+1
+if "%PrepareOnly%"=="1" set "SelectedExecutions=0"
+if "%PrepareOnly%"=="1" goto :development_plan_ready
+set "DevelopmentPlanFormat="
+set "DevelopmentCases="
+set "DevelopmentBundles="
+set "DevelopmentBundledCases="
+for /f "tokens=1-7 delims=|" %%A in ('node "%~dp0Plan-Database-Storage-Development.mjs" "%DevelopmentTarget%"') do (
+    set "DevelopmentPlanFormat=%%A"
+    set "DevelopmentTarget=%%B"
+    set "SelectedCases=%%C"
+    set "SelectedExecutions=%%D"
+    set "DevelopmentCases=%%E"
+    set "DevelopmentBundles=%%F"
+    set "DevelopmentBundledCases=%%G"
+)
+if not defined DevelopmentPlanFormat goto :usage
+if /I not "%DevelopmentPlanFormat%"=="windvale-database-storage-development-plan-2" (
+    >&2 echo The database development case plan is malformed.
+    exit /b 1
+)
+if not defined SelectedCases (
+    >&2 echo The database development case plan has no case count.
+    exit /b 1
+)
+if not defined SelectedExecutions (
+    >&2 echo The database development case plan has no execution count.
+    exit /b 1
+)
+if not defined DevelopmentCases (
+    >&2 echo The database development case plan selected no cases.
+    exit /b 1
+)
+set "DevelopmentCaseSet=,%DevelopmentCases%,"
+if /I not "%DevelopmentBundles%"=="-" set "DevelopmentBundleSet=,%DevelopmentBundles%,"
+if /I not "%DevelopmentBundledCases%"=="-" set "DevelopmentBundledCaseSet=,%DevelopmentBundledCases%,"
+:development_plan_ready
+set /a ProgressTotal=SelectedExecutions+1
 set "ProgressCurrent=1"
 set "QualificationStep=0"
-set "QualificationSteps=60"
-if /I "%QualificationTarget%"=="portable" set "QualificationSteps=49"
-if /I "%QualificationTarget%"=="hosted" set "QualificationSteps=11"
+set "QualificationPlanFormat="
+set "QualificationSteps=0"
+set "QualificationCases=0"
+set "QualificationPrerequisites=0"
+set "QualificationPortableSteps=0"
+set "QualificationHostedSteps=0"
+set "QualificationPortableCases=0"
+set "QualificationHostedCases=0"
+if "%Development%"=="1" goto :qualification_plan_ready
+for /f "tokens=1-8 delims=|" %%A in ('node "%~dp0Plan-Database-Storage-Qualification.mjs" --counts') do (
+    set "QualificationPlanFormat=%%A"
+    set "QualificationSteps=%%B"
+    set "QualificationCases=%%C"
+    set "QualificationPrerequisites=%%D"
+    set "QualificationPortableSteps=%%E"
+    set "QualificationHostedSteps=%%F"
+    set "QualificationPortableCases=%%G"
+    set "QualificationHostedCases=%%H"
+)
+if /I not "%QualificationPlanFormat%"=="windvale-database-storage-qualification-counts-1" (
+    >&2 echo The database qualification count plan is malformed.
+    exit /b 1
+)
+if /I "%QualificationTarget%"=="portable" set "QualificationSteps=%QualificationPortableSteps%"
+if /I "%QualificationTarget%"=="hosted" set "QualificationSteps=%QualificationHostedSteps%"
+if defined QualificationStepTarget set "QualificationSteps=0"
+:qualification_plan_ready
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -158,6 +204,14 @@ if "%PrepareOnly%"=="1" (
 
 if "%Development%"=="1" (
     call :read_clock PortableStart
+    call :verify_development_bundle PublicationRecovery publication-recovery "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj" "Publication,Recovery"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target Publication publication "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Publication.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target Recovery recovery "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Recovery.wvproj"
+    if errorlevel 1 goto :cleanup
+    call :verify_development_target SingleWriter single-writer "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Writer-Commit.wvproj"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target TreeNode tree-node "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj" tree-scan
     if errorlevel 1 goto :cleanup
     call :verify_development_target LogicalRecord logical-record "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Logical-Record.wvproj"
@@ -173,6 +227,8 @@ if "%Development%"=="1" (
     call :verify_development_target TransactionLeafRewrite transaction-leaf-rewrite "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj" transaction
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionPaths transaction-paths "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Paths.wvproj" transaction
+    if errorlevel 1 goto :cleanup
+    call :verify_development_bundle TransactionLeafGroupsPagesBundle transaction-leaf-groups-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj" "TransactionLeafGroups,TransactionLeafPages"
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionLeafGroups transaction-leaf-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj" transaction transaction-paths transaction-leaf-partition
     if errorlevel 1 goto :cleanup
@@ -190,13 +246,19 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionBranchPagesDepthThree transaction-branch-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj" transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-parent-groups
     if errorlevel 1 goto :cleanup
+    call :verify_development_bundle TransactionAncestorGroupsBundle transaction-ancestor-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj" "TransactionAncestorGroups,TransactionAncestorGroupsDepthFour"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionAncestorGroups transaction-ancestor-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Groups.wvproj" transaction transaction-paths transaction-branch-partition
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionAncestorGroupsDepthFour transaction-ancestor-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Depth-Four.wvproj" transaction transaction-paths transaction-branch-partition
     if errorlevel 1 goto :cleanup
+    call :verify_development_bundle TransactionAncestorPagesBundle transaction-ancestor-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj" "TransactionAncestorPages,TransactionAncestorPagesIntermediate"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionAncestorPages transaction-ancestor-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj" transaction transaction-paths transaction-branch-partition transaction-ancestor-groups
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionAncestorPagesIntermediate transaction-ancestor-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj" transaction transaction-paths transaction-branch-partition transaction-ancestor-groups
+    if errorlevel 1 goto :cleanup
+    call :verify_development_bundle TransactionRootGrowthBundle transaction-root-growth "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj" "TransactionRootGrowth,TransactionRootGrowthMultiLevel"
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionRootGrowth transaction-root-growth "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj" transaction transaction-branch-partition
     if errorlevel 1 goto :cleanup
@@ -228,6 +290,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target BranchSplit branch-split "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
     if errorlevel 1 goto :cleanup
+    call :verify_development_bundle RootSplitDepthTwoBundle root-split-depth-two "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj" "RootSplit,DepthTwo"
+    if errorlevel 1 goto :cleanup
     call :verify_development_target RootSplit root-split "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
     if errorlevel 1 goto :cleanup
     call :verify_development_target DepthTwo depth-two "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
@@ -253,206 +317,59 @@ if "%Development%"=="1" (
     set "PersistentTransactionWriterElapsedMs=0"
     call :verify_development_host_targets
     if errorlevel 1 goto :cleanup
+    call :verify_development_case_count
+    if errorlevel 1 goto :cleanup
     call :read_clock DevelopmentEnd
     call :elapsed_milliseconds DevelopmentStart DevelopmentEnd DevelopmentElapsedMs
     set "Result=0"
     goto :cleanup
 )
 
-if /I "%QualificationTarget%"=="hosted" goto :qualification_hosted
-
-call :verify_target Nested ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Nested-Record-Fields.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target Publication ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Publication.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target Recovery ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Storage-Recovery.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target SingleWriter ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Writer-Commit.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TreeNode ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Node.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target LogicalRecord ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Logical-Record.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TypedRow ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Typed-Row.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target SecondaryIndex ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Secondary-Index.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target SecondaryIndexMutations ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Secondary-Index-Mutations.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionMutations ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Mutations.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionLeafRewrite ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Rewrite.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionPaths ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Paths.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionLeafGroups ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Groups.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionLeafPartition ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionLeafPages ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Leaf-Pages.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionBranchPartition ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionParentGroups ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionBranchPages ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionBranchPagesValidation ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionBranchPagesDepthThree ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionAncestorGroups ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Groups.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionAncestorGroupsDepthFour ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Depth-Four.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionAncestorPages ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionAncestorPagesIntermediate ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Intermediate.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionRootGrowth ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionRootGrowthMultiLevel ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Root-Growth-Multi-Level.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_segmented_target TransactionTreeCompletion ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_segmented_target TransactionTreeCompletionRootGrowth ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Tree-Completion-Root-Growth.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TransactionCommitCapacity ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Commit-Batch-Capacity.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_segmented_target TransactionCommit ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Commit.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target QueryIr ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Query-Ir.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target SqlLowerer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Sql-Lowerer.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target JsonValue ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Value.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target JsonProtocol ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Json-Protocol.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target LocalService ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Local-Database-Service.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target CollectionCatalog ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Collection-Catalog.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target Bootstrap ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Bootstrap.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target SingleLeaf ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Single-Leaf-Upsert.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target BranchSplit ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Branch-Split.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target RootSplit ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Root-Split.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target DepthTwo ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Two-Upsert.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target DepthThree ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Root-Growth.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target DepthThreeUpsert ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Depth-Three-Upsert.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TreePathUpsert ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Upsert.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target TreePathDelete ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Tree-Path-Delete.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target ProviderTable ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Capability-Provider-Table.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target ProviderCall ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Provider-Call.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_target Context9 ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Execution-Context-9.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_storage_lowering ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Storage-Random-Access.wvproj"
-if errorlevel 1 goto :cleanup
-if /I "%QualificationTarget%"=="portable" (
+if defined QualificationStepTarget (
+    set "QualificationFocusedCases="
+    set "WINDVALE_DATABASE_QUALIFICATION_STEP=%QualificationStepTarget%"
+    set "QualificationStepPlan=%TemporaryDirectory%\Qualification-Focused.plan"
+    node "%~dp0Plan-Database-Storage-Qualification.mjs" --closure-env >"%TemporaryDirectory%\Qualification-Focused.plan"
+    if errorlevel 1 goto :cleanup
+    for /f "usebackq delims=" %%L in ("%TemporaryDirectory%\Qualification-Focused.plan") do set /a QualificationSteps+=1
+    call :require_focused_qualification_steps
+    if errorlevel 1 goto :cleanup
+    for /f "usebackq tokens=1-6 delims=|" %%A in ("%TemporaryDirectory%\Qualification-Focused.plan") do (
+        if /I "%%A"=="%QualificationStepTarget%" set "QualificationFocusedCases=%%F"
+        call :dispatch_qualification_step "%%A" "%%B" "%%C" "%%D" "%%E" "%%F"
+        if errorlevel 1 goto :cleanup
+    )
+    if not defined QualificationFocusedCases (
+        >&2 echo The focused database qualification plan selected no step.
+        goto :cleanup
+    )
+    call :verify_qualification_step_count
+    if errorlevel 1 goto :cleanup
+    set /a QualificationSupportSteps=QualificationSteps-1
     set "Result=0"
     goto :cleanup
 )
 
-:qualification_hosted
-call :verify_host_storage ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
+if /I not "%QualificationTarget%"=="hosted" (
+    for /f "tokens=1-6 delims=|" %%A in ('node "%~dp0Plan-Database-Storage-Qualification.mjs" --rows portable') do (
+        call :dispatch_qualification_step "%%A" "%%B" "%%C" "%%D" "%%E" "%%F"
+        if errorlevel 1 goto :cleanup
+    )
+)
+if /I "%QualificationTarget%"=="portable" (
+    set "Result=0"
+    goto :cleanup
+)
+if /I not "%QualificationTarget%"=="portable" (
+    for /f "tokens=1-6 delims=|" %%A in ('node "%~dp0Plan-Database-Storage-Qualification.mjs" --rows hosted') do (
+        call :dispatch_qualification_step "%%A" "%%B" "%%C" "%%D" "%%E" "%%F"
+        if errorlevel 1 goto :cleanup
+    )
+)
+call :verify_qualification_step_count
 if errorlevel 1 goto :cleanup
-call :verify_host_root_writer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Writer.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_root_split_writer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Fill.wvproj" ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Root-Split-Writer.wvproj" ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_local_service ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Put.wvproj" ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Local-Get.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_tree_reader ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Reader.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_tree_delete ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Delete.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_tree_scan ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Scan.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_engine ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Engine.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_tree_writer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Tree-Writer.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_host_logical_tree_writer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Writer.wvproj" ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj"
-if errorlevel 1 goto :cleanup
-call :verify_persistent_transaction_writer ^
-    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj"
-if errorlevel 1 goto :cleanup
-
 set "Result=0"
+goto :cleanup
 
 :cleanup
 if exist "%HostedApplicationSessionReady%" (
@@ -469,18 +386,22 @@ if "%PrepareOnly%"=="1" (
 )
 if "%Development%"=="1" (
     echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-delete-ms=%HostTreeDeleteElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% persistent-transaction-writer-ms=%PersistentTransactionWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
-    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter%,PersistentTransactionWriter:%ProjectCheckpointPersistentTransactionWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%,PersistentTransactionWriter:%ApplicationCheckpointPersistentTransactionWriter%
+    echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% executions=%SelectedExecutions% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter%,PersistentTransactionWriter:%ProjectCheckpointPersistentTransactionWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%,PersistentTransactionWriter:%ApplicationCheckpointPersistentTransactionWriter%
+    exit /b 0
+)
+if defined QualificationStepTarget (
+    echo native database storage qualification step status=Passed step=%QualificationStepTarget% cases=%QualificationFocusedCases% support-steps=%QualificationSupportSteps% local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated
     exit /b 0
 )
 if /I "%QualificationTarget%"=="portable" (
-    echo native database storage portable status=Passed cases=46 local-results=0 cross-host-images=Verified
+    echo native database storage portable status=Passed cases=%QualificationPortableCases% local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated
     exit /b 0
 )
 if /I "%QualificationTarget%"=="hosted" (
-    echo native database storage hosted status=Passed cases=11 local-results=0 cross-host-images=Verified
+    echo native database storage hosted status=Passed cases=%QualificationHostedCases% local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated
     exit /b 0
 )
-echo native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
+echo native database storage status=Passed cases=%QualificationCases% local-results=0 current-host-behavior=Verified portable-reproducibility=Delegated cross-target-packaging=Delegated
 exit /b 0
 
 :start_qualification_step
@@ -489,10 +410,99 @@ set /a QualificationStep+=1
 call echo Progress: step=database-storage-cases item=%%QualificationStep%%/%QualificationSteps% detail=%~1
 exit /b 0
 
+:verify_qualification_step_count
+if "%QualificationStep%"=="%QualificationSteps%" exit /b 0
+>&2 echo The database qualification plan executed %QualificationStep% steps, expected %QualificationSteps%.
+exit /b 1
+
+:require_focused_qualification_steps
+if %QualificationSteps% GTR 0 exit /b 0
+>&2 echo The focused database qualification plan selected no steps.
+exit /b 1
+
+:dispatch_qualification_step
+setlocal EnableExtensions DisableDelayedExpansion
+set "QualificationLabel=%~1"
+set "QualificationHandler=%~2"
+set "QualificationCaseNames=%~6"
+set "QualificationProject1=%RepositoryRoot%\%~3"
+set "QualificationProject2=%RepositoryRoot%\%~4"
+set "QualificationProject3=%RepositoryRoot%\%~5"
+call :read_clock QualificationDispatchStart
+if /I "%QualificationHandler%"=="project" (
+    call :verify_target "%QualificationLabel%" "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="segmented-project" (
+    call :verify_segmented_target "%QualificationLabel%" "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="storage-lowering" (
+    call :verify_storage_lowering "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-storage" (
+    call :verify_host_storage "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-root-writer" (
+    call :verify_host_root_writer "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-root-split-writer" (
+    call :verify_host_root_split_writer "%QualificationProject1%" "%QualificationProject2%" "%QualificationProject3%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-local-service" (
+    call :verify_host_local_service "%QualificationProject1%" "%QualificationProject2%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-tree-reader" (
+    call :verify_host_tree_reader "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-tree-delete" (
+    call :verify_host_tree_delete "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-tree-scan" (
+    call :verify_host_tree_scan "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-engine" (
+    call :verify_host_engine "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-tree-writer" (
+    call :verify_host_tree_writer "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="host-logical-tree-writer" (
+    call :verify_host_logical_tree_writer "%QualificationProject1%" "%QualificationProject2%"
+    goto :dispatch_qualification_done
+)
+if /I "%QualificationHandler%"=="persistent-transaction-writer" (
+    call :verify_persistent_transaction_writer "%QualificationProject1%"
+    goto :dispatch_qualification_done
+)
+>&2 echo Unknown database qualification handler: %QualificationHandler%.
+endlocal
+exit /b 1
+
+:dispatch_qualification_done
+set "QualificationDispatchResult=%ERRORLEVEL%"
+if "%QualificationDispatchResult%"=="0" (
+    call :read_clock QualificationDispatchEnd
+    call :elapsed_milliseconds QualificationDispatchStart QualificationDispatchEnd QualificationDispatchElapsedMs
+    call echo PASS  native database qualification step=%QualificationLabel% item=%%QualificationStep%%/%QualificationSteps% cases=%QualificationCaseNames% elapsed-ms=%%QualificationDispatchElapsedMs%% handler=%QualificationHandler%
+)
+endlocal & set "QualificationStep=%QualificationStep%" & exit /b %QualificationDispatchResult%
+
 :verify_development_target
-if /I "%DevelopmentTarget%"=="transaction-branch-partition" if /I "%~2"=="transaction-branch-pages" goto :verify_development_target_selected
-if /I not "%DevelopmentTarget%"=="all" if /I not "%DevelopmentTarget%"=="%~2" if /I not "%DevelopmentTarget%"=="%~4" if /I not "%DevelopmentTarget%"=="%~5" if /I not "%DevelopmentTarget%"=="%~6" if /I not "%DevelopmentTarget%"=="%~7" if /I not "%DevelopmentTarget%"=="%~8" if /I not "%DevelopmentTarget%"=="%~9" exit /b 0
-:verify_development_target_selected
+call :development_case_selected "%~1"
+if errorlevel 1 exit /b 0
+call :development_case_bundled "%~1"
+if not errorlevel 1 exit /b 0
 set /a ProgressCurrent+=1
 call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
 call :verify_target "%~1" "%~3"
@@ -502,12 +512,21 @@ if errorlevel 1 (
 )
 exit /b 0
 
-:verify_segmented_development_target
-if /I "%DevelopmentTarget%"=="all" goto :verify_segmented_development_target_selected
-if /I "%DevelopmentTarget%"=="%~2" goto :verify_segmented_development_target_selected
-for %%T in (transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-parent-groups transaction-branch-pages transaction-branch-partition transaction-ancestor-groups transaction-ancestor-pages transaction-root-growth) do if /I "%DevelopmentTarget%"=="%%T" goto :verify_segmented_development_target_selected
+:verify_development_bundle
+call :development_bundle_selected "%~1"
+if errorlevel 1 exit /b 0
+set /a ProgressCurrent+=1
+call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% cases=%~4
+call :verify_target "%~1" "%~3" "%~4"
+if errorlevel 1 (
+    >&2 echo The native database storage development %~2 bundle stage failed.
+    exit /b 1
+)
 exit /b 0
-:verify_segmented_development_target_selected
+
+:verify_segmented_development_target
+call :development_case_selected "%~1"
+if errorlevel 1 exit /b 0
 set /a ProgressCurrent+=1
 call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
 call :verify_segmented_target "%~1" "%~3"
@@ -517,19 +536,25 @@ if errorlevel 1 (
 )
 exit /b 0
 
-:verify_development_host_targets
-if /I "%DevelopmentTarget%"=="all" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-storage" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-root-writer" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-local-service" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-tree-reader" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-tree-delete" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-tree-scan" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="tree-scan" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="engine" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_storage
-if /I "%DevelopmentTarget%"=="persistent-transaction-writer" goto :development_run_host_storage
+:development_case_selected
+setlocal EnableExtensions DisableDelayedExpansion
+set "SelectedCaseNeedle=,%~1,"
+call set "SelectedCaseRemainder=%%DevelopmentCaseSet:%SelectedCaseNeedle%=%%"
+if "%SelectedCaseRemainder%"=="%DevelopmentCaseSet%" (
+    endlocal
+    exit /b 1
+)
+endlocal
 exit /b 0
+
+:verify_development_case_count
+if "%ProgressCurrent%"=="%ProgressTotal%" exit /b 0
+>&2 echo The database development plan executed an unexpected step count.
+exit /b 1
+
+:verify_development_host_targets
+call :development_case_selected "HostStorage"
+if errorlevel 1 exit /b 0
 
 :development_run_host_storage
 set /a ProgressCurrent+=1
@@ -543,12 +568,8 @@ if errorlevel 1 (
 call :read_clock HostStorageEnd
 call :elapsed_milliseconds HostStorageStart HostStorageEnd HostStorageElapsedMs
 call echo PASS  native database storage development step=host-storage item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostStorageElapsedMs%% project=%%ProjectCheckpointHostStorage%% application=%%ApplicationCheckpointHostStorage%%
-if /I "%DevelopmentTarget%"=="host-storage" exit /b 0
-
-if /I "%DevelopmentTarget%"=="all" goto :development_run_host_root_writer
-if /I "%DevelopmentTarget%"=="host-root-writer" goto :development_run_host_root_writer
-if /I "%DevelopmentTarget%"=="host-local-service" goto :development_run_host_local_service
-goto :development_run_host_tree_reader
+call :development_case_selected "HostRootWriter"
+if errorlevel 1 goto :development_after_host_root_writer
 
 :development_run_host_root_writer
 set /a ProgressCurrent+=1
@@ -570,10 +591,10 @@ if errorlevel 1 (
 call :read_clock HostRootWriterEnd
 call :elapsed_milliseconds HostRootWriterStart HostRootWriterEnd HostRootWriterElapsedMs
 call echo PASS  native database storage development step=host-root-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostRootWriterElapsedMs%% project=%%ProjectCheckpointHostRootWriter%% application=%%ApplicationCheckpointHostRootWriter%%
-if /I "%DevelopmentTarget%"=="host-root-writer" exit /b 0
 
-if /I "%DevelopmentTarget%"=="all" goto :development_run_host_local_service
-goto :development_run_host_tree_reader
+:development_after_host_root_writer
+call :development_case_selected "HostLocalService"
+if errorlevel 1 goto :development_after_host_local_service
 
 :development_run_host_local_service
 set /a ProgressCurrent+=1
@@ -589,10 +610,12 @@ if errorlevel 1 (
 call :read_clock HostLocalServiceEnd
 call :elapsed_milliseconds HostLocalServiceStart HostLocalServiceEnd HostLocalServiceElapsedMs
 call echo PASS  native database storage development step=host-local-service item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostLocalServiceElapsedMs%% project=%%ProjectCheckpointHostLocalService%% application=%%ApplicationCheckpointHostLocalService%%
-if /I "%DevelopmentTarget%"=="host-local-service" exit /b 0
+
+:development_after_host_local_service
+call :development_case_selected "HostTreeReader"
+if errorlevel 1 goto :development_after_host_tree_reader
 
 :development_run_host_tree_reader
-
 set /a ProgressCurrent+=1
 call :read_clock HostTreeReaderStart
 call echo START native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
@@ -604,13 +627,10 @@ if errorlevel 1 (
 call :read_clock HostTreeReaderEnd
 call :elapsed_milliseconds HostTreeReaderStart HostTreeReaderEnd HostTreeReaderElapsedMs
 call echo PASS  native database storage development step=host-tree-reader item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeReaderElapsedMs%% project=%%ProjectCheckpointHostTreeReader%% application=%%ApplicationCheckpointHostTreeReader%%
-if /I "%DevelopmentTarget%"=="host-tree-reader" exit /b 0
-if /I "%DevelopmentTarget%"=="host-tree-writer" goto :development_run_host_tree_writer
-if /I "%DevelopmentTarget%"=="persistent-transaction-writer" goto :development_run_persistent_transaction_writer
 
-if /I "%DevelopmentTarget%"=="all" goto :development_run_host_tree_delete
-if /I "%DevelopmentTarget%"=="host-tree-delete" goto :development_run_host_tree_delete
-goto :development_choose_host_tree_scan
+:development_after_host_tree_reader
+call :development_case_selected "HostTreeDelete"
+if errorlevel 1 goto :development_after_host_tree_delete
 
 :development_run_host_tree_delete
 set /a ProgressCurrent+=1
@@ -624,14 +644,10 @@ if errorlevel 1 (
 call :read_clock HostTreeDeleteEnd
 call :elapsed_milliseconds HostTreeDeleteStart HostTreeDeleteEnd HostTreeDeleteElapsedMs
 call echo PASS  native database storage development step=host-tree-delete item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeDeleteElapsedMs%% project=%%ProjectCheckpointHostTreeDelete%% application=%%ApplicationCheckpointHostTreeDelete%%
-if /I "%DevelopmentTarget%"=="host-tree-delete" exit /b 0
 
-:development_choose_host_tree_scan
-
-if /I "%DevelopmentTarget%"=="all" goto :development_run_host_tree_scan
-if /I "%DevelopmentTarget%"=="host-tree-scan" goto :development_run_host_tree_scan
-if /I "%DevelopmentTarget%"=="tree-scan" goto :development_run_host_tree_scan
-goto :development_after_host_tree_scan
+:development_after_host_tree_delete
+call :development_case_selected "HostTreeScan"
+if errorlevel 1 goto :development_after_host_tree_scan
 
 :development_run_host_tree_scan
 set /a ProgressCurrent+=1
@@ -645,11 +661,10 @@ if errorlevel 1 (
 call :read_clock HostTreeScanEnd
 call :elapsed_milliseconds HostTreeScanStart HostTreeScanEnd HostTreeScanElapsedMs
 call echo PASS  native database storage development step=host-tree-scan item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeScanElapsedMs%% project=%%ProjectCheckpointHostTreeScan%% application=%%ApplicationCheckpointHostTreeScan%%
-if /I "%DevelopmentTarget%"=="host-tree-scan" exit /b 0
-if /I "%DevelopmentTarget%"=="tree-scan" exit /b 0
 
 :development_after_host_tree_scan
-
+call :development_case_selected "Engine"
+if errorlevel 1 goto :development_after_engine
 set /a ProgressCurrent+=1
 call :read_clock EngineStart
 call echo START native database storage development step=engine item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget%
@@ -661,8 +676,10 @@ if errorlevel 1 (
 call :read_clock EngineEnd
 call :elapsed_milliseconds EngineStart EngineEnd EngineElapsedMs
 call echo PASS  native database storage development step=engine item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%EngineElapsedMs%% project=%%ProjectCheckpointEngine%% application=%%ApplicationCheckpointEngine%%
-if /I "%DevelopmentTarget%"=="engine" exit /b 0
 
+:development_after_engine
+call :development_case_selected "HostTreeWriter"
+if errorlevel 1 goto :development_after_host_tree_writer
 :development_run_host_tree_writer
 set /a ProgressCurrent+=1
 call :read_clock HostTreeWriterStart
@@ -682,8 +699,10 @@ if errorlevel 1 (
 call :read_clock HostTreeWriterEnd
 call :elapsed_milliseconds HostTreeWriterStart HostTreeWriterEnd HostTreeWriterElapsedMs
 call echo PASS  native database storage development step=host-tree-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%HostTreeWriterElapsedMs%% project=%%ProjectCheckpointHostTreeWriter%% application=%%ApplicationCheckpointHostTreeWriter%%
-if /I "%DevelopmentTarget%"=="host-tree-writer" exit /b 0
 
+:development_after_host_tree_writer
+call :development_case_selected "PersistentTransactionWriter"
+if errorlevel 1 exit /b 0
 :development_run_persistent_transaction_writer
 set /a ProgressCurrent+=1
 call :read_clock PersistentTransactionWriterStart
@@ -2290,7 +2309,7 @@ endlocal & set "%~2=%LocalDigest%"
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--development-target ^<target^>^|--prepare-development-tools^|--qualification-portable^|--qualification-hosted]
+>&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--development-target ^<target^>^|--development-target-set ^<target+...^>^|--prepare-development-tools^|--qualification-portable^|--qualification-hosted^|--qualification-step ^<step^>]
 exit /b 64
 
 :verify_storage_lowering
@@ -2366,9 +2385,28 @@ if not "%ERRORLEVEL%"=="0" (
     exit /b 1
 )
 
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
+:development_case_bundled
+setlocal EnableExtensions DisableDelayedExpansion
+set "SelectedCaseNeedle=,%~1,"
+call set "SelectedCaseRemainder=%%DevelopmentBundledCaseSet:%SelectedCaseNeedle%=%%"
+if "%SelectedCaseRemainder%"=="%DevelopmentBundledCaseSet%" (
+    endlocal
+    exit /b 1
+)
+endlocal
+exit /b 0
+
+:development_bundle_selected
+setlocal EnableExtensions DisableDelayedExpansion
+set "SelectedBundleNeedle=,%~1,"
+call set "SelectedBundleRemainder=%%DevelopmentBundleSet:%SelectedBundleNeedle%=%%"
+if "%SelectedBundleRemainder%"=="%DevelopmentBundleSet%" (
+    endlocal
+    exit /b 1
+)
 endlocal
 exit /b 0
 
@@ -2379,7 +2417,6 @@ set "Label=%~1"
 set "ProjectPath=%~f2"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\%~1-Segmented-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\%~1-Segmented-Second.wvb"
 set "ObjectPrefix=%TemporaryDirectory%\%~1-Object"
 set "ObjectManifest=%TemporaryDirectory%\%~1-Object.wvop"
 set "ImagePrefix=%TemporaryDirectory%\%~1-Staged-Image"
@@ -2411,11 +2448,9 @@ if "%Development%"=="1" (
     )
     call set "LinkCheckpoint=%%ProjectCheckpoint%%"
 ) else (
+    rem Portable database behavior binds one admitted construction. Aggregate
+    rem qualification owns compiler construction reproducibility separately.
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvb%" >nul
-    if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvb%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul
     if errorlevel 1 exit /b 1
     call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
         "%FirstWvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%StageReport%"
@@ -2459,12 +2494,6 @@ if not "%ERRORLEVEL%"=="0" (
     >&2 echo The %Label% segmented database-storage case did not return 0.
     exit /b 1
 )
-if not "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-        "%FirstWvb%" "%CanonicalPrefix%" %FragmentCount% %EntryOffset% ^
-        "%LinuxApplication%" linux >nul
-    if errorlevel 1 exit /b 1
-)
 if "%Development%"=="1" (
     call :read_clock TargetEnd
     call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
@@ -2479,14 +2508,13 @@ exit /b 0
 call :start_qualification_step "%~1"
 setlocal EnableExtensions DisableDelayedExpansion
 set "Label=%~1"
+set "CaseNames=%~3"
+if not defined CaseNames set "CaseNames=%~1"
 set "ProjectPath=%~f2"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\%~1-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\%~1-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\%~1-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\%~1-Second.wvo"
 set "Image=%TemporaryDirectory%\%~1.bin"
 set "ImagePrefix=%TemporaryDirectory%\%~1-Image"
 set "Map=%TemporaryDirectory%\%~1.map"
@@ -2508,18 +2536,11 @@ if "%Development%"=="1" (
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\%~1-Project-Cache.txt"') do set "ProjectCheckpoint=%%S"
     if not defined ProjectCheckpoint exit /b 1
 ) else (
+    rem Portable database behavior binds one admitted construction. Aggregate
+    rem qualification owns compiler and lowerer reproducibility separately.
     "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
     if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul
-    if errorlevel 1 exit /b 1
-
     "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-    if errorlevel 1 exit /b 1
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul
     if errorlevel 1 exit /b 1
 )
 if not "%Development%"=="1" (
@@ -2566,15 +2587,10 @@ if not "%ERRORLEVEL%"=="0" (
     exit /b 1
 )
 
-if not "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-        "%FirstWvb%" "%ImagePrefix%" 1 %EntryOffset% "%LinuxApplication%" linux >nul
-    if errorlevel 1 exit /b 1
-)
 if "%Development%"=="1" (
     call :read_clock TargetEnd
     call :elapsed_milliseconds TargetStart TargetEnd TargetElapsedMs
-    call echo PASS  native database storage development step=portable-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% case=%Label% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% application=windows-%WindowsApplicationCheckpoint%
+    call echo PASS  native database storage development step=portable-target item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% cases=%CaseNames% elapsed-ms=%%TargetElapsedMs%% project=%ProjectCheckpoint% link=%LinkCheckpoint% application=windows-%WindowsApplicationCheckpoint%
     endlocal & set "PortableProjectCheckpoints=%PortableProjectCheckpoints%%Label%:%ProjectCheckpoint%/link-%LinkCheckpoint%," & set "PortableApplicationCheckpoints=%PortableApplicationCheckpoints%%Label%:windows-%WindowsApplicationCheckpoint%,"
     exit /b 0
 )

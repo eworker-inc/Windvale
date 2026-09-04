@@ -1,14 +1,26 @@
 # Seed verification throughput
 
-## Status
+> Status: Current post-retirement verification architecture
+> Authority: Informative
+> Last reviewed: 2026-09-04
 
-Current post-retirement verification architecture. It incorporates
+It incorporates
 [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md),
 [Decision 0550](../Decisions/0550-Measured-Native-Retirement-Sharding.md),
 [Decisions 0553 through 0555](../Decisions/0555-Content-Addressed-Project-Wvb-Development-Checkpoints.md),
 [Decision 0557](../Decisions/0557-Separate-Development-Verification-From-Qualification.md),
 and
-[Decisions 0559 and 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md).
+[Decisions 0559 and 0560](../Decisions/0560-Linked-Image-Development-Checkpoints.md),
+with exact database target-set selection under
+[Decision 0944](../Decisions/0944-Select-Exact-Database-Development-Target-Sets.md)
+and portable database packaging ownership under
+[Decisions 0945 and 0946](../Decisions/0946-Delegate-Portable-Database-Reproducibility-To-Toolchain-Owners.md),
+then extends the same evidence-graph direction to complete qualification under
+[Decision 0947](../Decisions/0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md)
+and planner-proved development-result reuse under
+[Decision 0948](../Decisions/0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md),
+with the existing qualification runners balanced under
+[Decision 0949](../Decisions/0949-Balance-Qualification-Shards-By-Declared-Cost.md).
 
 Historical managed-suite optimization measurements remain in the dated
 decisions, qualification evidence, and Git history. They do not define the
@@ -143,12 +155,13 @@ Implemented database-path checkpoints currently cover:
 - flat linked images plus their exact link maps; and
 - packaged hosted applications with their producer closure.
 
-The database development owner additionally selects one exact target when the
-changed paths resolve to one maintained test-project closure. Shared, ambiguous,
-multi-target, and database-tool inputs fail closed to all fifteen targets.
-Hosted selections retain their dependency closure rather than reusing passing
-scenario output. Every progress record names its step, current item, requested
-target, elapsed time, and checkpoint outcome.
+The database development owner additionally derives a deterministic target set
+from every maintained test-project closure affected by the changed paths. A
+versioned 53-case inventory maps selectors to portable and hosted cases; the
+shared planner unions exact case labels, while ambiguous or complete selections
+fail closed to `all`. Hosted selections retain their dependency closure rather
+than reusing passing scenario output. Every progress record names its step,
+current item, requested target set, elapsed time, and checkpoint outcome.
 
 On the measured Windows host, the warm two-case database path fell from the
 1,111-second clean fourteen-case owner to about 71 seconds. The complete
@@ -419,6 +432,51 @@ now use the same retained-tool boundary while preserving duplicate compilation,
 byte comparison, lowering, linking, cross-target packaging, and current-host
 execution of their actual products. The fifth is the durable-database behavior
 owner, which no longer rebuilds a lowerer before exercising its 12 cases.
+
+Database target selection now preserves independent unions instead of turning
+every multi-closure change into the complete development owner. The current
+planner selects three cases for `Local-Database-Put.wv`, four for
+`Durable-Tree-Reader.wv`, and 34 for the broadly shared `Durable-Page.wv`.
+Publication, recovery, and single-writer commit are now included in the 53-case
+development inventory; cold qualification remains a separate 57-case route.
+The version-3 development inventory also identifies the six qualification-
+validated bundle memberships. A complete pair is one physical development
+execution while its two logical cases remain visible; a partial pair stays on
+the original one-case project. The all-development plan therefore contains 53
+behaviors in 47 executions. On Windows the publication/recovery bundle took
+44,850 ms while creating its content-addressed checkpoints and 2,130 ms on an
+unchanged warm run with project, link, and application hits. Independent warm
+publication and recovery selections took 2,100 and 1,980 ms, confirming that a
+partial selection does not consume the combined product.
+On the measured Windows host, three portable cases with two fresh products
+passed in 77,030 ms, and the portable plus hosted local-service closure passed
+its exact three cases in 193,520 ms. The latter plan reports 245 expected
+seconds and a 570-second safety bound rather than the qualification owner's
+2,700/3,600-second profile.
+
+Cold database qualification now reads one versioned inventory on both hosts.
+It preserves 57 logical cases while six compatible pairs share products, so the
+current graph contains 54 execution steps, 58 project references, 673 declared
+root/source references, and 146 unique source paths. Pairing every construction
+would produce 1,346 source visits per host. The 42 ordinary portable steps now
+use one admitted construction and delegate 385 duplicate visits to focused
+reproducibility owners; their remaining 4.61-fold cross-project manifest overlap
+is the next construction target. Portable steps execute the current-host image
+and delegate generic opposite-host packaging to focused packager owners; paired
+Windows/Linux database behavior remains mandatory for complete qualification.
+The first two-case bundle reduced direct clean Windows work from 71,830 to
+40,608 ms. Its focused node fell from 46,150 to 38,310 ms after both portable
+delegations. Two further bundles preserve the ancestor-groups/depth-four and
+ancestor-pages/intermediate case labels; their focused Windows nodes passed in
+51,640 and 61,150 ms respectively. A source-overlap planner now ranks
+non-identical portable pairs without treating them as safe automatically. Its
+first retained trial combines transaction leaf groups and leaf pages, sharing
+10 of 23 declared inputs; the focused Windows node passed in 56,140 ms without
+raising any compiler or lowerer limit. Its development path took 59,540 ms while
+creating checkpoints and 2,990 ms with project, link, and application hits.
+The next retained overlap trial combines root split and depth two; its focused
+Windows qualification node passed in 59,990 ms, and its development path took
+58,470 ms while creating checkpoints and 2,860 ms on the unchanged warm path.
 
 1. Schedule independent development owners concurrently only with explicit CPU
    and memory bounds, isolated state, deterministic log collation, and a retained

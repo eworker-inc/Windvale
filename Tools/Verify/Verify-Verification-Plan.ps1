@@ -70,7 +70,8 @@ $NativeCases = @(
         Name = 'verification owner registry and duration policy'
         Paths = @(
             'Tests/Native/Verification-Owners.txt',
-            'Tests/Native/Verification-Duration-Profiles.txt'
+            'Tests/Native/Verification-Duration-Profiles.txt',
+            'Tools/Verify/Plan-Qualification-Work.mjs'
         )
         Suites = @()
         Gaps = @()
@@ -3771,6 +3772,151 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'focused database qualification-fixture development targets'
+        Paths = @(
+            'Tests/Fixtures/Database/Database-Storage-Publication-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Storage-Recovery-Self-Test.wv',
+            'Tests/Fixtures/Database/Database-Single-Writer-Commit-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'publication+recovery+single-writer'
+        DatabaseCases = 3
+        DatabaseExecutions = 2
+        DatabaseExpectedSeconds = 110
+        DatabaseMaximumSeconds = 300
+    },
+    @{
+        Name = 'bundled database publication and recovery development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Storage-Publication-Recovery-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'publication+recovery'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'bundled database root-growth development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Root-Growth-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-root-growth-bundle'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'bundled database leaf-groups-pages development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Groups-Pages-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Leaf-Groups-Pages-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-leaf-groups-pages-bundle'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'bundled database root-split-depth-two development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Root-Split-Depth-Two-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Root-Split-Depth-Two-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'root-split-depth-two-bundle'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'bundled database ancestor-groups development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Ancestor-Groups-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-ancestor-groups-bundle'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'bundled database ancestor-pages development target'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Ancestor-Pages-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-ancestor-pages-bundle'
+        DatabaseCases = 2
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
+        Name = 'database development target-set union'
+        Paths = @(
+            'Libraries/Database/Local-Database-Put.wv',
+            'Specifications/Windvale-Database-Json-Value.md'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'host-local-service+json-value+local-service'
+        DatabaseCases = 4
+        DatabaseExecutions = 4
+        DatabaseExpectedSeconds = 290
+        DatabaseMaximumSeconds = 660
+    },
+    @{
+        Name = 'database development target-set retains transaction peers'
+        Paths = @(
+            'Specifications/Windvale-Database-Transaction-Commit.md',
+            'Specifications/Windvale-Database-Json-Protocol.md'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'json-protocol+transaction-commit'
+        DatabaseCases = 3
+        DatabaseExecutions = 3
+        DatabaseExpectedSeconds = 155
+        DatabaseMaximumSeconds = 390
+    },
+    @{
         Name = 'durable database superblock owner'
         Paths = @('Libraries/Database/Durable-Superblock.wv')
         Suites = @('database-superblock', 'database-durable-commit', 'libraries')
@@ -3792,6 +3938,8 @@ $NativeCases = @(
         VerifyPlan = $false
         LibraryDevelopment = $true
         LibraryTarget = 'durability'
+        DatabaseTarget = 'bootstrap+depth-three+depth-three-upsert+depth-two+engine+host-local-service+host-root-writer+host-storage+host-tree-delete+host-tree-reader+host-tree-scan+host-tree-writer+publication+recovery+root-split+single-leaf+single-writer+transaction-ancestor-groups+transaction-ancestor-pages+transaction-branch-pages+transaction-leaf-groups+transaction-leaf-pages+transaction-parent-groups+transaction-paths+transaction-root-growth+transaction-tree-completion+tree-path-delete+tree-path-upsert'
+        DatabaseCases = 34
     },
     @{
         Name = 'durable database commit project owner'
@@ -4720,6 +4868,109 @@ if ($VerificationOwnerProfiles.Count -ne $VerificationDurationProfiles.Count) {
     throw 'Not every native verification duration profile is assigned.'
 }
 
+$QualificationWorkPlanner = Join-Path $RepositoryRoot `
+    'Tools/Verify/Plan-Qualification-Work.mjs'
+$QualificationWorkPlan = (& node $QualificationWorkPlanner --json) |
+    ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or
+    $QualificationWorkPlan.Format -ne 'windvale-qualification-work-plan-2' -or
+    $QualificationWorkPlan.Owners -ne 126 -or
+    $QualificationWorkPlan.Cases -ne 5981 -or
+    $QualificationWorkPlan.TotalExpectedSeconds -ne 19560 -or
+    $QualificationWorkPlan.TotalMaximumSeconds -ne 79200 -or
+    $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
+        2 * $QualificationWorkPlan.TotalExpectedSeconds -or
+    $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 4890 -or
+    $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 24600 -or
+    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 4890 -or
+    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4890 -or
+    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 0 -or
+    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 10000 -or
+    $QualificationWorkPlan.LongOwners -ne 10 -or
+    $QualificationWorkPlan.LongOwnerExpectedSeconds -ne 13440 -or
+    $QualificationWorkPlan.OwnerAnalysis.Count -ne
+        $QualificationWorkPlan.Owners -or
+    $QualificationWorkPlan.AnalysisFiles -ne
+        ($QualificationWorkPlan.OwnerAnalysis.AnalysisFiles |
+            Measure-Object -Sum).Sum -or
+    $QualificationWorkPlan.SourceLines -ne
+        ($QualificationWorkPlan.OwnerAnalysis.SourceLines |
+            Measure-Object -Sum).Sum -or
+    $QualificationWorkPlan.OwnerProjectReferences -ne
+        ($QualificationWorkPlan.OwnerAnalysis.UniqueProjects |
+            Measure-Object -Sum).Sum -or
+    $QualificationWorkPlan.AnalysisFiles -lt
+        2 * $QualificationWorkPlan.Owners -or
+    $QualificationWorkPlan.SourceLines -lt 40000 -or
+    $QualificationWorkPlan.Shards.Count -ne 4 -or
+    ($QualificationWorkPlan.Shards.ExpectedSeconds |
+        Measure-Object -Sum).Sum -ne
+        $QualificationWorkPlan.TotalExpectedSeconds -or
+    $QualificationWorkPlan.TopExpectedOwners[0].Name -ne
+        'language-1-authenticated-foreign-binding' -or
+    $QualificationWorkPlan.TopExpectedOwners[0].AnalysisFiles -ne 3 -or
+    $QualificationWorkPlan.TopExpectedOwners[0].UniqueProjects -ne 2 -or
+    $QualificationWorkPlan.TopExpectedOwners[0].PipelineCallSites -ne 1 -or
+    $QualificationWorkPlan.TopExpectedOwners[1].Name -ne 'database-storage' -or
+    $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 66 -or
+    $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 86 -or
+    $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
+        'language-1-front-door' -or
+    $QualificationWorkPlan.TopExpectedOwners[5].PipelineCallSites -ne 237 -or
+    $QualificationWorkPlan.RepeatedProjects.Count -ne 11 -or
+    $QualificationWorkPlan.NestedOwnerEdges.Count -ne 0 -or
+    $QualificationWorkPlan.PipelineUses.Count -ne 19) {
+    throw 'The complete qualification work inventory differs.'
+}
+$QualificationShardSignature = @(
+    $QualificationWorkPlan.Shards | ForEach-Object {
+        "$($_.Shard)|$($_.Owners)|$($_.Cases)|$($_.ExpectedSeconds)|$($_.MaximumSeconds)"
+    }
+) -join ','
+if ($QualificationShardSignature -cne
+    '1|10|780|4890|13200,2|39|2140|4890|24600,3|39|1809|4890|24600,4|38|1252|4890|16800') {
+    throw "The balanced qualification shard assignment differs: $QualificationShardSignature"
+}
+$QualificationPipelineExpected = @{
+    'Build-Current-Wvb' = '11|41'
+    'Build-Wvb' = '48|221'
+    'Build-Cached-Project-Object' = '1|2'
+    'Build-Cached-Hosted-Application' = '12|44'
+    'Build-Cached-Split-Project-Wvb' = '3|18'
+    'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
+    'Stage-Compiler-Wvb' = '2|8'
+    'Lower-Wvb-To-Wvo' = '16|47'
+    'Check-Wvo' = '20|57'
+    'Link-Wvo' = '39|124'
+    'Package-Hosted-Wvb' = '19|111'
+    'Package-Console' = '19|77'
+    'Package-Segmented-Compiler-Wvb' = '21|57'
+    'Verify-Wvb' = '5|16'
+    'Verify-Wvo' = '10|34'
+    'Verify-Source-Analysis-Diagnostic' = '1|11'
+    'Run-Wvb' = '8|60'
+    'Run-Split-Compiler' = '3|81'
+    'Run-Authenticated-Source-Admission' = '1|30'
+}
+foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
+    $ActualPipelineUse = "$($PipelineUse.Owners)|$($PipelineUse.ScriptCallSites)"
+    if (!$QualificationPipelineExpected.ContainsKey($PipelineUse.Marker) -or
+        $QualificationPipelineExpected[$PipelineUse.Marker] -ne $ActualPipelineUse) {
+        throw "The complete qualification pipeline inventory differs at '$($PipelineUse.Marker)'."
+    }
+}
+$QualificationWorkOwners = @(& node $QualificationWorkPlanner --owners)
+if ($LASTEXITCODE -ne 0 -or
+    $QualificationWorkOwners.Count -ne $QualificationWorkPlan.Owners -or
+    !$QualificationWorkOwners[0].StartsWith(
+        'verification-owner-stream|2|6|quick|15|300|',
+        [StringComparison]::Ordinal) -or
+    !$QualificationWorkOwners[-1].StartsWith(
+        'wvdb-approval|4|13|quick|15|300|',
+        [StringComparison]::Ordinal)) {
+    throw 'The complete qualification owner rows differ.'
+}
+
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
 $PowerShellTestRunnerSource = Get-Content -Raw -LiteralPath $PowerShellTestRunner
 foreach ($Fragment in @(
@@ -4759,6 +5010,31 @@ try {
 } finally {
     if ([IO.File]::Exists($TestRunnerResultPath)) {
         [IO.File]::Delete($TestRunnerResultPath)
+    }
+}
+$BalancedShardPlans = @(
+    @{ Shard = 1; Owners = 10; Cases = 780; MaximumSeconds = 13200 },
+    @{ Shard = 2; Owners = 39; Cases = 2140; MaximumSeconds = 24600 },
+    @{ Shard = 3; Owners = 39; Cases = 1809; MaximumSeconds = 24600 },
+    @{ Shard = 4; Owners = 38; Cases = 1252; MaximumSeconds = 16800 }
+)
+foreach ($BalancedShardPlan in $BalancedShardPlans) {
+    $ShardPlanOutput = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+        -Shard $BalancedShardPlan.Shard -PlanOnly 2>&1)
+    $ShardPlanRows = @(
+        $ShardPlanOutput | Where-Object { $_ -match '^PLAN  owner=' })
+    $ExpectedShardSummary = (
+        "Verification plan mode=shard:$($BalancedShardPlan.Shard) " +
+        "owners=$($BalancedShardPlan.Owners) " +
+        "cases=$($BalancedShardPlan.Cases) expected-seconds=4890 " +
+        "maximum-seconds=$($BalancedShardPlan.MaximumSeconds) ")
+    if ($LASTEXITCODE -ne 0 -or
+        $ShardPlanRows.Count -ne $BalancedShardPlan.Owners -or
+        !($ShardPlanOutput -join "`n").Contains(
+            $ExpectedShardSummary, [StringComparison]::Ordinal)) {
+        throw (
+            "Qualification shard $($BalancedShardPlan.Shard) did not expose " +
+            'the balanced runner plan.')
     }
 }
 $TailPlanResultPath = Join-Path ([IO.Path]::GetTempPath()) (
@@ -4994,10 +5270,17 @@ $ResultCacheImplementation = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Verification-Owner-Result-Cache.mjs')
 foreach ($Fragment in @(
     '$Plan.Scope -eq ''development'' -and !$NoResultCache',
+    '''windvale-verification-owner-action-2''',
+    'ownerContractSha256',
     '''probe''',
+    '''candidates''',
+    '''changes''',
+    '''confirm''',
     '''publish''',
     '''StateChanged''',
-    'source-state=Exact'
+    'source-state=Exact',
+    'source-state=Compatible',
+    '$CompatibleResultCacheBarrierPaths'
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
         throw "Changed-file result-cache dispatch is missing '$Fragment'."
@@ -5008,6 +5291,9 @@ foreach ($Fragment in @(
     '$OwnerArguments = @(''-Owner'', $Suite)',
     '$OwnerArguments += ''-AllowLongRun''',
     '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments',
+    '$LOCAL_DEVELOPMENT_BUDGET_SECONDS = 600',
+    'DatabaseStorageDevelopmentExpectedSeconds -gt',
+    '''--development-target-set''',
     '$AllowIncompleteInfrastructure',
     '$PlanVerificationInClassification',
     '$GitHubVerificationOnLinux',
@@ -5026,10 +5312,19 @@ foreach ($Fragment in @(
 }
 foreach ($Fragment in @(
     "const CACHE_FAMILY = 'owner-result-v1'",
+    "const STATE_RECORD_FORMAT = 'windvale-verification-owner-state-record-1'",
+    "const CANDIDATE_FORMAT = 'windvale-verification-owner-candidates-1'",
+    "const CHANGED_PATH_FORMAT = 'windvale-verification-owner-changed-paths-1'",
     'const MAX_STATE_DIRECTORIES = 16',
+    'const MAX_COMPATIBLE_CANDIDATES = 15',
     'const MAX_RESULTS_PER_STATE = 512',
     'const MAX_RESULT_BYTES = 16 * 1024',
     'await Measureˉsourceˉsentinel(resolve(Repositoryˉinput))',
+    'Listˉverificationˉresultˉcandidates',
+    'Getˉverificationˉchangedˉpaths',
+    'Confirmˉverificationˉsourceˉstate',
+    'const Sentinelˉbefore = await Measureˉsourceˉsentinel',
+    'await Ensureˉstateˉrecord',
     'return ''StateChanged''',
     'await rm(Temporary, { force: true })'
 )) {
@@ -5252,6 +5547,293 @@ foreach ($Entry in $LinuxArtifactIndex) {
     if ($Entry -notmatch '^100755 .+\t(.+\.elf)$') {
         $Artifact = if ($Entry -match '\t(.+)$') { $Matches[1] } else { $Entry }
         throw "Linux ELF artifact '$Artifact' is not executable in Git."
+    }
+}
+
+$DatabaseCasePlan = Join-Path $RepositoryRoot `
+    'Tests/Native/Database-Storage-Development-Cases.txt'
+$DatabaseCaseLines = @(Get-Content -LiteralPath $DatabaseCasePlan)
+if ($DatabaseCaseLines.Count -ne 54 -or
+    $DatabaseCaseLines[0] -ne
+        'windvale-database-storage-development-cases 3') {
+    throw 'The database storage development-case inventory differs.'
+}
+$DatabaseCaseNames = [System.Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($Line in @($DatabaseCaseLines | Select-Object -Skip 1)) {
+    $Fields = $Line.Split('|')
+    $Selectors = if ($Fields.Count -in @(3, 4)) { @($Fields[2].Split(',')) } else { @() }
+    $Bundle = if ($Fields.Count -eq 4) { $Fields[3] } else { '-' }
+    if ($Fields.Count -notin @(3, 4) -or
+        $Fields[0] -notmatch '^[A-Z][A-Za-z0-9]*$' -or
+        $Fields[1] -notmatch '^(?:portable|hosted)$' -or
+        $Selectors.Count -eq 0 -or
+        @($Selectors | Where-Object {
+            $_ -notmatch '^[a-z0-9][a-z0-9-]*$'
+        }).Count -ne 0 -or
+        @($Selectors | Sort-Object -Unique).Count -ne $Selectors.Count -or
+        ($Bundle -ne '-' -and
+            ($Bundle -notmatch '^[A-Z][A-Za-z0-9]*$' -or
+             $Fields[1] -ne 'portable')) -or
+        !$DatabaseCaseNames.Add($Fields[0])) {
+        throw "Invalid or duplicate database development case: $Line"
+    }
+}
+$DatabaseCasePlanner = Join-Path $RepositoryRoot `
+    'Tools/Native/Plan-Database-Storage-Development.mjs'
+$DatabaseCasePlannerText = Get-Content -Raw -LiteralPath $DatabaseCasePlanner
+if (!$DatabaseCasePlannerText.Contains(
+        'Database-Storage-Development-Cases.txt',
+        [StringComparison]::Ordinal)) {
+    throw 'The database development planner does not consume its case inventory.'
+}
+$DatabaseAllPlan = (& node $DatabaseCasePlanner all).Trim()
+if ($LASTEXITCODE -ne 0) {
+    throw 'The database development all-case plan failed.'
+}
+$DatabaseAllFields = $DatabaseAllPlan.Split('|')
+if ($DatabaseAllFields.Count -ne 7 -or
+    $DatabaseAllFields[0] -ne 'windvale-database-storage-development-plan-2' -or
+    $DatabaseAllFields[1] -ne 'all' -or
+    $DatabaseAllFields[2] -ne '53' -or
+    $DatabaseAllFields[3] -ne '47' -or
+    $DatabaseAllFields[4].Split(',').Count -ne 53 -or
+    $DatabaseAllFields[5].Split(',').Count -ne 6 -or
+    $DatabaseAllFields[6].Split(',').Count -ne 12) {
+    throw "The database development all-case plan differs: $DatabaseAllPlan"
+}
+$DatabaseUnionPlan = (& node $DatabaseCasePlanner `
+    'host-local-service+local-service').Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseUnionPlan -ne
+        'windvale-database-storage-development-plan-2|host-local-service+local-service|3|3|LocalService,HostStorage,HostLocalService|-|-') {
+    throw "The database development target-set union differs: $DatabaseUnionPlan"
+}
+$DatabaseSinglePlan = (& node $DatabaseCasePlanner publication).Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseSinglePlan -ne
+        'windvale-database-storage-development-plan-2|publication|1|1|Publication|-|-') {
+    throw "The database development single-case plan differs: $DatabaseSinglePlan"
+}
+$DatabaseBundlePlan = (& node $DatabaseCasePlanner `
+    'publication+recovery').Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseBundlePlan -ne
+        'windvale-database-storage-development-plan-2|publication+recovery|2|1|Publication,Recovery|PublicationRecovery|Publication,Recovery') {
+    throw "The database development bundle plan differs: $DatabaseBundlePlan"
+}
+$DatabaseOverlapBundlePlan = (& node $DatabaseCasePlanner `
+    'transaction-leaf-groups-pages-bundle').Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseOverlapBundlePlan -ne
+        'windvale-database-storage-development-plan-2|transaction-leaf-groups-pages-bundle|2|1|TransactionLeafGroups,TransactionLeafPages|TransactionLeafGroupsPagesBundle|TransactionLeafGroups,TransactionLeafPages') {
+    throw "The database development overlap-bundle plan differs: $DatabaseOverlapBundlePlan"
+}
+$DatabaseRootBundlePlan = (& node $DatabaseCasePlanner `
+    'root-split-depth-two-bundle').Trim()
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseRootBundlePlan -ne
+        'windvale-database-storage-development-plan-2|root-split-depth-two-bundle|2|1|RootSplit,DepthTwo|RootSplitDepthTwoBundle|RootSplit,DepthTwo') {
+    throw "The database development root bundle plan differs: $DatabaseRootBundlePlan"
+}
+$DatabaseInvalidPlan = @(& node $DatabaseCasePlanner `
+    'recovery+recovery' 2>&1)
+if ($LASTEXITCODE -ne 64) {
+    throw 'The database development target-set planner admitted a duplicate target.'
+}
+$DatabaseQualificationPlanner = Join-Path $RepositoryRoot `
+    'Tools/Native/Plan-Database-Storage-Qualification.mjs'
+$DatabaseQualificationPlan = (& node $DatabaseQualificationPlanner --json) |
+    ConvertFrom-Json
+if ($LASTEXITCODE -ne 0 -or
+    $DatabaseQualificationPlan.Format -ne
+        'windvale-database-storage-qualification-plan-3' -or
+    $DatabaseQualificationPlan.Steps -ne 54 -or
+    $DatabaseQualificationPlan.Cases -ne 57 -or
+    $DatabaseQualificationPlan.Prerequisites -ne 3 -or
+    $DatabaseQualificationPlan.PortableSteps -ne 43 -or
+    $DatabaseQualificationPlan.HostedSteps -ne 11 -or
+    $DatabaseQualificationPlan.PortableCases -ne 46 -or
+    $DatabaseQualificationPlan.HostedCases -ne 11 -or
+    $DatabaseQualificationPlan.ProjectReferences -ne 58 -or
+    $DatabaseQualificationPlan.UniqueProjects -ne 57 -or
+    $DatabaseQualificationPlan.SourceReferences -ne 673 -or
+    $DatabaseQualificationPlan.UniqueSources -ne 146 -or
+    $DatabaseQualificationPlan.ManifestDuplication -ne 4.61 -or
+    $DatabaseQualificationPlan.AllPairedSourceVisits -ne
+        2 * $DatabaseQualificationPlan.SourceReferences -or
+    $DatabaseQualificationPlan.PortableSingleConstructionSteps -ne 42 -or
+    $DatabaseQualificationPlan.PortableDuplicateSourceVisitsDelegated -ne 385 -or
+    $DatabaseQualificationPlan.DependencyEdges -ne 10 -or
+    $DatabaseQualificationPlan.StepsWithDependencies -ne 10 -or
+    $DatabaseQualificationPlan.RepeatedSources.Count -eq 0 -or
+    $DatabaseQualificationPlan.SharedClosureCandidates.Count -ne 1 -or
+    $DatabaseQualificationPlan.SharedClosureCandidates[0].Steps.Count -ne 3 -or
+    $DatabaseQualificationPlan.SharedClosureCandidates[0].Cases -notcontains
+        'TransactionBranchPages' -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates.Count -ne 12 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].SharedSources -ne 14 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].UnionSources -ne 17 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].DeclarationVisitReductionBasisPoints -ne 4516) {
+    throw 'The database qualification work-graph plan differs.'
+}
+$DatabaseQualificationCounts = (& node $DatabaseQualificationPlanner `
+    --counts).Trim()
+if ($LASTEXITCODE -ne 0 -or $DatabaseQualificationCounts -ne
+    'windvale-database-storage-qualification-counts-1|54|57|3|43|11|46|11') {
+    throw "The database qualification count plan differs: $DatabaseQualificationCounts"
+}
+$PreviousQualificationStep = $env:WINDVALE_DATABASE_QUALIFICATION_STEP
+try {
+    $env:WINDVALE_DATABASE_QUALIFICATION_STEP = 'HostEngine'
+    $DatabaseHostedClosure = @(& node $DatabaseQualificationPlanner --closure-env)
+    if ($LASTEXITCODE -ne 0 -or $DatabaseHostedClosure.Count -ne 3 -or
+        !$DatabaseHostedClosure[0].StartsWith('HostStorage|', [StringComparison]::Ordinal) -or
+        !$DatabaseHostedClosure[1].StartsWith('HostTreeReader|', [StringComparison]::Ordinal) -or
+        !$DatabaseHostedClosure[2].StartsWith('HostEngine|', [StringComparison]::Ordinal)) {
+        throw 'The database hosted dependency closure differs.'
+    }
+} finally {
+    $env:WINDVALE_DATABASE_QUALIFICATION_STEP = $PreviousQualificationStep
+}
+$DatabasePortableRows = @(& node $DatabaseQualificationPlanner --rows portable)
+$DatabasePortableRowResult = $LASTEXITCODE
+$DatabaseHostedRows = @(& node $DatabaseQualificationPlanner --rows hosted)
+$DatabaseHostedRowResult = $LASTEXITCODE
+if ($DatabasePortableRowResult -ne 0 -or
+    $DatabaseHostedRowResult -ne 0 -or
+    $DatabasePortableRows.Count -ne $DatabaseQualificationPlan.PortableSteps -or
+    $DatabaseHostedRows.Count -ne $DatabaseQualificationPlan.HostedSteps -or
+    !$DatabasePortableRows[0].StartsWith('Nested|project|', [StringComparison]::Ordinal) -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'PublicationRecovery|*|Publication,Recovery'
+    }).Count -ne 1 -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'TransactionLeafGroupsPagesBundle|*|TransactionLeafGroups,TransactionLeafPages'
+    }).Count -ne 1 -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'RootSplitDepthTwoBundle|*|RootSplit,DepthTwo'
+    }).Count -ne 1 -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'TransactionRootGrowthBundle|*|TransactionRootGrowth,TransactionRootGrowthMultiLevel'
+    }).Count -ne 1 -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'TransactionAncestorGroupsBundle|*|TransactionAncestorGroups,TransactionAncestorGroupsDepthFour'
+    }).Count -ne 1 -or
+    @($DatabasePortableRows | Where-Object {
+        $_ -like 'TransactionAncestorPagesBundle|*|TransactionAncestorPages,TransactionAncestorPagesIntermediate'
+    }).Count -ne 1 -or
+    !$DatabasePortableRows[-1].StartsWith('StorageLowering|storage-lowering|', [StringComparison]::Ordinal) -or
+    !$DatabaseHostedRows[0].StartsWith('HostStorage|host-storage|', [StringComparison]::Ordinal) -or
+    !$DatabaseHostedRows[-1].StartsWith('PersistentTransactionWriter|persistent-transaction-writer|', [StringComparison]::Ordinal)) {
+    throw 'The database qualification row plans differ.'
+}
+$DatabaseQualificationRowLabels = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($Row in @($DatabasePortableRows + $DatabaseHostedRows)) {
+    $Fields = $Row.Split('|')
+    if ($Fields.Count -ne 6 -or !$DatabaseQualificationRowLabels.Add($Fields[0])) {
+        throw "Malformed or duplicate database qualification row: $Row"
+    }
+}
+$DatabaseWindowsOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.cmd')
+$DatabaseLinuxOwner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Database-Storage.sh')
+foreach ($OwnerContract in @(
+    @{ Host = 'Windows'; Text = $DatabaseWindowsOwner },
+    @{ Host = 'Linux'; Text = $DatabaseLinuxOwner }
+)) {
+    foreach ($Fragment in @(
+        'Plan-Database-Storage-Development.mjs',
+        '--development-target-set',
+        'development_case_selected',
+        'development_bundle_selected',
+        'development_case_bundled',
+        'verify_development_bundle',
+        'executions='
+    )) {
+        if (!$OwnerContract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "The $($OwnerContract.Host) database owner is missing '$Fragment'."
+        }
+    }
+}
+foreach ($OwnerContract in @(
+    @{ Host = 'Windows'; Text = $DatabaseWindowsOwner; Row = '--rows portable'; Lane = '--rows hosted'; PortableCases = '%QualificationPortableCases%'; HostedCases = '%QualificationHostedCases%'; Cases = '%QualificationCases%' },
+    @{ Host = 'Linux'; Text = $DatabaseLinuxOwner; Row = '--rows "$lane"'; Lane = 'run_qualification_lane portable'; PortableCases = '$qualification_portable_cases'; HostedCases = '$qualification_hosted_cases'; Cases = '$qualification_cases' }
+)) {
+    foreach ($Fragment in @(
+        'Plan-Database-Storage-Qualification.mjs',
+        '--counts',
+        '--qualification-step',
+        '--closure-env',
+        $OwnerContract.Row,
+        $OwnerContract.Lane,
+        'dispatch_qualification_step',
+        'current-host-behavior=Verified',
+        'portable-reproducibility=Delegated',
+        'cross-target-packaging=Delegated',
+        'support-steps=',
+        "cases=$($OwnerContract.PortableCases)",
+        "cases=$($OwnerContract.HostedCases)",
+        "cases=$($OwnerContract.Cases)"
+    )) {
+        if (!$OwnerContract.Text.Contains($Fragment, [StringComparison]::Ordinal)) {
+            throw "The $($OwnerContract.Host) database qualification owner differs from the work-graph inventory at '$Fragment'."
+        }
+    }
+}
+$DatabasePortableFunctionContracts = @(
+    @{
+        Host = 'Windows segmented'
+        Text = $DatabaseWindowsOwner.Substring(
+            $DatabaseWindowsOwner.LastIndexOf(':verify_segmented_target', [StringComparison]::Ordinal),
+            $DatabaseWindowsOwner.LastIndexOf(':verify_target', [StringComparison]::Ordinal) -
+                $DatabaseWindowsOwner.LastIndexOf(':verify_segmented_target', [StringComparison]::Ordinal))
+    },
+    @{
+        Host = 'Windows ordinary'
+        Text = $DatabaseWindowsOwner.Substring(
+            $DatabaseWindowsOwner.LastIndexOf(':verify_target', [StringComparison]::Ordinal),
+            $DatabaseWindowsOwner.LastIndexOf(':build_cached_hosted_application', [StringComparison]::Ordinal) -
+                $DatabaseWindowsOwner.LastIndexOf(':verify_target', [StringComparison]::Ordinal))
+    },
+    @{
+        Host = 'Linux segmented'
+        Text = $DatabaseLinuxOwner.Substring(
+            $DatabaseLinuxOwner.IndexOf('verify_segmented_target() {', [StringComparison]::Ordinal),
+            $DatabaseLinuxOwner.IndexOf('verify_target() {', [StringComparison]::Ordinal) -
+                $DatabaseLinuxOwner.IndexOf('verify_segmented_target() {', [StringComparison]::Ordinal))
+    },
+    @{
+        Host = 'Linux ordinary'
+        Text = $DatabaseLinuxOwner.Substring(
+            $DatabaseLinuxOwner.IndexOf('verify_target() {', [StringComparison]::Ordinal),
+            $DatabaseLinuxOwner.IndexOf('verify_storage_lowering() {', [StringComparison]::Ordinal) -
+                $DatabaseLinuxOwner.IndexOf('verify_target() {', [StringComparison]::Ordinal))
+    }
+)
+foreach ($FunctionContract in $DatabasePortableFunctionContracts) {
+    if (!$FunctionContract.Text.Contains(
+            'qualification owns compiler', [StringComparison]::Ordinal) -or
+        $FunctionContract.Text -match '(?i)second[_a-z]*wv[bo]|fc /b|cmp --silent') {
+        throw "The $($FunctionContract.Host) portable database function reintroduced private reproducibility work."
+    }
+}
+$DatabaseStorageLoweringContracts = @(
+    $DatabaseWindowsOwner.Substring(
+        $DatabaseWindowsOwner.LastIndexOf(':verify_storage_lowering', [StringComparison]::Ordinal),
+        $DatabaseWindowsOwner.LastIndexOf(':verify_segmented_target', [StringComparison]::Ordinal) -
+            $DatabaseWindowsOwner.LastIndexOf(':verify_storage_lowering', [StringComparison]::Ordinal)),
+    $DatabaseLinuxOwner.Substring(
+        $DatabaseLinuxOwner.IndexOf('verify_storage_lowering() {', [StringComparison]::Ordinal),
+        $DatabaseLinuxOwner.IndexOf('verify_host_storage_interruption() {', [StringComparison]::Ordinal) -
+            $DatabaseLinuxOwner.IndexOf('verify_storage_lowering() {', [StringComparison]::Ordinal))
+)
+foreach ($StorageLoweringContract in $DatabaseStorageLoweringContracts) {
+    if ($StorageLoweringContract -notmatch '(?i)second[_a-z]*wv[bo]' -or
+        $StorageLoweringContract -notmatch '(?i)(fc /b|cmp --silent)') {
+        throw 'The database storage-lowering owner no longer retains paired construction evidence.'
     }
 }
 
@@ -5654,6 +6236,21 @@ foreach ($Case in $NativeCases) {
     }
     $DatabaseTargetDiffers = (
         $Plan.DatabaseStorageDevelopmentTarget -ne $ExpectedDatabaseTarget)
+    $DatabaseCaseCountDiffers = (
+        $Case.ContainsKey('DatabaseCases') -and
+        $Plan.DatabaseStorageDevelopmentCaseCount -ne $Case.DatabaseCases)
+    $DatabaseExecutionCountDiffers = (
+        $Case.ContainsKey('DatabaseExecutions') -and
+        $Plan.DatabaseStorageDevelopmentExecutionCount -ne
+            $Case.DatabaseExecutions)
+    $DatabaseExpectedSecondsDiffers = (
+        $Case.ContainsKey('DatabaseExpectedSeconds') -and
+        $Plan.DatabaseStorageDevelopmentExpectedSeconds -ne
+            $Case.DatabaseExpectedSeconds)
+    $DatabaseMaximumSecondsDiffers = (
+        $Case.ContainsKey('DatabaseMaximumSeconds') -and
+        $Plan.DatabaseStorageDevelopmentMaximumSeconds -ne
+            $Case.DatabaseMaximumSeconds)
     if (
         !([System.Linq.Enumerable]::SequenceEqual(
             [string[]]@($Plan.Suites),
@@ -5671,7 +6268,11 @@ foreach ($Case in $NativeCases) {
         $LibraryDevelopmentDiffers -or
         $LibraryTargetDiffers -or
         $DatabaseDevelopmentDiffers -or
-        $DatabaseTargetDiffers
+        $DatabaseTargetDiffers -or
+        $DatabaseCaseCountDiffers -or
+        $DatabaseExecutionCountDiffers -or
+        $DatabaseExpectedSecondsDiffers -or
+        $DatabaseMaximumSecondsDiffers
     ) {
         throw (
             "Native plan '$($Case.Name)' expected suites=[$($Case.Suites -join ', ')], " +
@@ -5689,7 +6290,13 @@ foreach ($Case in $NativeCases) {
             "library-development=$($Plan.UseLibraryDevelopment), " +
             "library-target=$($Plan.LibraryDevelopmentTarget), " +
             "database-development=$($Plan.UseDatabaseStorageDevelopment), " +
-            "database-target=$($Plan.DatabaseStorageDevelopmentTarget)."
+            "database-target=$($Plan.DatabaseStorageDevelopmentTarget), " +
+            "database-cases=$($Plan.DatabaseStorageDevelopmentCaseCount), " +
+            "database-executions=$($Plan.DatabaseStorageDevelopmentExecutionCount), " +
+            "database-expected-seconds=" +
+            "$($Plan.DatabaseStorageDevelopmentExpectedSeconds), " +
+            "database-maximum-seconds=" +
+            "$($Plan.DatabaseStorageDevelopmentMaximumSeconds)."
         )
     }
 }

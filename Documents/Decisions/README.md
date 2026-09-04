@@ -11,7 +11,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Search status | Decisions |
 | --- | ---: |
 | Accepted | 350 |
-| Implemented | 484 |
+| Implemented | 494 |
 | Proposed | 4 |
 | Qualified | 94 |
 | Recorded | 7 |
@@ -47,6 +47,16 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0953: bundle the root-split and depth-two database cases](0953-Bundle-The-Root-Split-And-Depth-Two-Database-Cases.md) | Implemented |
+| [Decision 0952: rank and trial overlapping database products](0952-Rank-And-Trial-Overlapping-Database-Products.md) | Implemented |
+| [Decision 0951: coalesce complete database bundles in development](0951-Coalesce-Complete-Database-Bundles-In-Development.md) | Implemented |
+| [Decision 0950: bundle compatible database ancestor cases](0950-Bundle-Compatible-Database-Ancestor-Cases.md) | Implemented |
+| [Decision 0949: balance qualification shards by declared cost](0949-Balance-Qualification-Shards-By-Declared-Cost.md) | Implemented |
+| [Decision 0948: reuse development-owner results across unrelated source trees](0948-Reuse-Development-Owner-Results-Across-Unrelated-Source-Trees.md) | Implemented |
+| [Decision 0947: treat complete qualification as one evidence graph](0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md) | Implemented |
+| [Decision 0946: delegate portable database reproducibility to toolchain owners](0946-Delegate-Portable-Database-Reproducibility-To-Toolchain-Owners.md) | Implemented |
+| [Decision 0945: separate database behavior from cross-target packaging](0945-Separate-Database-Behavior-From-Cross-Target-Packaging.md) | Implemented |
+| [Decision 0944: select exact database development target sets](0944-Select-Exact-Database-Development-Target-Sets.md) | Implemented |
 | [Decision 0943: complete Windvale Language 1.0 Slice 8 qualification](0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) | Accepted |
 | [Decision 0942: advance the frozen source identity for Foreign and payload borrowing](0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md) | Accepted |
 | [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
@@ -62,16 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0931: preserve resumable compiler symbol checkpoints](0931-Preserve-Resumable-Compiler-Symbol-Checkpoints.md) | Accepted |
 | [Decision 0930: verify routing once during classification](0930-Verify-Routing-Once-During-Classification.md) | Accepted |
 | [Decision 0929: reuse native planner initialization in routing verification](0929-Reuse-Native-Planner-Initialization-In-Routing-Verification.md) | Accepted |
-| [Decision 0928: run shared development meta-verification once](0928-Run-Shared-Development-Meta-Verification-Once.md) | Accepted |
-| [Decision 0927: calibrate verification durations from bounded history](0927-Calibrate-Verification-Durations-From-Bounded-History.md) | Accepted |
-| [Decision 0926: classify and bound verification-owner outcomes](0926-Classify-And-Bound-Verification-Owner-Outcomes.md) | Accepted |
-| [Decision 0925: publish and retain the authenticated Foreign lowering carrier](0925-Publish-And-Retain-Authenticated-Foreign-Lowering-Carrier.md) | Accepted |
-| [Decision 0924: use one PowerShell verification-owner runner](0924-Use-One-PowerShell-Verification-Owner-Runner.md) | Accepted |
-| [Decision 0923: carry bound Foreign facts to typed lowering](0923-Carry-Bound-Foreign-Facts-To-Typed-Lowering.md) | Proposed |
-| [Decision 0922: lower contained WVB 1.37 write pointers and focus native development verification](0922-Lower-Contained-WVB-1.37-Write-Pointers-And-Focus-Native-Development-Verification.md) | Accepted |
-| [Decision 0921: cache complete segmented development packaging](0921-Cache-Complete-Segmented-Development-Packaging.md) | Accepted |
-| [Decision 0920: execute contained WVB 1.37 write pointers in the scalar provider](0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md) | Accepted |
-| [Decision 0919: advance the frozen source identity for WVB 1.37 containment](0919-Advance-The-Frozen-Source-Identity-For-WVB-1.37-Containment.md) | Accepted |
 
 ## Superseded or historical records
 

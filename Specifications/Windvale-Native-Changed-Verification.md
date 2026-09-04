@@ -8,6 +8,10 @@ It composes existing native verification owners; it does not redefine their test
 expectations or replace the final dual-host qualification gate.
 Single-execution ownership for automatic routing verification is recorded by
 [Decision 0930](../Documents/Decisions/0930-Verify-Routing-Once-During-Classification.md).
+Exact database target-set selection is recorded by
+[Decision 0944](../Documents/Decisions/0944-Select-Exact-Database-Development-Target-Sets.md).
+Complete development-bundle coalescing is recorded by
+[Decision 0951](../Documents/Decisions/0951-Coalesce-Complete-Database-Bundles-In-Development.md).
 
 ## Planning contract
 
@@ -22,8 +26,9 @@ values, and returns:
   to one declared project closure, otherwise `all`;
 - the library development target when every input that selects the library owner
   belongs to one declared dependency cluster, otherwise `all`;
-- the database development target when exactly one declared test-project closure
-  owns all affected database inputs, otherwise `all`; and
+- the sorted database development target set, its exact logical, portable, and
+  hosted case counts, physical execution count, selected bundle count, and its
+  cost-class-aware cold estimate and bound; and
 - the normalized changed-path count.
 
 Maintained Windvale compiler, bytecode, Foundation, object, assembler, linker,
@@ -55,20 +60,31 @@ reserved for the final grouped gate, not used as changed-file fallback.
 
 ## Persistent development resume
 
-The front door reuses a passing owner automatically when its complete version-1
-result state and exact action match. Preparation measures the complete
-non-ignored Git source tree plus the local host, boot, environment, and fixed
-host-tool identities. The action binds the selected suite, actual command,
-arguments, development scope, and cache format. A tracked-diff and
-untracked-content sentinel must still match after the owner finishes before its
-pass can be published.
+The front door first reuses a passing owner automatically when its complete
+version-1 result state and exact version-2 action match. Preparation measures
+the complete non-ignored Git source tree plus the local host, boot, environment,
+and fixed host-tool identities. The action binds the selected suite, actual
+command, arguments, development scope, cache format, and SHA-256 identity of the
+exact registered owner row. A tracked-diff and untracked-content sentinel must
+still match after the owner finishes before its pass can be published.
+Preparation accepts a tree only when sentinels measured immediately before and
+after tree construction are equal, and exact reuse reconfirms the sentinel
+before skipping owner execution.
 
-Version 1 is intentionally conservative: one source-tree change selects a new
-state and invalidates every prior owner receipt. It does not yet reuse an
-unaffected owner across two different source trees. A commit or push with an
-identical tree retains the state. Repeated or interrupted runs of that exact
-state can therefore skip every owner that already passed, while a failed owner
-runs again.
+After an exact-state miss, the front door may examine at most fifteen retained
+receipts from the same canonical repository and host identity. It enumerates
+the complete Git-tree path delta from each candidate to the current measured
+tree and submits those paths to the current native planner. A candidate is
+reusable only when the planner reports no coverage gap and does not select the
+owner. Changes to the registry, duration table, planners, dispatcher,
+coordinator, result-cache code, or owner-stream boundary are proof changes and
+disable compatible reuse. The candidate receipt is revalidated and the current
+source sentinel must still match before an exact receipt is published for the
+new state. Any error or unavailable Git tree becomes a miss.
+
+A commit or push with an identical tree retains the exact state. A proven
+unrelated tree reports `source-state=Compatible`, the bounded changed-path
+count, and the source-state prefix. A failed or affected owner runs again.
 
 This optimization applies only to development execution through
 `Verify-Changed.ps1`. Qualification and direct coordinator commands remain
@@ -209,12 +225,33 @@ this publisher; other tools do not select the lane merely because their names
 contain `Console`.
 
 The `database-storage` development lane derives target ownership from the root
-and source entries of its fifteen maintained test projects. One exact target is
-returned only when the changed database inputs resolve to one closure. Shared
-sources, multiple targets, cache or database-owner tooling, and otherwise
-ambiguous maintained database inputs select `all`. Hosted targets retain their
-behavioral prerequisites: the tree reader consumes host-storage output, and the
-engine and tree writer consume the reader's committed depth-two output.
+and source entries of its maintained test projects. Its versioned 53-case
+inventory maps each portable or hosted case to every selector that requires it
+and may bind a portable case to one qualification-declared bundle. The planner
+returns the stable union for all affected closures, separated by `+`, and
+returns `all` only when every development case is selected or the input is
+unsafe for focused development. It reports logical cases and physical
+executions separately. A bundle is selected only when every declared member is
+selected, and its ordered member list must equal the corresponding portable
+qualification step; otherwise planning fails. A partial selection executes its
+original one-case project. Hosted selections retain their behavioral
+prerequisites: the tree reader consumes host-storage output, and the engine and
+tree writer consume the reader's committed depth-two output. Publication,
+recovery, and single-writer commit are development cases as well as retained
+qualification behaviors. The six combined database projects and their bundle
+roots route to only the logical cases that they construct; a bundle-maintenance
+edit does not fall through to the generic project or full-database owner. The
+complete 53-case development selection currently has 47 physical executions.
+
+After exact result-cache reuse is considered, the front door refuses to start a
+focused database plan whose cold estimate exceeds the 600-second local
+development budget unless `-AllowLongRun` is explicit. `-PlanOnly` always
+reports the target set, logical cases, physical executions, case classes,
+estimate, and bound without starting it.
+When a qualification inventory or owner-orchestration change deliberately
+requires the full cold owner, the focused checkpoint is false and its two
+development estimates report `not-applicable`; the registered owner estimate
+remains the authoritative total shown above them.
 
 Ordinary source-compiler and source-language contract changes select the
 `language-1-front-door` instead of using database storage or a legacy monolithic
@@ -372,10 +409,11 @@ changes it:
    automatic Windows job that explicitly delegates that check to Linux;
 5. invokes each selected owner through
    `Invoke-WindvaleTests.ps1 -Owner <owner-name>` on both hosts, except that
-   development-scoped `compiler-reconstruction` receives `--development`, and
-   an eligible `database-storage`, `libraries`, or `os-x64-code-emission` owner
-   receives its development target, including explicit checkpointed `all` when
-   more than one OS x64 project is affected;
+   development-scoped `compiler-reconstruction` receives `--development`, an
+   eligible `database-storage` owner receives `--development-target-set` with
+   its exact case union, and eligible `libraries` or `os-x64-code-emission`
+   owners receive their development target, including explicit checkpointed
+   `all` when more than one OS x64 project is affected;
 6. invokes either the pinned WebAssembly engine checkpoint or the complete
    construction-and-engine owner when selected, never both;
 7. stops at the first test failure unless `-NoFailFast` is explicit;

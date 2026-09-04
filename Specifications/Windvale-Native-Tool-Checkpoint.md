@@ -1,7 +1,7 @@
 # Windvale native tool checkpoint 1
 
 Status: Implemented local-development contract under Decisions 0546, 0553,
-0554, 0555, 0559, 0560, and 0737 through 0743.
+0554, 0555, 0559, 0560, 0737 through 0743, and 0943.
 
 ## Purpose and boundary
 
@@ -362,7 +362,9 @@ contracts.
 `Test-Database-Storage.cmd --prepare-development-tools` and its shell peer build
 the current build-driver WVB, prepare or validate the checkpoint, and stop.
 `--development` then uses that driver plus the exact retained native lowerer to
-run the target-aware 50-case database owner. It obtains ordinary project
+run the manifest-driven 53-case database development owner. A focused
+`--development-target-set <target+...>` run validates and unions the exact cases
+for every affected closure. It obtains ordinary project
 objects first through the read-only session and falls back on a true miss to
 `Build-Cached-Project-Object`; it obtains the build-driver input through
 `Build-Cached-Project-Wvb`, every ordinary one-or-more-object linked image
@@ -371,10 +373,17 @@ through `Build-Cached-Linked-Image-Set`, and current-host executables through
 `Build-Cached-Segmented-Project` for the exact WVB and canonical image before
 the unchanged hosted-application or provider-overlay path. `Verify-Changed.ps1`
 selects that development owner only when every selected database-storage
-boundary is eligible. Compiler, lowerer, specialized provider, nested-record,
-and other broad changes mark the full database-storage owner mandatory. The
-no-argument owner does not consult the cache and retains complete
-reconstruction, duplicate-output, paired-target, and seventeen-case evidence.
+boundary is eligible. Multiple eligible closures remain a focused deterministic
+union; only a complete 53-case selection is normalized to `all`. Compiler,
+lowerer, specialized provider, nested-record, and other broad changes mark the
+full database-storage owner mandatory. The no-argument owner does not consult
+the development cache and retains all 57 logical database behaviors. Ordinary
+portable steps construct and admit one exact product; compiler/lowerer
+reproducibility and unused opposite-host packaging are delegated to focused
+qualification owners under Decisions 0945 and 0944. The storage-lowering step
+retains paired WVB, WVO, report, and bridge-object comparisons, while hosted
+construction retains its existing paired evidence until its shared objects and
+platform overlays have explicit work-graph ownership.
 
 ## Implemented evidence
 
