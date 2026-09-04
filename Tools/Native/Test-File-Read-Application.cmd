@@ -109,7 +109,7 @@ set "Result=0"
 :cleanup
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TemporaryRoot%\windvale-file-read-application-" >nul || exit /b 1
-if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
+if exist "%ResolvedWork%\." node -e "require('node:fs').rmSync(process.argv[1], { force: false, maxRetries: 5, recursive: true, retryDelay: 100 })" "%ResolvedWork%" || exit /b 1
 if not "%Result%"=="0" exit /b %Result%
 echo native file read application status=Passed cases=32 capabilities=5 wvb=95eed93bf74b10214711efe9a8780c4c289c06bbf8b46e835c00119a36190dfb cross-host-images=Verified
 exit /b 0
