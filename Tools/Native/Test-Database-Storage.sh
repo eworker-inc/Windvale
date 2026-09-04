@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+if [[ $# -eq 0 ]]; then
+    exec node "$script_directory/Run-Database-Storage-Qualification.mjs"
+fi
+
 development=0
 prepare_only=0
 development_target=all
+qualification_target=all
 if [[ $# -eq 1 && $1 == --development ]]; then
     development=1
 elif [[ $# -eq 2 && $1 == --development-target ]]; then
@@ -12,8 +18,12 @@ elif [[ $# -eq 2 && $1 == --development-target ]]; then
 elif [[ $# -eq 1 && $1 == --prepare-development-tools ]]; then
     development=1
     prepare_only=1
-elif [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--development-target <target>|--prepare-development-tools]' >&2
+elif [[ $# -eq 1 && $1 == --qualification-portable ]]; then
+    qualification_target=portable
+elif [[ $# -eq 1 && $1 == --qualification-hosted ]]; then
+    qualification_target=hosted
+else
+    echo 'Usage: ./Tools/Native/Test-Database-Storage.sh [--development|--development-target <target>|--prepare-development-tools|--qualification-portable|--qualification-hosted]' >&2
     exit 64
 fi
 
@@ -108,8 +118,12 @@ progress_total=$((selected_cases + 1))
 progress_current=1
 qualification_step=0
 qualification_steps=60
+if [[ $qualification_target == portable ]]; then
+    qualification_steps=49
+elif [[ $qualification_target == hosted ]]; then
+    qualification_steps=11
+fi
 
-script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 temporary_root=${TMPDIR:-/tmp}
 temporary_directory=$(mktemp -d "$temporary_root/windvale-database-storage.XXXXXXXX") || exit 1
@@ -2054,6 +2068,7 @@ if ((development == 1)); then
     exit 0
 fi
 
+if [[ $qualification_target != hosted ]]; then
 verify_target Nested \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Nested-Record-Fields.wvproj" || exit $?
 verify_target Publication \
@@ -2152,6 +2167,11 @@ verify_target Context9 \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Execution-Context-9.wvproj" || exit $?
 verify_storage_lowering \
     "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Storage-Random-Access.wvproj" || exit $?
+fi
+if [[ $qualification_target == portable ]]; then
+    echo 'native database storage portable status=Passed cases=46 local-results=0 cross-host-images=Verified'
+    exit 0
+fi
 verify_host_storage \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Storage.wvproj" || exit $?
 verify_host_root_writer \
@@ -2178,4 +2198,8 @@ verify_host_logical_tree_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Host-Logical-Tree-Get.wvproj" || exit $?
 verify_persistent_transaction_writer \
     "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Persistent-Transaction-Writer.wvproj" || exit $?
+if [[ $qualification_target == hosted ]]; then
+    echo 'native database storage hosted status=Passed cases=11 local-results=0 cross-host-images=Verified'
+    exit 0
+fi
 echo 'native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified'

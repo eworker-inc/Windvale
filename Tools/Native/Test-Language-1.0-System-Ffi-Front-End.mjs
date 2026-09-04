@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawn } from 'node:child_process';
@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const WINDOWS = process.platform === 'win32';
 const MAXIMUM_OUTPUT_BYTES = 64 * 1024;
+const MAXIMUM_APPLICATION_BYTES = 64 * 1024 * 1024;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST'];
@@ -96,14 +97,27 @@ async function Requireˉpackage(Package, Module, Application) {
     if (Result.Exceeded) {
         Reject('The system-ffi package exceeded the diagnostic-output limit.');
     }
-    if (Result.Code !== 0 || Result.Error.length !== 0 ||
-        !Result.Output.toString('utf8').includes(
-            'segmented compiler package status=Complete '
-        )) {
+    if (Result.Code !== 0 || Result.Error.length !== 0) {
         Reject(
             `The system-ffi package failed with exit ${Result.Code}.\n` +
-            Result.Error.toString('utf8')
+            Result.Error.toString('utf8') + Result.Output.toString('utf8')
         );
+    }
+    const Report = Result.Output.toString('utf8').trim().split(/\r?\n/u).at(-1);
+    const Host = WINDOWS ? 'windows-x64' : 'linux-x64';
+    const Target = WINDOWS ? 'windows' : 'linux';
+    const Pattern = new RegExp(
+        '^segmented hosted WVB cache status=(?:Created|Hit) key=[0-9a-f]{64} ' +
+        `host=${Host} target=${Target} profile=7$`,
+        'u'
+    );
+    if (!Pattern.test(Report ?? '')) {
+        Reject(`The system-ffi package report differs: ${Report ?? ''}`);
+    }
+    const Information = await lstat(Application);
+    if (!Information.isFile() || Information.isSymbolicLink() ||
+        Information.size === 0 || Information.size > MAXIMUM_APPLICATION_BYTES) {
+        Reject('The system-ffi package did not publish a bounded ordinary application.');
     }
 }
 
@@ -135,9 +149,9 @@ async function Removeˉwork(Work, Temporaryˉroot) {
 }
 
 const Temporaryˉroot = resolve(tmpdir());
-const Work = await mkdtemp(join(
+const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-system-ffi-front-end-'
-));
+)));
 var Passed = false;
 var Productˉbytes = 0;
 var Productˉsha256 = '';

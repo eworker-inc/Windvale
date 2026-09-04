@@ -88,9 +88,9 @@ async function Removeˉwork(Work, Temporaryˉroot) {
 }
 
 const Temporaryˉroot = resolve(tmpdir());
-const Work = await mkdtemp(join(
+const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-generic-nominal-type-layout-'
-));
+)));
 var Passed = false;
 try {
     const Extension = WINDOWS ? 'cmd' : 'sh';

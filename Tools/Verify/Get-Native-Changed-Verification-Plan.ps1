@@ -1360,6 +1360,10 @@ function Add-Native-Tool-Suite {
         Add-Suite 'language-1-front-door'
         return
     }
+    if ($Stem -eq 'Run-Database-Storage-Qualification') {
+        Require-Full-Database-Storage
+        return
+    }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
         'Build-Cached-Hosted-Application-Session',

@@ -134,9 +134,9 @@ async function Removeˉwork(Work, Temporaryˉroot) {
 }
 
 const Temporaryˉroot = resolve(tmpdir());
-const Work = await mkdtemp(join(
+const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-system-ffi-unsafe-context-'
-));
+)));
 var Passed = false;
 var Moduleˉbytes = 0;
 var Moduleˉdigest = '';

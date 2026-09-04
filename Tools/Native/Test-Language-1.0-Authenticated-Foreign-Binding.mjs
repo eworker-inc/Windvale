@@ -384,10 +384,10 @@ async function Main() {
     }
 
     const Temporaryˉroot = resolve(tmpdir());
-    const Work = await mkdtemp(join(
+    const Work = await realpath(await mkdtemp(join(
         Temporaryˉroot,
         'windvale-authenticated-foreign-binding-'
-    ));
+    )));
     var Passed = false;
     try {
         const Build = join(

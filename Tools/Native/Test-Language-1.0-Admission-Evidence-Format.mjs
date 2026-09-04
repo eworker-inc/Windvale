@@ -529,7 +529,9 @@ if (!ProbeOnly && process.argv.length !== 2) {
 await RunTerminationProbe();
 if (!ProbeOnly) {
 const TemporaryRoot = resolve(tmpdir());
-const Work = await mkdtemp(join(TemporaryRoot, 'windvale-admission-evidence-'));
+const Work = await realpath(await mkdtemp(join(
+    TemporaryRoot, 'windvale-admission-evidence-'
+)));
 var Passed = false;
 try {
     const Extension = WINDOWS ? 'cmd' : 'sh';

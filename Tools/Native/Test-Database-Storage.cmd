@@ -1,10 +1,15 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
+if not "%~1"=="" goto :parse_arguments
+node "%~dp0Run-Database-Storage-Qualification.mjs"
+exit /b %ERRORLEVEL%
+
+:parse_arguments
 set "Development=0"
 set "PrepareOnly=0"
 set "DevelopmentTarget=all"
-if "%~1"=="" goto :arguments_ready
+set "QualificationTarget=all"
 if /I "%~1"=="--development" (
     if not "%~2"=="" goto :usage
     set "Development=1"
@@ -20,7 +25,15 @@ if /I "%~1"=="--prepare-development-tools" (
     set "Development=1"
     set "PrepareOnly=1"
 )
-if "%Development%"=="0" goto :usage
+if /I "%~1"=="--qualification-portable" (
+    if not "%~2"=="" goto :usage
+    set "QualificationTarget=portable"
+)
+if /I "%~1"=="--qualification-hosted" (
+    if not "%~2"=="" goto :usage
+    set "QualificationTarget=hosted"
+)
+if "%Development%"=="0" if /I "%QualificationTarget%"=="all" goto :usage
 
 :arguments_ready
 
@@ -63,6 +76,8 @@ set /a ProgressTotal=SelectedCases+1
 set "ProgressCurrent=1"
 set "QualificationStep=0"
 set "QualificationSteps=60"
+if /I "%QualificationTarget%"=="portable" set "QualificationSteps=49"
+if /I "%QualificationTarget%"=="hosted" set "QualificationSteps=11"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -244,6 +259,8 @@ if "%Development%"=="1" (
     goto :cleanup
 )
 
+if /I "%QualificationTarget%"=="hosted" goto :qualification_hosted
+
 call :verify_target Nested ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Nested-Record-Fields.wvproj"
 if errorlevel 1 goto :cleanup
@@ -391,6 +408,12 @@ if errorlevel 1 goto :cleanup
 call :verify_storage_lowering ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Storage-Random-Access.wvproj"
 if errorlevel 1 goto :cleanup
+if /I "%QualificationTarget%"=="portable" (
+    set "Result=0"
+    goto :cleanup
+)
+
+:qualification_hosted
 call :verify_host_storage ^
     "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Host-Storage.wvproj"
 if errorlevel 1 goto :cleanup
@@ -447,6 +470,14 @@ if "%PrepareOnly%"=="1" (
 if "%Development%"=="1" (
     echo native database storage development timing target=%DevelopmentTarget% tools-ms=%ToolsElapsedMs% portable-ms=%PortableElapsedMs% host-storage-ms=%HostStorageElapsedMs% host-root-writer-ms=%HostRootWriterElapsedMs% host-local-service-ms=%HostLocalServiceElapsedMs% host-tree-reader-ms=%HostTreeReaderElapsedMs% host-tree-delete-ms=%HostTreeDeleteElapsedMs% host-tree-scan-ms=%HostTreeScanElapsedMs% engine-ms=%EngineElapsedMs% host-tree-writer-ms=%HostTreeWriterElapsedMs% persistent-transaction-writer-ms=%PersistentTransactionWriterElapsedMs% total-ms=%DevelopmentElapsedMs%
     echo native database storage development status=Passed target=%DevelopmentTarget% cases=%SelectedCases% local-results=0 tools=%ToolCheckpoint% project-wvb=%ProjectWvbCheckpoint% portable-projects=%PortableProjectCheckpoints% portable-applications=%PortableApplicationCheckpoints% projects=HostStorage:%ProjectCheckpointHostStorage%,HostRootWriter:%ProjectCheckpointHostRootWriter%,HostLocalService:%ProjectCheckpointHostLocalService%,HostTreeReader:%ProjectCheckpointHostTreeReader%,HostTreeDelete:%ProjectCheckpointHostTreeDelete%,HostTreeScan:%ProjectCheckpointHostTreeScan%,Engine:%ProjectCheckpointEngine%,HostTreeWriter:%ProjectCheckpointHostTreeWriter%,PersistentTransactionWriter:%ProjectCheckpointPersistentTransactionWriter% applications=HostStorage:%ApplicationCheckpointHostStorage%,HostRootWriter:%ApplicationCheckpointHostRootWriter%,HostLocalService:%ApplicationCheckpointHostLocalService%,HostTreeReader:%ApplicationCheckpointHostTreeReader%,HostTreeDelete:%ApplicationCheckpointHostTreeDelete%,HostTreeScan:%ApplicationCheckpointHostTreeScan%,Engine:%ApplicationCheckpointEngine%,HostTreeWriter:%ApplicationCheckpointHostTreeWriter%,PersistentTransactionWriter:%ApplicationCheckpointPersistentTransactionWriter%
+    exit /b 0
+)
+if /I "%QualificationTarget%"=="portable" (
+    echo native database storage portable status=Passed cases=46 local-results=0 cross-host-images=Verified
+    exit /b 0
+)
+if /I "%QualificationTarget%"=="hosted" (
+    echo native database storage hosted status=Passed cases=11 local-results=0 cross-host-images=Verified
     exit /b 0
 )
 echo native database storage status=Passed cases=57 local-results=0 cross-host-images=Verified
@@ -2259,7 +2290,7 @@ endlocal & set "%~2=%LocalDigest%"
 exit /b 0
 
 :usage
->&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--development-target ^<target^>^|--prepare-development-tools]
+>&2 echo Usage: Tools\Native\Test-Database-Storage.cmd [--development^|--development-target ^<target^>^|--prepare-development-tools^|--qualification-portable^|--qualification-hosted]
 exit /b 64
 
 :verify_storage_lowering

@@ -415,9 +415,9 @@ if (SEMANTIC_SELECTORS.length !== 29 ||
 }
 
 const Temporaryˉroot = resolve(tmpdir());
-const Work = await mkdtemp(join(
+const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-foreign-memory-semantics-'
-));
+)));
 var Passed = false;
 var Productˉbytes = 0;
 var Productˉsha256 = '';

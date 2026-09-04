@@ -406,9 +406,9 @@ async function Removeˉwork(Work, Temporaryˉroot) {
 }
 
 const Temporaryˉroot = resolve(tmpdir());
-const Work = await mkdtemp(join(
+const Work = await realpath(await mkdtemp(join(
     Temporaryˉroot, 'windvale-callable-semantics-'
-));
+)));
 const Evidence = [];
 var Passed = false;
 var Completedˉcases = 0;

@@ -24,15 +24,15 @@ for %%D in (Stage-Input Root-Key Release-Key Policy First Second Tampered Instal
 set "Result=1"
 
 echo native offline package stage step=build-tools item=1/8
-call "%Native%\Build-Wvb.cmd" ^
+call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Writer.wvproj" ^
     "%Work%\Writer.wvb" || goto :cleanup
-call :verify_file "%Work%\Writer.wvb" 510498 7bc577ac157fc20c301699e5cd08286b736017922871f5206b045d6c46b93a1d "bundle writer WVB" || goto :cleanup
-call "%Native%\Build-Wvb.cmd" ^
+call :verify_file "%Work%\Writer.wvb" 613470 ce17913d57ffab710abc296b1bbbdfc0b25dc3978b1259f3190673fdd9e3e7b1 "bundle writer WVB" || goto :cleanup
+call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Package-Bundle-Verifier.wvproj" ^
     "%Work%\Verifier.wvb" || goto :cleanup
-call :verify_file "%Work%\Verifier.wvb" 529791 218e8939a6e0686c6d2086e2ce977c405abb77728280b332bdf15277f8fa606b "bundle verifier WVB" || goto :cleanup
-call "%Native%\Build-Wvb.cmd" ^
+call :verify_file "%Work%\Verifier.wvb" 632763 cb8c959e44b24aa380f2a0f6b838d371ed2815d51c586e3e96a36190f52319c7 "bundle verifier WVB" || goto :cleanup
+call "%Native%\Build-Current-Wvb.cmd" ^
     "%RepositoryRoot%\Projects\Tools\Windvale-Installation-Generation-Verifier.wvproj" ^
     "%Work%\Generation-Verifier.wvb" || goto :cleanup
 call :verify_file "%Work%\Generation-Verifier.wvb" 42364 2beb02ba0ea13b1552a0c3bf9b92bebe438ac65b2eb49000a4fc1762ed8f7e9f "generation verifier WVB" || goto :cleanup
