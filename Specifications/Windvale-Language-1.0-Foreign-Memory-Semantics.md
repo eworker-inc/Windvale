@@ -151,8 +151,8 @@ compile-rejection project. Cases 3, 4, 11, and 15–30 are not represented as
 source-front-door or authenticated-WVFC proof in this checkpoint.
 
 The current native compiler accepts the focused project and two preflight
-builds produce a byte-identical 147,912-byte WVB with SHA-256
-`1ba359cc2372a43ba941d4b2baadd926774b706bfd5e1eeaca8a287329772003`.
+builds produce a byte-identical 149,603-byte WVB with SHA-256
+`ff252261c0332e52c7199b9c360793adb2a6619ab00579c08c2709b154bf957e`.
 Source-to-WIR publication proves that the complete oracle and its 29 rule
 selectors bind and lower together. The focused owner bounds the host-side
 candidate at 4 MiB, requires byte-identical rebuilds, delegates the candidate's
@@ -173,9 +173,11 @@ key `e2f5a700bd1fd84f9012780dd1a26f0e60526eb6532cb01742e4561f29ea6408`,
 four negative dispatch probes, all 29 isolated rule selectors, and the exact
 two-module source-graph rejection.
 
-The prior Windows profile-7 application identity and its 29-selector execution
-belonged to the superseded 121,635-byte WVB. The corrected 147,912-byte owner
-result above is the current local Windows development evidence.
+The prior Windows profile-7 application identities and their 29-selector
+execution belonged to the superseded 121,635-byte and 147,912-byte WVBs. The
+current 149,603-byte owner result includes the bounded lowercase SHA-256 hex
+decoder used by the declared foreign-catalog source and is the current local
+Windows development evidence.
 
 The separate two-module case-5 project is compile-rejection evidence. It asks a
 portable/Core-equivalent root to import a System dependency and requires exact
