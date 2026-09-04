@@ -33,6 +33,21 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The front-door development checkpoint now has one six-product inventory shared
+by Windows and Linux. It reuses exact project and native-package products while
+executing every selected behavior again. Descriptor reproducibility still uses
+two independent constructions. Changed-file planning can select exact project
+closures instead of all six products; unknown dependencies conservatively keep
+the full checkpoint. The 329 development claims and separate 492-case
+qualification contract are retained. Current measurements and limits are recorded
+in the [focused development-product evidence](../Evidence/2026-09-04-Front-End-Development-Product-Reuse.json); clean-machine and paired-host
+performance qualification remain separate work.
+
+The work planner also keeps historical timing case counts separate from the
+current registry. Adding a test reports a timing-coverage mismatch instead of
+breaking planning or rewriting old evidence. Timings remain advisory and never
+grant passing evidence for the added cases.
+
 Phase 1 is complete for the database owner, is now in progress across complete
 qualification, and Phase 2 has started. One versioned database
 qualification-step inventory drives both host wrappers, distinguishes
@@ -83,8 +98,9 @@ classes are timeout policy, not accurate weights. Reassigning six independent
 owners produces projected shard maxima of 4,655,707 ms on Windows and 4,521,081
 ms on Linux, 28.90 percent below the preceding measured projection and only
 4.01 percent above the arithmetic lower bound. This is a scheduling-only
-projection pending a run of the new assignment; all 126 owners and 5,981 cases
-remain selected.
+projection pending a run of the new assignment; all 126 owners and 5,981 baseline
+cases remain selected. The later 12 payload-borrow cases have no timing claim
+from that historical run.
 
 Compatible development-result reuse is also implemented as a bounded candidate.
 One focused six-case owner first executed in 15,682 ms; after four unrelated
@@ -130,7 +146,7 @@ points without executing qualification.
 
 ## Complete qualification baseline
 
-The current registry contains 126 owners and 5,981 declared cases. Its coarse
+The current registry contains 126 owners and 5,993 declared cases. Its coarse
 duration profiles sum to 19,560 expected seconds per host (5 hours 26 minutes)
 and 79,200 maximum seconds. The measured assignment intentionally has an uneven
 declared distribution: 2,535, 4,950, 4,815, and 7,260 expected seconds. Those

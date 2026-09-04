@@ -246,9 +246,8 @@ for (const [Index, Line] of TimingLines.entries()) {
         Fields[1],
         `qualification timing row ${Index + 5} cases`,
     );
-    if (Cases !== Owner.Cases) {
-        Fail(`qualification timing row ${Index + 5} case count differs`);
-    }
+    // Timing is historical measurement, never evidence for newly added cases.
+    Owner.ObservedCases = Cases;
     Owner.ObservedWindowsMilliseconds = Positiveˉinteger(
         Fields[2],
         `qualification timing row ${Index + 5} Windows elapsed milliseconds`,
@@ -432,6 +431,7 @@ const OwnerAnalysis = Owners.map(Owner => ({
     Command: Owner.Command,
     Shard: Owner.Shard,
     Cases: Owner.Cases,
+    ObservedCases: Owner.ObservedCases,
     Profile: Owner.Profile,
     ExpectedSeconds: Owner.ExpectedSeconds,
     MaximumSeconds: Owner.MaximumSeconds,
@@ -445,7 +445,11 @@ const OwnerAnalysis = Owners.map(Owner => ({
     ObservedLinuxMilliseconds: Owner.ObservedLinuxMilliseconds,
 }));
 const Summary = {
-    Format: 'windvale-qualification-work-plan-3',
+    Format: 'windvale-qualification-work-plan-4',
+    TimingEvidence: 'historical-only',
+    ObservedCases: Owners.reduce((Total, Owner) => Total + Owner.ObservedCases, 0),
+    TimingCaseCountMismatches: Owners.filter(Owner => Owner.Cases !== Owner.ObservedCases)
+        .map(Owner => ({ Name: Owner.Name, Cases: Owner.Cases, ObservedCases: Owner.ObservedCases })),
     TimingSourceCommit: TimingMetadata[1],
     TimingRunId: TimingMetadata[2],
     TimingDate: TimingMetadata[3],
@@ -527,7 +531,7 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
 } else if (process.argv.length === 3 && process.argv[2] === '--timings') {
     for (const Owner of Owners) {
         process.stdout.write(
-            `${Owner.Name}|${Owner.Shard}|${Owner.Cases}|` +
+            `${Owner.Name}|${Owner.Shard}|${Owner.ObservedCases}|` +
             `${Owner.ObservedWindowsMilliseconds}|` +
             `${Owner.ObservedLinuxMilliseconds}|${Owner.Command}\n`,
         );
@@ -535,6 +539,8 @@ if (process.argv.length === 3 && process.argv[2] === '--json') {
 } else if (process.argv.length === 2) {
     process.stdout.write(
         `${Summary.Format} owners=${Summary.Owners} cases=${Summary.Cases} ` +
+        `observed-cases=${Summary.ObservedCases} timing-evidence=historical-only ` +
+        `timing-case-count-mismatches=${Summary.TimingCaseCountMismatches.length} ` +
         `expected-seconds=${Summary.TotalExpectedSeconds} ` +
         `maximum-seconds=${Summary.TotalMaximumSeconds} ` +
         `critical-path-expected-seconds=${Summary.DeclaredCriticalPathExpectedSeconds} ` +

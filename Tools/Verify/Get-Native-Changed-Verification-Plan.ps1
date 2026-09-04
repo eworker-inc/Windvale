@@ -1374,6 +1374,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Verify-Language-1.0-Migration-Fixtures',
+        'Test-Language-1.0-Front-Door-Development',
         'Verify-Source-Analysis-Diagnostic',
         'Verify-Language-1.0-Fixed-Integers',
         'Verify-Language-1.0-Fixed-Arrays',
@@ -4656,11 +4657,47 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
     [long](($SelectedSuiteEntries |
         Measure-Object -Property MaximumSeconds -Sum).Sum)
 }
-$Language1FrontDoorDevelopmentExpectedSeconds = [long]240
+$Language1FrontDoorDevelopmentExpectedSeconds = [long]330
+$Language1FrontDoorDevelopmentCaseCount = 329
+$Language1FrontDoorDevelopmentTarget = 'all'
 $Language1FrontDoorDevelopmentMaximumSeconds = [long]600
 $Language1FrontDoorDevelopmentEligible =
     $SelectedSuites.Contains('language-1-front-door')
 if ($Language1FrontDoorDevelopmentEligible) {
+    $FrontEndCacheKey = 'front-end-development-products-v1'
+    if ($null -ne $InitializationCache -and $InitializationCache.ContainsKey($FrontEndCacheKey)) {
+        $FrontEndPlan = $InitializationCache[$FrontEndCacheKey]
+    } else {
+        $FrontEndPlan = (& node (Join-Path $RepositoryRoot `
+            'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs') --plan) |
+            ConvertFrom-Json
+        if ($LASTEXITCODE -ne 0) { throw 'The front-end development planner failed.' }
+        if ($null -ne $InitializationCache) { $InitializationCache[$FrontEndCacheKey] = $FrontEndPlan }
+    }
+    if (
+        $FrontEndPlan.Format -ne 'windvale-front-end-development-plan-1' -or
+        $FrontEndPlan.Cases -ne 329 -or $FrontEndPlan.Products.Count -ne 6) {
+        throw 'The front-end development product inventory is invalid.'
+    }
+    $FrontEndNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    $FrontEndExact = $Paths.Count -gt 0
+    foreach ($FrontEndPath in $Paths) {
+        $AffectedProducts = @($FrontEndPlan.Products | Where-Object {
+            $_.Inputs -ccontains $FrontEndPath
+        })
+        if ($AffectedProducts.Count -eq 0) { $FrontEndExact = $false; break }
+        foreach ($Product in $AffectedProducts) { $null = $FrontEndNames.Add($Product.Name) }
+    }
+    if ($FrontEndExact) {
+        $FrontEndProducts = @($FrontEndPlan.Products | Where-Object {
+            $FrontEndNames.Contains($_.Name)
+        })
+        $Language1FrontDoorDevelopmentTarget = ($FrontEndProducts.Name -join '+')
+        $Language1FrontDoorDevelopmentCaseCount = 251 +
+            ($FrontEndProducts.Cases | Measure-Object -Sum).Sum
+        $Language1FrontDoorDevelopmentExpectedSeconds = [long](
+            ($FrontEndProducts.ExpectedSeconds | Measure-Object -Sum).Sum)
+    }
     $Language1FrontDoorSuiteEntry = @(
         $SelectedSuiteEntries | Where-Object Name -eq 'language-1-front-door')[0]
     $SelectedExpectedSeconds = [long](
@@ -4970,7 +5007,8 @@ if (!$Quiet) {
         'Language 1 front-door development checkpoint: ' +
         $Language1FrontDoorDevelopmentEligible.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
-        Write-Host 'Language 1 front-door development cases: 329'
+        Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
+        Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
         Write-Host (
             'Language 1 front-door development expected seconds: ' +
             $Language1FrontDoorDevelopmentExpectedSeconds)
@@ -5045,7 +5083,8 @@ if ($PassThru) {
             $SourceContainmentCompilerDevelopmentEligible)
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
-        Language1FrontDoorDevelopmentCaseCount = 329
+        Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount
+        Language1FrontDoorDevelopmentTarget = $Language1FrontDoorDevelopmentTarget
         Language1FrontDoorDevelopmentExpectedSeconds =
             $Language1FrontDoorDevelopmentExpectedSeconds
         Language1FrontDoorDevelopmentMaximumSeconds =

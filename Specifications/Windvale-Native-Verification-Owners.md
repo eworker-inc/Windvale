@@ -82,9 +82,16 @@ column header:
 owner|cases|windows-elapsed-ms|linux-elapsed-ms
 ```
 
-It must contain every current owner exactly once with the current case count and
-positive elapsed values from one complete passed result on each host. A missing,
-extra, duplicate, malformed, or case-inconsistent row fails planning. The source
+It must contain every current owner exactly once with the case count measured at
+the observation and positive elapsed values from one complete passed result on
+each host. A missing,
+extra, duplicate, or malformed row fails planning. Historical case counts are
+positive and retained exactly as measured; they are not rewritten when the live
+registry adds or removes cases. The version-4 work plan distinguishes live
+`Cases` from `ObservedCases`, reports `TimingCaseCountMismatches`, and labels
+timing evidence `historical-only`. The `--timings` rows use observed case counts.
+Historical timings cannot prove coverage or bound the cost of newly added cases.
+The source
 identity states when the observation was made; it does not imply that later
 owner implementations have the same duration.
 
@@ -109,6 +116,33 @@ identity. Mutable execution, malformed-input handling, recovery, revocation,
 race, and hostile-input claims retain fresh bounded state.
 
 ## Invocation modes
+
+The Language 1 front-door `--development` checkpoint uses one shared six-product
+inventory in `Tools/Native/Test-Language-1.0-Front-Door-Development.mjs` on both
+hosts. It preserves the 329-claim development contract, not the 492-case complete
+qualification claim. Five products reuse the existing content-keyed project
+cache, and three use the segmented native package cache. The descriptor keeps
+two uncached independent constructions and exact byte comparison. Every selected
+product executes afresh; a cached executable is not a cached behavior result.
+
+`--development-target <product+product>` selects named products in canonical
+order. Unknown, duplicate, empty, oversized, or mixed `all` selections reject.
+The changed-file planner derives product dependencies from their exact Project 2
+manifests. It narrows only when every changed path belongs to these declared
+inputs; an unmapped path selects the complete development checkpoint. The
+frozen-input check remains selected with every product set. The selected names
+are included in the development result-cache action identity. No-argument
+qualification continues to use the independent existing owner implementation.
+
+The shared runner has one ten-minute deadline including preparation and cleanup,
+a 64 KiB combined child-diagnostic limit, and a five-second termination settle
+bound. It preserves nonzero outcomes and never retries a test failure. Execution
+requires exact `Result: 42` output for interpreted products or exit 42 with empty
+output for native products. The existing routing verifier checks all product
+selectors, missing/duplicate coverage, fresh repeated execution, and seeded
+wrong-result, unexpected-output, diagnostic, and per-product failures without
+constructing a compiler. Its `--plan` and `--check-runner` modes are bounded
+inspection helpers, not additional qualification owners.
 
 `Tools/Verify/Invoke-WindvaleTests.ps1` is the cross-host orchestration entry
 point. It supports:

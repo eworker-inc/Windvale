@@ -363,7 +363,12 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerArguments = @('--development')
                 $OwnerMessage = (
                     'Native owner language-1-front-door ' +
-                    'mode=development-front-end cases=329 expected-seconds=240')
+                    "mode=development-front-end cases=$($NativePlan.Language1FrontDoorDevelopmentCaseCount) " +
+                    "target=$($NativePlan.Language1FrontDoorDevelopmentTarget) " +
+                    "expected-seconds=$($NativePlan.Language1FrontDoorDevelopmentExpectedSeconds)")
+                if ($NativePlan.Language1FrontDoorDevelopmentTarget -ne 'all') {
+                    $OwnerArguments = @('--development-target', $NativePlan.Language1FrontDoorDevelopmentTarget)
+                }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',
                     'generic-nominal-type-layout',
@@ -662,7 +667,8 @@ if ($Plan.Scope -eq 'website') {
             }
             $OwnerExitCode = $LASTEXITCODE
             $OwnerSucceeded = $OwnerExitCode -eq 0
-            if (!$OwnerSucceeded -and $OwnerCommand -ceq $Coordinator -and
+            if (!$OwnerSucceeded -and
+                ($OwnerCommand -ceq $Coordinator -or $Suite -eq 'language-1-front-door') -and
                 $OwnerExitCode -ne 1) {
                 $TimingOutcome = if ($OwnerExitCode -eq 124) {
                     'timed-out'

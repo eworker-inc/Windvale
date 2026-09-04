@@ -4874,9 +4874,14 @@ $QualificationWorkPlanner = Join-Path $RepositoryRoot `
 $QualificationWorkPlan = (& node $QualificationWorkPlanner --json) |
     ConvertFrom-Json
 if ($LASTEXITCODE -ne 0 -or
-    $QualificationWorkPlan.Format -ne 'windvale-qualification-work-plan-3' -or
+    $QualificationWorkPlan.Format -ne 'windvale-qualification-work-plan-4' -or
     $QualificationWorkPlan.Owners -ne 126 -or
-    $QualificationWorkPlan.Cases -ne 5981 -or
+    $QualificationWorkPlan.Cases -ne ($VerificationOwnerLines | Select-Object -Skip 1 |
+        ForEach-Object { [int]$_.Split('|')[2] } | Measure-Object -Sum).Sum -or
+    $QualificationWorkPlan.ObservedCases -ne 5981 -or
+    $QualificationWorkPlan.TimingEvidence -ne 'historical-only' -or
+    $QualificationWorkPlan.TimingCaseCountMismatches.Count -ne @(
+        $QualificationWorkPlan.OwnerAnalysis | Where-Object { $_.Cases -ne $_.ObservedCases }).Count -or
     $QualificationWorkPlan.TotalExpectedSeconds -ne 19560 -or
     $QualificationWorkPlan.TotalMaximumSeconds -ne 79200 -or
     $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
@@ -4948,11 +4953,16 @@ if ($LASTEXITCODE -ne 0 -or
 }
 $QualificationShardSignature = @(
     $QualificationWorkPlan.Shards | ForEach-Object {
-        "$($_.Shard)|$($_.Owners)|$($_.Cases)|$($_.ExpectedSeconds)|$($_.MaximumSeconds)|$($_.ObservedWindowsMilliseconds)|$($_.ObservedLinuxMilliseconds)"
+        $ShardNumber = $_.Shard
+        $CurrentShardCases = ($VerificationOwnerLines | Select-Object -Skip 1 |
+            Where-Object { [int]$_.Split('|')[3] -eq $ShardNumber } |
+            ForEach-Object { [int]$_.Split('|')[2] } | Measure-Object -Sum).Sum
+        if ($_.Cases -ne $CurrentShardCases) { throw 'Current shard coverage differs from its registry.' }
+        "$($_.Shard)|$($_.Owners)|$($_.ExpectedSeconds)|$($_.MaximumSeconds)|$($_.ObservedWindowsMilliseconds)|$($_.ObservedLinuxMilliseconds)"
     }
 ) -join ','
 if ($QualificationShardSignature -cne
-    '1|13|766|2535|11100|4610402|4077157,2|40|2147|4950|25200|4041125|4521081,3|37|1794|4815|23700|4597601|4504598,4|36|1274|7260|19200|4655707|3364565') {
+    '1|13|2535|11100|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
     throw "The measured qualification shard assignment differs: $QualificationShardSignature"
 }
 $QualificationPipelineExpected = @{
@@ -4973,7 +4983,7 @@ $QualificationPipelineExpected = @{
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|81'
+    'Run-Split-Compiler' = '3|82'
     'Run-Authenticated-Source-Admission' = '1|30'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {
@@ -5047,12 +5057,7 @@ try {
         [IO.File]::Delete($TestRunnerResultPath)
     }
 }
-$MeasuredShardPlans = @(
-    @{ Shard = 1; Owners = 13; Cases = 766; ExpectedSeconds = 2535; MaximumSeconds = 11100 },
-    @{ Shard = 2; Owners = 40; Cases = 2147; ExpectedSeconds = 4950; MaximumSeconds = 25200 },
-    @{ Shard = 3; Owners = 37; Cases = 1794; ExpectedSeconds = 4815; MaximumSeconds = 23700 },
-    @{ Shard = 4; Owners = 36; Cases = 1274; ExpectedSeconds = 7260; MaximumSeconds = 19200 }
-)
+$MeasuredShardPlans = @($QualificationWorkPlan.Shards)
 foreach ($MeasuredShardPlan in $MeasuredShardPlans) {
     $ShardPlanOutput = @(& pwsh -NoProfile -File $PowerShellTestRunner `
         -Shard $MeasuredShardPlan.Shard -PlanOnly 2>&1)
@@ -5423,7 +5428,7 @@ foreach ($Contract in @(
             'Test-Language-1.0-Front-Door.cmd [--development]',
             'if "%Development%"=="1"',
             'phase=value-front-end item=3/13',
-            'development status=Passed cases=329',
+            'Test-Language-1.0-Front-Door-Development.mjs',
             'status=Passed cases=492'
         )
     },
@@ -5434,7 +5439,7 @@ foreach ($Contract in @(
             'Test-Language-1.0-Front-Door.sh [--development]',
             'if [[ $development == true ]]',
             'phase=value-front-end item=3/13',
-            'development status=Passed cases=329',
+            'Test-Language-1.0-Front-Door-Development.mjs',
             'status=Passed cases=492'
         )
     },
@@ -5444,7 +5449,8 @@ foreach ($Contract in @(
         Required = @(
             '$Suite -eq ''language-1-front-door''',
             '$Plan.Scope -eq ''development''',
-            'mode=development-front-end cases=329 expected-seconds=240',
+            'mode=development-front-end cases=$($NativePlan.Language1FrontDoorDevelopmentCaseCount)',
+            "'--development-target'",
             '$OwnerArguments = @(''--development'')',
             '& $OwnerCommand @OwnerArguments'
         )
@@ -5462,12 +5468,31 @@ $Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
 if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Suites.Count -ne 1 -or
     $Language1FrontDoorDevelopmentPlan.Suites[0] -ne 'language-1-front-door' -or
-    $Language1FrontDoorDevelopmentPlan.ExpectedSeconds -ne 240 -or
+    $Language1FrontDoorDevelopmentPlan.ExpectedSeconds -ne 330 -or
     $Language1FrontDoorDevelopmentPlan.MaximumSeconds -ne 600 -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentCaseCount -ne 329 -or
-    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 240 -or
+    $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 330 -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentMaximumSeconds -ne 600) {
     throw 'The Language 1 front-door development checkpoint plan differs.'
+}
+
+$FrontEndRunner = Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'
+& node $FrontEndRunner --check-runner
+if ($LASTEXITCODE -ne 0) { throw 'Front-end development runner fault checks failed.' }
+foreach ($Selection in @(
+    @{ Paths = @('Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj'); Target = 'generic-declarations'; Cases = 254; Seconds = 20 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv'); Target = 'generic-calls'; Cases = 252; Seconds = 150 },
+    @{ Paths = @('Tests/Fixtures/Language-1.0/Generic-Call-Front-End-Self-Test.wv', 'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj'); Target = 'generic-declarations+generic-calls'; Cases = 255; Seconds = 170 },
+    @{ Paths = @('Libraries/Foundation/Values/Option.wv'); Target = 'all'; Cases = 329; Seconds = 330 },
+    @{ Paths = @('Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'); Target = 'all'; Cases = 329; Seconds = 330 }
+)) {
+    $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet
+    if ($Selected.Language1FrontDoorDevelopmentTarget -cne $Selection.Target -or
+        $Selected.Language1FrontDoorDevelopmentCaseCount -ne $Selection.Cases -or
+        $Selected.Language1FrontDoorDevelopmentExpectedSeconds -ne $Selection.Seconds -or
+        $Selected.Gaps.Count -ne 0) {
+        throw "Front-end product selection differs for '$($Selection.Paths -join ',')'."
+    }
 }
 
 foreach ($Fragment in @(

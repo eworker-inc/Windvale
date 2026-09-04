@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-front-end-development-product-reuse",
+  "date": "2026-09-04",
+  "subject": "Shared construction and focused behavioral execution for front-end development",
+  "claim": "The Windows development checkpoint executed all 329 claims in 29,941 ms with exact project/package cache hits, compared with 225,713 ms while creating those products. A deliberately changed compiler parser invalidated its product key, rebuilt, and returned the required failing owner status in 14,634 ms. Restoring the original source reused its original product and executed the selected 254 claims successfully in 2,101 ms. No compiler semantics were retained from the mutation probes.",
+  "source": {
+    "kind": "Other",
+    "value": "Development worktree based on 4eb6c1156c0fe98f0922c4348c19d134042945bf. The final shared runner has SHA-256 76a76faff3d85da9affd87de12cb73d7f00607e43eb63e62760dc1410f0c11bd. The runner after the wrapper rejection repair had SHA-256 c83e335a58ed6ccf42595dcfe7afeccbaba919af816e8c93d10f11f219ce4e59. The initial cache-creation runner candidate had SHA-256 da2a6d3d0522cf710c6995e3f5c0834246b7c8e9c407522e92a7a55756561e57; subsequent edits added output streaming, selector/resource probes, wrapper rejection coverage, and deadline enforcement after cleanup without changing product source inputs."
+  },
+  "runs": [
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Complete development product-cache creation with fresh execution",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development",
+      "result": "Passed",
+      "elapsedMilliseconds": 225713
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Complete warm development run: six freshly executed products, 329 claims, independent descriptor A/B",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development",
+      "result": "Passed",
+      "elapsedMilliseconds": 29941
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Expected failure after temporarily rejecting valid U64 generic constant parameters in the current compiler source",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development-target generic-declarations; require exit 1",
+      "result": "Passed",
+      "elapsedMilliseconds": 14634
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Restored source, original product cache hit, and fresh focused execution",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door.cmd",
+      "command": "Tools\\Native\\Test-Language-1.0-Front-Door.cmd --development-target generic-declarations",
+      "result": "Passed",
+      "elapsedMilliseconds": 2101
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "All 63 product subsets, wrong results, missing/duplicate claims, per-product failure, fresh repeated execution, timeout, diagnostic limit, and host-wrapper rejection propagation",
+      "tool": "Tools/Native/Test-Language-1.0-Front-Door-Development.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Front-Door-Development.mjs --check-runner",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Final current-runner execution through changed-file dispatch with owner-result reuse disabled: 329 claims; owner 29,627 ms, complete command 31,496 ms",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Tools/Native/Test-Language-1.0-Front-Door.cmd -NoResultCache",
+      "result": "Passed",
+      "elapsedMilliseconds": 31496
+    },
+    {
+      "host": "Local Windows x64 implementation host; Node.js 24.19.0",
+      "target": "Final routing, dependency declaration, historical timing separation, runner fault, and selection verification: 31 general and 279 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 43396
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "These are single Windows development observations, not stable performance thresholds, clean-machine timings, or paired-host qualification. Existing admitted native tool artifacts were used.",
+    "The no-argument 492-case qualification owner was not run. The checkpoint does not qualify candidate WVB 1.39, Foundation payload borrowing, or omitted compiler/runtime phases.",
+    "The first source-mutation probe exposed lost child rejection in the new Windows dispatch. That failed attempt is not passing evidence; dispatch was repaired and the retained wrapper regression plus a distinct changed-source probe passed afterward.",
+    "Cache-creation cost is still material: the generic-call native package alone took 115,423 ms. Warm full-checkpoint execution is dominated by the roughly 20-second generic type-catalog behavior.",
+    "The independent descriptor constructions remain uncached. Compiler-scale reproducibility, fresh qualification, platform boundaries, and malformed-input ownership are not replaced by these development results.",
+    "Peak working-set memory was not measured. The new runner enforces a ten-minute deadline, bounded diagnostics and file reads, six products, and bounded termination cleanup."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Windvale-Native-Verification-Owners.md",
+    "Documents/Evidence/2026-09-04-Language-Front-Door-Development-Checkpoint.json",
+    "Tools/Native/Test-Language-1.0-Front-Door-Development.mjs"
+  ]
+}

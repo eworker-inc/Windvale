@@ -100,6 +100,15 @@ claim.
 
 ## Immediate next results
 
+Ordinary front-end verification now shares exact build products and selects
+affected test-project inputs while executing the behaviors afresh. The Windows
+checkpoint passed all 329 development claims in 29.94 seconds warm, versus
+225.71 seconds while creating its project/package checkpoints. A changed parser
+defect was rebuilt and rejected in 14.63 seconds; restoring it passed the focused
+254-claim selection in 2.10 seconds. These are development observations, not a
+clean-machine or paired-host qualification claim. See the
+[focused evidence](../Evidence/2026-09-04-Front-End-Development-Product-Reuse.json).
+
 1. Finish cross-call parameter identity, complete WVB verification, and runtime
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
    reproduce it on Linux, then complete exclusive borrow, take, and mapping.
@@ -115,7 +124,7 @@ claim.
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   5,981 cases. The accepted paired-host run now supplies all 252 owner timings;
+   5,993 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower
