@@ -583,13 +583,14 @@ try {
     );
     await link(Publicationˉcandidate, Output);
     Published = true;
-    Publishedˉidentity = Publicationˉcandidateˉidentity;
     await Requireˉordinaryˉfile(
         Output, 1, MAXIMUM_WVB_BYTES, 'published split compiler product'
     );
     await Requireˉidentity(
-        Output, Publishedˉidentity, 'published split compiler product'
+        Output, Publicationˉcandidateˉidentity,
+        'published split compiler product'
     );
+    Publishedˉidentity = await Readˉidentity(Output);
     await Applyˉpostˉlinkˉcandidateˉtestˉhook(Publicationˉcandidate);
     await Removeˉpublicationˉcandidate(
         Publicationˉcandidate, Outputˉparent,
@@ -597,6 +598,7 @@ try {
     );
     Publicationˉcandidate = null;
     Publicationˉcandidateˉidentity = null;
+    Publishedˉidentity = await Readˉidentity(Output);
     await Applyˉpostˉpublicationˉtestˉhook(
         Output, TEST_HOOKS.postPublicationCleanup
     );
@@ -1348,7 +1350,7 @@ async function Removeˉpublishedˉoutput(Candidate, Expectedˉidentity) {
     const Information = await Lstatˉorˉabsent(Candidate, { bigint: true });
     if (Information === null) return;
     if (!Information.isFile() || Information.isSymbolicLink() ||
-        !Sameˉidentity(Information, Expectedˉidentity)) {
+        !Sameˉpublishedˉidentity(Information, Expectedˉidentity)) {
         return;
     }
     await unlink(Candidate);
@@ -1446,6 +1448,15 @@ function Sameˉidentity(Left, Right) {
     return Right !== null &&
         BigInt(Left.dev) === BigInt(Right.dev) &&
         BigInt(Left.ino) === BigInt(Right.ino);
+}
+
+function Sameˉpublishedˉidentity(Left, Right) {
+    return Sameˉidentity(Left, Right) &&
+        BigInt(Left.size) === BigInt(Right.size) &&
+        BigInt(Left.mode) === BigInt(Right.mode) &&
+        BigInt(Left.mtimeNs) === BigInt(Right.mtimeNs) &&
+        BigInt(Left.ctimeNs) === BigInt(Right.ctimeNs) &&
+        BigInt(Left.birthtimeNs) === BigInt(Right.birthtimeNs);
 }
 
 function Requireˉdistinctˉpaths(Paths, Label) {
