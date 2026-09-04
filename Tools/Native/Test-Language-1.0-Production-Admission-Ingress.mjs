@@ -448,14 +448,27 @@ function Processˉisˉlive(Child) {
         Child.signalCode === null;
 }
 
-function Processˉidentifierˉisˉlive(Identifier) {
+async function Processˉidentifierˉisˉlive(Identifier) {
     try {
         process.kill(Identifier, 0);
-        return true;
     } catch (Error) {
         if (Error.code === 'ESRCH') return false;
-        return false;
+        throw Error;
     }
+    if (WINDOWS) return true;
+    const Record = await readFile(`/proc/${Identifier}/stat`, 'ascii').catch(
+        Error => {
+            if (Error.code === 'ENOENT') return null;
+            throw Error;
+        }
+    );
+    if (Record === null) return false;
+    const Commandˉend = Record.lastIndexOf(') ');
+    if (Commandˉend < 0 || Commandˉend + 2 >= Record.length) {
+        Reject(`The descendant process state is malformed: ${Identifier}.`);
+    }
+    const State = Record[Commandˉend + 2];
+    return State !== 'Z' && State !== 'X';
 }
 
 function Runˉboundedˉtaskkill(Identifier) {
@@ -1228,7 +1241,7 @@ async function Caseˉpreflightˉmaxima(Work) {
 
 async function Waitˉforˉexit(Identifier) {
     const Deadline = Date.now() + 2_000;
-    while (Processˉidentifierˉisˉlive(Identifier)) {
+    while (await Processˉidentifierˉisˉlive(Identifier)) {
         if (Date.now() >= Deadline) return false;
         await new Promise(Resolveˉwait => setTimeout(Resolveˉwait, 25));
     }
