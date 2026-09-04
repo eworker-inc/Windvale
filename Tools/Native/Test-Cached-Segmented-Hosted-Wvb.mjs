@@ -419,7 +419,7 @@ async function Requireˉprocessˉstopped(pid) {
 
 async function Readˉlinuxˉprocessˉstate(pid) {
     const record = await readFile(`/proc/${pid}/stat`, 'ascii').catch(error => {
-        if (error?.code === 'ENOENT') {
+        if (error?.code === 'ENOENT' || error?.code === 'ESRCH') {
             return null;
         }
         throw error;
