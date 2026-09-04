@@ -6,6 +6,13 @@ export record Hˉcontrolˉdirectory {
     Branches: bytes;
 }
 
+fn Hˉnominalˉshape(Kind: u32) -> bool {
+    return Kind == 7u32 || Kind == 8u32 || Kind == 11u32 ||
+        Kind == 22u32 || Kind == 23u32 || Kind == 24u32 ||
+        Kind == 26u32 || Kind == 27u32 || Kind == 28u32 ||
+        Kind == 29u32 || Kind == 30u32 || Kind == 35u32;
+}
+
 export fn Hˉlocalˉshapes(
     Input: bytes,
     Parameterˉtypes: u32,
@@ -13,57 +20,77 @@ export fn Hˉlocalˉshapes(
     Localˉtypes: u32,
     Localˉcount: u32
 ) -> bytes {
-    var Result: bytes = Bytesˉslice(Input, 0u32, 0u32);
-    var Cursor: u32 = Parameterˉtypes;
-    var Index: u32 = 0u32;
-    while Index < Parameterˉcount {
-        let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
-        var Nominal: u32 = 0u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
-            Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 ||
-            Kind == 28u8 || Kind == 29u8 || Kind == 30u8 || Kind == 35u8 {
-            Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
-        }
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal))
-        );
-        Cursor = Cursor + 1u32;
-        if Kind == 7u8 || Kind == 8u8 || Kind == 11u8 || Kind == 22u8 ||
-            Kind == 23u8 || Kind == 24u8 || Kind == 26u8 || Kind == 27u8 ||
-            Kind == 28u8 || Kind == 29u8 || Kind == 30u8 || Kind == 35u8 {
-            Cursor = Cursor + 4u32;
-        }
-        Index = Index + 1u32;
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Length: u32 = Bytesˉlength(Input);
+    if Parameterˉcount > 8192u32 || Localˉcount > 8192u32 - Parameterˉcount ||
+        Parameterˉtypes > Length || Localˉtypes > Length {
+        return Empty;
     }
-
-    Cursor = Localˉtypes;
-    Index = 0u32;
-    while Index < Localˉcount {
-        let Localˉkind: u8 = Bytesˉreadˉu8(Input, Cursor);
-        var Localˉnominal: u32 = 0u32;
-        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
-            Localˉkind == 22u8 || Localˉkind == 23u8 ||
-            Localˉkind == 24u8 || Localˉkind == 28u8 ||
-            Localˉkind == 29u8 || Localˉkind == 30u8 || Localˉkind == 35u8 {
-            Localˉnominal = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+    var Result: bytes = Empty;
+    var Chunk: bytes = Empty;
+    var Stage: u32 = 0u32;
+    while Stage < 2u32 {
+        var Cursor: u32 = Parameterˉtypes;
+        var Count: u32 = Parameterˉcount;
+        if Stage == 1u32 {
+            Cursor = Localˉtypes;
+            Count = Localˉcount;
         }
-        Result = Bytesˉconcat(
-            Result,
-            Bytesˉconcat(
-                Bytesˉfromˉu8(Localˉkind),
-                Bytesˉfromˉu32ˉlittle(Localˉnominal)
-            )
-        );
-        Cursor = Cursor + 1u32;
-        if Localˉkind == 7u8 || Localˉkind == 8u8 || Localˉkind == 11u8 ||
-            Localˉkind == 22u8 || Localˉkind == 23u8 ||
-            Localˉkind == 24u8 || Localˉkind == 28u8 ||
-            Localˉkind == 29u8 || Localˉkind == 30u8 || Localˉkind == 35u8 {
-            Cursor = Cursor + 4u32;
+        if Count > Length - Cursor { return Empty; }
+        var Index: u32 = 0u32;
+        while Index < Count {
+            if Cursor >= Length { return Empty; }
+            var Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+            Cursor = Cursor + 1u32;
+            var Borrowed: bool = false;
+            if Kind == 37u32 {
+                if Cursor >= Length { return Empty; }
+                Borrowed = true;
+                Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+                Cursor = Cursor + 1u32;
+                // Decode ordinary payloads only; nested and special-owner views
+                // retain their separate contracts. This is not module admission.
+                if !((Kind >= 1u32 && Kind <= 11u32) ||
+                    (Kind >= 14u32 && Kind <= 20u32) ||
+                    Kind == 22u32 || Kind == 24u32 || Kind == 35u32) {
+                    return Empty;
+                }
+            } else {
+                if !((Kind >= 1u32 && Kind <= 11u32) ||
+                    (Kind >= 14u32 && Kind <= 20u32) ||
+                    (Kind >= 22u32 && Kind <= 30u32) ||
+                    (Kind >= 34u32 && Kind <= 36u32)) {
+                    return Empty;
+                }
+                if Stage == 1u32 && (Kind == 26u32 || Kind == 27u32) {
+                    return Empty;
+                }
+            }
+            var Nominal: u32 = 0u32;
+            if Hˉnominalˉshape(Kind) {
+                if Length - Cursor < 4u32 { return Empty; }
+                Nominal = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+                Cursor = Cursor + 4u32;
+            }
+            // Five-byte internal cells use 64 + payload kind for shape 37.
+            // Keep the full nominal u32; stack transfer kinds 26..38 are distinct.
+            if Borrowed { Kind = Kind + 64u32; }
+            let Cell: bytes = Bytesˉconcat(
+                Bytesˉslice(Bytesˉfromˉu32ˉlittle(Kind), 0u32, 1u32),
+                Bytesˉfromˉu32ˉlittle(Nominal)
+            );
+            Chunk = Bytesˉconcat(Chunk, Cell);
+            // At most 128 bounded chunks for 8,192 slots, avoiding one growing
+            // whole-directory copy for every five-byte cell.
+            if Bytesˉlength(Chunk) == 320u32 {
+                Result = Bytesˉconcat(Result, Chunk);
+                Chunk = Empty;
+            }
+            Index = Index + 1u32;
         }
-        Index = Index + 1u32;
+        Stage = Stage + 1u32;
     }
+    if Bytesˉlength(Chunk) > 0u32 { Result = Bytesˉconcat(Result, Chunk); }
     return Result;
 }
 
@@ -73,6 +100,10 @@ export fn Iˉcontrolˉdirectory(
     Codeˉlength: u32
 ) -> Hˉcontrolˉdirectory {
     let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Functionˉcode > Bytesˉlength(Input) ||
+        Codeˉlength > Bytesˉlength(Input) - Functionˉcode {
+        return Hˉcontrolˉdirectory(false, Empty, Empty);
+    }
     var Boundaries: bytes = Empty;
     var Branches: bytes = Empty;
     var Cursor: u32 = 0u32;
@@ -100,7 +131,7 @@ export fn Iˉcontrolˉdirectory(
         }
         if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||
             Opcode == 217u32 || Opcode == 220u32 || Opcode == 222u32 ||
-            Opcode == 223u32 || Opcode == 224u32 {
+            Opcode == 223u32 || Opcode == 224u32 || Opcode == 225u32 {
             Width = 13u32;
         }
         if Opcode == 214u32 || Opcode == 215u32 || Opcode == 218u32 {
@@ -108,6 +139,9 @@ export fn Iˉcontrolˉdirectory(
         }
         if Opcode == 219u32 { Width = 6u32; }
         if Opcode == 192u32 {
+            if Codeˉlength - Cursor < 3u32 {
+                return Hˉcontrolˉdirectory(false, Empty, Empty);
+            }
             Width = 3u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(
                 Input, Functionˉcode + Cursor + 2u32
@@ -116,6 +150,9 @@ export fn Iˉcontrolˉdirectory(
             }
         }
         if Opcode == 193u32 {
+            if Codeˉlength - Cursor < 2u32 {
+                return Hˉcontrolˉdirectory(false, Empty, Empty);
+            }
             Width = 2u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(
                 Input, Functionˉcode + Cursor + 1u32
@@ -124,6 +161,9 @@ export fn Iˉcontrolˉdirectory(
             }
         }
         if Opcode == 194u32 {
+            if Codeˉlength - Cursor < 3u32 {
+                return Hˉcontrolˉdirectory(false, Empty, Empty);
+            }
             Width = 3u32;
             if U32ˉfromˉu8(Bytesˉreadˉu8(
                 Input, Functionˉcode + Cursor + 2u32
@@ -233,6 +273,7 @@ export fn Iˉcontrolˉdirectory(
 }
 
 export fn Iˉhasˉearlierˉpredecessor(Branches: bytes, Target: u32) -> bool {
+    if Bytesˉlength(Branches) % 8u32 != 0u32 { return false; }
     var Cursor: u32 = 0u32;
     while Cursor < Bytesˉlength(Branches) {
         let Source: u32 = Bytesˉreadˉu32ˉlittle(Branches, Cursor);

@@ -1,0 +1,199 @@
+module Wvbˉtypedˉdirectoriesˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
+
+data Scalars: bytes = [1, 2, 3, 4, 5, 6, 9, 10, 14, 15, 16, 17, 18, 19, 20, 25, 34, 36];
+data Nominals: bytes = [7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35];
+data Badˉpayloads: bytes = [0, 12, 13, 21, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 65, 255];
+data Badˉshapes: bytes = [0, 12, 13, 21, 31, 32, 33, 38, 65, 255];
+data Fixedˉwidths: bytes = [1, 5, 2, 2, 4, 5, 64, 5, 81, 1, 106, 9, 151, 9, 196, 9, 209, 13, 214, 9, 219, 6, 221, 9, 222, 13, 223, 13, 224, 13, 225, 13];
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Repeat(Value: bytes, Count: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    var Chunk: bytes = Value;
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 == 1u32 { Result = Bytesˉconcat(Result, Chunk); }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Cell(Kind: u8, Nominal: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal));
+}
+
+fn Locals(Input: bytes, Count: u32) -> bytes {
+    return Directories.Hˉlocalˉshapes(Input, 0u32, 0u32, 0u32, Count);
+}
+
+fn Control(Input: bytes) -> Directories.Hˉcontrolˉdirectory {
+    return Directories.Iˉcontrolˉdirectory(Input, 0u32, Bytesˉlength(Input));
+}
+
+fn Isˉcontrolˉvalid(Input: bytes) -> bool {
+    let Value: Directories.Hˉcontrolˉdirectory = Control(Input);
+    return Value.Valid;
+}
+
+fn Controlˉrangeˉvalid(Input: bytes, Offset: u32, Length: u32) -> bool {
+    let Value: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Input, Offset, Length);
+    return Value.Valid;
+}
+
+export fn Main() -> i32 {
+    let Empty: bytes = Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+    let Scalar: bytes = Bytesˉfromˉu8(5u8);
+    let Record: bytes = Cell(7u8, 4294967295u32);
+    let Plain: bytes = Bytesˉconcat(Scalar, Record);
+    if !Equal(Directories.Hˉlocalˉshapes(Plain, 0u32, 1u32, 1u32, 1u32),
+        Bytesˉconcat(Cell(5u8, 0u32), Record)) { return 1; }
+    if Bytesˉlength(Directories.Hˉlocalˉshapes(Empty, 0u32, 0u32, 0u32, 0u32)) != 0u32 {
+        return 2;
+    }
+    let Maximum: bytes = Repeat(Plain, 4096u32);
+    let Expected: bytes = Repeat(Bytesˉconcat(Cell(5u8, 0u32), Record), 4096u32);
+    if !Equal(Directories.Hˉlocalˉshapes(Maximum, 0u32, 4096u32, 12288u32, 4096u32),
+        Expected) { return 3; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Scalars) {
+        let Scalarˉkind: u8 = Bytesˉreadˉu8(Scalars, Index);
+        if !Equal(Locals(Bytesˉfromˉu8(Scalarˉkind), 1u32), Cell(Scalarˉkind, 0u32)) { return 4; }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < Bytesˉlength(Nominals) {
+        let Nominalˉinput: bytes = Cell(Bytesˉreadˉu8(Nominals, Index), 4294967295u32);
+        if !Equal(Directories.Hˉlocalˉshapes(Nominalˉinput, 0u32, 1u32, 5u32, 0u32),
+            Nominalˉinput) { return 5; }
+        Index = Index + 1u32;
+    }
+    let Borrowˉscalar: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Scalar);
+    let Borrowˉrecord: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Record);
+    if !Equal(Directories.Hˉlocalˉshapes(Repeat(Borrowˉscalar, 2u32), 0u32, 1u32, 2u32, 1u32),
+        Repeat(Cell(69u8, 0u32), 2u32)) { return 6; }
+    if !Equal(Locals(Repeat(Borrowˉrecord, 8192u32), 8192u32),
+        Repeat(Cell(71u8, 4294967295u32), 8192u32)) { return 7; }
+    let Distinct: bytes = Bytesˉconcat(Borrowˉscalar, Bytesˉconcat(
+        Borrowˉrecord, Bytesˉconcat(Bytesˉfromˉu8(37u8), Cell(8u8, 4294967295u32))));
+    if !Equal(Locals(Distinct, 3u32), Bytesˉconcat(Cell(69u8, 0u32),
+        Bytesˉconcat(Cell(71u8, 4294967295u32), Cell(72u8, 4294967295u32)))) { return 8; }
+    let Padded: bytes = Bytesˉconcat(Bytesˉfromˉu8(255u8),
+        Bytesˉconcat(Plain, Bytesˉconcat(Borrowˉrecord, Bytesˉfromˉu8(255u8))));
+    if !Equal(Directories.Hˉlocalˉshapes(Padded, 2u32, 1u32, 7u32, 1u32),
+        Bytesˉconcat(Record, Cell(71u8, 4294967295u32))) { return 9; }
+    if Bytesˉlength(Locals(Maximum, 8193u32)) != 0u32 ||
+        Bytesˉlength(Directories.Hˉlocalˉshapes(Maximum, 0u32, 8192u32, 0u32, 1u32)) != 0u32 ||
+        Bytesˉlength(Directories.Hˉlocalˉshapes(Maximum, 0u32, 4294967295u32, 0u32, 1u32)) != 0u32 {
+        return 10;
+    }
+    if Bytesˉlength(Directories.Hˉlocalˉshapes(Plain, 4294967295u32, 1u32, 0u32, 0u32)) != 0u32 ||
+        Bytesˉlength(Directories.Hˉlocalˉshapes(Plain, 0u32, 0u32, 7u32, 1u32)) != 0u32 ||
+        Bytesˉlength(Locals(Empty, 1u32)) != 0u32 { return 11; }
+    let Wrapper: bytes = Bytesˉfromˉu8(37u8);
+    if Bytesˉlength(Locals(Wrapper, 1u32)) != 0u32 ||
+        Bytesˉlength(Directories.Hˉlocalˉshapes(Wrapper, 0u32, 1u32, 1u32, 0u32)) != 0u32 {
+        return 12;
+    }
+    if Bytesˉlength(Locals(Bytesˉconcat(Wrapper, Borrowˉrecord), 1u32)) != 0u32 { return 13; }
+    Index = 0u32;
+    while Index < Bytesˉlength(Badˉpayloads) {
+        if Bytesˉlength(Locals(Bytesˉconcat(Wrapper,
+            Cell(Bytesˉreadˉu8(Badˉpayloads, Index), 0u32)), 1u32)) != 0u32 { return 14; }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < 4u32 {
+        if Bytesˉlength(Locals(Bytesˉslice(Record, 0u32, 1u32 + Index), 1u32)) != 0u32 ||
+            Bytesˉlength(Locals(Bytesˉslice(Borrowˉrecord, 0u32, 2u32 + Index), 1u32)) != 0u32 {
+            return 15;
+        }
+        Index = Index + 1u32;
+    }
+    Index = 0u32;
+    while Index < Bytesˉlength(Badˉshapes) {
+        if Bytesˉlength(Locals(Cell(Bytesˉreadˉu8(Badˉshapes, Index), 0u32), 1u32)) != 0u32 {
+            return 16;
+        }
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(Locals(Cell(26u8, 0u32), 1u32)) != 0u32 ||
+        Bytesˉlength(Locals(Cell(27u8, 0u32), 1u32)) != 0u32 { return 17; }
+    let Borrowˉinstruction: bytes = Bytesˉconcat(Bytesˉfromˉu8(225u8), Repeat(Scalar, 12u32));
+    let Borrowˉcontrol: Directories.Hˉcontrolˉdirectory = Control(
+        Bytesˉconcat(Borrowˉinstruction, Bytesˉfromˉu8(81u8)));
+    if !Borrowˉcontrol.Valid || !Equal(Borrowˉcontrol.Boundaries, Bytesˉconcat(
+        Bytesˉconcat(Bytesˉfromˉu8(1u8), Repeat(Bytesˉfromˉu8(0u8), 12u32)),
+        Bytesˉfromˉu8(1u8))) || Bytesˉlength(Borrowˉcontrol.Branches) != 0u32 { return 18; }
+    Index = 1u32;
+    while Index < 13u32 {
+        if Isˉcontrolˉvalid(Bytesˉslice(Borrowˉinstruction, 0u32, Index)) { return 19; }
+        Index = Index + 1u32;
+    }
+    if !Isˉcontrolˉvalid(Empty) ||
+        Controlˉrangeˉvalid(Empty, 1u32, 0u32) ||
+        Controlˉrangeˉvalid(Scalar, 0u32, 2u32) ||
+        Controlˉrangeˉvalid(Scalar, 4294967295u32, 2u32) ||
+        Controlˉrangeˉvalid(Scalar, 1u32, 4294967295u32) { return 20; }
+    Index = 0u32;
+    while Index < Bytesˉlength(Fixedˉwidths) {
+        let Width: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Fixedˉwidths, Index + 1u32));
+        let Instruction: bytes = Bytesˉconcat(Bytesˉfromˉu8(Bytesˉreadˉu8(Fixedˉwidths, Index)),
+            Repeat(Bytesˉfromˉu8(0u8), Width - 1u32));
+        let Fixedˉcontrol: Directories.Hˉcontrolˉdirectory = Control(Instruction);
+        if !Fixedˉcontrol.Valid || !Equal(Fixedˉcontrol.Boundaries,
+            Bytesˉconcat(Bytesˉfromˉu8(1u8), Repeat(Bytesˉfromˉu8(0u8), Width - 1u32))) { return 21; }
+        if Width > 1u32 && Isˉcontrolˉvalid(Bytesˉslice(Instruction, 0u32, Width - 1u32)) { return 21; }
+        Index = Index + 2u32;
+    }
+    let Convert: bytes = Bytesˉconcat(Bytesˉfromˉu8(192u8), Bytesˉfromˉu16ˉlittle(257u32));
+    let Literal: bytes = Bytesˉconcat(Bytesˉfromˉu8(193u8), Bytesˉfromˉu8(1u8));
+    let Numeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8), Bytesˉfromˉu16ˉlittle(257u32));
+    let Wideˉconvert: bytes = Bytesˉconcat(Bytesˉfromˉu8(192u8), Repeat(Bytesˉfromˉu8(0u8), 4u32));
+    let Wideˉliteral: bytes = Bytesˉconcat(Bytesˉfromˉu8(193u8), Repeat(Bytesˉfromˉu8(0u8), 5u32));
+    let Wideˉnumeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8), Repeat(Bytesˉfromˉu8(0u8), 6u32));
+    let Floatˉnumeric: bytes = Bytesˉconcat(Bytesˉfromˉu8(194u8),
+        Bytesˉconcat(Bytesˉfromˉu8(19u8), Repeat(Bytesˉfromˉu8(0u8), 9u32)));
+    if !Isˉcontrolˉvalid(Convert) || !Isˉcontrolˉvalid(Literal) || !Isˉcontrolˉvalid(Numeric) ||
+        !Isˉcontrolˉvalid(Wideˉconvert) || !Isˉcontrolˉvalid(Wideˉliteral) ||
+        !Isˉcontrolˉvalid(Wideˉnumeric) || !Isˉcontrolˉvalid(Floatˉnumeric) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Convert, 0u32, 2u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Literal, 0u32, 1u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Numeric, 0u32, 2u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Wideˉconvert, 0u32, 4u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Wideˉliteral, 0u32, 5u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Wideˉnumeric, 0u32, 6u32)) ||
+        Isˉcontrolˉvalid(Bytesˉslice(Floatˉnumeric, 0u32, 10u32)) { return 22; }
+    let Branchˉcode: bytes = Bytesˉconcat(Cell(48u8, 5u32),
+        Bytesˉconcat(Cell(49u8, 0u32), Bytesˉconcat(Bytesˉfromˉu8(81u8), Borrowˉinstruction)));
+    let Branchˉcontrol: Directories.Hˉcontrolˉdirectory = Control(Branchˉcode);
+    let Branchˉpairs: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(5u32), Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(5u32), Bytesˉfromˉu32ˉlittle(0u32))));
+    if !Branchˉcontrol.Valid || !Equal(Branchˉcontrol.Branches, Branchˉpairs) ||
+        Bytesˉreadˉu8(Branchˉcontrol.Boundaries, 5u32) != 3u8 ||
+        Bytesˉreadˉu8(Branchˉcontrol.Boundaries, 10u32) != 3u8 ||
+        Bytesˉreadˉu8(Branchˉcontrol.Boundaries, 11u32) != 3u8 ||
+        !Directories.Iˉhasˉearlierˉpredecessor(Branchˉpairs, 5u32) ||
+        Directories.Iˉhasˉearlierˉpredecessor(Branchˉpairs, 0u32) ||
+        Directories.Iˉhasˉearlierˉpredecessor(Bytesˉconcat(Branchˉpairs, Scalar), 5u32) { return 23; }
+    Index = 63u32;
+    while Index <= 129u32 {
+        let Chunkˉinput: bytes = Repeat(Bytesˉconcat(Scalar, Borrowˉrecord), Index);
+        if !Equal(Directories.Hˉlocalˉshapes(Chunkˉinput, 0u32, 1u32, 1u32, Index * 2u32 - 1u32),
+            Repeat(Bytesˉconcat(Cell(5u8, 0u32), Cell(71u8, 4294967295u32)), Index)) { return 24; }
+        Index = Index + 1u32;
+    }
+    return 42;
+}

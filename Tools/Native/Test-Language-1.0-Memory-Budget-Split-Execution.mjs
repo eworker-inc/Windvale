@@ -70,7 +70,9 @@ const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5
     process.argv[2] === '--foundation-borrow';
 const Foundationˉplanˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-plan';
-const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly;
+const Foundationˉdirectoriesˉonly = process.argv.length === 3 &&
+    process.argv[2] === '--foundation-borrow-directories';
+const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly || Foundationˉdirectoriesˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length === 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
@@ -87,7 +89,8 @@ const Inspectionˉonly =
 if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
-        '[--foundation-borrow-plan|--foundation-borrow [--maximum-seconds <seconds>]|' +
+        '[--foundation-borrow-plan|--foundation-borrow-directories|' +
+        '--foundation-borrow [--maximum-seconds <seconds>]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -154,10 +157,12 @@ let Step = 0;
 let Validator = null;
 let Targetˉdescriptor = null;
 let Borrowˉplanˉbytes = null;
+let Borrowˉdirectoryˉbytes = null;
 
 try {
-    await Runˉfoundationˉplan();
-    if (!Foundationˉplanˉonly) await Runˉpublicationˉandˉexecution();
+    if (!Foundationˉdirectoriesˉonly) await Runˉfoundationˉplan();
+    if (!Foundationˉplanˉonly) await Runˉfoundationˉdirectories();
+    if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly) await Runˉpublicationˉandˉexecution();
 } finally {
     const Resolved = path.resolve(Work);
     if (path.dirname(Resolved) !== Temporaryˉroot ||
@@ -172,9 +177,12 @@ if (Developmentˉonly) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉonly ? 39 : 16} ` +
-        `selection=${Foundationˉonly ? 'publication' : 'plan'} qualification=false candidate-execution=false ` +
-        `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉonly ? 63 : Foundationˉplanˉonly ? 16 : 24} ` +
+        `selection=${Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : 'directories'} qualification=false candidate-execution=false ` +
+        (Borrowˉplanˉbytes === null ? '' :
+            `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} `) +
+        (Borrowˉdirectoryˉbytes === null ? '' :
+            `directory-wvb-bytes=${Borrowˉdirectoryˉbytes.length} directory-wvb-sha256=${Digest(Borrowˉdirectoryˉbytes)} `) +
         `elapsed-ms=${Elapsed}\n`,
     );
 }
@@ -191,6 +199,20 @@ async function Runˉfoundationˉplan() {
     ]);
     const Planˉresult = await Run('foundation-borrow-plan-execute', Planˉapplication, [], 42);
     if (Planˉresult !== '') Reject('The Foundation borrow plan self-test emitted unexpected output.');
+}
+
+async function Runˉfoundationˉdirectories() {
+    const Directoryˉwvb = path.join(Work, 'Borrow-Directories.wvb');
+    await Runˉnative('foundation-borrow-directories-build', 'Build-Cached-Project-Wvb', [
+        Testˉproject('Windvale-Native-Test-Wvb-Typed-Directories.wvproj'), Directoryˉwvb,
+    ]);
+    Borrowˉdirectoryˉbytes = readFileSync(Directoryˉwvb);
+    const Application = path.join(Work, `Borrow-Directories.${process.platform === 'win32' ? 'exe' : 'elf'}`);
+    await Runˉnative('foundation-borrow-directories-package', 'Package-Segmented-Compiler-Wvb', [
+        '1', Directoryˉwvb, Application, '--development-cache',
+    ]);
+    const Result = await Run('foundation-borrow-directories-execute', Application, [], 42);
+    if (Result !== '') Reject('The WVB typed-directory self-test emitted unexpected output.');
 }
 
 async function Runˉpublicationˉandˉexecution() {
@@ -1248,7 +1270,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${189 + Growˉmalformedˉcases.length +
+        `cases=${213 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1261,7 +1283,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=16 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +

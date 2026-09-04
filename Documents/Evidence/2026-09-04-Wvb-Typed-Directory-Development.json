@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-wvb-typed-directory-development",
+  "date": "2026-09-04",
+  "subject": "Bounded WVB typed-directory decoding and fast current-source development tests",
+  "claim": "Twenty-four WV component case groups pass against the actual verifier directory module, including exact five-byte cells, distinct immutable payload identities, 8,192 slots, malformed/truncated shapes, checked ranges, E1 instruction boundaries, and branch predecessors. The warm owner ran fresh behavior in 1,266 ms. This is a component checkpoint, not complete WVB 1.39 admission.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on cbc6a28e56a3e045374d59cfe7119a693ce07e0e; exact final component and runner inputs below. Initial three-case measurements used cases 1 through 3 of the subsequently expanded fixture, before control-directory bounds and E1 cases were added. The deliberate identity mutation was restored before warm validation."
+  },
+  "runs": [
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Initial three-case baseline: mixed scalar/nominal cells, empty directory, and exact 8,192-slot maximum. Native process including launch measured 178 ms; total includes project and package construction.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-directories",
+      "result": "Passed",
+      "elapsedMilliseconds": 11818,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv at base commit",
+          "size": 8658,
+          "sha256": "5231f46c09ad1eb504f1c705420c40da2416a94d2ce43dbf990f3cc2599089e4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Directories.wvb (initial baseline)",
+          "size": 15716,
+          "sha256": "af2eb684865cc7a8a3a6d687e710880ecc30b70a4d500dc95383c771c32167de"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Same initial three-case workload after bounded 64-cell batching. Native process including launch measured 131 ms; exact directory output remained unchanged.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-directories",
+      "result": "Passed",
+      "elapsedMilliseconds": 10975,
+      "outputs": [
+        {
+          "path": "Borrow-Directories.wvb (batched three-case checkpoint)",
+          "size": 15871,
+          "sha256": "95700e66eebcf0c6340a31fb93ce03a4ca5308372bb2e482feeeafa509e856c5"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Expanded 24-case project and native package cache misses, followed by fresh execution in 129 ms",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-directories",
+      "result": "Passed",
+      "elapsedMilliseconds": 12720,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 10918,
+          "sha256": "67254828bbab85a1900eaabe67b677ac011d3cd48b323007c4af4308ada1f7f1"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj",
+          "size": 166,
+          "sha256": "74bcd2e9317e2871032f4ec3b0e88f516df7a81f4efa5f4bb62fd7f040459854"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 118572,
+          "sha256": "caf062f690fca1e5f9d67180fbd63de8e401fac6154960da4c09543bebfea956"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Directories.wvb",
+          "size": 29080,
+          "sha256": "f621b886e6772ee067b363524753cb919252e614ab5afbf04e183683e80325b3"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Seeded defect changes internal borrowed-kind offset from 64 to 63. Project and native package rebuild, and native case 6 fails. The harness exits 1 as required; defect restored afterward.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-directories (temporary seeded source defect; require harness rejection)",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Restored source, exact project/package cache hits, fresh execution of all 24 groups in 128 ms, and bounded cleanup; no owner-result reuse",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-directories",
+      "result": "Passed",
+      "elapsedMilliseconds": 1266,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 10918,
+          "sha256": "67254828bbab85a1900eaabe67b677ac011d3cd48b323007c4af4308ada1f7f1"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj",
+          "size": 166,
+          "sha256": "74bcd2e9317e2871032f4ec3b0e88f516df7a81f4efa5f4bb62fd7f040459854"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 118572,
+          "sha256": "caf062f690fca1e5f9d67180fbd63de8e401fac6154960da4c09543bebfea956"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd",
+          "size": 534,
+          "sha256": "86137fb1803412e400e799e99d1f7e981551d938ebab5e81b492b8096e6ca033"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh",
+          "size": 517,
+          "sha256": "00269d8c207fa6a5d35e67003b56cfa1e8a5caed0c14ea553cdd18cdc1912f12"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Directories.wvb",
+          "size": 29080,
+          "sha256": "f621b886e6772ee067b363524753cb919252e614ab5afbf04e183683e80325b3"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Changed-file dispatch through Windows wrapper, owner-result reuse disabled; included 1,266 ms owner above. Dependency-list ordinal correction was subsequently checked by routing validation.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv -NoResultCache",
+      "result": "Passed",
+      "elapsedMilliseconds": 3757,
+      "inputs": [
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 275349,
+          "sha256": "e4246738348aa2473d8ed75aa96b14ea7c95f0a9b1227aaaeebcd1348801c876"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 37356,
+          "sha256": "f54d175efb9f974ae1cfd2f236da1753b6521afea1e4aecc48d11d9eea3e4e7e"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Final routing contracts, positive and excluded directory selections, ordinal dependency declarations, shared runner fault checks, 31 general and 280 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 275349,
+          "sha256": "e4246738348aa2473d8ed75aa96b14ea7c95f0a9b1227aaaeebcd1348801c876"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 37356,
+          "sha256": "f54d175efb9f974ae1cfd2f236da1753b6521afea1e4aecc48d11d9eea3e4e7e"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 315154,
+          "sha256": "61f6f0972761871de8a6bef1c90c76a4453ee268e8ecba214fa38c3137c1bca5"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 17624,
+          "sha256": "534a58d7e4d3bd6983dd91c0b48f08496f7d97fb77b562d78d3fbd76dc14c486"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23730,
+          "sha256": "1616b2b23a2e79be37317e0b9ff2294667fd16680fb015805be1adb0efdac0f6"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows x64; PowerShell 7",
+      "target": "Current documentation catalogs, 14 retrieval cases, 1,587 Markdown files, 5,695 links, 462 anchors, 10 active documents, 968 decisions and 348 specifications; evidence JSON schema valid",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The complete metadata/semantic verifier, typed operand-stack and lifetime checks, and all execution consumers still reject candidate WVB 1.39. The internal 64-plus-payload-kind cell representation is not a serialized shape or permission to execute a module.",
+    "Directory decoding does not prove version eligibility, nominal declarations, canonical Option/Result relationships, value availability, owner freezing, call confinement, branch lifetime agreement, or non-escape. Those remain complete-verifier work.",
+    "The existing memory-budget owner has 234 declared cases after these additions, and the combined publication selector has 63. Neither complete selection was rerun here. Prior publication evidence is separate and unchanged.",
+    "The all-changed-file plan proposed nine owners and 2,550 expected seconds. It was not executed under the ten-minute development budget; current component behavior and routing were checked with the exact focused owner.",
+    "Measurements are single local observations in an existing bootstrap cache, not clean-host benchmarks, speedup thresholds, Linux reproduction, complete qualification, or peak-memory evidence. No process-tree peak working set was captured.",
+    "The pure WV fixture currently uses the bootstrap source syntax; edition-1 migration remains within the overall migration goal.",
+    "Two temporary fixture syntax errors and one dependency ordinal-order error were corrected before their relevant final passes. No failed development attempt is counted as passing complete verification."
+  ],
+  "related": [
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json",
+    "Documents/Project/Progress.md",
+    "Specifications/Seed-Bytecode.md",
+    "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+    "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv"
+  ]
+}

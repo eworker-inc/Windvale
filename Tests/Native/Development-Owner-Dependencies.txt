@@ -176,7 +176,10 @@ language-1-memory-budget-split-execution|producer|Tools/Native/Test-Language-1.0
 language-1-memory-budget-split-execution|producer|Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh
 language-1-memory-budget-split-execution|source|Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv
 language-1-memory-budget-split-execution|source|Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj
+language-1-memory-budget-split-execution|source|Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj
 language-1-memory-budget-split-execution|source|Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv
+language-1-memory-budget-split-execution|source|Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv
+language-1-memory-budget-split-execution|source|Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv
 language-1-memory-budget-split-execution|source|Windvale.wvws
 os-x64-code-emission|artifact|Artifacts/Native-Front-Door/SHA256SUMS
 os-x64-code-emission|checkpoint|project-wvb-v2

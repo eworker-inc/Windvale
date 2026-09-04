@@ -2368,6 +2368,8 @@ foreach ($Path in $Paths) {
         'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
         'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
         'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+        'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'
@@ -4671,7 +4673,14 @@ $FoundationBorrowPlanInputs = @(
 $UseFoundationBorrowPlanDevelopment = $Paths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($Paths | Where-Object { $_ -cnotin $FoundationBorrowPlanInputs }).Count -eq 0
-if ($UseFoundationBorrowPlanDevelopment) {
+$FoundationBorrowDirectoryInputs = @(
+    'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
+)
+$UseFoundationBorrowDirectoryDevelopment = $Paths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
+    @($Paths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
+if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'
     })[0]
@@ -5029,6 +5038,8 @@ if (!$Quiet) {
         $Language1FrontDoorDevelopmentEligible.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-plan development: ' +
         $UseFoundationBorrowPlanDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Foundation borrow-directory development: ' +
+        $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5105,6 +5116,7 @@ if ($PassThru) {
             $SelectedSuites.Contains('source-containment') -and
             $SourceContainmentCompilerDevelopmentEligible)
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
+        UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

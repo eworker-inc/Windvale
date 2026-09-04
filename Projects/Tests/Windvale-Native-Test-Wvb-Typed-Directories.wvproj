@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+emit wvb

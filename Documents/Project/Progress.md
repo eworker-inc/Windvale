@@ -81,7 +81,9 @@ Two active tracks intentionally use different bytecode generations:
   independent reader pass on Windows. The complete verifier and all execution
   consumers reject 1.39 until complete typed-stack and lifetime verification
   and runtime support land. Direct-call identity has local publication evidence,
-  not execution admission.
+  not execution admission. The verifier's small typed-directory component now
+  preserves distinct borrowed payload identities and bounds-checks shape and
+  instruction decoding; it does not yet admit complete 1.39 modules.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -122,6 +124,15 @@ products were retained; the expanded run reused them and freshly executed its
 cases. These are local observations, not clean-machine or cross-host claims.
 See the [publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json).
 
+Verifier-directory development adds 24 WV cases through the same existing test
+owner, using `--foundation-borrow-directories`. The small current-source package
+took 12.72 seconds to construct and test, and 1.27 seconds warm with fresh
+execution. Changed-file dispatch completed in 3.76 seconds with result reuse
+disabled. Boundary tests cover 8,192 slots, exact borrowed identities,
+truncation, invalid offsets, and instruction boundaries; a seeded defect was
+rebuilt and rejected. Full-verifier source changes retain broader routing.
+See the [directory evidence](../Evidence/2026-09-04-Wvb-Typed-Directory-Development.json).
+
 1. Finish complete WVB verification and runtime
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
    reproduce it on Linux, then complete exclusive borrow, take, and mapping.
@@ -137,7 +148,7 @@ See the [publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Ca
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   6,019 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
+   6,043 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower

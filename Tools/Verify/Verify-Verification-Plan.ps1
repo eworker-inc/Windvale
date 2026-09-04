@@ -235,6 +235,8 @@ $NativeCases = @(
             'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
             'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
             'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+            'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
             'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
         Suites = @('language-1-memory-budget-split-execution')
@@ -4988,7 +4990,7 @@ $QualificationPipelineExpected = @{
     'Link-Wvo' = '39|124'
     'Package-Hosted-Wvb' = '19|111'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '21|58'
+    'Package-Segmented-Compiler-Wvb' = '21|59'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
@@ -5509,6 +5511,34 @@ foreach ($OtherBorrowPath in @(
     ) -PassThru -Quiet
     if ($BorrowPlan.UseFoundationBorrowPlanDevelopment) {
         throw "Foundation planning hid integration changes in '$OtherBorrowPath'."
+    }
+}
+
+foreach ($DirectoryPath in @(
+    'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
+)) {
+    $DirectoryPlan = & $NativePlanner -ChangedPath $DirectoryPath -PassThru -Quiet
+    if (!$DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $DirectoryPlan.UseFoundationBorrowPlanDevelopment -or
+        $DirectoryPlan.ExpectedSeconds -ne 30 -or $DirectoryPlan.MaximumSeconds -ne 600 -or
+        $DirectoryPlan.Suites.Count -ne 1 -or $DirectoryPlan.Gaps.Count -ne 0) {
+        throw "The focused WVB typed-directory plan differs for '$DirectoryPath'."
+    }
+}
+foreach ($OtherDirectoryPath in @(
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv'
+)) {
+    $DirectoryPlan = & $NativePlanner -ChangedPath @(
+        'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv', $OtherDirectoryPath
+    ) -PassThru -Quiet
+    if ($DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $DirectoryPlan.UseFoundationBorrowPlanDevelopment) {
+        throw "WVB directory selection hid integration changes in '$OtherDirectoryPath'."
     }
 }
 
