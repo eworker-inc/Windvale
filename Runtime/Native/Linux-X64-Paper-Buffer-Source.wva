@@ -1,0 +1,44 @@
+windvale-assembly 1
+
+# Runtime-owned provider for the registered
+# windvale.paper.buffer_source.sysv_amd64_c_v1 contract. The SysV caller passes
+# Destination in rdi, Capacity in rsi, and Expected_generation in rdx. This
+# provider owns immutable generation 42 and publishes the canonical 24-byte
+# windvale.paper.foreign_record.v1 value for that generation.
+symbol export function wv_paper_buffer_source_read_v1 in .text
+
+section code .text align 16
+define wv_paper_buffer_source_read_v1
+compare_i32 rsi 64
+branch not_equal Paper_buffer_source_rejected
+compare_i32 rdx 42
+branch not_equal Paper_buffer_source_stale
+
+# WVFI magic followed by version 1, Delta kind, true, and reserved zero.
+move_u32 eax 1229346391
+store_memory_u32 rdi none 1 0 eax
+move_u32 eax 66049
+store_memory_u32 rdi none 1 4 eax
+
+# Generation 42, four payload bytes, and canonical payload de ad be ef.
+store_memory_u64 rdi none 1 8 rdx
+move_u32 eax 4
+store_memory_u32 rdi none 1 16 eax
+move_u32 eax 4022250974
+store_memory_u32 rdi none 1 20 eax
+move_u32 eax 24
+return
+
+label Paper_buffer_source_stale
+move_u32 eax 42
+store_memory_u64 rdi none 1 0 rax
+move_u32 eax 2
+xor_i32 rax -1
+return
+
+label Paper_buffer_source_rejected
+xor eax eax
+xor_i32 rax -1
+return
+end define
+end section

@@ -47,7 +47,7 @@ promotion checkpoint are:
 | --- | ---: | --- |
 | promoted analyzer input | 1,552,090 | `5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77` |
 | promoted emitter input | 1,556,434 | `d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9` |
-| current compiler-aligned verifier | 399,387 | `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800` |
+| current compiler-aligned verifier | 502,386 | `742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4` |
 
 The WVB identities are host-independent. PE and ELF container identities may
 differ because their startup and platform-service materializations are explicit
@@ -67,10 +67,12 @@ The coordinator performs these steps in one private temporary directory:
 
 1. admit the two exact bootstrap WVB products;
 2. create a private empty native cache;
-3. package the bootstrap analyzer and emitter for the current host;
+3. package the bootstrap analyzer and emitter under compiler-scale profile 8
+   for the current host;
 4. publish exact producer identities for those two applications;
 5. build the current analyzer Stage 1 with the bootstrap analyzer and emitter;
-6. package the Stage 1 analyzer and publish its producer identity;
+6. package the Stage 1 analyzer under compiler-scale profile 8 and publish its
+   producer identity;
 7. build the current emitter Stage 1 with the current analyzer and promoted
    bootstrap emitter;
 8. package the Stage 1 emitter and publish its producer identity;

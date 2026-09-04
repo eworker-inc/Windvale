@@ -254,12 +254,13 @@ boundary. Its default development mode builds target-aware `wvadmit`, complete
 independent `wvauth`, private `wvbind`, the successor Analyzer, and the matching
 current emitter, compiler-aligned verifier, and source-built runner once each
 through the validated shared development cache. It measures each WVB against
-its recorded candidate identity, packages the real products, and executes the
-private runner through 23 bounded acceptance, tamper, bypass, sequencing,
-publication, cleanup, timeout, output-limit, progress, and scalar-provider
-cases. This reduces the owner from fourteen cold product compilations to at most
-seven on an empty development cache, while normal development runs can reuse
-valid cached checkpoints.
+its recorded candidate identity, packages the analyzer and emitter under
+compiler-scale profile 8, and keeps the other tools on their narrower profiles.
+It executes the private runner through 24 bounded acceptance, tamper, bypass,
+sequencing, publication, cleanup, timeout, output-limit, progress, scalar-
+provider, and runtime-owned native-provider cases. This reduces the owner from
+fourteen cold product compilations to at most seven on an empty development
+cache, while normal development runs can reuse valid cached checkpoints.
 
 Changes limited to the post-analysis lowering builder, hosted `wvbind` driver
 source, or its tool project select only

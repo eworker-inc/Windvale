@@ -1078,6 +1078,23 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Slice 8 runtime-owned Foreign provider routing'
+        Paths = @('Runtime/Native/Linux-X64-Paper-Buffer-Source.wva')
+        Suites = @(
+            'native-x64-lowering-development',
+            'language-1-production-admission-ingress'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'Slice 8 source Foreign runtime consumer routing'
+        Paths = @('Runtime/Windvale/Foreign-Record-Consumer.wv')
+        Suites = @('language-1-production-admission-ingress')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'Language 1.0 generic nominal declaration routing'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Declaration.wvproj',
@@ -4364,6 +4381,7 @@ $NativeCases = @(
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0915-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0917-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt',
+            'Documents/Project/Windvale-Language-1.0-Source-Amendment-0942-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
             'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt'
         )

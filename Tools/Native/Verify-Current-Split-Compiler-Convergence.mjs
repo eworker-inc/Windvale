@@ -24,8 +24,8 @@ const PINNED_EMITTER = {
     sha256: 'd16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9',
 };
 const CURRENT_VERIFIER = {
-    bytes: 399_387,
-    sha256: '7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800',
+    bytes: 502_386,
+    sha256: '742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4',
 };
 
 if (process.argv.length !== 3) {
@@ -94,7 +94,7 @@ let Phase = 0;
 try {
     mkdirSync(Cacheˉroot);
     await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer,
+        '8', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer,
     ]);
     await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
         '8', Pinnedˉemitterˉwvb, Pinnedˉemitter,
@@ -119,7 +119,7 @@ try {
         'current analyzer Stage 1 WVB',
     );
     await Runˉnative('current-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Analyzerˉstage1ˉwvb, Analyzer,
+        '8', Analyzerˉstage1ˉwvb, Analyzer,
     ]);
     await Runˉnode('current-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Analyzer, Analyzerˉidentity,

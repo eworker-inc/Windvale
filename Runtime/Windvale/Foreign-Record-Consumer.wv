@@ -1,0 +1,72 @@
+#!wv/1 en@1
+module Runtimeˉforeignˉrecordˉconsumer;
+profile system;
+platform linux.x86_64.sysv_amd64_c_v1;
+authority application;
+
+import Foundationˉmemory as Memory;
+import Foundationˉresult as Result;
+import Foundationˉunsafe as Unsafe;
+
+enum Bufferˉsourceˉabi: u8 {
+    Witness = 1u8;
+}
+
+unsafe foreign "windvale.paper.buffer_source.sysv_amd64_c_v1"
+fn Readˉforeignˉrecord(
+    Destination: Unsafe.Foreignˉpointer<u8, Bufferˉsourceˉabi>,
+    Capacity: u64,
+    Expectedˉgeneration: u64,
+) -> i64 effects(ffi.call)
+as "wv_paper_buffer_source_read_v1";
+
+fn Invoke(Value: Unsafe.Foreignˉscratch<Bufferˉsourceˉabi>) -> i32
+effects(unsafe.address, ffi.call) {
+    var Scratch: Unsafe.Foreignˉscratch<Bufferˉsourceˉabi> = Value;
+    unsafe {
+        let Outcome: Result.Result<
+            Unsafe.Foreignˉwriteˉregion<Bufferˉsourceˉabi>,
+            Unsafe.Foreignˉpointerˉfailure
+        > = Unsafe.Borrowˉwriteˉregion::<Bufferˉsourceˉabi>(
+            Scratch: borrow mut Scratch,
+            Start: 0u64,
+            Length: 64u64,
+            Requiredˉalignment: 8u64
+        );
+        return match Outcome {
+            case Result.Result.Valid { Value: Region } {
+                let Destination: Unsafe.Foreignˉpointer<
+                    u8,
+                    Bufferˉsourceˉabi
+                > = Unsafe.Writeˉpointer::<Bufferˉsourceˉabi>(
+                    Region: borrow Region
+                );
+                let Status: i64 = Readˉforeignˉrecord(
+                    Destination: Destination,
+                    Capacity: 64u64,
+                    Expectedˉgeneration: 42u64
+                );
+                if Status == 24i64 { 42 } else { 2 }
+            }
+            case Result.Result.Failure { Error: _ } { 3 }
+        };
+    }
+}
+
+export fn Main(Budget: Memory.Memoryˉbudget) -> i32
+effects(memory.allocate, unsafe.address, ffi.call) {
+    let Constructed: Result.Result<
+        Unsafe.Foreignˉscratch<Bufferˉsourceˉabi>,
+        Unsafe.Foreignˉmemoryˉfailure
+    > = Unsafe.Constructˉscratch::<Bufferˉsourceˉabi>(
+        Budget: Budget,
+        Length: 64u64,
+        Alignment: 8u64
+    );
+    return match Constructed {
+        case Result.Result.Valid { Value: Scratchˉvalue } {
+            Invoke(Scratchˉvalue)
+        }
+        case Result.Result.Failure { Error: _ } { 4 }
+    };
+}

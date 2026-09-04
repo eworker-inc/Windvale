@@ -1096,6 +1096,7 @@ function Test-LanguageFrozenSourceDesignPath {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0915-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0917-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0942-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Decisions/0780-Implement-Language-1.0-Generic-Option-And-Result.md'
     )
@@ -2287,6 +2288,13 @@ foreach ($Path in $Paths) {
         'Tests/Native/X64-Paper-Buffer-Source.wva'
     )) {
         Add-Suite 'native-x64-lowering-development'
+    } elseif ($Path -eq 'Runtime/Native/Linux-X64-Paper-Buffer-Source.wva') {
+        Add-Suite @(
+            'native-x64-lowering-development',
+            'language-1-production-admission-ingress'
+        )
+    } elseif ($Path -eq 'Runtime/Windvale/Foreign-Record-Consumer.wv') {
+        Add-Suite 'language-1-production-admission-ingress'
     } elseif ($Path -eq
         'Tests/Native/Os-X64-Code-Emission-Development-Targets.txt') {
         $RunPlanVerification = $true
@@ -2305,6 +2313,7 @@ foreach ($Path in $Paths) {
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0915-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0917-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt',
+        'Documents/Project/Windvale-Language-1.0-Source-Amendment-0942-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Replacement-Source-Freeze-Candidate.txt',
         'Documents/Project/Windvale-Language-1.0-Source-Freeze-Candidate.txt',
         'Specifications/README.md',

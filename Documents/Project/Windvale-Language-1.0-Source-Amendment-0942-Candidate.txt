@@ -1,0 +1,69 @@
+windvale-language-1.0-source-amendment-candidate-v13
+date=2026-09-04
+status=candidate-accepted-only-by-decision-0942
+algorithm=sha256
+path_encoding=utf-8
+path_separator=/
+entry_order=ordinal-ascending-path
+entry_encoding=path=<path> LF bytes=<unsigned-decimal> LF sha256=<lowercase-hex> LF
+file_hash_input=exact-repository-file-bytes
+aggregate_hash_input=concatenated-entry-encodings
+base_manifest=Documents/Project/Windvale-Language-1.0-Source-Amendment-0919-Candidate.txt
+base_manifest_bytes=3789
+base_manifest_sha256=6654ca1e547dc73d0b1d48bc69d1bd365156f20dd0277f8bb28f589b1c74cb6e
+amendment=authenticated-foreign-and-foundation-payload-borrowing
+
+[core]
+77e4da73996ce78efcbdc0e8da7b51564404613acfb4012b641faadcbc6ffc35 64992 Specifications/Windvale-Language-1.0.md
+8578161e07f082bda68f493514f3008d3f5e72a70ebe0ce12a668cf74e97c3af 38513 Specifications/Windvale-Language-1.0-Grammar.md
+3e2dc49f198d3a6554eb0fa4c64edee7308a2a61501c8919f5e7b8a287904600 15280 Specifications/Windvale-Language-1.0.ebnf
+32e20416db6c88374e182e959055683112c0fa53639bd5bf114a31fb3e391bf8 36939 Specifications/Windvale-Language-1.0-Localized-Source.md
+b7abcfc81462e554284fa5b25fc752ae382a90216c470ba2bab030af251ee29d 12420 Specifications/Windvale-Language-1.0-Source-Profile-Formats.md
+28915c949c34244d03f6a3c99967788ddff530855a100573c0441bc222f5d409 87284 Specifications/Windvale-Language-1.0-Foundation.md
+f6c2ca95b53709ab841e83c195fde27dab200ce953aa7ddbf990b9e3f05875a7 30870 Specifications/Windvale-Language-1.0-Foundation-Registry.md
+5e12ba35c82eceee501eda6e4d59c5bdf577cf6778dcfab05c41e7c706c74121 4322 Specifications/Source-Naming.md
+ebdc5c0c788e7a7a1891829867f1e2418f28a7e9b8679da027888f474641497d 74663 Documents/Project/Windvale-Language-1.0-Design.md
+84706301ad7a3aeb30d84d721863a5850e37f383d3c7f7beb887b4b977043a2d 66499 Documents/Project/Windvale-Language-1.0-Migration.md
+b5c68fa1e0303d356fdc3b11a6a06af8674281c36e900b634d17339a897f658a 27845 Documents/Project/Windvale-Language-1.0-Paper-Corpus.md
+f0368213bae169ed4ab690439d32bc65ea45a2c6ae8efff330b8434d43a3da4c 21469 Documents/Project/Windvale-Accelerator-Compute-And-AI-Design.md
+4c1406b252964dd3bcd8be2019f5205ea1e1da9d23529575acc8a55b6d73b592 4756 Documents/Project/Windvale-Language-1.0-Localization-Workloads.md
+
+[decisions]
+selection=all 16 regular files in Documents/Decisions whose names begin 0751- through 0766-
+count=16
+file_bytes=126070
+entry_stream_bytes=2603
+aggregate_sha256=39573331530bceee4481f9758f2f98adc1911b5df58275769ee482d0d0567c0b
+
+[paper_corpus]
+selection=all 158 regular files recursively below Documents/Project/Language-1.0-Paper-Corpus
+count=158
+file_bytes=980348
+entry_stream_bytes=28885
+aggregate_sha256=56a33590b66a51654f0e98e780767ba249e711c742bead7846bb986cb468798e
+
+[localization_corpus]
+selection=all 64 regular files recursively below Documents/Project/Language-1.0-Localization-Workloads
+count=64
+file_bytes=189436
+entry_stream_bytes=12935
+aggregate_sha256=4ce7a72ce10c0cab9e1d2a4f8a2c08b2aa90ec1a2cdb7ced1553cfb364399b81
+
+[complete_candidate]
+selection=the 13 core paths above plus the decisions, paper_corpus, and localization_corpus selections
+count=251
+file_bytes=1781706
+entry_stream_bytes=46260
+aggregate_sha256=d91a5e0e31bf895b920ee3e9682c466f4d768eb6e75d920969837f1679e1fe8b
+
+[amended_core]
+base_identity_inputs=251
+effective_identity_inputs=251
+changed_paths=2
+changed_path_1=Documents/Project/Windvale-Language-1.0-Migration.md
+changed_path_2=Specifications/Windvale-Language-1.0-Foundation.md
+
+[exclusions]
+This manifest file, Decision 0942, roadmap/progress status, mutable implementation evidence,
+current compiler sources, generated build artifacts, caches, and future runtime/native-language
+qualification evidence are not identity inputs. Prior amendment manifests remain immutable provenance.

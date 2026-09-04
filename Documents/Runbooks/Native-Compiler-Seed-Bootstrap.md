@@ -40,8 +40,8 @@ The exact checked-in bootstrap inputs and currently pinned verifier are:
 - emitter: 1,556,434 bytes, SHA-256
   `d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9`;
   and
-- current verifier WVB: 399,387 bytes, SHA-256
-  `7da624b070b69c3a720a00df12b753ed28276b7909c48ec5e6c349bd15ed9800`.
+- current verifier WVB: 502,386 bytes, SHA-256
+  `742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4`.
 
 The analyzer and emitter identities in the final success line are the settled
 current-source outputs. They must match their respective Stage 1 and Stage 2

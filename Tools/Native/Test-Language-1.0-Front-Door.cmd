@@ -108,9 +108,9 @@ for %%F in ("%PinnedAnalyzerWvb%") do if not "%%~zF"=="1552090" goto :cleanup
 certutil -hashfile "%PinnedAnalyzerWvb%" SHA256 | findstr /I /C:"5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77" >nul || goto :cleanup
 for %%F in ("%PinnedEmitterWvb%") do if not "%%~zF"=="1556434" goto :cleanup
 certutil -hashfile "%PinnedEmitterWvb%" SHA256 | findstr /I /C:"d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9" >nul || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 8 ^
     "%PinnedAnalyzerWvb%" "%Work%\Pinned-Analyzer.exe" --development-cache || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 8 ^
     "%PinnedEmitterWvb%" "%Work%\Pinned-Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     analyzer "%Work%\Pinned-Analyzer.exe" "%Work%\Pinned-Analyzer.identity" || goto :cleanup
@@ -143,7 +143,7 @@ node "%Native%\Build-Cached-Segmented-Hosted-Wvb.mjs" 2 ^
     "%Work%\Admitter.wvb" "%Work%\Admitter.exe" || goto :cleanup
 node "%Native%\Build-Cached-Segmented-Hosted-Wvb.mjs" 7 ^
     "%Work%\Validator.wvb" "%Work%\Validator.exe" || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 8 ^
     "%Work%\Analyzer.wvb" "%Work%\Analyzer.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     analyzer "%Work%\Analyzer.exe" "%Work%\Analyzer.identity" || goto :cleanup
@@ -222,7 +222,7 @@ node "%Native%\Build-Cached-Split-Project-Wvb.mjs" ^
     "%Work%\Pinned-Emitter.exe" "%Work%\Pinned-Emitter.identity" || goto :cleanup
 for %%F in ("%Work%\Emitter.wvb") do echo INFO  language 1 emitter wvb-bytes=%%~zF
 certutil -hashfile "%Work%\Emitter.wvb" SHA256
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 7 ^
+call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 8 ^
     "%Work%\Emitter.wvb" "%Work%\Emitter.exe" --development-cache || goto :cleanup
 node "%Native%\Write-Split-Compiler-Producer-Identity.mjs" ^
     emitter "%Work%\Emitter.exe" "%Work%\Emitter.identity" || goto :cleanup
@@ -1747,7 +1747,7 @@ if not "%Result%"=="0" (
 )
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"
 if not "%Result%"=="0" exit /b %Result%
-echo native language 1 front door status=Passed cases=486 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=7 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
+echo native language 1 front door status=Passed cases=492 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=13 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%MemoryBudgetEntryWvbBytes% enum-dead-type-wvb-bytes=%EnumDeadTypeWvbBytes% enum-u8-wvb-bytes=%EnumU8WvbBytes% generic-type-catalog-wvb-bytes=%GenericTypeCatalogWvbBytes% generic-nominal-variant-wvb-bytes=%GenericNominalVariantWvbBytes% value-if-wvb-bytes=%ValueIfWvbBytes% value-match-wvb-bytes=%ValueMatchWvbBytes% value-match-never-wvb-bytes=%ValueMatchNeverWvbBytes% unit-wvb-bytes=%UnitWvbBytes% never-wvb-bytes=%NeverWvbBytes% record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%EnumI32WvbBytes% fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%RuneWvbBytes% floating-wvb-bytes=%FloatingWvbBytes% fixed-array-wvb-bytes=%FixedArrayWvbBytes% vector-sequence-type-wvb-bytes=%VectorSequenceTypesWvbBytes% vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%SequenceReadWvbBytes% vector-read-freeze-wvb-bytes=%VectorReadFreezeWvbBytes% multi-field-variant-wvb-bytes=%MultiFieldVariantWvbBytes% typed-failure-wvb-bytes=%ResultTryWvbBytes% foundation-generic-wvb-bytes=%FoundationGenericWvbBytes% generic-specializations-wvb-bytes=%GenericSpecializationsWvbBytes%
 exit /b 0
 
 :analyze_authenticated

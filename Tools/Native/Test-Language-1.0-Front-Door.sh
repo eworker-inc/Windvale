@@ -386,10 +386,10 @@ printf '%s  %s\n' \
 printf '%s  %s\n' \
     d16cc44f65a788a8c2dc45d423686dde095cac63e8f2fd8305d1246b29c168f9 \
     "$pinned_emitter_wvb" | sha256sum --check --strict --quiet || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 8 \
     "$pinned_analyzer_wvb" "$work/Pinned-Analyzer.elf" \
     --development-cache || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 8 \
     "$pinned_emitter_wvb" "$work/Pinned-Emitter.elf" \
     --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
@@ -426,7 +426,7 @@ node "$script_directory/Build-Cached-Segmented-Hosted-Wvb.mjs" 2 \
     "$work/Admitter.wvb" "$work/Admitter.elf" || exit $?
 node "$script_directory/Build-Cached-Segmented-Hosted-Wvb.mjs" 7 \
     "$work/Validator.wvb" "$work/Validator.elf" || exit $?
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 8 \
     "$work/Analyzer.wvb" "$work/Analyzer.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     analyzer "$work/Analyzer.elf" "$work/Analyzer.identity" || exit $?
@@ -502,7 +502,7 @@ node "$script_directory/Build-Cached-Split-Project-Wvb.mjs" \
 printf 'INFO  language 1 emitter wvb-bytes=%s sha256=%s\n' \
     "$(wc -c < "$work/Emitter.wvb")" \
     "$(sha256sum -- "$work/Emitter.wvb" | cut -d' ' -f1)"
-"$script_directory/Package-Segmented-Compiler-Wvb.sh" 7 \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 8 \
     "$work/Emitter.wvb" "$work/Emitter.elf" --development-cache || exit $?
 node "$script_directory/Write-Split-Compiler-Producer-Identity.mjs" \
     emitter "$work/Emitter.elf" "$work/Emitter.identity" || exit $?
@@ -1977,4 +1977,4 @@ generic_specializations_wvb_bytes=$(wc -c < \
 printf 'PASS  language 1 front door step=generic-specializations wvb-bytes=%s\n' \
     "$generic_specializations_wvb_bytes"
 echo 'PASS  language 1 front door phase=foundation-generics item=13/13'
-printf 'native language 1 front door status=Passed cases=486 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=7 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"
+printf 'native language 1 front door status=Passed cases=492 frozen-inputs=251 source-fixtures=114 descriptor-cases=33 profile-cases=4 value-front-end-cases=39 generic-front-end-cases=4 generic-resolution-cases=1 generic-type-catalog-cases=1 incremental-generic-wir-cases=13 generic-specialization-cases=4 generic-nominal-pipeline-cases=26 generic-nominal-function-body-cases=33 generic-nominal-declaration-dependency-cases=33 generic-nominal-variant-cases=97 compiler-cases=36 closure-compiler-pipeline-cases=5 enum-cases=20 borrow-cases=14 memory-budget-entry-cases=12 memory-budget-split-cases=13 vector-construct-reserved-cases=16 fixed-integer-cases=22 rune-cases=20 floating-cases=27 fixed-array-cases=6 vector-sequence-type-cases=6 vector-sequence-runtime-cases=12 sequence-read-cases=10 vector-read-freeze-cases=19 unit-never-cases=21 multi-field-variant-cases=25 typed-failure-cases=5 foundation-generic-cases=6 compiler-result=42 compiler-wvb-bytes=221 memory-budget-entry-wvb-bytes=%s enum-dead-type-wvb-bytes=%s enum-u8-wvb-bytes=%s generic-type-catalog-wvb-bytes=%s generic-nominal-variant-wvb-bytes=%s value-if-wvb-bytes=%s value-match-wvb-bytes=%s value-match-never-wvb-bytes=%s unit-wvb-bytes=%s never-wvb-bytes=%s record-update-wvb-bytes=1116 enum-i32-wvb-bytes=%s fixed-integer-wvb-bytes=5335 rune-wvb-bytes=%s floating-wvb-bytes=%s fixed-array-wvb-bytes=%s vector-sequence-type-wvb-bytes=%s vector-sequence-runtime-wvb-bytes=1156 sequence-read-wvb-bytes=%s vector-read-freeze-wvb-bytes=%s multi-field-variant-wvb-bytes=%s typed-failure-wvb-bytes=%s foundation-generic-wvb-bytes=%s generic-specializations-wvb-bytes=%s\n' "$memory_budget_entry_wvb_bytes" "$enum_dead_type_wvb_bytes" "$enum_u8_wvb_bytes" "$generic_type_catalog_wvb_bytes" "$generic_nominal_variant_wvb_bytes" "$value_if_wvb_bytes" "$value_match_wvb_bytes" "$value_match_never_wvb_bytes" "$unit_wvb_bytes" "$never_wvb_bytes" "$enum_i32_wvb_bytes" "$rune_wvb_bytes" "$floating_wvb_bytes" "$fixed_array_wvb_bytes" "$vector_sequence_types_wvb_bytes" "$sequence_read_wvb_bytes" "$vector_read_freeze_wvb_bytes" "$multi_field_variant_wvb_bytes" "$result_try_wvb_bytes" "$foundation_generic_wvb_bytes" "$generic_specializations_wvb_bytes"

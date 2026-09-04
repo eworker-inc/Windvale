@@ -48,7 +48,8 @@ const Candidateˉdirectory = join(
     Repositoryˉroot, 'Artifacts', 'Native-Wvb-To-Wvo-Candidate',
 );
 const Foreignˉproviderˉsource = join(
-    Repositoryˉroot, 'Tests', 'Native', 'X64-Paper-Buffer-Source.wva',
+    Repositoryˉroot, 'Runtime', 'Native',
+    'Linux-X64-Paper-Buffer-Source.wva',
 );
 
 const Work = await realpath(await mkdtemp(join(
@@ -175,14 +176,14 @@ try {
         [Foreignˉproviderˉsource, Providerˉwvo],
         'foreign-provider-assemble',
     );
-    if (!/^wvasm 1\r?\nassembly status=valid object-bytes=206 sections=1 symbols=1 relocations=0 /u
+    if (!/^wvasm 1\r?\nassembly status=valid object-bytes=223 sections=1 symbols=1 relocations=0 /u
         .test(Assembled.Output)) {
         Reject(`The Foreign provider assembly report differed.\n${Assembled.Output}`);
     }
     await Readˉbinary(
         Providerˉwvo,
-        206,
-        '69ca4c0a1e54997c5a729abe91eff8da08c7d66f828664a900794a753c454722',
+        223,
+        'b76bd5ff5b2824258e0f9931eaac6ec8c27a055bb207bdcacab4fc51f6b0f879',
     );
     await Requireˉsuccess(Check, [Providerˉwvo], 'foreign-provider-object-check');
     let Foreignˉexecutions = 0;

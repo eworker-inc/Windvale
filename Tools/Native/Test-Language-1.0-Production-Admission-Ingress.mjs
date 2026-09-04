@@ -28,6 +28,28 @@ const CASE_TIMEOUT_MILLISECONDS = 30_000;
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SPLIT_COMPILER = join(SCRIPT_DIRECTORY, 'Run-Split-Compiler.mjs');
+const NATIVE_TOOL_EXTENSION = WINDOWS ? 'cmd' : 'sh';
+const NATIVE_APPLICATION_EXTENSION = WINDOWS ? 'exe' : 'elf';
+const NATIVE_LOWERER = join(
+    REPOSITORY_ROOT, 'Artifacts', 'Native-Wvb-To-Wvo-Candidate',
+    WINDOWS ? 'Wvb-To-Wvo.exe' : 'Wvb-To-Wvo.elf'
+);
+const ASSEMBLE_WVA = join(
+    SCRIPT_DIRECTORY, `Assemble-Wva.${NATIVE_TOOL_EXTENSION}`
+);
+const CHECK_WVO = join(
+    SCRIPT_DIRECTORY, `Check-Wvo.${NATIVE_TOOL_EXTENSION}`
+);
+const LINK_WVO = join(
+    SCRIPT_DIRECTORY, `Link-Wvo.${NATIVE_TOOL_EXTENSION}`
+);
+const PACKAGE_CONSOLE = join(
+    SCRIPT_DIRECTORY, `Package-Console.${NATIVE_TOOL_EXTENSION}`
+);
+const FOREIGN_RUNTIME_PROVIDER = join(
+    REPOSITORY_ROOT, 'Runtime', 'Native',
+    'Linux-X64-Paper-Buffer-Source.wva'
+);
 const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
@@ -68,24 +90,24 @@ const EXPECTED_PRODUCTS = Object.freeze({
         sha256: '6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612',
     }),
     wvanalyze: Object.freeze({
-        bytes: 1_650_588,
-        sha256: '91fbdc08a60a4f319b6281f804c415e91e5776121155171dfa7e63821efc84b7',
+        bytes: 1_666_139,
+        sha256: 'e14928966c7ffc28511ed87047c51d9447d9af41efd2f17f95b49f13566f9cdf',
     }),
     wvbind: Object.freeze({
-        bytes: 988_400,
-        sha256: 'b73bb2af6da7f05632387c8c1f1c4d7085c49ce406c02aaf1be3a1baa45ad545',
+        bytes: 774_257,
+        sha256: '3439b887dbf1362454725e261b95880429e1aa951781e1323b185d88d16a5fa0',
     }),
     wvemit: Object.freeze({
-        bytes: 1_538_934,
-        sha256: '1e4aadaa6d2f7f4e99eed4d025d6f0181e8cec33ef4673d1b677ae5211c3b0f7',
+        bytes: 1_557_114,
+        sha256: '1058cee1686754bc092861b92e210e639524ffa06e9644fd4560a278777b9c50',
     }),
     wvverify: Object.freeze({
         bytes: 502_386,
         sha256: '742cb07b7351473c188d9247eb11be5ef39b2a522c09e89b9f97b5e2886651b4',
     }),
     wvrun: Object.freeze({
-        bytes: 0,
-        sha256: '',
+        bytes: 1_040_878,
+        sha256: '4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b',
     }),
 });
 
@@ -113,6 +135,7 @@ const CASES = Object.freeze([
     'invalid-production-preflight-rejected-before-product-launch',
     'foreign-scalar-provider-success',
     'foreign-scalar-provider-stale-generation',
+    'foreign-source-native-runtime-boundary',
 ]);
 
 function Reject(Message) { throw new Error(Message); }
@@ -677,8 +700,8 @@ function Getˉproductˉbuildˉmode() {
 }
 
 async function Verifyˉcontracts() {
-    Require(CASES.length === 23 && new Set(CASES).size === 23,
-        'The production-ingress case inventory is not exactly 23 unique cases.');
+    Require(CASES.length === 24 && new Set(CASES).size === 24,
+        'The production-ingress case inventory is not exactly 24 unique cases.');
     const Splitˉbytes = await readFile(SPLIT_COMPILER);
     Require(Splitˉbytes.length === EXPECTED_COORDINATOR.bytes &&
         Sha256(Splitˉbytes) === EXPECTED_COORDINATOR.sha256,
@@ -2223,8 +2246,8 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             Work, `Pinned-${Name}.${Executableˉextension}`
         );
         await Requireˉsuccess(
-            `pinned-${Name}-profile-7-package`, Lowˉlevelˉpackage,
-            ['7', Wvb, Application, '--development-cache'],
+            `pinned-${Name}-profile-8-package`, Lowˉlevelˉpackage,
+            ['8', Wvb, Application, '--development-cache'],
             PACKAGE_TIMEOUT_MILLISECONDS, true);
         const Identity = join(Work, `Pinned-${Name}.identity`);
         await Requireˉsuccess(`pinned-${Name}-identity`, process.execPath,
@@ -2292,7 +2315,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         }
         const Application = join(Work, `${Name}.${Executableˉextension}`);
         if (Name === 'wvanalyze' || Name === 'wvemit' || Name === 'wvrun') {
-            const Profile = Name === 'wvrun' ? '5' : '7';
+            const Profile = Name === 'wvrun' ? '5' : '8';
             await Requireˉsuccess(
                 `${Name}-profile-${Profile}-package`, Lowˉlevelˉpackage,
                 [Profile, First, Application, '--development-cache'],
@@ -2458,7 +2481,6 @@ async function Writeˉproductionˉinputs(Work) {
         'export record Foreignˉpointer<T, Abi> { Opaqueˉidentity: u64; }',
         'utf8'
     );
-    const Foreignˉruntimeˉsuccessˉsource = Foreignˉruntimeˉsource(42, 24);
     const Foreignˉruntimeˉstaleˉsource = Foreignˉruntimeˉsource(41, -3);
     const Paths = {
         lock: join(Work, 'Source-Inputs.wvlock'),
@@ -2467,7 +2489,10 @@ async function Writeˉproductionˉinputs(Work) {
         core: join(Work, 'Core.wv'),
         foreign: join(Work, 'Foreign.wv'),
         foreignUnsafe: join(Work, 'Foreign-Unsafe.wv'),
-        foreignRuntimeSuccess: join(Work, 'Foreign-Runtime-Success.wv'),
+        foreignRuntimeSuccess: join(
+            REPOSITORY_ROOT, 'Runtime', 'Windvale',
+            'Foreign-Record-Consumer.wv'
+        ),
         foreignRuntimeStale: join(Work, 'Foreign-Runtime-Stale.wv'),
         memory: join(REPOSITORY_ROOT, 'Libraries', 'Foundation', 'Memory',
             'Memory.wv'),
@@ -2483,8 +2508,6 @@ async function Writeˉproductionˉinputs(Work) {
         writeFile(Paths.core, Coreˉsource, { flag: 'wx' }),
         writeFile(Paths.foreign, Foreignˉsource, { flag: 'wx' }),
         writeFile(Paths.foreignUnsafe, Foreignˉunsafeˉsource, { flag: 'wx' }),
-        writeFile(Paths.foreignRuntimeSuccess,
-            Foreignˉruntimeˉsuccessˉsource, { flag: 'wx' }),
         writeFile(Paths.foreignRuntimeStale,
             Foreignˉruntimeˉstaleˉsource, { flag: 'wx' }),
     ]);
@@ -2502,6 +2525,95 @@ function Authenticatedˉarguments(Products, Inputs, Source, Output) {
         '--target-descriptor', Inputs.target,
         ...Sources, Output,
     ];
+}
+
+async function Verifyˉnativeˉforeignˉruntime(Work, Sourceˉwvb) {
+    const Name = CASES[23];
+    process.stdout.write(
+        `production admission foreign native case=${Name} status=Started\n`
+    );
+    const Programˉwvo = join(Work, 'Foreign-Runtime-Consumer.wvo');
+    const Lowered = await Requireˉsuccess(
+        `${Name}-lower`, NATIVE_LOWERER, [Sourceˉwvb, Programˉwvo],
+        CASE_TIMEOUT_MILLISECONDS
+    );
+    Require(
+        /^native x64 status=Valid abi=22 code-bytes=[0-9]+ object-bytes=[0-9]+\r?\n$/u
+            .test(Lowered.output.toString('utf8')),
+        `The ${Name} native lowering report differed.`
+    );
+
+    const Providerˉwvo = join(Work, 'Foreign-Runtime-Provider.wvo');
+    const Assembled = await Requireˉsuccess(
+        `${Name}-provider-assemble`, ASSEMBLE_WVA,
+        [FOREIGN_RUNTIME_PROVIDER, Providerˉwvo], CASE_TIMEOUT_MILLISECONDS
+    );
+    Require(
+        /^wvasm 1\r?\nassembly status=valid object-bytes=223 sections=1 symbols=1 relocations=0 /u
+            .test(Assembled.output.toString('utf8')),
+        `The ${Name} runtime-provider assembly report differed.`
+    );
+    const Providerˉevidence = await Evidence(Providerˉwvo);
+    Require(
+        Providerˉevidence.bytes === 223 &&
+        Providerˉevidence.sha256 ===
+            'b76bd5ff5b2824258e0f9931eaac6ec8c27a055bb207bdcacab4fc51f6b0f879',
+        `The ${Name} runtime-provider identity differed.`
+    );
+    await Requireˉsuccess(
+        `${Name}-program-check`, CHECK_WVO, [Programˉwvo],
+        CASE_TIMEOUT_MILLISECONDS
+    );
+    await Requireˉsuccess(
+        `${Name}-provider-check`, CHECK_WVO, [Providerˉwvo],
+        CASE_TIMEOUT_MILLISECONDS
+    );
+
+    const Image = join(Work, 'Foreign-Runtime-Consumer.bin');
+    const Linked = await Requireˉsuccess(
+        `${Name}-link`, LINK_WVO,
+        ['0', 'Main', Image, Programˉwvo, Providerˉwvo],
+        CASE_TIMEOUT_MILLISECONDS
+    );
+    const Linkˉreport = Linked.output.toString('utf8');
+    const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linkˉreport);
+    Require(
+        Entry !== null && Linkˉreport.includes('imports count=1') &&
+        Linkˉreport.includes(
+            'name=wv_paper_buffer_source_read_v1 provider-input=1'
+        ) && Linkˉreport.includes('relocations count=1'),
+        `The ${Name} link report differed.\n${Linkˉreport}`
+    );
+
+    if (!WINDOWS) {
+        const Application = join(
+            Work, `Foreign-Runtime-Consumer.${NATIVE_APPLICATION_EXTENSION}`
+        );
+        await Requireˉsuccess(
+            `${Name}-package`, PACKAGE_CONSOLE,
+            ['linux-x64-console-v1', Image, Entry[1], Application],
+            CASE_TIMEOUT_MILLISECONDS
+        );
+        const Executed = await Runˉbounded(
+            Application, [], `${Name}-execute`, CASE_TIMEOUT_MILLISECONDS
+        );
+        Requireˉcleanˉtermination(Executed, `${Name}-execute`);
+        Require(
+            Executed.code === 42 && !Executed.timedOut && !Executed.exceeded &&
+            Executed.output.length === 0 && Executed.error.length === 0,
+            `The ${Name} native execution differed: code=${Executed.code}.`
+        );
+    }
+
+    const Sourceˉevidence = await Evidence(Sourceˉwvb);
+    const Programˉevidence = await Evidence(Programˉwvo);
+    process.stdout.write(
+        `production admission foreign native case=${Name} status=Passed ` +
+        `source-wvb-sha256=${Sourceˉevidence.sha256} ` +
+        `program-wvo-sha256=${Programˉevidence.sha256} ` +
+        `provider-wvo-sha256=${Providerˉevidence.sha256} ` +
+        'links=1 execution=linux-only boundary=runtime-owned\n'
+    );
 }
 
 async function Writeˉadmissionˉsnapshotˉmutator(
@@ -2539,7 +2651,7 @@ async function Writeˉlaunchˉguard(Work, Name, Marker) {
 }
 
 async function Runˉproductionˉcases(Work, Products, Inputs) {
-    // Cases 1-13, 17, 22, and 23 are production-only. They exercise the actual seven
+    // Cases 1-13, 17, and 22-24 are production-only. They exercise the actual seven
     // successor products built above; qualification additionally pins their
     // settled cross-host portable identities.
     // The two valid outputs prove current-run final-WVB determinism only. They
@@ -2672,6 +2784,7 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
         );
         await Requireˉcoordinatorˉcleanup();
     }
+    await Verifyˉnativeˉforeignˉruntime(Work, Runtimeˉcases[0].output);
 
     const SecondOutput = join(Work, 'Valid-Second.wvb');
     const Second = await Runˉcoordinator(
@@ -2698,7 +2811,8 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
         `binding=${Foreignˉlayout.Binding} malformed=${Malformedˉforeignˉwvb} ` +
         `compiler-verifier-cases=${Compilerˉforeignˉwvb} ` +
         'current-verifier=Verified published-front-door=Closed ' +
-        'scalar-provider=Verified runtime-cases=2 deterministic=Verified\n'
+        'scalar-provider=Verified runtime-cases=2 ' +
+        'native-runtime-boundary=Verified deterministic=Verified\n'
     );
 
     await Requireˉcoordinatorˉcleanup();
@@ -2972,10 +3086,11 @@ async function Main() {
                 : 'Measured-current-products'} ` +
             `cold-double-build=${Buildˉmode.coldDoubleBuild
                 ? 'Verified'
-                : 'Not-requested'} profile=7\n`
+                : 'Not-requested'} compiler-profile=8 tool-profile=7 ` +
+            'verifier-profile=2 runner-profile=5\n'
         );
         const Inputs = await Writeˉproductionˉinputs(Work);
-        process.stdout.write('START production admission ingress phase=execute item=3/3 cases=23\n');
+        process.stdout.write('START production admission ingress phase=execute item=3/3 cases=24\n');
         await Runˉproductionˉcases(Work, Products, Inputs);
         Passed = true;
     } finally {
@@ -2984,7 +3099,8 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 production admission ingress status=Passed ' +
-            'cases=23 deterministic=Verified profile=7 ' +
+            'cases=24 deterministic=Verified compiler-profile=8 tool-profile=7 ' +
+            'verifier-profile=2 runner-profile=5 ' +
             'final-publication-owner=split-compiler\n'
         );
     }

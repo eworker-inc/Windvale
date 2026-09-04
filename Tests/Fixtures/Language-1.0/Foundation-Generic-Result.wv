@@ -55,8 +55,8 @@ fn Statementˉforward() -> Result.Result<u8, u32> {
     return Result.Result.Valid<u8, u32> { Value: 42u8 };
 }
 
-fn Observeˉresult(
-    Value: Result.Result<u8, u32>
+fn Observeˉresult<T>(
+    Value: Result.Result<T, u32>
 ) -> i32 {
     return match Value {
         case Result.Result.Valid { Value: _ } { 42 }
