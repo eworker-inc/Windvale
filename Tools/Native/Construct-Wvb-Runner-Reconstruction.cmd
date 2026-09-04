@@ -37,31 +37,37 @@ set "CanonicalManifest=%TemporaryDirectory%\Canonical.wvli"
 set "WindowsApplication=%OutputRoot%\windows-x64-wvrun.exe"
 set "LinuxApplication=%OutputRoot%\linux-x64-wvrun.elf"
 
+echo native WVB runner reconstruction step=build status=Started
 node "%RepositoryRoot%\Tools\Native\Build-Current-Split-Project-Wvb.mjs" "%SourceProject%" "%Wvb%"
 if errorlevel 1 goto :cleanup
 call :verify_file "%Wvb%" 1040878 4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b "WVB-runner module"
 if errorlevel 1 goto :cleanup
 
+echo native WVB runner reconstruction step=stage status=Started
 call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" "%Wvb%" "%ObjectPrefix%" "%ObjectManifest%" >"%TemporaryDirectory%\Stage.out" 2>"%TemporaryDirectory%\Stage.err"
 if errorlevel 1 goto :stage_failed
 findstr /c:"object-bytes=10547710 chunks=15 manifest-bytes=204" "%TemporaryDirectory%\Stage.out" >nul
 if errorlevel 1 goto :stage_failed
 
+echo native WVB runner reconstruction step=link status=Started
 call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" "%ObjectPrefix%" "%ObjectManifest%" "%ImagePrefix%" "%ImageManifest%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :link_failed
 findstr /c:"image-bytes=10529580 entry-offset=150541 chunks=11 manifest-bytes=160" "%TemporaryDirectory%\Link.out" >nul
 if errorlevel 1 goto :link_failed
 
+echo native WVB runner reconstruction step=transport status=Started
 call "%RepositoryRoot%\Tools\Native\Transport-Compiler-Image.cmd" "%ImagePrefix%" "%ImageManifest%" "%CanonicalPrefix%" "%CanonicalManifest%" >"%TemporaryDirectory%\Transport.out" 2>"%TemporaryDirectory%\Transport.err"
 if errorlevel 1 goto :transport_failed
 findstr /c:"image-bytes=10529580 entry-offset=150541 chunks=3 manifest-bytes=64" "%TemporaryDirectory%\Transport.out" >nul
 if errorlevel 1 goto :transport_failed
 
+echo native WVB runner reconstruction step=package-windows status=Started
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 5 "%Wvb%" "%CanonicalPrefix%" 3 150541 "%WindowsApplication%" windows >"%TemporaryDirectory%\Windows-Package.out" 2>"%TemporaryDirectory%\Windows-Package.err"
 if errorlevel 1 goto :windows_package_failed
 call :verify_file "%WindowsApplication%" 10547712 8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972 "Windows WVB-runner application"
 if errorlevel 1 goto :cleanup
 
+echo native WVB runner reconstruction step=package-linux status=Started
 call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 5 "%Wvb%" "%CanonicalPrefix%" 3 150541 "%LinuxApplication%" linux >"%TemporaryDirectory%\Linux-Package.out" 2>"%TemporaryDirectory%\Linux-Package.err"
 if errorlevel 1 goto :linux_package_failed
 call :verify_file "%LinuxApplication%" 10547200 4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e "Linux WVB-runner application"

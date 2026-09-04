@@ -9,7 +9,7 @@ segmented-hosted-wvb-cache|Test-Cached-Segmented-Hosted-Wvb|10|4|quick|segmented
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|7|3|standard|Tests: 7, Passed: 7, Failed: 0
 native-sha256-lowering|Test-Native-Sha256|8|3|quick|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected
 native-x64-lowering-development|Test-Native-Unsafe-Write-Pointer-Lowering|25|3|slow|native unsafe write pointer lowering status=Passed cases=25 valid=5 malformed=20 native-execution=1 foreign-native-execution=linux-only foreign-links=2 compiler-source=current package-cache=development
-wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|slow|Tests: 3, Passed: 3, Failed: 0
+wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|4|very-slow|Tests: 3, Passed: 3, Failed: 0
 scripting|Test-Scripting|6|2|quick|Tests: 6, Passed: 6, Failed: 0
 wv-linker-reconstruction|Test-Wv-Linker-Reconstruction|3|3|standard|Tests: 3, Passed: 3, Failed: 0
 wvb-inspector-reconstruction|Test-Wvb-Inspector-Reconstruction|4|3|standard|Tests: 4, Passed: 4, Failed: 0

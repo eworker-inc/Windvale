@@ -66,12 +66,14 @@ verify_file() {
         }
 }
 
+echo 'native WVB runner reconstruction step=build status=Started'
 node "$repository_root/Tools/Native/Build-Current-Split-Project-Wvb.mjs" \
     "$source_project" "$wvb" || exit 1
 verify_file "$wvb" 1040878 \
     4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b \
     'WVB-runner module' || exit 1
 
+echo 'native WVB runner reconstruction step=stage status=Started'
 "$repository_root/Tools/Native/Stage-Compiler-Wvb.sh" \
     "$wvb" "$object_prefix" "$object_manifest" \
     >"$temporary_directory/Stage.out" 2>"$temporary_directory/Stage.err" ||
@@ -80,6 +82,7 @@ grep -Fqx \
     'native x64 staging status=Complete object-bytes=10547710 chunks=15 manifest-bytes=204' \
     "$temporary_directory/Stage.out" || report_failure Stage
 
+echo 'native WVB runner reconstruction step=link status=Started'
 "$repository_root/Tools/Native/Link-Staged-Compiler-Wvo.sh" \
     "$object_prefix" "$object_manifest" "$image_prefix" "$image_manifest" \
     >"$temporary_directory/Link.out" 2>"$temporary_directory/Link.err" ||
@@ -88,6 +91,7 @@ grep -Fqx \
     'segmented compiler image staging status=Complete image-bytes=10529580 entry-offset=150541 chunks=11 manifest-bytes=160' \
     "$temporary_directory/Link.out" || report_failure Link
 
+echo 'native WVB runner reconstruction step=transport status=Started'
 "$repository_root/Tools/Native/Transport-Compiler-Image.sh" \
     "$image_prefix" "$image_manifest" "$canonical_prefix" "$canonical_manifest" \
     >"$temporary_directory/Transport.out" 2>"$temporary_directory/Transport.err" ||
@@ -96,6 +100,7 @@ grep -Fqx \
     'compiler image transport status=Complete image-bytes=10529580 entry-offset=150541 chunks=3 manifest-bytes=64' \
     "$temporary_directory/Transport.out" || report_failure Transport
 
+echo 'native WVB runner reconstruction step=package-windows status=Started'
 "$repository_root/Tools/Native/Package-Hosted-Wvb.sh" image 5 \
     "$wvb" "$canonical_prefix" 3 150541 "$windows_application" windows \
     >"$temporary_directory/Windows-Package.out" \
@@ -104,6 +109,7 @@ verify_file "$windows_application" 10547712 \
     8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972 \
     'Windows WVB-runner application' || exit 1
 
+echo 'native WVB runner reconstruction step=package-linux status=Started'
 "$repository_root/Tools/Native/Package-Hosted-Wvb.sh" image 5 \
     "$wvb" "$canonical_prefix" 3 150541 "$linux_application" linux \
     >"$temporary_directory/Linux-Package.out" \

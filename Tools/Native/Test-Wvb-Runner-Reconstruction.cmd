@@ -53,6 +53,7 @@ exit /b 1
 :preflight_done
 
 if "%Mode%"=="development" goto :development_reconstruction
+echo START WVB runner reconstruction phase=paired-reconstruction status=Started
 call "%Constructor%" >"%TestDirectory%\Usage.out" 2>"%TestDirectory%\Usage.err"
 if not "%ERRORLEVEL%"=="64" goto :reconstruction_failed
 call :check_file "%TestDirectory%\Usage.out" 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
@@ -76,6 +77,7 @@ set /a Passed+=1
 goto :reconstruction_done
 
 :development_reconstruction
+echo START WVB runner reconstruction phase=current-host-development status=Started
 node "%Builder%" "%SourceProject%" "%TestDirectory%\Rebuilt\Wvb-Runner.wvb"
 if errorlevel 1 goto :reconstruction_failed
 call "%Packager%" 5 "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" --development-cache

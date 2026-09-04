@@ -96,6 +96,7 @@ fi
 mkdir -- "$test_directory/Rebuilt" || exit 1
 
 if [[ $mode == development ]]; then
+    echo 'START WVB runner reconstruction phase=current-host-development status=Started'
     if node "$builder" "$source_project" "$test_directory/Rebuilt/Wvb-Runner.wvb" &&
         "$packager" 5 "$test_directory/Rebuilt/Wvb-Runner.wvb" \
             "$test_directory/Rebuilt/linux-x64-wvrun.elf" --development-cache &&
@@ -110,6 +111,7 @@ if [[ $mode == development ]]; then
         failed=$((failed + 1))
     fi
 else
+    echo 'START WVB runner reconstruction phase=paired-reconstruction status=Started'
     "$constructor" >"$test_directory/Usage.out" 2>"$test_directory/Usage.err"
     usage_status=$?
     printf '%s\n' 'Usage: ./Tools/Native/Construct-Wvb-Runner-Reconstruction.sh <existing-output-directory>' >"$test_directory/Expected-Usage.err"
