@@ -18,9 +18,9 @@ const TERMINATION_SETTLE_MILLISECONDS = 5_000;
 const BUILD_TIMEOUT_MILLISECONDS = 600_000;
 const ACQUISITION_TIMEOUT_MILLISECONDS = 1_200_000;
 const CASE_TIMEOUT_MILLISECONDS = 120_000;
-const EXPECTED_WVB_BYTES = 518_755;
+const EXPECTED_WVB_BYTES = 520_446;
 const EXPECTED_WVB_SHA256 =
-    'e930239f2b02f840fbfe92fc64cfa8409aeb38955a52dd16d1a73a8f62062db7';
+    '43da62a1a6749dbd232cc47eddacc46004f3e709b932015f770da9a6ea54a777';
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxy'];
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
@@ -527,8 +527,8 @@ async function Main() {
         process.stdout.write(
             'native language 1 foreign catalog producer status=Passed cases=25 ' +
             'result=42 deterministic=Verified complete-verifier=Passed ' +
-            'accumulator-records=683 wvb-bytes=518755 ' +
-            'sha256=e930239f2b02f840fbfe92fc64cfa8409aeb38955a52dd16d1a73a8f62062db7\n'
+            'accumulator-records=683 wvb-bytes=520446 ' +
+            'sha256=43da62a1a6749dbd232cc47eddacc46004f3e709b932015f770da9a6ea54a777\n'
         );
     }
 }
