@@ -36,6 +36,7 @@ state adds elapsed time without strengthening the selected claim.
 | Website | Static site, browser package, Cloudflare function, or website-tool changes | `Tools/Verify/Verify-Website.ps1` | Website development feedback |
 | Development | Implementation or specification changes with mapped native owners | `Tools/Verify/Verify-Changed.ps1` selects affected owners in canonical order | Development feedback only |
 | Qualification | Explicit workflow dispatch or an unresolved comparison that must fail closed | Complete cold native verification-owner shards, WebAssembly owner, and compiler convergence on Windows and Debian | Qualification for the selected source state |
+| Qualification resume | Explicit workflow dispatch naming one shard and, optionally, its first owner | The selected cold shard or canonical shard tail on Windows and Debian | Supplemental evidence for owners not completed by an earlier qualification; never a complete qualification by itself |
 
 The development planner refuses an uncovered path. It does not use the managed
 Seed harness or the complete unfiltered native suite as an implicit fallback.
@@ -81,11 +82,16 @@ The `Verify` workflow classifies the exact base/head comparison.
   key by prefix. Restore and save are separate steps, so a late development
   assertion failure still preserves every completely published content-addressed
   checkpoint. Qualification jobs never bind, restore, or save that directory.
-- Manual `workflow_dispatch` selects complete qualification.
+- Manual `workflow_dispatch` selects complete qualification by default. An
+  explicit shard selects only that shard on both hosts; an optional canonical
+  start owner resumes its tail. The selection is validated before runners
+  start, and bootstrap plus WebAssembly remain complete-qualification jobs.
 - An empty path set, missing base, unresolved comparison, or explicit
   qualification request fails closed to qualification rather than guessing.
-- The aggregate `Verification gate` remains stable for branch protection while
-  requiring only the jobs selected by the classifier.
+- The aggregate `Verification gate` remains stable for branch protection and
+  complete qualification. A resumed dispatch instead publishes a visibly
+  distinct `Partial qualification gate` that requires both selected host jobs
+  and cannot be presented as a complete release gate.
 - Workflow concurrency retains one running run and only the latest pending run
   for the same workflow and ref. A new push replaces an older pending run but
   does not discard an in-flight compiler reconstruction or its eventual cache.
@@ -93,6 +99,10 @@ The `Verify` workflow classifies the exact base/head comparison.
 Complete qualification is appropriate for a release candidate, artifact
 promotion, bootstrap or recovery claim, security boundary, ABI change, or a
 deliberate cross-host conformance statement. It is not a per-commit gate.
+Resume mode is appropriate only after a complete qualification stopped at a
+known owner and the passing owners' complete declared inputs remain unchanged.
+Its result must be composed with those retained results explicitly; it does not
+convert a failed or incomplete workflow into a pass.
 
 ## Native owner model
 
@@ -156,6 +166,13 @@ The native verification-owner manifest assigns every owner exactly once to one
 of four qualification shards. Manifest order remains canonical inside each
 shard; no-argument local execution remains the sequential oracle, and exact
 filters remain available for focused work.
+
+`Invoke-WindvaleTests.ps1 -Shard <1-4> -StartAtOwner <owner>` selects the named
+owner and every later owner in that shard's canonical order. The runner rejects
+a missing shard, a malformed or unknown owner, and an owner assigned to another
+shard. Its structured mode records the shard and start owner. This preserves
+the cold qualification behavior for the selected tail while avoiding replay of
+unaffected shards after a late deterministic failure.
 
 Decision 0550 qualified 52 suites and 3,287 cases per host. Four shards reduced
 the observed complete workflow from about 40 minutes to about 15 minutes without

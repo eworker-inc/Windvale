@@ -61,7 +61,12 @@ Assert-Workflow (
 $ClassificationBlock = Get-JobBlock 'classify-changes'
 foreach ($Fragment in @(
     'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
+    'qualification_shard: ${{ steps.qualification-selection.outputs.shard }}',
+    'qualification_start_owner: ${{ steps.qualification-selection.outputs.start_owner }}',
+    'qualification_shards: ${{ steps.qualification-selection.outputs.shards }}',
+    'qualification_full: ${{ steps.qualification-selection.outputs.full }}',
     'name: Select automatic Windows host',
+    'name: Validate qualification selection',
     "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
     "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)$'",
     'uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
@@ -207,9 +212,15 @@ foreach ($Job in $QualificationJobs) {
     $Block = Get-JobBlock $Job
     Assert-Workflow ($Block -match '(?m)^    needs: classify-changes$') `
         "Qualification job '$Job' does not depend on classification."
+    $ExpectedCondition = if ($Job -in @(
+            'windows-native-suite', 'linux-native-suite')) {
+        "    if: `${{ needs.classify-changes.outputs.scope == 'qualification' }}"
+    } else {
+        "    if: `${{ needs.classify-changes.outputs.scope == 'qualification' && needs.classify-changes.outputs.qualification_full == 'true' }}"
+    }
     Assert-Workflow (
-        $Block.Contains("    if: `${{ needs.classify-changes.outputs.scope == 'qualification' }}")
-    ) "Qualification job '$Job' does not use the fail-closed qualification condition."
+        $Block.Contains($ExpectedCondition, [StringComparison]::Ordinal)
+    ) "Qualification job '$Job' does not use its fail-closed qualification condition."
     Assert-Workflow (
         !$Block.Contains('actions/cache') -and
         !$Block.Contains('WINDVALE_NATIVE_CACHE_ROOT')
@@ -223,8 +234,6 @@ foreach ($Job in $QualificationJobs) {
 }
 
 $ExpectedCommands = @{
-    'windows-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
-    'linux-native-suite' = 'pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
     'windows-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'linux-webassembly' = 'pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1'
     'windows-bootstrap' = 'Tools\Verify\Verify-Bootstrap.cmd'
@@ -233,8 +242,20 @@ $ExpectedCommands = @{
 
 foreach ($Job in @('windows-native-suite', 'linux-native-suite')) {
     $Block = Get-JobBlock $Job
-    Assert-Workflow ($Block -match '(?m)^    strategy:\n      fail-fast: false\n      max-parallel: 4\n      matrix:\n        shard: \[1, 2, 3, 4\]$') `
-        "Retirement job '$Job' does not declare the exact four-shard matrix."
+    Assert-Workflow ($Block -match '(?m)^    strategy:\n      fail-fast: false\n      max-parallel: 4\n      matrix:\n        shard: \$\{\{ fromJSON\(needs\.classify-changes\.outputs\.qualification_shards\) \}\}$') `
+        "Qualification job '$Job' does not consume the validated shard selection."
+    foreach ($Fragment in @(
+        'QUALIFICATION_START_OWNER: ${{ needs.classify-changes.outputs.qualification_start_owner }}',
+        "'-File', 'Tools/Verify/Invoke-WindvaleTests.ps1'",
+        "'-Shard', '`${{ matrix.shard }}'",
+        "`$Arguments += @('-StartAtOwner', `$env:QUALIFICATION_START_OWNER)",
+        '& pwsh @Arguments',
+        'exit $LASTEXITCODE'
+    )) {
+        Assert-Workflow (
+            $Block.Contains($Fragment, [StringComparison]::Ordinal)
+        ) "Qualification job '$Job' is missing resumable runner fragment '$Fragment'."
+    }
     Assert-Workflow (
         $Block.Contains(
             'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2') -and
@@ -306,16 +327,33 @@ Assert-Workflow (
 ) 'The development gate does not enforce Linux plus conditionally selected Windows results.'
 foreach ($Variable in @(
     'WINDOWS_NATIVE_RESULT',
-    'LINUX_NATIVE_RESULT',
-    'WINDOWS_WEBASSEMBLY_RESULT',
-    'LINUX_WEBASSEMBLY_RESULT',
-    'WINDOWS_BOOTSTRAP_RESULT',
-    'LINUX_BOOTSTRAP_RESULT'
+    'LINUX_NATIVE_RESULT'
 )) {
     $SuccessPattern = '(?m)^              test "\$' +
         [regex]::Escape($Variable) + '" = success$'
     Assert-Workflow ($Gate -match $SuccessPattern) `
         "The qualification branch does not require '$Variable' success."
+}
+Assert-Workflow (
+    $Gate.Contains(
+        "    name: `${{ needs.classify-changes.outputs.scope == 'qualification' && needs.classify-changes.outputs.qualification_full != 'true' && 'Partial qualification gate' || 'Verification gate' }}") -and
+    $Gate.Contains(
+        '          QUALIFICATION_FULL: ${{ needs.classify-changes.outputs.qualification_full }}') -and
+    $Gate.Contains('              if [ "$QUALIFICATION_FULL" = true ]; then')
+) 'The verification gate does not distinguish complete and partial qualification.'
+foreach ($Variable in @(
+    'WINDOWS_WEBASSEMBLY_RESULT',
+    'LINUX_WEBASSEMBLY_RESULT',
+    'WINDOWS_BOOTSTRAP_RESULT',
+    'LINUX_BOOTSTRAP_RESULT'
+)) {
+    $SuccessPattern = '(?m)^                test "\$' +
+        [regex]::Escape($Variable) + '" = success$'
+    $SkippedPattern = '(?m)^                test "\$' +
+        [regex]::Escape($Variable) + '" = skipped$'
+    Assert-Workflow (
+        $Gate -match $SuccessPattern -and $Gate -match $SkippedPattern
+    ) "The qualification branch does not distinguish complete and partial '$Variable' results."
 }
 
 & $InventoryVerifier -Quiet
@@ -326,4 +364,4 @@ Assert-Workflow (
 ) 'The retirement inventory still contains a normal managed entry point.'
 Assert-Workflow ($InventoryEntries.Count -eq 0) `
     "The archival inventory contains $($InventoryEntries.Count) direct managed entry points instead of zero."
-Write-Host 'GitHub native workflow verification passed (1 documentation job; Linux-focused development plus conditional Windows; 6 qualification definitions, 12 matrix-expanded native jobs; 0 managed entry points).'
+Write-Host 'GitHub native workflow verification passed (1 documentation job; Linux-focused development plus conditional Windows; complete or resumable dual-host qualification; 0 managed entry points).'

@@ -4761,6 +4761,45 @@ try {
         [IO.File]::Delete($TestRunnerResultPath)
     }
 }
+$TailPlanResultPath = Join-Path ([IO.Path]::GetTempPath()) (
+    'windvale-test-tail-plan-' + [Guid]::NewGuid().ToString('N') + '.json')
+try {
+    $TailPlan = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+        -Shard 2 -StartAtOwner language-1-production-admission-ingress `
+        -PlanOnly -ResultPath $TailPlanResultPath 2>&1)
+    $TailPlanLines = @($TailPlan | Where-Object { $_ -match '^PLAN  owner=' })
+    $TailPlanResult = Get-Content -Raw -LiteralPath $TailPlanResultPath |
+        ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $TailPlanLines.Count -lt 2 -or
+        $TailPlanLines[0] -notmatch
+            '^PLAN  owner=language-1-production-admission-ingress ' -or
+        ($TailPlan -join "`n") -match
+            '(?m)^PLAN  owner=language-1-foreign-catalog-producer ' -or
+        $TailPlanResult.mode -ne
+            'shard:2:start:language-1-production-admission-ingress' -or
+        $TailPlanResult.outcome -ne 'planned' -or
+        $TailPlanResult.ownersPlanned -ne $TailPlanLines.Count) {
+        throw 'The PowerShell test runner did not return its resumable shard tail plan.'
+    }
+} finally {
+    if ([IO.File]::Exists($TailPlanResultPath)) {
+        [IO.File]::Delete($TailPlanResultPath)
+    }
+}
+$MissingShardResult = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+    -StartAtOwner verification-owner-stream -PlanOnly 2>&1)
+if ($LASTEXITCODE -ne 64 -or
+    ($MissingShardResult -join "`n") -notmatch
+        '(?m)^-StartAtOwner requires one explicit -Shard\.$') {
+    throw 'The PowerShell test runner accepted a start owner without a shard.'
+}
+$WrongShardStartResult = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+    -Shard 3 -StartAtOwner verification-owner-stream -PlanOnly 2>&1)
+if ($LASTEXITCODE -ne 64 -or
+    ($WrongShardStartResult -join "`n") -notmatch
+        "(?m)^Unknown start owner 'verification-owner-stream' in qualification shard 3\.$") {
+    throw 'The PowerShell test runner accepted a start owner from another shard.'
+}
 $UnknownOwnerResult = @(& pwsh -NoProfile -File $PowerShellTestRunner `
     -Owner windvale-unknown-owner -PlanOnly 2>&1)
 if ($LASTEXITCODE -ne 64 -or
@@ -5138,7 +5177,12 @@ $RequiredWorkflowFragments = @(
     "cancel-in-progress: `${{ github.event_name != 'workflow_dispatch' }}",
     'queue: single',
     'windows_required: ${{ steps.host-scope.outputs.windows_required }}',
+    'qualification_shard: ${{ steps.qualification-selection.outputs.shard }}',
+    'qualification_start_owner: ${{ steps.qualification-selection.outputs.start_owner }}',
+    'qualification_shards: ${{ steps.qualification-selection.outputs.shards }}',
+    'qualification_full: ${{ steps.qualification-selection.outputs.full }}',
     'name: Select automatic Windows host',
+    'name: Validate qualification selection',
     "`$_ -match '(?i)(?:^|[/_.-])(?:Windows|Win32)(?:`$|[/_.-])'",
     "`$_ -match '(?i)\.(?:cmd|bat|ps1|exe|dll|pdb)`$'",
     "if: `${{ needs.classify-changes.outputs.scope == 'development' && needs.classify-changes.outputs.windows_required == 'true' }}",
@@ -5154,7 +5198,10 @@ $RequiredWorkflowFragments = @(
     'Tools/Verify/Update-Verification-Timing-History.ps1 -InputPath $env:VERIFICATION_TIMING_REPORT -HistoryPath $env:VERIFICATION_TIMING_HISTORY -AnalysisPath $env:VERIFICATION_TIMING_ANALYSIS',
     '${{ runner.temp }}/windvale-development-timing-analysis.json',
     'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2',
-    'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT'
+    'shard: ${{ fromJSON(needs.classify-changes.outputs.qualification_shards) }}',
+    'QUALIFICATION_START_OWNER: ${{ needs.classify-changes.outputs.qualification_start_owner }}',
+    '$Arguments += @(''-StartAtOwner'', $env:QUALIFICATION_START_OWNER)',
+    "name: `${{ needs.classify-changes.outputs.scope == 'qualification' && needs.classify-changes.outputs.qualification_full != 'true' && 'Partial qualification gate' || 'Verification gate' }}"
 )
 foreach ($Fragment in $RequiredWorkflowFragments) {
     if (!$GitHubVerificationWorkflow.Contains($Fragment, [StringComparison]::Ordinal)) {
@@ -5163,8 +5210,7 @@ foreach ($Fragment in $RequiredWorkflowFragments) {
 }
 if ([regex]::Matches(
         $GitHubVerificationWorkflow,
-        [regex]::Escape(
-            'run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT')).Count -ne 2) {
+        [regex]::Escape('& pwsh @Arguments')).Count -ne 2) {
     throw 'The GitHub qualification workflow does not use the PowerShell test runner on both hosts.'
 }
 if ($GitHubVerificationWorkflow.Contains(
@@ -5182,8 +5228,9 @@ foreach ($JobName in @('windows-development', 'linux-development')) {
 }
 if ([regex]::Matches(
         $GitHubVerificationWorkflow,
-        [regex]::Escape('shard: [1, 2, 3, 4]')).Count -ne 2) {
-    throw 'The GitHub verification workflow must declare four shards for both hosts.'
+        [regex]::Escape(
+            'shard: ${{ fromJSON(needs.classify-changes.outputs.qualification_shards) }}')).Count -ne 2) {
+    throw 'The GitHub verification workflow must consume the validated shard matrix on both hosts.'
 }
 
 $GitAttributes = @(Get-Content -LiteralPath (Join-Path $RepositoryRoot '.gitattributes'))

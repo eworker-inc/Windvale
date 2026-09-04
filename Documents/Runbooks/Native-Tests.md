@@ -33,6 +33,26 @@ no-argument command remains available as the sequential complete-plan oracle,
 but it requires `-AllowLongRun` after its expected duration has been reviewed
 and explicitly approved.
 
+After a complete qualification stops at a known owner, inspect a canonical
+shard tail without running it:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 `
+    -Shard 2 `
+    -StartAtOwner language-1-production-admission-ingress `
+    -PlanOnly
+```
+
+The matching GitHub `workflow_dispatch` inputs are `qualification_shard` and
+the optional `qualification_start_owner`. Selecting one shard runs that shard
+on both Windows and Debian. A start owner runs it and every later owner in the
+same manifest order. The dispatch publishes `Partial qualification gate`,
+skips bootstrap and WebAssembly, and supplies only the missing cold dual-host
+evidence. It can be composed with retained passing results only when their
+complete declared inputs are unchanged; it is not a complete qualification or
+release gate by itself. The default `all` selection remains the complete
+qualification command.
+
 The canonical owner names, commands, case counts, qualification shards,
 duration profiles, and terminal summaries live only in
 `Tests/Native/Verification-Owners.txt`. Profile durations and infrastructure

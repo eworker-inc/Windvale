@@ -5,6 +5,8 @@ param(
 
     [string]$Shard,
 
+    [string]$StartAtOwner,
+
     [switch]$PlanOnly,
 
     [switch]$AllowLongRun,
@@ -23,10 +25,11 @@ $LOCAL_DEVELOPMENT_BUDGET_SECONDS = 600
 $MAXIMUM_RESULT_BYTES = 64 * 1024
 $MAXIMUM_DETAIL_CHARACTERS = 2048
 $USAGE = @'
-Usage: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 [-Owner <owner-name> | -Shard <1-4>] [-PlanOnly] [-AllowLongRun] [-ResultPath <new-json-path>]
+Usage: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 [-Owner <owner-name> | -Shard <1-4> [-StartAtOwner <owner-name>]] [-PlanOnly] [-AllowLongRun] [-ResultPath <new-json-path>]
 '@
 $OwnerWasSpecified = $PSBoundParameters.ContainsKey('Owner')
 $ShardWasSpecified = $PSBoundParameters.ContainsKey('Shard')
+$StartAtOwnerWasSpecified = $PSBoundParameters.ContainsKey('StartAtOwner')
 $RunStartedUtc = [DateTime]::UtcNow
 $RunStopwatch = [Diagnostics.Stopwatch]::StartNew()
 $script:RunMode = 'unresolved'
@@ -394,6 +397,17 @@ function Invoke-WindvaleTestRunner {
     if ($ShardWasSpecified -and $Shard -notmatch '^[1-4]$') {
         return (Write-UsageFailure '-Shard must be one of 1, 2, 3, or 4.')
     }
+    if ($StartAtOwnerWasSpecified -and
+        [string]::IsNullOrWhiteSpace($StartAtOwner)) {
+        return (Write-UsageFailure '-StartAtOwner requires a nonempty owner name.')
+    }
+    if ($StartAtOwnerWasSpecified -and !$ShardWasSpecified) {
+        return (Write-UsageFailure '-StartAtOwner requires one explicit -Shard.')
+    }
+    if ($StartAtOwnerWasSpecified -and
+        $StartAtOwner -cnotmatch '^[a-z0-9]+(?:[.-][a-z0-9]+)*$') {
+        return (Write-UsageFailure '-StartAtOwner must use a canonical owner name.')
+    }
 
     $RepositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
     $NativeRoot = Join-Path $RepositoryRoot 'Tools/Native'
@@ -423,9 +437,25 @@ function Invoke-WindvaleTestRunner {
         }
         return (Write-UsageFailure "Empty qualification shard: $Shard")
     }
+    if ($StartAtOwnerWasSpecified) {
+        $StartIndex = -1
+        for ($Index = 0; $Index -lt $Selected.Count; $Index += 1) {
+            if ($Selected[$Index].Name -ceq $StartAtOwner) {
+                $StartIndex = $Index
+                break
+            }
+        }
+        if ($StartIndex -lt 0) {
+            return (Write-UsageFailure (
+                "Unknown start owner '$StartAtOwner' in qualification shard $Shard."))
+        }
+        $Selected = @($Selected[$StartIndex..($Selected.Count - 1)])
+    }
 
     $script:RunMode = if (![string]::IsNullOrWhiteSpace($Owner)) {
         "owner:$Owner"
+    } elseif ($StartAtOwnerWasSpecified) {
+        "shard:${Shard}:start:$StartAtOwner"
     } elseif (![string]::IsNullOrWhiteSpace($Shard)) {
         "shard:$Shard"
     } else {
