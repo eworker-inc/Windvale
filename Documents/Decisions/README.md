@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 349 |
+| Accepted | 350 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0943: complete Windvale Language 1.0 Slice 8 qualification](0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md) | Accepted |
 | [Decision 0942: advance the frozen source identity for Foreign and payload borrowing](0942-Advance-The-Frozen-Source-Identity-For-Foreign-And-Payload-Borrowing.md) | Accepted |
 | [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
 | [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0921: cache complete segmented development packaging](0921-Cache-Complete-Segmented-Development-Packaging.md) | Accepted |
 | [Decision 0920: execute contained WVB 1.37 write pointers in the scalar provider](0920-Execute-Contained-WVB-1.37-Write-Pointers-In-The-Scalar-Provider.md) | Accepted |
 | [Decision 0919: advance the frozen source identity for WVB 1.37 containment](0919-Advance-The-Frozen-Source-Identity-For-WVB-1.37-Containment.md) | Accepted |
-| [Decision 0918: verify WVB 1.37 write-pointer lifetime containment](0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md) | Accepted |
 
 ## Superseded or historical records
 

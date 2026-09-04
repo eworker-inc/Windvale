@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-language-1-0-slice-8-qualification",
+  "date": "2026-09-04",
+  "subject": "Windvale Language 1.0 compiler and Slice 8 paired-host qualification",
+  "claim": "Source commit 47dd3d69fef8a0ac5b894885b0a1917e21033622 passed the complete selected qualification workflow. Each of the Windows and Debian hosts passed 126 native owners and 5,981 cases across four independent shards; the exact compiler reconstructed deterministically on both hosts; the declared native WebAssembly subset passed on both hosts; and the final aggregate gate accepted every required job. The qualified cases include the real Linux system-profile Foreign record consumer, the Windows and Linux native ABI paths, all 57 database-storage cases per host, the repaired Linux segmented-cache process race, and the repaired Windows file-read cleanup boundary.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "47dd3d69fef8a0ac5b894885b0a1917e21033622"
+  },
+  "runs": [
+    {
+      "host": "GitHub Actions run 33894696448",
+      "target": "Complete selected Windows and Linux qualification and aggregate verification gate",
+      "tool": ".github/workflows/Verify.yml",
+      "command": "gh workflow run Verify --repo eworker-inc/Windvale --ref main -f qualification_shard=all",
+      "result": "Passed",
+      "elapsedMilliseconds": 6781000
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Native qualification shard 1 of 4: 5 owners and 185 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 3391489
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Native qualification shard 2 of 4: 41 owners and 2,737 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 2 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 6687687
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Native qualification shard 3 of 4: 39 owners and 1,809 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 3 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 5040596
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Native qualification shard 4 of 4: 41 owners and 1,250 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 4 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 2786947
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Native qualification shard 1 of 4: 5 owners and 185 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 1 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 1835641
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Native qualification shard 2 of 4: 41 owners and 2,737 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 2 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 5669525
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Native qualification shard 3 of 4: 39 owners and 1,809 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 3 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 4943035
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Native qualification shard 4 of 4: 41 owners and 1,250 cases",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard 4 -AllowLongRun -ResultPath $env:VERIFICATION_RESULT",
+      "result": "Passed",
+      "elapsedMilliseconds": 4022598
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Deterministic native compiler convergence",
+      "tool": "Tools/Verify/Verify-Bootstrap.cmd",
+      "command": "Tools\\Verify\\Verify-Bootstrap.cmd",
+      "result": "Passed",
+      "elapsedMilliseconds": 2145000
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Deterministic native compiler convergence",
+      "tool": "Tools/Verify/Verify-Bootstrap.sh",
+      "command": "./Tools/Verify/Verify-Bootstrap.sh",
+      "result": "Passed",
+      "elapsedMilliseconds": 1714000
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Declared native WebAssembly compiler and execution subset",
+      "tool": "Tools/Verify/Verify-WebAssembly-Engine.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 25000
+    },
+    {
+      "host": "GitHub-hosted Ubuntu x64",
+      "target": "Declared native WebAssembly compiler and execution subset",
+      "tool": "Tools/Verify/Verify-WebAssembly-Engine.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 24000
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This qualifies the frozen Language 1.0 compiler scope and bounded Slice 8 contracts at the named source commit. It does not qualify unfinished Libraries 1.0 profiles, WVDB 1.0, integrated services, Windvale OS, installers, or a v1.0.0 release.",
+    "The WebAssembly jobs qualify their explicitly declared subset; they do not imply that every native x64 system-profile or Foreign operation is portable to WebAssembly.",
+    "The real Foreign record consumer is Linux system-profile source. Windows validates and cross-compiles that exact source path while Linux performs its native SysV execution; separate Windows-native Foreign ABI cases qualify the Windows path.",
+    "The qualification establishes correctness at this source identity, not acceptable development feedback latency. In particular, database-storage passed all 57 cases on both hosts but remains a named verification-performance improvement.",
+    "This evidence was produced and reviewed within the project and has not received external audit or certification."
+  ],
+  "related": [
+    "https://github.com/eworker-inc/Windvale/actions/runs/33894696448",
+    "Documents/Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md",
+    "Documents/Project/Windvale-Language-1.0-Migration.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Language-1.0-Foundation.md",
+    "Runtime/Windvale/Foreign-Record-Consumer.wv",
+    "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+    "Tools/Verify/Invoke-WindvaleTests.ps1",
+    ".github/workflows/Verify.yml"
+  ]
+}

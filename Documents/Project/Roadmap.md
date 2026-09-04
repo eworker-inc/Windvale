@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-03
+> Last reviewed: 2026-09-04
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -31,13 +31,15 @@ and evidence, but it is not an undeclared blocker for the host product.
 
 ## Critical path
 
-### 1. Complete Language 1.0
+### 1. Language 1.0 — complete
 
 Outcome: the frozen source design compiles through one authenticated,
 target-aware path into verified and executable representations on Windows and
 Linux.
 
-Completion requires:
+The [Slice 8 qualification decision](../Decisions/0943-Complete-Windvale-Language-1.0-Slice-8-Qualification.md)
+and [exact paired-host evidence](../Evidence/2026-09-04-Language-1.0-Slice-8-Qualification.json)
+close this gate for the frozen source design:
 
 - every frozen source feature has compiler, diagnostic, malformed-input, and
   execution evidence;
@@ -49,13 +51,10 @@ Completion requires:
 - Seed recovery remains frozen and separate rather than becoming a second
   forward compiler.
 
-Immediate sequence:
-
-1. lower the verified registered Foreign call through the native ABI rules;
-2. migrate one real system boundary onto that authenticated path;
-3. reproduce the current compiler, scalar provider, and native path on Linux;
-4. close any remaining frozen-language conformance gaps; and
-5. run the final paired-host slice and Language 1.0 gates.
+All six requirements passed at one exact source state. Seed remains the frozen
+recovery compiler, while the qualified Language 1.0 compiler is the forward
+path. A future language or WVB change must establish a new versioned contract
+and evidence rather than silently weakening this gate.
 
 ### 2. Complete required Libraries 1.0 profiles
 
@@ -73,6 +72,16 @@ Completion requires:
 
 Library work follows Language 1.0 where new source semantics are required, but
 independent library contracts and consumers may advance in parallel.
+
+Immediate sequence:
+
+1. reconstruct and execute direct-owner immutable Option/Result payload
+   borrowing through the complete compiler front door;
+2. specify and implement its verified WVB/runtime representation;
+3. complete Option/Result take and mapping operations;
+4. add primitive ordering, collection mutation and slicing, and bounded byte
+   construction; and
+5. migrate required real consumers and run one paired-host Libraries 1.0 gate.
 
 ### 3. Complete WVDB 1.0
 
