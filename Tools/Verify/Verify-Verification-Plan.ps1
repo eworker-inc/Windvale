@@ -5304,6 +5304,12 @@ $Language1FrontDoorWindows = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.cmd')
 $Language1FrontDoorLinux = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door.sh')
+$GenericNominalDevelopmentRunner = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tools/Native/Test-Generic-Nominal-Development-Bundle.mjs')
+$GenericNominalDevelopmentProject = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj')
+$GenericNominalDevelopmentRoot = Get-Content -Raw -LiteralPath (
+    Join-Path $RepositoryRoot 'Tests/Fixtures/Language-1.0/Generic-Nominal-Development-Bundle-Self-Test.wv')
 $ChangedVerification = Get-Content -Raw -LiteralPath (
     Join-Path $RepositoryRoot 'Tools/Verify/Verify-Changed.ps1')
 $ResultCacheImplementation = Get-Content -Raw -LiteralPath (
@@ -5462,6 +5468,116 @@ if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentExpectedSeconds -ne 240 -or
     $Language1FrontDoorDevelopmentPlan.Language1FrontDoorDevelopmentMaximumSeconds -ne 600) {
     throw 'The Language 1 front-door development checkpoint plan differs.'
+}
+
+foreach ($Fragment in @(
+    'Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj',
+    "Package, ['6', Wvb, Application, '--development-cache']",
+    'The generic nominal development bundle wrote output.',
+    'Execution.Code !== 42',
+    'native generic nominal type binding status=Passed cases=59 result=42',
+    'native generic nominal type layout status=Passed cases=21 result=42',
+    'native generic nominal type materialization status=Passed cases=28 result=42'
+)) {
+    if (!$GenericNominalDevelopmentRunner.Contains(
+            $Fragment, [StringComparison]::Ordinal)) {
+        throw "Generic nominal development runner is missing '$Fragment'."
+    }
+}
+foreach ($Fragment in @(
+    'Generic-Nominal-Type-Binding-Self-Test.wv',
+    'Generic-Nominal-Type-Layout-Self-Test.wv',
+    'Generic-Nominal-Type-Materialization-Self-Test.wv',
+    'emit wvb'
+)) {
+    if (!$GenericNominalDevelopmentProject.Contains(
+            $Fragment, [StringComparison]::Ordinal)) {
+        throw "Generic nominal development project is missing '$Fragment'."
+    }
+}
+foreach ($Fragment in @(
+    'Binding.Main()',
+    'Layout.Main()',
+    'Materialization.Main()',
+    'return 64 + Layoutˉresult;',
+    'return 96 + Materializationˉresult;',
+    'return 42;'
+)) {
+    if (!$GenericNominalDevelopmentRoot.Contains(
+            $Fragment, [StringComparison]::Ordinal)) {
+        throw "Generic nominal development root is missing '$Fragment'."
+    }
+}
+$GenericNominalWrapperContracts = @(
+    @{
+        Stem = 'Test-Generic-Nominal-Type-Binding'
+        Selector = 'type-binding'
+    },
+    @{
+        Stem = 'Test-Generic-Nominal-Type-Layout'
+        Selector = 'type-layout'
+    },
+    @{
+        Stem = 'Test-Generic-Nominal-Type-Materialization'
+        Selector = 'type-materialization'
+    }
+)
+foreach ($Contract in $GenericNominalWrapperContracts) {
+    foreach ($Extension in @('cmd', 'sh')) {
+        $Wrapper = Get-Content -Raw -LiteralPath (Join-Path $RepositoryRoot (
+            "Tools/Native/$($Contract.Stem).$Extension"))
+        foreach ($Fragment in @(
+            '[--development]',
+            'Test-Generic-Nominal-Development-Bundle.mjs',
+            $Contract.Selector,
+            "$($Contract.Stem).mjs"
+        )) {
+            if (!$Wrapper.Contains($Fragment, [StringComparison]::Ordinal)) {
+                throw (
+                    "$($Contract.Stem).$Extension is missing '$Fragment'.")
+            }
+        }
+    }
+}
+foreach ($Fragment in @(
+    '$NativePlan.UseGenericNominalDevelopmentBundle',
+    'mode=development-bundle',
+    'bundle-cases=108',
+    '$OwnerArguments = @(''--development'')'
+)) {
+    if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
+        throw "Changed-file generic nominal dispatch is missing '$Fragment'."
+    }
+}
+
+$GenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
+    'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj') `
+    -PassThru -Quiet
+$ExpectedGenericNominalDevelopmentSuites = @(
+    'generic-nominal-type-binding',
+    'generic-nominal-type-layout',
+    'generic-nominal-type-materialization'
+)
+if (!$GenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
+    ![Linq.Enumerable]::SequenceEqual(
+        [string[]]$GenericNominalDevelopmentPlan.Suites,
+        [string[]]$ExpectedGenericNominalDevelopmentSuites) -or
+    $GenericNominalDevelopmentPlan.ExpectedSeconds -ne 330 -or
+    $GenericNominalDevelopmentPlan.MaximumSeconds -ne 600 -or
+    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleSelectedOwnerCount -ne 3 -or
+    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleCaseCount -ne 108) {
+    throw 'The three-owner generic nominal development bundle plan differs.'
+}
+$SingleGenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
+    'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv') `
+    -PassThru -Quiet
+if ($SingleGenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
+    $SingleGenericNominalDevelopmentPlan.Suites.Count -ne 1 -or
+    $SingleGenericNominalDevelopmentPlan.Suites[0] -ne
+        'generic-nominal-type-binding' -or
+    $SingleGenericNominalDevelopmentPlan.ExpectedSeconds -ne 300 -or
+    $SingleGenericNominalDevelopmentPlan.MaximumSeconds -ne 600) {
+    throw 'A single generic nominal owner did not retain focused development.'
 }
 
 $SourceContainmentWindows = Get-Content -Raw -LiteralPath (

@@ -1,8 +1,8 @@
 # Decision 0955: add a bounded language front-door development checkpoint
 
 - Date: 2026-09-04
-- Status: Implemented candidate with focused Windows execution evidence; paired
-  CI measurement and complete qualification remain pending
+- Status: Implemented and verified on paired CI development hosts; complete
+  qualification remains pending
 - Extends: [Decision 0947](0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md)
 - Preserves: the no-argument 492-case owner, exact qualification output, fresh
   qualification, host-specific execution, and every existing case
@@ -46,6 +46,12 @@ necessary for qualification but is not the narrowest feedback for every edit.
 The exact Windows development command passed all three selected phases and
 reported 329 cases in 235,533 ms. The retained input identity and limitations
 are recorded in the [focused evidence record](../Evidence/2026-09-04-Language-Front-Door-Development-Checkpoint.json).
+
+GitHub Actions run 33912579658 then passed the exact committed development
+checkpoint on both hosts. Owner execution took 200,727 ms on Windows and
+172,336 ms on Linux. The complete focused jobs, including checkout, planning,
+timing analysis, and cache handling, completed in 4 minutes 27 seconds and
+3 minutes 40 seconds respectively.
 
 Compared with the historical 2,761,285 ms complete Windows owner, the focused
 path is 91.47 percent shorter and 11.72 times faster. This comparison explains

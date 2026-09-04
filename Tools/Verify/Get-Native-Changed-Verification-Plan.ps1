@@ -2216,6 +2216,16 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'generic-nominal-declarations'
     } elseif ($Path -in @(
+        'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj',
+        'Tests/Fixtures/Language-1.0/Generic-Nominal-Development-Bundle-Self-Test.wv',
+        'Tools/Native/Test-Generic-Nominal-Development-Bundle.mjs'
+    )) {
+        Add-Suite @(
+            'generic-nominal-type-binding',
+            'generic-nominal-type-layout',
+            'generic-nominal-type-materialization'
+        )
+    } elseif ($Path -in @(
         'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Binding.wvproj',
         'Tests/Fixtures/Language-1.0/Borrow-Parser-Self-Test.wv',
         'Tests/Fixtures/Language-1.0/Fixed-Array-Parser-Self-Test.wv',
@@ -4659,6 +4669,38 @@ if ($Language1FrontDoorDevelopmentEligible) {
             $Language1FrontDoorSuiteEntry.MaximumSeconds +
             $Language1FrontDoorDevelopmentMaximumSeconds)
 }
+$GenericNominalDevelopmentBundleOwners = @(
+    'generic-nominal-type-binding',
+    'generic-nominal-type-layout',
+    'generic-nominal-type-materialization'
+)
+$GenericNominalDevelopmentBundleSelectedEntries = @(
+    $SelectedSuiteEntries | Where-Object {
+        $_.Name -in $GenericNominalDevelopmentBundleOwners
+    })
+$GenericNominalDevelopmentBundleSelectedOwnerCount =
+    $GenericNominalDevelopmentBundleSelectedEntries.Count
+$UseGenericNominalDevelopmentBundle =
+    $GenericNominalDevelopmentBundleSelectedOwnerCount -ge 2
+$GenericNominalDevelopmentBundleCaseCount = 108
+$GenericNominalDevelopmentBundleExpectedSeconds = [long]330
+$GenericNominalDevelopmentBundleMaximumSeconds = [long]600
+if ($UseGenericNominalDevelopmentBundle) {
+    $ReplacedGenericNominalExpectedSeconds = [long](
+        ($GenericNominalDevelopmentBundleSelectedEntries |
+            Measure-Object -Property ExpectedSeconds -Sum).Sum)
+    $ReplacedGenericNominalMaximumSeconds = [long](
+        ($GenericNominalDevelopmentBundleSelectedEntries |
+            Measure-Object -Property MaximumSeconds -Sum).Sum)
+    $SelectedExpectedSeconds = [long](
+        $SelectedExpectedSeconds -
+            $ReplacedGenericNominalExpectedSeconds +
+            $GenericNominalDevelopmentBundleExpectedSeconds)
+    $SelectedMaximumSeconds = [long](
+        $SelectedMaximumSeconds -
+            $ReplacedGenericNominalMaximumSeconds +
+            $GenericNominalDevelopmentBundleMaximumSeconds)
+}
 $OrderedGaps = @($Gaps | Sort-Object)
 $DatabaseDevelopmentTarget = 'all'
 if (!$DatabaseDevelopmentRequiresAllTargets -and
@@ -4937,6 +4979,27 @@ if (!$Quiet) {
         Write-Host 'Language 1 front-door development expected seconds: not-applicable'
         Write-Host 'Language 1 front-door development maximum seconds: not-applicable'
     }
+    Write-Host (
+        'Generic nominal development bundle: ' +
+        $UseGenericNominalDevelopmentBundle.ToString().ToLowerInvariant())
+    Write-Host (
+        'Generic nominal development selected owners: ' +
+        $GenericNominalDevelopmentBundleSelectedOwnerCount)
+    if ($UseGenericNominalDevelopmentBundle) {
+        Write-Host (
+            'Generic nominal development bundle cases: ' +
+            $GenericNominalDevelopmentBundleCaseCount)
+        Write-Host (
+            'Generic nominal development bundle expected seconds: ' +
+            $GenericNominalDevelopmentBundleExpectedSeconds)
+        Write-Host (
+            'Generic nominal development bundle maximum seconds: ' +
+            $GenericNominalDevelopmentBundleMaximumSeconds)
+    } else {
+        Write-Host 'Generic nominal development bundle cases: not-applicable'
+        Write-Host 'Generic nominal development bundle expected seconds: not-applicable'
+        Write-Host 'Generic nominal development bundle maximum seconds: not-applicable'
+    }
     Write-Host "OS x64 code-emission development target: $OsX64CodeEmissionDevelopmentTarget"
     Write-Host "Library development target: $LibraryDevelopmentTarget"
     Write-Host "Database storage development checkpoint: $((
@@ -4984,6 +5047,16 @@ if ($PassThru) {
             $Language1FrontDoorDevelopmentExpectedSeconds
         Language1FrontDoorDevelopmentMaximumSeconds =
             $Language1FrontDoorDevelopmentMaximumSeconds
+        UseGenericNominalDevelopmentBundle =
+            $UseGenericNominalDevelopmentBundle
+        GenericNominalDevelopmentBundleSelectedOwnerCount =
+            $GenericNominalDevelopmentBundleSelectedOwnerCount
+        GenericNominalDevelopmentBundleCaseCount =
+            $GenericNominalDevelopmentBundleCaseCount
+        GenericNominalDevelopmentBundleExpectedSeconds =
+            $GenericNominalDevelopmentBundleExpectedSeconds
+        GenericNominalDevelopmentBundleMaximumSeconds =
+            $GenericNominalDevelopmentBundleMaximumSeconds
         UseOsX64CodeEmissionDevelopment = (
             $SelectedSuites.Contains('os-x64-code-emission') -and
             $OsX64CodeEmissionDevelopmentEligible)

@@ -3,10 +3,10 @@
   "evidenceId": "2026-09-04-language-front-door-development-checkpoint",
   "date": "2026-09-04",
   "subject": "Bounded Language 1 front-door development checkpoint",
-  "claim": "On the implementation host, the exact candidate Windows wrapper passed the frozen-fixture, descriptor, and value-front-end phases and reported 329 development cases in 235,533 ms. The no-argument 492-case qualification path was not executed by this run.",
+  "claim": "The bounded language front-door checkpoint passed its frozen-fixture, descriptor, and value-front-end phases and reported 329 development cases locally and on GitHub-hosted Windows and Linux. Exact committed owner execution took 200,727 ms on Windows and 172,336 ms on Linux. The no-argument 492-case qualification path was not executed by these runs.",
   "source": {
-    "kind": "Other",
-    "value": "Git commit dd26af64ae9b1239987f42fafdd02f9d9ba1fe03 plus the exact candidate input identified in runs[0].inputs"
+    "kind": "GitCommit",
+    "value": "22a6f2686010e7ce3fa8b1bebefd4422ae27e11d"
   },
   "runs": [
     {
@@ -23,6 +23,22 @@
           "sha256": "642f7dc9454e4e581751167b912b03987678966ecf90529241a6beb94e7d6b0c"
         }
       ]
+    },
+    {
+      "host": "GitHub-hosted Windows x64",
+      "target": "Language 1 front-door development phases 1 through 3",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPathFile $env:CHANGED_PATH_FILE -AllowIncompleteInfrastructure -TimingReportPath $env:VERIFICATION_TIMING_REPORT",
+      "result": "Passed",
+      "elapsedMilliseconds": 200727
+    },
+    {
+      "host": "GitHub-hosted Debian 12 x64 container",
+      "target": "Language 1 front-door development phases 1 through 3",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPathFile $env:CHANGED_PATH_FILE -AllowIncompleteInfrastructure -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT",
+      "result": "Passed",
+      "elapsedMilliseconds": 172336
     }
   ],
   "result": "Passed",
@@ -32,9 +48,10 @@
     "Machine-verified"
   ],
   "limitations": [
-    "This is one local Windows observation, not a stable performance threshold or a paired-host result.",
+    "This is one observation per CI host plus one local Windows observation, not a stable performance threshold.",
     "The run used the host's existing valid native development caches where the invoked producers permit them; it is not a clean-machine timing.",
     "The 163 qualification-only cases after phase 3 were intentionally not executed, and this result cannot support a Qualified claim.",
+    "The CI jobs restored valid development checkpoints before execution; these are development-path measurements, not clean-machine qualification timings.",
     "The historical 2,761,285 ms complete-owner timing came from GitHub Actions run 33894696448 at an earlier qualified source commit and is used only as a baseline comparison."
   ],
   "related": [
@@ -42,6 +59,7 @@
     "Documents/Project/Verification-Throughput-Plan.md",
     "Specifications/Windvale-Native-Verification-Owners.md",
     "Documents/Evidence/2026-09-04-Native-Qualification-Owner-Timings.json",
-    "https://github.com/eworker-inc/Windvale/actions/runs/33894696448"
+    "https://github.com/eworker-inc/Windvale/actions/runs/33894696448",
+    "https://github.com/eworker-inc/Windvale/actions/runs/33912579658"
   ]
 }

@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-generic-nominal-development-bundle",
+  "date": "2026-09-04",
+  "subject": "Shared generic nominal development product",
+  "claim": "On the Windows implementation host, one 489-function Project 2 product preserved the existing generic nominal type-binding, type-layout, and type-materialization self-tests. A project and package miss passed all 108 cases in 292,203 ms, and the three separately attributed wrappers later passed with exact cache hits in 8,017 ms total.",
+  "source": {
+    "kind": "Other",
+    "value": "Git commit 22a6f2686010e7ce3fa8b1bebefd4422ae27e11d plus the exact candidate project and root inputs identified in runs[0].inputs"
+  },
+  "runs": [
+    {
+      "host": "Local Windows x64 implementation host",
+      "target": "Three-way generic nominal development product build, segmented package, and execution",
+      "tool": "Tools/Native/Build-Cached-Project-Wvb.cmd and Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Build-Cached-Project-Wvb.cmd <bundle.wvproj> <bundle.wvb>; Package-Segmented-Compiler-Wvb.cmd 6 <bundle.wvb> <bundle.exe> --development-cache; <bundle.exe>",
+      "result": "Passed",
+      "elapsedMilliseconds": 292203,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj",
+          "size": 1341,
+          "sha256": "2391657bcefa575e42561f5e06362812c9d39e9a81852fe9c8972750aaa18644"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Development-Bundle-Self-Test.wv",
+          "size": 745,
+          "sha256": "e3b19ab63e67de846c2fc5a29dec9767c6eef93ff20240a04d07fab496b3a6d4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Bundle.wvb",
+          "size": 971313,
+          "sha256": "63947f3a72e2076bcfa44a7eefb4eb8987d61851cbb7a2d2edb31c86f577f251"
+        },
+        {
+          "path": "Bundle.exe",
+          "size": 22926336,
+          "sha256": "9ed51a7410b2967daf2f8ffbc196a90e4c760eb81616233d484fe0bcdc4c969f"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows x64 implementation host",
+      "target": "Three separately attributed development-owner receipts using the shared immutable product",
+      "tool": "Three generic nominal owner wrappers with --development",
+      "command": "Test-Generic-Nominal-Type-Binding.cmd --development; Test-Generic-Nominal-Type-Layout.cmd --development; Test-Generic-Nominal-Type-Materialization.cmd --development",
+      "result": "Passed",
+      "elapsedMilliseconds": 8017
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is one Windows implementation-host observation; Linux execution is pending.",
+    "The first retained run created exact project-WVB and segmented-hosted-package cache entries, but it used the repository's existing qualified native build and package tool artifacts.",
+    "The warm run proves exact cache reuse and repeated behavior execution for this source state; it is not a clean-machine timing.",
+    "The independent no-argument qualification owners were not run, changed, merged, or removed.",
+    "A four-way exploratory product including the WVLB carrier exceeded the existing publication bound and was rejected; that failed candidate is not an input to the retained evidence."
+  ],
+  "related": [
+    "Documents/Decisions/0956-Coalesce-Overlapping-Generic-Nominal-Development-Products.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Windvale-Native-Verification-Owners.md",
+    "Documents/Evidence/2026-09-04-Native-Qualification-Owner-Timings.json"
+  ]
+}

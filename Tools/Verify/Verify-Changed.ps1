@@ -364,6 +364,32 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerMessage = (
                     'Native owner language-1-front-door ' +
                     'mode=development-front-end cases=329 expected-seconds=240')
+            } elseif ($Suite -in @(
+                    'generic-nominal-type-binding',
+                    'generic-nominal-type-layout',
+                    'generic-nominal-type-materialization') -and
+                $Plan.Scope -eq 'development' -and
+                $NativePlan.UseGenericNominalDevelopmentBundle) {
+                $OwnerStem = switch ($Suite) {
+                    'generic-nominal-type-binding' {
+                        'Test-Generic-Nominal-Type-Binding'
+                    }
+                    'generic-nominal-type-layout' {
+                        'Test-Generic-Nominal-Type-Layout'
+                    }
+                    'generic-nominal-type-materialization' {
+                        'Test-Generic-Nominal-Type-Materialization'
+                    }
+                }
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/$OwnerStem.$OwnerExtension")
+                $OwnerArguments = @('--development')
+                $OwnerMessage = (
+                    "Native owner $Suite mode=development-bundle " +
+                    'bundle-cases=108 ' +
+                    "selected-owners=$($NativePlan.GenericNominalDevelopmentBundleSelectedOwnerCount) " +
+                    'expected-seconds=330')
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

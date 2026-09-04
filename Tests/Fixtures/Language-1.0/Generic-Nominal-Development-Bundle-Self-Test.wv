@@ -1,0 +1,17 @@
+module Languageˉoneˉgenericˉnominalˉdevelopmentˉbundleˉselfˉtest profile portable;
+
+import Languageˉoneˉgenericˉnominalˉtypeˉbindingˉselfˉtest as Binding;
+import Languageˉoneˉgenericˉnominalˉtypeˉlayoutˉselfˉtest as Layout;
+import Languageˉoneˉgenericˉnominalˉtypeˉmaterializationˉselfˉtest as Materialization;
+
+export fn Main() -> i32 {
+    let Bindingˉresult: i32 = Binding.Main();
+    if Bindingˉresult != 42 { return Bindingˉresult; }
+    let Layoutˉresult: i32 = Layout.Main();
+    if Layoutˉresult != 42 { return 64 + Layoutˉresult; }
+    let Materializationˉresult: i32 = Materialization.Main();
+    if Materializationˉresult != 42 {
+        return 96 + Materializationˉresult;
+    }
+    return 42;
+}

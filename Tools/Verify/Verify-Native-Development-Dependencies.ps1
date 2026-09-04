@@ -8,6 +8,9 @@ $Planner = Join-Path $PSScriptRoot 'Get-Native-Changed-Verification-Plan.ps1'
 $Owners = @(
     'compiler-reconstruction',
     'database-storage',
+    'generic-nominal-type-binding',
+    'generic-nominal-type-layout',
+    'generic-nominal-type-materialization',
     'language-1-front-door',
     'os-x64-code-emission',
     'seed-native-front-door',
@@ -85,6 +88,15 @@ foreach ($Owner in $Owners) {
     $OwnerSelected = switch ($Owner) {
         'compiler-reconstruction' { $Plan.Suites -contains 'compiler-reconstruction' }
         'database-storage' { $Plan.Suites -contains 'database-storage' }
+        'generic-nominal-type-binding' {
+            $Plan.Suites -contains 'generic-nominal-type-binding'
+        }
+        'generic-nominal-type-layout' {
+            $Plan.Suites -contains 'generic-nominal-type-layout'
+        }
+        'generic-nominal-type-materialization' {
+            $Plan.Suites -contains 'generic-nominal-type-materialization'
+        }
         'language-1-front-door' { $Plan.Suites -contains 'language-1-front-door' }
         'os-x64-code-emission' { $Plan.Suites -contains 'os-x64-code-emission' }
         'seed-native-front-door' { $Plan.Suites -contains 'seed-native-front-door' }

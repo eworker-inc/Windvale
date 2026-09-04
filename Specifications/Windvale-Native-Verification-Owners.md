@@ -142,6 +142,14 @@ The no-argument invocation remains the 492-case qualification owner. Changed-
 file development must never substitute the 329-case result for that complete
 owner receipt.
 
+The generic nominal type-binding, type-layout, and type-materialization owners
+share one 108-case development product when at least two of those owners are
+selected. Each selected owner executes that product and publishes only its own
+existing attributed summary. A one-owner plan retains the original focused
+product. Every no-argument wrapper remains its independent qualification owner;
+the WVLB carrier remains separate because adding its compiler closure exceeds
+the retained publication bound.
+
 One coherent source state receives one final selected plan. A failure
 invalidates that owner and owners whose declared inputs changed; it does not
 invalidate unrelated passing owners.
