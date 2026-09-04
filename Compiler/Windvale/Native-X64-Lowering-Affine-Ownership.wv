@@ -154,6 +154,18 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
             );
             Pointerˉtypes = Setˉmapˉbyte(Input, Pointerˉtypes, Pointerˉtype);
         }
+        if Resultˉopcode == 224u8 {
+            let Foreignˉpointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 5u32
+            );
+            if Foreignˉpointerˉtype >= Typeˉcount { return false; }
+            Scratchˉresultˉtypes = Setˉmapˉbyte(
+                Input, Scratchˉresultˉtypes, Foreignˉpointerˉtype
+            );
+            Pointerˉtypes = Setˉmapˉbyte(
+                Input, Pointerˉtypes, Foreignˉpointerˉtype
+            );
+        }
         Cursor = Nextˉinstruction(Instructions, Cursor, Codeˉlength);
     }
 
@@ -267,18 +279,68 @@ export fn Compilerˉnativeˉx64ˉaffineˉownershipˉisˉvalid(
                         Input, Codeˉoffset + Observer
                     );
                     if Isˉpointer {
-                        if Observerˉopcode != 5u8 { return false; }
-                        let Pointerˉtarget: u32 = Bytesˉreadˉu32ˉlittle(
-                            Input, Codeˉoffset + Observer + 1u32
-                        );
-                        if Pointerˉtarget < Parameters ||
-                            Pointerˉtarget >= Locals ||
-                            Pointerˉtarget == Targetˉlocal ||
-                            Bytesˉreadˉu8(Tracked, Pointerˉtarget) != 1u8 ||
-                            Bytesˉreadˉu32ˉlittle(
-                                Localˉtypeˉidentities, Pointerˉtarget * 4u32
-                            ) != Targetˉidentity {
-                            return false;
+                        var Callsˉforeign: bool = false;
+                        if Observerˉopcode == 4u8 {
+                            let Capacityˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                                Input, Codeˉoffset + Observer + 1u32
+                            );
+                            let Generationˉinstruction: u32 = Nextˉinstruction(
+                                Instructions, Observer, Codeˉlength
+                            );
+                            if Generationˉinstruction < Codeˉlength &&
+                                Bytesˉreadˉu8(
+                                    Input,
+                                    Codeˉoffset + Generationˉinstruction
+                                ) == 4u8 {
+                                let Generationˉlocal: u32 =
+                                    Bytesˉreadˉu32ˉlittle(
+                                        Input,
+                                        Codeˉoffset + Generationˉinstruction +
+                                            1u32
+                                    );
+                                let Callˉinstruction: u32 = Nextˉinstruction(
+                                    Instructions,
+                                    Generationˉinstruction,
+                                    Codeˉlength
+                                );
+                                if Capacityˉlocal < Locals &&
+                                    Generationˉlocal < Locals &&
+                                    Capacityˉlocal != Targetˉlocal &&
+                                    Generationˉlocal != Targetˉlocal &&
+                                    Bytesˉreadˉu8(
+                                        Localˉtypes, Capacityˉlocal
+                                    ) == 10u8 && Bytesˉreadˉu8(
+                                        Localˉtypes, Generationˉlocal
+                                    ) == 10u8 &&
+                                    Callˉinstruction < Codeˉlength &&
+                                    Bytesˉreadˉu8(
+                                        Input, Codeˉoffset + Callˉinstruction
+                                    ) == 224u8 &&
+                                    Bytesˉreadˉu32ˉlittle(
+                                        Input,
+                                        Codeˉoffset + Callˉinstruction + 5u32
+                                    ) == Targetˉidentity {
+                                    Callsˉforeign = true;
+                                }
+                            }
+                        }
+                        if !Callsˉforeign {
+                            if Observerˉopcode != 5u8 { return false; }
+                            let Pointerˉtarget: u32 =
+                                Bytesˉreadˉu32ˉlittle(
+                                    Input, Codeˉoffset + Observer + 1u32
+                                );
+                            if Pointerˉtarget < Parameters ||
+                                Pointerˉtarget >= Locals ||
+                                Pointerˉtarget == Targetˉlocal ||
+                                Bytesˉreadˉu8(
+                                    Tracked, Pointerˉtarget
+                                ) != 1u8 || Bytesˉreadˉu32ˉlittle(
+                                    Localˉtypeˉidentities,
+                                    Pointerˉtarget * 4u32
+                                ) != Targetˉidentity {
+                                return false;
+                            }
                         }
                         Availableˉlow = Setˉavailableˉlow(
                             Availableˉlow, Rank, false

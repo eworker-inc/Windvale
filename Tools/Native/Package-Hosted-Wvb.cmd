@@ -82,7 +82,7 @@ set "FileOutputServiceSha256=fc688f2a84936dc1082fcb5654667a8a60b0581bff29b1868d4
 
 :target_ready
 
-call :verify_file "%Toolset%\SHA256SUMS" 6927 c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89 "hosted toolset inventory"
+call :verify_file "%Toolset%\SHA256SUMS" 6927 1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7 "hosted toolset inventory"
 if errorlevel 1 exit /b 1
 for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
     call :verify_digest "%Toolset%\%%I" %%H "hosted toolset artifact"
@@ -90,11 +90,11 @@ for /f "usebackq tokens=1,*" %%H in ("%Toolset%\SHA256SUMS") do (
 )
 set "MetadataRequestTool=%Toolset%\windows-x64\wvhostrequest.exe"
 set "SourceSetTool=%Toolset%\windows-x64\wvhostsources.exe"
-call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe "hosted enum-request WVB"
+call :verify_file "%EnumRequestCandidate%\Wvb\wvhostenumrequest.wvb" 82115 69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36 "hosted enum-request WVB"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b "hosted enum-request Windows application"
+call :verify_file "%EnumRequestCandidate%\windows-x64\wvhostenumrequest.exe" 888832 adabe0902e164bcb68561796ef2d60d446399cd51e70e326daf366623365ced0 "hosted enum-request Windows application"
 if errorlevel 1 exit /b 1
-call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 544768 a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31 "hosted enum-request Linux application"
+call :verify_file "%EnumRequestCandidate%\linux-x64\wvhostenumrequest.elf" 888832 06f6b9fe4812ec9f1c4c37fd47ae3153ac9b870ffb9b4173b2705c6517c586f8 "hosted enum-request Linux application"
 if errorlevel 1 exit /b 1
 call :verify_file "%ConsoleService%" %ConsoleServiceBytes% %ConsoleServiceSha256% "console service"
 if errorlevel 1 exit /b 1

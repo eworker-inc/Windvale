@@ -20,8 +20,9 @@ linking, canonical transport, and this image-input mode without asking a host
 script to decode a Windvale format.
 
 Profiles `1` through `6` retain the 64,000,000,000-instruction execution
-ceiling. Profiles `7` and `8` have a 137,438,953,472-instruction (`2^37`)
-ceiling. Profile `7`, used by general split emission, has a 301,465,600-byte
+ceiling. Profile `7` retains its 137,438,953,472-instruction (`2^37`)
+ceiling. Profile `8` has a 274,877,906,944-instruction (`2^38`) ceiling for
+explicit compiler-scale analysis and emission. Profile `7`, used by general split emission, has a 301,465,600-byte
 (287.5 MiB) dynamic text/byte arena, 64 file-input slots, and an 8 KiB name
 stride. Profile `8`, selected only for compiler analysis and other explicit
 compiler-scale products, has a 435,945,472-byte (415.75 MiB) arena, 32
@@ -87,7 +88,7 @@ applications. Its exact identity is:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `SHA256SUMS` | 6,927 | `c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89` |
+| `SHA256SUMS` | 6,927 | `1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7` |
 
 The candidate manifest records the source project and target family for every
 command. The WVBs reconstruct through the digest-bound native Project 1 front

@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-`WVNT 5` is the fixed repository test inventory executed entirely through
+`WVNT 6` is the fixed repository test inventory executed entirely through
 the pinned Windvale-native source-to-WVB, WVB-runner, WVB-verifier, and
 WVO-verifier front doors. It is an implemented candidate pending exact-commit
 Windows/Linux qualification.
@@ -14,10 +14,10 @@ exhaustive. It is not a general test-description language.
 
 ## Exact inventory
 
-[`Tests/Native/Plan.txt`](../Tests/Native/Plan.txt) is exactly 4,742 UTF-8/LF bytes
+[`Tests/Native/Plan.txt`](../Tests/Native/Plan.txt) is exactly 4,955 UTF-8/LF bytes
 with SHA-256
-`6ad262319aad1b9df3c9e211fd1e01ed509d8e00beff0de8004642e2928457de`.
-Its complete version-5 inventory is:
+`9e36b8a6a1c272ee6335dee5fdd6c42aaa3d742437e8fd57af979c56e6943cff`.
+Its complete version-6 inventory is:
 
 | Test | Input kind and path | Expected input SHA-256 | Expected outcome |
 | --- | --- | --- | --- |
@@ -29,11 +29,11 @@ Its complete version-5 inventory is:
 | `invalid-utf8` | project `Projects/Tests/Windvale-Native-Test-Invalid-Utf8.wvproj` | `6ed7d7dfe3e4443c2943c56c0a8afe6c61c5ffae275e808f1be08fac9266317c` | `failure 3014:11` |
 | `range-failure` | project `Projects/Tests/Windvale-Native-Test-Range-Failure.wvproj` | `e57e6183e121d3215beb854c8edb6aebd118480d0991917790fe7c569f8af794` | `failure 3008:14` |
 | `u16-failure` | project `Projects/Tests/Windvale-Native-Test-U16-Failure.wvproj` | `971e2296743b5dd1f3838a68c1401c18a869124f4b47c96b85ea3acbbb2e672e` | `failure 3016:4` |
-| `malformed-bad-magic` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Magic.wvb.b64` | `20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e` | `verify-failure semantic` |
-| `malformed-bad-version` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Version.wvb.b64` | `4f0cc323d4eb6713405a3e92f7c885b358aa1efc5fa08e2ecca7be7e17287614` | `verify-failure semantic` |
-| `malformed-bad-utf8` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Utf8.wvb.b64` | `d7e26806542fc5a924193f7d42a229b8e86aaab78c7ba9f845f0b51dcc655c55` | `verify-failure semantic` |
-| `malformed-truncated` | base64 fixture `Tests/Native/Malformed-Wvb/Truncated.wvb.b64` | `c795b6a811dac439e60775dfc1c48b23b6a594e203639bc660f974d41dc4073f` | `verify-failure semantic` |
-| `malformed-trailing` | base64 fixture `Tests/Native/Malformed-Wvb/Trailing.wvb.b64` | `7121dfd48f36433738e81c9328e54b86ac3e26aa5a61c89f5bef6469df0481c1` | `verify-failure semantic` |
+| `malformed-bad-magic` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Magic.wvb.b64` | `20618498d9df059d52fc0d660bf52f32df291c88b94d4b5ded224078f936108e` | `verify-failure semantic step=normalization` |
+| `malformed-bad-version` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Version.wvb.b64` | `4f0cc323d4eb6713405a3e92f7c885b358aa1efc5fa08e2ecca7be7e17287614` | `verify-failure semantic step=normalization` |
+| `malformed-bad-utf8` | base64 fixture `Tests/Native/Malformed-Wvb/Bad-Utf8.wvb.b64` | `d7e26806542fc5a924193f7d42a229b8e86aaab78c7ba9f845f0b51dcc655c55` | `verify-failure semantic step=module-capabilities` |
+| `malformed-truncated` | base64 fixture `Tests/Native/Malformed-Wvb/Truncated.wvb.b64` | `c795b6a811dac439e60775dfc1c48b23b6a594e203639bc660f974d41dc4073f` | `verify-failure semantic step=structure` |
+| `malformed-trailing` | base64 fixture `Tests/Native/Malformed-Wvb/Trailing.wvb.b64` | `7121dfd48f36433738e81c9328e54b86ac3e26aa5a61c89f5bef6469df0481c1` | `verify-failure semantic step=structure` |
 | `malformed-typed-operator-stack-kind` | base64 fixture `Tests/Native/Malformed-Wvb/Typed-Operator-Stack-Kind.wvb.b64` | `c6a5431f2f79165294b23409212d5c30cc6dc191051f248561af7fb2c919fcbb` | `verify-failure typed-execution` |
 | `malformed-typed-local-store-kind` | base64 fixture `Tests/Native/Malformed-Wvb/Typed-Local-Store-Kind.wvb.b64` | `bd5b097c685065a16adafad9c1e84bbfe010016648251964dfd9edc0d4a482df` | `verify-failure typed-execution` |
 | `malformed-typed-call-argument-identity` | base64 fixture `Tests/Native/Malformed-Wvb/Typed-Call-Argument-Identity.wvb.b64` | `790846e2f2cba9df0c96a4c513cf6771935c18ec11ad6420dfdf71277d7b9a26` | `verify-failure typed-execution` |
@@ -48,27 +48,28 @@ Its complete version-5 inventory is:
 | `wvo-truncated` | base64 fixture `Tests/Native/Wvo/Truncated.wvo.b64` | `6f120ce6b833f781ab014844af535b25fe28eb2d565afa2b2f4360c7a0c99371` | rejected report SHA-256 `9b45f12022ab0ba549e6c2ffa49cb15673d96c8f58efd5d6d9c2def87097aedb` |
 | `wvo-trailing` | base64 fixture `Tests/Native/Wvo/Trailing.wvo.b64` | `3ca5e84240e8f12be84fdb957df37f8162e74415417cd7009f92698e683ee981` | rejected report SHA-256 `3cdcb2fa62f4fc698e9624e68dc10dbf95e7363cf0332b280066083cc1783711` |
 
-The first line is exactly `windvale-native-tests 5`. Each remaining line contains
+The first line is exactly `windvale-native-tests 6`. Each remaining line contains
 the exact ASCII test name, closed input kind, repository-root-relative input path,
 lowercase decoded/input SHA-256 identity, expectation kind, and expectation
 value separated by `|`. `project` selects a Project 1 build; `fixture-base64`
 selects exact text decoding. `result` carries one signed decimal value. `failure`
 carries the unsigned status code and executed guest-instruction count separated by
-`:`, while `verify-failure` carries one exact verifier phase. `wvo-fixture-base64`
-selects exact WVO text decoding. `wvo-valid` and `wvo-invalid` carry the SHA-256
+`:`, while `verify-failure` carries one exact verifier phase and may include its
+exact semantic `step=<step>` suffix. `wvo-fixture-base64` selects exact WVO text
+decoding. `wvo-valid` and `wvo-invalid` carry the SHA-256
 of the verifier's complete success or diagnostic report so the launchers do not
 need host text decoding or a live C# result generator.
 
-Version 5 is a digest-bound fixed value rather than an extensible parser surface.
+Version 6 is a digest-bound fixed value rather than an extensible parser surface.
 The launchers reject every insertion, deletion, reordering, path change, field
 change, line-ending change, truncation, or appended byte before consuming a field.
 A later dynamic plan format requires its own bounded parser, limits, malformed-input
 coverage, and version decision.
 
-The version-1, 1,074-byte version-2, 1,983-byte version-3, and 3,906-byte
-version-4 predecessors added by Decisions 0226, 0227, 0229, and 0230 were local
-unqualified candidates. Version 5 supersedes them before the grouped gate; no
-distributed consumer or compatibility promise depends on them.
+The version-1, 1,074-byte version-2, 1,983-byte version-3, 3,906-byte version-4,
+and earlier version-5 predecessors were fixed candidates. Version 6 supersedes
+them because it pins the source-built verifier's exact semantic failure step;
+no executable command or compatibility lane is added.
 
 ## Execution contract
 
@@ -87,7 +88,9 @@ The Windows and Linux launchers perform the same ordered steps for each entry:
    result `1`, empty standard output, and exact standard error
    `wvb run status=Failed code=<code> instructions=<count>` plus LF; for
    `verify-failure`, require process result `1`, empty standard output, and exact
-   standard error `wvb status=Invalid phase=<phase>` plus LF; for `wvo-valid`,
+   standard error `wvb status=Invalid phase=<phase>` plus LF or the exact
+   `wvb status=Invalid phase=semantic step=<step>` plus LF carried by the fixed
+   entry; for `wvo-valid`,
    require process result `0`, empty standard error, and the exact complete
    standard-output report digest; for `wvo-invalid`, require process result `2`,
    empty standard output, and the exact complete standard-error report digest;

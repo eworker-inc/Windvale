@@ -1,0 +1,38 @@
+windvale-assembly 1
+
+# Isolated conforming provider for the registered
+# windvale.paper.buffer_source.sysv_amd64_c_v1 contract. The SysV caller passes
+# Destination in rdi, Capacity in rsi, and Expected_generation in rdx.
+symbol export function wv_paper_buffer_source_read_v1 in .text
+
+section code .text align 16
+define wv_paper_buffer_source_read_v1
+compare_i32 rsi 64
+branch not_equal Paper_buffer_source_rejected
+compare_i32 rdx 42
+branch not_equal Paper_buffer_source_stale
+
+# A successful call writes exactly the returned 24-byte prefix. Reaching these
+# stores proves that the compiler supplied a writable, aligned native address.
+move_u32 eax 11
+store_memory_u64 rdi none 1 0 rax
+move_u32 eax 22
+store_memory_u64 rdi none 1 8 rax
+move_u32 eax 33
+store_memory_u64 rdi none 1 16 rax
+move_u32 eax 24
+return
+
+label Paper_buffer_source_stale
+move_u32 eax 42
+store_memory_u64 rdi none 1 0 rax
+move_u32 eax 2
+xor_i32 rax -1
+return
+
+label Paper_buffer_source_rejected
+xor eax eax
+xor_i32 rax -1
+return
+end define
+end section

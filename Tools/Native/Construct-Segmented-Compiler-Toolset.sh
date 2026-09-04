@@ -54,10 +54,11 @@ echo 'START segmented compiler toolset construction phase=build item=3/3 project
 echo 'PASS  segmented compiler toolset construction phase=build item=3/3 project=canonical-transport'
 
 construct_pair() {
-    local name=$1
-    local wvb=$2
-    local windows=$3
-    local linux=$4
+    local profile=$1
+    local name=$2
+    local wvb=$3
+    local windows=$4
+    local linux=$5
     local work_directory="$temporary_directory/$name"
     local object_prefix="$work_directory/Object"
     local object_manifest="$work_directory/Object.wvop"
@@ -88,28 +89,28 @@ construct_pair() {
     esac
     ((fragment_count >= 1 && fragment_count <= 16)) || return 1
 
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+    "$script_directory/Package-Hosted-Wvb.sh" image "$profile" \
         "$wvb" "$canonical_prefix" "$fragment_count" "$native_entry" \
         "$windows" windows \
         >"$work_directory/Windows.txt" 2>"$work_directory/Windows.err" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
+    "$script_directory/Package-Hosted-Wvb.sh" image "$profile" \
         "$wvb" "$canonical_prefix" "$fragment_count" "$native_entry" \
         "$linux" linux \
         >"$work_directory/Linux.txt" 2>"$work_directory/Linux.err"
 }
 
 echo 'START segmented compiler toolset construction phase=package item=1/3 family=WVO-staging'
-construct_pair Wvo-Staging "$wvo_staging_wvb" \
+construct_pair 8 Wvo-Staging "$wvo_staging_wvb" \
     "$output_root/windows-x64-wvstage.exe" \
     "$output_root/linux-x64-wvstage.elf" || exit $?
 echo 'PASS  segmented compiler toolset construction phase=package item=1/3 family=WVO-staging'
 echo 'START segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging'
-construct_pair Image-Staging "$image_staging_wvb" \
+construct_pair 6 Image-Staging "$image_staging_wvb" \
     "$output_root/windows-x64-wvlinkstage.exe" \
     "$output_root/linux-x64-wvlinkstage.elf" || exit $?
 echo 'PASS  segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging'
 echo 'START segmented compiler toolset construction phase=package item=3/3 family=canonical-transport'
-construct_pair Transport "$transport_wvb" \
+construct_pair 6 Transport "$transport_wvb" \
     "$output_root/windows-x64-wvimagetransport.exe" \
     "$output_root/linux-x64-wvimagetransport.elf" || exit $?
 echo 'PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport'
@@ -136,23 +137,23 @@ verify_file() {
     fi
 }
 
-verify_file "$wvo_staging_wvb" 728718 \
-    80694188b3f62f27851f8e21d04bcd9450bea01f2fc5fb4e67dfe9b137f77d2b \
+verify_file "$wvo_staging_wvb" 774524 \
+    427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f \
     'WVO staging producer WVB' || exit 1
-verify_file "$output_root/windows-x64-wvstage.exe" 10601984 \
-    e7ce71d35c2439ecf592206cd76b3b1d884bffc6f464e865a228cbf7c3230aae \
+verify_file "$output_root/windows-x64-wvstage.exe" 11184128 \
+    f289d608d6545dfeece35dfd325bf0a62ef862aeae0b069b47157fb97652820e \
     'Windows WVO staging producer' || exit 1
-verify_file "$output_root/linux-x64-wvstage.elf" 10604544 \
-    131b50ed4da1b3e9514a846730495c2341b1fad62c5ff13d9547953eab503e0e \
+verify_file "$output_root/linux-x64-wvstage.elf" 11186176 \
+    cafd9627383fdbd681bdcc5906a6fe0aedcb423ba0b7f380b39f43e7fd5aa0b8 \
     'Linux WVO staging producer' || exit 1
 verify_file "$image_staging_wvb" 81530 \
-    825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9 \
+    03a928f036a188fc943d3d197d45114cbb327d5edffae62ee3cc842186267bbc \
     'compiler-image staging WVB' || exit 1
 verify_file "$output_root/windows-x64-wvlinkstage.exe" 931840 \
-    969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f \
+    cc94fba08e6f4a5b20a0ddfc509f40f9fe8e801375d5e97320aec01f9f9f1b5b \
     'Windows compiler-image staging application' || exit 1
 verify_file "$output_root/linux-x64-wvlinkstage.elf" 933888 \
-    d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0 \
+    bdbea8e2e8c8eb48211be5068bd93b5f4011814bc2ef15acffb5fdee622ac58d \
     'Linux compiler-image staging application' || exit 1
 verify_file "$transport_wvb" 23836 \
     d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8 \

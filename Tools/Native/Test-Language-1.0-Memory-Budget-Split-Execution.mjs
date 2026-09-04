@@ -175,7 +175,7 @@ try {
         '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
     ]);
     Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
+        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
     ]);
     Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
@@ -217,7 +217,7 @@ try {
         Pinnedˉemitter, Pinnedˉemitterˉidentity,
     ]);
     Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Emitterˉwvb, Emitter, '--development-cache',
+        '8', Emitterˉwvb, Emitter, '--development-cache',
     ]);
     Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,

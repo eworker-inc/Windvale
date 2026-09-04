@@ -96,14 +96,14 @@ verify_file() {
     }
 }
 
-verify_file "$toolset/SHA256SUMS" 6927 c32a885162aff80da67a839c6c6c247f8d2da5ed420337823fccd62dcfc26c89 'hosted toolset inventory' || exit 1
+verify_file "$toolset/SHA256SUMS" 6927 1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7 'hosted toolset inventory' || exit 1
 (cd -- "$toolset" && sha256sum --check --strict --quiet SHA256SUMS) || {
     echo 'The hosted toolset artifact inventory is invalid.' >&2
     exit 1
 }
-verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 48791 b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe 'hosted enum-request WVB' || exit 1
-verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 544256 22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b 'hosted enum-request Windows application' || exit 1
-verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 544768 a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31 'hosted enum-request Linux application' || exit 1
+verify_file "$enum_request_candidate/Wvb/wvhostenumrequest.wvb" 82115 69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36 'hosted enum-request WVB' || exit 1
+verify_file "$enum_request_candidate/windows-x64/wvhostenumrequest.exe" 888832 adabe0902e164bcb68561796ef2d60d446399cd51e70e326daf366623365ced0 'hosted enum-request Windows application' || exit 1
+verify_file "$enum_request_candidate/linux-x64/wvhostenumrequest.elf" 888832 06f6b9fe4812ec9f1c4c37fd47ae3153ac9b870ffb9b4173b2705c6517c586f8 'hosted enum-request Linux application' || exit 1
 verify_file "$console_service" "$console_service_bytes" "$console_service_sha256" 'console service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Count-Service.bin" 5 2358e7e2c72d6476cfe05134db4f0eb5e6987fcca1b10894a8588a28d3929829 'argument-count service' || exit 1
 verify_file "$service_root/Native-X64-Argument-Service.bin" 70 2253e1435f141df5b68f9f7e9e9aa0de448410c42dcf33ad76dcf131afea65d1 'argument service' || exit 1

@@ -26,7 +26,13 @@ const Packageˉlowerer = join(
     Repositoryˉroot, 'Tools', 'Native',
     `Package-Segmented-Compiler-Wvb.${Extension}`,
 );
+const Assemble = join(
+    Repositoryˉroot, 'Tools', 'Native', `Assemble-Wva.${Extension}`,
+);
 const Check = join(Repositoryˉroot, 'Tools', 'Native', `Check-Wvo.${Extension}`);
+const Inspect = join(
+    Repositoryˉroot, 'Tools', 'Native', `Inspect-Wvo.${Extension}`,
+);
 const Link = join(Repositoryˉroot, 'Tools', 'Native', `Link-Wvo.${Extension}`);
 const Packageˉconsole = join(
     Repositoryˉroot, 'Tools', 'Native', `Package-Console.${Extension}`,
@@ -41,6 +47,9 @@ const Fixtureˉdirectory = join(
 const Candidateˉdirectory = join(
     Repositoryˉroot, 'Artifacts', 'Native-Wvb-To-Wvo-Candidate',
 );
+const Foreignˉproviderˉsource = join(
+    Repositoryˉroot, 'Tests', 'Native', 'X64-Paper-Buffer-Source.wva',
+);
 
 const Work = await mkdtemp(join(tmpdir(), 'windvale-write-pointer-lowering-'));
 try {
@@ -51,6 +60,14 @@ try {
     const Runtime = await Readˉfixture(
         join(Fixtureˉdirectory, 'Unsafe-Write-Pointer-Runtime.wvb.b64'),
         '3754236b188a99068bb3918dc581e27ba4215b0590286a7d62039d6254dd54e3',
+    );
+    const Foreignˉsuccess = await Readˉfixture(
+        join(Fixtureˉdirectory, 'Foreign-Runtime-Success.wvb.b64'),
+        '339fa2a51236e55281ab0ccc0f3c0ec881d9d4074c1cf9fc8a1b943bba4ffa80',
+    );
+    const Foreignˉstale = await Readˉfixture(
+        join(Fixtureˉdirectory, 'Foreign-Runtime-Stale.wvb.b64'),
+        'cd924526e21b4f9ffb3d9701670b69455492675e526fd33fd27d558166f416f4',
     );
     const Lowererˉwvb = join(Work, 'Native-Lowerer.wvb');
     const Lowerer = join(Work, `Native-Lowerer.${Nativeˉextension}`);
@@ -98,6 +115,108 @@ try {
         join(Work, 'Metadata'),
         'metadata',
     );
+
+    const Foreignˉspecifications = [
+        {
+            Name: 'foreign-success',
+            Input: Foreignˉsuccess,
+            Codeˉbytes: 11_195,
+            Objectˉbytes: 11_372,
+            Sha256: 'dc0fccf525916d882dee3c6e000870c3d625ef36964c6cd0c69247385b3b89ef',
+        },
+        {
+            Name: 'foreign-stale',
+            Input: Foreignˉstale,
+            Codeˉbytes: 11_366,
+            Objectˉbytes: 11_543,
+            Sha256: '8615a902c01f019460a3276b58ccff16f5fcbc329d6792dc5850eb30542dfa9b',
+        },
+    ];
+    const Foreignˉobjects = [];
+    for (let Index = 0; Index < Foreignˉspecifications.length; Index += 1) {
+        const Specification = Foreignˉspecifications[Index];
+        process.stdout.write(
+            `native unsafe write pointer lowering item=${Index + 1}/` +
+            `${Foreignˉspecifications.length} case=${Specification.Name} ` +
+            'status=Started\n',
+        );
+        const Prefix = join(Work, Specification.Name);
+        const Wvo = await Lowerˉidentity(
+            Lowerer,
+            Specification.Input,
+            Prefix,
+            Specification.Name,
+            Specification.Codeˉbytes,
+            Specification.Objectˉbytes,
+            Specification.Sha256,
+        );
+        await Requireˉsuccess(Check, [Wvo], `${Specification.Name}-object-check`);
+        const Inspected = await Requireˉsuccess(
+            Inspect, [Wvo], `${Specification.Name}-object-inspect`,
+        );
+        if (!Inspected.Output.includes('Symbols (3)') ||
+            !Inspected.Output.includes(
+                '[2] wv_paper_buffer_source_read_v1 binding=Import ' +
+                'kind=Function section=undefined offset=0 size=0',
+            ) || !Inspected.Output.includes('Relocations (1)') ||
+            !Inspected.Output.includes('symbol=2 addend=-4')) {
+            Reject(`The ${Specification.Name} object shape differed.\n` +
+                Inspected.Output);
+        }
+        Foreignˉobjects.push({ ...Specification, Wvo });
+    }
+
+    const Providerˉwvo = join(Work, 'Paper-Buffer-Source.wvo');
+    const Assembled = await Requireˉsuccess(
+        Assemble,
+        [Foreignˉproviderˉsource, Providerˉwvo],
+        'foreign-provider-assemble',
+    );
+    if (!/^wvasm 1\r?\nassembly status=valid object-bytes=206 sections=1 symbols=1 relocations=0 /u
+        .test(Assembled.Output)) {
+        Reject(`The Foreign provider assembly report differed.\n${Assembled.Output}`);
+    }
+    await Readˉbinary(
+        Providerˉwvo,
+        206,
+        '69ca4c0a1e54997c5a729abe91eff8da08c7d66f828664a900794a753c454722',
+    );
+    await Requireˉsuccess(Check, [Providerˉwvo], 'foreign-provider-object-check');
+    let Foreignˉexecutions = 0;
+    for (const Specification of Foreignˉobjects) {
+        const Image = join(Work, `${Specification.Name}.bin`);
+        const Linked = await Requireˉsuccess(
+            Link,
+            ['0', 'Main', Image, Specification.Wvo, Providerˉwvo],
+            `${Specification.Name}-link`,
+        );
+        const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
+        if (Entry === null || !existsSync(Image) ||
+            !Linked.Output.includes('imports count=1') ||
+            !Linked.Output.includes(
+                'name=wv_paper_buffer_source_read_v1 provider-input=1',
+            ) || !Linked.Output.includes('relocations count=1')) {
+            Reject(`The ${Specification.Name} link report differed.\n${Linked.Output}`);
+        }
+        if (Target === 'linux') {
+            const Application = join(Work, `${Specification.Name}.elf`);
+            await Requireˉsuccess(
+                Packageˉconsole,
+                ['linux-x64-console-v1', Image, Entry[1], Application],
+                `${Specification.Name}-console-package`,
+            );
+            const Executed = await Runˉprocess(
+                Application, [], COMMAND_TIMEOUT_MILLISECONDS,
+                `${Specification.Name}-native-execution`,
+            );
+            if (Executed.Code !== 42 || Executed.Exceeded ||
+                Executed.Timedˉout || Executed.Output !== '') {
+                Reject(`The ${Specification.Name} native result differed.\n` +
+                    Executed.Output);
+            }
+            Foreignˉexecutions += 1;
+        }
+    }
 
     const Runtimeˉwvb = join(Work, 'Runtime.wvb');
     const Runtimeˉwvo = join(Work, 'Runtime.wvo');
@@ -170,9 +289,64 @@ try {
                 Rejected.Output);
         }
     }
+    const Foreignˉlayout = Inspectˉforeignˉfixture(Foreignˉsuccess);
+    const Foreignˉcases = [
+        ['old-minor', Value => Value.writeUInt16LE(37, 6)],
+        ['unknown-opcode', Value => {
+            Value[Foreignˉlayout.Operation] = 225;
+        }],
+        ['unregistered-binding', Value => Value.writeUInt32LE(
+            0, Foreignˉlayout.Operation + 1,
+        )],
+        ['invalid-pointer-type', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 5,
+        )],
+        ['invalid-abi-type', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Typeˉcount, Foreignˉlayout.Operation + 9,
+        )],
+        ['abi-as-pointer', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Pointerˉtype, Foreignˉlayout.Operation + 9,
+        )],
+        ['pointer-as-abi', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Abiˉtype, Foreignˉlayout.Operation + 5,
+        )],
+        ['pointer-stack-kind', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Capacityˉlocal, Foreignˉlayout.Operation - 14,
+        )],
+        ['capacity-stack-kind', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 9,
+        )],
+        ['generation-stack-kind', Value => Value.writeUInt32LE(
+            Foreignˉlayout.Pointerˉlocal, Foreignˉlayout.Operation - 4,
+        )],
+    ];
+    for (let Index = 0; Index < Foreignˉcases.length; Index += 1) {
+        const [Name, Mutate] = Foreignˉcases[Index];
+        process.stdout.write(
+            `native unsafe write pointer lowering item=${Index + 1}/` +
+            `${Foreignˉcases.length} case=foreign-${Name} status=Started\n`,
+        );
+        const Candidate = Buffer.from(Foreignˉsuccess);
+        Mutate(Candidate);
+        const Candidateˉpath = join(Work, `Malformed-Foreign-${Name}.wvb`);
+        const Destination = join(Work, `Malformed-Foreign-${Name}.wvo`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        const Rejected = await Runˉprocess(
+            Lowerer, [Candidateˉpath, Destination],
+            COMMAND_TIMEOUT_MILLISECONDS, `foreign-${Name}`,
+        );
+        if (Rejected.Code !== 1 || Rejected.Exceeded || Rejected.Timedˉout ||
+            existsSync(Destination) ||
+            !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u
+                .test(Rejected.Output)) {
+            Reject(`The malformed Foreign case ${Name} differed.\n` +
+                Rejected.Output);
+        }
+    }
     process.stdout.write(
-        'native unsafe write pointer lowering status=Passed cases=13 ' +
-        'valid=3 malformed=10 native-execution=1 compiler-source=current ' +
+        'native unsafe write pointer lowering status=Passed cases=25 ' +
+        'valid=5 malformed=20 native-execution=' +
+        `${1 + Foreignˉexecutions} foreign-links=2 compiler-source=current ` +
         'package-cache=development\n',
     );
 } finally {
@@ -208,6 +382,163 @@ async function Lowerˉexact(Lowerer, Input, Expected, Prefix, Label) {
     if (!Actual.equals(Expected)) {
         Reject(`The ${Label} WVO bytes differed.`);
     }
+}
+
+async function Lowerˉidentity(
+    Lowerer,
+    Input,
+    Prefix,
+    Label,
+    Expectedˉcodeˉbytes,
+    Expectedˉobjectˉbytes,
+    Expectedˉsha256,
+) {
+    const Source = `${Prefix}.wvb`;
+    const Destination = `${Prefix}.wvo`;
+    await writeFile(Source, Input, { flag: 'wx' });
+    const Lowered = await Runˉprocess(
+        Lowerer, [Source, Destination], COMMAND_TIMEOUT_MILLISECONDS, Label,
+    );
+    const Expectedˉreport =
+        `native x64 status=Valid abi=22 code-bytes=${Expectedˉcodeˉbytes} ` +
+        `object-bytes=${Expectedˉobjectˉbytes}\n`;
+    if (!Passed(Lowered) || !existsSync(Destination) ||
+        Lowered.Output.replaceAll('\r\n', '\n') !== Expectedˉreport) {
+        Reject(`The ${Label} lowering differed.\n${Lowered.Output}`);
+    }
+    await Readˉbinary(
+        Destination, Expectedˉobjectˉbytes, Expectedˉsha256,
+    );
+    return Destination;
+}
+
+function Inspectˉforeignˉfixture(Input) {
+    if (Input.length < 12 || Input.length > FIXTURE_LIMIT ||
+        Input.subarray(0, 4).toString('ascii') !== 'WVB1' ||
+        Input.readUInt16LE(4) !== 1 || Input.readUInt16LE(6) !== 38 ||
+        Input.readUInt32LE(8) !== 7) {
+        Reject('The Foreign WVB 1.38 fixture header differs.');
+    }
+    const Sections = new Map();
+    let Cursor = 12;
+    for (let Kind = 1; Kind <= 7; Kind += 1) {
+        if (Cursor > Input.length - 8 || Input[Cursor] !== Kind ||
+            Input[Cursor + 1] !== 0 || Input.readUInt16LE(Cursor + 2) !== 0) {
+            Reject('The Foreign WVB fixture section envelope differs.');
+        }
+        const Length = Input.readUInt32LE(Cursor + 4);
+        const Start = Cursor + 8;
+        if (Length > Input.length - Start) {
+            Reject('The Foreign WVB fixture section exceeds the file.');
+        }
+        Sections.set(Kind, { Start, End: Start + Length });
+        Cursor = Start + Length;
+    }
+    if (Cursor !== Input.length) {
+        Reject('The Foreign WVB fixture has trailing bytes.');
+    }
+    const Types = Sections.get(7);
+    if (Types.End - Types.Start < 4) {
+        Reject('The Foreign WVB fixture type directory is truncated.');
+    }
+    const Typeˉcount = Input.readUInt32LE(Types.Start);
+    if (Typeˉcount === 0 || Typeˉcount > 65_536) {
+        Reject('The Foreign WVB fixture type count is invalid.');
+    }
+    const Functions = Sections.get(4);
+    const Code = Sections.get(5);
+    if (Functions.End - Functions.Start < 4) {
+        Reject('The Foreign WVB fixture function directory is truncated.');
+    }
+    const Functionˉcount = Input.readUInt32LE(Functions.Start);
+    if (Functionˉcount === 0 || Functionˉcount > 65_536) {
+        Reject('The Foreign WVB fixture function count is invalid.');
+    }
+    const Ranges = [];
+    Cursor = Functions.Start + 4;
+    for (let Function = 0; Function < Functionˉcount; Function += 1) {
+        Cursor = Skipˉwvbˉstring(Input, Cursor, Functions.End);
+        Cursor = Checkˉwvbˉrange(Cursor, 4, Functions.End);
+        const Parameters = Input.readUInt32LE(Cursor - 4);
+        if (Parameters > 2_048) {
+            Reject('The Foreign WVB fixture parameter count is oversized.');
+        }
+        for (let Parameter = 0; Parameter < Parameters; Parameter += 1) {
+            Cursor = Skipˉwvbˉshape(Input, Cursor, Functions.End);
+        }
+        Cursor = Skipˉwvbˉshape(Input, Cursor, Functions.End);
+        Cursor = Checkˉwvbˉrange(Cursor, 4, Functions.End);
+        const Locals = Input.readUInt32LE(Cursor - 4);
+        if (Locals > 4_096 - Parameters) {
+            Reject('The Foreign WVB fixture local count is oversized.');
+        }
+        for (let Local = 0; Local < Locals; Local += 1) {
+            Cursor = Skipˉwvbˉshape(Input, Cursor, Functions.End);
+        }
+        const Metadata = Cursor;
+        Cursor = Checkˉwvbˉrange(Cursor, 12, Functions.End);
+        const Offset = Input.readUInt32LE(Metadata);
+        const Length = Input.readUInt32LE(Metadata + 4);
+        if (Offset > Code.End - Code.Start ||
+            Length > Code.End - Code.Start - Offset) {
+            Reject('The Foreign WVB fixture code range is invalid.');
+        }
+        Ranges.push({
+            Start: Code.Start + Offset,
+            End: Code.Start + Offset + Length,
+        });
+    }
+    if (Cursor !== Functions.End) {
+        Reject('The Foreign WVB fixture function directory has trailing bytes.');
+    }
+    const Matches = [];
+    for (const Range of Ranges) {
+        for (Cursor = Range.Start; Cursor <= Range.End - 13; Cursor += 1) {
+            if (Input[Cursor] !== 224 || Input.readUInt32LE(Cursor + 1) !== 1 ||
+                Cursor < Range.Start + 15 || Cursor > Range.End - 18 ||
+                Input[Cursor - 15] !== 4 || Input[Cursor - 10] !== 4 ||
+                Input[Cursor - 5] !== 4 || Input[Cursor + 13] !== 5) {
+                continue;
+            }
+            Matches.push({
+                Operation: Cursor,
+                Pointerˉtype: Input.readUInt32LE(Cursor + 5),
+                Abiˉtype: Input.readUInt32LE(Cursor + 9),
+                Typeˉcount,
+                Pointerˉlocal: Input.readUInt32LE(Cursor - 14),
+                Capacityˉlocal: Input.readUInt32LE(Cursor - 9),
+                Generationˉlocal: Input.readUInt32LE(Cursor - 4),
+            });
+        }
+    }
+    if (Matches.length !== 1) {
+        Reject('The Foreign WVB fixture must contain one exact opcode 224 call.');
+    }
+    return Matches[0];
+}
+
+function Checkˉwvbˉrange(Cursor, Length, End) {
+    if (!Number.isSafeInteger(Cursor) || !Number.isSafeInteger(Length) ||
+        Cursor < 0 || Length < 0 || Cursor > End || Length > End - Cursor) {
+        Reject('The Foreign WVB fixture directory is truncated.');
+    }
+    return Cursor + Length;
+}
+
+function Skipˉwvbˉstring(Input, Cursor, End) {
+    const Lengthˉend = Checkˉwvbˉrange(Cursor, 4, End);
+    return Checkˉwvbˉrange(
+        Lengthˉend, Input.readUInt32LE(Cursor), End,
+    );
+}
+
+function Skipˉwvbˉshape(Input, Cursor, End) {
+    Checkˉwvbˉrange(Cursor, 1, End);
+    if ([7, 8, 11, 22, 23, 24, 26, 27, 28, 29, 30, 35]
+        .includes(Input[Cursor])) {
+        return Checkˉwvbˉrange(Cursor, 5, End);
+    }
+    return Cursor + 1;
 }
 
 async function Readˉfixture(Path, Expectedˉsha256) {

@@ -8,9 +8,9 @@ set "Manifest=%ArtifactRoot%\Manifest.json"
 set "Inventory=%ArtifactRoot%\SHA256SUMS"
 set "Verifier=%ArtifactRoot%\windows-x64\wvverify.exe"
 
-call :verify_file "%Manifest%" 6133 9957de4bbd69b2300e25567685f4de2befc89e6db611bcd8957002bbed0ed9c0 "front-door manifest"
+call :verify_file "%Manifest%" 6170 b5a27bbd6d143c73907f2908bd1022f30de474c5d922473086213dad9ab5319a "front-door manifest"
 if errorlevel 1 exit /b 1
-call :verify_file "%Inventory%" 1605 7ca7eff5a7398da2e3b9f85142b005e91fbca2cf80ec2bd5b2a5dd02f1d953b5 "front-door checksum inventory"
+call :verify_file "%Inventory%" 1605 cce8e76c7e16f9697241356490f18a87116b996a16f71284b161d6f0897996ad "front-door checksum inventory"
 if errorlevel 1 exit /b 1
 
 :allocate

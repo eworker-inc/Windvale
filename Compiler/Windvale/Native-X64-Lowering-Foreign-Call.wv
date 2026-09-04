@@ -1,0 +1,197 @@
+module Compilerˉnativeˉx64ˉloweringˉforeignˉcall profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉlayout as Layout;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉinstructions;
+
+fn Empty() -> bytes {
+    let Zero: bytes = Bytesˉfromˉu8(0u8);
+    return Bytesˉslice(Zero, 0u32, 0u32);
+}
+
+fn Appendˉbyte(Result: bytes, Value: u8) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu8(Value));
+}
+
+fn Appendˉu32(Result: bytes, Value: u32) -> bytes {
+    return Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Relativeˉu32(Target: u32, Origin: u32) -> u32 {
+    if Target >= Origin { return Target - Origin; }
+    let Magnitude: u32 = Origin - Target;
+    return 4294967295u32 - Magnitude + 1u32;
+}
+
+fn Loadˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrsi(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 180u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Loadˉrdx(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 148u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Storeˉrax(Result: bytes, Slot: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 72u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 132u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Slot * 16u32);
+}
+
+fn Conditionalˉjump(Result: bytes, Condition: u8, Target: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 15u8);
+    Output = Appendˉbyte(Output, Condition);
+    return Appendˉu32(
+        Output,
+        Relativeˉu32(Target, Bytesˉlength(Output) + 4u32)
+    );
+}
+
+fn Emitˉmachine(
+    Pointerˉslot: u32,
+    Capacityˉslot: u32,
+    Generationˉslot: u32,
+    Resultˉslot: u32,
+    Isˉmain: bool,
+    Invalidˉtarget: u32
+) -> bytes {
+    var Output: bytes = Loadˉrax(Empty(), Pointerˉslot);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 192u8);
+    Output = Conditionalˉjump(Output, 132u8, Invalidˉtarget);
+    // The pointer record stores the checked native address followed by its
+    // exact writable length. The record remains frame-owned and never escapes.
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 56u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 8u8);
+    Output = Loadˉrsi(Output, Capacityˉslot);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 57u8);
+    Output = Appendˉbyte(Output, 241u8);
+    Output = Conditionalˉjump(Output, 133u8, Invalidˉtarget);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 131u8);
+    Output = Appendˉbyte(Output, 254u8);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Conditionalˉjump(Output, 133u8, Invalidˉtarget);
+    Output = Appendˉbyte(Output, 72u8);
+    Output = Appendˉbyte(Output, 133u8);
+    Output = Appendˉbyte(Output, 255u8);
+    Output = Conditionalˉjump(Output, 132u8, Invalidˉtarget);
+    Output = Appendˉbyte(Output, 64u8);
+    Output = Appendˉbyte(Output, 246u8);
+    Output = Appendˉbyte(Output, 199u8);
+    Output = Appendˉbyte(Output, 7u8);
+    Output = Conditionalˉjump(Output, 133u8, Invalidˉtarget);
+    Output = Loadˉrdx(Output, Generationˉslot);
+    if !Isˉmain {
+        // ABI-22 helpers enter with rsp%16=8. Align before the SysV call.
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 131u8);
+        Output = Appendˉbyte(Output, 236u8);
+        Output = Appendˉbyte(Output, 8u8);
+    }
+    Output = Appendˉbyte(Output, 232u8);
+    Output = Appendˉu32(Output, 0u32);
+    if !Isˉmain {
+        Output = Appendˉbyte(Output, 72u8);
+        Output = Appendˉbyte(Output, 131u8);
+        Output = Appendˉbyte(Output, 196u8);
+        Output = Appendˉbyte(Output, 8u8);
+    }
+    return Storeˉrax(Output, Resultˉslot);
+}
+
+export fn Compilerˉnativeˉx64ˉforeignˉcallˉbytes(Isˉmain: bool) -> u32 {
+    // Includes the common ten-byte instruction-limit charge.
+    if Isˉmain { return 101u32; }
+    return 109u32;
+}
+
+export fn Compilerˉnativeˉx64ˉforeignˉcallˉrelocationˉoffset(
+    Isˉmain: bool
+) -> u32 {
+    // Offset from the start of the common charge to the call displacement.
+    if Isˉmain { return 89u32; }
+    return 93u32;
+}
+
+export fn Compilerˉnativeˉx64ˉemitˉforeignˉcall(
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Isˉmain: bool,
+    Invalidˉtarget: u32,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Depth: u32 = State.Stackˉdepth - 3u32;
+    let Pointerˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, Depth * 4u32
+    );
+    let Capacityˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, (Depth + 1u32) * 4u32
+    );
+    let Generationˉslot: u32 = Bytesˉreadˉu32ˉlittle(
+        State.Stackˉslots, (Depth + 2u32) * 4u32
+    );
+    let Resultˉslot: u32 = Layout.Compilerˉnativeˉx64ˉlayoutˉvalueˉslot(
+        Shape.Locals,
+        Shape.I32ˉslots,
+        Shape.Boolˉslots,
+        Shape.Textˉslots,
+        Shape.U8ˉslots,
+        Shape.U32ˉslots,
+        Shape.Bytesˉslots,
+        9u8,
+        State.Nextˉu32
+    );
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Bytesˉconcat(
+            State.Result,
+            Emitˉmachine(
+                Pointerˉslot,
+                Capacityˉslot,
+                Generationˉslot,
+                Resultˉslot,
+                Isˉmain,
+                Invalidˉtarget
+            )
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉtypes, 0u32, Depth),
+            Bytesˉfromˉu8(9u8)
+        ),
+        Bytesˉconcat(
+            Bytesˉslice(State.Stackˉslots, 0u32, Depth * 4u32),
+            Bytesˉfromˉu32ˉlittle(Resultˉslot)
+        ),
+        Depth + 1u32,
+        State.Nextˉi32,
+        State.Nextˉbool,
+        State.Nextˉtext,
+        State.Nextˉu8,
+        State.Nextˉu32 + 1u32,
+        State.Nextˉbytes,
+        State.Nextˉenum,
+        State.Nextˉrecord
+    );
+}

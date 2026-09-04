@@ -37,12 +37,12 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'windows-x64-wvstage.exe'),
-            sha256: 'e7ce71d35c2439ecf592206cd76b3b1d884bffc6f464e865a228cbf7c3230aae'
+            sha256: 'f289d608d6545dfeece35dfd325bf0a62ef862aeae0b069b47157fb97652820e'
         },
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'windows-x64-wvlinkstage.exe'),
-            sha256: '969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f'
+            sha256: 'cc94fba08e6f4a5b20a0ddfc509f40f9fe8e801375d5e97320aec01f9f9f1b5b'
         },
         {
             name: 'compiler-image transport',
@@ -54,12 +54,12 @@ const TOOL_CONTRACTS = WINDOWS
         {
             name: 'segmented WVO producer',
             path: path.join(TOOL_ROOT, 'linux-x64-wvstage.elf'),
-            sha256: '131b50ed4da1b3e9514a846730495c2341b1fad62c5ff13d9547953eab503e0e'
+            sha256: 'cafd9627383fdbd681bdcc5906a6fe0aedcb423ba0b7f380b39f43e7fd5aa0b8'
         },
         {
             name: 'segmented compiler-image linker',
             path: path.join(TOOL_ROOT, 'linux-x64-wvlinkstage.elf'),
-            sha256: 'd5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0'
+            sha256: 'bdbea8e2e8c8eb48211be5068bd93b5f4011814bc2ef15acffb5fdee622ac58d'
         },
         {
             name: 'compiler-image transport',

@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 344 |
+| Accepted | 348 |
 | Implemented | 484 |
 | Proposed | 4 |
 | Qualified | 94 |
@@ -47,6 +47,10 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0941: raise the native type-directory capacity for self-host convergence](0941-Raise-The-Native-Type-Directory-Capacity-For-Self-Host-Convergence.md) | Accepted |
+| [Decision 0940: separate the Profile 8 compiler-scale instruction ceiling](0940-Separate-The-Profile-8-Compiler-Scale-Instruction-Ceiling.md) | Accepted |
+| [Decision 0939: raise native x64 static-data capacity for compiler convergence](0939-Raise-Native-X64-Static-Data-Capacity-For-Compiler-Convergence.md) | Accepted |
+| [Decision 0938: lower authenticated WVB 1.38 Foreign calls through the native x64 ABI](0938-Lower-Authenticated-WVB-1.38-Foreign-Calls-Through-The-Native-X64-ABI.md) | Accepted |
 | [Decision 0937: execute authenticated WVB 1.38 Foreign calls in the bounded scalar provider](0937-Execute-Authenticated-WVB-1.38-Foreign-Calls-In-The-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0936: build Foreign lowering evidence after typed analysis](0936-Build-Foreign-Lowering-Evidence-After-Typed-Analysis.md) | Accepted |
 | [Decision 0935: verify contained WVB 1.38 Foreign calls](0935-Verify-Contained-WVB-1.38-Foreign-Calls.md) | Accepted |
@@ -68,10 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0919: advance the frozen source identity for WVB 1.37 containment](0919-Advance-The-Frozen-Source-Identity-For-WVB-1.37-Containment.md) | Accepted |
 | [Decision 0918: verify WVB 1.37 write-pointer lifetime containment](0918-Verify-WVB-1.37-Write-Pointer-Lifetime-Containment.md) | Accepted |
 | [Decision 0917: advance the frozen source identity for candidate WVB 1.37](0917-Advance-The-Frozen-Source-Identity-For-Candidate-Wvb-1.37.md) | Accepted |
-| [Decision 0916: represent contained write-pointer derivation in candidate WVB 1.37](0916-Represent-Contained-Write-Pointer-Derivation-In-Candidate-Wvb-1.37.md) | Accepted |
-| [Decision 0915: advance the frozen source identity for unsafe-memory progress](0915-Advance-The-Frozen-Source-Identity-For-Unsafe-Memory-Progress.md) | Accepted |
-| [Decision 0914: lower canonical unsafe write pointer to WVIR](0914-Lower-Canonical-Unsafe-Write-Pointer-To-Wvir.md) | Accepted |
-| [Decision 0913: lower compiler-verified WVB 1.36 write regions to native x64](0913-Lower-Compiler-Verified-WVB-1.36-Write-Regions-To-Native-X64.md) | Accepted |
 
 ## Superseded or historical records
 

@@ -5,6 +5,7 @@ param(
     [AllowEmptyCollection()]
     [string[]]$ChangedPath,
     [switch]$PlanOnly,
+    [switch]$AllowLongRun,
     [switch]$NoFailFast,
     [string]$TimingReportPath,
     [switch]$NoResultCache,
@@ -275,6 +276,9 @@ if ($Plan.Scope -eq 'website') {
         try {
             $OwnerCommand = $Coordinator
             $OwnerArguments = @('-Owner', $Suite)
+            if ($AllowLongRun) {
+                $OwnerArguments += '-AllowLongRun'
+            }
             $OwnerMessage = $null
             if ($Suite -eq 'compiler-reconstruction' -and
                 $Plan.Scope -eq 'development') {

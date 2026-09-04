@@ -24,8 +24,8 @@ const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '..', '..');
 const SELECTORS = [...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR'];
 const DYNAMIC_CASES = 12;
 const EXPECTED_RUNNER = WINDOWS
-    ? { bytes: 10_368_512, sha256: 'd5743801003ac0c43ce6b5b2b3c4bb195d8334f84f5a7f84c6e1edd04b8cf7a7' }
-    : { bytes: 10_371_072, sha256: 'e63bce623c470418ed3bede36ce2c4c3964c245c78766e45bb71090b637e3d0b' };
+    ? { bytes: 10_547_712, sha256: '8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972' }
+    : { bytes: 10_547_200, sha256: '4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e' };
 const EXPECTED_PINNED_ANALYZER = {
     bytes: 1_552_090,
     sha256: '5baba39b96932eca26d694b537d380f9ee6dcd4683afc81c09a99ab3c3cb9c77'

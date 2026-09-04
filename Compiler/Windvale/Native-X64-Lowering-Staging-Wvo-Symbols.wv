@@ -115,7 +115,7 @@ fn Decimalˉfour(Input: bytes, Offset: u32) -> u32 {
 }
 
 fn Dataˉsymbolˉlimit() -> u32 {
-    return 256u32;
+    return 512u32;
 }
 
 fn Dataˉnameˉordinal(Input: bytes, Offset: u32, Length: u32) -> u32 {
@@ -220,7 +220,7 @@ export fn Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉvalidate(
         Manifest.Compilerˉnativeˉx64ˉstagingˉmanifestˉvalidate(
             Stagingˉmanifest
         );
-    if Envelopeˉsummary.Symbols > 1281u32 {
+    if Envelopeˉsummary.Symbols > 1537u32 {
         return Invalid(
             Compilerˉnativeˉx64ˉstagingˉwvoˉsymbolsˉstatus.Limits
         );

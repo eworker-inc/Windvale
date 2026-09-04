@@ -45,7 +45,8 @@ fn Instructionˉlimitˉlow(Profile: u32) -> u32 {
 }
 
 fn Instructionˉlimitˉhigh(Profile: u32) -> u32 {
-    if Profile == 7u32 || Profile == 8u32 { return 32u32; }
+    if Profile == 8u32 { return 64u32; }
+    if Profile == 7u32 { return 32u32; }
     return 14u32;
 }
 

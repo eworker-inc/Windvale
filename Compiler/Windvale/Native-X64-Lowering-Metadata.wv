@@ -252,7 +252,7 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
     var Current: u32 = Cursor + 1u32;
     if Presence == 0u8 {
         if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
-            Minor == 36u32 || Minor == 37u32 {
+            Minor == 36u32 || Minor == 37u32 || Minor == 38u32 {
             return Invalidˉresult;
         }
         if Current != Limit { return Invalidˉresult; }
@@ -309,7 +309,7 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
     }
     if Requirementsˉoverlap(Required, Optional) { return Invalidˉresult; }
     if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 ||
-        Minor == 36u32 || Minor == 37u32 {
+        Minor == 36u32 || Minor == 37u32 || Minor == 38u32 {
         if Profile != 3u8 { return Invalidˉresult; }
     } else {
         var Expectedˉprofile: u8 = 1u8;
@@ -329,6 +329,32 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
         Required.Ranks,
         Optional.Count,
         Optional.Ranks
+    );
+}
+
+export fn Compilerˉnativeˉx64ˉregisteredˉforeignˉtargetˉisˉexact(
+    Input: bytes,
+    Cursor: u32,
+    Limit: u32
+) -> bool {
+    if Cursor >= Limit || Bytesˉreadˉu8(Input, Cursor) != 1u8 {
+        return false;
+    }
+    var Current: u32 = Cursor + 1u32;
+    if Limit - Current < 6u32 || Bytesˉreadˉu8(Input, Current) != 1u8 {
+        return false;
+    }
+    Current = Current + 2u32;
+    if Bytesˉreadˉu32ˉlittle(Input, Current) != 1u32 { return false; }
+    Current = Current + 4u32;
+    let Platform: Compilerˉnativeˉx64ˉmetadataˉstring =
+        Readˉstring(Input, Current, Limit);
+    if !Platform.Valid { return false; }
+    return Spanˉequalsˉtext(
+        Input,
+        Platform.Offset,
+        Platform.Length,
+        "linux.x86_64.sysv_amd64_c_v1"
     );
 }
 

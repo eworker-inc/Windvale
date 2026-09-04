@@ -169,7 +169,7 @@ fn Analyzeˉinspect(
     if Payload.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
     if Payload.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
     if Payload.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
-    if Payload.Type == 5u8 || Payload.Type == 10u8 {
+    if Payload.Type == 5u8 || Payload.Type == 9u8 || Payload.Type == 10u8 {
         U32ˉvalues = U32ˉvalues + 1u32;
     }
     if Payload.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }
@@ -242,7 +242,7 @@ fn Analyzeˉfield(
     if Field.Type == 2u8 { Boolˉvalues = Boolˉvalues + 1u32; }
     if Field.Type == 3u8 { Textˉvalues = Textˉvalues + 1u32; }
     if Field.Type == 4u8 { U8ˉvalues = U8ˉvalues + 1u32; }
-    if Field.Type == 5u8 || Field.Type == 10u8 {
+    if Field.Type == 5u8 || Field.Type == 9u8 || Field.Type == 10u8 {
         U32ˉvalues = U32ˉvalues + 1u32;
     }
     if Field.Type == 6u8 { Bytesˉvalues = Bytesˉvalues + 1u32; }

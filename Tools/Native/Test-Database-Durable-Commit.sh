@@ -53,8 +53,8 @@ linux_application="$temporary_directory/Commit.elf"
 windows_application="$temporary_directory/Commit.exe"
 
 echo 'START native database durable commit phase=tools item=1/4 retained-tools=1'
-verify_file "$lowerer" 10076160 \
-    9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 \
+verify_file "$lowerer" 10657792 \
+    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 \
     'retained lowerer' || exit 1
 echo 'PASS  native database durable commit phase=tools item=1/4'
 

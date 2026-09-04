@@ -51,8 +51,8 @@ verify_file "$build_driver" 30072832 \
     628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 \
     'retained build driver' || exit 1
 echo 'Progress: step=file-read-tools item=2/2 detail=verify-lowerer'
-verify_file "$lowerer" 10076160 \
-    9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 \
+verify_file "$lowerer" 10657792 \
+    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 \
     'retained lowerer' || exit 1
 echo 'PASS  native file read phase=tools item=1/6'
 

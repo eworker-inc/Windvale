@@ -31,7 +31,16 @@ Use `-PlanOnly` when you only need to inspect the affected owners. The planner
 selects focused native suites in canonical order and refuses unmapped active
 boundaries. The owner runner also reports expected and maximum duration and
 refuses an execution expected to exceed ten minutes unless `-AllowLongRun` is
-explicit. It does not fall back to an unfiltered or managed gate.
+explicit. After the named command and maximum duration have advance approval,
+pass that switch through the changed-file entry point:
+
+```powershell
+pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -AllowLongRun
+```
+
+The switch is forwarded only to owners run through the bounded coordinator;
+each owner still enforces its registered maximum. The command does not fall
+back to an unfiltered or managed gate.
 
 Verification levels are alternatives:
 

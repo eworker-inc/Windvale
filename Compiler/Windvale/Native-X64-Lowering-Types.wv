@@ -42,7 +42,7 @@ fn Rangeˉisˉvalid(Total: u32, Offset: u32, Length: u32) -> bool {
 }
 
 export fn Compilerˉnativeˉx64ˉtypesˉlimit() -> u32 {
-    return 128u32;
+    return 256u32;
 }
 
 export fn Compilerˉnativeˉx64ˉrecordˉtypesˉlimit() -> u32 {
@@ -378,7 +378,7 @@ fn Compilerˉnativeˉx64ˉcallableˉshapeˉisˉsupported(
         return false;
     }
     if Shape.Type == 1u8 || Shape.Type == 2u8 || Shape.Type == 4u8 ||
-        Shape.Type == 5u8 || Shape.Type == 10u8 {
+        Shape.Type == 5u8 || Shape.Type == 9u8 || Shape.Type == 10u8 {
         return true;
     }
     return Compilerˉnativeˉx64ˉtypeˉisˉenum(Shape.Type);
@@ -1871,7 +1871,12 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉscalarˉarithmetic(
         Consumed = 1u32;
         Emittedˉbytes = 32u32;
     }
-    if Numeric >= 20u32 { Type = 5u8; }
+    if Opcode == 133u8 {
+        Consumed = 1u32;
+        Type = 9u8;
+        Emittedˉbytes = 35u32;
+    }
+    if Numeric >= 20u32 && Opcode != 133u8 { Type = 5u8; }
     if Numeric >= 134u32 && Numeric <= 136u32 {
         Type = 10u8;
         Emittedˉbytes = 43u32;

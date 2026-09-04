@@ -107,7 +107,7 @@ try {
         '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
     ]);
     await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
+        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
     ]);
     const Pinnedˉanalyzerˉidentity = path.join(
         Work, 'Pinned-Analyzer.identity',
@@ -151,7 +151,7 @@ try {
         '--symbol-checkpoint',
     ]);
     await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Emitterˉwvb, Emitter, '--development-cache',
+        '8', Emitterˉwvb, Emitter, '--development-cache',
     ]);
     await Runˉnode('stage1-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,

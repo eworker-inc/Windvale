@@ -2280,8 +2280,11 @@ foreach ($Path in $Paths) {
     } elseif ($Path -eq 'Compiler/Windvale/Native-X64-Lowering-Metadata.wv') {
         Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -in @(
+        'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Stale.wvb.b64',
+        'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Success.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
-        'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64'
+        'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
+        'Tests/Native/X64-Paper-Buffer-Source.wva'
     )) {
         Add-Suite 'native-x64-lowering-development'
     } elseif ($Path -eq
@@ -4100,6 +4103,9 @@ foreach ($Path in $Paths) {
         } elseif ($Path -eq
             'Specifications/Windvale-Native-Wvb-Read-Only-Front-Door.md') {
             Add-Bytecode-Suites
+        } elseif ($Path -eq
+            'Specifications/Windvale-Native-Wvb-Unsafe-Rejection-Tests.md') {
+            Add-Suite 'unsafe-wvb'
         } elseif ($Path -eq 'Specifications/Windvale-WebAssembly.md') {
             Add-WebAssemblyVerification
         } elseif ($Path -eq 'Specifications/Windvale-Native-Compiler-Reconstruction.md') {
@@ -4202,7 +4208,7 @@ foreach ($Path in $Paths) {
             Add-Suite 'publisher-rejections'
         } elseif ($Path -eq 'Specifications/Windvale-Native-X64-Lowering.md') {
             Add-Compiler-Suites
-            $script:DatabaseStorageDevelopmentEligible = $false
+            $null = $SelectedDatabaseDevelopmentTargets.Add('host-storage')
             Add-Suite @('native-u64-lowering', 'model-provider', 'database-storage', 'wvb-to-wvo-reconstruction')
         } elseif ($Path -eq
             'Specifications/Compiler-Source-Foreign-Lowering-Carrier.md') {

@@ -9,17 +9,10 @@ fi
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P) || exit 1
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P) || exit 1
 native="$repository_root/Tools/Native"
-recovery_commit=4aca9935679b67f46bfb97f37c2e566980bbab68
 temporary_root=${TMPDIR:-/tmp}
 work=$(mktemp -d "$temporary_root/windvale-standard-byte-output.XXXXXXXX") || exit 1
-recovery="$work/compiler-recovery"
-worktree_added=0
 
 cleanup() {
-    if [[ $worktree_added -eq 1 ]]; then
-        git -c "safe.directory=$repository_root" -C "$repository_root" \
-            worktree remove "$recovery" >/dev/null 2>&1 || true
-    fi
     case "$work" in
         "$temporary_root"/windvale-standard-byte-output.*)
             rm -rf -- "$work"
@@ -33,6 +26,7 @@ cleanup() {
 trap cleanup EXIT
 
 workspace=$(realpath "$repository_root/Windvale.wvws")
+build_driver="$repository_root/Artifacts/Native-Compiler-Reconstruction-Candidate/linux-x64/wvbuild.elf"
 library_project=$(realpath "$repository_root/Projects/Libraries/Windvale-Library-Standard-Byte-Output-Core.wvproj")
 test_project=$(realpath "$repository_root/Projects/Tests/Windvale-Native-Test-Standard-Byte-Output-Core.wvproj")
 lowerer="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.elf"
@@ -44,28 +38,18 @@ verify_file() {
     [[ $(sha256sum "$path" | cut -d ' ' -f 1) == "$expected_hash" ]]
 }
 
-echo 'START native standard byte output phase=tools item=1/4'
-git -c "safe.directory=$repository_root" -C "$repository_root" \
-    cat-file -e "$recovery_commit^{commit}" || exit 1
-git -c "safe.directory=$repository_root" -C "$repository_root" \
-    worktree add --detach "$recovery" "$recovery_commit" >/dev/null 2>&1 || exit 1
-worktree_added=1
-"$recovery/Tools/Native/Build-Wvb.sh" \
-    "$recovery/Projects/Tools/Windvale-Compiler-Build-Driver.wvproj" \
-    "$work/Build-Driver.wvb" >/dev/null || exit 1
-verify_file "$work/Build-Driver.wvb" 1121370 ed5bbceaa0f1b4d889a7d17fe1d138d0bd5a01a593f6925ba34023ff0b0960ef || exit 1
-"$native/Package-Segmented-Compiler-Wvb.sh" 2 "$work/Build-Driver.wvb" \
-    "$work/Build-Driver.elf" --development-cache >/dev/null || exit 1
-verify_file "$lowerer" 10076160 9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 || exit 1
+echo 'START native standard byte output phase=tools item=1/4 retained-tools=2'
+verify_file "$build_driver" 30072832 628fd60ea702c4a3b3ffb01d32cba7ba9708477acccf190cc6506a56f159d7a9 || exit 1
+verify_file "$lowerer" 10657792 4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 || exit 1
 echo 'PASS  native standard byte output phase=tools item=1/4'
 
 echo 'START native standard byte output phase=compile item=2/4'
-"$work/Build-Driver.elf" --workspace "$workspace" --project "$library_project" "$work/Library-A.wvb" >/dev/null || exit 1
-"$work/Build-Driver.elf" --workspace "$workspace" --project "$library_project" "$work/Library-B.wvb" >/dev/null || exit 1
+"$build_driver" --workspace "$workspace" --project "$library_project" "$work/Library-A.wvb" >/dev/null || exit 1
+"$build_driver" --workspace "$workspace" --project "$library_project" "$work/Library-B.wvb" >/dev/null || exit 1
 cmp -s "$work/Library-A.wvb" "$work/Library-B.wvb" || exit 1
 verify_file "$work/Library-A.wvb" 55898 d80e98f785e8dfab0e357a7d74457f07775141bf31d2773e2d7745c061a7aa26 || exit 1
-"$work/Build-Driver.elf" --workspace "$workspace" --project "$test_project" "$work/Test-A.wvb" >/dev/null || exit 1
-"$work/Build-Driver.elf" --workspace "$workspace" --project "$test_project" "$work/Test-B.wvb" >/dev/null || exit 1
+"$build_driver" --workspace "$workspace" --project "$test_project" "$work/Test-A.wvb" >/dev/null || exit 1
+"$build_driver" --workspace "$workspace" --project "$test_project" "$work/Test-B.wvb" >/dev/null || exit 1
 cmp -s "$work/Test-A.wvb" "$work/Test-B.wvb" || exit 1
 verify_file "$work/Test-A.wvb" 75874 7fba163fd1087c324bf640879b72a5208375e49ab298950ba97d987a7c2a4d17 || exit 1
 "$lowerer" "$work/Test-A.wvb" "$work/Test-A.wvo" >/dev/null || exit 1

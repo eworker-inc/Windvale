@@ -49,35 +49,35 @@ if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=build item=3/3 project=canonical-transport
 
 echo START segmented compiler toolset construction phase=package item=1/3 family=WVO-staging
-call :construct_pair Wvo-Staging "%WvoStagingWvb%" ^
+call :construct_pair 8 Wvo-Staging "%WvoStagingWvb%" ^
     "%OutputRoot%\windows-x64-wvstage.exe" ^
     "%OutputRoot%\linux-x64-wvstage.elf"
 if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=package item=1/3 family=WVO-staging
 echo START segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging
-call :construct_pair Image-Staging "%ImageStagingWvb%" ^
+call :construct_pair 6 Image-Staging "%ImageStagingWvb%" ^
     "%OutputRoot%\windows-x64-wvlinkstage.exe" ^
     "%OutputRoot%\linux-x64-wvlinkstage.elf"
 if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=package item=2/3 family=compiler-image-staging
 echo START segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
-call :construct_pair Transport "%TransportWvb%" ^
+call :construct_pair 6 Transport "%TransportWvb%" ^
     "%OutputRoot%\windows-x64-wvimagetransport.exe" ^
     "%OutputRoot%\linux-x64-wvimagetransport.elf"
 if errorlevel 1 goto :cleanup
 echo PASS  segmented compiler toolset construction phase=package item=3/3 family=canonical-transport
 
-call :verify_file "%WvoStagingWvb%" 728718 80694188b3f62f27851f8e21d04bcd9450bea01f2fc5fb4e67dfe9b137f77d2b "WVO staging producer WVB"
+call :verify_file "%WvoStagingWvb%" 774524 427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f "WVO staging producer WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 10601984 e7ce71d35c2439ecf592206cd76b3b1d884bffc6f464e865a228cbf7c3230aae "Windows WVO staging producer"
+call :verify_file "%OutputRoot%\windows-x64-wvstage.exe" 11184128 f289d608d6545dfeece35dfd325bf0a62ef862aeae0b069b47157fb97652820e "Windows WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 10604544 131b50ed4da1b3e9514a846730495c2341b1fad62c5ff13d9547953eab503e0e "Linux WVO staging producer"
+call :verify_file "%OutputRoot%\linux-x64-wvstage.elf" 11186176 cafd9627383fdbd681bdcc5906a6fe0aedcb423ba0b7f380b39f43e7fd5aa0b8 "Linux WVO staging producer"
 if errorlevel 1 goto :cleanup
-call :verify_file "%ImageStagingWvb%" 81530 825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9 "compiler-image staging WVB"
+call :verify_file "%ImageStagingWvb%" 81530 03a928f036a188fc943d3d197d45114cbb327d5edffae62ee3cc842186267bbc "compiler-image staging WVB"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 931840 969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f "Windows compiler-image staging application"
+call :verify_file "%OutputRoot%\windows-x64-wvlinkstage.exe" 931840 cc94fba08e6f4a5b20a0ddfc509f40f9fe8e801375d5e97320aec01f9f9f1b5b "Windows compiler-image staging application"
 if errorlevel 1 goto :cleanup
-call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 933888 d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0 "Linux compiler-image staging application"
+call :verify_file "%OutputRoot%\linux-x64-wvlinkstage.elf" 933888 bdbea8e2e8c8eb48211be5068bd93b5f4011814bc2ef15acffb5fdee622ac58d "Linux compiler-image staging application"
 if errorlevel 1 goto :cleanup
 call :verify_file "%TransportWvb%" 23836 d4bdfa7588e4431432a300e0da257507d73846931f5dd1296855b03714d218c8 "compiler-image transport WVB"
 if errorlevel 1 goto :cleanup
@@ -91,10 +91,11 @@ set "Result=0"
 goto :cleanup
 
 :construct_pair
-set "ConstructionName=%~1"
-set "ConstructionWvb=%~2"
-set "ConstructionWindows=%~3"
-set "ConstructionLinux=%~4"
+set "ConstructionProfile=%~1"
+set "ConstructionName=%~2"
+set "ConstructionWvb=%~3"
+set "ConstructionWindows=%~4"
+set "ConstructionLinux=%~5"
 set "WorkDirectory=%TemporaryDirectory%\%ConstructionName%"
 mkdir "%WorkDirectory%" || exit /b 1
 set "ObjectPrefix=%WorkDirectory%\Object"
@@ -130,12 +131,12 @@ echo(%FragmentCount%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
 if %FragmentCount% LSS 1 exit /b 1
 if %FragmentCount% GTR 16 exit /b 1
 
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %ConstructionProfile% ^
     "%ConstructionWvb%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% ^
     "%ConstructionWindows%" windows ^
     >"%WorkDirectory%\Windows.txt" 2>"%WorkDirectory%\Windows.err"
 if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image %ConstructionProfile% ^
     "%ConstructionWvb%" "%CanonicalPrefix%" %FragmentCount% %NativeEntry% ^
     "%ConstructionLinux%" linux ^
     >"%WorkDirectory%\Linux.txt" 2>"%WorkDirectory%\Linux.err"

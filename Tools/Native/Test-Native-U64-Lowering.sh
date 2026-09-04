@@ -55,8 +55,8 @@ page_linux_application="$temporary_directory/Page.elf"
 page_windows_application="$temporary_directory/Page.exe"
 page_fixture="$repository_root/Tests/Fixtures/Database/Native-Hosted-Snapshot-Page.txt"
 
-verify_file "$lowerer" 10076160 \
-    9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 \
+verify_file "$lowerer" 10657792 \
+    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 \
     'native lowerer candidate' || exit $?
 
 "$script_directory/Build-Wvb.sh" \

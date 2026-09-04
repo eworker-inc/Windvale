@@ -536,7 +536,8 @@ function Invoke-WindvaleTestRunner {
                 $TemporaryFiles.Add($SuiteError)
                 $TemporaryFiles.Add($ProcessStatusPath)
                 & $Node.Source $StreamHelper $SuiteOutput $SuiteError `
-                    $Entry.CommandPath $RemainingMilliseconds $ProcessStatusPath
+                    $Entry.CommandPath $RemainingMilliseconds $ProcessStatusPath |
+                    Out-Host
                 $HelperExitCode = $LASTEXITCODE
                 $ProcessStatus = $null
                 try {

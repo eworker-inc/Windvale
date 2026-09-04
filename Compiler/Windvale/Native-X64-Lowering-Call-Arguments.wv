@@ -16,7 +16,7 @@ fn Typeˉisˉdescriptor(Type: u8) -> bool {
 }
 
 fn Typeˉisˉwideˉscalar(Type: u8) -> bool {
-    return Type == 10u8;
+    return Type == 9u8 || Type == 10u8;
 }
 
 fn Emitˉframeˉadjustment(

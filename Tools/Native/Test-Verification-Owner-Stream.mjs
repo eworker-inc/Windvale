@@ -36,6 +36,11 @@ if (process.env.WINDVALE_VERIFICATION_OWNER_TIMEOUT_FIXTURE === '1') {
     process.exit(0);
 }
 
+if (process.env.WINDVALE_VERIFICATION_OWNER_FAILURE_FIXTURE === '1') {
+    process.stdout.write('verification owner forced failure\n');
+    process.exit(7);
+}
+
 const Work = mkdtempSync(path.join(
     os.tmpdir(), 'windvale-verification-owner-stream-',
 ));

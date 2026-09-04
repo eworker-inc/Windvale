@@ -97,12 +97,13 @@ identity is therefore part of this containment boundary, including its
 verifier-specific startup rather than a generic hosted-compiler startup.
 
 All 1,000 WVB values must return the native verifier's rejection exit, write no
-standard output, emit one structured `wvb status=Invalid phase=...` diagnostic,
-and preserve the input. All 500 WVO values must return the native object
-verifier's rejection exit, write no standard output, emit one structured
-`object status=...` diagnostic with bounded counts and offset, and preserve the
-input. Stage 0 codes and offsets remain provenance; representative fixed
-matrices continue to own exact native diagnostic-family agreement.
+standard output, emit one structured `wvb status=Invalid phase=...` diagnostic
+with an optional lowercase `step=...` semantic substep, and preserve the input.
+All 500 WVO values must return the native object verifier's rejection exit,
+write no standard output, emit one structured `object status=...` diagnostic
+with bounded counts and offset, and preserve the input. Stage 0 codes and
+offsets remain provenance; representative fixed matrices continue to own exact
+native diagnostic-family agreement.
 
 ## Host commands
 

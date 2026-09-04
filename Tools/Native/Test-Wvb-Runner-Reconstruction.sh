@@ -74,9 +74,9 @@ report_runtime() {
     done
 }
 
-if check_file "$candidate/Wvb-Runner.wvb" 1020604 05fd4635781f2660922760a1c96cbfd675a7a3ebb74fcd780c965db56f9b9b51 &&
-    check_file "$candidate/windows-x64-wvrun.exe" 10368512 d5743801003ac0c43ce6b5b2b3c4bb195d8334f84f5a7f84c6e1edd04b8cf7a7 &&
-    check_file "$candidate/linux-x64-wvrun.elf" 10371072 e63bce623c470418ed3bede36ce2c4c3964c245c78766e45bb71090b637e3d0b; then
+if check_file "$candidate/Wvb-Runner.wvb" 1040878 4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b &&
+    check_file "$candidate/windows-x64-wvrun.exe" 10547712 8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972 &&
+    check_file "$candidate/linux-x64-wvrun.elf" 10547200 4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e; then
     echo 'PASS candidate inventory'
     passed=$((passed + 1))
 else

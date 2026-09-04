@@ -7,8 +7,8 @@ artifact_root="$repository_root/Artifacts/Native-Front-Door"
 manifest="$artifact_root/Manifest.json"
 inventory="$artifact_root/SHA256SUMS"
 verifier="$artifact_root/linux-x64/wvverify.elf"
-manifest_digest=9957de4bbd69b2300e25567685f4de2befc89e6db611bcd8957002bbed0ed9c0
-inventory_digest=7ca7eff5a7398da2e3b9f85142b005e91fbca2cf80ec2bd5b2a5dd02f1d953b5
+manifest_digest=b5a27bbd6d143c73907f2908bd1022f30de474c5d922473086213dad9ab5319a
+inventory_digest=cce8e76c7e16f9697241356490f18a87116b996a16f71284b161d6f0897996ad
 
 verify_file() {
     local path=$1
@@ -32,7 +32,7 @@ verify_file() {
     fi
 }
 
-verify_file "$manifest" 6133 "$manifest_digest" 'front-door manifest' || exit 1
+verify_file "$manifest" 6170 "$manifest_digest" 'front-door manifest' || exit 1
 verify_file "$inventory" 1605 "$inventory_digest" 'front-door checksum inventory' || exit 1
 if ! (cd -- "$artifact_root" && sha256sum --check --strict --quiet SHA256SUMS); then
     echo 'The native front-door artifact inventory differs.' >&2

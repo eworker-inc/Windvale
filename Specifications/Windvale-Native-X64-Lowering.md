@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11, 1.30, 1.31, 1.33, 1.34, 1.35, 1.36, or 1.37 module, independently verifies the metered scalar-control, nominal, direct-call, selected provider-call, frame-owned callable, unsafe-scratch, immutable borrowed-memory-budget, immutable borrowed-scratch observation, mutable write-region validation, and contained write-pointer subsets described below, and emits canonical WVO 1.0. Ordinary modules use ABI 22; an actual admitted provider call selects ABI 23 and execution context 9.
+`Compilerˉnativeˉx64ˉlowering` is the first portable Windvale-written slice of the shared x86-64 backend. It consumes one bounded WVB 1.11, 1.30, 1.31, 1.33, 1.34, 1.35, 1.36, 1.37, or 1.38 module, independently verifies the metered scalar-control, nominal, direct-call, selected provider-call, frame-owned callable, unsafe-scratch, immutable borrowed-memory-budget, immutable borrowed-scratch observation, mutable write-region validation, contained write-pointer, and registered Foreign-call subsets described below, and emits canonical WVO 1.0. Ordinary modules use ABI 22; an actual admitted provider call selects ABI 23 and execution context 9. WVB 1.38 accepts only the exact `linux.x86_64.sysv_amd64_c_v1` target and emits one registered imported function symbol; it does not open a general native loader or FFI surface.
 
 This is algorithmic machine-byte selection, not a lowering plan, private intermediate format, or collection of whole-program stencils. The bounded core now has a paired [native WVB-to-WVO application candidate](Windvale-Native-Wvb-To-Wvo.md). The Windvale-native compiler is the normal implementation for this accepted subset. Wider recovery and differential evidence remains outside the normal build and execution path.
 
@@ -39,15 +39,15 @@ The status vocabulary is:
 
 The shared lowering core accepts exactly:
 
-- WVB 1.11, 1.30, 1.31, 1.33, 1.34, 1.35, 1.36, or 1.37 with seven canonical sections, no trailing bytes, and a valid module identifier; 1.11 contains no callable descriptor or operation, 1.30 contains at least one `D3` or `D4` and no `D5`, 1.31 contains at least one `D5`, 1.33 contains exact unsafe-scratch evidence, 1.34 contains at least one immutable borrowed-budget parameter, 1.35 contains at least one exact `DD` scratch-length observation, 1.36 contains at least one exact `DE` write-region operation, and 1.37 contains at least one exact `DF` write-pointer operation;
-- portable profile with no capabilities, hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes`, `storage.random_access_v1(u32,u64,u64,u32,bytes)->bytes`, `standard_output.write_v1(bytes)->bytes`, `model.catalog_v1(bytes)->bytes`, and `model.inference_v1(bytes)->bytes` provider signatures when selected by an application, or the exact capability-free System profile for WVB 1.33/1.34/1.35/1.36/1.37; generic service calls retain ABI 22 and provider calls select ABI 23;
-- zero through 128 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 256 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
-- one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes`, or the exact WVB 1.33/1.34/1.35/1.36/1.37 `Main(Memoryˉbudget) -> i32`, at any ordinal and every other function non-exported;
-- parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those seven primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
+- WVB 1.11, 1.30, 1.31, 1.33, 1.34, 1.35, 1.36, 1.37, or 1.38 with seven canonical sections, no trailing bytes, and a valid module identifier; 1.11 contains no callable descriptor or operation, 1.30 contains at least one `D3` or `D4` and no `D5`, 1.31 contains at least one `D5`, 1.33 contains exact unsafe-scratch evidence, 1.34 contains at least one immutable borrowed-budget parameter, 1.35 contains at least one exact `DD` scratch-length observation, 1.36 contains at least one exact `DE` write-region operation, 1.37 contains at least one exact `DF` write-pointer operation, and 1.38 contains at least one exact registered `E0` Foreign-call operation;
+- portable profile with no capabilities, hosted profile with canonically ordered declarations drawn from the six exact generic service signatures `console.write_line`, `diagnostic.write_line`, `file.read_bytes`, `file.write_bytes`, `process.argument`, and `process.argument_count`, plus the exact ABI-23 `filesystem.directory_read_v1(text,u32,u32)->bytes`, `storage.random_access_v1(u32,u64,u64,u32,bytes)->bytes`, `standard_output.write_v1(bytes)->bytes`, `model.catalog_v1(bytes)->bytes`, and `model.inference_v1(bytes)->bytes` provider signatures when selected by an application, or the exact capability-free System profile for WVB 1.33/1.34/1.35/1.36/1.37/1.38; generic service calls retain ABI 22 and provider calls select ABI 23; WVB 1.38 additionally requires the exact `linux.x86_64.sysv_amd64_c_v1` platform target;
+- zero through 256 canonical type declarations with at most 116 records, 64 enums, 64 variants, and 128 terminal callable descriptors within that total; every encodable variant has declaration index below 64, one through 64 cases, and no recursive or variant payload; every record has one through 64 named fields whose shapes are admitted primitives, enums, or acyclic admitted records and whose recursively flattened backing is at most 64 cells; every enum has one through 256 named members with explicit unique signed backing values; every callable descriptor has the containing module's exact profile, one admitted scalar or enum result, and zero through 64 admitted scalar or enum parameters; and zero through 512 immutable text, bytes, or `[i32]` declarations, where text contains at most 1 MiB of valid UTF-8, bytes contains at most 4 MiB, and each i32 array contains at most 262,144 elements;
+- one through 1,024 functions with exactly one exported parameterless `Main() -> i32` or `Main() -> bytes`, or the exact WVB 1.33/1.34/1.35/1.36/1.37/1.38 `Main(Memoryˉbudget) -> i32`, at any ordinal and every other function non-exported;
+- parameterless `Main() -> i32` or `Main() -> bytes`, zero through 64 `i32`, `bool`, `text`, `u8`, `u32`, `i64`, `u64`, `bytes`, admitted enum, admitted record, or admitted variant helper parameters and those same primitive or nominal helper returns, declared locals using those eight primitive types plus admitted enum, record, or variant identities, fewer than 2,048 combined parameters and declared locals per function, a declared maximum stack depth from one through 1,024, at most 131,072 code bytes and 32,768 decoded instructions per function, adjacent exact code ranges, and no unclaimed function-section bytes; record/variant-bearing functions retain the narrower 1,024-basic-block, 8,192-instruction, 1,024-declared-record-local, 256-produced-record-value-per-block, and immutable-record-parameter limits;
 - one control-flow graph per function of at most 8,192 instructions drawn from the existing scalar, descriptor, enum, record, call, and control families, including `bytes.sha256_hex`, plus `variant.create`, `variant.is_case`, and `variant.payload`; every variant instruction names an admitted declaration and case, consumes the exact case payload shape, and preserves its nominal identity; every data, enum, record, variant, direct-call, or capability operation names an in-range declaration and consumes and produces its exact typed stack shape; and
 - instruction-aligned forward or backward targets, empty stacks at every block edge, complete fixed-point reachability from entry, valid typed local uses and stack effects, an exact declared maximum depth, and a combined local/value frame of at most 2,048 ABI cells. Locals retain WVB's zero-initialized entry semantics.
 
-### WVB 1.33 through WVB 1.37 System profile
+### WVB 1.33 through WVB 1.38 System profile
 
 WVB 1.33 lowers the exact bounded `unsafe.scratch.construct` operation. The
 backend independently validates the shape-`25` budget owner, canonical result
@@ -112,6 +112,34 @@ lowers, checks, links, packages, and executes one exact native result of `42`,
 compares two inherited WVO byte identities, and rejects ten malformed pointer
 or ownership cases.
 
+WVB 1.38 changes only the exact registered Foreign path. A function containing
+opcode `E0` reserves four additional 16-byte cells for the bounded 64-byte
+scratch backing. Scratch construction writes that private frame address into
+the descriptor's high word; write-region validation publishes the checked
+start-adjusted address; and `DF` preserves the resulting private
+`{address,length}` pointer record. The address remains frame-owned and is
+observable only by the immediately consuming registered call.
+
+Opcode `E0` requires binding `1`, the canonical write-pointer and ABI type
+identities, and the exact affine `pointer`, `capacity`, `generation` load
+sequence. Before the call it rejects a null pointer handle, null native address,
+length/capacity disagreement, capacity other than 64, or address not aligned to
+eight bytes. It passes address, capacity, and generation in SysV `RDI`, `RSI`,
+and `RDX`, aligns helper stacks before one relocated `call rel32`, and stores the
+signed `i64` result from `RAX`. The exact metered sizes are 316 bytes for scratch
+construction, 363 bytes for write-region construction, 61 bytes for pointer
+derivation, and 101 bytes in `Main` or 109 bytes in a helper for `E0`; each
+operation size includes the common ten-byte instruction-budget charge.
+
+The WVO contains exactly one imported function symbol named
+`wv_paper_buffer_source_read_v1` when `E0` is present, and every `E0` call has
+one ordered `Relative_i32` relocation with addend `-4` to that symbol. Symbol
+resolution remains the linker's responsibility; the lowerer does not load a
+library or grant ambient authority. The focused current-source owner covers 25
+valid and malformed cases on Windows and Linux, links both registered outcomes,
+and executes three native cases on Linux, including success and stale-generation
+behavior.
+
 ### Selected callable ABI
 
 The first native callable ABI is deliberately frame-owned and nonescaping. A
@@ -163,7 +191,7 @@ The output is one standard WVO 1.0 x86-64 object:
 - one 16-byte-aligned `.text` section containing the computed code bytes and, when static data exists, the canonical alignment padding;
 - an optional 16-byte-aligned `.rodata` section containing every admitted declaration's exact packed payload bytes;
 - canonical local `$function_NNNN` symbols for every non-main ordinal followed by one exported `Main` function symbol, plus local `$data_NNNN` symbols in declaration order, each spanning its exact range; and
-- one ordered `Relative_i32` relocation with addend `-4` for each i32-array load or static text/bytes descriptor address, and no platform imports.
+- one ordered `Relative_i32` relocation with addend `-4` for each i32-array load or static text/bytes descriptor address; WVB 1.38 `E0` additionally emits one relocation per call to the single exact imported `wv_paper_buffer_source_read_v1` function symbol, while every other accepted input has no platform import.
 
 A variant is record-backed in the generated frame. Its first cell carries the
 case tag, its remaining bounded backing carries the selected scalar,
@@ -177,7 +205,14 @@ The selector assigns one deterministic 16-byte ABI cell to each parameter or loc
 
 `bytes.from_u64_little` checks exact eight-byte arena growth, publishes one complete owned descriptor, stores the complete source scalar in little-endian order, and uses the existing arena-exhaustion detail.
 
-The admitted `u64` arithmetic is exact and checked: addition and subtraction branch on carry or borrow, multiplication rejects a nonzero high half, and division/remainder reject zero divisors. Unsigned comparisons use the complete 64-bit value. Bitwise and, or, xor, and not preserve all 64 bits; shifts require a `u32` count below 64, discard shifted-out high bits on the left, and fill with zero on the right. `Bytesˉreadˉu64ˉlittle` performs the existing exact eight-byte bounds proof before one little-endian load, `Bytesˉfromˉu64ˉlittle` performs the symmetric exact store, and `U64ˉfromˉu32` zero-extends losslessly. A scalar `u64` function result returns the complete value in `RAX` and reports status separately in `RDX`, avoiding the prior packed-high-word convention that could not represent all 64 result bits. This slice deliberately does not yet admit `i64` or `u64` formatting.
+The admitted `u64` arithmetic is exact and checked: addition and subtraction branch on carry or borrow, multiplication rejects a nonzero high half, and division/remainder reject zero divisors. Unsigned comparisons use the complete 64-bit value. Bitwise and, or, xor, and not preserve all 64 bits; shifts require a `u32` count below 64, discard shifted-out high bits on the left, and fill with zero on the right. `Bytesˉreadˉu64ˉlittle` performs the existing exact eight-byte bounds proof before one little-endian load, `Bytesˉfromˉu64ˉlittle` performs the symmetric exact store, and `U64ˉfromˉu32` zero-extends losslessly. A scalar `u64` function result returns the complete value in `RAX` and reports status separately in `RDX`, avoiding the prior packed-high-word convention that could not represent all 64 result bits. This slice deliberately does not yet admit `u64` formatting.
+
+WVB 1.38 admits the bounded `i64` subset required by the registered Foreign
+result: constants, negation, signed comparison, local movement, direct calls,
+and returns. An `i64` uses the same complete eight-byte scalar cell and 64-bit
+register or stack-argument path as `u64`, while retaining its distinct signed
+type and comparison rules. General checked `i64` arithmetic and formatting
+remain outside this slice.
 
 Persistent and scratch record interference use one packed bit per ordered pair. The packed representation preserves Stage 0's deterministic descending-width, first-fit allocation while avoiding a dense byte-per-pair compiler-scale envelope.
 
@@ -462,8 +497,8 @@ declared function code; and one final exported `Main` fills the one omitted
 ordinal and exact declared-code gap. Reserved fields, bindings, kinds, section
 indices, names, ranges, data coverage, function coverage, helper contiguity,
 and the optional zero-through-15-byte text padding are checked. The complete
-chunk must be consumed, with at most 256 data symbols, 1,024 functions, and
-1,281 symbols total. The additional symbol is available only for the one
+chunk must be consumed, with at most 512 data symbols, 1,024 functions, and
+1,537 symbols total. The additional symbol is available only for the one
 private helper; it does not widen either admitted data or function inventory.
 The symbol chunk's end is the exact relocation position. A nonempty
 relocation table must be one following manifest chunk of `count * 20` bytes
@@ -635,7 +670,7 @@ It reads the input once, calls the portable core in memory, writes exactly once 
 
 `Wvb-To-Wvo-Diagnostic-Write-Line.wv` writes one immutable `A` diagnostic line and returns 42. The reference interpreter and Stage 0 native execution both produce exact `A` plus LF on the diagnostic channel, while both Windvale adapters and the direct native package retain Stage 0's exact object bytes. Existing output-service tests retain separate-channel, Unicode, empty-line, authorization, rejection, and partial-sink coverage.
 
-`Wvb-To-Wvo-Large-Envelope.wv` declares nine immutable data items, nine nominal types, and ten functions. Its WVO contains canonical `$data_0008` and `$function_0008` symbols and agrees byte for byte through Stage 0, the Windvale memory adapter, and the hosted Windvale tool. The explicit 256-data, 64-record plus 64-enum, and 1,024-function limits cover the current 532-function segmented compiler while retaining the existing 64-parameter, 2,048-physical-cell, per-entry, instruction, aggregate-code, and relocation boundaries. A module-scale function-count rejection retains the sentinel function index and reports the rejected count in the plan detail field.
+`Wvb-To-Wvo-Large-Envelope.wv` declares nine immutable data items, nine nominal types, and ten functions. Its WVO contains canonical `$data_0008` and `$function_0008` symbols and agrees byte for byte through Stage 0, the Windvale memory adapter, and the hosted Windvale tool. The explicit 512-data, 64-record plus 64-enum, and 1,024-function limits cover the current compiler-scale source while retaining the existing 64-parameter, 2,048-physical-cell, per-entry, instruction, aggregate-code, and relocation boundaries. The focused data-reader boundary admits exactly 512 entries and rejects 513 before entry allocation. A module-scale function-count rejection retains the sentinel function index and reports the rejected count in the plan detail field.
 
 `Wvb-To-Wvo-Descriptor-Calls.wv` passes and returns borrowed `text`, borrowed `bytes` slices, and arena-owned concatenation results, retains a returned value across later allocation, and returns 42. Its six-parameter helper mixes descriptor and scalar register positions, then carries an `i32` and a complete `bytes` descriptor through the fifth and sixth stack cells. The reference interpreter and Stage 0 native execution agree, while the memory adapter and hosted Windvale tool reproduce Stage 0's complete WVO byte for byte.
 
@@ -651,11 +686,11 @@ It reads the input once, calls the portable core in memory, writes exactly once 
 
 The existing shared-backend conformance case compiles the Windvale modules once and compares produced WVO bytes with Stage 0 across constants, checked arithmetic, nested expressions, all admitted scalar shapes and comparisons, boolean negation, both conditional routes, forward and backward jumps, loops, early returns, bounded calls, mixed scalar arguments in all four register positions, mixed stack arguments after position four, typed scalar and descriptor returns, general call order, recursion, and canonical static data. The combined arithmetic oracle is exactly 1,871 code bytes and a 1,944-byte WVO. The retained nested-control oracle is exactly 4,835 code bytes and a 4,908-byte WVO. The metered loop oracle is exactly 1,665 code bytes and a 1,738-byte WVO; native execution succeeds at its exact 157-instruction requirement and reaches `WVR3011` at 156. The parameterless call oracle is exactly 795 code bytes and a 902-byte WVO, with exact shared instruction and two-entry depth boundaries retained by Stage 0 execution. The four-parameter mixed-scalar oracle is exactly 2,581 code bytes and a 2,688-byte WVO. The existing three-function `Add -> Build -> Main` fixture additionally calls both lower ordinals through control flow and returns 42. A verifier-approved `Alpha, Main, Zeta` oracle combines a real forward edge with same-signature forward/back mutual recursion; it returns 42 at exact call depth five, reaches `WVR3004` at four, and produces Stage 0's exact 4,350-byte `.text` and 4,491-byte WVO. Canonical 493-byte `Sum-Data.wv` combines one `[i32]` declaration, `data.length`, a bounds-checked load, backward control, and a scalar call; it produces the exact 3,088-byte `.text`, 16-byte `.rodata`, one relocation, and 3,288-byte WVO emitted by Stage 0. Canonical compiler-produced `Function-Only.wv` returns 6 through `u32` loop state and checked addition, a `u8` argument/comparison, and a Boolean helper result; the memory adapter, hosted tool, and generated native tool reproduce Stage 0's exact 6,041-byte `.text` and 6,216-byte WVO. A small source-defined `Byte() -> u8` and `Count() -> u32` vector returns 42 while exercising every `u32` and `u8` comparison across true and false routes; it reproduces Stage 0's exact 5,263-byte `.text` and 5,404-byte WVO through the hosted lowerer. The same test executes every retained input through the hosted lowering shell as native x86-64; exercises memory and hosted adapters over malformed stack, invalid-local, invalid-data, invalid-branch, unreachable control, out-of-range call target, and mismatched-parameter-type streams; and verifies that truncated input leaves a sentinel output unchanged. The same generated tool fragment is host-neutral; current-host evidence is not a Windows/Linux qualification claim.
 
-The mixed-scalar call code and WVO SHA-256 identities remain `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. Existing retained oracle objects remain byte-identical. The current hosted tool is the exact 678,601-byte WVB at SHA-256 `c552c6ca542a60de8140c78e4d978be75a70f8baf50cf7ae5661008c9259b823` and reproduces through the pinned native source front door.
+The mixed-scalar call code and WVO SHA-256 identities remain `1a0a541d2bd59378b4fa6df53248c3c359e909a0b7446198ebb1a58ca5a79721` and `cb7d2c74edb7aa3443e1e23cf0d762d4c15b79c39ea4f363531b2ec80633c13f`. Existing retained oracle objects remain byte-identical. The current hosted tool is the exact 747,242-byte WVB at SHA-256 `7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f` and reproduces through the pinned native source front door.
 
 The accepted variant subset is deliberately finite: no recursive variant,
 variant-valued payload, mutable payload, or declaration index beyond the
 one-byte nominal encoding is admitted. Directory, storage, and model provider
 calls are likewise exact signatures; none grants ambient host authority.
 
-This slice does not yet transfer mutable record parameters, dynamic byte builders beyond concatenation, `i64`, `u64` formatting/bitwise/shift/byte construction, the remaining scalar conversions and multi-byte construction instruction families, modules beyond the accepted function/data/nominal envelope, other hosted capability declarations and calls, broader nominal values, general relocations, fragment verification, W^X publication, PE/ELF construction, or the complete compiler. WVO 1.0 also does not serialize the required-service and nominal-type metadata needed to execute hosted calls or `enum.name` independently from the verified fragment. This slice does not satisfy a general native product gate by itself.
+This slice does not yet transfer mutable record parameters, provide dynamic byte builders beyond concatenation, general `i64` arithmetic, `u64` formatting/bitwise/shift/byte construction, the remaining scalar conversions and multi-byte construction instruction families, modules beyond the accepted function/data/nominal envelope, other hosted capability declarations and calls, broader nominal values, general imports or relocations, fragment verification, W^X publication, PE/ELF construction, or the complete compiler. WVO 1.0 also does not serialize the required-service and nominal-type metadata needed to execute hosted calls or `enum.name` independently from the verified fragment. This slice does not satisfy a general native product gate by itself.

@@ -7,11 +7,11 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate"
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 701436 124f968f6d1e6aa71ce3cd9136a4c4df2db6022253404286979fd6c0e26cfe97
+call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 747242 7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.exe" 10075136 22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea
+call :check_file "%Candidate%\Wvb-To-Wvo.exe" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.elf" 10076160 9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37
+call :check_file "%Candidate%\Wvb-To-Wvo.elf" 10657792 4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Return-42.wvb" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
 if errorlevel 1 goto :failed
@@ -45,6 +45,49 @@ findstr /c:"Result: 0" "%TestDirectory%\Metadata-Normalization.out" >nul
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Metadata-Normalization.err") do if not "%%~zF"=="0" goto :failed
 call :pass "portable metadata normalization"
+
+set "Phase=data-limit-build"
+call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+    "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj" ^
+    "%TestDirectory%\Data-Limit.wvb" >nul 2>"%TestDirectory%\Data-Limit-Build.err"
+if errorlevel 1 goto :failed
+for %%F in ("%TestDirectory%\Data-Limit-Build.err") do if not "%%~zF"=="0" goto :failed
+set "Phase=data-limit-lowering"
+"%Candidate%\Wvb-To-Wvo.exe" ^
+    "%TestDirectory%\Data-Limit.wvb" "%TestDirectory%\Data-Limit.wvo" ^
+    >"%TestDirectory%\Data-Limit-Lower.out" 2>"%TestDirectory%\Data-Limit-Lower.err"
+if errorlevel 1 goto :failed
+set "Phase=data-limit-object-check"
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" ^
+    "%TestDirectory%\Data-Limit.wvo" >nul
+if errorlevel 1 goto :failed
+set "Phase=data-limit-link"
+call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main ^
+    "%TestDirectory%\Data-Limit.bin" "%TestDirectory%\Data-Limit.wvo" ^
+    >"%TestDirectory%\Data-Limit-Link.out"
+if errorlevel 1 goto :failed
+set "Phase=data-limit-entry"
+set "DataLimitEntry="
+for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Main address=" "%TestDirectory%\Data-Limit-Link.out"') do set "DataLimitEntry=%%E"
+if not defined DataLimitEntry goto :failed
+echo(%DataLimitEntry%| findstr /r /x "[0-9][0-9]*" >nul
+if errorlevel 1 goto :failed
+copy /b "%TestDirectory%\Data-Limit.bin" "%TestDirectory%\Data-Limit-Image.chunk-0" >nul
+if errorlevel 1 goto :failed
+set "Phase=data-limit-windows-package"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%TestDirectory%\Data-Limit.wvb" "%TestDirectory%\Data-Limit-Image" ^
+    1 %DataLimitEntry% "%TestDirectory%\Data-Limit.exe" windows >nul
+if errorlevel 1 goto :failed
+set "Phase=data-limit-windows-execution"
+"%TestDirectory%\Data-Limit.exe" >nul
+if not "%ERRORLEVEL%"=="42" goto :failed
+set "Phase=data-limit-linux-package"
+call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
+    "%TestDirectory%\Data-Limit.wvb" "%TestDirectory%\Data-Limit-Image" ^
+    1 %DataLimitEntry% "%TestDirectory%\Data-Limit.elf" linux >nul
+if errorlevel 1 goto :failed
+call :pass "native 512/513 data and 256/257 type boundaries"
 
 set "Phase=metadata-verifier-build"
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^

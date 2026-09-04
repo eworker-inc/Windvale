@@ -22,7 +22,7 @@ set "WebAssemblyProject=%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-She
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
 echo START native shell 1 parser phase=tools item=1/5
-call :verify_file "%Lowerer%" 10075136 22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea || goto :cleanup
+call :verify_file "%Lowerer%" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda || goto :cleanup
 echo PASS  native shell 1 parser phase=tools item=1/5
 
 echo START native shell 1 parser phase=compile item=2/5

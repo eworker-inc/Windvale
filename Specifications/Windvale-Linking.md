@@ -243,7 +243,7 @@ canonical UTF-8 adapter slot as infrastructure; generated code does not call or
 gain another capability from that slot.
 
 The exact 81,530-byte tool WVB has SHA-256
-`825445b022cfd8a6b75fc6e0a63df548707bf5251f840d7cf0c33e2cf2ac15c9`.
+`03a928f036a188fc943d3d197d45114cbb327d5edffae62ee3cc842186267bbc`.
 Its canonical repository source closure is
 `Projects/Linker/Windvale-Compiler-Image-Staging.wvproj`; the ordinary native source front door
 publishes that exact identity byte for byte. The project retains dependencies
@@ -263,9 +263,9 @@ toolset as its seed; it is self-reconstruction evidence rather than a
 non-circular bootstrap or paired-host qualification.
 
 The Windows candidate is 931,840 bytes at SHA-256
-`969bc653c765e3d2e24f62afaa50717268df51fcb805f66e927f0f16ab47838f`;
+`cc94fba08e6f4a5b20a0ddfc509f40f9fe8e801375d5e97320aec01f9f9f1b5b`;
 the Linux candidate is 933,888 bytes at SHA-256
-`d5909f461c10c6529f881350e86d288cdb40a6ed0b600b75ada86037265af4b0`.
+`bdbea8e2e8c8eb48211be5068bd93b5f4011814bc2ef15acffb5fdee622ac58d`.
 Both containers have independent structural verification. Current-host Windows
 execution stages the complete small fixture without loading a CLR component;
 Linux execution remains a separate qualification item. The completed process

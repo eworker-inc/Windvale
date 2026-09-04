@@ -13,12 +13,12 @@ export async function Testˉwvb(Repositoryˉroot, Cases) {
     const Artifact = Hostˉartifact({
         win32: [
             "Artifacts/Native-Front-Door/windows-x64/wvverify.exe",
-            1_255_936,
+            3_983_360,
             "acfdf67d0c93ef9a7c503263d573f5466d4825841007149d7c0e7e1fbfc4b9a6",
         ],
         linux: [
             "Artifacts/Native-Front-Door/linux-x64/wvverify.elf",
-            1_257_472,
+            3_985_408,
             "bacd557c03dd92ebd9a11d32ae85e4c243822d2819a8b22730043b240a4b145f",
         ],
     });
@@ -37,7 +37,9 @@ export async function Testˉwvb(Repositoryˉroot, Cases) {
         );
         Require(Result.Output.byteLength === 0, `${Case.Name}: WVB rejection wrote output.`);
         const Diagnostic = Oneˉline(Result.Error, `${Case.Name} WVB diagnostic`);
-        Require(/^wvb status=Invalid phase=[A-Za-z0-9ˉ]+$/u.test(Diagnostic),
+        Require(
+            /^wvb status=Invalid phase=[A-Za-z0-9ˉ]+(?: step=[a-z-]+)?$/u
+                .test(Diagnostic),
             `${Case.Name}: WVB rejection report differs.`);
         await Requireˉinputˉpreserved(Case);
     });

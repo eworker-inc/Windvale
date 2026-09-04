@@ -97,7 +97,7 @@ try {
         '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer,
     ]);
     await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉemitterˉwvb, Pinnedˉemitter,
+        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter,
     ]);
     await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
@@ -138,7 +138,7 @@ try {
         'current emitter Stage 1 WVB',
     );
     await Runˉnative('current-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Emitterˉstage1ˉwvb, Emitter,
+        '8', Emitterˉstage1ˉwvb, Emitter,
     ]);
     await Runˉnode('current-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
         'emitter', Emitter, Emitterˉidentity,

@@ -1067,8 +1067,11 @@ $NativeCases = @(
             'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.cmd',
             'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs',
             'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.sh',
+            'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Stale.wvb.b64',
+            'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Success.wvb.b64',
             'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
-            'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64'
+            'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
+            'Tests/Native/X64-Paper-Buffer-Source.wva'
         )
         Suites = @('native-x64-lowering-development')
         Gaps = @()
@@ -1748,6 +1751,25 @@ $NativeCases = @(
         Gaps = @()
         VerifyPlan = $false
         DatabaseDevelopment = $false
+    },
+    @{
+        Name = 'native x64 lowering specification selects focused database host boundary'
+        Paths = @('Specifications/Windvale-Native-X64-Lowering.md')
+        Suites = @(
+            'seed',
+            'wvb-to-wvo-reconstruction',
+            'unsafe-wvb',
+            'source-containment',
+            'lowerer-rejections',
+            'console-packager-source-reconstruction',
+            'native-u64-lowering',
+            'model-provider',
+            'database-storage'
+        )
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'host-storage'
     },
     @{
         Name = 'rights-reduced WVDB query host owner'
@@ -3725,6 +3747,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'native unsafe WVB rejection specification owner'
+        Paths = @('Specifications/Windvale-Native-Wvb-Unsafe-Rejection-Tests.md')
+        Suites = @('unsafe-wvb')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'durable database superblock owner'
         Paths = @('Libraries/Database/Durable-Superblock.wv')
         Suites = @('database-superblock', 'database-durable-commit', 'libraries')
@@ -4675,7 +4704,8 @@ $PowerShellTestRunnerSource = Get-Content -Raw -LiteralPath $PowerShellTestRunne
 foreach ($Fragment in @(
     'Get-Command node -All -CommandType Application',
     '$Node = $NodeCandidates[0]',
-    '& $Node.Source $StreamHelper'
+    '& $Node.Source $StreamHelper',
+    'Out-Host'
 )) {
     if (!$PowerShellTestRunnerSource.Contains(
             $Fragment, [StringComparison]::Ordinal)) {
@@ -4722,6 +4752,41 @@ if ($LASTEXITCODE -ne 64 -or
     ($UnapprovedLongRun -join "`n") -notmatch
         '(?m)^Selected plan expects [0-9]+ seconds, which exceeds the 600-second local development budget\.') {
     throw 'The PowerShell test runner did not refuse an unapproved long run.'
+}
+$FailedOwnerResultPath = Join-Path ([IO.Path]::GetTempPath()) (
+    'windvale-test-failure-' + [Guid]::NewGuid().ToString('N') + '.json')
+$PriorFailureFixture = $env:WINDVALE_VERIFICATION_OWNER_FAILURE_FIXTURE
+try {
+    $env:WINDVALE_VERIFICATION_OWNER_FAILURE_FIXTURE = '1'
+    $FailedOwnerOutput = @(& pwsh -NoProfile -File $PowerShellTestRunner `
+        -Owner verification-owner-stream -ResultPath $FailedOwnerResultPath `
+        2>&1)
+    $FailedOwnerExitCode = $LASTEXITCODE
+    $FailedOwnerResult = Get-Content -Raw -LiteralPath $FailedOwnerResultPath |
+        ConvertFrom-Json
+    if ($FailedOwnerExitCode -ne 1 -or
+        ($FailedOwnerOutput -join "`n") -notmatch
+            '(?m)^verification owner forced failure$' -or
+        ($FailedOwnerOutput -join "`n") -notmatch
+            '(?m)^FAIL  suite verification-owner-stream outcome=test-failed ' -or
+        $FailedOwnerResult.outcome -ne 'test-failed' -or
+        $FailedOwnerResult.exitCode -ne 1 -or
+        @($FailedOwnerResult.owners).Count -ne 1 -or
+        $FailedOwnerResult.owners[0].outcome -ne 'test-failed' -or
+        $FailedOwnerResult.owners[0].exitCode -ne 1 -or
+        $FailedOwnerResult.owners[0].detail -ne 'Native command exited 7.') {
+        throw 'The PowerShell test runner did not propagate a streamed owner failure.'
+    }
+} finally {
+    if ($null -eq $PriorFailureFixture) {
+        Remove-Item Env:WINDVALE_VERIFICATION_OWNER_FAILURE_FIXTURE `
+            -ErrorAction SilentlyContinue
+    } else {
+        $env:WINDVALE_VERIFICATION_OWNER_FAILURE_FIXTURE = $PriorFailureFixture
+    }
+    if ([IO.File]::Exists($FailedOwnerResultPath)) {
+        [IO.File]::Delete($FailedOwnerResultPath)
+    }
 }
 
 $TimingAnalyzer = Join-Path $PSScriptRoot `
@@ -4881,6 +4946,7 @@ foreach ($Fragment in @(
 foreach ($Fragment in @(
     '$Coordinator = Join-Path $PSScriptRoot ''Invoke-WindvaleTests.ps1''',
     '$OwnerArguments = @(''-Owner'', $Suite)',
+    '$OwnerArguments += ''-AllowLongRun''',
     '& pwsh -NoProfile -File $OwnerCommand @OwnerArguments',
     '$AllowIncompleteInfrastructure',
     '$PlanVerificationInClassification',
@@ -5224,7 +5290,7 @@ $OsX64OwnerContracts = @(
             'windows-x64-wvappublish.exe',
             '65602cd41bd929f9d698d9a4a74f683a8525b7dc2c903a5462e8b22fe1fe34ec',
             'b9fd1b11bc1e4a726e4a43b16830a9351fe573b30e547ba8d8f6660f688ed421',
-            '22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea',
+            '0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda',
             '76f632ffa7998a6cce0386456fee98f02cbb5ec424d0d914a7e1f06ff3853910',
             'f47a952867203fbff53abb131ea155b4fe9e14a8be153cc61c0ca5fd8e4a74e0',
             '0dddbe6cfd38c37e3fd5332567b3323480a5548a6fbeb41b6b50aed0e57ac3d2',
@@ -5271,7 +5337,7 @@ $OsX64OwnerContracts = @(
             'linux-x64-wvappublish.elf',
             'd228db89c17cc8124776d6bd39cb061a1414168a22ca075168e44439b1253969',
             'b8efb90f7d7c4eae99de01df6c0a3c24a7396d9b9e717ff69d005282ed3d63af',
-            '9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37',
+            '4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24',
             '2889237d7fdb20b1d420c05834f19183d18b02112e3f4eea0ed7ff43414814f2',
             '8a220bfd6c7ef684897583e728419ecd6d383c8e8cf40094edbcfb695e3d6d7a',
             'd399c935e906ab42d7572e337226577055396cb6204766106e21790e22ea43af',

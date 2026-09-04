@@ -49,12 +49,12 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvb-To-Wvo.wvb" 701436 \
-    124f968f6d1e6aa71ce3cd9136a4c4df2db6022253404286979fd6c0e26cfe97 || fail
-check_file "$candidate/Wvb-To-Wvo.exe" 10075136 \
-    22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea || fail
-check_file "$candidate/Wvb-To-Wvo.elf" 10076160 \
-    9eb1ac6a547657a18e68b920b5e8523ae465de556a6f412f652680ccb9dd2d37 || fail
+check_file "$candidate/Wvb-To-Wvo.wvb" 747242 \
+    7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f || fail
+check_file "$candidate/Wvb-To-Wvo.exe" 10656768 \
+    0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda || fail
+check_file "$candidate/Wvb-To-Wvo.elf" 10657792 \
+    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 || fail
 check_file "$candidate/Return-42.wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 || fail
 check_file "$candidate/Return-42.wvo" 479 \
@@ -101,6 +101,44 @@ check_equal \
     "$test_directory/Metadata-Normalization-Expected.out" || fail
 [[ ! -s $test_directory/Metadata-Normalization.err ]] || fail
 pass 'portable metadata normalization'
+
+phase=data-limit-build
+"$script_directory/Build-Wvb.sh" \
+    "$repository_root/Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj" \
+    "$test_directory/Data-Limit.wvb" \
+    >/dev/null 2>"$test_directory/Data-Limit-Build.err" || fail
+[[ ! -s $test_directory/Data-Limit-Build.err ]] || fail
+phase=data-limit-lowering
+"$candidate/Wvb-To-Wvo.elf" \
+    "$test_directory/Data-Limit.wvb" "$test_directory/Data-Limit.wvo" \
+    >"$test_directory/Data-Limit-Lower.out" \
+    2>"$test_directory/Data-Limit-Lower.err" || fail
+phase=data-limit-object-check
+"$script_directory/Check-Wvo.sh" "$test_directory/Data-Limit.wvo" >/dev/null || fail
+phase=data-limit-link
+"$script_directory/Link-Wvo.sh" 0 Main \
+    "$test_directory/Data-Limit.bin" "$test_directory/Data-Limit.wvo" \
+    >"$test_directory/Data-Limit-Link.out" || fail
+phase=data-limit-entry
+data_limit_entry=$(sed -n \
+    's/^entry name=Main address=\([0-9][0-9]*\)$/\1/p' \
+    "$test_directory/Data-Limit-Link.out") || fail
+[[ $data_limit_entry =~ ^[0-9]+$ ]] || fail
+cp -- "$test_directory/Data-Limit.bin" \
+    "$test_directory/Data-Limit-Image.chunk-0" || fail
+phase=data-limit-linux-package
+"$script_directory/Package-Hosted-Wvb.sh" image 6 \
+    "$test_directory/Data-Limit.wvb" "$test_directory/Data-Limit-Image" \
+    1 "$data_limit_entry" "$test_directory/Data-Limit.elf" linux \
+    >/dev/null || fail
+phase=data-limit-linux-execution
+"$test_directory/Data-Limit.elf" >/dev/null || [[ $? -eq 42 ]] || fail
+phase=data-limit-windows-package
+"$script_directory/Package-Hosted-Wvb.sh" image 6 \
+    "$test_directory/Data-Limit.wvb" "$test_directory/Data-Limit-Image" \
+    1 "$data_limit_entry" "$test_directory/Data-Limit.exe" windows \
+    >/dev/null || fail
+pass 'native 512/513 data and 256/257 type boundaries'
 
 phase=metadata-verifier-build
 "$script_directory/Build-Wvb.sh" \

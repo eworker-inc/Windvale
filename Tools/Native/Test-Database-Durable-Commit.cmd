@@ -27,7 +27,7 @@ set "LinuxApplication=%TemporaryDirectory%\Commit.elf"
 set "Result=1"
 
 echo START native database durable commit phase=tools item=1/4 retained-tools=1
-call :verify "%Lowerer%" 10075136 22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea "retained lowerer"
+call :verify "%Lowerer%" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda "retained lowerer"
 if errorlevel 1 goto :cleanup
 echo PASS  native database durable commit phase=tools item=1/4
 

@@ -1,0 +1,109 @@
+module Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest profile portable;
+
+import Compilerˉnativeˉx64ˉloweringˉdata as Dataˉreader;
+import Compilerˉnativeˉx64ˉloweringˉtypes as Typeˉreader;
+
+fn Exactˉdataˉsection() -> bytes {
+    var Entry: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("A"));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(3u8));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("x"));
+    var Entries: bytes = Entry;
+    var Count: u32 = 1u32;
+    while Count < 512u32 {
+        Entries = Bytesˉconcat(Entries, Entries);
+        Count = Count * 2u32;
+    }
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(512u32), Entries);
+}
+
+fn Recordˉtypeˉentry() -> bytes {
+    var Entry: bytes = Bytesˉfromˉu8(1u8);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("R"));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("F"));
+    return Bytesˉconcat(Entry, Bytesˉfromˉu8(1u8));
+}
+
+fn Enumˉtypeˉentry() -> bytes {
+    var Entry: bytes = Bytesˉfromˉu8(2u8);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("E"));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Textˉtoˉutf8("V"));
+    return Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Callableˉtypeˉentry() -> bytes {
+    var Entry: bytes = Bytesˉfromˉu8(8u8);
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(3u8));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(1u8));
+    return Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Repeatˉentry(Entry: bytes, Powerˉcount: u32, Wanted: u32) -> bytes {
+    var Entries: bytes = Entry;
+    var Count: u32 = 1u32;
+    while Count < Powerˉcount {
+        Entries = Bytesˉconcat(Entries, Entries);
+        Count = Count * 2u32;
+    }
+    return Bytesˉslice(
+        Entries, 0u32, Wanted * Bytesˉlength(Entry)
+    );
+}
+
+fn Exactˉtypeˉsection() -> bytes {
+    var Entries: bytes = Repeatˉentry(
+        Recordˉtypeˉentry(), 128u32, 116u32
+    );
+    Entries = Bytesˉconcat(
+        Entries, Repeatˉentry(Enumˉtypeˉentry(), 64u32, 64u32)
+    );
+    Entries = Bytesˉconcat(
+        Entries, Repeatˉentry(Callableˉtypeˉentry(), 128u32, 76u32)
+    );
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(256u32), Entries);
+}
+
+export fn Main() -> i32 {
+    if Dataˉreader.Compilerˉnativeˉx64ˉdataˉlimit() != 512u32 {
+        return 1;
+    }
+    let Exact: bytes = Exactˉdataˉsection();
+    let Exactˉresult: Dataˉreader.Compilerˉnativeˉx64ˉdata =
+        Dataˉreader.Compilerˉnativeˉx64ˉdataˉread(
+            Exact, 0u32, Bytesˉlength(Exact)
+        );
+    if !Exactˉresult.Valid || Exactˉresult.Count != 512u32 {
+        return 2;
+    }
+    let Oversized: bytes = Bytesˉfromˉu32ˉlittle(513u32);
+    let Oversizedˉresult: Dataˉreader.Compilerˉnativeˉx64ˉdata =
+        Dataˉreader.Compilerˉnativeˉx64ˉdataˉread(
+            Oversized, 0u32, Bytesˉlength(Oversized)
+        );
+    if Oversizedˉresult.Valid { return 3; }
+    if Typeˉreader.Compilerˉnativeˉx64ˉtypesˉlimit() != 256u32 {
+        return 4;
+    }
+    let Exactˉtypes: bytes = Exactˉtypeˉsection();
+    let Exactˉtypeˉresult: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Exactˉtypes, 0u32, Bytesˉlength(Exactˉtypes)
+        );
+    if !Exactˉtypeˉresult.Valid || Exactˉtypeˉresult.Count != 256u32 {
+        return 5;
+    }
+    let Oversizedˉtypes: bytes = Bytesˉfromˉu32ˉlittle(257u32);
+    let Oversizedˉtypeˉresult: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Oversizedˉtypes, 0u32, Bytesˉlength(Oversizedˉtypes)
+        );
+    if Oversizedˉtypeˉresult.Valid { return 6; }
+    return 42;
+}

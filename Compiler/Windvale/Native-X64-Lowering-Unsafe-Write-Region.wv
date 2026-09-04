@@ -99,6 +99,14 @@ fn Storeˉr8(Result: bytes, Slot: u32) -> bytes {
     return Appendˉu32(Output, Slot * 16u32);
 }
 
+fn Storeˉr11ˉoffset(Result: bytes, Offset: u32) -> bytes {
+    var Output: bytes = Appendˉbyte(Result, 76u8);
+    Output = Appendˉbyte(Output, 137u8);
+    Output = Appendˉbyte(Output, 156u8);
+    Output = Appendˉbyte(Output, 36u8);
+    return Appendˉu32(Output, Offset);
+}
+
 fn Storeˉimmediate(Result: bytes, Slot: u32, Value: u32) -> bytes {
     var Output: bytes = Appendˉbyte(Result, 72u8);
     Output = Appendˉbyte(Output, 199u8);
@@ -211,7 +219,13 @@ fn Prefix(
     return Conditionalˉjump(Output, 133u8, Misalignedˉtarget);
 }
 
-fn Success(Result: bytes, Backing: u32, Finish: u32) -> bytes {
+fn Success(
+    Result: bytes,
+    Scratchˉslot: u32,
+    Backing: u32,
+    Finish: u32,
+    Nativeˉbacking: bool
+) -> bytes {
     var Output: bytes = Storeˉimmediate(Result, Backing, 0u32);
     Output = Appendˉbyte(Output, 73u8);
     Output = Appendˉbyte(Output, 137u8);
@@ -224,6 +238,26 @@ fn Success(Result: bytes, Backing: u32, Finish: u32) -> bytes {
     Output = Appendˉbyte(Output, 9u8);
     Output = Appendˉbyte(Output, 200u8);
     Output = Storeˉr8(Output, Backing + 2u32);
+    if Nativeˉbacking {
+        // Reload the scratch handle, take its private native base, and retain
+        // only the checked start-adjusted address beside the logical region.
+        Output = Appendˉbyte(Output, 76u8);
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 156u8);
+        Output = Appendˉbyte(Output, 36u8);
+        Output = Appendˉu32(Output, Scratchˉslot * 16u32);
+        Output = Appendˉbyte(Output, 77u8);
+        Output = Appendˉbyte(Output, 139u8);
+        Output = Appendˉbyte(Output, 91u8);
+        Output = Appendˉbyte(Output, 8u8);
+        Output = Appendˉbyte(Output, 73u8);
+        Output = Appendˉbyte(Output, 1u8);
+        Output = Appendˉbyte(Output, 195u8);
+        Output = Storeˉr11ˉoffset(
+            Output,
+            (Backing + 2u32) * 16u32 + 8u32
+        );
+    }
     return Jump(Output, Finish);
 }
 
@@ -259,10 +293,12 @@ fn Emitˉmachine(
     Scratchˉslot: u32,
     Resultˉtype: u32,
     Target: u32,
-    Backing: u32
+    Backing: u32,
+    Nativeˉbacking: bool
 ) -> bytes {
     let Prefixˉbytes: u32 = 123u32;
-    let Successˉbytes: u32 = 35u32;
+    var Successˉbytes: u32 = 35u32;
+    if Nativeˉbacking { Successˉbytes = 58u32; }
     let Outˉofˉrangeˉbytes: u32 = 53u32;
     let Addressˉoverflowˉbytes: u32 = 57u32;
     let Misalignedˉbytes: u32 = 40u32;
@@ -283,7 +319,7 @@ fn Emitˉmachine(
         Addressˉoverflowˉtarget,
         Misalignedˉtarget
     );
-    Output = Success(Output, Backing, Finish);
+    Output = Success(Output, Scratchˉslot, Backing, Finish, Nativeˉbacking);
     Output = Outˉofˉrange(Output, Backing, Finish);
     Output = Addressˉoverflow(Output, Backing, Finish);
     Output = Misaligned(Output, Backing);
@@ -295,9 +331,10 @@ fn Emitˉmachine(
     return Storeˉrax(Output, Target);
 }
 
-export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes() -> u32 {
+export fn Compilerˉnativeˉx64ˉunsafeˉwriteˉregionˉbytes(Minor: u32) -> u32 {
     // The common instruction-limit charge contributes ten bytes before the
     // 330-byte operation-specific sequence.
+    if Minor == 38u32 { return 363u32; }
     return 340u32;
 }
 
@@ -338,7 +375,8 @@ export fn Compilerˉnativeˉx64ˉemitˉunsafeˉwriteˉregion(
                 Scratchˉslot,
                 Resultˉtype,
                 Target,
-                Backing
+                Backing,
+                Bytesˉreadˉu16ˉlittle(Input, 6u32) == 38u32
             )
         ),
         Bytesˉconcat(

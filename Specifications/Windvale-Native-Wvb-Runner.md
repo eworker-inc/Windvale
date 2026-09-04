@@ -15,9 +15,9 @@ The same source-built scalar core also owns the focused capability-free System
 oracle for WVB 1.33 unsafe scratch, WVB 1.34 immutable borrowed-memory-budget
 calls, WVB 1.35 immutable borrowed-scratch length observation, WVB 1.36
 write-region validation, WVB 1.37 logical write-pointer derivation, and the
-registered WVB 1.38 scalar provider. That local Windows evidence is not part of
-the older profile-5 paired artifact identity or a paired-host qualification
-claim.
+registered WVB 1.38 scalar provider. The current profile-5 paired artifact now
+contains that source state; its promotion is deterministic reconstruction
+evidence, not final paired-host execution qualification.
 
 The project names its root tool plus the SHA-256, scalar-interpreter, envelope,
 and formatting dependencies in canonical module order. Project paths are
@@ -28,27 +28,21 @@ Project 1 semantics.
 
 ## Current exact products
 
-The following table is the last promoted profile-5 paired-host runner
-candidate. Independent Windows/Linux reconstruction reproduces all three
-identities. It remains the packaged reconstruction baseline while newer
-source-built System execution work awaits its own paired-host promotion.
+The following table is the current promoted profile-5 paired-host runner
+candidate. One canonical staged image produces both host wrappers, and the
+official constructor reproduces all three identities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVB runner | 482,767 | `fc4724c7756f22eb52dd6ed4da9737a865e14ea4d52df1de69fc10236970ff4f` |
-| Windows application | 5,907,456 | `2721b80158cf4825919be5a6b5c58cfa40d417dc802d5bf27b2584b822ad817b` |
-| Linux application | 5,906,432 | `611cfbf9fd95e9b29df4a38e3ac392dc9eea87b760b81ff572bad8af6f235eae` |
+| WVB runner | 1,040,878 | `4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b` |
+| Windows application | 10,547,712 | `8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972` |
+| Linux application | 10,547,200 | `4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e` |
 
-The WVB 1.38-capable source-built development candidate is 1,040,878 WVB bytes
-at SHA-256
-`4e50301efe5e2260608eb994f21ece89e83ad102aac28cebb705d35d06e3d86b`.
-Its measured local Windows application is 10,547,712 bytes at SHA-256
-`8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972`.
-These values are not settled cross-host identities.
-
-Segmented staging emits 5,899,132 object bytes across 13 chunks. Linking emits a
-5,889,164-byte native image with entry offset 150,541; canonical transport
-reduces that image to two chunks. Those intermediate chunks are reproducible
+The promoted WVB 1.38-capable candidate is the exact source-built product rather
+than a retained older runner. Segmented staging emits 10,547,710 object bytes
+across 15 chunks. Linking emits a 10,529,580-byte native image with entry offset
+150,541 across 11 chunks; canonical transport reduces that image to three
+chunks. Those intermediate chunks are reproducible
 construction evidence, not retained shipment artifacts. Removing the obsolete
 monolithic WVO avoids carrying a second copy of the runner's native code.
 

@@ -9,14 +9,12 @@ if not "%~1"=="" (
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Native=%RepositoryRoot%\Tools\Native"
-set "RecoveryCommit=4aca9935679b67f46bfb97f37c2e566980bbab68"
+set "BuildDriver=%RepositoryRoot%\Artifacts\Native-Compiler-Reconstruction-Candidate\windows-x64\wvbuild.exe"
 
 :allocate
 set "Work=%TEMP%\windvale-standard-byte-output-%RANDOM%-%RANDOM%-%RANDOM%"
 if exist "%Work%" goto :allocate
 mkdir "%Work%" || exit /b 1
-set "Recovery=%Work%\compiler-recovery"
-set "WorktreeAdded=0"
 set "Result=1"
 
 set "Workspace=%RepositoryRoot%\Windvale.wvws"
@@ -27,23 +25,18 @@ set "LibraryProjectResource=%LibraryProject:\=/%"
 set "TestProjectResource=%TestProject:\=/%"
 set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.exe"
 
-echo START native standard byte output phase=tools item=1/4
-git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" cat-file -e "%RecoveryCommit%^{commit}" >nul 2>nul || goto :cleanup
-git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" worktree add --detach "%Recovery%" "%RecoveryCommit%" >nul 2>nul || goto :cleanup
-set "WorktreeAdded=1"
-call "%Recovery%\Tools\Native\Build-Wvb.cmd" "%Recovery%\Projects\Tools\Windvale-Compiler-Build-Driver.wvproj" "%Work%\Build-Driver.wvb" >nul || goto :cleanup
-call :verify_file "%Work%\Build-Driver.wvb" 1121370 ed5bbceaa0f1b4d889a7d17fe1d138d0bd5a01a593f6925ba34023ff0b0960ef || goto :cleanup
-call "%Native%\Package-Segmented-Compiler-Wvb.cmd" 2 "%Work%\Build-Driver.wvb" "%Work%\Build-Driver.exe" --development-cache >nul || goto :cleanup
-call :verify_file "%Lowerer%" 10075136 22826b9bb6f391e5ac0e7605fe3246cce16d977c6bed88a5bafec90262aea6ea || goto :cleanup
+echo START native standard byte output phase=tools item=1/4 retained-tools=2
+call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || goto :cleanup
+call :verify_file "%Lowerer%" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda || goto :cleanup
 echo PASS  native standard byte output phase=tools item=1/4
 
 echo START native standard byte output phase=compile item=2/4
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-A.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-B.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-A.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%LibraryProjectResource%" "%Work%/Library-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Library-A.wvb" "%Work%\Library-B.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Library-A.wvb" 55898 d80e98f785e8dfab0e357a7d74457f07775141bf31d2773e2d7745c061a7aa26 || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-A.wvb" >nul || goto :cleanup
-"%Work%\Build-Driver.exe" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-B.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-A.wvb" >nul || goto :cleanup
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%TestProjectResource%" "%Work%/Test-B.wvb" >nul || goto :cleanup
 fc /b "%Work%\Test-A.wvb" "%Work%\Test-B.wvb" >nul || goto :cleanup
 call :verify_file "%Work%\Test-A.wvb" 75874 7fba163fd1087c324bf640879b72a5208375e49ab298950ba97d987a7c2a4d17 || goto :cleanup
 "%Lowerer%" "%Work%\Test-A.wvb" "%Work%\Test-A.wvo" >nul || goto :cleanup
@@ -70,7 +63,6 @@ echo PASS  native standard byte output phase=execute item=4/4
 set "Result=0"
 
 :cleanup
-if "%WorktreeAdded%"=="1" git -c "safe.directory=%RepositoryRoot%" -C "%RepositoryRoot%" worktree remove "%Recovery%" >nul 2>nul
 for %%R in ("%Work%") do set "ResolvedWork=%%~fR"
 echo(%ResolvedWork%| findstr /b /i /c:"%TEMP%\windvale-standard-byte-output-" >nul || exit /b 1
 if exist "%ResolvedWork%\." rmdir /s /q "%ResolvedWork%"

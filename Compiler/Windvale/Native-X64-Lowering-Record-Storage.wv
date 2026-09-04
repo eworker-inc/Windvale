@@ -180,11 +180,13 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 104u8 { return 5u32; }
     if Opcode == 105u8 { return 5u32; }
     if Opcode == 106u8 { return 9u32; }
-    if Opcode == 129u8 { return 9u32; }
+    if Opcode == 128u8 || Opcode == 129u8 { return 9u32; }
     if Numeric >= 107u32 {
         if Numeric <= 125u32 { return 1u32; }
     }
     if Numeric >= 134u32 && Numeric <= 136u32 { return 1u32; }
+    if Opcode == 133u8 { return 1u32; }
+    if Numeric >= 137u32 && Numeric <= 142u32 { return 1u32; }
     if Numeric >= 143u32 && Numeric <= 148u32 { return 1u32; }
     if Numeric >= 151u32 && Numeric <= 153u32 { return 9u32; }
     if Opcode == 196u8 { return 9u32; }
@@ -201,6 +203,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 221u8 { return 9u32; }
     if Opcode == 222u8 { return 13u32; }
     if Opcode == 223u8 { return 13u32; }
+    if Opcode == 224u8 { return 13u32; }
     return 0u32;
 }
 
@@ -835,7 +838,8 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
 
         if Opcode == 1u8 || Opcode == 2u8 || Opcode == 3u8 ||
             Opcode == 6u8 || Opcode == 8u8 || Opcode == 9u8 ||
-            Opcode == 10u8 || Opcode == 106u8 || Opcode == 129u8 {
+            Opcode == 10u8 || Opcode == 106u8 || Opcode == 128u8 ||
+            Opcode == 129u8 {
             Stackˉrecords = Pushˉscalar(Stackˉrecords);
             Depth = Depth + 1u32;
             Handled = true;
@@ -940,6 +944,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Opcode == 7u8 || Opcode == 11u8 || Opcode == 19u8 ||
+            Opcode == 133u8 ||
             Opcode == 176u8 ||
             Opcode == 182u8 ||
             Opcode == 40u8 ||
@@ -972,6 +977,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
             Opcode == 107u8 || Opcode == 108u8 || Opcode == 113u8 ||
             Opcode == 114u8 || Opcode == 119u8 ||
             Numericˉopcode >= 134u32 && Numericˉopcode <= 136u32 ||
+            Numericˉopcode >= 137u32 && Numericˉopcode <= 142u32 ||
             Numericˉopcode >= 143u32 && Numericˉopcode <= 148u32 ||
             Opcode == 161u8 || Opcode == 162u8 ||
             Opcode == 165u8 || Opcode == 166u8 || Opcode == 189u8 ||
@@ -1248,6 +1254,41 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
                 Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtype(Pointerˉtype)
             );
             Stackˉrecords = Pushˉrecord(Stackˉrecords, Resultˉrecord);
+            Depth = Depth + 1u32;
+            Handled = true;
+        }
+
+        if Opcode == 224u8 {
+            if Depth < 3u32 { return Invalid(Input); }
+            let Pointerˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 3u32) * 4u32
+            );
+            let Capacityˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 2u32) * 4u32
+            );
+            let Generationˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                Stackˉrecords, (Depth - 1u32) * 4u32
+            );
+            let Foreignˉpointerˉtype: u32 = Bytesˉreadˉu32ˉlittle(
+                Input, Codeˉoffset + Cursor + 5u32
+            );
+            if Pointerˉrecord == 4294967295u32 ||
+                Capacityˉrecord != 4294967295u32 ||
+                Generationˉrecord != 4294967295u32 ||
+                Foreignˉpointerˉtype >= Types.Count ||
+                Bytesˉreadˉu8(Recordˉtypes, Pointerˉrecord) !=
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtype(
+                        Foreignˉpointerˉtype
+                    ) {
+                return Invalid(Input);
+            }
+            Usedˉrecords = Bytesˉconcat(
+                Usedˉrecords,
+                Bytesˉfromˉu32ˉlittle(Pointerˉrecord)
+            );
+            Depth = Depth - 3u32;
+            Stackˉrecords = Popˉrecords(Stackˉrecords, Depth);
+            Stackˉrecords = Pushˉscalar(Stackˉrecords);
             Depth = Depth + 1u32;
             Handled = true;
         }

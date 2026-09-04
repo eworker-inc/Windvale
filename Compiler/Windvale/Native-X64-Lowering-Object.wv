@@ -51,7 +51,11 @@ fn Symbolˉrecord(
     return Bytesˉconcat(Output, Name);
 }
 
-fn Relocationˉrecord(Relocations: bytes, Relocation: u32) -> bytes {
+fn Relocationˉrecord(
+    Relocations: bytes,
+    Relocation: u32,
+    Foreignˉsymbol: u32
+) -> bytes {
     var Result: bytes = Bytesˉfromˉu8(2u8);
     Result = Bytesˉconcat(Result, Bytesˉfromˉu8(0u8));
     Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
@@ -62,11 +66,13 @@ fn Relocationˉrecord(Relocations: bytes, Relocation: u32) -> bytes {
             Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32)
         )
     );
+    var Targetˉsymbol: u32 = Bytesˉreadˉu32ˉlittle(
+        Relocations, Relocation * 8u32 + 4u32
+    );
+    if Targetˉsymbol == 4294967295u32 { Targetˉsymbol = Foreignˉsymbol; }
     Result = Bytesˉconcat(
         Result,
-        Bytesˉfromˉu32ˉlittle(
-            Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32 + 4u32)
-        )
+        Bytesˉfromˉu32ˉlittle(Targetˉsymbol)
     );
     return Bytesˉconcat(Result, Bytesˉfromˉi32ˉlittle(-4));
 }
@@ -203,8 +209,21 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
     if Expectedˉdataˉoffset != Bytesˉlength(Data.Bytes) {
         return Invalidˉregions(Input);
     }
+    var Foreignˉrelocations: u32 = 0u32;
+    var Relocation: u32 = 0u32;
+    while Relocation < Relocationˉcount {
+        if Bytesˉreadˉu32ˉlittle(
+            Relocations, Relocation * 8u32 + 4u32
+        ) == 4294967295u32 {
+            Foreignˉrelocations = Foreignˉrelocations + 1u32;
+        }
+        Relocation = Relocation + 1u32;
+    }
+    let Hasˉforeign: bool = Foreignˉrelocations > 0u32;
     if Data.Count == 0u32 {
-        if Relocationˉcount != 0u32 { return Invalidˉregions(Input); }
+        if Relocationˉcount != Foreignˉrelocations {
+            return Invalidˉregions(Input);
+        }
         if Bytesˉlength(Padding) != 0u32 { return Invalidˉregions(Input); }
     } else {
         if Bytesˉlength(Padding) > 15u32 { return Invalidˉregions(Input); }
@@ -220,7 +239,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         }
     }
 
-    var Relocation: u32 = 0u32;
+    Relocation = 0u32;
     var Previousˉoffset: u32 = 0u32;
     while Relocation < Relocationˉcount {
         let Patchˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Relocations, Relocation * 8u32);
@@ -228,7 +247,9 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
             Relocations,
             Relocation * 8u32 + 4u32
         );
-        if Targetˉdata >= Data.Count { return Invalidˉregions(Input); }
+        if Targetˉdata != 4294967295u32 && Targetˉdata >= Data.Count {
+            return Invalidˉregions(Input);
+        }
         if Patchˉoffset > Declaredˉcodeˉbytes { return Invalidˉregions(Input); }
         if 4u32 > Declaredˉcodeˉbytes - Patchˉoffset {
             return Invalidˉregions(Input);
@@ -249,6 +270,7 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         Sectionˉcount = 2u32;
         Symbolˉcount = Symbolˉcount + Data.Count;
     }
+    if Hasˉforeign { Symbolˉcount = Symbolˉcount + 1u32; }
     var Header: bytes = Textˉtoˉutf8("WVO1");
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(1u32));
     Header = Bytesˉconcat(Header, Bytesˉfromˉu16ˉlittle(0u32));
@@ -326,13 +348,27 @@ export fn Compilerˉnativeˉx64ˉobjectˉplan(
         ),
         Textˉtoˉutf8("Main")
     ));
+    if Hasˉforeign {
+        Symbols = Bytesˉconcat(Symbols, Symbolˉrecord(
+            3u8,
+            1u8,
+            4294967295u32,
+            0u32,
+            0u32,
+            Textˉtoˉutf8("wv_paper_buffer_source_read_v1")
+        ));
+    }
 
     var Relocationˉrecords: bytes = Empty(Input);
     Relocation = 0u32;
     while Relocation < Relocationˉcount {
         Relocationˉrecords = Bytesˉconcat(
             Relocationˉrecords,
-            Relocationˉrecord(Relocations, Relocation)
+            Relocationˉrecord(
+                Relocations,
+                Relocation,
+                Symbolˉcount - 1u32
+            )
         );
         Relocation = Relocation + 1u32;
     }

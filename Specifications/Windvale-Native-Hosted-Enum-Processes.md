@@ -20,7 +20,7 @@ fields and WVB 1.30/1.31 callable descriptors; both receive zero-member
 directory entries and do not change serialized enum metadata. It revalidates
 the WVB 1.11, 1.30, or 1.31 envelope with seven exact sections and a hosted-only
 type directory reader; it is not a replacement for whole-module semantic
-verification. It supports at most 128 types, with no more than 116 records,
+verification. It supports at most 256 total types, with no more than 116 records,
 64 enums, 64 variants, or 128 callables within that total, and the current single complete `WVEQ 2`
 group whose request and resulting `WVEN 1` each fit one 4 MiB Windvale byte
 value. Records and variants receive zero-member directory entries; enum values,
@@ -43,9 +43,9 @@ read/write, and process argument/count capabilities.
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 48,791 | `b9078ff3ce1366c49e792e370d39b13a61bc38ef47763d464f12e5dd13d168fe` |
-| Windows enum-request application | 544,256 | `22fd30575a7b3e81b13520c767f2f4e0f3e92b34686904b8c211ff14da42867b` |
-| Linux enum-request application | 544,768 | `a3c17efee8150617fd5df9c5f19cc16cf5d3723fbf39f82509bff5d1f8c91e31` |
+| Enum-request WVB | 82,115 | `69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36` |
+| Windows enum-request application | 888,832 | `adabe0902e164bcb68561796ef2d60d446399cd51e70e326daf366623365ced0` |
+| Linux enum-request application | 888,832 | `06f6b9fe4812ec9f1c4c37fd47ae3153ac9b870ffb9b4173b2705c6517c586f8` |
 | Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
 | Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
 | Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |
