@@ -301,7 +301,7 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerArguments = @('--development')
                 $OwnerMessage = (
                     'Native owner wvb-runner-reconstruction ' +
-                    'mode=development-current-host')
+                    'mode=development-candidate-smoke')
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

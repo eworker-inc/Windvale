@@ -220,6 +220,8 @@ jobs:
         env:
           BASE_SHA: ${{ needs.classify-changes.outputs.base_sha }}
           HEAD_SHA: ${{ needs.classify-changes.outputs.head_sha }}
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
           WINDVALE_NATIVE_CACHE_ROOT: ${{ runner.temp }}/windvale-native-development-cache
           VERIFICATION_TIMING_REPORT: ${{ runner.temp }}/windvale-development-verification.json
         run: pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -BaseReference $env:BASE_SHA -HeadReference $env:HEAD_SHA -SkipDocumentationVerification -AllowIncompleteInfrastructure -PlanVerificationInClassification -GitHubVerificationOnLinux -TimingReportPath $env:VERIFICATION_TIMING_REPORT
@@ -373,6 +375,8 @@ jobs:
       - name: Run native qualification shard
         shell: pwsh
         env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
           VERIFICATION_RESULT: ${{ runner.temp }}/windvale-native-qualification.json
         run: pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Shard ${{ matrix.shard }} -AllowLongRun -ResultPath $env:VERIFICATION_RESULT
 
@@ -466,6 +470,9 @@ jobs:
 
       - name: Run native WebAssembly verification
         shell: pwsh
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: pwsh -NoProfile -File Tools/Verify/Verify-WebAssembly-Engine.ps1
 
   linux-webassembly:
@@ -510,6 +517,9 @@ jobs:
 
       - name: Verify native compiler convergence
         shell: cmd
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
         run: Tools\Verify\Verify-Bootstrap.cmd
 
   linux-bootstrap:

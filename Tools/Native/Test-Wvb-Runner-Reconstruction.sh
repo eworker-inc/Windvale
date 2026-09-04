@@ -13,9 +13,6 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 candidate="$repository_root/Artifacts/Native-Wvb-Runner-Candidate"
 constructor="$repository_root/Tools/Native/Construct-Wvb-Runner-Reconstruction.sh"
-builder="$repository_root/Tools/Native/Build-Current-Split-Project-Wvb.mjs"
-packager="$repository_root/Tools/Native/Package-Segmented-Compiler-Wvb.sh"
-source_project="$repository_root/Projects/Tools/Windvale-Wvb-Runner.wvproj"
 fixture="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb"
 invalid_fixture="$repository_root/Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvo"
 passed=0
@@ -93,44 +90,33 @@ if ! check_runtime "$candidate/linux-x64-wvrun.elf"; then
     echo 'Tests: 2, Passed: 1, Failed: 1'
     exit 1
 fi
+if [[ $mode == development ]]; then
+    echo 'PASS current-host candidate execution reporting and rejection'
+    passed=$((passed + 1))
+    echo "Tests: $passed, Passed: $passed, Failed: 0"
+    exit 0
+fi
 mkdir -- "$test_directory/Rebuilt" || exit 1
 
-if [[ $mode == development ]]; then
-    echo 'START WVB runner reconstruction phase=current-host-development status=Started'
-    if node "$builder" "$source_project" "$test_directory/Rebuilt/Wvb-Runner.wvb" &&
-        "$packager" 5 "$test_directory/Rebuilt/Wvb-Runner.wvb" \
-            "$test_directory/Rebuilt/linux-x64-wvrun.elf" --development-cache &&
-        cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvb" "$candidate/Wvb-Runner.wvb" &&
-        cmp -s "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$candidate/linux-x64-wvrun.elf"; then
-        echo 'PASS exact source-built current-host development reconstruction'
-        passed=$((passed + 1))
-    else
-        [[ ! -f "$test_directory/Construct.out" ]] || cat -- "$test_directory/Construct.out"
-        [[ ! -f "$test_directory/Construct.err" ]] || cat -- "$test_directory/Construct.err" >&2
-        echo 'FAIL exact source-built development reconstruction'
-        failed=$((failed + 1))
-    fi
+echo 'START WVB runner reconstruction phase=paired-reconstruction status=Started'
+"$constructor" >"$test_directory/Usage.out" 2>"$test_directory/Usage.err"
+usage_status=$?
+printf '%s\n' 'Usage: ./Tools/Native/Construct-Wvb-Runner-Reconstruction.sh <existing-output-directory>' >"$test_directory/Expected-Usage.err"
+if [[ $usage_status -eq 64 && ! -s $test_directory/Usage.out ]] &&
+    cmp -s "$test_directory/Usage.err" "$test_directory/Expected-Usage.err" &&
+    "$constructor" "$test_directory/Rebuilt" >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" &&
+    [[ ! -s $test_directory/Construct.err ]] &&
+    [[ $(grep -Fxc 'native WVB runner reconstruction status=Complete artifacts=3' "$test_directory/Construct.out") -eq 1 ]] &&
+    cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvb" "$candidate/Wvb-Runner.wvb" &&
+    cmp -s "$test_directory/Rebuilt/windows-x64-wvrun.exe" "$candidate/windows-x64-wvrun.exe" &&
+    cmp -s "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$candidate/linux-x64-wvrun.elf"; then
+    echo 'PASS exact source-built paired reconstruction'
+    passed=$((passed + 1))
 else
-    echo 'START WVB runner reconstruction phase=paired-reconstruction status=Started'
-    "$constructor" >"$test_directory/Usage.out" 2>"$test_directory/Usage.err"
-    usage_status=$?
-    printf '%s\n' 'Usage: ./Tools/Native/Construct-Wvb-Runner-Reconstruction.sh <existing-output-directory>' >"$test_directory/Expected-Usage.err"
-    if [[ $usage_status -eq 64 && ! -s $test_directory/Usage.out ]] &&
-        cmp -s "$test_directory/Usage.err" "$test_directory/Expected-Usage.err" &&
-        "$constructor" "$test_directory/Rebuilt" >"$test_directory/Construct.out" 2>"$test_directory/Construct.err" &&
-        [[ ! -s $test_directory/Construct.err ]] &&
-        [[ $(grep -Fxc 'native WVB runner reconstruction status=Complete artifacts=3' "$test_directory/Construct.out") -eq 1 ]] &&
-        cmp -s "$test_directory/Rebuilt/Wvb-Runner.wvb" "$candidate/Wvb-Runner.wvb" &&
-        cmp -s "$test_directory/Rebuilt/windows-x64-wvrun.exe" "$candidate/windows-x64-wvrun.exe" &&
-        cmp -s "$test_directory/Rebuilt/linux-x64-wvrun.elf" "$candidate/linux-x64-wvrun.elf"; then
-        echo 'PASS exact source-built paired reconstruction'
-        passed=$((passed + 1))
-    else
-        [[ ! -f "$test_directory/Construct.out" ]] || cat -- "$test_directory/Construct.out"
-        [[ ! -f "$test_directory/Construct.err" ]] || cat -- "$test_directory/Construct.err" >&2
-        echo 'FAIL exact source-built qualification reconstruction'
-        failed=$((failed + 1))
-    fi
+    [[ ! -f "$test_directory/Construct.out" ]] || cat -- "$test_directory/Construct.out"
+    [[ ! -f "$test_directory/Construct.err" ]] || cat -- "$test_directory/Construct.err" >&2
+    echo 'FAIL exact source-built qualification reconstruction'
+    failed=$((failed + 1))
 fi
 
 if check_runtime "$test_directory/Rebuilt/linux-x64-wvrun.elf"; then

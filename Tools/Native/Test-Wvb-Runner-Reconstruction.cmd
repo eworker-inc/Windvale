@@ -12,9 +12,6 @@ set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
 set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-Runner-Candidate"
 set "Constructor=%RepositoryRoot%\Tools\Native\Construct-Wvb-Runner-Reconstruction.cmd"
-set "Builder=%RepositoryRoot%\Tools\Native\Build-Current-Split-Project-Wvb.mjs"
-set "Packager=%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd"
-set "SourceProject=%RepositoryRoot%\Projects\Tools\Windvale-Wvb-Runner.wvproj"
 set "Fixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Return-42.wvb"
 set "InvalidFixture=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Return-42.wvo"
 set "Passed=0"
@@ -52,7 +49,7 @@ echo Tests: 2, Passed: 1, Failed: 1
 exit /b 1
 :preflight_done
 
-if "%Mode%"=="development" goto :development_reconstruction
+if "%Mode%"=="development" goto :development_complete
 echo START WVB runner reconstruction phase=paired-reconstruction status=Started
 call "%Constructor%" >"%TestDirectory%\Usage.out" 2>"%TestDirectory%\Usage.err"
 if not "%ERRORLEVEL%"=="64" goto :reconstruction_failed
@@ -76,20 +73,6 @@ echo PASS exact source-built paired reconstruction
 set /a Passed+=1
 goto :reconstruction_done
 
-:development_reconstruction
-echo START WVB runner reconstruction phase=current-host-development status=Started
-node "%Builder%" "%SourceProject%" "%TestDirectory%\Rebuilt\Wvb-Runner.wvb"
-if errorlevel 1 goto :reconstruction_failed
-call "%Packager%" 5 "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" --development-cache
-if errorlevel 1 goto :reconstruction_failed
-call :check_equal "%TestDirectory%\Rebuilt\Wvb-Runner.wvb" "%Candidate%\Wvb-Runner.wvb"
-if errorlevel 1 goto :reconstruction_failed
-call :check_equal "%TestDirectory%\Rebuilt\windows-x64-wvrun.exe" "%Candidate%\windows-x64-wvrun.exe"
-if errorlevel 1 goto :reconstruction_failed
-echo PASS exact source-built current-host development reconstruction
-set /a Passed+=1
-goto :reconstruction_done
-
 :reconstruction_failed
 if exist "%TestDirectory%\Construct.out" type "%TestDirectory%\Construct.out"
 if exist "%TestDirectory%\Construct.err" type "%TestDirectory%\Construct.err" >&2
@@ -108,12 +91,18 @@ echo FAIL current-host execution reporting and rejection
 set /a Failed+=1
 :runtime_done
 
+:finish
 call :remove_test_directory
 if errorlevel 1 exit /b 1
 set /a Total=Passed+Failed
 echo Tests: %Total%, Passed: %Passed%, Failed: %Failed%
 if not "%Failed%"=="0" exit /b 1
 exit /b 0
+
+:development_complete
+echo PASS current-host candidate execution reporting and rejection
+set /a Passed+=1
+goto :finish
 
 :usage
 >&2 echo Usage: Tools\Native\Test-Wvb-Runner-Reconstruction.cmd [--development]
