@@ -59,6 +59,12 @@ Maximumˉstack: u32;
 Blockˉoffsets: bytes;
 Failureˉoperation: u32;
 }
+record Compilerˉsourceˉwvbˉfoundationˉborrowˉplan {
+Hasˉborrow: bool;
+Temporaryˉstate: bytes;
+Slotˉstate: bytes;
+Frozenˉslots: bytes;
+}
 record Compilerˉsourceˉwvbˉfunctionˉencoding {
 Status: Compilerˉsourceˉwvbˉstatus;
 Metadata: bytes;
@@ -96,6 +102,8 @@ const WVB_FUNCTION_TYPE_INSTANCE_LIMIT: u32 = 256u32;
 const WVB_FUNCTION_TYPE_HEADER_BYTES: u32 = 24u32;
 const WVB_FUNCTION_TYPE_ENTRY_BYTES: u32 = 32u32;
 const WVB_FUNCTION_TYPE_PARAMETER_BYTES: u32 = 8u32;
+const WIR_BORROWED_OPTION_SHAPE_BASE: u32 = 2147484160u32;
+const WIR_BORROWED_OPTION_SHAPE_LIMIT: u32 = 256u32;
 const WVB_TASK_FEATURE: u32 = 2097152u32;
 const WVB_UNSAFE_SCRATCH_FEATURE: u32 = 4194304u32;
 const WVB_BORROWED_BUDGET_FEATURE: u32 = 8388608u32;
@@ -103,6 +111,7 @@ const WVB_UNSAFE_SCRATCH_LENGTH_FEATURE: u32 = 16777216u32;
 const WVB_UNSAFE_WRITE_REGION_FEATURE: u32 = 33554432u32;
 const WVB_UNSAFE_WRITE_POINTER_FEATURE: u32 = 67108864u32;
 const WVB_FOREIGN_CALL_FEATURE: u32 = 134217728u32;
+const WVB_FOUNDATION_VALUE_BORROW_FEATURE: u32 = 268435456u32;
 export record Compilerˉsourceˉwvbˉsummary {
 Status: Compilerˉsourceˉwvbˉstatus;
 Wirˉstatus: Sourceˉwir.Compilerˉsourceˉwirˉstatus;
@@ -148,6 +157,23 @@ if !Compilerˉsourceˉwvbˉfunctionˉtypeˉshapeˉisˉprivate(Shape) {
 return 4294967295u32;
 }
 return Shape - WVB_FUNCTION_TYPE_SHAPE_BASE;
+}
+fn Compilerˉsourceˉwvbˉshapeˉisˉborrowedˉoption(
+Shape: u32
+) -> bool {
+return Shape >= WIR_BORROWED_OPTION_SHAPE_BASE &&
+Shape < WIR_BORROWED_OPTION_SHAPE_BASE +
+WIR_BORROWED_OPTION_SHAPE_LIMIT;
+}
+fn Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape: u32
+) -> u32 {
+if !Compilerˉsourceˉwvbˉshapeˉisˉborrowedˉoption(Shape) {
+return 4294967295u32;
+}
+return Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(
+Shape - WIR_BORROWED_OPTION_SHAPE_BASE
+);
 }
 export fn Compilerˉsourceˉwvbˉsummaryˉfailure(
 Input: bytes,
@@ -238,6 +264,15 @@ if Shape == 805306368u32 { return false; }
 if Compilerˉsourceˉwvbˉfunctionˉtypeˉshapeˉisˉprivate(Shape) {
 return true;
 }
+if Compilerˉsourceˉwvbˉshapeˉisˉborrowedˉoption(Shape) {
+return Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape
+),
+Symbols,
+Orders
+) != 4294967295u32;
+}
 if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉdeclaredˉvalue(
 Shape, Symbols.Records, Symbols.Enums, Symbols.Variants, Allowˉvoid
 ) {
@@ -270,6 +305,9 @@ Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary
 ) -> bool {
 if Shape == 805306368u32 { return false; }
 if Compilerˉsourceˉwvbˉfunctionˉtypeˉshapeˉisˉprivate(Shape) {
+return true;
+}
+if Compilerˉsourceˉwvbˉshapeˉisˉborrowedˉoption(Shape) {
 return true;
 }
 if Shape >= 65536u32 && Shape < 65536u32 + Symbols.Records { return true; }
@@ -667,11 +705,12 @@ if Operation == 187u32 { return Compilerˉsourceˉwvbˉlowˉbyte(221u32); }
 if Operation == 188u32 { return Compilerˉsourceˉwvbˉlowˉbyte(222u32); }
 if Operation == 189u32 { return Compilerˉsourceˉwvbˉlowˉbyte(223u32); }
 if Operation == 190u32 { return Compilerˉsourceˉwvbˉlowˉbyte(224u32); }
+if Operation == 191u32 { return Compilerˉsourceˉwvbˉlowˉbyte(225u32); }
 return Compilerˉsourceˉwvbˉlowˉbyte(0u32);
 }
 export fn Compilerˉsourceˉwvbˉoperationˉisˉsupported(Operation: u32) -> bool {
 if Operation >= 1u32 {
-if Operation <= 190u32 { return true; }
+if Operation <= 191u32 { return true; }
 }
 return false;
 }
@@ -738,6 +777,7 @@ if Operation == 187u32 { Opcodeˉbytes = 9u32; }
 if Operation == 188u32 { Opcodeˉbytes = 13u32; }
 if Operation == 189u32 { Opcodeˉbytes = 13u32; }
 if Operation == 190u32 { Opcodeˉbytes = 13u32; }
+if Operation == 191u32 { Opcodeˉbytes = 13u32; }
 var Result: u32 = Operands * 5u32 + Opcodeˉbytes;
 if Shape != 0u32 { Result = Result + 5u32; }
 return Result;
@@ -1451,6 +1491,15 @@ Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
 Orders: Compilerˉsourceˉwvbˉsymbolˉorders
 ) -> u32 {
 if Shape == 805306368u32 || Shape == 805306369u32 { return Shape; }
+if Compilerˉsourceˉwvbˉshapeˉisˉborrowedˉoption(Shape) {
+return Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape
+),
+Symbols,
+Orders
+);
+}
 if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
 let Entry: u32 = Compilerˉsourceˉwvbˉgenericˉnominalˉentry(
 Shape, Orders
@@ -4109,12 +4158,32 @@ Globalˉoperation
 );
 }
 }
+if Operation == 191u32 {
+let Plannedˉoption: u32 =
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape
+),
+Symbols,
+Orders
+);
+if Target >= Parameters + Locals || Operands != 0u32 ||
+Auxiliary < 1u32 || Auxiliary > 3u32 ||
+Plannedˉoption < 196608u32 ||
+Plannedˉoption >= 262144u32 {
+return Compilerˉsourceˉwvbˉanalysisˉfailure(
+Wir, Compilerˉsourceˉwvbˉstatus.Unsupportedˉshape,
+Globalˉoperation
+);
+}
+}
 if Operation != 171u32 && Operation != 172u32 &&
 Operation != 173u32 && Operation != 180u32 &&
 Operation != 181u32 && Operation != 182u32 &&
 Operation != 183u32 && Operation != 184u32 &&
 Operation != 186u32 && Operation != 187u32 &&
 Operation != 188u32 && Operation != 189u32 &&
+Operation != 191u32 &&
 !Compilerˉsourceˉwvbˉshapeˉrequiresˉtake(
 Wir, Shape, Orders
 ) &&
@@ -4377,6 +4446,161 @@ Bytesˉfromˉu8(Borrowedˉkind),
 Bytesˉslice(Planned, 1u32, 4u32)
 );
 }
+fn Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+State: bytes,
+Index: u32,
+Value: u8
+) -> bytes {
+if Index >= Bytesˉlength(State) { return State; }
+return Bytesˉconcat(
+Bytesˉconcat(
+Bytesˉslice(State, 0u32, Index),
+Bytesˉfromˉu8(Value)
+),
+Bytesˉslice(
+State, Index + 1u32,
+Bytesˉlength(State) - Index - 1u32
+)
+);
+}
+fn Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
+Wir: bytes,
+Firstˉoperation: u32,
+Operationˉcount: u32,
+Temporaryˉcount: u32,
+Slotˉcount: u32
+) -> Compilerˉsourceˉwvbˉfoundationˉborrowˉplan {
+let Empty: bytes = Compilerˉsourceˉwvbˉempty(Wir);
+var Temporaryˉstate: bytes = Empty;
+var Temporary: u32 = 0u32;
+while Temporary < Temporaryˉcount {
+Temporaryˉstate = Bytesˉconcat(
+Temporaryˉstate, Bytesˉfromˉu8(0u8)
+);
+Temporary = Temporary + 1u32;
+}
+var Slotˉstate: bytes = Empty;
+var Frozenˉslots: bytes = Empty;
+var Slot: u32 = 0u32;
+while Slot < Slotˉcount {
+Slotˉstate = Bytesˉconcat(Slotˉstate, Bytesˉfromˉu8(0u8));
+Frozenˉslots = Bytesˉconcat(
+Frozenˉslots, Bytesˉfromˉu8(0u8)
+);
+Slot = Slot + 1u32;
+}
+let Operations: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
+let Operands: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+var Hasˉborrow: bool = false;
+var Index: u32 = 0u32;
+while Index < Operationˉcount {
+let Scanˉentry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
+if Bytesˉreadˉu16ˉlittle(Wir, Scanˉentry + 4u32) == 191u32 {
+let Owner: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Scanˉentry + 20u32
+);
+Frozenˉslots = Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Frozenˉslots, Owner, 1u8
+);
+Hasˉborrow = true;
+}
+Index = Index + 1u32;
+}
+if !Hasˉborrow {
+return Compilerˉsourceˉwvbˉfoundationˉborrowˉplan(
+false, Temporaryˉstate, Slotˉstate, Frozenˉslots
+);
+}
+Index = 0u32;
+while Index < Operationˉcount {
+let Entry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
+let Kind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Entry + 4u32);
+let Resultˉtemporary: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Entry + 12u32
+);
+let Firstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Entry + 16u32
+);
+let Operandˉcount: u32 = Bytesˉreadˉu16ˉlittle(
+Wir, Entry + 6u32
+);
+let Target: u32 = Bytesˉreadˉu32ˉlittle(Wir, Entry + 20u32);
+if Kind == 191u32 {
+Temporaryˉstate =
+Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Temporaryˉstate, Resultˉtemporary, 1u8
+);
+} else if Kind == 7u32 && Target < Slotˉcount &&
+Resultˉtemporary < Temporaryˉcount &&
+(Bytesˉreadˉu8(Slotˉstate, Target) == 1u8 ||
+Bytesˉreadˉu8(Frozenˉslots, Target) == 1u8) {
+Temporaryˉstate =
+Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Temporaryˉstate, Resultˉtemporary, 2u8
+);
+} else if (Kind == 18u32 || Kind == 67u32 || Kind == 164u32 ||
+Kind == 166u32 || Kind == 168u32) &&
+Operandˉcount > 0u32 && Resultˉtemporary < Temporaryˉcount {
+let Aggregate: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Operands + Firstˉoperand * 4u32
+);
+if Aggregate < Temporaryˉcount &&
+Bytesˉreadˉu8(Temporaryˉstate, Aggregate) != 0u8 {
+Temporaryˉstate =
+Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Temporaryˉstate, Resultˉtemporary, 2u8
+);
+}
+}
+if Kind == 8u32 && Operandˉcount > 0u32 && Target < Slotˉcount {
+let Stored: u32 = Bytesˉreadˉu32ˉlittle(
+Wir, Operands + Firstˉoperand * 4u32
+);
+if Stored < Temporaryˉcount &&
+Bytesˉreadˉu8(Temporaryˉstate, Stored) == 2u8 {
+Slotˉstate =
+Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Slotˉstate, Target, 1u8
+);
+Temporaryˉstate =
+Compilerˉsourceˉwvbˉfoundationˉborrowˉstateˉset(
+Temporaryˉstate, Stored, 3u8
+);
+}
+}
+Index = Index + 1u32;
+}
+return Compilerˉsourceˉwvbˉfoundationˉborrowˉplan(
+true, Temporaryˉstate, Slotˉstate, Frozenˉslots
+);
+}
+fn Compilerˉsourceˉwvbˉfoundationˉborrowedˉoptionˉshape(
+Shape: u32,
+Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+Orders: Compilerˉsourceˉwvbˉsymbolˉorders
+) -> bytes {
+return Compilerˉsourceˉwvbˉborrowedˉaggregateˉshape(
+Compilerˉsourceˉwvbˉplannedˉshape(
+Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape
+),
+Symbols,
+Orders
+)
+);
+}
+fn Compilerˉsourceˉwvbˉfoundationˉborrowedˉpayloadˉshape(
+Planned: bytes
+) -> bytes {
+return Bytesˉconcat(Bytesˉfromˉu8(37u8), Planned);
+}
+fn Compilerˉsourceˉwvbˉtemporaryˉhasˉfoundationˉborrow(
+Borrowˉplan: Compilerˉsourceˉwvbˉfoundationˉborrowˉplan,
+Temporary: u32
+) -> bool {
+return Temporary < Bytesˉlength(Borrowˉplan.Temporaryˉstate) &&
+Bytesˉreadˉu8(Borrowˉplan.Temporaryˉstate, Temporary) != 0u8;
+}
 export fn Compilerˉsourceˉwvbˉemitˉoperation(
 Input: bytes,
 Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
@@ -4391,7 +4615,8 @@ Operationˉend: u32,
 Parameters: u32,
 Locals: u32,
 Firstˉtemporary: u32,
-Temporaryˉmapping: bytes
+Temporaryˉmapping: bytes,
+Borrowˉplan: Compilerˉsourceˉwvbˉfoundationˉborrowˉplan
 ) -> bytes {
 let Operation: u32 = Bytesˉreadˉu16ˉlittle(Wir, Operationˉentry + 4u32);
 let Shape: u32 = Bytesˉreadˉu32ˉlittle(Wir, Operationˉentry + 8u32);
@@ -4470,6 +4695,9 @@ Input, Scan, Symbols, Bindings, Operandˉshape
 Compilerˉsourceˉwvbˉshapeˉisˉaffineˉresult(
 Wir, Operandˉshape
 )) {
+if !Compilerˉsourceˉwvbˉtemporaryˉhasˉfoundationˉborrow(
+Borrowˉplan, Operandˉtemporary
+) {
 Operandˉload = Compilerˉsourceˉwvbˉinstructionˉu32(
 205u8,
 Compilerˉsourceˉwvbˉtemporaryˉslot(
@@ -4477,6 +4705,7 @@ Operandˉtemporary, Parameters, Locals,
 Temporaryˉmapping
 )
 );
+}
 }
 }
 Result = Bytesˉconcat(Result, Operandˉload);
@@ -4545,6 +4774,8 @@ Input, Scan, Symbols, Bindings, Shape
 )) && !Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
 Input, Scan, Symbols, Bindings, Wir,
 Operationˉentry + 28u32, Operationˉend, Temporary, Shape
+) && !Compilerˉsourceˉwvbˉtemporaryˉhasˉfoundationˉborrow(
+Borrowˉplan, Temporary
 ) {
 Loadˉopcode = 205u8;
 }
@@ -5144,6 +5375,23 @@ Foreignˉabiˉshape, Symbols, Orders
 )
 );
 }
+if Operation == 191u32 {
+Result = Bytesˉconcat(Result, Bytesˉfromˉu8(225u8));
+Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Target));
+Result = Bytesˉconcat(
+Result,
+Bytesˉfromˉu32ˉlittle(
+Compilerˉsourceˉwvbˉplannedˉshapeˉvalue(
+Compilerˉsourceˉwvbˉborrowedˉoptionˉvalueˉshape(
+Shape
+),
+Symbols,
+Orders
+) - 196608u32
+)
+);
+Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Auxiliary));
+}
 if Operation >= 11u32 {
 if Operation <= 16u32 {
 Result = Bytesˉconcat(
@@ -5617,11 +5865,21 @@ let Blocksˉoffset: u32 = Compilerˉsourceˉwvbˉblocksˉoffset(Wir);
 let Operationsˉoffset: u32 = Compilerˉsourceˉwvbˉoperationsˉoffset(Wir);
 let Temporariesˉoffset: u32 = Compilerˉsourceˉwvbˉtemporariesˉoffset(Wir);
 let Operandsˉoffset: u32 = Compilerˉsourceˉwvbˉoperandsˉoffset(Wir);
+let Foundationˉborrowˉplan:
+Compilerˉsourceˉwvbˉfoundationˉborrowˉplan =
+Compilerˉsourceˉwvbˉbuildˉfoundationˉborrowˉplan(
+Wir, Firstˉoperation, Operationˉcount, Temporaryˉcount,
+Parameters + Locals
+);
+if Foundationˉborrowˉplan.Hasˉborrow {
+Features = Features | WVB_FOUNDATION_VALUE_BORROW_FEATURE;
+}
 var Temporaryˉallocation: Temporaryˉslots.Compilerˉsourceˉwvbˉtemporaryˉslotˉallocation =
 Temporaryˉslots.Compilerˉsourceˉwvbˉidentityˉtemporaryˉslots(
 Wir, Temporariesˉoffset, Firstˉtemporary, Temporaryˉcount
 );
-var Preserveˉborrowedˉtemporaryˉidentity: bool = false;
+var Preserveˉborrowedˉtemporaryˉidentity: bool =
+Foundationˉborrowˉplan.Hasˉborrow;
 var Borrowˉscan: u32 = 0u32;
 while Borrowˉscan < Temporaryˉcount {
 let Borrowˉshape: u32 = Bytesˉreadˉu32ˉlittle(
@@ -5856,11 +6114,19 @@ Input, Scan, Symbols, Bindings, Wir, Localˉshape, Orders
 ) {
 Features = Features | 131072u32;
 }
-Metadata = Bytesˉconcat(
-Metadata, Compilerˉsourceˉwvbˉplannedˉshape(
+var Plannedˉlocal: bytes = Compilerˉsourceˉwvbˉplannedˉshape(
 Localˉshape, Symbols, Orders
-)
 );
+if Bytesˉreadˉu8(
+Foundationˉborrowˉplan.Slotˉstate,
+Parameters + Index
+) == 1u8 {
+Plannedˉlocal =
+Compilerˉsourceˉwvbˉfoundationˉborrowedˉpayloadˉshape(
+Plannedˉlocal
+);
+}
+Metadata = Bytesˉconcat(Metadata, Plannedˉlocal);
 Index = Index + 1u32;
 }
 Index = 0u32;
@@ -5887,6 +6153,23 @@ Features = Features | 131072u32;
 var Plannedˉtemporary: bytes = Compilerˉsourceˉwvbˉplannedˉshape(
 Temporaryˉshape, Symbols, Orders
 );
+let Foundationˉborrowˉstate: u32 = U32ˉfromˉu8(
+Bytesˉreadˉu8(
+Foundationˉborrowˉplan.Temporaryˉstate, Index
+)
+);
+if Foundationˉborrowˉstate == 1u32 {
+Plannedˉtemporary =
+Compilerˉsourceˉwvbˉfoundationˉborrowedˉoptionˉshape(
+Temporaryˉshape, Symbols, Orders
+);
+}
+if Foundationˉborrowˉstate >= 2u32 {
+Plannedˉtemporary =
+Compilerˉsourceˉwvbˉfoundationˉborrowedˉpayloadˉshape(
+Plannedˉtemporary
+);
+}
 let Isˉborrowedˉbudgetˉtemporary: bool =
 Temporaryˉshape == 805306368u32 &&
 Compilerˉsourceˉwvbˉtemporaryˉisˉborrowedˉcallˉoperand(
@@ -5998,6 +6281,9 @@ Features = Features | WVB_UNSAFE_WRITE_POINTER_FEATURE;
 if Operationˉkind == 190u32 {
 Features = Features | WVB_FOREIGN_CALL_FEATURE;
 }
+if Operationˉkind == 191u32 {
+Features = Features | WVB_FOUNDATION_VALUE_BORROW_FEATURE;
+}
 if Operationˉkind == 8u32 {
 let Storeˉfirstˉoperand: u32 = Bytesˉreadˉu32ˉlittle(
 Wir, Operationˉentry + 16u32
@@ -6033,7 +6319,8 @@ Operationsˉoffset +
 (Firstˉoperation + Operationˉcount) * 28u32,
 Parameters, Locals,
 Firstˉtemporary,
-Temporaryˉallocation.Mapping
+Temporaryˉallocation.Mapping,
+Foundationˉborrowˉplan
 )
 );
 Inˉblock = Inˉblock + 1u32;
@@ -6581,7 +6868,8 @@ Compilerˉsourceˉwvbˉencodeˉfunction(
 Input, Scan,
 Validationˉview.Source, Validationˉheader,
 Symbols, Bindings, Orders, Textˉplan,
-Wirˉsummary.Directory, Validationˉfunction,
+Wirˉsummary.Directory,
+Validationˉfunction,
 0u32, false
 );
 if Validationˉencoding.Status !=
@@ -6639,7 +6927,8 @@ let Encoded: Compilerˉsourceˉwvbˉfunctionˉencoding =
 Compilerˉsourceˉwvbˉencodeˉfunction(
 Input, Scan, Functionˉview.Source, Functionˉheader,
 Symbols, Bindings, Emissionˉorders, Textˉplan,
-Wirˉsummary.Directory, Functionˉentry, Codeˉoffset, true
+Wirˉsummary.Directory,
+Functionˉentry, Codeˉoffset, true
 );
 if Encoded.Status != Compilerˉsourceˉwvbˉstatus.Valid {
 return Compilerˉsourceˉwvbˉsummaryˉfailure(
@@ -6749,6 +7038,9 @@ Wvbˉminor = 37u32;
 }
 if (Features & WVB_FOREIGN_CALL_FEATURE) != 0u32 {
 Wvbˉminor = 38u32;
+}
+if (Features & WVB_FOUNDATION_VALUE_BORROW_FEATURE) != 0u32 {
+Wvbˉminor = 39u32;
 }
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu16ˉlittle(Wvbˉminor));
 Bytecode = Bytesˉconcat(Bytecode, Bytesˉfromˉu32ˉlittle(7u32));

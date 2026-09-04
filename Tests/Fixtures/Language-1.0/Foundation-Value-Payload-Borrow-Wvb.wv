@@ -1,0 +1,53 @@
+#!wv/1 en@1
+module Foundationˉvalueˉpayloadˉborrowˉwvbˉtest;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+record Payload {
+    Code: u32;
+}
+
+fn Readˉpayload(Value: borrow Payload) -> u32 {
+    return Value.Code;
+}
+
+fn Readˉu32(Value: borrow u32) -> u32 {
+    return Value;
+}
+
+export fn Main() -> i32 {
+    let Maybe: Option.Option<Payload> = Option.Option.Present<Payload> {
+        Value: Payload { Code: 30u32 }
+    };
+    let Valid: Result.Result<Payload, u32> =
+        Result.Result.Valid<Payload, u32> {
+            Value: Payload { Code: 7u32 }
+        };
+    let Failure: Result.Result<Payload, u32> =
+        Result.Result.Failure<Payload, u32> { Error: 5u32 };
+    var Total: u32 = 0u32;
+    match Option.Borrow(borrow Maybe) {
+        case Option.Option.Present { Value: Item } {
+            Total = Total + Readˉpayload(borrow Item);
+        }
+        case Option.Option.Absent { }
+    }
+    match Result.Borrowˉvalid(borrow Valid) {
+        case Option.Option.Present { Value: Validˉitem } {
+            Total = Total + Readˉpayload(borrow Validˉitem);
+        }
+        case Option.Option.Absent { }
+    }
+    match Result.Borrowˉfailure(borrow Failure) {
+        case Option.Option.Present { Value: Error } {
+            Total = Total + Readˉu32(borrow Error);
+        }
+        case Option.Option.Absent { }
+    }
+    if Total != 42u32 { return 1; }
+    return 42;
+}

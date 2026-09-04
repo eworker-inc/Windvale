@@ -1365,6 +1365,7 @@ function Add-Native-Tool-Suite {
         return
     }
     if ($Stem -in @(
+        'Verify-Language-1.0-Foundation-Value-Borrow-Wvb',
         'Verify-Language-1.0-Owned-Vector-Calls-Wir',
         'Verify-Language-1.0-Using-Wir'
     )) {
@@ -2319,6 +2320,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Async-Indirect-Call-Missing-Await.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Executable.wv',
         'Tests/Fixtures/Language-1.0/Memory-Budget-Split-Failure-Executable.wv',
+        'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Failure-Executable.wv',
         'Tests/Fixtures/Language-1.0/Vector-Construct-Reserved-Zero-Executable.wv',
@@ -2358,6 +2360,7 @@ foreach ($Path in $Paths) {
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
         'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh',
         'Tools/Native/Verify-Language-1.0-Async-Call-Await.mjs',
+        'Tools/Native/Verify-Language-1.0-Foundation-Value-Borrow-Wvb.mjs',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'

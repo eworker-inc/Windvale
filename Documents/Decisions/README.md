@@ -11,7 +11,7 @@ The normalized status is a search aid derived from the opening status. The copie
 | Search status | Decisions |
 | --- | ---: |
 | Accepted | 350 |
-| Implemented | 496 |
+| Implemented | 497 |
 | Proposed | 4 |
 | Qualified | 95 |
 | Recorded | 7 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0957: represent immutable Foundation payload borrows in candidate WVB 1.39](0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md) | Implemented |
 | [Decision 0956: coalesce overlapping generic nominal development products](0956-Coalesce-Overlapping-Generic-Nominal-Development-Products.md) | Implemented |
 | [Decision 0955: add a bounded language front-door development checkpoint](0955-Add-A-Bounded-Language-Front-Door-Development-Checkpoint.md) | Implemented |
 | [Decision 0954: balance qualification shards by paired-host timings](0954-Balance-Qualification-Shards-By-Paired-Host-Timings.md) | Qualified |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0935: verify contained WVB 1.38 Foreign calls](0935-Verify-Contained-WVB-1.38-Foreign-Calls.md) | Accepted |
 | [Decision 0934: represent paired Foreign calls in candidate WVB 1.38](0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md) | Accepted |
 | [Decision 0933: pair authenticated Foreign calls before WVB emission](0933-Pair-Authenticated-Foreign-Calls-Before-Wvb-Emission.md) | Accepted |
-| [Decision 0932: represent typed Foreign calls in WVIR 1.31](0932-Represent-Typed-Foreign-Calls-In-Wvir-1.31.md) | Accepted |
 
 ## Superseded or historical records
 

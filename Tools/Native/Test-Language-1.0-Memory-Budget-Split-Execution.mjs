@@ -168,6 +168,12 @@ try {
     const Ownedˉaggregateˉsuccessˉa = path.join(
         Work, 'Owned-Aggregate-Success-A.wvb',
     );
+    const Foundationˉvalueˉborrowˉa = path.join(
+        Work, 'Foundation-Value-Borrow-A.wvb',
+    );
+    const Foundationˉvalueˉborrowˉb = path.join(
+        Work, 'Foundation-Value-Borrow-B.wvb',
+    );
     Targetˉdescriptor = path.join(Work, 'Target.wvtd');
     writeFileSync(Targetˉdescriptor, Constructˉtargetˉdescriptor(), { flag: 'wx' });
 
@@ -243,6 +249,19 @@ try {
         'using-semantics-wir',
         'Verify-Language-1.0-Using-Wir.mjs',
         [Admitter, Validator, Analyzer, Emitter, Targetˉdescriptor, Work],
+    );
+    Compileˉfoundationˉvalueˉborrow(
+        'foundation-value-borrow-a-compile', Admitter, Analyzer, Emitter,
+        Foundationˉvalueˉborrowˉa,
+    );
+    Compileˉfoundationˉvalueˉborrow(
+        'foundation-value-borrow-b-compile', Admitter, Analyzer, Emitter,
+        Foundationˉvalueˉborrowˉb,
+    );
+    Runˉnode(
+        'foundation-value-borrow-wvb-inspection',
+        'Verify-Language-1.0-Foundation-Value-Borrow-Wvb.mjs',
+        [Foundationˉvalueˉborrowˉa, Foundationˉvalueˉborrowˉb],
     );
 
     const Successˉa = path.join(Work, 'Success-A.wvb');
@@ -1160,7 +1179,7 @@ try {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${151 + Growˉmalformedˉcases.length +
+        `cases=${163 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1173,6 +1192,7 @@ try {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
+        'foundation-value-borrow-wvb-cases=12 foundation-value-borrow-opcodes=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -1240,6 +1260,32 @@ function Compile(Label, Admitter, Analyzer, Emitter, Fixture, Output) {
         path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0', Fixture),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Memory', 'Memory.wv'),
         path.join(Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv'),
+        Output,
+    ]);
+}
+
+function Compileˉfoundationˉvalueˉborrow(
+    Label,
+    Admitter,
+    Analyzer,
+    Emitter,
+    Output,
+) {
+    Runˉnode(Label, 'Run-Split-Compiler.mjs', [
+        Admitter, Validator, Analyzer, Emitter,
+        '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+        '--source-profile', Sourceˉprofile,
+        '--target-descriptor', Targetˉdescriptor,
+        path.join(
+            Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0',
+            'Foundation-Value-Payload-Borrow-Wvb.wv',
+        ),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Option.wv',
+        ),
+        path.join(
+            Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Result.wv',
+        ),
         Output,
     ]);
 }

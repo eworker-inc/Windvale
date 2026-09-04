@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.38 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, and candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
+`Compilerˉsourceˉwvb` is the first portable Windvale-written executable backend. It consumes prepared validated source evidence, lowers the accepted `WVIR 1` subset to one complete canonical WVB 1.11 through candidate WVB 1.39 module, and returns the bytes without using hosted capabilities. WVB 1.33 has a bounded unsafe-scratch oracle, WVB 1.34 adds exact immutable borrowed-memory-budget calls, WVB 1.35 adds exact immutable borrowed-scratch length observation, WVB 1.36 adds verified write-region borrowing, candidate WVB 1.37 adds contained write-pointer derivation, candidate WVB 1.38 serializes the first authenticated and paired registered Foreign call, and candidate WVB 1.39 publishes direct-owner immutable Foundation Option/Result payload borrowing; other consumers retain their explicit narrower boundaries. `Compilerˉsourceˉwvbˉcompilation` separately owns direct source analysis and source-profile composition.
 
 For the execution subset through WVB 1.30, including the current
 Vector/Sequence, launcher-resource, and noncapturing-callable checkpoints, the implementation proves
@@ -54,6 +54,12 @@ makes the production carrier a post-analysis result, and
 opens the exact registered call in the source-built bounded scalar provider;
 native and other execution consumers retain their narrower boundaries.
 None of these checkpoints is a cross-host or complete Slice 8 claim.
+Candidate WVB 1.39 adds the Foundation value-borrow publication boundary selected
+by
+[Decision 0957](../Documents/Decisions/0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md).
+It currently has bounded Windows source-writer and independent-reader evidence;
+complete verification, execution, direct borrowed-payload call-parameter
+identity, and Linux reproduction remain pending.
 
 ## Direct compilation result
 
@@ -1175,6 +1181,46 @@ returns `-3`. It never forms a native address. The native lowerer, launchers,
 browser, WebAssembly host, packages, and OS consumers still reject minor 38.
 Native symbol resolution and ABI invocation remain separate later checkpoints.
 
+WVIR 1.33/1.34 operation `191` lowers to candidate WVB 1.39 opcode `E1`
+(`foundation.value.borrow`). The 13-byte instruction consumes no stack operand
+and carries the direct owner slot, canonical `Option<borrow T>` Types index, and
+projection `1` for `Option.Present`, `2` for `Result.Valid`, or `3` for
+`Result.Failure`. The ordinary result-temporary store follows the instruction.
+Zero and every projection above three are rejected.
+
+The emitter independently reconstructs the exact Option/Result relationship
+from typed WVIR and the canonical generic materialization plan. It marks the
+module with the Foundation-value-borrow feature and selects minor 39 only when
+operation `191` is emitted. Shape `29` carries the ephemeral borrowed Option
+view. New recursive shape `37` carries the exact non-owning payload shape only
+for compiler-generated temporary and local entries.
+
+Before emitting a function, one bounded linear plan scans its already validated
+WVIR. It freezes each direct owner named by operation `191`, preserves temporary
+identity, propagates payload-borrow provenance through generated local loads,
+variant case/payload operations, and stores, and avoids `local.take` for those
+non-owning values. A function remains inside the existing bounds of 64 blocks,
+4,096 combined slots, 4,096 operations, and 4,096 temporaries. The plan has no
+global state and changes no unaffected WVB bytes.
+
+`Foundation-Value-Payload-Borrow-Wvb.wv` exercises all three projections with
+both a nominal-record payload and `u32`. Two compilations compare byte for byte.
+The independent reader requires WVB 1.39, seven canonical sections, three `E1`
+instructions in projection order `1,2,3`, at least three shape-`29` view locals,
+at least three shape-`37` payload locals, exact Option/Result type relationships,
+and bounded function/code geometry. It rejects six byte mutations covering the
+prior minor, unknown opcode, zero and unknown projection, invalid owner slot,
+and invalid Option type index. Together with deterministic equality these are
+12 new focused cases.
+
+This checkpoint deliberately stops at source publication. A direct helper call
+that receives a borrowed payload does not yet encode shape `37` in the callee's
+corresponding parameter metadata. The complete compiler-aligned verifier,
+scalar runtime, native lowerer, WebAssembly targets, packages, and Windvale OS
+therefore reject minor 39. Cross-call parameter identity, complete typed-stack
+and lifetime verification, runtime execution, and Linux reproduction are the
+next required checkpoints; this candidate does not claim them.
+
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
 focused independent contract reader accepts the exact header, section geometry,
@@ -1198,6 +1244,9 @@ complete compiler-aligned verifier. The source-built bounded scalar provider
 executes the exact registered binding against private logical heap state for
 success and stale-generation outcomes. Native address formation, native Foreign
 invocation, and cross-host containment remain pending.
+Candidate WVB 1.39 publishes the three canonical immutable Foundation
+value-borrow projections and passes its bounded independent structural reader.
+Complete verification and every execution target remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256
