@@ -237,6 +237,8 @@ $NativeCases = @(
             'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
             'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
             'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
+            'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+            'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
             'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
         Suites = @('language-1-memory-budget-split-execution')
@@ -1918,6 +1920,7 @@ $NativeCases = @(
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+            'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
             'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
             'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv',
             'Projects/Tests/Windvale-Wvb-Metadata-Normalization-Self-Test.wvproj',
@@ -4990,7 +4993,7 @@ $QualificationPipelineExpected = @{
     'Link-Wvo' = '39|124'
     'Package-Hosted-Wvb' = '19|111'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '21|59'
+    'Package-Segmented-Compiler-Wvb' = '21|60'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
@@ -5539,6 +5542,36 @@ foreach ($OtherDirectoryPath in @(
     if ($DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
         $DirectoryPlan.UseFoundationBorrowPlanDevelopment) {
         throw "WVB directory selection hid integration changes in '$OtherDirectoryPath'."
+    }
+}
+
+foreach ($OwnerPath in @(
+    'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
+)) {
+    $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet
+    if (!$OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
+        $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
+        $OwnerPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $OwnerPlan.ExpectedSeconds -ne 180 -or $OwnerPlan.MaximumSeconds -ne 600 -or
+        $OwnerPlan.Suites.Count -ne 1 -or $OwnerPlan.Gaps.Count -ne 0) {
+        throw "The focused Foundation owner-flow plan differs for '$OwnerPath'."
+    }
+}
+foreach ($OtherOwnerPath in @(
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
+)) {
+    $OwnerPlan = & $NativePlanner -ChangedPath @(
+        'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $OtherOwnerPath
+    ) -PassThru -Quiet
+    if ($OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
+        $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
+        $OwnerPlan.UseFoundationBorrowDirectoryDevelopment) {
+        throw "Foundation owner selection hid integration changes in '$OtherOwnerPath'."
     }
 }
 

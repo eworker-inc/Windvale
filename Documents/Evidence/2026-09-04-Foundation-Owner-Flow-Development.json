@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-foundation-owner-flow-development",
+  "date": "2026-09-04",
+  "subject": "Bounded path-sensitive Foundation payload owner checking with fast current-source tests",
+  "claim": "Eighteen WV case groups pass against the current-source owner-flow component and actual compiler-aligned control phase. They cover all-path initialization, permanent E1 owner freezing, branch joins, backward-edge revisiting, input and work bounds, and rejection of a changed published candidate. Fresh warm execution plus exact cached construction checks takes 2,046 ms. Complete WVB 1.39 admission remains closed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on fe125408c3aafc241ad33436b35c6e6f90d4de9e. Exact final component, fixture, project, runner and routing inputs are recorded below. A deliberate branch-merge mutation was restored before the final warm pass. The embedded candidate is the exact 1,966-byte cross-call publication fixture, freshly reproduced with the existing current compiler products before implementation."
+  },
+  "runs": [
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "First project and native-package cache misses, then all 18 component case groups. Project construction 8,084 ms, complete verification and packaging 32,972 ms, fresh native execution 815 ms; total includes cleanup. Existing bootstrap cache was retained.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 41877,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 10022,
+          "sha256": "365049b19c982e098c408f668971c4f12ebdb2279b1cf11e80734ccf41f83f3d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 226000,
+          "sha256": "fcdab4da7512e22547aa5b9c18ec31405159fe9626de7413755666bd586f35a5"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 12926,
+          "sha256": "3badb28fde841fb8f6fb101395eb6a98b12507d2809c32accefa0896c5015cc3"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 320,
+          "sha256": "32ec9903a42e3a714f3c96f8ad0029038bc21aa3c01f4c099fecbc87b1c46b85"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120802,
+          "sha256": "9560734b6da5c505f558e42b2b9dd69d731ac5c6502a4e5864d4a58701049131"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 291881,
+          "sha256": "4cd9fb0b3fbf9eac73ec5286498888f37db8aee4c422a47b94620f071107477f"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Deliberately replaced the union of incoming owner states with intersection. Both project and package caches missed and rebuilt; native case 8 (one uninitialized branch) returned 8 and the harness exited 1. This expected rejection proves that changed-source behavior is not hidden by a stale passing product. Mutation restored afterward.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners (temporary seeded branch-merge defect; require harness rejection)",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Restored source; exact project and native package hits; freshly ran all 18 groups in 812 ms, without owner-result reuse. Project key 4c6f1a5094a442c7a14d983c6f5de4e4a5ba5b0df7a6928b851bac632a6fa1d0 and segmented Windows key ed5631d3d534d42699d0c1f7e6ce769a613afab50da521012d3c8b60e3f3a638.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 2046,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 10022,
+          "sha256": "365049b19c982e098c408f668971c4f12ebdb2279b1cf11e80734ccf41f83f3d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 226000,
+          "sha256": "fcdab4da7512e22547aa5b9c18ec31405159fe9626de7413755666bd586f35a5"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 12926,
+          "sha256": "3badb28fde841fb8f6fb101395eb6a98b12507d2809c32accefa0896c5015cc3"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 320,
+          "sha256": "32ec9903a42e3a714f3c96f8ad0029038bc21aa3c01f4c099fecbc87b1c46b85"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120802,
+          "sha256": "9560734b6da5c505f558e42b2b9dd69d731ac5c6502a4e5864d4a58701049131"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd",
+          "size": 605,
+          "sha256": "e3587f25a8838f235a72d1fda7faa2041b23592249043a51c2fa83627eb2eb84"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh",
+          "size": 580,
+          "sha256": "e5b8c3836ea78a65c90df67c6693d2d3e6cd36f94e4cf3f14620f31866cdf6af"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 276371,
+          "sha256": "071f300e6bf0d48d718b0e0fd4f2bb994ec3cc4e0e769b2c2cd2540efd1478c6"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 37739,
+          "sha256": "aa1f10837959a02541914b024b5c20df6e3b1ef1a96a8333e469fdc2117bab20"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 316894,
+          "sha256": "14c811a557019c8e8ab371961e9fc473d1ee3c7c6a14f08369a99f927b36108f"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18074,
+          "sha256": "30381dffa74bd85ea833df21f5d3925344b73d2c367d63c9134755db2b9d1883"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23763,
+          "sha256": "56579987d958194d1e03376a077525cecf472bacf5e44143b115520d533661d4"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 291881,
+          "sha256": "4cd9fb0b3fbf9eac73ec5286498888f37db8aee4c422a47b94620f071107477f"
+        },
+        {
+          "path": "Candidate byte data embedded in Foundation-Owner-Flow-Self-Test.wv",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        }
+      ]
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "Changed-file dispatch through the Windows wrapper, including the 2,046 ms fresh owner run above. The complete command wall time was observed at approximately 4.23 seconds.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv -NoResultCache",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "31 general and 280 native routing cases, plus positive and excluded owner-flow selectors, complete dependency declarations, shared runner faults, and the 21-owner/60-call segmented-packaging inventory.",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 276371,
+          "sha256": "071f300e6bf0d48d718b0e0fd4f2bb994ec3cc4e0e769b2c2cd2540efd1478c6"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 37739,
+          "sha256": "aa1f10837959a02541914b024b5c20df6e3b1ef1a96a8333e469fdc2117bab20"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 316894,
+          "sha256": "14c811a557019c8e8ab371961e9fc473d1ee3c7c6a14f08369a99f927b36108f"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18074,
+          "sha256": "30381dffa74bd85ea833df21f5d3925344b73d2c367d63c9134755db2b9d1883"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23763,
+          "sha256": "56579987d958194d1e03376a077525cecf472bacf5e44143b115520d533661d4"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Only payload-owner availability and permanent E1 freezing are implemented here. Complete semantic metadata admission, nominal Option/Result relationships, borrowed operand-stack provenance, ordinary direct-call loan lifetimes, non-escape, and runtime execution remain unfinished. All complete consumers still reject minor 39.",
+    "The synthetic owner-state streams isolate control flow and deliberately do not establish valid typed operand stacks. The final two groups exercise the actual control phase on the published candidate and an owner-overwrite mutation. They are not complete-module verifier tests.",
+    "The component relies on the caller's validated instruction directory and exact five-byte shape cells. It owns explicit bounds of 128 bytecode blocks, 8,192 slots, 1 MiB of code and a module-shared 16,777,216-unit work budget. Ordinary borrow-free functions do not enter this pass.",
+    "The existing full memory-budget owner now declares 252 cases, and the combined Foundation selector declares 81. Neither entire selection was rerun here. The earlier publication and 24-case typed-directory evidence remain separate.",
+    "The all-changed-file plan selected 24 owners with 5,625 expected seconds and no coverage gaps. It was inspected but not executed under the ten-minute development budget. Broader reconstruction, package, legacy semantic suites, Linux execution, WebAssembly and complete cross-host qualification were not run for this checkpoint.",
+    "Timings are single local observations with an existing native bootstrap cache, not clean-host benchmarks, stable speedup thresholds or peak-memory measurements. No process-tree peak working set was captured.",
+    "The new WV test fixture uses the current bootstrap source syntax. Its edition-1 source migration remains in the full compiler/library/source migration goal."
+  ],
+  "related": [
+    "Specifications/Seed-Bytecode.md",
+    "Documents/Project/Progress.md",
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json",
+    "Documents/Evidence/2026-09-04-Wvb-Typed-Directory-Development.json",
+    "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+    "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+    "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv"
+  ]
+}

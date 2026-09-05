@@ -1,6 +1,7 @@
 module Windvaleˉcompilerˉwvbˉverifierˉexecutable profile portable;
 
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Typedˉdirectories;
+import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Foundationˉowners;
 
 record Hˉoperationˉstate {
     Valid: bool;
@@ -24,6 +25,15 @@ fn Hˉeffectiveˉminor(Input: bytes) -> u32 {
 
 fn Hˉshapeˉwidth(Input: bytes, Cursor: u32) -> u32 {
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor));
+    if Kind == 37u32 {
+        if Cursor + 1u32 >= Bytesˉlength(Input) { return 0u32; }
+        let Inner: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Cursor + 1u32));
+        if Inner == 7u32 || Inner == 8u32 || Inner == 11u32 ||
+            Inner == 22u32 || Inner == 24u32 || Inner == 35u32 {
+            return 6u32;
+        }
+        return 2u32;
+    }
     if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
         Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 ||
         Kind == 28u32 || Kind == 29u32 || Kind == 30u32 || Kind == 35u32 {
@@ -4186,7 +4196,7 @@ fn Hˉfixedˉinstructionˉwidth(Opcode: u32) -> u32 {
     }
     if Opcode == 209u32 || Opcode == 213u32 || Opcode == 216u32 ||
         Opcode == 217u32 || Opcode == 220u32 || Opcode == 222u32 ||
-        Opcode == 223u32 || Opcode == 224u32 {
+        Opcode == 223u32 || Opcode == 224u32 || Opcode == 225u32 {
         return 13u32;
     }
     if Opcode == 214u32 || Opcode == 215u32 || Opcode == 218u32 {
@@ -5519,6 +5529,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
     var Controlˉfunctionˉindex: u32 = 0u32;
     var Controlˉfunctionˉcursor: u32 = Controlˉfunctions + 4u32;
     var Controlˉaggregateˉinstructions: u32 = 0u32;
+    var Foundationˉremainingˉwork: u32 = 16777216u32;
     while Controlˉfunctionˉindex < Controlˉfunctionˉcount {
         let Controlˉnameˉlength: u32 = Bytesˉreadˉu32ˉlittle(
             Input,
@@ -5536,19 +5547,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         var Controlˉshapeˉindex: u32 = 0u32;
         var Controlˉshapeˉkind: u32 = 0u32;
         while Controlˉshapeˉindex < Controlˉparameterˉcount {
-            Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
-                Input,
-                Controlˉfunctionˉcursor
-            ));
-            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
-            if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
-                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 ||
-                Controlˉshapeˉkind == 26u32 || Controlˉshapeˉkind == 27u32 ||
-                Controlˉshapeˉkind == 28u32 || Controlˉshapeˉkind == 29u32 ||
-                Controlˉshapeˉkind == 30u32 || Controlˉshapeˉkind == 35u32 {
-                Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
-            }
+            let Controlˉparameterˉwidth: u32 = Hˉshapeˉwidth(Input, Controlˉfunctionˉcursor);
+            if Controlˉparameterˉwidth == 0u32 { return Controlˉinvalid; }
+            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + Controlˉparameterˉwidth;
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
         }
         Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
@@ -5569,19 +5570,9 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         let Controlˉlocalˉtypes: u32 = Controlˉfunctionˉcursor;
         Controlˉshapeˉindex = 0u32;
         while Controlˉshapeˉindex < Controlˉlocalˉcount {
-            Controlˉshapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
-                Input,
-                Controlˉfunctionˉcursor
-            ));
-            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 1u32;
-            if Controlˉshapeˉkind == 7u32 || Controlˉshapeˉkind == 8u32 ||
-                Controlˉshapeˉkind == 11u32 || Controlˉshapeˉkind == 22u32 ||
-                Controlˉshapeˉkind == 23u32 || Controlˉshapeˉkind == 24u32 ||
-                Controlˉshapeˉkind == 28u32 ||
-                Controlˉshapeˉkind == 29u32 ||
-                Controlˉshapeˉkind == 30u32 || Controlˉshapeˉkind == 35u32 {
-                Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + 4u32;
-            }
+            let Controlˉlocalˉwidth: u32 = Hˉshapeˉwidth(Input, Controlˉfunctionˉcursor);
+            if Controlˉlocalˉwidth == 0u32 { return Controlˉinvalid; }
+            Controlˉfunctionˉcursor = Controlˉfunctionˉcursor + Controlˉlocalˉwidth;
             Controlˉshapeˉindex = Controlˉshapeˉindex + 1u32;
         }
         let Controlˉfunctionˉcodeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
@@ -5623,6 +5614,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
         var Controlˉpreviousˉopcode: u32 = 0u32;
         var Controlˉfunctionˉinstructions: u32 = 0u32;
         var Controlˉhasˉtake: bool = false;
+        var Controlˉhasˉfoundationˉborrow: bool = false;
         var Controlˉownedˉslot: u32 = 0u32;
         while Controlˉownedˉslot < Controlˉlocalˉslots {
             if Iˉtrackedˉownedˉlocalˉshape(
@@ -5660,6 +5652,7 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                 Controlˉcursor,
                 Controlˉopcode
             );
+            if Controlˉopcode == 225u32 { Controlˉhasˉfoundationˉborrow = true; }
             Controlˉaggregateˉinstructions = Controlˉaggregateˉinstructions
                 + 1u32;
             Controlˉfunctionˉinstructions =
@@ -5700,6 +5693,16 @@ export fn Iˉcontrol(Input: bytes) -> bytes {
                     return Controlˉinvalid;
                 }
             }
+        }
+        if Controlˉhasˉfoundationˉborrow {
+            if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 { return Controlˉinvalid; }
+            let Foundationˉflow: Foundationˉowners.Flowˉresult = Foundationˉowners.Check(
+                Input, Controlˉfunctionˉcode, Controlˉfunctionˉcodeˉlength,
+                Controlˉlocalˉshapes, Controlˉparameterˉcount,
+                Controlˉdirectory, Foundationˉremainingˉwork
+            );
+            if !Foundationˉflow.Valid { return Controlˉinvalid; }
+            Foundationˉremainingˉwork = Foundationˉremainingˉwork - Foundationˉflow.Work;
         }
         if Controlˉhasˉtake {
             if Controlˉfunctionˉinstructions > 4096u32 ||

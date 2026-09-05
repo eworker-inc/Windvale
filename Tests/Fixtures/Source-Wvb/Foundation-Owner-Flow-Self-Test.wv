@@ -1,0 +1,230 @@
+module Foundationˉownerˉflowˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Owners;
+import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
+
+// Published source-fixture snapshot; the native owner checks its exact bytes.
+data Candidate: bytes = [
+    87, 86, 66, 49, 1, 0, 39, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    97, 0, 0, 0, 1, 45, 0, 0, 0, 70, 111, 117, 110, 100, 97, 116,
+    105, 111, 110, 203, 137, 118, 97, 108, 117, 101, 203, 137, 112, 97, 121, 108,
+    111, 97, 100, 203, 137, 98, 111, 114, 114, 111, 119, 203, 137, 119, 118, 98,
+    203, 137, 116, 101, 115, 116, 1, 1, 2, 3, 0, 0, 0, 5, 0, 0,
+    0, 108, 105, 110, 117, 120, 7, 0, 0, 0, 119, 105, 110, 100, 111, 119,
+    115, 8, 0, 0, 0, 119, 105, 110, 100, 118, 97, 108, 101, 0, 0, 0,
+    0, 0, 0, 0, 0, 2, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+    0, 3, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0,
+    0, 154, 1, 0, 0, 6, 0, 0, 0, 16, 0, 0, 0, 70, 111, 114,
+    119, 97, 114, 100, 203, 137, 112, 97, 121, 108, 111, 97, 100, 1, 0, 0,
+    0, 37, 7, 0, 0, 0, 0, 5, 2, 0, 0, 0, 37, 7, 0, 0,
+    0, 0, 5, 0, 0, 0, 0, 31, 0, 0, 0, 1, 0, 0, 0, 12,
+    0, 0, 0, 70, 111, 114, 119, 97, 114, 100, 203, 137, 117, 51, 50, 1,
+    0, 0, 0, 37, 5, 5, 2, 0, 0, 0, 37, 5, 5, 31, 0, 0,
+    0, 31, 0, 0, 0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105,
+    110, 0, 0, 0, 0, 1, 62, 0, 0, 0, 7, 0, 0, 0, 0, 5,
+    11, 1, 0, 0, 0, 11, 2, 0, 0, 0, 11, 2, 0, 0, 0, 5,
+    37, 7, 0, 0, 0, 0, 37, 7, 0, 0, 0, 0, 37, 5, 5, 7,
+    0, 0, 0, 0, 5, 37, 7, 0, 0, 0, 0, 5, 5, 2, 1, 37,
+    5, 5, 5, 2, 1, 5, 5, 5, 2, 1, 5, 7, 0, 0, 0, 0,
+    11, 1, 0, 0, 0, 5, 7, 0, 0, 0, 0, 11, 2, 0, 0, 0,
+    5, 11, 2, 0, 0, 0, 5, 29, 1, 0, 0, 0, 2, 37, 7, 0,
+    0, 0, 0, 5, 37, 7, 0, 0, 0, 0, 5, 5, 29, 1, 0, 0,
+    0, 2, 37, 7, 0, 0, 0, 0, 5, 37, 7, 0, 0, 0, 0, 5,
+    5, 29, 3, 0, 0, 0, 2, 37, 5, 5, 37, 5, 5, 5, 5, 5,
+    2, 1, 1, 62, 0, 0, 0, 18, 4, 0, 0, 2, 0, 0, 0, 11,
+    0, 0, 0, 82, 101, 97, 100, 203, 137, 111, 119, 110, 101, 100, 1, 0,
+    0, 0, 5, 5, 1, 0, 0, 0, 5, 80, 4, 0, 0, 16, 0, 0,
+    0, 1, 0, 0, 0, 13, 0, 0, 0, 82, 101, 97, 100, 203, 137, 112,
+    97, 121, 108, 111, 97, 100, 1, 0, 0, 0, 37, 7, 0, 0, 0, 0,
+    5, 2, 0, 0, 0, 37, 7, 0, 0, 0, 0, 37, 5, 96, 4, 0,
+    0, 31, 0, 0, 0, 1, 0, 0, 0, 9, 0, 0, 0, 82, 101, 97,
+    100, 203, 137, 117, 51, 50, 1, 0, 0, 0, 37, 5, 5, 1, 0, 0,
+    0, 37, 5, 127, 4, 0, 0, 16, 0, 0, 0, 1, 0, 0, 0, 5,
+    0, 0, 0, 143, 4, 0, 0, 4, 0, 0, 0, 0, 5, 1, 0, 0,
+    0, 4, 1, 0, 0, 0, 64, 4, 0, 0, 0, 5, 2, 0, 0, 0,
+    4, 2, 0, 0, 0, 81, 4, 0, 0, 0, 0, 5, 1, 0, 0, 0,
+    4, 1, 0, 0, 0, 64, 5, 0, 0, 0, 5, 2, 0, 0, 0, 4,
+    2, 0, 0, 0, 81, 9, 42, 0, 0, 0, 5, 9, 0, 0, 0, 4,
+    9, 0, 0, 0, 104, 0, 0, 0, 0, 5, 10, 0, 0, 0, 4, 10,
+    0, 0, 0, 5, 0, 0, 0, 0, 9, 42, 0, 0, 0, 5, 11, 0,
+    0, 0, 4, 11, 0, 0, 0, 5, 1, 0, 0, 0, 4, 0, 0, 0,
+    0, 5, 12, 0, 0, 0, 4, 12, 0, 0, 0, 64, 0, 0, 0, 0,
+    5, 13, 0, 0, 0, 9, 42, 0, 0, 0, 5, 14, 0, 0, 0, 4,
+    13, 0, 0, 0, 4, 14, 0, 0, 0, 97, 5, 15, 0, 0, 0, 4,
+    15, 0, 0, 0, 49, 137, 0, 0, 0, 48, 121, 0, 0, 0, 1, 2,
+    0, 0, 0, 5, 16, 0, 0, 0, 4, 16, 0, 0, 0, 81, 48, 142,
+    0, 0, 0, 4, 1, 0, 0, 0, 5, 17, 0, 0, 0, 4, 17, 0,
+    0, 0, 64, 1, 0, 0, 0, 5, 18, 0, 0, 0, 9, 42, 0, 0,
+    0, 5, 19, 0, 0, 0, 4, 18, 0, 0, 0, 4, 19, 0, 0, 0,
+    97, 5, 20, 0, 0, 0, 4, 20, 0, 0, 0, 49, 224, 0, 0, 0,
+    48, 208, 0, 0, 0, 1, 3, 0, 0, 0, 5, 21, 0, 0, 0, 4,
+    21, 0, 0, 0, 81, 48, 229, 0, 0, 0, 4, 1, 0, 0, 0, 5,
+    22, 0, 0, 0, 4, 22, 0, 0, 0, 64, 3, 0, 0, 0, 5, 23,
+    0, 0, 0, 9, 42, 0, 0, 0, 5, 24, 0, 0, 0, 4, 23, 0,
+    0, 0, 4, 24, 0, 0, 0, 97, 5, 25, 0, 0, 0, 4, 25, 0,
+    0, 0, 49, 55, 1, 0, 0, 48, 39, 1, 0, 0, 1, 4, 0, 0,
+    0, 5, 26, 0, 0, 0, 4, 26, 0, 0, 0, 81, 48, 60, 1, 0,
+    0, 9, 30, 0, 0, 0, 5, 27, 0, 0, 0, 4, 27, 0, 0, 0,
+    104, 0, 0, 0, 0, 5, 28, 0, 0, 0, 4, 28, 0, 0, 0, 151,
+    1, 0, 0, 0, 0, 0, 0, 0, 5, 29, 0, 0, 0, 4, 29, 0,
+    0, 0, 5, 2, 0, 0, 0, 9, 7, 0, 0, 0, 5, 30, 0, 0,
+    0, 4, 30, 0, 0, 0, 104, 0, 0, 0, 0, 5, 31, 0, 0, 0,
+    4, 31, 0, 0, 0, 151, 2, 0, 0, 0, 0, 0, 0, 0, 5, 32,
+    0, 0, 0, 4, 32, 0, 0, 0, 5, 3, 0, 0, 0, 9, 5, 0,
+    0, 0, 5, 33, 0, 0, 0, 4, 33, 0, 0, 0, 151, 2, 0, 0,
+    0, 1, 0, 0, 0, 5, 34, 0, 0, 0, 4, 34, 0, 0, 0, 5,
+    4, 0, 0, 0, 9, 0, 0, 0, 0, 5, 35, 0, 0, 0, 4, 35,
+    0, 0, 0, 5, 5, 0, 0, 0, 225, 2, 0, 0, 0, 1, 0, 0,
+    0, 1, 0, 0, 0, 5, 36, 0, 0, 0, 4, 36, 0, 0, 0, 152,
+    1, 0, 0, 0, 0, 0, 0, 0, 5, 37, 0, 0, 0, 4, 37, 0,
+    0, 0, 49, 118, 2, 0, 0, 48, 23, 2, 0, 0, 4, 36, 0, 0,
+    0, 196, 1, 0, 0, 0, 0, 0, 0, 0, 5, 38, 0, 0, 0, 4,
+    38, 0, 0, 0, 5, 6, 0, 0, 0, 4, 5, 0, 0, 0, 5, 39,
+    0, 0, 0, 4, 6, 0, 0, 0, 5, 40, 0, 0, 0, 4, 40, 0,
+    0, 0, 64, 0, 0, 0, 0, 5, 41, 0, 0, 0, 4, 39, 0, 0,
+    0, 4, 41, 0, 0, 0, 20, 5, 42, 0, 0, 0, 4, 42, 0, 0,
+    0, 5, 5, 0, 0, 0, 48, 128, 2, 0, 0, 48, 123, 2, 0, 0,
+    48, 128, 2, 0, 0, 225, 3, 0, 0, 0, 1, 0, 0, 0, 2, 0,
+    0, 0, 5, 43, 0, 0, 0, 4, 43, 0, 0, 0, 152, 1, 0, 0,
+    0, 0, 0, 0, 0, 5, 44, 0, 0, 0, 4, 44, 0, 0, 0, 49,
+    19, 3, 0, 0, 48, 180, 2, 0, 0, 4, 43, 0, 0, 0, 196, 1,
+    0, 0, 0, 0, 0, 0, 0, 5, 45, 0, 0, 0, 4, 45, 0, 0,
+    0, 5, 7, 0, 0, 0, 4, 5, 0, 0, 0, 5, 46, 0, 0, 0,
+    4, 7, 0, 0, 0, 5, 47, 0, 0, 0, 4, 47, 0, 0, 0, 64,
+    4, 0, 0, 0, 5, 48, 0, 0, 0, 4, 46, 0, 0, 0, 4, 48,
+    0, 0, 0, 20, 5, 49, 0, 0, 0, 4, 49, 0, 0, 0, 5, 5,
+    0, 0, 0, 48, 29, 3, 0, 0, 48, 24, 3, 0, 0, 48, 29, 3,
+    0, 0, 225, 4, 0, 0, 0, 3, 0, 0, 0, 3, 0, 0, 0, 5,
+    50, 0, 0, 0, 4, 50, 0, 0, 0, 152, 3, 0, 0, 0, 0, 0,
+    0, 0, 5, 51, 0, 0, 0, 4, 51, 0, 0, 0, 49, 176, 3, 0,
+    0, 48, 81, 3, 0, 0, 4, 50, 0, 0, 0, 196, 3, 0, 0, 0,
+    0, 0, 0, 0, 5, 52, 0, 0, 0, 4, 52, 0, 0, 0, 5, 8,
+    0, 0, 0, 4, 5, 0, 0, 0, 5, 53, 0, 0, 0, 4, 8, 0,
+    0, 0, 5, 54, 0, 0, 0, 4, 54, 0, 0, 0, 64, 1, 0, 0,
+    0, 5, 55, 0, 0, 0, 4, 53, 0, 0, 0, 4, 55, 0, 0, 0,
+    20, 5, 56, 0, 0, 0, 4, 56, 0, 0, 0, 5, 5, 0, 0, 0,
+    48, 186, 3, 0, 0, 48, 181, 3, 0, 0, 48, 186, 3, 0, 0, 4,
+    5, 0, 0, 0, 5, 57, 0, 0, 0, 9, 42, 0, 0, 0, 5, 58,
+    0, 0, 0, 4, 57, 0, 0, 0, 4, 58, 0, 0, 0, 97, 5, 59,
+    0, 0, 0, 4, 59, 0, 0, 0, 49, 253, 3, 0, 0, 48, 237, 3,
+    0, 0, 1, 1, 0, 0, 0, 5, 60, 0, 0, 0, 4, 60, 0, 0,
+    0, 81, 48, 2, 4, 0, 0, 1, 42, 0, 0, 0, 5, 61, 0, 0,
+    0, 4, 61, 0, 0, 0, 81, 4, 0, 0, 0, 0, 5, 1, 0, 0,
+    0, 4, 1, 0, 0, 0, 81, 4, 0, 0, 0, 0, 5, 1, 0, 0,
+    0, 4, 1, 0, 0, 0, 105, 0, 0, 0, 0, 5, 2, 0, 0, 0,
+    4, 2, 0, 0, 0, 81, 4, 0, 0, 0, 0, 5, 1, 0, 0, 0,
+    4, 1, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0, 0, 1, 0,
+    0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 2, 0, 0, 0, 7,
+    0, 0, 0, 199, 0, 0, 0, 4, 0, 0, 0, 1, 7, 0, 0, 0,
+    80, 97, 121, 108, 111, 97, 100, 1, 0, 0, 0, 4, 0, 0, 0, 67,
+    111, 100, 101, 5, 3, 9, 0, 0, 0, 95, 95, 87, 118, 89, 48, 48,
+    48, 48, 2, 0, 0, 0, 7, 0, 0, 0, 80, 114, 101, 115, 101, 110,
+    116, 1, 5, 0, 0, 0, 86, 97, 108, 117, 101, 7, 0, 0, 0, 0,
+    6, 0, 0, 0, 65, 98, 115, 101, 110, 116, 0, 3, 9, 0, 0, 0,
+    95, 95, 87, 118, 89, 48, 48, 48, 49, 2, 0, 0, 0, 5, 0, 0,
+    0, 86, 97, 108, 105, 100, 1, 5, 0, 0, 0, 86, 97, 108, 117, 101,
+    7, 0, 0, 0, 0, 7, 0, 0, 0, 70, 97, 105, 108, 117, 114, 101,
+    1, 5, 0, 0, 0, 69, 114, 114, 111, 114, 5, 3, 9, 0, 0, 0,
+    95, 95, 87, 118, 89, 48, 48, 48, 50, 2, 0, 0, 0, 7, 0, 0,
+    0, 80, 114, 101, 115, 101, 110, 116, 1, 5, 0, 0, 0, 86, 97, 108,
+    117, 101, 5, 6, 0, 0, 0, 65, 98, 115, 101, 110, 116, 0
+];
+
+fn Operation(Opcode: u8, Slot: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Slot));
+}
+
+fn Borrow(Slot: u32) -> bytes {
+    return Bytesˉconcat(Operation(225u8, Slot), Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(1u32)));
+}
+
+fn Flow(Code: bytes, Shapes: bytes, Parameters: u32, Work: u32) -> Owners.Flowˉresult {
+    let Control: Directories.Hˉcontrolˉdirectory =
+        Directories.Iˉcontrolˉdirectory(Code, 0u32, Bytesˉlength(Code));
+    return Owners.Check(Code, 0u32, Bytesˉlength(Code), Shapes, Parameters, Control, Work);
+}
+
+fn Rule(Code: bytes, Shapes: bytes, Parameters: u32) -> u32 {
+    let Result: Owners.Flowˉresult = Flow(Code, Shapes, Parameters, 16777216u32);
+    return Result.Rule;
+}
+
+// Synthetic streams isolate owner-state transfer, not operand-stack validity.
+// The final cases use the actual compiler-published candidate module instead.
+export fn Main() -> i32 {
+    let Shape: bytes = Operation(11u8, 0u32);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Store: bytes = Operation(5u8, 0u32);
+    let Take: bytes = Operation(205u8, 0u32);
+    let Loan: bytes = Borrow(0u32);
+    let Valid: bytes = Bytesˉconcat(Store, Bytesˉconcat(Loan, Return));
+    if Rule(Valid, Shape, 0u32) != 0u32 { return 1; }
+    if Rule(Bytesˉconcat(Loan, Return), Shape, 1u32) != 0u32 { return 2; }
+    if Rule(Bytesˉconcat(Loan, Return), Shape, 0u32) != 3u32 { return 3; }
+    if Rule(Bytesˉconcat(Store, Bytesˉconcat(Take, Bytesˉconcat(Loan, Return))), Shape, 0u32) != 3u32 {
+        return 4;
+    }
+    if Rule(Bytesˉconcat(Store, Bytesˉconcat(Loan, Bytesˉconcat(Store, Return))), Shape, 0u32) != 4u32 ||
+        Rule(Bytesˉconcat(Store, Bytesˉconcat(Loan, Bytesˉconcat(Take, Return))), Shape, 0u32) != 4u32 {
+        return 5;
+    }
+    if Rule(Bytesˉconcat(Store, Bytesˉconcat(Loan, Bytesˉconcat(Loan, Return))), Shape, 0u32) != 0u32 {
+        return 6;
+    }
+    let Bothˉinitialized: bytes = Bytesˉconcat(Operation(49u8, 15u32), Bytesˉconcat(
+        Store, Bytesˉconcat(Operation(48u8, 25u32), Bytesˉconcat(Store,
+            Bytesˉconcat(Operation(48u8, 25u32), Bytesˉconcat(Loan, Return))))));
+    if Rule(Bothˉinitialized, Shape, 0u32) != 0u32 { return 7; }
+    let Oneˉinitialized: bytes = Bytesˉconcat(Operation(49u8, 15u32), Bytesˉconcat(
+        Store, Bytesˉconcat(Operation(48u8, 20u32), Bytesˉconcat(
+            Operation(48u8, 20u32), Bytesˉconcat(Loan, Return)))));
+    if Rule(Oneˉinitialized, Shape, 0u32) != 3u32 { return 8; }
+    let Oneˉfrozen: bytes = Bytesˉconcat(Operation(49u8, 23u32), Bytesˉconcat(
+        Loan, Bytesˉconcat(Operation(48u8, 28u32), Bytesˉconcat(Operation(48u8, 28u32),
+            Bytesˉconcat(Store, Return)))));
+    if Rule(Oneˉfrozen, Shape, 1u32) != 4u32 { return 9; }
+    let Loop: bytes = Bytesˉconcat(Store, Bytesˉconcat(Operation(48u8, 10u32),
+        Bytesˉconcat(Loan, Operation(48u8, 10u32))));
+    if Rule(Loop, Shape, 0u32) != 0u32 { return 10; }
+    let Loopˉwrite: bytes = Bytesˉconcat(Store, Bytesˉconcat(Operation(48u8, 10u32),
+        Bytesˉconcat(Store, Bytesˉconcat(Loan, Operation(48u8, 10u32)))));
+    if Rule(Loopˉwrite, Shape, 0u32) != 4u32 { return 11; }
+    let Other: bytes = Bytesˉconcat(Shape, Shape);
+    if Rule(Bytesˉconcat(Loan, Bytesˉconcat(Operation(5u8, 1u32), Return)), Other, 1u32) != 0u32 {
+        return 12;
+    }
+    let Twoˉowners: bytes = Bytesˉconcat(Loan, Bytesˉconcat(Borrow(1u32), Return));
+    if Rule(Twoˉowners, Other, 2u32) != 0u32 ||
+        Rule(Twoˉowners, Other, 1u32) != 3u32 { return 12; }
+    if Rule(Bytesˉconcat(Loan, Return), Operation(75u8, 0u32), 1u32) != 6u32 ||
+        Rule(Bytesˉconcat(Borrow(1u32), Return), Shape, 1u32) != 6u32 { return 13; }
+    let Limited: Owners.Flowˉresult = Flow(Valid, Shape, 0u32, 1u32);
+    let Badˉlimit: Owners.Flowˉresult = Flow(Valid, Shape, 0u32, 16777217u32);
+    if Limited.Valid || Limited.Rule != 5u32 || Limited.Work > 1u32 ||
+        Badˉlimit.Valid || Badˉlimit.Rule != 1u32 { return 14; }
+    if Rule(Valid, Bytesˉfromˉu8(11u8), 0u32) != 1u32 ||
+        Rule(Valid, Shape, 2u32) != 1u32 ||
+        Rule(Bytesˉslice(Loan, 0u32, 12u32), Shape, 1u32) != 1u32 { return 14; }
+    if Rule(Bytesˉconcat(Loan, Operation(48u8, 1u32)), Shape, 1u32) != 2u32 ||
+        Rule(Bytesˉconcat(Loan, Operation(49u8, 0u32)), Shape, 1u32) != 2u32 { return 15; }
+    var Chain: bytes = Bytesˉslice(Return, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < 127u32 {
+        Chain = Bytesˉconcat(Chain, Operation(48u8, (Index + 1u32) * 5u32));
+        Index = Index + 1u32;
+    }
+    if Rule(Bytesˉconcat(Chain, Bytesˉconcat(Loan, Return)), Shape, 1u32) != 0u32 ||
+        Rule(Bytesˉconcat(Chain, Bytesˉconcat(Operation(48u8, 640u32),
+            Bytesˉconcat(Loan, Return))), Shape, 1u32) != 5u32 ||
+        Rule(Bytesˉconcat(Chain, Bytesˉconcat(Operation(48u8, 640u32), Return)), Shape, 1u32) != 0u32 {
+        return 16;
+    }
+    if Bytesˉlength(Executable.Iˉcontrol(Candidate)) != Bytesˉlength(Candidate) { return 17; }
+    let Changed: bytes = Bytesˉconcat(Bytesˉslice(Candidate, 0u32, 1250u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉslice(Candidate,
+            1254u32, Bytesˉlength(Candidate) - 1254u32)));
+    if Bytesˉlength(Executable.Iˉcontrol(Changed)) != 0u32 { return 18; }
+    return 42;
+}

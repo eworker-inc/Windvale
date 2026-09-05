@@ -2370,6 +2370,8 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
+        'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+        'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
         Add-Suite 'language-1-memory-budget-split-execution'
@@ -2690,6 +2692,7 @@ foreach ($Path in $Paths) {
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Tool.wv',
         'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
     )) {
@@ -4680,11 +4683,20 @@ $FoundationBorrowDirectoryInputs = @(
 $UseFoundationBorrowDirectoryDevelopment = $Paths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($Paths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
-if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment) {
+$FoundationBorrowOwnerInputs = @(
+    'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
+)
+$UseFoundationBorrowOwnerDevelopment = $Paths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
+    @($Paths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
+if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment -or
+    $UseFoundationBorrowOwnerDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'
     })[0]
-    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + 30)
+    $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment) { 180 } else { 30 }
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + $FoundationBorrowExpectedSeconds)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $FoundationBorrowOwner.MaximumSeconds + 600)
 }
 $Language1FrontDoorDevelopmentExpectedSeconds = [long]330
@@ -5040,6 +5052,8 @@ if (!$Quiet) {
         $UseFoundationBorrowPlanDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-directory development: ' +
         $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Foundation borrow-owner development: ' +
+        $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5117,6 +5131,7 @@ if ($PassThru) {
             $SourceContainmentCompilerDevelopmentEligible)
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
+        UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

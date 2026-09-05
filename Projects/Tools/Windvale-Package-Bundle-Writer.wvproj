@@ -2,6 +2,7 @@ windvale-project 2
 root "Tools/Windvale.Package/Package-Bundle-Writer-Tool.wv"
 source "Foundation/Sha256.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
 source "Libraries/Package/Package-Bundle-Writer.wv"

@@ -72,7 +72,10 @@ const Foundationˉplanˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-plan';
 const Foundationˉdirectoriesˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-directories';
-const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly || Foundationˉdirectoriesˉonly;
+const Foundationˉownersˉonly = process.argv.length === 3 &&
+    process.argv[2] === '--foundation-borrow-owners';
+const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
+    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length === 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
@@ -89,7 +92,7 @@ const Inspectionˉonly =
 if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
-        '[--foundation-borrow-plan|--foundation-borrow-directories|' +
+        '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|' +
         '--foundation-borrow [--maximum-seconds <seconds>]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
@@ -158,11 +161,15 @@ let Validator = null;
 let Targetˉdescriptor = null;
 let Borrowˉplanˉbytes = null;
 let Borrowˉdirectoryˉbytes = null;
+let Borrowˉownerˉbytes = null;
 
 try {
-    if (!Foundationˉdirectoriesˉonly) await Runˉfoundationˉplan();
-    if (!Foundationˉplanˉonly) await Runˉfoundationˉdirectories();
-    if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly) await Runˉpublicationˉandˉexecution();
+    if (!Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉplan();
+    if (!Foundationˉplanˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉdirectories();
+    if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly) await Runˉfoundationˉowners();
+    if (!Foundationˉplanˉonly && !Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) {
+        await Runˉpublicationˉandˉexecution();
+    }
 } finally {
     const Resolved = path.resolve(Work);
     if (path.dirname(Resolved) !== Temporaryˉroot ||
@@ -177,12 +184,14 @@ if (Developmentˉonly) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉonly ? 63 : Foundationˉplanˉonly ? 16 : 24} ` +
-        `selection=${Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : 'directories'} qualification=false candidate-execution=false ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉonly ? 81 : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 18} ` +
+        `selection=${Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=false ` +
         (Borrowˉplanˉbytes === null ? '' :
             `plan-wvb-bytes=${Borrowˉplanˉbytes.length} plan-wvb-sha256=${Digest(Borrowˉplanˉbytes)} `) +
         (Borrowˉdirectoryˉbytes === null ? '' :
             `directory-wvb-bytes=${Borrowˉdirectoryˉbytes.length} directory-wvb-sha256=${Digest(Borrowˉdirectoryˉbytes)} `) +
+        (Borrowˉownerˉbytes === null ? '' :
+            `owner-wvb-bytes=${Borrowˉownerˉbytes.length} owner-wvb-sha256=${Digest(Borrowˉownerˉbytes)} `) +
         `elapsed-ms=${Elapsed}\n`,
     );
 }
@@ -213,6 +222,30 @@ async function Runˉfoundationˉdirectories() {
     ]);
     const Result = await Run('foundation-borrow-directories-execute', Application, [], 42);
     if (Result !== '') Reject('The WVB typed-directory self-test emitted unexpected output.');
+}
+
+async function Runˉfoundationˉowners() {
+    const Fixture = path.join(Repositoryˉroot,
+        'Tests', 'Fixtures', 'Source-Wvb', 'Foundation-Owner-Flow-Self-Test.wv');
+    Requireˉordinaryˉfile(Fixture, 32_768, 'Foundation owner-flow self-test');
+    const Match = /^data Candidate: bytes = \[([0-9,\s]+)\];$/mu.exec(readFileSync(Fixture, 'utf8'));
+    if (Match === null) Reject('The owner-flow published candidate snapshot is missing.');
+    const Values = Match[1].trim().split(/\s*,\s*/u).map(Number);
+    if (Values.length !== 1966 || Values.some(Value => !Number.isInteger(Value) || Value < 0 || Value > 255) ||
+        Digest(Buffer.from(Values)) !== '470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821') {
+        Reject('The owner-flow published candidate snapshot identity differs.');
+    }
+    const Wvb = path.join(Work, 'Borrow-Owners.wvb');
+    await Runˉnative('foundation-borrow-owners-build', 'Build-Cached-Project-Wvb', [
+        Testˉproject('Windvale-Native-Test-Foundation-Owner-Flow.wvproj'), Wvb,
+    ]);
+    Borrowˉownerˉbytes = readFileSync(Wvb);
+    const Application = path.join(Work, `Borrow-Owners.${process.platform === 'win32' ? 'exe' : 'elf'}`);
+    await Runˉnative('foundation-borrow-owners-package', 'Package-Segmented-Compiler-Wvb', [
+        '1', Wvb, Application, '--development-cache',
+    ]);
+    const Result = await Run('foundation-borrow-owners-execute', Application, [], 42);
+    if (Result !== '') Reject('The Foundation owner-flow self-test emitted unexpected output.');
 }
 
 async function Runˉpublicationˉandˉexecution() {
@@ -1270,7 +1303,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${213 + Growˉmalformedˉcases.length +
+        `cases=${231 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1283,7 +1316,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +

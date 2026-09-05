@@ -1,0 +1,216 @@
+module Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
+
+export record Flowˉresult {
+    Valid: bool;
+    Rule: u32;
+    Offset: u32;
+    Work: u32;
+}
+
+fn Reject(Rule: u32, Offset: u32, Work: u32) -> Flowˉresult {
+    return Flowˉresult(false, Rule, Offset, Work);
+}
+
+fn Zeroes(Count: u32) -> bytes {
+    var Chunk: bytes = Bytesˉfromˉu8(0u8);
+    var Result: bytes = Bytesˉslice(Chunk, 0u32, 0u32);
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 != 0u32 { Result = Bytesˉconcat(Result, Chunk); }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Setˉstate(Input: bytes, Index: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Input, 0u32, Index),
+        Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32)),
+        Bytesˉslice(Input, Index + 1u32, Bytesˉlength(Input) - Index - 1u32));
+}
+
+fn Blockˉindex(Blocks: bytes, Offset: u32) -> u32 {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Blocks) / 4u32 {
+        if Bytesˉreadˉu32ˉlittle(Blocks, Index * 4u32) == Offset { return Index; }
+        Index = Index + 1u32;
+    }
+    return 4294967295u32;
+}
+
+fn Hasˉowner(Owners: bytes, Owner: u32) -> bool {
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Owners) {
+        if Bytesˉreadˉu32ˉlittle(Owners, Index) == Owner { return true; }
+        Index = Index + 4u32;
+    }
+    return false;
+}
+
+// The complete verifier supplies its validated instruction directory and exact
+// five-byte local cells. This pass owns availability and permanent E1 freezing,
+// not shape eligibility, Option/Result identity, operand typing, or call escape.
+// Rules: 1 input bounds, 2 control geometry, 3 unavailable owner, 4 frozen write,
+// 5 work/state limit, 6 non-owned-variant owner. Offsets are function-relative.
+export fn Check(
+    Input: bytes,
+    Code: u32,
+    Length: u32,
+    Shapes: bytes,
+    Parameters: u32,
+    Control: Directories.Hˉcontrolˉdirectory,
+    Maximumˉwork: u32
+) -> Flowˉresult {
+    if Code > Bytesˉlength(Input) || Length > Bytesˉlength(Input) - Code ||
+        Length > 1048576u32 || Bytesˉlength(Shapes) % 5u32 != 0u32 ||
+        Bytesˉlength(Shapes) / 5u32 > 8192u32 ||
+        Parameters > Bytesˉlength(Shapes) / 5u32 ||
+        !Control.Valid || Bytesˉlength(Control.Boundaries) != Length ||
+        Maximumˉwork > 16777216u32 {
+        return Reject(1u32, 0u32, 0u32);
+    }
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Owners: bytes = Empty;
+    var Blocks: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Cursor: u32 = 0u32;
+    var Work: u32 = 0u32;
+    var Excessˉblocks: bool = false;
+    while Cursor < Length {
+        if Work >= Maximumˉwork { return Reject(5u32, Cursor, Work); }
+        Work = Work + 1u32;
+        let Boundary: u8 = Bytesˉreadˉu8(Control.Boundaries, Cursor);
+        if Cursor > 0u32 && Boundary == 3u8 {
+            // One source conditional can lower to a conditional plus a jump.
+            // E1 source functions have at most 64 blocks: at most 128 here.
+            if Bytesˉlength(Blocks) >= 512u32 {
+                Excessˉblocks = true;
+            } else {
+                Blocks = Bytesˉconcat(Blocks, Bytesˉfromˉu32ˉlittle(Cursor));
+            }
+        }
+        if Boundary != 0u8 && Bytesˉreadˉu8(Input, Code + Cursor) == 225u8 {
+            if Length - Cursor < 13u32 { return Reject(1u32, Cursor, Work); }
+            let Owner: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Cursor + 1u32);
+            if Owner >= Bytesˉlength(Shapes) / 5u32 ||
+                Bytesˉreadˉu8(Shapes, Owner * 5u32) != 11u8 {
+                return Reject(6u32, Cursor, Work);
+            }
+            let Ownerˉwork: u32 = Bytesˉlength(Owners) / 4u32;
+            if Ownerˉwork > Maximumˉwork - Work { return Reject(5u32, Cursor, Work); }
+            Work = Work + Ownerˉwork;
+            if !Hasˉowner(Owners, Owner) {
+                Owners = Bytesˉconcat(Owners, Bytesˉfromˉu32ˉlittle(Owner));
+            }
+        }
+        Cursor = Cursor + 1u32;
+    }
+    if Bytesˉlength(Owners) == 0u32 { return Flowˉresult(true, 0u32, 0u32, Work); }
+    if Excessˉblocks { return Reject(5u32, 0u32, Work); }
+    let Blockˉcount: u32 = Bytesˉlength(Blocks) / 4u32;
+    var Edges: bytes = Empty;
+    var Block: u32 = 0u32;
+    while Block < Blockˉcount {
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32);
+        var End: u32 = Length;
+        if Block + 1u32 < Blockˉcount { End = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32 + 4u32); }
+        if End <= Start { return Reject(2u32, Start, Work); }
+        var Last: u32 = End - 1u32;
+        while Bytesˉreadˉu8(Control.Boundaries, Last) == 0u8 {
+            if Work >= Maximumˉwork { return Reject(5u32, Last, Work); }
+            Work = Work + 1u32;
+            if Last == Start { return Reject(2u32, Start, Work); }
+            Last = Last - 1u32;
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Last);
+        var First: u32 = 4294967295u32;
+        var Second: u32 = 4294967295u32;
+        if Opcode == 48u8 || Opcode == 49u8 {
+            if End - Last != 5u32 { return Reject(2u32, Last, Work); }
+            if Blockˉcount > Maximumˉwork - Work { return Reject(5u32, Last, Work); }
+            Work = Work + Blockˉcount;
+            First = Blockˉindex(Blocks, Bytesˉreadˉu32ˉlittle(Input, Code + Last + 1u32));
+            if First == 4294967295u32 { return Reject(2u32, Last, Work); }
+            if Opcode == 49u8 {
+                if Block + 1u32 >= Blockˉcount { return Reject(2u32, Last, Work); }
+                Second = Block + 1u32;
+            }
+        } else if Opcode != 81u8 || End - Last != 1u32 {
+            return Reject(2u32, Last, Work);
+        }
+        Edges = Bytesˉconcat(Edges, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First), Bytesˉfromˉu32ˉlittle(Second)));
+        Block = Block + 1u32;
+    }
+    var Ownerˉindex: u32 = 0u32;
+    while Ownerˉindex < Bytesˉlength(Owners) / 4u32 {
+        let Tracked: u32 = Bytesˉreadˉu32ˉlittle(Owners, Ownerˉindex * 4u32);
+        // Reachable states are a union: uninitialized=1, available=2, frozen=4,
+        // taken=8. A later incoming path must never overwrite earlier evidence.
+        var Entries: bytes = Zeroes(Blockˉcount);
+        var Pending: bytes = Zeroes(Blockˉcount);
+        var Initial: u32 = 1u32;
+        if Tracked < Parameters { Initial = 2u32; }
+        Entries = Setˉstate(Entries, 0u32, Initial);
+        Pending = Setˉstate(Pending, 0u32, 1u32);
+        var Continue: bool = true;
+        while Continue {
+            var Selected: u32 = Blockˉcount;
+            var Search: u32 = 0u32;
+            while Search < Blockˉcount {
+                if Work >= Maximumˉwork { return Reject(5u32, 0u32, Work); }
+                Work = Work + 1u32;
+                if Selected == Blockˉcount && Bytesˉreadˉu8(Pending, Search) != 0u8 { Selected = Search; }
+                Search = Search + 1u32;
+            }
+            if Selected == Blockˉcount {
+                Continue = false;
+            } else {
+                Pending = Setˉstate(Pending, Selected, 0u32);
+                var State: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Selected));
+                Cursor = Bytesˉreadˉu32ˉlittle(Blocks, Selected * 4u32);
+                var Stop: u32 = Length;
+                if Selected + 1u32 < Blockˉcount { Stop = Bytesˉreadˉu32ˉlittle(Blocks, Selected * 4u32 + 4u32); }
+                while Cursor < Stop {
+                    if Work >= Maximumˉwork { return Reject(5u32, Cursor, Work); }
+                    Work = Work + 1u32;
+                    if Bytesˉreadˉu8(Control.Boundaries, Cursor) != 0u8 {
+                        let Operation: u8 = Bytesˉreadˉu8(Input, Code + Cursor);
+                        if Operation == 5u8 || Operation == 205u8 || Operation == 225u8 {
+                            if Stop - Cursor < 5u32 { return Reject(2u32, Cursor, Work); }
+                            if Bytesˉreadˉu32ˉlittle(Input, Code + Cursor + 1u32) == Tracked {
+                                if Operation == 5u8 {
+                                    if (State & 4u32) != 0u32 { return Reject(4u32, Cursor, Work); }
+                                    State = 2u32;
+                                } else if Operation == 205u8 {
+                                    if (State & 4u32) != 0u32 { return Reject(4u32, Cursor, Work); }
+                                    if State != 2u32 { return Reject(3u32, Cursor, Work); }
+                                    State = 8u32;
+                                } else {
+                                    if (State & 9u32) != 0u32 || State == 0u32 { return Reject(3u32, Cursor, Work); }
+                                    State = 4u32;
+                                }
+                            }
+                        }
+                    }
+                    Cursor = Cursor + 1u32;
+                }
+                var Edge: u32 = 0u32;
+                while Edge < 2u32 {
+                    let Target: u32 = Bytesˉreadˉu32ˉlittle(Edges, Selected * 8u32 + Edge * 4u32);
+                    if Target != 4294967295u32 {
+                        let Existing: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target));
+                        let Merged: u32 = Existing | State;
+                        if Merged != Existing {
+                            Entries = Setˉstate(Entries, Target, Merged);
+                            Pending = Setˉstate(Pending, Target, 1u32);
+                        }
+                    }
+                    Edge = Edge + 1u32;
+                }
+            }
+        }
+        Ownerˉindex = Ownerˉindex + 1u32;
+    }
+    return Flowˉresult(true, 0u32, 0u32, Work);
+}

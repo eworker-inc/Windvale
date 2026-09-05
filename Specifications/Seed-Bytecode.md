@@ -1531,6 +1531,18 @@ The focused WVB 1.39 reader is likewise only a bounded structural publication
 oracle. The complete verifier rejects minor 39 until shape `37`, opcode `E1`,
 cross-call borrowed-payload identity, and their lifetime rules are implemented.
 
+The current-source control-phase component additionally checks `E1` owner flow
+in isolation. An owner must be an ordinary variant local, initialized on every
+reachable incoming path. After `E1`, no reachable path may overwrite or take
+that owner before the function exits. Branch joins retain the union of possible
+owner states, and backward edges are revisited when that union grows. An owned
+parameter starts initialized; a non-parameter local does not. Repeated immutable
+borrows are permitted, but borrowing an uninitialized or already-taken owner
+rejects. The check consumes the validated instruction directory and five-byte
+local-shape cells; it does not establish nominal Option/Result relationships,
+typed operand-stack validity, ordinary call-loan lifetimes, or non-escape. The
+complete verifier still rejects minor 39 at its earlier admission boundary.
+
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
@@ -1610,6 +1622,16 @@ Verification is required before execution and rejects a module unless:
 - WVB 1.39 independent candidate reader input: 16 MiB
 - WVB 1.39 source-writer Foundation-borrow plan per function: 64 blocks,
   4,096 combined slots, 4,096 operations, and 4,096 temporaries
+- WVB 1.39 isolated owner-flow component per borrow-bearing function: 128
+  bytecode blocks, 8,192 five-byte local cells, and 1 MiB of function code. A
+  source conditional emits one additional bytecode block, so the block bound
+  covers the source writer's 64-block limit. Borrow-free functions do not enter
+  this pass and do not inherit that block bound.
+- WVB 1.39 isolated owner-flow work: 16,777,216 charged scan, lookup, queue, and
+  transfer units shared across a module. Tracked-owner indices occupy at most
+  32 KiB; block offsets, paired edges, and the two per-owner state arrays occupy
+  at most 512, 1,024, and 256 bytes respectively. These exclude the caller's
+  input and validated directories. Exhaustion rejects; it is not admission.
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes
