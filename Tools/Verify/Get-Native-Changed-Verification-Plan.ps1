@@ -2371,6 +2371,7 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
@@ -4685,8 +4686,29 @@ $UseFoundationBorrowDirectoryDevelopment = $Paths.Count -gt 0 -and
     @($Paths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
 $FoundationBorrowOwnerInputs = @(
     'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )
+$PublisherCurrentSourceInputs = @(
+    'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
+    'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
+    'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
+)
+$UsePublisherCurrentSourceDevelopment = $Paths.Count -gt 0 -and
+    $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
+    @($Paths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0
+if ($UsePublisherCurrentSourceDevelopment) {
+    $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'hosted-verifier-publisher-files'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 60)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 180)
+}
 $UseFoundationBorrowOwnerDevelopment = $Paths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($Paths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
@@ -5054,6 +5076,8 @@ if (!$Quiet) {
         $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-owner development: ' +
         $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Publisher current-source development: ' +
+        $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
         Write-Host "Language 1 front-door development cases: $Language1FrontDoorDevelopmentCaseCount"
         Write-Host "Language 1 front-door development target: $Language1FrontDoorDevelopmentTarget"
@@ -5132,6 +5156,7 @@ if ($PassThru) {
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
+        UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible
         Language1FrontDoorDevelopmentCaseCount = $Language1FrontDoorDevelopmentCaseCount

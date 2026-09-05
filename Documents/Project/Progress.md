@@ -85,8 +85,10 @@ Two active tracks intentionally use different bytecode generations:
   preserves distinct borrowed payload identities and bounds-checks shape and
   instruction decoding. The control-phase component also checks that each
   payload owner is initialized on every path and cannot be overwritten or
-  consumed after borrowing, including loops. These are component results,
-  not complete 1.39 admission or call-lifetime verification.
+  consumed after borrowing, including loops. Its isolated call checker now
+  matches exact borrowed parameters and permits by-value reads only for payloads
+  proved safe to copy or share. These are component results, not complete 1.39
+  admission, borrowed stack provenance, or call-lifetime verification.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -115,10 +117,11 @@ defect was rebuilt and rejected in 14.63 seconds; restoring it passed the focuse
 clean-machine or paired-host qualification claim. See the
 [focused evidence](../Evidence/2026-09-04-Front-End-Development-Product-Reuse.json).
 
-Borrow-planner development now has a separate 16-case current-source check:
-10.75 seconds while creating its small native package and 1.69 seconds warm.
-A changed-source defect rebuilt and failed at the expected case. See the
-[bounded planner evidence](../Evidence/2026-09-04-Foundation-Borrow-Plan-Development.json).
+Foundation component development uses small current-source WV packages through
+one existing owner. The
+[planner's 16 cases](../Evidence/2026-09-04-Foundation-Borrow-Plan-Development.json)
+and [typed directory's 24 cases](../Evidence/2026-09-04-Wvb-Typed-Directory-Development.json)
+have separate focused selectors and changed-source rejection evidence.
 
 The separate cross-call publication checkpoint now passes 39 cases in 15.35
 seconds warm. Constructing missing compiler packages and running the preceding
@@ -127,21 +130,15 @@ products were retained; the expanded run reused them and freshly executed its
 cases. These are local observations, not clean-machine or cross-host claims.
 See the [publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json).
 
-Verifier-directory development adds 24 WV cases through the same existing test
-owner, using `--foundation-borrow-directories`. The small current-source package
-took 12.72 seconds to construct and test, and 1.27 seconds warm with fresh
-execution. Changed-file dispatch completed in 3.76 seconds with result reuse
-disabled. Boundary tests cover 8,192 slots, exact borrowed identities,
-truncation, invalid offsets, and instruction boundaries; a seeded defect was
-rebuilt and rejected. Full-verifier source changes retain broader routing.
-See the [directory evidence](../Evidence/2026-09-04-Wvb-Typed-Directory-Development.json).
-
-The next control-phase checkpoint adds 18 WV owner-flow case groups through
-`--foundation-borrow-owners`. It tests path-dependent initialization, permanent
-owner freezing, branch joins, loops, bounded work, and the actual published
-candidate's control phase. See the
-[owner-flow evidence](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json)
-for exact timings, changed-source rejection, and the remaining admission limits.
+The `--foundation-borrow-owners` selector combines the
+[18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json)
+with 18 direct-call groups, including the actual published function signatures,
+wrong nominal identities, unsafe copying, argument order, truncation, and
+4,096-argument bounds. The call checker avoids repeated parameter scans and
+stack-prefix copies. See the
+[call-checker evidence](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json)
+for exact measurements and remaining admission limits. Full-verifier source
+changes retain broader routing; component passes do not imply complete admission.
 
 1. Finish complete WVB verification and runtime
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
@@ -158,7 +155,7 @@ for exact timings, changed-source rejection, and the remaining admission limits.
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   6,061 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
+   6,079 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower

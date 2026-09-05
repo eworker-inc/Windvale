@@ -1,0 +1,188 @@
+module Foundationˉborrowˉcallsˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
+
+fn Repeat(Value: bytes, Count: u32) -> bytes {
+    var Result: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    var Chunk: bytes = Value;
+    var Remaining: u32 = Count;
+    while Remaining > 0u32 {
+        if Remaining % 2u32 != 0u32 { Result = Bytesˉconcat(Result, Chunk); }
+        Remaining = Remaining / 2u32;
+        if Remaining > 0u32 { Chunk = Bytesˉconcat(Chunk, Chunk); }
+    }
+    return Result;
+}
+
+fn Cell(Kind: u8, Nominal: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(Nominal));
+}
+
+fn Name(Value: text) -> bytes {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Encoded)), Encoded);
+}
+
+record Callˉfixture { Input: bytes; Types: u32; Code: u32; }
+
+// Isolated function/type directories for the call-transfer contract, not a
+// complete module. The one nominal type is a record with one u32 field.
+fn Fixtureˉshapes(Parameters: bytes, Count: u32, Return: bytes, Minor: u32) -> Callˉfixture {
+    var Input: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(826431063u32),
+        Bytesˉconcat(Bytesˉfromˉu16ˉlittle(1u32),
+            Bytesˉconcat(Bytesˉfromˉu16ˉlittle(Minor), Bytesˉfromˉu32ˉlittle(0u32))));
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Name("F")));
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Count), Parameters));
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Return, Repeat(Bytesˉfromˉu8(0u8), 16u32)));
+    let Types: u32 = Bytesˉlength(Input);
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu8(1u8)));
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Name("Payload"), Bytesˉfromˉu32ˉlittle(1u32)));
+    Input = Bytesˉconcat(Input, Bytesˉconcat(Name("Code"), Bytesˉfromˉu8(5u8)));
+    let Code: u32 = Bytesˉlength(Input);
+    Input = Bytesˉconcat(Input, Cell(64u8, 0u32));
+    return Callˉfixture(Input, Types, Code);
+}
+
+fn Fixture(Parameter: bytes, Count: u32, Return: bytes, Minor: u32) -> Callˉfixture {
+    return Fixtureˉshapes(Repeat(Parameter, Count), Count, Return, Minor);
+}
+
+export fn Checkˉbaseline() -> bool {
+    let Model: Callˉfixture = Fixture(Bytesˉfromˉu8(5u8), 256u32, Bytesˉfromˉu8(5u8), 38u32);
+    let Stack: bytes = Repeat(Cell(5u8, 0u32), 256u32);
+    var Iteration: u32 = 0u32;
+    while Iteration < 64u32 {
+        let Result: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Model.Input, 37u32, Model.Code, 0u32, 12u32, Model.Types, Stack, 256u32
+        );
+        if !Result.Valid || Result.Depth != 0u32 || Bytesˉlength(Result.Stack) != 0u32 ||
+            !Result.Hasˉpush || Result.Pushˉkind != 5u32 || Result.Pushˉnominal != 0u32 {
+            return false;
+        }
+        Iteration = Iteration + 1u32;
+    }
+    return true;
+}
+
+fn Checkˉcall(Model: Callˉfixture, Stack: bytes, Depth: u32) -> Executable.Hˉoperationˉstate {
+    return Executable.Hˉcall(Model.Input, 37u32, Model.Code, 0u32, 12u32, Model.Types, Stack, Depth);
+}
+
+fn Accepts(Model: Callˉfixture, Stack: bytes, Depth: u32) -> bool {
+    let Result: Executable.Hˉoperationˉstate = Checkˉcall(Model, Stack, Depth);
+    return Result.Valid;
+}
+
+fn Withˉtypes(Model: Callˉfixture, Types: bytes) -> Callˉfixture {
+    let Prefix: bytes = Bytesˉconcat(Bytesˉslice(Model.Input, 0u32, Model.Types), Types);
+    return Callˉfixture(Bytesˉconcat(Prefix, Cell(64u8, 0u32)), Model.Types, Bytesˉlength(Prefix));
+}
+
+fn Recordˉtype(Field: bytes) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉfromˉu8(1u8), Name("Payload")),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Name("Code"), Field)));
+}
+
+fn Section(Input: bytes, Kind: u32) -> u32 {
+    var Cursor: u32 = 12u32;
+    var Index: u32 = 0u32;
+    while Index < Bytesˉreadˉu32ˉlittle(Input, 8u32) {
+        if Bytesˉreadˉu32ˉlittle(Input, Cursor) == Kind { return Cursor + 8u32; }
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        Index = Index + 1u32;
+    }
+    return 0u32;
+}
+
+export fn Check(Candidate: bytes) -> i32 {
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Record: bytes = Cell(7u8, 0u32);
+    let Borrowˉu32: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), U32);
+    let Borrowˉrecord: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Record);
+    let Scalar: Callˉfixture = Fixture(Borrowˉu32, 1u32, U32, 39u32);
+    let Aggregate: Callˉfixture = Fixture(Borrowˉrecord, 1u32, U32, 39u32);
+    let Owned: Callˉfixture = Fixture(Record, 1u32, U32, 39u32);
+    if !Accepts(Scalar, Cell(69u8, 0u32), 1u32) { return 1; }
+    if !Accepts(Aggregate, Cell(71u8, 0u32), 1u32) { return 2; }
+    if Accepts(Scalar, Cell(5u8, 0u32), 1u32) || Accepts(Aggregate, Record, 1u32) { return 3; }
+    if Accepts(Aggregate, Cell(71u8, 1u32), 1u32) { return 4; }
+    if Accepts(Scalar, Cell(74u8, 0u32), 1u32) { return 5; }
+
+    var Kind: u32 = 1u32;
+    while Kind <= 20u32 {
+        if Kind != 7u32 && Kind != 8u32 && Kind != 11u32 && Kind != 12u32 && Kind != 13u32 {
+            let Shape: bytes = Bytesˉslice(Bytesˉfromˉu32ˉlittle(Kind), 0u32, 1u32);
+            let Read: Callˉfixture = Fixture(Shape, 1u32, U32, 39u32);
+            let Borrowed: bytes = Bytesˉconcat(Bytesˉslice(Bytesˉfromˉu32ˉlittle(Kind + 64u32),
+                0u32, 1u32), Bytesˉfromˉu32ˉlittle(0u32));
+            if !Accepts(Read, Borrowed, 1u32) { return 6; }
+        }
+        Kind = Kind + 1u32;
+    }
+    let Enumˉmodel: Callˉfixture = Withˉtypes(Fixture(Cell(8u8, 0u32), 1u32, U32, 39u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Bytesˉfromˉu8(2u8),
+            Bytesˉconcat(Name("E"), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+                Bytesˉconcat(Name("A"), Bytesˉfromˉu32ˉlittle(0u32)))))));
+    if !Accepts(Enumˉmodel, Cell(72u8, 0u32), 1u32) { return 6; }
+    let Sequence: Callˉfixture = Withˉtypes(Fixture(Cell(24u8, 0u32), 1u32, U32, 39u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉconcat(Bytesˉfromˉu8(6u8),
+            Bytesˉconcat(Name("Sequence"), U32))));
+    if !Accepts(Sequence, Cell(88u8, 0u32), 1u32) { return 6; }
+    if !Accepts(Owned, Cell(71u8, 0u32), 1u32) { return 7; }
+    let Shared: Callˉfixture = Withˉtypes(Owned, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32),
+        Recordˉtype(Bytesˉfromˉu8(3u8))));
+    if !Accepts(Shared, Cell(71u8, 0u32), 1u32) { return 8; }
+    let Vector: Callˉfixture = Withˉtypes(Owned, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32),
+        Bytesˉconcat(Recordˉtype(Cell(23u8, 1u32)), Bytesˉconcat(Bytesˉfromˉu8(5u8),
+            Bytesˉconcat(Name("Vector"), U32)))));
+    if Accepts(Vector, Cell(71u8, 0u32), 1u32) { return 9; }
+    let Recursive: Callˉfixture = Withˉtypes(Owned,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Recordˉtype(Record)));
+    if Accepts(Recursive, Cell(71u8, 0u32), 1u32) { return 10; }
+    let Invalidˉfield: Callˉfixture = Withˉtypes(Owned,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Recordˉtype(Bytesˉfromˉu8(0u8))));
+    if Accepts(Invalidˉfield, Cell(71u8, 0u32), 1u32) { return 10; }
+    let Maximum: Callˉfixture = Fixture(Borrowˉu32, 4096u32, U32, 39u32);
+    let Oversized: Callˉfixture = Fixture(Borrowˉu32, 4097u32, U32, 39u32);
+    let Largeˉstack: bytes = Repeat(Cell(69u8, 0u32), 4096u32);
+    if !Accepts(Maximum, Largeˉstack, 4096u32) || Accepts(Oversized, Largeˉstack, 4096u32) { return 11; }
+    if Accepts(Scalar, Bytesˉslice(U32, 0u32, 0u32), 0u32) ||
+        Accepts(Scalar, Cell(69u8, 0u32), 0u32) || Accepts(Scalar, U32, 1u32) ||
+        Accepts(Scalar, Largeˉstack, 4097u32) { return 12; }
+    let Prefix: bytes = Cell(2u8, 0u32);
+    let Kept: Executable.Hˉoperationˉstate = Checkˉcall(Scalar,
+        Bytesˉconcat(Prefix, Cell(69u8, 0u32)), 2u32);
+    if !Kept.Valid || Kept.Depth != 1u32 || Bytesˉlength(Kept.Stack) != 5u32 ||
+        Bytesˉreadˉu8(Kept.Stack, 0u32) != 2u8 || Kept.Pushˉkind != 5u32 { return 13; }
+    let Mixed: Callˉfixture = Fixtureˉshapes(Bytesˉconcat(Borrowˉu32, Borrowˉrecord), 2u32, U32, 39u32);
+    if !Accepts(Mixed, Bytesˉconcat(Cell(69u8, 0u32), Cell(71u8, 0u32)), 2u32) ||
+        Accepts(Mixed, Bytesˉconcat(Cell(71u8, 0u32), Cell(69u8, 0u32)), 2u32) { return 13; }
+    if Accepts(Fixture(Borrowˉu32, 1u32, U32, 38u32), Cell(69u8, 0u32), 1u32) ||
+        Accepts(Fixture(Bytesˉconcat(Bytesˉfromˉu8(37u8), Borrowˉu32), 1u32, U32, 39u32),
+            Cell(69u8, 0u32), 1u32) ||
+        Accepts(Fixture(Bytesˉconcat(Bytesˉfromˉu8(37u8), Bytesˉfromˉu8(25u8)), 1u32, U32, 39u32),
+            Cell(89u8, 0u32), 1u32) { return 14; }
+    if Accepts(Fixture(U32, 0u32, Borrowˉu32, 39u32), Bytesˉslice(U32, 0u32, 0u32), 0u32) { return 15; }
+    let Void: Executable.Hˉoperationˉstate = Checkˉcall(Fixture(U32, 0u32, Bytesˉfromˉu8(0u8), 39u32),
+        Bytesˉslice(U32, 0u32, 0u32), 0u32);
+    if !Void.Valid || Void.Hasˉpush || Void.Depth != 0u32 { return 15; }
+    let Truncated: Callˉfixture = Callˉfixture(Bytesˉslice(Scalar.Input, 0u32, Scalar.Code + 4u32),
+        Scalar.Types, Scalar.Code);
+    let Wrongˉtarget: Callˉfixture = Callˉfixture(Bytesˉconcat(Bytesˉslice(Scalar.Input, 0u32, Scalar.Code),
+        Cell(64u8, 1u32)), Scalar.Types, Scalar.Code);
+    if Accepts(Truncated, Cell(69u8, 0u32), 1u32) || Accepts(Wrongˉtarget, Cell(69u8, 0u32), 1u32) { return 16; }
+    var Target: u32 = 0u32;
+    while Target < 6u32 {
+        var Argument: bytes = Cell(69u8, 0u32);
+        var Depth: u32 = 1u32;
+        if Target == 0u32 || Target == 4u32 { Argument = Cell(71u8, 0u32); }
+        if Target == 2u32 { Argument = Bytesˉslice(U32, 0u32, 0u32); Depth = 0u32; }
+        let Actual: Executable.Hˉoperationˉstate = Executable.Hˉcall(
+            Bytesˉconcat(Candidate, Cell(64u8, Target)), 37u32, Bytesˉlength(Candidate), 0u32,
+            Section(Candidate, 4u32), Section(Candidate, 7u32), Argument, Depth
+        );
+        if !Actual.Valid || Actual.Depth != 0u32 || !Actual.Hasˉpush { return 17; }
+        Target = Target + 1u32;
+    }
+    return 0;
+}

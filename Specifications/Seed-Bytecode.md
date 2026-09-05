@@ -1543,6 +1543,19 @@ local-shape cells; it does not establish nominal Option/Result relationships,
 typed operand-stack validity, ordinary call-loan lifetimes, or non-escape. The
 complete verifier still rejects minor 39 at its earlier admission boundary.
 
+The isolated direct-call checker also decodes shape `37` parameters into exact
+borrowed stack cells, including their nominal identity. An ordinary owned cell
+cannot satisfy a borrowed parameter. A borrowed cell may satisfy its ordinary
+by-value parameter only when the payload is proved Copy or shared immutable:
+supported primitive scalars and enums, text, bytes, Sequence, or a record,
+variant, or fixed array whose contents all meet that rule. Owned contents,
+special task/scratch identities, cycles, and unproved callable classes reject.
+This phase consumes a previously admitted type directory; it does not replace
+metadata validation, track the loan's owner or lifetime, or admit borrowed
+function results. Other stack operations and complete consumers remain closed
+to the candidate. Parameters are decoded once into five-byte cells, and argument
+consumption preserves the remaining stack with one slice.
+
 Verification is required before execution and rejects a module unless:
 
 - The header, sections, strings, counts, types, and code ranges are structurally valid and within implementation limits.
@@ -1632,6 +1645,13 @@ Verification is required before execution and rejects a module unless:
   32 KiB; block offsets, paired edges, and the two per-owner state arrays occupy
   at most 512, 1,024, and 256 bytes respectively. These exclude the caller's
   input and validated directories. Exhaustion rejects; it is not admission.
+- Isolated direct-call shape checking: at most 4,096 functions, 4,096 parameters
+  and 4,096 locals per scanned function, and 4,096 five-byte operand cells.
+  Borrow read-through aggregate traversal has at most 8,192 frame/item/field
+  visits per query, 4,096 pending eight-byte frames, and 64 nested nominal types.
+  These local bounds do not account for repeated type-directory searches or
+  establish a module-wide work bound; complete candidate admission still needs
+  shared class evidence and a complete work budget.
 - UTF-8 value: 1 MiB
 - Byte-data value: 4 MiB
 - Declaration name: 255 UTF-8 bytes

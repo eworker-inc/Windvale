@@ -238,6 +238,7 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
             'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
             'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+            'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
             'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
             'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
         )
@@ -4897,16 +4898,16 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TimingEvidence -ne 'historical-only' -or
     $QualificationWorkPlan.TimingCaseCountMismatches.Count -ne @(
         $QualificationWorkPlan.OwnerAnalysis | Where-Object { $_.Cases -ne $_.ObservedCases }).Count -or
-    $QualificationWorkPlan.TotalExpectedSeconds -ne 19560 -or
-    $QualificationWorkPlan.TotalMaximumSeconds -ne 79200 -or
+    $QualificationWorkPlan.TotalExpectedSeconds -ne 19845 -or
+    $QualificationWorkPlan.TotalMaximumSeconds -ne 79500 -or
     $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
         2 * $QualificationWorkPlan.TotalExpectedSeconds -or
     $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 7260 -or
     $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 25200 -or
-    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 2535 -or
-    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4890 -or
-    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4725 -or
-    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6735 -or
+    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 2820 -or
+    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4962 -or
+    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4440 -or
+    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6833 -or
     $QualificationWorkPlan.TimingSourceCommit -ne
         '47dd3d69fef8a0ac5b894885b0a1917e21033622' -or
     $QualificationWorkPlan.TimingRunId -ne '33894696448' -or
@@ -4977,7 +4978,7 @@ $QualificationShardSignature = @(
     }
 ) -join ','
 if ($QualificationShardSignature -cne
-    '1|13|2535|11100|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
+    '1|13|2820|11400|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
     throw "The measured qualification shard assignment differs: $QualificationShardSignature"
 }
 $QualificationPipelineExpected = @{
@@ -4987,10 +4988,10 @@ $QualificationPipelineExpected = @{
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
     'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
-    'Stage-Compiler-Wvb' = '2|8'
-    'Lower-Wvb-To-Wvo' = '16|47'
+    'Stage-Compiler-Wvb' = '3|10'
+    'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '20|57'
-    'Link-Wvo' = '39|124'
+    'Link-Wvo' = '39|122'
     'Package-Hosted-Wvb' = '19|111'
     'Package-Console' = '19|77'
     'Package-Segmented-Compiler-Wvb' = '21|60'
@@ -5547,6 +5548,7 @@ foreach ($OtherDirectoryPath in @(
 
 foreach ($OwnerPath in @(
     'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )) {
     $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet
@@ -5556,6 +5558,36 @@ foreach ($OwnerPath in @(
         $OwnerPlan.ExpectedSeconds -ne 180 -or $OwnerPlan.MaximumSeconds -ne 600 -or
         $OwnerPlan.Suites.Count -ne 1 -or $OwnerPlan.Gaps.Count -ne 0) {
         throw "The focused Foundation owner-flow plan differs for '$OwnerPath'."
+    }
+}
+foreach ($PublisherPath in @(
+    'Projects/Tools/Windvale-Wvb-Publisher.wvproj',
+    'Tools/Windvale.Publish/Wvb-Publisher-Tool.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv'
+)) {
+    $PublisherPlan = & $NativePlanner -ChangedPath @(
+        'Projects/Tools/Windvale-Wvb-Publisher.wvproj', $PublisherPath
+    ) -PassThru -Quiet
+    if (!$PublisherPlan.UsePublisherCurrentSourceDevelopment -or
+        $PublisherPlan.Suites -cnotcontains 'hosted-verifier-publisher-files' -or
+        $PublisherPlan.Gaps.Count -ne 0) {
+        throw "The current-source publisher selection differs for '$PublisherPath'."
+    }
+}
+foreach ($OtherPublisherPath in @(
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.cmd',
+    'Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh',
+    'Tools/Native/Construct-Hosted-Verifier-Publisher.cmd',
+    'Tools/Windvale.Publish/Wvb-Publication-Transaction.wv',
+    'Foundation/Byte-Construction.wv',
+    'Artifacts/Native-Wvb-Publisher-Candidate/SHA256SUMS'
+)) {
+    $PublisherPlan = & $NativePlanner -ChangedPath @(
+        'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv', $OtherPublisherPath
+    ) -PassThru -Quiet
+    if ($PublisherPlan.UsePublisherCurrentSourceDevelopment) {
+        throw "Current-source publisher selection hid frozen reconstruction changes in '$OtherPublisherPath'."
     }
 }
 foreach ($OtherOwnerPath in @(

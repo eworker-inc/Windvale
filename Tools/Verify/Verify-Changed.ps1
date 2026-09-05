@@ -353,6 +353,13 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerMessage = (
                     'Native owner wvb-runner-reconstruction ' +
                     'mode=development-candidate-smoke')
+            } elseif ($Suite -eq 'hosted-verifier-publisher-files' -and
+                $Plan.Scope -eq 'development' -and $NativePlan.UsePublisherCurrentSourceDevelopment) {
+                $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
+                $OwnerCommand = Join-Path $RepositoryRoot (
+                    "Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.$OwnerExtension")
+                $OwnerArguments = @('--current-source')
+                $OwnerMessage = 'Native owner hosted-verifier-publisher-files mode=current-source cases=1 expected-seconds=60'
             } elseif ($Suite -eq 'language-1-front-door' -and
                 $Plan.Scope -eq 'development') {
                 $OwnerCommand = if ($IsWindowsHost) {
@@ -385,7 +392,7 @@ if ($Plan.Scope -eq 'website') {
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=18 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=36 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',

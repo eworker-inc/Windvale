@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-if [[ $# -ne 0 ]]; then
-    echo 'Usage: ./Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh' >&2
+if [[ $# -gt 1 || (${1-} != '' && ${1-} != '--current-source') ]]; then
+    echo 'Usage: ./Tools/Native/Test-Hosted-Verifier-Publisher-File-Pipeline.sh [--current-source]' >&2
     exit 64
 fi
+current_source_only=false
+if [[ ${1-} == '--current-source' ]]; then current_source_only=true; fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
@@ -70,6 +72,22 @@ check_file() {
         return 1
     fi
 }
+check_bounded() {
+    # Local workload ceilings, not new serialized-format limits.
+    local path=$1
+    local maximum=$2
+    local label=$3
+    if [[ ! -s $path ]]; then
+        echo "FAIL  hosted-verifier publisher files: missing or empty $label" >&2
+        return 1
+    fi
+    local found_bytes
+    found_bytes=$(wc -c < "$path")
+    if [[ $found_bytes -gt $maximum ]]; then
+        echo "FAIL  hosted-verifier publisher files: $label exceeds workload ceiling $maximum" >&2
+        return 1
+    fi
+}
 check_empty() {
     local path=$1
     local label=$2
@@ -100,6 +118,7 @@ fail() {
 }
 
 total=$((total + 1))
+if [[ $current_source_only == false ]]; then
 check_file "$construction/SHA256SUMS" 5064 \
     15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 \
     'construction inventory' || fail
@@ -164,38 +183,69 @@ grep -Fx 'entry name=Main address=1178' \
 check_file "$test_directory/Publisher-Promoter.bin" 658339 \
     843094cf8ba3de92697568abab6788a276f0ea7bd193e65abfb5c7b56918fb43 \
     'linked publisher promoter fragment' || fail
-"$repository_root/Tools/Native/Build-Wvb.sh" \
-    "$repository_root/Projects/Tools/Windvale-Wvb-Publisher.wvproj" \
-    "$test_directory/Wvb-Publisher.wvb" \
-    > "$test_directory/Wvb-Publisher-Build.out" \
-    2> "$test_directory/Wvb-Publisher-Build.err" || fail
-check_empty "$test_directory/Wvb-Publisher-Build.err" \
-    'WVB publisher source build wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvb" 511544 \
-    a08bc05d619e03d7649310fd0520102a395abfb12ed8cff25ec113ace3e0b721 \
-    'metadata-aware WVB publisher candidate' || fail
-"$repository_root/Tools/Native/Lower-Wvb-To-Wvo.sh" \
-    "$test_directory/Wvb-Publisher.wvb" \
-    "$test_directory/Wvb-Publisher.wvo" \
-    > "$test_directory/Wvb-Publisher-Lower.out" \
-    2> "$test_directory/Wvb-Publisher-Lower.err" || fail
-check_empty "$test_directory/Wvb-Publisher-Lower.err" \
-    'WVB publisher native lowering wrote a diagnostic' || fail
-check_file "$test_directory/Wvb-Publisher.wvo" 4151146 \
-    4b545ad288a5afd7870b8775a2db0ee6d5d259eda2e134c946e32d2e2be9ec93 \
-    'metadata-aware WVB publisher object candidate' || fail
-"$repository_root/Tools/Native/Link-Wvo.sh" 0 Main \
-    "$test_directory/Wvb-Publisher.bin" "$test_directory/Wvb-Publisher.wvo" \
-    > "$test_directory/Wvb-Publisher-Link.out" \
-    2> "$test_directory/Wvb-Publisher-Link.err" || fail
-check_empty "$test_directory/Wvb-Publisher-Link.err" \
-    'WVB publisher native link wrote a diagnostic' || fail
-grep -Fx 'entry name=Main address=0' \
-    "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
-check_file "$test_directory/Wvb-Publisher.bin" 4142408 \
-    539f4df88d1b1881256ad16e93e2d7ba3bfd51b983df482a01e565b1568e252d \
-    'linked metadata-aware WVB publisher fragment' || fail
-pass 'metadata-aware publisher source and refreshed construction inventory'
+fi
+# Current source is not the frozen construction product. Rebuild independently
+# twice, admit each representation, and compare exact bytes without cache reuse.
+for sample in 1 2; do
+    phase="current-source publisher pass $sample"
+    echo "START hosted-verifier publisher files step=current-source item=$sample/2"
+    "$repository_root/Tools/Native/Build-Wvb.sh" \
+        "$repository_root/Projects/Tools/Windvale-Wvb-Publisher.wvproj" \
+        "$test_directory/Wvb-Publisher-$sample.wvb" \
+        > "$test_directory/Wvb-Publisher-Build.out" \
+        2> "$test_directory/Wvb-Publisher-Build.err" || fail
+    check_empty "$test_directory/Wvb-Publisher-Build.err" \
+        'WVB publisher source build wrote a diagnostic' || fail
+    check_bounded "$test_directory/Wvb-Publisher-$sample.wvb" 16777216 \
+        'current-source publisher WVB' || fail
+    # Use the qualified segmented path; the monolithic lowerer has a 4 MiB ceiling.
+    "$repository_root/Tools/Native/Stage-Compiler-Wvb.sh" \
+        "$test_directory/Wvb-Publisher-$sample.wvb" \
+        "$test_directory/Wvb-Publisher-Object-$sample" "$test_directory/Wvb-Publisher-$sample.wvop" \
+        > "$test_directory/Wvb-Publisher-Lower.out" \
+        2> "$test_directory/Wvb-Publisher-Lower.err" || fail
+    check_empty "$test_directory/Wvb-Publisher-Lower.err" \
+        'WVB publisher native staging wrote a diagnostic' || fail
+    check_bounded "$test_directory/Wvb-Publisher-$sample.wvop" 6240 \
+        'current-source publisher object manifest' || fail
+    "$repository_root/Tools/Native/Link-Staged-Compiler-Wvo.sh" \
+        "$test_directory/Wvb-Publisher-Object-$sample" "$test_directory/Wvb-Publisher-$sample.wvop" \
+        "$test_directory/Wvb-Publisher-Image-$sample" "$test_directory/Wvb-Publisher-$sample.wvli" \
+        > "$test_directory/Wvb-Publisher-Link.out" \
+        2> "$test_directory/Wvb-Publisher-Link.err" || fail
+    check_empty "$test_directory/Wvb-Publisher-Link.err" \
+        'WVB publisher native link wrote a diagnostic' || fail
+    grep -F ' entry-offset=0 ' \
+        "$test_directory/Wvb-Publisher-Link.out" >/dev/null || fail
+    check_bounded "$test_directory/Wvb-Publisher-$sample.wvli" 6244 \
+        'current-source publisher image manifest' || fail
+done
+phase='current-source publisher reproducibility'
+for extension in wvb wvop wvli; do
+    cmp --silent "$test_directory/Wvb-Publisher-1.$extension" \
+        "$test_directory/Wvb-Publisher-2.$extension" || fail
+done
+# WVOP and WVLI admit at most 518 contiguous chunks of at most 4 MiB each.
+for kind in Object Image; do
+    [[ -f $test_directory/Wvb-Publisher-$kind-1.chunk-0 ]] || fail
+    [[ ! -e $test_directory/Wvb-Publisher-$kind-1.chunk-518 &&
+       ! -e $test_directory/Wvb-Publisher-$kind-2.chunk-518 ]] || fail
+    for ((chunk=0; chunk<518; chunk++)); do
+        if [[ -e $test_directory/Wvb-Publisher-$kind-1.chunk-$chunk ]]; then
+            check_bounded "$test_directory/Wvb-Publisher-$kind-1.chunk-$chunk" 4194304 \
+                'current-source publisher chunk' || fail
+            cmp --silent "$test_directory/Wvb-Publisher-$kind-1.chunk-$chunk" \
+                "$test_directory/Wvb-Publisher-$kind-2.chunk-$chunk" || fail
+        else
+            [[ ! -e $test_directory/Wvb-Publisher-$kind-2.chunk-$chunk ]] || fail
+        fi
+    done
+done
+pass 'current-source publisher reproducibility'
+if [[ $current_source_only == true ]]; then
+    echo "Tests: $total, Passed: $passed, Failed: 0"
+    exit 0
+fi
 
 total=$((total + 1))
 "$repository_root/Tools/Native/Construct-Hosted-Verifier-Publisher.sh" windows \

@@ -179,6 +179,7 @@ language-1-memory-budget-split-execution|source|Projects/Tests/Windvale-Native-T
 language-1-memory-budget-split-execution|source|Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj
 language-1-memory-budget-split-execution|source|Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj
 language-1-memory-budget-split-execution|source|Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv
+language-1-memory-budget-split-execution|source|Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv
 language-1-memory-budget-split-execution|source|Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv
 language-1-memory-budget-split-execution|source|Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv
 language-1-memory-budget-split-execution|source|Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv

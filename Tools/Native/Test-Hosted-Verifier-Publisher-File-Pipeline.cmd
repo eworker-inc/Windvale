@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-if not "%~1"=="" (
-    >&2 echo Usage: Tools\Native\Test-Hosted-Verifier-Publisher-File-Pipeline.cmd
-    exit /b 64
-)
+if not "%~1"=="" if not "%~1"=="--current-source" goto :usage
+if not "%~2"=="" goto :usage
+set "CurrentSourceOnly=0"
+if "%~1"=="--current-source" set "CurrentSourceOnly=1"
 
 set "RepositoryRoot=%~dp0..\.."
 for %%R in ("%RepositoryRoot%") do set "RepositoryRoot=%%~fR"
@@ -25,6 +25,7 @@ set /a Passed=0
 set "Result=1"
 set "Phase=initialization"
 
+if "%CurrentSourceOnly%"=="1" goto :current_source
 set /a Total+=1
 call :check_file "%Construction%\SHA256SUMS" 5064 15502d44e9578a1ce332fe390764c811a82fee8b3a0f8d9ee80aa158c9bbb334 "construction inventory"
 if errorlevel 1 goto :failed
@@ -84,33 +85,70 @@ findstr /b /c:"entry name=Main address=1178" "%TestDirectory%\Promoter-Link.out"
 if errorlevel 1 goto :failed
 call :check_file "%TestDirectory%\Publisher-Promoter.bin" 658339 843094cf8ba3de92697568abab6788a276f0ea7bd193e65abfb5c7b56918fb43 "linked publisher promoter fragment"
 if errorlevel 1 goto :failed
-call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
-    "%RepositoryRoot%\Projects/Tools/Windvale-Wvb-Publisher.wvproj" ^
-    "%TestDirectory%\Wvb-Publisher.wvb" ^
-    >"%TestDirectory%\Wvb-Publisher-Build.out" 2>"%TestDirectory%\Wvb-Publisher-Build.err"
-if errorlevel 1 goto :failed
-call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvb" 511544 a08bc05d619e03d7649310fd0520102a395abfb12ed8cff25ec113ace3e0b721 "metadata-aware WVB publisher candidate"
-if errorlevel 1 goto :failed
-call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" ^
-    "%TestDirectory%\Wvb-Publisher.wvb" ^
-    "%TestDirectory%\Wvb-Publisher.wvo" ^
-    >"%TestDirectory%\Wvb-Publisher-Lower.out" 2>"%TestDirectory%\Wvb-Publisher-Lower.err"
-if errorlevel 1 goto :failed
-call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native lowering wrote a diagnostic"
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.wvo" 4151146 4b545ad288a5afd7870b8775a2db0ee6d5d259eda2e134c946e32d2e2be9ec93 "metadata-aware WVB publisher object candidate"
-if errorlevel 1 goto :failed
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%TestDirectory%\Wvb-Publisher.bin" "%TestDirectory%\Wvb-Publisher.wvo" >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
-if errorlevel 1 goto :failed
-call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native link wrote a diagnostic"
-if errorlevel 1 goto :failed
-findstr /b /c:"entry name=Main address=0" "%TestDirectory%\Wvb-Publisher-Link.out" >nul
-if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Wvb-Publisher.bin" 4142408 539f4df88d1b1881256ad16e93e2d7ba3bfd51b983df482a01e565b1568e252d "linked metadata-aware WVB publisher fragment"
-if errorlevel 1 goto :failed
-call :pass "metadata-aware publisher source and refreshed construction inventory"
+:current_source
+if "%CurrentSourceOnly%"=="1" set /a Total+=1
+rem Current source is not the frozen construction product. Rebuild independently
+rem twice, admit each representation, and compare exact bytes without cache reuse.
+for %%P in (1 2) do (
+    set "Phase=current-source publisher pass %%P"
+    echo START hosted-verifier publisher files step=current-source item=%%P/2
+    call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
+        "%RepositoryRoot%\Projects/Tools/Windvale-Wvb-Publisher.wvproj" ^
+        "%TestDirectory%\Wvb-Publisher-%%P.wvb" ^
+        >"%TestDirectory%\Wvb-Publisher-Build.out" 2>"%TestDirectory%\Wvb-Publisher-Build.err"
+    if errorlevel 1 goto :failed
+    call :check_empty "%TestDirectory%\Wvb-Publisher-Build.err" "WVB publisher source build wrote a diagnostic"
+    if errorlevel 1 goto :failed
+    call :check_bounded "%TestDirectory%\Wvb-Publisher-%%P.wvb" 16777216 "current-source publisher WVB"
+    if errorlevel 1 goto :failed
+    rem Use the qualified segmented path; the monolithic lowerer has a 4 MiB ceiling.
+    call "%RepositoryRoot%\Tools\Native\Stage-Compiler-Wvb.cmd" ^
+        "%TestDirectory%\Wvb-Publisher-%%P.wvb" ^
+        "%TestDirectory%\Wvb-Publisher-Object-%%P" "%TestDirectory%\Wvb-Publisher-%%P.wvop" ^
+        >"%TestDirectory%\Wvb-Publisher-Lower.out" 2>"%TestDirectory%\Wvb-Publisher-Lower.err"
+    if errorlevel 1 goto :failed
+    call :check_empty "%TestDirectory%\Wvb-Publisher-Lower.err" "WVB publisher native staging wrote a diagnostic"
+    if errorlevel 1 goto :failed
+    call :check_bounded "%TestDirectory%\Wvb-Publisher-%%P.wvop" 6240 "current-source publisher object manifest"
+    if errorlevel 1 goto :failed
+    call "%RepositoryRoot%\Tools\Native\Link-Staged-Compiler-Wvo.cmd" ^
+        "%TestDirectory%\Wvb-Publisher-Object-%%P" "%TestDirectory%\Wvb-Publisher-%%P.wvop" ^
+        "%TestDirectory%\Wvb-Publisher-Image-%%P" "%TestDirectory%\Wvb-Publisher-%%P.wvli" ^
+        >"%TestDirectory%\Wvb-Publisher-Link.out" 2>"%TestDirectory%\Wvb-Publisher-Link.err"
+    if errorlevel 1 goto :failed
+    call :check_empty "%TestDirectory%\Wvb-Publisher-Link.err" "WVB publisher native link wrote a diagnostic"
+    if errorlevel 1 goto :failed
+    findstr /c:" entry-offset=0 " "%TestDirectory%\Wvb-Publisher-Link.out" >nul
+    if errorlevel 1 goto :failed
+    call :check_bounded "%TestDirectory%\Wvb-Publisher-%%P.wvli" 6244 "current-source publisher image manifest"
+    if errorlevel 1 goto :failed
+)
+set "Phase=current-source publisher reproducibility"
+for %%E in (wvb wvop wvli) do (
+    fc /b "%TestDirectory%\Wvb-Publisher-1.%%E" "%TestDirectory%\Wvb-Publisher-2.%%E" >nul
+    if errorlevel 1 goto :failed
+)
+rem WVOP and WVLI admit at most 518 contiguous chunks of at most 4 MiB each.
+for %%K in (Object Image) do (
+    if not exist "%TestDirectory%\Wvb-Publisher-%%K-1.chunk-0" goto :failed
+    if exist "%TestDirectory%\Wvb-Publisher-%%K-1.chunk-518" goto :failed
+    if exist "%TestDirectory%\Wvb-Publisher-%%K-2.chunk-518" goto :failed
+    for /l %%C in (0,1,517) do (
+        if exist "%TestDirectory%\Wvb-Publisher-%%K-1.chunk-%%C" (
+            call :check_bounded "%TestDirectory%\Wvb-Publisher-%%K-1.chunk-%%C" 4194304 "current-source publisher chunk"
+            if errorlevel 1 goto :failed
+            fc /b "%TestDirectory%\Wvb-Publisher-%%K-1.chunk-%%C" "%TestDirectory%\Wvb-Publisher-%%K-2.chunk-%%C" >nul
+            if errorlevel 1 goto :failed
+        ) else (
+            if exist "%TestDirectory%\Wvb-Publisher-%%K-2.chunk-%%C" goto :failed
+        )
+    )
+)
+call :pass "current-source publisher reproducibility"
+if "%CurrentSourceOnly%"=="1" (
+    set "Result=0"
+    goto :cleanup
+)
 
 set /a Total+=1
 call "%RepositoryRoot%\Tools\Native\Construct-Hosted-Verifier-Publisher.cmd" windows "%TestDirectory%\Publisher.exe" >"%TestDirectory%\Windows.out" 2>"%TestDirectory%\Windows.err"
@@ -403,6 +441,10 @@ call :pass "current-host metadata-present WVB publisher execution"
 set "Result=0"
 goto :cleanup
 
+:usage
+>&2 echo Usage: Tools\Native\Test-Hosted-Verifier-Publisher-File-Pipeline.cmd [--current-source]
+exit /b 64
+
 :pass
 set /a Passed+=1
 echo PASS  %~1
@@ -419,6 +461,21 @@ for %%F in ("%~1") do if not "%%~zF"=="%~2" (
 )
 call :check_digest "%~1" %~3 "%~4"
 exit /b %ERRORLEVEL%
+
+:check_bounded
+rem Local workload ceilings, not new serialized-format limits.
+if not exist "%~1" (
+    >&2 echo FAIL  hosted-verifier publisher files: missing %~3
+    exit /b 1
+)
+for %%F in ("%~1") do (
+    if %%~zF LEQ 0 exit /b 1
+    if %%~zF GTR %~2 (
+        >&2 echo FAIL  hosted-verifier publisher files: %~3 exceeds workload ceiling %~2
+        exit /b 1
+    )
+)
+exit /b 0
 
 :check_digest
 certutil -hashfile "%~1" SHA256 | findstr /i /c:"%~2" >nul
@@ -450,7 +507,7 @@ exit /b 0
 :failed
 set "Result=1"
 >&2 echo FAIL  hosted-verifier publisher files: %Phase%
-for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
+for %%F in (Admission-Build.err Admission-Lower.err Promoter-Build.err Promoter-Lower.err Promoter-Link.err Wvb-Publisher-Build.err Wvb-Publisher-Lower.err Wvb-Publisher-Link.err Windows.err Linux.err Promoter-Windows.err Promoter-Linux.err Wvb-Publisher-Windows.err Wvb-Publisher-Linux.err Admitter-Windows.err Admitter-Linux.err Admit-Windows.out Admit-Windows.err Admit-Linux.out Admit-Linux.err Admit-Swap.out Admit-Swap.err Admit-Corrupt.out Admit-Corrupt.err Admit-Usage.out Admit-Usage.err Install-Publisher-Windows.err Install-Publisher-Linux.err Reject.err Alias.err Execute.err Wvb-Publisher-Execute.out Wvb-Publisher-Execute.err) do if exist "%TestDirectory%\%%F" (
     for %%S in ("%TestDirectory%\%%F") do if not "%%~zS"=="0" type "%%~fS" >&2
 )
 
