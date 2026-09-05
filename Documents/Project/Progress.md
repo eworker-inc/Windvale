@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 4 September 2026
+> Status: Current project snapshot as of 5 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-04
+> Last reviewed: 2026-09-05
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -89,8 +89,10 @@ Two active tracks intentionally use different bytecode generations:
   matches exact borrowed parameters and permits by-value reads only for payloads
   proved safe to copy or share. The typed-stack pass preserves borrowed identity
   through the published record/u32 fixture's locals, projections, and helpers.
-  These are component results, not complete 1.39 admission or loan-lifetime
-  verification across control flow.
+  Its loan pass tracks origins through branches and loops, including values
+  waiting on the operand stack. Owner changes invalidate later borrowed reads;
+  changes after the last use and fresh reborrows remain valid. Wider payload and
+  inherited-operation composition still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -136,13 +138,14 @@ The `--foundation-borrow-owners` selector combines
 [18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json),
 [18 direct-call groups](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json),
 [37 semantic metadata groups](../Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json),
-and [15 typed-stack groups](../Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
+[15 typed-stack groups](../Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json),
+and [28 lifetime groups](../Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
 They consume the actual published signatures and projections, check exact
 nominal identities, reject every truncated fixture prefix, and preserve an
 earlier-bytecode regression. Type and local directories avoid repeated scans;
 cached products keep fresh execution separate from construction. Complete
-minor-39 admission remains explicitly closed until origin tracking and loan
-lifetimes are verified. Full-verifier source changes retain broader routing.
+minor-39 admission remains closed pending the complete composition and execution
+gates. Full-verifier source changes retain broader routing.
 
 1. Finish complete WVB verification and runtime
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
@@ -159,7 +162,7 @@ lifetimes are verified. Full-verifier source changes retain broader routing.
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   6,131 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
+   6,159 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower

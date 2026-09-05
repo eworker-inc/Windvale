@@ -4665,6 +4665,25 @@ fn Hˉfunctionˉentryˉread(Input: bytes, Start: u32, Limit: u32,
         Bytesˉreadˉu32ˉlittle(Input, Cursor + 8u32));
 }
 
+fn Hˉneedsˉloanˉflow(Input: bytes, Code: u32, Length: u32, Shapes: bytes) -> bool {
+    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 { return false; }
+    var Slot: u32 = 0u32;
+    while Slot < Bytesˉlength(Shapes) / 5u32 {
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Shapes, Slot * 5u32));
+        if Kind >= 64u32 || Kind == 29u32 { return true; }
+        Slot = Slot + 1u32;
+    }
+    var Cursor: u32 = 0u32;
+    while Cursor < Length {
+        let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Code + Cursor));
+        if Opcode == 225u32 { return true; }
+        let Width: u32 = Hˉinstructionˉwidth(Input, Code, Cursor, Opcode);
+        if Width == 0u32 || Width > Length - Cursor { return true; }
+        Cursor = Cursor + Width;
+    }
+    return false;
+}
+
 export fn Hˉexecutable(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
     let Total: u32 = Bytesˉlength(Input);
@@ -4710,6 +4729,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
     var Functionˉindex: u32 = 0u32;
     var Functionˉcursor: u32 = Functions + 4u32;
     var Aggregateˉinstructions: u32 = 0u32;
+    var Loanˉwork: u32 = 16777216u32;
     while Functionˉindex < Functionˉcount {
         let Entry: Hˉfunctionˉentry = Hˉfunctionˉentryˉread(
             Input, Functionˉcursor, Functionsˉend, Types, Minor);
@@ -4750,7 +4770,17 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         var Taskˉsignatures: bytes = Bytesˉslice(Input, 0u32, 0u32);
         var Depth: u32 = 0u32;
         var Maximum: u32 = 0u32;
+        let Trackˉloans: bool = Hˉneedsˉloanˉflow(Input, Functionˉcode,
+            Functionˉcodeˉlength, Localˉshapes);
+        var Loans: Foundationˉowners.Loanˉtrace = Foundationˉowners.Loanˉbegin(
+            Invalid, 0u32, 0u32, Loanˉwork);
+        if Trackˉloans {
+            Loans = Foundationˉowners.Loanˉbegin(Localˉshapes,
+                Parameterˉcount, Declaredˉmaximum, Loanˉwork);
+            if !Loans.Valid { return Invalid; }
+        }
         while Cursor < Functionˉcodeˉlength {
+            let Beforeˉstack: bytes = Stack;
             let Opcode: u32 = U32ˉfromˉu8(
                 Bytesˉreadˉu8(Input, Functionˉcode + Cursor)
             );
@@ -5292,6 +5322,12 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 if Depth != 0u32 { return Invalid; }
             }
 
+            if Trackˉloans {
+                Loans = Foundationˉowners.Loanˉobserve(Loans, Input,
+                    Functionˉcode, Cursor, Previousˉopcode, Beforeˉstack,
+                    Depth, Hasˉpush, Pushˉkind);
+                if !Loans.Valid { return Invalid; }
+            }
             if Hasˉpush {
                 let Encodedˉshape: bytes = Hˉencodedˉshape(
                     Pushˉkind, Pushˉnominal
@@ -5317,6 +5353,16 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
         }
         if Depth != 0u32 { return Invalid; }
         if Maximum != Declaredˉmaximum { return Invalid; }
+        if Trackˉloans {
+            let Loanˉcontrol: Typedˉdirectories.Hˉcontrolˉdirectory =
+                Typedˉdirectories.Iˉcontrolˉdirectory(Input,
+                    Functionˉcode, Functionˉcodeˉlength);
+            let Lifetime: Foundationˉowners.Flowˉresult = Foundationˉowners.Loanˉcheck(
+                Input, Functionˉcode, Functionˉcodeˉlength, Parameterˉcount,
+                Loanˉcontrol, Loans);
+            if !Lifetime.Valid { return Invalid; }
+            Loanˉwork = Loanˉwork - Lifetime.Work;
+        }
         Functionˉindex = Functionˉindex + 1u32;
     }
     if Functionˉcursor != Functionsˉend { return Invalid; }

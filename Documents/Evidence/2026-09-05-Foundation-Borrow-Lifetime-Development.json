@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-05-foundation-borrow-lifetime-development",
+  "date": "2026-09-05",
+  "subject": "Bounded borrowed-value origin and lifetime checks with fresh cached WV execution",
+  "claim": "The typed-stack pass emits immutable origin events into a bounded loan-flow analysis. It rejects uninitialized and stale borrowed reads across forwarding, branch joins, loops, and live operand-stack aliases, while allowing owner changes after the last use and fresh reborrows. Twenty isolated flow groups and eight complete-bytecode probes extend the existing selection to 116 passing groups. The final warm selection executes afresh in 2,439 ms. Complete candidate WVB 1.39 admission remains closed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 41ee232082b788f34f11cfc3308399f6b4e66447. Exact final source and routing inputs are recorded below. The intentional return-read omission was restored byte for byte before the final warm run; its project and native cache identities match the preceding passing cold run."
+  },
+  "runs": [
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "116 groups: 18 permanent-owner-flow, 18 direct-call, 37 metadata, 15 typed-stack, and 28 lifetime. Both project and native products are newly constructed, with existing qualified bootstrap products retained. Project construction 21,686 ms; complete verification and segmented packaging 66,881 ms; fresh native execution 1,005 ms. This is not clean-machine timing.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 89579,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 815,
+          "sha256": "37b41384b01fee7c552fab5422a2f3584c8d0f0b7bad56cc663ea658e5b4640f"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 13663,
+          "sha256": "0483254c9cff51781c87156c3e969ff2c6be5fb12b90ed0e39b4687db5a93864"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 10336,
+          "sha256": "6c8a7cadcb0386188e7b83e7656ac75389a3d91f5d7ffbc3a61b1cf2d4904e75"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "size": 8951,
+          "sha256": "fcfb88933e039fa193e25a65249d6bc7e0b77e9f8b43d535436b12612974b9ef"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9291,
+          "sha256": "05b2d20b3d87a3d65be1ef703fdb3bdea9157175fc064fd55105665f2015429d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 2999,
+          "sha256": "49676a876d31e3d9a41225fb1ae7c11a828ac7ddb212c0fe06fdaabb0217b972"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 243342,
+          "sha256": "30a7b456af3b4446cb108dad92fb4747d6a87271d4d00c1b81593d0caf4236a9"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 30719,
+          "sha256": "1fc27302cac5ad0b3d8ebaf703cb71f2a7decc0748382ea248d918fac40bc9a3"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 512,
+          "sha256": "078c5db03ed79ecb0da064f413a888876682f5d0f02af4ddf391388001133998"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180338,
+          "sha256": "e9bc867da0d88bfe1eaeab3a97e75796da26538c863c150ebd0330e354681956"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14882,
+          "sha256": "b9ef240e0783fb529afa6c283bb9762b212c572ced4029f19126f62b708cb844"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120941,
+          "sha256": "e2e02004a22f00901ee59106343564aff800ace26d1692ef810eb17948c1e5b7"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 278330,
+          "sha256": "490af776f138b8c01b35478714303ba2e11cb2041f6695ff334307589b2afc16"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 318946,
+          "sha256": "1c676e42a3a6b8656b5dd392587c620177c13c33203f87f34e0e608857ec1da5"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 38333,
+          "sha256": "e9a0c08d371fe89f63239f0089094cbccb6404295f7a10f135f72cb13193cdc9"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23899,
+          "sha256": "820e5510542ab9debc6f13e7795e3133a671b537a5ec32ebb2483f127033e6f9"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18842,
+          "sha256": "3fc5f08ce5a4f3525ce18f401ac57264818a4faa9c05eca7513d0081899eb7e0"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "project-wvb-v2/windows-x64/6fb0e272bf09f7b6c97bab4bdaf9471487bc1ef5b3c6ab6dcdb840fa8f655115/Product.wvb",
+          "size": 620474,
+          "sha256": "2ca5a6c04e651e0b779fa994189fed4f6e930cfa87efe983c4226e26738a9dbf"
+        },
+        {
+          "path": "segmented-hosted-wvb-v1/windows-x64/c520ce13764d58c61ba703f1a1027ce31b14c6fd50942814eed1909d34358e0a/Product.exe",
+          "size": 5495296,
+          "sha256": "2ea9af125ac9ccd2a378636b4bb1706ca19c4e20aa54a9adc2190cc239d761d1"
+        },
+        {
+          "path": "Candidate.wvb embedded in Foundation-Owner-Flow-Self-Test.wv",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        }
+      ]
+    },
+    {
+      "host": "Same local Windows host and tool identities",
+      "target": "Selected final run after byte-exact restoration. Project-cache hit 830 ms; native-package-cache hit 516 ms; fresh native execution 1,077 ms. Both cache keys match the passing cold run. Build products are reused; test success is not cached.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 2439
+    },
+    {
+      "host": "Same local Windows host and tool identities",
+      "target": "Intentional implementation defect: omit the read event for a borrowed operand consumed by return. The independent flow cases and preceding integration cases still pass, but lifetime group 24 detects the live borrowed stack value used after its owner is overwritten: native exit 224, harness exit 1. Both caches create new products. Project construction 18,605 ms; verification and packaging 66,497 ms. This expected failure is detection evidence, not a passing verifier receipt.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 30738,
+          "sha256": "b0043702ebb6c35d3c5a263587026cb3dcefc6a6987696bcd53e54fb63771140"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "project-wvb-v2/windows-x64/b226d6f94ae08d1740d3929b99fd25d750981a55630148ec329643ff574465fc/Product.wvb",
+          "size": 620567,
+          "sha256": "703c1d0cc5cc76dda1e13249621b9a13db6f5726ecd5e99673d1e9f8576bfb21"
+        },
+        {
+          "path": "segmented-hosted-wvb-v1/windows-x64/810fec90710f5a318c9e17a80fbdd4a15ce1c49e43120697e1bb607a848ebb9b/Product.exe",
+          "size": 5495808,
+          "sha256": "763e43d91c13e1c750ed3bebac2fbd525561378f16544b68ba4b762367927f5a"
+        }
+      ]
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Positive focused-fixture routing and broader-source exclusions pass: 31 general and 280 native plan cases, including exact declaration ordering. The registry retains 126 owners and declares 6,159 cases. The full memory-budget owner declares 350, combined Foundation selector 179, and focused owner/call/metadata/stack/lifetime selector 116. Node.js runner syntax and git whitespace checks also pass.",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Read-only final plan review: the broad change set selects 12 owners, expected 2,925 seconds and maximum 11,700 seconds, without gaps. That plan was not executed. The exact lifetime fixture selects the existing --foundation-borrow-owners mode, expected 180 seconds and maximum 600 seconds; final execution reused its valid products.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly",
+      "result": "Passed"
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Documentation validation passes: 1,587 Markdown files, 5,706 links, 462 anchors, 10 active-context documents, and 12 documented legacy decision collisions. Catalogs are current; all 14 retrieval cases pass. The project snapshot date was subsequently aligned with its review date without changing links or contracts.",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is current-source verifier component evidence for the published record/u32 matrix and focused control-flow probes, not complete WVB 1.39 admission, runtime execution, product completion, or qualification. The explicit complete-admission guard remains closed.",
+    "Borrowed arrays, Sequence operations, callable and indirect-call combinations, owned-aggregate borrowing, legacy Option-view composition, inherited Foreign typing, and wider payload/capability interactions still need composition work and distinct evidence. The component results do not prove that complete contract.",
+    "The analysis bounds metadata to 8,192 local slots, the stack to 4,096 positions, and the control graph to 4,096 blocks, with a shared 16,777,216-unit module work budget. Checked per-owner state allocation avoids a roots-by-slots-by-blocks product. These bounds and passing probes are not exhaustive qualification of every maximum-sized source combination.",
+    "All new component execution here is local Windows. Preceding commit 41ee2320 passed GitHub run 33939953656; that result is not evidence for these new bytes. Linux reproduction and exact paired-host qualification remain pending.",
+    "Development exposed Seed-path declaration ordering, function-wide local naming, and byte-comparison restrictions, all corrected before the passing run. A compound nested loop condition produced blocks without earlier predecessors under the retained Seed compiler; an explicit bounded scan preserves the algorithm and passes the official verifier. The retained compiler itself was not changed or requalified. The first complete probe also exposed a noncanonical appended function name, corrected before the passing run.",
+    "Measurements are single development observations with retained bootstrap products, not clean-machine timings or stable speedup thresholds. Peak working-set memory was not measured.",
+    "The broad 12-owner plan, full 350-case owner, database/library integration, runtime, compiler reconstruction, bootstrap, ABI, and cross-host qualification were not run. Complete admission is unchanged, and the broad plan exceeds the ten-minute local development budget.",
+    "The new WV tests still compile through the retained Seed/bootstrap project path. Edition-1 migration remains in scope for the active goal; host orchestration and independent oracles keep their separate roles."
+  ],
+  "related": [
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json",
+    "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv"
+  ]
+}

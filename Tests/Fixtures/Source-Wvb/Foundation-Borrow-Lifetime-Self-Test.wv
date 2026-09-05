@@ -1,0 +1,134 @@
+module Foundationˉborrowˉlifetimeˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Owners;
+import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semantic;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadata;
+
+fn Join(A: bytes, B: bytes, C: bytes) -> bytes { return Bytesˉconcat(A, Bytesˉconcat(B, C)); }
+fn Instruction(Opcode: u8, Operand: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(Opcode), Bytesˉfromˉu32ˉlittle(Operand));
+}
+fn Event(Offset: u32, Operation: u32, Destination: u32, Source: u32) -> bytes {
+    return Join(Bytesˉfromˉu32ˉlittle(Offset), Bytesˉfromˉu32ˉlittle(Operation),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Destination), Bytesˉfromˉu32ˉlittle(Source)));
+}
+fn Word(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Join(Bytesˉslice(Input, 0u32, Offset), Bytesˉfromˉu32ˉlittle(Value),
+        Bytesˉslice(Input, Offset + 4u32, Bytesˉlength(Input) - Offset - 4u32));
+}
+
+data Straight: bytes = [80, 80, 80, 80, 80, 80, 80, 81];
+data Diamond: bytes = [49, 10, 0, 0, 0, 48, 15, 0, 0, 0, 48, 15, 0, 0, 0, 80, 80, 81];
+data Loop: bytes = [48, 5, 0, 0, 0, 49, 15, 0, 0, 0, 48, 5, 0, 0, 0, 81];
+data Shapes: bytes = [5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 69, 0, 0, 0, 0, 69, 0, 0, 0, 0];
+data Borrowedˉparameter: bytes = [69, 0, 0, 0, 0, 69, 0, 0, 0, 0];
+
+// Synthetic events isolate dataflow. The probe cases below exercise production
+// event generation from complete typed bytecode, including live stack aliases.
+fn Flow(Code: bytes, Shape: bytes, Parameters: u32, Events: bytes, Limit: u32) -> Owners.Flowˉresult {
+    let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Shape, Parameters, 2u32, Limit);
+    let Trace: Owners.Loanˉtrace = Owners.Loanˉtrace(Initial.Valid, Initial.Map,
+        Initial.Parameters, Initial.Locals, Initial.Maximum, Events,
+        Bytesˉslice(Events, 0u32, 0u32), Initial.Work, Initial.Limit);
+    let Control: Directories.Hˉcontrolˉdirectory = Directories.Iˉcontrolˉdirectory(Code, 0u32, Bytesˉlength(Code));
+    return Owners.Loanˉcheck(Code, 0u32, Bytesˉlength(Code), Parameters, Control, Trace);
+}
+fn Rule(Code: bytes, Events: bytes) -> u32 {
+    let Result: Owners.Flowˉresult = Flow(Code, Shapes, 2u32, Events, 16777216u32);
+    return Result.Rule;
+}
+
+fn Section(Input: bytes, Kind: u32) -> u32 {
+    var Cursor: u32 = 12u32;
+    var Index: u32 = 1u32;
+    while Index < Kind {
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        Index = Index + 1u32;
+    }
+    return Cursor + 8u32;
+}
+
+// Trial sorts after the published Read helpers in the canonical directory.
+data Probeˉheader: bytes = [5, 0, 0, 0, 84, 114, 105, 97, 108, 1, 0, 0, 0, 5, 5, 2, 0, 0, 0, 37, 5, 37, 5];
+fn Probe(Input: bytes, Body: bytes, Maximum: u32) -> bytes {
+    let Functions: u32 = Section(Input, 4u32);
+    let Code: u32 = Section(Input, 5u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Code - 4u32);
+    let Entry: bytes = Join(Probeˉheader, Bytesˉfromˉu32ˉlittle(Length),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body)), Bytesˉfromˉu32ˉlittle(Maximum)));
+    let Updated: bytes = Word(Word(Input, Functions,
+        Bytesˉreadˉu32ˉlittle(Input, Functions) + 1u32), Functions - 4u32,
+        Bytesˉreadˉu32ˉlittle(Input, Functions - 4u32) + Bytesˉlength(Entry));
+    return Join(Bytesˉslice(Updated, 0u32, Code - 8u32), Entry,
+        Join(Bytesˉconcat(Bytesˉfromˉu32ˉlittle(5u32), Bytesˉfromˉu32ˉlittle(Length + Bytesˉlength(Body))),
+            Bytesˉslice(Input, Code, Length), Bytesˉconcat(Body,
+                Bytesˉslice(Input, Code + Length, Bytesˉlength(Input) - Code - Length))));
+}
+fn Typedˉresult(Input: bytes) -> u32 {
+    if Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) == 0u32 { return 1u32; }
+    if Bytesˉlength(Executable.Hˉexecutable(Input)) == 0u32 { return 2u32; }
+    return 0u32;
+}
+
+export fn Check(Candidate: bytes) -> i32 {
+    let Start: bytes = Event(0u32, 1u32, 0u32, 0u32);
+    let Read: bytes = Event(1u32, 3u32, 0u32, 0u32);
+    let Write: bytes = Event(2u32, 4u32, 0u32, 0u32);
+    let Alias: bytes = Event(1u32, 2u32, 1u32, 0u32);
+    if Rule(Straight, Join(Start, Read, Write)) != 0u32 { return 201; }
+    if Rule(Straight, Join(Start, Write, Event(3u32, 3u32, 0u32, 0u32))) != 8u32 { return 202; }
+    if Rule(Straight, Join(Start, Alias, Bytesˉconcat(Write, Event(3u32, 3u32, 1u32, 0u32)))) != 8u32 { return 203; }
+    if Rule(Straight, Join(Start, Event(1u32, 2u32, 2u32, 0u32),
+        Bytesˉconcat(Write, Event(3u32, 3u32, 2u32, 0u32)))) != 8u32 { return 204; }
+    let Renew: bytes = Event(3u32, 1u32, 0u32, 0u32);
+    if Rule(Straight, Join(Start, Write, Bytesˉconcat(Renew, Event(4u32, 3u32, 0u32, 0u32)))) != 0u32 { return 205; }
+    if Rule(Straight, Join(Start, Alias, Join(Write, Renew, Event(4u32, 3u32, 1u32, 0u32)))) != 8u32 { return 206; }
+    if Rule(Straight, Read) != 7u32 { return 207; }
+    let Uninitialized: Owners.Flowˉresult = Flow(Straight, Shapes, 0u32, Start, 16777216u32);
+    if Uninitialized.Rule != 9u32 { return 208; }
+    if Rule(Straight, Bytesˉconcat(Event(0u32, 5u32, 0u32, 0u32), Event(1u32, 1u32, 0u32, 0u32))) != 9u32 { return 209; }
+    if Rule(Straight, Join(Start, Event(1u32, 4u32, 1u32, 0u32), Event(2u32, 3u32, 0u32, 0u32))) != 0u32 { return 210; }
+    let Parameter: Owners.Flowˉresult = Flow(Straight, Borrowedˉparameter, 1u32,
+        Bytesˉconcat(Alias, Event(2u32, 3u32, 1u32, 0u32)), 16777216u32);
+    if Parameter.Rule != 0u32 { return 211; }
+    let Branches: bytes = Bytesˉconcat(Event(5u32, 1u32, 0u32, 0u32), Event(10u32, 1u32, 0u32, 1u32));
+    if Rule(Diamond, Bytesˉconcat(Branches, Event(15u32, 3u32, 0u32, 0u32))) != 0u32 { return 212; }
+    if Rule(Diamond, Join(Branches, Event(15u32, 4u32, 0u32, 0u32), Event(16u32, 3u32, 0u32, 0u32))) != 8u32 { return 213; }
+    if Rule(Diamond, Bytesˉconcat(Event(5u32, 1u32, 0u32, 0u32), Event(15u32, 3u32, 0u32, 0u32))) != 7u32 { return 214; }
+    let Loopˉread: bytes = Bytesˉconcat(Start, Event(5u32, 3u32, 0u32, 0u32));
+    if Rule(Loop, Bytesˉconcat(Loopˉread, Event(10u32, 4u32, 0u32, 0u32))) != 8u32 { return 215; }
+    if Rule(Loop, Join(Loopˉread, Event(10u32, 4u32, 0u32, 0u32), Event(10u32, 1u32, 0u32, 0u32))) != 0u32 { return 216; }
+    if Rule(Straight, Event(0u32, 1u32, 0u32, 99u32)) != 10u32 ||
+        Rule(Straight, Event(0u32, 2u32, 99u32, 0u32)) != 10u32 { return 217; }
+    if Rule(Diamond, Event(1u32, 3u32, 0u32, 0u32)) != 10u32 ||
+        Rule(Straight, Bytesˉconcat(Read, Start)) != 10u32 { return 218; }
+    if Rule(Straight, Event(0u32, 6u32, 0u32, 0u32)) != 10u32 ||
+        Rule(Straight, Bytesˉslice(Start, 0u32, 15u32)) != 10u32 { return 219; }
+    let Limited: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Join(Start, Read, Write), 64u32);
+    let Oversized: Owners.Flowˉresult = Flow(Straight, Shapes, 2u32, Start, 16777217u32);
+    if Limited.Valid || Limited.Rule != 5u32 || Limited.Work > 64u32 ||
+        Oversized.Valid { return 220; }
+
+    let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Loan: bytes = Bytesˉconcat(Instruction(4u8, 0u32), Instruction(5u8, 1u32));
+    let Rewrite: bytes = Bytesˉconcat(Instruction(9u8, 42u32), Instruction(5u8, 0u32));
+    let Readˉloan: bytes = Bytesˉconcat(Instruction(4u8, 1u32), Return);
+    let Forward: bytes = Bytesˉconcat(Instruction(4u8, 1u32), Instruction(5u8, 2u32));
+    if Typedˉresult(Word(Input, Section(Input, 5u32) + 1152u32, 1u32)) != 2u32 { return 221; }
+    let Copy: bytes = Bytesˉconcat(Bytesˉfromˉu8(176u8), Bytesˉfromˉu8(176u8));
+    let Ownerˉresult: bytes = Bytesˉconcat(Instruction(4u8, 0u32), Return);
+    if Typedˉresult(Probe(Input, Join(Loan, Instruction(4u8, 1u32),
+        Join(Copy, Instruction(5u8, 0u32), Ownerˉresult)), 1u32)) != 0u32 { return 222; }
+    if Typedˉresult(Probe(Input, Join(Loan, Rewrite, Readˉloan), 1u32)) != 2u32 { return 223; }
+    if Typedˉresult(Probe(Input, Join(Loan, Instruction(4u8, 1u32), Bytesˉconcat(Rewrite, Return)), 2u32)) != 2u32 { return 224; }
+    if Typedˉresult(Probe(Input, Join(Loan, Forward, Join(Rewrite, Instruction(4u8, 2u32), Return)), 1u32)) != 2u32 { return 225; }
+    if Typedˉresult(Probe(Input, Join(Loan, Rewrite, Bytesˉconcat(Loan, Readˉloan)), 1u32)) != 0u32 { return 226; }
+    if Typedˉresult(Probe(Input, Join(Loan, Forward, Join(Rewrite, Loan,
+        Bytesˉconcat(Instruction(4u8, 2u32), Return))), 1u32)) != 2u32 { return 227; }
+    if Typedˉresult(Probe(Input, Join(Loan, Instruction(4u8, 1u32),
+        Join(Rewrite, Bytesˉfromˉu8(80u8), Ownerˉresult)), 2u32)) != 0u32 { return 228; }
+    return 0;
+}

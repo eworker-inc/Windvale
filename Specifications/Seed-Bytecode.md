@@ -533,15 +533,39 @@ operations and function results may read through a borrow only when the existing
 bounded shape proof establishes Copy/shared behavior and exact nominal identity.
 
 These transfers pass the published record/u32 matrix, not arbitrary payload
-classes or inherited-operation combinations. They do not establish an origin's
-continued availability across later writes, calls, branches, or loops; the
-loan pass must still prove that. See the
+classes or inherited-operation combinations. See the
 [typed-stack development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
 
+The typed pass now supplies immutable loan events to a bounded control-flow
+analysis for borrow-bearing functions. Each borrowed local and each live
+operand-stack position has a loan slot. Owner creation, forwarding, reads,
+stores, and takes retain their instruction offsets; the flow analysis does not
+re-run the type checker or infer origins from compatible nominal shapes.
+
+For each directly borrowed owner, it tracks uninitialized loans, valid loans
+from that owner, loans from other owners or incoming borrowed parameters, and
+loans made stale by a write or take. Joins union every incoming path and loops
+iterate to a fixed point. Reading an uninitialized or stale loan rejects;
+creating a loan requires its owner to be available on every incoming path.
+Writing after a loan's last use is valid. A fresh borrow after a write does not
+revive older aliases, and discarding a value already on the stack does not read
+its payload. The separate permanent `E1` owner-freezing rule remains unchanged.
+
+This component retains rules and function-relative failure offsets. It bounds
+local metadata to 8,192 slots, the operand stack to 4,096 positions, and its
+control graph to 4,096 blocks. A shared module budget of 16,777,216 work units
+charges trace construction, scans, queue work, and state copying. State rows
+are retained for one owner at a time, with checked allocation before building
+them; there is no owners-by-slots-by-blocks allocation. Borrow-free functions
+skip the loan pass. These are bounded component contracts, not a claim that
+every maximum-sized source combination has been qualified. See the
+[lifetime development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
+
 No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
-admits minor 39. Complete typed-stack/lifetime verification and runtime
-execution are the next checkpoints. Direct-call publication does not qualify
-indirect calls, arbitrary payload classes, or Linux reproduction.
+admits minor 39. Inherited-operation and wider-payload composition, the complete
+admission audit, and runtime execution remain open. Direct-call and lifetime
+probes do not qualify indirect calls, arbitrary payload classes, or Linux
+reproduction.
 
 ## Encoding
 

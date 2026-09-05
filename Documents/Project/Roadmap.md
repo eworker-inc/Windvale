@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-04
+> Last reviewed: 2026-09-05
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -75,10 +75,10 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. complete origin tracking, loan-lifetime verification, and inherited-operation
-   composition for the published immutable Option/Result candidate; retain
-   closed admission while metadata, call, owner-flow, and typed-stack results
-   cover components rather than the complete contract;
+1. complete inherited-operation and wider-payload composition for the immutable
+   Option/Result candidate, then audit complete admission; retain the gate while
+   metadata, typing, and origin/lifetime results cover the published matrix and
+   focused control-flow probes rather than the complete contract;
 2. implement bounded execution, reproduce it on Linux, and qualify the complete
    compiler-to-runtime path;
 3. complete Option/Result take and mapping operations;

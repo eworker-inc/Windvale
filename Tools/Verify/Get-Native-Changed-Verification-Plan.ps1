@@ -2374,6 +2374,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
@@ -4691,6 +4692,7 @@ $FoundationBorrowOwnerInputs = @(
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )
 $PublisherCurrentSourceInputs = @(

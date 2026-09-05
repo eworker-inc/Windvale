@@ -1244,10 +1244,18 @@ loans, and mismatched shapes. Its record/u32 fixture includes a valid primitive
 read-through case and an explicit closed-admission check. See the
 [typed-stack development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
 
+The typed pass also produces immutable origin events for the loan-flow checker.
+Its direct-owner and forwarding analysis rejects stale or uninitialized reads
+across joins and loops, including aliases held on the operand stack while an
+owner changes. Owner changes after the last read and fresh reborrows remain
+valid; the separate permanent `E1` freeze is unchanged. Twenty isolated flow
+groups and eight complete-bytecode probes extend the same focused WV owner.
+See the [lifetime development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
+
 The complete
 compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
-packages, and Windvale OS still reject minor 39. Origin and loan-lifetime
-verification, inherited-operation composition, runtime execution, and Linux
+packages, and Windvale OS still reject minor 39. Inherited-operation and
+wider-payload composition, complete-admission auditing, runtime execution, and Linux
 reproduction are the next required checkpoints. Indirect-call combinations and
 wider payload classes are not qualified by the direct-call fixture.
 

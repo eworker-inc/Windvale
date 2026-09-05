@@ -9,12 +9,163 @@ export record Flowˉresult {
     Work: u32;
 }
 
+// Immutable evidence from the typed-stack pass, not a serialized module format.
+// Events are sixteen-byte cells: code offset, operation, destination, source.
+// Operations: 1 new loan, 2 forward, 3 read, 4 owner store, 5 owner take.
+export record Loanˉtrace {
+    Valid: bool;
+    Map: bytes;
+    Parameters: u32;
+    Locals: u32;
+    Maximum: u32;
+    Events: bytes;
+    Chunk: bytes;
+    Work: u32;
+    Limit: u32;
+}
+
+fn Loanˉnext(Trace: Loanˉtrace, Valid: bool, Events: bytes,
+    Chunk: bytes, Work: u32) -> Loanˉtrace {
+    return Loanˉtrace(Valid, Trace.Map, Trace.Parameters, Trace.Locals,
+        Trace.Maximum, Events, Chunk, Work, Trace.Limit);
+}
+
+export fn Loanˉbegin(Shapes: bytes, Parameters: u32, Maximum: u32,
+    Limit: u32) -> Loanˉtrace {
+    let Empty: bytes = Bytesˉslice(Shapes, 0u32, 0u32);
+    let Invalid: Loanˉtrace = Loanˉtrace(false, Empty, 0u32, 0u32,
+        Maximum, Empty, Empty, 0u32, Limit);
+    if Bytesˉlength(Shapes) % 5u32 != 0u32 ||
+        Bytesˉlength(Shapes) / 5u32 > 8192u32 ||
+        Parameters > Bytesˉlength(Shapes) / 5u32 || Maximum > 4096u32 ||
+        Limit > 16777216u32 { return Invalid; }
+    var Map: bytes = Empty;
+    var Chunk: bytes = Empty;
+    var Local: u32 = 0u32;
+    var Loans: u32 = 0u32;
+    var Borrowedˉparameters: u32 = 0u32;
+    var Work: u32 = 0u32;
+    while Local < Bytesˉlength(Shapes) / 5u32 {
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Shapes, Local * 5u32));
+        var Value: u32 = 4294967295u32;
+        if Kind >= 64u32 || Kind == 29u32 {
+            Value = Loans;
+            Loans = Loans + 1u32;
+            if Local < Parameters { Borrowedˉparameters = Borrowedˉparameters + 1u32; }
+        }
+        var Cost: u32 = Bytesˉlength(Chunk) + 4u32;
+        if Bytesˉlength(Chunk) == 252u32 { Cost = Cost + Bytesˉlength(Map) + 256u32; }
+        if Cost > Limit - Work { return Invalid; }
+        Work = Work + Cost;
+        Chunk = Bytesˉconcat(Chunk, Bytesˉfromˉu32ˉlittle(Value));
+        if Bytesˉlength(Chunk) == 256u32 { Map = Bytesˉconcat(Map, Chunk); Chunk = Empty; }
+        Local = Local + 1u32;
+    }
+    if Bytesˉlength(Map) + Bytesˉlength(Chunk) > Limit - Work { return Invalid; }
+    Work = Work + Bytesˉlength(Map) + Bytesˉlength(Chunk);
+    Map = Bytesˉconcat(Map, Chunk);
+    return Loanˉtrace(true, Map, Borrowedˉparameters, Loans, Maximum,
+        Empty, Empty, Work, Limit);
+}
+
+export fn Loanˉevent(Trace: Loanˉtrace, Offset: u32, Operation: u32,
+    Destination: u32, Source: u32) -> Loanˉtrace {
+    if !Trace.Valid { return Trace; }
+    var Cost: u32 = Bytesˉlength(Trace.Chunk) + 16u32;
+    if Bytesˉlength(Trace.Chunk) == 1008u32 {
+        Cost = Cost + Bytesˉlength(Trace.Events) + 1024u32;
+    }
+    if Cost > Trace.Limit - Trace.Work {
+        return Loanˉnext(Trace, false, Trace.Events, Trace.Chunk, Trace.Work);
+    }
+    let Cell: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Offset),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Operation),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Destination), Bytesˉfromˉu32ˉlittle(Source))));
+    var Chunk: bytes = Bytesˉconcat(Trace.Chunk, Cell);
+    var Events: bytes = Trace.Events;
+    if Bytesˉlength(Chunk) == 1024u32 {
+        Events = Bytesˉconcat(Events, Chunk);
+        Chunk = Bytesˉslice(Chunk, 0u32, 0u32);
+    }
+    return Loanˉnext(Trace, true, Events, Chunk, Trace.Work + Cost);
+}
+
+// Each live operand position has a virtual loan slot. Keeping only local-slot
+// aliases would miss an owner write between loading a borrow and calling it.
+export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
+    Offset: u32, Previous: u32, Before: bytes, Remaining: u32,
+    Hasˉpush: bool, Pushˉkind: u32) -> Loanˉtrace {
+    var Result: Loanˉtrace = Trace;
+    let Count: u32 = Bytesˉlength(Before) / 5u32;
+    if !Trace.Valid || Bytesˉlength(Before) % 5u32 != 0u32 ||
+        Remaining > Count || Count > Trace.Maximum {
+        return Loanˉnext(Trace, false, Trace.Events, Trace.Chunk, Trace.Work);
+    }
+    let Opcode: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input, Code + Offset));
+    var Index: u32 = Remaining;
+    while Index < Count {
+        if Opcode != 80u32 && U32ˉfromˉu8(Bytesˉreadˉu8(Before, Index * 5u32)) >= 64u32 {
+            Result = Loanˉevent(Result, Offset, 3u32, Trace.Locals + Index, 0u32);
+        }
+        Index = Index + 1u32;
+    }
+    if Opcode == 5u32 || Opcode == 205u32 {
+        let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
+        if Local >= Bytesˉlength(Trace.Map) / 4u32 {
+            return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+        }
+        let Target: u32 = Bytesˉreadˉu32ˉlittle(Trace.Map, Local * 4u32);
+        if Target == 4294967295u32 {
+            var Event: u32 = 4u32;
+            if Opcode == 205u32 { Event = 5u32; }
+            Result = Loanˉevent(Result, Offset, Event, Local, 0u32);
+        } else {
+            if Opcode != 5u32 || Count == 0u32 {
+                return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+            }
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Before, (Count - 1u32) * 5u32)) >= 64u32 {
+                Result = Loanˉevent(Result, Offset, 2u32, Target, Trace.Locals + Count - 1u32);
+            } else {
+                if Previous != 4u32 || Offset < 5u32 {
+                    return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+                }
+                Result = Loanˉevent(Result, Offset, 1u32, Target,
+                    Bytesˉreadˉu32ˉlittle(Input, Code + Offset - 4u32));
+            }
+        }
+    }
+    if Hasˉpush && Pushˉkind >= 64u32 {
+        let Pushedˉtarget: u32 = Trace.Locals + Remaining;
+        if Opcode == 225u32 {
+            Result = Loanˉevent(Result, Offset, 1u32, Pushedˉtarget,
+                Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32));
+        } else if Opcode == 4u32 {
+            let Loadedˉlocal: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
+            if Loadedˉlocal >= Bytesˉlength(Trace.Map) / 4u32 {
+                return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+            }
+            Result = Loanˉevent(Result, Offset, 2u32, Pushedˉtarget,
+                Bytesˉreadˉu32ˉlittle(Trace.Map, Loadedˉlocal * 4u32));
+        } else if Opcode == 105u32 || Opcode == 153u32 || Opcode == 196u32 || Opcode == 198u32 {
+            var Consumed: u32 = 1u32;
+            if Opcode == 198u32 { Consumed = 2u32; }
+            if Count < Consumed || Remaining != Count - Consumed {
+                return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+            }
+            Result = Loanˉevent(Result, Offset, 2u32, Pushedˉtarget, Trace.Locals + Count - Consumed);
+        } else {
+            return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+        }
+    }
+    return Result;
+}
+
 fn Reject(Rule: u32, Offset: u32, Work: u32) -> Flowˉresult {
     return Flowˉresult(false, Rule, Offset, Work);
 }
 
-fn Zeroes(Count: u32) -> bytes {
-    var Chunk: bytes = Bytesˉfromˉu8(0u8);
+fn Repeatedˉbyte(Value: u8, Count: u32) -> bytes {
+    var Chunk: bytes = Bytesˉfromˉu8(Value);
     var Result: bytes = Bytesˉslice(Chunk, 0u32, 0u32);
     var Remaining: u32 = Count;
     while Remaining > 0u32 {
@@ -24,6 +175,8 @@ fn Zeroes(Count: u32) -> bytes {
     }
     return Result;
 }
+
+fn Zeroes(Count: u32) -> bytes { return Repeatedˉbyte(0u8, Count); }
 
 fn Setˉstate(Input: bytes, Index: u32, Value: u32) -> bytes {
     return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Input, 0u32, Index),
@@ -47,6 +200,291 @@ fn Hasˉowner(Owners: bytes, Owner: u32) -> bool {
         Index = Index + 4u32;
     }
     return false;
+}
+
+record Edgesˉresult {
+    Valid: bool;
+    Edges: bytes;
+    Rule: u32;
+    Offset: u32;
+    Work: u32;
+}
+
+fn Buildˉedges(Input: bytes, Code: u32, Length: u32,
+    Control: Directories.Hˉcontrolˉdirectory, Blocks: bytes,
+    Limit: u32) -> Edgesˉresult {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Edges: bytes = Empty;
+    var Work: u32 = 0u32;
+    let Count: u32 = Bytesˉlength(Blocks) / 4u32;
+    var Block: u32 = 0u32;
+    while Block < Count {
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32);
+        var End: u32 = Length;
+        if Block + 1u32 < Count { End = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32 + 4u32); }
+        if End <= Start || End > Length { return Edgesˉresult(false, Empty, 2u32, Start, Work); }
+        var Last: u32 = End - 1u32;
+        while Bytesˉreadˉu8(Control.Boundaries, Last) == 0u8 {
+            if Work >= Limit { return Edgesˉresult(false, Empty, 5u32, Last, Work); }
+            Work = Work + 1u32;
+            if Last == Start { return Edgesˉresult(false, Empty, 2u32, Start, Work); }
+            Last = Last - 1u32;
+        }
+        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Last);
+        var First: u32 = 4294967295u32;
+        var Second: u32 = 4294967295u32;
+        if Opcode == 48u8 || Opcode == 49u8 {
+            if End - Last != 5u32 { return Edgesˉresult(false, Empty, 2u32, Last, Work); }
+            if Count > Limit - Work { return Edgesˉresult(false, Empty, 5u32, Last, Work); }
+            Work = Work + Count;
+            First = Blockˉindex(Blocks, Bytesˉreadˉu32ˉlittle(Input, Code + Last + 1u32));
+            if First == 4294967295u32 { return Edgesˉresult(false, Empty, 2u32, Last, Work); }
+            if Opcode == 49u8 {
+                if Block + 1u32 >= Count { return Edgesˉresult(false, Empty, 2u32, Last, Work); }
+                Second = Block + 1u32;
+            }
+        } else if Opcode != 81u8 || End - Last != 1u32 {
+            return Edgesˉresult(false, Empty, 2u32, Last, Work);
+        }
+        let Cost: u32 = Bytesˉlength(Edges) + 8u32;
+        if Cost > Limit - Work { return Edgesˉresult(false, Empty, 5u32, Last, Work); }
+        Work = Work + Cost;
+        Edges = Bytesˉconcat(Edges, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First), Bytesˉfromˉu32ˉlittle(Second)));
+        Block = Block + 1u32;
+    }
+    return Edgesˉresult(true, Edges, 0u32, 0u32, Work);
+}
+
+record Loanˉstate {
+    Valid: bool;
+    State: bytes;
+    Rule: u32;
+    Work: u32;
+}
+
+// A root is checked independently, so state is linear in live loan slots rather
+// than a roots-by-slots-by-blocks allocation. Joins union every incoming path.
+// Loan bits: uninitialized=1, valid here=2, valid elsewhere=4, stale here=8.
+// The final byte is root availability: unavailable=1 or available=2.
+fn Loanˉtransfer(State: bytes, Operation: u32, Destination: u32,
+    Source: u32, Root: u32, Limit: u32) -> Loanˉstate {
+    let Slots: u32 = Bytesˉlength(State) - 1u32;
+    let Cost: u32 = Bytesˉlength(State) * 3u32;
+    if Cost > Limit { return Loanˉstate(false, State, 5u32, 0u32); }
+    if Operation == 1u32 {
+        var Createdˉvalue: u32 = 4u32;
+        if Source == Root {
+            if Bytesˉreadˉu8(State, Slots) != 2u8 { return Loanˉstate(false, State, 9u32, Cost); }
+            Createdˉvalue = 2u32;
+        }
+        return Loanˉstate(true, Setˉstate(State, Destination, Createdˉvalue), 0u32, Cost);
+    }
+    if Operation == 2u32 || Operation == 3u32 {
+        var Slot: u32 = Source;
+        if Operation == 3u32 { Slot = Destination; }
+        let Readˉvalue: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(State, Slot));
+        if (Readˉvalue & 1u32) != 0u32 || Readˉvalue == 0u32 { return Loanˉstate(false, State, 7u32, Cost); }
+        if (Readˉvalue & 8u32) != 0u32 { return Loanˉstate(false, State, 8u32, Cost); }
+        if Operation == 2u32 { return Loanˉstate(true, Setˉstate(State, Destination, Readˉvalue), 0u32, Cost); }
+        return Loanˉstate(true, State, 0u32, Cost);
+    }
+    if Destination != Root { return Loanˉstate(true, State, 0u32, Cost); }
+    if Operation == 5u32 && Bytesˉreadˉu8(State, Slots) != 2u8 {
+        return Loanˉstate(false, State, 9u32, Cost);
+    }
+    var Result: bytes = Bytesˉslice(State, 0u32, 0u32);
+    var Chunk: bytes = Result;
+    var Index: u32 = 0u32;
+    var Work: u32 = Cost;
+    while Index < Slots {
+        var Value: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(State, Index));
+        if (Value & 2u32) != 0u32 { Value = (Value & 13u32) | 8u32; }
+        let Step: u32 = Bytesˉlength(Chunk) + Bytesˉlength(Result) + 1u32;
+        if Step > Limit - Work { return Loanˉstate(false, State, 5u32, Work); }
+        Work = Work + Step;
+        Chunk = Bytesˉconcat(Chunk, Bytesˉslice(Bytesˉfromˉu32ˉlittle(Value), 0u32, 1u32));
+        if Bytesˉlength(Chunk) == 64u32 { Result = Bytesˉconcat(Result, Chunk); Chunk = Bytesˉslice(Chunk, 0u32, 0u32); }
+        Index = Index + 1u32;
+    }
+    var Available: u8 = 2u8;
+    if Operation == 5u32 { Available = 1u8; }
+    return Loanˉstate(true, Bytesˉconcat(Result, Bytesˉconcat(Chunk, Bytesˉfromˉu8(Available))), 0u32, Work);
+}
+
+export fn Loanˉcheck(Input: bytes, Code: u32, Length: u32,
+    Parameters: u32, Control: Directories.Hˉcontrolˉdirectory,
+    Trace: Loanˉtrace) -> Flowˉresult {
+    if !Trace.Valid || Trace.Work > Trace.Limit || Trace.Limit > 16777216u32 ||
+        Code > Bytesˉlength(Input) || Length > Bytesˉlength(Input) - Code ||
+        Length == 0u32 || Length > 4194304u32 || !Control.Valid ||
+        Bytesˉlength(Control.Boundaries) != Length ||
+        Bytesˉlength(Trace.Map) % 4u32 != 0u32 || Bytesˉlength(Trace.Map) > 32768u32 ||
+        Parameters > Bytesˉlength(Trace.Map) / 4u32 ||
+        Trace.Locals > 8192u32 || Trace.Parameters > Trace.Locals || Trace.Maximum > 4096u32 ||
+        Bytesˉlength(Trace.Events) % 16u32 != 0u32 || Bytesˉlength(Trace.Chunk) % 16u32 != 0u32 {
+        return Reject(10u32, 0u32, 0u32);
+    }
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Limit: u32 = Trace.Limit;
+    var Work: u32 = Trace.Work;
+    if Bytesˉlength(Trace.Events) > Limit ||
+        Bytesˉlength(Trace.Chunk) > Limit - Bytesˉlength(Trace.Events) { return Reject(5u32, 0u32, Work); }
+    let Eventˉbytes: u32 = Bytesˉlength(Trace.Events) + Bytesˉlength(Trace.Chunk);
+    if Eventˉbytes > Limit - Work { return Reject(5u32, 0u32, Work); }
+    Work = Work + Eventˉbytes;
+    let Events: bytes = Bytesˉconcat(Trace.Events, Trace.Chunk);
+    let Slots: u32 = Trace.Locals + Trace.Maximum;
+    var Roots: bytes = Empty;
+    var Event: u32 = 0u32;
+    var Earlier: u32 = 0u32;
+    while Event < Eventˉbytes {
+        if Work >= Limit { return Reject(5u32, Earlier, Work); }
+        Work = Work + 1u32;
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Events, Event);
+        let Operation: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 4u32);
+        let Destination: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 8u32);
+        let Source: u32 = Bytesˉreadˉu32ˉlittle(Events, Event + 12u32);
+        if Offset < Earlier || Offset >= Length || Bytesˉreadˉu8(Control.Boundaries, Offset) == 0u8 ||
+            Operation < 1u32 || Operation > 5u32 { return Reject(10u32, Offset, Work); }
+        if Operation <= 3u32 && Destination >= Slots { return Reject(10u32, Offset, Work); }
+        if Operation == 2u32 && Source >= Slots { return Reject(10u32, Offset, Work); }
+        if Operation == 1u32 {
+            if Source >= Bytesˉlength(Trace.Map) / 4u32 ||
+                Bytesˉreadˉu32ˉlittle(Trace.Map, Source * 4u32) != 4294967295u32 { return Reject(10u32, Offset, Work); }
+            let Rootˉcost: u32 = Bytesˉlength(Roots) * 2u32 + 4u32;
+            if Rootˉcost > Limit - Work { return Reject(5u32, Offset, Work); }
+            Work = Work + Rootˉcost;
+            if !Hasˉowner(Roots, Source) { Roots = Bytesˉconcat(Roots, Bytesˉfromˉu32ˉlittle(Source)); }
+        }
+        if Operation >= 4u32 && Destination >= Bytesˉlength(Trace.Map) / 4u32 { return Reject(10u32, Offset, Work); }
+        Earlier = Offset;
+        Event = Event + 16u32;
+    }
+    // Borrowed parameters still need initialization/forwarding checks when a
+    // function never creates a loan from an ordinary local owner.
+    if Bytesˉlength(Roots) == 0u32 { Roots = Bytesˉfromˉu32ˉlittle(4294967295u32); }
+    var Blocks: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Cursor: u32 = 1u32;
+    while Cursor < Length {
+        if Work >= Limit { return Reject(5u32, Cursor, Work); }
+        Work = Work + 1u32;
+        if Bytesˉreadˉu8(Control.Boundaries, Cursor) == 3u8 {
+            if Bytesˉlength(Blocks) >= 16384u32 || Bytesˉlength(Blocks) + 4u32 > Limit - Work {
+                return Reject(5u32, Cursor, Work);
+            }
+            Work = Work + Bytesˉlength(Blocks) + 4u32;
+            Blocks = Bytesˉconcat(Blocks, Bytesˉfromˉu32ˉlittle(Cursor));
+        }
+        Cursor = Cursor + 1u32;
+    }
+    let Graph: Edgesˉresult = Buildˉedges(Input, Code, Length, Control, Blocks, Limit - Work);
+    Work = Work + Graph.Work;
+    if !Graph.Valid { return Reject(Graph.Rule, Graph.Offset, Work); }
+    let Count: u32 = Bytesˉlength(Blocks) / 4u32;
+    let Stride: u32 = Slots + 1u32;
+    // Division before multiplication bounds the retained rows and their zeroing.
+    if Count > (Limit - Work) / Stride { return Reject(5u32, 0u32, Work); }
+    var Starts: bytes = Empty;
+    var Block: u32 = 0u32;
+    Event = 0u32;
+    while Block < Count {
+        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32);
+        var Seekˉstart: bool = Event < Eventˉbytes;
+        while Seekˉstart {
+            if Bytesˉreadˉu32ˉlittle(Events, Event) >= Start {
+                Seekˉstart = false;
+            } else {
+                if Work >= Limit { return Reject(5u32, Start, Work); }
+                Work = Work + 1u32;
+                Event = Event + 16u32;
+                Seekˉstart = Event < Eventˉbytes;
+            }
+        }
+        if Bytesˉlength(Starts) + 4u32 > Limit - Work { return Reject(5u32, Start, Work); }
+        Work = Work + Bytesˉlength(Starts) + 4u32;
+        Starts = Bytesˉconcat(Starts, Bytesˉfromˉu32ˉlittle(Event));
+        Block = Block + 1u32;
+    }
+    var Rootˉindex: u32 = 0u32;
+    while Rootˉindex < Bytesˉlength(Roots) / 4u32 {
+        let Root: u32 = Bytesˉreadˉu32ˉlittle(Roots, Rootˉindex * 4u32);
+        let Allocation: u32 = 4u32 * (Count * Stride + Count + Stride);
+        if Allocation > Limit - Work { return Reject(5u32, 0u32, Work); }
+        Work = Work + Allocation;
+        var Initial: bytes = Bytesˉconcat(Repeatedˉbyte(4u8, Trace.Parameters),
+            Repeatedˉbyte(1u8, Slots - Trace.Parameters));
+        var Available: u8 = 1u8;
+        if Root < Parameters || Root == 4294967295u32 { Available = 2u8; }
+        Initial = Bytesˉconcat(Initial, Bytesˉfromˉu8(Available));
+        var Entries: bytes = Bytesˉconcat(Initial, Zeroes((Count - 1u32) * Stride));
+        var Pending: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Zeroes(Count - 1u32));
+        var Continue: bool = true;
+        while Continue {
+            if Count > Limit - Work { return Reject(5u32, 0u32, Work); }
+            Work = Work + Count;
+            var Selected: u32 = Count;
+            Block = 0u32;
+            while Block < Count {
+                if Selected == Count && Bytesˉreadˉu8(Pending, Block) != 0u8 { Selected = Block; }
+                Block = Block + 1u32;
+            }
+            if Selected == Count {
+                Continue = false;
+            } else {
+                Pending = Setˉstate(Pending, Selected, 0u32);
+                var State: bytes = Bytesˉslice(Entries, Selected * Stride, Stride);
+                Event = Bytesˉreadˉu32ˉlittle(Starts, Selected * 4u32);
+                var Stop: u32 = Eventˉbytes;
+                if Selected + 1u32 < Count { Stop = Bytesˉreadˉu32ˉlittle(Starts, Selected * 4u32 + 4u32); }
+                while Event < Stop {
+                    let Transferˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Events, Event);
+                    let Next: Loanˉstate = Loanˉtransfer(State,
+                        Bytesˉreadˉu32ˉlittle(Events, Event + 4u32),
+                        Bytesˉreadˉu32ˉlittle(Events, Event + 8u32),
+                        Bytesˉreadˉu32ˉlittle(Events, Event + 12u32), Root, Limit - Work);
+                    Work = Work + Next.Work;
+                    if !Next.Valid { return Reject(Next.Rule, Transferˉoffset, Work); }
+                    State = Next.State;
+                    Event = Event + 16u32;
+                }
+                var Edge: u32 = 0u32;
+                while Edge < 2u32 {
+                    let Target: u32 = Bytesˉreadˉu32ˉlittle(Graph.Edges, Selected * 8u32 + Edge * 4u32);
+                    if Target != 4294967295u32 {
+                        let Cost: u32 = Bytesˉlength(Entries) * 3u32 + Stride + Count * 3u32;
+                        if Cost > Limit - Work { return Reject(5u32, 0u32, Work); }
+                        Work = Work + Cost;
+                        var Merged: bytes = Empty;
+                        var Chunk: bytes = Empty;
+                        var Changed: bool = false;
+                        var Slot: u32 = 0u32;
+                        while Slot < Stride {
+                            let Old: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Entries, Target * Stride + Slot));
+                            let New: u32 = Old | U32ˉfromˉu8(Bytesˉreadˉu8(State, Slot));
+                            if New != Old { Changed = true; }
+                            var Step: u32 = Bytesˉlength(Chunk) + 1u32;
+                            if Bytesˉlength(Chunk) == 63u32 { Step = Step + Bytesˉlength(Merged) + 64u32; }
+                            if Step > Limit - Work { return Reject(5u32, 0u32, Work); }
+                            Work = Work + Step;
+                            Chunk = Bytesˉconcat(Chunk, Bytesˉslice(Bytesˉfromˉu32ˉlittle(New), 0u32, 1u32));
+                            if Bytesˉlength(Chunk) == 64u32 { Merged = Bytesˉconcat(Merged, Chunk); Chunk = Empty; }
+                            Slot = Slot + 1u32;
+                        }
+                        Merged = Bytesˉconcat(Merged, Chunk);
+                        if Changed {
+                            Entries = Bytesˉconcat(Bytesˉslice(Entries, 0u32, Target * Stride),
+                                Bytesˉconcat(Merged, Bytesˉslice(Entries, (Target + 1u32) * Stride,
+                                    Bytesˉlength(Entries) - (Target + 1u32) * Stride)));
+                            Pending = Setˉstate(Pending, Target, 1u32);
+                        }
+                    }
+                    Edge = Edge + 1u32;
+                }
+            }
+        }
+        Rootˉindex = Rootˉindex + 1u32;
+    }
+    return Flowˉresult(true, 0u32, 0u32, Work);
 }
 
 // The complete verifier supplies its validated instruction directory and exact
@@ -109,39 +547,10 @@ export fn Check(
     if Bytesˉlength(Owners) == 0u32 { return Flowˉresult(true, 0u32, 0u32, Work); }
     if Excessˉblocks { return Reject(5u32, 0u32, Work); }
     let Blockˉcount: u32 = Bytesˉlength(Blocks) / 4u32;
-    var Edges: bytes = Empty;
-    var Block: u32 = 0u32;
-    while Block < Blockˉcount {
-        let Start: u32 = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32);
-        var End: u32 = Length;
-        if Block + 1u32 < Blockˉcount { End = Bytesˉreadˉu32ˉlittle(Blocks, Block * 4u32 + 4u32); }
-        if End <= Start { return Reject(2u32, Start, Work); }
-        var Last: u32 = End - 1u32;
-        while Bytesˉreadˉu8(Control.Boundaries, Last) == 0u8 {
-            if Work >= Maximumˉwork { return Reject(5u32, Last, Work); }
-            Work = Work + 1u32;
-            if Last == Start { return Reject(2u32, Start, Work); }
-            Last = Last - 1u32;
-        }
-        let Opcode: u8 = Bytesˉreadˉu8(Input, Code + Last);
-        var First: u32 = 4294967295u32;
-        var Second: u32 = 4294967295u32;
-        if Opcode == 48u8 || Opcode == 49u8 {
-            if End - Last != 5u32 { return Reject(2u32, Last, Work); }
-            if Blockˉcount > Maximumˉwork - Work { return Reject(5u32, Last, Work); }
-            Work = Work + Blockˉcount;
-            First = Blockˉindex(Blocks, Bytesˉreadˉu32ˉlittle(Input, Code + Last + 1u32));
-            if First == 4294967295u32 { return Reject(2u32, Last, Work); }
-            if Opcode == 49u8 {
-                if Block + 1u32 >= Blockˉcount { return Reject(2u32, Last, Work); }
-                Second = Block + 1u32;
-            }
-        } else if Opcode != 81u8 || End - Last != 1u32 {
-            return Reject(2u32, Last, Work);
-        }
-        Edges = Bytesˉconcat(Edges, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(First), Bytesˉfromˉu32ˉlittle(Second)));
-        Block = Block + 1u32;
-    }
+    let Graph: Edgesˉresult = Buildˉedges(Input, Code, Length, Control, Blocks, Maximumˉwork - Work);
+    Work = Work + Graph.Work;
+    if !Graph.Valid { return Reject(Graph.Rule, Graph.Offset, Work); }
+    let Edges: bytes = Graph.Edges;
     var Ownerˉindex: u32 = 0u32;
     while Ownerˉindex < Bytesˉlength(Owners) / 4u32 {
         let Tracked: u32 = Bytesˉreadˉu32ˉlittle(Owners, Ownerˉindex * 4u32);
