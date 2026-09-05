@@ -75,9 +75,11 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. reconstruct and execute direct-owner immutable Option/Result payload
-   borrowing through the complete compiler front door;
-2. specify and implement its verified WVB/runtime representation;
+1. complete typed-stack provenance and loan-lifetime verification for the
+   published immutable Option/Result candidate; retain closed admission while
+   only metadata, call, and owner-flow components have evidence;
+2. implement bounded execution, reproduce it on Linux, and qualify the complete
+   compiler-to-runtime path;
 3. complete Option/Result take and mapping operations;
 4. add primitive ordering, collection mutation and slicing, and bounded byte
    construction; and

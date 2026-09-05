@@ -150,7 +150,12 @@ fn Hˉsynthesizedˉgenericˉname(
     Types: u32,
     Typeˉindex: u32
 ) -> bool {
-    let Cursor: u32 = Hˉtypeˉat(Input, Types, Typeˉindex) + 1u32;
+    return Hˉsynthesizedˉgenericˉnameˉat(
+        Input, Hˉtypeˉat(Input, Types, Typeˉindex) + 1u32
+    );
+}
+
+fn Hˉsynthesizedˉgenericˉnameˉat(Input: bytes, Cursor: u32) -> bool {
     if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 9u32 ||
         !Hˉspanˉequalsˉtext(Input, Cursor + 4u32, 5u32, "__WvY") {
         return false;
@@ -164,6 +169,87 @@ fn Hˉsynthesizedˉgenericˉname(
         Digit = Digit + 1u32;
     }
     return true;
+}
+
+fn Hˉfoundationˉpayloadˉcell(Input: bytes, Cursor: u32) -> bytes {
+    let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Hˉshapeˉwidth(Input, Cursor) == 5u32 {
+        return Bytesˉslice(Input, Cursor, 5u32);
+    }
+    return Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉfromˉu32ˉlittle(0u32));
+}
+
+fn Hˉfoundationˉtypeˉcell(Input: bytes, Descriptor: u32) -> bytes {
+    let Zero: bytes = Bytesˉconcat(Bytesˉfromˉu8(0u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32)));
+    let Invalid: bytes = Bytesˉconcat(Zero,
+        Bytesˉconcat(Bytesˉfromˉu8(0u8), Bytesˉfromˉu8(0u8)));
+    if Bytesˉreadˉu8(Input, Descriptor) != 3u8 ||
+        !Hˉsynthesizedˉgenericˉnameˉat(Input, Descriptor + 1u32) {
+        return Invalid;
+    }
+    var Cursor: u32 = Hˉafterˉencodedˉstring(Input, Descriptor + 1u32);
+    if Bytesˉreadˉu32ˉlittle(Input, Cursor) != 2u32 { return Invalid; }
+    Cursor = Cursor + 4u32;
+    let Firstˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    var Kind: u8 = 0u8;
+    if Hˉspanˉequalsˉtext(Input, Cursor + 4u32, Firstˉlength, "Present") {
+        Kind = 1u8;
+    }
+    if Hˉspanˉequalsˉtext(Input, Cursor + 4u32, Firstˉlength, "Valid") {
+        Kind = 2u8;
+    }
+    Cursor = Cursor + 4u32 + Firstˉlength;
+    if Kind == 0u8 || Bytesˉreadˉu8(Input, Cursor) != 1u8 { return Invalid; }
+    Cursor = Cursor + 1u32;
+    let Valueˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    if !Hˉspanˉequalsˉtext(Input, Cursor + 4u32, Valueˉlength, "Value") {
+        return Invalid;
+    }
+    Cursor = Cursor + 4u32 + Valueˉlength;
+    let Value: bytes = Hˉfoundationˉpayloadˉcell(Input, Cursor);
+    Cursor = Cursor + Hˉshapeˉwidth(Input, Cursor);
+    let Secondˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+    var Secondˉname: text = "Absent";
+    if Kind == 2u8 { Secondˉname = "Failure"; }
+    if !Hˉspanˉequalsˉtext(Input, Cursor + 4u32, Secondˉlength, Secondˉname) {
+        return Invalid;
+    }
+    Cursor = Cursor + 4u32 + Secondˉlength;
+    var Error: bytes = Bytesˉslice(Zero, 0u32, 5u32);
+    if Kind == 1u8 {
+        if Bytesˉreadˉu8(Input, Cursor) != 0u8 { return Invalid; }
+    } else {
+        if Bytesˉreadˉu8(Input, Cursor) != 1u8 { return Invalid; }
+        Cursor = Cursor + 1u32;
+        let Errorˉlength: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor);
+        if !Hˉspanˉequalsˉtext(Input, Cursor + 4u32, Errorˉlength, "Error") {
+            return Invalid;
+        }
+        Error = Hˉfoundationˉpayloadˉcell(Input, Cursor + 4u32 + Errorˉlength);
+    }
+    return Bytesˉconcat(Bytesˉfromˉu8(Kind), Bytesˉconcat(Value, Error));
+}
+
+// B-validated Types only. Each 11-byte cell is kind (0/Option/Result),
+// exact Value shape, exact Error shape. Scan once; never rescan Types per E1.
+export fn Hˉfoundationˉtypes(Input: bytes, Types: u32, Count: u32) -> bytes {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    if Count > 1024u32 { return Empty; }
+    var Result: bytes = Empty;
+    var Chunk: bytes = Empty;
+    var Cursor: u32 = Types + 4u32;
+    var Index: u32 = 0u32;
+    while Index < Count {
+        Chunk = Bytesˉconcat(Chunk, Hˉfoundationˉtypeˉcell(Input, Cursor));
+        if Bytesˉlength(Chunk) == 704u32 {
+            Result = Bytesˉconcat(Result, Chunk);
+            Chunk = Empty;
+        }
+        Cursor = Hˉnextˉtype(Input, Cursor);
+        Index = Index + 1u32;
+    }
+    return Bytesˉconcat(Result, Chunk);
 }
 
 fn Hˉrecordˉhasˉoneˉu64ˉtoken(

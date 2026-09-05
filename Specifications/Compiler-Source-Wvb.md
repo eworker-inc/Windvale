@@ -1230,7 +1230,14 @@ and coexist with the candidate feature. See
 [Decision 0958: direct-call borrow identity](../Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md)
 and its linked exact evidence.
 
-This checkpoint deliberately stops at source publication. The complete
+Current-source semantic metadata stages B-G now recognize the candidate's exact
+borrow wrappers and Option/Result relationships, with bounded type and local
+directories. A native WV component fixture consumes the published bytes and
+checks damaged metadata, wrong identities, earlier-bytecode behavior, and the
+closed complete-admission boundary. See the
+[metadata development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
+
+The complete
 compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
 packages, and Windvale OS still reject minor 39. Complete typed-stack and
 lifetime verification, runtime execution, and Linux reproduction are the next
@@ -1261,7 +1268,8 @@ executes the exact registered binding against private logical heap state for
 success and stale-generation outcomes. Native address formation, native Foreign
 invocation, and cross-host containment remain pending.
 Candidate WVB 1.39 publishes the three canonical immutable Foundation
-value-borrow projections and passes its bounded independent structural reader.
+value-borrow projections and passes its bounded independent structural reader
+and focused current-source semantic metadata tests.
 Complete verification and every execution target remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at

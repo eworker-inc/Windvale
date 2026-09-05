@@ -130,15 +130,16 @@ products were retained; the expanded run reused them and freshly executed its
 cases. These are local observations, not clean-machine or cross-host claims.
 See the [publication evidence](../Evidence/2026-09-04-Foundation-Borrow-Cross-Call-Publication.json).
 
-The `--foundation-borrow-owners` selector combines the
-[18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json)
-with 18 direct-call groups, including the actual published function signatures,
-wrong nominal identities, unsafe copying, argument order, truncation, and
-4,096-argument bounds. The call checker avoids repeated parameter scans and
-stack-prefix copies. See the
-[call-checker evidence](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json)
-for exact measurements and remaining admission limits. Full-verifier source
-changes retain broader routing; component passes do not imply complete admission.
+The `--foundation-borrow-owners` selector combines
+[18 owner-flow groups](../Evidence/2026-09-04-Foundation-Owner-Flow-Development.json),
+[18 direct-call groups](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json),
+and [37 semantic metadata groups](../Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
+They consume the actual published signatures and projections, check exact
+nominal identities, reject every truncated fixture prefix, and preserve an
+earlier-bytecode regression. Type and local directories avoid repeated scans;
+cached products keep fresh execution separate from construction. Complete
+minor-39 admission remains explicitly closed until stack provenance and loan
+lifetimes are verified. Full-verifier source changes retain broader routing.
 
 1. Finish complete WVB verification and runtime
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
@@ -155,7 +156,7 @@ changes retain broader routing; component passes do not imply complete admission
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   6,079 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
+   6,116 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower

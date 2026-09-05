@@ -4,6 +4,7 @@ import Windvaleˉcompilerˉwvbˉverifierˉfoundationˉownerˉflow as Owners;
 import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
 import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
 import Foundationˉborrowˉcallsˉselfˉtest as Calls;
+import Foundationˉborrowˉmetadataˉselfˉtest as Metadata;
 
 // Published source-fixture snapshot; the native owner checks its exact bytes.
 data Candidate: bytes = [
@@ -230,5 +231,7 @@ export fn Main() -> i32 {
     if !Calls.Checkˉbaseline() { return 19; }
     let Callˉfailure: i32 = Calls.Check(Candidate);
     if Callˉfailure != 0 { return 19 + Callˉfailure; }
+    let Metadataˉfailure: i32 = Metadata.Check(Candidate);
+    if Metadataˉfailure != 0 { return Metadataˉfailure; }
     return 42;
 }

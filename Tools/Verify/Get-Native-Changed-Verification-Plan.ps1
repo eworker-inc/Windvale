@@ -2372,6 +2372,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
     )) {
@@ -4687,6 +4688,7 @@ $UseFoundationBorrowDirectoryDevelopment = $Paths.Count -gt 0 -and
 $FoundationBorrowOwnerInputs = @(
     'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )
 $PublisherCurrentSourceInputs = @(

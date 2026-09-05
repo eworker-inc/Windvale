@@ -329,7 +329,12 @@ fn Readˉmetadata(
             Expectedˉprofile = 2u8;
         }
     }
-    if Profile != Expectedˉprofile { return Invalidˉresult; }
+    if Minor == 39u32 {
+        // Payload borrowing is profile-neutral. Preserve declared host/system
+        // scope; semantic instruction checks still enforce required authority.
+        if U32ˉfromˉu8(Profile) < U32ˉfromˉu8(Expectedˉprofile) ||
+            U32ˉfromˉu8(Profile) > 3u32 { return Invalidˉresult; }
+    } else if Profile != Expectedˉprofile { return Invalidˉresult; }
     return Metadataˉvalue(Input, true, Required);
 }
 
@@ -342,7 +347,7 @@ export fn Windvaleˉwvbˉmetadataˉnormalize(Input: bytes) -> bytes {
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Bytesˉreadˉu16ˉlittle(Input, 4u32) != 1u32 ||
-        Minor < 11u32 || Minor > 38u32 ||
+        Minor < 11u32 || Minor > 39u32 ||
         Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
         return Invalid;
     }

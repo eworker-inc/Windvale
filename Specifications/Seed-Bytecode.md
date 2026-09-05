@@ -162,7 +162,8 @@ write-pointer matrix. Candidate WVB 1.38 has source-writer, independent-reader,
 and complete compiler-aligned verification evidence; scalar and native
 execution, browser, WebAssembly-package, and Windvale OS consumers retain
 explicit narrower version boundaries until their own slices land.
-Candidate WVB 1.39 has source-writer and independent-reader evidence only.
+Candidate WVB 1.39 has source-writer, independent-reader, and focused verifier
+component evidence; complete verification and execution remain closed.
 
 ## Verified WVB 1.33 unsafe-scratch publication and scalar execution
 
@@ -490,6 +491,34 @@ Twelve mutations cover instruction, projection, owner, Option index, parameter
 and argument wrapper, nominal identity, call target, and argument-local
 boundaries. This is bounded source-publication evidence, not complete
 verification or execution evidence.
+
+The current-source metadata normalizer and semantic stages B-G recognize this
+candidate without granting complete admission. Shape `37` is confined to
+parameters and locals and wraps one ordinary shape from `1` through `11`, `14`
+through `20`, `22`, `24`, or `35`; nesting, function results, stored fields,
+variant payload declarations, and collection element declarations reject.
+Nominal wrappers preserve the full Types index and require its matching kind.
+Shape `29` may additionally describe an exact borrowed Option local even when
+its payload is Copy/shared; the prior affine-view rules remain separate.
+
+Exact Option/Result recognition checks the materialized generic name, ordered
+case names, single-field markers, `Value`/`Error` field names, and payload shape
+and nominal identity. Each semantic phase scans the B-validated Types directory
+once into 11-byte cells, bounded by the inherited 1,024-type limit, with 64-cell
+construction chunks. Instruction relationships use direct indexed lookups and
+one per-function five-byte local-shape directory. Every minor-39 module must
+contain `E1`; its owner must be an ordinary exact variant slot, not a borrowed
+view. Option projection requires the same nominal; Result projections require
+the chosen payload to match the named Option payload exactly.
+
+Payload borrowing is profile-neutral. Metadata normalization preserves declared
+hosted/system scope and enforces the authority/capability-derived minimum.
+Inherited source-file/task instructions require hosted or system scope;
+scratch, region, pointer, and Foreign instructions require system scope.
+These metadata checks do not prove stack provenance, non-escape, or call-scoped
+loan lifetimes. The complete verifier explicitly rejects minor 39 before its
+unfinished executable stages. See the
+[component evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
 
 No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
 admits minor 39. Complete typed-stack/lifetime verification and runtime

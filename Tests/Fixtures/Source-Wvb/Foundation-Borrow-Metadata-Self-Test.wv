@@ -1,0 +1,181 @@
+module Foundationˉborrowˉmetadataˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semantic;
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Complete;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadata;
+
+// Earlier WVB 1.11: ordinary Helper(u32) and Main local/parameter decoding.
+data Earlier: bytes = [
+    87, 86, 66, 49, 1, 0, 11, 0, 7, 0, 0, 0, 1, 0, 0, 0,
+    10, 0, 0, 0, 1, 4, 0, 0, 0, 84, 101, 115, 116, 0, 2, 0,
+    0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 4, 0,
+    0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 67, 0, 0, 0, 2, 0,
+    0, 0, 6, 0, 0, 0, 72, 101, 108, 112, 101, 114, 1, 0, 0, 0,
+    5, 5, 1, 0, 0, 0, 5, 0, 0, 0, 0, 16, 0, 0, 0, 1,
+    0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 1, 16, 0, 0, 0, 16, 0, 0, 0, 1, 0, 0,
+    0, 5, 0, 0, 0, 32, 0, 0, 0, 4, 0, 0, 0, 0, 5, 1,
+    0, 0, 0, 4, 1, 0, 0, 0, 81, 1, 42, 0, 0, 0, 5, 0,
+    0, 0, 0, 4, 0, 0, 0, 0, 81, 6, 0, 0, 0, 17, 0, 0,
+    0, 1, 0, 0, 0, 4, 0, 0, 0, 77, 97, 105, 110, 1, 1, 0,
+    0, 0, 7, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0
+];
+
+fn Replace(Input: bytes, Offset: u32, Value: bytes) -> bytes {
+    let End: u32 = Offset + Bytesˉlength(Value);
+    return Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Bytesˉconcat(Value,
+        Bytesˉslice(Input, End, Bytesˉlength(Input) - End)));
+}
+
+fn Byte(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replace(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+fn Word(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Section(Input: bytes, Index: u32) -> u32 {
+    var Cursor: u32 = 12u32;
+    var Current: u32 = 1u32;
+    while Current < Index {
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        Current = Current + 1u32;
+    }
+    return Cursor + 8u32;
+}
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Failureˉstage(Input: bytes) -> u32 {
+    var State: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input);
+    if Bytesˉlength(State) == 0u32 { return 1u32; }
+    State = Semantic.Bˉstructure(State);
+    if Bytesˉlength(State) == 0u32 { return 2u32; }
+    State = Semantic.Cˉmoduleˉandˉcapabilities(State);
+    if Bytesˉlength(State) == 0u32 { return 3u32; }
+    State = Semantic.Dˉdata(State);
+    if Bytesˉlength(State) == 0u32 { return 4u32; }
+    State = Semantic.Eˉfunctions(State);
+    if Bytesˉlength(State) == 0u32 { return 5u32; }
+    State = Semantic.Fˉcodeˉandˉexports(State);
+    if Bytesˉlength(State) == 0u32 { return 6u32; }
+    State = Semantic.Gˉtypes(State);
+    if Bytesˉlength(State) == 0u32 { return 7u32; }
+    return 0u32;
+}
+
+export fn Check(Candidate: bytes) -> i32 {
+    // Group 1: real writer output reaches B-G, but complete admission stays shut.
+    let Stage: u32 = Failureˉstage(Candidate);
+    if Stage == 1u32 { return 201; }
+    if Stage == 2u32 { return 202; }
+    if Stage == 3u32 { return 203; }
+    if Stage == 4u32 { return 204; }
+    if Stage == 5u32 { return 205; }
+    if Stage == 6u32 { return 206; }
+    if Stage == 7u32 { return 207; }
+    if Complete.Compilerˉwvbˉverifyˉmetadata(Candidate) != 1u32 { return 101; }
+    let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
+    if !Equal(Input, Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input)) ||
+        Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) != 1u32 { return 102; }
+    var Length: u32 = 0u32;
+    while Length < Bytesˉlength(Candidate) {
+        if Failureˉstage(Bytesˉslice(Candidate, 0u32, Length)) == 0u32 { return 103; }
+        Length = Length + 1u32;
+    }
+    if Failureˉstage(Word(Input, 16u32, 4294967295u32)) != 1u32 { return 104; }
+    if Failureˉstage(Bytesˉconcat(Input, Bytesˉfromˉu8(0u8))) != 2u32 { return 105; }
+    if Failureˉstage(Byte(Input, 6u32, 38u8)) != 2u32 { return 106; }
+
+    // Offsets are relative to the exact pinned writer fixture, not reader output.
+    let Functions: u32 = Section(Input, 4u32);
+    let Parameter: u32 = Functions + 28u32;
+    let Code: u32 = Section(Input, 5u32) + 62u32;
+    let First: u32 = Code + 483u32;
+    let Valid: u32 = Code + 640u32;
+    let Failure: u32 = Code + 797u32;
+    let Types: u32 = Section(Input, 7u32);
+    if Bytesˉreadˉu8(Input, Parameter) != 37u8 ||
+        Bytesˉreadˉu8(Input, First) != 225u8 ||
+        Bytesˉreadˉu8(Input, Valid) != 225u8 ||
+        Bytesˉreadˉu8(Input, Failure) != 225u8 { return 208; }
+    if Failureˉstage(Byte(Input, First, 226u8)) != 2u32 { return 107; }
+    if Failureˉstage(Byte(Input, Parameter + 1u32, 37u8)) != 2u32 { return 108; }
+    if Failureˉstage(Byte(Input, Parameter + 1u32, 23u8)) != 2u32 ||
+        Failureˉstage(Byte(Input, Parameter + 1u32, 21u8)) != 2u32 { return 109; }
+    if Failureˉstage(Byte(Input, Parameter + 6u32, 37u8)) != 2u32 { return 110; }
+    if Failureˉstage(Byte(Input, Types + 28u32, 37u8)) != 2u32 { return 111; }
+    if Failureˉstage(Word(Input, Parameter + 2u32, 1024u32)) != 5u32 { return 112; }
+    if Failureˉstage(Word(Input, Parameter + 2u32, 1u32)) != 5u32 { return 113; }
+    if Failureˉstage(Word(Input, Types, 1025u32)) != 2u32 { return 114; }
+    if Failureˉstage(Word(Input, Parameter - 4u32, 4294967295u32)) != 2u32 { return 115; }
+    if Failureˉstage(Word(Input, First + 1u32, 62u32)) != 6u32 { return 116; }
+    if Failureˉstage(Word(Input, First + 1u32, 1u32)) != 6u32 { return 117; }
+    if Failureˉstage(Word(Input, First + 1u32, 36u32)) != 6u32 { return 118; }
+    if Failureˉstage(Word(Input, First + 5u32, 4u32)) != 6u32 { return 119; }
+    if Failureˉstage(Word(Input, First + 5u32, 2u32)) != 6u32 { return 120; }
+    if Failureˉstage(Word(Input, First + 9u32, 0u32)) != 6u32 ||
+        Failureˉstage(Word(Input, First + 9u32, 4u32)) != 6u32 { return 121; }
+    if Failureˉstage(Word(Input, First + 5u32, 3u32)) != 6u32 { return 122; }
+    if Failureˉstage(Word(Input, Valid + 5u32, 3u32)) != 6u32 { return 123; }
+    if Failureˉstage(Word(Input, Failure + 5u32, 1u32)) != 6u32 { return 124; }
+    if Failureˉstage(Word(Input, Valid + 1u32, 2u32)) != 6u32 { return 125; }
+    if Failureˉstage(Word(Input, Types + 122u32, 3u32)) != 6u32 { return 126; }
+    if Failureˉstage(Byte(Input, Types + 51u32, 88u8)) != 5u32 { return 127; }
+    if Failureˉstage(Byte(Input, Types + 116u32, 88u8)) != 6u32 { return 128; }
+    if Failureˉstage(Byte(Input, Types + 34u32, 88u8)) != 5u32 { return 129; }
+    var Pops: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    var Index: u32 = 0u32;
+    while Index < 13u32 {
+        Pops = Bytesˉconcat(Pops, Bytesˉfromˉu8(80u8));
+        Index = Index + 1u32;
+    }
+    let Noˉborrow: bytes = Replace(Replace(Replace(Input, First, Pops), Valid, Pops), Failure, Pops);
+    if Failureˉstage(Noˉborrow) != 6u32 { return 130; }
+    if Failureˉstage(Byte(Candidate, 20u32, 2u8)) != 0u32 ||
+        Failureˉstage(Byte(Candidate, 20u32, 3u8)) != 0u32 { return 131; }
+    if Failureˉstage(Byte(Candidate, 20u32, 0u8)) != 1u32 ||
+        Failureˉstage(Byte(Candidate, 20u32, 4u8)) != 1u32 ||
+        Failureˉstage(Byte(Candidate, 72u32, 4u8)) != 1u32 { return 132; }
+    Index = 220u32;
+    while Index <= 224u32 {
+        if Semantic.Fˉinstructionˉauthority(39u32, 1u8, Index) ||
+            Semantic.Fˉinstructionˉauthority(39u32, 2u8, Index) ||
+            !Semantic.Fˉinstructionˉauthority(39u32, 3u8, Index) { return 133; }
+        Index = Index + 1u32;
+    }
+    Index = 214u32;
+    while Index <= 219u32 {
+        if Semantic.Fˉinstructionˉauthority(39u32, 1u8, Index) ||
+            !Semantic.Fˉinstructionˉauthority(39u32, 2u8, Index) ||
+            !Semantic.Fˉinstructionˉauthority(39u32, 3u8, Index) { return 133; }
+        Index = Index + 1u32;
+    }
+    if Semantic.Fˉinstructionˉauthority(39u32, 1u8, 210u32) ||
+        !Semantic.Fˉinstructionˉauthority(39u32, 2u8, 210u32) ||
+        !Semantic.Fˉinstructionˉauthority(39u32, 1u8, 225u32) { return 133; }
+    let Callable: bytes = Bytesˉconcat(Bytesˉfromˉu8(8u8),
+        Bytesˉconcat(Bytesˉfromˉu8(1u8), Bytesˉconcat(Bytesˉfromˉu8(5u8),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+                    Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+                        Bytesˉconcat(Bytesˉfromˉu8(0u8), Bytesˉfromˉu8(0u8))))))));
+    let Withˉcallable: bytes = Word(Word(Bytesˉconcat(Input, Callable), Types, 5u32),
+        Types - 4u32, 199u32 + Bytesˉlength(Callable));
+    if Failureˉstage(Withˉcallable) != 0u32 { return 134; }
+    let Shortˉcallable: bytes = Word(Bytesˉslice(Withˉcallable, 0u32,
+        Bytesˉlength(Withˉcallable) - 1u32), Types - 4u32, 215u32);
+    if Failureˉstage(Shortˉcallable) != 2u32 { return 135; }
+    if Failureˉstage(Byte(Candidate, 6u32, 40u8)) != 1u32 { return 136; }
+    if Complete.Compilerˉwvbˉverifyˉmetadata(Earlier) != 0u32 { return 137; }
+    return 0;
+}
