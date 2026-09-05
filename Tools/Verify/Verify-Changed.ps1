@@ -392,7 +392,7 @@ if ($Plan.Scope -eq 'website') {
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=116 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=150 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',

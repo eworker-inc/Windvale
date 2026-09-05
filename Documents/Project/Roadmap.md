@@ -75,10 +75,11 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. complete inherited-operation and wider-payload composition for the immutable
-   Option/Result candidate, then audit complete admission; retain the gate while
-   metadata, typing, and origin/lifetime results cover the published matrix and
-   focused control-flow probes rather than the complete contract;
+1. finish the remaining operand, owned-payload, and authority-operation composition and
+   source value-classification reconciliation for the immutable Option/Result
+   candidate, then audit complete admission; retain the gate while current
+   metadata, typing, loan-flow, and collection/callable probes cover components
+   rather than the complete compiler-to-runtime contract;
 2. implement bounded execution, reproduce it on Linux, and qualify the complete
    compiler-to-runtime path;
 3. complete Option/Result take and mapping operations;

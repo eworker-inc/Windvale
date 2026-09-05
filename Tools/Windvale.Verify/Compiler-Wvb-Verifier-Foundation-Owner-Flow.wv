@@ -109,6 +109,18 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
         }
         Index = Index + 1u32;
     }
+    // Sequence observations retain their receiver on the operand stack.
+    if Opcode == 203u32 || Opcode == 204u32 {
+        var Distance: u32 = 1u32;
+        if Opcode == 204u32 { Distance = 2u32; }
+        if Count < Distance {
+            return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
+        }
+        let Receiver: u32 = Count - Distance;
+        if Bytesˉreadˉu8(Before, Receiver * 5u32) == 88u8 {
+            Result = Loanˉevent(Result, Offset, 3u32, Trace.Locals + Receiver, 0u32);
+        }
+    }
     if Opcode == 5u32 || Opcode == 205u32 {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
         if Local >= Bytesˉlength(Trace.Map) / 4u32 {

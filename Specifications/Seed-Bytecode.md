@@ -561,11 +561,33 @@ skip the loan pass. These are bounded component contracts, not a claim that
 every maximum-sized source combination has been qualified. See the
 [lifetime development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
 
+The collection/callable composition component additionally checks borrowed
+fixed-array projections, nested record and Sequence reads, ordinary array
+construction from Copy/shared reads, borrowed scalar Vector inputs, and exact
+indirect calls. Array projection keeps the owner's loan and the full element
+identity; it cannot turn an owned Vector element into an owned transfer.
+Sequence length and element observations explicitly read their retained
+receiver, so a pending stale receiver rejects even though the instruction does
+not pop it. A copied element remains independent of a later owner change.
+
+The inherited function-reference/plain-capture callable cell is Copy only after
+its existing descriptor and capture restrictions have been admitted. Borrowed
+callable reads retain that exact descriptor; compatible signatures do not
+substitute for identity. Array and variant payload readers preserve nonzero
+callable indices. Semantic collection validation checks the descriptor kind,
+and the mixed type-category scan advances once per descriptor. Both executable
+and control-flow stages use the same bounded function-entry decoder, including
+callable results. Exact ordinary owned-aggregate loans and the older owned
+Option load/store view can coexist with `E1`, without allowing a Copy/shared
+Option view to be invented by an ordinary load. Thirty-four complete-module
+composition groups extend the existing WV selection; see the
+[composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
+
 No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
-admits minor 39. Inherited-operation and wider-payload composition, the complete
-admission audit, and runtime execution remain open. Direct-call and lifetime
-probes do not qualify indirect calls, arbitrary payload classes, or Linux
-reproduction.
+admits minor 39. Remaining operand families, owned-payload projections, and
+authority-operation composition, source value-classification reconciliation,
+the complete admission audit, and runtime execution remain open. These probes do not qualify arbitrary payload
+classes, wider capture classes, or Linux reproduction.
 
 ## Encoding
 
@@ -1618,13 +1640,15 @@ The isolated direct-call checker also decodes shape `37` parameters into exact
 borrowed stack cells, including their nominal identity. An ordinary owned cell
 cannot satisfy a borrowed parameter. A borrowed cell may satisfy its ordinary
 by-value parameter only when the payload is proved Copy or shared immutable:
-supported primitive scalars and enums, text, bytes, Sequence, or a record,
-variant, or fixed array whose contents all meet that rule. Owned contents,
-special task/scratch identities, cycles, and unproved callable classes reject.
+supported primitive scalars and enums, text, bytes, Sequence, an admitted
+function-reference/plain-capture callable cell, or a record, variant, or fixed
+array whose contents all meet that rule. Owned contents, special task/scratch
+identities, cycles, and unadmitted callable classes reject.
 This phase consumes a previously admitted type directory; it does not replace
 metadata validation, track the loan's owner or lifetime, or admit borrowed
-function results. Other stack operations and complete consumers remain closed
-to the candidate. Parameters are decoded once into five-byte cells, and argument
+function-result encodings. The typed-stack and loan-flow components above supply
+their separate checks; complete consumers remain closed to the candidate.
+Parameters are decoded once into five-byte cells, and argument
 consumption preserves the remaining stack with one slice.
 
 Verification is required before execution and rejects a module unless:

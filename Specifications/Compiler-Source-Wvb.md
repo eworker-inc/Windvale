@@ -1252,12 +1252,21 @@ valid; the separate permanent `E1` freeze is unchanged. Twenty isolated flow
 groups and eight complete-bytecode probes extend the same focused WV owner.
 See the [lifetime development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
 
+The same WV owner adds 34 complete-module composition groups for arrays,
+Sequence observations, borrowed scalar Vector inputs, owned-aggregate loans,
+and callable payloads/results/indirect calls. Mixed nominal categories retain
+their real indices, and retained Sequence receivers produce explicit loan
+reads. Full callable identity survives array and variant projections; copied
+values may outlive the loan, while owned values cannot escape through a read.
+See the [composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
+
 The complete
 compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
-packages, and Windvale OS still reject minor 39. Inherited-operation and
-wider-payload composition, complete-admission auditing, runtime execution, and Linux
-reproduction are the next required checkpoints. Indirect-call combinations and
-wider payload classes are not qualified by the direct-call fixture.
+packages, and Windvale OS still reject minor 39. Remaining operand families,
+owned-payload projections, authority-operation composition, source value-classification reconciliation,
+complete-admission auditing, runtime execution, and Linux reproduction are the
+next required checkpoints. The composition probes do not qualify arbitrary
+payload or capture classes or replace compiler-to-runtime evidence.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The

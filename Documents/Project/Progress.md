@@ -91,8 +91,9 @@ Two active tracks intentionally use different bytecode generations:
   through the published record/u32 fixture's locals, projections, and helpers.
   Its loan pass tracks origins through branches and loops, including values
   waiting on the operand stack. Owner changes invalidate later borrowed reads;
-  changes after the last use and fresh reborrows remain valid. Wider payload and
-  inherited-operation composition still prevent complete 1.39 admission.
+  changes after the last use and fresh reborrows remain valid. Array, Sequence,
+  and callable composition now has focused evidence. Remaining operand,
+  owned-payload, and authority checks still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -139,7 +140,8 @@ The `--foundation-borrow-owners` selector combines
 [18 direct-call groups](../Evidence/2026-09-04-Foundation-Borrow-Call-Development.json),
 [37 semantic metadata groups](../Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json),
 [15 typed-stack groups](../Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json),
-and [28 lifetime groups](../Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json).
+[28 lifetime groups](../Evidence/2026-09-05-Foundation-Borrow-Lifetime-Development.json),
+and [34 composition groups](../Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
 They consume the actual published signatures and projections, check exact
 nominal identities, reject every truncated fixture prefix, and preserve an
 earlier-bytecode regression. Type and local directories avoid repeated scans;
@@ -162,7 +164,7 @@ gates. Full-verifier source changes retain broader routing.
    cases multiplied by the complete pipeline, and reserve full qualification
    for deliberately selected release, security, bootstrap, ABI, or conformance
    states. The new complete-work planner inventories all 126 native owners and
-   6,159 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
+   6,193 declared cases. The accepted 5,981-case paired-host baseline supplies all 252 owner timings;
    it revealed that equal profile totals still projected a 6,547,869 ms critical
    shard. Six scheduling-only owner moves reduce that historical projection to
    4,655,707 ms, 28.90 percent lower and 4.01 percent above the arithmetic lower
