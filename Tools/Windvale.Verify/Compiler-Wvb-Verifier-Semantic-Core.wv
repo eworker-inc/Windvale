@@ -2793,32 +2793,6 @@ export fn Fˉinstructionˉauthority(Declaredˉminor: u32, Profile: u8, Opcode: u
     return Profile == 1u8 || Profile == 2u8 || Profile == 3u8;
 }
 
-fn Fˉfoundationˉborrowˉisˉvalid(
-    Shapes: bytes,
-    Types: bytes,
-    Owner: u32,
-    Option: u32,
-    Projection: u32
-) -> bool {
-    if Owner >= Bytesˉlength(Shapes) / 5u32 ||
-        Option >= Bytesˉlength(Types) / 11u32 ||
-        Projection < 1u32 || Projection > 3u32 ||
-        Bytesˉreadˉu8(Shapes, Owner * 5u32) != 11u8 ||
-        Bytesˉreadˉu8(Types, Option * 11u32) != 1u8 { return false; }
-    let Ownerˉtype: u32 = Bytesˉreadˉu32ˉlittle(Shapes, Owner * 5u32 + 1u32);
-    if Ownerˉtype >= Bytesˉlength(Types) / 11u32 { return false; }
-    if Projection == 1u32 { return Ownerˉtype == Option; }
-    if Bytesˉreadˉu8(Types, Ownerˉtype * 11u32) != 2u8 { return false; }
-    var Payload: u32 = Ownerˉtype * 11u32 + 1u32;
-    if Projection == 3u32 { Payload = Payload + 5u32; }
-    var Byte: u32 = 0u32;
-    while Byte < 5u32 {
-        if Bytesˉreadˉu8(Types, Payload + Byte) !=
-            Bytesˉreadˉu8(Types, Option * 11u32 + 1u32 + Byte) { return false; }
-        Byte = Byte + 1u32;
-    }
-    return true;
-}
 
 export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
     let Invalid: bytes = Bytesˉslice(Input, 0u32, 0u32);
@@ -3104,7 +3078,7 @@ export fn Fˉcodeˉandˉexports(Input: bytes) -> bytes {
             if Declaredˉminor == 39u32 && !Fˉinstructionˉauthority(Declaredˉminor,
                 Bytesˉreadˉu8(Input, 20u32), Opcode) { return Invalid; }
             if Opcode == 225u32 {
-                if Declaredˉminor != 39u32 || !Fˉfoundationˉborrowˉisˉvalid(
+                if Declaredˉminor != 39u32 || !Executableˉverifier.Hˉfoundationˉborrowˉisˉvalid(
                     Functionˉshapes, Foundationˉtypes, Operand,
                     Secondˉoperand, Thirdˉoperand) { return Invalid; }
                 Foundationˉborrowˉinstructions = Foundationˉborrowˉinstructions + 1u32;

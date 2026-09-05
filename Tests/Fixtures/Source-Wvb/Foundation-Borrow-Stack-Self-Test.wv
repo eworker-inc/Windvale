@@ -1,0 +1,63 @@
+module Foundationˉborrowˉstackˉselfˉtest profile portable;
+
+import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
+import Windvaleˉcompilerˉwvbˉverifierˉsemantic as Semantic;
+import Windvaleˉwvbˉmetadataˉnormalization as Metadata;
+
+fn Replace(Input: bytes, Offset: u32, Value: bytes) -> bytes {
+    let End: u32 = Offset + Bytesˉlength(Value);
+    return Bytesˉconcat(Bytesˉslice(Input, 0u32, Offset), Bytesˉconcat(Value,
+        Bytesˉslice(Input, End, Bytesˉlength(Input) - End)));
+}
+
+fn Byte(Input: bytes, Offset: u32, Value: u8) -> bytes {
+    return Replace(Input, Offset, Bytesˉfromˉu8(Value));
+}
+
+fn Word(Input: bytes, Offset: u32, Value: u32) -> bytes {
+    return Replace(Input, Offset, Bytesˉfromˉu32ˉlittle(Value));
+}
+
+fn Codeˉsection(Input: bytes) -> u32 {
+    var Cursor: u32 = 12u32;
+    var Section: u32 = 1u32;
+    while Section < 5u32 {
+        Cursor = Cursor + 8u32 + Bytesˉreadˉu32ˉlittle(Input, Cursor + 4u32);
+        Section = Section + 1u32;
+    }
+    return Cursor + 8u32;
+}
+
+fn Typedˉresult(Input: bytes) -> u32 {
+    if Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) == 0u32 { return 1u32; }
+    if Bytesˉlength(Executable.Hˉexecutable(Input)) == 0u32 { return 2u32; }
+    return 0u32;
+}
+
+data Borrowedˉarithmetic: bytes = [4, 0, 0, 0, 0, 4, 0, 0, 0, 0, 20, 176, 176, 176, 176, 81];
+
+export fn Check(Candidate: bytes) -> i32 {
+    let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
+    if Typedˉresult(Input) != 0u32 { return 151; }
+    let Code: u32 = Codeˉsection(Input);
+    let Main: u32 = Code + 62u32;
+    // Each case invokes the typed-stack pass on the whole published matrix.
+    if Typedˉresult(Word(Input, Code + 1u32, 2u32)) != 2u32 { return 152; }
+    if Typedˉresult(Word(Input, Code + 6u32, 0u32)) != 2u32 { return 153; }
+    if Typedˉresult(Byte(Input, Main + 142u32, 9u8)) != 2u32 { return 154; }
+    if Typedˉresult(Word(Input, Main + 497u32, 2u32)) != 2u32 { return 155; }
+    if Typedˉresult(Byte(Input, Main + 501u32, 205u8)) != 2u32 { return 156; }
+    if Typedˉresult(Byte(Input, Main + 584u32, 205u8)) != 2u32 { return 157; }
+    if Typedˉresult(Word(Input, Code + 1120u32 + 16u32, 1u32)) != 2u32 { return 158; }
+    if Typedˉresult(Byte(Input, Code + 1120u32 + 15u32, 104u8)) != 2u32 { return 159; }
+    if Typedˉresult(Word(Input, Main + 590u32, 3u32)) != 2u32 { return 160; }
+    if Typedˉresult(Word(Input, Code + 16u32, 5u32)) != 2u32 { return 161; }
+    if Typedˉresult(Word(Input, Main + 507u32, 2u32)) != 2u32 { return 162; }
+    let Arithmetic: bytes = Word(Replace(Input, Code + 1151u32, Borrowedˉarithmetic),
+        Code - 12u32, 2u32);
+    if Typedˉresult(Arithmetic) != 0u32 { return 163; }
+    if Typedˉresult(Byte(Arithmetic, Code + 1161u32, 16u8)) != 2u32 { return 164; }
+    // Passing this matrix does not turn off the complete-admission guard.
+    if Semantic.Compilerˉwvbˉverify(Input) != 1u32 { return 165; }
+    return 0;
+}

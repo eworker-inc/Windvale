@@ -1237,12 +1237,19 @@ checks damaged metadata, wrong identities, earlier-bytecode behavior, and the
 closed complete-admission boundary. See the
 [metadata development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
 
+The typed-stack component also consumes those published bytes end to end. It
+retains exact borrowed tags through locals, record fields, variant projections,
+and direct calls, and rejects parameter writes, borrowed-value takes, fabricated
+loans, and mismatched shapes. Its record/u32 fixture includes a valid primitive
+read-through case and an explicit closed-admission check. See the
+[typed-stack development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
+
 The complete
 compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
-packages, and Windvale OS still reject minor 39. Complete typed-stack and
-lifetime verification, runtime execution, and Linux reproduction are the next
-required checkpoints. Indirect-call combinations and wider payload classes are
-not qualified by the direct-call fixture.
+packages, and Windvale OS still reject minor 39. Origin and loan-lifetime
+verification, inherited-operation composition, runtime execution, and Linux
+reproduction are the next required checkpoints. Indirect-call combinations and
+wider payload classes are not qualified by the direct-call fixture.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The

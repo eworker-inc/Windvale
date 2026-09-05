@@ -75,9 +75,10 @@ independent library contracts and consumers may advance in parallel.
 
 Immediate sequence:
 
-1. complete typed-stack provenance and loan-lifetime verification for the
-   published immutable Option/Result candidate; retain closed admission while
-   only metadata, call, and owner-flow components have evidence;
+1. complete origin tracking, loan-lifetime verification, and inherited-operation
+   composition for the published immutable Option/Result candidate; retain
+   closed admission while metadata, call, owner-flow, and typed-stack results
+   cover components rather than the complete contract;
 2. implement bounded execution, reproduce it on Linux, and qualify the complete
    compiler-to-runtime path;
 3. complete Option/Result take and mapping operations;

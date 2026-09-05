@@ -122,8 +122,8 @@ that names the owner, exact projected `Option` type, and projection kind, plus
 one recursive non-owning payload shape for compiler-generated locals. The
 source writer and a bounded independent structural reader implement this
 candidate. The complete compiler-aligned verifier and every runtime remain
-closed to WVB 1.39, and direct borrowed-payload call-parameter identity is not
-yet encoded.
+closed to WVB 1.39. The writer preserves exact direct borrowed-payload
+call-parameter identity under the candidate rules below.
 A canonical writer emits the lowest required
 minor version: 1.11 when no later extension is present, 1.12 for fixed integers,
 1.13 for rune evidence, 1.14 for floating-point evidence, 1.15 for unit or
@@ -519,6 +519,24 @@ These metadata checks do not prove stack provenance, non-escape, or call-scoped
 loan lifetimes. The complete verifier explicitly rejects minor 39 before its
 unfinished executable stages. See the
 [component evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
+
+The typed-stack component preserves shape-`37` identity internally as `64`
+plus the ordinary payload kind, retaining its exact nominal index. The `E1`
+Option view uses a separate internal kind `139`, not the prior affine-transfer
+kind `29`; these internal stack tags are not serialized shape encodings.
+Borrowed local loads and stores preserve those tags. A new ordinary local loan
+requires an immediately preceding load of a named owner with the exact shape;
+constants and aggregate construction cannot invent a loan. Borrowed parameters
+cannot be overwritten, and borrowed locals and views cannot be taken by value.
+Record-field and variant-payload reads preserve borrowed identity. Primitive
+operations and function results may read through a borrow only when the existing
+bounded shape proof establishes Copy/shared behavior and exact nominal identity.
+
+These transfers pass the published record/u32 matrix, not arbitrary payload
+classes or inherited-operation combinations. They do not establish an origin's
+continued availability across later writes, calls, branches, or loops; the
+loan pass must still prove that. See the
+[typed-stack development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
 
 No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
 admits minor 39. Complete typed-stack/lifetime verification and runtime

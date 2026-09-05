@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-04-foundation-borrow-stack-development",
+  "date": "2026-09-04",
+  "subject": "Candidate borrowed-value typed-stack transfers with fast current-source WV validation",
+  "claim": "The typed-stack pass consumes the actual published record/u32 candidate, preserving exact borrowed identity through locals, variant payloads, record fields, direct calls, and permitted primitive read-through. Fifteen new WV groups join the existing owner, call, and metadata groups; all 88 pass. An intentional borrowed-parameter-write defect is detected. Complete WVB 1.39 admission remains closed. With exact build products retained, a fresh 88-group execution completes in 2,331 ms end to end.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 6023dcdf31911fe242fcf0dbb97f7751b8b368b9. The final project closure and routing inputs are identified below. Between the first cold run and final runs, only two test comments changed in that closure; the WVB bytes remained identical. The deliberately changed executable verifier was restored byte for byte before the final runs."
+  },
+  "runs": [
+    {
+      "host": "Local Windows 11 Pro for Workstations 10.0.26200 x64; AMD Ryzen 9 3900X; Node.js 24.19.0",
+      "target": "First development observation: 88 groups, new project and native products, existing qualified bootstrap products retained. Project construction 15,883 ms, complete verification and segmented packaging 56,953 ms, fresh native execution 927 ms. The test fixture still had the two earlier comments identified in the input digest. This is not a clean-machine measurement.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 73770,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 740,
+          "sha256": "92a0d24bdce6d1dfce2792676db9bad96d32d065a4b1b439ab0950db7c529ae9"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 13482,
+          "sha256": "4b67fef9311667ae6b92a61fb12c84e52607e9d1b80a50611494658a72f8a083"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 10336,
+          "sha256": "6c8a7cadcb0386188e7b83e7656ac75389a3d91f5d7ffbc3a61b1cf2d4904e75"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9291,
+          "sha256": "05b2d20b3d87a3d65be1ef703fdb3bdea9157175fc064fd55105665f2015429d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 2999,
+          "sha256": "5eb72d49b4a21ffe7525361087c941aecf3878288c990564becbc7771de393c3"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 241146,
+          "sha256": "c95d5ae5590479cd9035c1dad3051060eaa3694d708abb36c9ab9ff923b82e91"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 10022,
+          "sha256": "365049b19c982e098c408f668971c4f12ebdb2279b1cf11e80734ccf41f83f3d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 512,
+          "sha256": "078c5db03ed79ecb0da064f413a888876682f5d0f02af4ddf391388001133998"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180338,
+          "sha256": "e9bc867da0d88bfe1eaeab3a97e75796da26538c863c150ebd0330e354681956"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14882,
+          "sha256": "b9ef240e0783fb529afa6c283bb9762b212c572ced4029f19126f62b708cb844"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120904,
+          "sha256": "979bf7af0b744d817318ccde4bc1a731bc30d55d465cd396cc687bd15bb3f6e8"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 278180,
+          "sha256": "54c86d844bfddc13b04ff0c1f12625d41fc2c8b737e022daca80c96dfd226dd0"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 318796,
+          "sha256": "95d7c6d8916ee0564f128f74837cfb8292e07e43e0e64733c7154d84107e40ef"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 38332,
+          "sha256": "6a069d46d2df309f55666369edbc4da84fb93154471fa97e43e32044a615a0da"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23863,
+          "sha256": "0a0d8d4d52ebbcbfda33a7eb1e5f57ca09716cf19f5ca252e9f630689e5e3e88"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18728,
+          "sha256": "d4c1bbf0681afbbc63eb9a987fbb71a83386be49e746f6da87943a9383cbbb8f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "project-wvb-v2/windows-x64/725c2e56c948083776ebb4fb72ebe0859560c927c498f1883bffb4795b14dc67/Product.wvb",
+          "size": 576125,
+          "sha256": "8675b9618fc8dece3b95488313d615ff22a25de585e98e7aff394ebed1e81a22"
+        },
+        {
+          "path": "segmented-hosted-wvb-v1/windows-x64/14276bfcde8885cc7e57d4fd8ca9e779ab564f70636e91f8feb10376fc66b828/Product.exe",
+          "size": 4926976,
+          "sha256": "5e4c8edd185400e11417c926f82a7971b82c22c7d51bc2fea0dd23db53250fc3"
+        },
+        {
+          "path": "Candidate.wvb embedded in Foundation-Owner-Flow-Self-Test.wv",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        }
+      ]
+    },
+    {
+      "host": "Same local Windows host and tool identities",
+      "target": "Selected final run after restoring the verifier and clarifying two fixture comments. The new exact-source project key creates a product in 17,081 ms; identical WVB bytes reuse the native product in 589 ms; the behaviors execute afresh in 995 ms. No cached test-success receipt substitutes for execution.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 18673,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 740,
+          "sha256": "92a0d24bdce6d1dfce2792676db9bad96d32d065a4b1b439ab0950db7c529ae9"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 13482,
+          "sha256": "4b67fef9311667ae6b92a61fb12c84e52607e9d1b80a50611494658a72f8a083"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 10336,
+          "sha256": "6c8a7cadcb0386188e7b83e7656ac75389a3d91f5d7ffbc3a61b1cf2d4904e75"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9291,
+          "sha256": "05b2d20b3d87a3d65be1ef703fdb3bdea9157175fc064fd55105665f2015429d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 2999,
+          "sha256": "49676a876d31e3d9a41225fb1ae7c11a828ac7ddb212c0fe06fdaabb0217b972"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 241146,
+          "sha256": "c95d5ae5590479cd9035c1dad3051060eaa3694d708abb36c9ab9ff923b82e91"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 10022,
+          "sha256": "365049b19c982e098c408f668971c4f12ebdb2279b1cf11e80734ccf41f83f3d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 512,
+          "sha256": "078c5db03ed79ecb0da064f413a888876682f5d0f02af4ddf391388001133998"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180338,
+          "sha256": "e9bc867da0d88bfe1eaeab3a97e75796da26538c863c150ebd0330e354681956"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14882,
+          "sha256": "b9ef240e0783fb529afa6c283bb9762b212c572ced4029f19126f62b708cb844"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120904,
+          "sha256": "979bf7af0b744d817318ccde4bc1a731bc30d55d465cd396cc687bd15bb3f6e8"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 278180,
+          "sha256": "54c86d844bfddc13b04ff0c1f12625d41fc2c8b737e022daca80c96dfd226dd0"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 318796,
+          "sha256": "95d7c6d8916ee0564f128f74837cfb8292e07e43e0e64733c7154d84107e40ef"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 38332,
+          "sha256": "6a069d46d2df309f55666369edbc4da84fb93154471fa97e43e32044a615a0da"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23863,
+          "sha256": "0a0d8d4d52ebbcbfda33a7eb1e5f57ca09716cf19f5ca252e9f630689e5e3e88"
+        },
+        {
+          "path": "Tests/Native/Development-Owner-Dependencies.txt",
+          "size": 18728,
+          "sha256": "d4c1bbf0681afbbc63eb9a987fbb71a83386be49e746f6da87943a9383cbbb8f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "project-wvb-v2/windows-x64/24ccd184f5f615f6979f6b0e52b7d52aa3a1d7a2b58cec0a13defee15870490a/Product.wvb",
+          "size": 576125,
+          "sha256": "8675b9618fc8dece3b95488313d615ff22a25de585e98e7aff394ebed1e81a22"
+        },
+        {
+          "path": "segmented-hosted-wvb-v1/windows-x64/14276bfcde8885cc7e57d4fd8ca9e779ab564f70636e91f8feb10376fc66b828/Product.exe",
+          "size": 4926976,
+          "sha256": "5e4c8edd185400e11417c926f82a7971b82c22c7d51bc2fea0dd23db53250fc3"
+        }
+      ]
+    },
+    {
+      "host": "Same local Windows host and tool identities",
+      "target": "Unchanged final 88-group workload, measured specifically to verify warm feedback cost. Project-cache hit 780 ms; native-package-cache hit 520 ms; fresh native execution 1,023 ms. Both keys match the selected final run.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 2331
+    },
+    {
+      "host": "Same local Windows host and tool identities",
+      "target": "Intentional implementation defect: replace Slot < Parameters with Slot < 0u32 in the borrowed-local store guard. Both caches construct new products. Project construction 16,755 ms; verification and packaging 62,030 ms. Stack group 3 detects the allowed parameter overwrite at the typed-stack stage: native exit 153, harness exit 1. This expected failure is defect-detection evidence, not a passing verifier receipt.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 241140,
+          "sha256": "fb7628c191494e7e559d5efd9eff90df25e0e30adeb1542f1a4c2e19972af476"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 2999,
+          "sha256": "5eb72d49b4a21ffe7525361087c941aecf3878288c990564becbc7771de393c3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "project-wvb-v2/windows-x64/0f540aac1281e62b184a24b5d7e53f9ac734696181798bf5490a1861269d9a27/Product.wvb",
+          "size": 576125,
+          "sha256": "442472def1df995c8e3f7c612e5101654c38bf1929eefa2a7f4f9046e15a571b"
+        },
+        {
+          "path": "segmented-hosted-wvb-v1/windows-x64/b3c5865765af1fd1249b27a42729728c4ab84e0f91fb7ea6bf03dc86c03ce89d/Product.exe",
+          "size": 4926976,
+          "sha256": "a5c2e823bac49a04298d13c69281d964d85885246bef085e2cbe57ab36486eb1"
+        }
+      ]
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Routing contracts, positive focused-fixture routing, and broad-source exclusions: 31 general and 280 native plan cases pass. Registry remains 126 owners with 6,131 declared cases. The full memory-budget owner declares 322, combined Foundation selector 151, and focused owner/call/metadata/stack selector 88. Node.js runner syntax and git whitespace checks also passed.",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Read-only inspection: the all-changes plan retains 12 owners, expected 2,925 seconds and maximum 11,700 seconds, with no gaps; it was not executed. The exact new stack fixture selects the existing --foundation-borrow-owners mode, expected 180 seconds and maximum 600 seconds. Selected local validation, including the intentional failure, remains below the ten-minute development budget.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -PlanOnly",
+      "result": "Passed"
+    },
+    {
+      "host": "Same local Windows host",
+      "target": "Documentation catalogs are current. All fourteen retrieval cases and the documentation verifier pass: 1,587 Markdown files, 5,703 links, and 462 anchors. The new evidence record also validates against Evidence-Record.schema.json.",
+      "tool": "Tools/Verify/Verify-Documentation.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Documentation.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is typed-stack component evidence, not complete WVB 1.39 verification or execution. The complete verifier explicitly rejects minor 39; runtime, native, WebAssembly, package, and OS admission are unchanged.",
+    "Ordinary loan origin tracking, initialization and stale reads across branches or loops, call-lifetime validity, and non-escape remain incomplete. A passing typed-stack result alone is not a safety proof.",
+    "The fixture covers the actual nominal-record and u32 publication matrix. Borrowed arrays, Sequence operations, callable combinations, owned-aggregate construction of loans, legacy Option-view composition, and inherited Foreign execution typing still need composition work and distinct evidence. No arbitrary-payload claim is made.",
+    "All new component execution here is local Windows. Preceding commit 6023dcdf passed GitHub run 33938350915 on both development hosts, but that result is not evidence for these new bytes. Linux reproduction and exact paired-host qualification remain pending.",
+    "Measurements are single local development observations with retained qualified bootstrap products, not clean-machine timings or stable regression thresholds. Peak working-set memory was not measured.",
+    "The full 12-owner plan, full 322-case owner, database/library integration, compiler reconstruction, runtime, bootstrap, ABI, and cross-host qualification were not run. Complete admission is unchanged and the broad plan exceeds the local development budget.",
+    "The WV tests still use the retained Seed/bootstrap project path. Migrating in-scope tests to edition 1 remains part of the active goal; thin host orchestration and independent oracles retain separate roles."
+  ],
+  "related": [
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json",
+    "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv"
+  ]
+}

@@ -2,6 +2,7 @@ windvale-project 2
 root "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv"
 source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv"
 source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv"
 source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv"

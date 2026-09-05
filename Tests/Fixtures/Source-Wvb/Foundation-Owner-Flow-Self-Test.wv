@@ -5,6 +5,7 @@ import Windvaleˉcompilerˉwvbˉverifierˉtypedˉdirectories as Directories;
 import Windvaleˉcompilerˉwvbˉverifierˉexecutable as Executable;
 import Foundationˉborrowˉcallsˉselfˉtest as Calls;
 import Foundationˉborrowˉmetadataˉselfˉtest as Metadata;
+import Foundationˉborrowˉstackˉselfˉtest as Stack;
 
 // Published source-fixture snapshot; the native owner checks its exact bytes.
 data Candidate: bytes = [
@@ -233,5 +234,7 @@ export fn Main() -> i32 {
     if Callˉfailure != 0 { return 19 + Callˉfailure; }
     let Metadataˉfailure: i32 = Metadata.Check(Candidate);
     if Metadataˉfailure != 0 { return Metadataˉfailure; }
+    let Stackˉfailure: i32 = Stack.Check(Candidate);
+    if Stackˉfailure != 0 { return Stackˉfailure; }
     return 42;
 }
