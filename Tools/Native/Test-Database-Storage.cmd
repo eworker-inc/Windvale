@@ -749,15 +749,10 @@ set "FirstWvo=%TemporaryDirectory%\HostStorage-First.wvo"
 set "CommonFirst=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "CommonSecond=%TemporaryDirectory%\HostStorage-Common-Second.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "WindowsImage=%TemporaryDirectory%\HostStorage-Windows.bin"
 set "WindowsImagePrefix=%TemporaryDirectory%\HostStorage-Windows-Image"
 set "WindowsMap=%TemporaryDirectory%\HostStorage-Windows.map"
 set "WindowsApplication=%TemporaryDirectory%\HostStorage.exe"
-set "LinuxImage=%TemporaryDirectory%\HostStorage-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\HostStorage-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\HostStorage-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\HostStorage.elf"
 set "RunDirectory=%TemporaryDirectory%\HostStorage-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
 set "InitialFile=%RunDirectory%\Windvale-Database-Storage.initial"
@@ -800,12 +795,6 @@ call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
     "%WindowsPlatform%" >nul
 if errorlevel 1 exit /b 1
 call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%WindowsPlatform%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" ^
-    "%RepositoryRoot%\Runtime\Native\Linux-X64-Random-Access-Storage.wva" ^
-    "%LinuxPlatform%" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%LinuxPlatform%" >nul
 if errorlevel 1 exit /b 1
 
 if "%Development%"=="1" (
@@ -889,20 +878,8 @@ if "%Development%"=="1" (
     exit /b 0
 )
 
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-    "%CommonFirst%" "%LinuxPlatform%" >"%LinuxMap%"
-if errorlevel 1 exit /b 1
-set "LinuxEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-if not defined LinuxEntry exit /b 1
-echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
-    "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+rem Opposite-host construction belongs to the focused packager owners.
+
 endlocal
 exit /b 0
 
@@ -916,15 +893,10 @@ set "FirstWvbResource=%FirstWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostRootWriter-First.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "WindowsImage=%TemporaryDirectory%\HostRootWriter-Windows.bin"
 set "WindowsImagePrefix=%TemporaryDirectory%\HostRootWriter-Windows-Image"
 set "WindowsMap=%TemporaryDirectory%\HostRootWriter-Windows.map"
 set "WindowsApplication=%TemporaryDirectory%\HostRootWriter.exe"
-set "LinuxImage=%TemporaryDirectory%\HostRootWriter-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\HostRootWriter-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\HostRootWriter-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\HostRootWriter.elf"
 set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
 set "RunDirectory=%TemporaryDirectory%\HostRootWriter-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
@@ -1009,20 +981,8 @@ if "%Development%"=="1" (
     endlocal & set "ProjectCheckpointHostRootWriter=%HostRootWriterCheckpoint%" & set "ApplicationCheckpointHostRootWriter=%HostRootWriterApplicationCheckpoint%"
     exit /b 0
 )
-if not exist "%LinuxPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
-if errorlevel 1 exit /b 1
-set "LinuxEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-if not defined LinuxEntry exit /b 1
-echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
-    "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+rem Opposite-host construction belongs to the focused packager owners.
+
 endlocal
 exit /b 0
 
@@ -1203,14 +1163,9 @@ set "FirstWvbResource=%FirstWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostLocal-%Component%-First.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "WindowsImage=%TemporaryDirectory%\HostLocal-%Component%-Windows.bin"
 set "WindowsImagePrefix=%TemporaryDirectory%\HostLocal-%Component%-Windows-Image"
 set "WindowsMap=%TemporaryDirectory%\HostLocal-%Component%-Windows.map"
-set "LinuxImage=%TemporaryDirectory%\HostLocal-%Component%-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\HostLocal-%Component%-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\HostLocal-%Component%-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
 
 if /I "%Component%"=="LogicalTreePut" (
     endlocal
@@ -1254,20 +1209,6 @@ if "%Development%"=="1" (
         "%FirstWvb%" "%WindowsImagePrefix%" 1 %WindowsEntry% ^
         "%WindowsApplication%" windows >nul
     if errorlevel 1 exit /b 1
-    if not exist "%LinuxPlatform%" exit /b 1
-    call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-        Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-        "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
-    if errorlevel 1 exit /b 1
-    set "LinuxEntry="
-    for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-    if not defined LinuxEntry exit /b 1
-    call echo(%%LinuxEntry%%^| findstr /r /x "[0-9][0-9]*" ^>nul || exit /b 1
-    copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-        "%FirstWvb%" "%LinuxImagePrefix%" 1 %%LinuxEntry%% ^
-        "%LinuxApplication%" linux >nul
-    if errorlevel 1 exit /b 1
 )
 endlocal
 exit /b 0
@@ -1286,11 +1227,8 @@ set "StagedManifest=%TemporaryDirectory%\HostLocal-%Component%-Staged.wvli"
 set "CanonicalPrefix=%TemporaryDirectory%\HostLocal-%Component%-Canonical"
 set "CanonicalManifest=%TemporaryDirectory%\HostLocal-%Component%-Canonical.wvli"
 set "WindowsPrefix=%TemporaryDirectory%\HostLocal-%Component%-Windows-Image"
-set "LinuxPrefix=%TemporaryDirectory%\HostLocal-%Component%-Linux-Image"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
-set "LinuxApplication=%TemporaryDirectory%\HostLocal-%Component%.elf"
 set "ApplicationReport=%TemporaryDirectory%\HostLocal-%Component%-Application-Cache.txt"
 set "ProjectReport=%TemporaryDirectory%\HostLocal-%Component%-Segmented-Cache.txt"
 set "OverlayReport=%TemporaryDirectory%\HostLocal-%Component%-Windows-Overlay.txt"
@@ -1343,19 +1281,6 @@ if "%Development%"=="1" (
     call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
         "%FirstWvb%" "%WindowsPrefix%" %FragmentCount% %WindowsEntry% ^
         "%WindowsApplication%" windows >nul
-    if errorlevel 1 exit /b 1
-    if not exist "%LinuxPlatform%" exit /b 1
-    call "%RepositoryRoot%\Tools\Native\Compose-Segmented-Hosted-Overlay.cmd" ^
-        "%CanonicalPrefix%" "%CanonicalManifest%" "%Common%" "%LinuxPlatform%" ^
-        "%LinuxPrefix%" >"%TemporaryDirectory%\HostLocal-%Component%-Linux-Overlay.txt"
-    if errorlevel 1 exit /b 1
-    set "LinuxEntry="
-    for /f "tokens=17 delims== " %%E in ('findstr /b /c:"segmented hosted overlay status=Valid " "%TemporaryDirectory%\HostLocal-%Component%-Linux-Overlay.txt"') do set "LinuxEntry=%%E"
-    if not defined LinuxEntry exit /b 1
-    call echo(%%LinuxEntry%%^| findstr /r /x "[0-9][0-9]*" ^>nul || exit /b 1
-    call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-        "%FirstWvb%" "%LinuxPrefix%" %FragmentCount% %%LinuxEntry%% ^
-        "%LinuxApplication%" linux >nul
     if errorlevel 1 exit /b 1
 )
 endlocal & set "HostSegmentedComponentProjectCheckpoint=%ProjectCheckpoint%"
@@ -1508,15 +1433,10 @@ set "FirstWvbResource=%FirstWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostTreeReader-First.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "WindowsImage=%TemporaryDirectory%\HostTreeReader-Windows.bin"
 set "WindowsImagePrefix=%TemporaryDirectory%\HostTreeReader-Windows-Image"
 set "WindowsMap=%TemporaryDirectory%\HostTreeReader-Windows.map"
 set "WindowsApplication=%TemporaryDirectory%\HostTreeReader.exe"
-set "LinuxImage=%TemporaryDirectory%\HostTreeReader-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\HostTreeReader-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\HostTreeReader-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\HostTreeReader.elf"
 set "InitialFile=%TemporaryDirectory%\HostStorage-Run\Windvale-Database-Storage.initial"
 set "RunDirectory=%TemporaryDirectory%\HostTreeReader-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
@@ -1642,21 +1562,8 @@ if "%Development%"=="1" (
     endlocal & set "ProjectCheckpointHostTreeReader=%HostTreeReaderCheckpoint%" & set "ApplicationCheckpointHostTreeReader=%HostTreeReaderApplicationCheckpoint%"
     exit /b 0
 )
-if not exist "%LinuxPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
-if errorlevel 1 exit /b 1
-set "LinuxEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-if not defined LinuxEntry exit /b 1
-echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul
-if errorlevel 1 exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
-    "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+rem Opposite-host construction belongs to the focused packager owners.
+
 endlocal
 exit /b 0
 
@@ -1670,15 +1577,10 @@ set "FirstWvbResource=%FirstWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\Engine-First.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
-set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
 set "WindowsImage=%TemporaryDirectory%\Engine-Windows.bin"
 set "WindowsImagePrefix=%TemporaryDirectory%\Engine-Windows-Image"
 set "WindowsMap=%TemporaryDirectory%\Engine-Windows.map"
 set "WindowsApplication=%TemporaryDirectory%\Engine.exe"
-set "LinuxImage=%TemporaryDirectory%\Engine-Linux.bin"
-set "LinuxImagePrefix=%TemporaryDirectory%\Engine-Linux-Image"
-set "LinuxMap=%TemporaryDirectory%\Engine-Linux.map"
-set "LinuxApplication=%TemporaryDirectory%\Engine.elf"
 set "DepthTwoCommittedFile=%TemporaryDirectory%\HostTreeReader-Run\Windvale-Database-Storage.depth-two"
 set "RunDirectory=%TemporaryDirectory%\Engine-Run"
 set "StorageFile=%RunDirectory%\Windvale-Database-Storage.bin"
@@ -1784,20 +1686,8 @@ if "%Development%"=="1" (
     endlocal & set "ProjectCheckpointEngine=%EngineCheckpoint%" & set "ApplicationCheckpointEngine=%EngineApplicationCheckpoint%"
     exit /b 0
 )
-if not exist "%LinuxPlatform%" exit /b 1
-call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 ^
-    Storage_host_entry "%LinuxImage%" "%FirstWvo%" ^
-    "%Common%" "%LinuxPlatform%" >"%LinuxMap%"
-if errorlevel 1 exit /b 1
-set "LinuxEntry="
-for /f "tokens=3 delims==" %%E in ('findstr /b /c:"entry name=Storage_host_entry address=" "%LinuxMap%"') do set "LinuxEntry=%%E"
-if not defined LinuxEntry exit /b 1
-echo(%LinuxEntry%| findstr /r /x "[0-9][0-9]*" >nul || exit /b 1
-copy /b "%LinuxImage%" "%LinuxImagePrefix%.chunk-0" >nul || exit /b 1
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" image 6 ^
-    "%FirstWvb%" "%LinuxImagePrefix%" 1 %LinuxEntry% ^
-    "%LinuxApplication%" linux >nul
-if errorlevel 1 exit /b 1
+rem Opposite-host construction belongs to the focused packager owners.
+
 endlocal
 exit /b 0
 

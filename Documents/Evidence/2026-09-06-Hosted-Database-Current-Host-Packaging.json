@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-hosted-database-current-host-packaging",
+  "date": "2026-09-06",
+  "subject": "Remove unused opposite-host construction from hosted database qualification",
+  "claim": "Six hosted construction sites per host now package only the image that the behavior owner executes. Windows HostStorage and dependent HostRootWriter passed in a 137140 ms command, compared with the previous 234129 ms observation (41.4% lower). Debian HostStorage passed with an 80000 ms step. All selected recovery, reopen, and interruption assertions remain. No complete database qualification or general performance threshold is claimed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on cad7506e. Windows script SHA-256 e4d3b0ed42079497e67018f1d9407600805353d6fa688a07ef28deea772fcf66; Linux script SHA-256 03446a38403051e71c89ab32c300e1251031a563b181c7df2324aae525a746a9."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Before: one source construction but both host packages; HostStorage 129620 ms and HostRootWriter 103860 ms",
+      "tool": "Tools/Native/Test-Database-Storage.cmd",
+      "command": "Tools\\Native\\Test-Database-Storage.cmd --qualification-step HostRootWriter (240-second outer bound; prior evidence)",
+      "result": "Passed",
+      "elapsedMilliseconds": 234129
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "After: current-host products; HostStorage 78060 ms and HostRootWriter 58300 ms, including prerequisite ordering and recovery behaviors",
+      "tool": "Tools/Native/Test-Database-Storage.cmd",
+      "command": "Tools\\Native\\Test-Database-Storage.cmd --qualification-step HostRootWriter (210-second outer bound)",
+      "result": "Passed",
+      "elapsedMilliseconds": 137140
+    },
+    {
+      "host": "Local WSL Debian, Node 20.19.2; repository on /mnt/d/windvale/dev01",
+      "target": "After: current-host HostStorage behavior; step 80000 ms; complete WSL command including startup 92952 ms",
+      "tool": "Tools/Native/Test-Database-Storage.sh",
+      "command": "wsl --distribution Debian --cd /mnt/d/windvale/dev01 -- bash -lc \"timeout --kill-after=5s 180s bash Tools/Native/Test-Database-Storage.sh --qualification-step HostStorage\"",
+      "result": "Passed",
+      "elapsedMilliseconds": 92952
+    },
+    {
+      "host": "Local Windows Git Bash",
+      "target": "Linux leaf syntax",
+      "tool": "Tools/Native/Test-Database-Storage.sh",
+      "command": "bash -n Tools/Native/Test-Database-Storage.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Local Windows PowerShell",
+      "target": "Construction ownership guard, exact pipeline inventory after deletion, and all existing routing checks (31 general and 280 native cases)",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 47216,
+      "peakWorkingSetBytes": 224493568
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The pass covers the named focused runs only. Complete 57-case database qualification, remaining hosted cases, and complete paired-host repository qualification were not run: they exceed the ten-minute development budget and the causal scope of this removal.",
+    "The before observation overlapped other verification; the after host runs were sequential. Retained qualified tools and fresh qualification products were used. The observed improvement is not a controlled clean-machine benchmark or an enforceable regression threshold. There is no completed before Debian timing for this change.",
+    "Opposite-host image construction is delegated to the existing console-packager-container-reconstruction and console-segmented-construction owners; malformed hosted-container behavior remains with hosted-console-container-mutations. Those unchanged packager owners were inspected but not executed in this run. Both host database behavior lanes are still required for complete qualification.",
+    "The removed images were never executed by the host that constructed them. Per-database cross-construction coverage is deliberately removed; current-host database behavior and focused generic packager coverage replace that repetition. Common host-adapter assembly A/B comparisons and the paired StorageLowering case remain.",
+    "Peak child-process memory was not measured. No claim is made that overall qualification meets its target; repeated construction across distinct products remains redesign work.",
+    "An initial routing-verifier attempt rejected stale pipeline-count expectations after the deletion. Updating the expected removal of two admission, ten link, and twelve hosted-package call sites resolved that inventory failure; the recorded rerun passed."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-06-Hosted-Database-Single-Construction.json",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md",
+    "Tools/Native/Test-Database-Storage.cmd",
+    "Tools/Native/Test-Database-Storage.sh",
+    "Tools/Verify/Verify-Verification-Plan.ps1",
+    "Tests/Native/Database-Storage-Qualification-Steps.txt",
+    "Tools/Native/Test-Console-Packager-Container-Reconstruction.cmd",
+    "Tools/Native/Test-Console-Application-Segmented-Construction.cmd",
+    "Tools/Native/Test-Hosted-Console-Container-Mutations.cmd"
+  ]
+}

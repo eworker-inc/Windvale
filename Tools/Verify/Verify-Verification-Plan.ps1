@@ -4954,7 +4954,7 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopExpectedOwners[0].PipelineCallSites -ne 1 -or
     $QualificationWorkPlan.TopExpectedOwners[1].Name -ne 'database-storage' -or
     $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 66 -or
-    $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 86 -or
+    $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 62 -or
     $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
         'language-1-front-door' -or
     $QualificationWorkPlan.TopExpectedOwners[5].PipelineCallSites -ne 237 -or
@@ -4993,9 +4993,9 @@ $QualificationPipelineExpected = @{
     'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
     'Stage-Compiler-Wvb' = '3|10'
     'Lower-Wvb-To-Wvo' = '16|45'
-    'Check-Wvo' = '20|57'
-    'Link-Wvo' = '39|122'
-    'Package-Hosted-Wvb' = '19|111'
+    'Check-Wvo' = '20|55'
+    'Link-Wvo' = '39|112'
+    'Package-Hosted-Wvb' = '19|99'
     'Package-Console' = '19|77'
     'Package-Segmented-Compiler-Wvb' = '21|60'
     'Verify-Wvb' = '5|16'
@@ -6251,6 +6251,7 @@ $DatabaseHostedConstructionContracts = @(
         Build = '"%BuildDriver%" --workspace'
         Lower = '"%Lowerer%" "%FirstWvb%" "%FirstWvo%"'
         Admit = 'Check-Wvo.cmd" "%FirstWvo%"'
+        OppositeHost = '(?i)(%Linux|Linux-X64-Random-Access-Storage)'
     },
     @{
         Host = 'Linux'
@@ -6262,6 +6263,7 @@ $DatabaseHostedConstructionContracts = @(
         Build = '"$build_driver" --workspace'
         Lower = '"$lowerer" "$first_wvb" "$first_wvo"'
         Admit = 'Check-Wvo.sh" "$first_wvo"'
+        OppositeHost = '(?i)(\$windows_|Windows-X64-Random-Access-Storage)'
     }
 )
 foreach ($Contract in $DatabaseHostedConstructionContracts) {
@@ -6269,7 +6271,8 @@ foreach ($Contract in $DatabaseHostedConstructionContracts) {
         [regex]::Matches($Contract.Text, [regex]::Escape($Contract.Lower)).Count -ne 1 -or
         [regex]::Matches($Contract.Text, [regex]::Escape($Contract.Admit)).Count -ne 1 -or
         !$Contract.Text.Contains($Contract.Build, [StringComparison]::Ordinal) -or
-        $Contract.Text -match '(?i)second[_a-z]*wv[bo]') {
+        $Contract.Text -match '(?i)second[_a-z]*wv[bo]' -or
+        $Contract.Text -match $Contract.OppositeHost) {
         throw "The $($Contract.Host) hosted database lane lost single construction/admission ownership."
     }
 }

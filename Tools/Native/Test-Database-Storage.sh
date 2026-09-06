@@ -617,16 +617,11 @@ verify_host_storage() {
     local first_wvo="$temporary_directory/HostStorage-First.wvo"
     local common_first="$temporary_directory/HostStorage-Common-First.wvo"
     local common_second="$temporary_directory/HostStorage-Common-Second.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
     local linux_image="$temporary_directory/HostStorage-Linux.bin"
     local linux_image_prefix="$temporary_directory/HostStorage-Linux-Image"
     local linux_map="$temporary_directory/HostStorage-Linux.map"
     local linux_application="$temporary_directory/HostStorage.elf"
-    local windows_image="$temporary_directory/HostStorage-Windows.bin"
-    local windows_image_prefix="$temporary_directory/HostStorage-Windows-Image"
-    local windows_map="$temporary_directory/HostStorage-Windows.map"
-    local windows_application="$temporary_directory/HostStorage.exe"
     local run_directory="$temporary_directory/HostStorage-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
     local initial_file="$run_directory/Windvale-Database-Storage.initial"
@@ -661,10 +656,6 @@ verify_host_storage() {
         "$repository_root/Runtime/Native/Linux-X64-Random-Access-Storage.wva" \
         "$linux_platform" >/dev/null || return $?
     "$script_directory/Check-Wvo.sh" "$linux_platform" >/dev/null || return $?
-    "$script_directory/Assemble-Wva.sh" \
-        "$repository_root/Runtime/Native/Windows-X64-Random-Access-Storage.wva" \
-        "$windows_platform" >/dev/null || return $?
-    "$script_directory/Check-Wvo.sh" "$windows_platform" >/dev/null || return $?
 
     if ((development == 1)); then
         build_cached_linked_image_set Storage_host_entry \
@@ -741,20 +732,8 @@ verify_host_storage() {
         return 0
     fi
 
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$windows_image" "$first_wvo" "$common_first" "$windows_platform" \
-        >"$windows_map" || return $?
-    local windows_entry
-    windows_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$windows_map")
-    case "$windows_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-        "$windows_application" windows >/dev/null || return $?
+    # Opposite-host construction belongs to the focused packager owners.
+    return 0
 }
 
 verify_host_root_writer() {
@@ -764,15 +743,10 @@ verify_host_root_writer() {
     local first_wvo="$temporary_directory/HostRootWriter-First.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_image="$temporary_directory/HostRootWriter-Linux.bin"
     local linux_image_prefix="$temporary_directory/HostRootWriter-Linux-Image"
     local linux_map="$temporary_directory/HostRootWriter-Linux.map"
     local linux_application="$temporary_directory/HostRootWriter.elf"
-    local windows_image="$temporary_directory/HostRootWriter-Windows.bin"
-    local windows_image_prefix="$temporary_directory/HostRootWriter-Windows-Image"
-    local windows_map="$temporary_directory/HostRootWriter-Windows.map"
-    local windows_application="$temporary_directory/HostRootWriter.exe"
     local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
     local run_directory="$temporary_directory/HostRootWriter-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
@@ -853,21 +827,8 @@ verify_host_root_writer() {
         application_checkpoint_host_root_writer=$host_root_writer_application_checkpoint
         return 0
     fi
-    [[ -f $windows_platform ]] || return 1
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
-        >"$windows_map" || return $?
-    local windows_entry
-    windows_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$windows_map")
-    case "$windows_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-        "$windows_application" windows >/dev/null || return $?
+    # Opposite-host construction belongs to the focused packager owners.
+    return 0
 }
 
 verify_host_root_writer_interruption() {
@@ -936,14 +897,9 @@ build_host_local_component() {
     local first_wvo="$temporary_directory/HostLocal-$component-First.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_image="$temporary_directory/HostLocal-$component-Linux.bin"
     local linux_image_prefix="$temporary_directory/HostLocal-$component-Linux-Image"
     local linux_map="$temporary_directory/HostLocal-$component-Linux.map"
-    local windows_image="$temporary_directory/HostLocal-$component-Windows.bin"
-    local windows_image_prefix="$temporary_directory/HostLocal-$component-Windows-Image"
-    local windows_map="$temporary_directory/HostLocal-$component-Windows.map"
-    local windows_application="$temporary_directory/HostLocal-$component.exe"
     host_local_component_project_checkpoint=Rebuilt
     host_local_component_application_checkpoint=Rebuilt
 
@@ -992,21 +948,6 @@ build_host_local_component() {
         "$script_directory/Package-Hosted-Wvb.sh" image 6 \
             "$first_wvb" "$linux_image_prefix" 1 "$linux_entry" \
             "$linux_application" linux >/dev/null || return $?
-        [[ -f $windows_platform ]] || return 1
-        "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-            "$windows_image" "$first_wvo" "$common" "$windows_platform" \
-            >"$windows_map" || return $?
-        local windows_entry
-        windows_entry=$(sed -n \
-            's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-            "$windows_map")
-        case "$windows_entry" in
-            ''|*[!0-9]*) return 1 ;;
-        esac
-        cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-            "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-            "$windows_application" windows >/dev/null || return $?
     fi
 }
 
@@ -1021,10 +962,7 @@ build_host_segmented_component() {
     local canonical_manifest="$temporary_directory/HostLocal-$component-Canonical.wvli"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_prefix="$temporary_directory/HostLocal-$component-Linux-Image"
-    local windows_prefix="$temporary_directory/HostLocal-$component-Windows-Image"
-    local windows_application="$temporary_directory/HostLocal-$component.exe"
     local project_report="$temporary_directory/HostLocal-$component-Segmented-Cache.txt"
     local overlay_report="$temporary_directory/HostLocal-$component-Linux-Overlay.txt"
 
@@ -1076,17 +1014,6 @@ build_host_segmented_component() {
         "$script_directory/Package-Hosted-Wvb.sh" image 6 \
             "$first_wvb" "$linux_prefix" "$fragment_count" "$linux_entry" \
             "$linux_application" linux >/dev/null || return $?
-        [[ -f $windows_platform ]] || return 1
-        local windows_report="$temporary_directory/HostLocal-$component-Windows-Overlay.txt"
-        "$script_directory/Compose-Segmented-Hosted-Overlay.sh" \
-            "$canonical_prefix" "$canonical_manifest" "$common" "$windows_platform" \
-            "$windows_prefix" >"$windows_report" || return $?
-        local windows_entry
-        windows_entry=$(sed -n 's/^segmented hosted overlay status=Valid .* provider-entry=\([0-9][0-9]*\) .*$/\1/p' "$windows_report")
-        case "$windows_entry" in ''|*[!0-9]*) return 1 ;; esac
-        "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-            "$first_wvb" "$windows_prefix" "$fragment_count" "$windows_entry" \
-            "$windows_application" windows >/dev/null || return $?
     fi
 }
 
@@ -1225,15 +1152,10 @@ verify_host_tree_reader() {
     local first_wvo="$temporary_directory/HostTreeReader-First.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_image="$temporary_directory/HostTreeReader-Linux.bin"
     local linux_image_prefix="$temporary_directory/HostTreeReader-Linux-Image"
     local linux_map="$temporary_directory/HostTreeReader-Linux.map"
     local linux_application="$temporary_directory/HostTreeReader.elf"
-    local windows_image="$temporary_directory/HostTreeReader-Windows.bin"
-    local windows_image_prefix="$temporary_directory/HostTreeReader-Windows-Image"
-    local windows_map="$temporary_directory/HostTreeReader-Windows.map"
-    local windows_application="$temporary_directory/HostTreeReader.exe"
     local initial_file="$temporary_directory/HostStorage-Run/Windvale-Database-Storage.initial"
     local run_directory="$temporary_directory/HostTreeReader-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
@@ -1329,21 +1251,8 @@ verify_host_tree_reader() {
         application_checkpoint_host_tree_reader=$host_tree_reader_application_checkpoint
         return 0
     fi
-    [[ -f $windows_platform ]] || return 1
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
-        >"$windows_map" || return $?
-    local windows_entry
-    windows_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$windows_map")
-    case "$windows_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-        "$windows_application" windows >/dev/null || return $?
+    # Opposite-host construction belongs to the focused packager owners.
+    return 0
 }
 
 verify_host_tree_reader_interruption() {
@@ -1405,15 +1314,10 @@ verify_host_engine() {
     local first_wvo="$temporary_directory/Engine-First.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
-    local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
     local linux_image="$temporary_directory/Engine-Linux.bin"
     local linux_image_prefix="$temporary_directory/Engine-Linux-Image"
     local linux_map="$temporary_directory/Engine-Linux.map"
     local linux_application="$temporary_directory/Engine.elf"
-    local windows_image="$temporary_directory/Engine-Windows.bin"
-    local windows_image_prefix="$temporary_directory/Engine-Windows-Image"
-    local windows_map="$temporary_directory/Engine-Windows.map"
-    local windows_application="$temporary_directory/Engine.exe"
     local depth_two_committed_file="$temporary_directory/HostTreeReader-Run/Windvale-Database-Storage.depth-two"
     local run_directory="$temporary_directory/Engine-Run"
     local storage_file="$run_directory/Windvale-Database-Storage.bin"
@@ -1511,21 +1415,8 @@ verify_host_engine() {
         application_checkpoint_engine=$engine_application_checkpoint
         return 0
     fi
-    [[ -f $windows_platform ]] || return 1
-    "$script_directory/Link-Wvo.sh" 0 Storage_host_entry \
-        "$windows_image" "$first_wvo" "$common" "$windows_platform" \
-        >"$windows_map" || return $?
-    local windows_entry
-    windows_entry=$(sed -n \
-        's/^entry name=Storage_host_entry address=\([0-9][0-9]*\)$/\1/p' \
-        "$windows_map")
-    case "$windows_entry" in
-        ''|*[!0-9]*) return 1 ;;
-    esac
-    cp -- "$windows_image" "$windows_image_prefix.chunk-0" || return $?
-    "$script_directory/Package-Hosted-Wvb.sh" image 6 \
-        "$first_wvb" "$windows_image_prefix" 1 "$windows_entry" \
-        "$windows_application" windows >/dev/null || return $?
+    # Opposite-host construction belongs to the focused packager owners.
+    return 0
 }
 
 verify_host_engine_recovery() {

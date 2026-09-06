@@ -33,19 +33,19 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
-Hosted database qualification now builds and lowers each ordinary test product
-once through a shared routine on each host. Five formerly duplicated
-construction functions delegate compiler/lowerer determinism to their focused
-qualification owners and the retained paired `StorageLowering` case. Object
-admission remains explicit, and database recovery, reopen, and interruption
-checks remain in their behavior owners. Windows `HostStorage` and its dependent
-root-writer case passed. The observed `HostStorage` step changed from 132,970 to
-129,620 ms under different concurrent load, which does not establish a reliable
-speedup. A Debian attempt stopped at its 100-second bound after object
-admission; it provides no passing Linux runtime evidence. The
-[construction evidence](../Evidence/2026-09-06-Hosted-Database-Single-Construction.json)
-records the limits. Opposite-host packaging and repeated hosted products remain
-the next measured optimization targets.
+Hosted database qualification now constructs each ordinary product once and
+packages only the image its host executes. Six hosted construction sites no
+longer repeat opposite-host assembly, linking, or packaging. Dedicated packager
+owners retain that construction coverage; paired Windows/Linux database
+behavior remains required for complete qualification. Recovery, reopen,
+interruption, and object-admission checks remain in place. The focused Windows
+storage-plus-root-writer run fell from 234,129 to 137,140 ms in these observations.
+The storage step passed in 78,060 ms on Windows and 80,000 ms on Debian. These
+runs used retained tools and fresh test products; they are not clean-machine or
+complete qualification measurements. The
+[current-host packaging evidence](../Evidence/2026-09-06-Hosted-Database-Current-Host-Packaging.json)
+records the scope and limits. Repeated construction across different hosted
+products and the broader qualification graph remain optimization work.
 
 Mixed changes now preserve each owner's focused development selection. The
 planner excludes paths already routed to documentation-only checks from

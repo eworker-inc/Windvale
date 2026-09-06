@@ -2,7 +2,7 @@
 
 > Status: Current post-retirement verification architecture
 > Authority: Informative
-> Last reviewed: 2026-09-04
+> Last reviewed: 2026-09-06
 
 It incorporates
 [Decision 0526](../Decisions/0526-Dotnet-Retirement-Qualification-And-Stage0-Archive.md),
@@ -470,9 +470,15 @@ root/source references, and 146 unique source paths. Pairing every construction
 would produce 1,346 source visits per host. The 42 ordinary portable steps now
 use one admitted construction and delegate 385 duplicate visits to focused
 reproducibility owners; their remaining 4.61-fold cross-project manifest overlap
-is the next construction target. Portable steps execute the current-host image
-and delegate generic opposite-host packaging to focused packager owners; paired
-Windows/Linux database behavior remains mandatory for complete qualification.
+is the next construction target. Portable and hosted steps execute the
+current-host image and delegate generic opposite-host packaging to focused
+packager owners; paired Windows/Linux database behavior remains mandatory for
+complete qualification. Five ordinary hosted construction functions also share
+one fresh source-build, lowering, and admission routine per host. The paired
+`StorageLowering` case and common host-adapter assembly comparisons retain their
+focused reproducibility claims. See the
+[hosted construction evidence](../Evidence/2026-09-06-Hosted-Database-Current-Host-Packaging.json)
+for the measured improvement and remaining qualification limits.
 The first two-case bundle reduced direct clean Windows work from 71,830 to
 40,608 ms. Its focused node fell from 46,150 to 38,310 ms after both portable
 delegations. Two further bundles preserve the ancestor-groups/depth-four and
