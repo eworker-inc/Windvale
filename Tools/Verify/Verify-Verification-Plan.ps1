@@ -5910,7 +5910,7 @@ foreach ($IntegrationPath in @(
     }
 }
 if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
-    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=225 expected-seconds=180', [StringComparison]::Ordinal)) {
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=257 expected-seconds=180', [StringComparison]::Ordinal)) {
     throw 'The combined Foundation component dispatch differs.'
 }
 

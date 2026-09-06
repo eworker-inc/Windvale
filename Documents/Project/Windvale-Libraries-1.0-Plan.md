@@ -65,6 +65,17 @@ closed while owned-payload, authority-operation, source value-classification,
 and runtime retention work continues. Exclusive borrowing, take, mapping, and
 the real consumer are still pending; this checkpoint does not complete the chunk.
 
+The next local verifier checkpoint adds exact borrowed task-limit/context and
+scratch/region/Foreign numeric arguments, preserves opaque-owner restrictions,
+and records inherited owner-consuming operations in loan flow. Its existing
+focused selector now contains 217 groups, including 30 authority-composition
+groups and two grouped event-handoff checks. The implementation remains a
+component checkpoint: full candidate admission, runtime retention/execution,
+source value-classification reconciliation, wider owned payloads, exclusive
+borrowing, take, mapping, and consumer migration remain open. Final verification
+for this checkpoint is recorded in the
+[authority composition evidence](../Evidence/2026-09-06-Foundation-Borrow-Authority-Composition.json).
+
 ## Proposed product names
 
 The recommended public names are:

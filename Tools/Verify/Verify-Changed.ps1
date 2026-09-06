@@ -393,11 +393,11 @@ if ($Plan.Scope -eq 'website') {
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=185 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=217 expected-seconds=180'
                 }
                 if ($NativePlan.UseFoundationBorrowComponentsDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-components')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=225 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=257 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',

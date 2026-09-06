@@ -121,7 +121,12 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
             Result = Loanˉevent(Result, Offset, 3u32, Trace.Locals + Receiver, 0u32);
         }
     }
-    if Opcode == 5u32 || Opcode == 205u32 {
+    // These inherited operations consume their first named owner. The typed
+    // pass has already proved its exact budget, task, or scratch identity.
+    let Takesˉowner: bool = Opcode == 205u32 || Opcode == 207u32 ||
+        Opcode == 214u32 || Opcode == 217u32 || Opcode == 219u32 ||
+        Opcode == 220u32 || Opcode == 222u32;
+    if Opcode == 5u32 || Takesˉowner {
         let Local: u32 = Bytesˉreadˉu32ˉlittle(Input, Code + Offset + 1u32);
         if Local >= Bytesˉlength(Trace.Map) / 4u32 {
             return Loanˉnext(Result, false, Result.Events, Result.Chunk, Result.Work);
@@ -129,7 +134,7 @@ export fn Loanˉobserve(Trace: Loanˉtrace, Input: bytes, Code: u32,
         let Target: u32 = Bytesˉreadˉu32ˉlittle(Trace.Map, Local * 4u32);
         if Target == 4294967295u32 {
             var Event: u32 = 4u32;
-            if Opcode == 205u32 { Event = 5u32; }
+            if Takesˉowner { Event = 5u32; }
             Result = Loanˉevent(Result, Offset, Event, Local, 0u32);
         } else {
             if Opcode != 5u32 || Count == 0u32 {

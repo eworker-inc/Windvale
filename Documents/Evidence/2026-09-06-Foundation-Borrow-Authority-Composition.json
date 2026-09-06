@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-foundation-borrow-authority-composition",
+  "date": "2026-09-06",
+  "subject": "Candidate Foundation borrow composition with inherited task and unsafe-memory authority",
+  "claim": "The current-source typed verifier accepts exact borrowed Copy/shared task limits and contexts and borrowed u64 scratch, region, and Foreign arguments, preserves opaque-owner and derived-pointer restrictions, and records inherited owner consumption in loan flow. All 217 focused groups pass on Windows. Complete WVB 1.39 admission and execution remain disabled.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 336b56c4. Exact changed verification inputs are listed below; unchanged dependencies and bootstrap tools belong to that base commit."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "217 focused groups: 114 typed-stack groups, 30 lifetime groups, and the retained owner, direct-call, and metadata groups. Thirty authority groups and two grouped event-handoff checks extend the preceding 185-group selection.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 2370,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 243540,
+          "sha256": "47162c6276ed5a7f9a6a576109a90351012df0cbf1463acff0d71da563d42c82"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 31588,
+          "sha256": "01a18afbf236243f22fce58d181346648787471b2bee5ee6eae83cad96638b59"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 41591,
+          "sha256": "70e3271c23d306d3fa17001f2df2b427aeba368f0189b8730835cef0ca2daffb"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "size": 10482,
+          "sha256": "169af932dc9e0a282232378e3a14cceb64582e5c7b4e89bf10be94ed2dc3f4a3"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122811,
+          "sha256": "0f7f6feadbf2230be6ff93b96f89de270493696b44fcc7a8e453062a452c527e"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23959,
+          "sha256": "5bd092ddc8b0f70aab584c6304b590287d24b1527c5907ef540fc30d24a980d7"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 39351,
+          "sha256": "480e59869e0342fdf692d20dae0ba06d0b0a6eb942891ef6b691608e978bc64f"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 340986,
+          "sha256": "1bb8f9f253349f47d1d422c321802e79ac2ec1a335f7fff2c67d5a8c7918934f"
+        },
+        {
+          "path": "Specifications/Seed-Bytecode.md",
+          "size": 112573,
+          "sha256": "102f9e17341f0db0ade1e5a0e6de2e27d4386232af465b2e71eb9db6c713bfb5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 681018,
+          "sha256": "0e192c73a49bb71f38b0dc6e2735e0d12e59a8ab13bd2d8a1c18536319660065"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Local component evidence only. No complete-verifier, runtime, native, browser, package, OS, or whole-product WVB 1.39 admission is claimed. Linux reproduction is deferred to the coherent chunk gate.",
+    "Source value-classification reconciliation, broader owned-payload handling, async callable/task composition, runtime retention/execution, exclusive borrowing, take, mapping, and a real consumer remain open.",
+    "Independent canonical bytecode models exercise the existing semantic, typed, control, and loan components. They do not establish source publication or runtime execution of each new combination.",
+    "The final run reused exact construction products and freshly executed all behaviors. The preceding successful construction-and-execution diagnostic took 81619 ms; its summary still reported the old 185-group inventory. The final 217-group summary corrects that count without changing the 681018-byte test WVB.",
+    "Earlier diagnostics found and corrected a test enum encoding and two assertions that expected rejection at the wrong phase or assumed ordinary task-scope loads were permitted. The inherited no-load restriction was preserved. Failed diagnostics are not passing evidence.",
+    "The reviewed broad plan selected nine native owners with 2550 expected seconds and 10200 maximum seconds. It was not run because it exceeds the ten-minute development budget for this still-gated component checkpoint. Full memory-budget execution, bootstrap reconstruction, ABI, WebAssembly, OS, and complete qualification were not run.",
+    "The updated full owner declares 451 cases, combined publication 280, and combined components 257. These inventories do not imply that the broader selections passed at this source state.",
+    "No clean-machine timing, stable performance threshold, or peak working-set measurement is claimed."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-06-Foundation-Borrow-Operand-Integration.json",
+    "Specifications/Seed-Bytecode.md"
+  ]
+}

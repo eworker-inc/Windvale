@@ -24,6 +24,7 @@ data Diamond: bytes = [49, 10, 0, 0, 0, 48, 15, 0, 0, 0, 48, 15, 0, 0, 0, 80, 80
 data Loop: bytes = [48, 5, 0, 0, 0, 49, 15, 0, 0, 0, 48, 5, 0, 0, 0, 81];
 data Shapes: bytes = [5, 0, 0, 0, 0, 5, 0, 0, 0, 0, 69, 0, 0, 0, 0, 69, 0, 0, 0, 0];
 data Borrowedˉparameter: bytes = [69, 0, 0, 0, 0, 69, 0, 0, 0, 0];
+data Consumingˉoperations: bytes = [205, 207, 214, 217, 219, 220, 222];
 
 // Synthetic events isolate dataflow. The probe cases below exercise production
 // event generation from complete typed bytecode, including live stack aliases.
@@ -130,5 +131,27 @@ export fn Check(Candidate: bytes) -> i32 {
         Bytesˉconcat(Instruction(4u8, 2u32), Return))), 1u32)) != 2u32 { return 227; }
     if Typedˉresult(Probe(Input, Join(Loan, Instruction(4u8, 1u32),
         Join(Rewrite, Bytesˉfromˉu8(80u8), Ownerˉresult)), 2u32)) != 0u32 { return 228; }
+    // Isolate the typed-pass handoff for every inherited local consumption.
+    // Full scratch/region cases in the stack fixture prove real composition.
+    let Empty: bytes = Bytesˉslice(Shapes, 0u32, 0u32);
+    var Operation: u32 = 0u32;
+    while Operation < Bytesˉlength(Consumingˉoperations) {
+        let Code: bytes = Instruction(Bytesˉreadˉu8(Consumingˉoperations, Operation), 0u32);
+        let Initial: Owners.Loanˉtrace = Owners.Loanˉbegin(Shapes, 2u32, 2u32, 16777216u32);
+        let Observed: Owners.Loanˉtrace = Owners.Loanˉobserve(
+            Initial, Code, 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
+        if !Observed.Valid || Bytesˉlength(Observed.Events) != 0u32 ||
+            Bytesˉlength(Observed.Chunk) != 16u32 ||
+            Bytesˉreadˉu32ˉlittle(Observed.Chunk, 0u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Observed.Chunk, 4u32) != 5u32 ||
+            Bytesˉreadˉu32ˉlittle(Observed.Chunk, 8u32) != 0u32 ||
+            Bytesˉreadˉu32ˉlittle(Observed.Chunk, 12u32) != 0u32 { return 229; }
+        let Wrong: Owners.Loanˉtrace = Owners.Loanˉobserve(
+            Initial, Word(Code, 1u32, 2u32), 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
+        let Missing: Owners.Loanˉtrace = Owners.Loanˉobserve(
+            Initial, Word(Code, 1u32, 4u32), 0u32, 0u32, 0u32, Empty, 0u32, false, 0u32);
+        if Wrong.Valid || Missing.Valid { return 230; }
+        Operation = Operation + 1u32;
+    }
     return 0;
 }

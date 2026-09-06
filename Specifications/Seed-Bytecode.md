@@ -583,6 +583,18 @@ Option view to be invented by an ordinary load. Thirty-four complete-module
 composition groups extend the existing WV selection; see the
 [composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
 
+The candidate typed component also accepts exact Copy/shared borrowed task
+limits and operation contexts, and borrowed `u64` arguments for scratch
+construction, write-region construction, and the registered Foreign call.
+The Foreign typed check recognizes both minor 38 and candidate minor 39,
+matching semantic admission. Budget, scope, scratch, region, and pointer
+ownership requirements remain separate; a borrowed opaque record cannot replace
+a derived pointer, expose its token, or become an owned copy. Task scopes retain
+their inherited no-load restriction. The loan trace records owner consumption
+by `CD`, `CF`, `D6`, `D9`, `DB`, `DC`, and `DE`; later borrowed reads, including
+pending stack values, must not outlive that consumption. These component checks
+do not enable candidate execution or complete admission.
+
 No complete-verifier, runtime, native, WebAssembly, package, or OS consumer
 admits minor 39. Remaining operand families, owned-payload projections, and
 authority-operation composition, source value-classification reconciliation,

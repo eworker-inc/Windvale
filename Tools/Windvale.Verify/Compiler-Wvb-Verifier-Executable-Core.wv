@@ -3229,7 +3229,9 @@ fn Hˉtaskˉoperation(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         let Contextˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Contextˉoffset)) != 7u32 ||
+        if !Hˉvalueˉmatches(Input, Types, 7u32,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Contextˉoffset)),
+            Bytesˉreadˉu32ˉlittle(Stack, Contextˉoffset + 1u32)) ||
             !Hˉoperationˉcontextˉisˉexact(
                 Input, Types, Typeˉcount,
                 Bytesˉreadˉu32ˉlittle(Stack, Contextˉoffset + 1u32)
@@ -3237,7 +3239,9 @@ fn Hˉtaskˉoperation(
             return Hˉoperationˉfailure(Stack, Depth);
         }
         let Limitsˉoffset: u32 = Contextˉoffset - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Limitsˉoffset)) != 7u32 ||
+        if !Hˉvalueˉmatches(Input, Types, 7u32,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Limitsˉoffset)),
+            Bytesˉreadˉu32ˉlittle(Stack, Limitsˉoffset + 1u32)) ||
             !Hˉtaskˉlimitsˉisˉexact(
                 Input, Types, Typeˉcount,
                 Bytesˉreadˉu32ˉlittle(Stack, Limitsˉoffset + 1u32)
@@ -3416,10 +3420,12 @@ fn Hˉunsafeˉscratchˉoperation(
     }
     let Alignment: u32 = Bytesˉlength(Stack) - 5u32;
     let Length: u32 = Alignment - 5u32;
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Alignment)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Alignment + 1u32) != 0u32 ||
-        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Length)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Length + 1u32) != 0u32 {
+    if !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Alignment)),
+        Bytesˉreadˉu32ˉlittle(Stack, Alignment + 1u32)) ||
+        !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Length)),
+        Bytesˉreadˉu32ˉlittle(Stack, Length + 1u32)) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     return Hˉoperationˉstate(
@@ -3488,12 +3494,15 @@ fn Hˉunsafeˉwriteˉregionˉoperation(
     let Alignment: u32 = Bytesˉlength(Stack) - 5u32;
     let Length: u32 = Alignment - 5u32;
     let Start: u32 = Length - 5u32;
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Alignment)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Alignment + 1u32) != 0u32 ||
-        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Length)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Length + 1u32) != 0u32 ||
-        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Start)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Start + 1u32) != 0u32 {
+    if !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Alignment)),
+        Bytesˉreadˉu32ˉlittle(Stack, Alignment + 1u32)) ||
+        !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Length)),
+        Bytesˉreadˉu32ˉlittle(Stack, Length + 1u32)) ||
+        !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Start)),
+        Bytesˉreadˉu32ˉlittle(Stack, Start + 1u32)) {
         return Hˉoperationˉfailure(Stack, Depth);
     }
     return Hˉoperationˉstate(
@@ -3574,7 +3583,8 @@ fn Hˉforeignˉcallˉoperation(
         Input, Functionˉcode + Cursor + 9u32
     );
     let Typeˉcount: u32 = Bytesˉreadˉu32ˉlittle(Input, Types);
-    if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 38u32 || Binding != 1u32 ||
+    let Declaredˉminor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
+    if (Declaredˉminor != 38u32 && Declaredˉminor != 39u32) || Binding != 1u32 ||
         Pointerˉtype >= Typeˉcount || Abiˉtype >= Typeˉcount || Depth < 3u32 ||
         !Hˉunsafeˉscratchˉisˉexact(
             Input, Types, Typeˉcount, Pointerˉtype
@@ -3590,10 +3600,12 @@ fn Hˉforeignˉcallˉoperation(
     let Generation: u32 = Bytesˉlength(Stack) - 5u32;
     let Capacity: u32 = Generation - 5u32;
     let Pointer: u32 = Capacity - 5u32;
-    if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Generation)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Generation + 1u32) != 0u32 ||
-        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Capacity)) != 10u32 ||
-        Bytesˉreadˉu32ˉlittle(Stack, Capacity + 1u32) != 0u32 ||
+    if !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Generation)),
+        Bytesˉreadˉu32ˉlittle(Stack, Generation + 1u32)) ||
+        !Hˉexactˉvalueˉmatches(Input, Types, 10u32, 0u32,
+        U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Capacity)),
+        Bytesˉreadˉu32ˉlittle(Stack, Capacity + 1u32)) ||
         U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Pointer)) != 38u32 ||
         Bytesˉreadˉu32ˉlittle(Stack, Pointer + 1u32) != Pointerˉtype {
         return Hˉoperationˉfailure(Stack, Depth);
