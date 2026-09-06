@@ -178,6 +178,32 @@ function Read-VerificationRegistry {
         [StringComparer]::Ordinal)
     $Shards = [Collections.Generic.HashSet[int]]::new()
     $Entries = [Collections.Generic.List[object]]::new()
+    $LinuxIndexModes = [Collections.Generic.Dictionary[string, string]]::new(
+        [StringComparer]::Ordinal)
+    if ($HostExtension -eq '.sh') {
+        $RelativeNativeRoot = [IO.Path]::GetRelativePath(
+            $RepositoryRoot, $NativeRoot).Replace('\', '/')
+        $IndexRows = @(git -C $RepositoryRoot ls-files -s -- "$RelativeNativeRoot/*.sh")
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Git could not enumerate Linux verification owner modes.'
+        }
+        foreach ($IndexRow in $IndexRows) {
+            if ($IndexRow -notmatch '^([0-9]{6}) [0-9a-f]+ ([0-3])\t(.+)$') {
+                throw "Malformed Linux verification index entry: $IndexRow"
+            }
+            $IndexMode = $Matches[1]
+            $IndexStage = $Matches[2]
+            $IndexPath = $Matches[3]
+            # A conflict or duplicate stage cannot prove one executable owner.
+            if ($LinuxIndexModes.ContainsKey($IndexPath)) {
+                $LinuxIndexModes[$IndexPath] = ''
+            } else {
+                $LinuxIndexModes.Add($IndexPath, $(if ($IndexStage -eq '0') {
+                    $IndexMode
+                } else { '' }))
+            }
+        }
+    }
 
     foreach ($Line in $Lines | Select-Object -Skip 1) {
         if ([string]::IsNullOrWhiteSpace($Line)) {
@@ -231,9 +257,8 @@ function Read-VerificationRegistry {
             $RelativeCommand = [IO.Path]::GetRelativePath(
                 $RepositoryRoot,
                 $CommandPath).Replace('\', '/')
-            $IndexEntry = @(git -C $RepositoryRoot ls-files -s -- $RelativeCommand)
-            if ($LASTEXITCODE -ne 0 -or $IndexEntry.Count -ne 1 -or
-                $IndexEntry[0] -notmatch '^100755 ') {
+            if (!$LinuxIndexModes.ContainsKey($RelativeCommand) -or
+                $LinuxIndexModes[$RelativeCommand] -cne '100755') {
                 throw "Linux verification owner is not executable in Git: $RelativeCommand"
             }
         }

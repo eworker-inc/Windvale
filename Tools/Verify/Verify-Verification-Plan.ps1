@@ -5186,6 +5186,74 @@ if ($LASTEXITCODE -ne 0 -or
 
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
 $PowerShellTestRunnerSource = Get-Content -Raw -LiteralPath $PowerShellTestRunner
+# Exercise the production Linux registry reader on every guard host. The Git
+# boundary is injected; owner files and duration/owner registries remain real.
+& {
+    $ReaderTokens = $null
+    $ReaderErrors = $null
+    $ReaderAst = [Management.Automation.Language.Parser]::ParseInput(
+        $PowerShellTestRunnerSource, [ref]$ReaderTokens, [ref]$ReaderErrors)
+    if ($ReaderErrors.Count -ne 0) { throw 'The owner coordinator did not parse.' }
+    $ReaderFunctions = @($ReaderAst.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+        $Node.Name -in @('Read-StrictTextLines', 'Read-DurationProfiles', 'Read-VerificationRegistry')
+    }, $false))
+    if ($ReaderFunctions.Count -ne 3) { throw 'The production registry readers are missing.' }
+    foreach ($ReaderFunction in $ReaderFunctions) {
+        . ([scriptblock]::Create($ReaderFunction.Extent.Text))
+    }
+    $ReaderProfiles = Read-DurationProfiles $VerificationDurationPlan
+    $ProbePath = 'Tools/Native/Test-Verification-Owner-Stream.sh'
+    $ProbeRows = @($LinuxIndexRows | Where-Object { $_.EndsWith("`t$ProbePath") })
+    if ($ProbeRows.Count -ne 1) { throw 'The executable-mode probe lacks its real index row.' }
+    $ProbeRow = $ProbeRows[0]
+    $OtherRows = @($LinuxIndexRows | Where-Object { !$_.EndsWith("`t$ProbePath") })
+    $PriorExitCode = $global:LASTEXITCODE
+    $IndexProbe = @{ Calls = 0; Rows = @(); ExitCode = 0 }
+    function git {
+        $IndexProbe.Calls++
+        # PowerShell consumes the argument terminator when invoking this function.
+        if (($args -join '|') -cne "-C|$RepositoryRoot|ls-files|-s|Tools/Native/*.sh") {
+            throw "The coordinator did not request one complete native shell index: $($args -join '|')"
+        }
+        $global:LASTEXITCODE = $IndexProbe.ExitCode
+        $IndexProbe.Rows
+    }
+    try {
+        foreach ($Probe in @(
+            @{ Name = 'executable'; Rows = @($LinuxIndexRows); Error = $null },
+            @{ Name = 'missing'; Rows = $OtherRows; Error = 'not executable in Git' },
+            @{ Name = 'non-executable'; Rows = $OtherRows + @($ProbeRow -replace '^100755 ', '100644 '); Error = 'not executable in Git' },
+            @{ Name = 'index symlink'; Rows = $OtherRows + @($ProbeRow -replace '^100755 ', '120000 '); Error = 'not executable in Git' },
+            @{ Name = 'single conflict stage'; Rows = $OtherRows + @($ProbeRow -replace ' 0\t', " 2`t"); Error = 'not executable in Git' },
+            @{ Name = 'duplicate stages'; Rows = $LinuxIndexRows + @($ProbeRow -replace ' 0\t', " 3`t"); Error = 'not executable in Git' },
+            @{ Name = 'malformed index'; Rows = @('malformed'); Error = 'Malformed Linux verification index entry' },
+            @{ Name = 'Git failure'; Rows = @($LinuxIndexRows); ExitCode = 1; Error = 'Git could not enumerate' }
+        )) {
+            $IndexProbe.Calls = 0
+            $IndexProbe.Rows = $Probe.Rows
+            $IndexProbe.ExitCode = if ($Probe.ContainsKey('ExitCode')) { $Probe.ExitCode } else { 0 }
+            $Failure = $null
+            try {
+                $Rows = @(Read-VerificationRegistry -RegistryPath $VerificationOwnerPlan `
+                    -RepositoryRoot $RepositoryRoot -NativeRoot (Join-Path $RepositoryRoot 'Tools/Native') `
+                    -HostExtension '.sh' -Profiles $ReaderProfiles)
+            } catch { $Failure = $_.Exception.Message }
+            if ($IndexProbe.Calls -ne 1 -or
+                ($null -eq $Probe.Error -and ($null -ne $Failure -or $Rows.Count -ne $VerificationOwnerNames.Count)) -or
+                ($null -ne $Probe.Error -and ($null -eq $Failure -or !$Failure.Contains($Probe.Error)))) {
+                throw "Linux registry probe '$($Probe.Name)' differs: calls=$($IndexProbe.Calls), failure=$Failure"
+            }
+        }
+        $IndexProbe.Calls = 0
+        $WindowsRows = @(Read-VerificationRegistry -RegistryPath $VerificationOwnerPlan `
+            -RepositoryRoot $RepositoryRoot -NativeRoot (Join-Path $RepositoryRoot 'Tools/Native') `
+            -HostExtension '.cmd' -Profiles $ReaderProfiles)
+        if ($IndexProbe.Calls -ne 0 -or $WindowsRows.Count -ne $VerificationOwnerNames.Count) {
+            throw 'Windows registry reading unexpectedly requested Linux index modes.'
+        }
+    } finally { $global:LASTEXITCODE = $PriorExitCode }
+}
 foreach ($Fragment in @(
     'Get-Command node -All -CommandType Application',
     '$Node = $NodeCandidates[0]',

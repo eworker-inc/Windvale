@@ -41,6 +41,17 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The owner coordinator now reads Linux executable modes with one Git index
+request instead of one request per owner. A controlled Windows-hosted run of
+the production Linux registry reader fell from 5,514 to 168 ms and returned
+identical rows for all 126 owners. The existing routing guard now checks missing,
+non-executable, linked-mode, conflicted, malformed and failed index responses.
+The selected Windows changed-file plan passed in 59.3 seconds, including all
+six stream-owner cases. This is not a Linux host timing or a whole-plan speedup:
+Debian currently has no PowerShell executable. The
+[registry evidence](../Evidence/2026-09-06-Verification-Registry-Index-Batching.json)
+records that remaining measurement and the unchanged broad performance targets.
+
 Canonical packaging now uses the rebuilt current-source hashing tools. In one
 paired-host 10.6 MB image comparison, packaging fell from 67.8 to 52.9 seconds
 on Windows and from 68.9 to 50.8 seconds on Debian, with identical output bytes.
