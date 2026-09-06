@@ -25,6 +25,7 @@ import {
     Prepareˉhostedˉapplicationˉcontext,
     Readˉboundedˉhostedˉfile,
 } from './Native-Hosted-Application-Cache-Core.mjs';
+import { Validateˉimageˉmanifest } from './Build-Cached-Segmented-Project.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const SCRIPT_DIRECTORY = path.dirname(SCRIPT_PATH);
@@ -35,6 +36,7 @@ const PRODUCT_LEAF = WINDOWS ? 'Product.exe' : 'Product.elf';
 const OUTPUT_EXTENSION = WINDOWS ? '.exe' : '.elf';
 const RECORD_ENDING = WINDOWS ? '\r\n' : '\n';
 const CACHE_NAMESPACE = 'segmented-hosted-wvb-v1';
+const IMAGE_CACHE_NAMESPACE = 'segmented-hosted-image-v1';
 const MAXIMUM_PRODUCT_BYTES = 67_108_864;
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 const MAXIMUM_REPORTED_DIAGNOSTIC_CHARACTERS = 4_096;
@@ -47,6 +49,7 @@ const VERIFICATION_TEMPORARY_PREFIX = 'windvale-segmented-hosted-verification-';
 const LOADED_PRODUCER_RELATIVES = [
     'Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs',
     'Tools/Native/Native-Hosted-Application-Cache-Core.mjs',
+    'Tools/Native/Build-Cached-Segmented-Project.mjs',
 ];
 const LOADED_PRODUCER_SNAPSHOTS = await Promise.all(
     LOADED_PRODUCER_RELATIVES.map(async relative => ({
@@ -596,27 +599,176 @@ async function Completeˉverifyˉinput(snapshot) {
     await Requireˉinputˉunchanged(snapshot);
 }
 
-async function Buildˉcandidate(temporary, profile, input, deadline) {
-    const stagedInput = path.join(temporary, 'Input.wvb');
-    await writeFile(stagedInput, input.payload, { flag: 'wx' });
-    const productPath = path.join(temporary, PRODUCT_LEAF);
-    await Runˉboundedˉsegmentedˉhostedˉproducer(
-        Nativeˉwrapper('Package-Segmented-Compiler-Wvb'),
-        [profile, stagedInput, productPath],
-        'cold-build',
-        deadline,
+async function Readˉsegmentedˉimage(directory) {
+    await Requireˉcanonicalˉdirectory(directory, 'segmented image directory');
+    const manifestPath = path.join(directory, 'Image.wvli');
+    const manifestBytes = await Readˉboundedˉhostedˉfile(
+        manifestPath, 'segmented image manifest', 220,
     );
-    const stagedBytes = await Readˉboundedˉhostedˉfile(
-        stagedInput,
-        'segmented hosted cold-build input copy',
-        MAXIMUM_HOSTED_INPUT_BYTES,
-    );
-    if (!stagedBytes.equals(input.payload)) {
-        Reject('The segmented hosted cold-build input copy changed.');
+    if (manifestBytes.length < 40) Reject('The segmented image manifest is truncated.');
+    const count = manifestBytes.readUInt32LE(20);
+    if (count < 1 || count > 16) Reject('The segmented image fragment count differs.');
+    if (manifestBytes.length !== 28 + count * 12) {
+        Reject('The segmented image manifest length differs.');
     }
-    await unlink(stagedInput);
-    if (!WINDOWS) {
-        await chmod(productPath, 0o755);
+    const entryOffset = manifestBytes.readUInt32LE(16);
+    Validateˉimageˉmanifest(manifestBytes, entryOffset,
+        Array.from({ length: count }, (_, index) => ({
+            bytes: manifestBytes.readUInt32LE(36 + index * 12),
+        })));
+    const fragments = [];
+    const fragmentPaths = [];
+    for (let index = 0; index < count; index += 1) {
+        const fragmentPath = path.join(directory, 'Image.chunk-' + index);
+        const bytes = await Readˉboundedˉhostedˉfile(
+            fragmentPath, 'segmented image fragment', 4_194_304,
+        );
+        fragments.push(Productˉmeasurement(bytes));
+        fragmentPaths.push(fragmentPath);
+    }
+    Validateˉimageˉmanifest(manifestBytes, entryOffset, fragments);
+    return { entryOffset, fragmentPaths, fragments, manifestPath,
+        manifest: Productˉmeasurement(manifestBytes) };
+}
+
+function Imageˉrecord(key, input, image) {
+    return Buffer.from(JSON.stringify({
+        format: 'windvale-segmented-image-checkpoint-1', key, host: HOST_FAMILY,
+        inputBytes: input.bytes, inputSha256: input.sha256,
+        entryOffset: image.entryOffset, manifest: image.manifest,
+        fragments: image.fragments,
+    }) + '\n', 'ascii');
+}
+
+export async function Validateˉsegmentedˉimageˉcheckpoint(directory, key, input) {
+    const image = await Readˉsegmentedˉimage(directory);
+    const entries = (await readdir(directory)).sort();
+    const expected = ['Checkpoint.txt', 'Image.wvli',
+        ...image.fragmentPaths.map(candidate => path.basename(candidate))].sort();
+    if (entries.length !== expected.length ||
+        entries.some((entry, index) => entry !== expected[index])) {
+        Reject('The segmented image checkpoint has unexpected entries.');
+    }
+    const record = await Readˉboundedˉhostedˉfile(
+        path.join(directory, 'Checkpoint.txt'), 'segmented image checkpoint', 4_096,
+    );
+    if (!record.equals(Imageˉrecord(key, input, image))) {
+        Reject('The segmented image checkpoint identity differs.');
+    }
+    return image;
+}
+
+export async function Acquireˉsegmentedˉimageˉcheckpoint(
+    family, key, input, producer, admit,
+) {
+    if (!/^[0-9a-f]{64}$/u.test(key) ||
+        typeof producer !== 'function' || typeof admit !== 'function') {
+        Reject('The segmented image checkpoint request is invalid.');
+    }
+    await Requireˉcanonicalˉdirectory(family, 'segmented image checkpoint family');
+    const directory = path.join(family, key);
+    const existing = await lstat(directory).catch(error => {
+        if (error?.code === 'ENOENT') return null;
+        throw error;
+    });
+    if (existing !== null) {
+        const image = await Validateˉsegmentedˉimageˉcheckpoint(directory, key, input);
+        await Requireˉinputˉunchanged(input);
+        await admit();
+        return { ...image, status: 'Hit' };
+    }
+    const temporary = path.join(family,
+        '.new-' + key + '-' + process.pid + '-' + randomBytes(16).toString('hex'));
+    await mkdir(temporary);
+    let status = 'Created';
+    try {
+        await producer(temporary);
+        const image = await Readˉsegmentedˉimage(temporary);
+        await Requireˉinputˉunchanged(input);
+        await writeFile(path.join(temporary, 'Checkpoint.txt'),
+            Imageˉrecord(key, input, image), { flag: 'wx' });
+        await Validateˉsegmentedˉimageˉcheckpoint(temporary, key, input);
+        await admit();
+        try {
+            await rename(temporary, directory);
+        } catch (error) {
+            if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES'].includes(error?.code)) throw error;
+            status = 'Hit';
+        }
+        return { ...await Validateˉsegmentedˉimageˉcheckpoint(directory, key, input), status };
+    } finally {
+        await Removeˉtemporaryˉcheckpoint(family, temporary);
+    }
+}
+
+async function Buildˉimage(temporary, input, deadline) {
+    const temporaryRoot = await realpath(os.tmpdir());
+    const work = await realpath(await mkdtemp(
+        path.join(temporaryRoot, VERIFICATION_TEMPORARY_PREFIX)));
+    try {
+        const stagedInput = path.join(work, 'Input.wvb');
+        await writeFile(stagedInput, input.payload, { flag: 'wx' });
+        const objects = path.join(work, 'Objects');
+        const linked = path.join(work, 'Linked');
+        for (const [leaf, arguments_] of [
+            ['Stage-Compiler-Wvb', [stagedInput, objects, objects + '.wvop']],
+            ['Link-Staged-Compiler-Wvo', [objects, objects + '.wvop', linked, linked + '.wvli']],
+            ['Transport-Compiler-Image', [linked, linked + '.wvli',
+                path.join(temporary, 'Image'), path.join(temporary, 'Image.wvli')]],
+        ]) {
+            await Runˉboundedˉsegmentedˉhostedˉproducer(
+                Nativeˉwrapper(leaf), arguments_, leaf, deadline,
+            );
+        }
+        const stagedBytes = await Readˉboundedˉhostedˉfile(
+            stagedInput, 'segmented image input copy', MAXIMUM_HOSTED_INPUT_BYTES,
+        );
+        if (!stagedBytes.equals(input.payload)) Reject('The segmented image input copy changed.');
+    } finally {
+        await Removeˉverificationˉtemporary(temporaryRoot, work);
+    }
+}
+
+async function Buildˉcandidate(temporary, profile, input, deadline, imageKey) {
+    const image = await Acquireˉsegmentedˉimageˉcheckpoint(
+        await Getˉcheckpointˉfamily(IMAGE_CACHE_NAMESPACE), imageKey, input,
+        candidate => Buildˉimage(candidate, input, deadline),
+        () => Requireˉproducersˉunchanged('image', input, imageKey),
+    );
+    process.stdout.write('segmented hosted image cache status=' + image.status + '\n');
+    const temporaryRoot = await realpath(os.tmpdir());
+    const work = await realpath(await mkdtemp(
+        path.join(temporaryRoot, VERIFICATION_TEMPORARY_PREFIX)));
+    try {
+        const stagedInput = path.join(work, 'Input.wvb');
+        await writeFile(stagedInput, input.payload, { flag: 'wx' });
+        const copiedPaths = [path.join(work, 'Image.wvli'),
+            ...image.fragmentPaths.map(candidate => path.join(work, path.basename(candidate)))];
+        for (const [index, source] of [image.manifestPath, ...image.fragmentPaths].entries()) {
+            await copyFile(source, copiedPaths[index], FS_CONSTANTS.COPYFILE_EXCL);
+        }
+        const copied = await Readˉsegmentedˉimage(work);
+        if (!Imageˉrecord(imageKey, input, copied).equals(Imageˉrecord(imageKey, input, image))) {
+            Reject('The materialized segmented image differs.');
+        }
+        const productPath = path.join(temporary, PRODUCT_LEAF);
+        await Runˉboundedˉsegmentedˉhostedˉproducer(
+            Nativeˉwrapper('Package-Hosted-Wvb'),
+            ['image', profile, stagedInput, path.join(work, 'Image'),
+                String(image.fragments.length), String(image.entryOffset), productPath, TARGET],
+            'container-build', deadline,
+        );
+        const stagedBytes = await Readˉboundedˉhostedˉfile(
+            stagedInput, 'segmented hosted cold-build input copy', MAXIMUM_HOSTED_INPUT_BYTES,
+        );
+        if (!stagedBytes.equals(input.payload) ||
+            !Imageˉrecord(imageKey, input, await Readˉsegmentedˉimage(work))
+                .equals(Imageˉrecord(imageKey, input, image))) {
+            Reject('The segmented hosted cold-build input copy changed.');
+        }
+        if (!WINDOWS) await chmod(productPath, 0o755);
+    } finally {
+        await Removeˉverificationˉtemporary(temporaryRoot, work);
     }
 }
 
@@ -715,13 +867,12 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
     Addˉhostedˉkeyˉfield(
         hash,
         'format',
-        Buffer.from('windvale-native-segmented-hosted-wvb-cache-key 1\n', 'ascii'),
+        Buffer.from('windvale-native-segmented-hosted-wvb-cache-key 2\n', 'ascii'),
     );
     for (const [label, value] of [
         ['namespace', CACHE_NAMESPACE],
         ['host', HOST_FAMILY],
         ['target', TARGET],
-        ['profile', profile],
     ]) {
         Addˉhostedˉkeyˉfield(hash, label, Buffer.from(value, 'ascii'));
     }
@@ -755,20 +906,28 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
             await Readˉproducer(relative),
         );
     }
+    const imageHash = hash.copy();
+    Addˉhostedˉkeyˉfield(imageHash, 'profile', Buffer.from('image', 'ascii'));
     for (const field of hostedContext.producerFields) {
         Addˉhostedˉkeyˉfield(hash, field.label, field.bytes);
     }
-    return hash.digest('hex');
+    Addˉhostedˉkeyˉfield(hash, 'profile', Buffer.from(profile, 'ascii'));
+    return { key: hash.digest('hex'), imageKey: imageHash.digest('hex') };
 }
 
-async function Getˉcurrentˉcacheˉkey(profile, input) {
+async function Getˉcurrentˉcacheˉkey(profile, input, includeImage = false) {
+    if (profile === 'image') {
+        const keys = await Getˉcacheˉkey(profile, input, { producerFields: [] });
+        return keys.imageKey;
+    }
     const packager = Nativeˉwrapper('Package-Hosted-Wvb');
     const hostedContext = await Prepareˉhostedˉapplicationˉcontext(
         TARGET,
         packager,
     );
     try {
-        return await Getˉcacheˉkey(profile, input, hostedContext);
+        const keys = await Getˉcacheˉkey(profile, input, hostedContext);
+        return includeImage ? keys : keys.key;
     } finally {
         hostedContext.producerFields.length = 0;
     }
@@ -782,7 +941,7 @@ async function Requireˉproducersˉunchanged(profile, input, expectedKey) {
     }
 }
 
-async function Getˉcheckpointˉfamily() {
+async function Getˉcheckpointˉfamily(namespace = CACHE_NAMESPACE) {
     if (WINDOWS && process.env.WINDVALE_NATIVE_CACHE_ROOT === undefined &&
         process.env.LOCALAPPDATA === undefined) {
         Reject('The native segmented hosted cache root is unavailable.');
@@ -801,7 +960,7 @@ async function Getˉcheckpointˉfamily() {
         'segmented hosted cache root',
     );
     const productRoot = await Ensureˉcanonicalˉdirectory(
-        path.join(root, CACHE_NAMESPACE),
+        path.join(root, namespace),
         'segmented hosted cache product root',
     );
     return Ensureˉcanonicalˉdirectory(
@@ -821,7 +980,7 @@ async function Main() {
     const profile = process.argv[2];
     const input = await Requireˉinputˉsnapshot(process.argv[3]);
     const outputPath = await Requireˉoutputˉpath(process.argv[4]);
-    const key = await Getˉcurrentˉcacheˉkey(profile, input);
+    const { key, imageKey } = await Getˉcurrentˉcacheˉkey(profile, input, true);
     await Requireˉinputˉunchanged(input);
     const checkpointFamily = await Getˉcheckpointˉfamily();
     const checkpointDirectory = path.join(checkpointFamily, key);
@@ -845,6 +1004,7 @@ async function Main() {
                 profile,
                 input,
                 Date.now() + COLD_DEADLINE_MILLISECONDS,
+                imageKey,
             ),
             () => Requireˉproducersˉunchanged(profile, input, key),
         );

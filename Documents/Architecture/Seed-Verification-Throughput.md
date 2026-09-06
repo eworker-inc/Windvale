@@ -145,8 +145,21 @@ revalidate the manifest, output size, digest, and required structural admission.
 
 Checkpoints cache immutable products, not passing behavior. The owner reruns the
 execution, recovery, denial, mutation, or other behavior affected by the edit.
-Qualification ignores development checkpoint state and reconstructs its evidence
-cold.
+Qualification retains explicitly required independent constructions; a
+checkpoint hit alone proves neither behavior nor reproducibility.
+
+Segmented hosted packaging stores a profile-independent native image separately
+from each profile's final application. The private `segmented-hosted-image-v1`
+checkpoint binds the WVB bytes, host, complete producer graph, and validator
+identity. It retains the existing WVLI manifest and at most sixteen 4 MiB
+fragments; manifest bounds are checked before fragment reads. Producer and input
+changes reject publication, and every hit rechecks identities and image
+structure. Profiles 1 through 8 may share that image while keeping separate
+container keys. Packaging copies the image into scratch space because service
+construction appends chunks beside it. Independent reconstruction remains the
+uncached wrapper path. See the
+[image-reuse evidence](../Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json)
+for exact package comparisons and the limits of the measured workload.
 
 Implemented database-path checkpoints currently cover:
 

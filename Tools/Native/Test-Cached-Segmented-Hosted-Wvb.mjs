@@ -16,6 +16,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+    Acquireˉsegmentedˉimageˉcheckpoint,
+    Validateˉsegmentedˉimageˉcheckpoint,
     Createˉsegmentedˉhostedˉcheckpoint,
     Materializeˉsegmentedˉhostedˉcheckpoint,
     Requireˉloadedˉsegmentedˉhostedˉproducersˉunchanged,
@@ -49,6 +51,7 @@ try {
         sha256: createHash('sha256').update(inputBytes).digest('hex'),
     };
     const profile = '5';
+    await Checkˉimageˉreuse(checkpointFamily, input);
 
     const loadedProducerSnapshot = [{
         bytes: Buffer.from('loaded producer A\n', 'ascii'),
@@ -293,12 +296,12 @@ try {
     }
 
     console.log(
-        'segmented hosted WVB cache test cases=10 status=Passed ' +
+        'segmented hosted WVB cache test cases=11 status=Passed ' +
         'deadline-tree-termination=Passed output-bound-termination=Passed ' +
         'termination-failure-settle=Passed ' +
         'forced-failure-cleanup=Passed publication-cleanup=Passed ' +
         'prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed ' +
-        'race-cleanup=Passed executable-materialization=Passed',
+        'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed',
     );
 } finally {
     const resolved = path.resolve(testRoot);
@@ -495,4 +498,66 @@ function Sameˉpath(left, right) {
 
 function Reject(message) {
     throw new Error(message);
+}
+
+async function Checkˉimageˉreuse(family, input) {
+    const key = 'a'.repeat(64);
+    let constructions = 0;
+    let admissions = 0;
+    const produce = async directory => {
+        constructions += 1;
+        const manifest = Buffer.alloc(40);
+        manifest.write('WVLI', 'ascii');
+        for (const [offset, value] of [[4, 1], [8, 40], [12, 3], [16, 0],
+            [20, 1], [24, 4_194_304], [28, 0], [32, 0], [36, 3]]) {
+            manifest.writeUInt32LE(value, offset);
+        }
+        await writeFile(path.join(directory, 'Image.wvli'), manifest);
+        await writeFile(path.join(directory, 'Image.chunk-0'), Buffer.from([1, 2, 3]));
+    };
+    const acquire = () => Acquireˉsegmentedˉimageˉcheckpoint(
+        family, key, input, produce, async () => { admissions += 1; },
+    );
+    const first = await acquire();
+    const second = await acquire();
+    if (first.status !== 'Created' || second.status !== 'Hit' ||
+        constructions !== 1 || admissions !== 2 || second.entryOffset !== 0) {
+        Reject('The segmented image was not shared across consumers.');
+    }
+    const directory = path.join(family, key);
+    const manifestPath = path.join(directory, 'Image.wvli');
+    const original = await readFile(manifestPath);
+    const malformed = [Buffer.from('WVLI'), Buffer.alloc(221),
+        ...[[4, 2], [8, 39], [12, 0], [16, 3], [20, 0], [20, 17],
+            [24, 0], [28, 1], [32, 1], [36, 4]].map(([offset, value]) => {
+                const bytes = Buffer.from(original); bytes.writeUInt32LE(value, offset); return bytes;
+            })];
+    for (const bytes of malformed) {
+        await writeFile(manifestPath, bytes);
+        await Expectˉrejection(acquire(), '');
+    }
+    await writeFile(manifestPath, original);
+    await writeFile(path.join(directory, 'Image.chunk-0'), Buffer.from([1, 2, 4]));
+    await Expectˉrejection(acquire(), 'identity differs');
+    await writeFile(path.join(directory, 'Image.chunk-0'), Buffer.from([1, 2, 3]));
+    await Expectˉrejection(Validateˉsegmentedˉimageˉcheckpoint(directory, 'b'.repeat(64), input), 'identity differs');
+    await Expectˉrejection(Validateˉsegmentedˉimageˉcheckpoint(directory, key,
+        { ...input, sha256: 'b'.repeat(64) }), 'identity differs');
+    await writeFile(path.join(directory, 'Extra'), 'unexpected');
+    await Expectˉrejection(acquire(), 'unexpected entries');
+    await Expectˉrejection(Acquireˉsegmentedˉimageˉcheckpoint(
+        family, 'c'.repeat(64), input, produce,
+        async () => { throw new Error('image admission rejected'); },
+    ), 'image admission rejected');
+    if (await lstat(path.join(family, 'c'.repeat(64))).catch(() => null) !== null) {
+        Reject('A rejected image checkpoint was published.');
+    }
+    const race = await Promise.all([1, 2].map(() => Acquireˉsegmentedˉimageˉcheckpoint(
+        family, 'd'.repeat(64), input, produce, async () => {},
+    )));
+    if (race.filter(result => result.status === 'Created').length !== 1 ||
+        race.filter(result => result.status === 'Hit').length !== 1) {
+        Reject('The segmented image publication race differs.');
+    }
+    await Requireˉnoˉtemporaryˉcheckpoints(family);
 }

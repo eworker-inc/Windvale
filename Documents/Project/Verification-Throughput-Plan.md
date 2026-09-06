@@ -33,6 +33,17 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Segmented hosted packaging now shares the staged, linked, and transported
+native image across application profiles, while retaining a separate container
+and producer check for each profile. On the 82,115-byte enum-request workload,
+the two-profile cached run changed from 27,260 to 23,684 ms on Windows and from
+34,749 to 31,628 ms on Debian. Both profiles matched uncached package bytes and
+passed native behavior checks. The
+[shared-image evidence](../Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json)
+also records cases where cache overhead exceeds saved construction. Large
+compiler packaging and complete qualification still need measurements; this
+change does not establish the overall feedback targets.
+
 The routing guard now reads executable modes once for all 126 owners, shares
 immutable planner initialization across the eleven development dependency
 closures, and checks filesystem existence only for relevant retirement inputs.
