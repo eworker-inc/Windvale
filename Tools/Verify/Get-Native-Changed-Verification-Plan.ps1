@@ -1457,7 +1457,6 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Build-Cached-Split-Project-Wvb',
-        'Current-Split-Compiler-Cache-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development'
     )) {
@@ -1663,7 +1662,7 @@ function Add-Native-Tool-Suite {
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator'
         )
-    } elseif ($Stem -eq 'Build-Current-Split-Project-Wvb') {
+    } elseif ($Stem -in @('Build-Current-Split-Project-Wvb', 'Current-Split-Compiler-Cache-Core')) {
         Add-Suite @(
             'compiler-split-development',
             'language-1-authenticated-foreign-binding'
@@ -2315,6 +2314,8 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-parallel-task-scheduler'
     } elseif ($Path -eq 'Tools/Native/Development-Command-Core.mjs') {
+        Add-Suite 'compiler-split-development'
+        Add-Suite 'language-1-authenticated-foreign-binding'
         Add-Suite 'language-1-front-door'
         Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path -in @(

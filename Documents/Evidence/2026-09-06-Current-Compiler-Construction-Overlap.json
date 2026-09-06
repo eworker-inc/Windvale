@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-current-compiler-construction-overlap",
+  "date": "2026-09-06",
+  "subject": "Overlap independent current compiler construction branches",
+  "claim": "Current compiler preparation completes Profile 8 Analyzer packaging before running Profile 7 Analyzer packaging alongside Emitter construction. All twelve operations and both profile limits remain. A pair-cache miss using preserved lower-level products and all 27 foreign-binding cases passed in 8643 ms, with 4463 ms in the build phase. The compiler executables, identities and both fixture WVBs match the preceding implementation exactly. The expanded 28-case cache sentinel passes within the existing four-group development owner on Windows and Debian.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on ad21c390; exact compiler orchestration inputs are bound in the local integration record and below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "New compiler-pair publication using existing native, package and project caches; all 27 isolated foreign-binding executions",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Current-Compiler-Overlap.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 8643,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+          "size": 10331,
+          "sha256": "af177f7e76898db949236d110c0f3847820fb9f98600f6d51270a01227b6a92b"
+        },
+        {
+          "path": "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+          "size": 15235,
+          "sha256": "b4b5a2dae3627a67930e9ee5a4c65c956e5c93e9eb51a9ca0ef1202347f57f28"
+        },
+        {
+          "path": "Tools/Native/Development-Command-Core.mjs",
+          "size": 3714,
+          "sha256": "d7e1a4652b27dd52d2962d3fc202e91456006e5fd930748f25661ac70a5dc9d8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Current-Compiler-Overlap-Windows.json",
+          "size": 13193,
+          "sha256": "cc03ea52d8dbc56803561df6fb725a05866bce5e525aceac821d5cf25467c74d"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Current-Compiler-Overlap-Summary.json",
+          "size": 1216,
+          "sha256": "eb145379adf3912f134482f17041eef4f566f3115659bea06d0eb1f8bb54f782"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Existing four-group compiler split owner including 28-case cache and construction sentinel",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian Linux x64, Node 20.19.2",
+      "target": "Existing four-group compiler split owner including 28-case cache and construction sentinel",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "timeout --kill-after=2s 30s node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "No new cold compiler construction or full qualification was executed. The previous fully cold foreign-binding baseline was 3568735 ms; its one-shot 60-minute approval was already consumed. The new scheduling has no measured cold speedup claim.",
+    "The new pair-cache miss reused all lower-level construction products. Its 8643 ms is not a cold timing or directly comparable to the preceding 4492 ms warm pair hit.",
+    "The Profile 7 package and Emitter chain now overlap, bounded to two branches. Their full cold peak working set and elapsed time remain unmeasured. Existing per-process profile limits are unchanged.",
+    "Branch-order, failure-joining and publication tests use bounded producer callbacks on both hosts. Native integration was executed on Windows only; Debian current compiler construction remains unavailable within the normal local verification budget.",
+    "Raw Artifacts diagnostic records are ignored local files; the durable record binds their identities."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Documents/Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json"
+  ]
+}

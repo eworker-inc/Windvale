@@ -33,6 +33,16 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Current compiler preparation now overlaps two independent branches after
+constructing the shared native image: Profile 7 Analyzer packaging and Emitter
+construction. Both profiles and all twelve operations remain. The existing
+cache sentinel now covers branch ordering, joined failures and publication on
+Windows and Debian. All 27 foreign-binding cases passed in 8,643 ms on Windows
+while republishing the pair from preserved lower-level products; compiler and
+fixture bytes are unchanged. This is not a new cold timing. The
+[construction evidence](../Evidence/2026-09-06-Current-Compiler-Construction-Overlap.json)
+records the distinction and the pending cold time/memory measurement.
+
 The routing guard now shares immutable inventory initialization across its
 focused-selection checks and the full native-routing table. The final Windows
 measurement passed in 27.8 seconds, versus about 38.4 seconds before, preserving
@@ -46,7 +56,7 @@ The complete 27-case foreign-binding owner now passes warm in 4,492 ms on
 Windows, versus 7,324 ms for the prior coordinator with equally warm lower-level
 caches. The current compiler pair is a separate validated product, so a hit
 skips all twelve pinned/intermediate preparation steps and builds only the two
-requested projects. Its 23-case cache sentinel passes on Windows and Debian.
+requested projects. Its 28-case cache sentinel passes on Windows and Debian.
 The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
 records unchanged WVB identities and the limits of this comparison. The approved
 fully cold baseline still took 59.5 minutes; only 1,735 ms was behavior execution.

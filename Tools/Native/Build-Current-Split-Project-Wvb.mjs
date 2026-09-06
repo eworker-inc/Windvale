@@ -1,7 +1,6 @@
-import { spawn } from 'node:child_process';
+import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
-    copyFileSync,
     lstatSync,
     mkdtempSync,
     readFileSync,
@@ -13,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
     Acquireˉcurrentˉsplitˉcompiler,
+    Constructˉcurrentˉsplitˉcompiler,
     Getˉcurrentˉsplitˉcompilerˉfamily,
     Getˉcurrentˉsplitˉcompilerˉkey,
 } from './Current-Split-Compiler-Cache-Core.mjs';
@@ -93,18 +93,6 @@ const Work = mkdtempSync(path.join(
     'windvale-current-split-project-',
 ));
 const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
-const Pinnedˉanalyzer = path.join(Work, `Pinned-Analyzer${Suffix}`);
-const Pinnedˉemitter = path.join(Work, `Pinned-Emitter${Suffix}`);
-const Analyzerˉwvb = path.join(Work, 'Analyzer.wvb');
-const Analyzer = path.join(Work, `Analyzer${Suffix}`);
-const Analyzerˉidentity = path.join(Work, 'Analyzer.identity');
-const Checkpointˉanalyzer = path.join(Work, `Checkpoint-Analyzer${Suffix}`);
-const Checkpointˉanalyzerˉidentity = path.join(
-    Work, 'Checkpoint-Analyzer.identity',
-);
-const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
-const Emitter = path.join(Work, `Emitter${Suffix}`);
-const Emitterˉidentity = path.join(Work, 'Emitter.identity');
 let Step = 0;
 let Totalˉsteps = 12 + Targets.length;
 
@@ -113,64 +101,9 @@ try {
     const Compilerˉcheckpoint = await Acquireˉcurrentˉsplitˉcompiler(
         await Getˉcurrentˉsplitˉcompilerˉfamily(),
         Compilerˉkey,
-        async Candidate => {
-            await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-                '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
-            ]);
-            await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-                '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
-            ]);
-            const Pinnedˉanalyzerˉidentity = path.join(
-                Work, 'Pinned-Analyzer.identity',
-            );
-            const Pinnedˉemitterˉidentity = path.join(
-                Work, 'Pinned-Emitter.identity',
-            );
-            await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-                'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
-            ]);
-            await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-                'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
-            ]);
-            await Runˉnode('stage1-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-                Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
-                Analyzerˉwvb,
-                Pinnedˉanalyzer,
-                Pinnedˉanalyzerˉidentity,
-                Pinnedˉemitter,
-                Pinnedˉemitterˉidentity,
-            ]);
-            await Runˉnative('stage1-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-                '7', Analyzerˉwvb, Analyzer, '--development-cache',
-            ]);
-            await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-                'analyzer', Analyzer, Analyzerˉidentity,
-            ]);
-            await Runˉnative('stage1-checkpoint-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-                '8', Analyzerˉwvb, Checkpointˉanalyzer, '--development-cache',
-            ]);
-            await Runˉnode('stage1-checkpoint-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-                'analyzer', Checkpointˉanalyzer, Checkpointˉanalyzerˉidentity,
-            ]);
-            await Runˉnode('stage1-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-                Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
-                Emitterˉwvb,
-                Checkpointˉanalyzer,
-                Checkpointˉanalyzerˉidentity,
-                Pinnedˉemitter,
-                Pinnedˉemitterˉidentity,
-                '--symbol-checkpoint',
-            ]);
-            await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-                '8', Emitterˉwvb, Emitter, '--development-cache',
-            ]);
-            await Runˉnode('stage1-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-                'emitter', Emitter, Emitterˉidentity,
-            ]);
-            for (const Product of [Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity]) {
-                copyFileSync(Product, path.join(Candidate, path.basename(Product)));
-            }
-        },
+        Candidate => Constructˉcurrentˉsplitˉcompiler(
+            Work, Candidate, Runˉnative, Runˉnode,
+        ),
         async () => {
             if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
                 Reject('Current compiler construction inputs changed.');
@@ -233,18 +166,12 @@ try {
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
 
-function Projectˉpath(Name) {
-    return path.join(Repositoryˉroot, 'Projects', 'Tools', Name);
-}
-
 async function Runˉnative(Label, Name, Arguments) {
     const Extension = process.platform === 'win32' ? '.cmd' : '.sh';
     const Script = path.join(Scriptˉdirectory, `${Name}${Extension}`);
     Requireˉordinaryˉfile(Script, MAXIMUM_INPUT_BYTES, `${Name} script`);
     if (process.platform === 'win32') {
-        await Run(Label, process.env.ComSpec ?? 'cmd.exe', [
-            '/d', '/c', 'call', Script, ...Arguments,
-        ]);
+        await Run(Label, Script, Arguments);
         return;
     }
     await Run(Label, 'bash', [Script, ...Arguments]);
@@ -259,70 +186,22 @@ async function Runˉnode(Label, Name, Arguments) {
 }
 
 async function Run(Label, Command, Arguments) {
-    Step += 1;
+    const Currentˉstep = ++Step;
+    const Started = Date.now();
     process.stdout.write(
-        `START current split project step=${Step}/${Totalˉsteps} phase=${Label}\n`,
+        `START current split project step=${Currentˉstep}/${Totalˉsteps} phase=${Label}\n`,
     );
-    const Result = await new Promise((Resolve, Rejectˉpromise) => {
-        const Child = spawn(Command, Arguments, {
-            cwd: Repositoryˉroot,
-            windowsHide: true,
-            stdio: ['ignore', 'pipe', 'pipe'],
-        });
-        const Started = Date.now();
-        let Diagnosticˉbytes = 0;
-        let Stderr = Buffer.alloc(0);
-        let Timedˉout = false;
-        const Progress = setInterval(() => {
-            process.stdout.write(
-                `PROGRESS current split project step=${Step}/${Totalˉsteps} ` +
-                `phase=${Label} ` +
-                `elapsed-seconds=${Math.floor((Date.now() - Started) / 1_000)}\n`,
-            );
-        }, 30_000);
-        const Timeout = setTimeout(() => {
-            Timedˉout = true;
-            Child.kill();
-        }, TOOL_TIMEOUT_MILLISECONDS);
-        const Append = Chunk => {
-            Diagnosticˉbytes += Chunk.length;
-            if (Diagnosticˉbytes > MAXIMUM_DIAGNOSTIC_BYTES) {
-                Child.kill();
-                Rejectˉpromise(new Error(
-                    `${Label} diagnostics exceed 1 MiB.`,
-                ));
-                return false;
-            }
-            return true;
-        };
-        Child.stdout.on('data', Chunk => {
-            if (Append(Chunk)) process.stdout.write(Chunk);
-        });
-        Child.stderr.on('data', Chunk => {
-            if (Append(Chunk)) Stderr = Buffer.concat([Stderr, Chunk]);
-        });
-        Child.on('error', Error => {
-            clearInterval(Progress);
-            clearTimeout(Timeout);
-            Rejectˉpromise(Error);
-        });
-        Child.on('close', Status => {
-            clearInterval(Progress);
-            clearTimeout(Timeout);
-            Resolve({ status: Status, stderr: Stderr, timedOut: Timedˉout });
-        });
-    });
-    if (Result.timedOut || Result.status !== 0 || Result.stderr.length !== 0) {
-        if (Result.stderr.length !== 0) {
-            process.stderr.write(Result.stderr);
-        }
-        Reject(
-            `${Label} failed: status=${Result.status} ` +
-            `timeout=${Result.timedOut}.`,
-        );
+    const Result = await Runˉdevelopmentˉcommand(
+        Command, Arguments, Started + TOOL_TIMEOUT_MILLISECONDS,
+        true, MAXIMUM_DIAGNOSTIC_BYTES,
+    );
+    if (Result.Code !== 0 || Result.Error !== '') {
+        if (Result.Error !== '') process.stderr.write(Result.Error);
+        Reject(`${Label} failed: status=${Result.Code}.`);
     }
     process.stdout.write(
-        `PASS  current split project step=${Step}/${Totalˉsteps} phase=${Label}\n`,
+        `PASS  current split project step=${Currentˉstep}/${Totalˉsteps} phase=${Label} ` +
+        `elapsed-ms=${Date.now() - Started}\n`,
     );
 }
 

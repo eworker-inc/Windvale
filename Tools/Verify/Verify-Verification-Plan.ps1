@@ -110,7 +110,12 @@ $NativeCases = @(
     @{
         Name = 'Shared bounded development command lifecycle'
         Paths = @('Tools/Native/Development-Command-Core.mjs')
-        Suites = @('language-1-front-door', 'language-1-memory-budget-split-execution')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-authenticated-foreign-binding',
+            'language-1-memory-budget-split-execution',
+            'compiler-split-development'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2149,9 +2154,9 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'current compiler pair cache excludes downstream reconstruction'
+        Name = 'current compiler pair cache and construction preserve foreign-binding integration'
         Paths = @('Tools/Native/Current-Split-Compiler-Cache-Core.mjs')
-        Suites = @('compiler-split-development')
+        Suites = @('language-1-authenticated-foreign-binding', 'compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },

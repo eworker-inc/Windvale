@@ -144,13 +144,14 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, and executes a twenty-three-case cache sentinel. The sentinel
+complete counterpart, and executes a twenty-eight-case cache sentinel. The sentinel
 proves module ordering, identity publication, failure cleanup, replacement and
 quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
 Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
 after a later analysis failure, fail-closed WVSY corruption handling, finished
 product reuse after intermediate eviction, final product and analysis-key
-corruption rejection before construction, and producer-change invalidation. It
+corruption rejection before construction, producer-change invalidation, two-branch construction ordering, peer completion
+after either branch fails, aggregate errors, and rejection before publication. It
 deliberately does not rebuild three large compiler products already covered by
 the Language 1.0 front door.
 Compiler analysis/emission core changes select that broader semantic gate once;
@@ -163,15 +164,27 @@ integration gates unless this boundary changes them directly.
 `Build-Current-Split-Project-Wvb.mjs` acquires the current analyzer and emitter
 as one development construction product before building requested projects.
 A validated pair skips pinned compiler packaging and all intermediate compiler
-construction. A miss uses the existing twelve preparation steps and publishes
+construction. A miss uses twelve preparation steps and publishes
 only the completed pair; existing intermediate caches remain independently
 reusable. This does not make a genuinely cold compiler preparation fit the local
 development budget or turn cached construction into qualification evidence.
 
+The construction core first completes the pinned pair, current Analyzer WVB,
+and its Profile 8 package and identity. It then runs exactly two independent
+branches: Profile 7 Analyzer packaging/identity, and Emitter build/package/identity.
+The Profile 8 package publishes the shared native image before either branch
+starts, so parallel execution does not duplicate native staging. Profile-specific
+memory, instruction, file-count, and output limits remain unchanged. Both branches
+settle before final-product copying or temporary cleanup; failures prevent pair
+publication and retain each branch error. The coordinator uses the existing
+bounded process-tree command runner, with a ten-minute per-command timeout and
+a 1 MiB combined diagnostic bound. Owner-level total budgets remain separate.
+Each progress line retains its assigned step number during overlapping work.
+
 The `current-split-compiler-v1` family is separated by `win32-x64` or
 `linux-x64`. Its key binds the workspace marker, both compiler project manifests
 and their complete declared source closures, pinned analyzer/emitter WVB bytes,
-the coordinator and split-cache implementations, source ordering, producer
+the coordinator, command lifecycle and split-cache implementations, source ordering, producer
 identity writing, all segmented staging/linking/transport/admission producers,
 the hosted packager's complete producer context, and the Node version and
 executable identity. Requested test projects are separate downstream products.

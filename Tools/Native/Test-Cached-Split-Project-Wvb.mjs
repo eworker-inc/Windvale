@@ -1,5 +1,5 @@
 import Assert from 'node:assert/strict';
-import { Acquireˉcurrentˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
+import { Acquireˉcurrentˉsplitˉcompiler, Constructˉcurrentˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -528,8 +528,9 @@ try {
     }
     await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
     await Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot);
+    await Verifyˉcompilerˉconstructionˉbranches(Testˉroot);
     console.log(
-        'split project cache test cases=23 status=Passed current-compiler-pair=Verified ' +
+        'split project cache test cases=28 status=Passed current-compiler-pair=Verified ' +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -998,4 +999,114 @@ async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
     await rm(Extra);
     Assert.equal((await Acquireˉcurrentˉsplitˉcompiler(
         Family, Key, Neverˉproduce, Unchanged)).status, 'Hit');
+}
+
+async function Verifyˉcompilerˉconstructionˉbranches(Testˉroot) {
+    const Suffix = process.platform === 'win32' ? '.exe' : '.elf';
+    for (const Mode of ['complete', 'analyzer-failure', 'emitter-failure', 'both-failures', 'preparation-failure']) {
+        const Work = path.join(Testˉroot, Mode);
+        const Candidate = path.join(Work, 'Pair');
+        await mkdir(Candidate, { recursive: true });
+        const Calls = [];
+        const Completed = new Set();
+        let Active = 0;
+        let Maximumˉactive = 0;
+        let Arrivals = 0;
+        let Settled = false;
+        let Release;
+        let Announce;
+        const Ready = new Promise(Resolve => { Announce = Resolve; });
+        const Peer = new Promise(Resolve => { Release = Resolve; });
+        const Timer = setTimeout(() => { Announce(); Release(); }, 2_000);
+        const Run = async (Label, Name, Arguments) => {
+            Assert.equal(Calls.includes(Label), false);
+            Calls.push(Label);
+            Active += 1;
+            Maximumˉactive = Math.max(Active, Maximumˉactive);
+            try {
+                if (Label === 'stage1-analyzer-build' && Mode === 'preparation-failure') {
+                    throw new Error('preparation-failure');
+                }
+                const Branch = Label === 'stage1-analyzer-package' ? 'analyzer' :
+                    Label === 'stage1-emitter-build' ? 'emitter' : null;
+                if (Branch !== null) {
+                    Assert.ok(Completed.has('stage1-checkpoint-analyzer-identity'));
+                    Arrivals += 1;
+                    if (Arrivals === 2) Announce();
+                    if (Mode === Branch + '-failure' || Mode === 'both-failures') {
+                        throw new Error(Branch + '-failure');
+                    }
+                    await Peer;
+                }
+                if (Name === 'Package-Segmented-Compiler-Wvb') {
+                    Assert.equal(Arguments.length, 4);
+                    Assert.equal(Arguments[3], '--development-cache');
+                    Assert.equal(Arguments[0], Label === 'pinned-analyzer-package' ||
+                        Label === 'stage1-analyzer-package' ? '7' : '8');
+                    await readFile(Arguments[1]);
+                    await writeFile(Arguments[2], Buffer.from(Label), { mode: 0o755 });
+                } else if (Name === 'Write-Split-Compiler-Producer-Identity.mjs') {
+                    Assert.equal(Arguments.length, 3);
+                    await readFile(Arguments[1]);
+                    Assert.equal(Arguments[0], Label.includes('emitter') ? 'emitter' : 'analyzer');
+                    await writeFile(Arguments[2], Buffer.from(Label));
+                } else {
+                    Assert.equal(Name, 'Build-Cached-Split-Project-Wvb.mjs');
+                    Assert.equal(Arguments.length, Label === 'stage1-emitter-build' ? 7 : 6);
+                    if (Arguments.length === 7) {
+                        Assert.equal(Arguments[6], '--symbol-checkpoint');
+                        Assert.equal(path.basename(Arguments[2]), 'Checkpoint-Analyzer' + Suffix);
+                    }
+                    for (const Input of Arguments.slice(0, 6).filter((_, Index) => Index !== 1)) {
+                        await readFile(Input);
+                    }
+                    await writeFile(Arguments[1], Buffer.from(Label));
+                }
+                Completed.add(Label);
+            } finally { Active -= 1; }
+        };
+        const Construction = Constructˉcurrentˉsplitˉcompiler(Work, Candidate, Run, Run)
+            .then(() => { Settled = true; return null; }, Error => { Settled = true; return Error; });
+        try {
+            if (Mode !== 'preparation-failure') {
+                await Ready;
+                Assert.equal(Arrivals, 2, 'The independent compiler branches were serialized.');
+                await new Promise(Resolve => setImmediate(Resolve));
+                if (Mode !== 'both-failures') {
+                    Assert.equal(Settled, false, 'Construction abandoned its live peer.');
+                    Assert.deepEqual(await readdir(Candidate), []);
+                }
+                Release();
+            }
+            const Failure = await Construction;
+            Assert.equal(Active, 0);
+            Assert.ok(Maximumˉactive <= 2);
+            if (Mode === 'complete') {
+                Assert.equal(Failure, null);
+                Assert.equal(Maximumˉactive, 2);
+                Assert.equal(Calls.length, 12);
+                const Products = ['Analyzer' + Suffix, 'Analyzer.identity', 'Emitter' + Suffix, 'Emitter.identity'];
+                Assert.deepEqual((await readdir(Candidate)).sort(), Products.sort());
+                for (const Product of Products) {
+                    Assert.deepEqual(await readFile(path.join(Candidate, Product)),
+                        await readFile(path.join(Work, Product)));
+                }
+            } else {
+                Assert.deepEqual(await readdir(Candidate), []);
+                if (Mode === 'preparation-failure') {
+                    Assert.equal(Failure.message, Mode);
+                    Assert.equal(Arrivals, 0);
+                    Assert.equal(Calls.length, 5);
+                } else {
+                    Assert.ok(Failure instanceof AggregateError);
+                    const Expected = Mode === 'both-failures'
+                        ? ['analyzer-failure', 'emitter-failure'] : [Mode];
+                    Assert.deepEqual(Failure.errors.map(Error => Error.message), Expected);
+                    for (const Failed of Expected) {
+                        Assert.equal(Calls.includes('stage1-' + Failed.split('-')[0] + '-identity'), false);
+                    }
+                }
+            }
+        } finally { clearTimeout(Timer); Release(); await Construction; }
+    }
 }
