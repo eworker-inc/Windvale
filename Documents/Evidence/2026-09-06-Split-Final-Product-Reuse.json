@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-split-final-product-reuse",
+  "date": "2026-09-06",
+  "subject": "Acquire split compiler analysis only when the final WVB is missing",
+  "claim": "The finished split WVB is validated before intermediate analysis or symbols are acquired. The cache sentinel reproduced two unnecessary analyzer invocations with the old coordinator after intermediate eviction; the revised coordinator restores the same product without either invocation and rejects corrupt final evidence before construction. Cache/verifier edits select the focused split owner, whose four checks include fourteen cache cases and exact optimized/complete compiler byte oracles.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 062ec88a; exact changed implementation and routing identities are recorded in the Windows run inputs."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Regression diagnosis against coordinator from 062ec88a: an emission hit incorrectly reconstructed symbols and analysis after their checkpoint families were evicted",
+      "tool": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Split-Project-Wvb.mjs (new sentinel against unchanged 062ec88a coordinator, before implementation edit)",
+      "result": "Failed"
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Changed-file gate; focused split owner 5107 ms, 31 general and 282 native routing cases, documentation checks",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -NoResultCache -TimingReportPath Artifacts/Verification-Redesign-2026-09-06/Split-Lazy-Windows-Timing.json",
+      "result": "Passed",
+      "elapsedMilliseconds": 57312,
+      "inputs": [
+        {
+          "path": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+          "size": 40830,
+          "sha256": "942364ca9801ed75fd5b10ea74cbb41f07b767703202cdd261b9b6db5579c332"
+        },
+        {
+          "path": "Tools/Native/Test-Cached-Split-Project-Wvb.mjs",
+          "size": 35373,
+          "sha256": "c7e4df539fe2c3b672d4f5d17811be76e3fd90dea1a4eafe11f3cccdbc8ba996"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 279150,
+          "sha256": "4c5118f3f2eb843ad187d5aafad2d3ca4c389178836858a9bfa0c206c3e8aa5f"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 326924,
+          "sha256": "51fae85c86d6eb849f8d98255e1f1c551087cb8b59cc351c6a7435bb177a6607"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Split-Lazy-Windows-Final.json",
+          "size": 7592,
+          "sha256": "64793274bc1a8b0c9dc9d8ae47ec4cc90eedf861f0c3228bbe15144dcaad8249"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Split-Lazy-Windows-Timing.json",
+          "size": 471,
+          "sha256": "e639f2466c9dccc616bd09c72daee83a4f77083eaf3447c83bcc341f9a568318"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Four focused split-owner checks, including fourteen cache cases and exact 308-byte optimized and 395-byte complete pruning outputs",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "timeout --kill-after=5s 70s node Artifacts/Verification-Redesign-2026-09-06/Measure-Split-Lazy.mjs (60-second bounded focused owner)",
+      "result": "Passed",
+      "elapsedMilliseconds": 11155,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Split-Lazy-Linux-Final.json",
+          "size": 795,
+          "sha256": "1d62035bb765bee3cf0083830ef63a2e2414eae1ee6d7d137c31f28b3081b4cd"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The first failed run is the intended regression diagnosis; it is not passing verification of the old coordinator.",
+    "The source closure, producer identities, host namespace, final product digest, and analysis request key still bind each hit; cached intermediate files are not dependencies of an already completed product.",
+    "The fourteen cache cases use bounded instrumented producers to prove invocation, invalidation, cleanup, and corruption behavior. They do not time a compiler-scale analysis rebuild.",
+    "Reported elapsed times are single focused observations with retained bootstrap tools and fresh test fixtures; peak memory was not measured.",
+    "A read-only attempt to locate a reusable current compiler-analysis product found that the retained historical checkpoint keys did not match current sources. No speculative cold compiler build was started.",
+    "The owner duration profile remains the conservative 300-second estimate. Before routing correction, a cache-test-only edit selected runner reconstruction plus the focused owner at 1200 expected seconds; that over-budget plan was not executed.",
+    "Complete compiler preparation, runner reconstruction, production admission, and paired-host full qualification were not run. This is development evidence and does not establish the seconds/minutes targets for those broader workloads."
+  ],
+  "related": [
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md"
+  ]
+}

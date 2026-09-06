@@ -148,6 +148,12 @@ execution, recovery, denial, mutation, or other behavior affected by the edit.
 Qualification retains explicitly required independent constructions; a
 checkpoint hit alone proves neither behavior nor reproducibility.
 
+Acquire construction dependencies only when the requested product is missing.
+The [split compiler cache](../../Specifications/Compiler-Split-Development-Cache.md)
+derives both current request keys and validates its final WVB first. A valid
+final checkpoint needs no retained analysis or symbol files; eviction must not
+restart those phases. Corrupt final evidence fails before reconstruction.
+
 Segmented hosted packaging stores a profile-independent native image separately
 from each profile's final application. The private `segmented-hosted-image-v1`
 checkpoint binds the WVB bytes, host, complete producer graph, and validator

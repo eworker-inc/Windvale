@@ -86,8 +86,15 @@ additionally separated by the current host family.
 
 ## Hit, miss, and publication behavior
 
-A hit validates the complete checkpoint and hashes only its bounded phase
-values and product; it does not read or execute either large compiler product.
+A finished-product hit validates the WVB record, its exact analysis request key,
+and its bounded product bytes before consulting intermediate analysis or symbol
+checkpoints. It does not read, validate, or reconstruct those intermediate
+products; they may have been evicted independently. It still derives both keys
+from the current complete source closure and producer identities. Invalid final
+records or product bytes fail closed without falling back to reconstruction.
+Only a final-product miss acquires analysis, ordering the bounded source modules
+and validating or constructing its phase products as needed. A hit does not
+read or execute either large compiler product.
 On a miss, the coordinator hashes the selected executable against its identity
 both immediately before and after execution, rechecks the complete key input
 set, syncs the candidate files, and atomically publishes the directory.
@@ -137,11 +144,13 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, and executes a ten-case cache sentinel. The sentinel
+complete counterpart, and executes a fourteen-case cache sentinel. The sentinel
 proves module ordering, identity publication, failure cleanup, replacement and
 quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
 Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
-after a later analysis failure, and fail-closed WVSY corruption handling. It
+after a later analysis failure, fail-closed WVSY corruption handling, finished
+product reuse after intermediate eviction, final product and analysis-key
+corruption rejection before construction, and producer-change invalidation. It
 deliberately does not rebuild three large compiler products already covered by
 the Language 1.0 front door.
 Compiler analysis/emission core changes select that broader semantic gate once;

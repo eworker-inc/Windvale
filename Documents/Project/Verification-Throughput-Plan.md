@@ -33,6 +33,19 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The split compiler now checks its finished WVB before acquiring intermediate
+analysis. A valid final checkpoint survives independent analysis/symbol
+eviction without restarting those producers. Invalid WVB bytes or analysis-key
+records fail before construction. The existing cache sentinel covers this
+dependency boundary, and cache/verifier edits now select the focused split
+owner instead of runner reconstruction and production admission. The owner
+passed in 5,107 ms on Windows and 11,155 ms on Debian; the complete Windows
+changed-file plan passed in 57,312 ms. The
+[final-product reuse evidence](../Evidence/2026-09-06-Split-Final-Product-Reuse.json)
+records the reproduced rebuild and coverage limits. This removes an avoidable
+rebuild path; it does not yet remove current-compiler preparation or establish
+the cold qualification target.
+
 Hosted cache/session edits now select their focused owner instead of a
 2,540-second database plan. The existing session test is part of that owner,
 which passed twelve cases in 4,968 ms on Windows and 10,041 ms on Debian; the implementation changed-file

@@ -1451,19 +1451,17 @@ function Add-Native-Tool-Suite {
         Add-Suite 'language-1-authenticated-foreign-binding'
         return
     }
-    if ($Stem -eq 'Build-Cached-Split-Project-Wvb') {
-        Add-Suite @(
-            'compiler-split-development',
-            'wvb-runner-reconstruction',
-            'language-1-production-admission-ingress'
-        )
+    if ($Stem -in @(
+        'Build-Cached-Split-Project-Wvb',
+        'Test-Cached-Split-Project-Wvb',
+        'Test-Compiler-Split-Development'
+    )) {
+        Add-Suite 'compiler-split-development'
         return
     }
     if ($Stem -in @(
         'Generate-Compiler-Artifact-Readers',
         'Split-Project-Source-Ordering-Core',
-        'Test-Cached-Split-Project-Wvb',
-        'Test-Compiler-Split-Development',
         'Write-Split-Compiler-Producer-Identity'
     )) {
         Add-Suite @('compiler-split-development', 'wvb-runner-reconstruction')

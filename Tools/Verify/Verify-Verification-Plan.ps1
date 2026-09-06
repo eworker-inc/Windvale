@@ -2142,13 +2142,21 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'production cached split builder routing'
+        Name = 'cached split builder excludes compiler reconstruction and admission semantics'
         Paths = @('Tools/Native/Build-Cached-Split-Project-Wvb.mjs')
-        Suites = @(
-            'wvb-runner-reconstruction',
-            'language-1-production-admission-ingress',
-            'compiler-split-development'
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'split cache verifier edits remain focused'
+        Paths = @(
+            'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.cmd',
+            'Tools/Native/Test-Compiler-Split-Development.sh'
         )
+        Suites = @('compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },

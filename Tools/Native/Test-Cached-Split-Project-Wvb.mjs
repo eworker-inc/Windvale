@@ -7,6 +7,7 @@ import {
     mkdir,
     readFile,
     readdir,
+    rename,
     rm,
     writeFile,
 } from 'node:fs/promises';
@@ -522,13 +523,15 @@ try {
     }
     await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
     console.log(
-        'split project cache test cases=10 status=Passed ' +
+        'split project cache test cases=14 status=Passed ' +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
         'quarantine-boundary-race=Passed non-error-primary=Passed ' +
         'raw-project2-route=Passed symbol-resume=Passed ' +
-        'symbol-corruption=Rejected',
+        'symbol-corruption=Rejected final-product-reuse=Passed ' +
+        'final-product-corruption=Rejected analysis-key-corruption=Rejected ' +
+        'producer-change=Rejected',
     );
 } finally {
     const Resolved = path.resolve(Testˉroot);
@@ -745,6 +748,61 @@ async function Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot) {
             'The retry did not reuse the symbol checkpoint and complete: ' +
             Childˉdiagnostic(Retry),
         );
+    }
+    // A finished product is independent of evicted intermediate checkpoints.
+    for (const Namespace of ['project-analysis-wvca-v3', 'project-symbols-wvsy-v1']) {
+        await rename(path.join(Cacheˉroot, Namespace),
+            path.join(Cacheˉroot, `${Namespace}.evicted`));
+    }
+    const Completedˉphases = await readFile(Record, 'ascii');
+    const Runˉagain = () => spawnSync(process.execPath, Arguments, {
+        cwd: REPOSITORY_ROOT, encoding: 'utf8', env: Environment,
+        maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
+        timeout: FAILURE_TIMEOUT_MILLISECONDS, windowsHide: true,
+    });
+    const Hit = Runˉagain();
+    if (Hit.status !== 0 || Hit.stderr !== '' ||
+        !Hit.stdout.includes('step=emission cache=Hit') ||
+        Hit.stdout.includes('step=analysis') ||
+        await readFile(Record, 'ascii') !== Completedˉphases ||
+        !(await readFile(Output)).equals(Buffer.from([0x57])) ||
+        (await readdir(Cacheˉroot)).some(Name =>
+            Name === 'project-analysis-wvca-v3' || Name === 'project-symbols-wvsy-v1')) {
+        Reject('The finished product rebuilt evicted analysis: ' + Childˉdiagnostic(Hit));
+    }
+    const Family = path.join(Cacheˉroot, 'project-split-wvb-optimized-v3', HOST);
+    const Entries = await readdir(Family);
+    if (Entries.length !== 1 || !/^[0-9a-f]{64}$/u.test(Entries[0])) {
+        Reject('The final product did not publish exactly one checkpoint.');
+    }
+    const Product = path.join(Family, Entries[0], 'Product.wvb');
+    const Manifest = path.join(Family, Entries[0], 'Checkpoint.txt');
+    const Originalˉmanifest = await readFile(Manifest, 'ascii');
+    for (const Mutation of ['product', 'analysis-key']) {
+        if (Mutation === 'product') {
+            await writeFile(Product, Buffer.from([0x58]));
+        } else {
+            await writeFile(Manifest, Originalˉmanifest.replace(
+                /^analysis-key [0-9a-f]{64}$/mu, `analysis-key ${'0'.repeat(64)}`), 'ascii');
+        }
+        const Corruption = Runˉagain();
+        if (Corruption.status === 0 || !Corruption.stderr.includes(
+            'The emission checkpoint manifest is invalid.') ||
+            await readFile(Record, 'ascii') !== Completedˉphases) {
+            Reject(`The invalid ${Mutation} was accepted or rebuilt analysis: ` +
+                Childˉdiagnostic(Corruption));
+        }
+        await writeFile(Product, Buffer.from([0x57]));
+        await writeFile(Manifest, Originalˉmanifest, 'ascii');
+    }
+    await writeFile(Analyzerˉidentity, Identity('analyzer', 2, '0'.repeat(64)), 'ascii');
+    const Changed = Runˉagain();
+    if (Changed.status === 0 || !Changed.stderr.includes(
+        'analyzer producer does not match its identity') ||
+        Changed.stdout.includes('step=emission cache=Hit') ||
+        await readFile(Record, 'ascii') !== Completedˉphases) {
+        Reject('A changed producer reused the prior finished product: ' +
+            Childˉdiagnostic(Changed));
     }
 }
 
