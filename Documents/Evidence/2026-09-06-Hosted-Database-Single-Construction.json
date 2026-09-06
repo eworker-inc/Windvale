@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-hosted-database-single-construction",
+  "date": "2026-09-06",
+  "subject": "Remove repeated source compilation and lowering from hosted database qualification",
+  "claim": "Five ordinary hosted construction functions now share one uncached source-build, lowering, and object-admission routine per host. The Windows HostStorage and dependent HostRootWriter behaviors passed. HostStorage changed from 132970 ms to 129620 ms; this small single-observation difference under different concurrent load does not establish a reliable speedup. Linking and packaging remain the next cost to isolate. No complete database or cross-host qualification is claimed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 3345cff0. Windows script SHA-256 72d1a974cf0f6ee8c87152fab086fd6a86014e677474838a53e4eaf99effcec4; Linux script SHA-256 0afa37bd70bb898ec72c54ea5492b308b19a29e05a7691dff5cc764e81695478."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X 12-Core Processor            , Node 24.18.0",
+      "target": "Before: unmodified HostStorage including paired source compilation/lowering, create/recovery/reopen and five interruption points",
+      "tool": "Tools/Native/Test-Database-Storage.cmd",
+      "command": "Tools\\Native\\Test-Database-Storage.cmd --qualification-step HostStorage (180-second outer bound)",
+      "result": "Passed",
+      "elapsedMilliseconds": 133581
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, Node 24.18.0",
+      "target": "After: HostStorage plus dependent HostRootWriter, exact dependency order; step times 129620 and 103860 ms",
+      "tool": "Tools/Native/Test-Database-Storage.cmd",
+      "command": "Tools\\Native\\Test-Database-Storage.cmd --qualification-step HostRootWriter (240-second outer bound)",
+      "result": "Passed",
+      "elapsedMilliseconds": 234129
+    },
+    {
+      "host": "Local Windows PowerShell",
+      "target": "Single-construction routing contracts for all five call sites on both hosts; preserve paired StorageLowering and all existing planner checks",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 52224,
+      "peakWorkingSetBytes": 222486528
+    },
+    {
+      "host": "Local Windows Git Bash",
+      "target": "Linux leaf syntax",
+      "tool": "Tools/Native/Test-Database-Storage.sh",
+      "command": "bash -n Tools/Native/Test-Database-Storage.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Local WSL Debian; Node 20.19.2; repository on /mnt/d/windvale/dev01",
+      "target": "Bounded HostStorage attempt reached object admission but did not complete before timeout",
+      "tool": "Tools/Native/Test-Database-Storage.sh",
+      "command": "timeout --kill-after=5s 100s bash Tools/Native/Test-Database-Storage.sh --qualification-step HostStorage",
+      "result": "Incomplete"
+    }
+  ],
+  "result": "Incomplete",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Windows behavior and static routing/syntax checks passed. The record remains incomplete because the Debian runtime attempt exceeded its bound and supplies no passing Linux execution evidence.",
+    "The before/after observations used retained qualified tool artifacts and freshly constructed test products. These are not clean-machine measurements. The revised Windows run overlapped routing verification and a Debian attempt; do not treat its small timing difference as a performance improvement.",
+    "Complete database qualification, the remaining hosted behavior cases, complete dual-host qualification, and broad compiler/lowerer suites were not run because they exceed the remaining ten-minute local development budget and are unnecessary for the narrow extraction evidence.",
+    "Compiler and lowerer reproducibility are delegated to the existing focused qualification owners and the retained paired database StorageLowering case. Per-project hosted A/B comparisons are deliberately removed; no claim is made that each database product was independently reconstructed twice.",
+    "Both target packages and common-host assembly reproducibility remain constructed as before. Duplicate host packaging and repeated cross-case products remain optimization work.",
+    "Peak child-process working-set memory was not measured. The routing-verifier process reported a 222486528-byte peak working set. No stable timing or memory regression threshold is established."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Native/Test-Database-Storage.cmd",
+    "Tools/Native/Test-Database-Storage.sh",
+    "Tests/Native/Database-Storage-Qualification-Steps.txt",
+    "Tools/Native/Test-Compiler-Reconstruction.cmd",
+    "Tools/Native/Test-Wvb-To-Wvo-Reconstruction.cmd"
+  ]
+}

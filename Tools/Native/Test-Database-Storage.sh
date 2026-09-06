@@ -598,13 +598,23 @@ verify_host_storage_interruption() {
     if ((step == 4 && scenario_bytes != 12800)); then return 1; fi
 }
 
+build_qualification_project_object() {
+    # Complete qualification owns compiler/lowerer reproducibility separately.
+    # Hosted database cases construct once and retain structural admission.
+    local project_path=$1 first_wvb=$2 first_wvo=$3
+    echo 'Progress: step=database-hosted-construction phase=source-build'
+    "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
+    echo 'Progress: step=database-hosted-construction phase=lower'
+    "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
+    echo 'Progress: step=database-hosted-construction phase=admit'
+    "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+}
+
 verify_host_storage() {
     start_qualification_step HostStorage
     local project_path=$1
     local first_wvb="$temporary_directory/HostStorage-First.wvb"
-    local second_wvb="$temporary_directory/HostStorage-Second.wvb"
     local first_wvo="$temporary_directory/HostStorage-First.wvo"
-    local second_wvo="$temporary_directory/HostStorage-Second.wvo"
     local common_first="$temporary_directory/HostStorage-Common-First.wvo"
     local common_second="$temporary_directory/HostStorage-Common-Second.wvo"
     local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
@@ -633,15 +643,7 @@ verify_host_storage() {
             "$cache_report")
         [[ $host_storage_checkpoint == Created || $host_storage_checkpoint == Hit ]] || return 1
     else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
-    fi
-    if ((development == 0)); then
-        "$script_directory/Check-Wvo.sh" "$first_wvo" >/dev/null || return $?
+        build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?
     fi
 
     "$script_directory/Assemble-Wva.sh" \
@@ -759,9 +761,7 @@ verify_host_root_writer() {
     start_qualification_step HostRootWriter
     local project_path=$1
     local first_wvb="$temporary_directory/HostRootWriter-First.wvb"
-    local second_wvb="$temporary_directory/HostRootWriter-Second.wvb"
     local first_wvo="$temporary_directory/HostRootWriter-First.wvo"
-    local second_wvo="$temporary_directory/HostRootWriter-Second.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
     local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
@@ -791,12 +791,7 @@ verify_host_root_writer() {
         [[ $host_root_writer_checkpoint == Created ||
             $host_root_writer_checkpoint == Hit ]] || return 1
     else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+        build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 
@@ -938,9 +933,7 @@ build_host_local_component() {
         return $?
     fi
     local first_wvb="$temporary_directory/HostLocal-$component-First.wvb"
-    local second_wvb="$temporary_directory/HostLocal-$component-Second.wvb"
     local first_wvo="$temporary_directory/HostLocal-$component-First.wvo"
-    local second_wvo="$temporary_directory/HostLocal-$component-Second.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
     local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
@@ -965,12 +958,7 @@ build_host_local_component() {
         [[ $host_local_component_project_checkpoint == Created ||
             $host_local_component_project_checkpoint == Hit ]] || return 1
     else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+        build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
     if ((development == 1)); then
@@ -1234,9 +1222,7 @@ verify_host_tree_reader() {
     start_qualification_step HostTreeReader
     local project_path=$1
     local first_wvb="$temporary_directory/HostTreeReader-First.wvb"
-    local second_wvb="$temporary_directory/HostTreeReader-Second.wvb"
     local first_wvo="$temporary_directory/HostTreeReader-First.wvo"
-    local second_wvo="$temporary_directory/HostTreeReader-Second.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
     local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
@@ -1266,12 +1252,7 @@ verify_host_tree_reader() {
             "$cache_report")
         [[ $host_tree_reader_checkpoint == Created || $host_tree_reader_checkpoint == Hit ]] || return 1
     else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+        build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 
@@ -1421,9 +1402,7 @@ verify_host_engine() {
     start_qualification_step HostEngine
     local project_path=$1
     local first_wvb="$temporary_directory/Engine-First.wvb"
-    local second_wvb="$temporary_directory/Engine-Second.wvb"
     local first_wvo="$temporary_directory/Engine-First.wvo"
-    local second_wvo="$temporary_directory/Engine-Second.wvo"
     local common="$temporary_directory/HostStorage-Common-First.wvo"
     local linux_platform="$temporary_directory/HostStorage-Linux.wvo"
     local windows_platform="$temporary_directory/HostStorage-Windows.wvo"
@@ -1454,12 +1433,7 @@ verify_host_engine() {
             "$cache_report")
         [[ $engine_checkpoint == Created || $engine_checkpoint == Hit ]] || return 1
     else
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$first_wvb" >/dev/null || return $?
-        "$build_driver" --workspace "$workspace_path" --project "$project_path" "$second_wvb" >/dev/null || return $?
-        cmp --silent -- "$first_wvb" "$second_wvb" || return 1
-        "$lowerer" "$first_wvb" "$first_wvo" >/dev/null || return $?
-        "$lowerer" "$second_wvb" "$second_wvo" >/dev/null || return $?
-        cmp --silent -- "$first_wvo" "$second_wvo" || return 1
+        build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?
     fi
     [[ -f $common && -f $linux_platform ]] || return 1
 

@@ -33,6 +33,20 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Hosted database qualification now builds and lowers each ordinary test product
+once through a shared routine on each host. Five formerly duplicated
+construction functions delegate compiler/lowerer determinism to their focused
+qualification owners and the retained paired `StorageLowering` case. Object
+admission remains explicit, and database recovery, reopen, and interruption
+checks remain in their behavior owners. Windows `HostStorage` and its dependent
+root-writer case passed. The observed `HostStorage` step changed from 132,970 to
+129,620 ms under different concurrent load, which does not establish a reliable
+speedup. A Debian attempt stopped at its 100-second bound after object
+admission; it provides no passing Linux runtime evidence. The
+[construction evidence](../Evidence/2026-09-06-Hosted-Database-Single-Construction.json)
+records the limits. Opposite-host packaging and repeated hosted products remain
+the next measured optimization targets.
+
 Mixed changes now preserve each owner's focused development selection. The
 planner excludes paths already routed to documentation-only checks from
 Foundation borrow, publisher, and front-end narrowing. Previously, adding a

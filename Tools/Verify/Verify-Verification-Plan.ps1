@@ -6240,6 +6240,40 @@ foreach ($FunctionContract in $DatabasePortableFunctionContracts) {
         throw "The $($FunctionContract.Host) portable database function reintroduced private reproducibility work."
     }
 }
+$DatabaseHostedConstructionContracts = @(
+    @{
+        Host = 'Windows'
+        Text = $DatabaseWindowsOwner.Substring(
+            $DatabaseWindowsOwner.IndexOf("`n:build_qualification_project_object", [StringComparison]::Ordinal),
+            $DatabaseWindowsOwner.IndexOf("`n:verify_file", [StringComparison]::Ordinal) -
+                $DatabaseWindowsOwner.IndexOf("`n:build_qualification_project_object", [StringComparison]::Ordinal))
+        Calls = 'call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"'
+        Build = '"%BuildDriver%" --workspace'
+        Lower = '"%Lowerer%" "%FirstWvb%" "%FirstWvo%"'
+        Admit = 'Check-Wvo.cmd" "%FirstWvo%"'
+    },
+    @{
+        Host = 'Linux'
+        Text = $DatabaseLinuxOwner.Substring(
+            $DatabaseLinuxOwner.IndexOf('build_qualification_project_object() {', [StringComparison]::Ordinal),
+            $DatabaseLinuxOwner.IndexOf('verify_development_target() {', [StringComparison]::Ordinal) -
+                $DatabaseLinuxOwner.IndexOf('build_qualification_project_object() {', [StringComparison]::Ordinal))
+        Calls = 'build_qualification_project_object "$project_path" "$first_wvb" "$first_wvo" || return $?'
+        Build = '"$build_driver" --workspace'
+        Lower = '"$lowerer" "$first_wvb" "$first_wvo"'
+        Admit = 'Check-Wvo.sh" "$first_wvo"'
+    }
+)
+foreach ($Contract in $DatabaseHostedConstructionContracts) {
+    if ([regex]::Matches($Contract.Text, [regex]::Escape($Contract.Calls)).Count -ne 5 -or
+        [regex]::Matches($Contract.Text, [regex]::Escape($Contract.Lower)).Count -ne 1 -or
+        [regex]::Matches($Contract.Text, [regex]::Escape($Contract.Admit)).Count -ne 1 -or
+        !$Contract.Text.Contains($Contract.Build, [StringComparison]::Ordinal) -or
+        $Contract.Text -match '(?i)second[_a-z]*wv[bo]') {
+        throw "The $($Contract.Host) hosted database lane lost single construction/admission ownership."
+    }
+}
+
 $DatabaseStorageLoweringContracts = @(
     $DatabaseWindowsOwner.Substring(
         $DatabaseWindowsOwner.LastIndexOf(':verify_storage_lowering', [StringComparison]::Ordinal),

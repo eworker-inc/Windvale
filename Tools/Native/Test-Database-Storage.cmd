@@ -717,17 +717,35 @@ call :elapsed_milliseconds PersistentTransactionWriterStart PersistentTransactio
 call echo PASS  native database storage development step=persistent-transaction-writer item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% elapsed-ms=%%PersistentTransactionWriterElapsedMs%% project=%%ProjectCheckpointPersistentTransactionWriter%% application=%%ApplicationCheckpointPersistentTransactionWriter%%
 exit /b 0
 
+:build_qualification_project_object
+rem Complete qualification owns compiler/lowerer reproducibility separately.
+rem Hosted database cases construct once and retain structural admission.
+setlocal EnableExtensions DisableDelayedExpansion
+set "ProjectPath=%~f1"
+set "FirstWvb=%~f2"
+set "FirstWvo=%~f3"
+set "ProjectResource=%ProjectPath:\=/%"
+set "FirstWvbResource=%FirstWvb:\=/%"
+echo Progress: step=database-hosted-construction phase=source-build
+"%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+if errorlevel 1 exit /b 1
+echo Progress: step=database-hosted-construction phase=lower
+"%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+echo Progress: step=database-hosted-construction phase=admit
+call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
+if errorlevel 1 exit /b 1
+endlocal
+exit /b 0
+
 :verify_host_storage
 call :start_qualification_step HostStorage
 setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\HostStorage-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\HostStorage-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostStorage-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\HostStorage-Second.wvo"
 set "CommonFirst=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "CommonSecond=%TemporaryDirectory%\HostStorage-Common-Second.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
@@ -758,27 +776,7 @@ if "%Development%"=="1" (
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostStorage-Cache.txt"') do set "HostStorageCheckpoint=%%S"
     if not defined HostStorageCheckpoint exit /b 1
 ) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-    if errorlevel 1 (
-        >&2 echo The native host-storage source build failed.
-        exit /b 1
-    )
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul
-    if errorlevel 1 exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-    if errorlevel 1 (
-        >&2 echo The native host-storage lowering failed.
-        exit /b 1
-    )
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-)
-if not "%Development%"=="1" (
-    call "%RepositoryRoot%\Tools\Native\Check-Wvo.cmd" "%FirstWvo%" >nul
+    call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"
     if errorlevel 1 exit /b 1
 )
 
@@ -914,11 +912,8 @@ setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\HostRootWriter-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\HostRootWriter-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostRootWriter-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\HostRootWriter-Second.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
 set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
@@ -949,14 +944,8 @@ if "%Development%"=="1" (
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostRootWriter-Cache.txt"') do set "HostRootWriterCheckpoint=%%S"
     if not defined HostRootWriterCheckpoint exit /b 1
 ) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"
     if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul || exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul || exit /b 1
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul || exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul || exit /b 1
 )
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
@@ -1210,11 +1199,8 @@ set "Component=%~2"
 set "WindowsApplication=%~f3"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\HostLocal-%Component%-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\HostLocal-%Component%-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostLocal-%Component%-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\HostLocal-%Component%-Second.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
 set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
@@ -1238,14 +1224,8 @@ if "%Development%"=="1" (
         >"%TemporaryDirectory%\HostLocal-%Component%-Cache.txt"
     if errorlevel 1 exit /b 1
 ) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"
     if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul || exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul || exit /b 1
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul || exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul || exit /b 1
 )
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
@@ -1524,11 +1504,8 @@ setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\HostTreeReader-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\HostTreeReader-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\HostTreeReader-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\HostTreeReader-Second.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
 set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
@@ -1560,23 +1537,7 @@ if "%Development%"=="1" (
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\HostTreeReader-Cache.txt"') do set "HostTreeReaderCheckpoint=%%S"
     if not defined HostTreeReaderCheckpoint exit /b 1
 ) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
-    if errorlevel 1 (
-        >&2 echo The native host tree-reader source build failed.
-        exit /b 1
-    )
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul
-    if errorlevel 1 exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul
-    if errorlevel 1 (
-        >&2 echo The native host tree-reader lowering failed.
-        exit /b 1
-    )
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul
+    call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"
     if errorlevel 1 exit /b 1
 )
 if not exist "%Common%" (
@@ -1705,11 +1666,8 @@ setlocal EnableExtensions DisableDelayedExpansion
 set "ProjectPath=%~f1"
 set "ProjectResource=%ProjectPath:\=/%"
 set "FirstWvb=%TemporaryDirectory%\Engine-First.wvb"
-set "SecondWvb=%TemporaryDirectory%\Engine-Second.wvb"
 set "FirstWvbResource=%FirstWvb:\=/%"
-set "SecondWvbResource=%SecondWvb:\=/%"
 set "FirstWvo=%TemporaryDirectory%\Engine-First.wvo"
-set "SecondWvo=%TemporaryDirectory%\Engine-Second.wvo"
 set "Common=%TemporaryDirectory%\HostStorage-Common-First.wvo"
 set "WindowsPlatform=%TemporaryDirectory%\HostStorage-Windows.wvo"
 set "LinuxPlatform=%TemporaryDirectory%\HostStorage-Linux.wvo"
@@ -1739,14 +1697,8 @@ if "%Development%"=="1" (
     for /f "tokens=6 delims== " %%S in ('findstr /b /c:"native project object cache status=" "%TemporaryDirectory%\Engine-Cache.txt"') do set "EngineCheckpoint=%%S"
     if not defined EngineCheckpoint exit /b 1
 ) else (
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%FirstWvbResource%" >nul
+    call :build_qualification_project_object "%ProjectPath%" "%FirstWvb%" "%FirstWvo%"
     if errorlevel 1 exit /b 1
-    "%BuildDriver%" --workspace "%WorkspaceResource%" --project "%ProjectResource%" "%SecondWvbResource%" >nul
-    if errorlevel 1 exit /b 1
-    fc /b "%FirstWvb%" "%SecondWvb%" >nul || exit /b 1
-    "%Lowerer%" "%FirstWvb%" "%FirstWvo%" >nul || exit /b 1
-    "%Lowerer%" "%SecondWvb%" "%SecondWvo%" >nul || exit /b 1
-    fc /b "%FirstWvo%" "%SecondWvo%" >nul || exit /b 1
 )
 if not exist "%Common%" exit /b 1
 if not exist "%WindowsPlatform%" exit /b 1
