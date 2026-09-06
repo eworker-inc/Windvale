@@ -41,6 +41,23 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Foundation borrow component verification now offers one 225-group development
+product over the existing plan, typed-directory and owner-flow tests. Fresh
+test-product construction and execution took 85.3 seconds on Windows and 92.1
+seconds on Debian, compared with 96.9 and 103.6 seconds for three separate
+products. Bootstrap tools were retained in both measurements. Warm runs execute
+all assertions in 2.0 and 4.3 seconds including process startup; the representative Windows mixed-file
+dispatcher passes in 3.3 seconds with result caching disabled. The
+[component evidence](../Evidence/2026-09-06-Foundation-Borrow-Component-Bundle.json)
+records exact inputs, identical cross-host WVB and remaining limits.
+
+Mixed owner-flow fixture edits with borrow-plan or directory fixture edits now
+select that product. Standalone diagnostics remain separate, and two small
+components alone do not acquire the larger owner-flow bundle. Compiler
+integration, verifier implementation and format changes retain conservative
+routing. The no-argument full owner and publication selection remain unchanged;
+this development bundle does not qualify candidate WVB 1.39 execution.
+
 The owner coordinator now reads Linux executable modes with one Git index
 request instead of one request per owner. A controlled Windows-hosted run of
 the production Linux registry reader fell from 5,514 to 168 ms and returned

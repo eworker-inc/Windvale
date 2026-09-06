@@ -2382,6 +2382,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
@@ -4754,12 +4756,25 @@ if ($UsePublisherCurrentSourceDevelopment) {
 $UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
+$FoundationBorrowBundleInputs = @(
+    'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv'
+)
+$FoundationBorrowComponentInputs = @($FoundationBorrowPlanInputs) +
+    @($FoundationBorrowDirectoryInputs) + @($FoundationBorrowOwnerInputs) + @($FoundationBorrowBundleInputs)
+$UseFoundationBorrowComponentsDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
+    !$UseFoundationBorrowPlanDevelopment -and !$UseFoundationBorrowDirectoryDevelopment -and
+    !$UseFoundationBorrowOwnerDevelopment -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @($FoundationBorrowOwnerInputs + $FoundationBorrowBundleInputs) }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowComponentInputs }).Count -eq 0
 if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment -or
-    $UseFoundationBorrowOwnerDevelopment) {
+    $UseFoundationBorrowOwnerDevelopment -or $UseFoundationBorrowComponentsDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'
     })[0]
-    $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment) { 180 } else { 30 }
+    $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment -or
+        $UseFoundationBorrowComponentsDevelopment) { 180 } else { 30 }
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + $FoundationBorrowExpectedSeconds)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $FoundationBorrowOwner.MaximumSeconds + 600)
 }
@@ -5118,6 +5133,8 @@ if (!$Quiet) {
         $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-owner development: ' +
         $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Foundation borrow-components development: ' +
+        $UseFoundationBorrowComponentsDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Streaming SHA-256 development: ' +
         $UseStreamingSha256Development.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-source development: ' +
@@ -5200,6 +5217,7 @@ if ($PassThru) {
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
+        UseFoundationBorrowComponentsDevelopment = $UseFoundationBorrowComponentsDevelopment
         UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UseLanguage1FrontDoorDevelopment =

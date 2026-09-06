@@ -380,7 +380,8 @@ if ($Plan.Scope -eq 'website') {
                 $Plan.Scope -eq 'development' -and
                 ($NativePlan.UseFoundationBorrowPlanDevelopment -or
                     $NativePlan.UseFoundationBorrowDirectoryDevelopment -or
-                    $NativePlan.UseFoundationBorrowOwnerDevelopment)) {
+                    $NativePlan.UseFoundationBorrowOwnerDevelopment -or
+                    $NativePlan.UseFoundationBorrowComponentsDevelopment)) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
                 $OwnerCommand = Join-Path $RepositoryRoot (
                     "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.$OwnerExtension")
@@ -392,7 +393,11 @@ if ($Plan.Scope -eq 'website') {
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=150 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=185 expected-seconds=180'
+                }
+                if ($NativePlan.UseFoundationBorrowComponentsDevelopment) {
+                    $OwnerArguments = @('--foundation-borrow-components')
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=225 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',

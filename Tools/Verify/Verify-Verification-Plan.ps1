@@ -243,6 +243,8 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
             'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
             'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+            'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
@@ -5146,7 +5148,7 @@ $QualificationPipelineExpected = @{
     'Link-Wvo' = '39|112'
     'Package-Hosted-Wvb' = '18|97'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '22|62'
+    'Package-Segmented-Compiler-Wvb' = '22|63'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
@@ -5841,9 +5843,81 @@ foreach ($OtherOwnerPath in @(
     }
 }
 
+$ComponentPaths = @(
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
+)
+$ComponentProject = Join-Path $RepositoryRoot 'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj'
+$ComponentSources = @(Get-Content -LiteralPath $ComponentProject | ForEach-Object {
+    if ($_ -match '^source "([^"]+)"$') { $Matches[1] }
+})
+$SeparateSources = @(@(
+    'Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
+    'Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+    'Windvale-Native-Test-Foundation-Owner-Flow.wvproj'
+) | ForEach-Object {
+    Get-Content -LiteralPath (Join-Path $RepositoryRoot "Projects/Tests/$_") | ForEach-Object {
+        if ($_ -match '^(?:root|source) "([^"]+)"$') { $Matches[1] }
+    }
+} | Sort-Object -Unique)
+if ($ComponentSources.Count -ne $SeparateSources.Count -or
+    @(Compare-Object $ComponentSources $SeparateSources -CaseSensitive).Count -ne 0) {
+    throw 'The combined Foundation product lost or duplicated a separate input.'
+}
+$ComponentRoot = Get-Content -Raw -LiteralPath (Join-Path $RepositoryRoot `
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv')
+foreach ($ComponentCall in @('Plan.Main() != 42', 'Directories.Main() != 42', 'Owners.Main() != 42')) {
+    if (!$ComponentRoot.Contains($ComponentCall, [StringComparison]::Ordinal)) {
+        throw "The combined Foundation product lost '$ComponentCall'."
+    }
+}
+foreach ($ComponentSelection in @(
+    @($ComponentPaths[0], $ComponentPaths[2]),
+    @($ComponentPaths[1], $ComponentPaths[2]),
+    @($ComponentPaths),
+    @('Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv'),
+    @('Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj')
+)) {
+    $ComponentPlan = & $NativePlanner -ChangedPath $ComponentSelection -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$ComponentPlan.UseFoundationBorrowComponentsDevelopment -or
+        $ComponentPlan.UseFoundationBorrowPlanDevelopment -or
+        $ComponentPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $ComponentPlan.UseFoundationBorrowOwnerDevelopment -or
+        $ComponentPlan.ExpectedSeconds -ne 180 -or $ComponentPlan.MaximumSeconds -ne 600 -or
+        $ComponentPlan.Suites.Count -ne 1 -or $ComponentPlan.Gaps.Count -ne 0) {
+        throw "The combined Foundation component plan differs: $ComponentSelection"
+    }
+}
+$SmallComponentPlan = & $NativePlanner -ChangedPath @($ComponentPaths[0], $ComponentPaths[1]) -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if ($SmallComponentPlan.UseFoundationBorrowComponentsDevelopment) {
+    throw 'Two small Foundation components unnecessarily acquired the owner-flow product.'
+}
+foreach ($IntegrationPath in @(
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tools/Native/Development-Command-Core.mjs',
+    'Specifications/Seed-Bytecode.md',
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv'
+)) {
+    $ComponentPlan = & $NativePlanner -ChangedPath (@($ComponentPaths) + $IntegrationPath) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($ComponentPlan.UseFoundationBorrowComponentsDevelopment) {
+        throw "Foundation component selection hid integration changes in '$IntegrationPath'."
+    }
+}
+if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=225 expected-seconds=180', [StringComparison]::Ordinal)) {
+    throw 'The combined Foundation component dispatch differs.'
+}
+
 # Documentation companions retain the exact selection. Exercise shared immutable
 # initialization too: a preceding broad plan must not contaminate the next one.
 $MixedOwnerSelections = @(
+    @{ Path = 'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj'; Field = 'UseFoundationBorrowComponentsDevelopment'; Value = $true },
     @{ Path = 'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv'; Field = 'UseFoundationBorrowPlanDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'; Field = 'UseFoundationBorrowDirectoryDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'; Field = 'UseFoundationBorrowOwnerDevelopment'; Value = $true },
