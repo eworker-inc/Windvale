@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-streaming-sha256-focused-owner",
+  "date": "2026-09-06",
+  "subject": "Production streaming SHA-256 arithmetic and focused coverage in the existing native SHA owner",
+  "claim": "The prior measured arithmetic candidate now has direct production-source coverage. The existing owner exposes a 20-case streaming development selection with 12 digest answers, seven malformed-input/state cases and one maximum-total empty-update boundary. Both hosts pass with identical WVB bytes. Exact streaming changes select that mode; native backend and owner changes retain full selection.",
+  "source": {
+    "kind": "Other",
+    "value": "Changes based on b9991550; input hashes identify the checked source."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Fresh focused product with existing compiler and host-tool caches",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --streaming",
+      "result": "Passed",
+      "elapsedMilliseconds": 14838,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb (temporary owner product)",
+          "size": 34004,
+          "sha256": "1740846a2ed62a84797e926d256d7e0737b249724ae22cf490e29bd9998b8648"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Fresh focused product with existing compiler and host-tool caches",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs linux /mnt/d/windvale/dev01 --streaming",
+      "result": "Passed",
+      "elapsedMilliseconds": 23920,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb (temporary owner product)",
+          "size": 34004,
+          "sha256": "1740846a2ed62a84797e926d256d7e0737b249724ae22cf490e29bd9998b8648"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Warm focused product",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "cmd /d /c Tools\\Native\\Test-Native-Sha256.cmd --streaming",
+      "result": "Passed",
+      "elapsedMilliseconds": 3248,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb (temporary owner product)",
+          "size": 34004,
+          "sha256": "1740846a2ed62a84797e926d256d7e0737b249724ae22cf490e29bd9998b8648"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Warm focused product",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "bash Tools/Native/Test-Native-Sha256.sh --streaming",
+      "result": "Passed",
+      "elapsedMilliseconds": 5001,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb (temporary owner product)",
+          "size": 34004,
+          "sha256": "1740846a2ed62a84797e926d256d7e0737b249724ae22cf490e29bd9998b8648"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "31 general and 291 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 29635
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "One-second total deadline and invalid zero duration; expected exits 124 and 64",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --streaming --maximum-seconds 1; node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --maximum-seconds 0",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64, PowerShell 7 and Node 24.18.0",
+      "target": "Actual focused changed-file dispatch with owner result reuse disabled; all 20 cases execute",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 -ChangedPath Foundation/Sha256-Compression.wv -NoResultCache -SkipDocumentationVerification",
+      "result": "Passed",
+      "elapsedMilliseconds": 4791
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Full native SHA owner: first four groups passed including the 20 streaming cases; publication-stager packaging hit the explicit total cap",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --maximum-seconds 270",
+      "result": "Incomplete",
+      "elapsedMilliseconds": 270269,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 39426,
+          "sha256": "af8a71f2f9f0d291e4b95d3081015870b6662acd891ae4d194fabd6825403550"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Full native SHA owner: first four groups passed including the 20 streaming cases; publication-stager packaging hit the explicit total cap",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs linux /mnt/d/windvale/dev01 --maximum-seconds 270",
+      "result": "Incomplete",
+      "elapsedMilliseconds": 272801,
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj",
+          "size": 214,
+          "sha256": "ead28ea9c98ee74d827a7e1ff122ebb7b7765b95f705b44a5701ec5304f351d5"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 39426,
+          "sha256": "af8a71f2f9f0d291e4b95d3081015870b6662acd891ae4d194fabd6825403550"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Focused product construction reused the existing compiler and pinned host tools; these are not fully cold bootstrap measurements. Warm measurements overlapped full native owner activity and are observations, not stable performance thresholds.",
+    "The 27% execution speedup was measured in the preceding arithmetic trial. No frozen hashing tool binaries were rebuilt or promoted here, so no real packaging speedup or new cold compiler time is claimed.",
+    "The focused mode has a 60-second total command budget including construction and cleanup, with bounded process termination. It is development evidence, not complete native qualification. The full owner retains eight native groups and includes the same streaming cases in its existing KAT application.",
+    "The console KAT needs an explicit 4294967296-instruction allowance for the 1 MiB case. Its 16 MiB arena and all other packaged bytes remain unchanged; the 64/63-byte arena probes use their original separate fixture. Initial full attempts failed at the default one-million-instruction limit and are not passing evidence.",
+    "Boundary checks synthesize stream states to test rejection before allocation. They do not hash a complete 64 MiB input or exhaustively enumerate arithmetic values.",
+    "No new memory sampling was performed. The preceding trial records sampled working-set observations and the code-size tradeoff.",
+    "The complete eight-group owner did not pass: final attempts exited 124 at 270269 ms on Windows and 272801 ms on Debian during publication-stager packaging. Both completed current lowerer construction, SHA-free WVO equality, exact private-helper/call-target checks and the combined native/streaming KAT. The final publication comparison and three allocation groups were not completed. Initial attempts before the KAT instruction-budget correction failed at 141547 and 175608 ms. No further full run was started within this change budget.",
+    "The full owner still rebuilds and packages its lowerer and publication stager into temporary products on every run. The generic quick duration estimate remains inaccurate for that full selection; explicit measured caps were used instead. Resumable construction and accurate full-owner cost accounting remain redesign work."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json"
+  ]
+}

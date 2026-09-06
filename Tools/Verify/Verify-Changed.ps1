@@ -380,7 +380,8 @@ if ($Plan.Scope -eq 'website') {
                 $Plan.Scope -eq 'development' -and
                 ($NativePlan.UseFoundationBorrowPlanDevelopment -or
                     $NativePlan.UseFoundationBorrowDirectoryDevelopment -or
-                    $NativePlan.UseFoundationBorrowOwnerDevelopment)) {
+                    $NativePlan.UseFoundationBorrowOwnerDevelopment -or
+                    $NativePlan.UseFoundationBorrowComponentsDevelopment)) {
                 $OwnerExtension = if ($IsWindowsHost) { 'cmd' } else { 'sh' }
                 $OwnerCommand = Join-Path $RepositoryRoot (
                     "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.$OwnerExtension")
@@ -392,7 +393,11 @@ if ($Plan.Scope -eq 'website') {
                 }
                 if ($NativePlan.UseFoundationBorrowOwnerDevelopment) {
                     $OwnerArguments = @('--foundation-borrow-owners')
-                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=150 expected-seconds=180'
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-owners cases=217 expected-seconds=180'
+                }
+                if ($NativePlan.UseFoundationBorrowComponentsDevelopment) {
+                    $OwnerArguments = @('--foundation-borrow-components')
+                    $OwnerMessage = 'Native owner language-1-memory-budget-split-execution mode=foundation-borrow-components cases=257 expected-seconds=180'
                 }
             } elseif ($Suite -in @(
                     'generic-nominal-type-binding',
@@ -420,6 +425,16 @@ if ($Plan.Scope -eq 'website') {
                     'bundle-cases=108 ' +
                     "selected-owners=$($NativePlan.GenericNominalDevelopmentBundleSelectedOwnerCount) " +
                     'expected-seconds=330')
+            } elseif ($Suite -eq 'native-sha256-lowering' -and
+                $Plan.Scope -eq 'development' -and
+                $NativePlan.UseStreamingSha256Development) {
+                $OwnerCommand = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Sha256.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Sha256.sh'
+                }
+                $OwnerArguments = @('--streaming')
+                $OwnerMessage = 'Native owner native-sha256-lowering mode=streaming-development cases=20 expected-seconds=30'
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

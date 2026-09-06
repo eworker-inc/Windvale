@@ -695,6 +695,10 @@ foreach ($TransactionCommitPath in $TransactionCommitBoundaryPaths) {
         'transaction-commit')
 }
 $DatabaseBundledDevelopmentTargets = [ordered]@{
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj' =
+        @('transaction-branch-pages-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Bundle-Self-Test.wv' =
+        @('transaction-branch-pages-bundle')
     'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj' =
         @('publication', 'recovery')
     'Tests/Fixtures/Database/Database-Storage-Publication-Recovery-Bundle-Self-Test.wv' =
@@ -1416,7 +1420,12 @@ function Add-Native-Tool-Suite {
         Add-Suite 'segmented-hosted-wvb-cache'
         return
     }
-    if ($Stem -eq 'Native-Hosted-Application-Cache-Core') {
+    if ($Stem -in @(
+        'Native-Hosted-Application-Cache-Core',
+        'Build-Cached-Hosted-Application-Session',
+        'Get-Native-Hosted-Application-Cache-Key',
+        'Test-Hosted-Application-Session'
+    )) {
         Add-Suite 'segmented-hosted-wvb-cache'
         return
     }
@@ -1446,19 +1455,17 @@ function Add-Native-Tool-Suite {
         Add-Suite 'language-1-authenticated-foreign-binding'
         return
     }
-    if ($Stem -eq 'Build-Cached-Split-Project-Wvb') {
-        Add-Suite @(
-            'compiler-split-development',
-            'wvb-runner-reconstruction',
-            'language-1-production-admission-ingress'
-        )
+    if ($Stem -in @(
+        'Build-Cached-Split-Project-Wvb',
+        'Test-Cached-Split-Project-Wvb',
+        'Test-Compiler-Split-Development'
+    )) {
+        Add-Suite 'compiler-split-development'
         return
     }
     if ($Stem -in @(
         'Generate-Compiler-Artifact-Readers',
         'Split-Project-Source-Ordering-Core',
-        'Test-Cached-Split-Project-Wvb',
-        'Test-Compiler-Split-Development',
         'Write-Split-Compiler-Producer-Identity'
     )) {
         Add-Suite @('compiler-split-development', 'wvb-runner-reconstruction')
@@ -1474,17 +1481,14 @@ function Add-Native-Tool-Suite {
     }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
-        'Build-Cached-Hosted-Application-Session',
         'Build-Cached-Linked-Image',
         'Build-Cached-Linked-Image-Set',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
         'Build-Cached-Segmented-Project',
-        'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Native-Project-Cache-Key-Core',
-        'Test-Hosted-Application-Session',
         'Test-Linked-Image-Set-Checkpoint',
         'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
@@ -1658,10 +1662,9 @@ function Add-Native-Tool-Suite {
             'language-1-foreign-catalog-producer',
             'language-1-source-admission-coordinator'
         )
-    } elseif ($Stem -eq 'Build-Current-Split-Project-Wvb') {
+    } elseif ($Stem -in @('Build-Current-Split-Project-Wvb', 'Current-Split-Compiler-Cache-Core')) {
         Add-Suite @(
             'compiler-split-development',
-            'wvb-runner-reconstruction',
             'language-1-authenticated-foreign-binding'
         )
     } elseif ($Stem -eq 'Build-Windvale-Model-Chat') {
@@ -2315,6 +2318,8 @@ foreach ($Path in $Paths) {
     )) {
         Add-Suite 'language-1-parallel-task-scheduler'
     } elseif ($Path -eq 'Tools/Native/Development-Command-Core.mjs') {
+        Add-Suite 'compiler-split-development'
+        Add-Suite 'language-1-authenticated-foreign-binding'
         Add-Suite 'language-1-front-door'
         Add-Suite 'language-1-memory-budget-split-execution'
     } elseif ($Path -in @(
@@ -2381,6 +2386,8 @@ foreach ($Path in $Paths) {
         'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+        'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
@@ -3370,6 +3377,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
+        'Foundation/Sha256-Compression.wv',
+        'Foundation/Sha256-Streaming.wv',
+        'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj',
+        'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj',
         'Tests/Fixtures/Native-X64/Sha256-Native-Kat.wv',
@@ -4447,6 +4458,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvo-inspector-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Test-Plan.md') {
             $RunPlanVerification = $true
+        } elseif ($Path -eq 'Specifications/Windvale-Hosted-Application-Checkpoint.md') {
+            Add-Suite 'segmented-hosted-wvb-cache'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Tool-Checkpoint.md') {
             Add-Suite 'database-storage'
         } elseif ($Path -eq 'Specifications/Windvale-Console-Application-Verification.md') {
@@ -4703,6 +4716,22 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
 $FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
+$StreamingSha256Inputs = @(
+    'Foundation/Sha256-Compression.wv',
+    'Foundation/Sha256-Streaming.wv',
+    'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj',
+    'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv'
+)
+$UseStreamingSha256Development = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('native-sha256-lowering') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $StreamingSha256Inputs }).Count -eq 0
+if ($UseStreamingSha256Development) {
+    $StreamingOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'native-sha256-lowering'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $StreamingOwner.ExpectedSeconds + 30)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $StreamingOwner.MaximumSeconds + 60)
+}
 $FoundationBorrowPlanInputs = @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
@@ -4749,12 +4778,25 @@ if ($UsePublisherCurrentSourceDevelopment) {
 $UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
+$FoundationBorrowBundleInputs = @(
+    'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv'
+)
+$FoundationBorrowComponentInputs = @($FoundationBorrowPlanInputs) +
+    @($FoundationBorrowDirectoryInputs) + @($FoundationBorrowOwnerInputs) + @($FoundationBorrowBundleInputs)
+$UseFoundationBorrowComponentsDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
+    !$UseFoundationBorrowPlanDevelopment -and !$UseFoundationBorrowDirectoryDevelopment -and
+    !$UseFoundationBorrowOwnerDevelopment -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cin @($FoundationBorrowOwnerInputs + $FoundationBorrowBundleInputs) }).Count -gt 0 -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowComponentInputs }).Count -eq 0
 if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment -or
-    $UseFoundationBorrowOwnerDevelopment) {
+    $UseFoundationBorrowOwnerDevelopment -or $UseFoundationBorrowComponentsDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'language-1-memory-budget-split-execution'
     })[0]
-    $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment) { 180 } else { 30 }
+    $FoundationBorrowExpectedSeconds = if ($UseFoundationBorrowOwnerDevelopment -or
+        $UseFoundationBorrowComponentsDevelopment) { 180 } else { 30 }
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $FoundationBorrowOwner.ExpectedSeconds + $FoundationBorrowExpectedSeconds)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $FoundationBorrowOwner.MaximumSeconds + 600)
 }
@@ -5113,6 +5155,10 @@ if (!$Quiet) {
         $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-owner development: ' +
         $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Foundation borrow-components development: ' +
+        $UseFoundationBorrowComponentsDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Streaming SHA-256 development: ' +
+        $UseStreamingSha256Development.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-source development: ' +
         $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
@@ -5193,6 +5239,8 @@ if ($PassThru) {
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
+        UseFoundationBorrowComponentsDevelopment = $UseFoundationBorrowComponentsDevelopment
+        UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible

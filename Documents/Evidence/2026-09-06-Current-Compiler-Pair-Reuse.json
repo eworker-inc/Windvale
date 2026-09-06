@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-current-compiler-pair-reuse",
+  "date": "2026-09-06",
+  "subject": "Reuse the complete current compiler pair and measure foreign-binding construction costs",
+  "claim": "All 27 foreign-binding cases pass. Fully cold compiler/application construction took 3568735 ms, with 1735 ms summed across the behavior cases. With equally warm lower-level caches the prior coordinator took 7324 ms and current compiler-pair reuse took 4492 ms. First pair publication using preserved products took 10089 ms. Both target WVB identities are unchanged. The existing split-cache owner passes its expanded 23-case sentinel on Windows and Debian; no new verifier entry point was added.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 5efd90a57e00b4d7fa96208f810402c68bb092fb. Exact implementation hashes are in the current pair run artifacts. The cold baseline used that unchanged commit."
+  },
+  "runs": [
+    {
+      "host": "Windows 11 Pro for Workstations 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Fresh compiler/application construction, two fixture products and all 27 cases; sampled tree working set reached 948871168 bytes",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Foreign-Binding-Baseline.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 3568735,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Foreign-Binding-Baseline-Result.json",
+          "size": 51876,
+          "sha256": "5a4e3d01e38408d8ebbc59def18618568771d5c7be5f2d76f565c2ee5b40b7f7"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Foreign-Binding-Baseline-Events.ndjson",
+          "size": 84560,
+          "sha256": "73af2f84ea17c48d784bbe56cec55624c426befefd8c8b02bf5f5b8d23aa7438"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Foreign-Binding-Baseline-Summary.json",
+          "size": 12414,
+          "sha256": "5e225f49bfe5e4b87a963fe991c75decd478efdc006904d2abe1f2c4fa30e753"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Foreign-Binding-Baseline-Memory.ndjson",
+          "size": 218982,
+          "sha256": "05ba666eea2149d43eadf191877872ba4e93742dfaa5c6c812ce9198952d052c"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Create the current compiler pair from preserved lower-level products; all 27 behaviors",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Current-Compiler-Pair.mjs Fill",
+      "result": "Passed",
+      "elapsedMilliseconds": 10089,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Current-Compiler-Pair-Fill-Windows.json",
+          "size": 12950,
+          "sha256": "c56bab4e07ae55c0f4cabc63f163a95ceb742440c6ffbdc7bac2bd40c00bbbdf"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Prior coordinator from 5efd90a5 with equally warm lower-level caches; all 27 behaviors",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Before-Foreign-Binding.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Current-Compiler-Pair.mjs BeforeWarm",
+      "result": "Passed",
+      "elapsedMilliseconds": 7324,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Current-Compiler-Pair-BeforeWarm-Windows.json",
+          "size": 12840,
+          "sha256": "7ed80f27215f3c291771013116134df81c08493fd90fb1de8ee71c9d34d4ed79"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Current compiler-pair hit; two target steps and all 27 behaviors",
+      "tool": "Tools/Native/Test-Language-1.0-Authenticated-Foreign-Binding.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Current-Compiler-Pair.mjs Warm",
+      "result": "Passed",
+      "elapsedMilliseconds": 4492,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Current-Compiler-Pair-Warm-Windows.json",
+          "size": 9022,
+          "sha256": "2a8f86564c36e1739a0df28d9658136a44d65fb1783f63d29030d0cd4acd41f8"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Four existing split-development groups including the expanded 23-case cache sentinel",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian WSL, Node 20.19.2",
+      "target": "Four existing split-development groups including the expanded 23-case cache sentinel",
+      "tool": "Tools/Native/Test-Compiler-Split-Development.mjs",
+      "command": "node Tools/Native/Test-Compiler-Split-Development.mjs",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Cold versus warm timings are different cache states; this change alone did not reduce genuinely cold construction to seconds. The fair warm comparison is 7324 ms versus 4492 ms.",
+    "The prior coordinator and its unchanged foreign-binding owner were copied from 5efd90a5 into private artifacts. Only script-directory and coordinator-path bindings were adapted; producers, arguments, fixtures, packaging and behavior cases were retained. Both comparison commands include the same approximately half-second key-inspection harness overhead.",
+    "The full Linux foreign-binding workload, cold Linux compiler-pair construction, complete database qualification and paired-host repository qualification were not run. The ordinary cold and complete qualification targets remain open.",
+    "The approved baseline was capped at 60 minutes and completed once. Read-only inspection and brief draft cache cases ran concurrently; this was not an isolated host benchmark.",
+    "Memory is a sampled process-tree maximum, not the true peak. Initial samples were manual; later samples were 15 seconds apart. CPU samples omit processes that ended before observation. The short warm runs were not memory-profiled.",
+    "Performance observations are single before/after samples, not stable regression thresholds. Cache protection is development construction evidence; every requested behavior still executes."
+  ],
+  "related": [
+    "Specifications/Compiler-Split-Development-Cache.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md",
+    "Tools/Native/Current-Split-Compiler-Cache-Core.mjs",
+    "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+    "Tools/Native/Test-Cached-Split-Project-Wvb.mjs"
+  ]
+}

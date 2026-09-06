@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-source-set-read-reuse-trial",
+  "date": "2026-09-06",
+  "subject": "Discarded single-segment reuse trial in hosted source-set hashing",
+  "claim": "The trial retains one structurally validated response between region digests and calls the existing range hash API directly. It reduces response reads in the measured three-segment input from 13 to 3 while preserving all 11 digests. Output bytes match on both hosts. Complete packaging improves by less than 2% in single observations, while isolated Windows execution is slightly slower with essentially unchanged working set. No useful performance gain is established; the production source was restored and no tools were promoted.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "25853a395cee6aeed74270f84431fc689bf4a55d"
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0; shared AMD Ryzen 9 3900X host",
+      "target": "Current-source candidate construction and Profile 8 packaging, retained bootstrap caches; profile stack, arena, flags and instruction allowance equal the canonical source-set tool.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Build.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Build.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 16288,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Build.mjs",
+          "size": 2326,
+          "sha256": "ac9b726dcfa012dc8443e5187531ac6406d437d6fdfe807cdeee3876eeb58e9b"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Trial-Source.wv",
+          "size": 10979,
+          "sha256": "3d6f8249a2f7442dc33bc194a1b22077fb65c94dba955df4631d4a8f3c5e664d"
+        },
+        {
+          "path": "Projects/Linker/Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj",
+          "size": 532,
+          "sha256": "efa78d700061a12c95c00340001129affa6f8b327c01a4bd6a66c24f27fbed3d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/wvhostsources.wvb",
+          "size": 84192,
+          "sha256": "766e5ae940c8cdbe15a630c67ae5cf16b63bc3d05f189e518b0fb5daa5a497e2"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/wvhostsources.exe",
+          "size": 1300992,
+          "sha256": "fbcce801bbfc0bd5ef6d68c16b0672d699c36d6e1a243c5f581904f25e8e4465"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0; shared AMD Ryzen 9 3900X host",
+      "target": "before: same retained 10.6 MB image, Profile 6, complete packaging; candidate outputs compare byte-for-byte with canonical outputs.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 46227,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+          "size": 5232,
+          "sha256": "8fd41d7d9924b5cd671b8c23de803d696a583f90e360bfa579c936f541ffe634"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/Lowerer-before.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0; shared AMD Ryzen 9 3900X host",
+      "target": "after: same retained 10.6 MB image, Profile 6, complete packaging; candidate outputs compare byte-for-byte with canonical outputs.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 45760,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+          "size": 5232,
+          "sha256": "8fd41d7d9924b5cd671b8c23de803d696a583f90e360bfa579c936f541ffe634"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/win32/Lowerer-after.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; same physical host",
+      "target": "Current-source candidate construction and Profile 8 packaging, retained bootstrap caches; profile stack, arena, flags and instruction allowance equal the canonical source-set tool.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Build.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Build.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 17663,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Build.mjs",
+          "size": 2326,
+          "sha256": "ac9b726dcfa012dc8443e5187531ac6406d437d6fdfe807cdeee3876eeb58e9b"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Trial-Source.wv",
+          "size": 10979,
+          "sha256": "3d6f8249a2f7442dc33bc194a1b22077fb65c94dba955df4631d4a8f3c5e664d"
+        },
+        {
+          "path": "Projects/Linker/Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj",
+          "size": 532,
+          "sha256": "efa78d700061a12c95c00340001129affa6f8b327c01a4bd6a66c24f27fbed3d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/wvhostsources.wvb",
+          "size": 84192,
+          "sha256": "766e5ae940c8cdbe15a630c67ae5cf16b63bc3d05f189e518b0fb5daa5a497e2"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/wvhostsources.elf",
+          "size": 1302528,
+          "sha256": "915378185e7e9869fbb953f416fbce7180a71e11b420932749663c24c093c1c7"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; same physical host",
+      "target": "before: same retained 10.6 MB image, Profile 6, complete packaging; candidate outputs compare byte-for-byte with canonical outputs.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 47575,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+          "size": 5232,
+          "sha256": "8fd41d7d9924b5cd671b8c23de803d696a583f90e360bfa579c936f541ffe634"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/Lowerer-before.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; same physical host",
+      "target": "after: same retained 10.6 MB image, Profile 6, complete packaging; candidate outputs compare byte-for-byte with canonical outputs.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 46759,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Package-Trial.mjs",
+          "size": 5232,
+          "sha256": "8fd41d7d9924b5cd671b8c23de803d696a583f90e360bfa579c936f541ffe634"
+        },
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/Lowerer-after.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; same shared physical host",
+      "target": "before: isolated source-set digest validation and chunk/manifest output for the retained 10.6 MB package. OS peak working set sampled every 50 ms; outputs compare byte-for-byte.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 20344,
+      "peakWorkingSetBytes": 17915904,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+          "size": 2267,
+          "sha256": "d449d494619a78b98d85d4097c2fe7ca18225cc3b45945b9211f77200769f12b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; same shared physical host",
+      "target": "after: isolated source-set digest validation and chunk/manifest output for the retained 10.6 MB package. OS peak working set sampled every 50 ms; outputs compare byte-for-byte.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 20818,
+      "peakWorkingSetBytes": 17887232,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Measure-Direct.ps1",
+          "size": 2267,
+          "sha256": "d449d494619a78b98d85d4097c2fe7ca18225cc3b45945b9211f77200769f12b"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "38 direct source-set cases: both tools accept identical small valid output and reject usage, output alias, truncated plan/response, oversized response, wrong segment offset, out-of-range region, and each of 11 corrupted digests. Every rejection preserves the manifest sentinel and writes no chunks.",
+      "tool": "Artifacts/Source-Set-Read-Reuse/Check-Rejections.mjs",
+      "command": "node Artifacts/Source-Set-Read-Reuse/Check-Rejections.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 10362,
+      "inputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/Check-Rejections.mjs",
+          "size": 3520,
+          "sha256": "5df9d04f760365c2f9dcdbeb894f108f522403d73f2689d1a952c898f3da30e1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Source-Set-Read-Reuse/linux/Rejection-Results.json",
+          "size": 4946,
+          "sha256": "169f3ec6807f129029e0c5bda019c40b21bdc3a97664b56bb74a7b37c1245843"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Negative optimization result, not an implemented redesign improvement. The candidate source and harnesses are ignored diagnostic artifacts identified by hashes; production source, WVB and native tools remain unchanged.",
+    "One before/after observation on each host. Windows and Debian packaging trials overlapped on the same physical host. The after-wrapper additionally preserved its small metadata and bundle response inputs for direct diagnosis. No regression threshold or statistically meaningful speedup is claimed.",
+    "Isolated Windows source-set execution measured 20344 to 20818 ms and sampled peak working set 17915904 to 17887232 bytes. The small difference is not evidence of a memory improvement. Linux peak memory was not measured.",
+    "The initial trial rejected extra files in a historical retained image checkpoint before packaging. A private snapshot of only its declared manifest, fragments and checkpoint passed the unchanged complete-identity validator. The original directory was preserved. Wrappers ran against the private snapshot, not the cache directory.",
+    "The paired-host tests use preserved native images and bootstrap tools; they are not full cold compiler preparation or repository qualification. The source-set phase still spends about 20 seconds validating and publishing this workload; hashing arithmetic or reuse of independently valid digest products merits investigation.",
+    "Debian direct cases completed; Windows direct malformed cases were not repeated after the optimization was discarded. Existing broad linker, bootstrap, ABI, OS and complete qualification owners were not run because no implementation change remains.",
+    "All construction and trial commands used explicit short deadlines within the ten-minute local development budget. The earlier 60-minute foreign-binding baseline was not repeated."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Hosted-Hashing-Tool-Promotion.json",
+    "Linker/Windvale/Native-Hosted-Container-Source-Set-Tool.wv"
+  ]
+}

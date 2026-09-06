@@ -96,38 +96,40 @@ await Requireˉproducerˉidentityˉunchanged(
     Analyzerˉidentityˉpath,
     Analyzerˉidentity,
 );
-const Analysisˉinputˉbyˉpath = new Map(
-    Analysisˉrequest.inputEvidence.slice(1).map(Evidence => [
-        Normalizedˉpath(Evidence.path),
-        Evidence.path,
-    ]),
-);
-const Declaredˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
-    const Input = Analysisˉinputˉbyˉpath.get(Normalizedˉpath(Candidate));
-    if (Input === undefined) {
-        Reject(`The split compiler project input is unavailable: ${Candidate}`);
-    }
-    return Input;
-});
-const Orderedˉanalysisˉinputs = await Orderˉanalysisˉinputs(
-    Declaredˉanalysisˉinputs,
-);
-const Analysisˉfamily = await Prepareˉfamily(
-    Cacheˉroot,
-    'project-analysis-wvca-v3',
-);
-const Symbolˉfamily = Symbolˉcheckpointˉanalysis
-    ? await Prepareˉfamily(Cacheˉroot, 'project-symbols-wvsy-v1')
-    : null;
-const Analysisˉcheckpoint = await Acquireˉanalysis(
-    Analysisˉfamily,
-    Symbolˉfamily,
-    Analysisˉrequest,
-    Orderedˉanalysisˉinputs,
-    Analyzerˉpath,
-    Analyzerˉidentity,
-    Symbolˉcheckpointˉanalysis,
-);
+async function Acquireˉrequiredˉanalysis() {
+    const Analysisˉinputˉbyˉpath = new Map(
+        Analysisˉrequest.inputEvidence.slice(1).map(Evidence => [
+            Normalizedˉpath(Evidence.path),
+            Evidence.path,
+        ]),
+    );
+    const Declaredˉanalysisˉinputs = Projectˉinputs.map(Candidate => {
+        const Input = Analysisˉinputˉbyˉpath.get(Normalizedˉpath(Candidate));
+        if (Input === undefined) {
+            Reject(`The split compiler project input is unavailable: ${Candidate}`);
+        }
+        return Input;
+    });
+    const Orderedˉanalysisˉinputs = await Orderˉanalysisˉinputs(
+        Declaredˉanalysisˉinputs,
+    );
+    const Analysisˉfamily = await Prepareˉfamily(
+        Cacheˉroot,
+        'project-analysis-wvca-v3',
+    );
+    const Symbolˉfamily = Symbolˉcheckpointˉanalysis
+        ? await Prepareˉfamily(Cacheˉroot, 'project-symbols-wvsy-v1')
+        : null;
+    return Acquireˉanalysis(
+        Analysisˉfamily,
+        Symbolˉfamily,
+        Analysisˉrequest,
+        Orderedˉanalysisˉinputs,
+        Analyzerˉpath,
+        Analyzerˉidentity,
+        Symbolˉcheckpointˉanalysis,
+    );
+}
 
 const Emissionˉcontext = await Prepareˉnativeˉprojectˉcacheˉcontext(
     'project-split-wvb-optimized-v3',
@@ -153,7 +155,7 @@ const Emissionˉcheckpoint = await Acquireˉemission(
     Emissionˉfamily,
     Emissionˉrequest,
     Analysisˉrequest.key,
-    Analysisˉcheckpoint,
+    Acquireˉrequiredˉanalysis,
     Emitterˉpath,
     Emitterˉidentity,
 );
@@ -483,7 +485,7 @@ async function Acquireˉemission(
     Family,
     Request,
     Analysisˉkey,
-    Analysisˉcheckpoint,
+    Acquireˉanalysisˉcheckpoint,
     Emitter,
     Identity,
 ) {
@@ -493,6 +495,7 @@ async function Acquireˉemission(
         console.log(`split project step=emission cache=Hit key=${Request.key}`);
         return Checkpoint;
     }
+    const Analysisˉcheckpoint = await Acquireˉanalysisˉcheckpoint();
     let Temporary = null;
     let Failure = null;
     try {

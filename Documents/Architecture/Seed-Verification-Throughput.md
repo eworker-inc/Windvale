@@ -138,6 +138,18 @@ failure domain.
 
 ## Development checkpoints
 
+The current split-compiler coordinator now acquires the complete analyzer/emitter
+pair before building requested projects. Its key binds both complete compiler
+source closures and every construction producer; its two applications and two
+identities are validated together. A hit needs no pinned or intermediate
+construction. The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
+records all 27 foreign-binding cases at 4,492 ms warm on Windows, versus 7,324 ms
+with the prior coordinator and equally warm caches. The 59.5-minute genuinely
+cold baseline remains separate. The
+[split-cache contract](../../Specifications/Compiler-Split-Development-Cache.md#reusable-current-compiler-pair)
+defines bounds, invalidation and failure handling; cache correctness cases run
+inside the existing split-development owner on both hosts.
+
 Content-addressed checkpoints may accelerate deterministic construction during
 development. A valid key includes all input digests, producing tool identity,
 target/profile, relevant options, and the checkpoint format. Every hit must
@@ -145,8 +157,41 @@ revalidate the manifest, output size, digest, and required structural admission.
 
 Checkpoints cache immutable products, not passing behavior. The owner reruns the
 execution, recovery, denial, mutation, or other behavior affected by the edit.
-Qualification ignores development checkpoint state and reconstructs its evidence
-cold.
+Qualification retains explicitly required independent constructions; a
+checkpoint hit alone proves neither behavior nor reproducibility.
+
+Acquire construction dependencies only when the requested product is missing.
+The [split compiler cache](../../Specifications/Compiler-Split-Development-Cache.md)
+derives both current request keys and validates its final WVB first. A valid
+final checkpoint needs no retained analysis or symbol files; eviction must not
+restart those phases. Corrupt final evidence fails before reconstruction.
+
+Segmented hosted packaging stores a profile-independent native image separately
+from each profile's final application. The private `segmented-hosted-image-v1`
+checkpoint binds the WVB bytes, host, complete producer graph, and validator
+identity. It retains the existing WVLI manifest and at most sixteen 4 MiB
+fragments; manifest bounds are checked before fragment reads. Producer and input
+changes reject publication, and every hit rechecks identities and image
+structure. Profiles 1 through 8 may share that image while keeping separate
+container keys. Packaging copies the image into scratch space because service
+construction appends chunks beside it. Independent reconstruction remains the
+uncached wrapper path. See the
+[image-reuse evidence](../Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json)
+for exact package comparisons and the limits of the measured workload.
+
+Hosted producer contexts retain 40-byte fingerprints: an eight-byte little-endian
+size followed by SHA-256, rather than complete producer files. All 72 toolset
+entries are still read and checked against their inventory, in batches of at
+most four; field order follows the inventory regardless of completion order.
+Version-2 hosted application keys also bind the cache-key implementation and
+Node runtime version. The shared reader allocates only the admitted file size
+plus one byte, rejects a changed opened file identity or length, and closes its
+handle on every path. The focused cache owner includes the existing hosted-session
+checks, so session and key-tool edits select that owner instead of all database
+behavior. A 4 KiB producer-payload bound protects the retained context in its
+focused test. See the
+[producer-context evidence](../Evidence/2026-09-06-Hosted-Producer-Fingerprints.json)
+for timing, memory scope, and the unchanged package comparisons.
 
 Implemented database-path checkpoints currently cover:
 
@@ -448,11 +493,11 @@ planner selects three cases for `Local-Database-Put.wv`, four for
 `Durable-Tree-Reader.wv`, and 34 for the broadly shared `Durable-Page.wv`.
 Publication, recovery, and single-writer commit are now included in the 53-case
 development inventory; cold qualification remains a separate 57-case route.
-The version-3 development inventory also identifies the six qualification-
-validated bundle memberships. A complete pair is one physical development
-execution while its two logical cases remain visible; a partial pair stays on
-the original one-case project. The all-development plan therefore contains 53
-behaviors in 47 executions. On Windows the publication/recovery bundle took
+The version-3 development inventory identifies seven qualification bundle
+memberships: six pairs and the three-case branch-page bundle. A complete bundle
+is one physical development execution while its logical cases remain visible;
+a partial selection stays on the original one-case projects. The all-development
+plan therefore contains 53 behaviors in 45 executions. On Windows the publication/recovery bundle took
 44,850 ms while creating its content-addressed checkpoints and 2,130 ms on an
 unchanged warm run with project, link, and application hits. Independent warm
 publication and recovery selections took 2,100 and 1,980 ms, confirming that a
@@ -463,13 +508,20 @@ its exact three cases in 193,520 ms. The latter plan reports 245 expected
 seconds and a 570-second safety bound rather than the qualification owner's
 2,700/3,600-second profile.
 
+The branch-page group calls its three existing portable tests in order, with
+a distinct nonzero result for each failing member. It shares 15 library inputs
+and uses the existing segmented-image owner path because its native image
+exceeds the ordinary lowerer bound. The WVB has 278,725 bytes and the native
+image uses two fragments. No input or execution bound was increased.
+
 Cold database qualification now reads one versioned inventory on both hosts.
-It preserves 57 logical cases while six compatible pairs share products, so the
-current graph contains 54 execution steps, 58 project references, 673 declared
-root/source references, and 146 unique source paths. Pairing every construction
-would produce 1,346 source visits per host. The 42 ordinary portable steps now
-use one admitted construction and delegate 385 duplicate visits to focused
-reproducibility owners; their remaining 4.61-fold cross-project manifest overlap
+It preserves 57 logical cases while seven compatible groups share products, so
+the current graph contains 52 execution steps, 56 project references, 644
+declared root/source references, and 147 unique source paths. Pairing every
+construction would produce 1,288 source visits per host. The 40 portable
+construction steps use one admitted construction and delegate 356 duplicate
+visits to focused reproducibility owners; their remaining 4.38-fold cross-project
+manifest overlap
 is the next construction target. Portable and hosted steps execute the
 current-host image and delegate generic opposite-host packaging to focused
 packager owners; paired Windows/Linux database behavior remains mandatory for

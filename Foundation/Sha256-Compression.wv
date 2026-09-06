@@ -32,23 +32,43 @@ export fn Foundationˉsha256ˉinitial() -> Foundationˉsha256ˉhash {
 }
 
 fn Addˉwrap(Left: u32, Right: u32) -> u32 {
-    let Low: u32 = (Left & 65535u32) + (Right & 65535u32);
-    let High: u32 = (Left >> 16u32) + (Right >> 16u32) + (Low >> 16u32);
+    // The two low 31-bit parts sum to at most 2^32 - 2.
+    return ((Left & 2147483647u32) + (Right & 2147483647u32)) ^
+        ((Left ^ Right) & 2147483648u32);
+}
+
+// At most five low halves sum to 327675; high halves plus carry to 327679.
+// Combining once avoids nested modular-add calls without checked overflow.
+fn Addˉfour(Zero: u32, One: u32, Two: u32, Three: u32) -> u32 {
+    let Low: u32 =
+        (Zero & 65535u32) +
+        (One & 65535u32) +
+        (Two & 65535u32) +
+        (Three & 65535u32);
+    let High: u32 =
+        (Zero >> 16u32) +
+        (One >> 16u32) +
+        (Two >> 16u32) +
+        (Three >> 16u32) +
+        (Low >> 16u32);
     return ((High & 65535u32) << 16u32) | (Low & 65535u32);
 }
 
-fn Addˉfour(Zero: u32, One: u32, Two: u32, Three: u32) -> u32 {
-    return Addˉwrap(Addˉwrap(Addˉwrap(Zero, One), Two), Three);
-}
-
-fn Addˉfive(
-    Zero: u32, One: u32, Two: u32, Three: u32, Four: u32
-) -> u32 {
-    return Addˉwrap(Addˉfour(Zero, One, Two, Three), Four);
-}
-
-fn Rotateˉright(Value: u32, Count: u32) -> u32 {
-    return (Value >> Count) | (Value << (32u32 - Count));
+fn Addˉfive(Zero: u32, One: u32, Two: u32, Three: u32, Four: u32) -> u32 {
+    let Low: u32 =
+        (Zero & 65535u32) +
+        (One & 65535u32) +
+        (Two & 65535u32) +
+        (Three & 65535u32) +
+        (Four & 65535u32);
+    let High: u32 =
+        (Zero >> 16u32) +
+        (One >> 16u32) +
+        (Two >> 16u32) +
+        (Three >> 16u32) +
+        (Four >> 16u32) +
+        (Low >> 16u32);
+    return ((High & 65535u32) << 16u32) | (Low & 65535u32);
 }
 
 fn Readˉbigˉu32(Value: bytes, Offset: u32) -> u32 {
@@ -63,24 +83,33 @@ fn Expand(
     Minusˉsixteen: u32, Minusˉfifteen: u32,
     Minusˉseven: u32, Minusˉtwo: u32
 ) -> u32 {
-    let Smallˉzero: u32 = Rotateˉright(Minusˉfifteen, 7u32) ^
-        Rotateˉright(Minusˉfifteen, 18u32) ^ (Minusˉfifteen >> 3u32);
-    let Smallˉone: u32 = Rotateˉright(Minusˉtwo, 17u32) ^
-        Rotateˉright(Minusˉtwo, 19u32) ^ (Minusˉtwo >> 10u32);
+    // Fixed rotations avoid a variable-distance call in each compression round.
+    let Smallˉzero: u32 =
+        ((Minusˉfifteen >> 7u32) | (Minusˉfifteen << 25u32)) ^
+        ((Minusˉfifteen >> 18u32) | (Minusˉfifteen << 14u32)) ^
+        (Minusˉfifteen >> 3u32);
+    let Smallˉone: u32 =
+        ((Minusˉtwo >> 17u32) | (Minusˉtwo << 15u32)) ^
+        ((Minusˉtwo >> 19u32) | (Minusˉtwo << 13u32)) ^
+        (Minusˉtwo >> 10u32);
     return Addˉfour(Minusˉsixteen, Smallˉzero, Minusˉseven, Smallˉone);
 }
 
 fn Compressˉround(
     State: Workingˉhash, Constant: u32, Word: u32
 ) -> Workingˉhash {
-    let Bigˉone: u32 = Rotateˉright(State.E, 6u32) ^
-        Rotateˉright(State.E, 11u32) ^ Rotateˉright(State.E, 25u32);
+    let Bigˉone: u32 =
+        ((State.E >> 6u32) | (State.E << 26u32)) ^
+        ((State.E >> 11u32) | (State.E << 21u32)) ^
+        ((State.E >> 25u32) | (State.E << 7u32));
     let Choice: u32 = (State.E & State.F) ^ (~State.E & State.G);
     let Temporaryˉone: u32 = Addˉfive(
         State.H, Bigˉone, Choice, Constant, Word
     );
-    let Bigˉzero: u32 = Rotateˉright(State.A, 2u32) ^
-        Rotateˉright(State.A, 13u32) ^ Rotateˉright(State.A, 22u32);
+    let Bigˉzero: u32 =
+        ((State.A >> 2u32) | (State.A << 30u32)) ^
+        ((State.A >> 13u32) | (State.A << 19u32)) ^
+        ((State.A >> 22u32) | (State.A << 10u32));
     let Majority: u32 =
         (State.A & State.B) ^ (State.A & State.C) ^ (State.B & State.C);
     let Temporaryˉtwo: u32 = Addˉwrap(Bigˉzero, Majority);

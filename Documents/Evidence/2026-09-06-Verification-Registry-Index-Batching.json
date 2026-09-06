@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-verification-registry-index-batching",
+  "date": "2026-09-06",
+  "subject": "One Git index enumeration for Linux verification owner admission",
+  "claim": "The coordinator replaces 126 per-owner Git launches with one native shell index enumeration. All 126 production registry rows are identical in the real-index comparison. Missing, non-executable, symlink-mode, conflicted, duplicate, malformed and failed index responses are rejected; the Windows reader performs no Linux mode query.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 42058b87; unchanged dependencies belong to that commit. Exact changed production and guard identities are recorded in inputs."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; production Linux registry branch, real Git index",
+      "target": "Prior production registry reader; actual repository index; 126 owners and 126 Git launches. PowerShell 7.6.5. Whole-process peak working set 119779328 bytes.",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "Extract production Read-StrictTextLines, Read-DurationProfiles and Read-VerificationRegistry; invoke Read-VerificationRegistry -HostExtension .sh against the real registry and Git index.",
+      "result": "Passed",
+      "elapsedMilliseconds": 5514
+    },
+    {
+      "host": "Windows x64; production Linux registry branch, real Git index",
+      "target": "Changed production registry reader; same actual repository index; 126 owners and one Git launch. PowerShell 7.6.5. Whole-process peak working set 110813184 bytes; returned rows equal the baseline exactly.",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "Same production-function harness and inputs as baseline; invoke Read-VerificationRegistry -HostExtension .sh.",
+      "result": "Passed",
+      "elapsedMilliseconds": 168,
+      "inputs": [
+        {
+          "path": "Tools/Verify/Invoke-WindvaleTests.ps1",
+          "size": 31143,
+          "sha256": "0d1eccbf68f0b760891905f658fe4ef09a254ede27e6e0b02782cd4df6db1d8c"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 336737,
+          "sha256": "c17ad75d5cbf86471efbac9a3c7b6c6940d73c4a83b3b0b2da17f1d08855002d"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23958,
+          "sha256": "24ac67da787e4e274fe5381864f4fb89f46affe148d85a3a0b10db40ba29323b"
+        },
+        {
+          "path": "Tests/Native/Verification-Duration-Profiles.txt",
+          "size": 177,
+          "sha256": "d9712b0b8411affa8bc53d309c13a897c60219d0bffd8b28c192e2a08cfe5343"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Complete selected changed-file plan: 31 general and 291 native routing cases, eight new Linux index boundary probes and Windows exclusion, plus all six verification-owner-stream cases. Stream owner executed freshly in 16477 ms.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 59259,
+      "inputs": [
+        {
+          "path": "Tools/Verify/Invoke-WindvaleTests.ps1",
+          "size": 31143,
+          "sha256": "0d1eccbf68f0b760891905f658fe4ef09a254ede27e6e0b02782cd4df6db1d8c"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 336737,
+          "sha256": "c17ad75d5cbf86471efbac9a3c7b6c6940d73c4a83b3b0b2da17f1d08855002d"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23958,
+          "sha256": "24ac67da787e4e274fe5381864f4fb89f46affe148d85a3a0b10db40ba29323b"
+        },
+        {
+          "path": "Tests/Native/Verification-Duration-Profiles.txt",
+          "size": 177,
+          "sha256": "d9712b0b8411affa8bc53d309c13a897c60219d0bffd8b28c192e2a08cfe5343"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The before/after sample executes the production Linux reader on Windows with real Git, not the complete Linux coordinator. Debian WSL has no pwsh executable, so native Linux time and memory remain unmeasured.",
+    "One observation per reader version on a shared Windows host; no stable performance threshold or isolated allocator saving is established. Whole-process peaks include PowerShell startup, parsing and output serialization.",
+    "The Windows end-to-end plan still takes 59.3 seconds and exceeds the 30-second warm target. This optimization applies to the Linux mode branch; it does not establish a Windows whole-plan speedup.",
+    "The guard injects Git response rows to exercise rejection boundaries against production functions, retaining real owner files and registries. A single nonzero index stage now also fails closed; no conflicted index is accepted as executable.",
+    "The first final-plan attempt stopped in the new test probe because PowerShell consumes -- when invoking a function. The probe was corrected, its narrow cases passed, and the selected plan then passed. The production reader was unchanged by that test fix.",
+    "A read-only compiler-pair acquisition found no current-key product and did not start cold preparation. The memory-budget owner migration, cold compiler preparation and complete paired-host qualification remain pending. No compiler, runtime, bytecode or OS behavior was changed or qualified."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Verify/AGENTS.md"
+  ]
+}

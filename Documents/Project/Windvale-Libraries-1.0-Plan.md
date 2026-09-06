@@ -1,5 +1,9 @@
 # Windvale Libraries 1.0 plan
 
+> Status: Proposed suite catalog with an active Option/Result implementation goal
+> Authority: Informative; accepted specifications and decisions own contracts
+> Last reviewed: 2026-09-06
+
 ## Status
 
 - Status: Draft for owner review
@@ -22,6 +26,55 @@ together.
 No numbered decision is assigned in this draft. The exact signature catalog is
 still under review, and other active work may consume the next repository
 decision number before publication.
+
+## Active implementation goal
+
+The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+coordinates this library sequence with compiler/runtime support, installed tools,
+real consumers, and testing at substantial chunk boundaries.
+
+Complete canonical Option/Result support as one coherent library, compiler,
+verifier, and runtime chunk. Finish immutable payload-borrow admission and
+bounded execution, then exclusive borrowing, take, and mapping, and migrate a
+real consumer. Preserve exact ownership, failure behavior, authority, and
+declared target limits. Windows and Debian evidence is required before claiming
+the chunk complete across hosts. The broader library catalog remains a draft;
+this goal does not accept unreviewed API signatures.
+
+During implementation, use small diagnostic checks where needed. Once the
+chunk is coherent, inspect one combined verification plan, share construction
+products, and execute the affected behaviors on their required hosts. Preserve
+unaffected evidence after failures and rerun only dependencies invalidated by
+the fix. Do not restart broad verification for documentation, commits, or
+pushes. A run beyond the ordinary ten-minute local budget needs a concrete
+command and an approved maximum duration before execution.
+
+The [verification throughput redesign](Verification-Throughput-Plan.md) remains
+supporting work with open performance targets; it does not block implementation
+until every verifier is fast. Commit coherent verified results and push them to
+both configured remotes, `origin` and `github`.
+
+The current operand-integration checkpoint passes 185 focused verifier groups
+on Windows and Debian, including 35 new groups for enum observations, capability
+arguments, local stores, plain closure captures, record construction, exact
+nominal identity, and owner lifetime. Construction and fresh execution took
+77.8 and 81.0 seconds with existing bootstrap caches. The
+[exact evidence](../Evidence/2026-09-06-Foundation-Borrow-Operand-Integration.json)
+records the candidate's limits. Complete WVB 1.39 admission and execution remain
+closed while owned-payload, authority-operation, source value-classification,
+and runtime retention work continues. Exclusive borrowing, take, mapping, and
+the real consumer are still pending; this checkpoint does not complete the chunk.
+
+The next local verifier checkpoint adds exact borrowed task-limit/context and
+scratch/region/Foreign numeric arguments, preserves opaque-owner restrictions,
+and records inherited owner-consuming operations in loan flow. Its existing
+focused selector now contains 217 groups, including 30 authority-composition
+groups and two grouped event-handoff checks. The implementation remains a
+component checkpoint: full candidate admission, runtime retention/execution,
+source value-classification reconciliation, wider owned payloads, exclusive
+borrowing, take, mapping, and consumer migration remain open. Final verification
+for this checkpoint is recorded in the
+[authority composition evidence](../Evidence/2026-09-06-Foundation-Borrow-Authority-Composition.json).
 
 ## Proposed product names
 

@@ -1,5 +1,7 @@
 module Compilerˉnativeˉx64ˉsha256ˉnativeˉkat profile portable;
 
+import Foundationˉsha256ˉstreamingˉselfˉtest as Streaming;
+
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉmanifest as Manifest;
 import Compilerˉnativeˉx64ˉloweringˉstagingˉwvoˉenvelope as Envelope;
@@ -209,5 +211,7 @@ export fn Main() -> i32 {
         1u32,
         Bytesˉconcat(Functionˉchunk, Corruptˉhelper)
     ) != 13u32 { return 8; }
+    let Streamingˉresult: i32 = Streaming.Main();
+    if Streamingˉresult != 42 { return 64 + Streamingˉresult; }
     return 42;
 }

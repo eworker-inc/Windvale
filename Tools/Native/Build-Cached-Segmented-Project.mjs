@@ -203,7 +203,7 @@ function Parseˉcheckpointˉrecord(bytes, key) {
     return { entryOffset, fragmentCount };
 }
 
-function Validateˉimageˉmanifest(bytes, entryOffset, fragments) {
+export function Validateˉimageˉmanifest(bytes, entryOffset, fragments) {
     if (bytes.length !== 28 + fragments.length * 12 ||
         bytes.subarray(0, 4).toString('ascii') !== 'WVLI' ||
         bytes.readUInt32LE(4) !== 1 || bytes.readUInt32LE(8) !== bytes.length ||
@@ -598,9 +598,12 @@ async function Main() {
     );
 }
 
-try {
-    await Main();
-} catch (error) {
-    process.stderr.write(`${error.message}\n`);
-    process.exit(error.exitCode ?? 1);
+if (process.argv[1] !== undefined &&
+    Isˉsameˉpath(path.resolve(process.argv[1]), SCRIPT_PATH)) {
+    try {
+        await Main();
+    } catch (error) {
+        process.stderr.write(`${error.message}\n`);
+        process.exit(error.exitCode ?? 1);
+    }
 }

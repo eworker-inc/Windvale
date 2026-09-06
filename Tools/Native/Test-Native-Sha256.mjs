@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFile, mkdtemp, open, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
@@ -16,6 +17,7 @@ const MAXIMUM_STAGING_CHUNK_BYTES = 4 * 1024 * 1024;
 const MAXIMUM_APPLICATION_BYTES = 64 * 1024 * 1024;
 const HELPER_BYTES = 1640;
 const CONTEXT_BYTES = 112;
+let Runˉdeadline = Infinity;
 
 function Reject(Message) {
     throw new Error(Message);
@@ -121,8 +123,11 @@ async function Terminateˉprocessˉtree(Child) {
 }
 
 async function Runˉprocess(Command, Arguments, Options = {}) {
-    const Timeoutˉmilliseconds = Options.Timeoutˉmilliseconds ??
-        COMMAND_TIMEOUT_MILLISECONDS;
+    const Remaining = Runˉdeadline - Date.now();
+    if (Remaining <= 0) throw Object.assign(new Error(
+        'Native SHA-256 total budget expired.'), { exitCode: 124 });
+    const Timeoutˉmilliseconds = Math.min(Remaining,
+        Options.Timeoutˉmilliseconds ?? COMMAND_TIMEOUT_MILLISECONDS);
     const Isˉcommand = WINDOWS && Command.toLowerCase().endsWith('.cmd');
     if (Isˉcommand && [Command, ...Arguments].some(
         Argument => /[\r\n&|<>^%!"]/u.test(Argument))) {
@@ -262,7 +267,8 @@ async function Runˉprocess(Command, Arguments, Options = {}) {
     if (Result.Cleanupˉfailure !== null) {
         Reject(`${Label} cleanup failed: ${Result.Cleanupˉfailure}.`);
     }
-    if (Result.Timedˉout) Reject(`${Label} timed out after ${Timeoutˉmilliseconds} ms.`);
+    if (Result.Timedˉout) throw Object.assign(new Error(
+        `${Label} timed out after ${Timeoutˉmilliseconds} ms.`), { exitCode: 124 });
     if (Result.Exceeded) Reject(`${Label} exceeded the ${OUTPUT_LIMIT}-byte output limit.`);
     if (Options.Expectedˉexit !== undefined && Result.Code !== Options.Expectedˉexit) {
         Reject(
@@ -299,6 +305,25 @@ async function Runˉnative(Host, Repository, Step, Stem, Arguments) {
         Progressˉstep: Step,
         Timeoutˉmilliseconds: CONSTRUCTION_TIMEOUT_MILLISECONDS,
     });
+}
+
+async function Buildˉcurrentˉtool(Host, Repository, Work, Name, Project, Application) {
+    const Wvb = join(Work, Name + '.wvb');
+    await Runˉnative(Host, Repository, Name + '-build', 'Build-Cached-Project-Wvb', [
+        join(Repository, Project), Wvb,
+    ]);
+    const Package = await Runˉnative(Host, Repository, Name + '-package',
+        'Package-Segmented-Compiler-Wvb', ['6', Wvb, Application, '--development-cache']);
+    const Report = Package.Output.trim().split(/\r?\n/).at(-1);
+    if (!/^segmented hosted WVB cache status=(Created|Hit) key=[0-9a-f]{64} host=(windows|linux)-x64 target=(windows|linux) profile=6$/.test(Report)) {
+        Reject('The current-tool construction cache report differs.');
+    }
+    process.stdout.write('native SHA-256 construction tool=' + Name + ' ' + Report + '\n');
+    for (const [Kind, Path] of [['wvb', Wvb], ['application', Application]]) {
+        const Bytes = await Readˉbounded(Path, MAXIMUM_APPLICATION_BYTES, Name + ' ' + Kind);
+        process.stdout.write('native SHA-256 product tool=' + Name + ' kind=' + Kind +
+            ' bytes=' + Bytes.length + ' sha256=' + createHash('sha256').update(Bytes).digest('hex') + '\n');
+    }
 }
 
 function Parseˉwvo(Bytes, Label) {
@@ -490,7 +515,7 @@ function Contextˉpattern() {
     return Pattern;
 }
 
-async function Patchˉarenaˉcapacity(Source, Target, Capacity) {
+async function Patchˉcontext(Source, Target, Offset, Patch) {
     const Bytes = await Readˉbounded(
         Source, MAXIMUM_APPLICATION_BYTES, `${basename(Source)} application`
     );
@@ -501,10 +526,8 @@ async function Patchˉarenaˉcapacity(Source, Target, Capacity) {
     await copyFile(Source, Target);
     const Handle = await open(Target, 'r+');
     try {
-        const Patch = Buffer.alloc(4);
-        Patch.writeUInt32LE(Capacity);
-        const Written = await Handle.write(Patch, 0, Patch.length, Context + 56);
-        if (Written.bytesWritten !== 4) Reject('Execution-context capacity patch was partial.');
+        const Written = await Handle.write(Patch, 0, Patch.length, Context + Offset);
+        if (Written.bytesWritten !== Patch.length) Reject('Execution-context capacity patch was partial.');
     } finally {
         await Handle.close();
     }
@@ -512,16 +535,33 @@ async function Patchˉarenaˉcapacity(Source, Target, Capacity) {
         Target, MAXIMUM_APPLICATION_BYTES, `${basename(Target)} patched application`
     );
     const Expected = Buffer.from(Bytes);
-    Expected.writeUInt32LE(Capacity, Context + 56);
-    Equal(Patched, Expected, 'Arena-capacity clone changed bytes outside the four-byte capacity field.');
+    Patch.copy(Expected, Context + Offset);
+    Equal(Patched, Expected, 'Execution-context clone changed bytes outside its selected field.');
+}
+
+async function Patchˉarenaˉcapacity(Source, Target, Capacity) {
+    const Patch = Buffer.alloc(4);
+    Patch.writeUInt32LE(Capacity);
+    await Patchˉcontext(Source, Target, 56, Patch);
 }
 
 async function Main() {
-    if (process.argv.length !== 4 || !['windows', 'linux'].includes(process.argv[2])) {
-        process.stderr.write('Usage: node Test-Native-Sha256.mjs <windows|linux> <repository-root>\n');
+    const Arguments = process.argv.slice(4);
+    const Streamingˉonly = Arguments[0] === '--streaming';
+    if (Streamingˉonly) Arguments.shift();
+    let Maximumˉseconds = Streamingˉonly ? 60 : 600;
+    if (Arguments.length === 2 && Arguments[0] === '--maximum-seconds' &&
+        /^[1-9][0-9]{0,3}$/.test(Arguments[1]) && Number(Arguments[1]) <= 3600) {
+        Maximumˉseconds = Number(Arguments[1]);
+        Arguments.length = 0;
+    }
+    if (process.argv.length < 4 || Arguments.length !== 0 ||
+        !['windows', 'linux'].includes(process.argv[2])) {
+        process.stderr.write('Usage: node Test-Native-Sha256.mjs <windows|linux> <repository-root> [--streaming] [--maximum-seconds <1-3600>]\n');
         process.exitCode = 64;
         return;
     }
+    Runˉdeadline = Date.now() + Maximumˉseconds * 1000;
     const Host = process.argv[2];
     const Repository = resolve(process.argv[3]);
     const Temporaryˉprefix = join(tmpdir(), 'windvale-native-sha256.');
@@ -533,34 +573,31 @@ async function Main() {
     };
     try {
         const Extension = Host === 'windows' ? 'exe' : 'elf';
-        const Lowererˉwvb = join(Work, 'Wvb-To-Wvo.wvb');
-        const Objectˉprefix = join(Work, 'Lowerer-Object');
-        const Objectˉmanifest = join(Work, 'Lowerer-Object.wvop');
-        const Imageˉprefix = join(Work, 'Lowerer-Image');
-        const Imageˉmanifest = join(Work, 'Lowerer-Image.wvli');
-        const Canonicalˉprefix = join(Work, 'Lowerer-Canonical');
-        const Canonicalˉmanifest = join(Work, 'Lowerer-Canonical.wvli');
+        if (Streamingˉonly) {
+            const Wvb = join(Work, 'Streaming.wvb');
+            const Application = join(Work, 'Streaming.' + Extension);
+            await Runˉnative(Host, Repository, 'streaming-build', 'Build-Cached-Project-Wvb', [
+                join(Repository, 'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj'), Wvb,
+            ]);
+            await Runˉnative(Host, Repository, 'streaming-package', 'Package-Segmented-Compiler-Wvb', [
+                '1', Wvb, Application, '--development-cache',
+            ]);
+            const Execution = await Runˉprocess(Application, [], {
+                Workingˉdirectory: Work, Expectedˉexit: 42,
+                Label: 'streaming SHA-256 cases', Progressˉstep: 'streaming-execution',
+            });
+            if (Execution.Output !== '' || Execution.Errorˉoutput !== '') {
+                Reject('The streaming SHA-256 self-test emitted unexpected output.');
+            }
+            const Wvbˉbytes = await Readˉbounded(Wvb, MAXIMUM_WVO_BYTES, 'streaming WVB');
+            process.stdout.write('native SHA-256 streaming development status=Passed cases=20 kats=12 malformed=7 boundary=1 qualification=false ' +
+                'wvb-bytes=' + Wvbˉbytes.length + ' wvb-sha256=' +
+                createHash('sha256').update(Wvbˉbytes).digest('hex') + '\n');
+            return;
+        }
         const Lowerer = join(Work, `Wvb-To-Wvo.${Extension}`);
-        await Runˉnative(Host, Repository, 'lowerer-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Compiler', 'Windvale-Native-X64-Lowering-Tool.wvproj'),
-            Lowererˉwvb,
-        ]);
-        await Runˉnative(Host, Repository, 'lowerer-stage', 'Stage-Compiler-Wvb', [
-            Lowererˉwvb, Objectˉprefix, Objectˉmanifest,
-        ]);
-        await Runˉnative(Host, Repository, 'lowerer-link', 'Link-Staged-Compiler-Wvo', [
-            Objectˉprefix, Objectˉmanifest, Imageˉprefix, Imageˉmanifest,
-        ]);
-        const Transport = await Runˉnative(
-            Host, Repository, 'lowerer-transport', 'Transport-Compiler-Image',
-            [Imageˉprefix, Imageˉmanifest, Canonicalˉprefix, Canonicalˉmanifest]
-        );
-        const Report = Transport.Output.trim().replace(/\r/g, '');
-        const Match = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-8]) manifest-bytes=([0-9]+)$/.exec(Report);
-        if (!Match) Reject(`Compiler image transport report differs: ${JSON.stringify(Report)}`);
-        await Runˉnative(Host, Repository, 'lowerer-package', 'Package-Hosted-Wvb', [
-            'image', '6', Lowererˉwvb, Canonicalˉprefix, Match[3], Match[2], Lowerer, Host,
-        ]);
+        await Buildˉcurrentˉtool(Host, Repository, Work, 'lowerer',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj', Lowerer);
         Pass('current lowerer construction');
 
         const Returnˉinput = join(Repository, 'Artifacts', 'Native-Wvb-To-Wvo-Candidate', 'Return-42.wvb');
@@ -580,8 +617,8 @@ async function Main() {
 
         const Katˉwvb = join(Work, 'Sha256-Kat.wvb');
         const Katˉwvo = join(Work, 'Sha256-Kat.wvo');
-        await Runˉnative(Host, Repository, 'kat-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Tests', 'Windvale-Native-Test-Sha256-Native-Kat.wvproj'),
+        await Runˉnative(Host, Repository, 'kat-build', 'Build-Cached-Project-Wvb', [
+            join(Repository, 'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj'),
             Katˉwvb,
         ]);
         await Runˉprocess(Lowerer, [Katˉwvb, Katˉwvo], {
@@ -615,50 +652,24 @@ async function Main() {
         await Runˉnative(Host, Repository, 'kat-package', 'Package-Console', [
             `${Host}-x64-console-v1`, Katˉimage, '0', Katˉapplication,
         ]);
-        await Runˉprocess(Katˉapplication, [], {
+        // The console smoke default is one million instructions; the 1 MiB
+        // streaming workload needs a larger, explicit execution allowance.
+        // Keep the packaged arena and every other byte unchanged.
+        const Katˉbounded = join(Work, 'Sha256-Kat-Bounded.' + Extension);
+        const Katˉbudget = Buffer.alloc(8);
+        Katˉbudget.writeBigUInt64LE(4294967296n);
+        await Patchˉcontext(Katˉapplication, Katˉbounded, 8, Katˉbudget);
+        await Runˉprocess(Katˉbounded, [], {
             Workingˉdirectory: Work,
             Expectedˉexit: 42,
             Label: 'native SHA-256 exact KAT application',
             Progressˉstep: 'kat-execution',
         });
-        Pass('empty and abc exact native KATs');
+        Pass('empty and abc exact native KATs plus 20 streaming cases');
 
-        const Stagerˉwvb = join(Work, 'Wvb-To-Wvo-Stager.wvb');
-        const Stagerˉobjectˉprefix = join(Work, 'Stager-Object');
-        const Stagerˉobjectˉmanifest = join(Work, 'Stager-Object.wvop');
-        const Stagerˉimageˉprefix = join(Work, 'Stager-Image');
-        const Stagerˉimageˉmanifest = join(Work, 'Stager-Image.wvli');
-        const Stagerˉcanonicalˉprefix = join(Work, 'Stager-Canonical');
-        const Stagerˉcanonicalˉmanifest = join(Work, 'Stager-Canonical.wvli');
         const Stager = join(Work, `Wvb-To-Wvo-Stager.${Extension}`);
-        await Runˉnative(Host, Repository, 'publication-stager-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Compiler',
-                'Windvale-Native-X64-Lowering-Staging-Tool.wvproj'),
-            Stagerˉwvb,
-        ]);
-        await Runˉnative(Host, Repository, 'publication-stager-stage', 'Stage-Compiler-Wvb', [
-            Stagerˉwvb, Stagerˉobjectˉprefix, Stagerˉobjectˉmanifest,
-        ]);
-        await Runˉnative(Host, Repository, 'publication-stager-link', 'Link-Staged-Compiler-Wvo', [
-            Stagerˉobjectˉprefix, Stagerˉobjectˉmanifest,
-            Stagerˉimageˉprefix, Stagerˉimageˉmanifest,
-        ]);
-        const Stagerˉtransport = await Runˉnative(
-            Host, Repository, 'publication-stager-transport', 'Transport-Compiler-Image',
-            [Stagerˉimageˉprefix, Stagerˉimageˉmanifest,
-                Stagerˉcanonicalˉprefix, Stagerˉcanonicalˉmanifest]
-        );
-        const Stagerˉreport = Stagerˉtransport.Output.trim().replace(/\r/g, '');
-        const Stagerˉmatch = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-8]) manifest-bytes=([0-9]+)$/.exec(
-            Stagerˉreport
-        );
-        if (!Stagerˉmatch) {
-            Reject(`Compiler staging image transport report differs: ${JSON.stringify(Stagerˉreport)}`);
-        }
-        await Runˉnative(Host, Repository, 'publication-stager-package', 'Package-Hosted-Wvb', [
-            'image', '6', Stagerˉwvb, Stagerˉcanonicalˉprefix,
-            Stagerˉmatch[3], Stagerˉmatch[2], Stager, Host,
-        ]);
+        await Buildˉcurrentˉtool(Host, Repository, Work, 'publication-stager',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj', Stager);
         const Stagedˉprefix = join(Work, 'Sha256-Staged');
         const Stagedˉmanifest = join(Work, 'Sha256-Staged.wvop');
         await Runˉprocess(Stager, [Katˉwvb, Stagedˉprefix, Stagedˉmanifest], {
@@ -722,8 +733,8 @@ async function Main() {
         const Smokeˉwvo = join(Work, 'Sha256-Smoke.wvo');
         const Smokeˉimage = join(Work, 'Sha256-Smoke.bin');
         const Smokeˉapplication = join(Work, `Sha256-Smoke.${Extension}`);
-        await Runˉnative(Host, Repository, 'arena-smoke-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Tests', 'Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj'),
+        await Runˉnative(Host, Repository, 'arena-smoke-build', 'Build-Cached-Project-Wvb', [
+            join(Repository, 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj'),
             Smokeˉwvb,
         ]);
         await Runˉprocess(Lowerer, [Smokeˉwvb, Smokeˉwvo], {
@@ -769,7 +780,7 @@ async function Main() {
         if (Tests !== 8) Reject(`Native SHA-256 case count is ${Tests}, expected 8.`);
         process.stdout.write(
             'native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 ' +
-            'helper-bytes=1640 sha-free=Identical staged-corruption=Rejected\n'
+            'helper-bytes=1640 sha-free=Identical staged-corruption=Rejected streaming-cases=20\n'
         );
     } finally {
         const Resolved = resolve(Work);
@@ -778,10 +789,14 @@ async function Main() {
             Reject(`Refusing to remove unexpected temporary path: ${Resolved}`);
         }
         await rm(Resolved, { recursive: true, force: true });
+        if (Date.now() >= Runˉdeadline) {
+            process.exitCode = 124;
+            process.stderr.write('Native SHA-256 total budget expired during cleanup.\n');
+        }
     }
 }
 
 Main().catch(Errorˉvalue => {
     process.stderr.write(`Native SHA-256 verification failed: ${Errorˉvalue.message}\n`);
-    process.exitCode = 1;
+    process.exitCode = Errorˉvalue.exitCode ?? 1;
 });

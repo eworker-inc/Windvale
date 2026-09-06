@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-foundation-borrow-operand-integration",
+  "date": "2026-09-06",
+  "subject": "Foundation immutable-borrow operand integration in the current-source verifier",
+  "claim": "The existing verifier now applies its exact nominal Copy/shared read-through proof to enum equality, inequality and text conversion, capability arguments, local stores, record construction and plain closure captures. New whole-module cases reject wrong types, wrong enum identity, undeclared capability calls, portable authority, stale local and pending-stack loans, borrowed parameter reassignment, owned aggregate copying and escaping borrow captures. Independently copied values remain usable after the original owner changes. All 185 focused groups pass on Windows and Debian with identical test WVB; the complete WVB 1.39 admission guard remains closed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 0b7eb8159c1a55307da727513c28c9a8001ea4dd; exact changed implementation, fixture and owner identities are recorded in each run. Unchanged dependencies and bootstrap artifacts belong to that base commit."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0; AMD Ryzen 9 3900X",
+      "target": "185 focused groups, including 35 new operand integration groups. Both the project and native application caches created new products using retained bootstrap tools. Every behavior executed afresh; candidate WVB 1.39 execution remains disabled.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 77845,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 242936,
+          "sha256": "c82b5bfa3638b987a9e0145523f65a9dac1be21dc671838fde78192b77aa26d4"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 27748,
+          "sha256": "996f0ec68f5f8f020016add2b2850a39ea31ec3fe3269193fe52fb879e615597"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120941,
+          "sha256": "426ef4330f5e170f072eac45605c23265509ca3422ed9640b8d1cdff46d4303e"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23958,
+          "sha256": "24ac67da787e4e274fe5381864f4fb89f46affe148d85a3a0b10db40ba29323b"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 815,
+          "sha256": "37b41384b01fee7c552fab5422a2f3584c8d0f0b7bad56cc663ea658e5b4640f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 658357,
+          "sha256": "5eeb0359d7ac4972c9a675d9f60c818fc4fb3ce41f075027d0ac942bccf6aa6e"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 20.19.2; same physical host",
+      "target": "185 focused groups, including 35 new operand integration groups. Both the project and native application caches created new products using retained bootstrap tools. Every behavior executed afresh; candidate WVB 1.39 execution remains disabled.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 81021,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 242936,
+          "sha256": "c82b5bfa3638b987a9e0145523f65a9dac1be21dc671838fde78192b77aa26d4"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 27748,
+          "sha256": "996f0ec68f5f8f020016add2b2850a39ea31ec3fe3269193fe52fb879e615597"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 120941,
+          "sha256": "426ef4330f5e170f072eac45605c23265509ca3422ed9640b8d1cdff46d4303e"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23958,
+          "sha256": "24ac67da787e4e274fe5381864f4fb89f46affe148d85a3a0b10db40ba29323b"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj",
+          "size": 815,
+          "sha256": "37b41384b01fee7c552fab5422a2f3584c8d0f0b7bad56cc663ea658e5b4640f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 658357,
+          "sha256": "5eeb0359d7ac4972c9a675d9f60c818fc4fb3ce41f075027d0ac942bccf6aa6e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Updated case inventory and unchanged conservative routing pass 31 general and 291 native checks. No new owner or verifier entry point was added. The full memory-budget owner declares 419 cases; combined Foundation publication declares 248; focused owner selection declares 185.",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Component verification only: complete WVB 1.39 admission and execution remain closed. This does not qualify the larger Option/Result chunk, the current compiler or the Windvale 1.0 product.",
+    "Owned Vector payload projection, wider ownership and authority-operation composition, inherited Foreign typing and source value-classification reconciliation remain pending, followed by coordinated runtime metadata, retention and execution support.",
+    "The constructed test modules do not prove source publication of every combination. Source compilation still requires its own focused evidence before admission.",
+    "One ordered development observation per final host, with retained bootstrap caches; no clean-machine latency or stable performance threshold is claimed. Peak working-set memory was not sampled.",
+    "The initial 168-group diagnostic rejected valid shared-text local storage at group 218. The local-store path was corrected using the existing bounded Copy/shared proof. Subsequent 174-, 179- and final 185-group runs passed; earlier runs are development diagnostics, not evidence for later changed bytes.",
+    "The reviewed broad plan selected nine owners, expected 2550 seconds and maximum 10200 seconds. It was not executed because it exceeded the ten-minute local budget and was disproportionate to this still-gated component checkpoint. Full memory-budget execution, compiler reconstruction, native ABI, WebAssembly, OS and whole-product qualification were not run.",
+    "The registered full owner has not executed all 419 cases at this source state; its inventory is updated without implying a passing full-owner result."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Decisions/0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md",
+    "Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Language-1.0-Foundation.md"
+  ]
+}

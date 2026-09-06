@@ -2,7 +2,7 @@
 
 > Status: Current dependency plan for the direct Windvale 1.0 product
 > Authority: Informative plan; accepted decisions and specifications own contracts
-> Last reviewed: 2026-09-05
+> Last reviewed: 2026-09-06
 
 Windvale's next intended product tag is `v1.0.0`. Decision
 [0800, Target Windvale 1.0 directly](../Decisions/0800-Target-Windvale-1.0-Directly.md)
@@ -13,6 +13,10 @@ This roadmap shows dependencies and completion gates. It is not an activity
 diary. Current implementation standing lives in [Progress](Progress.md), and
 the [historical roadmap](Roadmap-History-2026-08-31.md) retains the detailed
 milestone audits and measurements that preceded this concise plan.
+
+The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+proposes usable delivery chunks, concrete exit criteria, and a verification
+rhythm that reserves long runs for selected chunk and qualification gates.
 
 ## Product outcome
 

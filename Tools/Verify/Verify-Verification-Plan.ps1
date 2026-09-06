@@ -110,7 +110,12 @@ $NativeCases = @(
     @{
         Name = 'Shared bounded development command lifecycle'
         Paths = @('Tools/Native/Development-Command-Core.mjs')
-        Suites = @('language-1-front-door', 'language-1-memory-budget-split-execution')
+        Suites = @(
+            'language-1-front-door',
+            'language-1-authenticated-foreign-binding',
+            'language-1-memory-budget-split-execution',
+            'compiler-split-development'
+        )
         Gaps = @()
         VerifyPlan = $false
     },
@@ -238,6 +243,8 @@ $NativeCases = @(
             'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
             'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
             'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj',
+            'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
@@ -1859,6 +1866,67 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Foundation/Sha256-Compression.wv'
+        Paths = @('Foundation/Sha256-Compression.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Foundation/Sha256-Streaming.wv'
+        Paths = @('Foundation/Sha256-Streaming.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj'
+        Paths = @('Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv'
+        Paths = @('Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'streaming SHA companion documentation'
+        Paths = @('Foundation/Sha256-Compression.wv', 'README.md')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'streaming SHA mixed native lowering'
+        Paths = @('Foundation/Sha256-Compression.wv', 'Compiler/Windvale/Native-X64-Lowering-Sha256.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $false
+    },
+    @{
+        Name = 'streaming SHA mixed runner'
+        Paths = @('Foundation/Sha256-Compression.wv', 'Tools/Native/Test-Native-Sha256.mjs')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $false
+    },
+    @{
         Name = 'native SHA-256 lowering owner'
         Paths = @(
             'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
@@ -2064,6 +2132,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'hosted session and key changes select the cache contract without database execution'
+        Paths = @(
+            'Tools/Native/Build-Cached-Hosted-Application-Session.mjs',
+            'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
+            'Tools/Native/Test-Hosted-Application-Session.mjs',
+            'Specifications/Windvale-Hosted-Application-Checkpoint.md'
+        )
+        Suites = @('segmented-hosted-wvb-cache')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'retired aggregate verification aliases are deletion tombstones'
         Paths = @(
             'Tools/Native/Test-Retirement-Suite.cmd',
@@ -2130,13 +2210,28 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
-        Name = 'production cached split builder routing'
+        Name = 'cached split builder excludes compiler reconstruction and admission semantics'
         Paths = @('Tools/Native/Build-Cached-Split-Project-Wvb.mjs')
-        Suites = @(
-            'wvb-runner-reconstruction',
-            'language-1-production-admission-ingress',
-            'compiler-split-development'
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'current compiler pair cache and construction preserve foreign-binding integration'
+        Paths = @('Tools/Native/Current-Split-Compiler-Cache-Core.mjs')
+        Suites = @('language-1-authenticated-foreign-binding', 'compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
+        Name = 'split cache verifier edits remain focused'
+        Paths = @(
+            'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.mjs',
+            'Tools/Native/Test-Compiler-Split-Development.cmd',
+            'Tools/Native/Test-Compiler-Split-Development.sh'
         )
+        Suites = @('compiler-split-development')
         Gaps = @()
         VerifyPlan = $false
     },
@@ -2166,7 +2261,6 @@ $NativeCases = @(
             'Tools/Native/Build-Current-Split-Project-Wvb.mjs'
         )
         Suites = @(
-            'wvb-runner-reconstruction',
             'language-1-authenticated-foreign-binding',
             'compiler-split-development'
         )
@@ -3826,6 +3920,22 @@ $NativeCases = @(
         DatabaseMaximumSeconds = 300
     },
     @{
+        Name = 'segmented branch-page bundle keeps all three cases in one execution'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-branch-pages-bundle'
+        DatabaseCases = 3
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
         Name = 'bundled database publication and recovery development target'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj',
@@ -4800,7 +4910,23 @@ $NativeCases = @(
 )
 
 Write-Host 'START verification plan phase=contracts item=1/3'
-& $RetirementInventoryVerifier -Quiet
+& {
+    . $RetirementInventoryVerifier -Quiet
+    $ManagedCommandName = 'dot' + 'net'
+    foreach ($InvocationCase in @(
+        @{ Text = '{"scripts":{"build":"' + $ManagedCommandName + ' build"}}'; Expected = $true },
+        @{ Text = "run: '$ManagedCommandName.exe build'"; Expected = $true },
+        @{ Text = 'echo prepare && ' + $ManagedCommandName + ' build'; Expected = $true },
+        @{ Text = 'actions/setup-' + $ManagedCommandName + '@v4'; Expected = $true },
+        @{ Text = 'dotnet-recovery.md'; Expected = $false },
+        @{ Text = '{"scripts":{"build":"node Build.mjs"}}'; Expected = $false }
+    )) {
+        if ((Test-DirectManagedInvocation -Content $InvocationCase.Text) -ne
+            $InvocationCase.Expected) {
+            throw "Managed entry-point classification differs: $($InvocationCase.Text)"
+        }
+    }
+}
 & $DevelopmentDependencyVerifier -Quiet
 
 $VerificationDurationPlan = Join-Path $RepositoryRoot `
@@ -4850,6 +4976,25 @@ $VerificationOwnerCommands = [System.Collections.Generic.HashSet[string]]::new(
 $VerificationOwnerProfiles = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
+$LinuxIndexRows = @(git -C $RepositoryRoot ls-files -s -- 'Tools/Native/*.sh')
+if ($LASTEXITCODE -ne 0) {
+    throw 'Git could not enumerate Linux verification owner modes.'
+}
+$LinuxIndexModes = [Collections.Generic.Dictionary[string, string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($IndexRow in $LinuxIndexRows) {
+    if ($IndexRow -notmatch '^([0-9]{6}) [0-9a-f]+ [0-3]\t(.+)$') {
+        throw "Malformed Linux verification index entry: $IndexRow"
+    }
+    $IndexMode = $Matches[1]
+    $IndexPath = $Matches[2]
+    # Multiple stages never prove a single executable index entry.
+    if ($LinuxIndexModes.ContainsKey($IndexPath)) {
+        $LinuxIndexModes[$IndexPath] = ''
+    } else {
+        $LinuxIndexModes.Add($IndexPath, $IndexMode)
+    }
+}
 foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
     $Fields = $Line -split '\|', 6
     if ($Fields.Count -ne 6) {
@@ -4892,9 +5037,8 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
             throw "The native verification plan is missing owner '$Owner'."
         }
     }
-    $LinuxIndex = @(git -C $RepositoryRoot ls-files -s -- $LinuxOwner)
-    if ($LASTEXITCODE -ne 0 -or $LinuxIndex.Count -ne 1 -or
-        $LinuxIndex[0] -notmatch '^100755 ') {
+    if (!$LinuxIndexModes.ContainsKey($LinuxOwner) -or
+        $LinuxIndexModes[$LinuxOwner] -cne '100755') {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }
@@ -4918,16 +5062,16 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TimingEvidence -ne 'historical-only' -or
     $QualificationWorkPlan.TimingCaseCountMismatches.Count -ne @(
         $QualificationWorkPlan.OwnerAnalysis | Where-Object { $_.Cases -ne $_.ObservedCases }).Count -or
-    $QualificationWorkPlan.TotalExpectedSeconds -ne 19845 -or
-    $QualificationWorkPlan.TotalMaximumSeconds -ne 79500 -or
+    $QualificationWorkPlan.TotalExpectedSeconds -ne 20130 -or
+    $QualificationWorkPlan.TotalMaximumSeconds -ne 79800 -or
     $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
         2 * $QualificationWorkPlan.TotalExpectedSeconds -or
     $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 7260 -or
     $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 25200 -or
-    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 2820 -or
-    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4962 -or
-    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4440 -or
-    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6833 -or
+    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 3105 -or
+    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 5033 -or
+    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4155 -or
+    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6931 -or
     $QualificationWorkPlan.TimingSourceCommit -ne
         '47dd3d69fef8a0ac5b894885b0a1917e21033622' -or
     $QualificationWorkPlan.TimingRunId -ne '33894696448' -or
@@ -4970,7 +5114,7 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopExpectedOwners[0].UniqueProjects -ne 2 -or
     $QualificationWorkPlan.TopExpectedOwners[0].PipelineCallSites -ne 1 -or
     $QualificationWorkPlan.TopExpectedOwners[1].Name -ne 'database-storage' -or
-    $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 66 -or
+    $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 67 -or
     $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 62 -or
     $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
         'language-1-front-door' -or
@@ -4982,10 +5126,17 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopObservedOwners[2].Name -ne
         'language-1-memory-budget-split-execution' -or
     $QualificationWorkPlan.TopObservedOwners[3].Name -ne 'database-storage' -or
-    $QualificationWorkPlan.RepeatedProjects.Count -ne 11 -or
+    $QualificationWorkPlan.RepeatedProjects.Count -ne 12 -or
     $QualificationWorkPlan.NestedOwnerEdges.Count -ne 0 -or
     $QualificationWorkPlan.PipelineUses.Count -ne 19) {
     throw 'The complete qualification work inventory differs.'
+}
+$ShaConstructionOwner = @($QualificationWorkPlan.OwnerAnalysis | Where-Object {
+    $_.Name -eq 'native-sha256-lowering'
+})[0]
+if ($ShaConstructionOwner.UniqueProjects -ne 5 -or
+    $ShaConstructionOwner.Profile -ne 'slow') {
+    throw 'The native SHA owner must expose all five construction projects and its cold duration profile.'
 }
 $QualificationShardSignature = @(
     $QualificationWorkPlan.Shards | ForEach-Object {
@@ -4998,23 +5149,23 @@ $QualificationShardSignature = @(
     }
 ) -join ','
 if ($QualificationShardSignature -cne
-    '1|13|2820|11400|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
+    '1|13|3105|11700|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
     throw "The measured qualification shard assignment differs: $QualificationShardSignature"
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
-    'Build-Wvb' = '48|221'
+    'Build-Wvb' = '47|217'
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
     'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
-    'Stage-Compiler-Wvb' = '3|10'
+    'Stage-Compiler-Wvb' = '2|8'
     'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '20|55'
     'Link-Wvo' = '39|112'
-    'Package-Hosted-Wvb' = '19|99'
+    'Package-Hosted-Wvb' = '18|97'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '21|60'
+    'Package-Segmented-Compiler-Wvb' = '22|63'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
@@ -5054,6 +5205,74 @@ if ($LASTEXITCODE -ne 0 -or
 
 $PowerShellTestRunner = Join-Path $PSScriptRoot 'Invoke-WindvaleTests.ps1'
 $PowerShellTestRunnerSource = Get-Content -Raw -LiteralPath $PowerShellTestRunner
+# Exercise the production Linux registry reader on every guard host. The Git
+# boundary is injected; owner files and duration/owner registries remain real.
+& {
+    $ReaderTokens = $null
+    $ReaderErrors = $null
+    $ReaderAst = [Management.Automation.Language.Parser]::ParseInput(
+        $PowerShellTestRunnerSource, [ref]$ReaderTokens, [ref]$ReaderErrors)
+    if ($ReaderErrors.Count -ne 0) { throw 'The owner coordinator did not parse.' }
+    $ReaderFunctions = @($ReaderAst.FindAll({ param($Node)
+        $Node -is [Management.Automation.Language.FunctionDefinitionAst] -and
+        $Node.Name -in @('Read-StrictTextLines', 'Read-DurationProfiles', 'Read-VerificationRegistry')
+    }, $false))
+    if ($ReaderFunctions.Count -ne 3) { throw 'The production registry readers are missing.' }
+    foreach ($ReaderFunction in $ReaderFunctions) {
+        . ([scriptblock]::Create($ReaderFunction.Extent.Text))
+    }
+    $ReaderProfiles = Read-DurationProfiles $VerificationDurationPlan
+    $ProbePath = 'Tools/Native/Test-Verification-Owner-Stream.sh'
+    $ProbeRows = @($LinuxIndexRows | Where-Object { $_.EndsWith("`t$ProbePath") })
+    if ($ProbeRows.Count -ne 1) { throw 'The executable-mode probe lacks its real index row.' }
+    $ProbeRow = $ProbeRows[0]
+    $OtherRows = @($LinuxIndexRows | Where-Object { !$_.EndsWith("`t$ProbePath") })
+    $PriorExitCode = $global:LASTEXITCODE
+    $IndexProbe = @{ Calls = 0; Rows = @(); ExitCode = 0 }
+    function git {
+        $IndexProbe.Calls++
+        # PowerShell consumes the argument terminator when invoking this function.
+        if (($args -join '|') -cne "-C|$RepositoryRoot|ls-files|-s|Tools/Native/*.sh") {
+            throw "The coordinator did not request one complete native shell index: $($args -join '|')"
+        }
+        $global:LASTEXITCODE = $IndexProbe.ExitCode
+        $IndexProbe.Rows
+    }
+    try {
+        foreach ($Probe in @(
+            @{ Name = 'executable'; Rows = @($LinuxIndexRows); Error = $null },
+            @{ Name = 'missing'; Rows = $OtherRows; Error = 'not executable in Git' },
+            @{ Name = 'non-executable'; Rows = $OtherRows + @($ProbeRow -replace '^100755 ', '100644 '); Error = 'not executable in Git' },
+            @{ Name = 'index symlink'; Rows = $OtherRows + @($ProbeRow -replace '^100755 ', '120000 '); Error = 'not executable in Git' },
+            @{ Name = 'single conflict stage'; Rows = $OtherRows + @($ProbeRow -replace ' 0\t', " 2`t"); Error = 'not executable in Git' },
+            @{ Name = 'duplicate stages'; Rows = $LinuxIndexRows + @($ProbeRow -replace ' 0\t', " 3`t"); Error = 'not executable in Git' },
+            @{ Name = 'malformed index'; Rows = @('malformed'); Error = 'Malformed Linux verification index entry' },
+            @{ Name = 'Git failure'; Rows = @($LinuxIndexRows); ExitCode = 1; Error = 'Git could not enumerate' }
+        )) {
+            $IndexProbe.Calls = 0
+            $IndexProbe.Rows = $Probe.Rows
+            $IndexProbe.ExitCode = if ($Probe.ContainsKey('ExitCode')) { $Probe.ExitCode } else { 0 }
+            $Failure = $null
+            try {
+                $Rows = @(Read-VerificationRegistry -RegistryPath $VerificationOwnerPlan `
+                    -RepositoryRoot $RepositoryRoot -NativeRoot (Join-Path $RepositoryRoot 'Tools/Native') `
+                    -HostExtension '.sh' -Profiles $ReaderProfiles)
+            } catch { $Failure = $_.Exception.Message }
+            if ($IndexProbe.Calls -ne 1 -or
+                ($null -eq $Probe.Error -and ($null -ne $Failure -or $Rows.Count -ne $VerificationOwnerNames.Count)) -or
+                ($null -ne $Probe.Error -and ($null -eq $Failure -or !$Failure.Contains($Probe.Error)))) {
+                throw "Linux registry probe '$($Probe.Name)' differs: calls=$($IndexProbe.Calls), failure=$Failure"
+            }
+        }
+        $IndexProbe.Calls = 0
+        $WindowsRows = @(Read-VerificationRegistry -RegistryPath $VerificationOwnerPlan `
+            -RepositoryRoot $RepositoryRoot -NativeRoot (Join-Path $RepositoryRoot 'Tools/Native') `
+            -HostExtension '.cmd' -Profiles $ReaderProfiles)
+        if ($IndexProbe.Calls -ne 0 -or $WindowsRows.Count -ne $VerificationOwnerNames.Count) {
+            throw 'Windows registry reading unexpectedly requested Linux index modes.'
+        }
+    } finally { $global:LASTEXITCODE = $PriorExitCode }
+}
 foreach ($Fragment in @(
     'Get-Command node -All -CommandType Application',
     '$Node = $NodeCandidates[0]',
@@ -5499,8 +5718,10 @@ foreach ($Contract in @(
     }
 }
 
+$NativePlannerInitializationCache = @{}
 $Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
-    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
 if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Suites.Count -ne 1 -or
     $Language1FrontDoorDevelopmentPlan.Suites[0] -ne 'language-1-front-door' -or
@@ -5512,12 +5733,14 @@ if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     throw 'The Language 1 front-door development checkpoint plan differs.'
 }
 
+
 foreach ($BorrowPath in @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
     'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv'
 )) {
-    $BorrowPlan = & $NativePlanner -ChangedPath $BorrowPath -PassThru -Quiet
+    $BorrowPlan = & $NativePlanner -ChangedPath $BorrowPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$BorrowPlan.UseFoundationBorrowPlanDevelopment -or
         $BorrowPlan.ExpectedSeconds -ne 30 -or $BorrowPlan.MaximumSeconds -ne 600 -or
         $BorrowPlan.Suites.Count -ne 1 -or $BorrowPlan.Gaps.Count -ne 0) {
@@ -5532,7 +5755,8 @@ foreach ($OtherBorrowPath in @(
 )) {
     $BorrowPlan = & $NativePlanner -ChangedPath @(
         'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv', $OtherBorrowPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($BorrowPlan.UseFoundationBorrowPlanDevelopment) {
         throw "Foundation planning hid integration changes in '$OtherBorrowPath'."
     }
@@ -5542,7 +5766,8 @@ foreach ($DirectoryPath in @(
     'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
     'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
 )) {
-    $DirectoryPlan = & $NativePlanner -ChangedPath $DirectoryPath -PassThru -Quiet
+    $DirectoryPlan = & $NativePlanner -ChangedPath $DirectoryPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
         $DirectoryPlan.UseFoundationBorrowPlanDevelopment -or
         $DirectoryPlan.ExpectedSeconds -ne 30 -or $DirectoryPlan.MaximumSeconds -ne 600 -or
@@ -5559,7 +5784,8 @@ foreach ($OtherDirectoryPath in @(
 )) {
     $DirectoryPlan = & $NativePlanner -ChangedPath @(
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv', $OtherDirectoryPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
         $DirectoryPlan.UseFoundationBorrowPlanDevelopment) {
         throw "WVB directory selection hid integration changes in '$OtherDirectoryPath'."
@@ -5574,7 +5800,8 @@ foreach ($OwnerPath in @(
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )) {
-    $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet
+    $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
         $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
         $OwnerPlan.UseFoundationBorrowDirectoryDevelopment -or
@@ -5591,7 +5818,8 @@ foreach ($PublisherPath in @(
 )) {
     $PublisherPlan = & $NativePlanner -ChangedPath @(
         'Projects/Tools/Windvale-Wvb-Publisher.wvproj', $PublisherPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$PublisherPlan.UsePublisherCurrentSourceDevelopment -or
         $PublisherPlan.Suites -cnotcontains 'hosted-verifier-publisher-files' -or
         $PublisherPlan.Gaps.Count -ne 0) {
@@ -5608,7 +5836,8 @@ foreach ($OtherPublisherPath in @(
 )) {
     $PublisherPlan = & $NativePlanner -ChangedPath @(
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv', $OtherPublisherPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($PublisherPlan.UsePublisherCurrentSourceDevelopment) {
         throw "Current-source publisher selection hid frozen reconstruction changes in '$OtherPublisherPath'."
     }
@@ -5622,7 +5851,8 @@ foreach ($OtherOwnerPath in @(
 )) {
     $OwnerPlan = & $NativePlanner -ChangedPath @(
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $OtherOwnerPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
         $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
         $OwnerPlan.UseFoundationBorrowDirectoryDevelopment) {
@@ -5630,10 +5860,81 @@ foreach ($OtherOwnerPath in @(
     }
 }
 
+$ComponentPaths = @(
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
+)
+$ComponentProject = Join-Path $RepositoryRoot 'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj'
+$ComponentSources = @(Get-Content -LiteralPath $ComponentProject | ForEach-Object {
+    if ($_ -match '^source "([^"]+)"$') { $Matches[1] }
+})
+$SeparateSources = @(@(
+    'Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
+    'Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
+    'Windvale-Native-Test-Foundation-Owner-Flow.wvproj'
+) | ForEach-Object {
+    Get-Content -LiteralPath (Join-Path $RepositoryRoot "Projects/Tests/$_") | ForEach-Object {
+        if ($_ -match '^(?:root|source) "([^"]+)"$') { $Matches[1] }
+    }
+} | Sort-Object -Unique)
+if ($ComponentSources.Count -ne $SeparateSources.Count -or
+    @(Compare-Object $ComponentSources $SeparateSources -CaseSensitive).Count -ne 0) {
+    throw 'The combined Foundation product lost or duplicated a separate input.'
+}
+$ComponentRoot = Get-Content -Raw -LiteralPath (Join-Path $RepositoryRoot `
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv')
+foreach ($ComponentCall in @('Plan.Main() != 42', 'Directories.Main() != 42', 'Owners.Main() != 42')) {
+    if (!$ComponentRoot.Contains($ComponentCall, [StringComparison]::Ordinal)) {
+        throw "The combined Foundation product lost '$ComponentCall'."
+    }
+}
+foreach ($ComponentSelection in @(
+    @($ComponentPaths[0], $ComponentPaths[2]),
+    @($ComponentPaths[1], $ComponentPaths[2]),
+    @($ComponentPaths),
+    @('Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv'),
+    @('Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj')
+)) {
+    $ComponentPlan = & $NativePlanner -ChangedPath $ComponentSelection -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if (!$ComponentPlan.UseFoundationBorrowComponentsDevelopment -or
+        $ComponentPlan.UseFoundationBorrowPlanDevelopment -or
+        $ComponentPlan.UseFoundationBorrowDirectoryDevelopment -or
+        $ComponentPlan.UseFoundationBorrowOwnerDevelopment -or
+        $ComponentPlan.ExpectedSeconds -ne 180 -or $ComponentPlan.MaximumSeconds -ne 600 -or
+        $ComponentPlan.Suites.Count -ne 1 -or $ComponentPlan.Gaps.Count -ne 0) {
+        throw "The combined Foundation component plan differs: $ComponentSelection"
+    }
+}
+$SmallComponentPlan = & $NativePlanner -ChangedPath @($ComponentPaths[0], $ComponentPaths[1]) -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if ($SmallComponentPlan.UseFoundationBorrowComponentsDevelopment) {
+    throw 'Two small Foundation components unnecessarily acquired the owner-flow product.'
+}
+foreach ($IntegrationPath in @(
+    'Compiler/Windvale/Source-Wvb-Core.wv',
+    'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
+    'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
+    'Tools/Native/Development-Command-Core.mjs',
+    'Specifications/Seed-Bytecode.md',
+    'Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv'
+)) {
+    $ComponentPlan = & $NativePlanner -ChangedPath (@($ComponentPaths) + $IntegrationPath) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
+    if ($ComponentPlan.UseFoundationBorrowComponentsDevelopment) {
+        throw "Foundation component selection hid integration changes in '$IntegrationPath'."
+    }
+}
+if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=257 expected-seconds=180', [StringComparison]::Ordinal)) {
+    throw 'The combined Foundation component dispatch differs.'
+}
+
 # Documentation companions retain the exact selection. Exercise shared immutable
 # initialization too: a preceding broad plan must not contaminate the next one.
-$MixedOwnerInitialization = @{}
 $MixedOwnerSelections = @(
+    @{ Path = 'Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj'; Field = 'UseFoundationBorrowComponentsDevelopment'; Value = $true },
     @{ Path = 'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv'; Field = 'UseFoundationBorrowPlanDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'; Field = 'UseFoundationBorrowDirectoryDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'; Field = 'UseFoundationBorrowOwnerDevelopment'; Value = $true },
@@ -5642,7 +5943,7 @@ $MixedOwnerSelections = @(
 )
 foreach ($Selection in $MixedOwnerSelections) {
     $Single = & $NativePlanner -ChangedPath $Selection.Path -PassThru -Quiet `
-        -InitializationCache $MixedOwnerInitialization
+        -InitializationCache $NativePlannerInitializationCache
     foreach ($Companion in @(
         'README.md',
         'Documents/Project/Progress.md',
@@ -5650,9 +5951,9 @@ foreach ($Selection in $MixedOwnerSelections) {
         'Documents/Project/Images/Progress.png'
     )) {
         $CompanionPlan = & $NativePlanner -ChangedPath $Companion -PassThru -Quiet `
-            -InitializationCache $MixedOwnerInitialization
+            -InitializationCache $NativePlannerInitializationCache
         $Mixed = & $NativePlanner -ChangedPath @($Selection.Path, $Companion) -PassThru -Quiet `
-            -InitializationCache $MixedOwnerInitialization
+            -InitializationCache $NativePlannerInitializationCache
         $ExpectedSuites = @(@($Single.Suites) + @($CompanionPlan.Suites) | Sort-Object -Unique)
         if ($Mixed.($Selection.Field) -cne $Selection.Value -or
             $Mixed.ExpectedSeconds -ne ($Single.ExpectedSeconds + $CompanionPlan.ExpectedSeconds) -or
@@ -5673,17 +5974,29 @@ foreach ($Selection in $MixedOwnerSelections) {
     )) {
         $Broad = & $NativePlanner -ChangedPath @(
             $Selection.Path, $SharedDependency
-        ) -PassThru -Quiet -InitializationCache $MixedOwnerInitialization
+        ) -PassThru -Quiet `
+            -InitializationCache $NativePlannerInitializationCache
         if ($Broad.($Selection.Field) -ceq $Selection.Value) {
             throw "Unproven dependency '$SharedDependency' retained the narrow selection for '$($Selection.Path)'."
         }
     }
     $Again = & $NativePlanner -ChangedPath @('README.md', $Selection.Path) -PassThru -Quiet `
-        -InitializationCache $MixedOwnerInitialization
+        -InitializationCache $NativePlannerInitializationCache
     if ($Again.($Selection.Field) -cne $Selection.Value -or
         $Again.ExpectedSeconds -ne $Single.ExpectedSeconds) {
         throw 'Cached planner initialization retained prior owner paths.'
     }
+}
+
+# One fresh initialization remains an oracle for the shared registry path.
+$UncachedFrontDoorPlan = & $NativePlanner -ChangedPath (
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet
+$ReusedFrontDoorPlan = & $NativePlanner -ChangedPath (
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if (($UncachedFrontDoorPlan | ConvertTo-Json -Depth 10 -Compress) -cne
+    ($ReusedFrontDoorPlan | ConvertTo-Json -Depth 10 -Compress)) {
+    throw 'Shared routing initialization differs from the uncached plan.'
 }
 
 $FrontEndRunner = Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'
@@ -5696,7 +6009,8 @@ foreach ($Selection in @(
     @{ Paths = @('Libraries/Foundation/Values/Option.wv'); Target = 'all'; Cases = 329; Seconds = 330 },
     @{ Paths = @('Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'); Target = 'all'; Cases = 329; Seconds = 330 }
 )) {
-    $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet
+    $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($Selected.Language1FrontDoorDevelopmentTarget -cne $Selection.Target -or
         $Selected.Language1FrontDoorDevelopmentCaseCount -ne $Selection.Cases -or
         $Selected.Language1FrontDoorDevelopmentExpectedSeconds -ne $Selection.Seconds -or
@@ -5787,7 +6101,8 @@ foreach ($Fragment in @(
 
 $GenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
     'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 $ExpectedGenericNominalDevelopmentSuites = @(
     'generic-nominal-type-binding',
     'generic-nominal-type-layout',
@@ -5805,7 +6120,8 @@ if (!$GenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
 }
 $SingleGenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
     'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 if ($SingleGenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
     $SingleGenericNominalDevelopmentPlan.Suites.Count -ne 1 -or
     $SingleGenericNominalDevelopmentPlan.Suites[0] -ne
@@ -5878,7 +6194,8 @@ foreach ($Contract in @(
 }
 
 $CompilerSourceContainmentPlan = & $NativePlanner -ChangedPath (
-    'Compiler/Windvale/Source-Lexer-Core.wv') -PassThru -Quiet
+    'Compiler/Windvale/Source-Lexer-Core.wv') -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
 if (!$CompilerSourceContainmentPlan.UseSourceContainmentCompilerDevelopment -or
     $CompilerSourceContainmentPlan.Suites -notcontains 'source-containment') {
     throw 'Compiler source containment does not select compiler-only development.'
@@ -5887,7 +6204,8 @@ $ContainmentOwnerPlan = & $NativePlanner -ChangedPath @(
     'Tools/Native/Test-Source-Containment.cmd',
     'Tools/Native/Test-Source-Containment.sh',
     'Tests/Native/Random-Containment/Corpus.tar.gz.b64'
-) -PassThru -Quiet
+) -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
 if ($ContainmentOwnerPlan.UseSourceContainmentCompilerDevelopment -or
     $ContainmentOwnerPlan.Suites -notcontains 'source-containment' -or
     $ContainmentOwnerPlan.Gaps.Count -ne 0) {
@@ -5895,7 +6213,8 @@ if ($ContainmentOwnerPlan.UseSourceContainmentCompilerDevelopment -or
 }
 $DirectCompilerContainmentPlan = & $NativePlanner -ChangedPath (
     'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 if (!$DirectCompilerContainmentPlan.UseSourceContainmentCompilerDevelopment -or
     $DirectCompilerContainmentPlan.Suites -notcontains 'source-containment' -or
     !$DirectCompilerContainmentPlan.RunWebAssemblyEngineVerification) {
@@ -6033,10 +6352,10 @@ if ($DatabaseAllFields.Count -ne 7 -or
     $DatabaseAllFields[0] -ne 'windvale-database-storage-development-plan-2' -or
     $DatabaseAllFields[1] -ne 'all' -or
     $DatabaseAllFields[2] -ne '53' -or
-    $DatabaseAllFields[3] -ne '47' -or
+    $DatabaseAllFields[3] -ne '45' -or
     $DatabaseAllFields[4].Split(',').Count -ne 53 -or
-    $DatabaseAllFields[5].Split(',').Count -ne 6 -or
-    $DatabaseAllFields[6].Split(',').Count -ne 12) {
+    $DatabaseAllFields[5].Split(',').Count -ne 7 -or
+    $DatabaseAllFields[6].Split(',').Count -ne 15) {
     throw "The database development all-case plan differs: $DatabaseAllPlan"
 }
 $DatabaseUnionPlan = (& node $DatabaseCasePlanner `
@@ -6085,39 +6404,36 @@ $DatabaseQualificationPlan = (& node $DatabaseQualificationPlanner --json) |
 if ($LASTEXITCODE -ne 0 -or
     $DatabaseQualificationPlan.Format -ne
         'windvale-database-storage-qualification-plan-3' -or
-    $DatabaseQualificationPlan.Steps -ne 54 -or
+    $DatabaseQualificationPlan.Steps -ne 52 -or
     $DatabaseQualificationPlan.Cases -ne 57 -or
     $DatabaseQualificationPlan.Prerequisites -ne 3 -or
-    $DatabaseQualificationPlan.PortableSteps -ne 43 -or
+    $DatabaseQualificationPlan.PortableSteps -ne 41 -or
     $DatabaseQualificationPlan.HostedSteps -ne 11 -or
     $DatabaseQualificationPlan.PortableCases -ne 46 -or
     $DatabaseQualificationPlan.HostedCases -ne 11 -or
-    $DatabaseQualificationPlan.ProjectReferences -ne 58 -or
-    $DatabaseQualificationPlan.UniqueProjects -ne 57 -or
-    $DatabaseQualificationPlan.SourceReferences -ne 673 -or
-    $DatabaseQualificationPlan.UniqueSources -ne 146 -or
-    $DatabaseQualificationPlan.ManifestDuplication -ne 4.61 -or
+    $DatabaseQualificationPlan.ProjectReferences -ne 56 -or
+    $DatabaseQualificationPlan.UniqueProjects -ne 55 -or
+    $DatabaseQualificationPlan.SourceReferences -ne 644 -or
+    $DatabaseQualificationPlan.UniqueSources -ne 147 -or
+    $DatabaseQualificationPlan.ManifestDuplication -ne 4.38 -or
     $DatabaseQualificationPlan.AllPairedSourceVisits -ne
         2 * $DatabaseQualificationPlan.SourceReferences -or
-    $DatabaseQualificationPlan.PortableSingleConstructionSteps -ne 42 -or
-    $DatabaseQualificationPlan.PortableDuplicateSourceVisitsDelegated -ne 385 -or
+    $DatabaseQualificationPlan.PortableSingleConstructionSteps -ne 40 -or
+    $DatabaseQualificationPlan.PortableDuplicateSourceVisitsDelegated -ne 356 -or
     $DatabaseQualificationPlan.DependencyEdges -ne 10 -or
     $DatabaseQualificationPlan.StepsWithDependencies -ne 10 -or
     $DatabaseQualificationPlan.RepeatedSources.Count -eq 0 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates.Count -ne 1 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates[0].Steps.Count -ne 3 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates[0].Cases -notcontains
-        'TransactionBranchPages' -or
+    $DatabaseQualificationPlan.SharedClosureCandidates.Count -ne 0 -or
     $DatabaseQualificationPlan.OverlapMergeCandidates.Count -ne 12 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].SharedSources -ne 14 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].UnionSources -ne 17 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].DeclarationVisitReductionBasisPoints -ne 4516) {
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].SharedSources -ne 10 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].UnionSources -ne 14 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].DeclarationVisitReductionBasisPoints -ne 4166) {
     throw 'The database qualification work-graph plan differs.'
 }
 $DatabaseQualificationCounts = (& node $DatabaseQualificationPlanner `
     --counts).Trim()
 if ($LASTEXITCODE -ne 0 -or $DatabaseQualificationCounts -ne
-    'windvale-database-storage-qualification-counts-1|54|57|3|43|11|46|11') {
+    'windvale-database-storage-qualification-counts-1|52|57|3|41|11|46|11') {
     throw "The database qualification count plan differs: $DatabaseQualificationCounts"
 }
 $PreviousQualificationStep = $env:WINDVALE_DATABASE_QUALIFICATION_STEP
@@ -6644,7 +6960,6 @@ foreach ($Case in $Cases) {
 Write-Host "PASS  verification plan phase=general-routing item=$($Cases.Count)/$($Cases.Count)"
 
 $NativeCaseIndex = 0
-$NativePlannerInitializationCache = @{}
 $NativePlannerCommand = Get-Command -Name $NativePlanner
 Write-Host "START verification plan phase=native-routing item=0/$($NativeCases.Count)"
 foreach ($Case in $NativeCases) {
@@ -6676,6 +6991,11 @@ foreach ($Case in $NativeCases) {
     } else {
         $false
     }
+    $StreamingSha256Differs = (
+        $Case.ContainsKey('StreamingSha256Development') -and
+        ($Plan.UseStreamingSha256Development -ne $Case.StreamingSha256Development -or
+            ($Case.StreamingSha256Development -and
+                ($Plan.ExpectedSeconds -ne 30 -or $Plan.MaximumSeconds -ne 60))))
     $DatabaseDevelopmentDiffers = (
         $Case.ContainsKey('DatabaseDevelopment') -and
         $Plan.UseDatabaseStorageDevelopment -ne $Case.DatabaseDevelopment)
@@ -6741,6 +7061,7 @@ foreach ($Case in $NativeCases) {
         $OsX64TargetDiffers -or
         $LibraryDevelopmentDiffers -or
         $LibraryTargetDiffers -or
+        $StreamingSha256Differs -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers -or
         $DatabaseCaseCountDiffers -or
@@ -6759,6 +7080,7 @@ foreach ($Case in $NativeCases) {
             "verify-webassembly-engine=$($Plan.RunWebAssemblyEngineVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
+            "streaming-sha256=$($Plan.UseStreamingSha256Development), expected-seconds=$($Plan.ExpectedSeconds), maximum-seconds=$($Plan.MaximumSeconds), " +
             "os-x64-development=$($Plan.UseOsX64CodeEmissionDevelopment), " +
             "os-x64-target=$($Plan.OsX64CodeEmissionDevelopmentTarget), " +
             "library-development=$($Plan.UseLibraryDevelopment), " +

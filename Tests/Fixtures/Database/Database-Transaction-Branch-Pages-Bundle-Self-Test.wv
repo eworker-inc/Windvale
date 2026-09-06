@@ -1,0 +1,12 @@
+module Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉbundle profile portable;
+
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpages as Pages;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉvalidation as Validation;
+import Windvaleˉnativeˉtestˉdatabaseˉtransactionˉbranchˉpagesˉdepthˉthree as Depthˉthree;
+
+export fn Main() -> i32 {
+    if Pages.Main() != 0 { return 1; }
+    if Validation.Main() != 0 { return 2; }
+    if Depthˉthree.Main() != 0 { return 3; }
+    return 0;
+}

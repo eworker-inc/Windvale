@@ -1,0 +1,378 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-sha256-constant-rotations",
+  "date": "2026-09-06",
+  "subject": "Fixed-distance SHA-256 rotations reduce native call overhead",
+  "claim": "The source compression implementation expresses ten fixed rotations directly as complementary shifts and removes the general rotate helper. This removes 576 helper calls per 64-byte compression block, preserving every round, checked modular sum, format and input bound. Repeated benchmark medians improve from 2192 to 2107 ms on Windows and 2271 to 2130 ms on Debian. All 20 existing focused owner cases pass on both hosts with identical WVB. Packaged hashing tools are unchanged, so no compiler preparation or packaging speedup is claimed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 283c976972621daab5b8299c310684f961df00e6. Exact benchmark before/after source identities and final formatted production source are recorded in runs. Unchanged dependencies and pinned tools belong to the base commit."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 1/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2107,
+      "peakWorkingSetBytes": 7290880,
+      "inputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After.wv",
+          "size": 20009,
+          "sha256": "739e4b6bf493c2686e3e4d675c0e54bc2a92c43b1d634f0d829c34fc293be091"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before.wvproj",
+          "size": 220,
+          "sha256": "6d658f535f365d9bc0192f6e666fb452e0723f4543f16f5d01506886612de0e2"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After.wvproj",
+          "size": 219,
+          "sha256": "a1ec6ab583f60f3565a602f8cf1243bf2e705fc40963e6ed27633a905578e61a"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Measure.mjs",
+          "size": 1817,
+          "sha256": "7f763611a07fb9c5d833fec7d74d710a3e7d36697ff4ee028c9f59ebc7d3fce4"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+          "size": 1304,
+          "sha256": "72f6eca9d886dedf094de150bf3984f6479cf415767a469c12ea09307d3196dd"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before-win32.wvb",
+          "size": 30731,
+          "sha256": "bef9fc0c7756e6ffddc17d535601e8cf8dcb6d39c5314913f4f8ffbac40274ee"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After-win32.wvb",
+          "size": 31206,
+          "sha256": "2b8a2fab2c1fde040451e1bdb66e0db6f4118fef50c65ffcc4de0dc6e2b034b3"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 2/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2187,
+      "peakWorkingSetBytes": 7278592
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 3/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2192,
+      "peakWorkingSetBytes": 7282688
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 4/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2107,
+      "peakWorkingSetBytes": 7299072
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 5/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2155,
+      "peakWorkingSetBytes": 7290880
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 6/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "command": "pwsh -NoProfile -File Artifacts/Sha256-Constant-Rotations/Repeat-Windows.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 2281,
+      "peakWorkingSetBytes": 7278592
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "Unadopted two-round record-sharing trial; original variable-distance rotation helper retained; same ten known answers. Single observation, not comparable to the repeated median as a demonstrated improvement.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2062,
+      "inputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Paired.wv",
+          "size": 20561,
+          "sha256": "21fda689f36fff489cb082029c704a9e45b7f1e9104479a5499c63125f588a86"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+          "size": 1823,
+          "sha256": "0c64d40d8f18851543a7bf213bd0d71994efc08354359fffb8bf062a531304ed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Paired-win32.wvb",
+          "size": 30305,
+          "sha256": "98ced509a36abfbd351f6a7be5a77d4d53e218eba7d34f541dbecc5d41ccb553"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5; Node v24.18.0",
+      "target": "Final formatted production compression source; all 20 existing streaming owner cases (12 known answers, 7 malformed-state/range cases, 1 boundary case).",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --streaming --maximum-seconds 60",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 20154,
+          "sha256": "3f2296476e9b45d19d125c68e905e7c2a66d8b4838cefedf3ea40301e8cee2ab"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 37098,
+          "sha256": "f939cbadc90c6b8cfde59e2de855f5b7618d1b05d04f876674738395acd47c58"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb",
+          "size": 34479,
+          "sha256": "8e043260c0ee05543830c5721761a6f8752fbf610dd9bdb2efb12524cdecc036"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 1/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2130,
+      "peakWorkingSetBytes": 1712128,
+      "inputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After.wv",
+          "size": 20009,
+          "sha256": "739e4b6bf493c2686e3e4d675c0e54bc2a92c43b1d634f0d829c34fc293be091"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before.wvproj",
+          "size": 220,
+          "sha256": "6d658f535f365d9bc0192f6e666fb452e0723f4543f16f5d01506886612de0e2"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After.wvproj",
+          "size": 219,
+          "sha256": "a1ec6ab583f60f3565a602f8cf1243bf2e705fc40963e6ed27633a905578e61a"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Measure.mjs",
+          "size": 1817,
+          "sha256": "7f763611a07fb9c5d833fec7d74d710a3e7d36697ff4ee028c9f59ebc7d3fce4"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+          "size": 1523,
+          "sha256": "431eefbdfcd049adfbbc6e8e40f393f44630ab855e56589e84ef8df44334a33d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Before-linux.wvb",
+          "size": 30731,
+          "sha256": "bef9fc0c7756e6ffddc17d535601e8cf8dcb6d39c5314913f4f8ffbac40274ee"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/After-linux.wvb",
+          "size": 31206,
+          "sha256": "2b8a2fab2c1fde040451e1bdb66e0db6f4118fef50c65ffcc4de0dc6e2b034b3"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 2/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2140,
+      "peakWorkingSetBytes": 1695744
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 3/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2288,
+      "peakWorkingSetBytes": 1695744
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 4/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2124,
+      "peakWorkingSetBytes": 1716224
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "After: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 5/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2233,
+      "peakWorkingSetBytes": 1712128
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "Before: ten known-answer lengths (0, 1, 55, 56, 63, 64, 65, 4097, 65536, 1048576), 4097-byte streaming updates, Profile 1; repeated observation 6/6.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Repeat-Debian.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2271,
+      "peakWorkingSetBytes": 1695744
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "Unadopted two-round record-sharing trial; original variable-distance rotation helper retained; same ten known answers. Single observation, not comparable to the repeated median as a demonstrated improvement.",
+      "tool": "Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+      "command": "node Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2049,
+      "inputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Paired.wv",
+          "size": 20561,
+          "sha256": "21fda689f36fff489cb082029c704a9e45b7f1e9104479a5499c63125f588a86"
+        },
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Measure-Paired.mjs",
+          "size": 1823,
+          "sha256": "0c64d40d8f18851543a7bf213bd0d71994efc08354359fffb8bf062a531304ed"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Sha256-Constant-Rotations/Paired-linux.wvb",
+          "size": 30305,
+          "sha256": "98ced509a36abfbd351f6a7be5a77d4d53e218eba7d34f541dbecc5d41ccb553"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2",
+      "target": "Final formatted production compression source; all 20 existing streaming owner cases (12 known answers, 7 malformed-state/range cases, 1 boundary case).",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs linux /mnt/d/windvale/dev01 --streaming --maximum-seconds 60",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 20154,
+          "sha256": "3f2296476e9b45d19d125c68e905e7c2a66d8b4838cefedf3ea40301e8cee2ab"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv",
+          "size": 7470,
+          "sha256": "4b15beed81739c008949eb43b56396d1870ed498934cd2bcc2b14718a04491fb"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 37098,
+          "sha256": "f939cbadc90c6b8cfde59e2de855f5b7618d1b05d04f876674738395acd47c58"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Streaming.wvb",
+          "size": 34479,
+          "sha256": "8e043260c0ee05543830c5721761a6f8752fbf610dd9bdb2efb12524cdecc036"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Three interleaved observations per variant and host on a shared AMD Ryzen 9 3900X machine. Paired host runs overlapped. The observed 3.9% Windows and 6.2% Debian improvements are modest; no portable regression threshold is established.",
+    "The benchmark WVB grows from 30731 to 31206 bytes (475 bytes, 1.5%) while eliminating variable-distance call overhead. Complementary shifts have distances 1 through 31 and exactly reproduce the removed helper; u32 overflow policy and modular-add implementations are unchanged.",
+    "Windows peak working set and Linux high-water RSS are sampled every 20 ms. Both variants remain close (about 7.3 MB Windows and 1.7 MB Linux); no memory improvement is claimed. These different OS metrics are not directly comparable.",
+    "A two-round record-sharing trial also passes the same ten known answers, with single observations of 2062 ms Windows and 2049 ms Debian. It was not adopted because the evidence did not justify duplicated round logic; its larger structural change would need further focused comparison.",
+    "The final production source has formatting and one comment beyond the measured candidate. The final 20-case owner compiles that exact source and produces identical host WVB; no opcode, source-language semantic or capability contract changed.",
+    "The first Debian final owner printed its passing summary, but the diagnostic shell wrapper returned an exit-format error afterward. A direct rerun of only the same warm owner returned exit 0 and the same WVB identity. Windows passing evidence was retained.",
+    "Benchmark construction reused existing bootstrap/native image caches where valid. Packaged hashing tools, full cold compiler preparation, full native SHA lowering and broader repository/ABI/OS qualification were not rebuilt or rerun. The change-aware plan selects the existing 60-second streaming mode for this source contract.",
+    "All trial construction, repeated execution and final focused verification remained within the ten-minute local development budget. No new verifier entry point or case was added.",
+    "The next larger opportunity is to investigate the already specified Bytesˉsha256ˉhex intrinsic for regions wholly contained in one buffer, retaining exact region admission and the bounded streaming path for larger regions. That path is not implemented or verified by this record."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Source-Set-Read-Reuse-Trial.json",
+    "Specifications/Foundation-Bytes.md",
+    "Foundation/Sha256-Compression.wv"
+  ]
+}

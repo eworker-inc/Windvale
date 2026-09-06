@@ -6,6 +6,14 @@
 
 ## Goal
 
+Product implementation now resumes under the
+[Option/Result completion goal](Windvale-Libraries-1.0-Plan.md#active-implementation-goal).
+The redesign remains supporting work: improve verification while completing
+coherent compiler, runtime, and library chunks. Use focused diagnostics during
+implementation and one combined final plan for each completed chunk, reusing
+valid construction and unaffected evidence. Finishing every performance target
+below is not a prerequisite for continued product work.
+
 Windvale verification must make the common correct action inexpensive. A
 developer should be able to change one compiler, runtime, library, or database
 contract and receive relevant behavioral feedback in seconds where practical
@@ -32,6 +40,175 @@ These are redesign targets, not current claims or pass thresholds. Measure each
 phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
+
+SHA-256 compression now expresses its fixed rotations directly, removing 576
+variable-distance helper calls per block. Repeated benchmark medians fell from
+2.192 to 2.107 seconds on Windows and 2.271 to 2.130 seconds on Debian. All 20
+existing streaming owner cases pass on both hosts with identical bytecode. The
+[rotation evidence](../Evidence/2026-09-06-Sha256-Constant-Rotations.json) records
+the modest gain, 1.5% benchmark bytecode growth and unadopted two-round trial.
+Packaged hashing tools remain unchanged. Investigate the existing native
+SHA-256 intrinsic for regions contained in one buffer while preserving the
+bounded streaming path for larger regions; that larger optimization is pending.
+
+A bounded source-set read-reuse trial showed no useful performance gain and
+was discarded. Reducing thirteen response reads to three preserved output
+bytes on both hosts, but whole packaging changed by less than 2%; isolated
+Windows execution was slightly slower with essentially unchanged memory use.
+The [trial evidence](../Evidence/2026-09-06-Source-Set-Read-Reuse-Trial.json)
+records the measurements and unchanged production tools. The source-set phase
+still takes about 20 seconds on the 10.6 MB workload. Investigate native hashing
+cost and sharing independently valid digest products before optimizing more
+file reads; full cold compiler preparation remains unmeasured after the earlier
+hashing-tool promotion.
+
+Foundation borrow component verification now offers one 225-group development
+product over the existing plan, typed-directory and owner-flow tests. Fresh
+test-product construction and execution took 85.3 seconds on Windows and 92.1
+seconds on Debian, compared with 96.9 and 103.6 seconds for three separate
+products. Bootstrap tools were retained in both measurements. Warm runs execute
+all assertions in 2.0 and 4.3 seconds including process startup; the representative Windows mixed-file
+dispatcher passes in 3.3 seconds with result caching disabled. The
+[component evidence](../Evidence/2026-09-06-Foundation-Borrow-Component-Bundle.json)
+records exact inputs, identical cross-host WVB and remaining limits.
+
+Mixed owner-flow fixture edits with borrow-plan or directory fixture edits now
+select that product. Standalone diagnostics remain separate, and two small
+components alone do not acquire the larger owner-flow bundle. Compiler
+integration, verifier implementation and format changes retain conservative
+routing. The no-argument full owner and publication selection remain unchanged;
+this development bundle does not qualify candidate WVB 1.39 execution.
+
+The owner coordinator now reads Linux executable modes with one Git index
+request instead of one request per owner. A controlled Windows-hosted run of
+the production Linux registry reader fell from 5,514 to 168 ms and returned
+identical rows for all 126 owners. The existing routing guard now checks missing,
+non-executable, linked-mode, conflicted, malformed and failed index responses.
+The selected Windows changed-file plan passed in 59.3 seconds, including all
+six stream-owner cases. This is not a Linux host timing or a whole-plan speedup:
+Debian currently has no PowerShell executable. The
+[registry evidence](../Evidence/2026-09-06-Verification-Registry-Index-Batching.json)
+records that remaining measurement and the unchanged broad performance targets.
+
+Canonical packaging now uses the rebuilt current-source hashing tools. In one
+paired-host 10.6 MB image comparison, packaging fell from 67.8 to 52.9 seconds
+on Windows and from 68.9 to 50.8 seconds on Debian, with identical output bytes.
+Both hosts pass the existing five packaging checks and six direct CLI rejection
+and output-preservation cases. The [promotion evidence](../Evidence/2026-09-06-Hosted-Hashing-Tool-Promotion.json)
+records the exact identities, stale control-fixture correction and explicit
+adoption of the current Profile 8 instruction allowance. Memory geometry is
+unchanged. Full compiler-scale timing and narrower toolset-change routing remain
+open; dependent caches must rebuild under the new producer identities.
+
+Streaming SHA-256 now has a focused selection in the existing native SHA owner.
+All 20 cases pass in 14.8 seconds on Windows and 23.9 seconds on Debian for
+fresh test products using existing compiler/tool caches; warm runs take 3.2 and
+5.0 seconds. The source incorporates the arithmetic change measured about 27%
+faster in the [preceding trial](../Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json).
+The [owner evidence](../Evidence/2026-09-06-Streaming-Sha256-Focused-Owner.json)
+records identical bytecode, malformed-state coverage and timing limits.
+
+Changes confined to the streaming hash sources and fixture select the existing
+owner's `--streaming` mode, capped at 60 seconds including preparation. Native
+backend and owner changes retain the full eight-group selection; its existing
+KAT application also executes the streaming cases. No new verifier entry point
+was added. The full owner now reuses the existing project and segmented package
+products for its lowerer and publication stager. All eight groups pass warm in
+17.4 seconds on Windows and 20.8 seconds on Debian, executing every assertion.
+First application-cache misses took 4 minutes 49 seconds and 5 minutes 2 seconds;
+that remains above the cold target. The [construction evidence](../Evidence/2026-09-06-Native-Sha256-Construction-Reuse.json)
+records exact product identities and the limits of the comparison with earlier
+270-second incomplete runs. Planning now budgets five minutes expected and ten
+minutes maximum for the full owner, with all five projects visible in inventory.
+The hashing-tool promotion above improves real packaging, but does not yet
+establish a full cold compiler improvement. Complete repository qualification
+remains open.
+
+Current compiler preparation now overlaps two independent branches after
+constructing the shared native image: Profile 7 Analyzer packaging and Emitter
+construction. Both profiles and all twelve operations remain. The existing
+cache sentinel now covers branch ordering, joined failures and publication on
+Windows and Debian. All 27 foreign-binding cases passed in 8,643 ms on Windows
+while republishing the pair from preserved lower-level products; compiler and
+fixture bytes are unchanged. This is not a new cold timing. The
+[construction evidence](../Evidence/2026-09-06-Current-Compiler-Construction-Overlap.json)
+records the distinction and the pending cold time/memory measurement.
+
+The routing guard now shares immutable inventory initialization across its
+focused-selection checks and the full native-routing table. The final Windows
+measurement passed in 27.8 seconds, versus about 38.4 seconds before, preserving
+all 31 general and 284 native cases. An uncached plan remains the comparison oracle and mixed
+selections still check for retained state from prior requests. This guard runs
+for verification-infrastructure changes; it is not a universal source-edit cost.
+The [routing evidence](../Evidence/2026-09-06-Routing-Guard-Shared-Initialization.json)
+records the measurement limits. The planner performance targets remain open.
+
+The complete 27-case foreign-binding owner now passes warm in 4,492 ms on
+Windows, versus 7,324 ms for the prior coordinator with equally warm lower-level
+caches. The current compiler pair is a separate validated product, so a hit
+skips all twelve pinned/intermediate preparation steps and builds only the two
+requested projects. Its 28-case cache sentinel passes on Windows and Debian.
+The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
+records unchanged WVB identities and the limits of this comparison. The approved
+fully cold baseline still took 59.5 minutes; only 1,735 ms was behavior execution.
+Cold compiler construction and full paired-host qualification remain open.
+
+Three branch-page cases now share one segmented product. Fresh Windows
+construction and execution passed in 52,110 ms; the separate-product baseline
+was still incomplete at its 210-second bound after two passes. Development
+executes all three cases in 3,353 ms warm on Windows and 8,108 ms warm on Debian.
+Both hosts passed fresh development construction and produced identical WVB
+bytes. The [branch-page evidence](../Evidence/2026-09-06-Segmented-Branch-Page-Bundle.json)
+records those observations and the incomplete baseline. This seventh bundle
+retains all 57 qualification cases in 52 steps and all 53 development cases in
+45 executions. Full qualification and the broader timing targets remain open.
+
+The split compiler now checks its finished WVB before acquiring intermediate
+analysis. A valid final checkpoint survives independent analysis/symbol
+eviction without restarting those producers. Invalid WVB bytes or analysis-key
+records fail before construction. The existing cache sentinel covers this
+dependency boundary, and cache/verifier edits now select the focused split
+owner instead of runner reconstruction and production admission. The owner
+passed in 5,107 ms on Windows and 11,155 ms on Debian; the complete Windows
+changed-file plan passed in 57,312 ms. The
+[final-product reuse evidence](../Evidence/2026-09-06-Split-Final-Product-Reuse.json)
+records the reproduced rebuild and coverage limits. This removes an avoidable
+rebuild path; the current-pair checkpoint above also removes earlier coordinator
+setup on a hit. Cold qualification remains outside the target.
+
+Hosted cache/session edits now select their focused owner instead of a
+2,540-second database plan. The existing session test is part of that owner,
+which passed twelve cases in 4,968 ms on Windows and 10,041 ms on Debian; the implementation changed-file
+gate, including routing checks, passed in 53,824 ms. Producer contexts retain 3,560
+bytes of fingerprints instead of about 24.4 MB of file contents. Four bounded
+reads preserve every producer check and reduced observed Debian preparation
+from 2,733 to 850 ms. The paired packaging workload changed from 31,628 to
+23,962 ms on Debian and from 23,684 to 23,390 ms on Windows. The
+[producer-context evidence](../Evidence/2026-09-06-Hosted-Producer-Fingerprints.json)
+records the host measurements and memory limits. Cold compiler construction and
+wider qualification remain unfinished.
+
+Segmented hosted packaging now shares the staged, linked, and transported
+native image across application profiles, while retaining a separate container
+and producer check for each profile. On the 82,115-byte enum-request workload,
+the two-profile cached run changed from 27,260 to 23,684 ms on Windows and from
+34,749 to 31,628 ms on Debian. Both profiles matched uncached package bytes and
+passed native behavior checks. The
+[shared-image evidence](../Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json)
+also records cases where cache overhead exceeds saved construction. Large
+compiler packaging and complete qualification still need measurements; this
+change does not establish the overall feedback targets.
+
+The routing guard now reads executable modes once for all 126 owners, shares
+immutable planner initialization across the eleven development dependency
+closures, and checks filesystem existence only for relevant retirement inputs.
+All 31 general and 280 native routing cases still pass. The complete Windows
+guard took 38,607 ms against the preceding 47,216 ms observation; it remains
+above the planner/coverage target. The
+[setup-reuse evidence](../Evidence/2026-09-06-Verification-Guard-Setup-Reuse.json)
+records component costs, the fixed quoted-command detection gap, and the lack
+of Linux PowerShell measurements. Repeated process startup and remaining
+construction work still need reduction.
 
 Hosted database qualification now constructs each ordinary product once and
 packages only the image its host executes. Six hosted construction sites no
@@ -84,18 +261,19 @@ exact rows, counts, source-closure duplication, and per-step elapsed time withou
 running the owner. A focused step can be selected for diagnostics without making
 a complete qualification claim.
 
-Six compatible case pairs now share products, reducing the inventory from 60 to
-54 execution steps while preserving all 57 logical cases. The current graph has
-58 project references across 57 unique manifests and 673 root/source references
-across 146 unique source paths, a 4.61-fold declaration overlap. Pairing every
-construction would visit those source references 1,346 times per host. The 42
-ordinary portable steps now consume one admitted construction, delegating 385
+Six compatible pairs and one segmented three-case bundle now share products,
+reducing the inventory from 60 to 52 execution steps while preserving all 57
+logical cases. The current graph has 56 project references across 55 unique
+manifests and 644 root/source references across 147 unique source paths, a
+4.38-fold declaration overlap. Pairing every construction would visit those
+source references 1,288 times per host. The 40 portable construction steps now
+consume one admitted construction, delegating 356
 duplicate source visits to focused reproducibility owners. Portable steps also
 package and execute only the current-host image; generic opposite-host packaging
-is delegated to its focused owners. Only the previously rejected three-case
-branch-pages closure remains as a static bundling candidate. Hosted migration,
-build-once graph execution, capacity-aware bundling, and paired-host
-qualification remain pending.
+is delegated to its focused owners. The branch-page bundle uses the existing
+segmented image path because its native image exceeds the ordinary lowerer
+limit. Hosted product sharing, build-once graph execution, further capacity-aware
+bundling, and complete paired-host qualification remain pending.
 
 The planner now also ranks the twelve strongest non-identical portable pair
 candidates by shared declarations and bytes, union size, and potential source-
@@ -108,10 +286,10 @@ fifth retained bundle. A second ranked trial combined root split and depth two;
 it passed in 59,990 ms without increasing a limit and is the sixth retained
 bundle.
 
-The six retained bundle projects and their root fixtures now route to their
-exact two-case development selectors. The version-3 development inventory binds
+The seven retained bundle projects and their root fixtures now route to their
+exact two- or three-case development selectors. The version-3 development inventory binds
 those cases back to the qualification bundle membership and distinguishes 53
-logical development cases from 47 physical executions. A complete pair now
+logical development cases from 45 physical executions. A complete bundle now
 plans one 65-second execution with a 210-second bound and dispatches the bundle
 project once; selecting only one member still dispatches its one-case project.
 The publication/recovery bundle took 44,850 ms while creating its development
@@ -374,11 +552,11 @@ the contract.
 Exit condition: adding a pure behavioral case normally adds a function and a
 manifest row, not a new compiler/lowerer/linker/packager pipeline.
 
-Bundling must remain capacity-aware. A trial that combined the three
-branch-page cases exceeded the native lowerer's declared output limit and was
-discarded without increasing that limit. Compatible cases therefore need a
-bounded segmented product when one ordinary product would cross a compiler,
-lowerer, execution, or diagnostic resource limit.
+Bundling must remain capacity-aware. The three branch-page cases exceed the
+ordinary native lowerer's output limit when combined. Their retained bundle
+therefore uses the existing bounded segmented path: two image fragments, with
+no increased compiler, lowerer, execution, or diagnostic limit. Other candidate
+bundles still require the same capacity and behavior evidence.
 
 ### Phase 5: make compiler construction incremental
 

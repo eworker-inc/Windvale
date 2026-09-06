@@ -184,64 +184,8 @@ closed and are not repaired.
 
 ## Hosted-application key and record
 
-`Get-Native-Hosted-Application-Cache-Key.mjs` and the bounded session adapter
-use `Native-Hosted-Application-Cache-Core.mjs` to derive the same
-length-framed SHA-256 key from these ordered fields:
-
-1. format `windvale-native-hosted-application-cache-key 1` and namespace
-   `hosted-application-v1`;
-2. current host family, selected target, profile, fragment count, and canonical
-   unsigned entry;
-3. exact input WVB and each native-image fragment in index order;
-4. exact current-host `Package-Hosted-Wvb` driver;
-5. exact hosted-toolset inventory plus all 72 inventory-verified artifacts;
-6. exact enum-request WVB and paired applications;
-7. the nine exact target service leaves; and
-8. the exact target startup WVO.
-
-Inputs must be canonical ordinary non-link files. Each input is nonempty and at
-most 67,108,864 bytes. Image mode accepts one through sixteen fragments, every
-nonfinal fragment is exactly 4 MiB, and every fragment is at most 4 MiB. The
-lowercase 64-hex key names
-`hosted-application-v1/<host-family>/<key>`; the target remains key material and
-is also recorded explicitly.
-
-The hosted-application `Checkpoint.txt` contains exactly five ASCII lines:
-
-```text
-windvale-native-hosted-application-checkpoint 1
-key <64-lowercase-hex>
-target <windows|linux>
-application-bytes <canonical-positive-decimal>
-application-sha256 <64-lowercase-hex>
-```
-
-The record is at most 1,024 bytes and the application is greater than zero and
-at most 67,108,864 bytes. Every hit rejects linked cache state, rehashes the
-application, constructs and compares the complete expected record, copies the
-application to a fresh owner path, and compares the copy byte for byte. Linux
-also requires executable mode on both the checkpoint and materialized copy.
-
-The database development owner may start one current-host hosted-application
-session after tool preparation. Session startup reads, inventory-validates,
-hashes, and retains the exact shared producer fields listed in items 4 through
-8 once. Each request still reads and hashes its exact WVB and ordered fragments,
-replays the retained producer fields through the unchanged version-1 framing,
-and therefore selects the byte-identical standalone key. A hit independently
-validates the exact checkpoint entry, record, product size and digest, copies
-the application to its private owner path, rehashes the copy, and preserves
-Linux executable mode.
-
-The session is read-only with respect to checkpoint publication. A missing key
-returns a distinguished miss without changing the owner output; the caller
-then invokes the standalone checkpoint driver, which repeats complete producer
-validation and retains its ordinary immutable publication boundary. Later
-requests can consume that published entry. Corrupt existing entries fail
-closed and do not fall back. The server binds one random 256-bit token to one
-loopback-only port and one bounded readiness record inside the owner's private
-temporary directory, serializes requests, rejects other targets and malformed
-or oversized protocol messages, and removes the readiness record on shutdown.
-No-argument and qualification verification do not start the session.
+The [hosted-application checkpoint](Windvale-Hosted-Application-Checkpoint.md)
+owns hosted keys, records, bounded producer contexts, and session behavior.
 
 ## Project-WVB key and record
 

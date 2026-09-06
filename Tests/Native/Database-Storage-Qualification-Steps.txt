@@ -14,9 +14,7 @@ TransactionLeafGroupsPagesBundle|portable|case|project|Projects/Tests/Windvale-N
 TransactionLeafPartition|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Leaf-Partition.wvproj
 TransactionBranchPartition|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Partition.wvproj
 TransactionParentGroups|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj
-TransactionBranchPages|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj
-TransactionBranchPagesValidation|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj
-TransactionBranchPagesDepthThree|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Depth-Three.wvproj
+TransactionBranchPagesBundle|portable|case|segmented-project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj|TransactionBranchPages,TransactionBranchPagesValidation,TransactionBranchPagesDepthThree
 TransactionAncestorGroupsBundle|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Groups-Bundle.wvproj|TransactionAncestorGroups,TransactionAncestorGroupsDepthFour
 TransactionAncestorPagesBundle|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Ancestor-Pages-Bundle.wvproj|TransactionAncestorPages,TransactionAncestorPagesIntermediate
 TransactionRootGrowthBundle|portable|case|project|Projects/Tests/Windvale-Native-Test-Database-Transaction-Root-Growth-Bundle.wvproj|TransactionRootGrowth,TransactionRootGrowthMultiLevel

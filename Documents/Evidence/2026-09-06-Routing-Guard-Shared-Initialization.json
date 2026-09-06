@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-routing-guard-shared-initialization",
+  "date": "2026-09-06",
+  "subject": "Reuse routing inventories across focused verifier contract cases",
+  "claim": "The original routing guard reached its final passing summary at 38356 ms. Shared initialization passed the same 31 general and 284 native cases in 30232 ms including process completion. The final revision also compares an uncached full plan against a reused plan after mixed selections. No existing assertion or CLI failure check was removed. The final implementation passed in 27761 ms.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 3a88f4e9; the before script and final implementation are identified below."
+  },
+  "runs": [
+    {
+      "host": "Windows, PowerShell 7",
+      "target": "Original routing guard; final passing-summary timestamp 38356 ms (not an exact process-completion duration)",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1 (elapsed stopwatch recorded for each output line)",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Routing-Guard-Before.ps1",
+          "size": 327582,
+          "sha256": "41f73e8f326f59cbc4594cf86921dbc60f4220bc74b39c52ff4af226a2db5e93"
+        }
+      ]
+    },
+    {
+      "host": "Windows, PowerShell 7",
+      "target": "Shared inventory initialization, initial implementation; complete guard and all existing contract checks",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 30232,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Routing-Guard-Shared-Initialization-Windows.json",
+          "size": 4584,
+          "sha256": "ee045444c3ccd9852266f4ed9d515c00ec6a1a7aa091063ac8c768a8480612ce"
+        }
+      ]
+    },
+    {
+      "host": "Windows, PowerShell 7.6.5",
+      "target": "Final shared initialization and full cold-versus-reused plan comparison after mixed selections; all 31 general and 284 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 27761,
+      "inputs": [
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 329176,
+          "sha256": "0224158bb1ee4bfde9fa0a126705cf0a78475f53b8735ba81696ed228d4f07fc"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Routing-Guard-Final-Windows.json",
+          "size": 4697,
+          "sha256": "91021c3d9dcb2f254e691e9cc52244b9f5d5974ba501f340f917d566570b3044"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "These are single diagnostic observations with warm filesystem caches, not regression thresholds or paired-host qualification. No Linux PowerShell runtime is installed in the available Debian environment, so this PowerShell-only verifier change has Windows execution evidence.",
+    "Peak memory was not measured. Shared initialization is bounded to the existing routing inventories and lasts only for the verifier invocation; no passing owner result is cached by this change.",
+    "The initial revised timing predates the final stronger cold-versus-reused comparison. The final implementation verification is recorded separately below.",
+    "The roughly eight-second difference compares the baseline final-summary timestamp with revised whole-process completion; the baseline process-tail duration was not recorded.",
+    "The guard still exceeds the redesign planner targets. Compiler construction and complete qualification were not run because this edit changes only how the routing verifier acquires unchanged inventories.",
+    "Raw diagnostic files under Artifacts are local ignored evidence and are not distributed in Git."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Verify/Verify-Verification-Plan.ps1",
+    "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1"
+  ]
+}

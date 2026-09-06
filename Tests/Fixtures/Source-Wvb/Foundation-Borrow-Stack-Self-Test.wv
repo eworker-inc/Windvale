@@ -93,10 +93,16 @@ fn Composition(Input: bytes, Element: bytes, Payload: bytes) -> bytes {
 
 fn Trial(Input: bytes, Parameters: bytes, Count: u32, Return: bytes,
     Locals: bytes, Localˉcount: u32, Body: bytes, Maximum: u32) -> bytes {
+    return Namedˉtrial(Input, "Trial", Parameters, Count, Return,
+        Locals, Localˉcount, Body, Maximum);
+}
+
+fn Namedˉtrial(Input: bytes, Label: text, Parameters: bytes, Count: u32, Return: bytes,
+    Locals: bytes, Localˉcount: u32, Body: bytes, Maximum: u32) -> bytes {
     let Functions: u32 = Section(Input, 4u32);
     let Code: u32 = Section(Input, 5u32);
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Input, Code - 4u32);
-    let Entry: bytes = Join(Name("Trial"), Bytesˉfromˉu32ˉlittle(Count),
+    let Entry: bytes = Join(Name(Label), Bytesˉfromˉu32ˉlittle(Count),
         Join(Parameters, Return, Join(Bytesˉfromˉu32ˉlittle(Localˉcount), Locals,
             Join(Bytesˉfromˉu32ˉlittle(Length), Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body)),
                 Bytesˉfromˉu32ˉlittle(Maximum)))));
@@ -214,6 +220,363 @@ fn Checkˉcomposition(Input: bytes) -> i32 {
     return 0;
 }
 
+fn Encodedˉsection(Kind: u32, Payload: bytes) -> bytes {
+    return Join(Bytesˉfromˉu32ˉlittle(Kind),
+        Bytesˉfromˉu32ˉlittle(Bytesˉlength(Payload)), Payload);
+}
+
+// A small independent module keeps nominal enum order canonical and includes
+// an actual E1 owner/view so the candidate's version requirements remain real.
+fn Enumˉmodel() -> bytes {
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let One: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    let Enumˉa: bytes = Join(Bytesˉfromˉu8(2u8), Name("Choice"), Join(One, Name("First"), Zero));
+    let Enumˉb: bytes = Join(Bytesˉfromˉu8(2u8), Name("Other"), Join(One, Name("First"), Zero));
+    let Option: bytes = Join(Bytesˉfromˉu8(3u8), Name("__WvY0000"),
+        Join(Bytesˉfromˉu32ˉlittle(2u32), Name("Present"),
+            Join(Bytesˉfromˉu8(1u8), Name("Value"),
+                Join(Cell(8u8, 0u32), Name("Absent"), Bytesˉfromˉu8(0u8)))));
+    let Body: bytes = Join(Bytesˉconcat(Cell(106u8, 0u32), Zero),
+        Bytesˉconcat(Cell(151u8, 2u32), Zero),
+        Join(Cell(5u8, 0u32), Join(Cell(225u8, 0u32), Bytesˉfromˉu32ˉlittle(2u32), One),
+            Join(Cell(5u8, 1u32), Cell(4u8, 1u32),
+                Join(Bytesˉfromˉu8(80u8), Cell(1u8, 42u32), Bytesˉfromˉu8(81u8)))));
+    let Function: bytes = Join(Name("Main"), Zero,
+        Join(Bytesˉfromˉu8(1u8), Bytesˉfromˉu32ˉlittle(2u32),
+            Join(Bytesˉconcat(Cell(11u8, 2u32), Cell(29u8, 2u32)), Zero,
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body)), One))));
+    let Header: bytes = Join(Bytesˉfromˉu32ˉlittle(826431063u32),
+        Bytesˉfromˉu32ˉlittle(2555905u32), Bytesˉfromˉu32ˉlittle(7u32));
+    return Join(Header, Encodedˉsection(1u32,
+        Join(Bytesˉfromˉu8(1u8), Name("EnumTest"), Bytesˉfromˉu8(0u8))),
+        Join(Encodedˉsection(2u32, Zero), Encodedˉsection(3u32, Zero),
+            Join(Encodedˉsection(4u32, Bytesˉconcat(One, Function)), Encodedˉsection(5u32, Body),
+                Bytesˉconcat(Encodedˉsection(6u32, Zero), Encodedˉsection(7u32,
+                    Join(Bytesˉfromˉu32ˉlittle(3u32), Enumˉa, Bytesˉconcat(Enumˉb, Option)))))));
+}
+
+fn Hostedˉconsole(Input: bytes) -> bytes {
+    let Start: u32 = Section(Input, 2u32) - 8u32;
+    let End: u32 = Section(Input, 3u32) - 8u32;
+    let Capability: bytes = Join(Bytesˉfromˉu32ˉlittle(1u32), Name("console.write_line"),
+        Join(Bytesˉfromˉu32ˉlittle(1u32), Bytesˉfromˉu8(3u8), Bytesˉfromˉu8(0u8)));
+    return Join(Bytesˉslice(Byte(Input, 20u32, 2u8), 0u32, Start),
+        Encodedˉsection(2u32, Capability), Bytesˉslice(Input, End, Bytesˉlength(Input) - End));
+}
+
+fn Checkˉoperands(Input: bytes) -> i32 {
+    let Model: bytes = Enumˉmodel();
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let Bool: bytes = Bytesˉfromˉu8(2u8);
+    let Text: bytes = Bytesˉfromˉu8(3u8);
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Enum: bytes = Cell(8u8, 0u32);
+    let Pair: bytes = Bytesˉconcat(Borrow(Enum), Borrow(Enum));
+    let Loadˉpair: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(4u8, 1u32));
+    let Equal: bytes = Bytesˉconcat(Bytesˉfromˉu8(107u8), Return);
+    let Unequal: bytes = Bytesˉconcat(Bytesˉfromˉu8(108u8), Return);
+    if Phase(Model) != 0 || Bytesˉlength(Executable.Iˉcontrol(Model)) == 0u32 { return 201; }
+    if Typedˉresult(Trial(Model, Pair, 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Equal), 2u32)) != 0u32 { return 202; }
+    if Typedˉresult(Trial(Model, Pair, 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Unequal), 2u32)) != 0u32 { return 203; }
+    if Typedˉresult(Trial(Model, Bytesˉconcat(Enum, Borrow(Enum)), 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Equal), 2u32)) != 0u32 { return 204; }
+    if Typedˉresult(Trial(Model, Bytesˉconcat(Borrow(Enum), Enum), 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Unequal), 2u32)) != 0u32 { return 205; }
+    let Wrong: bytes = Bytesˉconcat(Borrow(Enum), Borrow(Cell(8u8, 1u32)));
+    if Typedˉresult(Trial(Model, Wrong, 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Equal), 2u32)) != 2u32 { return 206; }
+    if Typedˉresult(Trial(Model, Wrong, 2u32, Bool, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Unequal), 2u32)) != 2u32 { return 207; }
+    if Typedˉresult(Trial(Model, Borrow(Enum), 1u32, Text, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Bytesˉfromˉu8(109u8), Return), 1u32)) != 0u32 { return 208; }
+    if Typedˉresult(Trial(Model, Borrow(U32), 1u32, Text, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Bytesˉfromˉu8(109u8), Return), 1u32)) != 2u32 { return 209; }
+    let Loan: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 1u32));
+    let Rewrite: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 0u32));
+    let Read: bytes = Join(Cell(4u8, 1u32), Bytesˉfromˉu8(109u8), Return);
+    if Typedˉresult(Trial(Model, Enum, 1u32, Text, Borrow(Enum), 1u32,
+        Join(Loan, Rewrite, Read), 1u32)) != 2u32 { return 210; }
+    if Typedˉresult(Trial(Model, Enum, 1u32, Text, Borrow(Enum), 1u32,
+        Join(Loan, Rewrite, Bytesˉconcat(Loan, Read)), 1u32)) != 0u32 { return 211; }
+    let Hosted: bytes = Hostedˉconsole(Input);
+    let Write: bytes = Bytesˉconcat(Cell(65u8, 0u32), Return);
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    let Valid: bytes = Trial(Hosted, Borrow(Text), 1u32, Unit, Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Write), 1u32);
+    if Typedˉresult(Valid) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Valid)) == 0u32 { return 212; }
+    if Typedˉresult(Byte(Valid, 20u32, 1u8)) != 1u32 { return 213; }
+    if Typedˉresult(Trial(Hosted, Borrow(U32), 1u32, Unit, Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Write), 1u32)) != 2u32 { return 214; }
+    if Typedˉresult(Trial(Hosted, Borrow(Text), 1u32, Unit, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Cell(65u8, 1u32), Return), 1u32)) != 1u32 { return 215; }
+    let Readˉtext: bytes = Bytesˉconcat(Cell(4u8, 1u32), Write);
+    if Typedˉresult(Trial(Hosted, Text, 1u32, Unit, Borrow(Text), 1u32,
+        Join(Loan, Rewrite, Readˉtext), 1u32)) != 2u32 { return 216; }
+    if Typedˉresult(Trial(Hosted, Text, 1u32, Unit, Borrow(Text), 1u32,
+        Join(Loan, Rewrite, Bytesˉconcat(Loan, Readˉtext)), 1u32)) != 0u32 { return 217; }
+    // Copying a shared value ends the loan dependency; the capability receives
+    // the independent shared value even after the original owner changes.
+    if Typedˉresult(Trial(Hosted, Text, 1u32, Unit, Bytesˉconcat(Borrow(Text), Text), 2u32,
+        Join(Loan, Bytesˉconcat(Cell(4u8, 1u32), Cell(5u8, 2u32)),
+            Join(Rewrite, Cell(4u8, 2u32), Write)), 1u32)) != 0u32 { return 218; }
+    let Record: bytes = Cell(7u8, 0u32);
+    let Save: bytes = Join(Cell(4u8, 0u32), Cell(5u8, 1u32),
+        Bytesˉconcat(Cell(4u8, 1u32), Return));
+    if Typedˉresult(Trial(Input, Borrow(Record), 1u32, Record, Record, 1u32,
+        Save, 1u32)) != 0u32 { return 219; }
+    let Owned: bytes = Composition(Input, Cell(23u8, 6u32), Cell(23u8, 6u32));
+    let Array: bytes = Cell(22u8, 5u32);
+    if Typedˉresult(Trial(Owned, Borrow(Array), 1u32, Array, Array, 1u32,
+        Save, 1u32)) != 2u32 { return 220; }
+    if Typedˉresult(Trial(Model, Borrow(Enum), 1u32, Cell(8u8, 1u32), Cell(8u8, 1u32), 1u32,
+        Save, 1u32)) != 2u32 { return 221; }
+    if Typedˉresult(Trial(Hosted, Borrow(Text), 1u32, Unit, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Cell(5u8, 0u32), Return), 1u32)) != 2u32 { return 222; }
+    if Typedˉresult(Trial(Hosted, Text, 1u32, Unit, Borrow(Text), 1u32,
+        Join(Loan, Cell(4u8, 1u32), Bytesˉconcat(Rewrite, Write)), 2u32)) != 2u32 { return 223; }
+    if Typedˉresult(Trial(Model, Enum, 1u32, Text, Bytesˉconcat(Borrow(Enum), Enum), 2u32,
+        Join(Loan, Bytesˉconcat(Cell(4u8, 1u32), Cell(5u8, 2u32)),
+            Join(Rewrite, Cell(4u8, 2u32), Bytesˉconcat(Bytesˉfromˉu8(109u8), Return))), 1u32)) != 0u32 { return 224; }
+    let Closures: bytes = Composition(Input, U32, Cell(23u8, 6u32));
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Closures, Section(Closures, 4u32));
+    let Sum: bytes = Trial(Closures, Bytesˉconcat(U32, U32), 2u32, U32, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Bytesˉconcat(Bytesˉfromˉu8(20u8), Return)), 2u32);
+    let Capture: bytes = Join(Cell(213u8, Target), Bytesˉfromˉu32ˉlittle(8u32),
+        Bytesˉfromˉu32ˉlittle(1u32));
+    let Invoke: bytes = Bytesˉconcat(Cell(212u8, 8u32), Return);
+    if Typedˉresult(Namedˉtrial(Sum, "Zed", Borrow(U32), 1u32, U32, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Capture, Bytesˉconcat(Cell(9u8, 1u32), Invoke)), 2u32)) != 0u32 { return 225; }
+    if Typedˉresult(Namedˉtrial(Sum, "Zed", Borrow(Text), 1u32, U32, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Capture, Bytesˉconcat(Cell(9u8, 1u32), Invoke)), 2u32)) != 2u32 { return 226; }
+    let Callable: bytes = Cell(35u8, 8u32);
+    let Saveˉclosure: bytes = Bytesˉconcat(Capture, Cell(5u8, 2u32));
+    let Invokeˉlocal: bytes = Join(Cell(4u8, 2u32), Cell(9u8, 1u32), Invoke);
+    if Typedˉresult(Namedˉtrial(Sum, "Zed", U32, 1u32, U32,
+        Bytesˉconcat(Borrow(U32), Callable), 2u32,
+        Join(Loan, Join(Cell(4u8, 1u32), Saveˉclosure, Rewrite), Invokeˉlocal), 2u32)) != 0u32 { return 227; }
+    if Typedˉresult(Namedˉtrial(Sum, "Zed", U32, 1u32, U32,
+        Bytesˉconcat(Borrow(U32), Callable), 2u32,
+        Join(Loan, Rewrite, Join(Cell(4u8, 1u32), Saveˉclosure, Invokeˉlocal)), 2u32)) != 2u32 { return 228; }
+    let Borrowedˉtarget: bytes = Trial(Closures, Bytesˉconcat(Borrow(U32), U32), 2u32, U32, Empty, 0u32,
+        Bytesˉconcat(Loadˉpair, Bytesˉconcat(Bytesˉfromˉu8(20u8), Return)), 2u32);
+    if Typedˉresult(Namedˉtrial(Borrowedˉtarget, "Zed", Borrow(U32), 1u32, U32, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Capture, Bytesˉconcat(Cell(9u8, 1u32), Invoke)), 2u32)) != 1u32 { return 229; }
+    let Construct: bytes = Bytesˉconcat(Cell(104u8, 0u32), Return);
+    if Typedˉresult(Trial(Input, Borrow(U32), 1u32, Record, Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Construct), 1u32)) != 0u32 { return 230; }
+    if Typedˉresult(Trial(Input, Borrow(Text), 1u32, Record, Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Construct), 1u32)) != 2u32 { return 231; }
+    if Typedˉresult(Trial(Input, Borrow(Record), 1u32, Record, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Cell(105u8, 0u32), Construct), 1u32)) != 0u32 { return 232; }
+    if Typedˉresult(Trial(Input, Record, 1u32, Record, Borrow(Record), 1u32,
+        Join(Loan, Rewrite, Join(Cell(4u8, 1u32), Cell(105u8, 0u32), Construct)), 1u32)) != 2u32 { return 233; }
+    let Saveˉrecord: bytes = Bytesˉconcat(Cell(104u8, 0u32), Cell(5u8, 2u32));
+    if Typedˉresult(Trial(Input, Record, 1u32, Record, Bytesˉconcat(Borrow(Record), Record), 2u32,
+        Join(Loan, Join(Cell(4u8, 1u32), Cell(105u8, 0u32), Saveˉrecord),
+            Join(Rewrite, Cell(4u8, 2u32), Return)), 1u32)) != 0u32 { return 234; }
+    if Typedˉresult(Trial(Input, U32, 1u32, Record, Bytesˉconcat(Borrow(U32), Record), 2u32,
+        Join(Loan, Bytesˉconcat(Cell(4u8, 1u32), Saveˉrecord),
+            Join(Rewrite, Cell(4u8, 2u32), Return)), 1u32)) != 0u32 { return 235; }
+    return 0;
+}
+
+fn Field(Nameˉtext: text, Shape: bytes) -> bytes {
+    return Bytesˉconcat(Name(Nameˉtext), Shape);
+}
+
+fn Recordˉtype(Label: text, Count: u32, Fields: bytes) -> bytes {
+    return Join(Bytesˉfromˉu8(1u8), Name(Label),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Count), Fields));
+}
+
+fn Caseˉfields(Label: text, Count: u32, Fields: bytes) -> bytes {
+    if Count == 0u32 { return Bytesˉconcat(Name(Label), Bytesˉfromˉu8(0u8)); }
+    if Count == 1u32 { return Join(Name(Label), Bytesˉfromˉu8(1u8), Fields); }
+    return Join(Name(Label), Bytesˉfromˉu8(2u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Count), Fields));
+}
+
+fn Variantˉtype(Label: text, Count: u32, Cases: bytes) -> bytes {
+    return Join(Bytesˉfromˉu8(3u8), Name(Label),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Count), Cases));
+}
+
+fn Resultˉtype(Label: text, Value: bytes, Error: bytes) -> bytes {
+    return Variantˉtype(Label, 2u32, Bytesˉconcat(
+        Caseˉfields("Valid", 1u32, Field("Value", Value)),
+        Caseˉfields("Failure", 1u32, Field("Error", Error))));
+}
+
+// Independent canonical metadata for inherited task/scratch/region/Foreign
+// operations beside a real E1. No fixture grants execution admission.
+fn Authorityˉmodel() -> bytes {
+    let Zero: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let One: bytes = Bytesˉfromˉu32ˉlittle(1u32);
+    let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let U64: bytes = Bytesˉfromˉu8(10u8);
+    let Allocation: bytes = Recordˉtype("Allocation", 3u32,
+        Join(Field("Reason", Cell(8u8, 8u32)), Field("Requestedˉbytes", U64),
+            Field("Availableˉbytes", U64)));
+    let Context: bytes = Recordˉtype("Context", 1u32, Field("Contextˉtokenˉidentity", U64));
+    let Limits: bytes = Recordˉtype("Limits", 8u32,
+        Join(Field("Maximumˉchildren", U32), Field("Maximumˉrunnable", U32),
+            Join(Field("Maximumˉcompleted", U32), Field("Maximumˉretainedˉbytes", U64),
+                Join(Field("Maximumˉworkˉunits", U64), Field("Maximumˉcallˉdepth", U32),
+                    Bytesˉconcat(Field("Maximumˉtimers", U32), Field("Maximumˉdiagnostics", U32))))));
+    let Scope: bytes = Recordˉtype("Scope", 1u32, Field("Scopeˉtokenˉidentity", U64));
+    let Scratch: bytes = Recordˉtype("__WvY0000", 1u32, Field("Opaqueˉidentity", U64));
+    let Region: bytes = Recordˉtype("__WvY0001", 1u32, Field("Opaqueˉidentity", U64));
+    let Pointer: bytes = Recordˉtype("__WvY0002", 1u32, Field("Opaqueˉidentity", U64));
+    let Abi: bytes = Join(Bytesˉfromˉu8(2u8), Name("Abi"), Join(One, Name("Native"), Zero));
+    let Reason: bytes = Join(Bytesˉfromˉu8(7u8), Name("Reason"),
+        Join(Bytesˉfromˉu8(6u8), Bytesˉfromˉu32ˉlittle(4u32),
+            Join(Field("Budgetˉexhausted", Bytesˉfromˉu8(1u8)), Field("Targetˉunaddressable", Bytesˉfromˉu8(2u8)),
+                Bytesˉconcat(Field("Providerˉunavailable", Bytesˉfromˉu8(3u8)), Field("Fragmented", Bytesˉfromˉu8(4u8))))));
+    let Failure: bytes = Variantˉtype("Failure", 4u32,
+        Join(Caseˉfields("Invalidˉlength", 2u32, Bytesˉconcat(Field("Observed", U64), Field("Maximum", U64))),
+            Caseˉfields("Invalidˉalignment", 1u32, Field("Observed", U64)),
+            Bytesˉconcat(Caseˉfields("Allocation", 1u32, Field("Error", Cell(7u8, 0u32))),
+                Caseˉfields("Unsupportedˉabi", 0u32, Empty))));
+    let Pointerˉfailure: bytes = Variantˉtype("PointerFailure", 7u32,
+        Join(Caseˉfields("Null", 0u32, Empty),
+            Caseˉfields("Addressˉoverflow", 3u32, Join(Field("Start", U64), Field("Length", U64), Field("Addressˉbits", U32))),
+            Join(Caseˉfields("Outˉofˉrange", 3u32, Join(Field("Start", U64), Field("Length", U64), Field("Ownerˉlength", U64))),
+                Caseˉfields("Misaligned", 2u32, Bytesˉconcat(Field("Start", U64), Field("Requiredˉalignment", U64))),
+                Join(Caseˉfields("Aliasing", 0u32, Empty), Caseˉfields("Lifetimeˉended", 0u32, Empty),
+                    Caseˉfields("Unsupportedˉabi", 0u32, Empty)))));
+    let Types: bytes = Join(Bytesˉfromˉu32ˉlittle(15u32),
+        Join(Allocation, Context, Join(Limits, Scope, Join(Scratch, Region, Pointer))),
+        Join(Abi, Reason, Join(Failure, Pointerˉfailure,
+            Join(Resultˉtype("__WvY0003", Cell(7u8, 3u32), U32),
+                Resultˉtype("__WvY0004", Cell(7u8, 4u32), Cell(11u8, 9u32)),
+                Bytesˉconcat(Resultˉtype("__WvY0005", Cell(7u8, 5u32), Cell(11u8, 10u32)),
+                    Variantˉtype("__WvY0006", 2u32, Bytesˉconcat(
+                        Caseˉfields("Present", 1u32, Field("Value", U64)), Caseˉfields("Absent", 0u32, Empty))))))));
+    let Body: bytes = Join(Wide(42u32), Bytesˉconcat(Cell(151u8, 14u32), Zero),
+        Join(Cell(5u8, 0u32), Join(Cell(225u8, 0u32), Bytesˉfromˉu32ˉlittle(14u32), One),
+            Join(Bytesˉfromˉu8(80u8), Cell(1u8, 42u32), Bytesˉfromˉu8(81u8))));
+    let Function: bytes = Join(Name("Main"), Zero,
+        Join(Bytesˉfromˉu8(1u8), One, Join(Cell(11u8, 14u32), Zero,
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Body)), One))));
+    let Header: bytes = Join(Bytesˉfromˉu32ˉlittle(826431063u32),
+        Bytesˉfromˉu32ˉlittle(2555905u32), Bytesˉfromˉu32ˉlittle(7u32));
+    return Join(Header, Encodedˉsection(1u32,
+        Join(Bytesˉfromˉu8(3u8), Name("AuthorityTest"), Bytesˉfromˉu8(0u8))),
+        Join(Encodedˉsection(2u32, Zero), Encodedˉsection(3u32, Zero),
+            Join(Encodedˉsection(4u32, Bytesˉconcat(One, Function)), Encodedˉsection(5u32, Body),
+                Bytesˉconcat(Encodedˉsection(6u32, Zero), Encodedˉsection(7u32, Types)))));
+}
+
+fn Checkˉauthority() -> i32 {
+    let Model: bytes = Authorityˉmodel();
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let U64: bytes = Bytesˉfromˉu8(10u8);
+    let Empty: bytes = Bytesˉslice(U32, 0u32, 0u32);
+    let End: bytes = Bytesˉconcat(Cell(9u8, 42u32), Bytesˉfromˉu8(81u8));
+    let Drop: bytes = Bytesˉfromˉu8(80u8);
+    let Parameters: bytes = Join(Bytesˉfromˉu8(25u8), Borrow(U64), Borrow(U64));
+    let Operation: bytes = Join(Cell(220u8, 0u32), Bytesˉfromˉu32ˉlittle(12u32), Bytesˉfromˉu32ˉlittle(7u32));
+    let Body: bytes = Join(Cell(4u8, 1u32), Cell(4u8, 2u32), Join(Operation, Drop, End));
+    let Valid: bytes = Trial(Model, Parameters, 3u32, U32, Empty, 0u32, Body, 2u32);
+    let Modelˉphase: i32 = Phase(Model);
+    if Modelˉphase != 0 { return 30 + Modelˉphase; }
+    let Trialˉphase: i32 = Phase(Valid);
+    if Trialˉphase != 0 { return 40 + Trialˉphase; }
+    if Bytesˉlength(Executable.Iˉcontrol(Valid)) == 0u32 { return 48; }
+    if Typedˉresult(Byte(Valid, 20u32, 2u8)) != 1u32 { return 49; }
+    if Typedˉresult(Trial(Model, Join(Bytesˉfromˉu8(25u8), Borrow(U32), Borrow(U64)),
+        3u32, U32, Empty, 0u32, Body, 2u32)) != 2u32 { return 50; }
+    if Typedˉresult(Trial(Model, Join(Bytesˉfromˉu8(25u8), Borrow(U64), Borrow(U32)),
+        3u32, U32, Empty, 0u32, Body, 2u32)) != 2u32 { return 51; }
+    if Typedˉresult(Trial(Model, Parameters, 3u32, U32, Empty, 0u32,
+        Join(Cell(4u8, 1u32), Cell(4u8, 2u32), Join(Word(Operation, 1u32, 1u32), Drop, End)), 2u32)) == 0u32 { return 52; }
+    let Taskˉparameters: bytes = Join(Bytesˉfromˉu8(25u8), Borrow(Cell(7u8, 2u32)), Borrow(Cell(7u8, 1u32)));
+    let Taskˉbody: bytes = Join(Cell(4u8, 1u32), Cell(4u8, 2u32),
+        Join(Bytesˉconcat(Cell(214u8, 0u32), Bytesˉfromˉu32ˉlittle(11u32)), Drop, End));
+    let Taskˉtrial: bytes = Trial(Model, Taskˉparameters, 3u32, U32, Empty, 0u32, Taskˉbody, 2u32);
+    if Typedˉresult(Taskˉtrial) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Taskˉtrial)) == 0u32 { return 53; }
+    if Typedˉresult(Byte(Taskˉtrial, 20u32, 1u8)) != 1u32 { return 54; }
+    if Typedˉresult(Trial(Model, Join(Bytesˉfromˉu8(25u8), Borrow(Cell(7u8, 1u32)), Borrow(Cell(7u8, 2u32))),
+        3u32, U32, Empty, 0u32, Taskˉbody, 2u32)) != 2u32 { return 55; }
+    // Opaque owners cannot be copied, unwrapped, or used as their raw token.
+    var Owner: u32 = 3u32;
+    while Owner <= 6u32 {
+        if Typedˉresult(Trial(Model, Borrow(Cell(7u8, Owner)), 1u32, Cell(7u8, Owner), Empty, 0u32,
+            Bytesˉconcat(Cell(4u8, 0u32), Bytesˉfromˉu8(81u8)), 1u32)) == 0u32 { return 56; }
+        if Typedˉresult(Trial(Model, Borrow(Cell(7u8, Owner)), 1u32, U64, Empty, 0u32,
+            Join(Cell(4u8, 0u32), Cell(105u8, 0u32), Bytesˉfromˉu8(81u8)), 1u32)) == 0u32 { return 57; }
+        Owner = Owner + 1u32;
+    }
+    let Regionˉoperation: bytes = Join(Cell(222u8, 0u32), Bytesˉfromˉu32ˉlittle(13u32), Bytesˉfromˉu32ˉlittle(7u32));
+    let Regionˉparameters: bytes = Join(Cell(7u8, 4u32), Borrow(U64), Bytesˉconcat(Borrow(U64), Borrow(U64)));
+    let Regionˉbody: bytes = Join(Cell(4u8, 1u32), Cell(4u8, 2u32),
+        Join(Cell(4u8, 3u32), Regionˉoperation, Bytesˉconcat(Drop, End)));
+    let Regionˉtrial: bytes = Trial(Model, Regionˉparameters, 4u32, U32, Empty, 0u32, Regionˉbody, 3u32);
+    let Regionˉphase: i32 = Phase(Regionˉtrial);
+    if Regionˉphase != 0 { return 60 + Regionˉphase; }
+    if Bytesˉlength(Executable.Iˉcontrol(Regionˉtrial)) == 0u32 { return 68; }
+    if Typedˉresult(Byte(Regionˉtrial, 20u32, 2u8)) != 1u32 { return 69; }
+    if Typedˉresult(Trial(Model, Join(Cell(7u8, 4u32), Borrow(U32), Bytesˉconcat(Borrow(U64), Borrow(U64))),
+        4u32, U32, Empty, 0u32, Regionˉbody, 3u32)) != 2u32 { return 70; }
+    if Typedˉresult(Trial(Model, Join(Cell(7u8, 4u32), Borrow(U64), Bytesˉconcat(Borrow(U32), Borrow(U64))),
+        4u32, U32, Empty, 0u32, Regionˉbody, 3u32)) != 2u32 { return 71; }
+    if Typedˉresult(Trial(Model, Join(Cell(7u8, 4u32), Borrow(U64), Bytesˉconcat(Borrow(U64), Borrow(U32))),
+        4u32, U32, Empty, 0u32, Regionˉbody, 3u32)) != 2u32 { return 72; }
+    let Pointerˉoperation: bytes = Join(Cell(223u8, 0u32), Bytesˉfromˉu32ˉlittle(6u32), Bytesˉfromˉu32ˉlittle(7u32));
+    let Foreignˉoperation: bytes = Join(Cell(224u8, 1u32), Bytesˉfromˉu32ˉlittle(6u32), Bytesˉfromˉu32ˉlittle(7u32));
+    let Foreignˉparameters: bytes = Join(Cell(7u8, 5u32), Borrow(U64), Borrow(U64));
+    let Foreignˉbody: bytes = Join(Pointerˉoperation, Cell(4u8, 1u32),
+        Join(Cell(4u8, 2u32), Foreignˉoperation, Bytesˉfromˉu8(81u8)));
+    let I64: bytes = Bytesˉfromˉu8(9u8);
+    let Foreignˉtrial: bytes = Trial(Model, Foreignˉparameters, 3u32, I64, Empty, 0u32, Foreignˉbody, 3u32);
+    let Foreignˉphase: i32 = Phase(Foreignˉtrial);
+    if Foreignˉphase != 0 { return 80 + Foreignˉphase; }
+    if Bytesˉlength(Executable.Iˉcontrol(Foreignˉtrial)) == 0u32 { return 88; }
+    if Typedˉresult(Byte(Foreignˉtrial, 20u32, 2u8)) != 1u32 { return 89; }
+    if Typedˉresult(Trial(Model, Join(Cell(7u8, 5u32), Borrow(U32), Borrow(U64)),
+        3u32, I64, Empty, 0u32, Foreignˉbody, 3u32)) != 2u32 { return 90; }
+    if Typedˉresult(Trial(Model, Join(Cell(7u8, 5u32), Borrow(U64), Borrow(U32)),
+        3u32, I64, Empty, 0u32, Foreignˉbody, 3u32)) != 2u32 { return 91; }
+    if Typedˉresult(Trial(Model, Foreignˉparameters, 3u32, I64, Empty, 0u32,
+        Join(Pointerˉoperation, Cell(4u8, 1u32), Join(Cell(4u8, 2u32),
+            Word(Foreignˉoperation, 1u32, 2u32), Bytesˉfromˉu8(81u8))), 3u32)) != 1u32 { return 92; }
+    // An ordinary borrowed opaque record cannot stand in for a derived pointer.
+    if Typedˉresult(Trial(Model, Join(Borrow(Cell(7u8, 6u32)), Borrow(U64), Borrow(U64)),
+        3u32, I64, Empty, 0u32, Join(Cell(4u8, 0u32), Cell(4u8, 1u32),
+            Join(Cell(4u8, 2u32), Foreignˉoperation, Bytesˉfromˉu8(81u8))), 3u32)) == 0u32 { return 93; }
+    let Scope: bytes = Cell(7u8, 3u32);
+    let Reader: bytes = Namedˉtrial(Model, "Read", Borrow(Scope), 1u32, U32, Empty, 0u32, End, 1u32);
+    let Loan: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 1u32));
+    let Exit: bytes = Bytesˉconcat(Cell(219u8, 0u32), Bytesˉfromˉu8(0u8));
+    let Read: bytes = Bytesˉconcat(Cell(4u8, 1u32), Cell(64u8, 1u32));
+    let Live: bytes = Trial(Reader, Scope, 1u32, U32, Borrow(Scope), 1u32,
+        Join(Loan, Read, Join(Drop, Exit, End)), 1u32);
+    // Scope owners retain their inherited no-load boundary; a new generic
+    // wrapper must not create an alternate way to borrow or transport one.
+    if Typedˉresult(Live) == 0u32 { return 94; }
+    if Typedˉresult(Trial(Reader, Scope, 1u32, U32, Borrow(Scope), 1u32,
+        Join(Loan, Exit, Join(Read, Drop, End)), 1u32)) == 0u32 { return 95; }
+    if Typedˉresult(Trial(Reader, Scope, 1u32, U32, Borrow(Scope), 1u32,
+        Join(Loan, Cell(4u8, 1u32), Join(Exit, Cell(64u8, 1u32), Bytesˉconcat(Drop, End))), 1u32)) == 0u32 { return 96; }
+    let Scratchˉreader: bytes = Namedˉtrial(Model, "Read", Borrow(Cell(7u8, 4u32)),
+        1u32, U32, Empty, 0u32, End, 1u32);
+    let Scratchˉloan: bytes = Bytesˉconcat(Cell(4u8, 0u32), Cell(5u8, 4u32));
+    let Scratchˉread: bytes = Join(Cell(4u8, 4u32), Cell(64u8, 1u32), Drop);
+    let Regionˉdrop: bytes = Join(Cell(4u8, 1u32), Cell(4u8, 2u32),
+        Join(Cell(4u8, 3u32), Regionˉoperation, Drop));
+    if Typedˉresult(Trial(Scratchˉreader, Regionˉparameters, 4u32, U32,
+        Borrow(Cell(7u8, 4u32)), 1u32,
+        Join(Scratchˉloan, Scratchˉread, Bytesˉconcat(Regionˉdrop, End)), 3u32)) != 0u32 { return 97; }
+    if Typedˉresult(Trial(Scratchˉreader, Regionˉparameters, 4u32, U32,
+        Borrow(Cell(7u8, 4u32)), 1u32,
+        Join(Scratchˉloan, Regionˉdrop, Bytesˉconcat(Scratchˉread, End)), 3u32)) != 2u32 { return 98; }
+    return 0;
+}
+
 export fn Check(Candidate: bytes) -> i32 {
     let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
     if Typedˉresult(Input) != 0u32 { return 151; }
@@ -237,5 +600,9 @@ export fn Check(Candidate: bytes) -> i32 {
     if Typedˉresult(Byte(Arithmetic, Code + 1161u32, 16u8)) != 2u32 { return 164; }
     // Passing this matrix does not turn off the complete-admission guard.
     if Semantic.Compilerˉwvbˉverify(Input) != 1u32 { return 165; }
-    return Checkˉcomposition(Input);
+    let Compositionˉresult: i32 = Checkˉcomposition(Input);
+    if Compositionˉresult != 0 { return Compositionˉresult; }
+    let Operandsˉresult: i32 = Checkˉoperands(Input);
+    if Operandsˉresult != 0 { return Operandsˉresult; }
+    return Checkˉauthority();
 }

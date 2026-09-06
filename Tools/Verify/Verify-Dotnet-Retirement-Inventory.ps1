@@ -16,7 +16,7 @@ function Test-DirectManagedInvocation {
     return (
         $Content -match '(?im)actions/setup-dotnet@' -or
         $Content -match '(?im)\bGet-Command\s+dotnet\b' -or
-        $Content -match '(?im)(^|[\s;&|($=])dotnet(?:\.exe)?\s+'
+        $Content -match '(?im)(^|[\s;&|($=''"])dotnet(?:\.exe)?\s+'
     )
 }
 
@@ -59,12 +59,6 @@ $TrackedPaths = @(git -C $RepositoryRoot ls-files --cached --others --exclude-st
 if ($LASTEXITCODE -ne 0) {
     throw 'Git could not enumerate the repository inventory.'
 }
-$TrackedPaths = @(
-    $TrackedPaths | Where-Object {
-        Test-Path -LiteralPath (Join-Path $RepositoryRoot $_) -PathType Leaf
-    }
-)
-
 $ManagedExtensions = @('.cs', '.csproj', '.fs', '.fsproj', '.vb', '.vbproj', '.razor', '.sln', '.slnx')
 $ManagedBuildFiles = @(
     'Directory.Build.props',
@@ -76,8 +70,9 @@ $ManagedBuildFiles = @(
 )
 $TrackedManagedPaths = @(
     $TrackedPaths | Where-Object {
-        [IO.Path]::GetExtension($_) -in $ManagedExtensions -or
-        [IO.Path]::GetFileName($_) -in $ManagedBuildFiles
+        ([IO.Path]::GetExtension($_) -in $ManagedExtensions -or
+            [IO.Path]::GetFileName($_) -in $ManagedBuildFiles) -and
+        (Test-Path -LiteralPath (Join-Path $RepositoryRoot $_) -PathType Leaf)
     }
 )
 if ($TrackedManagedPaths.Count -ne 0) {

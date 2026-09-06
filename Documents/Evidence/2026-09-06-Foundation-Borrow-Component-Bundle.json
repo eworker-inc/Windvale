@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-foundation-borrow-component-bundle",
+  "date": "2026-09-06",
+  "subject": "Shared Foundation borrow component construction for coherent development chunks",
+  "claim": "All 225 existing component groups pass separately and together on Windows and Debian. The development bundle replaces three immutable test products with one, preserves the exact source union and profile, and uses existing complete-input construction caches. Eligible mixed-file development reaches the combined selection without invoking the full memory-budget owner.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 12ad40ef. Shared component and runner inputs are recorded in the first Windows bundle run; routing and wrapper identities are recorded in the dispatcher run. The same identities apply to later runs of each path. Separate component implementation, fixtures, construction machinery and bootstrap identities are unchanged from that base; the separate selections use the same recorded JavaScript runner."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node v24.18.0; AMD Ryzen 9 3900X shared physical host",
+      "target": "225 groups through three existing selections (16 plan, 24 directories, 185 owner-flow). Empty private test-product cache; retained bootstrap tools. Nine build/package/execute operations.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "Sequential node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs selections --foundation-borrow-plan, --foundation-borrow-directories, --foundation-borrow-owners; shared fresh private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 96949,
+      "outputs": [
+        {
+          "path": "plan.wvb",
+          "size": 17928,
+          "sha256": "d55437e23078b7b64c56d1f3f49ca971d92acf38cc5abc9e7a420ccb56b0364a"
+        },
+        {
+          "path": "directories.wvb",
+          "size": 29080,
+          "sha256": "f621b886e6772ee067b363524753cb919252e614ab5afbf04e183683e80325b3"
+        },
+        {
+          "path": "owners.wvb",
+          "size": 658357,
+          "sha256": "5eeb0359d7ac4972c9a675d9f60c818fc4fb3ce41f075027d0ac942bccf6aa6e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0; AMD Ryzen 9 3900X shared physical host",
+      "target": "225 identical groups through one portable Profile 1 product. Empty private test-product cache; retained bootstrap tools. Three build/package/execute operations.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-components; private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 85295,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Foundation-Borrow-Components.wvproj",
+          "size": 1101,
+          "sha256": "867e37399a39a9958c651d4a8a5f8840e284bedaa21551def540f339d453054b"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv",
+          "size": 412,
+          "sha256": "e7fd952dae4f7522bcf6876acb1ea7325fd9f2e20a0cf7453e19990ed992bf29"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 6090,
+          "sha256": "330098f55e819ff52dd9e81643bd7eab17b8584104b8b7b8fefe7672182415ae"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv",
+          "size": 10336,
+          "sha256": "6c8a7cadcb0386188e7b83e7656ac75389a3d91f5d7ffbc3a61b1cf2d4904e75"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv",
+          "size": 8951,
+          "sha256": "fcfb88933e039fa193e25a65249d6bc7e0b77e9f8b43d535436b12612974b9ef"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9291,
+          "sha256": "05b2d20b3d87a3d65be1ef703fdb3bdea9157175fc064fd55105665f2015429d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 27748,
+          "sha256": "996f0ec68f5f8f020016add2b2850a39ea31ec3fe3269193fe52fb879e615597"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv",
+          "size": 13663,
+          "sha256": "0483254c9cff51781c87156c3e969ff2c6be5fb12b90ed0e39b4687db5a93864"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv",
+          "size": 6114,
+          "sha256": "4a3941ba156b2e774b2a1f8e5c30deb57af028e35f4ef9acb0629251e1bca892"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 242936,
+          "sha256": "c82b5bfa3638b987a9e0145523f65a9dac1be21dc671838fde78192b77aa26d4"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv",
+          "size": 31260,
+          "sha256": "d702d7007eb1f7515096821267cc2387dbc424b9ee2da2172bb9cfb2664f0e18"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv",
+          "size": 512,
+          "sha256": "078c5db03ed79ecb0da064f413a888876682f5d0f02af4ddf391388001133998"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180270,
+          "sha256": "165a35b981bac9bc1dac4eb7493c198b1afdeb0be02870eb08e344575541ddbe"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv",
+          "size": 10504,
+          "sha256": "9e5a9f90f4dd81dd16de6e013c164e2c1f14f7bc600d8d798f6243e21ec52b0d"
+        },
+        {
+          "path": "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv",
+          "size": 14882,
+          "sha256": "b9ef240e0783fb529afa6c283bb9762b212c572ced4029f19126f62b708cb844"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv",
+          "size": 10918,
+          "sha256": "67254828bbab85a1900eaabe67b677ac011d3cd48b323007c4af4308ada1f7f1"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122810,
+          "sha256": "9f532a7d2464d15aa3073e76ee83c98f47e5227f9f737fc3477cbc59b3979b16"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "components.wvb",
+          "size": 690788,
+          "sha256": "c970f9dedcdba904b34552c94f49ccf20283af8a865531d628f78ed796db58a6"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node v24.18.0; AMD Ryzen 9 3900X shared physical host",
+      "target": "Warm shared immutable construction products; all 225 groups execute afresh. No passing behavior receipt is reused.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-components; private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 2023,
+      "outputs": [
+        {
+          "path": "components.wvb",
+          "size": 690788,
+          "sha256": "c970f9dedcdba904b34552c94f49ccf20283af8a865531d628f78ed796db58a6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; AMD Ryzen 9 3900X shared physical host",
+      "target": "225 groups through three existing selections (16 plan, 24 directories, 185 owner-flow). Empty private test-product cache; retained bootstrap tools. Nine build/package/execute operations.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "Sequential node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs selections --foundation-borrow-plan, --foundation-borrow-directories, --foundation-borrow-owners; shared fresh private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 103621,
+      "outputs": [
+        {
+          "path": "plan.wvb",
+          "size": 17928,
+          "sha256": "d55437e23078b7b64c56d1f3f49ca971d92acf38cc5abc9e7a420ccb56b0364a"
+        },
+        {
+          "path": "directories.wvb",
+          "size": 29080,
+          "sha256": "f621b886e6772ee067b363524753cb919252e614ab5afbf04e183683e80325b3"
+        },
+        {
+          "path": "owners.wvb",
+          "size": 658357,
+          "sha256": "5eeb0359d7ac4972c9a675d9f60c818fc4fb3ce41f075027d0ac942bccf6aa6e"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; AMD Ryzen 9 3900X shared physical host",
+      "target": "225 identical groups through one portable Profile 1 product. Empty private test-product cache; retained bootstrap tools. Three build/package/execute operations.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-components; private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 92120,
+      "outputs": [
+        {
+          "path": "components.wvb",
+          "size": 690788,
+          "sha256": "c970f9dedcdba904b34552c94f49ccf20283af8a865531d628f78ed796db58a6"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node v20.19.2; AMD Ryzen 9 3900X shared physical host",
+      "target": "Warm shared immutable construction products; all 225 groups execute afresh. No passing behavior receipt is reused.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-components; private WINDVALE_NATIVE_CACHE_ROOT.",
+      "result": "Passed",
+      "elapsedMilliseconds": 4349,
+      "outputs": [
+        {
+          "path": "components.wvb",
+          "size": 690788,
+          "sha256": "c970f9dedcdba904b34552c94f49ccf20283af8a865531d628f78ed796db58a6"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell 7.6.5",
+      "target": "Real mixed-file changed plan selects one 225-group component owner, expected 180 seconds, maximum 600 seconds, no coverage gaps. Native construction products are warm; result caching disabled; all assertions execute.",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "& Tools/Verify/Verify-Changed.ps1 -ChangedPath @('Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv') -NoResultCache -TimingReportPath Artifacts/Foundation-Components/Dispatch-Timing.json",
+      "result": "Passed",
+      "elapsedMilliseconds": 3298,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.cmd",
+          "size": 684,
+          "sha256": "e306fce45f3b27e39b0bd63364eb0715f201cc2532856f588a6048a1314c3d74"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh",
+          "size": 651,
+          "sha256": "88d02d194bbc5aee9b740db3a3a7a7c7a46a7ff37a7c743a9cd368bbed66dbbd"
+        },
+        {
+          "path": "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+          "size": 282189,
+          "sha256": "0ad664ae1aa78177bbae9f666bf599cda52bd04948ea64876d861618f41b6a9e"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 39351,
+          "sha256": "9b3516bd7e70ad084fffbe26f62c02fb1e9e12eb4c24d91e1f866a9a3064b7a0"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 340986,
+          "sha256": "a7f2b423538852b594ce3a114f30ac7abfa611765fd669aec3c0ab37fc6ac406"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Maintained shell wrapper accepts the component selection and executes all 225 groups using the same warm products.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh",
+      "command": "bash Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.sh --foundation-borrow-components",
+      "result": "Passed",
+      "elapsedMilliseconds": 4165
+    },
+    {
+      "host": "Windows x64",
+      "target": "31 general and 291 native routing cases; additional component source-union, entry calls, mixed selections, singleton retention, documentation companions, small-component exclusion and integration-exclusion checks.",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Component verification only; candidate WVB 1.39 execution and full Option/Result completion remain gated. Full 419-case memory-budget qualification, compiler reconstruction, WebAssembly, ABI and OS qualification were not run.",
+    "Fresh means empty private project/native application caches with retained bootstrap tools. This is not a clean-machine compiler-preparation measurement or a paired-host repository qualification.",
+    "One separate/bundle/warm observation per host on a shared machine. The routing guard overlapped part of bundle construction. No enforceable regression threshold or isolated peak-memory improvement is claimed; memory was not sampled.",
+    "The two-host bundle bytes match, but deliberately combined bytes differ from each separate product. Each separate source closure and all its Main assertions remain in the combined project. Existing source ordering and resource bounds were retained.",
+    "A bundle failure names plan, directories or owners. The retained focused selection supplies that component’s original group code; the bundle does not automatically repeat construction after failure.",
+    "The first combined build rejected dependency order before construction. The manifest was sorted by declared module names and both hosts then passed. Initial dispatch exposed missing wrapper acceptance; both wrappers were corrected and exercised.",
+    "The routing guard first detected its stale package-call-site count after the new development branch was added; the inventory expectation was updated. No owner or logical case was removed.",
+    "Broad routing for the orchestration implementation edit selected a 900-second full owner with a 3600-second maximum. That over-budget plan was not launched. The causally selected evidence was the three retained modes, combined mode on both hosts, real dispatcher/wrappers and routing guard.",
+    "A real Debian PowerShell dispatcher measurement remains unavailable because pwsh is not installed there. Debian direct owner and maintained shell-wrapper execution passed.",
+    "The no-argument full owner and full Foundation publication selection still construct their three separate products. Two small components without owner-flow work do not select the large bundle; wider construction sharing and routing remain open."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Tools/Verify/AGENTS.md"
+  ]
+}

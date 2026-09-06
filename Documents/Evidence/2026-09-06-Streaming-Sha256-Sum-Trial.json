@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-streaming-sha256-sum-trial",
+  "date": "2026-09-06",
+  "subject": "Native streaming SHA-256 arithmetic candidate and verification coverage audit",
+  "claim": "A candidate reduces nested wrapping-sum calls without changing checked u32 semantics or hashing bounds. Ten known-answer lengths from zero through 1048576 bytes pass before and after on Windows and Debian, with identical WVB bytes across hosts for each variant. Three repeated observations per variant give Windows medians 2888 to 2111 ms and Debian medians 3055 to 2214 ms. Production Foundation source and all packaged tools remain unchanged.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "c5bb66ccda24e44d021f4e97871d5cebb914cfff"
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "Before arithmetic; ten SHA-256 known-answer lengths, 4097-byte range updates, native Profile 1",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 3055,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.wv",
+          "size": 19267,
+          "sha256": "aed3739449c339d65e2dc2a66497f96fe9c69db9221d256e88a41471f8e47479"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.wvproj",
+          "size": 258,
+          "sha256": "e5da09a5f1db5fc9bade9dde4c862ed7451c0bcefe5083332a24a534f05250b3"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before-win32.wvb",
+          "size": 29815,
+          "sha256": "1bb21bbaf43d5d5f3adc74752351b42ef822462875625a45941f2ade3fca0f9e"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.exe",
+          "size": 567808,
+          "sha256": "9231e171e74d4bbef1b73698541369e389cded4c1dfd18d8ddfac1811cd58873"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node v24.18.0",
+      "target": "After arithmetic; ten SHA-256 known-answer lengths, 4097-byte range updates, native Profile 1",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2265,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.wv",
+          "size": 19669,
+          "sha256": "1cacd04b71a3737fdb433268535cd95ae0b5a8b749ad83bef5da4e7e3c1dfc99"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.wvproj",
+          "size": 257,
+          "sha256": "fe867cf18bdd9d353bfa4b0af1e4aeffbeffb23ed5cb294fa01b568184450247"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After-win32.wvb",
+          "size": 30731,
+          "sha256": "bef9fc0c7756e6ffddc17d535601e8cf8dcb6d39c5314913f4f8ffbac40274ee"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.exe",
+          "size": 578560,
+          "sha256": "ec2ccfdbd6ea5f96b0c62f0296df30ab0e9264f474c83f087a756f6d5471e525"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64, Node v20.19.2",
+      "target": "Before arithmetic; ten SHA-256 known-answer lengths, 4097-byte range updates, native Profile 1",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "command": "timeout --kill-after=2s 180s node Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2869,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.wv",
+          "size": 19267,
+          "sha256": "aed3739449c339d65e2dc2a66497f96fe9c69db9221d256e88a41471f8e47479"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.wvproj",
+          "size": 258,
+          "sha256": "e5da09a5f1db5fc9bade9dde4c862ed7451c0bcefe5083332a24a534f05250b3"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before-linux.wvb",
+          "size": 29815,
+          "sha256": "1bb21bbaf43d5d5f3adc74752351b42ef822462875625a45941f2ade3fca0f9e"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.elf",
+          "size": 569344,
+          "sha256": "dcf07f38c5ed4562ab1c1b4d446dc5ad4cd4abc640cddacbeead6ddf3c9e5a4f"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64, Node v20.19.2",
+      "target": "After arithmetic; ten SHA-256 known-answer lengths, 4097-byte range updates, native Profile 1",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "command": "timeout --kill-after=2s 180s node Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Measure.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 2171,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.wv",
+          "size": 19669,
+          "sha256": "1cacd04b71a3737fdb433268535cd95ae0b5a8b749ad83bef5da4e7e3c1dfc99"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Benchmark.wv",
+          "size": 3590,
+          "sha256": "5d85b945ccc22e9e50b47267aac06937f99240081b890cf1f4d62b761e8634cf"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.wvproj",
+          "size": 257,
+          "sha256": "fe867cf18bdd9d353bfa4b0af1e4aeffbeffb23ed5cb294fa01b568184450247"
+        },
+        {
+          "path": "Foundation/Byte-Construction.wv",
+          "size": 1888,
+          "sha256": "40b4d34537a7ed7d9750c72f2eb2f01365fcf7610983fffb2004178916cfb925"
+        },
+        {
+          "path": "Foundation/Sha256-Streaming.wv",
+          "size": 6406,
+          "sha256": "df0fbc94c85e28a4021ad19ec251d49122adb582a5f34574a9a0b4ec1366ec13"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After-linux.wvb",
+          "size": 30731,
+          "sha256": "bef9fc0c7756e6ffddc17d535601e8cf8dcb6d39c5314913f4f8ffbac40274ee"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/After.elf",
+          "size": 577536,
+          "sha256": "055e385edb7135bfdf771585b2cc87ba1207c00990e357b08e8dc8b8b7d3a572"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Six native executions alternating After/Before/Before/After/After/Before; each checks all ten lengths; 20 ms memory observation",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Before.exe and After.exe",
+      "command": "PowerShell Process.Start; WaitForExit(20); observe PeakWorkingSet64; require exit 42 and empty stdout/stderr",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Repeated-Windows.json",
+          "size": 800,
+          "sha256": "a6d7828cd4fab579525ee729a5af6d2b990b7d9f53657ba4ac2e0c09213174b6"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64",
+      "target": "Six native executions alternating After/Before/Before/After/After/Before; each checks all ten lengths; 20 ms memory observation",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Repeat-Debian.mjs",
+      "command": "timeout --kill-after=2s 80s node Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Repeat-Debian.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Repeated-Debian.json",
+          "size": 870,
+          "sha256": "928a7a8752bac83e520e2815d0f9cfe387d180bf0ffa54df5d609691b4c8d534"
+        }
+      ]
+    },
+    {
+      "host": "Windows and Debian",
+      "target": "Exact retained measurement and coverage-audit summary",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Summary.json",
+      "command": "Compare native run records and inspect the seed project source declarations",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Summary.json",
+          "size": 1452,
+          "sha256": "b35871720d75b83845b0bc0d8ca17fdf612760f8f922e2655b16231684724315"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Results-win32.json",
+          "size": 3445,
+          "sha256": "800b4937ad2430d27d45bd32068ca43cb8d5300c280182ac5dd76cf187c3d844"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Sha256-Sums/Results-linux.json",
+          "size": 3432,
+          "sha256": "e72a6fe0a4471b5689aa54c762c503338179df8390fac9000e75c78f846d7b71"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is a native arithmetic trial, not an implemented production optimization or a cold packaging speedup. Fixed hosted tool binaries still use the previous implementation. Rebuilding and promoting them remains separate work.",
+    "The candidate replaces two-input modular addition with low-31-bit addition XOR the two high bits. The low sum is at most 2^32-2. Four/five-input sums accumulate all low and high 16-bit halves directly: Low is at most 262140/327675; High including carry is at most 262143/327679. All intermediate checked additions remain within u32.",
+    "Known-answer inputs are repeated byte 97 with lengths 0,1,55,56,63,64,65,4097,65536,1048576 and digest constants generated by Node crypto. Range updates use chunks of at most 4097 bytes. Randomized input, direct arithmetic edge cases, malformed streaming states, and full 64 MiB limits are not exhaustively qualified by this trial.",
+    "Windows observed kernel peak working sets were 7270400-7274496 bytes before and 7278592-7720960 after. Debian observed VmHWM values were 1683456-1687552 before and 1695744 after. Values sampled every 20 ms may omit the final interval and are not cross-host comparable or strict peak bounds.",
+    "Candidate WVB size rises from 29815 to 30731 bytes. Windows application size rises from 567808 to 578560 bytes; Linux from 569344 to 577536 bytes. Timing gains trade a small code-size increase for fewer executed helper calls.",
+    "Three alternating samples per variant establish a useful local signal but no enforced performance threshold. Full compiler and qualification benchmarks were not rerun.",
+    "Changed-file routing selects only seed for Foundation/Sha256-Compression.wv. Inspection found eight source projects in the pinned seed plan, each with one source reference, and none uses the compression or streaming source. An existing appropriate owner must acquire direct streaming-hash coverage before production promotion; routing alone is not passing evidence.",
+    "Initial fixture data names ending with a numeric word were rejected by bytecode semantic admission. Corrected word names passed the unchanged verifier. Those failed diagnostic attempts are not successful build evidence.",
+    "Raw sources, executables, results and summary under Artifacts are ignored local diagnostics, identified by hashes here rather than distributed in Git."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json",
+    "Documents/Decisions/0426-Fixed-Space-Compiler-Scale-Hosted-Sha256.md"
+  ]
+}

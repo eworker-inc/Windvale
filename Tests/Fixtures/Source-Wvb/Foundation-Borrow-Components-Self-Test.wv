@@ -1,0 +1,12 @@
+module Foundationˉborrowˉcomponentsˉselfˉtest profile portable;
+
+import Foundationˉvalueˉborrowˉplanˉselfˉtest as Plan;
+import Wvbˉtypedˉdirectoriesˉselfˉtest as Directories;
+import Foundationˉownerˉflowˉselfˉtest as Owners;
+
+export fn Main() -> i32 {
+    if Plan.Main() != 42 { return 1; }
+    if Directories.Main() != 42 { return 2; }
+    if Owners.Main() != 42 { return 3; }
+    return 42;
+}

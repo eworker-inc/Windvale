@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-segmented-image-profile-reuse",
+  "date": "2026-09-06",
+  "subject": "Share admitted segmented native images between hosted application profiles",
+  "claim": "On the 82115-byte enum-request tool workload, packaging profiles 7 and 8 through the prior cache took 27260 ms on Windows and 34749 ms on Debian. Sharing the native image reduced those observations to 23684 and 31628 ms. Both profiles retain distinct containers, match the uncached output bytes exactly, and execute successfully on each host. This establishes a shared construction boundary, not a complete compiler or repository qualification performance claim.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 0e61169c. Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs SHA-256 49fd91ab90a6f96d1fc8bab850c82c5cd3e8db5a3c3f65784db9a0eca746779d; Tools/Native/Build-Cached-Segmented-Project.mjs SHA-256 77431c47c104d3ee6d514ffd27d05a06a54e8b82af62008db1a5c1af542d794c; Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs SHA-256 1e9fe0e56388a3f824b2f7f42274ddcff2e3ef91edbc8df61ef5f3a12e9f7829; Tests/Native/Verification-Owners.txt SHA-256 aa0f1d92d5a8e371d31639aa2a1b61ac19aac17803c0eea23a8ffa7cb3263fd4. Prior implementation: git show 0e61169c:Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs, with only its loaded self-identity path changed to Tools/Native/Baseline-Segmented-Hosted-Wvb.mjs to isolate its checkpoints. Baseline source SHA-256 71443bb00feedad70ec7a602369ca848dd99db62c7af9bfc0bb0aab3331ad726."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Prior cold cached packaging for profiles 7 and 8; individual times 13568, 13692 ms",
+      "tool": "Baseline-Segmented-Hosted-Wvb.mjs (temporary original implementation with isolated self identity)",
+      "command": "node Tools/Native/Baseline-Segmented-Hosted-Wvb.mjs <7 then 8> Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb <output.exe>; 60-second bound per profile",
+      "result": "Passed",
+      "elapsedMilliseconds": 27260,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Prior-Windows-7.exe",
+          "size": 888832,
+          "sha256": "f9d06eb41a44166e56c5dc7fd8b9b64eb59992ec9778779cc0ae4ad2a93f61a5"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Prior-Windows-8.exe",
+          "size": 888832,
+          "sha256": "96c5250d62eaa290f5c4b588cbb49786b3ba8610fceccee6586420c836464662"
+        }
+      ]
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Final cold cached packaging for profiles 7 and 8; individual times 13256, 10428 ms",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs <7 then 8> Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb <output.exe>; 60-second bound per profile",
+      "result": "Passed",
+      "elapsedMilliseconds": 23684,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Final-Windows-7.exe",
+          "size": 888832,
+          "sha256": "f9d06eb41a44166e56c5dc7fd8b9b64eb59992ec9778779cc0ae4ad2a93f61a5"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Final-Windows-8.exe",
+          "size": 888832,
+          "sha256": "96c5250d62eaa290f5c4b588cbb49786b3ba8610fceccee6586420c836464662"
+        }
+      ]
+    },
+    {
+      "host": "Windows",
+      "target": "Compare both final packages with fresh uncached Package-Segmented-Compiler-Wvb outputs and execute both enum-request tools successfully",
+      "tool": "Run-development-command diagnostic harness",
+      "command": "Byte-compare profiles 7/8, then Enum-Final-Windows-<profile>.exe <input.wvb> <request.wveq>",
+      "result": "Passed"
+    },
+    {
+      "host": "Local WSL Debian, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Prior cold cached packaging for profiles 7 and 8; individual times 17570, 17179 ms",
+      "tool": "Baseline-Segmented-Hosted-Wvb.mjs (temporary original implementation with isolated self identity)",
+      "command": "node Tools/Native/Baseline-Segmented-Hosted-Wvb.mjs <7 then 8> Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb <output.elf>; 60-second bound per profile",
+      "result": "Passed",
+      "elapsedMilliseconds": 34749,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Prior-Linux-7.elf",
+          "size": 888832,
+          "sha256": "e0e9efc8b7506a159485d8d37985e9570ba4cd3f4ee00e491fedb48cf6e35bf2"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Prior-Linux-8.elf",
+          "size": 888832,
+          "sha256": "216d2228ebff4bff9aab28c6aa56d9449673c62edb2cdf99d1e3f737990c79f4"
+        }
+      ]
+    },
+    {
+      "host": "Local WSL Debian, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Final cold cached packaging for profiles 7 and 8; individual times 17268, 14360 ms",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs <7 then 8> Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb <output.elf>; 60-second bound per profile",
+      "result": "Passed",
+      "elapsedMilliseconds": 31628,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Final-Linux-7.elf",
+          "size": 888832,
+          "sha256": "e0e9efc8b7506a159485d8d37985e9570ba4cd3f4ee00e491fedb48cf6e35bf2"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Final-Linux-8.elf",
+          "size": 888832,
+          "sha256": "216d2228ebff4bff9aab28c6aa56d9449673c62edb2cdf99d1e3f737990c79f4"
+        }
+      ]
+    },
+    {
+      "host": "Linux",
+      "target": "Compare both final packages with fresh uncached Package-Segmented-Compiler-Wvb outputs and execute both enum-request tools successfully",
+      "tool": "Run-development-command diagnostic harness",
+      "command": "Byte-compare profiles 7/8, then Enum-Final-Linux-<profile>.elf <input.wvb> <request.wveq>",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows",
+      "target": "All eleven cache cases, including image reuse, corruption, bounds, truncated/malformed manifests, key/input mismatch, extra files, rejected publication and races",
+      "tool": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "WSL Debian",
+      "target": "All eleven cache cases, including image reuse, corruption, bounds, truncated/malformed manifests, key/input mismatch, extra files, rejected publication and races",
+      "tool": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows",
+      "target": "Existing segmented project producer still creates, reuses, rejects corruption, cleans failures and resolves publication races after exporting its unchanged image validator",
+      "tool": "Tools/Native/Test-Segmented-Project-Checkpoint.mjs",
+      "command": "node Tools/Native/Test-Segmented-Project-Checkpoint.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows, PowerShell 7.6.5",
+      "target": "All routing and inventory contracts after adding one distinct image-cache case",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 37719,
+      "peakWorkingSetBytes": 220577792
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Single observations using retained native tool artifacts and fresh cache keys; no controlled clean-machine, large compiler-package, or stable regression-threshold claim. The paired image-producing and container phases were run sequentially within each measured command.",
+    "The existing cache pipeline is the before/after baseline. Fresh uncached wrappers were also measured: 29742 ms on Windows and 23870 ms on Debian for both profiles. Cache identity checks can outweigh saved construction on small inputs or the mounted Linux filesystem.",
+    "An earlier 261-byte probe matched uncached package bytes and behavior but did not improve timing. A first implementation also rehashed container-only producers for the shared image; separating that dependency boundary reduced the final cache overhead. An initial scratch-layout failure was fixed before the recorded final runs.",
+    "The image key binds the WVB, host and declared native producer/validator graph independently of the application profile. Container keys retain the hosted producer graph and profile. The private image checkpoint admits at most sixteen 4 MiB fragments and validates its bounded WVLI header before reading fragments. Behavior results are never cached.",
+    "Complete database verification and full compiler, bootstrap, reconstruction and paired-host qualification were not run. The changed-file plan included a 2540-second database owner; the causal shared-validator behavior was checked through its existing focused checkpoint test instead.",
+    "The temporary baseline/harness files are diagnostics, not new verifier entry points. Prior cache source reconstruction is described in the source identity. All retained behavioral and malformed-input cases extend the existing cache owner.",
+    "Aggregate child-process peak memory was not measured. Node and host versions are recorded for reproducibility; broader toolchain-identity and cache-cost auditing remains part of the active redesign."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md",
+    "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tools/Native/Build-Cached-Segmented-Project.mjs",
+    "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tests/Native/Verification-Owners.txt"
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-native-sha256-construction-reuse",
+  "date": "2026-09-06",
+  "subject": "Reusable current-source construction for the complete native SHA-256 owner",
+  "claim": "The native SHA owner replaces its private lowerer and publication-stager construction pipelines with existing complete-input project-WVB and segmented hosted application products. Every execution retains all eight native groups and 20 streaming cases. Both hosts pass with application-cache misses and hits; warm runs take 17432 ms on Windows and 20842 ms on Debian. Native WVB identities match across hosts and each executable is identical between first and warm runs.",
+  "source": {
+    "kind": "Other",
+    "value": "Working tree based on b12fa011; runner input hashes distinguish initial and final path spellings."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Complete eight-group native SHA owner plus 20 streaming cases; both tool application caches Created",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --maximum-seconds 420",
+      "result": "Passed",
+      "elapsedMilliseconds": 288872,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Native-Sha-Reuse/Initial-Owner.mjs",
+          "size": 37104,
+          "sha256": "848c40776c5916ef60cc01cd52656578699d7c6a9408f0e5b9325e97e4729876"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        },
+        {
+          "path": "Wvb-To-Wvo.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        },
+        {
+          "path": "publication-stager.wvb",
+          "size": 774524,
+          "sha256": "427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f"
+        },
+        {
+          "path": "Wvb-To-Wvo-Stager.exe",
+          "size": 11184128,
+          "sha256": "48411e2a93329d00288d9ad6a1eeebf05ea853c5ea9253047f722e1af1b90adb"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Complete eight-group native SHA owner plus 20 streaming cases; both tool application caches Created",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs linux /mnt/d/windvale/dev01 --maximum-seconds 420",
+      "result": "Passed",
+      "elapsedMilliseconds": 301889,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Native-Sha-Reuse/Initial-Owner.mjs",
+          "size": 37104,
+          "sha256": "848c40776c5916ef60cc01cd52656578699d7c6a9408f0e5b9325e97e4729876"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        },
+        {
+          "path": "Wvb-To-Wvo.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        },
+        {
+          "path": "publication-stager.wvb",
+          "size": 774524,
+          "sha256": "427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f"
+        },
+        {
+          "path": "Wvb-To-Wvo-Stager.elf",
+          "size": 11186176,
+          "sha256": "ab1ba7644113308fdc244a7b18fa7cea0ed1dd9c2b75557ee4516c78c44d4627"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Complete eight-group native SHA owner plus 20 streaming cases; both tool application caches Hit",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs windows D:/windvale/dev01 --maximum-seconds 60",
+      "result": "Passed",
+      "elapsedMilliseconds": 17432,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 37098,
+          "sha256": "f939cbadc90c6b8cfde59e2de855f5b7618d1b05d04f876674738395acd47c58"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        },
+        {
+          "path": "Wvb-To-Wvo.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        },
+        {
+          "path": "publication-stager.wvb",
+          "size": 774524,
+          "sha256": "427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f"
+        },
+        {
+          "path": "Wvb-To-Wvo-Stager.exe",
+          "size": 11184128,
+          "sha256": "48411e2a93329d00288d9ad6a1eeebf05ea853c5ea9253047f722e1af1b90adb"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Complete eight-group native SHA owner plus 20 streaming cases; both tool application caches Hit",
+      "tool": "Tools/Native/Test-Native-Sha256.mjs",
+      "command": "node Tools/Native/Test-Native-Sha256.mjs linux /mnt/d/windvale/dev01 --maximum-seconds 60",
+      "result": "Passed",
+      "elapsedMilliseconds": 20842,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Native-Sha256.mjs",
+          "size": 37098,
+          "sha256": "f939cbadc90c6b8cfde59e2de855f5b7618d1b05d04f876674738395acd47c58"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        },
+        {
+          "path": "Wvb-To-Wvo.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        },
+        {
+          "path": "publication-stager.wvb",
+          "size": 774524,
+          "sha256": "427e7ee4424ecf7ff53a1a23eafd1e211873c15f666c46255685d364f4e5761f"
+        },
+        {
+          "path": "Wvb-To-Wvo-Stager.elf",
+          "size": 11186176,
+          "sha256": "ab1ba7644113308fdc244a7b18fa7cea0ed1dd9c2b75557ee4516c78c44d4627"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, PowerShell 7",
+      "target": "31 general and 291 native routing cases, complete work inventory and five visible SHA project dependencies",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 28814,
+      "inputs": [
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 23958,
+          "sha256": "c8de618a63b41dc426183afb850491da556b28d903c353651f4c03f771b869e2"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 332370,
+          "sha256": "80f37cc002ac7372a9d9b37aa61abffb3a9d5f8c0a679746e9df22415c830a73"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The preceding owner attempts stopped at 270 seconds during publication-stager packaging. They are incomplete baselines, not measurements of a complete old run. The earlier historical timing registry measured 216110/217604 ms on an older source state; it is not a controlled speedup baseline for these observations.",
+    "The first runs created both Profile 6 application products in 288872/301889 ms. Existing compiler binaries and caches were available; intermediate image and project-cache misses were not independently instrumented. These observations do not establish fully cold bootstrap time or meet the three-minute cold target.",
+    "The new path uses the maintained cached project builder and fully admitted segmented package products. Project keys bind workspace, exact ordered project/source bytes, front-door inventory and build-driver bytes; application keys bind WVB bytes, host, profile, Node version, admission and native construction producers, and the hosted producer context. A cache receipt alone is not qualification: fresh lowering, execution, publication-byte comparison, corruption and allocation checks supply this owner result.",
+    "The existing project cache uses the native reconstruction build driver; the old Build-Wvb wrapper used the retained front-door driver plus publisher. The new products are admitted by the segmented cache and satisfy the existing exact native output and behavior assertions on both hosts. No equivalence claim is made for all outputs of those two build drivers.",
+    "Full-owner planning now uses the existing slow profile: 300 expected and 600 maximum seconds. This is a conservative planning policy rather than an enforced warm-performance threshold. The streaming-only selection remains 30 expected and 60 maximum seconds.",
+    "The initial runner snapshot differs from the final runner only in equivalent project-path construction spelling. The final literal repository-relative paths expose all five projects to static work inventory; both warm runs exercised that final source.",
+    "Only immutable construction is reused. All eight owner groups run on every invocation, including SHA-free golden WVO bytes, the exact 1640-byte helper and its call target, native/streaming digest answers, publication staging equality and corruption rejection, atomic allocation instruction checks, 64-byte success and 63-byte failure.",
+    "No new cache implementation or verifier entry point was added. Existing cache corruption and input-invalidation sentinels were not rerun because those implementations were unchanged. This owner now consumes their validated products.",
+    "No new memory sampling or stable repeated-sample performance threshold was established. Frozen packaged hashing tools remain unchanged; compiler bootstrap and complete repository qualification were not rerun.",
+    "Initial owner snapshot under Artifacts is an ignored local diagnostic. Product names in outputs refer to temporary files whose bytes are retained by the shared cache. Durable hashes identify the measured products."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Streaming-Sha256-Focused-Owner.json",
+    "Documents/Decisions/0947-Treat-Complete-Qualification-As-One-Evidence-Graph.md"
+  ]
+}

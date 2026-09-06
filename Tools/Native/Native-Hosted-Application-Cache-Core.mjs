@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { lstat, readFile, realpath, stat } from 'node:fs/promises';
+import { lstat, open, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TextDecoder } from 'node:util';
@@ -14,6 +14,7 @@ export const HOSTED_REPOSITORY_ROOT = path.resolve(
 );
 const UTF8 = new TextDecoder('utf-8', { fatal: true });
 const WINDOWS = process.platform === 'win32';
+const PRODUCER_READ_CONCURRENCY = 4;
 
 function Reject(message) {
     throw new Error(message);
@@ -37,15 +38,13 @@ export async function Readˉboundedˉhostedˉfile(
     requireExecutable = false
 ) {
     const absolute = path.resolve(candidate);
-    let linkInformation;
     let information;
     try {
-        linkInformation = await lstat(absolute);
-        information = await stat(absolute);
+        information = await lstat(absolute);
     } catch {
         Reject(`Missing ${label}: ${absolute}`);
     }
-    if (linkInformation.isSymbolicLink() || !information.isFile() ||
+    if (information.isSymbolicLink() || !information.isFile() ||
         information.size < 1 || information.size > maximumBytes ||
         (requireExecutable && !WINDOWS && (information.mode & 0o111) === 0)) {
         Reject(`The ${label} is not a bounded ordinary file: ${absolute}`);
@@ -55,7 +54,30 @@ export async function Readˉboundedˉhostedˉfile(
         !(WINDOWS && allowWindowsAlias)) {
         Reject(`The ${label} must use its canonical non-link path: ${absolute}`);
     }
-    return readFile(WINDOWS && allowWindowsAlias ? canonical : absolute);
+    const handle = await open(WINDOWS && allowWindowsAlias ? canonical : absolute, 'r');
+    try {
+        const opened = await handle.stat();
+        if (!opened.isFile() || opened.dev !== information.dev ||
+            opened.ino !== information.ino || opened.size !== information.size ||
+            (requireExecutable && !WINDOWS && (opened.mode & 0o111) === 0)) {
+            Reject(`The ${label} changed before it was opened: ${absolute}`);
+        }
+        // One extra byte detects growth without allowing unbounded readFile allocation.
+        const bytes = Buffer.allocUnsafe(opened.size + 1);
+        let count = 0;
+        while (count < bytes.length) {
+            const result = await handle.read(bytes, count, bytes.length - count, count);
+            if (result.bytesRead === 0) break;
+            count += result.bytesRead;
+        }
+        if (count !== opened.size) {
+            Reject(`The ${label} changed length while being read: ${absolute}`);
+        }
+        return bytes.subarray(0, count);
+    } finally {
+        await handle.close();
+    }
+
 }
 
 export function Addˉhostedˉkeyˉfield(hash, label, bytes) {
@@ -86,8 +108,15 @@ async function Readˉrepositoryˉproducer(relative) {
     );
 }
 
+function Producerˉfingerprint(label, bytes, digest) {
+    const fingerprint = Buffer.alloc(40);
+    fingerprint.writeBigUInt64LE(BigInt(bytes.length), 0);
+    (digest ?? createHash('sha256').update(bytes).digest()).copy(fingerprint, 8);
+    return { label, bytes: fingerprint };
+}
+
 function Addˉproducerˉfield(fields, label, bytes) {
-    fields.push({ label, bytes });
+    fields.push(Producerˉfingerprint(label, bytes));
 }
 
 export async function Prepareˉhostedˉapplicationˉcontext(
@@ -147,22 +176,31 @@ export async function Prepareˉhostedˉapplicationˉcontext(
     if (inventoryEntries.length !== 72) {
         Reject('The hosted toolset inventory does not contain exactly 72 entries.');
     }
-    for (const line of inventoryEntries) {
+    const producerEntries = inventoryEntries.map(line => {
         const match = /^([0-9a-f]{64})  ([A-Za-z0-9._/-]+)$/u.exec(line);
         if (match === null || match[2].split('/').some(part =>
             part === '' || part === '.' || part === '..')) {
             Reject('The hosted toolset inventory contains a malformed entry.');
         }
-        const relative =
-            `Artifacts/Native-Hosted-Container-Toolset-Candidate/${match[2]}`;
-        const bytes = await Readˉrepositoryˉproducer(relative);
-        const actual = createHash('sha256').update(bytes).digest('hex');
-        if (actual !== match[1]) {
-            Reject(
-                `The hosted toolset artifact differs from its inventory: ${match[2]}`
-            );
+        return { digest: match[1], path: match[2] };
+    });
+    for (let offset = 0; offset < producerEntries.length; offset += PRODUCER_READ_CONCURRENCY) {
+        const batch = await Promise.allSettled(producerEntries
+            .slice(offset, offset + PRODUCER_READ_CONCURRENCY)
+            .map(async entry => {
+                const relative = 'Artifacts/Native-Hosted-Container-Toolset-Candidate/' + entry.path;
+                const bytes = await Readˉrepositoryˉproducer(relative);
+                const digest = createHash('sha256').update(bytes).digest();
+                if (digest.toString('hex') !== entry.digest) {
+                    Reject('The hosted toolset artifact differs from its inventory: ' + entry.path);
+                }
+                return Producerˉfingerprint('producer:' + relative, bytes, digest);
+            }));
+        // Await the entire bounded batch and keep inventory order in the key.
+        for (const result of batch) {
+            if (result.status === 'rejected') throw result.reason;
+            producerFields.push(result.value);
         }
-        Addˉproducerˉfield(producerFields, `producer:${relative}`, bytes);
     }
 
     for (const relative of [
@@ -203,6 +241,10 @@ export async function Prepareˉhostedˉapplicationˉcontext(
         `producer:${linkerRelative}`,
         await Readˉrepositoryˉproducer(linkerRelative)
     );
+
+    Addˉproducerˉfield(producerFields, 'producer:Native-Hosted-Application-Cache-Core',
+        await Readˉboundedˉhostedˉfile(SCRIPT_PATH, 'hosted cache key implementation'));
+    Addˉproducerˉfield(producerFields, 'runtime:node', Buffer.from(process.version, 'ascii'));
 
     return {
         hostFamily,
@@ -248,7 +290,7 @@ export async function Getˉhostedˉapplicationˉcacheˉkey(
     Addˉhostedˉkeyˉfield(
         hash,
         'format',
-        Buffer.from('windvale-native-hosted-application-cache-key 1\n', 'ascii')
+        Buffer.from('windvale-native-hosted-application-cache-key 2\n', 'ascii')
     );
     Addˉhostedˉkeyˉfield(hash, 'namespace', Buffer.from(namespace, 'ascii'));
     Addˉhostedˉkeyˉfield(hash, 'host', Buffer.from(context.hostFamily, 'ascii'));

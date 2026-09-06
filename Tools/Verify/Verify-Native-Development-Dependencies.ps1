@@ -74,6 +74,7 @@ $Entries = @(
     }
 )
 
+$PlannerInitializationCache = @{}
 foreach ($Owner in $Owners) {
     $OwnerEntries = @($Entries | Where-Object Owner -eq $Owner)
     foreach ($Kind in $RequiredKinds) {
@@ -82,7 +83,8 @@ foreach ($Owner in $Owners) {
         }
     }
     $Paths = @($OwnerEntries | Where-Object Kind -ne 'checkpoint' | ForEach-Object Value)
-    $Plan = & $Planner -ChangedPath $Paths -PassThru -Quiet
+    $Plan = & $Planner -ChangedPath $Paths -PassThru -Quiet `
+        -InitializationCache $PlannerInitializationCache
     if ($Plan.Gaps.Count -ne 0) {
         throw "Native development owner '$Owner' has planner gaps: $($Plan.Gaps -join ', ')"
     }

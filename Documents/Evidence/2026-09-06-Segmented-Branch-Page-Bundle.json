@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-segmented-branch-page-bundle",
+  "date": "2026-09-06",
+  "subject": "Share one segmented product across three portable database branch-page cases",
+  "claim": "The three existing branch-page Main functions execute in one portable bundle, sharing 15 library modules and reducing declared source visits from 48 to 19. Fresh Windows construction, packaging, and behavior passed in 52110 ms. Focused development passes with three logical cases and one execution on both hosts, with unchanged warm runs of 3353 ms on Windows and 8108 ms on Debian. The portable WVB bytes match across hosts. Qualification retains 57 cases in 52 steps; development retains 53 cases in 45 executions.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 8e98f230. Exact bundle, inventory, and dispatch source identities are recorded in the Windows construction run."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Separate-product baseline: first case 73893 ms command / 73180 ms owned step; second 69547 ms command / 68980 ms owned step; third interrupted at the 210-second aggregate bound",
+      "tool": "Tools/Native/Test-Database-Storage.cmd",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Baseline.mjs",
+      "result": "Incomplete",
+      "elapsedMilliseconds": 210000,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Baseline-Windows.json",
+          "size": 1656,
+          "sha256": "5b2ff5da1412c5d968885ac8b81c5aafd153fd38684a3c2cf2e7ca35d61f68e2"
+        }
+      ]
+    },
+    {
+      "host": "Windows",
+      "target": "Fresh bundle construction, segmented packaging, and all three behaviors; 278725-byte WVB, two native-image fragments",
+      "tool": "Artifacts/Native-Compiler-Reconstruction-Candidate/windows-x64/wvbuild.exe; Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Bundle.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 52110,
+      "inputs": [
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj",
+          "size": 1138,
+          "sha256": "6701af253af351d24cad24390b067ee929c818cc4b58b40f0381980d1e90e7b6"
+        },
+        {
+          "path": "Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Bundle-Self-Test.wv",
+          "size": 539,
+          "sha256": "313b19da0a9c71eb2b97d5d28cf052496de09b0410f05661a7ca551c8ca3045f"
+        },
+        {
+          "path": "Tests/Native/Database-Storage-Qualification-Steps.txt",
+          "size": 6830,
+          "sha256": "26e55efecae8944303711c9af304f0fb7dd24b9503cb3ab147bf3774dc252b75"
+        },
+        {
+          "path": "Tests/Native/Database-Storage-Development-Cases.txt",
+          "size": 5420,
+          "sha256": "9996753c85e270284b8e20471b1655b8c4a00737b230398026f6997a2dd810c1"
+        },
+        {
+          "path": "Tools/Native/Test-Database-Storage.cmd",
+          "size": 123598,
+          "sha256": "e787c5d8ee5075696f1fd9644dc554d299bc493ce998fafd16c6a93bca102d0f"
+        },
+        {
+          "path": "Tools/Native/Test-Database-Storage.sh",
+          "size": 108793,
+          "sha256": "44b6dd4dea465c321b838fcc40fee66788a537f48c46112a5d955274cb372df9"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Bundle-Windows.json",
+          "size": 5502,
+          "sha256": "191241267a2f01c68794cfa75977aa1c61b7674c46538bfa8f6c88f900602d35"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Bundle-Windows.wvb",
+          "size": 278725,
+          "sha256": "39c251e5bad59b0da6a5d049672c0e6494a24208e3bf323296b3d1e8d9d8cfb3"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Bundle-Windows.exe",
+          "size": 4471808,
+          "sha256": "bebba984ab9a7921c9a1d7dd75485474f61abc73044b8fba2ff6d2d64cd150d8"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Windows focused development; project, image, and application Created",
+      "tool": "Tools/Native/Test-Database-Storage",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Final.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 69091,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Final-Windows.json",
+          "size": 2232,
+          "sha256": "5f0018466823f5b67212569ff7bc0f7dc1eaff3b67d0d8e60b05f93c1489ff86"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Debian focused qualification step, 55000 ms owned step; includes WSL repository tool setup",
+      "tool": "Tools/Native/Test-Database-Storage",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Final.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 66761,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Final-Linux.json",
+          "size": 997,
+          "sha256": "6874b7fbe3d9eeb8165f81045b0fdf5e30f603e11d2afe1321348828f969f87b"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Debian focused development; project, image, and application Created",
+      "tool": "Tools/Native/Test-Database-Storage",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Development.mjs Cold",
+      "result": "Passed",
+      "elapsedMilliseconds": 60973,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Cold-Linux.json",
+          "size": 2091,
+          "sha256": "47b48282a12bd709191ecfad3fdbc47132cd9a683c747450fdf4047a577e75c0"
+        }
+      ]
+    },
+    {
+      "host": "Windows, Node 24.18.0",
+      "target": "Windows warm development; project, image, and application Hit; all three behaviors executed",
+      "tool": "Tools/Native/Test-Database-Storage",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Development.mjs Warm",
+      "result": "Passed",
+      "elapsedMilliseconds": 3349,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Warm-Windows.json",
+          "size": 2085,
+          "sha256": "6fc2a91dc4cb8163be1a3e2ae58559248d83cc9feb57b666add0e83443e44136"
+        }
+      ]
+    },
+    {
+      "host": "Debian under WSL, Node 20.19.2, repository on /mnt/d/windvale/dev01",
+      "target": "Debian warm development; project, image, and application Hit; all three behaviors executed",
+      "tool": "Tools/Native/Test-Database-Storage",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Measure-Branch-Pages-Development.mjs Warm",
+      "result": "Passed",
+      "elapsedMilliseconds": 8098,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Warm-Linux.json",
+          "size": 2063,
+          "sha256": "518e4737a20d3cb38f2b875f195becee8343b554ed47df2d98abdaaac6cd3c38"
+        }
+      ]
+    },
+    {
+      "host": "Windows and Debian",
+      "target": "Exact portable WVB comparison",
+      "tool": "Byte comparison and SHA-256",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Compare-Branch-Pages-Wvb.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Paired-Wvb.json",
+          "size": 155,
+          "sha256": "5a7423cb804462bb49b22eb3d0affc39113e2b3be83a48911ec1461933877f3f"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Branch-Pages-Bundle-Linux.wvb",
+          "size": 278725,
+          "sha256": "39c251e5bad59b0da6a5d049672c0e6494a24208e3bf323296b3d1e8d9d8cfb3"
+        }
+      ]
+    },
+    {
+      "host": "Windows, PowerShell",
+      "target": "31 general and 283 native routing cases, including exact three-case/one-execution routing and unchanged aggregate case counts",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The 210-second separate-product baseline is incomplete, with only its first two cases recorded as passed. It is not an exact three-case completion-time comparison. The baseline bound terminated the entire active process tree.",
+    "The first diagnostic invocations rejected a Windows resource path and noncanonical source dependency order; both were corrected before the successful construction, without changing runtime semantics or bounds.",
+    "Cold means fresh test products and construction checkpoints with retained qualified bootstrap tools, not a clean machine. Full database qualification and complete paired-host repository qualification were not run.",
+    "Windows development, Debian focused qualification, and routing verification ran concurrently on the same physical host; these elapsed times are diagnostic single observations. The initial Windows separate-product baseline and successful 52110 ms bundle construction were sequential.",
+    "Windows warm time is 3353 ms end to end (2950 ms owner timing); Debian warm is 8108 ms (7000 ms coarse shell timing). Debian remains above the five-second focused target.",
+    "Native runtime and image limits were unchanged. Peak memory was not measured.",
+    "The old individual projects remain available for partial development selections; the bundle is selected only when all three declared members are selected. Existing rejection and boundary cases remain inside the original test functions."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md",
+    "Tests/Native/Database-Storage-Qualification-Steps.txt"
+  ]
+}

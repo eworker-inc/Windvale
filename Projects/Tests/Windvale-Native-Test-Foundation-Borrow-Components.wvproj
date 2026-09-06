@@ -1,0 +1,17 @@
+windvale-project 2
+root "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Components-Self-Test.wv"
+source "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv"
+source "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv"
+source "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Foundation-Owner-Flow.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Metadata-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv"
+source "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv"
+source "Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv"
+source "Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv"
+emit wvb

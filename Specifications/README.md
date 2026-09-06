@@ -39,7 +39,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 | Current | 26 |
 | Documented | 226 |
 | Experimental | 3 |
-| Implemented | 36 |
+| Implemented | 37 |
 | Proposed | 1 |
 | Superseded | 1 |
 
