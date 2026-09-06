@@ -2272,12 +2272,9 @@ export fn Hˉrecord(
                 Expectedˉkind = Hˉownedˉtransferˉkind(Expectedˉkind);
             }
             let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
-            if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)) !=
-                Expectedˉkind {
-                return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
-            }
-            if Bytesˉreadˉu32ˉlittle(Resultˉstack, Actualˉoffset + 1u32) !=
-                Expectedˉnominal {
+            if !Hˉexactˉvalueˉmatches(Input, Types, Expectedˉkind, Expectedˉnominal,
+                U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)),
+                Bytesˉreadˉu32ˉlittle(Resultˉstack, Actualˉoffset + 1u32)) {
                 return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
             }
             Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actualˉoffset);
@@ -3069,6 +3066,7 @@ fn Hˉcallableˉcreate(
     Functionˉcode: u32,
     Cursor: u32,
     Functions: u32,
+    Types: u32,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3148,10 +3146,9 @@ fn Hˉcallableˉcreate(
         }
         let Actual: u32 = Bytesˉlength(Resultˉstack) - 5u32;
         if !Hˉclosureˉcaptureˉshapeˉisˉcopyable(Expectedˉkind) ||
-            U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actual)) !=
-                Expectedˉkind ||
-            Bytesˉreadˉu32ˉlittle(Resultˉstack, Actual + 1u32) !=
-                Expectedˉnominal {
+            !Hˉexactˉvalueˉmatches(Input, Types, Expectedˉkind, Expectedˉnominal,
+                U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actual)),
+                Bytesˉreadˉu32ˉlittle(Resultˉstack, Actual + 1u32)) {
             return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
         }
         Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actual);
@@ -3181,7 +3178,7 @@ fn Hˉcallableˉoperation(
         );
     }
     return Hˉcallableˉcreate(
-        Input, Functionˉcode, Cursor, Functions, Stack, Depth
+        Input, Functionˉcode, Cursor, Functions, Types, Stack, Depth
     );
 }
 
@@ -3651,6 +3648,7 @@ export fn Hˉcapability(
     Functionˉcode: u32,
     Cursor: u32,
     Capabilities: u32,
+    Types: u32,
     Stack: bytes,
     Depth: u32
 ) -> Hˉoperationˉstate {
@@ -3683,10 +3681,9 @@ export fn Hˉcapability(
             Capabilityˉcursor + Capabilityˉparameters - Argument - 1u32
         ));
         let Actualˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)) != Expectedˉkind {
-            return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
-        }
-        if Bytesˉreadˉu32ˉlittle(Resultˉstack, Actualˉoffset + 1u32) != 0u32 {
+        if !Hˉexactˉvalueˉmatches(Input, Types, Expectedˉkind, 0u32,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actualˉoffset)),
+            Bytesˉreadˉu32ˉlittle(Resultˉstack, Actualˉoffset + 1u32)) {
             return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
         }
         Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actualˉoffset);
@@ -4344,10 +4341,9 @@ fn Hˉlocalˉoperation(
             Expectedˉnominal = 0u32;
         }
         let Actual: u32 = Bytesˉlength(Resultˉstack) - 5u32;
-        if U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actual)) !=
-                Expectedˉkind || Bytesˉreadˉu32ˉlittle(
-                    Resultˉstack, Actual + 1u32
-                ) != Expectedˉnominal {
+        if !Hˉexactˉvalueˉmatches(Input, Types, Expectedˉkind, Expectedˉnominal,
+            U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Actual)),
+            Bytesˉreadˉu32ˉlittle(Resultˉstack, Actual + 1u32)) {
             return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
         }
         Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Actual);
@@ -5074,12 +5070,13 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 let Rightˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
                 let Rightˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Rightˉoffset));
                 let Rightˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Stack, Rightˉoffset + 1u32);
-                if Rightˉkind != 8u32 { return Invalid; }
+                if !Hˉvalueˉmatches(Input, Types, 8u32, Rightˉkind, Rightˉnominal) { return Invalid; }
                 Stack = Bytesˉslice(Stack, 0u32, Rightˉoffset);
                 Depth = Depth - 1u32;
                 let Leftˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Leftˉoffset)) != 8u32 { return Invalid; }
-                if Bytesˉreadˉu32ˉlittle(Stack, Leftˉoffset + 1u32) != Rightˉnominal { return Invalid; }
+                if !Hˉexactˉvalueˉmatches(Input, Types, 8u32, Rightˉnominal,
+                    U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Leftˉoffset)),
+                    Bytesˉreadˉu32ˉlittle(Stack, Leftˉoffset + 1u32)) { return Invalid; }
                 Stack = Bytesˉslice(Stack, 0u32, Leftˉoffset);
                 Depth = Depth - 1u32;
                 Hasˉpush = true;
@@ -5091,12 +5088,13 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                 let Unequalˉrightˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
                 let Unequalˉrightˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Unequalˉrightˉoffset));
                 let Unequalˉrightˉnominal: u32 = Bytesˉreadˉu32ˉlittle(Stack, Unequalˉrightˉoffset + 1u32);
-                if Unequalˉrightˉkind != 8u32 { return Invalid; }
+                if !Hˉvalueˉmatches(Input, Types, 8u32, Unequalˉrightˉkind, Unequalˉrightˉnominal) { return Invalid; }
                 Stack = Bytesˉslice(Stack, 0u32, Unequalˉrightˉoffset);
                 Depth = Depth - 1u32;
                 let Unequalˉleftˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Unequalˉleftˉoffset)) != 8u32 { return Invalid; }
-                if Bytesˉreadˉu32ˉlittle(Stack, Unequalˉleftˉoffset + 1u32) != Unequalˉrightˉnominal { return Invalid; }
+                if !Hˉexactˉvalueˉmatches(Input, Types, 8u32, Unequalˉrightˉnominal,
+                    U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Unequalˉleftˉoffset)),
+                    Bytesˉreadˉu32ˉlittle(Stack, Unequalˉleftˉoffset + 1u32)) { return Invalid; }
                 Stack = Bytesˉslice(Stack, 0u32, Unequalˉleftˉoffset);
                 Depth = Depth - 1u32;
                 Hasˉpush = true;
@@ -5106,7 +5104,9 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
             if Opcode == 109u32 {
                 if Depth == 0u32 { return Invalid; }
                 let Sourceˉoffset: u32 = Bytesˉlength(Stack) - 5u32;
-                if U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Sourceˉoffset)) != 8u32 { return Invalid; }
+                if !Hˉvalueˉmatches(Input, Types, 8u32,
+                    U32ˉfromˉu8(Bytesˉreadˉu8(Stack, Sourceˉoffset)),
+                    Bytesˉreadˉu32ˉlittle(Stack, Sourceˉoffset + 1u32)) { return Invalid; }
                 Stack = Bytesˉslice(Stack, 0u32, Sourceˉoffset);
                 Depth = Depth - 1u32;
                 Hasˉpush = true;
@@ -5277,6 +5277,7 @@ export fn Hˉexecutable(Input: bytes) -> bytes {
                     Functionˉcode,
                     Cursor,
                     Capabilities,
+                    Types,
                     Stack,
                     Depth
                 );

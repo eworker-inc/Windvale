@@ -6,6 +6,14 @@
 
 ## Goal
 
+Product implementation now resumes under the
+[Option/Result completion goal](Windvale-Libraries-1.0-Plan.md#active-implementation-goal).
+The redesign remains supporting work: improve verification while completing
+coherent compiler, runtime, and library chunks. Use focused diagnostics during
+implementation and one combined final plan for each completed chunk, reusing
+valid construction and unaffected evidence. Finishing every performance target
+below is not a prerequisite for continued product work.
+
 Windvale verification must make the common correct action inexpensive. A
 developer should be able to change one compiler, runtime, library, or database
 contract and receive relevant behavioral feedback in seconds where practical
