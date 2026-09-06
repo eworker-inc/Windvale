@@ -45,12 +45,17 @@ Changes confined to the streaming hash sources and fixture select the existing
 owner's `--streaming` mode, capped at 60 seconds including preparation. Native
 backend and owner changes retain the full eight-group selection; its existing
 KAT application also executes the streaming cases. No new verifier entry point
-was added. Full runs passed the first four groups on both hosts but reached a
-270-second cap while packaging the publication stager, so complete native
-qualification is still unpassed. Make that construction resumable and correct
-its full-owner cost estimate before repeating it. Frozen packaged hashing tools
-still use the previous implementation; rebuild and qualify them, then measure
-real packaging before claiming a cold-workflow improvement.
+was added. The full owner now reuses the existing project and segmented package
+products for its lowerer and publication stager. All eight groups pass warm in
+17.4 seconds on Windows and 20.8 seconds on Debian, executing every assertion.
+First application-cache misses took 4 minutes 49 seconds and 5 minutes 2 seconds;
+that remains above the cold target. The [construction evidence](../Evidence/2026-09-06-Native-Sha256-Construction-Reuse.json)
+records exact product identities and the limits of the comparison with earlier
+270-second incomplete runs. Planning now budgets five minutes expected and ten
+minutes maximum for the full owner, with all five projects visible in inventory.
+Frozen packaged hashing tools still use the previous implementation; rebuild and
+qualify them, then measure real packaging before claiming a cold-workflow
+improvement. Complete repository qualification remains open.
 
 Current compiler preparation now overlaps two independent branches after
 constructing the shared native image: Profile 7 Analyzer packaging and Emitter

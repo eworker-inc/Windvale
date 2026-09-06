@@ -307,6 +307,25 @@ async function Runˉnative(Host, Repository, Step, Stem, Arguments) {
     });
 }
 
+async function Buildˉcurrentˉtool(Host, Repository, Work, Name, Project, Application) {
+    const Wvb = join(Work, Name + '.wvb');
+    await Runˉnative(Host, Repository, Name + '-build', 'Build-Cached-Project-Wvb', [
+        join(Repository, Project), Wvb,
+    ]);
+    const Package = await Runˉnative(Host, Repository, Name + '-package',
+        'Package-Segmented-Compiler-Wvb', ['6', Wvb, Application, '--development-cache']);
+    const Report = Package.Output.trim().split(/\r?\n/).at(-1);
+    if (!/^segmented hosted WVB cache status=(Created|Hit) key=[0-9a-f]{64} host=(windows|linux)-x64 target=(windows|linux) profile=6$/.test(Report)) {
+        Reject('The current-tool construction cache report differs.');
+    }
+    process.stdout.write('native SHA-256 construction tool=' + Name + ' ' + Report + '\n');
+    for (const [Kind, Path] of [['wvb', Wvb], ['application', Application]]) {
+        const Bytes = await Readˉbounded(Path, MAXIMUM_APPLICATION_BYTES, Name + ' ' + Kind);
+        process.stdout.write('native SHA-256 product tool=' + Name + ' kind=' + Kind +
+            ' bytes=' + Bytes.length + ' sha256=' + createHash('sha256').update(Bytes).digest('hex') + '\n');
+    }
+}
+
 function Parseˉwvo(Bytes, Label) {
     if (Bytes.length < 24 || Bytes.subarray(0, 4).toString('ascii') !== 'WVO1') {
         Reject(`${Label} is not a Windvale object.`);
@@ -558,7 +577,7 @@ async function Main() {
             const Wvb = join(Work, 'Streaming.wvb');
             const Application = join(Work, 'Streaming.' + Extension);
             await Runˉnative(Host, Repository, 'streaming-build', 'Build-Cached-Project-Wvb', [
-                join(Repository, 'Projects', 'Tests', 'Windvale-Native-Test-Sha256-Streaming.wvproj'), Wvb,
+                join(Repository, 'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj'), Wvb,
             ]);
             await Runˉnative(Host, Repository, 'streaming-package', 'Package-Segmented-Compiler-Wvb', [
                 '1', Wvb, Application, '--development-cache',
@@ -576,34 +595,9 @@ async function Main() {
                 createHash('sha256').update(Wvbˉbytes).digest('hex') + '\n');
             return;
         }
-        const Lowererˉwvb = join(Work, 'Wvb-To-Wvo.wvb');
-        const Objectˉprefix = join(Work, 'Lowerer-Object');
-        const Objectˉmanifest = join(Work, 'Lowerer-Object.wvop');
-        const Imageˉprefix = join(Work, 'Lowerer-Image');
-        const Imageˉmanifest = join(Work, 'Lowerer-Image.wvli');
-        const Canonicalˉprefix = join(Work, 'Lowerer-Canonical');
-        const Canonicalˉmanifest = join(Work, 'Lowerer-Canonical.wvli');
         const Lowerer = join(Work, `Wvb-To-Wvo.${Extension}`);
-        await Runˉnative(Host, Repository, 'lowerer-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Compiler', 'Windvale-Native-X64-Lowering-Tool.wvproj'),
-            Lowererˉwvb,
-        ]);
-        await Runˉnative(Host, Repository, 'lowerer-stage', 'Stage-Compiler-Wvb', [
-            Lowererˉwvb, Objectˉprefix, Objectˉmanifest,
-        ]);
-        await Runˉnative(Host, Repository, 'lowerer-link', 'Link-Staged-Compiler-Wvo', [
-            Objectˉprefix, Objectˉmanifest, Imageˉprefix, Imageˉmanifest,
-        ]);
-        const Transport = await Runˉnative(
-            Host, Repository, 'lowerer-transport', 'Transport-Compiler-Image',
-            [Imageˉprefix, Imageˉmanifest, Canonicalˉprefix, Canonicalˉmanifest]
-        );
-        const Report = Transport.Output.trim().replace(/\r/g, '');
-        const Match = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-8]) manifest-bytes=([0-9]+)$/.exec(Report);
-        if (!Match) Reject(`Compiler image transport report differs: ${JSON.stringify(Report)}`);
-        await Runˉnative(Host, Repository, 'lowerer-package', 'Package-Hosted-Wvb', [
-            'image', '6', Lowererˉwvb, Canonicalˉprefix, Match[3], Match[2], Lowerer, Host,
-        ]);
+        await Buildˉcurrentˉtool(Host, Repository, Work, 'lowerer',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj', Lowerer);
         Pass('current lowerer construction');
 
         const Returnˉinput = join(Repository, 'Artifacts', 'Native-Wvb-To-Wvo-Candidate', 'Return-42.wvb');
@@ -623,8 +617,8 @@ async function Main() {
 
         const Katˉwvb = join(Work, 'Sha256-Kat.wvb');
         const Katˉwvo = join(Work, 'Sha256-Kat.wvo');
-        await Runˉnative(Host, Repository, 'kat-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Tests', 'Windvale-Native-Test-Sha256-Native-Kat.wvproj'),
+        await Runˉnative(Host, Repository, 'kat-build', 'Build-Cached-Project-Wvb', [
+            join(Repository, 'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj'),
             Katˉwvb,
         ]);
         await Runˉprocess(Lowerer, [Katˉwvb, Katˉwvo], {
@@ -673,42 +667,9 @@ async function Main() {
         });
         Pass('empty and abc exact native KATs plus 20 streaming cases');
 
-        const Stagerˉwvb = join(Work, 'Wvb-To-Wvo-Stager.wvb');
-        const Stagerˉobjectˉprefix = join(Work, 'Stager-Object');
-        const Stagerˉobjectˉmanifest = join(Work, 'Stager-Object.wvop');
-        const Stagerˉimageˉprefix = join(Work, 'Stager-Image');
-        const Stagerˉimageˉmanifest = join(Work, 'Stager-Image.wvli');
-        const Stagerˉcanonicalˉprefix = join(Work, 'Stager-Canonical');
-        const Stagerˉcanonicalˉmanifest = join(Work, 'Stager-Canonical.wvli');
         const Stager = join(Work, `Wvb-To-Wvo-Stager.${Extension}`);
-        await Runˉnative(Host, Repository, 'publication-stager-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Compiler',
-                'Windvale-Native-X64-Lowering-Staging-Tool.wvproj'),
-            Stagerˉwvb,
-        ]);
-        await Runˉnative(Host, Repository, 'publication-stager-stage', 'Stage-Compiler-Wvb', [
-            Stagerˉwvb, Stagerˉobjectˉprefix, Stagerˉobjectˉmanifest,
-        ]);
-        await Runˉnative(Host, Repository, 'publication-stager-link', 'Link-Staged-Compiler-Wvo', [
-            Stagerˉobjectˉprefix, Stagerˉobjectˉmanifest,
-            Stagerˉimageˉprefix, Stagerˉimageˉmanifest,
-        ]);
-        const Stagerˉtransport = await Runˉnative(
-            Host, Repository, 'publication-stager-transport', 'Transport-Compiler-Image',
-            [Stagerˉimageˉprefix, Stagerˉimageˉmanifest,
-                Stagerˉcanonicalˉprefix, Stagerˉcanonicalˉmanifest]
-        );
-        const Stagerˉreport = Stagerˉtransport.Output.trim().replace(/\r/g, '');
-        const Stagerˉmatch = /^compiler image transport status=Complete image-bytes=([0-9]+) entry-offset=([0-9]+) chunks=([1-8]) manifest-bytes=([0-9]+)$/.exec(
-            Stagerˉreport
-        );
-        if (!Stagerˉmatch) {
-            Reject(`Compiler staging image transport report differs: ${JSON.stringify(Stagerˉreport)}`);
-        }
-        await Runˉnative(Host, Repository, 'publication-stager-package', 'Package-Hosted-Wvb', [
-            'image', '6', Stagerˉwvb, Stagerˉcanonicalˉprefix,
-            Stagerˉmatch[3], Stagerˉmatch[2], Stager, Host,
-        ]);
+        await Buildˉcurrentˉtool(Host, Repository, Work, 'publication-stager',
+            'Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj', Stager);
         const Stagedˉprefix = join(Work, 'Sha256-Staged');
         const Stagedˉmanifest = join(Work, 'Sha256-Staged.wvop');
         await Runˉprocess(Stager, [Katˉwvb, Stagedˉprefix, Stagedˉmanifest], {
@@ -772,8 +733,8 @@ async function Main() {
         const Smokeˉwvo = join(Work, 'Sha256-Smoke.wvo');
         const Smokeˉimage = join(Work, 'Sha256-Smoke.bin');
         const Smokeˉapplication = join(Work, `Sha256-Smoke.${Extension}`);
-        await Runˉnative(Host, Repository, 'arena-smoke-build', 'Build-Wvb', [
-            join(Repository, 'Projects', 'Tests', 'Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj'),
+        await Runˉnative(Host, Repository, 'arena-smoke-build', 'Build-Cached-Project-Wvb', [
+            join(Repository, 'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj'),
             Smokeˉwvb,
         ]);
         await Runˉprocess(Lowerer, [Smokeˉwvb, Smokeˉwvo], {

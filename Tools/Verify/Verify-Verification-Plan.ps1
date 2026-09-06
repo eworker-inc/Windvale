@@ -5043,16 +5043,16 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TimingEvidence -ne 'historical-only' -or
     $QualificationWorkPlan.TimingCaseCountMismatches.Count -ne @(
         $QualificationWorkPlan.OwnerAnalysis | Where-Object { $_.Cases -ne $_.ObservedCases }).Count -or
-    $QualificationWorkPlan.TotalExpectedSeconds -ne 19845 -or
-    $QualificationWorkPlan.TotalMaximumSeconds -ne 79500 -or
+    $QualificationWorkPlan.TotalExpectedSeconds -ne 20130 -or
+    $QualificationWorkPlan.TotalMaximumSeconds -ne 79800 -or
     $QualificationWorkPlan.DualHostExpectedWorkSeconds -ne
         2 * $QualificationWorkPlan.TotalExpectedSeconds -or
     $QualificationWorkPlan.DeclaredCriticalPathExpectedSeconds -ne 7260 -or
     $QualificationWorkPlan.DeclaredCriticalPathMaximumSeconds -ne 25200 -or
-    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 2820 -or
-    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 4962 -or
-    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4440 -or
-    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6833 -or
+    $QualificationWorkPlan.MinimumShardExpectedSeconds -ne 3105 -or
+    $QualificationWorkPlan.IdealShardExpectedSeconds -ne 5033 -or
+    $QualificationWorkPlan.ShardExpectedSpreadSeconds -ne 4155 -or
+    $QualificationWorkPlan.DeclaredParallelEfficiencyBasisPoints -ne 6931 -or
     $QualificationWorkPlan.TimingSourceCommit -ne
         '47dd3d69fef8a0ac5b894885b0a1917e21033622' -or
     $QualificationWorkPlan.TimingRunId -ne '33894696448' -or
@@ -5107,10 +5107,17 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopObservedOwners[2].Name -ne
         'language-1-memory-budget-split-execution' -or
     $QualificationWorkPlan.TopObservedOwners[3].Name -ne 'database-storage' -or
-    $QualificationWorkPlan.RepeatedProjects.Count -ne 11 -or
+    $QualificationWorkPlan.RepeatedProjects.Count -ne 12 -or
     $QualificationWorkPlan.NestedOwnerEdges.Count -ne 0 -or
     $QualificationWorkPlan.PipelineUses.Count -ne 19) {
     throw 'The complete qualification work inventory differs.'
+}
+$ShaConstructionOwner = @($QualificationWorkPlan.OwnerAnalysis | Where-Object {
+    $_.Name -eq 'native-sha256-lowering'
+})[0]
+if ($ShaConstructionOwner.UniqueProjects -ne 5 -or
+    $ShaConstructionOwner.Profile -ne 'slow') {
+    throw 'The native SHA owner must expose all five construction projects and its cold duration profile.'
 }
 $QualificationShardSignature = @(
     $QualificationWorkPlan.Shards | ForEach-Object {
@@ -5123,23 +5130,23 @@ $QualificationShardSignature = @(
     }
 ) -join ','
 if ($QualificationShardSignature -cne
-    '1|13|2820|11400|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
+    '1|13|3105|11700|4610402|4077157,2|40|4950|25200|4041125|4521081,3|37|4815|23700|4597601|4504598,4|36|7260|19200|4655707|3364565') {
     throw "The measured qualification shard assignment differs: $QualificationShardSignature"
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
-    'Build-Wvb' = '48|221'
+    'Build-Wvb' = '47|217'
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
     'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
-    'Stage-Compiler-Wvb' = '3|10'
+    'Stage-Compiler-Wvb' = '2|8'
     'Lower-Wvb-To-Wvo' = '16|45'
     'Check-Wvo' = '20|55'
     'Link-Wvo' = '39|112'
-    'Package-Hosted-Wvb' = '19|99'
+    'Package-Hosted-Wvb' = '18|97'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '22|61'
+    'Package-Segmented-Compiler-Wvb' = '22|62'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
