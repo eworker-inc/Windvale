@@ -159,10 +159,6 @@ export fn Modelˉchatˉprepare(
         }
         Evicted = Evicted + 1u32;
     }
-    return Modelˉchatˉhistoryˉresult(
-        Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
-        Modelˉchatˉempty(), Evicted
-    );
 }
 
 export fn Modelˉchatˉcommit(
@@ -222,8 +218,4 @@ export fn Modelˉchatˉcommit(
         Candidate = Trimmed;
         Evicted = Evicted + 1u32;
     }
-    return Modelˉchatˉhistoryˉresult(
-        Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
-        Modelˉchatˉempty(), Evicted
-    );
 }

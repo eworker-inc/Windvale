@@ -26,7 +26,7 @@ The [machine-readable catalog](Specification-Catalog.json) contains every Markdo
 | [Bytecode, runtime, and user tools](Indexes/bytecode-runtime-and-tools.md) | Portable bytecode, execution, command-line behavior, WebAssembly, and inspection tools. | 9 |
 | [Assembly, objects, and linking](Indexes/assembly-object-and-linking.md) | Textual assembly, object records, relocation, linking, and native image construction. | 9 |
 | [Native toolchain](Indexes/native-toolchain.md) | Windvale-owned native compilers, publishers, runtime services, and their focused verification. | 95 |
-| [Packages, capabilities, and services](Indexes/packages-capabilities-and-services.md) | Projects, packages, installation, applications, capabilities, storage, and service contracts. | 32 |
+| [Packages, capabilities, and services](Indexes/packages-capabilities-and-services.md) | Projects, packages, installation, applications, capabilities, storage, and service contracts. | 33 |
 | [Database](Indexes/database.md) | WVDB data, query, transaction, storage, durability, and hosted service contracts. | 48 |
 | [Operating system](Indexes/operating-system.md) | Boot, kernel, memory, processes, drivers, filesystems, and Windvale OS services. | 98 |
 | [Network, models, and host boundaries](Indexes/network-models-and-host-boundaries.md) | Bounded operations, networking, TLS, external models, credentials, and host adapters. | 15 |
