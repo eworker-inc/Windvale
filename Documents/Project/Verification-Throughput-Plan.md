@@ -33,6 +33,16 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Three branch-page cases now share one segmented product. Fresh Windows
+construction and execution passed in 52,110 ms; the separate-product baseline
+was still incomplete at its 210-second bound after two passes. Development
+executes all three cases in 3,353 ms warm on Windows and 8,108 ms warm on Debian.
+Both hosts passed fresh development construction and produced identical WVB
+bytes. The [branch-page evidence](../Evidence/2026-09-06-Segmented-Branch-Page-Bundle.json)
+records those observations and the incomplete baseline. This seventh bundle
+retains all 57 qualification cases in 52 steps and all 53 development cases in
+45 executions. Full qualification and the broader timing targets remain open.
+
 The split compiler now checks its finished WVB before acquiring intermediate
 analysis. A valid final checkpoint survives independent analysis/symbol
 eviction without restarting those producers. Invalid WVB bytes or analysis-key
@@ -131,18 +141,19 @@ exact rows, counts, source-closure duplication, and per-step elapsed time withou
 running the owner. A focused step can be selected for diagnostics without making
 a complete qualification claim.
 
-Six compatible case pairs now share products, reducing the inventory from 60 to
-54 execution steps while preserving all 57 logical cases. The current graph has
-58 project references across 57 unique manifests and 673 root/source references
-across 146 unique source paths, a 4.61-fold declaration overlap. Pairing every
-construction would visit those source references 1,346 times per host. The 42
-ordinary portable steps now consume one admitted construction, delegating 385
+Six compatible pairs and one segmented three-case bundle now share products,
+reducing the inventory from 60 to 52 execution steps while preserving all 57
+logical cases. The current graph has 56 project references across 55 unique
+manifests and 644 root/source references across 147 unique source paths, a
+4.38-fold declaration overlap. Pairing every construction would visit those
+source references 1,288 times per host. The 40 portable construction steps now
+consume one admitted construction, delegating 356
 duplicate source visits to focused reproducibility owners. Portable steps also
 package and execute only the current-host image; generic opposite-host packaging
-is delegated to its focused owners. Only the previously rejected three-case
-branch-pages closure remains as a static bundling candidate. Hosted migration,
-build-once graph execution, capacity-aware bundling, and paired-host
-qualification remain pending.
+is delegated to its focused owners. The branch-page bundle uses the existing
+segmented image path because its native image exceeds the ordinary lowerer
+limit. Hosted product sharing, build-once graph execution, further capacity-aware
+bundling, and complete paired-host qualification remain pending.
 
 The planner now also ranks the twelve strongest non-identical portable pair
 candidates by shared declarations and bytes, union size, and potential source-
@@ -155,10 +166,10 @@ fifth retained bundle. A second ranked trial combined root split and depth two;
 it passed in 59,990 ms without increasing a limit and is the sixth retained
 bundle.
 
-The six retained bundle projects and their root fixtures now route to their
-exact two-case development selectors. The version-3 development inventory binds
+The seven retained bundle projects and their root fixtures now route to their
+exact two- or three-case development selectors. The version-3 development inventory binds
 those cases back to the qualification bundle membership and distinguishes 53
-logical development cases from 47 physical executions. A complete pair now
+logical development cases from 45 physical executions. A complete bundle now
 plans one 65-second execution with a 210-second bound and dispatches the bundle
 project once; selecting only one member still dispatches its one-case project.
 The publication/recovery bundle took 44,850 ms while creating its development
@@ -421,11 +432,11 @@ the contract.
 Exit condition: adding a pure behavioral case normally adds a function and a
 manifest row, not a new compiler/lowerer/linker/packager pipeline.
 
-Bundling must remain capacity-aware. A trial that combined the three
-branch-page cases exceeded the native lowerer's declared output limit and was
-discarded without increasing that limit. Compatible cases therefore need a
-bounded segmented product when one ordinary product would cross a compiler,
-lowerer, execution, or diagnostic resource limit.
+Bundling must remain capacity-aware. The three branch-page cases exceed the
+ordinary native lowerer's output limit when combined. Their retained bundle
+therefore uses the existing bounded segmented path: two image fragments, with
+no increased compiler, lowerer, execution, or diagnostic limit. Other candidate
+bundles still require the same capacity and behavior evidence.
 
 ### Phase 5: make compiler construction incremental
 

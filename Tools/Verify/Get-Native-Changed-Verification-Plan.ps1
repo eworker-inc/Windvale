@@ -695,6 +695,10 @@ foreach ($TransactionCommitPath in $TransactionCommitBoundaryPaths) {
         'transaction-commit')
 }
 $DatabaseBundledDevelopmentTargets = [ordered]@{
+    'Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj' =
+        @('transaction-branch-pages-bundle')
+    'Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Bundle-Self-Test.wv' =
+        @('transaction-branch-pages-bundle')
     'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj' =
         @('publication', 'recovery')
     'Tests/Fixtures/Database/Database-Storage-Publication-Recovery-Bundle-Self-Test.wv' =

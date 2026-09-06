@@ -240,6 +240,8 @@ if "%Development%"=="1" (
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionParentGroups transaction-parent-groups "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-branch-partition
     if errorlevel 1 goto :cleanup
+    call :verify_development_bundle TransactionBranchPagesBundle transaction-branch-pages-bundle "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj" "TransactionBranchPages,TransactionBranchPagesValidation,TransactionBranchPagesDepthThree" segmented-project
+    if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionBranchPages transaction-branch-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj" transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-parent-groups
     if errorlevel 1 goto :cleanup
     call :verify_development_target TransactionBranchPagesValidation transaction-branch-pages "%RepositoryRoot%\Projects\Tests\Windvale-Native-Test-Database-Transaction-Branch-Pages-Validation.wvproj" transaction transaction-paths transaction-leaf-groups transaction-leaf-partition transaction-leaf-pages transaction-parent-groups
@@ -517,7 +519,14 @@ call :development_bundle_selected "%~1"
 if errorlevel 1 exit /b 0
 set /a ProgressCurrent+=1
 call echo START native database storage development step=%~2 item=%%ProgressCurrent%%/%ProgressTotal% target=%DevelopmentTarget% cases=%~4
-call :verify_target "%~1" "%~3" "%~4"
+if "%~5"=="" (
+    call :verify_target "%~1" "%~3" "%~4"
+) else if "%~5"=="segmented-project" (
+    call :verify_segmented_target "%~1" "%~3"
+) else (
+    >&2 echo Unknown database bundle handler: %~5
+    exit /b 1
+)
 if errorlevel 1 (
     >&2 echo The native database storage development %~2 bundle stage failed.
     exit /b 1

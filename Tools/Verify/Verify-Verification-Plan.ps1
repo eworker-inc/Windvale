@@ -3829,6 +3829,22 @@ $NativeCases = @(
         DatabaseMaximumSeconds = 300
     },
     @{
+        Name = 'segmented branch-page bundle keeps all three cases in one execution'
+        Paths = @(
+            'Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj',
+            'Tests/Fixtures/Database/Database-Transaction-Branch-Pages-Bundle-Self-Test.wv'
+        )
+        Suites = @('database-storage')
+        Gaps = @()
+        VerifyPlan = $false
+        DatabaseDevelopment = $true
+        DatabaseTarget = 'transaction-branch-pages-bundle'
+        DatabaseCases = 3
+        DatabaseExecutions = 1
+        DatabaseExpectedSeconds = 65
+        DatabaseMaximumSeconds = 210
+    },
+    @{
         Name = 'bundled database publication and recovery development target'
         Paths = @(
             'Projects/Tests/Windvale-Native-Test-Database-Storage-Publication-Recovery-Bundle.wvproj',
@@ -5007,7 +5023,7 @@ if ($LASTEXITCODE -ne 0 -or
     $QualificationWorkPlan.TopExpectedOwners[0].UniqueProjects -ne 2 -or
     $QualificationWorkPlan.TopExpectedOwners[0].PipelineCallSites -ne 1 -or
     $QualificationWorkPlan.TopExpectedOwners[1].Name -ne 'database-storage' -or
-    $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 66 -or
+    $QualificationWorkPlan.TopExpectedOwners[1].UniqueProjects -ne 67 -or
     $QualificationWorkPlan.TopExpectedOwners[1].PipelineCallSites -ne 62 -or
     $QualificationWorkPlan.TopExpectedOwners[5].Name -ne
         'language-1-front-door' -or
@@ -6070,10 +6086,10 @@ if ($DatabaseAllFields.Count -ne 7 -or
     $DatabaseAllFields[0] -ne 'windvale-database-storage-development-plan-2' -or
     $DatabaseAllFields[1] -ne 'all' -or
     $DatabaseAllFields[2] -ne '53' -or
-    $DatabaseAllFields[3] -ne '47' -or
+    $DatabaseAllFields[3] -ne '45' -or
     $DatabaseAllFields[4].Split(',').Count -ne 53 -or
-    $DatabaseAllFields[5].Split(',').Count -ne 6 -or
-    $DatabaseAllFields[6].Split(',').Count -ne 12) {
+    $DatabaseAllFields[5].Split(',').Count -ne 7 -or
+    $DatabaseAllFields[6].Split(',').Count -ne 15) {
     throw "The database development all-case plan differs: $DatabaseAllPlan"
 }
 $DatabaseUnionPlan = (& node $DatabaseCasePlanner `
@@ -6122,39 +6138,36 @@ $DatabaseQualificationPlan = (& node $DatabaseQualificationPlanner --json) |
 if ($LASTEXITCODE -ne 0 -or
     $DatabaseQualificationPlan.Format -ne
         'windvale-database-storage-qualification-plan-3' -or
-    $DatabaseQualificationPlan.Steps -ne 54 -or
+    $DatabaseQualificationPlan.Steps -ne 52 -or
     $DatabaseQualificationPlan.Cases -ne 57 -or
     $DatabaseQualificationPlan.Prerequisites -ne 3 -or
-    $DatabaseQualificationPlan.PortableSteps -ne 43 -or
+    $DatabaseQualificationPlan.PortableSteps -ne 41 -or
     $DatabaseQualificationPlan.HostedSteps -ne 11 -or
     $DatabaseQualificationPlan.PortableCases -ne 46 -or
     $DatabaseQualificationPlan.HostedCases -ne 11 -or
-    $DatabaseQualificationPlan.ProjectReferences -ne 58 -or
-    $DatabaseQualificationPlan.UniqueProjects -ne 57 -or
-    $DatabaseQualificationPlan.SourceReferences -ne 673 -or
-    $DatabaseQualificationPlan.UniqueSources -ne 146 -or
-    $DatabaseQualificationPlan.ManifestDuplication -ne 4.61 -or
+    $DatabaseQualificationPlan.ProjectReferences -ne 56 -or
+    $DatabaseQualificationPlan.UniqueProjects -ne 55 -or
+    $DatabaseQualificationPlan.SourceReferences -ne 644 -or
+    $DatabaseQualificationPlan.UniqueSources -ne 147 -or
+    $DatabaseQualificationPlan.ManifestDuplication -ne 4.38 -or
     $DatabaseQualificationPlan.AllPairedSourceVisits -ne
         2 * $DatabaseQualificationPlan.SourceReferences -or
-    $DatabaseQualificationPlan.PortableSingleConstructionSteps -ne 42 -or
-    $DatabaseQualificationPlan.PortableDuplicateSourceVisitsDelegated -ne 385 -or
+    $DatabaseQualificationPlan.PortableSingleConstructionSteps -ne 40 -or
+    $DatabaseQualificationPlan.PortableDuplicateSourceVisitsDelegated -ne 356 -or
     $DatabaseQualificationPlan.DependencyEdges -ne 10 -or
     $DatabaseQualificationPlan.StepsWithDependencies -ne 10 -or
     $DatabaseQualificationPlan.RepeatedSources.Count -eq 0 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates.Count -ne 1 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates[0].Steps.Count -ne 3 -or
-    $DatabaseQualificationPlan.SharedClosureCandidates[0].Cases -notcontains
-        'TransactionBranchPages' -or
+    $DatabaseQualificationPlan.SharedClosureCandidates.Count -ne 0 -or
     $DatabaseQualificationPlan.OverlapMergeCandidates.Count -ne 12 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].SharedSources -ne 14 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].UnionSources -ne 17 -or
-    $DatabaseQualificationPlan.OverlapMergeCandidates[0].DeclarationVisitReductionBasisPoints -ne 4516) {
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].SharedSources -ne 10 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].UnionSources -ne 14 -or
+    $DatabaseQualificationPlan.OverlapMergeCandidates[0].DeclarationVisitReductionBasisPoints -ne 4166) {
     throw 'The database qualification work-graph plan differs.'
 }
 $DatabaseQualificationCounts = (& node $DatabaseQualificationPlanner `
     --counts).Trim()
 if ($LASTEXITCODE -ne 0 -or $DatabaseQualificationCounts -ne
-    'windvale-database-storage-qualification-counts-1|54|57|3|43|11|46|11') {
+    'windvale-database-storage-qualification-counts-1|52|57|3|41|11|46|11') {
     throw "The database qualification count plan differs: $DatabaseQualificationCounts"
 }
 $PreviousQualificationStep = $env:WINDVALE_DATABASE_QUALIFICATION_STEP

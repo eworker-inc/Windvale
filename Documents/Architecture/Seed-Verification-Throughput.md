@@ -481,11 +481,11 @@ planner selects three cases for `Local-Database-Put.wv`, four for
 `Durable-Tree-Reader.wv`, and 34 for the broadly shared `Durable-Page.wv`.
 Publication, recovery, and single-writer commit are now included in the 53-case
 development inventory; cold qualification remains a separate 57-case route.
-The version-3 development inventory also identifies the six qualification-
-validated bundle memberships. A complete pair is one physical development
-execution while its two logical cases remain visible; a partial pair stays on
-the original one-case project. The all-development plan therefore contains 53
-behaviors in 47 executions. On Windows the publication/recovery bundle took
+The version-3 development inventory identifies seven qualification bundle
+memberships: six pairs and the three-case branch-page bundle. A complete bundle
+is one physical development execution while its logical cases remain visible;
+a partial selection stays on the original one-case projects. The all-development
+plan therefore contains 53 behaviors in 45 executions. On Windows the publication/recovery bundle took
 44,850 ms while creating its content-addressed checkpoints and 2,130 ms on an
 unchanged warm run with project, link, and application hits. Independent warm
 publication and recovery selections took 2,100 and 1,980 ms, confirming that a
@@ -496,13 +496,20 @@ its exact three cases in 193,520 ms. The latter plan reports 245 expected
 seconds and a 570-second safety bound rather than the qualification owner's
 2,700/3,600-second profile.
 
+The branch-page group calls its three existing portable tests in order, with
+a distinct nonzero result for each failing member. It shares 15 library inputs
+and uses the existing segmented-image owner path because its native image
+exceeds the ordinary lowerer bound. The WVB has 278,725 bytes and the native
+image uses two fragments. No input or execution bound was increased.
+
 Cold database qualification now reads one versioned inventory on both hosts.
-It preserves 57 logical cases while six compatible pairs share products, so the
-current graph contains 54 execution steps, 58 project references, 673 declared
-root/source references, and 146 unique source paths. Pairing every construction
-would produce 1,346 source visits per host. The 42 ordinary portable steps now
-use one admitted construction and delegate 385 duplicate visits to focused
-reproducibility owners; their remaining 4.61-fold cross-project manifest overlap
+It preserves 57 logical cases while seven compatible groups share products, so
+the current graph contains 52 execution steps, 56 project references, 644
+declared root/source references, and 147 unique source paths. Pairing every
+construction would produce 1,288 source visits per host. The 40 portable
+construction steps use one admitted construction and delegate 356 duplicate
+visits to focused reproducibility owners; their remaining 4.38-fold cross-project
+manifest overlap
 is the next construction target. Portable and hosted steps execute the
 current-host image and delegate generic opposite-host packaging to focused
 packager owners; paired Windows/Linux database behavior remains mandatory for

@@ -1589,13 +1589,19 @@ verify_development_target() {
 }
 
 verify_development_bundle() {
-    local label=$1 target=$2 project=$3 case_names=$4
+    local label=$1 target=$2 project=$3 case_names=$4 handler=${5:-project}
     if ! development_bundle_selected "$label"; then
         return 0
     fi
     progress_current=$((progress_current + 1))
     echo "START native database storage development step=$target item=$progress_current/$progress_total target=$development_target cases=$case_names"
-    verify_target "$label" "$project" "$case_names" || {
+    local verifier
+    case "$handler" in
+        project) verifier=verify_target ;;
+        segmented-project) verifier=verify_segmented_target ;;
+        *) echo "Unknown database bundle handler: $handler" >&2; return 1 ;;
+    esac
+    "$verifier" "$label" "$project" "$case_names" || {
         echo "The native database storage development $target bundle stage failed." >&2
         return 1
     }
@@ -1897,6 +1903,10 @@ if ((development == 1)); then
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Parent-Groups.wvproj" \
         transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \
         transaction-leaf-pages transaction-branch-partition || exit $?
+    verify_development_bundle TransactionBranchPagesBundle transaction-branch-pages-bundle \
+        "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages-Bundle.wvproj" \
+        TransactionBranchPages,TransactionBranchPagesValidation,TransactionBranchPagesDepthThree \
+        segmented-project || exit $?
     verify_development_target TransactionBranchPages transaction-branch-pages \
         "$repository_root/Projects/Tests/Windvale-Native-Test-Database-Transaction-Branch-Pages.wvproj" \
         transaction transaction-paths transaction-leaf-groups transaction-leaf-partition \

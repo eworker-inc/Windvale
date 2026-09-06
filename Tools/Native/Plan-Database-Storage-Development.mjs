@@ -76,7 +76,7 @@ for (const line of qualificationLines) {
     const fields = line.split('|');
     if (fields.length >= 6 && bundles.has(fields[0])) {
         if (fields[1] !== 'portable' || fields[2] !== 'case' ||
-            fields[3] !== 'project') {
+            !['project', 'segmented-project'].includes(fields[3])) {
             throw new Error(`Invalid database qualification bundle row: ${line}`);
         }
         qualificationBundles.set(fields[0], fields[5].split(','));
