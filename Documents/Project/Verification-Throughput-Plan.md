@@ -33,6 +33,18 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+A native streaming-SHA-256 arithmetic candidate is about 27% faster in a
+focused paired-host trial. Median execution fell from 2,888 to 2,111 ms on
+Windows and 3,055 to 2,214 ms on Debian across three observations per variant.
+All ten digest cases passed, with matching WVB bytes across hosts. This is
+unpromoted: Foundation source and packaged hashing tools remain unchanged. The
+[hashing trial](../Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json) records
+input sizes, memory observations and the small code-size increase. Before
+promotion, extend an appropriate existing owner with direct streaming-hash
+coverage: current routing selects the seed plan, whose eight source projects
+do not exercise these modules. Then rebuild the affected hashing tools and
+measure real packaging before claiming a cold-workflow improvement.
+
 Current compiler preparation now overlaps two independent branches after
 constructing the shared native image: Profile 7 Analyzer packaging and Emitter
 construction. Both profiles and all twelve operations remain. The existing
