@@ -29,6 +29,10 @@ decision number before publication.
 
 ## Active implementation goal
 
+The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Libraries-Completion-Plan.md)
+coordinates this library sequence with compiler/runtime support, installed tools,
+real consumers, and testing at substantial chunk boundaries.
+
 Complete canonical Option/Result support as one coherent library, compiler,
 verifier, and runtime chunk. Finish immutable payload-borrow admission and
 bounded execution, then exclusive borrowing, take, and mapping, and migrate a
