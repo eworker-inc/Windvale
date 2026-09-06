@@ -5558,8 +5558,10 @@ foreach ($Contract in @(
     }
 }
 
+$NativePlannerInitializationCache = @{}
 $Language1FrontDoorDevelopmentPlan = & $NativePlanner -ChangedPath (
-    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
 if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     $Language1FrontDoorDevelopmentPlan.Suites.Count -ne 1 -or
     $Language1FrontDoorDevelopmentPlan.Suites[0] -ne 'language-1-front-door' -or
@@ -5571,12 +5573,14 @@ if (!$Language1FrontDoorDevelopmentPlan.UseLanguage1FrontDoorDevelopment -or
     throw 'The Language 1 front-door development checkpoint plan differs.'
 }
 
+
 foreach ($BorrowPath in @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
     'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv'
 )) {
-    $BorrowPlan = & $NativePlanner -ChangedPath $BorrowPath -PassThru -Quiet
+    $BorrowPlan = & $NativePlanner -ChangedPath $BorrowPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$BorrowPlan.UseFoundationBorrowPlanDevelopment -or
         $BorrowPlan.ExpectedSeconds -ne 30 -or $BorrowPlan.MaximumSeconds -ne 600 -or
         $BorrowPlan.Suites.Count -ne 1 -or $BorrowPlan.Gaps.Count -ne 0) {
@@ -5591,7 +5595,8 @@ foreach ($OtherBorrowPath in @(
 )) {
     $BorrowPlan = & $NativePlanner -ChangedPath @(
         'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv', $OtherBorrowPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($BorrowPlan.UseFoundationBorrowPlanDevelopment) {
         throw "Foundation planning hid integration changes in '$OtherBorrowPath'."
     }
@@ -5601,7 +5606,8 @@ foreach ($DirectoryPath in @(
     'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
     'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
 )) {
-    $DirectoryPlan = & $NativePlanner -ChangedPath $DirectoryPath -PassThru -Quiet
+    $DirectoryPlan = & $NativePlanner -ChangedPath $DirectoryPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
         $DirectoryPlan.UseFoundationBorrowPlanDevelopment -or
         $DirectoryPlan.ExpectedSeconds -ne 30 -or $DirectoryPlan.MaximumSeconds -ne 600 -or
@@ -5618,7 +5624,8 @@ foreach ($OtherDirectoryPath in @(
 )) {
     $DirectoryPlan = & $NativePlanner -ChangedPath @(
         'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv', $OtherDirectoryPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($DirectoryPlan.UseFoundationBorrowDirectoryDevelopment -or
         $DirectoryPlan.UseFoundationBorrowPlanDevelopment) {
         throw "WVB directory selection hid integration changes in '$OtherDirectoryPath'."
@@ -5633,7 +5640,8 @@ foreach ($OwnerPath in @(
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'
 )) {
-    $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet
+    $OwnerPlan = & $NativePlanner -ChangedPath $OwnerPath -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
         $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
         $OwnerPlan.UseFoundationBorrowDirectoryDevelopment -or
@@ -5650,7 +5658,8 @@ foreach ($PublisherPath in @(
 )) {
     $PublisherPlan = & $NativePlanner -ChangedPath @(
         'Projects/Tools/Windvale-Wvb-Publisher.wvproj', $PublisherPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if (!$PublisherPlan.UsePublisherCurrentSourceDevelopment -or
         $PublisherPlan.Suites -cnotcontains 'hosted-verifier-publisher-files' -or
         $PublisherPlan.Gaps.Count -ne 0) {
@@ -5667,7 +5676,8 @@ foreach ($OtherPublisherPath in @(
 )) {
     $PublisherPlan = & $NativePlanner -ChangedPath @(
         'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv', $OtherPublisherPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($PublisherPlan.UsePublisherCurrentSourceDevelopment) {
         throw "Current-source publisher selection hid frozen reconstruction changes in '$OtherPublisherPath'."
     }
@@ -5681,7 +5691,8 @@ foreach ($OtherOwnerPath in @(
 )) {
     $OwnerPlan = & $NativePlanner -ChangedPath @(
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv', $OtherOwnerPath
-    ) -PassThru -Quiet
+    ) -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($OwnerPlan.UseFoundationBorrowOwnerDevelopment -or
         $OwnerPlan.UseFoundationBorrowPlanDevelopment -or
         $OwnerPlan.UseFoundationBorrowDirectoryDevelopment) {
@@ -5691,7 +5702,6 @@ foreach ($OtherOwnerPath in @(
 
 # Documentation companions retain the exact selection. Exercise shared immutable
 # initialization too: a preceding broad plan must not contaminate the next one.
-$MixedOwnerInitialization = @{}
 $MixedOwnerSelections = @(
     @{ Path = 'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv'; Field = 'UseFoundationBorrowPlanDevelopment'; Value = $true },
     @{ Path = 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'; Field = 'UseFoundationBorrowDirectoryDevelopment'; Value = $true },
@@ -5701,7 +5711,7 @@ $MixedOwnerSelections = @(
 )
 foreach ($Selection in $MixedOwnerSelections) {
     $Single = & $NativePlanner -ChangedPath $Selection.Path -PassThru -Quiet `
-        -InitializationCache $MixedOwnerInitialization
+        -InitializationCache $NativePlannerInitializationCache
     foreach ($Companion in @(
         'README.md',
         'Documents/Project/Progress.md',
@@ -5709,9 +5719,9 @@ foreach ($Selection in $MixedOwnerSelections) {
         'Documents/Project/Images/Progress.png'
     )) {
         $CompanionPlan = & $NativePlanner -ChangedPath $Companion -PassThru -Quiet `
-            -InitializationCache $MixedOwnerInitialization
+            -InitializationCache $NativePlannerInitializationCache
         $Mixed = & $NativePlanner -ChangedPath @($Selection.Path, $Companion) -PassThru -Quiet `
-            -InitializationCache $MixedOwnerInitialization
+            -InitializationCache $NativePlannerInitializationCache
         $ExpectedSuites = @(@($Single.Suites) + @($CompanionPlan.Suites) | Sort-Object -Unique)
         if ($Mixed.($Selection.Field) -cne $Selection.Value -or
             $Mixed.ExpectedSeconds -ne ($Single.ExpectedSeconds + $CompanionPlan.ExpectedSeconds) -or
@@ -5732,17 +5742,29 @@ foreach ($Selection in $MixedOwnerSelections) {
     )) {
         $Broad = & $NativePlanner -ChangedPath @(
             $Selection.Path, $SharedDependency
-        ) -PassThru -Quiet -InitializationCache $MixedOwnerInitialization
+        ) -PassThru -Quiet `
+            -InitializationCache $NativePlannerInitializationCache
         if ($Broad.($Selection.Field) -ceq $Selection.Value) {
             throw "Unproven dependency '$SharedDependency' retained the narrow selection for '$($Selection.Path)'."
         }
     }
     $Again = & $NativePlanner -ChangedPath @('README.md', $Selection.Path) -PassThru -Quiet `
-        -InitializationCache $MixedOwnerInitialization
+        -InitializationCache $NativePlannerInitializationCache
     if ($Again.($Selection.Field) -cne $Selection.Value -or
         $Again.ExpectedSeconds -ne $Single.ExpectedSeconds) {
         throw 'Cached planner initialization retained prior owner paths.'
     }
+}
+
+# One fresh initialization remains an oracle for the shared registry path.
+$UncachedFrontDoorPlan = & $NativePlanner -ChangedPath (
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet
+$ReusedFrontDoorPlan = & $NativePlanner -ChangedPath (
+    'Tools/Native/Test-Language-1.0-Front-Door.cmd') -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
+if (($UncachedFrontDoorPlan | ConvertTo-Json -Depth 10 -Compress) -cne
+    ($ReusedFrontDoorPlan | ConvertTo-Json -Depth 10 -Compress)) {
+    throw 'Shared routing initialization differs from the uncached plan.'
 }
 
 $FrontEndRunner = Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'
@@ -5755,7 +5777,8 @@ foreach ($Selection in @(
     @{ Paths = @('Libraries/Foundation/Values/Option.wv'); Target = 'all'; Cases = 329; Seconds = 330 },
     @{ Paths = @('Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'); Target = 'all'; Cases = 329; Seconds = 330 }
 )) {
-    $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet
+    $Selected = & $NativePlanner -ChangedPath $Selection.Paths -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
     if ($Selected.Language1FrontDoorDevelopmentTarget -cne $Selection.Target -or
         $Selected.Language1FrontDoorDevelopmentCaseCount -ne $Selection.Cases -or
         $Selected.Language1FrontDoorDevelopmentExpectedSeconds -ne $Selection.Seconds -or
@@ -5846,7 +5869,8 @@ foreach ($Fragment in @(
 
 $GenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
     'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Development-Bundle.wvproj') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 $ExpectedGenericNominalDevelopmentSuites = @(
     'generic-nominal-type-binding',
     'generic-nominal-type-layout',
@@ -5864,7 +5888,8 @@ if (!$GenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
 }
 $SingleGenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (
     'Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Binding-Self-Test.wv') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 if ($SingleGenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
     $SingleGenericNominalDevelopmentPlan.Suites.Count -ne 1 -or
     $SingleGenericNominalDevelopmentPlan.Suites[0] -ne
@@ -5937,7 +5962,8 @@ foreach ($Contract in @(
 }
 
 $CompilerSourceContainmentPlan = & $NativePlanner -ChangedPath (
-    'Compiler/Windvale/Source-Lexer-Core.wv') -PassThru -Quiet
+    'Compiler/Windvale/Source-Lexer-Core.wv') -PassThru -Quiet `
+        -InitializationCache $NativePlannerInitializationCache
 if (!$CompilerSourceContainmentPlan.UseSourceContainmentCompilerDevelopment -or
     $CompilerSourceContainmentPlan.Suites -notcontains 'source-containment') {
     throw 'Compiler source containment does not select compiler-only development.'
@@ -5946,7 +5972,8 @@ $ContainmentOwnerPlan = & $NativePlanner -ChangedPath @(
     'Tools/Native/Test-Source-Containment.cmd',
     'Tools/Native/Test-Source-Containment.sh',
     'Tests/Native/Random-Containment/Corpus.tar.gz.b64'
-) -PassThru -Quiet
+) -PassThru -Quiet `
+    -InitializationCache $NativePlannerInitializationCache
 if ($ContainmentOwnerPlan.UseSourceContainmentCompilerDevelopment -or
     $ContainmentOwnerPlan.Suites -notcontains 'source-containment' -or
     $ContainmentOwnerPlan.Gaps.Count -ne 0) {
@@ -5954,7 +5981,8 @@ if ($ContainmentOwnerPlan.UseSourceContainmentCompilerDevelopment -or
 }
 $DirectCompilerContainmentPlan = & $NativePlanner -ChangedPath (
     'Artifacts/WebAssembly-Playground/Windvale-Compiler-Direct.wasm') `
-    -PassThru -Quiet
+    -PassThru -Quiet `
+       -InitializationCache $NativePlannerInitializationCache
 if (!$DirectCompilerContainmentPlan.UseSourceContainmentCompilerDevelopment -or
     $DirectCompilerContainmentPlan.Suites -notcontains 'source-containment' -or
     !$DirectCompilerContainmentPlan.RunWebAssemblyEngineVerification) {
@@ -6700,7 +6728,6 @@ foreach ($Case in $Cases) {
 Write-Host "PASS  verification plan phase=general-routing item=$($Cases.Count)/$($Cases.Count)"
 
 $NativeCaseIndex = 0
-$NativePlannerInitializationCache = @{}
 $NativePlannerCommand = Get-Command -Name $NativePlanner
 Write-Host "START verification plan phase=native-routing item=0/$($NativeCases.Count)"
 foreach ($Case in $NativeCases) {

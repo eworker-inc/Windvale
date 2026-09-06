@@ -33,6 +33,15 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The routing guard now shares immutable inventory initialization across its
+focused-selection checks and the full native-routing table. The final Windows
+measurement passed in 27.8 seconds, versus about 38.4 seconds before, preserving
+all 31 general and 284 native cases. An uncached plan remains the comparison oracle and mixed
+selections still check for retained state from prior requests. This guard runs
+for verification-infrastructure changes; it is not a universal source-edit cost.
+The [routing evidence](../Evidence/2026-09-06-Routing-Guard-Shared-Initialization.json)
+records the measurement limits. The planner performance targets remain open.
+
 The complete 27-case foreign-binding owner now passes warm in 4,492 ms on
 Windows, versus 7,324 ms for the prior coordinator with equally warm lower-level
 caches. The current compiler pair is a separate validated product, so a hit
