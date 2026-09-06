@@ -15,7 +15,7 @@ const OWNER_SUMMARIES = new Map([
     ],
     [
         'type-layout',
-        'native generic nominal type layout status=Passed cases=21 result=42\n'
+        'native generic nominal type layout status=Passed cases=51 result=42\n'
     ],
     [
         'type-materialization',

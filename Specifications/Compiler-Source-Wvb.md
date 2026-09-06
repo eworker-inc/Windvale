@@ -1261,6 +1261,33 @@ reads. Full callable identity survives array and variant projections; copied
 values may outlive the loan, while owned values cannot escape through a read.
 See the [composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
 
+The source call checker also has a bounded read-through classification for
+records, variants, and fixed arrays. It consumes freshly constructed generic
+layouts and the existing ordinary field plan and type binder: scalar-only
+contents are Copy, shared immutable contents make the aggregate Shared, and a
+nested Vector, budget, capability, or canonical
+opaque task/unsafe owner cannot be copied through a borrow. Fixed arrays inspect
+their element type once, including zero-length arrays; their length does not
+erase an owned element class. Invalid layouts, recursive value containment,
+uninstantiated generic declarations, and unproven callable classes fail closed.
+Any generic field types materialized during the proof remain local evidence;
+the caller's type catalog and published identities do not change. The helper
+returns explicit catalog status and byte evidence, matching the existing layout
+model, and checks the symbol lookup extent before reading a nominal entry. The walk
+allows 8192 node/field steps, 64 active aggregate ancestors, 16384 pending bytes,
+and 16384 completed-shape bytes, within the existing source and generic-layout
+limits. Completed Copy/Shared subtrees are reused within that walk; active
+recursive ancestors are never reusable evidence. Only a borrowed actual
+argument passed to a by-value formal requires this proof; matching argument
+modes do not traverse layouts.
+This source checkpoint does not open WVB 1.39 admission or execute its borrows.
+The existing symbol validator still rejects a concrete generic type spelled in
+an ordinary record field; this classifier does not broaden that source boundary.
+The existing focused classifier owner passes 51 groups on Windows, as recorded
+in the [component evidence](../Documents/Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json).
+Compiler front-door integration and paired-host checks remain pending; this
+component result is not qualification evidence.
+
 The complete
 compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
 packages, and Windvale OS still reject minor 39. Remaining operand families,

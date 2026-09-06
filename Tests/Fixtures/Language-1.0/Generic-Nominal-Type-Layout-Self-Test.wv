@@ -9,6 +9,7 @@ import Compilerˉsourceˉsymbols as Sourceˉsymbols;
 import Foundationˉbyteˉconstruction as Byteˉconstruction;
 
 data Sourceˉsymbolsˉmagic: bytes = [87, 86, 83, 83];
+data Readˉclasses: bytes = [1, 2, 2, 0, 2, 2, 1, 1, 1, 1, 1];
 
 fn Sourceˉsymbolsˉone(Source: text) -> bytes {
     let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
@@ -253,12 +254,11 @@ export fn Main() -> i32 {
             Input, Scan, Symbols, Packet, 2u32
         );
     if Packetˉvalue.Shape !=
-            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) ||
-        Packetˉvalue.Nominalˉkind !=
-            Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(4u32) ||
-        Packetˉerror.Shape != 5u32 || Packetˉready.Shape != 4u32 {
-        return 6;
-    }
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(0u32) { return 119; }
+    if Packetˉvalue.Nominalˉkind !=
+        Sourceˉsymbols.Compilerˉsourceˉsymbolsˉdeclarationˉkind(4u32) { return 116; }
+    if Packetˉerror.Shape != 5u32 { return 117; }
+    if Packetˉready.Shape != 4u32 { return 118; }
 
     let Choice: Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayout =
         Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉlayoutˉcreate(
@@ -512,5 +512,234 @@ export fn Main() -> i32 {
         Generics.Compilerˉsourceˉgenericˉstatus.Invalidˉevidence {
         return 18;
     }
+    var Primitive: u32 = 1u32;
+    while Primitive <= 16u32 {
+        var Expected: u32 = 1u32;
+        if Primitive == 5u32 || Primitive == 6u32 { Expected = 2u32; }
+        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog, Primitive
+        ) != Expected { return 22; }
+        Primitive = Primitive + 1u32;
+    }
+    var Aggregate: u32 = 0u32;
+    while Aggregate < Bytesˉlength(Readˉclasses) {
+        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog,
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Aggregate)
+        ) != U32ˉfromˉu8(Bytesˉreadˉu8(Readˉclasses, Aggregate)) {
+            return 23;
+        }
+        Aggregate = Aggregate + 1u32;
+    }
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Catalog, 0u32
+    ) != 0u32 || Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Catalog, 65536u32
+    ) != 0u32 { return 24; }
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Catalog,
+        Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(11u32)
+    ) != 0u32 { return 25; }
+    var Prefix: u32 = 0u32;
+    while Prefix < 24u32 {
+        let Truncated: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog(
+                Generics.Compilerˉsourceˉgenericˉstatus.Valid,
+                Bytesˉslice(Catalog.Evidence, 0u32, Prefix)
+            );
+        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Truncated, Box.Shape
+        ) != 0u32 { return 26; }
+        Prefix = Prefix + 1u32;
+    }
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Mismatchˉcatalog, Box.Shape
+    ) != 0u32 { return 27; }
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Missingˉcatalog, Box.Shape
+    ) != 0u32 || Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Badˉcatalog, Box.Shape
+    ) != 0u32 { return 28; }
+    if Opaqueˉclasses() != 0 { return 29; }
+    let Collections: i32 = Collectionˉclasses();
+    if Collections != 0 { return Collections; }
+    let Nominals: i32 = Nominalˉclasses();
+    if Nominals != 0 { return Nominals; }
+    if !Repeatedˉclass("u32", 1u32) { return 114; }
+    if !Repeatedˉclass("text", 2u32) { return 115; }
     return 42;
+}
+
+fn Opaqueˉclasses() -> i32 {
+    let Body: text = "record Foreignˉscratch<T> { Opaqueˉidentity: u64; }\nrecord Foreignˉwriteˉregion<T> { Opaqueˉidentity: u64; }\nrecord Foreignˉpointer<T, E> { Opaqueˉidentity: u64; }\nrecord Nullableˉforeignˉpointer<T, E> { Opaqueˉidentity: u64; }\nrecord Task<T, E> { Taskˉtokenˉidentity: u64; }\nrecord Box<T> { Value: T; }\n// use Box<Foreignˉscratch<u32>>\n// region Box<Foreignˉwriteˉregion<u32>>\n// pointer Box<Foreignˉpointer<u32, u32>>\n// nullable Box<Nullableˉforeignˉpointer<u32, u32>>\n// task Box<Task<u32, u32>>\n";
+    var Case: u32 = 0u32;
+    while Case < 6u32 {
+        var Header: text = "module Foundationˉunsafe profile system;\n";
+        var Marker: text = "// use ";
+        if Case == 1u32 { Marker = "// region "; }
+        if Case == 2u32 { Marker = "// pointer "; }
+        if Case == 3u32 { Marker = "// nullable "; }
+        if Case == 4u32 {
+            Header = "module Foundationˉtask profile hosted;\n";
+            Marker = "// task ";
+        }
+        if Case == 5u32 { Header = "module Userˉtypes profile portable;\n"; }
+        let Input: bytes = Sourceˉsymbolsˉone(Textˉconcat(Header, Body));
+        let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+            Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+        let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+            Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+        if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+            Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+            return 120;
+        }
+        let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+            Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+        let Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Bind(Input, Scan, Symbols, View.Source, Marker,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty());
+        var Expected: u32 = 3u32;
+        if Case == 5u32 { Expected = 1u32; }
+        if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+                Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
+            ) != Expected { return 1; }
+        Case = Case + 1u32;
+    }
+    return 0;
+}
+
+fn Collectionˉclasses() -> i32 {
+    let Source: text = "\nmodule Readˉclasses;\nprofile core;\nplatform linux, windows, windvale;\nauthority application;\nimport Foundationˉcollections as Collections;\nrecord Box<T> { Value: T; }\n// scalar Collections.Array<u32, 4095u64>\n// shared Collections.Array<text, 2u64>\n// owned Collections.Array<Collections.Vector<u32>, 0u64>\n// nested Collections.Array<Collections.Array<bytes, 2u64>, 3u64>\n// vector Box<Collections.Vector<u32>>\n// sequence Box<Collections.Sequence<u32>>\n// emptyˉcopy Collections.Array<u32, 0u64>\n// emptyˉshared Collections.Array<Box<text>, 0u64>\n";
+    let Sourceˉbytes: bytes = Textˉtoˉutf8(Source);
+    let Foundation: bytes = Textˉtoˉutf8("\nmodule Foundationˉcollections;\nprofile core;\nplatform linux, windows, windvale;\nauthority library;\n");
+    var Input: bytes = Bytesˉconcat(Sourceˉsymbolsˉmagic, Bytesˉfromˉu16ˉlittle(2u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu16ˉlittle(0u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(2u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(40u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(56u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Sourceˉbytes)));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(1u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(1u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(12u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(56u32 + Bytesˉlength(Sourceˉbytes)));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Foundation)));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(1u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(1u32));
+    Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(12u32));
+    Input = Bytesˉconcat(Input, Sourceˉbytes);
+    Input = Bytesˉconcat(Input, Foundation);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return 121;
+    }
+    var Case: u32 = 0u32;
+    while Case < 8u32 {
+        var Marker: text = "scalar ";
+        var Expected: u32 = 1u32;
+        if Case == 1u32 { Marker = "shared "; Expected = 2u32; }
+        if Case == 2u32 { Marker = "owned "; Expected = 3u32; }
+        if Case == 3u32 { Marker = "nested "; Expected = 2u32; }
+        if Case == 4u32 { Marker = "vector "; Expected = 3u32; }
+        if Case == 5u32 { Marker = "sequence "; Expected = 2u32; }
+        if Case == 6u32 { Marker = "emptyˉcopy "; Expected = 1u32; }
+        if Case == 7u32 { Marker = "emptyˉshared "; Expected = 2u32; }
+        let Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+            Bind(Input, Scan, Symbols, Sourceˉbytes, Marker,
+                Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty());
+        if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
+            Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+                Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
+            ) != Expected {
+            if Case == 0u32 { return 30; }
+            if Case == 1u32 { return 31; }
+            if Case == 2u32 { return 32; }
+            if Case == 3u32 { return 33; }
+            if Case == 4u32 { return 34; }
+            if Case == 5u32 { return 35; }
+            if Case == 6u32 { return 112; }
+            return 113;
+        }
+        Case = Case + 1u32;
+    }
+    return 0;
+}
+
+fn Sourceˉclassˉis(Source: text, Expected: u32) -> bool {
+    let Input: bytes = Sourceˉsymbolsˉone(Source);
+    let Scan: Sourceˉset.Compilerˉsourceˉsetˉscan =
+        Sourceˉset.Compilerˉscanˉsourceˉset(Input);
+    let Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary =
+        Sourceˉsymbols.Compilerˉvalidateˉsourceˉsymbols(Input);
+    if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
+        Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid {
+        return false;
+    }
+    let View: Sourceˉset.Compilerˉsourceˉsetˉview =
+        Sourceˉset.Compilerˉsourceˉsetˉmodule(Input, Scan, 0u32);
+    let Binding: Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbinding =
+        Bind(Input, Scan, Symbols, View.Source, "// read ",
+            Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty());
+    return Binding.Status == Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
+        Binding.Genericˉstatus == Generics.Compilerˉsourceˉgenericˉstatus.Valid &&
+        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
+        ) == Expected;
+}
+
+fn Repeatedˉclass(Leaf: text, Expected: u32) -> bool {
+    var Type: text = Leaf;
+    var Depth: u32 = 0u32;
+    while Depth < 12u32 {
+        Type = Textˉconcat(Textˉconcat("Pair<", Type), ">");
+        Depth = Depth + 1u32;
+    }
+    return Sourceˉclassˉis(Textˉconcat(
+        "module Readˉrepeated profile portable;\nrecord Pair<T> { Left: T; Right: T; }\n// read ",
+        Textˉconcat(Type, "\n")
+    ), Expected);
+}
+
+fn Nominalˉclasses() -> i32 {
+    let Header: text = "module Readˉnominals profile portable;\n";
+    let Body: text = "record Plain { Value: u32; }\nrecord Shared { Value: Plain; Text: text; }\nrecord Box<T> { Value: T; }\nrecord Wrapped { Value: Choice; }\nvariant Tag { First; Second; }\nvariant Choice { Empty; Both(Value: Shared, Number: u32); }\nenum Flag { First = 0; Second = 1; }\nrecord Tagged { Value: Flag; }\n";
+    var Case: u32 = 0u32;
+    var Failure: i32 = 100;
+    while Case < 12u32 {
+        var Source: text = Textˉconcat(Header, Body);
+        var Expected: u32 = 1u32;
+        if Case == 0u32 { Source = Textˉconcat(Source, "// read Plain\n"); }
+        if Case == 1u32 { Source = Textˉconcat(Source, "// read Shared\n"); Expected = 2u32; }
+        if Case == 2u32 { Source = Textˉconcat(Source, "// read Tag\n"); }
+        if Case == 3u32 { Source = Textˉconcat(Source, "// read Box<Shared>\n"); Expected = 2u32; }
+        if Case == 4u32 { Source = Textˉconcat(Source, "// read Wrapped\n"); Expected = 2u32; }
+        if Case == 5u32 { Source = Textˉconcat(Source, "// read Choice\n"); Expected = 2u32; }
+        if Case == 6u32 { Source = Textˉconcat(Source, "// read Tagged\n"); }
+        if Case == 7u32 {
+            Source = Textˉconcat(Header, "record Self { Value: Self; }\n// read Self\n");
+            Expected = 0u32;
+        }
+        if Case == 8u32 {
+            Source = Textˉconcat(Header, "record Left { Value: Right; }\nrecord Right { Value: Left; }\n// read Left\n");
+            Expected = 0u32;
+        }
+        if Case == 9u32 {
+            Source = "module Foundationˉtask profile hosted;\nrecord Taskˉscope { Scopeˉtokenˉidentity: u64; }\nrecord Wrapped { Value: Taskˉscope; }\n// read Wrapped\n";
+            Expected = 3u32;
+        }
+        if Case == 10u32 {
+            Source = "module Foundationˉtask profile hosted;\nrecord Operationˉcontext { Contextˉtokenˉidentity: u64; }\n// read Operationˉcontext\n";
+        }
+        if Case == 11u32 {
+            Source = Textˉconcat(Header, "record Taskˉscope { Scopeˉtokenˉidentity: u64; }\n// read Taskˉscope\n");
+        }
+        if !Sourceˉclassˉis(Source, Expected) { return Failure; }
+        Case = Case + 1u32;
+        Failure = Failure + 1;
+    }
+    return 0;
 }

@@ -76,6 +76,32 @@ borrowing, take, mapping, and consumer migration remain open. Final verification
 for this checkpoint is recorded in the
 [authority composition evidence](../Evidence/2026-09-06-Foundation-Borrow-Authority-Composition.json).
 
+The current source checkpoint implements read-through classification for ordinary
+and generic records, variants, and fixed arrays. It permits recursively proven
+Copy/Shared contents and rejects nested owners, malformed layouts, recursive
+value containment, and unproven callable classes. Its bounded walk reuses
+completed type proofs, and ordinary by-value calls avoid the traversal. The
+existing generic-layout owner now passes 51 groups on Windows; its final
+construction and execution after rebasing onto the current terminal-input changes took 275.0 seconds. The
+[exact classifier evidence](../Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json)
+records this component scope. Compiler call-site cases
+also move a one-integer record into positive coverage and retain an actual
+builder-owner rejection. Those call-site edits still need compiler front-door
+execution; the focused layout project does not include `Source-Wir-Core.wv`.
+Ordinary record fields that spell concrete generic types remain rejected by the
+existing symbol validator. That separate source-binding gap is not covered by
+the classifier checkpoint; the fixtures must validate their source models
+before binding or classification.
+
+The [preceding 35-group run](../Evidence/2026-09-06-Foundation-Source-Read-Classification-Development.json)
+is incomplete: it reached the opaque-owner fixture and failed there; review
+found and corrected an ambiguous marker that selected the module header. Its
+construction caches are preserved. Later diagnostics found invalid fixture
+declarations being passed into binding; the passing fixture now checks source
+validation first and uses admitted forms. Callable classification, complete admission, and runtime
+retention remain pending. This checkpoint does not complete immutable borrowing
+or Option/Result.
+
 ## Proposed product names
 
 The recommended public names are:

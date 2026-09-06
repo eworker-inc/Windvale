@@ -417,7 +417,14 @@ read-through rule: an explicit borrowed actual may satisfy a by-value formal
 only when conservative classification proves the value Copy or shared
 immutable. Scalars and enums are Copy; `text`, `bytes`, and immutable sequences
 are shared; builders and capability-shaped values are conservatively owned; an
-unproven aggregate remains unknown.
+unproven aggregate remains unknown. The current source-classification candidate
+extends that proof through ordinary and generic records, variants, and fixed
+arrays, with shared field binding, local proof catalogs, recursion rejection,
+and bounded reuse of completed type proofs. Canonical task scopes, task handles,
+and unsafe owners retain owned behavior even when their representation fields
+are scalar. Matching argument modes do not need aggregate classification.
+The exact bounds and incomplete verification standing are recorded in the
+[source-to-WVB contract](Compiler-Source-Wvb.md).
 
 A direct name or field argument rooted in a parameter derives its actual mode
 from that parameter's declaration offset already carried by the transient local

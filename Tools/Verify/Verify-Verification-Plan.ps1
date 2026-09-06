@@ -6025,7 +6025,7 @@ foreach ($Fragment in @(
     'The generic nominal development bundle wrote output.',
     'Execution.Code !== 42',
     'native generic nominal type binding status=Passed cases=59 result=42',
-    'native generic nominal type layout status=Passed cases=21 result=42',
+    'native generic nominal type layout status=Passed cases=51 result=42',
     'native generic nominal type materialization status=Passed cases=28 result=42'
 )) {
     if (!$GenericNominalDevelopmentRunner.Contains(
@@ -6091,7 +6091,7 @@ foreach ($Contract in $GenericNominalWrapperContracts) {
 foreach ($Fragment in @(
     '$NativePlan.UseGenericNominalDevelopmentBundle',
     'mode=development-bundle',
-    'bundle-cases=108',
+    'bundle-cases=138',
     '$OwnerArguments = @(''--development'')'
 )) {
     if (!$ChangedVerification.Contains($Fragment, [StringComparison]::Ordinal)) {
@@ -6115,7 +6115,7 @@ if (!$GenericNominalDevelopmentPlan.UseGenericNominalDevelopmentBundle -or
     $GenericNominalDevelopmentPlan.ExpectedSeconds -ne 330 -or
     $GenericNominalDevelopmentPlan.MaximumSeconds -ne 600 -or
     $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleSelectedOwnerCount -ne 3 -or
-    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleCaseCount -ne 108) {
+    $GenericNominalDevelopmentPlan.GenericNominalDevelopmentBundleCaseCount -ne 138) {
     throw 'The three-owner generic nominal development bundle plan differs.'
 }
 $SingleGenericNominalDevelopmentPlan = & $NativePlanner -ChangedPath (

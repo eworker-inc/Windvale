@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-foundation-source-read-classification-development",
+  "date": "2026-09-06",
+  "subject": "Generic source value classification development checkpoint",
+  "claim": "The focused layout owner compiled and packaged the new source classifier, then failed in the opaque-owner fixture. Earlier generic Copy/Shared and malformed-evidence groups completed before that failure. A marker correction is present but has not been executed; this is incomplete development evidence, not a passing owner or complete Option/Result support.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on cbb5d1b4. The failed executable input is identified below. The subsequent test marker correction remains unverified and the changes remain local."
+  },
+  "runs": [
+    {
+      "target": "generic-nominal-type-layout, 35 declared groups; stopped at group 29",
+      "command": "node Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "result": "Failed",
+      "tool": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "inputs": [
+        {
+          "size": 51232,
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "sha256": "22971908baf4a7e0fe84ac73f5f54d23288c6b8e49f0177d67b2ffc1c1c4470e"
+        },
+        {
+          "size": 873381,
+          "path": "Generic-Nominal-Type-Layout.wvb",
+          "sha256": "b533789c772e1a295f9f6d68ef4761f2a29541ca381b34c46496175e217c2bec"
+        }
+      ],
+      "host": "Windows x64; Node.js 24.18.0",
+      "elapsedMilliseconds": 232326
+    }
+  ],
+  "result": "Incomplete",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The corrected opaque-owner fixture and collection groups 30 through 35 still require execution. Review found that the task marker could select the Foundation task module header; comment-qualified markers replace it.",
+    "An earlier diagnostic corrected an unavailable test conversion helper. Another run returned group 23 because its expected classification overlooked an existing invalid builder-field layout; that expectation was corrected without weakening admission.",
+    "Construction took about four minutes per source state, including native staging and container packaging. Another packaging run is deferred under the ten-minute local development budget; valid caches are preserved.",
+    "Verification-plan checks passed with 31 general and 291 native cases after synchronizing the declared 35-group owner and 122-group bundle counts. Node syntax checks, git diff --check, and documentation verification passed.",
+    "The source call-site integration in Source-Wir-Core.wv was reviewed but not rebuilt by this focused layout owner. Complete compiler publication, the 122-group bundle, Windows/Debian qualification, WVB 1.39 full admission and execution, ABI, WebAssembly, and OS checks were not run.",
+    "No cross-host, complete-owner, stable performance, or peak working-set claim is made."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}

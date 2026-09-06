@@ -1,5 +1,18 @@
 module Languageˉoneˉborrowˉcall profile portable;
 
+record Packet { Value: i32; }
+record Shared { Value: bytes; }
+record Box<T> { Value: T; }
+data Sample: bytes = [1, 2, 3];
+
+fn Copyˉpacket(Value: Packet) -> i32 { return Value.Value; }
+fn Copyˉbox(Value: Box<Packet>) -> i32 { return Value.Value.Value; }
+fn Countˉshared(Value: Shared) -> u32 { return Bytesˉlength(Value.Value); }
+
+fn Readˉpacket(Value: borrow Packet) -> i32 { return Copyˉpacket(Value); }
+fn Readˉbox(Value: borrow Box<Packet>) -> i32 { return Copyˉbox(Value); }
+fn Readˉshared(Value: borrow Shared) -> u32 { return Countˉshared(Value); }
+
 fn Observe(Value: borrow i32) -> i32 {
     return Value;
 }
@@ -32,5 +45,12 @@ export fn Main() -> i32 {
     if Readˉthrough(borrow Fixed) != 40 {
         return 3;
     }
+    let Packetˉvalue: Packet = Packet { Value: 42 };
+    let Boxˉvalue: Box<Packet> = Box<Packet> { Value: Packetˉvalue };
+    let Sharedˉvalue: Shared = Shared { Value: Sample };
+    if Readˉpacket(borrow Packetˉvalue) != 42 { return 4; }
+    if Readˉbox(borrow Boxˉvalue) != 42 { return 5; }
+    if Readˉshared(borrow Sharedˉvalue) != 3u32 { return 6; }
+    if Copyˉbox(borrow Boxˉvalue) != 42 { return 7; }
     return Forwardˉmutable(borrow mut Mutable);
 }

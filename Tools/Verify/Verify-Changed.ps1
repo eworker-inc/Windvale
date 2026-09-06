@@ -422,7 +422,7 @@ if ($Plan.Scope -eq 'website') {
                 $OwnerArguments = @('--development')
                 $OwnerMessage = (
                     "Native owner $Suite mode=development-bundle " +
-                    'bundle-cases=108 ' +
+                    'bundle-cases=138 ' +
                     "selected-owners=$($NativePlan.GenericNominalDevelopmentBundleSelectedOwnerCount) " +
                     'expected-seconds=330')
             } elseif ($Suite -eq 'native-sha256-lowering' -and

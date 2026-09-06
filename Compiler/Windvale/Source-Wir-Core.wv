@@ -1189,7 +1189,9 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
         ) || Shape == 805306368u32 || Shape == 805306369u32 {
         return WIR_VALUE_CLASS_OWNED;
     }
-    return WIR_VALUE_CLASS_UNKNOWN;
+    return Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Typeˉcatalog, Shape
+    );
 }
 
 export fn Compilerˉsourceˉwirˉshapeˉisˉfixedˉarray(
@@ -12255,13 +12257,19 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
                 Callˉargument.Offset, Callˉargument.Line, Callˉargument.Column
             );
         }
-        let Valueˉclass: u32 =
-            Compilerˉsourceˉwirˉvalueˉclassify(
+        var Valueˉclass: u32 = WIR_VALUE_CLASS_UNKNOWN;
+        // Matching modes need no read-through proof. In particular, ordinary
+        // value calls must not repeatedly traverse aggregate layouts.
+        if Argumentˉsignature.Parameterˉmode ==
+                Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE &&
+            Actualˉmode != Sourceˉdeclarations.COMPILER_SOURCE_BORROW_MODE_VALUE {
+            Valueˉclass = Compilerˉsourceˉwirˉvalueˉclassify(
                 Input, Scan, Value.Shape, Symbols,
                 Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
                     Value.Genericˉevidence
                 )
             );
+        }
         if !Compilerˉsourceˉwirˉborrowˉmodeˉisˉaccepted(
                 Argumentˉsignature.Parameterˉmode,
                 Actualˉmode, Valueˉclass

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-foundation-source-aggregate-classification",
+  "date": "2026-09-06",
+  "subject": "Bounded source aggregate read-through classification",
+  "claim": "The existing generic nominal layout owner passes all 51 groups on Windows with the current source classifier. It proves Copy/Shared classification, refusal of nested owners, opaque-owner identity, malformed generic evidence, recursive nominal containment, zero-length array element classification, and reuse of repeated type proofs. This is a component checkpoint, not complete Option/Result support.",
+  "source": {
+    "kind": "Other",
+    "value": "The initial run used a worktree based on cbb5d1b419c26d8e6cbf721f9ef846ee97e6e912. The final confirmation uses the same classifier and fixture after rebasing onto 2cc34b0e091889a1eb8b764996078fd550a25e6e, whose symbol validator and native lowerer changed. Exact modified inputs and produced WVB identities are recorded per run. The owner excludes Source-Wir-Core.wv."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0; shared VM under concurrent load",
+      "target": "Initial source checkpoint; generic-nominal-type-layout; 51 groups; result 42 with no output",
+      "tool": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "command": "node Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 232830,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "size": 58775,
+          "sha256": "4434b8130a99b5fb0f41c79eb12714306194d36fbc8b126ce90292e73a6db70e"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv",
+          "size": 34147,
+          "sha256": "ba682878a4fb1048a184925d89d421615609a75103a4aeaeb0c9def966fdb59c"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj",
+          "size": 743,
+          "sha256": "de85bfd6ef37645c5fa74118fdd4f35f2899838a643cb8e5ff358a16fe6dc71f"
+        },
+        {
+          "path": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+          "size": 5004,
+          "sha256": "05748b67a5fc5c8e792eec63af10cee539477c4c77ef8b5f14d10f3f7d7cbeec"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Generic-Nominal-Type-Layout.wvb",
+          "size": 888110,
+          "sha256": "8a9db23e3ca2be8c70aeb0024be4a4a91114dd79e67035cc27959f158ef05953"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.18.0; shared VM under concurrent load",
+      "target": "Rebase confirmation on 2cc34b0e; generic-nominal-type-layout; the same 51 groups; result 42 with no output",
+      "tool": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "command": "node Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 274972,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "size": 58775,
+          "sha256": "4434b8130a99b5fb0f41c79eb12714306194d36fbc8b126ce90292e73a6db70e"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv",
+          "size": 34147,
+          "sha256": "ba682878a4fb1048a184925d89d421615609a75103a4aeaeb0c9def966fdb59c"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj",
+          "size": 743,
+          "sha256": "de85bfd6ef37645c5fa74118fdd4f35f2899838a643cb8e5ff358a16fe6dc71f"
+        },
+        {
+          "path": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+          "size": 5004,
+          "sha256": "05748b67a5fc5c8e792eec63af10cee539477c4c77ef8b5f14d10f3f7d7cbeec"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Symbols-Core.wv",
+          "size": 297166,
+          "sha256": "6a44a125ee926583846dfdb6ee37b09da7f1ea9eeecad4f433a17dd8df5ea418"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Manifest.json",
+          "size": 2586,
+          "sha256": "6a868d3c0f5b617f67c4b29dc3e60af1339db13dfcdf2489012282b6e8860e3e"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Wvb-To-Wvo.exe",
+          "size": 10661888,
+          "sha256": "a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Generic-Nominal-Type-Layout.wvb",
+          "size": 888262,
+          "sha256": "b9dd90a3fba7a4d21fc0976ce21a55d9dfffa88aab650e0d59d81f406d5a3a33"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The source call-site integration and changed borrow-call fixtures have not been rebuilt by the compiler front-door owner. This focused project does not include Source-Wir-Core.wv.",
+    "Ordinary record fields that spell concrete generic types remain rejected by the existing symbol validator. The classifier does not expand that admission boundary; its ordinary-record tests use admitted nominal fields.",
+    "Earlier diagnostic constructions found a duplicate local and invalid collection fixture declarations. The fixture had passed failed symbol validation into binding, causing a native byte-range failure. Final fixtures validate their source models before binding. Temporary executable copies used to identify the failure were diagnostic only and supply no passing verifier evidence.",
+    "Each reported duration covers its named source-state run, including construction and execution. Earlier failed development builds and diagnostic runs are excluded; no stable performance or peak-memory claim is made. The second run rechecks changed producer and symbol-validator inputs rather than increasing the distinct group count.",
+    "The 138-group generic development bundle, complete source compiler publication, Windows/Debian qualification, WVB 1.39 admission and execution, ABI, WebAssembly, and OS gates were not run. Callable classification, runtime retention, exclusive borrowing, take, mapping, and consumer migration remain pending."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Evidence/2026-09-06-Foundation-Source-Read-Classification-Development.json",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}
