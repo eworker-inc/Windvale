@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-hosted-hashing-tool-promotion",
+  "date": "2026-09-06",
+  "subject": "Canonical current-source hashing tools reduce real hosted packaging time",
+  "claim": "The two canonical hashing tools are reconstructed from current source on both hosts and promoted with exact inventory pins. A paired-host 10.6 MB image comparison preserves every output byte while Windows packaging falls from 67833 to 52932 ms and Debian from 68928 to 50799 ms. All four small source/target combinations agree before/after and across hosts. Both hosts pass five existing packaging checks and six direct CLI rejection/preservation cases.",
+  "source": {
+    "kind": "GitCommit",
+    "value": "cadf15bf"
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Reconstruct both hashing tools from current source and package in canonical Profile 8",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+          "size": 2671,
+          "sha256": "d7b89f289d16c957c74ed9bdfafede955f4d82b0fa968f9b7292b8af08a3d23c"
+        },
+        {
+          "path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Request.wvproj",
+          "size": 397,
+          "sha256": "4f590784c92563853db0f7291b4a55d8c353af81b8cd81c6d2ba5fe0b6c2fab9"
+        },
+        {
+          "path": "Projects/Linker/Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj",
+          "size": 532,
+          "sha256": "efa78d700061a12c95c00340001129affa6f8b327c01a4bd6a66c24f27fbed3d"
+        },
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\wvhostrequest.wvb",
+          "size": 70273,
+          "sha256": "1e17a8defcb759d3ea46a56e6dc784908ce3507c8e416e09a7a216d643009969"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\wvhostrequest.exe",
+          "size": 1116160,
+          "sha256": "fb70460967fa890abc1699d4ed014b4c4d4d4f9e85100ce47c8ced194feac7df"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\wvhostsources.wvb",
+          "size": 84135,
+          "sha256": "ab3b671b60b7a8863094c52051ff6eaeb345ab904ed331ac6dcae20afc3a00ad"
+        },
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\wvhostsources.exe",
+          "size": 1302016,
+          "sha256": "b000dcad8134b7f49259aa1989af049068c6e6b70c3fb81e42ccecfefd0e98f1"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "10.6 MB native image, Profile 6 packaging with previous hashing tools",
+      "tool": "Tools/Native/Package-Hosted-Wvb.cmd",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 67833,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+          "size": 4140,
+          "sha256": "6b4117b775b15b273ed5b8ac791322c736e89b0614fc51cd306b9ca0e3190a57"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\Lowerer-before.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "10.6 MB native image, Profile 6 packaging with rebuilt hashing tools",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Package-Candidate.cmd",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 52932,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+          "size": 4140,
+          "sha256": "6b4117b775b15b273ed5b8ac791322c736e89b0614fc51cd306b9ca0e3190a57"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "D:\\windvale\\dev01\\Artifacts\\Verification-Redesign-2026-09-06\\Hashing-Tools\\win32\\Lowerer-after.exe",
+          "size": 10656768,
+          "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Four small source/target packaging combinations: old and new tools produce identical bytes; both hosts produce the same target bytes",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+          "size": 3206,
+          "sha256": "49a5b4207abe3beb591853e807f97bd87962aad12136c18631ad07fa58c0d249"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Small-Package-Results.json",
+          "size": 33851,
+          "sha256": "e462de2c750b1368d123ad420577d650d6dd4b2e2a09613f67f1623a3e97ef28"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Existing five packaging checks after canonical promotion: host/cross-target exact applications, malformed WVB rejection, input/output preservation, scratch cleanup",
+      "tool": "Tools/Native/Test-Hosted-Wvb-Packaging.cmd",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Promotion.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 39266,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Final-Packaging-Checks.json",
+          "size": 447,
+          "sha256": "29306079e8c3b9542622be2d94e0fa1a7acd75e491c2152359e00f63f121cfcb"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.18.0",
+      "target": "Six direct CLI cases: usage, truncated input, output alias; both tools reject with diagnostics and preserve output",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Malformed.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Malformed.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/win32/Malformed-Results.json",
+          "size": 621,
+          "sha256": "c47cb22c93f6619332f36907ef8773b69dd456b10994a613c65c07a7807f1ec5"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Reconstruct both hashing tools from current source and package in canonical Profile 8",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Build.mjs",
+          "size": 2671,
+          "sha256": "d7b89f289d16c957c74ed9bdfafede955f4d82b0fa968f9b7292b8af08a3d23c"
+        },
+        {
+          "path": "Projects/Runtime/Windvale-Native-Hosted-Tool-Metadata-Request.wvproj",
+          "size": 397,
+          "sha256": "4f590784c92563853db0f7291b4a55d8c353af81b8cd81c6d2ba5fe0b6c2fab9"
+        },
+        {
+          "path": "Projects/Linker/Windvale-Native-Hosted-Container-Source-Set-Tool.wvproj",
+          "size": 532,
+          "sha256": "efa78d700061a12c95c00340001129affa6f8b327c01a4bd6a66c24f27fbed3d"
+        },
+        {
+          "path": "Foundation/Sha256-Compression.wv",
+          "size": 19981,
+          "sha256": "f3b6cd19549fdc2e2a2d89311a0ff060a68b18c0ad0a0944471f6cae8e8af55e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/wvhostrequest.wvb",
+          "size": 70273,
+          "sha256": "1e17a8defcb759d3ea46a56e6dc784908ce3507c8e416e09a7a216d643009969"
+        },
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/wvhostrequest.elf",
+          "size": 1118208,
+          "sha256": "b34a7d05d09a8b9d425962371074092bc6d692cba809d12e2d322458427acbad"
+        },
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/wvhostsources.wvb",
+          "size": 84135,
+          "sha256": "ab3b671b60b7a8863094c52051ff6eaeb345ab904ed331ac6dcae20afc3a00ad"
+        },
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/wvhostsources.elf",
+          "size": 1302528,
+          "sha256": "4aa9defbfbfc957dd24cd8650515c0fd5b0670b92e18d7c804b9128762afad06"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "10.6 MB native image, Profile 6 packaging with previous hashing tools",
+      "tool": "Tools/Native/Package-Hosted-Wvb.sh",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 68928,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+          "size": 4140,
+          "sha256": "6b4117b775b15b273ed5b8ac791322c736e89b0614fc51cd306b9ca0e3190a57"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Lowerer-before.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "10.6 MB native image, Profile 6 packaging with rebuilt hashing tools",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Package-Candidate.sh",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 50799,
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Package-Trial.mjs",
+          "size": 4140,
+          "sha256": "6b4117b775b15b273ed5b8ac791322c736e89b0614fc51cd306b9ca0e3190a57"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Lowerer.wvb",
+          "size": 747242,
+          "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "/mnt/d/windvale/dev01/Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Lowerer-after.elf",
+          "size": 10657792,
+          "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Four small source/target packaging combinations: old and new tools produce identical bytes; both hosts produce the same target bytes",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Small-Trial.mjs",
+          "size": 3206,
+          "sha256": "49a5b4207abe3beb591853e807f97bd87962aad12136c18631ad07fa58c0d249"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Small-Package-Results.json",
+          "size": 33667,
+          "sha256": "938330d21a0b69e2172d8252ebb6f7ea2a0465a979decb3e99a1a9dee7db7beb"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Existing five packaging checks after canonical promotion: host/cross-target exact applications, malformed WVB rejection, input/output preservation, scratch cleanup",
+      "tool": "Tools/Native/Test-Hosted-Wvb-Packaging.sh",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Promotion.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 21148,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Final-Packaging-Checks.json",
+          "size": 435,
+          "sha256": "087117dd43d05d0ef45e211ce02ba138c3d344b946adb999f3622380b39eeef1"
+        }
+      ]
+    },
+    {
+      "host": "Debian Linux x64 under WSL, Node 20.19.2",
+      "target": "Six direct CLI cases: usage, truncated input, output alias; both tools reject with diagnostics and preserve output",
+      "tool": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Malformed.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/Check-Malformed.mjs",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hashing-Tools/linux/Malformed-Results.json",
+          "size": 621,
+          "sha256": "c47cb22c93f6619332f36907ef8773b69dd456b10994a613c65c07a7807f1ec5"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Installed legacy tools had Profile 8 metadata/memory geometry but an older 137438953472-instruction allowance. Rebuilt tools use canonical current Profile 8: 274877906944 instructions, 435945472-byte arena, 2097152-byte stack and flags 9. The instruction allowance change is deliberate and documented; the initial strict geometry comparison caught it before promotion. Initial rejected-comparison build outputs are retained under Initial-Build-Results.json.",
+    "This is one ordered before/after observation per host, with paired host work overlapping on one machine. It is not a statistical regression threshold, fully cold compiler measurement or full repository qualification. No new working-set sampling was performed. The ten-minute total local verification budget was retained.",
+    "Both old and new package trials use the same fixed 747242-byte lowerer WVB and validated 10638426-byte native image in three fragments (4194304,4194304,2249818 bytes). Wrapper trial copies preserve all canonical validation and pin both replacement executables before using them. Output applications are 10656768 bytes on Windows and 10657792 on Linux. Current packages are byte-identical to the previous exact owner products.",
+    "The old and new hashing tools differ in current-source WVB and native construction, not only the arithmetic source edit. The measured improvement therefore applies to the promoted tool pair as a whole; the preceding sum trial separately measured arithmetic execution.",
+    "Existing packaging checks initially failed on stale control-tool expectations. Running the same four source/target combinations with old hashing tools proved the smaller control output predated this change: Windows 168960 bytes and Linux 167936. The check now binds those exact digests and removes redundant comparison with older installed control binaries. Verifier-request expectations and all five logical groups remain unchanged.",
+    "The canonical 6927-byte SHA256SUMS inventory changes from 1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7 to d8b23c4b371c4841b6386f64940166be57a81930a2987a541a7c04648ddb016a. Six payloads change (two WVBs and four applications); other tool payloads remain unchanged. All twelve active script consumers of the inventory pin were updated. Complete-input construction caches invalidate products that depend on the changed producer identities; no receipts were relabeled to avoid that rebuild.",
+    "The change-aware plan selected eleven broad owners totaling 1935 expected seconds. That plan was not launched: pin-only wrapper changes and this hashing-tool promotion were checked with exact paired-host packaging, before/after byte equality and direct malformed-input behavior. Broad compiler, runtime, linker, publisher reconstruction and complete qualification remain unrun. Routing for these toolset changes remains too broad and needs redesign.",
+    "Artifact manifest remains candidate with qualification pending. This evidence establishes the measured scoped promotion, not full compiler-scale or release qualification. Canonical small tools use current Profile 8 but a 48 MB compiler application was not repackaged in this turn.",
+    "Raw diagnostic sources, old payload backups and trial outputs under Artifacts/Verification-Redesign-2026-09-06 are ignored local files; recorded hashes and the promoted canonical payloads retain the durable identities."
+  ],
+  "related": [
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Documents/Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json",
+    "Documents/Evidence/2026-09-06-Native-Sha256-Construction-Reuse.json",
+    "Documents/Decisions/0900-Add-A-Compiler-Scale-Hosted-Geometry-And-Artifact-Readers.md"
+  ]
+}

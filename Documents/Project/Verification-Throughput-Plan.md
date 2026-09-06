@@ -33,6 +33,16 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Canonical packaging now uses the rebuilt current-source hashing tools. In one
+paired-host 10.6 MB image comparison, packaging fell from 67.8 to 52.9 seconds
+on Windows and from 68.9 to 50.8 seconds on Debian, with identical output bytes.
+Both hosts pass the existing five packaging checks and six direct CLI rejection
+and output-preservation cases. The [promotion evidence](../Evidence/2026-09-06-Hosted-Hashing-Tool-Promotion.json)
+records the exact identities, stale control-fixture correction and explicit
+adoption of the current Profile 8 instruction allowance. Memory geometry is
+unchanged. Full compiler-scale timing and narrower toolset-change routing remain
+open; dependent caches must rebuild under the new producer identities.
+
 Streaming SHA-256 now has a focused selection in the existing native SHA owner.
 All 20 cases pass in 14.8 seconds on Windows and 23.9 seconds on Debian for
 fresh test products using existing compiler/tool caches; warm runs take 3.2 and
@@ -53,9 +63,9 @@ that remains above the cold target. The [construction evidence](../Evidence/2026
 records exact product identities and the limits of the comparison with earlier
 270-second incomplete runs. Planning now budgets five minutes expected and ten
 minutes maximum for the full owner, with all five projects visible in inventory.
-Frozen packaged hashing tools still use the previous implementation; rebuild and
-qualify them, then measure real packaging before claiming a cold-workflow
-improvement. Complete repository qualification remains open.
+The hashing-tool promotion above improves real packaging, but does not yet
+establish a full cold compiler improvement. Complete repository qualification
+remains open.
 
 Current compiler preparation now overlaps two independent branches after
 constructing the shared native image: Profile 7 Analyzer packaging and Emitter

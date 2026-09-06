@@ -23,13 +23,9 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Valid.err" "valid packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Valid.exe" 236032 2aa9fa9ea5d6d7c4860d65734de0fe538877700b9fcea5f6b8ca616e5cb2cd2f "valid package"
+rem Current pinned-lowerer output is the control reconstruction oracle.
+call :check_file "%TestDirectory%\Valid.exe" 168960 fe38148f665f5718e91d056bbd41a0de03ae9cf783a59850de6d76fa37396c41 "valid package"
 if errorlevel 1 goto :failed
-fc /b "%TestDirectory%\Valid.exe" "%Toolset%\windows-x64\wvhostcontrol.exe" >nul
-if errorlevel 1 (
-    >&2 echo FAIL  hosted packaging: valid package differs from the candidate
-    goto :failed
-)
 call :check_no_scratch
 if errorlevel 1 goto :failed
 echo PASS  hosted packaging exact Windows application
@@ -40,13 +36,8 @@ call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 1 ^
 if errorlevel 1 goto :failed
 call :check_empty "%TestDirectory%\Cross-Target.err" "cross-target packaging wrote a diagnostic"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Cross-Target.elf" 237568 0bb6d21a928a880bfebdb522918d8aaa147bb3849f42b2c519bbdf2f7ca4a1d0 "cross-target Linux package"
+call :check_file "%TestDirectory%\Cross-Target.elf" 167936 fb103bd9a38191f76084e6e2fe3bc48f0a742d10657cf3652d07ea5b251c6203 "cross-target Linux package"
 if errorlevel 1 goto :failed
-fc /b "%TestDirectory%\Cross-Target.elf" "%Toolset%\linux-x64\wvhostcontrol.elf" >nul
-if errorlevel 1 (
-    >&2 echo FAIL  hosted packaging: cross-target Linux package differs from the candidate
-    goto :failed
-)
 call :check_no_scratch
 if errorlevel 1 goto :failed
 echo PASS  hosted packaging exact cross-target Linux application
@@ -94,9 +85,9 @@ if not errorlevel 1 (
     >&2 echo FAIL  hosted packaging: invalid WVB was accepted
     goto :failed
 )
-call :check_file "%TestDirectory%\Destination.exe" 6927 1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7 "preserved destination"
+call :check_file "%TestDirectory%\Destination.exe" 6927 d8b23c4b371c4841b6386f64940166be57a81930a2987a541a7c04648ddb016a "preserved destination"
 if errorlevel 1 goto :failed
-call :check_file "%TestDirectory%\Invalid.wvb" 6927 1a17fa4ee16ba2f21613db6ac36bd7e8643d29a5a1cb26f42e322df19cdc9fd7 "preserved input"
+call :check_file "%TestDirectory%\Invalid.wvb" 6927 d8b23c4b371c4841b6386f64940166be57a81930a2987a541a7c04648ddb016a "preserved input"
 if errorlevel 1 goto :failed
 call :check_no_scratch
 if errorlevel 1 goto :failed
