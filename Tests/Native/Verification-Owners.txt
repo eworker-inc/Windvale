@@ -7,7 +7,7 @@ compiler-reconstruction|Test-Compiler-Reconstruction|3|3|very-slow|Tests: 3, Pas
 segmented-compiler-toolset-reconstruction|Test-Segmented-Compiler-Toolset-Reconstruction|6|2|very-slow|Tests: 6, Passed: 6, Failed: 0
 segmented-hosted-wvb-cache|Test-Cached-Segmented-Hosted-Wvb|12|4|quick|segmented hosted WVB cache test cases=12 status=Passed deadline-tree-termination=Passed output-bound-termination=Passed termination-failure-settle=Passed forced-failure-cleanup=Passed publication-cleanup=Passed prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed race-cleanup=Passed executable-materialization=Passed image-reuse=Passed hosted-session=Passed
 wvb-to-wvo-reconstruction|Test-Wvb-To-Wvo-Reconstruction|7|2|standard|Tests: 7, Passed: 7, Failed: 0
-native-sha256-lowering|Test-Native-Sha256|8|1|quick|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected
+native-sha256-lowering|Test-Native-Sha256|8|1|quick|native SHA-256 lowering status=Passed cases=8 kats=2 arena=64/63 helper-bytes=1640 sha-free=Identical staged-corruption=Rejected streaming-cases=20
 native-x64-lowering-development|Test-Native-Unsafe-Write-Pointer-Lowering|25|3|slow|native unsafe write pointer lowering status=Passed cases=25 valid=5 malformed=20 native-execution=1 foreign-native-execution=linux-only foreign-links=2 compiler-source=current package-cache=development
 wvb-runner-reconstruction|Test-Wvb-Runner-Reconstruction|3|2|very-slow|Tests: 3, Passed: 3, Failed: 0
 scripting|Test-Scripting|6|2|quick|Tests: 6, Passed: 6, Failed: 0

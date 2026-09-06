@@ -3353,6 +3353,10 @@ foreach ($Path in $Paths) {
         Add-Suite 'database-storage'
     } elseif ($Path -in @(
         'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
+        'Foundation/Sha256-Compression.wv',
+        'Foundation/Sha256-Streaming.wv',
+        'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj',
+        'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv',
         'Projects/Tests/Windvale-Native-Test-Sha256-Native-Kat.wvproj',
         'Projects/Tests/Windvale-Native-Test-Wvb-To-Wvo-Sha256.wvproj',
         'Tests/Fixtures/Native-X64/Sha256-Native-Kat.wv',
@@ -4688,6 +4692,22 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
 # Documentation routing has already excluded executable and frozen contracts.
 # Keep every other path: owner routing alone is not a complete dependency proof.
 $FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
+$StreamingSha256Inputs = @(
+    'Foundation/Sha256-Compression.wv',
+    'Foundation/Sha256-Streaming.wv',
+    'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj',
+    'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv'
+)
+$UseStreamingSha256Development = $FocusedDevelopmentPaths.Count -gt 0 -and
+    $SelectedSuites.Contains('native-sha256-lowering') -and
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $StreamingSha256Inputs }).Count -eq 0
+if ($UseStreamingSha256Development) {
+    $StreamingOwner = @($SelectedSuiteEntries | Where-Object {
+        $_.Name -eq 'native-sha256-lowering'
+    })[0]
+    $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $StreamingOwner.ExpectedSeconds + 30)
+    $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $StreamingOwner.MaximumSeconds + 60)
+}
 $FoundationBorrowPlanInputs = @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
@@ -5098,6 +5118,8 @@ if (!$Quiet) {
         $UseFoundationBorrowDirectoryDevelopment.ToString().ToLowerInvariant())
     Write-Host ('Foundation borrow-owner development: ' +
         $UseFoundationBorrowOwnerDevelopment.ToString().ToLowerInvariant())
+    Write-Host ('Streaming SHA-256 development: ' +
+        $UseStreamingSha256Development.ToString().ToLowerInvariant())
     Write-Host ('Publisher current-source development: ' +
         $UsePublisherCurrentSourceDevelopment.ToString().ToLowerInvariant())
     if ($Language1FrontDoorDevelopmentEligible) {
@@ -5178,6 +5200,7 @@ if ($PassThru) {
         UseFoundationBorrowPlanDevelopment = $UseFoundationBorrowPlanDevelopment
         UseFoundationBorrowDirectoryDevelopment = $UseFoundationBorrowDirectoryDevelopment
         UseFoundationBorrowOwnerDevelopment = $UseFoundationBorrowOwnerDevelopment
+        UseStreamingSha256Development = $UseStreamingSha256Development
         UsePublisherCurrentSourceDevelopment = $UsePublisherCurrentSourceDevelopment
         UseLanguage1FrontDoorDevelopment =
             $Language1FrontDoorDevelopmentEligible

@@ -1864,6 +1864,67 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'Foundation/Sha256-Compression.wv'
+        Paths = @('Foundation/Sha256-Compression.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Foundation/Sha256-Streaming.wv'
+        Paths = @('Foundation/Sha256-Streaming.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj'
+        Paths = @('Projects/Tests/Windvale-Native-Test-Sha256-Streaming.wvproj')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv'
+        Paths = @('Tests/Fixtures/Native-X64/Sha256-Streaming-Self-Test.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'streaming SHA companion documentation'
+        Paths = @('Foundation/Sha256-Compression.wv', 'README.md')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $true
+    },
+    @{
+        Name = 'streaming SHA mixed native lowering'
+        Paths = @('Foundation/Sha256-Compression.wv', 'Compiler/Windvale/Native-X64-Lowering-Sha256.wv')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $false
+    },
+    @{
+        Name = 'streaming SHA mixed runner'
+        Paths = @('Foundation/Sha256-Compression.wv', 'Tools/Native/Test-Native-Sha256.mjs')
+        Suites = @('native-sha256-lowering')
+        Gaps = @()
+        VerifyPlan = $false
+        LibraryTarget = 'durability'
+        StreamingSha256Development = $false
+    },
+    @{
         Name = 'native SHA-256 lowering owner'
         Paths = @(
             'Compiler/Windvale/Native-X64-Lowering-Sha256.wv',
@@ -5078,7 +5139,7 @@ $QualificationPipelineExpected = @{
     'Link-Wvo' = '39|112'
     'Package-Hosted-Wvb' = '19|99'
     'Package-Console' = '19|77'
-    'Package-Segmented-Compiler-Wvb' = '21|60'
+    'Package-Segmented-Compiler-Wvb' = '22|61'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
@@ -6764,6 +6825,11 @@ foreach ($Case in $NativeCases) {
     } else {
         $false
     }
+    $StreamingSha256Differs = (
+        $Case.ContainsKey('StreamingSha256Development') -and
+        ($Plan.UseStreamingSha256Development -ne $Case.StreamingSha256Development -or
+            ($Case.StreamingSha256Development -and
+                ($Plan.ExpectedSeconds -ne 30 -or $Plan.MaximumSeconds -ne 60))))
     $DatabaseDevelopmentDiffers = (
         $Case.ContainsKey('DatabaseDevelopment') -and
         $Plan.UseDatabaseStorageDevelopment -ne $Case.DatabaseDevelopment)
@@ -6829,6 +6895,7 @@ foreach ($Case in $NativeCases) {
         $OsX64TargetDiffers -or
         $LibraryDevelopmentDiffers -or
         $LibraryTargetDiffers -or
+        $StreamingSha256Differs -or
         $DatabaseDevelopmentDiffers -or
         $DatabaseTargetDiffers -or
         $DatabaseCaseCountDiffers -or
@@ -6847,6 +6914,7 @@ foreach ($Case in $NativeCases) {
             "verify-webassembly-engine=$($Plan.RunWebAssemblyEngineVerification), " +
             "verify-webassembly=$($Plan.RunWebAssemblyVerification), " +
             "verify-github=$($Plan.RunGitHubQualificationVerification), " +
+            "streaming-sha256=$($Plan.UseStreamingSha256Development), expected-seconds=$($Plan.ExpectedSeconds), maximum-seconds=$($Plan.MaximumSeconds), " +
             "os-x64-development=$($Plan.UseOsX64CodeEmissionDevelopment), " +
             "os-x64-target=$($Plan.OsX64CodeEmissionDevelopmentTarget), " +
             "library-development=$($Plan.UseLibraryDevelopment), " +

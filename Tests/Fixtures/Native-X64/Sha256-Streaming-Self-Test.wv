@@ -1,0 +1,86 @@
+module Foundationˉsha256ˉstreamingˉselfˉtest profile portable;
+import Foundationˉbyteˉconstruction as Bytes;
+import Foundationˉsha256ˉstreaming as Sha;
+data Expectedˉzero: bytes = [227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39, 174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85];
+data Expectedˉone: bytes = [202, 151, 129, 18, 202, 27, 189, 202, 250, 194, 49, 179, 154, 35, 220, 77, 167, 134, 239, 248, 20, 124, 78, 114, 185, 128, 119, 133, 175, 238, 72, 187];
+data Expectedˉtwo: bytes = [159, 67, 144, 248, 211, 12, 45, 217, 46, 201, 240, 149, 182, 94, 43, 154, 233, 176, 169, 37, 165, 37, 142, 36, 28, 159, 30, 145, 15, 115, 67, 24];
+data Expectedˉthree: bytes = [179, 84, 57, 164, 172, 111, 9, 72, 182, 214, 249, 227, 198, 175, 15, 95, 89, 12, 226, 15, 27, 222, 112, 144, 239, 121, 112, 104, 110, 198, 115, 138];
+data Expectedˉfour: bytes = [125, 62, 116, 160, 93, 125, 177, 91, 206, 74, 217, 236, 6, 88, 234, 152, 227, 240, 110, 238, 207, 22, 180, 198, 255, 242, 218, 69, 125, 220, 47, 52];
+data Expectedˉfive: bytes = [255, 224, 84, 254, 122, 224, 203, 109, 198, 92, 58, 249, 182, 29, 82, 9, 244, 57, 133, 29, 180, 61, 11, 165, 153, 115, 55, 223, 21, 70, 104, 235];
+data Expectedˉsix: bytes = [99, 83, 97, 196, 139, 185, 234, 177, 65, 152, 231, 110, 168, 171, 127, 26, 65, 104, 93, 106, 214, 42, 169, 20, 109, 48, 29, 79, 23, 235, 10, 224];
+data Expectedˉseven: bytes = [78, 54, 155, 86, 24, 100, 60, 58, 189, 221, 2, 123, 101, 11, 250, 84, 129, 11, 227, 180, 24, 2, 138, 124, 157, 130, 41, 154, 89, 208, 8, 232];
+data Expectedˉeight: bytes = [191, 113, 139, 111, 101, 59, 235, 193, 132, 225, 71, 159, 25, 53, 184, 218, 151, 77, 112, 27, 137, 58, 252, 244, 158, 112, 31, 62, 47, 159, 156, 90];
+data Expectedˉnine: bytes = [155, 193, 178, 162, 136, 178, 106, 247, 37, 122, 54, 39, 122, 227, 129, 106, 125, 79, 22, 232, 156, 30, 126, 119, 208, 165, 196, 139, 173, 98, 179, 96];
+data Abc: bytes = [97, 98, 99];
+data Abcˉdigest: bytes = [186, 120, 22, 191, 143, 1, 207, 234, 65, 65, 64, 222, 93, 174, 34, 35, 176, 3, 97, 163, 150, 23, 122, 156, 180, 16, 255, 97, 242, 0, 21, 173];
+data Pattern: bytes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255];
+data Patternˉdigest: bytes = [30, 151, 61, 2, 157, 242, 178, 198, 108, 180, 42, 148, 44, 94, 219, 69, 150, 111, 2, 171, 175, 242, 159, 233, 148, 16, 228, 77, 39, 29, 14, 252];
+
+fn Isˉvalid(State: Sha.Foundationˉsha256ˉstream) -> bool { return State.Valid; }
+
+fn Stateˉwith(Base: Sha.Foundationˉsha256ˉstream, Valid: bool, Total: u32, Tail: bytes)
+    -> Sha.Foundationˉsha256ˉstream {
+    return Sha.Foundationˉsha256ˉstream(Valid, Total, Tail,
+        Base.Hashˉzero, Base.Hashˉone, Base.Hashˉtwo, Base.Hashˉthree,
+        Base.Hashˉfour, Base.Hashˉfive, Base.Hashˉsix, Base.Hashˉseven);
+}
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+fn Check(Input: bytes, Count: u32, Expected: bytes) -> bool {
+    var State: Sha.Foundationˉsha256ˉstream = Sha.Foundationˉsha256ˉbegin(Input);
+    var Offset: u32 = 0u32;
+    while Offset < Count {
+        var Take: u32 = Count - Offset;
+        if Take > 4097u32 { Take = 4097u32; }
+        State = Sha.Foundationˉsha256ˉupdateˉrange(State, Input, Offset, Take);
+        Offset = Offset + Take;
+    }
+    return State.Valid && Equal(Sha.Foundationˉsha256ˉfinishˉraw(State), Expected);
+}
+export fn Main() -> i32 {
+    let Input: Bytes.Foundationˉbytesˉresult = Bytes.Foundationˉbytesˉrepeat(97u8, 1048576u32);
+    if !Input.Valid { return 1; }
+    if !Check(Input.Value, 0u32, Expectedˉzero) { return 2; }
+    if !Check(Input.Value, 1u32, Expectedˉone) { return 3; }
+    if !Check(Input.Value, 55u32, Expectedˉtwo) { return 4; }
+    if !Check(Input.Value, 56u32, Expectedˉthree) { return 5; }
+    if !Check(Input.Value, 63u32, Expectedˉfour) { return 6; }
+    if !Check(Input.Value, 64u32, Expectedˉfive) { return 7; }
+    if !Check(Input.Value, 65u32, Expectedˉsix) { return 8; }
+    if !Check(Input.Value, 4097u32, Expectedˉseven) { return 9; }
+    if !Check(Input.Value, 65536u32, Expectedˉeight) { return 10; }
+    if !Check(Input.Value, 1048576u32, Expectedˉnine) { return 11; }
+    if !Check(Abc, 3u32, Abcˉdigest) { return 12; }
+    var Patternˉinput: bytes = Pattern;
+    while Bytesˉlength(Patternˉinput) < 4097u32 {
+        var Take: u32 = 4097u32 - Bytesˉlength(Patternˉinput);
+        if Take > Bytesˉlength(Patternˉinput) { Take = Bytesˉlength(Patternˉinput); }
+        Patternˉinput = Bytesˉconcat(Patternˉinput, Bytesˉslice(Patternˉinput, 0u32, Take));
+    }
+    if !Check(Patternˉinput, 4097u32, Patternˉdigest) { return 13; }
+    let Base: Sha.Foundationˉsha256ˉstream = Sha.Foundationˉsha256ˉbegin(Abc);
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdateˉrange(Base, Abc, 4u32, 0u32)) { return 14; }
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdateˉrange(Base, Abc, 1u32, 3u32)) { return 15; }
+    let Invalid: Sha.Foundationˉsha256ˉstream = Stateˉwith(Base, false, 0u32, Base.Tail);
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdate(Invalid, Abc)) ||
+        Bytesˉlength(Sha.Foundationˉsha256ˉfinishˉraw(Invalid)) != 0u32 { return 16; }
+    let Oversized: Sha.Foundationˉsha256ˉstream = Stateˉwith(Base, true, 67108865u32, Base.Tail);
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdateˉrange(Oversized, Abc, 0u32, 0u32)) { return 17; }
+    let Full: Sha.Foundationˉsha256ˉstream = Stateˉwith(Base, true, 67108864u32, Base.Tail);
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdate(Full, Abc)) { return 18; }
+    let Badˉtail: Sha.Foundationˉsha256ˉstream = Stateˉwith(Base, true, 0u32,
+        Bytesˉslice(Input.Value, 0u32, 64u32));
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdate(Badˉtail, Abc)) ||
+        Bytesˉlength(Sha.Foundationˉsha256ˉfinishˉraw(Badˉtail)) != 0u32 { return 19; }
+    if Isˉvalid(Sha.Foundationˉsha256ˉupdateˉrange(Base, Abc, 0u32, 4294967295u32)) { return 20; }
+    if !Isˉvalid(Sha.Foundationˉsha256ˉupdateˉrange(Full, Abc, 3u32, 0u32)) { return 21; }
+    return 42;
+}

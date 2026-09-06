@@ -420,6 +420,16 @@ if ($Plan.Scope -eq 'website') {
                     'bundle-cases=108 ' +
                     "selected-owners=$($NativePlan.GenericNominalDevelopmentBundleSelectedOwnerCount) " +
                     'expected-seconds=330')
+            } elseif ($Suite -eq 'native-sha256-lowering' -and
+                $Plan.Scope -eq 'development' -and
+                $NativePlan.UseStreamingSha256Development) {
+                $OwnerCommand = if ($IsWindowsHost) {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Sha256.cmd'
+                } else {
+                    Join-Path $RepositoryRoot 'Tools/Native/Test-Native-Sha256.sh'
+                }
+                $OwnerArguments = @('--streaming')
+                $OwnerMessage = 'Native owner native-sha256-lowering mode=streaming-development cases=20 expected-seconds=30'
             } elseif ($Suite -eq 'source-containment' -and
                 $Plan.Scope -eq 'development' -and
                 $NativePlan.UseSourceContainmentCompilerDevelopment) {

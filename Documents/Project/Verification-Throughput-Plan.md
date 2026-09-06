@@ -33,17 +33,24 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
-A native streaming-SHA-256 arithmetic candidate is about 27% faster in a
-focused paired-host trial. Median execution fell from 2,888 to 2,111 ms on
-Windows and 3,055 to 2,214 ms on Debian across three observations per variant.
-All ten digest cases passed, with matching WVB bytes across hosts. This is
-unpromoted: Foundation source and packaged hashing tools remain unchanged. The
-[hashing trial](../Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json) records
-input sizes, memory observations and the small code-size increase. Before
-promotion, extend an appropriate existing owner with direct streaming-hash
-coverage: current routing selects the seed plan, whose eight source projects
-do not exercise these modules. Then rebuild the affected hashing tools and
-measure real packaging before claiming a cold-workflow improvement.
+Streaming SHA-256 now has a focused selection in the existing native SHA owner.
+All 20 cases pass in 14.8 seconds on Windows and 23.9 seconds on Debian for
+fresh test products using existing compiler/tool caches; warm runs take 3.2 and
+5.0 seconds. The source incorporates the arithmetic change measured about 27%
+faster in the [preceding trial](../Evidence/2026-09-06-Streaming-Sha256-Sum-Trial.json).
+The [owner evidence](../Evidence/2026-09-06-Streaming-Sha256-Focused-Owner.json)
+records identical bytecode, malformed-state coverage and timing limits.
+
+Changes confined to the streaming hash sources and fixture select the existing
+owner's `--streaming` mode, capped at 60 seconds including preparation. Native
+backend and owner changes retain the full eight-group selection; its existing
+KAT application also executes the streaming cases. No new verifier entry point
+was added. Full runs passed the first four groups on both hosts but reached a
+270-second cap while packaging the publication stager, so complete native
+qualification is still unpassed. Make that construction resumable and correct
+its full-owner cost estimate before repeating it. Frozen packaged hashing tools
+still use the previous implementation; rebuild and qualify them, then measure
+real packaging before claiming a cold-workflow improvement.
 
 Current compiler preparation now overlaps two independent branches after
 constructing the shared native image: Profile 7 Analyzer packaging and Emitter
