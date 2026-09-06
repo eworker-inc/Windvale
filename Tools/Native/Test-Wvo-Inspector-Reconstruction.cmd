@@ -7,13 +7,13 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvo-Object-Candidate"
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvo-Object.wvb" 73322 40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070
+call :check_file "%Candidate%\Wvo-Object.wvb" 74713 fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.wvo" 1022822 bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae
+call :check_file "%Candidate%\Wvo-Object.wvo" 1043860 ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.exe" 1037312 5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03
+call :check_file "%Candidate%\Wvo-Object.exe" 1058304 182739a91046cf3563924668cf724ba1ad17ac5007d91c023e6687de7f2b83a4
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.elf" 1036288 fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840
+call :check_file "%Candidate%\Wvo-Object.elf" 1056768 b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7
 if errorlevel 1 goto :failed
 call :pass "candidate inventory"
 
@@ -53,7 +53,7 @@ for %%F in ("%TestDirectory%\Check.err") do if not "%%~zF"=="0" goto :failed
 
 "%Candidate%\Wvo-Object.exe" verify "%Candidate%\Wvo-Object.wvo" >"%TestDirectory%\Verify.out" 2>"%TestDirectory%\Verify.err"
 if errorlevel 1 goto :failed
->"%TestDirectory%\Verify.hex" echo 56 65 72 69 66 69 65 64 20 6f 62 6a 65 63 74 3a 20 58 38 36 cb 89 36 34 0a 53 48 41 2d 32 35 36 3a 20 62 61 62 36 62 37 33 65 35 65 64 64 36 62 30 62 32 37 32 36 33 38 30 62 61 32 66 66 31 30 38 35 39 66 62 62 63 63 33 37 34 38 31 35 37 32 34 35 37 62 35 30 38 62 62 64 30 64 36 37 63 32 61 65 0a
+>"%TestDirectory%\Verify.hex" echo 56 65 72 69 66 69 65 64 20 6f 62 6a 65 63 74 3a 20 58 38 36 cb 89 36 34 0a 53 48 41 2d 32 35 36 3a 20 66 66 61 61 62 33 66 37 31 31 63 37 66 65 38 34 65 63 37 65 64 38 35 65 61 62 61 62 63 39 65 62 37 37 64 39 38 39 37 63 38 37 63 31 62 38 32 38 39 62 63 65 38 36 66 62 63 65 34 31 61 38 37 34 0a
 certutil -f -decodehex "%TestDirectory%\Verify.hex" "%TestDirectory%\Verify.expected" 4 >nul
 if errorlevel 1 goto :failed
 fc /b "%TestDirectory%\Verify.out" "%TestDirectory%\Verify.expected" >nul
@@ -65,7 +65,7 @@ if not "%ERRORLEVEL%"=="2" goto :failed
 for %%F in ("%TestDirectory%\Isolation.out") do if not "%%~zF"=="0" goto :failed
 call :check_file "%TestDirectory%\Isolation.err" 61 ffadaf98e0978439eb19a97ccfe2d4c06f810b8c9926d5193eb4827f3c126b89
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvo-Object.wvo" 1022822 bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae
+call :check_file "%Candidate%\Wvo-Object.wvo" 1043860 ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874
 if errorlevel 1 goto :failed
 call :pass "current-host compatibility and profile isolation"
 

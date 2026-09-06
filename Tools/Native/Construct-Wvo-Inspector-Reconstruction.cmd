@@ -61,7 +61,7 @@ set "LinuxStartup=%TemporaryDirectory%\Linux-Startup.wvo"
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" "%RepositoryRoot%\Projects/Object-Model/Windvale-Wvo-Object.wvproj" "%Wvb%" >"%TemporaryDirectory%\Build.out" 2>"%TemporaryDirectory%\Build.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvb%" 73322 40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 "WVO inspector WVB"
+call :verify_file "%Wvb%" 74713 fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf "WVO inspector WVB"
 if errorlevel 1 goto :cleanup
 
 "%HostedTools%\wvhostenumrequest.exe" "%Wvb%" "%EnumRequest%" >"%TemporaryDirectory%\Enum-Request.out" 2>"%TemporaryDirectory%\Enum-Request.err"
@@ -75,14 +75,14 @@ if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Lower-Wvb-To-Wvo.cmd" "%Wvb%" "%Wvo%" >"%TemporaryDirectory%\Lower.out" 2>"%TemporaryDirectory%\Lower.err"
 if errorlevel 1 goto :cleanup
-call :verify_file "%Wvo%" 1022822 bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae "WVO inspector native object"
+call :verify_file "%Wvo%" 1043860 ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874 "WVO inspector native object"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Link-Wvo.cmd" 0 Main "%Fragment%" "%Wvo%" >"%TemporaryDirectory%\Link.out" 2>"%TemporaryDirectory%\Link.err"
 if errorlevel 1 goto :cleanup
 findstr /b /c:"entry name=Main address=82280" "%TemporaryDirectory%\Link.out" >nul
 if errorlevel 1 goto :cleanup
-call :verify_file "%Fragment%" 1017780 1410b92ebc614f17cbf6e8a1147cb2cd448ae687a3b776e8d4ec3eb96a434854 "WVO inspector linked fragment"
+call :verify_file "%Fragment%" 1038852 9e2e0079e557bccbbff49ddb18a9ca733100782fe6d3829318fe0582f2b4d905 "WVO inspector linked fragment"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Assemble-Wva.cmd" "%StartupRoot%\Windows-X64-Hosted-Inspector.wva" "%WindowsStartup%" >"%TemporaryDirectory%\Windows-Assemble.out" 2>"%TemporaryDirectory%\Windows-Assemble.err"
@@ -96,12 +96,12 @@ if errorlevel 1 goto :cleanup
 
 call :construct_target windows 1 "%ServiceRoot%\Native-X64-Windows-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Windows-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Windows-Diagnostic-Output-Service.bin" "%WindowsStartup%" "%WindowsApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%WindowsApplication%" 1037312 5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03 "Windows WVO inspector application"
+call :verify_file "%WindowsApplication%" 1058304 182739a91046cf3563924668cf724ba1ad17ac5007d91c023e6687de7f2b83a4 "Windows WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 call :construct_target linux 2 "%ServiceRoot%\Native-X64-Linux-Console-Output-Service.bin" "%ServiceRoot%\Native-X64-Linux-File-Input-Service.bin" "%ServiceRoot%\Native-X64-Linux-Diagnostic-Output-Service.bin" "%LinuxStartup%" "%LinuxApplication%"
 if errorlevel 1 goto :cleanup
-call :verify_file "%LinuxApplication%" 1036288 fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840 "Linux WVO inspector application"
+call :verify_file "%LinuxApplication%" 1056768 b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7 "Linux WVO inspector application"
 if errorlevel 1 goto :cleanup
 
 echo native WVO inspector reconstruction status=Complete artifacts=4

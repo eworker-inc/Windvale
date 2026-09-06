@@ -10,7 +10,7 @@ script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
 repository_root=$(CDPATH= cd -- "$script_directory/../.." && pwd -P)
 artifact_root="$repository_root/Artifacts/Native-Wvo-Object-Candidate"
 if ! (cd -- "$artifact_root" && printf '%s  %s\n' \
-    'fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840' \
+    'b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7' \
     'Wvo-Object.elf' | sha256sum --check --strict --quiet); then
     echo 'The Linux native WVO inspector artifact digest is invalid.' >&2
     exit 1

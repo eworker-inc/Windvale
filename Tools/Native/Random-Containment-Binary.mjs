@@ -51,12 +51,12 @@ export async function Testˉwvo(Repositoryˉroot, Cases) {
         win32: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.exe",
             1_037_312,
-            "5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03",
+            "182739a91046cf3563924668cf724ba1ad17ac5007d91c023e6687de7f2b83a4",
         ],
         linux: [
             "Artifacts/Native-Wvo-Object-Candidate/Wvo-Object.elf",
             1_036_288,
-            "fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840",
+            "b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7",
         ],
     });
     const Verifier = await Verifyˉartifact(

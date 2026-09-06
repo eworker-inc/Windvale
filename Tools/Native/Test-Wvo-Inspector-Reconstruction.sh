@@ -33,14 +33,14 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvo-Object.wvb" 73322 \
-    40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070 || fail
-check_file "$candidate/Wvo-Object.wvo" 1022822 \
-    bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae || fail
-check_file "$candidate/Wvo-Object.exe" 1037312 \
-    5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03 || fail
-check_file "$candidate/Wvo-Object.elf" 1036288 \
-    fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840 || fail
+check_file "$candidate/Wvo-Object.wvb" 74713 \
+    fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf || fail
+check_file "$candidate/Wvo-Object.wvo" 1043860 \
+    ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874 || fail
+check_file "$candidate/Wvo-Object.exe" 1058304 \
+    182739a91046cf3563924668cf724ba1ad17ac5007d91c023e6687de7f2b83a4 || fail
+check_file "$candidate/Wvo-Object.elf" 1056768 \
+    b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7 || fail
 [[ -x $candidate/Wvo-Object.elf ]] || fail
 pass 'candidate inventory'
 
@@ -91,7 +91,7 @@ pass 'exact paired reconstruction'
     >"$test_directory/Verify.out" 2>"$test_directory/Verify.err" || fail
 printf '%s\n' \
     'Verified object: X86ˉ64' \
-    'SHA-256: bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae' \
+    'SHA-256: ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874' \
     >"$test_directory/Verify.expected" || fail
 check_equal "$test_directory/Verify.out" "$test_directory/Verify.expected" || fail
 [[ ! -s $test_directory/Verify.err ]] || fail
@@ -107,8 +107,8 @@ fi
 printf '%s\n' 'native hosted verifier publisher application status=Rejected' \
     >"$test_directory/Isolation.expected" || fail
 check_equal "$test_directory/Isolation.err" "$test_directory/Isolation.expected" || fail
-check_file "$candidate/Wvo-Object.wvo" 1022822 \
-    bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae || fail
+check_file "$candidate/Wvo-Object.wvo" 1043860 \
+    ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874 || fail
 pass 'current-host compatibility and profile isolation'
 
 echo "Tests: $tests, Passed: $passed, Failed: 0"

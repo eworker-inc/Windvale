@@ -4,7 +4,7 @@
 
 `Object-Model/Windvale/Wvo-Object-Core.wv` owns the Windvale-written WVO 1.0 read-only command and report shell. `Object-Model/Windvale/Wvo-Object-Verification.wv` owns its shared portable reader and complete bounded validator. The shell constructs the canonical representative object for an internal deterministic self-test and emits the same successful verification and inspection reports as the independent C# Stage 0 oracle.
 
-`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉconstruction`, `Foundationˉbyteˉordering`, and the compression plus streaming SHA-256 modules. The current candidate WVB is 73,322 bytes with SHA-256 `40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070`. It is a source candidate pending independent execution of this descendant on both hosts; this identity is not a cross-host qualification claim.
+`Projects/Object-Model/Windvale-Wvo-Object.wvproj` composes both object modules with `Foundationˉbyteˉconstruction`, `Foundationˉbyteˉordering`, and the compression plus streaming SHA-256 modules. The current candidate WVB is 74,713 bytes with SHA-256 `fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf`. It is a source candidate pending independent execution of this descendant on both hosts; this identity is not a cross-host qualification claim.
 
 Decision 0519 makes that manifest the normal broad-script build contract and
 requires independent native verification plus exact inspection. Decision

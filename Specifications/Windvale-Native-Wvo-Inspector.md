@@ -63,11 +63,11 @@ The current candidate identities are:
 
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| WVO inspector WVB | 73,322 | `40f7b7efcff5b6e5bbc3c878cf5f0147ee92af208d43d54ab8a04f87ec1e9070` |
-| WVO inspector WVO | 1,022,822 | `bab6b73e5edd6b0b2726380ba2ff10859fbbcc37481572457b508bbd0d67c2ae` |
-| Linked inspector fragment | 1,017,780 | `1410b92ebc614f17cbf6e8a1147cb2cd448ae687a3b776e8d4ec3eb96a434854` |
-| Windows WVO inspector | 1,037,312 | `5362372e826958470eee7d90eb01938de5b91dcb3e1b0f952722e00578a82d03` |
-| Linux WVO inspector | 1,036,288 | `fcfd134222b05482a6ac432fc4acbfb72f3dfce92c3c646fc17595ddb078b840` |
+| WVO inspector WVB | 74,713 | `fbea7318001a67c464f0ceb8a7d590cbf73244de184659f8254e9f222a4053bf` |
+| WVO inspector WVO | 1,043,860 | `ffaab3f711c7fe84ec7ed85eababc9eb77d9897c87c1b8289bce86fbce41a874` |
+| Linked inspector fragment | 1,038,852 | `9e2e0079e557bccbbff49ddb18a9ca733100782fe6d3829318fe0582f2b4d905` |
+| Windows WVO inspector | 1,058,304 | `182739a91046cf3563924668cf724ba1ad17ac5007d91c023e6687de7f2b83a4` |
+| Linux WVO inspector | 1,056,768 | `b8f0367a8ced12227c9554101152bd5199ec0fd32e5e78210f5dd8a0761b81c7` |
 
 [Decision 0500](../Documents/Decisions/0500-Native-Wvo-Inspector-Reconstruction.md)
 adds the exact native source-to-WVB-to-WVO-to-paired-application route. Its
