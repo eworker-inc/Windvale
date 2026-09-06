@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-verification-guard-setup-reuse",
+  "date": "2026-09-06",
+  "subject": "Remove repeated index reads, planner initialization, and irrelevant filesystem probes from verification guards",
+  "claim": "The complete routing guard passed in 38607 ms compared with the prior 47216 ms observation. It reads the Git index once for 126 owners, reuses immutable planner initialization within eleven dependency closures, and probes only relevant retirement-inventory files. General/native routing coverage remains 31/280 cases. A quoted managed command that the old retirement scanner missed is now rejected and protected by six focused classification cases in the existing verifier.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on ad6d643f. Tools/Verify/Verify-Verification-Plan.ps1 SHA-256 0fae1d8b9ba6ae38cefdaca31217ca89e38ad6e1d3677e03455b3bb20b0312f4; Tools/Verify/Verify-Native-Development-Dependencies.ps1 SHA-256 f3590d2163f642109bd310a054107f084095279295f41092b1f98c3d8118d7d0; Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1 SHA-256 96b1e26fda9cabee3d08ae7087ecf25d8f998a4502a248bdf63e2d440bd66413."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Prior full routing guard at previous source state",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1 (prior packaging evidence)",
+      "result": "Passed",
+      "elapsedMilliseconds": 47216,
+      "peakWorkingSetBytes": 224493568
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "All existing routing contracts plus quoted managed-command cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 38607,
+      "peakWorkingSetBytes": 222015488
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Before: 126 independent Git index queries for registered Linux owner modes",
+      "tool": "git",
+      "command": "For each Verification-Owners.txt command: git ls-files -s -- Tools/Native/<command>.sh",
+      "result": "Passed",
+      "elapsedMilliseconds": 5834
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "After: one Git index query, 188 matching script rows",
+      "tool": "git",
+      "command": "git ls-files -s -- 'Tools/Native/*.sh'",
+      "result": "Passed",
+      "elapsedMilliseconds": 43
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Retirement inventory before filtering candidate names first",
+      "tool": "Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1",
+      "command": "& Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1 -Quiet (original source)",
+      "result": "Passed",
+      "elapsedMilliseconds": 2018
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Retirement inventory after filtering candidate names first",
+      "tool": "Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1",
+      "command": "& Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1 -Quiet",
+      "result": "Passed",
+      "elapsedMilliseconds": 650
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Eleven dependency closures with repeated planner initialization",
+      "tool": "Tools/Verify/Verify-Native-Development-Dependencies.ps1",
+      "command": "& Tools/Verify/Verify-Native-Development-Dependencies.ps1 -Quiet (original source)",
+      "result": "Passed",
+      "elapsedMilliseconds": 3815
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Eleven dependency closures sharing invocation-local immutable planner initialization",
+      "tool": "Tools/Verify/Verify-Native-Development-Dependencies.ps1",
+      "command": "& Tools/Verify/Verify-Native-Development-Dependencies.ps1 -Quiet",
+      "result": "Passed",
+      "elapsedMilliseconds": 1666
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Ten isolated temporary Git-repository fixtures: unchanged tracked/untracked/deleted managed-file and operational-path outcomes; intentional fix for quoted package command",
+      "tool": "Local diagnostic harness, original and revised retirement scanner",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Retirement-Equivalence.mjs",
+      "result": "Passed"
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, PowerShell 7.6.5",
+      "target": "Exact index-block comparison with previous single-owner predicate: executable, non-executable, missing, conflict, case mismatch, unrelated path; Git failure rejection",
+      "tool": "PowerShell local diagnostic harness",
+      "command": "Evaluate the actual index collection block with controlled Git rows and compare its registered-owner outcome with the original count-and-mode predicate",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "These are single Windows observations using the existing worktree and retained tools, not controlled cold-host benchmarks or enforceable thresholds. Component timings were measured inside a PowerShell process and exclude its startup; complete verifier timing includes its own work in a fresh PowerShell process.",
+    "Linux PowerShell validation was not run: the available Debian distribution has Git but no pwsh. No cross-host performance claim is made.",
+    "The scanner comparison initially exposed a pre-existing false negative for a quoted package command. The revised scanner intentionally rejects that case; all other fixture outcomes agree. Six permanent classification cases remain in Verify-Verification-Plan.ps1; the temporary Git/index diagnostic harnesses are not new verifier entry points.",
+    "The full implementation/qualification suites were not run because changed-file planning selected only plan verification, with no native owners or coverage gaps. Compiler/runtime behavior is outside the causal scope of these setup changes.",
+    "Planner initialization is shared only within one verifier invocation. There is no persistent passing-result cache, no reuse across edits, and no omission of selected owner checks. Overall repository qualification remains incomplete and does not meet its performance target.",
+    "Peak working-set measurements cover the main PowerShell process, not aggregate child-process memory."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-06-Hosted-Database-Current-Host-Packaging.json",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Verify/Verify-Verification-Plan.ps1",
+    "Tools/Verify/Verify-Native-Development-Dependencies.ps1",
+    "Tools/Verify/Verify-Dotnet-Retirement-Inventory.ps1"
+  ]
+}

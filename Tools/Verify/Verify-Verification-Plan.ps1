@@ -4783,7 +4783,23 @@ $NativeCases = @(
 )
 
 Write-Host 'START verification plan phase=contracts item=1/3'
-& $RetirementInventoryVerifier -Quiet
+& {
+    . $RetirementInventoryVerifier -Quiet
+    $ManagedCommandName = 'dot' + 'net'
+    foreach ($InvocationCase in @(
+        @{ Text = '{"scripts":{"build":"' + $ManagedCommandName + ' build"}}'; Expected = $true },
+        @{ Text = "run: '$ManagedCommandName.exe build'"; Expected = $true },
+        @{ Text = 'echo prepare && ' + $ManagedCommandName + ' build'; Expected = $true },
+        @{ Text = 'actions/setup-' + $ManagedCommandName + '@v4'; Expected = $true },
+        @{ Text = 'dotnet-recovery.md'; Expected = $false },
+        @{ Text = '{"scripts":{"build":"node Build.mjs"}}'; Expected = $false }
+    )) {
+        if ((Test-DirectManagedInvocation -Content $InvocationCase.Text) -ne
+            $InvocationCase.Expected) {
+            throw "Managed entry-point classification differs: $($InvocationCase.Text)"
+        }
+    }
+}
 & $DevelopmentDependencyVerifier -Quiet
 
 $VerificationDurationPlan = Join-Path $RepositoryRoot `
@@ -4833,6 +4849,25 @@ $VerificationOwnerCommands = [System.Collections.Generic.HashSet[string]]::new(
 $VerificationOwnerProfiles = [System.Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 $VerificationOwnerShards = [System.Collections.Generic.HashSet[int]]::new()
+$LinuxIndexRows = @(git -C $RepositoryRoot ls-files -s -- 'Tools/Native/*.sh')
+if ($LASTEXITCODE -ne 0) {
+    throw 'Git could not enumerate Linux verification owner modes.'
+}
+$LinuxIndexModes = [Collections.Generic.Dictionary[string, string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($IndexRow in $LinuxIndexRows) {
+    if ($IndexRow -notmatch '^([0-9]{6}) [0-9a-f]+ [0-3]\t(.+)$') {
+        throw "Malformed Linux verification index entry: $IndexRow"
+    }
+    $IndexMode = $Matches[1]
+    $IndexPath = $Matches[2]
+    # Multiple stages never prove a single executable index entry.
+    if ($LinuxIndexModes.ContainsKey($IndexPath)) {
+        $LinuxIndexModes[$IndexPath] = ''
+    } else {
+        $LinuxIndexModes.Add($IndexPath, $IndexMode)
+    }
+}
 foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
     $Fields = $Line -split '\|', 6
     if ($Fields.Count -ne 6) {
@@ -4875,9 +4910,8 @@ foreach ($Line in $VerificationOwnerLines | Select-Object -Skip 1) {
             throw "The native verification plan is missing owner '$Owner'."
         }
     }
-    $LinuxIndex = @(git -C $RepositoryRoot ls-files -s -- $LinuxOwner)
-    if ($LASTEXITCODE -ne 0 -or $LinuxIndex.Count -ne 1 -or
-        $LinuxIndex[0] -notmatch '^100755 ') {
+    if (!$LinuxIndexModes.ContainsKey($LinuxOwner) -or
+        $LinuxIndexModes[$LinuxOwner] -cne '100755') {
         throw "Linux verification owner '$LinuxOwner' is not executable in Git."
     }
 }

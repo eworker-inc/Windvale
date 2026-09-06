@@ -33,6 +33,17 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The routing guard now reads executable modes once for all 126 owners, shares
+immutable planner initialization across the eleven development dependency
+closures, and checks filesystem existence only for relevant retirement inputs.
+All 31 general and 280 native routing cases still pass. The complete Windows
+guard took 38,607 ms against the preceding 47,216 ms observation; it remains
+above the planner/coverage target. The
+[setup-reuse evidence](../Evidence/2026-09-06-Verification-Guard-Setup-Reuse.json)
+records component costs, the fixed quoted-command detection gap, and the lack
+of Linux PowerShell measurements. Repeated process startup and remaining
+construction work still need reduction.
+
 Hosted database qualification now constructs each ordinary product once and
 packages only the image its host executes. Six hosted construction sites no
 longer repeat opposite-host assembly, linking, or packaging. Dedicated packager
