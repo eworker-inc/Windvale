@@ -1416,7 +1416,12 @@ function Add-Native-Tool-Suite {
         Add-Suite 'segmented-hosted-wvb-cache'
         return
     }
-    if ($Stem -eq 'Native-Hosted-Application-Cache-Core') {
+    if ($Stem -in @(
+        'Native-Hosted-Application-Cache-Core',
+        'Build-Cached-Hosted-Application-Session',
+        'Get-Native-Hosted-Application-Cache-Key',
+        'Test-Hosted-Application-Session'
+    )) {
         Add-Suite 'segmented-hosted-wvb-cache'
         return
     }
@@ -1474,17 +1479,14 @@ function Add-Native-Tool-Suite {
     }
     # Retain retired version-1 stems as deletion tombstones for checkout diffs.
     if ($Stem -in @(
-        'Build-Cached-Hosted-Application-Session',
         'Build-Cached-Linked-Image',
         'Build-Cached-Linked-Image-Set',
         'Build-Cached-Project-Object',
         'Build-Cached-Project-Wvb',
         'Build-Cached-Segmented-Project',
-        'Get-Native-Hosted-Application-Cache-Key',
         'Get-Native-Linked-Image-Cache-Key',
         'Get-Native-Project-Cache-Key',
         'Native-Project-Cache-Key-Core',
-        'Test-Hosted-Application-Session',
         'Test-Linked-Image-Set-Checkpoint',
         'Test-Segmented-Project-Checkpoint',
         'Test-Project-Object-Checkpoint',
@@ -4425,6 +4427,8 @@ foreach ($Path in $Paths) {
             Add-Suite 'wvo-inspector-reconstruction'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Test-Plan.md') {
             $RunPlanVerification = $true
+        } elseif ($Path -eq 'Specifications/Windvale-Hosted-Application-Checkpoint.md') {
+            Add-Suite 'segmented-hosted-wvb-cache'
         } elseif ($Path -eq 'Specifications/Windvale-Native-Tool-Checkpoint.md') {
             Add-Suite 'database-storage'
         } elseif ($Path -eq 'Specifications/Windvale-Console-Application-Verification.md') {

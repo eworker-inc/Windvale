@@ -21,6 +21,7 @@ Projects, packages, installation, applications, capabilities, storage, and servi
 | [Windvale directory-service IPC](../Windvale-Directory-Service-Ipc.md) | Documented |
 | [Windvale immutable directory snapshot](../Windvale-Directory-Snapshot.md) | Implemented |
 | [Windvale filesystem semantic core](../Windvale-Filesystem-Semantics.md) | Candidate |
+| [Windvale hosted-application checkpoint](../Windvale-Hosted-Application-Checkpoint.md) | Implemented |
 | [Windvale hosted compiler application manifest](../Windvale-Hosted-Compiler-Application.md) | Implemented |
 | [Windvale hosted console application contract](../Windvale-Hosted-Console-Application.md) | Documented |
 | [Windvale hosted task scheduling](../Windvale-Hosted-Task-Scheduling.md) | Documented |

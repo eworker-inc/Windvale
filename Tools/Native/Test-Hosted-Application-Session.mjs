@@ -15,6 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+    Readˉboundedˉhostedˉfile,
     Getˉhostedˉapplicationˉcacheˉkey,
     Prepareˉhostedˉapplicationˉcontext
 } from './Native-Hosted-Application-Cache-Core.mjs';
@@ -160,6 +161,23 @@ async function Main() {
         const readyPath = path.join(testRoot, 'Session.txt');
         const prefix = path.join(testRoot, 'Image');
         await mkdir(outputRoot);
+        const boundedInput = path.join(testRoot, 'Bounded.bin');
+        const boundedBytes = Buffer.from([0, 1, 255]);
+        await writeFile(boundedInput, boundedBytes);
+        if (!(await Readˉboundedˉhostedˉfile(boundedInput, 'bounded fixture', 3)).equals(boundedBytes)) {
+            Reject('The exact-bound hosted input changed.');
+        }
+        for (const [candidate, maximum] of [[boundedInput, 2], [outputRoot, 3]]) {
+            let rejected = false;
+            try { await Readˉboundedˉhostedˉfile(candidate, 'bounded fixture', maximum); }
+            catch { rejected = true; }
+            if (!rejected) Reject('An oversized or non-file hosted input was accepted.');
+        }
+        await writeFile(boundedInput, Buffer.alloc(0));
+        let emptyRejected = false;
+        try { await Readˉboundedˉhostedˉfile(boundedInput, 'bounded fixture', 3); }
+        catch { emptyRejected = true; }
+        if (!emptyRejected) Reject('An empty hosted input was accepted.');
         const fragment = Buffer.from([0xc3]);
         await writeFile(`${prefix}.chunk-0`, fragment);
 
@@ -167,6 +185,7 @@ async function Main() {
             TARGET,
             PACKAGER
         );
+        await Requireˉproducerˉfingerprints(context);
         const request = {
             namespace: 'hosted-application-v1',
             profile: '1',
@@ -179,6 +198,17 @@ async function Main() {
             context,
             request
         );
+        for (const label of ['producer:Package-Hosted-Wvb',
+            'producer:Native-Hosted-Application-Cache-Core', 'runtime:node']) {
+            for (const byte of [0, 8]) {
+                const changed = { ...context, producerFields: context.producerFields.map(field =>
+                    ({ label: field.label, bytes: Buffer.from(field.bytes) })) };
+                changed.producerFields.find(field => field.label === label).bytes[byte] ^= 1;
+                if (await Getˉhostedˉapplicationˉcacheˉkey(changed, request) === key) {
+                    Reject('A producer size or digest change did not invalidate the hosted key.');
+                }
+            }
+        }
         const standalone = await Runˉnode([
             KEY_TOOL,
             request.namespace,
@@ -375,4 +405,34 @@ try {
 } catch (error) {
     process.stderr.write(`${error.message}\n`);
     process.exit(1);
+}
+
+async function Requireˉproducerˉfingerprints(context) {
+    if (context.producerFields.reduce((sum, field) => sum + field.bytes.length, 0) > 4096) {
+        Reject('The hosted producer context exceeded its retained-memory bound.');
+    }
+    const labels = new Set(context.producerFields.map(field => field.label));
+    const inventory = await readFile(path.join(REPOSITORY_ROOT,
+        'Artifacts/Native-Hosted-Container-Toolset-Candidate/SHA256SUMS'), 'utf8');
+    for (const line of inventory.trimEnd().split(/\r?\n/u)) {
+        const relative = line.split('  ')[1];
+        if (!labels.has('producer:Artifacts/Native-Hosted-Container-Toolset-Candidate/' + relative)) {
+            Reject('A hosted inventory producer was omitted from the context.');
+        }
+    }
+    for (const field of context.producerFields) {
+        let original;
+        if (field.label === 'runtime:node') original = Buffer.from(process.version, 'ascii');
+        else {
+            const source = field.label === 'producer:Package-Hosted-Wvb' ? PACKAGER :
+                field.label === 'producer:Native-Hosted-Application-Cache-Core' ?
+                    path.join(REPOSITORY_ROOT, 'Tools/Native/Native-Hosted-Application-Cache-Core.mjs') :
+                    path.join(REPOSITORY_ROOT, field.label.slice('producer:'.length));
+            original = await readFile(source);
+        }
+        if (field.bytes.length !== 40 || field.bytes.readBigUInt64LE(0) !== BigInt(original.length) ||
+            !field.bytes.subarray(8).equals(createHash('sha256').update(original).digest())) {
+            Reject('A hosted producer fingerprint differs from its complete file bytes.');
+        }
+    }
 }

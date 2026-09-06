@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-06-hosted-producer-fingerprints",
+  "date": "2026-09-06",
+  "subject": "Bound hosted producer context memory and route session verification to its focused owner",
+  "claim": "Producer contexts retain 3560 bytes of fingerprints instead of 24408113 bytes on Windows and 24404721 bytes on Debian. All 72 inventory artifacts remain read and digest-checked. Context preparation changed from 120 to 73 ms on Windows and from 2733 to 850 ms on Debian; thirty repeated key-hash passes changed from 374/394 to 6/9 ms. Cached two-profile packaging passed with identical bytes and behavior in 23390 ms on Windows and 23962 ms on Debian. Session changes select the existing cache owner instead of a 2540-second database plan, and its twelve cases passed on both hosts.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on cdc27e63. Tools/Native/Native-Hosted-Application-Cache-Core.mjs SHA-256 023762dded3fe39f216512127a8241f91602422a0d12b787ba084f3035801fab; Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs SHA-256 48b51c16602173645193901dba4c863f789e5dab3f8c191053d3db48a1992786; Tools/Native/Test-Hosted-Application-Session.mjs SHA-256 056327c883c0e4f450006e9167bdf04a285ebcfeac76212382213bd079c28788; Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs SHA-256 4c5353c5ed6514e86e71672dbe24eb1d963cbb673e90b53ebb02e8746020a846; Tools/Verify/Get-Native-Changed-Verification-Plan.ps1 SHA-256 7f5a8e5e47e601e18c7052754fa3ce60d7e66ccbb73024fc2af580da69ddf50a; Tests/Native/Verification-Owners.txt SHA-256 11a1aa89fae2f6553a1d3a422503a4a4e850e685eb5398606565f8cbd9e6c8d6."
+  },
+  "runs": [
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "Before producer context: 87 fields, 24408113 retained producer bytes; 30 key-hash passes 374 ms",
+      "tool": "Native-Hosted-Application-Cache-Core.mjs",
+      "command": "node --expose-gc Artifacts/Verification-Redesign-2026-09-06/Measure-Hosted-Context.mjs Before",
+      "result": "Passed",
+      "elapsedMilliseconds": 120,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hosted-Context-Before-Windows.json",
+          "size": 441,
+          "sha256": "25d8a431fa08dfcfdb3df067c99a654b1d2b7a4d1cc40b14fe366c7f744fd205"
+        }
+      ]
+    },
+    {
+      "host": "CodexDev, Windows 10.0.26200, AMD Ryzen 9 3900X, Node 24.18.0",
+      "target": "After producer context: 89 fields, 3560 retained producer bytes; 30 key-hash passes 6 ms",
+      "tool": "Native-Hosted-Application-Cache-Core.mjs",
+      "command": "node --expose-gc Artifacts/Verification-Redesign-2026-09-06/Measure-Hosted-Context.mjs After",
+      "result": "Passed",
+      "elapsedMilliseconds": 73,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hosted-Context-After-Windows.json",
+          "size": 432,
+          "sha256": "7fffc39e6cdf27c86da13a4a2ad673c7d2ed98bf8bd5641957a677c5cb20bb6f"
+        }
+      ]
+    },
+    {
+      "host": "Windows",
+      "target": "Fresh two-profile cached packaging: individual 13062, 10328 ms; each output matches the prior uncached package and executes successfully",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Cache.mjs (profiles 7 and 8, 60-second bound each)",
+      "result": "Passed",
+      "elapsedMilliseconds": 23390,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Windows-7.exe",
+          "size": 888832,
+          "sha256": "f9d06eb41a44166e56c5dc7fd8b9b64eb59992ec9778779cc0ae4ad2a93f61a5"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Windows-8.exe",
+          "size": 888832,
+          "sha256": "96c5250d62eaa290f5c4b588cbb49786b3ba8610fceccee6586420c836464662"
+        }
+      ]
+    },
+    {
+      "host": "WSL Debian, Node 20.19.2, /mnt/d/windvale/dev01",
+      "target": "Before producer context: 87 fields, 24404721 retained producer bytes; 30 key-hash passes 394 ms",
+      "tool": "Native-Hosted-Application-Cache-Core.mjs",
+      "command": "node --expose-gc Artifacts/Verification-Redesign-2026-09-06/Measure-Hosted-Context.mjs Before",
+      "result": "Passed",
+      "elapsedMilliseconds": 2733,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hosted-Context-Before-Linux.json",
+          "size": 438,
+          "sha256": "35891229f2c07886f4252fea507a6a63d7556bece2c954adf4c074a792f2d6bd"
+        }
+      ]
+    },
+    {
+      "host": "WSL Debian, Node 20.19.2, /mnt/d/windvale/dev01",
+      "target": "After producer context: 89 fields, 3560 retained producer bytes; 30 key-hash passes 9 ms",
+      "tool": "Native-Hosted-Application-Cache-Core.mjs",
+      "command": "node --expose-gc Artifacts/Verification-Redesign-2026-09-06/Measure-Hosted-Context.mjs After",
+      "result": "Passed",
+      "elapsedMilliseconds": 850,
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Hosted-Context-After-Linux.json",
+          "size": 427,
+          "sha256": "e3b264c26348e88eefafb9e443ad623389bd09b665f31748a8476bc0f511ee1d"
+        }
+      ]
+    },
+    {
+      "host": "Linux",
+      "target": "Fresh two-profile cached packaging: individual 13450, 10512 ms; each output matches the prior uncached package and executes successfully",
+      "tool": "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "node Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Cache.mjs (profiles 7 and 8, 60-second bound each)",
+      "result": "Passed",
+      "elapsedMilliseconds": 23962,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 82115,
+          "sha256": "69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Linux-7.elf",
+          "size": 888832,
+          "sha256": "e0e9efc8b7506a159485d8d37985e9570ba4cd3f4ee00e491fedb48cf6e35bf2"
+        },
+        {
+          "path": "Artifacts/Verification-Redesign-2026-09-06/Enum-Fingerprint-Linux-8.elf",
+          "size": 888832,
+          "sha256": "216d2228ebff4bff9aab28c6aa56d9449673c62edb2cdf99d1e3f737990c79f4"
+        }
+      ]
+    },
+    {
+      "host": "Windows, PowerShell 7.6.5",
+      "target": "Implementation changed-file gate: routing plus exactly the cache owner; owner 12 cases and 4968 ms",
+      "tool": "Tools/Verify/Verify-Changed.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Changed.ps1 (before specification extraction)",
+      "result": "Passed",
+      "elapsedMilliseconds": 53824,
+      "peakWorkingSetBytes": 228679680
+    },
+    {
+      "host": "WSL Debian, Node 20.19.2",
+      "target": "Final combined cache owner: session/key agreement, 4 KiB fingerprint payload bound, exact file size/digest oracle, size/digest invalidation, file bounds, corruption, races and lifecycle checks",
+      "tool": "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+      "command": "timeout --kill-after=5s 45s node Artifacts/Verification-Redesign-2026-09-06/Measure-Cache-Owner.mjs",
+      "result": "Passed",
+      "elapsedMilliseconds": 10041
+    },
+    {
+      "host": "Windows, PowerShell 7.6.5",
+      "target": "Final routing including the newly separated hosted checkpoint specification; 31 general and 281 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed",
+      "elapsedMilliseconds": 39835
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Single observations with retained tool artifacts. These are not controlled clean-host benchmarks or stable wall-clock thresholds. The workload uses an 82115-byte enum-request WVB, not the full compiler toolset or full qualification graph.",
+    "Retained producer bytes count Buffer payloads held by the context, excluding JavaScript object overhead. RSS/external-memory values in diagnostic outputs are process snapshots after explicit garbage collection, not peak memory or aggregate child-process memory. The main PowerShell peak is recorded separately.",
+    "The previous paired cached workload took 23684 ms on Windows and 31628 ms on Debian, as recorded in the related image-reuse evidence. The Windows timing difference is small; the clearer Windows benefits are lower retained bytes and repeated hashing cost.",
+    "Bounded concurrent preparation preserves input coverage and deterministic order. It retains only eight-byte little-endian sizes and SHA-256 digests; the existing focused session test enforces a 4096-byte producer payload bound and checks every fingerprint against source bytes. Hosted keys use format 2 and include the implementation plus Node version; segmented image keys also include Node version.",
+    "The implementation changed-file gate completed before documentation extraction. The original shared checkpoint specification still conservatively selects database verification when it changes; its hosted section was relocated into a new focused specification. The unchanged database behavior contracts were not rerun for this documentation relocation.",
+    "Complete database, compiler, bootstrap, and paired-host qualification were not run because they are unrelated to these cache contracts and exceed the local development budget. Overall verification redesign and qualification targets remain incomplete."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json",
+    "Specifications/Windvale-Hosted-Application-Checkpoint.md",
+    "Specifications/Windvale-Native-Tool-Checkpoint.md",
+    "Documents/Architecture/Seed-Verification-Throughput.md",
+    "Documents/Project/Verification-Throughput-Plan.md",
+    "Tools/Native/Native-Hosted-Application-Cache-Core.mjs",
+    "Tools/Native/Build-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tools/Native/Test-Hosted-Application-Session.mjs",
+    "Tools/Native/Test-Cached-Segmented-Hosted-Wvb.mjs",
+    "Tools/Verify/Get-Native-Changed-Verification-Plan.ps1",
+    "Tests/Native/Verification-Owners.txt"
+  ]
+}

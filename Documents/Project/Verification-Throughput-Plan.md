@@ -33,6 +33,18 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+Hosted cache/session edits now select their focused owner instead of a
+2,540-second database plan. The existing session test is part of that owner,
+which passed twelve cases in 4,968 ms on Windows and 10,041 ms on Debian; the implementation changed-file
+gate, including routing checks, passed in 53,824 ms. Producer contexts retain 3,560
+bytes of fingerprints instead of about 24.4 MB of file contents. Four bounded
+reads preserve every producer check and reduced observed Debian preparation
+from 2,733 to 850 ms. The paired packaging workload changed from 31,628 to
+23,962 ms on Debian and from 23,684 to 23,390 ms on Windows. The
+[producer-context evidence](../Evidence/2026-09-06-Hosted-Producer-Fingerprints.json)
+records the host measurements and memory limits. Wider qualification and
+compiler-product reuse remain unfinished.
+
 Segmented hosted packaging now shares the staged, linked, and transported
 native image across application profiles, while retaining a separate container
 and producer check for each profile. On the 82,115-byte enum-request workload,

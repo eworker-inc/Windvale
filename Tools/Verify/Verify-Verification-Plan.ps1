@@ -2064,6 +2064,18 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'hosted session and key changes select the cache contract without database execution'
+        Paths = @(
+            'Tools/Native/Build-Cached-Hosted-Application-Session.mjs',
+            'Tools/Native/Get-Native-Hosted-Application-Cache-Key.mjs',
+            'Tools/Native/Test-Hosted-Application-Session.mjs',
+            'Specifications/Windvale-Hosted-Application-Checkpoint.md'
+        )
+        Suites = @('segmented-hosted-wvb-cache')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'retired aggregate verification aliases are deletion tombstones'
         Paths = @(
             'Tools/Native/Test-Retirement-Suite.cmd',

@@ -872,6 +872,7 @@ async function Getˉcacheˉkey(profile, input, hostedContext) {
     for (const [label, value] of [
         ['namespace', CACHE_NAMESPACE],
         ['host', HOST_FAMILY],
+        ['node-runtime', process.version],
         ['target', TARGET],
     ]) {
         Addˉhostedˉkeyˉfield(hash, label, Buffer.from(value, 'ascii'));

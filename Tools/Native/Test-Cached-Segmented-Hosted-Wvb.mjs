@@ -41,6 +41,14 @@ try {
     await mkdir(checkpointFamily);
     await mkdir(outputRoot);
     await Requireˉdevelopmentˉcacheˉrouting(testRoot, outputRoot);
+    const session = await Runˉboundedˉsegmentedˉhostedˉproducer(
+        process.execPath, [path.join(SCRIPT_DIRECTORY, 'Test-Hosted-Application-Session.mjs')],
+        'hosted-session', Date.now() + 30_000,
+    );
+    if (session.stderr.length !== 0 || session.stdout.toString('utf8').trim() !==
+        'native hosted application session status=Passed key=Equivalent concurrent-hits=4 corruption=Rejected malformed=Rejected miss=Unchanged record=Rejected lifecycle=Clean') {
+        Reject('The hosted session did not complete its focused contract checks.');
+    }
     const inputPath = path.join(testRoot, 'Input.wvb');
     const inputBytes = Buffer.from('bounded segmented hosted cache input\n', 'ascii');
     await writeFile(inputPath, inputBytes);
@@ -296,12 +304,12 @@ try {
     }
 
     console.log(
-        'segmented hosted WVB cache test cases=11 status=Passed ' +
+        'segmented hosted WVB cache test cases=12 status=Passed ' +
         'deadline-tree-termination=Passed output-bound-termination=Passed ' +
         'termination-failure-settle=Passed ' +
         'forced-failure-cleanup=Passed publication-cleanup=Passed ' +
         'prepublication-admission=Passed corruption-rejection=Passed race-winner=Passed ' +
-        'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed',
+        'race-cleanup=Passed executable-materialization=Passed image-reuse=Passed hosted-session=Passed',
     );
 } finally {
     const resolved = path.resolve(testRoot);

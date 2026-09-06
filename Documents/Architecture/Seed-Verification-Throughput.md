@@ -161,6 +161,20 @@ uncached wrapper path. See the
 [image-reuse evidence](../Evidence/2026-09-06-Segmented-Image-Profile-Reuse.json)
 for exact package comparisons and the limits of the measured workload.
 
+Hosted producer contexts retain 40-byte fingerprints: an eight-byte little-endian
+size followed by SHA-256, rather than complete producer files. All 72 toolset
+entries are still read and checked against their inventory, in batches of at
+most four; field order follows the inventory regardless of completion order.
+Version-2 hosted application keys also bind the cache-key implementation and
+Node runtime version. The shared reader allocates only the admitted file size
+plus one byte, rejects a changed opened file identity or length, and closes its
+handle on every path. The focused cache owner includes the existing hosted-session
+checks, so session and key-tool edits select that owner instead of all database
+behavior. A 4 KiB producer-payload bound protects the retained context in its
+focused test. See the
+[producer-context evidence](../Evidence/2026-09-06-Hosted-Producer-Fingerprints.json)
+for timing, memory scope, and the unchanged package comparisons.
+
 Implemented database-path checkpoints currently cover:
 
 - source-built project WVB products;
