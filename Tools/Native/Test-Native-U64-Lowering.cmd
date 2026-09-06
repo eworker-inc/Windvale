@@ -29,7 +29,7 @@ set "PageLinuxApplication=%TemporaryDirectory%\Page.elf"
 set "PageFixture=%RepositoryRoot%\Tests\Fixtures\Database\Native-Hosted-Snapshot-Page.txt"
 set "Result=1"
 
-call :verify "%Lowerer%" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda "native lowerer candidate"
+call :verify "%Lowerer%" 10661888 a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd "native lowerer candidate"
 if errorlevel 1 goto :cleanup
 
 call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^

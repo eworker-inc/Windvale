@@ -12,30 +12,31 @@
   "registeredForeignCallRefreshDecision": "0938",
   "staticDataCapacityRefreshDecision": "0939",
   "typeCapacityRefreshDecision": "0941",
+  "terminalLineReadRefreshDecision": "0959",
   "applicationConstruction": "native-segmented-self-reconstruction",
   "artifacts": [
     {
       "name": "wvb-to-wvo-tool-wvb",
       "path": "Wvb-To-Wvo.wvb",
       "target": "canonical-wvb-1.11",
-      "bytes": 747242,
-      "sha256": "7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f",
+      "bytes": 747997,
+      "sha256": "d5a514e72203ab530c6df6da8f444e6bd7f93130921e02042e70c7a7723942dc",
       "sourceProject": "Windvale-Native-X64-Lowering-Tool.wvproj"
     },
     {
       "name": "windows-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.exe",
       "target": "windows-x64-wvb-to-wvo-v1",
-      "bytes": 10656768,
-      "sha256": "0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda",
+      "bytes": 10661888,
+      "sha256": "a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {
       "name": "linux-x64-wvb-to-wvo",
       "path": "Wvb-To-Wvo.elf",
       "target": "linux-x64-wvb-to-wvo-v1",
-      "bytes": 10657792,
-      "sha256": "4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24",
+      "bytes": 10661888,
+      "sha256": "9c331308e5afe852d4c0441e22c1ff68a0ac0c86793c2e403f38556302c90fd3",
       "sourceWvb": "Wvb-To-Wvo.wvb"
     },
     {

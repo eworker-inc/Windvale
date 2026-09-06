@@ -27,7 +27,7 @@ set "Lowerer=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate\Wvb-To-Wvo.e
 
 echo START native standard byte output phase=tools item=1/4 retained-tools=2
 call :verify_file "%BuildDriver%" 30071296 f556f0e2c794d9424cbcd9f5e3f8e5aee54f49373c7c18ea1d4829facea7dc6f || goto :cleanup
-call :verify_file "%Lowerer%" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda || goto :cleanup
+call :verify_file "%Lowerer%" 10661888 a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd || goto :cleanup
 echo PASS  native standard byte output phase=tools item=1/4
 
 echo START native standard byte output phase=compile item=2/4

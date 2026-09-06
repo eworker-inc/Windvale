@@ -7,11 +7,11 @@ set "Candidate=%RepositoryRoot%\Artifacts\Native-Wvb-To-Wvo-Candidate"
 set /a Tests=0
 set /a Passed=0
 
-call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 747242 7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f
+call :check_file "%Candidate%\Wvb-To-Wvo.wvb" 747997 d5a514e72203ab530c6df6da8f444e6bd7f93130921e02042e70c7a7723942dc
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.exe" 10656768 0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda
+call :check_file "%Candidate%\Wvb-To-Wvo.exe" 10661888 a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd
 if errorlevel 1 goto :failed
-call :check_file "%Candidate%\Wvb-To-Wvo.elf" 10657792 4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24
+call :check_file "%Candidate%\Wvb-To-Wvo.elf" 10661888 9c331308e5afe852d4c0441e22c1ff68a0ac0c86793c2e403f38556302c90fd3
 if errorlevel 1 goto :failed
 call :check_file "%Candidate%\Return-42.wvb" 174 7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31
 if errorlevel 1 goto :failed
@@ -96,9 +96,9 @@ call "%RepositoryRoot%\Tools\Native\Build-Wvb.cmd" ^
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Metadata-Verifier-Build.err") do if not "%%~zF"=="0" goto :failed
 set "Phase=metadata-verifier-package"
-call "%RepositoryRoot%\Tools\Native\Package-Hosted-Wvb.cmd" 2 ^
+call "%RepositoryRoot%\Tools\Native\Package-Segmented-Compiler-Wvb.cmd" 2 ^
     "%TestDirectory%\Metadata-Verifier.wvb" ^
-    "%TestDirectory%\Metadata-Verifier.exe" windows ^
+    "%TestDirectory%\Metadata-Verifier.exe" ^
     >"%TestDirectory%\Metadata-Verifier-Package.out" 2>"%TestDirectory%\Metadata-Verifier-Package.err"
 if errorlevel 1 goto :failed
 for %%F in ("%TestDirectory%\Metadata-Verifier-Package.err") do if not "%%~zF"=="0" goto :failed

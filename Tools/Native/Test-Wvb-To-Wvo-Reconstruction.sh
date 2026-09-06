@@ -49,12 +49,12 @@ fail() {
     exit 1
 }
 
-check_file "$candidate/Wvb-To-Wvo.wvb" 747242 \
-    7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f || fail
-check_file "$candidate/Wvb-To-Wvo.exe" 10656768 \
-    0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda || fail
-check_file "$candidate/Wvb-To-Wvo.elf" 10657792 \
-    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 || fail
+check_file "$candidate/Wvb-To-Wvo.wvb" 747997 \
+    d5a514e72203ab530c6df6da8f444e6bd7f93130921e02042e70c7a7723942dc || fail
+check_file "$candidate/Wvb-To-Wvo.exe" 10661888 \
+    a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd || fail
+check_file "$candidate/Wvb-To-Wvo.elf" 10661888 \
+    9c331308e5afe852d4c0441e22c1ff68a0ac0c86793c2e403f38556302c90fd3 || fail
 check_file "$candidate/Return-42.wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 || fail
 check_file "$candidate/Return-42.wvo" 479 \
@@ -147,9 +147,9 @@ phase=metadata-verifier-build
     >/dev/null 2>"$test_directory/Metadata-Verifier-Build.err" || fail
 [[ ! -s $test_directory/Metadata-Verifier-Build.err ]] || fail
 phase=metadata-verifier-package
-"$script_directory/Package-Hosted-Wvb.sh" 2 \
+"$script_directory/Package-Segmented-Compiler-Wvb.sh" 2 \
     "$test_directory/Metadata-Verifier.wvb" \
-    "$test_directory/Metadata-Verifier.elf" linux \
+    "$test_directory/Metadata-Verifier.elf" \
     >"$test_directory/Metadata-Verifier-Package.out" \
     2>"$test_directory/Metadata-Verifier-Package.err" || fail
 [[ ! -s $test_directory/Metadata-Verifier-Package.err ]] || fail

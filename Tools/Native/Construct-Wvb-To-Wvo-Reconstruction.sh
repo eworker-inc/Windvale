@@ -126,14 +126,14 @@ verify_file() {
     fi
 }
 
-verify_file "$lowerer_wvb" 747242 \
-    7cc1867200d747c3b694f7bd35b3f9128dbb7bcc8223ebd46ead234a22680a3f \
+verify_file "$lowerer_wvb" 747997 \
+    d5a514e72203ab530c6df6da8f444e6bd7f93130921e02042e70c7a7723942dc \
     'WVB-to-WVO tool WVB' || exit 1
-verify_file "$windows_application" 10656768 \
-    0a0894901341d71ef09712fb63ed0a9f7ac2b93c64b357d123dd09674045cfda \
+verify_file "$windows_application" 10661888 \
+    a46d73ada72fba9561e9db1fcfc5477bf19be2518ad9db2d8487184112923dfd \
     'Windows WVB-to-WVO application' || exit 1
-verify_file "$linux_application" 10657792 \
-    4f7aa0abdf870ada362defee6258ba4e6b8ce1f0f67329563d20ed3eb6c9ff24 \
+verify_file "$linux_application" 10661888 \
+    9c331308e5afe852d4c0441e22c1ff68a0ac0c86793c2e403f38556302c90fd3 \
     'Linux WVB-to-WVO application' || exit 1
 verify_file "$return_wvb" 174 \
     7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31 \
