@@ -41,6 +41,16 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+SHA-256 compression now expresses its fixed rotations directly, removing 576
+variable-distance helper calls per block. Repeated benchmark medians fell from
+2.192 to 2.107 seconds on Windows and 2.271 to 2.130 seconds on Debian. All 20
+existing streaming owner cases pass on both hosts with identical bytecode. The
+[rotation evidence](../Evidence/2026-09-06-Sha256-Constant-Rotations.json) records
+the modest gain, 1.5% benchmark bytecode growth and unadopted two-round trial.
+Packaged hashing tools remain unchanged. Investigate the existing native
+SHA-256 intrinsic for regions contained in one buffer while preserving the
+bounded streaming path for larger regions; that larger optimization is pending.
+
 A bounded source-set read-reuse trial showed no useful performance gain and
 was discarded. Reducing thirteen response reads to three preserved output
 bytes on both hosts, but whole packaging changed by less than 2%; isolated
