@@ -16,8 +16,9 @@ model. Credential custody and model-catalog administration remain in the hosted
 launcher. The interactive chat, commands, exact model request construction,
 typed model failures, and bounded history are migrated into
 `Applications/Model-Chat/Windvale-Model-Chat.wv`. Windows and Linux launch
-scripts are intended to build that native application reproducibly and then
-start it through the temporary Node credential/network supervisor.
+scripts select that application only after it has been published by the
+separate reproducible construction entry point; otherwise they retain the
+implemented hosted chat. No ordinary chat launch hides a cold compiler build.
 
 The command supports the gateway's exact `openai`, `anthropic`, and `google`
 bindings over authenticated HTTPS. It is not a provider router, automatic model
@@ -123,7 +124,7 @@ mutation resubmission.
 
 ## Required executable evidence and boundary
 
-The quick `model-chat` owner defines ten hosted-supervisor cases, while the
+The quick `model-chat` owner defines eleven hosted-supervisor cases, while the
 separate `Test-Model-Chat-Native-Construction` entry point defines 32 Windvale
 cases and is intentionally not part of fast normal feedback. The hosted cases
 cover command admission, secret-option rejection, masked credential custody,
@@ -138,7 +139,9 @@ before the native path is promoted. It makes no public-network call and reads
 no real credential.
 
 The executable command itself uses the production supervised gateway and can
-make live calls when a user supplies a valid protected credential. Live provider
+make live calls when a user supplies a valid protected credential. A published
+native artifact selects the Windvale UI; its absence selects the existing
+hosted UI. Live provider
 availability is operational evidence, not deterministic acceptance. The Node
 process remains the implemented command and a temporary supervised host adapter
 for protected unlock, credential custody, provider HTTPS, and private

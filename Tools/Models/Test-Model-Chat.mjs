@@ -6,6 +6,7 @@ import {
 import {
     Decodeˉgatewayˉmodelˉrequest,
     Encodeˉgatewayˉcatalogˉresponse,
+    Encodeˉgatewayˉgenerationˉresponse,
     Modelˉgatewayˉstatus,
 } from "../../Runtime/Hosted/Models/External-Model-Gateway-Core.mjs";
 import {
@@ -31,8 +32,9 @@ const WRAPPER = await Createˉprotectedˉcredential({
 });
 const METADATA = Inspectˉprotectedˉcredential(WRAPPER);
 
-function Fakeˉterminal(Masked = []) {
+function Fakeˉterminal(Masked = [], Lines = []) {
     const Secrets = [...Masked];
+    const Visible = [...Lines];
     const Secretˉbuffers = [];
     const Output = [];
     return {
@@ -46,6 +48,7 @@ function Fakeˉterminal(Masked = []) {
             Secretˉbuffers.push(Bytes);
             return Bytes;
         },
+        readLine: () => Visible.length === 0 ? null : Visible.shift(),
     };
 }
 
@@ -192,6 +195,36 @@ Test("chat delegates UI and history to the native Windvale application", async (
     assert.ok(Observed.nativeWrapper.every(Byte => Byte === 0));
     assert.ok(Observed.nativePassphrase.every(Byte => Byte === 0));
     assert.equal(Terminal.output.join(""), "");
+});
+
+Test("chat keeps the hosted UI when no native application is published", async () => {
+    const Observed = {};
+    const Terminal = Fakeˉterminal([PASSPHRASE_TEXT], ["hello", ":quit"]);
+    const Fallback = Dependencies(Observed);
+    Fallback.nativeApplicationPath = () => null;
+    Fallback.gatewayFactory = () => ({
+        ready: async () => Ready(),
+        request: async Bytes => {
+            const Request = Decodeˉgatewayˉmodelˉrequest(Buffer.from(Bytes));
+            Observed.generationRequest = Request;
+            return Encodeˉgatewayˉgenerationˉresponse({
+                requestId: Request.requestId,
+                generation: 1n,
+                completion: 1,
+                model: "gpt-test",
+                text: "answer",
+            });
+        },
+        teardown: async () => { Observed.gatewayClosed = true; },
+    });
+    assert.equal(await Executeˉmodelˉchat({
+        arguments: ["chat", "--credential", "openai.wvsc", "--model", "gpt-test"],
+        terminal: Terminal,
+        dependencies: Fallback,
+    }), 0);
+    assert.equal(Observed.generationRequest.messages[0].content, "hello");
+    assert.match(Terminal.output.join(""), /model> answer\nChat closed\./);
+    assert.equal(Observed.gatewayClosed, true);
 });
 
 Test("native Windvale exit status is propagated exactly", async () => {
