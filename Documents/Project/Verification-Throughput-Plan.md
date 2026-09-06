@@ -33,6 +33,16 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+The complete 27-case foreign-binding owner now passes warm in 4,492 ms on
+Windows, versus 7,324 ms for the prior coordinator with equally warm lower-level
+caches. The current compiler pair is a separate validated product, so a hit
+skips all twelve pinned/intermediate preparation steps and builds only the two
+requested projects. Its 23-case cache sentinel passes on Windows and Debian.
+The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
+records unchanged WVB identities and the limits of this comparison. The approved
+fully cold baseline still took 59.5 minutes; only 1,735 ms was behavior execution.
+Cold compiler construction and full paired-host qualification remain open.
+
 Three branch-page cases now share one segmented product. Fresh Windows
 construction and execution passed in 52,110 ms; the separate-product baseline
 was still incomplete at its 210-second bound after two passes. Development
@@ -53,8 +63,8 @@ passed in 5,107 ms on Windows and 11,155 ms on Debian; the complete Windows
 changed-file plan passed in 57,312 ms. The
 [final-product reuse evidence](../Evidence/2026-09-06-Split-Final-Product-Reuse.json)
 records the reproduced rebuild and coverage limits. This removes an avoidable
-rebuild path; it does not yet remove current-compiler preparation or establish
-the cold qualification target.
+rebuild path; the current-pair checkpoint above also removes earlier coordinator
+setup on a hit. Cold qualification remains outside the target.
 
 Hosted cache/session edits now select their focused owner instead of a
 2,540-second database plan. The existing session test is part of that owner,
@@ -65,8 +75,8 @@ reads preserve every producer check and reduced observed Debian preparation
 from 2,733 to 850 ms. The paired packaging workload changed from 31,628 to
 23,962 ms on Debian and from 23,684 to 23,390 ms on Windows. The
 [producer-context evidence](../Evidence/2026-09-06-Hosted-Producer-Fingerprints.json)
-records the host measurements and memory limits. Wider qualification and
-compiler-product reuse remain unfinished.
+records the host measurements and memory limits. Cold compiler construction and
+wider qualification remain unfinished.
 
 Segmented hosted packaging now shares the staged, linked, and transported
 native image across application profiles, while retaining a separate container

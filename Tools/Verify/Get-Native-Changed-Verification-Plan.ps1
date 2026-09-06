@@ -1457,6 +1457,7 @@ function Add-Native-Tool-Suite {
     }
     if ($Stem -in @(
         'Build-Cached-Split-Project-Wvb',
+        'Current-Split-Compiler-Cache-Core',
         'Test-Cached-Split-Project-Wvb',
         'Test-Compiler-Split-Development'
     )) {
@@ -1665,7 +1666,6 @@ function Add-Native-Tool-Suite {
     } elseif ($Stem -eq 'Build-Current-Split-Project-Wvb') {
         Add-Suite @(
             'compiler-split-development',
-            'wvb-runner-reconstruction',
             'language-1-authenticated-foreign-binding'
         )
     } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {

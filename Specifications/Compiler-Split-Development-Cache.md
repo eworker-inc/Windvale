@@ -144,7 +144,7 @@ the per-project split-cache key nor the resulting bytes.
 
 The focused development owner validates the adapter's fixed optimized route,
 requires the exact 308-byte reachable pruning oracle and its exact 395-byte
-complete counterpart, and executes a fourteen-case cache sentinel. The sentinel
+complete counterpart, and executes a twenty-three-case cache sentinel. The sentinel
 proves module ordering, identity publication, failure cleanup, replacement and
 quarantine race safety, primary-plus-cleanup diagnostics, the root-first raw
 Project 2 argument and WVSS/WVCA/WVLB/WVIR output order, resumable WVSY reuse
@@ -157,6 +157,52 @@ Compiler analysis/emission core changes select that broader semantic gate once;
 split adapter, identity, and cache changes select this focused owner. Full
 storage, OS, complete native, and paired-host qualification remain final
 integration gates unless this boundary changes them directly.
+
+## Reusable current compiler pair
+
+`Build-Current-Split-Project-Wvb.mjs` acquires the current analyzer and emitter
+as one development construction product before building requested projects.
+A validated pair skips pinned compiler packaging and all intermediate compiler
+construction. A miss uses the existing twelve preparation steps and publishes
+only the completed pair; existing intermediate caches remain independently
+reusable. This does not make a genuinely cold compiler preparation fit the local
+development budget or turn cached construction into qualification evidence.
+
+The `current-split-compiler-v1` family is separated by `win32-x64` or
+`linux-x64`. Its key binds the workspace marker, both compiler project manifests
+and their complete declared source closures, pinned analyzer/emitter WVB bytes,
+the coordinator and split-cache implementations, source ordering, producer
+identity writing, all segmented staging/linking/transport/admission producers,
+the hosted packager's complete producer context, and the Node version and
+executable identity. Requested test projects are separate downstream products.
+Every input is remeasured before accepting a hit and before publishing a miss.
+
+Each checkpoint contains exactly `Analyzer.exe`/`Emitter.exe` on Windows or
+`Analyzer.elf`/`Emitter.elf` on Linux, their two `.identity` files, and
+`Checkpoint.json`. Each executable is nonempty and at most 64 MiB; each identity
+is at most 1 KiB and must exactly describe its corresponding executable and
+role. The record is at most 4 KiB of canonical UTF-8 JSON with a final LF:
+`format`, `key`, `host`, and four ordered `products` containing `name`, `bytes`,
+and `sha256`. The format is `windvale-current-split-compiler-checkpoint-1`.
+The implementation compares canonical record bytes rather than accepting extra
+fields or alternate serialization.
+
+Paths must be canonical ordinary files/directories without links; Linux
+executables must retain an execute permission bit. Directory
+inventory is bounded before reading product bytes. Missing, additional,
+corrupt, oversized, wrong-role, or wrong-host products fail before use; a corrupt
+hit never silently starts reconstruction. Hashing uses 1 MiB stream buffers.
+Production uses a private sibling directory and atomic directory publication.
+Concurrent writers must produce identical complete records. Failure cleanup
+removes only its own private candidate and retains completed checkpoints owned
+by other stages. Forced process termination may leave an unpublished candidate;
+lookup never treats that private directory as a completed checkpoint.
+
+The existing split-cache sentinel also covers current-pair reuse, corruption,
+identity mismatch, size and link rejection, changed inputs and keys,
+interruption cleanup, concurrent publication, and excess inventory. The ordinary
+coordinator route keeps that owner and the foreign-binding integration owner;
+it no longer rebuilds the WVB runner merely to replay compiler preparation.
 
 ## Compiler-scale development sentinel
 

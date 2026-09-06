@@ -1,3 +1,5 @@
+import Assert from 'node:assert/strict';
+import { Acquireˉcurrentˉsplitˉcompiler } from './Current-Split-Compiler-Cache-Core.mjs';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -5,10 +7,13 @@ import {
     chmod,
     mkdtemp,
     mkdir,
+    open,
     readFile,
     readdir,
+    realpath,
     rename,
     rm,
+    symlink,
     writeFile,
 } from 'node:fs/promises';
 import os from 'node:os';
@@ -522,8 +527,9 @@ try {
         );
     }
     await Verifyˉsymbolˉcheckpointˉresume(Testˉroot, Outputˉroot);
+    await Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot);
     console.log(
-        'split project cache test cases=14 status=Passed ' +
+        'split project cache test cases=23 status=Passed current-compiler-pair=Verified ' +
         'module-order=Passed identity-publication=Passed ' +
         'forced-failure-cleanup=Passed replacement-race=Passed ' +
         'primary-cleanup-diagnostics=Passed ' +
@@ -871,4 +877,125 @@ function Sameˉpath(Left, Right) {
 
 function Reject(Message) {
     throw new Error(Message);
+}
+
+async function Verifyˉcurrentˉcompilerˉcheckpoint(Testˉroot) {
+    const Family = path.join(Testˉroot, 'current-compiler-pair');
+    await mkdir(Family);
+    const Key = '1'.repeat(64);
+    const Suffix = process.platform === 'win32' ? 'exe' : 'elf';
+    let Constructions = 0;
+    let Inputˉchecks = 0;
+    const Unchanged = async () => { Inputˉchecks += 1; };
+    const Produce = async Place => {
+        Constructions += 1;
+        for (const [Name, Role] of [['Analyzer', 'analyzer'], ['Emitter', 'emitter']]) {
+            const Bytes = Buffer.from(`bounded ${Role} fixture`);
+            const Digest = createHash('sha256').update(Bytes).digest('hex');
+            await writeFile(path.join(Place, `${Name}.${Suffix}`), Bytes, { mode: 0o755 });
+            await writeFile(path.join(Place, `${Name}.identity`), Identity(Role, Bytes.length, Digest));
+        }
+    };
+    const Neverˉproduce = async () => Reject('Unexpected current compiler reconstruction.');
+    const Cold = await Acquireˉcurrentˉsplitˉcompiler(Family, Key, Produce, Unchanged);
+    const Warm = await Acquireˉcurrentˉsplitˉcompiler(Family, Key, Neverˉproduce, Unchanged);
+    Assert.equal(Cold.status, 'Created');
+    Assert.equal(Warm.status, 'Hit');
+    Assert.equal(Cold.directory, Warm.directory);
+    Assert.equal(Constructions, 1);
+    Assert.equal(Inputˉchecks, 3);
+
+    const Product = path.join(Cold.directory, `Analyzer.${Suffix}`);
+    const Original = await readFile(Product);
+    await writeFile(Product, Buffer.from('corrupt product'));
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged), /analyzer identity differs/);
+    await writeFile(Product, Original);
+
+    const Record = path.join(Cold.directory, 'Checkpoint.json');
+    const Originalˉrecord = await readFile(Record);
+    await writeFile(Record, Buffer.from('{}\n'));
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged), /checkpoint record differs/);
+    await writeFile(Record, Originalˉrecord);
+
+    const Productˉidentity = path.join(Cold.directory, 'Analyzer.identity');
+    const Originalˉidentity = await readFile(Productˉidentity);
+    await writeFile(Productˉidentity, Originalˉidentity.toString().replace(
+        'source-analysis-v1', 'portable-wvb-optimized-v1'));
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged), /analyzer identity differs/);
+    await writeFile(Productˉidentity, Originalˉidentity);
+
+    const Handle = await open(Product, 'r+');
+    try { await Handle.truncate(67_108_865); }
+    finally { await Handle.close(); }
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged), /bounded ordinary file/);
+    await writeFile(Product, Original);
+    if (process.platform === 'linux') {
+        await chmod(Product, 0o644);
+        try {
+            await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+                Family, Key, Neverˉproduce, Unchanged), /bounded ordinary file/);
+        } finally { await chmod(Product, 0o755); }
+    }
+    const Holding = path.join(Family, 'held-valid-pair');
+    await rename(Cold.directory, Holding);
+    try {
+        await symlink(Holding, Cold.directory, process.platform === 'win32' ? 'junction' : 'dir');
+        await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+            Family, Key, Neverˉproduce, Unchanged), /link or non-directory/);
+    } finally {
+        // The link and its resolved target are both inside this private test family.
+        const Resolved = await realpath(Cold.directory);
+        Assert.equal(Resolved, Holding);
+        await rm(Cold.directory, { recursive: true, force: true });
+        await rename(Holding, Cold.directory);
+    }
+
+    const Changed = async () => Reject('Compiler inputs changed.');
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Changed), /Compiler inputs changed/);
+    const Changedˉkey = '2'.repeat(64);
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Changedˉkey, Produce, Changed), /Compiler inputs changed/);
+    Assert.equal((await readdir(Family)).includes(Changedˉkey), false);
+    const Changedˉproduct = await Acquireˉcurrentˉsplitˉcompiler(
+        Family, Changedˉkey, Produce, Unchanged);
+    Assert.equal(Changedˉproduct.status, 'Created');
+
+    const Interruptedˉkey = '3'.repeat(64);
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Interruptedˉkey, async Place => {
+            await writeFile(path.join(Place, `Analyzer.${Suffix}`), Original);
+            Reject('Compiler construction interrupted.');
+        }, Unchanged), /construction interrupted/);
+    Assert.equal((await readdir(Family)).some(Name => Name.startsWith('.new-')), false);
+    Assert.equal((await readdir(Family)).includes(Interruptedˉkey), false);
+
+    const Raceˉkey = '4'.repeat(64);
+    let Arrivals = 0;
+    let Release;
+    const Ready = new Promise(Resolve => { Release = Resolve; });
+    const Racingˉproducer = async Place => {
+        await Produce(Place);
+        Arrivals += 1;
+        if (Arrivals === 2) Release();
+        await Ready;
+    };
+    const Race = await Promise.all([
+        Acquireˉcurrentˉsplitˉcompiler(Family, Raceˉkey, Racingˉproducer, Unchanged),
+        Acquireˉcurrentˉsplitˉcompiler(Family, Raceˉkey, Racingˉproducer, Unchanged),
+    ]);
+    Assert.deepEqual(Race.map(Value => Value.status).sort(), ['Created', 'Hit']);
+    Assert.equal((await readdir(Family)).some(Name => Name.startsWith('.new-')), false);
+
+    const Extra = path.join(Cold.directory, 'Unexpected');
+    await writeFile(Extra, Buffer.from('extra'));
+    await Assert.rejects(() => Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged), /inventory bound/);
+    await rm(Extra);
+    Assert.equal((await Acquireˉcurrentˉsplitˉcompiler(
+        Family, Key, Neverˉproduce, Unchanged)).status, 'Hit');
 }

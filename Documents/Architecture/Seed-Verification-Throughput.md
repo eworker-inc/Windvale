@@ -138,6 +138,18 @@ failure domain.
 
 ## Development checkpoints
 
+The current split-compiler coordinator now acquires the complete analyzer/emitter
+pair before building requested projects. Its key binds both complete compiler
+source closures and every construction producer; its two applications and two
+identities are validated together. A hit needs no pinned or intermediate
+construction. The [compiler-pair evidence](../Evidence/2026-09-06-Current-Compiler-Pair-Reuse.json)
+records all 27 foreign-binding cases at 4,492 ms warm on Windows, versus 7,324 ms
+with the prior coordinator and equally warm caches. The 59.5-minute genuinely
+cold baseline remains separate. The
+[split-cache contract](../../Specifications/Compiler-Split-Development-Cache.md#reusable-current-compiler-pair)
+defines bounds, invalidation and failure handling; cache correctness cases run
+inside the existing split-development owner on both hosts.
+
 Content-addressed checkpoints may accelerate deterministic construction during
 development. A valid key includes all input digests, producing tool identity,
 target/profile, relevant options, and the checkpoint format. Every hit must

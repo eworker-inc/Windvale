@@ -2149,6 +2149,13 @@ $NativeCases = @(
         VerifyPlan = $false
     },
     @{
+        Name = 'current compiler pair cache excludes downstream reconstruction'
+        Paths = @('Tools/Native/Current-Split-Compiler-Cache-Core.mjs')
+        Suites = @('compiler-split-development')
+        Gaps = @()
+        VerifyPlan = $false
+    },
+    @{
         Name = 'split cache verifier edits remain focused'
         Paths = @(
             'Tools/Native/Test-Cached-Split-Project-Wvb.mjs',
@@ -2186,7 +2193,6 @@ $NativeCases = @(
             'Tools/Native/Build-Current-Split-Project-Wvb.mjs'
         )
         Suites = @(
-            'wvb-runner-reconstruction',
             'language-1-authenticated-foreign-binding',
             'compiler-split-development'
         )

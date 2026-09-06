@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
+    copyFileSync,
     lstatSync,
     mkdtempSync,
     readFileSync,
@@ -10,6 +11,11 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    Acquireˉcurrentˉsplitˉcompiler,
+    Getˉcurrentˉsplitˉcompilerˉfamily,
+    Getˉcurrentˉsplitˉcompilerˉkey,
+} from './Current-Split-Compiler-Cache-Core.mjs';
 
 const MAXIMUM_DIAGNOSTIC_BYTES = 1_048_576;
 const MAXIMUM_INPUT_BYTES = 16_777_216;
@@ -100,62 +106,84 @@ const Emitterˉwvb = path.join(Work, 'Emitter.wvb');
 const Emitter = path.join(Work, `Emitter${Suffix}`);
 const Emitterˉidentity = path.join(Work, 'Emitter.identity');
 let Step = 0;
-const Totalˉsteps = 12 + Targets.length;
+let Totalˉsteps = 12 + Targets.length;
 
 try {
-    await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
-    ]);
-    await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
-    ]);
-    const Pinnedˉanalyzerˉidentity = path.join(
-        Work, 'Pinned-Analyzer.identity',
+    const Compilerˉkey = await Getˉcurrentˉsplitˉcompilerˉkey();
+    const Compilerˉcheckpoint = await Acquireˉcurrentˉsplitˉcompiler(
+        await Getˉcurrentˉsplitˉcompilerˉfamily(),
+        Compilerˉkey,
+        async Candidate => {
+            await Runˉnative('pinned-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+                '7', Pinnedˉanalyzerˉwvb, Pinnedˉanalyzer, '--development-cache',
+            ]);
+            await Runˉnative('pinned-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+                '8', Pinnedˉemitterˉwvb, Pinnedˉemitter, '--development-cache',
+            ]);
+            const Pinnedˉanalyzerˉidentity = path.join(
+                Work, 'Pinned-Analyzer.identity',
+            );
+            const Pinnedˉemitterˉidentity = path.join(
+                Work, 'Pinned-Emitter.identity',
+            );
+            await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+                'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
+            ]);
+            await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+                'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
+            ]);
+            await Runˉnode('stage1-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+                Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
+                Analyzerˉwvb,
+                Pinnedˉanalyzer,
+                Pinnedˉanalyzerˉidentity,
+                Pinnedˉemitter,
+                Pinnedˉemitterˉidentity,
+            ]);
+            await Runˉnative('stage1-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+                '7', Analyzerˉwvb, Analyzer, '--development-cache',
+            ]);
+            await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+                'analyzer', Analyzer, Analyzerˉidentity,
+            ]);
+            await Runˉnative('stage1-checkpoint-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
+                '8', Analyzerˉwvb, Checkpointˉanalyzer, '--development-cache',
+            ]);
+            await Runˉnode('stage1-checkpoint-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+                'analyzer', Checkpointˉanalyzer, Checkpointˉanalyzerˉidentity,
+            ]);
+            await Runˉnode('stage1-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
+                Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
+                Emitterˉwvb,
+                Checkpointˉanalyzer,
+                Checkpointˉanalyzerˉidentity,
+                Pinnedˉemitter,
+                Pinnedˉemitterˉidentity,
+                '--symbol-checkpoint',
+            ]);
+            await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
+                '8', Emitterˉwvb, Emitter, '--development-cache',
+            ]);
+            await Runˉnode('stage1-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
+                'emitter', Emitter, Emitterˉidentity,
+            ]);
+            for (const Product of [Analyzer, Analyzerˉidentity, Emitter, Emitterˉidentity]) {
+                copyFileSync(Product, path.join(Candidate, path.basename(Product)));
+            }
+        },
+        async () => {
+            if (await Getˉcurrentˉsplitˉcompilerˉkey() !== Compilerˉkey) {
+                Reject('Current compiler construction inputs changed.');
+            }
+        },
     );
-    const Pinnedˉemitterˉidentity = path.join(
-        Work, 'Pinned-Emitter.identity',
+    if (Compilerˉcheckpoint.status === 'Hit' && Step === 0) {
+        Totalˉsteps = Targets.length;
+    }
+    process.stdout.write(
+        'current split compiler cache status=' + Compilerˉcheckpoint.status +
+        ' key=' + Compilerˉkey + '\n',
     );
-    await Runˉnode('pinned-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Pinnedˉanalyzer, Pinnedˉanalyzerˉidentity,
-    ]);
-    await Runˉnode('pinned-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Pinnedˉemitter, Pinnedˉemitterˉidentity,
-    ]);
-    await Runˉnode('stage1-analyzer-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Analysis-Driver.wvproj'),
-        Analyzerˉwvb,
-        Pinnedˉanalyzer,
-        Pinnedˉanalyzerˉidentity,
-        Pinnedˉemitter,
-        Pinnedˉemitterˉidentity,
-    ]);
-    await Runˉnative('stage1-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '7', Analyzerˉwvb, Analyzer, '--development-cache',
-    ]);
-    await Runˉnode('stage1-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Analyzer, Analyzerˉidentity,
-    ]);
-    await Runˉnative('stage1-checkpoint-analyzer-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Analyzerˉwvb, Checkpointˉanalyzer, '--development-cache',
-    ]);
-    await Runˉnode('stage1-checkpoint-analyzer-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'analyzer', Checkpointˉanalyzer, Checkpointˉanalyzerˉidentity,
-    ]);
-    await Runˉnode('stage1-emitter-build', 'Build-Cached-Split-Project-Wvb.mjs', [
-        Projectˉpath('Windvale-Compiler-Emission-Driver.wvproj'),
-        Emitterˉwvb,
-        Checkpointˉanalyzer,
-        Checkpointˉanalyzerˉidentity,
-        Pinnedˉemitter,
-        Pinnedˉemitterˉidentity,
-        '--symbol-checkpoint',
-    ]);
-    await Runˉnative('stage1-emitter-package', 'Package-Segmented-Compiler-Wvb', [
-        '8', Emitterˉwvb, Emitter, '--development-cache',
-    ]);
-    await Runˉnode('stage1-emitter-identity', 'Write-Split-Compiler-Producer-Identity.mjs', [
-        'emitter', Emitter, Emitterˉidentity,
-    ]);
     const Evidence = [];
     for (const [Index, Target] of Targets.entries()) {
         const Label = Targets.length === 1
@@ -164,10 +192,10 @@ try {
         await Runˉnode(Label, 'Build-Cached-Split-Project-Wvb.mjs', [
             Target.Project,
             Target.Output,
-            Analyzer,
-            Analyzerˉidentity,
-            Emitter,
-            Emitterˉidentity,
+            path.join(Compilerˉcheckpoint.directory, 'Analyzer' + Suffix),
+            path.join(Compilerˉcheckpoint.directory, 'Analyzer.identity'),
+            path.join(Compilerˉcheckpoint.directory, 'Emitter' + Suffix),
+            path.join(Compilerˉcheckpoint.directory, 'Emitter.identity'),
             '--symbol-checkpoint',
         ]);
         const Targetˉevidence = Fileˉevidence(
