@@ -41,6 +41,17 @@ phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
 
+A bounded source-set read-reuse trial showed no useful performance gain and
+was discarded. Reducing thirteen response reads to three preserved output
+bytes on both hosts, but whole packaging changed by less than 2%; isolated
+Windows execution was slightly slower with essentially unchanged memory use.
+The [trial evidence](../Evidence/2026-09-06-Source-Set-Read-Reuse-Trial.json)
+records the measurements and unchanged production tools. The source-set phase
+still takes about 20 seconds on the 10.6 MB workload. Investigate native hashing
+cost and sharing independently valid digest products before optimizing more
+file reads; full cold compiler preparation remains unmeasured after the earlier
+hashing-tool promotion.
+
 Foundation borrow component verification now offers one 225-group development
 product over the existing plan, typed-directory and owner-flow tests. Fresh
 test-product construction and execution took 85.3 seconds on Windows and 92.1
