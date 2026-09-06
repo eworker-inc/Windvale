@@ -1,0 +1,82 @@
+module Modelˉchatˉcoreˉselfˉtest profile portable;
+
+import Windvaleˉmodelˉchatˉcore as Chat;
+import Windvaleˉmodelˉprotocol as Protocol;
+
+fn Commandˉcases() -> bool {
+    let Empty: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread("");
+    let Help: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread(":help");
+    let Clear: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread(":clear");
+    let Quit: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread(":quit");
+    let Unknown: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread(":model");
+    return Empty.Kind == Chat.Modelˉchatˉcommandˉkind.Empty &&
+        Help.Kind == Chat.Modelˉchatˉcommandˉkind.Help &&
+        Clear.Kind == Chat.Modelˉchatˉcommandˉkind.Clear &&
+        Quit.Kind == Chat.Modelˉchatˉcommandˉkind.Quit &&
+        Unknown.Kind == Chat.Modelˉchatˉcommandˉkind.Message;
+}
+
+fn Oneˉturnˉcases() -> bool {
+    let Empty: bytes = Chat.Modelˉchatˉhistoryˉempty();
+    let Prepared: Chat.Modelˉchatˉhistoryˉresult =
+        Chat.Modelˉchatˉprepare(Empty, "hello");
+    if Prepared.Status != Chat.Modelˉchatˉhistoryˉstatus.Valid ||
+        Bytesˉreadˉu32ˉlittle(Prepared.Messages, 12u32) != 1u32 { return false; }
+    let Committed: Chat.Modelˉchatˉhistoryˉresult =
+        Chat.Modelˉchatˉcommit(Prepared.Messages, "world", Prepared.Evictedˉturns);
+    if Committed.Status != Chat.Modelˉchatˉhistoryˉstatus.Valid ||
+        Bytesˉreadˉu32ˉlittle(Committed.Messages, 12u32) != 2u32 { return false; }
+    let User: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Committed.Messages, 0u32);
+    let Assistant: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Committed.Messages, 1u32);
+    return User.Found && User.Role == Protocol.Modelˉrole.User &&
+        Assistant.Found && Assistant.Role == Protocol.Modelˉrole.Assistant;
+}
+
+fn Rollingˉcases() -> bool {
+    var History: bytes = Chat.Modelˉchatˉhistoryˉempty();
+    var Turn: u32 = 0u32;
+    while Turn < 16u32 {
+        let Prepared: Chat.Modelˉchatˉhistoryˉresult =
+            Chat.Modelˉchatˉprepare(History, "user");
+        if Prepared.Status != Chat.Modelˉchatˉhistoryˉstatus.Valid { return false; }
+        let Committed: Chat.Modelˉchatˉhistoryˉresult =
+            Chat.Modelˉchatˉcommit(Prepared.Messages, "assistant", Prepared.Evictedˉturns);
+        if Committed.Status != Chat.Modelˉchatˉhistoryˉstatus.Valid { return false; }
+        History = Committed.Messages;
+        Turn = Turn + 1u32;
+    }
+    if Bytesˉreadˉu32ˉlittle(History, 12u32) != 32u32 { return false; }
+    let Rolled: Chat.Modelˉchatˉhistoryˉresult =
+        Chat.Modelˉchatˉprepare(History, "next");
+    return Rolled.Status == Chat.Modelˉchatˉhistoryˉstatus.Valid &&
+        Rolled.Evictedˉturns == 1u32 &&
+        Bytesˉreadˉu32ˉlittle(Rolled.Messages, 12u32) == 31u32;
+}
+
+fn Invalidˉcases() -> bool {
+    let Empty: bytes = Chat.Modelˉchatˉhistoryˉempty();
+    let Blank: Chat.Modelˉchatˉhistoryˉresult = Chat.Modelˉchatˉprepare(Empty, "");
+    if Blank.Status != Chat.Modelˉchatˉhistoryˉstatus.Invalidˉmessage { return false; }
+    var Large: text = "x";
+    var Index: u32 = 1u32;
+    while Index < 3073u32 {
+        Large = Textˉconcat(Large, "x");
+        Index = Index + 1u32;
+    }
+    let Oversized: Chat.Modelˉchatˉhistoryˉresult = Chat.Modelˉchatˉprepare(Empty, Large);
+    if Oversized.Status != Chat.Modelˉchatˉhistoryˉstatus.Invalidˉmessage { return false; }
+    let Prepared: Chat.Modelˉchatˉhistoryˉresult = Chat.Modelˉchatˉprepare(Empty, "user");
+    let Odd: Chat.Modelˉchatˉhistoryˉresult = Chat.Modelˉchatˉprepare(Prepared.Messages, "again");
+    if Odd.Status != Chat.Modelˉchatˉhistoryˉstatus.Invalidˉhistory { return false; }
+    let Emptyˉassistant: Chat.Modelˉchatˉhistoryˉresult =
+        Chat.Modelˉchatˉcommit(Prepared.Messages, "", 0u32);
+    return Emptyˉassistant.Status == Chat.Modelˉchatˉhistoryˉstatus.Invalidˉmessage;
+}
+
+export fn Main() -> i32 {
+    if !Commandˉcases() { return 1; }
+    if !Oneˉturnˉcases() { return 2; }
+    if !Rollingˉcases() { return 3; }
+    if !Invalidˉcases() { return 4; }
+    return 42;
+}

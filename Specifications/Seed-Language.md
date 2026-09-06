@@ -136,6 +136,7 @@ process.argument(u32) -> text
 process.argument_count() -> u32
 standard_output.write_v1(bytes) -> bytes
 storage.random_access_v1(u32, u64, u64, u32, bytes) -> bytes
+terminal.line_read_v1(bytes) -> bytes
 ```
 
 The process, file-byte, console, and diagnostic leaves are defined by
@@ -144,6 +145,8 @@ interfaces are defined by [Read-Only-Directory-Capability.md](Read-Only-Director
 and [Random-Access-Storage-Capability.md](Random-Access-Storage-Capability.md).
 Exact standard byte output is defined by
 [Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md).
+Bounded visible terminal input is defined by
+[Terminal-Line-Input-Capability.md](Terminal-Line-Input-Capability.md).
 The two model operations are defined by
 [Windvale-Bound-Model-Provider.md](Windvale-Bound-Model-Provider.md).
 

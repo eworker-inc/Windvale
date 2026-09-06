@@ -1,10 +1,13 @@
 windvale-assembly 1
 
-# Linux x64 leaf for the supervisor-dedicated model worker pipes. File
-# descriptors zero and one are process-private transport authority, not
-# portable console or ambient network authority.
+# Linux x64 leaf for the supervisor-dedicated model worker pipes plus one
+# independently opened /dev/tty endpoint for visible user input and output.
+# The terminal descriptor never carries WVMQ/WVMC traffic.
+symbol local data Model_gateway_linux_tty_path in .rodata
 symbol export function Model_gateway_platform_open in .text
 symbol export function Model_gateway_platform_read in .text
+symbol export function Model_gateway_platform_terminal_read in .text
+symbol export function Model_gateway_platform_terminal_write in .text
 symbol export function Model_gateway_platform_write in .text
 
 section code .text align 16
@@ -13,7 +16,27 @@ move_u32 eax 0
 store_memory_u64 r8 none 1 0 rax
 move_u32 eax 1
 store_memory_u64 r8 none 1 8 rax
+push rdi
+push rsi
+move_i32 eax -1
+store_memory_u64 r8 none 1 16 rax
+move_i32 edi -100
+load_address rsi Model_gateway_linux_tty_path
+move_u32 edx 2
+xor r10d r10d
+move_u32 eax 257
+syscall
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_open_failure
+store_memory_u64 r8 none 1 16 rax
 xor eax eax
+pop rsi
+pop rdi
+return
+label Model_gateway_linux_open_failure
+xor eax eax
+pop rsi
+pop rdi
 return
 end define
 
@@ -99,5 +122,167 @@ pop r12
 pop rsi
 pop rdi
 return
+end define
+
+define Model_gateway_platform_terminal_read
+push rbx
+push rbp
+push rdi
+push rsi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 16
+move r12 r8
+move r13 r9
+move r14d r10d
+move r15 r11
+xor ebx ebx
+xor ebp ebp
+store_memory_u32 r15 none 1 0 ebx
+
+label Model_gateway_linux_terminal_read_next
+load_memory_u64 rdi r12 none 1 16
+compare_i32 rdi -1
+branch equal Model_gateway_linux_terminal_read_lost
+move rsi rsp
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Model_gateway_linux_terminal_read_interrupted
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_terminal_read_lost
+test rax rax
+branch equal Model_gateway_linux_terminal_read_eof
+compare_i32 rax 1
+branch not_equal Model_gateway_linux_terminal_read_lost
+load_memory_u8 al rsp none 1 0
+compare_i8 al 10
+branch equal Model_gateway_linux_terminal_read_line_end
+compare_i8 al 13
+branch equal Model_gateway_linux_terminal_read_next
+test al al
+branch equal Model_gateway_linux_terminal_read_reject_start
+compare ebx r14d
+branch above_equal Model_gateway_linux_terminal_read_reject_start
+store_memory_u8 r13 rbx 1 0 al
+add_i32 ebx 1
+jump_label Model_gateway_linux_terminal_read_next
+
+label Model_gateway_linux_terminal_read_line_end
+store_memory_u32 r15 none 1 0 ebx
+xor eax eax
+jump_label Model_gateway_linux_terminal_read_return
+
+label Model_gateway_linux_terminal_read_eof
+test ebx ebx
+branch not_equal Model_gateway_linux_terminal_read_lost
+move_u32 eax 1
+jump_label Model_gateway_linux_terminal_read_return
+
+label Model_gateway_linux_terminal_read_interrupted
+move_u32 eax 2
+jump_label Model_gateway_linux_terminal_read_return
+
+label Model_gateway_linux_terminal_read_reject_start
+move_u32 ebp 1
+label Model_gateway_linux_terminal_read_drain
+compare_i32 ebp 65536
+branch above_equal Model_gateway_linux_terminal_read_lost
+load_memory_u64 rdi r12 none 1 16
+compare_i32 rdi -1
+branch equal Model_gateway_linux_terminal_read_lost
+move rsi rsp
+move_u32 edx 1
+xor eax eax
+syscall
+compare_i32 rax -4
+branch equal Model_gateway_linux_terminal_read_interrupted
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_terminal_read_lost
+test rax rax
+branch equal Model_gateway_linux_terminal_read_lost
+compare_i32 rax 1
+branch not_equal Model_gateway_linux_terminal_read_lost
+load_memory_u8 al rsp none 1 0
+add_i32 ebp 1
+compare_i8 al 10
+branch not_equal Model_gateway_linux_terminal_read_drain
+move_u32 eax 3
+jump_label Model_gateway_linux_terminal_read_return
+
+label Model_gateway_linux_terminal_read_lost
+move_u32 eax 4
+label Model_gateway_linux_terminal_read_return
+add_i32 rsp 16
+pop r15
+pop r14
+pop r13
+pop r12
+pop rsi
+pop rdi
+pop rbp
+pop rbx
+return
+end define
+
+define Model_gateway_platform_terminal_write
+push rdi
+push rsi
+push r12
+push r13
+push r14
+push r15
+move r12 r8
+move r13 r9
+move r14d r10d
+move r15 r11
+xor eax eax
+store_memory_u32 r15 none 1 0 eax
+label Model_gateway_linux_terminal_write_next
+test r14d r14d
+branch equal Model_gateway_linux_terminal_write_complete
+load_memory_u64 rdi r12 none 1 16
+compare_i32 rdi -1
+branch equal Model_gateway_linux_terminal_write_failure
+move rsi r13
+move edx r14d
+move_u32 eax 1
+syscall
+compare_i32 rax -4
+branch equal Model_gateway_linux_terminal_write_next
+compare_i32 rax -4095
+branch above_equal Model_gateway_linux_terminal_write_failure
+test rax rax
+branch equal Model_gateway_linux_terminal_write_failure
+compare rax r14
+branch above Model_gateway_linux_terminal_write_failure
+add r13 rax
+subtract r14 rax
+load_memory_u32 ecx r15 none 1 0
+add ecx eax
+store_memory_u32 r15 none 1 0 ecx
+jump_label Model_gateway_linux_terminal_write_next
+label Model_gateway_linux_terminal_write_complete
+xor eax eax
+jump_label Model_gateway_linux_terminal_write_return
+label Model_gateway_linux_terminal_write_failure
+move_u32 eax 1
+label Model_gateway_linux_terminal_write_return
+pop r15
+pop r14
+pop r13
+pop r12
+pop rsi
+pop rdi
+return
+end define
+end section
+
+section rodata .rodata align 1
+define Model_gateway_linux_tty_path
+bytes 47 100 101 118 47 116 116 121 0
 end define
 end section

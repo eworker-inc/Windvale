@@ -1,0 +1,20 @@
+module Windvaleˉterminalˉlineˉinput profile hosted;
+
+import Windvaleˉterminalˉlineˉinputˉcore as Core;
+
+capability terminal.line_read_v1;
+
+export fn Terminalˉlineˉread(Maximum: u32) -> bytes {
+    let Unit: bytes = Bytesˉfromˉu8(0u8);
+    if Maximum == 0u32 || Maximum > 3072u32 {
+        return Bytesˉslice(Unit, 0u32, 0u32);
+    }
+    var Request: bytes = Bytesˉfromˉu32ˉlittle(1380734551u32);
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(1u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(32u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(Maximum));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu32ˉlittle(0u32));
+    Request = Bytesˉconcat(Request, Bytesˉfromˉu64ˉlittle(1u64));
+    return terminal.line_read_v1(Request);
+}

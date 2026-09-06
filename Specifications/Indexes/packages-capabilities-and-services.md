@@ -12,6 +12,7 @@ Projects, packages, installation, applications, capabilities, storage, and servi
 | [Read-only directory capability version 1](../Read-Only-Directory-Capability.md) | Candidate |
 | [Standard byte-output capability](../Standard-Byte-Output-Capability.md) | Documented |
 | [Standard Byte Output Core](../Standard-Byte-Output-Core.md) | Candidate |
+| [Terminal line-input capability version 1](../Terminal-Line-Input-Capability.md) | Candidate |
 | [Windvale Backend Libraries 1.0](../Windvale-Backend-Libraries-1.0.md) | Documented |
 | [Windvale binary data profile 1.0](../Windvale-Binary-Data-1.0.md) | Documented |
 | [Windvale capability approval and launch records](../Windvale-Capability-Approval-And-Launch.md) | Implemented |

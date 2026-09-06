@@ -80,7 +80,7 @@ export class Nativeˉexternalˉmodelˉgatewayˉsupervisor {
         }
         if (this.closed) throw new Error("Native model-gateway supervisor is closed.");
         const Child = spawn(this.applicationPath, this.applicationArguments, {
-            stdio: ["pipe", "pipe", "pipe"], windowsHide: true,
+            stdio: ["pipe", "pipe", "pipe"], windowsHide: false,
             env: this.applicationEnvironment,
         });
         this.application = Child;

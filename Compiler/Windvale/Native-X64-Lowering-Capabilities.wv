@@ -100,6 +100,9 @@ fn Capabilityˉkind(
     if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "storage.random_access_v1") {
         return 11u8;
     }
+    if Spanˉequalsˉtext(Input, Nameˉoffset, Nameˉlength, "terminal.line_read_v1") {
+        return 12u8;
+    }
     return 0u8;
 }
 
@@ -140,7 +143,7 @@ fn Signatureˉisˉvalid(
             return 0u32;
         }
     }
-    if Kind == 6u8 || Kind == 7u8 || Kind == 10u8 {
+    if Kind == 6u8 || Kind == 7u8 || Kind == 10u8 || Kind == 12u8 {
         if Parameters != 1u32 || First != 6u8 || Return != 6u8 { return 0u32; }
     }
     if Kind == 8u8 {
@@ -171,7 +174,7 @@ export fn Compilerˉnativeˉx64ˉcapabilitiesˉread(
     if Length < 4u32 { return Invalid; }
     let Limit: u32 = Offset + Length;
     let Count: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset);
-    if Count > 11u32 { return Invalid; }
+    if Count > 12u32 { return Invalid; }
     var Kinds: bytes = Bytesˉslice(Input, 0u32, 0u32);
     var Previous: u32 = 0u32;
     var Cursor: u32 = Offset + 4u32;
@@ -236,6 +239,10 @@ export fn Compilerˉnativeˉx64ˉstorageˉrandomˉaccessˉkind() -> u8 {
 
 export fn Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() -> u8 {
     return 10u8;
+}
+
+export fn Compilerˉnativeˉx64ˉterminalˉlineˉreadˉkind() -> u8 {
+    return 12u8;
 }
 
 export fn Compilerˉnativeˉx64ˉdirectoryˉreadˉkind() -> u8 {
@@ -309,7 +316,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
     var Outputˉbody: u32 = Bodyˉbytes;
     if Kind == Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
         Kind == Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
-        Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
+        Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉterminalˉlineˉreadˉkind() {
         if Outputˉdepth < 1u32 ||
             Bytesˉreadˉu8(Outputˉstack, Outputˉdepth - 1u32) != 6u8 {
             return Compilerˉnativeˉx64ˉcapabilityˉanalysis(
@@ -327,7 +335,8 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉcapability(
         Outputˉstack = Bytesˉconcat(Outputˉstack, Bytesˉfromˉu8(6u8));
         Outputˉdepth = Outputˉdepth + 1u32;
         Outputˉbytes = Outputˉbytes + 1u32;
-        if Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
+        if Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() ||
+            Kind == Compilerˉnativeˉx64ˉterminalˉlineˉreadˉkind() {
             Outputˉbody = Outputˉbody +
                 Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉbytes();
         } else {
@@ -772,7 +781,8 @@ export fn Compilerˉnativeˉx64ˉemitˉcapability(
     var Outputˉbytes: u32 = Nextˉbytes;
     if Kind == Compilerˉnativeˉx64ˉmodelˉcatalogˉkind() ||
         Kind == Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
-        Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
+        Kind == Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() ||
+        Kind == Compilerˉnativeˉx64ˉterminalˉlineˉreadˉkind() {
         let Modelˉsource: u32 = Bytesˉreadˉu32ˉlittle(
             Outputˉslots, (Outputˉdepth - 1u32) * 4u32
         );

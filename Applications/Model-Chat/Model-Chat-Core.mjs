@@ -1,7 +1,3 @@
-export const MODEL_CHAT_MAX_LINE_BYTES = 3_072;
-export const MODEL_CHAT_MAX_MESSAGES = 32;
-export const MODEL_CHAT_MAX_MESSAGE_SET_BYTES = 16_384;
-
 const PROVIDERS = Object.freeze({
     openai: Object.freeze({ service: "api.openai.com", display: "OpenAI" }),
     anthropic: Object.freeze({ service: "api.anthropic.com", display: "Anthropic" }),
@@ -139,74 +135,6 @@ export function Parseˉmodelˉchatˉarguments(Arguments) {
         });
     }
     Fail("usage", "Command is invalid. Run with --help for usage.");
-}
-
-function Strictˉmessage(Value, Role) {
-    if (typeof Value !== "string" || Value.length === 0 || Value.includes("\0")) {
-        Fail("input", `${Role} message is empty or invalid.`);
-    }
-    const Bytes = Buffer.from(Value, "utf8");
-    if (Bytes.length > MODEL_CHAT_MAX_LINE_BYTES || Bytes.toString("utf8") !== Value) {
-        Fail("input", `${Role} message exceeds the 3072-byte UTF-8 limit.`);
-    }
-    return Object.freeze({ role: Role, content: Value, bytes: Bytes.length });
-}
-
-function Messageˉsetˉbytes(Messages) {
-    return 16 + Messages.reduce((Sum, Message) => Sum + 8 + Message.bytes, 0);
-}
-
-function Dropˉoldestˉturn(Messages) {
-    if (Messages.length < 2 || Messages[0].role !== "user" || Messages[1].role !== "assistant") {
-        Fail("history", "Conversation history is internally invalid.");
-    }
-    Messages.splice(0, 2);
-}
-
-function Fitˉhistory(Messages, MaximumMessages) {
-    while (Messages.length > MaximumMessages ||
-        Messageˉsetˉbytes(Messages) > MODEL_CHAT_MAX_MESSAGE_SET_BYTES) {
-        Dropˉoldestˉturn(Messages);
-    }
-    return Messages;
-}
-
-export class Boundedˉchatˉconversation {
-    #messages = [];
-
-    prepare(Value) {
-        const Messages = [...this.#messages, Strictˉmessage(Value, "user")];
-        Fitˉhistory(Messages, MODEL_CHAT_MAX_MESSAGES - 1);
-        return Object.freeze(Messages.map(Message => Object.freeze({
-            role: Message.role,
-            content: Message.content,
-            bytes: Message.bytes,
-        })));
-    }
-
-    commit(Prepared, AssistantValue) {
-        if (!Array.isArray(Prepared) || Prepared.length < 1 ||
-            Prepared[Prepared.length - 1]?.role !== "user") {
-            Fail("history", "Prepared conversation turn is invalid.");
-        }
-        const Messages = Prepared.map(Message => Strictˉmessage(Message.content, Message.role));
-        Messages.push(Strictˉmessage(AssistantValue, "assistant"));
-        Fitˉhistory(Messages, MODEL_CHAT_MAX_MESSAGES);
-        this.#messages = Messages;
-        return this.inspect();
-    }
-
-    clear() {
-        this.#messages = [];
-    }
-
-    inspect() {
-        return Object.freeze({
-            messages: this.#messages.length,
-            turns: this.#messages.length / 2,
-            bytes: Messageˉsetˉbytes(this.#messages),
-        });
-    }
 }
 
 export function Modelˉchatˉproviderˉprofile(Name) {

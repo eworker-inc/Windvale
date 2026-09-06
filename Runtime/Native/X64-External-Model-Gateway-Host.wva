@@ -1,15 +1,19 @@
 windvale-assembly 1
 
-# Platform-neutral ABI-23 provider that gives a model-only native worker one
-# synchronous request/response channel. The supervising launcher dedicates the
-# worker's standard output to WVMQ requests and standard input to WVMC/WVMG
-# responses; this host publishes neither channel as a portable console service.
+# Platform-neutral ABI-23 host for the Windvale model chat. The supervising
+# launcher dedicates the worker's standard output to WVMQ requests and standard
+# input to WVMC/WVMG responses. Separate platform leaves bind the user's real
+# terminal for standard_output.write_v1 and terminal.line_read_v1.
 symbol local data Model_gateway_host_identities in .rodata
+symbol local function Model_gateway_host_output_provider in .text
 symbol local function Model_gateway_host_provider in .text
+symbol local function Model_gateway_host_terminal_provider in .text
 symbol export function Model_gateway_host_entry in .text
 symbol import function Main
 symbol import function Model_gateway_platform_open
 symbol import function Model_gateway_platform_read
+symbol import function Model_gateway_platform_terminal_read
+symbol import function Model_gateway_platform_terminal_write
 symbol import function Model_gateway_platform_write
 
 section code .text align 16
@@ -18,12 +22,13 @@ push rbx
 move rbx rdx
 subtract_i32 rsp 1053184
 
-# Clear context 9, WVPT, both capability states, platform-private pipe state,
-# and the response-scratch prefix before binding any live authority.
+# Clear context 9, the six-entry WVPT, four capability states, platform-private
+# pipe/terminal state, host metadata, and the response-scratch prefix before
+# binding any live authority.
 xor rax rax
 xor ecx ecx
 label Model_gateway_host_entry_clear
-compare_i32 ecx 512
+compare_i32 ecx 768
 branch above_equal Model_gateway_host_entry_copy
 store_memory_u64 rsp rcx 1 0 rax
 add_i32 ecx 8
@@ -48,49 +53,80 @@ move rax rsp
 add_i32 rax 168
 store_memory_u64 rsp none 1 160 rax
 
-# Exact two-entry WVPT 1 table for the existing catalog and inference
-# capability identities. Each state selects one required WVMQ operation.
+# Exact six-entry WVPT 1 table for the complete application capability list.
+# Process argument services remain fixed runtime services and therefore have
+# zero provider bindings. The four selected states grant only their operation.
 move_u32 eax 1414551127
 store_memory_u32 rsp none 1 168 eax
 move_u32 eax 1
 store_memory_u32 rsp none 1 172 eax
-move_u32 eax 134
+move_u32 eax 352
 store_memory_u32 rsp none 1 176 eax
-move_u32 eax 2
+move_u32 eax 6
 store_memory_u32 rsp none 1 180 eax
-move_u32 eax 3
+move_u32 eax 51
 store_memory_u32 rsp none 1 184 eax
 move_u32 eax 24
 store_memory_u32 rsp none 1 188 eax
-move_u32 eax 54
+move_u32 eax 176
 store_memory_u32 rsp none 1 192 eax
 
-move_u32 eax 80
+move_u32 eax 176
 store_memory_u32 rsp none 1 200 eax
 move_u32 eax 26
 store_memory_u32 rsp none 1 204 eax
 load_address rax Model_gateway_host_provider
 store_memory_u64 rsp none 1 208 rax
 move rax rsp
-add_i32 rax 320
+add_i32 rax 528
 store_memory_u64 rsp none 1 216 rax
 
-move_u32 eax 106
+move_u32 eax 202
 store_memory_u32 rsp none 1 224 eax
 move_u32 eax 28
 store_memory_u32 rsp none 1 228 eax
 load_address rax Model_gateway_host_provider
 store_memory_u64 rsp none 1 232 rax
 move rax rsp
-add_i32 rax 336
+add_i32 rax 544
 store_memory_u64 rsp none 1 240 rax
+
+move_u32 eax 230
+store_memory_u32 rsp none 1 248 eax
+move_u32 eax 26
+store_memory_u32 rsp none 1 252 eax
+
+move_u32 eax 256
+store_memory_u32 rsp none 1 272 eax
+move_u32 eax 31
+store_memory_u32 rsp none 1 276 eax
+
+move_u32 eax 287
+store_memory_u32 rsp none 1 296 eax
+move_u32 eax 34
+store_memory_u32 rsp none 1 300 eax
+load_address rax Model_gateway_host_output_provider
+store_memory_u64 rsp none 1 304 rax
+move rax rsp
+add_i32 rax 560
+store_memory_u64 rsp none 1 312 rax
+
+move_u32 eax 321
+store_memory_u32 rsp none 1 320 eax
+move_u32 eax 31
+store_memory_u32 rsp none 1 324 eax
+load_address rax Model_gateway_host_terminal_provider
+store_memory_u64 rsp none 1 328 rax
+move rax rsp
+add_i32 rax 576
+store_memory_u64 rsp none 1 336 rax
 
 load_address rbx Model_gateway_host_identities
 move rdx rsp
-add_i32 rdx 248
+add_i32 rdx 344
 xor ecx ecx
 label Model_gateway_host_entry_identity_copy
-compare_i32 ecx 54
+compare_i32 ecx 176
 branch above_equal Model_gateway_host_entry_state
 load_memory_u8 al rbx rcx 1 0
 store_memory_u8 rdx rcx 1 0 al
@@ -99,11 +135,15 @@ jump_label Model_gateway_host_entry_identity_copy
 
 label Model_gateway_host_entry_state
 move_u32 eax 1
-store_memory_u32 rsp none 1 320 eax
+store_memory_u32 rsp none 1 528 eax
 move_u32 eax 2
-store_memory_u32 rsp none 1 336 eax
+store_memory_u32 rsp none 1 544 eax
+move_u32 eax 3
+store_memory_u32 rsp none 1 560 eax
+move_u32 eax 4
+store_memory_u32 rsp none 1 576 eax
 move r8 rsp
-add_i32 r8 352
+add_i32 r8 608
 move r9 rbx
 # Restore the admitted context pointer saved before the identity copy.
 move r9 rsp
@@ -125,11 +165,11 @@ label Model_gateway_host_entry_failure
 move_u32 ebx 1
 
 label Model_gateway_host_entry_erase
-load_memory_u32 ecx rsp none 1 384
+load_memory_u32 ecx rsp none 1 744
 compare_i32 ecx 1048576
 branch above Model_gateway_host_entry_return
 move rdx rsp
-add_i32 rdx 512
+add_i32 rdx 768
 xor eax eax
 label Model_gateway_host_entry_erase_next
 test ecx ecx
@@ -172,7 +212,7 @@ compare_i32 edx 1
 branch not_equal Model_gateway_host_provider_abi_failure
 
 move rax r15
-add_i32 rax 288
+add_i32 rax 496
 compare r13 rax
 branch equal Model_gateway_host_provider_state_ready
 add_i32 rax 16
@@ -214,14 +254,18 @@ test eax eax
 branch not_equal Model_gateway_host_provider_invalid_request
 
 move rbp r15
-add_i32 rbp 320
+add_i32 rbp 576
 move rdi r15
-add_i32 rdi 480
+add_i32 rdi 736
 
 # A later call invalidates and erases the preceding borrowed response.
-load_memory_u32 ecx rbp none 1 32
+move rax r15
+add_i32 rax 712
+load_memory_u32 ecx rax none 1 0
 compare_i32 ecx 1048576
 branch above Model_gateway_host_provider_abi_failure
+xor edx edx
+store_memory_u32 rax none 1 0 edx
 move rdx rdi
 xor eax eax
 label Model_gateway_host_provider_erase_next
@@ -233,8 +277,6 @@ subtract_i32 ecx 1
 jump_label Model_gateway_host_provider_erase_next
 
 label Model_gateway_host_provider_send
-xor eax eax
-store_memory_u32 rbp none 1 32 eax
 move r8 rbp
 move r9 rsi
 move r10d ebx
@@ -288,7 +330,9 @@ load_memory_u64 rcx rsi none 1 16
 compare rax rcx
 branch not_equal Model_gateway_host_provider_bridge_failure
 
-store_memory_u32 rbp none 1 32 ebx
+move rax r15
+add_i32 rax 712
+store_memory_u32 rax none 1 0 ebx
 store_memory_u64 r12 none 1 0 rdi
 store_memory_u32 r12 none 1 8 ebx
 xor eax eax
@@ -318,6 +362,275 @@ pop rbp
 pop rbx
 return
 end define
+
+define Model_gateway_host_output_provider
+push rbx
+push rsi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal Model_gateway_host_output_abi_failure
+test r13 r13
+branch equal Model_gateway_host_output_abi_failure
+test r14 r14
+branch equal Model_gateway_host_output_abi_failure
+compare_i32 edx 1
+branch not_equal Model_gateway_host_output_abi_failure
+move rax r15
+add_i32 rax 528
+compare r13 rax
+branch not_equal Model_gateway_host_output_abi_failure
+
+load_memory_u64 rsi r14 none 1 0
+load_memory_u64 rax r14 none 1 8
+move ebx eax
+shift_right rax 32
+test rax rax
+branch not_equal Model_gateway_host_output_invalid_request
+test rsi rsi
+branch equal Model_gateway_host_output_invalid_request
+test ebx ebx
+branch equal Model_gateway_host_output_invalid_request
+compare_i32 ebx 65536
+branch above Model_gateway_host_output_invalid_request
+
+move r13 r15
+add_i32 r13 576
+move r14 r15
+add_i32 r14 736
+move rax r15
+add_i32 rax 712
+load_memory_u32 ecx rax none 1 0
+compare_i32 ecx 1048576
+branch above Model_gateway_host_output_abi_failure
+xor edx edx
+store_memory_u32 rax none 1 0 edx
+move rdx r14
+xor eax eax
+label Model_gateway_host_output_erase_next
+test ecx ecx
+branch equal Model_gateway_host_output_dispatch
+store_memory_u8 rdx none 1 0 al
+add_i32 rdx 1
+subtract_i32 ecx 1
+jump_label Model_gateway_host_output_erase_next
+label Model_gateway_host_output_dispatch
+xor eax eax
+store_memory_u32 rsp none 1 32 eax
+move r8 r13
+move r9 rsi
+move r10d ebx
+move r11 rsp
+add_i32 r11 32
+call Model_gateway_platform_terminal_write
+move ecx eax
+load_memory_u32 edx rsp none 1 32
+compare edx ebx
+branch above Model_gateway_host_output_abi_failure
+
+move_u32 eax 1464817239
+store_memory_u32 r14 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r14 none 1 4 eax
+move_u32 eax 32
+store_memory_u32 r14 none 1 8 eax
+test ecx ecx
+branch equal Model_gateway_host_output_completed
+move_u32 eax 3
+store_memory_u32 r14 none 1 12 eax
+jump_label Model_gateway_host_output_response
+label Model_gateway_host_output_completed
+compare edx ebx
+branch not_equal Model_gateway_host_output_abi_failure
+xor eax eax
+store_memory_u32 r14 none 1 12 eax
+label Model_gateway_host_output_response
+store_memory_u32 r14 none 1 16 edx
+xor eax eax
+store_memory_u32 r14 none 1 20 eax
+move_u32 eax 1
+store_memory_u64 r14 none 1 24 rax
+move_u32 eax 32
+move rbx r15
+add_i32 rbx 712
+store_memory_u32 rbx none 1 0 eax
+store_memory_u64 r12 none 1 0 r14
+store_memory_u32 r12 none 1 8 eax
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label Model_gateway_host_output_complete
+
+label Model_gateway_host_output_invalid_request
+move_u32 eax 2
+jump_label Model_gateway_host_output_complete
+label Model_gateway_host_output_abi_failure
+move_u32 eax 1
+label Model_gateway_host_output_complete
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rsi
+pop rbx
+return
+end define
+
+define Model_gateway_host_terminal_provider
+push rbx
+push rsi
+push r12
+push r13
+push r14
+push r10
+push r11
+push r15
+subtract_i32 rsp 40
+move r12 rcx
+move r13 r8
+move r14 r9
+
+test r12 r12
+branch equal Model_gateway_host_terminal_abi_failure
+test r13 r13
+branch equal Model_gateway_host_terminal_abi_failure
+test r14 r14
+branch equal Model_gateway_host_terminal_abi_failure
+compare_i32 edx 1
+branch not_equal Model_gateway_host_terminal_abi_failure
+move rax r15
+add_i32 rax 544
+compare r13 rax
+branch not_equal Model_gateway_host_terminal_abi_failure
+
+load_memory_u64 rsi r14 none 1 0
+load_memory_u64 rax r14 none 1 8
+move ebx eax
+shift_right rax 32
+test rax rax
+branch not_equal Model_gateway_host_terminal_invalid_request
+test rsi rsi
+branch equal Model_gateway_host_terminal_invalid_request
+compare_i32 ebx 32
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u32 eax rsi none 1 0
+compare_i32 eax 1380734551
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u32 eax rsi none 1 4
+compare_i32 eax 1
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u32 eax rsi none 1 8
+compare_i32 eax 32
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u32 ebx rsi none 1 12
+test ebx ebx
+branch equal Model_gateway_host_terminal_invalid_request
+compare_i32 ebx 3072
+branch above Model_gateway_host_terminal_invalid_request
+load_memory_u32 eax rsi none 1 16
+test eax eax
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u32 eax rsi none 1 20
+test eax eax
+branch not_equal Model_gateway_host_terminal_invalid_request
+load_memory_u64 rax rsi none 1 24
+compare_i32 rax 1
+branch not_equal Model_gateway_host_terminal_invalid_request
+
+move r13 r15
+add_i32 r13 576
+move r14 r15
+add_i32 r14 736
+move rax r15
+add_i32 rax 712
+load_memory_u32 ecx rax none 1 0
+compare_i32 ecx 1048576
+branch above Model_gateway_host_terminal_abi_failure
+xor edx edx
+store_memory_u32 rax none 1 0 edx
+move rdx r14
+xor eax eax
+label Model_gateway_host_terminal_erase_next
+test ecx ecx
+branch equal Model_gateway_host_terminal_dispatch
+store_memory_u8 rdx none 1 0 al
+add_i32 rdx 1
+subtract_i32 ecx 1
+jump_label Model_gateway_host_terminal_erase_next
+label Model_gateway_host_terminal_dispatch
+xor eax eax
+store_memory_u32 rsp none 1 32 eax
+move r8 r13
+move r9 r14
+add_i32 r9 32
+move r10d ebx
+move r11 rsp
+add_i32 r11 32
+call Model_gateway_platform_terminal_read
+compare_i32 eax 4
+branch above Model_gateway_host_terminal_abi_failure
+move ecx eax
+load_memory_u32 edx rsp none 1 32
+compare edx ebx
+branch above Model_gateway_host_terminal_abi_failure
+test ecx ecx
+branch equal Model_gateway_host_terminal_payload_ready
+test edx edx
+branch not_equal Model_gateway_host_terminal_abi_failure
+label Model_gateway_host_terminal_payload_ready
+
+move_u32 eax 1229739607
+store_memory_u32 r14 none 1 0 eax
+move_u32 eax 1
+store_memory_u32 r14 none 1 4 eax
+move eax edx
+add_i32 eax 32
+store_memory_u32 r14 none 1 8 eax
+store_memory_u32 r14 none 1 12 ecx
+store_memory_u32 r14 none 1 16 edx
+xor eax eax
+store_memory_u32 r14 none 1 20 eax
+move_u32 eax 1
+store_memory_u64 r14 none 1 24 rax
+move eax edx
+add_i32 eax 32
+move rbx r15
+add_i32 rbx 712
+store_memory_u32 rbx none 1 0 eax
+store_memory_u64 r12 none 1 0 r14
+store_memory_u32 r12 none 1 8 eax
+xor eax eax
+store_memory_u32 r12 none 1 12 eax
+jump_label Model_gateway_host_terminal_complete
+
+label Model_gateway_host_terminal_invalid_request
+move_u32 eax 2
+jump_label Model_gateway_host_terminal_complete
+label Model_gateway_host_terminal_abi_failure
+move_u32 eax 1
+label Model_gateway_host_terminal_complete
+add_i32 rsp 40
+pop r15
+pop r11
+pop r10
+pop r14
+pop r13
+pop r12
+pop rsi
+pop rbx
+return
+end define
 end section
 
 section rodata .rodata align 1
@@ -325,5 +638,13 @@ define Model_gateway_host_identities
 bytes 16 0 0 0 109 111 100 101 108 46 99 97 116 97 108 111 103 95 118 49
 bytes 1 0 0 0 6 6 18 0 0 0 109 111 100 101 108 46 105 110 102 101
 bytes 114 101 110 99 101 95 118 49 1 0 0 0 6 6
+bytes 16 0 0 0 112 114 111 99 101 115 115 46 97 114 103 117 109 101 110 116
+bytes 1 0 0 0 5 3
+bytes 22 0 0 0 112 114 111 99 101 115 115 46 97 114 103 117 109 101 110 116
+bytes 95 99 111 117 110 116 0 0 0 0 5
+bytes 24 0 0 0 115 116 97 110 100 97 114 100 95 111 117 116 112 117 116 46
+bytes 119 114 105 116 101 95 118 49 1 0 0 0 6 6
+bytes 21 0 0 0 116 101 114 109 105 110 97 108 46 108 105 110 101 95 114 101
+bytes 97 100 95 118 49 1 0 0 0 6 6
 end define
 end section

@@ -459,9 +459,10 @@ complete dependency closure; compilation does not treat a library requirement as
 authority. The root declarations alone form the emitted capability table, sorted by
 ordinal name independently of source declaration order. Dependency capability calls
 are rebound to those root-owned indices by canonical capability name. Parameter and
-result tags come from the fixed eleven-entry Seed catalog, including
+result tags come from the fixed twelve-entry Seed catalog, including
 `filesystem.directory_read_v1`, `storage.random_access_v1`,
-`standard_output.write_v1`, `model.catalog_v1`, and `model.inference_v1`.
+`standard_output.write_v1`, `model.catalog_v1`, `model.inference_v1`, and
+`terminal.line_read_v1`.
 
 WVIR operation `63` carries a validated WVSD capability directory entry. The backend ranks that entry among capability declarations by ordinal name and emits WVB `call.capability` with the resulting index. No capability is inferred, removed, or authorized by compilation; host support and runtime authorization remain separate required boundaries.
 

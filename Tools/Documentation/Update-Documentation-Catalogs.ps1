@@ -306,7 +306,7 @@ function Get-SpecificationDomain {
         '^(Seed-(Bytecode|CLI|Conformance)|Browser-Playground|Windvale-(Baseline-Jit|WebAssembly|Shell)|Wv-Dump)' {
             return 'bytecode-runtime-and-tools'
         }
-        '^(Random-Access|Read-Only|Standard-|Windvale-(Backend-Libraries|Binary-Data|Capability|Console|Directory|Filesystem|Hosted|Installation|Installer|Libraries|Linux-Console|Package|Project|Release|Resource|Segmented-Hosted|Windows-Console|Wvb-Publication))' {
+        '^(Random-Access|Read-Only|Standard-|Terminal-Line-|Windvale-(Backend-Libraries|Binary-Data|Capability|Console|Directory|Filesystem|Hosted|Installation|Installer|Libraries|Linux-Console|Package|Project|Release|Resource|Segmented-Hosted|Windows-Console|Wvb-Publication))' {
             return 'packages-capabilities-and-services'
         }
         default {

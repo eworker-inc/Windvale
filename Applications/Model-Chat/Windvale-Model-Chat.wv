@@ -1,0 +1,270 @@
+module Windvaleˉmodelˉchat profile hosted;
+
+import Boundˉmodelˉprovider as Provider;
+import Foundationˉdecimalˉparsing as Decimal;
+import Windvaleˉmodelˉchatˉcore as Chat;
+import Windvaleˉmodelˉprotocol as Protocol;
+import Windvaleˉstandardˉbyteˉoutput as Output;
+import Windvaleˉterminalˉlineˉinput as Input;
+import Windvaleˉterminalˉlineˉinputˉcore as Inputˉcore;
+
+capability model.catalog_v1;
+capability model.inference_v1;
+capability process.argument;
+capability process.argument_count;
+capability standard_output.write_v1;
+capability terminal.line_read_v1;
+
+fn Write(Session: Output.Standardˉoutputˉsession, Value: text)
+    -> Output.Standardˉoutputˉsession {
+    return Output.Standardˉoutputˉwrite(Session, Textˉtoˉutf8(Value));
+}
+
+fn Writeˉline(Session: Output.Standardˉoutputˉsession, Value: text)
+    -> Output.Standardˉoutputˉsession {
+    var Written: Output.Standardˉoutputˉsession = Session;
+    Written = Write(Written, Value);
+    return Write(Written, "\n");
+}
+
+fn Help(Session: Output.Standardˉoutputˉsession)
+    -> Output.Standardˉoutputˉsession {
+    return Writeˉline(
+        Session,
+        "Commands: :clear forgets retained turns, :help shows commands, :quit exits."
+    );
+}
+
+fn Failure(
+    Session: Output.Standardˉoutputˉsession,
+    Prefix: text,
+    Status: text
+) -> Output.Standardˉoutputˉsession {
+    var Written: Output.Standardˉoutputˉsession = Session;
+    Written = Write(Written, Prefix);
+    return Writeˉline(Written, Status);
+}
+
+record Turnˉresult {
+    Session: Output.Standardˉoutputˉsession;
+    History: bytes;
+    Requestˉidentity: u64;
+    Running: bool;
+    Exitˉcode: i32;
+}
+
+record Startˉresult {
+    Session: Output.Standardˉoutputˉsession;
+    Model: text;
+    Maximumˉoutputˉtokens: u32;
+    Valid: bool;
+    Exitˉcode: i32;
+}
+
+record Promptˉresult {
+    Session: Output.Standardˉoutputˉsession;
+    Line: Inputˉcore.Terminalˉlineˉresponse;
+    Valid: bool;
+}
+
+fn Prompt(Session: Output.Standardˉoutputˉsession) -> Promptˉresult {
+    let Written: Output.Standardˉoutputˉsession = Write(Session, "you> ");
+    if Written.Status != Output.Standardˉoutputˉstatus.Valid {
+        let Invalidˉraw: bytes = Input.Terminalˉlineˉread(0u32);
+        let Invalidˉline: Inputˉcore.Terminalˉlineˉresponse =
+            Inputˉcore.Terminalˉlineˉresponseˉread(Invalidˉraw, 0u32);
+        return Promptˉresult(
+            Written,
+            Invalidˉline,
+            false
+        );
+    }
+    let Raw: bytes = Input.Terminalˉlineˉread(3072u32);
+    let Line: Inputˉcore.Terminalˉlineˉresponse =
+        Inputˉcore.Terminalˉlineˉresponseˉread(Raw, 3072u32);
+    return Promptˉresult(Written, Line, true);
+}
+
+fn Start() -> Startˉresult {
+    var Session: Output.Standardˉoutputˉsession = Output.Standardˉoutputˉopen();
+    if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+        return Startˉresult(Session, "", 0u32, false, 70);
+    }
+    if process.argument_count() != 3u32 {
+        Session = Writeˉline(
+            Session, "Usage: Windvale-Model-Chat <provider> <model> <maximum-output-tokens>"
+        );
+        return Startˉresult(Session, "", 0u32, false, 64);
+    }
+    let Providerˉname: text = process.argument(0u32);
+    let Model: text = process.argument(1u32);
+    let Tokenˉbytes: bytes = Textˉtoˉutf8(process.argument(2u32));
+    let Tokens: Decimal.Foundationˉu32ˉparse =
+        Decimal.Foundationˉu32ˉdecimalˉparse(
+            Tokenˉbytes, 0u32, Bytesˉlength(Tokenˉbytes)
+        );
+    if !Tokens.Valid || Tokens.Value == 0u32 || Tokens.Value > 4096u32 {
+        Session = Writeˉline(Session, "Maximum output tokens must be 1 through 4096.");
+        return Startˉresult(Session, Model, 0u32, false, 64);
+    }
+    Session = Write(Session, "Connected to ");
+    Session = Write(Session, Providerˉname);
+    Session = Write(Session, "; model=");
+    Session = Writeˉline(Session, Model);
+    Session = Help(Session);
+    if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+        return Startˉresult(Session, Model, Tokens.Value, false, 70);
+    }
+    return Startˉresult(Session, Model, Tokens.Value, true, 0);
+}
+
+fn Generateˉturn(
+    Session: Output.Standardˉoutputˉsession,
+    History: bytes,
+    Model: text,
+    User: text,
+    Requestˉidentity: u64,
+    Maximumˉoutputˉtokens: u32
+) -> Turnˉresult {
+    var Nextˉsession: Output.Standardˉoutputˉsession = Session;
+    let Prepared: Chat.Modelˉchatˉhistoryˉresult =
+        Chat.Modelˉchatˉprepare(History, User);
+    if Prepared.Status != Chat.Modelˉchatˉhistoryˉstatus.Valid {
+        Nextˉsession = Failure(Nextˉsession, "Message rejected: ", Enumˉname(Prepared.Status));
+        return Turnˉresult(Nextˉsession, History, Requestˉidentity, true, 0);
+    }
+    let Encoded: Protocol.Modelˉencoded = Protocol.Modelˉgenerationˉrequest(
+        Requestˉidentity, 1u64, Model, Prepared.Messages, Maximumˉoutputˉtokens
+    );
+    if Encoded.Status != Protocol.Modelˉcodecˉstatus.Valid {
+        Nextˉsession = Failure(Nextˉsession, "Model request rejected: ", Enumˉname(Encoded.Status));
+        return Turnˉresult(Nextˉsession, History, Requestˉidentity, false, 64);
+    }
+    let Generated: Provider.Boundˉmodelˉgenerationˉresult =
+        Provider.Boundˉmodelˉgenerate(Encoded.Bytes);
+    if Generated.Requestˉstatus != Protocol.Modelˉcodecˉstatus.Valid ||
+        Generated.Generation.Codecˉstatus != Protocol.Modelˉcodecˉstatus.Valid {
+        Nextˉsession = Writeˉline(Nextˉsession, "Model provider returned a malformed response.");
+        return Turnˉresult(Nextˉsession, History, Requestˉidentity, false, 70);
+    }
+    if Generated.Generation.Status != Protocol.Modelˉstatus.Valid {
+        Nextˉsession = Failure(
+            Nextˉsession, "Model provider failed: ", Enumˉname(Generated.Generation.Status)
+        );
+        if Generated.Generation.Status == Protocol.Modelˉstatus.Submissionˉindeterminate {
+            return Turnˉresult(Nextˉsession, History, Requestˉidentity, false, 75);
+        }
+        return Turnˉresult(Nextˉsession, History, Requestˉidentity, false, 69);
+    }
+    let Answerˉbytes: bytes = Bytesˉslice(
+        Generated.Generation.Bytes,
+        Generated.Generation.Textˉoffset,
+        Generated.Generation.Textˉlength
+    );
+    let Answer: text = Textˉfromˉutf8(Answerˉbytes);
+    Nextˉsession = Writeˉline(Nextˉsession, Textˉconcat("model> ", Answer));
+    if Generated.Generation.Completion == Protocol.Modelˉcompletion.Lengthˉlimit {
+        Nextˉsession = Writeˉline(Nextˉsession, "[Output stopped at the selected token limit.]");
+    } else if Generated.Generation.Completion == Protocol.Modelˉcompletion.Contentˉfilter {
+        Nextˉsession = Writeˉline(Nextˉsession, "[Output was stopped by the provider content filter.]");
+    }
+    let Committed: Chat.Modelˉchatˉhistoryˉresult = Chat.Modelˉchatˉcommit(
+        Prepared.Messages, Answer, Prepared.Evictedˉturns
+    );
+    if Committed.Status == Chat.Modelˉchatˉhistoryˉstatus.Valid {
+        return Turnˉresult(
+            Nextˉsession, Committed.Messages, Requestˉidentity + 1u64, true, 0
+        );
+    }
+    Nextˉsession = Writeˉline(
+        Nextˉsession, "[This turn was not retained in bounded history.]"
+    );
+    return Turnˉresult(Nextˉsession, History, Requestˉidentity + 1u64, true, 0);
+}
+
+fn Iterate(
+    Session: Output.Standardˉoutputˉsession,
+    History: bytes,
+    Model: text,
+    Requestˉidentity: u64,
+    Maximumˉoutputˉtokens: u32
+) -> Turnˉresult {
+    let Prompted: Promptˉresult = Prompt(Session);
+    if !Prompted.Valid {
+        return Turnˉresult(Prompted.Session, History, Requestˉidentity, false, 70);
+    }
+    let Line: Inputˉcore.Terminalˉlineˉresponse = Prompted.Line;
+    if Line.Status == Inputˉcore.Terminalˉlineˉstatus.Endˉofˉinput {
+        return Turnˉresult(Prompted.Session, History, Requestˉidentity, false, 0);
+    }
+    if Line.Status == Inputˉcore.Terminalˉlineˉstatus.Interrupted {
+        return Turnˉresult(Prompted.Session, History, Requestˉidentity, false, 130);
+    }
+    if Line.Status != Inputˉcore.Terminalˉlineˉstatus.Completed {
+        let Lineˉstatus: text = Enumˉname(Line.Status);
+        let Failed: Output.Standardˉoutputˉsession = Failure(
+            Prompted.Session, "Terminal input failed: ", Lineˉstatus
+        );
+        return Turnˉresult(Failed, History, Requestˉidentity, false, 65);
+    }
+    let Command: Chat.Modelˉchatˉcommand = Chat.Modelˉchatˉcommandˉread(Line.Value);
+    if Command.Kind == Chat.Modelˉchatˉcommandˉkind.Quit {
+        return Turnˉresult(Prompted.Session, History, Requestˉidentity, false, 0);
+    }
+    if Command.Kind == Chat.Modelˉchatˉcommandˉkind.Help {
+        let Helped: Output.Standardˉoutputˉsession = Help(Prompted.Session);
+        return Turnˉresult(Helped, History, Requestˉidentity, true, 0);
+    }
+    if Command.Kind == Chat.Modelˉchatˉcommandˉkind.Clear {
+        let Cleared: bytes = Chat.Modelˉchatˉhistoryˉempty();
+        let Reported: Output.Standardˉoutputˉsession = Writeˉline(
+            Prompted.Session, "Conversation history cleared."
+        );
+        return Turnˉresult(Reported, Cleared, Requestˉidentity, true, 0);
+    }
+    if Command.Kind == Chat.Modelˉchatˉcommandˉkind.Message {
+        return Generateˉturn(
+            Prompted.Session, History, Model, Line.Value, Requestˉidentity,
+            Maximumˉoutputˉtokens
+        );
+    }
+    return Turnˉresult(Prompted.Session, History, Requestˉidentity, true, 0);
+}
+
+fn Run() -> i32 {
+    let Started: Startˉresult = Start();
+    if !Started.Valid { return Started.Exitˉcode; }
+    var Session: Output.Standardˉoutputˉsession = Started.Session;
+    let Model: text = Started.Model;
+    let Maximumˉoutputˉtokens: u32 = Started.Maximumˉoutputˉtokens;
+
+    var History: bytes = Chat.Modelˉchatˉhistoryˉempty();
+    var Requestˉidentity: u64 = 1u64;
+    var Running: bool = true;
+    var Result: i32 = 0;
+    var Turn: Turnˉresult = Turnˉresult(
+        Session, History, Requestˉidentity, Running, Result
+    );
+    while Running {
+        Turn = Iterate(
+            Session, History, Model, Requestˉidentity, Maximumˉoutputˉtokens
+        );
+        Session = Turn.Session;
+        History = Turn.History;
+        Requestˉidentity = Turn.Requestˉidentity;
+        Running = Turn.Running;
+        Result = Turn.Exitˉcode;
+        if Session.Status != Output.Standardˉoutputˉstatus.Valid {
+            Result = 70;
+            Running = false;
+        }
+    }
+    Session = Writeˉline(Session, "Chat closed.");
+    Session = Output.Standardˉoutputˉclose(Session);
+    if Session.Status != Output.Standardˉoutputˉstatus.Valid { return 70; }
+    return Result;
+}
+
+export fn Main() -> i32 {
+    return Run();
+}

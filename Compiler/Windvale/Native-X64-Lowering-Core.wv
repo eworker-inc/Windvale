@@ -4726,7 +4726,9 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
             Capabilityˉkind ==
                 Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉinferenceˉkind() ||
             Capabilityˉkind ==
-                Nativeˉcapabilities.Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() {
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉstandardˉoutputˉwriteˉkind() ||
+            Capabilityˉkind ==
+                Nativeˉcapabilities.Compilerˉnativeˉx64ˉterminalˉlineˉreadˉkind() {
             return Nativeˉcapabilities.Compilerˉnativeˉx64ˉmodelˉcallˉbytes();
         }
         return Nativeˉcapabilities.Compilerˉnativeˉx64ˉprocessˉargumentˉcountˉbytes();

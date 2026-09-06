@@ -1,0 +1,3 @@
+windvale-project 2
+root "Libraries/Platform/Streams/Terminal-Line-Input-Core.wv"
+emit wvb

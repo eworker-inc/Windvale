@@ -1664,6 +1664,10 @@ function Add-Native-Tool-Suite {
             'wvb-runner-reconstruction',
             'language-1-authenticated-foreign-binding'
         )
+    } elseif ($Stem -eq 'Build-Windvale-Model-Chat') {
+        Add-Suite 'model-chat'
+    } elseif ($Stem -eq 'Test-Model-Chat-Native-Construction') {
+        Add-Suite 'model-chat'
     } elseif ($Stem -in @('Build-Wvdb-Query-Package', 'Build-Wvb-Inspector-Package')) {
         Add-Suite @('packages', 'offline-package-stage')
     } elseif ($Stem -eq 'Test-Package-Format') {
@@ -2807,6 +2811,24 @@ foreach ($Path in $Paths) {
             'Specifications/Protected-Provider-Credential.md'
     )) {
         Add-Suite 'protected-credential'
+    } elseif ($Path -in @(
+            'Applications/Model-Chat/Model-Chat-Core.wv',
+            'Applications/Model-Chat/Windvale-Model-Chat.wv',
+            'Applications/Model-Chat/Windvale-Model-Chat.cmd',
+            'Applications/Model-Chat/Windvale-Model-Chat.sh',
+            'Libraries/Platform/Streams/Terminal-Line-Input-Core.wv',
+            'Libraries/Platform/Streams/Terminal-Line-Input.wv',
+            'Projects/Applications/Windvale-Application-Model-Chat.wvproj',
+            'Projects/Libraries/Windvale-Library-Model-Chat-Core.wvproj',
+            'Projects/Libraries/Windvale-Library-Terminal-Line-Input-Core.wvproj',
+            'Projects/Libraries/Windvale-Library-Terminal-Line-Input.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Model-Chat-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Terminal-Line-Input-Core.wvproj',
+            'Tests/Fixtures/Models/Model-Chat-Core-Self-Test.wv',
+            'Tests/Fixtures/Streams/Terminal-Line-Input-Core-Self-Test.wv',
+            'Specifications/Terminal-Line-Input-Capability.md'
+        )) {
+        Add-Suite 'model-chat'
     } elseif ($Path.StartsWith('Applications/Model-Chat/', [StringComparison]::Ordinal) -or
         $Path -in @(
             'Runtime/Hosted/Models/External-Model-Gateway-Client.mjs',

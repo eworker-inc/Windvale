@@ -11,21 +11,20 @@ import {
 } from "../../Runtime/Hosted/Credentials/Protected-Credential.mjs";
 import {
     Decodeˉgatewayˉcatalogˉresponse,
-    Decodeˉgatewayˉgenerationˉresponse,
     Encodeˉgatewayˉcatalogˉrequest,
-    Encodeˉgatewayˉgenerationˉrequest,
     Modelˉclientˉstatus,
 } from "../../Runtime/Hosted/Models/External-Model-Gateway-Client.mjs";
 import {
     Externalˉmodelˉgatewayˉsupervisor,
 } from "../../Runtime/Hosted/Models/External-Model-Gateway-Supervisor.mjs";
 import {
-    Boundedˉchatˉconversation,
-    MODEL_CHAT_MAX_LINE_BYTES,
     Modelˉchatˉfailure,
     Modelˉchatˉusage,
     Parseˉmodelˉchatˉarguments,
 } from "./Model-Chat-Core.mjs";
+import {
+    Nativeˉexternalˉmodelˉgatewayˉsupervisor,
+} from "../../Runtime/Hosted/Models/Native-External-Model-Gateway-Supervisor.mjs";
 
 const MAX_CREDENTIAL_FILE_BYTES = 1_437;
 const MAX_SECRET_BYTES = 1_024;
@@ -89,20 +88,6 @@ const HOST_TERMINAL = Object.freeze({
     error: Value => process.stderr.write(String(Value)),
     readMasked: (Prompt, MaximumBytes = MAX_SECRET_BYTES) =>
         Readˉterminalˉbytes(Prompt, MaximumBytes, true),
-    readLine: Prompt => {
-        const Bytes = Readˉterminalˉbytes(Prompt, MODEL_CHAT_MAX_LINE_BYTES, false, true);
-        if (Bytes === null) return null;
-        try {
-            const Value = new TextDecoder("utf-8", { fatal: true }).decode(Bytes);
-            if (Value.includes("\0")) Fail("input", "Input contains NUL.");
-            return Value;
-        } catch (Error) {
-            if (Error instanceof Modelˉchatˉfailure) throw Error;
-            Fail("input", "Input is not strict UTF-8.");
-        } finally {
-            Bytes.fill(0);
-        }
-    },
 });
 
 function Readˉcredentialˉfile(Value) {
@@ -301,70 +286,60 @@ async function Modelsˉcommand(Options, Terminal, Dependencies) {
     }
 }
 
-function Chatˉhelp(Terminal) {
-    Terminal.write("Commands: :clear forgets retained turns, :help shows commands, :quit exits.\n");
+async function Chatˉcommand(Options, Terminal, Dependencies) {
+    const Wrapper = Dependencies.readCredential(Options.credentialPath);
+    let Passphrase;
+    let Native;
+    try {
+        const Metadata = Inspectˉprotectedˉcredential(Wrapper);
+        Passphrase = Terminal.readMasked(`Unlock ${Metadata.provider} credential: `);
+        const Lifetime = Math.min(300_000, Options.timeoutMilliseconds + 180_000);
+        Native = Dependencies.nativeGatewayFactory({
+            applicationPath: Dependencies.nativeApplicationPath(),
+            applicationArguments: [
+                Metadata.provider, Options.model, String(Options.maximumOutputTokens),
+            ],
+            wrapper: Wrapper,
+            passphrase: Passphrase,
+            providerGeneration: PROVIDER_GENERATION,
+            trustGeneration: TRUST_GENERATION,
+            maximumOperationMilliseconds: Options.timeoutMilliseconds,
+            maximumLifetimeMilliseconds: Lifetime,
+        });
+        const Result = await Native.run();
+        if (Result.ready.provider !== Metadata.provider ||
+            Result.ready.providerGeneration !== PROVIDER_GENERATION ||
+            Result.ready.credentialGeneration !== Metadata.generation ||
+            Result.ready.identity !== Metadata.identity) {
+            Fail("gateway", "Native model gateway readiness does not match the protected credential.");
+        }
+        if (Result.signal !== null || !Number.isInteger(Result.code)) {
+            Fail("gateway", "Windvale model chat terminated unexpectedly.");
+        }
+        return Result.code;
+    } finally {
+        await Native?.teardown().catch(() => {});
+        Wrapper.fill(0);
+        Passphrase?.fill(0);
+    }
 }
 
-async function Chatˉcommand(Options, Terminal, Dependencies) {
-    const Bound = await Openˉgateway(Options, Terminal, Dependencies);
-    const Conversation = new Boundedˉchatˉconversation();
-    let RequestId = 1n;
-    try {
-        Terminal.write(`Connected to ${Bound.ready.provider}; model=${Options.model}.\n`);
-        Chatˉhelp(Terminal);
-        for (;;) {
-            const Input = Terminal.readLine("you> ");
-            if (Input === null || Input === ":quit") break;
-            if (Input === ":help") {
-                Chatˉhelp(Terminal);
-                continue;
-            }
-            if (Input === ":clear") {
-                Conversation.clear();
-                Terminal.write("Conversation history cleared.\n");
-                continue;
-            }
-            if (Input.length === 0) continue;
-            const Prepared = Conversation.prepare(Input);
-            const CurrentId = RequestId++;
-            const Request = Encodeˉgatewayˉgenerationˉrequest({
-                requestId: CurrentId,
-                providerGeneration: Bound.ready.providerGeneration,
-                maximumOutputTokens: Options.maximumOutputTokens,
-                model: Options.model,
-                messages: Prepared,
-            });
-            let ResponseBytes;
-            let Response;
-            try {
-                try {
-                    ResponseBytes = await Bound.gateway.request(Request, Options.timeoutMilliseconds);
-                } catch {
-                    Fail(
-                        "submission_indeterminate",
-                        "Model gateway lost the generation request; submission completion is indeterminate. The request was not retried.",
-                    );
-                }
-                Response = Decodeˉgatewayˉgenerationˉresponse(ResponseBytes, CurrentId);
-            } finally {
-                Request.fill(0);
-                ResponseBytes?.fill(0);
-            }
-            if (Response.status !== Modelˉclientˉstatus.Valid) Throwˉproviderˉfailure(Response);
-            Terminal.write(`model> ${Response.text}\n`);
-            if (Response.completion === 2) Terminal.write("[Output stopped at the selected token limit.]\n");
-            if (Response.completion === 3) Terminal.write("[Output was stopped by the provider content filter.]\n");
-            const OutputBytes = Buffer.byteLength(Response.text, "utf8");
-            if (OutputBytes === 0 || OutputBytes > MODEL_CHAT_MAX_LINE_BYTES) {
-                Terminal.write("[This turn was not retained because its response cannot fit bounded history.]\n");
-                continue;
-            }
-            Conversation.commit(Prepared, Response.text);
-        }
-        Terminal.write("Chat closed.\n");
-    } finally {
-        await Bound.gateway.teardown();
+function Nativeˉapplicationˉpath() {
+    const Value = process.env.WINDVALE_MODEL_CHAT_APPLICATION;
+    if (typeof Value !== "string" || !path.isAbsolute(Value)) {
+        Fail(
+            "native_application",
+            "The Windvale model-chat application is not built. Run the platform launcher or set WINDVALE_MODEL_CHAT_APPLICATION to its absolute path.",
+        );
     }
+    let Stat;
+    try { Stat = fs.lstatSync(Value); } catch {
+        Fail("native_application", "The Windvale model-chat native application cannot be read.");
+    }
+    if (!Stat.isFile() || Stat.isSymbolicLink()) {
+        Fail("native_application", "The Windvale model-chat native application must be an ordinary file.");
+    }
+    return Value;
 }
 
 const DEFAULT_DEPENDENCIES = Object.freeze({
@@ -372,6 +347,8 @@ const DEFAULT_DEPENDENCIES = Object.freeze({
     readCredential: Readˉcredentialˉfile,
     writeCredential: Writeˉnewˉcredentialˉfile,
     gatewayFactory: Values => new Externalˉmodelˉgatewayˉsupervisor(Values),
+    nativeApplicationPath: Nativeˉapplicationˉpath,
+    nativeGatewayFactory: Values => new Nativeˉexternalˉmodelˉgatewayˉsupervisor(Values),
 });
 
 export async function Executeˉmodelˉchat({
@@ -396,8 +373,7 @@ export async function Executeˉmodelˉchat({
         await Modelsˉcommand(Options, terminal, dependencies);
         return 0;
     }
-    await Chatˉcommand(Options, terminal, dependencies);
-    return 0;
+    return await Chatˉcommand(Options, terminal, dependencies);
 }
 
 function Exitˉcode(Error) {
@@ -406,6 +382,7 @@ function Exitˉcode(Error) {
     if (Error?.kind === "submission_indeterminate") return 75;
     if (Error?.kind?.startsWith("provider_")) return 69;
     if (Error?.kind === "credential_file" || Error?.kind === "input" || Error?.kind === "terminal") return 65;
+    if (Error?.kind === "native_application") return 69;
     return 70;
 }
 

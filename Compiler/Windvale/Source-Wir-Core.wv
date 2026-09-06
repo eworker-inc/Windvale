@@ -2310,6 +2310,9 @@ export fn Compilerˉsourceˉwirˉcapabilityˉparameterˉshape(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "standard_output.write_v1") {
         return 6u32;
     }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "terminal.line_read_v1") {
+        return 6u32;
+    }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument") {
         return 3u32;
     }
@@ -2335,6 +2338,7 @@ export fn Compilerˉsourceˉwirˉcapabilityˉreturnˉshape(
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "process.argument_count") { return 3u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "standard_output.write_v1") { return 6u32; }
     if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "storage.random_access_v1") { return 6u32; }
+    if Sourceˉsymbols.Compilerˉsourceˉsymbolsˉnameˉequals(Source, Offset, Length, "terminal.line_read_v1") { return 6u32; }
     return 0u32;
 }
 

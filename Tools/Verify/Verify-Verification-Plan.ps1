@@ -3293,14 +3293,31 @@ $NativeCases = @(
         Name = 'hosted model chat owner'
         Paths = @(
             'Applications/Model-Chat/Model-Chat-Core.mjs',
+            'Applications/Model-Chat/Model-Chat-Core.wv',
             'Applications/Model-Chat/Windvale-Model-Chat.mjs',
+            'Applications/Model-Chat/Windvale-Model-Chat.wv',
             'Applications/Model-Chat/Windvale-Model-Chat.cmd',
             'Applications/Model-Chat/Windvale-Model-Chat.sh',
+            'Libraries/Platform/Streams/Terminal-Line-Input-Core.wv',
+            'Libraries/Platform/Streams/Terminal-Line-Input.wv',
+            'Projects/Applications/Windvale-Application-Model-Chat.wvproj',
+            'Projects/Libraries/Windvale-Library-Model-Chat-Core.wvproj',
+            'Projects/Libraries/Windvale-Library-Terminal-Line-Input-Core.wvproj',
+            'Projects/Libraries/Windvale-Library-Terminal-Line-Input.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Model-Chat-Core.wvproj',
+            'Projects/Tests/Windvale-Native-Test-Terminal-Line-Input-Core.wvproj',
             'Runtime/Hosted/Models/External-Model-Gateway-Client.mjs',
+            'Tests/Fixtures/Models/Model-Chat-Core-Self-Test.wv',
+            'Tests/Fixtures/Streams/Terminal-Line-Input-Core-Self-Test.wv',
             'Tools/Models/Test-Model-Chat.mjs',
+            'Tools/Native/Build-Windvale-Model-Chat.cmd',
+            'Tools/Native/Build-Windvale-Model-Chat.sh',
+            'Tools/Native/Test-Model-Chat-Native-Construction.cmd',
+            'Tools/Native/Test-Model-Chat-Native-Construction.sh',
             'Tools/Native/Test-Model-Chat.cmd',
             'Tools/Native/Test-Model-Chat.sh',
-            'Specifications/Hosted-Model-Chat-Command.md'
+            'Specifications/Hosted-Model-Chat-Command.md',
+            'Specifications/Terminal-Line-Input-Capability.md'
         )
         Suites = @('model-chat')
         Gaps = @()

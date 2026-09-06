@@ -1,0 +1,5 @@
+windvale-project 2
+root "Tests/Fixtures/Models/Model-Chat-Core-Self-Test.wv"
+source "Applications/Model-Chat/Model-Chat-Core.wv"
+source "Libraries/Models/Model-Protocol.wv"
+emit wvb

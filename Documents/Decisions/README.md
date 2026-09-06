@@ -10,7 +10,7 @@ The normalized status is a search aid derived from the opening status. The copie
 
 | Search status | Decisions |
 | --- | ---: |
-| Accepted | 350 |
+| Accepted | 351 |
 | Implemented | 498 |
 | Proposed | 4 |
 | Qualified | 95 |
@@ -47,6 +47,7 @@ These published numbers cannot be renamed safely. The full key shown beside each
 
 | Decision | Search status |
 | --- | --- |
+| [Decision 0959: Windvale-owned native model chat](0959-Windvale-Owned-Native-Model-Chat.md) | Accepted |
 | [Decision 0958: preserve Foundation borrow identity across direct calls](0958-Preserve-Foundation-Borrow-Identity-Across-Direct-Calls.md) | Implemented |
 | [Decision 0957: represent immutable Foundation payload borrows in candidate WVB 1.39](0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md) | Implemented |
 | [Decision 0956: coalesce overlapping generic nominal development products](0956-Coalesce-Overlapping-Generic-Nominal-Development-Products.md) | Implemented |
@@ -71,7 +72,6 @@ These published numbers cannot be renamed safely. The full key shown beside each
 | [Decision 0937: execute authenticated WVB 1.38 Foreign calls in the bounded scalar provider](0937-Execute-Authenticated-WVB-1.38-Foreign-Calls-In-The-Bounded-Scalar-Provider.md) | Accepted |
 | [Decision 0936: build Foreign lowering evidence after typed analysis](0936-Build-Foreign-Lowering-Evidence-After-Typed-Analysis.md) | Accepted |
 | [Decision 0935: verify contained WVB 1.38 Foreign calls](0935-Verify-Contained-WVB-1.38-Foreign-Calls.md) | Accepted |
-| [Decision 0934: represent paired Foreign calls in candidate WVB 1.38](0934-Represent-Paired-Foreign-Calls-In-Candidate-Wvb-1.38.md) | Accepted |
 
 ## Superseded or historical records
 

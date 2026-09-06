@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tests/Fixtures/Streams/Terminal-Line-Input-Core-Self-Test.wv"
+source "Libraries/Platform/Streams/Terminal-Line-Input-Core.wv"
+emit wvb

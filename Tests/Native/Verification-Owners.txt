@@ -103,7 +103,7 @@ host-tls-provider|Test-Host-Tls-Provider|15|4|quick|host tls provider status=Pas
 bounded-https|Test-Bounded-Https|29|4|quick|bounded https status=Passed platforms=2 cases=29 current-host=Verified public-network=0 credentials=0 redirects-followed=0
 protected-credential|Test-Protected-Credential|16|4|quick|protected credential status=Passed providers=3 cases=16 current-host=Verified plaintext-files=0 exported-secrets=0 public-network=0
 external-model-gateway|Test-External-Model-Gateway|30|4|quick|external model gateway status=Passed providers=3 cases=30 child-process=Verified differential=Verified public-network=0 real-credentials=0
-model-chat|Test-Model-Chat|21|4|quick|model chat status=Passed providers=3 cases=21 live-calls=0 real-credentials=0 secrets-in-arguments=0 automatic-retries=0
+model-chat|Test-Model-Chat|10|4|quick|model chat status=Passed providers=3 cases=10 native-ui=Windvale credential-custody=Hosted public-network=0 real-credentials=0
 native-external-model-gateway|Test-Native-External-Model-Gateway|14|4|quick|native external model gateway status=Passed cases=14 local-result=0 cross-host-images=Verified public-network=0 real-credentials=0
 database-superblock|Test-Database-Superblock|13|4|quick|native database superblock status=Passed cases=13 local-result=42 cross-host-images=Verified
 database-durable-commit|Test-Database-Durable-Commit|12|4|quick|native database durable commit status=Passed cases=12 local-result=42 cross-host-images=Verified

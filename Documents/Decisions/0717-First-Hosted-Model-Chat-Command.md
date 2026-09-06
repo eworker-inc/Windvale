@@ -3,6 +3,7 @@
 - Status: Implemented
 - Date: 2026-08-16
 - Advances: Decisions 0573, 0583, 0604, 0605, and 0647
+- Advanced by: [Decision 0959](0959-Windvale-Owned-Native-Model-Chat.md)
 - Contract: [hosted model chat command](../../Specifications/Hosted-Model-Chat-Command.md)
 
 ## Context

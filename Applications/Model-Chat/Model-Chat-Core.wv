@@ -1,0 +1,229 @@
+module Windvaleˉmodelˉchatˉcore profile portable;
+
+import Windvaleˉmodelˉprotocol as Protocol;
+
+export enum Modelˉchatˉcommandˉkind {
+    Empty = 0;
+    Message = 1;
+    Help = 2;
+    Clear = 3;
+    Quit = 4;
+}
+
+export enum Modelˉchatˉhistoryˉstatus {
+    Valid = 0;
+    Invalidˉhistory = 1;
+    Invalidˉmessage = 2;
+    Sizeˉlimit = 3;
+}
+
+export record Modelˉchatˉcommand {
+    Kind: Modelˉchatˉcommandˉkind;
+}
+
+export record Modelˉchatˉhistoryˉresult {
+    Status: Modelˉchatˉhistoryˉstatus;
+    Messages: bytes;
+    Evictedˉturns: u32;
+}
+
+fn Modelˉchatˉempty() -> bytes {
+    return Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+}
+
+fn Modelˉchatˉhistoryˉisˉvalid(Value: bytes) -> bool {
+    if !Protocol.Modelˉmessagesˉisˉvalid(Value) { return false; }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Count % 2u32 != 0u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Count {
+        let User: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Value, Index);
+        let Assistant: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Value, Index + 1u32);
+        if !User.Found || User.Role != Protocol.Modelˉrole.User ||
+            !Assistant.Found || Assistant.Role != Protocol.Modelˉrole.Assistant {
+            return false;
+        }
+        Index = Index + 2u32;
+    }
+    return true;
+}
+
+fn Modelˉchatˉdropˉoldestˉturn(Value: bytes) -> bytes {
+    if !Protocol.Modelˉmessagesˉisˉvalid(Value) ||
+        Bytesˉreadˉu32ˉlittle(Value, 12u32) < 2u32 {
+        return Modelˉchatˉempty();
+    }
+    let User: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Value, 0u32);
+    let Assistant: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Value, 1u32);
+    if !User.Found || User.Role != Protocol.Modelˉrole.User ||
+        !Assistant.Found || Assistant.Role != Protocol.Modelˉrole.Assistant {
+        return Modelˉchatˉempty();
+    }
+    let Tailˉoffset: u32 = Assistant.Contentˉoffset + Assistant.Contentˉlength;
+    let Total: u32 = Bytesˉlength(Value);
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32) - 2u32;
+    var Result: bytes = Bytesˉfromˉu32ˉlittle(1296914007u32);
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(1u32));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(16u32 + Total - Tailˉoffset));
+    Result = Bytesˉconcat(Result, Bytesˉfromˉu32ˉlittle(Count));
+    Result = Bytesˉconcat(Result, Bytesˉslice(Value, Tailˉoffset, Total - Tailˉoffset));
+    if !Protocol.Modelˉmessagesˉisˉvalid(Result) { return Modelˉchatˉempty(); }
+    return Result;
+}
+
+fn Modelˉchatˉmessageˉisˉvalid(Value: text) -> bool {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    let Length: u32 = Bytesˉlength(Encoded);
+    if Length == 0u32 || Length > 3072u32 { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Encoded, Index) == 0u8 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Modelˉchatˉbytesˉequalˉtext(Value: bytes, Expected: text) -> bool {
+    let Expectedˉbytes: bytes = Textˉtoˉutf8(Expected);
+    let Length: u32 = Bytesˉlength(Value);
+    if Length != Bytesˉlength(Expectedˉbytes) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Length {
+        if Bytesˉreadˉu8(Value, Index) != Bytesˉreadˉu8(Expectedˉbytes, Index) {
+            return false;
+        }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+export fn Modelˉchatˉcommandˉread(Value: text) -> Modelˉchatˉcommand {
+    let Encoded: bytes = Textˉtoˉutf8(Value);
+    if Bytesˉlength(Encoded) == 0u32 {
+        return Modelˉchatˉcommand(Modelˉchatˉcommandˉkind.Empty);
+    }
+    if Modelˉchatˉbytesˉequalˉtext(Encoded, ":help") {
+        return Modelˉchatˉcommand(Modelˉchatˉcommandˉkind.Help);
+    }
+    if Modelˉchatˉbytesˉequalˉtext(Encoded, ":clear") {
+        return Modelˉchatˉcommand(Modelˉchatˉcommandˉkind.Clear);
+    }
+    if Modelˉchatˉbytesˉequalˉtext(Encoded, ":quit") {
+        return Modelˉchatˉcommand(Modelˉchatˉcommandˉkind.Quit);
+    }
+    return Modelˉchatˉcommand(Modelˉchatˉcommandˉkind.Message);
+}
+
+export fn Modelˉchatˉhistoryˉempty() -> bytes {
+    return Protocol.Modelˉmessagesˉempty();
+}
+
+export fn Modelˉchatˉprepare(
+    History: bytes,
+    User: text
+) -> Modelˉchatˉhistoryˉresult {
+    if !Modelˉchatˉhistoryˉisˉvalid(History) {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+            Modelˉchatˉempty(), 0u32
+        );
+    }
+    if !Modelˉchatˉmessageˉisˉvalid(User) {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉmessage,
+            History, 0u32
+        );
+    }
+    var Candidate: bytes = History;
+    var Evicted: u32 = 0u32;
+    while true {
+        let Appended: Protocol.Modelˉencoded = Protocol.Modelˉmessagesˉappend(
+            Candidate, Protocol.Modelˉrole.User, User
+        );
+        if Appended.Status == Protocol.Modelˉcodecˉstatus.Valid && Appended.Count <= 31u32 {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Valid, Appended.Bytes, Evicted
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Candidate, 12u32) < 2u32 {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Sizeˉlimit, Candidate, Evicted
+            );
+        }
+        Candidate = Modelˉchatˉdropˉoldestˉturn(Candidate);
+        if !Modelˉchatˉhistoryˉisˉvalid(Candidate) {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+                Modelˉchatˉempty(), Evicted
+            );
+        }
+        Evicted = Evicted + 1u32;
+    }
+    return Modelˉchatˉhistoryˉresult(
+        Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+        Modelˉchatˉempty(), Evicted
+    );
+}
+
+export fn Modelˉchatˉcommit(
+    Prepared: bytes,
+    Assistant: text,
+    Priorˉevictions: u32
+) -> Modelˉchatˉhistoryˉresult {
+    if !Protocol.Modelˉmessagesˉisˉvalid(Prepared) {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+            Modelˉchatˉempty(), Priorˉevictions
+        );
+    }
+    let Count: u32 = Bytesˉreadˉu32ˉlittle(Prepared, 12u32);
+    if Count == 0u32 || Count % 2u32 != 1u32 {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+            Modelˉchatˉempty(), Priorˉevictions
+        );
+    }
+    let Last: Protocol.Modelˉmessage = Protocol.Modelˉmessageˉat(Prepared, Count - 1u32);
+    if !Last.Found || Last.Role != Protocol.Modelˉrole.User {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+            Modelˉchatˉempty(), Priorˉevictions
+        );
+    }
+    if !Modelˉchatˉmessageˉisˉvalid(Assistant) {
+        return Modelˉchatˉhistoryˉresult(
+            Modelˉchatˉhistoryˉstatus.Invalidˉmessage,
+            Prepared, Priorˉevictions
+        );
+    }
+    var Candidate: bytes = Prepared;
+    var Evicted: u32 = Priorˉevictions;
+    while true {
+        let Appended: Protocol.Modelˉencoded = Protocol.Modelˉmessagesˉappend(
+            Candidate, Protocol.Modelˉrole.Assistant, Assistant
+        );
+        if Appended.Status == Protocol.Modelˉcodecˉstatus.Valid {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Valid, Appended.Bytes, Evicted
+            );
+        }
+        if Bytesˉreadˉu32ˉlittle(Candidate, 12u32) < 3u32 {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Sizeˉlimit, Candidate, Evicted
+            );
+        }
+        let Trimmed: bytes = Modelˉchatˉdropˉoldestˉturn(Candidate);
+        if !Protocol.Modelˉmessagesˉisˉvalid(Trimmed) {
+            return Modelˉchatˉhistoryˉresult(
+                Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+                Modelˉchatˉempty(), Evicted
+            );
+        }
+        Candidate = Trimmed;
+        Evicted = Evicted + 1u32;
+    }
+    return Modelˉchatˉhistoryˉresult(
+        Modelˉchatˉhistoryˉstatus.Invalidˉhistory,
+        Modelˉchatˉempty(), Evicted
+    );
+}

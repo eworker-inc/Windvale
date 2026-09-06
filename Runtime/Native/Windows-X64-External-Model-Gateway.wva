@@ -1,12 +1,19 @@
 windvale-assembly 1
 
-# Windows x64 leaf for supervisor-dedicated model worker pipes. It reuses the
-# admitted hosted container's ReadFile/WriteFile functions and resolves only
-# GetStdHandle from that same already admitted KERNEL32 image.
+# Windows x64 leaf for supervisor-dedicated model worker pipes plus separate
+# CONIN$/CONOUT$ handles. Visible input is read as UTF-16 and converted to
+# strict UTF-8; the private standard handles remain model protocol transport.
+symbol local data Model_gateway_windows_name_conin in .rodata
+symbol local data Model_gateway_windows_name_conout in .rodata
+symbol local data Model_gateway_windows_name_create_file in .rodata
 symbol local data Model_gateway_windows_name_get_std_handle in .rodata
+symbol local data Model_gateway_windows_name_read_console in .rodata
+symbol local data Model_gateway_windows_name_wide_char_to_multi_byte in .rodata
 symbol local function Model_gateway_windows_resolve in .text
 symbol export function Model_gateway_platform_open in .text
 symbol export function Model_gateway_platform_read in .text
+symbol export function Model_gateway_platform_terminal_read in .text
+symbol export function Model_gateway_platform_terminal_write in .text
 symbol export function Model_gateway_platform_write in .text
 
 section code .text align 16
@@ -176,7 +183,9 @@ define Model_gateway_platform_open
 push rbx
 push r12
 push r13
-subtract_i32 rsp 32
+push r14
+push r15
+subtract_i32 rsp 64
 move r12 r8
 move r13 r9
 load_memory_u64 rax r13 none 1 88
@@ -214,12 +223,71 @@ branch equal Model_gateway_windows_open_failure
 compare_i32 rax -1
 branch equal Model_gateway_windows_open_failure
 store_memory_u64 r12 none 1 0 rax
+
+move r8 rbx
+load_address r9 Model_gateway_windows_name_create_file
+move_u32 r10d 11
+call Model_gateway_windows_resolve
+test rax rax
+branch equal Model_gateway_windows_open_terminal_unavailable
+move r14 rax
+move r8 rbx
+load_address r9 Model_gateway_windows_name_read_console
+move_u32 r10d 12
+call Model_gateway_windows_resolve
+test rax rax
+branch equal Model_gateway_windows_open_terminal_unavailable
+store_memory_u64 r12 none 1 48 rax
+move r8 rbx
+load_address r9 Model_gateway_windows_name_wide_char_to_multi_byte
+move_u32 r10d 19
+call Model_gateway_windows_resolve
+test rax rax
+branch equal Model_gateway_windows_open_terminal_unavailable
+store_memory_u64 r12 none 1 56 rax
+
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u64 rsp none 1 40 rax
+store_memory_u64 rsp none 1 48 rax
+move_u32 eax 3
+store_memory_u32 rsp none 1 32 eax
+load_address rcx Model_gateway_windows_name_conin
+move_u32 edx 2147483648
+move_u32 r8d 3
+xor r9 r9
+call_register r14
+test rax rax
+branch equal Model_gateway_windows_open_terminal_unavailable
+compare_i32 rax -1
+branch equal Model_gateway_windows_open_terminal_unavailable
+store_memory_u64 r12 none 1 32 rax
+
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u64 rsp none 1 40 rax
+store_memory_u64 rsp none 1 48 rax
+move_u32 eax 3
+store_memory_u32 rsp none 1 32 eax
+load_address rcx Model_gateway_windows_name_conout
+move_u32 edx 1073741824
+move_u32 r8d 3
+xor r9 r9
+call_register r14
+test rax rax
+branch equal Model_gateway_windows_open_terminal_unavailable
+compare_i32 rax -1
+branch equal Model_gateway_windows_open_terminal_unavailable
+store_memory_u64 r12 none 1 40 rax
+label Model_gateway_windows_open_terminal_unavailable
 xor eax eax
 jump_label Model_gateway_windows_open_complete
 label Model_gateway_windows_open_failure
 move_u32 eax 1
 label Model_gateway_windows_open_complete
-add_i32 rsp 32
+add_i32 rsp 64
+pop r15
+pop r14
 pop r13
 pop r12
 pop rbx
@@ -317,10 +385,243 @@ pop r13
 pop r12
 return
 end define
+
+define Model_gateway_platform_terminal_read
+push rbx
+push rbp
+push rsi
+push rdi
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 6248
+move r12 r8
+move r13 r9
+move r14d r10d
+move r15 r11
+xor eax eax
+store_memory_u32 r15 none 1 0 eax
+move rsi rsp
+add_i32 rsi 80
+load_memory_u64 rax r12 none 1 32
+test rax rax
+branch equal Model_gateway_windows_terminal_read_lost
+compare_i32 rax -1
+branch equal Model_gateway_windows_terminal_read_lost
+load_memory_u64 rax r12 none 1 48
+test rax rax
+branch equal Model_gateway_windows_terminal_read_lost
+load_memory_u64 rax r12 none 1 56
+test rax rax
+branch equal Model_gateway_windows_terminal_read_lost
+
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 64 eax
+load_memory_u64 rcx r12 none 1 32
+move rdx rsi
+move_u32 r8d 3074
+move r9 rsp
+add_i32 r9 64
+load_memory_u64 rax r12 none 1 48
+call_register rax
+test eax eax
+branch equal Model_gateway_windows_terminal_read_lost
+load_memory_u32 ebp rsp none 1 64
+test ebp ebp
+branch equal Model_gateway_windows_terminal_read_eof
+compare_i32 ebp 3074
+branch above Model_gateway_windows_terminal_read_lost
+xor ebx ebx
+
+label Model_gateway_windows_terminal_read_scan
+compare ebx ebp
+branch above_equal Model_gateway_windows_terminal_read_drain_start
+load_memory_u16 ax rsi rbx 2 0
+compare_i16 ax 13
+branch equal Model_gateway_windows_terminal_read_convert
+compare_i16 ax 10
+branch equal Model_gateway_windows_terminal_read_convert
+test ax ax
+branch equal Model_gateway_windows_terminal_read_rejected
+add_i32 ebx 1
+jump_label Model_gateway_windows_terminal_read_scan
+
+label Model_gateway_windows_terminal_read_convert
+test ebx ebx
+branch equal Model_gateway_windows_terminal_read_empty
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u64 rsp none 1 40 rax
+store_memory_u64 rsp none 1 48 rax
+store_memory_u64 rsp none 1 56 rax
+move_u32 ecx 65001
+move_u32 edx 128
+move r8 rsi
+move r9d ebx
+load_memory_u64 rax r12 none 1 56
+call_register rax
+test eax eax
+branch equal Model_gateway_windows_terminal_read_rejected
+compare eax r14d
+branch above Model_gateway_windows_terminal_read_rejected
+move edi eax
+xor eax eax
+store_memory_u64 rsp none 1 48 rax
+store_memory_u64 rsp none 1 56 rax
+store_memory_u64 rsp none 1 32 r13
+store_memory_u32 rsp none 1 40 edi
+move_u32 ecx 65001
+move_u32 edx 128
+move r8 rsi
+move r9d ebx
+load_memory_u64 rax r12 none 1 56
+call_register rax
+compare eax edi
+branch not_equal Model_gateway_windows_terminal_read_lost
+store_memory_u32 r15 none 1 0 edi
+xor eax eax
+jump_label Model_gateway_windows_terminal_read_return
+
+label Model_gateway_windows_terminal_read_empty
+xor eax eax
+jump_label Model_gateway_windows_terminal_read_return
+
+label Model_gateway_windows_terminal_read_drain_start
+move edi ebp
+label Model_gateway_windows_terminal_read_drain
+compare_i32 edi 65536
+branch above_equal Model_gateway_windows_terminal_read_lost
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 64 eax
+load_memory_u64 rcx r12 none 1 32
+move rdx rsi
+move_u32 r8d 3074
+move r9 rsp
+add_i32 r9 64
+load_memory_u64 rax r12 none 1 48
+call_register rax
+test eax eax
+branch equal Model_gateway_windows_terminal_read_lost
+load_memory_u32 ebp rsp none 1 64
+test ebp ebp
+branch equal Model_gateway_windows_terminal_read_lost
+compare_i32 ebp 3074
+branch above Model_gateway_windows_terminal_read_lost
+add edi ebp
+xor ebx ebx
+label Model_gateway_windows_terminal_read_drain_scan
+compare ebx ebp
+branch above_equal Model_gateway_windows_terminal_read_drain
+load_memory_u16 ax rsi rbx 2 0
+compare_i16 ax 13
+branch equal Model_gateway_windows_terminal_read_rejected
+compare_i16 ax 10
+branch equal Model_gateway_windows_terminal_read_rejected
+add_i32 ebx 1
+jump_label Model_gateway_windows_terminal_read_drain_scan
+
+label Model_gateway_windows_terminal_read_eof
+move_u32 eax 1
+jump_label Model_gateway_windows_terminal_read_return
+label Model_gateway_windows_terminal_read_rejected
+move_u32 eax 3
+jump_label Model_gateway_windows_terminal_read_return
+label Model_gateway_windows_terminal_read_lost
+move_u32 eax 4
+label Model_gateway_windows_terminal_read_return
+add_i32 rsp 6248
+pop r15
+pop r14
+pop r13
+pop r12
+pop rdi
+pop rsi
+pop rbp
+pop rbx
+return
+end define
+
+define Model_gateway_platform_terminal_write
+push r12
+push r13
+push r14
+push r15
+subtract_i32 rsp 56
+move r12 r8
+move r13 r9
+move r14d r10d
+move r15 r11
+xor eax eax
+store_memory_u32 r15 none 1 0 eax
+load_memory_u64 rax r12 none 1 40
+test rax rax
+branch equal Model_gateway_windows_terminal_write_failure
+compare_i32 rax -1
+branch equal Model_gateway_windows_terminal_write_failure
+load_memory_u64 rax r12 none 1 24
+test rax rax
+branch equal Model_gateway_windows_terminal_write_failure
+label Model_gateway_windows_terminal_write_next
+test r14d r14d
+branch equal Model_gateway_windows_terminal_write_complete
+xor eax eax
+store_memory_u64 rsp none 1 32 rax
+store_memory_u32 rsp none 1 40 eax
+load_memory_u64 rcx r12 none 1 40
+move rdx r13
+move r8d r14d
+move r9 rsp
+add_i32 r9 40
+load_memory_u64 rax r12 none 1 24
+call_register rax
+test eax eax
+branch equal Model_gateway_windows_terminal_write_failure
+load_memory_u32 eax rsp none 1 40
+test eax eax
+branch equal Model_gateway_windows_terminal_write_failure
+compare eax r14d
+branch above Model_gateway_windows_terminal_write_failure
+add r13 rax
+subtract r14d eax
+load_memory_u32 ecx r15 none 1 0
+add ecx eax
+store_memory_u32 r15 none 1 0 ecx
+jump_label Model_gateway_windows_terminal_write_next
+label Model_gateway_windows_terminal_write_complete
+xor eax eax
+jump_label Model_gateway_windows_terminal_write_return
+label Model_gateway_windows_terminal_write_failure
+move_u32 eax 1
+label Model_gateway_windows_terminal_write_return
+add_i32 rsp 56
+pop r15
+pop r14
+pop r13
+pop r12
+return
+end define
 end section
 
 section rodata .rodata align 1
+define Model_gateway_windows_name_conin
+bytes 67 0 79 0 78 0 73 0 78 0 36 0 0 0
+end define
+define Model_gateway_windows_name_conout
+bytes 67 0 79 0 78 0 79 0 85 0 84 0 36 0 0 0
+end define
+define Model_gateway_windows_name_create_file
+bytes 67 114 101 97 116 101 70 105 108 101 87
+end define
 define Model_gateway_windows_name_get_std_handle
 bytes 71 101 116 83 116 100 72 97 110 100 108 101
+end define
+define Model_gateway_windows_name_read_console
+bytes 82 101 97 100 67 111 110 115 111 108 101 87
+end define
+define Model_gateway_windows_name_wide_char_to_multi_byte
+bytes 87 105 100 101 67 104 97 114 84 111 77 117 108 116 105 66 121 116 101
 end define
 end section

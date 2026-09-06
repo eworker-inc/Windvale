@@ -13,7 +13,7 @@ Bounded operations, networking, TLS, external models, credentials, and host adap
 | [Windvale supervised host network provider version 1](../Host-Network-Provider.md) | Documented |
 | [Windvale supervised host TLS provider version 1](../Host-Tls-Provider.md) | Documented |
 | [Windvale hosted model chat command version 1](../Hosted-Model-Chat-Command.md) | Implemented |
-| [Windvale native external-model gateway bridge version 1](../Native-External-Model-Gateway-Bridge.md) | Documented |
+| [Windvale native external-model gateway bridge version 1](../Native-External-Model-Gateway-Bridge.md) | Candidate |
 | [Network Address and Authority](../Network-Address-Authority.md) | Candidate |
 | [Network Resolve/Connect and Reliable Stream Core](../Network-Connect-Stream-Core.md) | Candidate |
 | [Windvale protected provider credential version 1](../Protected-Provider-Credential.md) | Documented |

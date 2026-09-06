@@ -1,0 +1,13 @@
+windvale-project 2
+root "Applications/Model-Chat/Windvale-Model-Chat.wv"
+source "Libraries/Platform/Models/Bound-Model-Provider.wv"
+source "Foundation/Decimal-Parsing.wv"
+source "Libraries/Foundation/Operations/Bounded-Operation-Core.wv"
+source "Applications/Model-Chat/Model-Chat-Core.wv"
+source "Libraries/Models/Model-Protocol.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Core.wv"
+source "Libraries/Platform/Streams/Standard-Byte-Output-Response-Core.wv"
+source "Libraries/Platform/Streams/Terminal-Line-Input.wv"
+source "Libraries/Platform/Streams/Terminal-Line-Input-Core.wv"
+emit wvb

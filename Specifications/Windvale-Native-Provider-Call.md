@@ -14,6 +14,12 @@ operations plus the directory-backed WVDB Query success, denial, and unavailable
 paths. Equivalent Linux images are constructed; independent Linux execution and
 ordinary configurable container binding remain promotion boundaries.
 
+The same lowering path is extended for
+`terminal.line_read_v1(bytes)->bytes` as a migrated candidate. It also selects
+ABI 23 and execution-context version 9, but current split-compiler construction
+and native model-chat execution remain required before that extension is
+promoted.
+
 The call consumes one ordinal entry from the immutable [`WVPT 1` provider
 table](Windvale-Native-Capability-Provider-Table.md). Generated code never
 searches an identity, opens a path, obtains a host handle, or retains a provider
@@ -141,6 +147,16 @@ the admitted private stdout descriptor, retrying only `EINTR`. Neither leaf
 decodes text, adds a terminator, exposes a handle, or treats local acceptance as
 remote receipt or durable commit. The shared adapter and response decoder are
 owned by [Standard-Byte-Output-Capability.md](Standard-Byte-Output-Capability.md).
+
+## Terminal line-input cell
+
+For `terminal.line_read_v1(bytes)->bytes`, the provider call uses one complete
+borrowed bytes descriptor and argument count one. The provider independently
+validates the exact 32-byte `WVLR 1` request, maximum line bound, visible mode,
+reserved fields, and expected generation. It returns one borrowed bounded
+`WVLI 1` response; malformed response bytes never become application text.
+The full request, response, platform binding, and loss behavior are owned by
+[Terminal-Line-Input-Capability.md](Terminal-Line-Input-Capability.md).
 
 Decision 0585 requires an alive model bridge to return zero and publish a
 canonical typed response for revocation, stale generation, pre-dispatch peer

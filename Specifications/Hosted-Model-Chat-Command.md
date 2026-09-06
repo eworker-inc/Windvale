@@ -2,13 +2,22 @@
 
 ## Status and purpose
 
+The existing Node-hosted credential, catalog, and bounded-chat command is
+implemented. The Windvale-owned interactive application and terminal-input
+extension described below are accepted migration candidates pending current
+split-compiler construction and native host execution. Until that evidence
+passes, the hosted Node command remains the supported user-facing path.
+
 This specification defines the first user-facing command over the supervised
 [external-model gateway](Supervised-External-Model-Gateway.md). It lets a person
 create and inspect one protected provider credential, list the models visible to
 that credential, and hold a bounded multi-turn text conversation with one exact
-model. The hosted bootstrap command is implemented by
-`Applications/Model-Chat/Windvale-Model-Chat.mjs` with Windows and Linux launch
-scripts beside it.
+model. Credential custody and model-catalog administration remain in the hosted
+launcher. The interactive chat, commands, exact model request construction,
+typed model failures, and bounded history are migrated into
+`Applications/Model-Chat/Windvale-Model-Chat.wv`. Windows and Linux launch
+scripts are intended to build that native application reproducibly and then
+start it through the temporary Node credential/network supervisor.
 
 The command supports the gateway's exact `openai`, `anthropic`, and `google`
 bindings over authenticated HTTPS. It is not a provider router, automatic model
@@ -43,9 +52,12 @@ byte count. It never emits ciphertext or secret material.
 Credential and passphrase creation each require two matching masked terminal
 entries. Model listing and chat require one masked passphrase entry. Protected
 input requires a real terminal with raw-mode support; redirected standard input
-is rejected. Command-line arguments, environment variables, ordinary output,
-diagnostics, model records, and child launch arguments never carry either
-secret.
+is rejected. Later visible chat lines use the distinct
+[`terminal.line_read_v1`](Terminal-Line-Input-Capability.md) provider and never
+return a credential. Command-line arguments, environment variables, ordinary
+output, diagnostics, model records, and child launch arguments never carry
+either secret. Native child arguments contain only the public provider label,
+exact model identifier, and output-token ceiling.
 
 Credential creation uses [WVSC 1](Protected-Provider-Credential.md), writes an
 ordinary new file with owner-only mode where the host supports it, flushes the
@@ -70,10 +82,17 @@ optional display name. Catalog requests are serial and are never automatically
 retried.
 
 `chat` selects the exact model named by `--model`; it never substitutes an alias,
-fallback, or newer model. The interactive commands are `:help`, `:clear`, and
-`:quit`. Empty lines do nothing. Each other line becomes one user message and
-one serial generation request. A successful text response is printed before it
-is considered for retention.
+fallback, or newer model. After protected unlock, the host binds only
+`model.catalog_v1`, `model.inference_v1`, `standard_output.write_v1`, and
+`terminal.line_read_v1` to the native Windvale application. Process arguments
+remain immutable fixed services. The application receives no credential,
+resolver, socket, TLS object, URL, authorization header, provider JSON, or raw
+terminal handle.
+
+The Windvale-owned interactive commands are `:help`, `:clear`, and `:quit`.
+Empty lines do nothing. Each other line becomes one user message and one serial
+generation request. A successful text response is printed before it is
+considered for retention.
 
 The caller owns history under the existing `WVMM 1` limits:
 
@@ -102,19 +121,28 @@ rejected before display. Every gateway exit path requests teardown. Version 1
 performs no automatic retry, reconnect replay, provider fallback, or uncertain
 mutation resubmission.
 
-## Executable evidence and boundary
+## Required executable evidence and boundary
 
-The `model-chat` owner runs 21 deterministic cases with fake credentials and an
-isolated fake gateway. It covers command admission, secret-option rejection,
-conversation rolling, message and record bounds, canonical request/response
-coding, malformed responses, masked credential creation, metadata-only
-inspection, catalog continuation, exact multi-turn history, clear, oversized
-response retention, typed provider failure, and uncertain submission without
-retry. It makes no public-network call and reads no real credential.
+The quick `model-chat` owner defines ten hosted-supervisor cases, while the
+separate `Test-Model-Chat-Native-Construction` entry point defines 32 Windvale
+cases and is intentionally not part of fast normal feedback. The hosted cases
+cover command admission, secret-option rejection, masked credential custody,
+metadata-only inspection, catalog administration, native delegation, exact exit
+status, readiness mismatch, and signal loss. Nineteen Windvale terminal-core
+cases cover valid and malformed WVLR/WVLI records, bounds, generations, line
+terminators, and strict UTF-8. Thirteen Windvale chat-core cases cover commands,
+prepare/commit, rolling complete turns, and invalid history/messages. The
+construction owner must build byte-identical WVB and WVO artifacts, execute the portable cores on
+its local host, and construct both Windows and Linux native application images
+before the native path is promoted. It makes no public-network call and reads
+no real credential.
 
 The executable command itself uses the production supervised gateway and can
 make live calls when a user supplies a valid protected credential. Live provider
-availability is operational evidence, not deterministic acceptance. A fully
-Windvale-source terminal front end, installed Package 1 records, OS keyring/HSM
-custody, streaming, tool calls, multimodal input, concurrent requests, and GUI
-chat remain later increments.
+availability is operational evidence, not deterministic acceptance. The Node
+process remains the implemented command and a temporary supervised host adapter
+for protected unlock, credential custody, provider HTTPS, and private
+WVMQ/WVMC/WVMG transport. Once the native path passes its promotion evidence,
+Node no longer owns the chat UI or conversation. Installed Package 1 records, OS
+keyring/HSM custody, streaming, tool calls, multimodal input, concurrent
+requests, and GUI chat remain later increments.

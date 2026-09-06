@@ -1,0 +1,150 @@
+module Windvaleˉterminalˉlineˉinputˉcore profile portable;
+
+const TERMINAL_LINE_REQUEST_MAGIC: u32 = 1380734551u32;
+const TERMINAL_LINE_RESPONSE_MAGIC: u32 = 1229739607u32;
+const TERMINAL_LINE_PROTOCOL_VERSION: u32 = 1u32;
+const TERMINAL_LINE_REQUEST_BYTES: u32 = 32u32;
+const TERMINAL_LINE_RESPONSE_HEADER_BYTES: u32 = 32u32;
+const TERMINAL_LINE_MAXIMUM_BYTES: u32 = 3072u32;
+const TERMINAL_LINE_PROVIDER_GENERATION: u64 = 1u64;
+
+export enum Terminalˉlineˉstatus {
+    Completed = 0;
+    Endˉofˉinput = 1;
+    Interrupted = 2;
+    Rejected = 3;
+    Providerˉlost = 4;
+    Stale = 5;
+    Revoked = 6;
+    Invalidˉrequest = 7;
+    Invalidˉresponse = 8;
+}
+
+export record Terminalˉlineˉrequest {
+    Valid: bool;
+    Maximum: u32;
+    Bytes: bytes;
+}
+
+export record Terminalˉlineˉresponse {
+    Valid: bool;
+    Status: Terminalˉlineˉstatus;
+    Providerˉgeneration: u64;
+    Value: text;
+}
+
+fn Terminalˉlineˉempty(Value: bytes) -> bytes {
+    return Bytesˉslice(Value, 0u32, 0u32);
+}
+
+fn Terminalˉlineˉstatusˉfromˉu32(Value: u32) -> Terminalˉlineˉstatus {
+    if Value == 0u32 { return Terminalˉlineˉstatus.Completed; }
+    if Value == 1u32 { return Terminalˉlineˉstatus.Endˉofˉinput; }
+    if Value == 2u32 { return Terminalˉlineˉstatus.Interrupted; }
+    if Value == 3u32 { return Terminalˉlineˉstatus.Rejected; }
+    if Value == 4u32 { return Terminalˉlineˉstatus.Providerˉlost; }
+    if Value == 5u32 { return Terminalˉlineˉstatus.Stale; }
+    return Terminalˉlineˉstatus.Revoked;
+}
+
+fn Terminalˉlineˉcontentˉisˉvalid(Value: bytes) -> bool {
+    if !Textˉutf8ˉisˉvalid(Value) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Value) {
+        let Byte: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Value, Index));
+        if Byte == 0u32 || Byte == 10u32 || Byte == 13u32 { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+fn Terminalˉlineˉinvalidˉresponse(Value: bytes) -> Terminalˉlineˉresponse {
+    return Terminalˉlineˉresponse(
+        false,
+        Terminalˉlineˉstatus.Invalidˉresponse,
+        0u64,
+        ""
+    );
+}
+
+fn Terminalˉlineˉstatusˉisˉvalid(
+    Status: Terminalˉlineˉstatus,
+    Generation: u64,
+    Content: bytes
+) -> bool {
+    let Length: u32 = Bytesˉlength(Content);
+    if Status == Terminalˉlineˉstatus.Completed {
+        return Generation == TERMINAL_LINE_PROVIDER_GENERATION &&
+            Terminalˉlineˉcontentˉisˉvalid(Content);
+    }
+    if Length != 0u32 { return false; }
+    if Status == Terminalˉlineˉstatus.Stale ||
+        Status == Terminalˉlineˉstatus.Revoked {
+        return Generation != TERMINAL_LINE_PROVIDER_GENERATION;
+    }
+    return Generation == TERMINAL_LINE_PROVIDER_GENERATION;
+}
+
+export fn Terminalˉlineˉrequestˉcreate(Maximum: u32) -> Terminalˉlineˉrequest {
+    let Empty: bytes = Bytesˉslice(Bytesˉfromˉu8(0u8), 0u32, 0u32);
+    if Maximum == 0u32 || Maximum > TERMINAL_LINE_MAXIMUM_BYTES {
+        return Terminalˉlineˉrequest(false, Maximum, Empty);
+    }
+    var Value: bytes = Bytesˉfromˉu32ˉlittle(TERMINAL_LINE_REQUEST_MAGIC);
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(TERMINAL_LINE_PROTOCOL_VERSION));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(TERMINAL_LINE_REQUEST_BYTES));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(Maximum));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu32ˉlittle(0u32));
+    Value = Bytesˉconcat(Value, Bytesˉfromˉu64ˉlittle(TERMINAL_LINE_PROVIDER_GENERATION));
+    return Terminalˉlineˉrequest(true, Maximum, Value);
+}
+
+export fn Terminalˉlineˉrequestˉread(Value: bytes) -> Terminalˉlineˉrequest {
+    if Bytesˉlength(Value) != TERMINAL_LINE_REQUEST_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Value, 0u32) != TERMINAL_LINE_REQUEST_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != TERMINAL_LINE_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != TERMINAL_LINE_REQUEST_BYTES ||
+        Bytesˉreadˉu32ˉlittle(Value, 16u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Value, 20u32) != 0u32 ||
+        Bytesˉreadˉu64ˉlittle(Value, 24u32) != TERMINAL_LINE_PROVIDER_GENERATION {
+        return Terminalˉlineˉrequest(false, 0u32, Value);
+    }
+    let Maximum: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    if Maximum == 0u32 || Maximum > TERMINAL_LINE_MAXIMUM_BYTES {
+        return Terminalˉlineˉrequest(false, Maximum, Value);
+    }
+    return Terminalˉlineˉrequest(true, Maximum, Value);
+}
+
+export fn Terminalˉlineˉresponseˉread(
+    Value: bytes,
+    Requestedˉmaximum: u32
+) -> Terminalˉlineˉresponse {
+    let Total: u32 = Bytesˉlength(Value);
+    if Requestedˉmaximum == 0u32 || Requestedˉmaximum > TERMINAL_LINE_MAXIMUM_BYTES ||
+        Total < TERMINAL_LINE_RESPONSE_HEADER_BYTES ||
+        Total > TERMINAL_LINE_RESPONSE_HEADER_BYTES + Requestedˉmaximum ||
+        Bytesˉreadˉu32ˉlittle(Value, 0u32) != TERMINAL_LINE_RESPONSE_MAGIC ||
+        Bytesˉreadˉu32ˉlittle(Value, 4u32) != TERMINAL_LINE_PROTOCOL_VERSION ||
+        Bytesˉreadˉu32ˉlittle(Value, 8u32) != Total {
+        return Terminalˉlineˉinvalidˉresponse(Value);
+    }
+    let Statusˉvalue: u32 = Bytesˉreadˉu32ˉlittle(Value, 12u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 16u32);
+    let Reserved: u32 = Bytesˉreadˉu32ˉlittle(Value, 20u32);
+    let Generation: u64 = Bytesˉreadˉu64ˉlittle(Value, 24u32);
+    if Statusˉvalue > 6u32 || Reserved != 0u32 ||
+        Length != Total - TERMINAL_LINE_RESPONSE_HEADER_BYTES ||
+        Length > Requestedˉmaximum || Generation == 0u64 {
+        return Terminalˉlineˉinvalidˉresponse(Value);
+    }
+    let Status: Terminalˉlineˉstatus = Terminalˉlineˉstatusˉfromˉu32(Statusˉvalue);
+    let Content: bytes = Bytesˉslice(Value, TERMINAL_LINE_RESPONSE_HEADER_BYTES, Length);
+    if !Terminalˉlineˉstatusˉisˉvalid(Status, Generation, Content) {
+        return Terminalˉlineˉinvalidˉresponse(Value);
+    }
+    return Terminalˉlineˉresponse(
+        true, Status, Generation, Textˉfromˉutf8(Content)
+    );
+}
