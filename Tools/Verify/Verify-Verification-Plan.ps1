@@ -5613,6 +5613,62 @@ foreach ($OtherOwnerPath in @(
     }
 }
 
+# Documentation companions retain the exact selection. Exercise shared immutable
+# initialization too: a preceding broad plan must not contaminate the next one.
+$MixedOwnerInitialization = @{}
+$MixedOwnerSelections = @(
+    @{ Path = 'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv'; Field = 'UseFoundationBorrowPlanDevelopment'; Value = $true },
+    @{ Path = 'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'; Field = 'UseFoundationBorrowDirectoryDevelopment'; Value = $true },
+    @{ Path = 'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv'; Field = 'UseFoundationBorrowOwnerDevelopment'; Value = $true },
+    @{ Path = 'Projects/Tools/Windvale-Wvb-Publisher.wvproj'; Field = 'UsePublisherCurrentSourceDevelopment'; Value = $true },
+    @{ Path = 'Projects/Tests/Windvale-Native-Test-Language-1-Generic-Declarations.wvproj'; Field = 'Language1FrontDoorDevelopmentTarget'; Value = 'generic-declarations' }
+)
+foreach ($Selection in $MixedOwnerSelections) {
+    $Single = & $NativePlanner -ChangedPath $Selection.Path -PassThru -Quiet `
+        -InitializationCache $MixedOwnerInitialization
+    foreach ($Companion in @(
+        'README.md',
+        'Documents/Project/Progress.md',
+        'Specifications/Indexes/Compiler.md',
+        'Documents/Project/Images/Progress.png'
+    )) {
+        $CompanionPlan = & $NativePlanner -ChangedPath $Companion -PassThru -Quiet `
+            -InitializationCache $MixedOwnerInitialization
+        $Mixed = & $NativePlanner -ChangedPath @($Selection.Path, $Companion) -PassThru -Quiet `
+            -InitializationCache $MixedOwnerInitialization
+        $ExpectedSuites = @(@($Single.Suites) + @($CompanionPlan.Suites) | Sort-Object -Unique)
+        if ($Mixed.($Selection.Field) -cne $Selection.Value -or
+            $Mixed.ExpectedSeconds -ne ($Single.ExpectedSeconds + $CompanionPlan.ExpectedSeconds) -or
+            $Mixed.MaximumSeconds -ne ($Single.MaximumSeconds + $CompanionPlan.MaximumSeconds) -or
+            (($Mixed.Suites | Sort-Object) -join ',') -cne ($ExpectedSuites -join ',') -or
+            $Mixed.Gaps.Count -ne 0 -or $Mixed.ChangedCount -ne 2 -or
+            $Mixed.RunPlanVerification -ne ($Single.RunPlanVerification -or $CompanionPlan.RunPlanVerification)) {
+            throw "Unrelated '$Companion' widened or lost evidence for '$($Selection.Path)'."
+        }
+    }
+    foreach ($SharedDependency in @(
+        'Tools/Native/Development-Command-Core.mjs',
+        'Foundation/Byte-Construction.wv',
+        'Tools/Native/Test-Verification-Owner-Stream.mjs',
+        'Specifications/Windvale-Language-1.0.md',
+        'Documents/Project/Windvale-Language-1.0-Design.md',
+        'Unknown/Boundary.bin'
+    )) {
+        $Broad = & $NativePlanner -ChangedPath @(
+            $Selection.Path, $SharedDependency
+        ) -PassThru -Quiet -InitializationCache $MixedOwnerInitialization
+        if ($Broad.($Selection.Field) -ceq $Selection.Value) {
+            throw "Unproven dependency '$SharedDependency' retained the narrow selection for '$($Selection.Path)'."
+        }
+    }
+    $Again = & $NativePlanner -ChangedPath @('README.md', $Selection.Path) -PassThru -Quiet `
+        -InitializationCache $MixedOwnerInitialization
+    if ($Again.($Selection.Field) -cne $Selection.Value -or
+        $Again.ExpectedSeconds -ne $Single.ExpectedSeconds) {
+        throw 'Cached planner initialization retained prior owner paths.'
+    }
+}
+
 $FrontEndRunner = Join-Path $RepositoryRoot 'Tools/Native/Test-Language-1.0-Front-Door-Development.mjs'
 & node $FrontEndRunner --check-runner
 if ($LASTEXITCODE -ne 0) { throw 'Front-end development runner fault checks failed.' }

@@ -31,6 +31,16 @@ values, and returns:
   cost-class-aware cold estimate and bound; and
 - the normalized changed-path count.
 
+Foundation borrow, current-source publisher, and front-end product narrowing
+uses the changed paths after excluding paths already routed to documentation-only
+checks. Executable and frozen documentation inputs retain their implementation
+routing. Every other path remains a narrowing constraint, including paths
+assigned to other owners: routing alone is not a complete dependency proof.
+Dependencies outside the focused input inventory still force broader selection.
+All selected owners, metadata checks, and coverage gaps remain in the plan.
+Documentation-only path sets are fresh for each request, including when immutable planner
+initialization is reused.
+
 Maintained Windvale compiler, bytecode, Foundation, object, assembler, linker,
 OS, project, example, and native-tool paths select their existing focused owners.
 Frozen managed implementation or test source selects a named recovery-source

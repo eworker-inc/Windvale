@@ -1073,6 +1073,7 @@ $DatabaseDevelopmentRequiresAllTargets = $false
 $SelectedDatabaseDevelopmentTargets =
     [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $script:CurrentChangedPath = $null
+$DocumentationOnlyPaths = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 
 function Add-Suite {
     param([Parameter(Mandatory)][string[]]$Name)
@@ -1775,6 +1776,7 @@ foreach ($Path in $Paths) {
         )
     )
     if ($IsDocumentationCatalogPath) {
+        $null = $DocumentationOnlyPaths.Add($Path)
         continue
     }
     if ($OsX64CodeEmissionDevelopmentTargetsByPath.ContainsKey($Path)) {
@@ -1881,6 +1883,10 @@ foreach ($Path in $Paths) {
             )
         )
     ) {
+        if ($Path.EndsWith('.md', [StringComparison]::OrdinalIgnoreCase) -or
+            $IsDocumentationImage) {
+            $null = $DocumentationOnlyPaths.Add($Path)
+        }
         continue
     } elseif (Test-ArchivedManagedPath $Path) {
         $RunPlanVerification = $true
@@ -4672,21 +4678,24 @@ $SelectedMaximumSeconds = if ($SelectedSuiteEntries.Count -eq 0) {
     [long](($SelectedSuiteEntries |
         Measure-Object -Property MaximumSeconds -Sum).Sum)
 }
+# Documentation routing has already excluded executable and frozen contracts.
+# Keep every other path: owner routing alone is not a complete dependency proof.
+$FocusedDevelopmentPaths = @($Paths | Where-Object { !$DocumentationOnlyPaths.Contains($_) })
 $FoundationBorrowPlanInputs = @(
     'Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Value-Borrow-Plan.wvproj',
     'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv'
 )
-$UseFoundationBorrowPlanDevelopment = $Paths.Count -gt 0 -and
+$UseFoundationBorrowPlanDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
-    @($Paths | Where-Object { $_ -cnotin $FoundationBorrowPlanInputs }).Count -eq 0
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowPlanInputs }).Count -eq 0
 $FoundationBorrowDirectoryInputs = @(
     'Projects/Tests/Windvale-Native-Test-Wvb-Typed-Directories.wvproj',
     'Tests/Fixtures/Source-Wvb/Typed-Directories-Self-Test.wv'
 )
-$UseFoundationBorrowDirectoryDevelopment = $Paths.Count -gt 0 -and
+$UseFoundationBorrowDirectoryDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
-    @($Paths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
 $FoundationBorrowOwnerInputs = @(
     'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',
@@ -4705,9 +4714,9 @@ $PublisherCurrentSourceInputs = @(
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Typed-Directories.wv',
     'Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv'
 )
-$UsePublisherCurrentSourceDevelopment = $Paths.Count -gt 0 -and
+$UsePublisherCurrentSourceDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('hosted-verifier-publisher-files') -and
-    @($Paths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $PublisherCurrentSourceInputs }).Count -eq 0
 if ($UsePublisherCurrentSourceDevelopment) {
     $PublisherOwner = @($SelectedSuiteEntries | Where-Object {
         $_.Name -eq 'hosted-verifier-publisher-files'
@@ -4715,9 +4724,9 @@ if ($UsePublisherCurrentSourceDevelopment) {
     $SelectedExpectedSeconds = [long]($SelectedExpectedSeconds - $PublisherOwner.ExpectedSeconds + 60)
     $SelectedMaximumSeconds = [long]($SelectedMaximumSeconds - $PublisherOwner.MaximumSeconds + 180)
 }
-$UseFoundationBorrowOwnerDevelopment = $Paths.Count -gt 0 -and
+$UseFoundationBorrowOwnerDevelopment = $FocusedDevelopmentPaths.Count -gt 0 -and
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
-    @($Paths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
+    @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowOwnerInputs }).Count -eq 0
 if ($UseFoundationBorrowPlanDevelopment -or $UseFoundationBorrowDirectoryDevelopment -or
     $UseFoundationBorrowOwnerDevelopment) {
     $FoundationBorrowOwner = @($SelectedSuiteEntries | Where-Object {
@@ -4750,8 +4759,8 @@ if ($Language1FrontDoorDevelopmentEligible) {
         throw 'The front-end development product inventory is invalid.'
     }
     $FrontEndNames = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
-    $FrontEndExact = $Paths.Count -gt 0
-    foreach ($FrontEndPath in $Paths) {
+    $FrontEndExact = $FocusedDevelopmentPaths.Count -gt 0
+    foreach ($FrontEndPath in $FocusedDevelopmentPaths) {
         $AffectedProducts = @($FrontEndPlan.Products | Where-Object {
             $_.Inputs -ccontains $FrontEndPath
         })

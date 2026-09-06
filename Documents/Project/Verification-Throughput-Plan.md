@@ -2,7 +2,7 @@
 
 > Status: Active implementation plan
 > Authority: Informative
-> Last reviewed: 2026-09-04
+> Last reviewed: 2026-09-06
 
 ## Goal
 
@@ -32,6 +32,20 @@ These are redesign targets, not current claims or pass thresholds. Measure each
 phase on Windows and Linux before making a target enforceable.
 
 ## Current checkpoint
+
+Mixed changes now preserve each owner's focused development selection. The
+planner excludes paths already routed to documentation-only checks from
+Foundation borrow, publisher, and front-end narrowing. Previously, adding a
+README change to the borrow-plan source changed its estimate from 30 to 900
+seconds and requested the complete execution owner. A generic-declaration
+project plus README similarly selected all six front-end products at 330
+expected seconds instead of one at 20. Those mixed plans now retain the 30-
+and 20-second estimates. These are planning estimates, not measured execution
+speedups. Other selected owners and documentation checks still execute; shared
+dependencies, implementation companions, and unknown coverage still fail
+conservatively. Owner routing is not yet a complete construction dependency
+inventory, so it cannot justify ignoring other implementation changes. Complete
+qualification remains hours long and requires further construction reuse.
 
 The front-door development checkpoint now has one six-product inventory shared
 by Windows and Linux. It reuses exact project and native-package products while
