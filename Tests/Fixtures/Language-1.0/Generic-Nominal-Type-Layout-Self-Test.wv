@@ -1,6 +1,7 @@
 module Languageˉoneˉgenericˉnominalˉtypeˉlayoutˉselfˉtest profile portable;
 
 import Compilerˉsourceˉgenericˉlowering as Generics;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
 import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉbinding;
 import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayout;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
@@ -70,6 +71,66 @@ fn Bindingˉcatalog(
     return Genericˉbinding.Compilerˉsourceˉgenericˉtypeˉbindingˉcatalog(
         Binding
     );
+}
+
+fn Readˉclass(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Shape: u32
+) -> u32 {
+    return Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Input, Scan, Symbols, Catalog,
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(), Shape
+    );
+}
+
+fn Callableˉclasses(
+    Input: bytes,
+    Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
+    Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
+    Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+) -> i32 {
+    let Empty: bytes = Bytesˉslice(Input, 0u32, 0u32);
+    let Admission: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉadmission =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉadmit(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(),
+            0u32, 1u32, 1u32, 0u32, 0u32, 0u32, Empty, 32u32
+        );
+    if Admission.Status !=
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid {
+        return 116;
+    }
+    let Functions: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉfromˉadmission(
+            Admission
+        );
+    let Shape: u32 = Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshape(0u32);
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog, Functions, Shape
+        ) != 3u32 {
+        return 117;
+    }
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog, Functions, Shape + 1u32
+        ) != 0u32 || Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog,
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(), Shape
+        ) != 0u32 {
+        return 118;
+    }
+    let Invalid: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Bytesˉslice(Functions.Evidence, 0u32, 23u32)
+        );
+    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Input, Scan, Symbols, Catalog, Invalid, Shape
+        ) != 0u32 {
+        return 119;
+    }
+    return 0;
 }
 
 fn Nameˉis(
@@ -516,14 +577,14 @@ export fn Main() -> i32 {
     while Primitive <= 16u32 {
         var Expected: u32 = 1u32;
         if Primitive == 5u32 || Primitive == 6u32 { Expected = 2u32; }
-        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        if Readˉclass(
             Input, Scan, Symbols, Catalog, Primitive
         ) != Expected { return 22; }
         Primitive = Primitive + 1u32;
     }
     var Aggregate: u32 = 0u32;
     while Aggregate < Bytesˉlength(Readˉclasses) {
-        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        if Readˉclass(
             Input, Scan, Symbols, Catalog,
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(Aggregate)
         ) != U32ˉfromˉu8(Bytesˉreadˉu8(Readˉclasses, Aggregate)) {
@@ -531,12 +592,12 @@ export fn Main() -> i32 {
         }
         Aggregate = Aggregate + 1u32;
     }
-    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    if Readˉclass(
         Input, Scan, Symbols, Catalog, 0u32
-    ) != 0u32 || Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    ) != 0u32 || Readˉclass(
         Input, Scan, Symbols, Catalog, 65536u32
     ) != 0u32 { return 24; }
-    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    if Readˉclass(
         Input, Scan, Symbols, Catalog,
         Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshape(11u32)
     ) != 0u32 { return 25; }
@@ -547,17 +608,17 @@ export fn Main() -> i32 {
                 Generics.Compilerˉsourceˉgenericˉstatus.Valid,
                 Bytesˉslice(Catalog.Evidence, 0u32, Prefix)
             );
-        if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        if Readˉclass(
             Input, Scan, Symbols, Truncated, Box.Shape
         ) != 0u32 { return 26; }
         Prefix = Prefix + 1u32;
     }
-    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    if Readˉclass(
         Input, Scan, Symbols, Mismatchˉcatalog, Box.Shape
     ) != 0u32 { return 27; }
-    if Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    if Readˉclass(
         Input, Scan, Symbols, Missingˉcatalog, Box.Shape
-    ) != 0u32 || Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+    ) != 0u32 || Readˉclass(
         Input, Scan, Symbols, Badˉcatalog, Box.Shape
     ) != 0u32 { return 28; }
     if Opaqueˉclasses() != 0 { return 29; }
@@ -565,6 +626,8 @@ export fn Main() -> i32 {
     if Collections != 0 { return Collections; }
     let Nominals: i32 = Nominalˉclasses();
     if Nominals != 0 { return Nominals; }
+    let Callables: i32 = Callableˉclasses(Input, Scan, Symbols, Catalog);
+    if Callables != 0 { return Callables; }
     if !Repeatedˉclass("u32", 1u32) { return 114; }
     if !Repeatedˉclass("text", 2u32) { return 115; }
     return 42;
@@ -601,7 +664,7 @@ fn Opaqueˉclasses() -> i32 {
         var Expected: u32 = 3u32;
         if Case == 5u32 { Expected = 1u32; }
         if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
-            Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Readˉclass(
                 Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
             ) != Expected { return 1; }
         Case = Case + 1u32;
@@ -652,7 +715,7 @@ fn Collectionˉclasses() -> i32 {
             Bind(Input, Scan, Symbols, Sourceˉbytes, Marker,
                 Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty());
         if Binding.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
-            Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+            Readˉclass(
                 Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
             ) != Expected {
             if Case == 0u32 { return 30; }
@@ -686,7 +749,7 @@ fn Sourceˉclassˉis(Source: text, Expected: u32) -> bool {
             Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉempty());
     return Binding.Status == Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid &&
         Binding.Genericˉstatus == Generics.Compilerˉsourceˉgenericˉstatus.Valid &&
-        Genericˉlayout.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+        Readˉclass(
             Input, Scan, Symbols, Bindingˉcatalog(Binding), Binding.Shape
         ) == Expected;
 }

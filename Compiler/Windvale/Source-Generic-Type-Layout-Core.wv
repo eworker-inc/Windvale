@@ -2,6 +2,7 @@ module Compilerˉsourceˉgenericˉtypeˉlayout profile portable;
 
 import Compilerˉsourceˉbodyˉparser as Sourceˉbodies;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
 import Compilerˉsourceˉgenericˉlowering as Sourceˉgenerics;
 import Compilerˉsourceˉgenericˉtypeˉbinding as Genericˉtypeˉbinding;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
@@ -44,18 +45,22 @@ export record Compilerˉsourceˉgenericˉtypeˉcase {
 }
 
 // These are the WVIR value classes. Unknown is a refusal to copy through a
-// borrow, not evidence that the value is owned. Callable capture classes need
-// their own source-side proof.
+// borrow, not evidence that the value is owned. Callable values are frame-owned
+// in the current executable profile and require exact WVFT catalog evidence.
 export fn Compilerˉsourceˉgenericˉtypeˉreadˉclass(
     Input: bytes,
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Catalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Functionˉcatalog: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog,
     Shape: u32
 ) -> u32 {
     if Scan.Status != Sourceˉset.Compilerˉsourceˉsetˉstatus.Valid ||
         Symbols.Status != Sourceˉsymbols.Compilerˉsourceˉsymbolˉstatus.Valid ||
-        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(Catalog) {
+        !Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalogˉisˉvalid(Catalog) ||
+        !Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉisˉvalid(
+            Functionˉcatalog
+        ) {
         return 0u32;
     }
     var Pending: bytes = Bytesˉfromˉu32ˉlittle(Shape);
@@ -86,6 +91,18 @@ export fn Compilerˉsourceˉgenericˉtypeˉreadˉclass(
             Sourceˉsymbols.Compilerˉsourceˉsymbolsˉshapeˉisˉcapability(
                 Symbols.Directory, Current
             ) {
+            return 3u32;
+        } else if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshapeˉisˉprivate(
+                Current
+            ) {
+            if Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉshapeˉinstance(
+                    Current
+                ) >=
+                Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
+                    Functionˉcatalog
+                ) {
+                return 0u32;
+            }
             return 3u32;
         } else if Compilerˉsourceˉtypeˉreadˉshapeˉcontains(Completed, Current) {
             // Only completed Copy/Shared subtrees are reusable. Active path

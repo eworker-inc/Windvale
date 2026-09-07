@@ -79,10 +79,14 @@ for this checkpoint is recorded in the
 The current source checkpoint implements read-through classification for ordinary
 and generic records, variants, and fixed arrays. It permits recursively proven
 Copy/Shared contents and rejects nested owners, malformed layouts, recursive
-value containment, and unproven callable classes. Its bounded walk reuses
+value containment, and unproven callable classes. Exact WVFT-backed callable
+shapes are now classified as owned under the frame-owned profile; absent,
+truncated, and out-of-range callable evidence fails closed. Its bounded walk reuses
 completed type proofs, and ordinary by-value calls avoid the traversal. The
-existing generic-layout owner now passes 51 groups on Windows; its final
-construction and execution after rebasing onto the current terminal-input changes took 275.0 seconds. The
+generic-layout owner now passes 56 groups on Windows; the callable extension's
+passing run took 248.2 seconds. The
+[callable classifier evidence](../Evidence/2026-09-07-Foundation-Source-Callable-Classification.json)
+records the added boundary. The earlier
 [exact classifier evidence](../Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json)
 records this component scope. Compiler call-site cases
 also move a one-integer record into positive coverage and retain an actual
@@ -98,8 +102,8 @@ is incomplete: it reached the opaque-owner fixture and failed there; review
 found and corrected an ambiguous marker that selected the module header. Its
 construction caches are preserved. Later diagnostics found invalid fixture
 declarations being passed into binding; the passing fixture now checks source
-validation first and uses admitted forms. Callable classification, complete admission, and runtime
-retention remain pending. This checkpoint does not complete immutable borrowing
+validation first and uses admitted forms. Complete admission, owned-payload
+reconciliation, and runtime retention remain pending. This checkpoint does not complete immutable borrowing
 or Option/Result.
 
 ## Proposed product names

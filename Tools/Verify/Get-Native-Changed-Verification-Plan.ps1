@@ -4865,7 +4865,7 @@ $GenericNominalDevelopmentBundleSelectedOwnerCount =
     $GenericNominalDevelopmentBundleSelectedEntries.Count
 $UseGenericNominalDevelopmentBundle =
     $GenericNominalDevelopmentBundleSelectedOwnerCount -ge 2
-$GenericNominalDevelopmentBundleCaseCount = 138
+$GenericNominalDevelopmentBundleCaseCount = 143
 $GenericNominalDevelopmentBundleExpectedSeconds = [long]330
 $GenericNominalDevelopmentBundleMaximumSeconds = [long]600
 if ($UseGenericNominalDevelopmentBundle) {

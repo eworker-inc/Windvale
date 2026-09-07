@@ -417,7 +417,11 @@ read-through rule: an explicit borrowed actual may satisfy a by-value formal
 only when conservative classification proves the value Copy or shared
 immutable. Scalars and enums are Copy; `text`, `bytes`, and immutable sequences
 are shared; builders and capability-shaped values are conservatively owned; an
-unproven aggregate remains unknown. The current source-classification candidate
+unproven aggregate remains unknown. A callable-private shape is owned only when
+an exact entry exists in the validated WVFT catalog; an unbacked private shape
+remains unknown. This preserves the current frame-owned, nonescaping callable
+profile and never infers callable ownership from its numeric range alone. The
+current source-classification candidate
 extends that proof through ordinary and generic records, variants, and fixed
 arrays, with shared field binding, local proof catalogs, recursion rejection,
 and bounded reuse of completed type proofs. Canonical task scopes, task handles,

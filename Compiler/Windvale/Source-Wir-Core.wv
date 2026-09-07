@@ -1148,7 +1148,8 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Shape: u32,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
-    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog
+    Typeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog,
+    Functionˉcatalog: Compilerˉsourceˉwirˉfunctionˉtypeˉcatalog
 ) -> u32 {
     if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉisˉprivate(Shape) {
         if Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉshapeˉinstance(Shape) <
@@ -1190,7 +1191,12 @@ fn Compilerˉsourceˉwirˉvalueˉclassify(
         return WIR_VALUE_CLASS_OWNED;
     }
     return Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
-        Input, Scan, Symbols, Typeˉcatalog, Shape
+        Input, Scan, Symbols, Typeˉcatalog,
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Functionˉcatalog.Evidence
+        ),
+        Shape
     );
 }
 
@@ -12266,6 +12272,9 @@ export fn Compilerˉsourceˉwirˉcompileˉcall(
             Valueˉclass = Compilerˉsourceˉwirˉvalueˉclassify(
                 Input, Scan, Value.Shape, Symbols,
                 Compilerˉsourceˉwirˉgenericˉtypeˉcatalog(
+                    Value.Genericˉevidence
+                ),
+                Compilerˉsourceˉwirˉfunctionˉtypeˉcatalogˉfromˉgeneric(
                     Value.Genericˉevidence
                 )
             );

@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 5 September 2026
+> Status: Current project snapshot as of 7 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-05
+> Last reviewed: 2026-09-07
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -92,8 +92,10 @@ Two active tracks intentionally use different bytecode generations:
   Its loan pass tracks origins through branches and loops, including values
   waiting on the operand stack. Owner changes invalidate later borrowed reads;
   changes after the last use and fresh reborrows remain valid. Array, Sequence,
-  and callable composition now has focused evidence. Remaining operand,
-  owned-payload, and authority checks still prevent complete 1.39 admission.
+  and callable composition now has focused evidence. Source read-through also
+  classifies only exact WVFT-backed callable shapes as owned and rejects absent,
+  truncated, or out-of-range callable evidence. Remaining owned-payload
+  reconciliation and the complete audit still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.

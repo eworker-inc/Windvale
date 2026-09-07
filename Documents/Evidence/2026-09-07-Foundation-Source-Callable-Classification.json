@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-07-foundation-source-callable-classification",
+  "date": "2026-09-07",
+  "subject": "Authenticated source callable read-through classification",
+  "claim": "The generic nominal type-layout owner passes all 56 groups on Windows. Five added cases prove that an exact WVFT-backed callable shape is classified as owned while an unbacked instance, an empty catalog, and truncated catalog evidence fail closed.",
+  "source": {
+    "kind": "Other",
+    "value": "Uncommitted coherent change based on 5dcd15e8ec84b8cb5e59baccc96a8386a02e958f; exact modified input hashes are recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "generic-nominal-type-layout; 56 groups; result 42 with no output",
+      "tool": "Tools/Verify/Invoke-WindvaleTests.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Invoke-WindvaleTests.ps1 -Owner generic-nominal-type-layout",
+      "result": "Passed",
+      "elapsedMilliseconds": 248224,
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Generic-Type-Layout-Core.wv",
+          "size": 59568,
+          "sha256": "540c9c4b09869808f9016500fc71c17e3fd1b551aa6f7e59c5bdff5f900d2a57"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wir-Core.wv",
+          "size": 779995,
+          "sha256": "dca8e48d0470e83be775231f62dd707088001ce511c5d87c27abfca1b1502b76"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Generic-Nominal-Type-Layout-Self-Test.wv",
+          "size": 36249,
+          "sha256": "50e5ca03e28ab946355b7541508cc13306a1de27be51b71426095d1e327d9d01"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-Language-1-Generic-Nominal-Type-Layout.wvproj",
+          "size": 808,
+          "sha256": "c28c7928a830bdf5d13d2d3994c91b087a941d9aae2c69acd2b3b4ab836de2a3"
+        },
+        {
+          "path": "Tools/Native/Test-Generic-Nominal-Type-Layout.mjs",
+          "size": 5004,
+          "sha256": "f3c2109096242ee84d820b70dce494ced8c3097a001bd21c4b966153fe8a93b6"
+        }
+      ],
+      "outputs": []
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Callable classification is conservatively owned. It does not admit borrowed callable read-through or widen the frame-owned callable runtime profile.",
+    "The complete compiler front door, complete WVB 1.39 verifier, runtime execution, Linux reproduction, and cross-host qualification were not run.",
+    "The first focused attempt failed because the implementation used a sentinel-returning shape constructor as an upper bound. That local defect was corrected before the recorded passing run.",
+    "No stable performance or peak-memory claim is made."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json",
+    "Specifications/Compiler-Source-Wir.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}
