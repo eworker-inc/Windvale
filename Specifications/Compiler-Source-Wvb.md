@@ -1257,8 +1257,11 @@ The same WV owner adds 34 complete-module composition groups for arrays,
 Sequence observations, borrowed scalar Vector inputs, owned-aggregate loans,
 and callable payloads/results/indirect calls. Mixed nominal categories retain
 their real indices, and retained Sequence receivers produce explicit loan
-reads. Full callable identity survives array and variant projections; copied
-values may outlive the loan, while owned values cannot escape through a read.
+reads. Full callable identity survives array and variant projections. The
+current callable reconciliation permits exact borrowed invocation but rejects
+copying borrowed callables, including nested callable contents, into ordinary
+results, locals, or aggregates. Copy/Shared values may outlive the loan, while
+owned and unproven callable values cannot escape through a read.
 See the [composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
 
 The source call checker also has a bounded read-through classification for

@@ -1655,10 +1655,15 @@ The isolated direct-call checker also decodes shape `37` parameters into exact
 borrowed stack cells, including their nominal identity. An ordinary owned cell
 cannot satisfy a borrowed parameter. A borrowed cell may satisfy its ordinary
 by-value parameter only when the payload is proved Copy or shared immutable:
-supported primitive scalars and enums, text, bytes, Sequence, an admitted
-function-reference/plain-capture callable cell, or a record, variant, or fixed
-array whose contents all meet that rule. Owned contents, special task/scratch
-identities, cycles, and unadmitted callable classes reject.
+supported primitive scalars and enums, text, bytes, Sequence, or a record,
+variant, or fixed array whose contents all meet that rule. Owned contents,
+special task/scratch identities, cycles, and callable contents reject.
+An exact callable descriptor proves invocation identity, not permission to copy
+a frame-owned callable through a borrow. Candidate `call.indirect` may consume
+an exact borrowed callable receiver without converting it to an owned cell;
+ordinary arguments, local stores, aggregate construction, and returns retain
+the Copy/Shared proof requirement. Callable array and variant projections
+retain their borrowed identity and may be invoked but cannot escape as copies.
 This phase consumes a previously admitted type directory; it does not replace
 metadata validation, track the loan's owner or lifetime, or admit borrowed
 function-result encodings. The typed-stack and loan-flow components above supply

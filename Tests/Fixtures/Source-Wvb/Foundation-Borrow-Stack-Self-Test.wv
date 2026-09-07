@@ -197,11 +197,18 @@ fn Checkˉcomposition(Input: bytes) -> i32 {
         Join(Cell(4u8, 0u32), Cell(4u8, 1u32), Invoke), 2u32)) != 0u32 { return 192; }
     let Callableˉreturn: bytes = Trial(Model, Borrow(Callable), 1u32, Callable, Empty, 0u32,
         Bytesˉconcat(Cell(4u8, 0u32), Return), 1u32);
-    if Typedˉresult(Callableˉreturn) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Callableˉreturn)) == 0u32 { return 193; }
+    if Typedˉresult(Callableˉreturn) != 2u32 { return 193; }
+    let Callableˉstore: bytes = Trial(Model, Borrow(Callable), 1u32, Callable, Callable, 1u32,
+        Join(Cell(4u8, 0u32), Cell(5u8, 1u32), Bytesˉconcat(Cell(4u8, 1u32), Return)), 1u32);
+    if Typedˉresult(Callableˉstore) != 2u32 { return 193; }
     let Functions: bytes = Composition(Input, Callable, Cell(23u8, 6u32));
     let Functionˉelement: bytes = Trial(Functions, Borrow(Array), 1u32, Callable, Empty, 0u32,
         Bytesˉconcat(Readˉarray, Return), 2u32);
-    if Typedˉresult(Functionˉelement) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Functionˉelement)) == 0u32 { return 194; }
+    if Typedˉresult(Functionˉelement) != 2u32 { return 194; }
+    if Typedˉresult(Trial(Functions, Borrow(Array), 1u32, Array, Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Return), 1u32)) != 2u32 { return 194; }
+    if Typedˉresult(Trial(Functions, Borrow(Callable), 1u32, Array, Empty, 0u32,
+        Join(Cell(4u8, 0u32), Cell(197u8, 5u32), Return), 1u32)) != 2u32 { return 194; }
     if Typedˉresult(Trial(Functions, Borrow(Array), 1u32, U32, Empty, 0u32,
         Join(Readˉarray, Cell(9u8, 42u32), Invoke), 2u32)) != 0u32 { return 195; }
     if Typedˉresult(Trial(Functions, Borrow(Array), 1u32, Cell(35u8, 9u32), Empty, 0u32,
@@ -209,6 +216,10 @@ fn Checkˉcomposition(Input: bytes) -> i32 {
     let Optionˉfunction: bytes = Composition(Input, U32, Callable);
     let E1: bytes = Join(Cell(225u8, 0u32), Bytesˉfromˉu32ˉlittle(4u32), Bytesˉfromˉu32ˉlittle(1u32));
     let Field: bytes = Bytesˉconcat(Cell(196u8, 4u32), Bytesˉfromˉu32ˉlittle(0u32));
+    if Typedˉresult(Trial(Optionˉfunction, Cell(11u8, 4u32), 1u32, Callable, Cell(29u8, 4u32), 1u32,
+        Join(E1, Cell(5u8, 1u32), Join(Cell(4u8, 1u32), Field, Return)), 1u32)) != 2u32 { return 197; }
+    if Typedˉresult(Trial(Optionˉfunction, Borrow(Cell(11u8, 4u32)), 1u32, Cell(11u8, 4u32), Empty, 0u32,
+        Bytesˉconcat(Cell(4u8, 0u32), Return), 1u32)) != 2u32 { return 197; }
     if Typedˉresult(Trial(Optionˉfunction, Cell(11u8, 4u32), 1u32, U32, Cell(29u8, 4u32), 1u32,
         Join(E1, Cell(5u8, 1u32), Join(Cell(4u8, 1u32), Field,
             Bytesˉconcat(Cell(9u8, 42u32), Invoke))), 2u32)) != 0u32 { return 197; }

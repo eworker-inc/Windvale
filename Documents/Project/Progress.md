@@ -94,7 +94,11 @@ Two active tracks intentionally use different bytecode generations:
   changes after the last use and fresh reborrows remain valid. Array, Sequence,
   and callable composition now has focused evidence. Source read-through also
   classifies only exact WVFT-backed callable shapes as owned and rejects absent,
-  truncated, or out-of-range callable evidence. Remaining owned-payload
+  truncated, or out-of-range callable evidence. The candidate bytecode checker
+  now rejects borrowed callable copies while preserving exact invocation,
+  including array and Option projections; its existing 217-group selector passes
+  on Windows in the [callable reconciliation checkpoint](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json).
+  Remaining owned-payload
   reconciliation and the complete audit still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery

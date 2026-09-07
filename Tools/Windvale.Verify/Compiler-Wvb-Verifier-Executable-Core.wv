@@ -2735,15 +2735,12 @@ fn Hˉreadˉthroughˉshape(Input: bytes, Types: u32, Kind: u32, Nominal: u32) ->
             (Currentˉkind >= 14u32 && Currentˉkind <= 20u32) {
             // Primitive scalars are Copy; text and bytes are shared immutable.
             if Currentˉnominal != 0u32 { return false; }
-        } else if Currentˉkind == 8u32 || Currentˉkind == 24u32 || Currentˉkind == 35u32 {
+        } else if Currentˉkind == 8u32 || Currentˉkind == 24u32 {
             if Currentˉnominal >= Typeˉcount { return false; }
             let Descriptor: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Input,
                 Hˉtypeˉat(Input, Types, Currentˉnominal)));
             if (Currentˉkind == 8u32 && Descriptor != 2u32 && Descriptor != 7u32) ||
-                (Currentˉkind == 24u32 && Descriptor != 6u32) ||
-                (Currentˉkind == 35u32 && Descriptor != 8u32) { return false; }
-            // The admitted function-reference/plain-capture cell is Copy.
-            // This does not admit a new capture class or callable descriptor.
+                (Currentˉkind == 24u32 && Descriptor != 6u32) { return false; }
         } else if Currentˉkind == 7u32 || Currentˉkind == 11u32 || Currentˉkind == 22u32 {
             if Currentˉnominal >= Typeˉcount || Bytesˉlength(Path) >= 256u32 ||
                 Hˉtypeˉpathˉcontains(Path, Currentˉnominal) || Bytesˉlength(Pending) >= 32768u32 {
@@ -3023,9 +3020,12 @@ fn Hˉindirectˉcall(
         Argument = Argument + 1u32;
     }
     let Callableˉoffset: u32 = Bytesˉlength(Resultˉstack) - 5u32;
-    if !Hˉexactˉvalueˉmatches(Input, Types, 35u32, Callableˉtype,
-        U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Callableˉoffset)),
-        Bytesˉreadˉu32ˉlittle(Resultˉstack, Callableˉoffset + 1u32)) {
+    let Callableˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Resultˉstack, Callableˉoffset));
+    // Invocation observes the loan; it does not copy a frame-owned callable.
+    let Borrowedˉcallable: bool = Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 &&
+        Callableˉkind == 99u32;
+    if (Callableˉkind != 35u32 && !Borrowedˉcallable) ||
+        Bytesˉreadˉu32ˉlittle(Resultˉstack, Callableˉoffset + 1u32) != Callableˉtype {
         return Hˉoperationˉfailure(Resultˉstack, Resultˉdepth);
     }
     Resultˉstack = Bytesˉslice(Resultˉstack, 0u32, Callableˉoffset);

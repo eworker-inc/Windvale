@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-07-foundation-borrow-callable-reconciliation",
+  "date": "2026-09-07",
+  "subject": "Candidate borrowed callable non-copying boundary",
+  "claim": "The candidate typed verifier rejects borrowed callable copies, including nested array and Option contents, while retaining exact borrowed indirect invocation. All 217 focused groups pass on Windows; complete WVB 1.39 admission remains disabled.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on a87c747587aad95cc8b662dcadcbb832e239ef68. Exact changed implementation and test inputs follow; unchanged dependencies and bootstrap tools belong to that commit."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.18.0",
+      "target": "Existing 217 Foundation borrow-owner groups; callable composition groups 193, 194, and 197 now contain seven rejection probes (two corrected expectations and five added probes). Retained positive cases cover exact direct, array-element, and Option-view invocation, nominal mismatch rejection, and ordinary callable aggregate construction.",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 91035,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv",
+          "size": 243518,
+          "sha256": "c5e0189c40936d97e7d1c4ca718e58f296958aefaaacdda0767c559cc0c7bc4a"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 42434,
+          "sha256": "850a2f9986cfef17f2c3e0a43e72ed6204c43beedaafdbcae4c7263049343d6f"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 682619,
+          "sha256": "53b2a0696585749f982945ab88785cde842f27d46f8e4e91d263dea05ff25ccc"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "This is component verification, not source publication, candidate runtime execution, complete admission, or cross-host qualification. No runtime retention behavior is claimed.",
+    "A callable descriptor proves exact invocation identity, not Copy ownership. The candidate read-through proof conservatively rejects callable contents; this does not introduce a general affine callable implementation or alter earlier bytecode versions.",
+    "The existing grouped inventory remains 217; it is not a count of individual assertions. Existing owner, lifetime, metadata, and call checks were executed, not replaced by a new verifier.",
+    "An initial build failed in about 3.3 seconds on an extra closing parenthesis introduced by this edit. It was corrected before the reported passing construction and execution. Failed evidence is not a pass.",
+    "The proposed broad changed-file plan selected 12 native owners at 2925 expected seconds and 11700 maximum seconds. It was not run because it exceeds the ten-minute local budget. Full compiler front-door, bootstrap, complete callable execution, runtime, ABI, OS, and Linux qualification were not run.",
+    "Broader owned-payload handling, complete admission audit, runtime retention, exclusive borrowing, take, mapping, and real consumer migration remain open.",
+    "No clean-machine performance comparison or peak working-set measurement was performed. Existing bounded traversal is retained; the change adds no allocation or new traversal."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Evidence/2026-09-07-Foundation-Source-Callable-Classification.json",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Specifications/Seed-Bytecode.md"
+  ]
+}

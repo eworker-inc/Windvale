@@ -86,7 +86,14 @@ completed type proofs, and ordinary by-value calls avoid the traversal. The
 generic-layout owner now passes 56 groups on Windows; the callable extension's
 passing run took 248.2 seconds. The
 [callable classifier evidence](../Evidence/2026-09-07-Foundation-Source-Callable-Classification.json)
-records the added boundary. The earlier
+records the added boundary. The candidate bytecode checker now follows that
+conservative callable boundary: exact borrowed invocation remains allowed,
+but borrowed callable returns, ordinary stores, and aggregate copies reject,
+including callable contents reached through arrays and Option views.
+The existing 217-group selector passes on Windows; the
+[callable reconciliation evidence](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json)
+records the exact run and limits. This does not prove runtime retention or
+enable complete admission. The earlier
 [exact classifier evidence](../Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json)
 records this component scope. Compiler call-site cases
 also move a one-integer record into positive coverage and retain an actual
