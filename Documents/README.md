@@ -2,7 +2,7 @@
 
 > Status: Current documentation map
 > Authority: Informative routing guide
-> Last reviewed: 2026-08-31
+> Last reviewed: 2026-09-08
 
 Start with the smallest document that owns your question. Do not load the full
 decision or evidence history for ordinary development.
@@ -65,6 +65,22 @@ their explicit status controls how they may be used.
   qualification.
 - [Release names and tags](Project/Release-Names-And-Tags.md) — recovery,
   baseline, preview, and product tag meanings.
+
+## Future release proposals
+
+- [Windvale 2.0 release planning](Project/Windvale-2.0-Release-Plan.md) — proposed
+  scope, sequencing, compatibility review, and evidence needed before selection.
+- [Windvale 2.0 ideas register](Project/Windvale-2.0-Ideas.md) — initial language,
+  implementation, authoring, and product recommendations with tradeoffs.
+- [Windvale 2.0 compiler and tooling review](Project/Windvale-2.0-Compiler-And-Tools.md)
+  — code-backed findings, proposed improvements, priorities, and evidence needed.
+- [Windvale 2.0 qualification and testing review](Project/Windvale-2.0-Qualification-And-Testing.md)
+  — shorter feedback, shared construction, precise selection, and safe resumption.
+- [Windvale 2.0 stack and application review](Project/Windvale-2.0-Stack-And-Applications.md)
+  — runtime/native tools, libraries, database, OS/distribution, and browser findings.
+
+These proposals do not change the active 1.0 roadmap, freeze a new source
+edition, or authorize implementation or release.
 
 ## Architecture entry points
 
