@@ -26,6 +26,7 @@ import Compilerˉnativeˉx64ˉloweringˉruntimeˉdescriptors as Runtimeˉdescrip
 import Compilerˉnativeˉx64ˉloweringˉsha256 as Nativeˉsha256;
 import Compilerˉnativeˉx64ˉloweringˉbytesˉconcatenation as Bytesˉconcatenation;
 import Compilerˉnativeˉx64ˉloweringˉobject as Objectˉwriter;
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Completeˉverifier;
 
 export enum Compilerˉnativeˉx64ˉstatus {
     Valid = 0;
@@ -482,7 +483,7 @@ export fn Compilerˉnativeˉx64ˉreadˉstructure(Input: bytes)
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
     if Minor != 11u32 && Minor != 30u32 && Minor != 31u32 &&
         Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
-        Minor != 36u32 && Minor != 37u32 && Minor != 38u32 {
+        Minor != 36u32 && Minor != 37u32 && Minor != 38u32 && Minor != 39u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     if Bytesˉreadˉu32ˉlittle(Input, 8u32) != 7u32 {
@@ -1439,7 +1440,9 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
         return Callableˉtypes == 0u32 &&
             Referencesˉandˉcalls == 0u32 && Closures == 0u32;
     }
-    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 { return true; }
+    if Minor == 33u32 || Minor == 34u32 || Minor == 35u32 || Minor == 39u32 {
+        return true;
+    }
     if Minor == 36u32 { return Writeˉregions > 0u32; }
     if Minor == 37u32 { return Writeˉpointers > 0u32; }
     if Minor == 38u32 { return Foreignˉcalls > 0u32; }
@@ -4601,7 +4604,7 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
     }
     if Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) {
         if Opcode == 225u8 {
-            return Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
+            return 10u32 + Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
                 Input, Types, Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32));
         }
         let Variantˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
@@ -8193,6 +8196,16 @@ fn Compilerˉnativeˉx64ˉborrowedˉusesˉareˉvalid(
 
 export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
     -> Compilerˉnativeˉx64ˉplan {
+    // Candidate borrowing requires the shared typed-stack and lifetime proof,
+    // including when callers bypass the command-line tool. Native target
+    // admission below remains a separate, stricter boundary.
+    if Bytesˉlength(Input) >= 12u32 &&
+        Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 {
+        if Completeˉverifier.Compilerˉwvbˉverifyˉmetadata(Input) != 0u32 {
+            return Compilerˉnativeˉx64ˉplanˉfailure(
+                Input, Compilerˉnativeˉx64ˉstatus.Invalidˉwvb);
+        }
+    }
     let Structure: Compilerˉnativeˉx64ˉstructure =
         Compilerˉnativeˉx64ˉreadˉstructure(Input);
     if !Structure.Valid {
@@ -8408,7 +8421,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         }
         if Isˉmain && Minor != 33u32 && Minor != 34u32 &&
             Minor != 35u32 && Minor != 36u32 && Minor != 37u32 &&
-            Minor != 38u32 &&
+            Minor != 38u32 && Minor != 39u32 &&
             Function.Parameters != 0u32 {
             return Compilerˉnativeˉx64ˉplanˉfunctionˉfailure(
                 Input,
@@ -8418,7 +8431,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
             );
         }
         if Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
-            Minor == 37u32 || Minor == 38u32 {
+            Minor == 37u32 || Minor == 38u32 || Minor == 39u32 {
             Parameterˉcounts = Bytesˉconcat(
                 Parameterˉcounts,
                 Bytesˉslice(
@@ -8497,7 +8510,7 @@ export fn Compilerˉnativeˉx64ˉplanˉbuild(Input: bytes)
         );
     }
     if Minor == 34u32 || Minor == 35u32 || Minor == 36u32 ||
-        Minor == 37u32 || Minor == 38u32 {
+        Minor == 37u32 || Minor == 38u32 || Minor == 39u32 {
         if Bytesˉlength(Parameterˉcounts) != Functionˉcount ||
             Bytesˉlength(Borrowedˉparameterˉmasks) != Functionˉcount * 8u32 ||
             (Minor == 34u32 && Borrowedˉparameterˉcount == 0u32) {

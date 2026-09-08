@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
@@ -12,10 +12,13 @@ const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
 const PROGRESS_INTERVAL_MILLISECONDS = 30_000;
 
-if ((process.argv.length !== 4 && process.argv.length !== 5) ||
+if ((process.argv.length !== 4 && process.argv.length !== 5 && process.argv.length !== 7) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
 const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
 if (process.argv.length === 5 && !Borrowˉonly) Usage();
+const Suppliedˉlowerer = process.argv.length === 7;
+if (Suppliedˉlowerer && (process.argv[4] !== '--lowerer' ||
+    !/^[0-9a-f]{64}$/u.test(process.argv[6]))) Usage();
 const Target = process.argv[2];
 if ((WINDOWS && Target !== 'windows') || (!WINDOWS && Target !== 'linux')) {
     Reject('The native unsafe write-pointer target does not match this host.');
@@ -23,7 +26,7 @@ if ((WINDOWS && Target !== 'windows') || (!WINDOWS && Target !== 'linux')) {
 const Repositoryˉroot = await realpath(resolve(process.argv[3]));
 const Extension = WINDOWS ? 'cmd' : 'sh';
 const Nativeˉextension = WINDOWS ? 'exe' : 'elf';
-const Build = join(Repositoryˉroot, 'Tools', 'Native', `Build-Wvb.${Extension}`);
+const Build = join(Repositoryˉroot, 'Tools', 'Native', 'Build-Current-Split-Project-Wvb.mjs');
 const Packageˉlowerer = join(
     Repositoryˉroot, 'Tools', 'Native',
     `Package-Segmented-Compiler-Wvb.${Extension}`,
@@ -78,12 +81,25 @@ try {
         'cd924526e21b4f9ffb3d9701670b69455492675e526fd33fd27d558166f416f4',
     );
     const Lowererˉwvb = join(Work, 'Native-Lowerer.wvb');
-    const Lowerer = join(Work, `Native-Lowerer.${Nativeˉextension}`);
+    const Lowerer = Suppliedˉlowerer ? resolve(process.argv[5]) :
+        join(Work, `Native-Lowerer.${Nativeˉextension}`);
+    if (Suppliedˉlowerer) {
+        const Metadata = await stat(Lowerer);
+        if (!Metadata.isFile() || Metadata.size > 67_108_864) {
+            Reject('The supplied native lowerer is not a bounded ordinary file.');
+        }
+        const Bytes = await readFile(Lowerer);
+        if (Bytes.length > 67_108_864 ||
+            createHash('sha256').update(Bytes).digest('hex') !== process.argv[6]) {
+            Reject('The supplied native lowerer identity differs.');
+        }
+        process.stdout.write(`native unsafe write pointer lowering step=compiler-reuse sha256=${process.argv[6]}\n`);
+    } else {
     process.stdout.write(
         'native unsafe write pointer lowering step=compiler-build status=Started\n',
     );
     await Requireˉsuccess(
-        Build, [Project, Lowererˉwvb], 'compiler-build',
+        process.execPath, [Build, Project, Lowererˉwvb], 'compiler-build',
         CONSTRUCTION_TIMEOUT_MILLISECONDS,
     );
     process.stdout.write(
@@ -95,6 +111,7 @@ try {
         'compiler-package',
         CONSTRUCTION_TIMEOUT_MILLISECONDS,
     );
+    }
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
     await Lowerˉexact(
@@ -701,7 +718,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root> [--foundation-borrow-emission]\n',
+        '<windows|linux> <repository-root> [--foundation-borrow-emission|--lowerer <application> <sha256>]\n',
     );
     process.exit(64);
 }

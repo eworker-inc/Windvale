@@ -116,9 +116,14 @@ paired-host checks reject lookalike descriptors. The
 [native emission checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Emission.json)
 adds `E1` machine-code emission, scratch planning, and owner-local read tracking.
 Twelve scalar/record machine-code cases and the 37-case lowering owner pass on
-both hosts. Full native admission remains closed: next integrate complete lifetime
-verification, borrowed calls, and owner retention/cleanup before migrating the
-consumer; a parallel parser is not the replacement path.
+both hosts. The [native execution checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json)
+composes complete verification with bounded candidate admission: record/u32 and
+allocated-text programs execute on both hosts, with 26 focused cases per host.
+Hosted text execution requires the intrinsic service table; the enum-metadata
+packaging reader now admits candidate 1.39. The existing 37-case lowering and
+five-case packaging regressions also pass on each host. Wider owned payloads,
+staging integration, and the maintained consumer remain pending; this is not
+full native qualification. A parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

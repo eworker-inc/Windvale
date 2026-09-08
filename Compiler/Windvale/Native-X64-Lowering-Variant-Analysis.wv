@@ -297,7 +297,7 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
             State.I32ˉvalues, State.Boolˉvalues, State.Textˉvalues, State.U8ˉvalues,
             State.U32ˉvalues, State.Bytesˉvalues, State.Enumˉvalues,
             State.Recordˉvalues + 1u32,
-            State.Bodyˉbytes + Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
+            State.Bodyˉbytes + 10u32 + Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
                 Input, Types, Viewˉtype
             )
         );

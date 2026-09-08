@@ -18,7 +18,7 @@ wvhostenumservice <request.wveq> <service.bin>
 digest-bound candidate uses the native x64 type reader that admits `u64` record
 fields and WVB 1.30/1.31 callable descriptors; both receive zero-member
 directory entries and do not change serialized enum metadata. It revalidates
-the WVB 1.11, 1.30, or 1.31 envelope with seven exact sections and a hosted-only
+the WVB 1.11, 1.30, 1.31, or candidate 1.39 envelope with seven exact sections and a hosted-only
 type directory reader; it is not a replacement for whole-module semantic
 verification. It supports at most 256 total types, with no more than 116 records,
 64 enums, 64 variants, or 128 callables within that total, and the current single complete `WVEQ 2`
@@ -41,11 +41,15 @@ read/write, and process argument/count capabilities.
 
 ## Exact identities
 
+The current enum-request artifacts are identified by the
+[candidate manifest](../Artifacts/Native-Hosted-Enum-Request-Candidate/Manifest.json).
+The [native borrowing execution checkpoint](../Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json)
+records paired-host metadata-envelope checks and native text execution.
+Candidate 1.39 admission here does not imply complete native qualification;
+whole-module verification remains a prerequisite.
+
 | Artifact | Bytes | SHA-256 |
 | --- | ---: | --- |
-| Enum-request WVB | 82,115 | `69a4ef3b33875e26f068e1545c60a0ae7bee60ac566869c05e55ad27c0aa9b36` |
-| Windows enum-request application | 888,832 | `adabe0902e164bcb68561796ef2d60d446399cd51e70e326daf366623365ced0` |
-| Linux enum-request application | 888,832 | `06f6b9fe4812ec9f1c4c37fd47ae3153ac9b870ffb9b4173b2705c6517c586f8` |
 | Enum-service WVB | 18,883 | `6e44a4c0f4d61ea9aa3d72442baba60080896c0cf7d3536b353fcd61ff48ec07` |
 | Enum-service WVO | 167,750 | `e00168aac4422a6a38d6c7c202d8fc2377b7770c4f3fc144d1ce207271f978bb` |
 | Enum-service raw fragment | 166,682 | `38ea83b0d417bdc57cd0c5b3bd29f8d9cb37a9575767401486fde6da2ded4cea` |

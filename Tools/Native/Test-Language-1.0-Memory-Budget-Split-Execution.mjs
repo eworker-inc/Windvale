@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
+    copyFileSync,
     lstatSync,
     mkdtempSync,
     readFileSync,
@@ -68,6 +69,10 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
+const Foundationˉenumˉonly = process.argv.length === 4 &&
+    process.argv[2] === '--foundation-enum-metadata';
+const Foundationˉnativeˉonly = process.argv.length === 5 &&
+    process.argv[2] === '--foundation-native-execution';
 const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5 || process.argv.length === 7) &&
     process.argv[2] === '--foundation-borrow';
 const Foundationˉplanˉonly = process.argv.length === 3 &&
@@ -79,7 +84,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
 const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
-    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly;
+    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length >= 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
@@ -89,10 +94,12 @@ if (Foundationˉonly && process.argv.length >= 5) {
     }
     Maximumˉrunˉmilliseconds = Number(process.argv[4]) * 1000;
 }
-const Foundationˉsourceˉrunner = Foundationˉonly && process.argv.length === 7 ?
+const Foundationˉsourceˉrunner = Foundationˉonly && process.argv.length === 7 && process.argv[5] === '--runner' ?
     path.resolve(process.argv[6]) : null;
-if (Foundationˉsourceˉrunner !== null && process.argv[5] !== '--runner') {
-    process.stderr.write('Expected --runner <current-source-runner> after the development maximum.\n');
+const Foundationˉnativeˉlowerer = Foundationˉonly && process.argv.length === 7 && process.argv[5] === '--native-lowerer' ?
+    path.resolve(process.argv[6]) : null;
+if (Foundationˉonly && process.argv.length === 7 && Foundationˉsourceˉrunner === null && Foundationˉnativeˉlowerer === null) {
+    process.stderr.write('Expected --runner <current-source-runner> or --native-lowerer <current-source-lowerer> after the development maximum.\n');
     process.exit(64);
 }
 const Started = Date.now();
@@ -103,7 +110,8 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
         '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
-        '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>]]|--foundation-borrow-runtime <runner>|' +
+        '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>|--native-lowerer <lowerer>]]|--foundation-borrow-runtime <runner>|' +
+        '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -178,7 +186,17 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉruntimeˉonly) {
+    if (Foundationˉnativeˉonly) {
+        const Lowerer = path.resolve(process.argv[3]);
+        const Record = path.join(Work, 'Foundation-Record.wvb');
+        writeFileSync(Record, Requireˉfoundationˉcandidate(), { flag: 'wx' });
+        await Verifyˉfoundationˉnative(Lowerer, Record, 'record-u32');
+        await Verifyˉfoundationˉnative(Lowerer, path.resolve(process.argv[4]), 'text');
+        await Verifyˉfoundationˉnativeˉrejections(Lowerer);
+        process.stdout.write('native Foundation execution status=Passed cases=26 qualification=false\n');
+    } else if (Foundationˉenumˉonly) {
+        await Verifyˉfoundationˉenumˉmetadata(path.resolve(process.argv[3]));
+    } else if (Foundationˉruntimeˉonly) {
         await Runˉfoundationˉruntime(path.resolve(process.argv[3]));
     } else if (Foundationˉcomponentsˉonly) {
         await Runˉfoundationˉcomponents();
@@ -198,14 +216,15 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly && !Foundationˉruntimeˉonly) {
+if (Developmentˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 345 : Foundationˉonly ? (Foundationˉsourceˉrunner === null ? 368 : 371) : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
-        `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 345 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 394 : Foundationˉsourceˉrunner === null ? 368 : 371) : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
+        `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
+        (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
         (Borrowˉcomponentˉbytes === null ? '' :
             `component-wvb-bytes=${Borrowˉcomponentˉbytes.length} component-wvb-sha256=${Digest(Borrowˉcomponentˉbytes)} `) +
         (Borrowˉplanˉbytes === null ? '' :
@@ -260,9 +279,7 @@ function Requireˉfoundationˉcandidate() {
     return Buffer.from(Values);
 }
 
-async function Runˉfoundationˉruntime(Runner) {
-    Requireˉordinaryˉfile(Runner, 134_217_728, 'current-source scalar runner');
-    const Candidate = Requireˉfoundationˉcandidate();
+function Foundationˉruntimeˉcases(Candidate) {
     const Code = Parseˉsections(Candidate)[5].payload;
     const Projection = Code + 62 + 483;
     if (Candidate[Projection] !== 225) Reject('The published first projection moved.');
@@ -282,6 +299,13 @@ async function Runˉfoundationˉruntime(Runner) {
         Cases.push([Label, Mutated, false]);
     }
     Cases.push(['truncated', Candidate.subarray(0, Candidate.length - 1), false]);
+    return Cases;
+}
+
+async function Runˉfoundationˉruntime(Runner) {
+    Requireˉordinaryˉfile(Runner, 134_217_728, 'current-source scalar runner');
+    const Candidate = Requireˉfoundationˉcandidate();
+    const Cases = Foundationˉruntimeˉcases(Candidate);
     for (const [Label, Bytes, Valid] of Cases) {
         const File = path.join(Work, `Borrow-Runtime-${Label}.wvb`);
         writeFileSync(File, Bytes, { flag: 'wx' });
@@ -471,7 +495,7 @@ async function Runˉpublicationˉandˉexecution() {
     );
     await Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Pinnedˉemitter);
 
-    if (!Foundationˉonly || Foundationˉsourceˉrunner !== null) {
+    if (!Foundationˉonly || Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null) {
         for (const [Label, Output] of [['a', Foundationˉtextˉa], ['b', Foundationˉtextˉb]]) {
             await Compileˉfoundationˉvalueˉborrow(`foundation-text-${Label}-compile`,
                 Admitter, Analyzer, Emitter, Output, 'Foundation-Value-Borrow-Text-Executable.wv');
@@ -493,6 +517,11 @@ async function Runˉpublicationˉandˉexecution() {
         if (Foundationˉsourceˉrunner !== null) {
             await Verifyˉfoundationˉfresh(Foundationˉsourceˉrunner, Foundationˉvalueˉborrowˉa, 'record-u32');
             await Verifyˉfoundationˉfresh(Foundationˉsourceˉrunner, Foundationˉtextˉa, 'text');
+        }
+        if (Foundationˉnativeˉlowerer !== null) {
+            await Verifyˉfoundationˉnative(Foundationˉnativeˉlowerer, Foundationˉvalueˉborrowˉa, 'record-u32');
+            await Verifyˉfoundationˉnative(Foundationˉnativeˉlowerer, Foundationˉtextˉa, 'text');
+            await Verifyˉfoundationˉnativeˉrejections(Foundationˉnativeˉlowerer);
         }
         return;
     }
@@ -1623,6 +1652,116 @@ async function Compileˉtask(Label, Admitter, Analyzer, Emitter, Fixture, Output
         ),
         Output,
     ]);
+}
+
+async function Verifyˉfoundationˉnativeˉrejections(Lowerer) {
+    for (const [Label, Bytes, Valid] of Foundationˉruntimeˉcases(Requireˉfoundationˉcandidate())) {
+        if (Valid) continue;
+        const File = path.join(Work, `Borrow-Native-Rejection-${Label}.wvb`);
+        const Object = path.join(Work, `Borrow-Native-Rejection-${Label}.wvo`);
+        writeFileSync(File, Bytes, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(Lowerer, [File, Object],
+            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000),
+            true, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Result.Code !== 1 || Result.Output !== '' ||
+            !Normalize(Result.Error).startsWith('native x64 status=Invalidˉwvb ') ||
+            lstatSync(Object, { throwIfNoEntry: false }) !== undefined) {
+            Reject(`Foundation native rejection ${Label} failed: status=${Result.Code}\n${Result.Output}\n${Result.Error}`);
+        }
+        process.stdout.write(`PASS Foundation native rejection case=${Label}\n`);
+    }
+}
+
+async function Verifyˉfoundationˉenumˉmetadata(Candidate) {
+    Requireˉordinaryˉfile(Candidate, 4096, 'Foundation allocated-text fixture');
+    const Bytes = readFileSync(Candidate);
+    if (Digest(Bytes) !== 'f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018') {
+        Reject('The Foundation allocated-text fixture identity differs.');
+    }
+    const Sections = Parseˉsections(Bytes);
+    const Reader = path.join(Repositoryˉroot, 'Artifacts',
+        'Native-Hosted-Enum-Request-Candidate',
+        process.platform === 'win32' ? 'windows-x64/wvhostenumrequest.exe' : 'linux-x64/wvhostenumrequest.elf');
+    Requireˉordinaryˉfile(Reader, 4_194_304, 'hosted enum metadata reader');
+    const Cases = [];
+    // These are metadata-envelope tests, not executable-version qualification.
+    for (const Version of [11, 30, 31, 39]) {
+        const Value = Buffer.from(Bytes);
+        Value.writeUInt16LE(Version, 6);
+        Cases.push([`version-${Version}`, Value, true]);
+    }
+    for (const [Label, Offset, Value] of [
+        ['unknown-version', 6, 40], ['magic', 0, 0], ['major', 4, 2],
+        ['section-count', 8, 6], ['section-reserved', 13, 1],
+        ['type-kind', Sections[7].payload + 4, 255],
+    ]) {
+        const Mutated = Buffer.from(Bytes);
+        Mutated[Offset] = Value;
+        Cases.push([Label, Mutated, false]);
+    }
+    const Oversized = Buffer.from(Bytes);
+    Oversized.writeUInt32LE(0xffffffff, Sections[7].header + 4);
+    Cases.push(['oversized-section', Oversized, false]);
+    const Typeˉlimit = Buffer.from(Bytes);
+    Typeˉlimit.writeUInt32LE(257, Sections[7].payload);
+    Cases.push(['type-limit', Typeˉlimit, false]);
+    Cases.push(['short-header', Bytes.subarray(0, 11), false]);
+    Cases.push(['truncated', Bytes.subarray(0, -1), false]);
+    Cases.push(['trailing', Buffer.concat([Bytes, Buffer.from([0])]), false]);
+    for (const [Label, Input, Valid] of Cases) {
+        const File = path.join(Work, `Enum-${Label}.wvb`);
+        const Output = path.join(Work, `Enum-${Label}.wveq`);
+        const Sentinel = Buffer.from('preserve rejected destination', 'utf8');
+        writeFileSync(File, Input, { flag: 'wx' });
+        writeFileSync(Output, Sentinel, { flag: 'wx' });
+        const Result = await Runˉdevelopmentˉcommand(Reader, [File, Output],
+            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+            true, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Valid) {
+            if (Result.Code !== 0 || Result.Error !== '' ||
+                Normalize(Result.Output) !== 'hosted enum request status=Valid bytes=64\n' ||
+                Digest(readFileSync(Output)) !== '7af5d827197fd6674bd88655c21dbc98d1886e9c7a30641b8df5460016ef1564') {
+                Reject(`Foundation enum metadata ${Label} failed.`);
+            }
+        } else if (Result.Code !== 2 || Result.Output !== '' ||
+            Normalize(Result.Error) !== 'hosted enum request status=Rejected\n' ||
+            !readFileSync(Output).equals(Sentinel)) {
+            Reject(`Foundation enum metadata rejection ${Label} failed.`);
+        }
+        process.stdout.write(`PASS Foundation enum metadata case=${Label}\n`);
+    }
+    process.stdout.write(`native Foundation enum metadata status=Passed cases=${Cases.length} qualification=false\n`);
+}
+
+async function Verifyˉfoundationˉnative(Lowerer, Candidate, Label) {
+    Requireˉordinaryˉfile(Lowerer, 67_108_864, 'current native lowerer');
+    const Prefix = path.join(Work, `Foundation-Native-${Label}`);
+    const Object = Prefix + '.wvo';
+    const Image = Prefix + '.bin';
+    const Application = Prefix + (process.platform === 'win32' ? '.exe' : '.elf');
+    await Run(`foundation-native-${Label}-lower`, Lowerer, [Candidate, Object]);
+    await Runˉnative(`foundation-native-${Label}-check`, 'Check-Wvo', [Object]);
+    const Linked = await Runˉnative(`foundation-native-${Label}-link`, 'Link-Wvo', ['0', 'Main', Image, Object]);
+    const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked);
+    if (Entry === null) Reject('Foundation native link omitted Main.');
+    if (Label === 'text') {
+        await Verifyˉfoundationˉenumˉmetadata(Candidate);
+        // Text concatenation requires the ABI service table, not only an arena.
+        // Preserve the candidate lowerer's linked image through hosted packaging.
+        const Sources = Prefix + '-Sources';
+        copyFileSync(Image, Sources + '.chunk-0');
+        await Runˉnative(`foundation-native-${Label}-package`, 'Package-Hosted-Wvb', [
+            'image', '1', Candidate, Sources, '1', Entry[1], Application,
+            process.platform === 'win32' ? 'windows' : 'linux',
+        ]);
+    } else {
+        await Runˉnative(`foundation-native-${Label}-package`, 'Package-Console', [
+            process.platform === 'win32' ? 'windows-x64-console-v1' : 'linux-x64-console-v1',
+            Image, Entry[1], Application,
+        ]);
+    }
+    const Output = await Run(`foundation-native-${Label}-execute`, Application, [], 42);
+    if (Output !== '') Reject('Foundation native execution emitted unexpected output.');
 }
 
 async function Runˉnative(Label, Name, Arguments) {

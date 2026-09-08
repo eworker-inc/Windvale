@@ -407,7 +407,7 @@ fn Borrowˉemission() -> bool {
             let Code: bytes = Emitted.Result;
             var Expectedˉcase: u32 = 0u32;
             if Projection == 3u32 { Expectedˉcase = 1u32; }
-            if Bytesˉlength(Code) != 101u32 || Planned.Bodyˉbytes != 108u32 ||
+            if Bytesˉlength(Code) != 101u32 || Planned.Bodyˉbytes != 118u32 ||
                 Planned.Depth != 2u32 || Planned.Recordˉvalues != 1u32 ||
                 Emitted.Stackˉdepth != 2u32 || Emitted.Nextˉrecord != 1u32 ||
                 Bytesˉreadˉu32ˉlittle(Emitted.Stackˉslots, 0u32) != 2u32 ||

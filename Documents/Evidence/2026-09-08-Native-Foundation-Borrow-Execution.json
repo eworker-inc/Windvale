@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-execution",
+  "date": "2026-09-08",
+  "subject": "Candidate native Foundation borrow execution and hosted metadata integration",
+  "claim": "The current-source native lowerer composes complete WVB 1.39 verification with bounded native admission. Record/u32 and allocated-text fixtures return 42 on Windows and Debian. The focused selection passes 26 cases per host: two native programs, nine invalid-borrow rejections, and fifteen enum-metadata envelope checks. Hosted packaging retains its five existing regression cases on each host. The existing native lowering owner also passes 37 cases on each host using the hash-identified current-source lowerer.",
+  "source": {
+    "kind": "Other",
+    "value": "Uncommitted worktree based on 30a204cc592b4f4b201fc3caae55ffbd1777fd6f; exact changed source, project, tool and artifact identities recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "26 focused native execution and rejection cases",
+      "tool": "Node.js with source-built native lowerer and hosted packager",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-execution Artifacts/Work/Native-Borrow-Candidate-Charge.exe Artifacts/Work/Borrow-Text-Diagnostic.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "sha256": "78fc4777381d9ce0476713f0bcf6492637cd1d432215057d6e9132d976cdccec",
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Manifest.json",
+          "size": 1030
+        },
+        {
+          "sha256": "d70447bee64f1dbfe6ce8421cacdd2b9bca4a481958bbdc83f75a5c243dd6600",
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 89951
+        },
+        {
+          "sha256": "8feb6e2e71d02ef00dc53e3b96fc0fa651f3512a74d937475cc905497f30acb6",
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/linux-x64/wvhostenumrequest.elf",
+          "size": 999424
+        },
+        {
+          "sha256": "1bf6872f6e1f1bf3c90961d6b2a4c2fa9d849e5a19c9e8e8e2908cdfae6971a6",
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/windows-x64/wvhostenumrequest.exe",
+          "size": 996864
+        },
+        {
+          "sha256": "c5d346319496e04256438620398c95abd4c19ef2b9f479ab67c28b0252fb77c6",
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 369484
+        },
+        {
+          "sha256": "120eec2d1a5629681056bbbe41a5f4e5372927d66893323e36d18fc65a4eb671",
+          "path": "Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv",
+          "size": 14045
+        },
+        {
+          "sha256": "5ff15e9f06a7ec960f51cc69eda33f250895de2d1c061fe00b763ae63084264e",
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj",
+          "size": 2779
+        },
+        {
+          "sha256": "873051cf998bff27085c1d6fcaaa9d49fd6e29e299019605efb8f351ca790f84",
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Tool.wvproj",
+          "size": 2698
+        },
+        {
+          "sha256": "9615ee372a0649f6d15bafbd89b6c7be04f9d849aa0889d8b2e813a325f81881",
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj",
+          "size": 2561
+        },
+        {
+          "sha256": "ff8a26192ee52e3bebf07350a0a38a14dda4fd7cfed06215bbe3c6667211deb6",
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering.wvproj",
+          "size": 2508
+        },
+        {
+          "sha256": "60d8ae8de63eeb42512bf163c4ae94b7e74683e9a765eae59072e8271087f1a8",
+          "path": "Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj",
+          "size": 2711
+        },
+        {
+          "sha256": "fcdcd04456a41026be882dee9e36085fb837548af62a63483dc891476043c6da",
+          "path": "Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv",
+          "size": 9208
+        },
+        {
+          "sha256": "f326875e6ea5b98370c4c4a31f2d168b6059890aeaf8c250f50d9ffc7f6c447c",
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv",
+          "size": 24559
+        },
+        {
+          "size": 14901,
+          "path": "Tools/Native/Package-Hosted-Wvb.cmd",
+          "sha256": "cdef0b02ae8360335afdf6ec6c470fb073a9be7ba2ab51e9c70bf02fa5463ff6"
+        },
+        {
+          "sha256": "453a61aa045b8f4483fd48acc7b97d240713159676299241cd0b94fdec987ea1",
+          "path": "Tools/Native/Package-Hosted-Wvb.sh",
+          "size": 13819
+        },
+        {
+          "sha256": "9acce0915f0d35f6bb775e28fc6188e81ce2bb847fcc3f3e2fcb11fd8d443d16",
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 136472
+        },
+        {
+          "size": 30489,
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "sha256": "2b9cdf2c7a4dd84752abb6d9ef1ba2ed8bf7d922251e7204940925bc9c76d60a"
+        },
+        {
+          "sha256": "ae8c315249b1487fd8876cb0fc951df9ed42492c4ee9994cc2416c5c7f86ae1d",
+          "path": "Artifacts/Work/Native-Borrow-Candidate-Charge.wvb",
+          "size": 1309254
+        },
+        {
+          "sha256": "f585b5b8eeef2060641ebab457608631958de63118c8ad73c734973f9c0167dd",
+          "path": "Artifacts/Work/Native-Borrow-Candidate-Charge.exe",
+          "size": 15504896
+        },
+        {
+          "sha256": "0ef455c9032bf753efbe0ad259989783d82ef5487c56395de551792f12ea0288",
+          "path": "Artifacts/Work/Native-Borrow-Candidate-Charge.elf",
+          "size": 15503360
+        },
+        {
+          "sha256": "f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018",
+          "path": "Artifacts/Work/Borrow-Text-Diagnostic.wvb",
+          "size": 2148
+        },
+        {
+          "sha256": "ee8b43bb1d13040236adf1e29b4bfd38cb6cc0c00bcae53e7139e047c5b3ef87",
+          "path": "Artifacts/Work/Borrow-Text-Hosted.exe",
+          "size": 33792
+        },
+        {
+          "sha256": "eb27d4c2069e519be7350204fbdd533893bb663cf79b68a57658c0eaa056cf47",
+          "path": "Artifacts/Work/Borrow-Text-Hosted.elf",
+          "size": 32768
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same 26 focused cases",
+      "tool": "Node.js with Linux source-built native lowerer and hosted packager",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-execution /mnt/d/windvale/dev01/Artifacts/Work/Native-Borrow-Candidate-Charge.elf /mnt/d/windvale/dev01/Artifacts/Work/Borrow-Text-Diagnostic.wvb",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Five existing exact packaging and invalid-input/output-preservation regressions",
+      "tool": "Maintained native hosted-packaging owner",
+      "command": "Tools/Native/Test-Hosted-Wvb-Packaging.cmd",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Five existing exact packaging and invalid-input/output-preservation regressions",
+      "tool": "Maintained native hosted-packaging owner",
+      "command": "wsl -d Debian -- bash /mnt/d/windvale/dev01/Tools/Native/Test-Hosted-Wvb-Packaging.sh",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "37 existing lowering cases, including 12 raw borrowing emission cases",
+      "tool": "Node.js owner, source-built probe and explicit SHA-256 lowerer reuse",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows <repository-root> --lowerer <repository-root>/Artifacts/Work/Native-Borrow-Candidate-Charge.exe f585b5b8eeef2060641ebab457608631958de63118c8ad73c734973f9c0167dd",
+      "result": "Passed"
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "37 existing lowering cases, including 12 raw borrowing emission cases",
+      "tool": "Node.js owner, source-built probe and explicit SHA-256 lowerer reuse",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs linux <repository-root> --lowerer <repository-root>/Artifacts/Work/Native-Borrow-Candidate-Charge.elf 0ef455c9032bf753efbe0ad259989783d82ef5487c56395de551792f12ea0288",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is a development checkpoint, not complete native 1.39 or Libraries 1.0 qualification. Minor-39 system, unsafe write-region/write-pointer and Foreign admission remains unsupported.",
+    "The text fixture was freshly compiled through authenticated source admission on Windows and shared for these narrow native runs; this record does not claim new independent Debian source reconstruction.",
+    "Initial execution in a console-v1 container failed at a null text.concat service-table lookup (address 64). The existing hosted image packager supplies that intrinsic service. No payload-retention fix was inferred from that crash.",
+    "Enum metadata admission validates the envelope and existing supported nominal directory, not whole-module semantics. Full native verification remains prerequisite. Accepted older-version mutations are metadata tests only, not executable compatibility claims.",
+    "The E1 instruction-charge sizing correction and existing 37-case native lowering regression pass. Staging variants and clean bootstrap reconstruction remain unverified. Supplied-lowerer reuse checks the exact application hash; source provenance is recorded here rather than inferred from a digest.",
+    "The fresh-source Foundation selection was not repeated after the packaging candidate refresh; the narrow selector reuses the exact source fixture and lowerer products while executing changed behavior afresh.",
+    "PlanOnly selects a disproportionate 4185-second plan and a managed recovery coverage gap. It was not executed. Full development, frozen compiler qualification, browser and installed-tool qualification remain outside this checkpoint.",
+    "Owned Vector/native-resource payload execution, exclusive borrowing, Take/Map, maintained real-consumer migration, and the full goal remain pending."
+  ],
+  "related": [
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Emission.json",
+    "Specifications/Windvale-Native-Hosted-Enum-Processes.md"
+  ]
+}
