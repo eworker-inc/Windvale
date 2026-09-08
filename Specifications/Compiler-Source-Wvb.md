@@ -1235,14 +1235,14 @@ Current-source semantic metadata stages B-G now recognize the candidate's exact
 borrow wrappers and Option/Result relationships, with bounded type and local
 directories. A native WV component fixture consumes the published bytes and
 checks damaged metadata, wrong identities, earlier-bytecode behavior, and the
-closed complete-admission boundary. See the
+complete-verifier entry point. The original closed-admission checkpoint is in the
 [metadata development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Metadata-Development.json).
 
 The typed-stack component also consumes those published bytes end to end. It
 retains exact borrowed tags through locals, record fields, variant projections,
 and direct calls, and rejects parameter writes, borrowed-value takes, fabricated
 loans, and mismatched shapes. Its record/u32 fixture includes a valid primitive
-read-through case and an explicit closed-admission check. See the
+read-through case and complete-verifier phase-result checks. The original scope is in the
 [typed-stack development evidence](../Documents/Evidence/2026-09-04-Foundation-Borrow-Stack-Development.json).
 
 The typed pass also produces immutable origin events for the loan-flow checker.
@@ -1279,7 +1279,7 @@ preserve the verified loan lifetime before using this internal reader.
 Success reports absence or one eight-byte payload cell plus an inline,
 descriptor, aggregate, or callable root category. These categories identify
 retention work for the caller; they do not grant Copy ownership or admit new
-payload shapes. Complete WVB 1.39 admission remains closed.
+payload shapes. Runtime WVB 1.39 admission remains closed.
 
 The same component now has an internal `Execute` adapter for an exact 13-byte
 `E1` instruction. The caller supplies authenticated owner/view type indices and
@@ -1301,7 +1301,7 @@ geometry returns empty failure, distinct from a successful empty root set.
 These are internal execution-owned structures, not an added WVB format or
 capability. The scalar interpreter source now connects these leases to `E1`,
 shapes 29/37, local loads/stores, operand flags, synchronous calls, allocation
-and return collection, frame exit, and guest-failure teardown. Admission stays
+and return collection, frame exit, and guest-failure teardown. Runtime admission stays
 closed while complete candidate execution and
 the candidate audit remain pending; this source change does not enable candidate
 modules in the public runner.
@@ -1365,13 +1365,18 @@ and the callable extension is recorded in the
 Compiler front-door integration and paired-host checks remain pending; this
 component result is not qualification evidence.
 
-The complete
-compiler-aligned verifier, scalar runtime, native lowerer, WebAssembly targets,
-packages, and Windvale OS still reject minor 39. Remaining operand families,
-owned-payload projections, authority-operation composition, source value-classification reconciliation,
-complete-admission auditing, runtime execution, and Linux reproduction are the
-next required checkpoints. The composition probes do not qualify arbitrary
-payload or capture classes or replace compiler-to-runtime evidence.
+The complete compiler-aligned verifier now routes minor 39 through the same
+semantic, typed-stack, and control/lifetime passes as earlier supported minors.
+Its result remains 1 for semantic/metadata failure, 2 for typed/loan failure, 3 for
+control-flow failure, and 0 only after all passes succeed. Metadata
+normalization still precedes this entry point in the public tool. There is no
+candidate bypass or separate verifier. Existing metadata and typed-stack cases
+also check the complete entry point, including every truncated publication prefix.
+This verification boundary does not grant execution support: the scalar runtime,
+native lowerer, WebAssembly targets, packages, and Windvale OS still reject minor
+39. Runtime admission/execution, source value-classification reconciliation, and
+compiler-to-runtime consumer evidence remain required. Composition probes do
+not qualify arbitrary payload or capture classes.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The

@@ -56,25 +56,47 @@ fn Equal(Left: bytes, Right: bytes) -> bool {
 }
 
 fn Failureˉstage(Input: bytes) -> u32 {
+    let Completeˉresult: u32 = Complete.Compilerˉwvbˉverifyˉmetadata(Input);
     var State: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input);
-    if Bytesˉlength(State) == 0u32 { return 1u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 1u32;
+    }
     State = Semantic.Bˉstructure(State);
-    if Bytesˉlength(State) == 0u32 { return 2u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 2u32;
+    }
     State = Semantic.Cˉmoduleˉandˉcapabilities(State);
-    if Bytesˉlength(State) == 0u32 { return 3u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 3u32;
+    }
     State = Semantic.Dˉdata(State);
-    if Bytesˉlength(State) == 0u32 { return 4u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 4u32;
+    }
     State = Semantic.Eˉfunctions(State);
-    if Bytesˉlength(State) == 0u32 { return 5u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 5u32;
+    }
     State = Semantic.Fˉcodeˉandˉexports(State);
-    if Bytesˉlength(State) == 0u32 { return 6u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 6u32;
+    }
     State = Semantic.Gˉtypes(State);
-    if Bytesˉlength(State) == 0u32 { return 7u32; }
+    if Bytesˉlength(State) == 0u32 {
+        if Completeˉresult == 0u32 { return 99u32; }
+        return 7u32;
+    }
     return 0u32;
 }
 
 export fn Check(Candidate: bytes) -> i32 {
-    // Group 1: real writer output reaches B-G, but complete admission stays shut.
+    // Group 1: real writer output passes the complete semantic/type/lifetime path.
     let Stage: u32 = Failureˉstage(Candidate);
     if Stage == 1u32 { return 201; }
     if Stage == 2u32 { return 202; }
@@ -83,13 +105,14 @@ export fn Check(Candidate: bytes) -> i32 {
     if Stage == 5u32 { return 205; }
     if Stage == 6u32 { return 206; }
     if Stage == 7u32 { return 207; }
-    if Complete.Compilerˉwvbˉverifyˉmetadata(Candidate) != 1u32 { return 101; }
+    if Complete.Compilerˉwvbˉverifyˉmetadata(Candidate) != 0u32 { return 101; }
     let Input: bytes = Metadata.Windvaleˉwvbˉmetadataˉnormalize(Candidate);
     if !Equal(Input, Metadata.Windvaleˉwvbˉmetadataˉnormalize(Input)) ||
         Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) != 1u32 { return 102; }
     var Length: u32 = 0u32;
     while Length < Bytesˉlength(Candidate) {
-        if Failureˉstage(Bytesˉslice(Candidate, 0u32, Length)) == 0u32 { return 103; }
+        let Truncatedˉstage: u32 = Failureˉstage(Bytesˉslice(Candidate, 0u32, Length));
+        if Truncatedˉstage == 0u32 || Truncatedˉstage == 99u32 { return 103; }
         Length = Length + 1u32;
     }
     if Failureˉstage(Word(Input, 16u32, 4294967295u32)) != 1u32 { return 104; }

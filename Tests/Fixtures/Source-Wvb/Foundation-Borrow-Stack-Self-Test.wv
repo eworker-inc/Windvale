@@ -29,8 +29,18 @@ fn Codeˉsection(Input: bytes) -> u32 {
 }
 
 fn Typedˉresult(Input: bytes) -> u32 {
-    if Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) == 0u32 { return 1u32; }
-    if Bytesˉlength(Executable.Hˉexecutable(Input)) == 0u32 { return 2u32; }
+    let Complete: u32 = Semantic.Compilerˉwvbˉverify(Input);
+    if Bytesˉlength(Semantic.Compilerˉwvbˉverifyˉsemantic(Input)) == 0u32 {
+        if Complete != 1u32 { return 99u32; }
+        return 1u32;
+    }
+    if Bytesˉlength(Executable.Hˉexecutable(Input)) == 0u32 {
+        if Complete != 2u32 { return 99u32; }
+        return 2u32;
+    }
+    if Bytesˉlength(Executable.Iˉcontrol(Input)) == 0u32 {
+        if Complete != 3u32 { return 99u32; }
+    } else if Complete != 0u32 { return 99u32; }
     return 0u32;
 }
 
@@ -645,8 +655,8 @@ export fn Check(Candidate: bytes) -> i32 {
         Code - 12u32, 2u32);
     if Typedˉresult(Arithmetic) != 0u32 { return 163; }
     if Typedˉresult(Byte(Arithmetic, Code + 1161u32, 16u8)) != 2u32 { return 164; }
-    // Passing this matrix does not turn off the complete-admission guard.
-    if Semantic.Compilerˉwvbˉverify(Input) != 1u32 { return 165; }
+    // The complete entry point must compose the same verified passes.
+    if Semantic.Compilerˉwvbˉverify(Input) != 0u32 { return 165; }
     let Compositionˉresult: i32 = Checkˉcomposition(Input);
     if Compositionˉresult != 0 { return Compositionˉresult; }
     let Operandsˉresult: i32 = Checkˉoperands(Input);

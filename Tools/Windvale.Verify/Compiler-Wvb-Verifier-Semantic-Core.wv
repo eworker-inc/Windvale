@@ -4182,10 +4182,6 @@ export fn Compilerˉwvbˉverifyˉsemantic(Input: bytes) -> bytes {
 }
 
 export fn Compilerˉwvbˉverify(Input: bytes) -> u32 {
-    // Candidate metadata recognition is not complete stack/lifetime admission.
-    if Bytesˉlength(Input) >= 8u32 && Bytesˉreadˉu16ˉlittle(Input, 6u32) == 39u32 {
-        return 1u32;
-    }
     var State: bytes = Compilerˉwvbˉverifyˉsemantic(Input);
     if Bytesˉlength(State) == 0u32 { return 1u32; }
     State = Executableˉverifier.Hˉexecutable(Input);

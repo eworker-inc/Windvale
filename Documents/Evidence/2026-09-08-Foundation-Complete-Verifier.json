@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-complete-verifier",
+  "date": "2026-09-08",
+  "subject": "Complete WVB 1.39 verification without runtime admission",
+  "claim": "The complete compiler-aligned verifier accepts the published immutable Option/Result candidate only after semantic, typed/loan, and control-flow checks. The existing metadata and typed-stack matrices now check complete-entry-point rejection and phase results. All 305 focused owner groups pass on Windows and Debian with identical WVB output.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on d1df6eb31507194e60da826fd5e8da81af166658; exact changed implementation and fixture identities below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "305 Foundation owner groups, including complete-verifier assertions in the 37 metadata and 120 typed-stack groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 117964,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180075,
+          "sha256": "d25ab172d1238818d3f595d885c842a15e924e22c48e7bac191164902eb7c2bd"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9918,
+          "sha256": "7541e6292c6950b0f82daebf28089c97b2a3388de9de8fbe6ea23fb12ec4fd3d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 45256,
+          "sha256": "91c34b27d6085793483c80cfd120b0e448d7b5711f6e81c7b1c51ec44046a4dc"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 874629,
+          "sha256": "f3c23c32ce39d17be311513585b780063cdaaa582156759bd18d3913f8d70b81"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "305 Foundation owner groups, including complete-verifier assertions in the 37 metadata and 120 typed-stack groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian -- bash -lc 'cd /mnt/d/windvale/dev01 && timeout 600s node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners'",
+      "result": "Passed",
+      "elapsedMilliseconds": 120216,
+      "inputs": [
+        {
+          "path": "Tools/Windvale.Verify/Compiler-Wvb-Verifier-Semantic-Core.wv",
+          "size": 180075,
+          "sha256": "d25ab172d1238818d3f595d885c842a15e924e22c48e7bac191164902eb7c2bd"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv",
+          "size": 9918,
+          "sha256": "7541e6292c6950b0f82daebf28089c97b2a3388de9de8fbe6ea23fb12ec4fd3d"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 45256,
+          "sha256": "91c34b27d6085793483c80cfd120b0e448d7b5711f6e81c7b1c51ec44046a4dc"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 874629,
+          "sha256": "f3c23c32ce39d17be311513585b780063cdaaa582156759bd18d3913f8d70b81"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Only the blanket minor-39 rejection was removed from production code. All existing semantic, typed/loan, control-flow, metadata normalization, version, authority, and resource checks remain in the same entry path.",
+    "The first runs used a fixture still expecting the old complete-admission rejection and failed with status 165 on both hosts. The corrected fixture produced the final passing runs.",
+    "Verification is not execution admission. The scalar envelope still rejects minor 39; runtime execution, native lowering, installed tools, consumer migration, and full compiler/library qualification remain pending.",
+    "The focused owner executes current verifier source, not a promoted standalone verifier executable. Existing immutable bootstrap and installed-tool identities were not changed.",
+    "PlanOnly conservatively selected nine owners with 2550 expected seconds. The focused owner was selected for the version-39-only branch change; unrelated seed, database, library, and application suites were not rerun. An earlier-version regression remains in the selected metadata owner.",
+    "The group count is unchanged: existing focused cases gained complete-entry-point assertions rather than adding a duplicate verifier."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}
