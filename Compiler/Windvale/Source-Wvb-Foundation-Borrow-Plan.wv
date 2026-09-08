@@ -47,13 +47,15 @@ export fn Build(
     Temporaryˉcount: u32,
     Slotˉcount: u32,
     Parameterˉborrows: bytes,
-    Callˉborrows: bytes
+    Callˉborrows: bytes,
+    Projectionˉreads: bytes
 ) -> Borrowˉplan {
     let Length: u32 = Bytesˉlength(Wir);
     if Operationˉcount > 4096u32 || Temporaryˉcount > 4096u32 ||
         Slotˉcount > 4096u32 || Operations > Length || Operands > Length ||
         Bytesˉlength(Parameterˉborrows) > Slotˉcount ||
-        Bytesˉlength(Callˉborrows) != Temporaryˉcount {
+        Bytesˉlength(Callˉborrows) != Temporaryˉcount ||
+        Bytesˉlength(Projectionˉreads) != Temporaryˉcount {
         return Invalid(Wir);
     }
     let Available: u32 = (Length - Operations) / 28u32;
@@ -70,6 +72,8 @@ export fn Build(
     while Index < Temporaryˉcount {
         let State: u8 = Bytesˉreadˉu8(Temporaryˉstate, Index);
         if State != 0u8 && State != 2u8 { return Invalid(Wir); }
+        let Read: u8 = Bytesˉreadˉu8(Projectionˉreads, Index);
+        if Read != 0u8 && Read != 1u8 { return Invalid(Wir); }
         if State != 0u8 { Hasˉborrow = true; }
         Index = Index + 1u32;
     }
@@ -132,7 +136,8 @@ export fn Build(
                 }
             } else {
                 if Resultˉtemporary >= Temporaryˉcount { return Invalid(Wir); }
-                if Bytesˉreadˉu8(Temporaryˉstate, Source) != 0u8 {
+                if Bytesˉreadˉu8(Temporaryˉstate, Source) != 0u8 &&
+                    Bytesˉreadˉu8(Projectionˉreads, Resultˉtemporary) == 0u8 {
                     Temporaryˉstate = Setˉstate(Temporaryˉstate, Resultˉtemporary, 2u8);
                 }
             }

@@ -1212,6 +1212,21 @@ shape-`37` identity as their callee's immutable parameter, including a plain
 owner passed to that parameter and forwarding through another borrowed helper.
 Owned parameters and function results do not acquire borrow metadata.
 
+The source type classifier also determines whether each projection produces an
+ordinary Copy/shared value or a non-owning owned payload. The planner consumes
+an exact one-byte-per-temporary mask containing only zero or one: one permits
+ordinary read-through, while zero preserves borrowed provenance and escape
+restrictions. A short, long, or non-Boolean mask rejects. Copy/shared pattern
+values may be stored, passed by value, or returned under ordinary type rules;
+an explicit immutable-borrow call still receives its exact borrowed parameter
+identity. Reading a value does not unfreeze its source owner. Type classification
+runs only after the borrow-free fast exit and the applicable resource bounds;
+an empty valid callable catalog is normalized before classification.
+The [paired-host read-through checkpoint](../Documents/Evidence/2026-09-08-Foundation-Copy-Borrow-Read-Through.json)
+records the current emitter build, Copy-return acceptance, owned-return rejection,
+and identical record/text fixture publications. It does not establish complete
+owned-payload execution or the full Generic-WIR self-test suite.
+
 The source validator retains its 64-block bound for functions containing
 operation `191`; the extracted planner bounds combined source slots, operations,
 and temporaries to 4,096 each. A function without a borrowed parameter, borrowed

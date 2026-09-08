@@ -1,0 +1,20 @@
+#!wv/1 en@1
+module Foundationˉvalueˉownedˉborrowˉcontrol;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+import Foundationˉcollections as Collections;
+
+fn Selectˉfallback(
+    Owner: borrow Option.Option<Collections.Vector<u32> >,
+    Fallback: Collections.Vector<u32>
+) -> Collections.Vector<u32> {
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } { return Fallback; }
+        case Option.Option.Absent { return Fallback; }
+    }
+}
+
+export fn Main() -> i32 { return 42; }

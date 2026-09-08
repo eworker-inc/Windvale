@@ -4,6 +4,8 @@ import Compilerˉsourceˉbindingsˉclosures as Closureˉbindings;
 import Compilerˉsourceˉbindingsˉgenericˉtypes as Genericˉbindings;
 import Compilerˉsourceˉdeclarationˉparser as Sourceˉdeclarations;
 import Compilerˉsourceˉdescriptor as Sourceˉdescriptor;
+import Compilerˉsourceˉfunctionˉtypeˉlowering as Functionˉtypes;
+import Compilerˉsourceˉgenericˉtypeˉlayout as Genericˉlayouts;
 import Compilerˉsourceˉgenericˉtypeˉlowering as Genericˉtypes;
 import Compilerˉsourceˉgenericˉtypeˉmaterialization as Genericˉmaterialization;
 import Compilerˉsourceˉlexer as Sourceˉlexer;
@@ -4520,9 +4522,43 @@ Operand = Operand + 1u32;
 Index = Index + 1u32;
 }
 if !Hasˉborrow { return Unborrowed; }
+if Operationˉcount > 4096u32 || Temporaryˉcount > 4096u32 ||
+Slotˉcount > 4096u32 || Bytesˉlength(Parameterˉborrows) > Slotˉcount {
+return Foundationˉborrows.Borrowˉplan(false, true, Empty, Empty, Empty);
+}
+var Projectionˉreads: bytes = Foundationˉborrows.Zeroes(Temporaryˉcount);
+let Readˉtypes: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+Compilerˉsourceˉwvbˉbindingsˉtypeˉcatalog(Bindings.Directory);
+let Functionˉtypesˉoffset: u32 = Compilerˉsourceˉwvbˉfunctionˉtypesˉoffset(Wir);
+var Readˉfunctions: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+Bytesˉslice(Wir, Functionˉtypesˉoffset, Bytesˉlength(Wir) - Functionˉtypesˉoffset)
+);
+if Functionˉtypesˉoffset == Bytesˉlength(Wir) {
+Readˉfunctions = Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty();
+}
+Index = 0u32;
+while Index < Operationˉcount {
+let Readˉentry: u32 = Operations + (Firstˉoperation + Index) * 28u32;
+let Readˉkind: u32 = Bytesˉreadˉu16ˉlittle(Wir, Readˉentry + 4u32);
+if Readˉkind == 18u32 || Readˉkind == 67u32 || Readˉkind == 164u32 ||
+Readˉkind == 166u32 || Readˉkind == 168u32 {
+let Readˉclass: u32 = Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+Input, Scan, Symbols, Readˉtypes, Readˉfunctions,
+Bytesˉreadˉu32ˉlittle(Wir, Readˉentry + 8u32)
+);
+if Readˉclass == 1u32 || Readˉclass == 2u32 {
+Projectionˉreads = Foundationˉborrows.Setˉstate(
+Projectionˉreads, Bytesˉreadˉu32ˉlittle(Wir, Readˉentry + 12u32), 1u8
+);
+}
+}
+Index = Index + 1u32;
+}
 return Foundationˉborrows.Build(
 Wir, Operations, Operands, Firstˉoperation, Operationˉcount,
-Temporaryˉcount, Slotˉcount, Parameterˉborrows, Callˉborrows
+Temporaryˉcount, Slotˉcount, Parameterˉborrows, Callˉborrows, Projectionˉreads
 );
 }
 fn Compilerˉsourceˉwvbˉfoundationˉborrowedˉoptionˉshape(

@@ -481,7 +481,7 @@ export fn Compilerˉnativeˉx64ˉreadˉstructure(Input: bytes)
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
     }
     let Minor: u32 = Bytesˉreadˉu16ˉlittle(Input, 6u32);
-    if Minor != 11u32 && Minor != 30u32 && Minor != 31u32 &&
+    if Minor != 11u32 && Minor != 16u32 && Minor != 30u32 && Minor != 31u32 &&
         Minor != 33u32 && Minor != 34u32 && Minor != 35u32 &&
         Minor != 36u32 && Minor != 37u32 && Minor != 38u32 && Minor != 39u32 {
         return Compilerˉnativeˉx64ˉinvalidˉstructure();
@@ -1436,7 +1436,7 @@ fn Compilerˉnativeˉx64ˉcallableˉversionˉisˉvalid(
         return false;
     }
     if Foreignˉcalls > 0u32 && Minor != 38u32 { return false; }
-    if Minor == 11u32 {
+    if Minor == 11u32 || Minor == 16u32 {
         return Callableˉtypes == 0u32 &&
             Referencesˉandˉcalls == 0u32 && Closures == 0u32;
     }

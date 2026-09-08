@@ -1,0 +1,22 @@
+#!wv/1 en@1
+module Optionˉu64ˉreturn;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+
+fn Make() -> Option.Option<u64> {
+    return Option.Option.Present<u64> { Value: 18446744073709551615u64 };
+}
+
+export fn Main() -> i32 {
+    let Owner: Option.Option<u64> = Make();
+    match Owner {
+        case Option.Option.Present { Value: Number } {
+            if Number != 18446744073709551615u64 { return 1; }
+        }
+        case Option.Option.Absent { return 2; }
+    }
+    return 42;
+}

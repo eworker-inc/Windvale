@@ -19,7 +19,8 @@ fn Plan(
 ) -> Borrows.Borrowˉplan {
     return Borrows.Build(
         Bytesˉconcat(Operations, Operands), 0u32, Bytesˉlength(Operations),
-        0u32, Bytesˉlength(Operations) / 28u32, Temporaries, Slots, Parameters, Calls
+        0u32, Bytesˉlength(Operations) / 28u32, Temporaries, Slots, Parameters, Calls,
+        Borrows.Zeroes(Temporaries)
     );
 }
 
@@ -91,12 +92,12 @@ export fn Main() -> i32 {
         Isˉvalid(Plan(Empty, Empty, 1u32, 0u32, Empty, Empty)) ||
         Isˉvalid(Plan(Empty, Empty, 0u32, 1u32, Two, Empty)) ||
         Isˉvalid(Plan(Empty, Empty, 1u32, 0u32, Empty, One)) { return 11; }
-    if Isˉvalid(Borrows.Build(Borrows.Zeroes(27u32), 0u32, 0u32, 0u32, 1u32, 0u32, 0u32, Empty, Empty)) {
+    if Isˉvalid(Borrows.Build(Borrows.Zeroes(27u32), 0u32, 0u32, 0u32, 1u32, 0u32, 0u32, Empty, Empty, Empty)) {
         return 12;
     }
-    if Isˉvalid(Borrows.Build(Empty, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty)) ||
-        Isˉvalid(Borrows.Build(Empty, 0u32, 1u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty)) ||
-        Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 4294967295u32, 0u32, 0u32, 0u32, Empty, Empty)) {
+    if Isˉvalid(Borrows.Build(Empty, 1u32, 0u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty, Empty)) ||
+        Isˉvalid(Borrows.Build(Empty, 0u32, 1u32, 0u32, 0u32, 0u32, 0u32, Empty, Empty, Empty)) ||
+        Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 4294967295u32, 0u32, 0u32, 0u32, Empty, Empty, Empty)) {
         return 13;
     }
     if Isˉvalid(Plan(Borrow, Empty, 1u32, 1u32, Empty, Zero)) ||
@@ -107,5 +108,27 @@ export fn Main() -> i32 {
         1u32, 1u32, Empty, Two)) { return 15; }
     if Isˉvalid(Plan(Operation(18u32, 0u32, 0u32, 4294967295u32, 1u32), Operandˉzero,
         1u32, 0u32, Empty, Two)) { return 16; }
+    let Readˉmask: bytes = Bytesˉconcat(Bytesˉconcat(Zero, One), Zero);
+    let Readˉchain: Borrows.Borrowˉplan = Borrows.Build(
+        Bytesˉconcat(Chain, Operands), 0u32, Bytesˉlength(Chain), 0u32,
+        4u32, 3u32, 3u32, Empty, Borrows.Zeroes(3u32), Readˉmask
+    );
+    if !Readˉchain.Valid || !Readˉchain.Hasˉborrow ||
+        Bytesˉreadˉu8(Readˉchain.Temporaryˉstate, 1u32) != 0u8 ||
+        Bytesˉreadˉu8(Readˉchain.Temporaryˉstate, 2u32) != 0u8 ||
+        Bytesˉreadˉu8(Readˉchain.Slotˉstate, 2u32) != 0u8 ||
+        Bytesˉreadˉu8(Readˉchain.Frozenˉslots, 1u32) != 1u8 { return 17; }
+    let Readˉcall: Borrows.Borrowˉplan = Borrows.Build(
+        Bytesˉconcat(Chain, Operands), 0u32, Bytesˉlength(Chain), 0u32,
+        4u32, 3u32, 3u32, Empty, Bytesˉconcat(Borrows.Zeroes(2u32), Two), Readˉmask
+    );
+    if !Readˉcall.Valid || Bytesˉreadˉu8(Readˉcall.Slotˉstate, 2u32) != 0u8 ||
+        Bytesˉreadˉu8(Readˉcall.Temporaryˉstate, 2u32) != 2u8 { return 18; }
+    if Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32,
+            Empty, Zero, Empty)) ||
+        Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32,
+            Empty, Zero, Bytesˉconcat(Zero, Zero))) { return 19; }
+    if Isˉvalid(Borrows.Build(Empty, 0u32, 0u32, 0u32, 0u32, 1u32, 0u32,
+            Empty, Zero, Two)) { return 20; }
     return 42;
 }

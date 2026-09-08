@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-copy-borrow-read-through",
+  "date": "2026-09-08",
+  "subject": "Copy/shared payload read-through in source WIR validation and WVB planning",
+  "claim": "The rebuilt current-source emitter passes the existing ownership selector on Windows and real Debian: an owned fallback return compiles, an owned borrowed payload return rejects at WIR validation without output, and the equivalent Copy payload return compiles. The two successful products are byte-identical across hosts. The maintained record/u32 and text payload-borrow fixtures also compile to identical cross-host WVBs.",
+  "source": {
+    "kind": "Other",
+    "value": "Base 61f43a7edb0749a851c7db831a54bfe61b6ff110 plus the five compiler source identities and test inputs below. All other emission-driver project sources retain their base bytes. Emitter analysis cache key 54d239e378cbf4df2b3235d81a396784d71c309055339a5293c7298a33498398; emission key b5e99ccdd5fe03203aaabcb67187238ea2a3ed02f24e6eaf4047a3e006ea8707."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Current-source emitter construction and Profile 8 packaging",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/Work/Read-Through-Validated-Emitter.wvb ANALYZER ANALYZER.identity EMITTER EMITTER.identity --symbol-checkpoint; Tools/Native/Package-Segmented-Compiler-Wvb.cmd 8 Artifacts/Work/Read-Through-Validated-Emitter.wvb Artifacts/Work/Read-Through-Validated-Emitter.exe --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Source-Wir-Validation-Core.wv",
+          "size": 358135,
+          "sha256": "513e970ed3b841773b4c8f28d9a3aa2f4bf3c869c2109597693cec4cb04e681d"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Core.wv",
+          "size": 305832,
+          "sha256": "b7c4ac142e3e0ccc3c9525433a346c8accc4ab6b97ce4944cf5340b731db9e3c"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Artifact-Core.wv",
+          "size": 229434,
+          "sha256": "3d77a766e4e2276e94219000cbdd163fc15c335fc0487b6bcd7110f2cce2c345"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Wvb-Foundation-Borrow-Plan.wv",
+          "size": 6397,
+          "sha256": "da18f7aa74ef04887116f4fff52b497056330b631063646d70150382e9f54287"
+        },
+        {
+          "path": "Compiler/Windvale/Source-Function-Type-Lowering-Artifact-Core.wv",
+          "size": 9962,
+          "sha256": "f557cbb8bc0afe972442e9ee76b6c65a86eb1b98f837e2a16a2418251e72ef84"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.wvb",
+          "size": 1595130,
+          "sha256": "beded5b3fdd5fbb61c636b5c2bea3b4ddddfae5896348eea600e9322fa555d93"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.exe",
+          "size": 32662528,
+          "sha256": "149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Three source ownership cases through authenticated split compilation",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-source-ownership ADMITTER VALIDATOR ANALYZER Artifacts/Work/Read-Through-Validated-Emitter.exe Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Owned-Borrow-Control.wv",
+          "size": 584,
+          "sha256": "c38c0110ec9e88bd0ec824514f0944c06efee1c2c681073e2c4e46507c872e2d"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv",
+          "size": 2253,
+          "sha256": "766e75c3b3c414e6c546339cc6311fe50565c6709826f570b94bcb1e99703ad4"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv",
+          "size": 7564,
+          "sha256": "ed99a59a2067c2f60ea29d7cad190ce4fd236f1b1f6a83a6b3d86ce9bca5ee98"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 148242,
+          "sha256": "ffe63cbd2ae534c3f0cd9a6b08ce05437122caca786d1513c84f0c99a1252869"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.exe",
+          "size": 32662528,
+          "sha256": "149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30"
+        },
+        {
+          "path": "Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd",
+          "size": 64,
+          "sha256": "fa1d61dbb7ce65fb3e31dff3e1ceff767f9456b97388e06fa9dae80d4eed23bb"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/owned-borrow-control.wvb",
+          "size": 851,
+          "sha256": "ef3f6c49867009bf987d24f87326d399a66235f83016f7132bbe82a2a45ca889"
+        },
+        {
+          "path": "temporary/copy-borrow-return.wvb",
+          "size": 832,
+          "sha256": "da4f9b1d97037fdc91755225b365478c4f23362a5a57ba996b454eb751159e2a"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 through WSL, Node 24.20.0",
+      "target": "Three source ownership cases through authenticated split compilation",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-source-ownership ADMITTER VALIDATOR ANALYZER Artifacts/Work/Read-Through-Validated-Emitter.elf Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Owned-Borrow-Control.wv",
+          "size": 584,
+          "sha256": "c38c0110ec9e88bd0ec824514f0944c06efee1c2c681073e2c4e46507c872e2d"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv",
+          "size": 2253,
+          "sha256": "766e75c3b3c414e6c546339cc6311fe50565c6709826f570b94bcb1e99703ad4"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Plan-Self-Test.wv",
+          "size": 7564,
+          "sha256": "ed99a59a2067c2f60ea29d7cad190ce4fd236f1b1f6a83a6b3d86ce9bca5ee98"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 148242,
+          "sha256": "ffe63cbd2ae534c3f0cd9a6b08ce05437122caca786d1513c84f0c99a1252869"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.elf",
+          "size": 32661504,
+          "sha256": "fdb25e86d3c8905836cf22389d00574c29d6786d77e16ba6a69a296959ad675d"
+        },
+        {
+          "path": "Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd",
+          "size": 64,
+          "sha256": "fa1d61dbb7ce65fb3e31dff3e1ceff767f9456b97388e06fa9dae80d4eed23bb"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/owned-borrow-control.wvb",
+          "size": 851,
+          "sha256": "ef3f6c49867009bf987d24f87326d399a66235f83016f7132bbe82a2a45ca889"
+        },
+        {
+          "path": "temporary/copy-borrow-return.wvb",
+          "size": 832,
+          "sha256": "da4f9b1d97037fdc91755225b365478c4f23362a5a57ba996b454eb751159e2a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64 and real Debian x64",
+      "target": "Maintained record/u32 and text borrowed-payload fixture compilation",
+      "tool": "Tools/Native/Run-Split-Compiler.mjs",
+      "command": "node Tools/Native/Run-Split-Compiler.mjs ADMITTER VALIDATOR ANALYZER EMITTER --source-input-lock Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock 9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e --source-profile Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp --target-descriptor Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd FIXTURE Libraries/Foundation/Values/Option.wv Libraries/Foundation/Values/Result.wv OUTPUT",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Payload-Borrow-Wvb.wv",
+          "size": 2253,
+          "sha256": "766e75c3b3c414e6c546339cc6311fe50565c6709826f570b94bcb1e99703ad4"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Text-Executable.wv",
+          "size": 2281,
+          "sha256": "183bbe3d6c764ab4da63f867d41ff30560fa06f68cb9493561998263df4721ab"
+        },
+        {
+          "path": "Artifacts/Work/Slice8-Generic-Specialization-Check/Target.wvtd",
+          "size": 64,
+          "sha256": "fa1d61dbb7ce65fb3e31dff3e1ceff767f9456b97388e06fa9dae80d4eed23bb"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Foundation.wvb",
+          "size": 2417,
+          "sha256": "d6ec158088f1230da44ef97e10726bdbb194285709d05c1f21fca5829f8df6a5"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Foundation-Linux.wvb",
+          "size": 2417,
+          "sha256": "d6ec158088f1230da44ef97e10726bdbb194285709d05c1f21fca5829f8df6a5"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Text.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Text-Linux.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Producer aliases identify retained tools, not ordinary installed-toolchain promotion. Windows Analyzer is 54543360 bytes SHA-256 c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1; construction Emitter is 32322048 bytes SHA-256 2187d7acdd67044c5fa092af62af191e6fa266d7b24818c3ab28b3a9ea39fc00.",
+    "Windows Admitter SHA-256 8dd9055238337a55f03a777474e4e78375fa8b548ddcc62e4a8efecb26f5cc7e and Validator SHA-256 30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad. Debian Admitter SHA-256 2b3f81a0cb522c4749733660c85ff752eee1237bc4fd0251da7732e5909fde72, Validator SHA-256 10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1 and Analyzer SHA-256 2312bd21cf1929c75398c10e3ce0be01b7415ba34ea3cb9e023f0d9ef84e1ad7. Other source lock/profile and canonical library inputs retain their base-commit bytes.",
+    "Debian packages the same Windows-produced emitter WVB and executes that native compiler on real Debian. This is not independent compiler-source reconstruction.",
+    "The owned helper is validated before dead-function elimination but not invoked at runtime. These three cases do not establish general owned Vector payload execution, release behavior, exclusive borrow, Take, or Map.",
+    "The old construction emitter passes the first two selector cases but rejects copy-borrow-return as Invalid_analysis/Invalid_wir. This expected differential failure demonstrates the new case detects the corrected behavior; it is not a passing baseline run.",
+    "The full Generic-WIR self-test construction remains incomplete: ordinary analysis exhausted instructions and a whitespace-compacted Profile 8 diagnostic reached the existing five-minute timeout before assertions ran. No limits were increased. The emitter's full directory validator was instead exercised through Source-Emission-Core and Source-Analysis-Validation-Core; this does not claim all Generic-WIR test assertions passed.",
+    "Recorded fixture WVB hashes equal the earlier native-executed record and text products; no new native execution or complete WVB 1.39 admission is claimed by this record.",
+    "Temporary selector outputs were inspected before normal cleanup. Package consumer/project migration, full qualification, installed compiler promotion and the overall compiler/library goal remain incomplete."
+  ],
+  "related": [
+    "Specifications/Compiler-Source-Wir.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}

@@ -114,6 +114,8 @@ try {
     }
     if (!existsSync(Lowerer)) Reject('The current native lowerer was not published.');
 
+    await Runˉoptionˉu64(Lowerer);
+
     await Lowerˉexact(
         Lowerer,
         await Readˉbinary(
@@ -372,14 +374,67 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        'native unsafe write pointer lowering status=Passed cases=37 ' +
-        'valid=17 malformed=20 native-execution=2 foundation-borrow-cases=12 ' +
+        'native unsafe write pointer lowering status=Passed cases=43 ' +
+        'valid=18 malformed=25 native-execution=3 foundation-borrow-cases=12 ' +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
     }
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Runˉoptionˉu64(Lowerer) {
+    process.stdout.write('native unsafe write pointer lowering case=option-u64-1.16 status=Started\n');
+    const Input = await Readˉfixture(
+        join(Fixtureˉdirectory, 'Option-U64-Return.wvb.b64'),
+        '8adba32580fde1749011c4a1d45c4eac1f02f4eb1e3ddf5d2afd96ba03ba41ad',
+    );
+    if (Input.length !== 565 || Input.readUInt16LE(6) !== 16) {
+        Reject('The Option<u64> WVB 1.16 fixture shape differs.');
+    }
+    const Source = join(Work, 'Option-U64.wvb');
+    const Object = join(Work, 'Option-U64.wvo');
+    const Repeated = join(Work, 'Option-U64-Repeated.wvo');
+    await writeFile(Source, Input, { flag: 'wx' });
+    await Requireˉsuccess(Lowerer, [Source, Object], 'option-u64-lower');
+    await Requireˉsuccess(Lowerer, [Source, Repeated], 'option-u64-repeat');
+    if (!(await readFile(Object)).equals(await readFile(Repeated))) {
+        Reject('The Option<u64> native object is not deterministic.');
+    }
+    await Requireˉsuccess(Check, [Object], 'option-u64-object-check');
+    const Image = join(Work, 'Option-U64.bin');
+    const Linked = await Requireˉsuccess(Link,
+        ['0', 'Main', Image, Object], 'option-u64-link');
+    const Entry = /^entry name=Main address=([0-9]+)$/mu.exec(Linked.Output);
+    if (Entry === null) Reject('The Option<u64> entry point is missing.');
+    const Application = join(Work, `Option-U64.${Nativeˉextension}`);
+    await Requireˉsuccess(Packageˉconsole,
+        [`${Target}-x64-console-v1`, Image, Entry[1], Application],
+        'option-u64-package');
+    const Executed = await Runˉprocess(Application, [],
+        COMMAND_TIMEOUT_MILLISECONDS, 'option-u64-execute');
+    if (Executed.Code !== 42 || Executed.Exceeded || Executed.Timedˉout ||
+        Executed.Output !== '') Reject('The Option<u64> native execution differs.');
+    const Cases = [
+        ['unsupported-minor', Value => { Value.writeUInt16LE(15, 6); return Value; }],
+        ['truncated', Value => Value.subarray(0, Value.length - 1)],
+        ['trailing', Value => Buffer.concat([Value, Buffer.from([0])])],
+        ['oversized-section', Value => { Value.writeUInt32LE(0xffff_ffff, 16); return Value; }],
+        ['reserved-section', Value => { Value[13] = 1; return Value; }],
+    ];
+    for (const [Name, Mutate] of Cases) {
+        const Candidate = join(Work, `Option-U64-${Name}.wvb`);
+        const Destination = join(Work, `Option-U64-${Name}.wvo`);
+        await writeFile(Candidate, Mutate(Buffer.from(Input)), { flag: 'wx' });
+        const Rejected = await Runˉprocess(Lowerer, [Candidate, Destination],
+            COMMAND_TIMEOUT_MILLISECONDS, `option-u64-${Name}`);
+        if (Rejected.Code !== 1 || Rejected.Exceeded || Rejected.Timedˉout ||
+            existsSync(Destination) ||
+            !/^native x64 status=(?:Invalidˉwvb|Unsupportedˉprofile|Unsupportedˉmodule|Unsupportedˉfunction|Unsupportedˉcode) /u.test(Rejected.Output)) {
+            Reject(`The Option<u64> malformed case ${Name} differs.\n${Rejected.Output}`);
+        }
+    }
 }
 
 async function Runˉfoundationˉborrowˉemission() {

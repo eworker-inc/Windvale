@@ -35,6 +35,47 @@ const GENERIC_TYPE_SHAPE_LIMIT: u32 = 2147483904u32;
 fn Compilerˉsourceˉfunctionˉtypeˉsentinel() -> u32 {
 return 4294967295u32;
 }
+fn Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+Input: bytes,
+Value: u32
+) -> bytes {
+return Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Value));
+}
+fn Compilerˉsourceˉfunctionˉtypeˉheader(
+Instances: u32,
+Maximumˉparameters: u32,
+Retainedˉbytes: u32,
+Estimatedˉbytes: u32
+) -> bytes {
+var Result: bytes = Textˉtoˉutf8("WVFT");
+Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(1u32));
+Result = Bytesˉconcat(Result, Bytesˉfromˉu16ˉlittle(0u32));
+Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(Result, Instances);
+Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+Result, Maximumˉparameters
+);
+Result = Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+Result, Retainedˉbytes
+);
+return Compilerˉsourceˉfunctionˉtypeˉappendˉu32(
+Result, Estimatedˉbytes
+);
+}
+fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉvalue(
+Status: Compilerˉsourceˉfunctionˉtypeˉstatus,
+Evidence: bytes
+) -> Compilerˉsourceˉfunctionˉtypeˉcatalog {
+return Compilerˉsourceˉfunctionˉtypeˉcatalog(Status, Evidence);
+}
+export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty(
+) -> Compilerˉsourceˉfunctionˉtypeˉcatalog {
+return Compilerˉsourceˉfunctionˉtypeˉcatalogˉvalue(
+Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+Compilerˉsourceˉfunctionˉtypeˉheader(
+0u32, 0u32, FUNCTION_TYPE_HEADER_BYTES, 0u32
+)
+);
+}
 export fn Compilerˉsourceˉfunctionˉtypeˉcatalogˉinstances(
 Catalog: Compilerˉsourceˉfunctionˉtypeˉcatalog
 ) -> u32 {

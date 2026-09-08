@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-wvb-16-nominal-admission",
+  "date": "2026-09-08",
+  "subject": "Current-source native WVB 1.16 nominal admission and hosted enum metadata",
+  "claim": "The native candidate accepts the existing WVB 1.16 nominal-value envelope through complete verification, executes a canonical Option<u64> maximum-value return on Windows and Debian, produces identical repeated WVO bytes, and rejects five distinct malformed boundary cases. The existing native regression owner passes 43 cases on each host. The refreshed hosted enum metadata reader passes 16 cases on each host, including version 1.16 and rejection output preservation.",
+  "source": {
+    "kind": "Other",
+    "value": "Base 61f43a7edb0749a851c7db831a54bfe61b6ff110 plus the exact changed source and test identities in runs[0].inputs; other native-lowerer project dependencies retain their base-commit bytes."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "ABI 22 native lowering development: 18 valid and 25 malformed cases",
+      "tool": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows D:/windvale/dev01 --lowerer D:/windvale/dev01/Artifacts/Work/Read-Through-Native-Lowerer.exe 708f2640b23c01fad21c1acd7c24516eebd5b798757a532e083c6f1af4120d55",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 369520,
+          "sha256": "51775511d2f5c9bc676c15bdea8c0a94f09be00846761e56d5a7a75348fe0c33"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Metadata.wv",
+          "size": 15761,
+          "sha256": "05f53e8f073e6b56d2af113bd8fe508362d0739700ef98a7df730b2ec9c6978c"
+        },
+        {
+          "path": "Runtime/Windvale/Native-Hosted-Enum-Service-Request.wv",
+          "size": 9226,
+          "sha256": "66c70f83ac12aa26510e3b9ba1876f8a83cd9bdb09bdf332a5bac4d7fd11ebe3"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "size": 33588,
+          "sha256": "53cd048c2dea621c3f1b92aea05291b31056925277987731a916db96f3a37147"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 147786,
+          "sha256": "83e81e617e30034b44ed444e4f413ebd40abb7289628e341364b016872e91d83"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Option-U64-Return-Wvb.wv",
+          "size": 549,
+          "sha256": "93b69817a9ff5d5ad76a1239a461300885df844ed014c6b509d8ac0d533add26"
+        },
+        {
+          "path": "Tests/Native/Wvb-To-Wvo-Rejections/Option-U64-Return.wvb.b64",
+          "size": 757,
+          "sha256": "304ef02106bbc916cb99395904c87e9a3014b12f428b06419a7c4847043ee9d8"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Native-Lowerer.wvb",
+          "size": 1309533,
+          "sha256": "8a0e6345aeb6c4751e1d76816bbd69e7bcb7fea43e92f5e0160cad63c47dded6"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Native-Lowerer.exe",
+          "size": 15506432,
+          "sha256": "708f2640b23c01fad21c1acd7c24516eebd5b798757a532e083c6f1af4120d55"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "host": "Debian x64 through WSL, Node 24.20.0",
+      "target": "ABI 22 native lowering development: 18 valid and 25 malformed cases",
+      "tool": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+      "command": "wsl -d Debian -- node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs linux /mnt/d/windvale/dev01 --lowerer /mnt/d/windvale/dev01/Artifacts/Work/Read-Through-Native-Lowerer.elf d9d8ab9208fb5e0c4d63c183821659d3dc4581474fa9d7d06beb3a1e99711c80",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Read-Through-Native-Lowerer.elf",
+          "size": 15507456,
+          "sha256": "d9d8ab9208fb5e0c4d63c183821659d3dc4581474fa9d7d06beb3a1e99711c80"
+        }
+      ],
+      "outputs": []
+    },
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "16 hosted enum metadata-envelope and rejection-preservation cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-enum-metadata Artifacts/Work/Read-Through-Text.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 147786,
+          "sha256": "83e81e617e30034b44ed444e4f413ebd40abb7289628e341364b016872e91d83"
+        },
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 90044,
+          "sha256": "4185a7f7d5d9cd0eb856d3700c4900542b8801bf75df96bcd955e0daf5d8c20c"
+        },
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/windows-x64/wvhostenumrequest.exe",
+          "size": 997376,
+          "sha256": "4526b18915fc77cd33c1c53e9011fe07c340de2856485027f8d8d9db8b7ea8fe"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Text.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 through WSL, Node 24.20.0",
+      "target": "16 hosted enum metadata-envelope and rejection-preservation cases",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian -- node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-enum-metadata Artifacts/Work/Read-Through-Text.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 147786,
+          "sha256": "83e81e617e30034b44ed444e4f413ebd40abb7289628e341364b016872e91d83"
+        },
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/Wvb/wvhostenumrequest.wvb",
+          "size": 90044,
+          "sha256": "4185a7f7d5d9cd0eb856d3700c4900542b8801bf75df96bcd955e0daf5d8c20c"
+        },
+        {
+          "path": "Artifacts/Native-Hosted-Enum-Request-Candidate/linux-x64/wvhostenumrequest.elf",
+          "size": 999424,
+          "sha256": "53120a5bc7ae62067ed1b64444807b6e451c6ba4cd79b0965e824ded1467537a"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Text.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is development evidence, not complete WVB 1.16, compiler, library, bootstrap, or release qualification. The native lowerer and installed build driver are not promoted by this record.",
+    "The native regression's supplied-lowerer identity is explicit; construction used retained bootstrap producers on Windows. Debian execution does not establish an independent Linux source reconstruction.",
+    "The decoded 565-byte Option fixture SHA-256 is 8adba32580fde1749011c4a1d45c4eac1f02f4eb1e3ddf5d2afd96ba03ba41ad. Both the retained emitter and the read-through candidate emitted these bytes.",
+    "Metadata version mutations test envelopes only, not execution under the substituted version. Whole-module verification remains mandatory.",
+    "Large Generic-WIR and build-driver reconstruction attempts did not pass: the ordinary analyzer exhausted instructions, a reconstruction-profile retry timed out, and a direct build-driver analysis exited without diagnostics. No passing reconstruction claim is made.",
+    "Project 3 source migration, legacy SHA-256 dependencies, Copy/shared source-WIR integration, owned payload coverage, exclusive borrow, take, mapping, and installed workflow integration remain separate unfinished work.",
+    "Generated local candidates and temporary native-test outputs are not release artifacts. The tracked enum-request manifest owns its current pinned identities."
+  ],
+  "related": [
+    "Specifications/Windvale-Native-X64-Lowering.md",
+    "Specifications/Windvale-Native-Hosted-Enum-Processes.md",
+    "Artifacts/Native-Hosted-Enum-Request-Candidate/Manifest.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}

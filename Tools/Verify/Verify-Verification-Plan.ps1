@@ -1096,6 +1096,7 @@ $NativeCases = @(
             'Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.sh',
             'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Stale.wvb.b64',
             'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Success.wvb.b64',
+            'Tests/Native/Wvb-To-Wvo-Rejections/Option-U64-Return.wvb.b64',
             'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
             'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
             'Tests/Native/X64-Paper-Buffer-Source.wva'
@@ -5154,23 +5155,23 @@ if ($QualificationShardSignature -cne
 }
 $QualificationPipelineExpected = @{
     'Build-Current-Wvb' = '11|41'
-    'Build-Wvb' = '47|217'
+    'Build-Wvb' = '46|216'
     'Build-Cached-Project-Object' = '1|2'
     'Build-Cached-Hosted-Application' = '12|44'
     'Build-Cached-Split-Project-Wvb' = '3|18'
     'Build-Cached-Segmented-Hosted-Wvb' = '8|11'
     'Stage-Compiler-Wvb' = '2|8'
     'Lower-Wvb-To-Wvo' = '16|45'
-    'Check-Wvo' = '20|55'
-    'Link-Wvo' = '39|112'
-    'Package-Hosted-Wvb' = '18|95'
-    'Package-Console' = '19|77'
+    'Check-Wvo' = '21|56'
+    'Link-Wvo' = '40|113'
+    'Package-Hosted-Wvb' = '18|96'
+    'Package-Console' = '20|78'
     'Package-Segmented-Compiler-Wvb' = '23|65'
     'Verify-Wvb' = '5|16'
     'Verify-Wvo' = '10|34'
     'Verify-Source-Analysis-Diagnostic' = '1|11'
     'Run-Wvb' = '8|60'
-    'Run-Split-Compiler' = '3|83'
+    'Run-Split-Compiler' = '3|84'
     'Run-Authenticated-Source-Admission' = '1|30'
 }
 foreach ($PipelineUse in $QualificationWorkPlan.PipelineUses) {

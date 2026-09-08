@@ -18,7 +18,7 @@ wvhostenumservice <request.wveq> <service.bin>
 digest-bound candidate uses the native x64 type reader that admits `u64` record
 fields and WVB 1.30/1.31 callable descriptors; both receive zero-member
 directory entries and do not change serialized enum metadata. It revalidates
-the WVB 1.11, 1.30, 1.31, or candidate 1.39 envelope with seven exact sections and a hosted-only
+the WVB 1.11, 1.16, 1.30, 1.31, or candidate 1.39 envelope with seven exact sections and a hosted-only
 type directory reader; it is not a replacement for whole-module semantic
 verification. It supports at most 256 total types, with no more than 116 records,
 64 enums, 64 variants, or 128 callables within that total, and the current single complete `WVEQ 2`
@@ -45,6 +45,8 @@ The current enum-request artifacts are identified by the
 [candidate manifest](../Artifacts/Native-Hosted-Enum-Request-Candidate/Manifest.json).
 The [native borrowing execution checkpoint](../Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json)
 records paired-host metadata-envelope checks and native text execution.
+The [WVB 1.16 checkpoint](../Documents/Evidence/2026-09-08-Native-Wvb-16-Nominal-Admission.json)
+adds the nominal-value envelope without weakening complete verification.
 Candidate 1.39 admission here does not imply complete native qualification;
 whole-module verification remains a prerequisite.
 

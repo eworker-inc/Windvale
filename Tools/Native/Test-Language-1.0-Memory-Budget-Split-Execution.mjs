@@ -3,6 +3,7 @@ import { Runˉdevelopmentˉcommand } from './Development-Command-Core.mjs';
 import { createHash } from 'node:crypto';
 import {
     copyFileSync,
+    existsSync,
     lstatSync,
     mkdtempSync,
     readFileSync,
@@ -67,6 +68,8 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
+const Foundationˉsourceˉonly = process.argv.length === 8 &&
+    process.argv[2] === '--foundation-source-ownership';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
 const Foundationˉenumˉonly = process.argv.length === 4 &&
@@ -86,7 +89,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-owners';
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
-const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
+const Developmentˉonly = Foundationˉsourceˉonly || Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length >= 5) {
@@ -116,6 +119,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>|--native-lowerer <lowerer>]]|--foundation-borrow-runtime <runner>|' +
         '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
         '--foundation-native-staging <producer> <text-fixture.wvb> [--admitter <checker>]|' +
+        '--foundation-source-ownership <admitter> <validator> <analyzer> <emitter> <target.wvtd>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -190,7 +194,12 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉstagingˉonly) {
+    if (Foundationˉsourceˉonly) {
+        Validator = path.resolve(process.argv[4]);
+        Targetˉdescriptor = path.resolve(process.argv[7]);
+        await Verifyˉfoundationˉsourceˉownership(path.resolve(process.argv[3]),
+            path.resolve(process.argv[5]), path.resolve(process.argv[6]));
+    } else if (Foundationˉstagingˉonly) {
         await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]),
             process.argv.length === 7 ? path.resolve(process.argv[6]) : null);
     } else if (Foundationˉnativeˉonly) {
@@ -200,7 +209,7 @@ try {
         await Verifyˉfoundationˉnative(Lowerer, Record, 'record-u32');
         await Verifyˉfoundationˉnative(Lowerer, path.resolve(process.argv[4]), 'text');
         await Verifyˉfoundationˉnativeˉrejections(Lowerer);
-        process.stdout.write('native Foundation execution status=Passed cases=26 qualification=false\n');
+        process.stdout.write('native Foundation execution status=Passed cases=27 qualification=false\n');
     } else if (Foundationˉenumˉonly) {
         await Verifyˉfoundationˉenumˉmetadata(path.resolve(process.argv[3]));
     } else if (Foundationˉruntimeˉonly) {
@@ -223,13 +232,13 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
+if (Developmentˉonly && !Foundationˉsourceˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 345 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 394 : Foundationˉsourceˉrunner === null ? 368 : 371) : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 349 : Foundationˉonly ? (Foundationˉnativeˉlowerer !== null ? 402 : Foundationˉsourceˉrunner === null ? 375 : 378) : Foundationˉplanˉonly ? 20 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
         `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null} ` +
         (Foundationˉnativeˉlowerer === null ? '' : 'execution=native-x64 ') +
         (Borrowˉcomponentˉbytes === null ? '' :
@@ -501,6 +510,7 @@ async function Runˉpublicationˉandˉexecution() {
         [Foundationˉvalueˉborrowˉa, Foundationˉvalueˉborrowˉb],
     );
     await Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Pinnedˉemitter);
+    await Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter);
 
     if (!Foundationˉonly || Foundationˉsourceˉrunner !== null || Foundationˉnativeˉlowerer !== null) {
         for (const [Label, Output] of [['a', Foundationˉtextˉa], ['b', Foundationˉtextˉb]]) {
@@ -1450,20 +1460,21 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${531 + Growˉmalformedˉcases.length +
-            Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
+        `cases=${538 + Growˉmalformedˉcases.length +
+            Ownedˉaggregateˉmalformedˉcases.length} valid=26 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
             Ownedˉcallˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length +
             Sourceˉfileˉmalformedˉcases.length +
-            Structuredˉtaskˉmalformedˉcases.length + 1
+            Structuredˉtaskˉmalformedˉcases.length + 2
         } owned-call-cases=4 owned-aggregate-source-cases=5 ` +
         'using-cases=12 using-releases=7 source-file-cases=12 ' +
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=18 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=46 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=20 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=18 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=120 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=46 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-source-ownership-cases=3 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +
@@ -1553,6 +1564,63 @@ async function Compileˉfoundationˉvalueˉborrow(
         ),
         Output,
     ]);
+}
+
+async function Verifyˉfoundationˉsourceˉownership(Admitter, Analyzer, Emitter) {
+    const Fixture = path.join(Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0',
+        'Foundation-Value-Owned-Borrow-Control.wv');
+    Requireˉordinaryˉfile(Fixture, 4096, 'Foundation owned borrow control');
+    const Source = readFileSync(Fixture, 'utf8');
+    const Present = 'case Option.Option.Present { Value: Item } { return Fallback; }';
+    if (Source.split(Present).length !== 2) Reject('The owned borrow control mutation is ambiguous.');
+    const Escaping = path.join(Work, 'Owned-Borrow-Escape.wv');
+    const Returningˉpayload = Source.replace(Present,
+        'case Option.Option.Present { Value: Item } { return Item; }');
+    writeFileSync(Escaping, Returningˉpayload, { flag: 'wx' });
+    const Copyˉreturn = path.join(Work, 'Copy-Borrow-Return.wv');
+    if (Returningˉpayload.split('Collections.Vector<u32>').length !== 4) {
+        Reject('The Copy borrow return type substitution is ambiguous.');
+    }
+    writeFileSync(Copyˉreturn,
+        Returningˉpayload.replaceAll('Collections.Vector<u32>', 'u32'),
+        { flag: 'wx' });
+    for (const [Label, Input, Valid] of [
+        ['owned-borrow-control', Fixture, true],
+        ['owned-borrow-escape', Escaping, false],
+        ['copy-borrow-return', Copyˉreturn, true],
+    ]) {
+        const Output = path.join(Work, `${Label}.wvb`);
+        const Arguments = [path.join(Scriptˉdirectory, 'Run-Split-Compiler.mjs'),
+            Admitter, Validator, Analyzer, Emitter,
+            '--source-input-lock', Sourceˉlock, SOURCE_LOCK_SHA256,
+            '--source-profile', Sourceˉprofile, '--target-descriptor', Targetˉdescriptor,
+            Input,
+            path.join(Repositoryˉroot, 'Libraries/Foundation/Collections/Collections.wv'),
+            path.join(Repositoryˉroot, 'Libraries/Foundation/Memory/Memory.wv'),
+            path.join(Repositoryˉroot, 'Libraries/Foundation/Values/Option.wv'), Output];
+        process.stdout.write(`START Foundation source ownership case=${Label}\n`);
+        const Result = await Runˉdevelopmentˉcommand(process.execPath, Arguments,
+            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000),
+            false, MAXIMUM_DIAGNOSTIC_BYTES);
+        if (Valid) {
+            if (Result.Code !== 0 || Result.Error !== '' || !existsSync(Output) ||
+                !Result.Output.includes('source emission status=Published')) {
+                Reject(`The owned borrow control failed.\n${Result.Output}\n${Result.Error}`);
+            }
+            Requireˉordinaryˉfile(Output, 4096, 'owned borrow control WVB');
+            const Bytes = readFileSync(Output);
+            const Sections = Parseˉsections(Bytes);
+            const Functions = Parseˉfunctionˉentries(Bytes, Sections[4]);
+            if (Functions.length !== 1 || Functions[0].name !== 'Main' ||
+                Functions[0].codeLength === 0) Reject('The owned control publication shape differs.');
+            process.stdout.write(`Foundation source ownership control wvb-bytes=${Bytes.length} wvb-sha256=${Digest(Bytes)}\n`);
+        } else if (Result.Code !== 1 || existsSync(Output) ||
+            Normalize(Result.Error) !== 'source emission status=Invalidˉanalysis analysis-status=Invalidˉwir wvb-status=Sourceˉwir function=0 operation=0 source-line=0\n') {
+            Reject(`The owned borrow escape failed to reject at emitter WIR validation.\n${Result.Output}\n${Result.Error}`);
+        }
+        process.stdout.write(`PASS Foundation source ownership case=${Label}\n`);
+    }
+    process.stdout.write('native Foundation source ownership status=Passed cases=3 qualification=false\n');
 }
 
 async function Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Referenceˉemitter) {
@@ -1795,7 +1863,12 @@ async function Verifyˉfoundationˉstagingˉadmission(Admitter, Input, Prefix, M
 async function Verifyˉfoundationˉenumˉmetadata(Candidate) {
     Requireˉordinaryˉfile(Candidate, 4096, 'Foundation allocated-text fixture');
     const Bytes = readFileSync(Candidate);
-    if (Digest(Bytes) !== 'f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018') {
+    // Retained borrow-only publication and the current shared-read publication
+    // have identical enum metadata; retain both exact diagnostic inputs.
+    if (![
+        'f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018',
+        '1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e',
+    ].includes(Digest(Bytes))) {
         Reject('The Foundation allocated-text fixture identity differs.');
     }
     const Sections = Parseˉsections(Bytes);
@@ -1805,7 +1878,7 @@ async function Verifyˉfoundationˉenumˉmetadata(Candidate) {
     Requireˉordinaryˉfile(Reader, 4_194_304, 'hosted enum metadata reader');
     const Cases = [];
     // These are metadata-envelope tests, not executable-version qualification.
-    for (const Version of [11, 30, 31, 39]) {
+    for (const Version of [11, 16, 30, 31, 39]) {
         const Value = Buffer.from(Bytes);
         Value.writeUInt16LE(Version, 6);
         Cases.push([`version-${Version}`, Value, true]);

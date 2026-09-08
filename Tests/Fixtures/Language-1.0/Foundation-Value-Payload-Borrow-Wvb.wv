@@ -49,6 +49,8 @@ export fn Main() -> i32 {
     var Total: u32 = 0u32;
     match Option.Borrow(borrow Maybe) {
         case Option.Option.Present { Value: Item } {
+            let Copiedˉitem: Payload = Item;
+            if Copiedˉitem.Code != 30u32 || Item.Code != 30u32 { return 5; }
             Total = Total + Forwardˉpayload(borrow Item);
         }
         case Option.Option.Absent { }
@@ -61,6 +63,8 @@ export fn Main() -> i32 {
     }
     match Result.Borrowˉfailure(borrow Failure) {
         case Option.Option.Present { Value: Error } {
+            let Copiedˉerror: u32 = Error;
+            if Copiedˉerror != 5u32 || Error + 1u32 != 6u32 { return 6; }
             Total = Total + Forwardˉu32(borrow Error);
         }
         case Option.Option.Absent { }

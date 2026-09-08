@@ -236,14 +236,14 @@ fn Foundationˉvalueˉborrowˉviewˉstorageˉrejection() -> bool {
         Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
 }
 
-fn Foundationˉvalueˉpayloadˉescapeˉrejection() -> bool {
+fn Foundationˉvalueˉpayloadˉcopyˉread() -> bool {
     let Root: text = "#!wv/1 en@1\nmodule Foundationˉvalueˉpayloadˉescapeˉtest; profile core; platform linux, windows, windvale; authority application; import Foundationˉoption as Option; record Payload { Code: u32; } fn Escape(Value: borrow Option.Option<Payload>) -> Payload { return match Option.Borrow(borrow Value) { case Option.Option.Present { Value: Item } { Item } case Option.Option.Absent { Payload { Code: 0u32 } } }; } export fn Main() -> i32 { let Value: Option.Option<Payload> = Option.Option.Absent<Payload> {}; let Escaped: Payload = Escape(borrow Value); if Escaped.Code != 0u32 { return 1; } return 42; }";
     let Summary: Sourceˉwir.Compilerˉsourceˉwirˉsummary =
         Sourceˉwirˉchecked.Compilerˉvalidateˉsourceˉwir(
             Sourceˉsetˉtwo(Root, Optionˉsource())
         );
     return Summary.Status ==
-        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Invalidˉdirectory;
+        Sourceˉwir.Compilerˉsourceˉwirˉstatus.Valid;
 }
 
 fn Foundationˉvalueˉpayloadˉownerˉmutationˉrejection() -> bool {
@@ -283,7 +283,7 @@ export fn Main() -> i32 {
     }
     if !Foundationˉvalueˉpayloadˉborrowˉmodeˉrejection() { return 10; }
     if !Foundationˉvalueˉborrowˉviewˉstorageˉrejection() { return 11; }
-    if !Foundationˉvalueˉpayloadˉescapeˉrejection() { return 12; }
+    if !Foundationˉvalueˉpayloadˉcopyˉread() { return 12; }
     if !Foundationˉvalueˉpayloadˉownerˉmutationˉrejection() { return 13; }
     return 42;
 }

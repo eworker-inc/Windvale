@@ -341,11 +341,17 @@ canonical generic families and requires the selected Option payload argument
 to equal the source Option payload or the selected Result type argument.
 
 The ephemeral result may be consumed only by exhaustive Option matching. A
-projected payload is a non-owning alias: it may be bound once by that pattern,
+projected owned payload, or one whose value class cannot be proved, is a
+non-owning alias: it may be bound once by that pattern,
 projected further, variant-tested, or passed to an exact immutable-borrow
 parameter.
 It may not be returned, copied into another local, consumed by value, captured,
-placed in an aggregate, sent to a task, or used by an indirect call. The source
+placed in an aggregate, sent to a task, or used by an indirect call. A projection
+proved Copy or shared immutable by the bounded source type classifier is instead
+an ordinary value and may be copied, passed by value, or returned under its
+normal type rules. This applies to record fields, variant payloads, fixed-array
+elements, and sequence elements, without granting ownership of an owned field.
+The source
 owner remains frozen from operation `191` through function exit; assignment,
 release, mutable observation, or consuming use after the borrow rejects. The
 proof is bounded to at most 64 blocks, 64 slots, 4,096 operations, and 4,096
@@ -353,9 +359,10 @@ temporaries for any function containing this operation. Borrowed projections
 are explicitly excluded from the owned-vector transfer state, so observation
 does not manufacture ownership or a second release obligation.
 
-WVIR 1.33/1.34 are compiler checkpoints only. Source WVB rejects operation
-`191` and its ephemeral shapes until a separately specified verified runtime
-representation and non-escape lowering exist.
+WVIR 1.33/1.34 remain compiler checkpoints. The
+[source WVB payload-borrow candidate](Compiler-Source-Wvb.md#code-lowering-contract)
+owns subsequent representation and lowering; it does not establish complete
+WVB 1.39 admission or general owned-payload execution.
 
 ## Independent validation
 

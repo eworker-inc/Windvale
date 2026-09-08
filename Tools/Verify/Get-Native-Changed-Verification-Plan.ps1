@@ -2444,6 +2444,7 @@ foreach ($Path in $Paths) {
     } elseif ($Path -in @(
         'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Stale.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Foreign-Runtime-Success.wvb.b64',
+        'Tests/Native/Wvb-To-Wvo-Rejections/Option-U64-Return.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer.wvb.b64',
         'Tests/Native/Wvb-To-Wvo-Rejections/Unsafe-Write-Pointer-Runtime.wvb.b64',
         'Tests/Native/X64-Paper-Buffer-Source.wva'

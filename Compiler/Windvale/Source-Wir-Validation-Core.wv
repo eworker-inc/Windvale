@@ -5951,6 +5951,7 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
     Scan: Sourceˉset.Compilerˉsourceˉsetˉscan,
     Symbols: Sourceˉsymbols.Compilerˉsourceˉsymbolˉsummary,
     Bindings: Sourceˉbindings.Compilerˉsourceˉbindingˉsummary,
+    Functionˉtypeˉcatalog: Compilerˉsourceˉwirˉfunctionˉtypeˉcatalog,
     Directory: bytes,
     Function: u32,
     Range: Compilerˉsourceˉwirˉrange
@@ -6000,6 +6001,16 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
         Slotˉcount > 64u32 || Range.Operationˉcount > 4096u32 ||
         Range.Temporaryˉcount > 4096u32 {
         return Invalid;
+    }
+    let Readˉtypeˉcatalog: Genericˉtypes.Compilerˉsourceˉgenericˉtypeˉcatalog =
+        Compilerˉsourceˉwirˉbindingsˉtypeˉcatalog(Bindings.Directory);
+    var Readˉfunctions: Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog =
+        Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalog(
+            Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉstatus.Valid,
+            Functionˉtypeˉcatalog.Evidence
+        );
+    if Bytesˉlength(Functionˉtypeˉcatalog.Evidence) == 0u32 {
+        Readˉfunctions = Functionˉtypes.Compilerˉsourceˉfunctionˉtypeˉcatalogˉempty();
     }
     var Temporaryˉstate: bytes = Empty;
     var Temporaryˉprojection: bytes = Empty;
@@ -6162,13 +6173,23 @@ fn Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
             if Aggregate < Range.Temporaryˉcount &&
                 (Bytesˉreadˉu8(Temporaryˉstate, Aggregate) == 1u8 ||
                     Bytesˉreadˉu8(Temporaryˉstate, Aggregate) == 2u8) {
-                Temporaryˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
-                    Temporaryˉstate, Resultˉtemporary, 2u8
-                );
-                Temporaryˉprojection =
-                    Compilerˉsourceˉwirˉownershipˉstateˉset(
-                        Temporaryˉprojection, Resultˉtemporary, 1u8
-                );
+                let Readˉclass: u32 =
+                    Genericˉlayouts.Compilerˉsourceˉgenericˉtypeˉreadˉclass(
+                        Input, Scan, Symbols, Readˉtypeˉcatalog,
+                        Readˉfunctions, Shape
+                    );
+                // Copy/shared fields are values; owned or unproven fields
+                // retain the non-owning projection and escape restrictions.
+                if Readˉclass != WIR_VALUE_CLASS_COPY &&
+                    Readˉclass != WIR_VALUE_CLASS_SHARED {
+                    Temporaryˉstate = Compilerˉsourceˉwirˉownershipˉstateˉset(
+                        Temporaryˉstate, Resultˉtemporary, 2u8
+                    );
+                    Temporaryˉprojection =
+                        Compilerˉsourceˉwirˉownershipˉstateˉset(
+                            Temporaryˉprojection, Resultˉtemporary, 1u8
+                        );
+                }
             }
         }
         if Kind == WIR_OPERATION_LOAD_LOCAL &&
@@ -6234,7 +6255,8 @@ fn Compilerˉsourceˉwirˉvectorˉownershipˉisˉvalid(
     let Slotˉcount: u32 = Range.Parameters + Range.Locals;
     let Borrowˉprovenance: Compilerˉsourceˉwirˉborrowˉprovenance =
         Compilerˉsourceˉwirˉborrowˉprovenanceˉanalyze(
-            Input, Scan, Symbols, Bindings, Directory, Function, Range
+            Input, Scan, Symbols, Bindings, Functionˉtypeˉcatalog,
+            Directory, Function, Range
         );
     if !Borrowˉprovenance.Valid { return false; }
 
