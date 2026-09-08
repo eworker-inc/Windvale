@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-07-foundation-borrow-view-reader",
+  "date": "2026-09-07",
+  "subject": "Bounded scalar-runtime Option/Result projection reader",
+  "claim": "A new runtime preparation component selects an immutable Option/Result payload from exact live scalar aggregate cells, or reports absence, without consuming the owner. Sixteen grouped tests extend the existing Foundation borrow owner to 233 passing Windows groups. Runtime instruction integration and WVB 1.39 admission remain pending.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 3db968ec7b4a0867452916f33d273cbc0a0ee55c. Changed implementation, fixture, entry, and project identities are recorded below; unchanged bootstrap dependencies belong to that base."
+  },
+  "runs": [{
+    "host": "Windows x64; Node.js 24.18.0",
+    "target": "233 Foundation borrow groups: the existing 217 plus 16 projection-reader groups covering all three selectors, both cases, retention categories, malformed cells, token/slot mismatches, and exact buffer/type limits.",
+    "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+    "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+    "result": "Passed",
+    "elapsedMilliseconds": 2333,
+    "inputs": [
+      {"path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv", "size": 2989, "sha256": "20dd0a4431840c7c30159dcd44311e25a5c9eabad6d09da8242f3ec774f34278"},
+      {"path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv", "size": 4825, "sha256": "383d1c8c53ae886e1fe9e51313acdd56572b365004689c5fadc9fe27f0300a58"},
+      {"path": "Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv", "size": 13817, "sha256": "79abe548910e904550630d9e896de1699f50cd034faba0fd9476461826ddc4d1"},
+      {"path": "Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj", "size": 943, "sha256": "d2d23c71bff7db86547ff2ea3dc5a3bd5067216db9c1366e5f9dc746995717a4"}
+    ],
+    "outputs": [{"path": "Borrow-Owners.wvb", "size": 697479, "sha256": "6437faef5a76ffaae5c20dab6a18d8272396e5ab706da5d6d5439e471f9212a1"}]
+  }],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "This is a runtime preparation component invoked by the existing test owner, not an enabled runtime instruction or candidate module execution. It does not replace canonical type authentication or the verified loan lifetime.",
+    "The reader returns one bounded eight-byte payload cell and a root category. The execution adapter must still implement retention, aggregate allocation, frame/root handling, and release before admission can open. Callable and Vector root classification does not authorize new borrowed operations.",
+    "The scalar runtime uses at most 768 aggregate slots and type indices below 4096. Invalid metadata tokens reject; slot reuse is not generation checked by this helper.",
+    "The successful construction-and-execution run took 87720 ms but printed the preceding 217-group summary. After correcting the inventory, the final run reused exact construction products and freshly executed all 233 groups in 2333 ms. The test WVB identity was unchanged.",
+    "Two earlier builds failed before construction: a fixture used unsupported direct field selection on a call result, then the project listed modules out of canonical order. Both were corrected. These failures are not passing evidence.",
+    "The reviewed plan selected the full memory-budget owner at 900 expected seconds and 3600 maximum seconds. The existing focused selector was used instead under the ten-minute local budget. Full compiler, interpreter reconstruction, native ABI, browser, OS, real-consumer, and Linux qualification were not run.",
+    "No clean-machine benchmark, peak working-set measurement, or end-to-end performance claim is made. The reader performs constant bounded work and returns at most eight payload bytes."
+  ],
+  "related": ["Specifications/Compiler-Source-Wvb.md", "Documents/Project/Windvale-Libraries-1.0-Plan.md"]
+}

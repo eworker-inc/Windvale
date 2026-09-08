@@ -7,6 +7,7 @@ import Foundationˉborrowˉcallsˉselfˉtest as Calls;
 import Foundationˉborrowˉmetadataˉselfˉtest as Metadata;
 import Foundationˉborrowˉstackˉselfˉtest as Stack;
 import Foundationˉborrowˉlifetimeˉselfˉtest as Lifetime;
+import Foundationˉborrowˉviewˉselfˉtest as View;
 
 // Published source-fixture snapshot; the native owner checks its exact bytes.
 data Candidate: bytes = [
@@ -239,5 +240,7 @@ export fn Main() -> i32 {
     if Stackˉfailure != 0 { return Stackˉfailure; }
     let Lifetimeˉfailure: i32 = Lifetime.Check(Candidate);
     if Lifetimeˉfailure != 0 { return Lifetimeˉfailure; }
+    let Viewˉfailure: i32 = View.Check();
+    if Viewˉfailure != 0 { return 220 + Viewˉfailure; }
     return 42;
 }

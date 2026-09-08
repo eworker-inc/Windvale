@@ -1264,6 +1264,24 @@ results, locals, or aggregates. Copy/Shared values may outlive the loan, while
 owned and unproven callable values cannot escape through a read.
 See the [composition development evidence](../Documents/Evidence/2026-09-05-Foundation-Borrow-Composition-Development.json).
 
+The runtime preparation component
+`Runtime/Windvale/Foundation-Borrow-View-Core.wv` reads the scalar interpreter's
+eight-byte owner and payload cells without consuming, retaining, releasing, or
+mutating storage. Its caller must authenticate the canonical Option/Result
+identity, projection, and payload shape first. `Read` checks the exact owner
+type/case token, a live one-field allocation, and aligned metadata/value buffers
+of at most 768 cells (6,144 bytes each). Type indices are below 4,096 and
+projection selectors are 1 through 3. A canonical Option.Absent uses the
+no-allocation sentinel; a Result's unselected case still requires a live owner.
+Truncated, oversized, invalid-case, mismatched-token, and inconsistent cells
+fail explicitly. Slot reuse is not generation checked here: the caller must
+preserve the verified loan lifetime before using this internal reader.
+Success reports absence or one eight-byte payload cell plus an inline,
+descriptor, aggregate, or callable root category. These categories identify
+retention work for the caller; they do not grant Copy ownership or admit new
+payload shapes. This component is not yet wired into instruction execution;
+complete WVB 1.39 admission remains closed.
+
 The source call checker also has a bounded read-through classification for
 records, variants, and fixed arrays. It consumes freshly constructed generic
 layouts and the existing ordinary field plan and type binder: scalar-only

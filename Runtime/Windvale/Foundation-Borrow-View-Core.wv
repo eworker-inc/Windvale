@@ -1,0 +1,73 @@
+module Windvaleˉfoundationˉborrowˉview profile portable;
+
+export enum Payloadˉroot {
+    Inline = 0;
+    Descriptor = 1;
+    Aggregate = 2;
+    Callable = 3;
+}
+
+export record Projectionˉresult {
+    Valid: bool;
+    Present: bool;
+    Value: bytes;
+    Root: Payloadˉroot;
+}
+
+// The caller authenticates canonical Option/Result identities and the selected
+// payload shape before calling. This reader checks the scalar runtime's live
+// eight-byte cells; it neither grants ownership nor retains/releases storage.
+export fn Read(
+    Owner: bytes,
+    Ownerˉtype: u32,
+    Projection: u32,
+    Payloadˉkind: u32,
+    Metadata: bytes,
+    Values: bytes
+) -> Projectionˉresult {
+    let Empty: bytes = Bytesˉslice(Owner, 0u32, 0u32);
+    let Invalid: Projectionˉresult = Projectionˉresult(false, false, Empty, Payloadˉroot.Inline);
+    if Bytesˉlength(Owner) != 8u32 || Ownerˉtype >= 4096u32 ||
+        Projection < 1u32 || Projection > 3u32 ||
+        Bytesˉlength(Metadata) > 6144u32 || Bytesˉlength(Metadata) % 8u32 != 0u32 ||
+        Bytesˉlength(Values) > 6144u32 || Bytesˉlength(Values) % 8u32 != 0u32 {
+        return Invalid;
+    }
+    var Root: Payloadˉroot = Payloadˉroot.Inline;
+    if Payloadˉkind == 3u32 || Payloadˉkind == 6u32 ||
+        Payloadˉkind == 23u32 || Payloadˉkind == 24u32 {
+        Root = Payloadˉroot.Descriptor;
+    } else if Payloadˉkind == 7u32 || Payloadˉkind == 11u32 || Payloadˉkind == 22u32 {
+        Root = Payloadˉroot.Aggregate;
+    } else if Payloadˉkind == 35u32 {
+        Root = Payloadˉroot.Callable;
+    } else if !(Payloadˉkind == 1u32 || Payloadˉkind == 2u32 ||
+        Payloadˉkind == 4u32 || Payloadˉkind == 5u32 || Payloadˉkind == 8u32 ||
+        Payloadˉkind == 9u32 || Payloadˉkind == 10u32 ||
+        (Payloadˉkind >= 14u32 && Payloadˉkind <= 20u32)) {
+        return Invalid;
+    }
+    let Token: u32 = Bytesˉreadˉu32ˉlittle(Owner, 4u32);
+    let Base: u32 = 2147483648u32 + (Ownerˉtype + 1u32) * 256u32;
+    if Token != Base && Token != Base + 1u32 { return Invalid; }
+    let Slot: u32 = Bytesˉreadˉu32ˉlittle(Owner, 0u32);
+    // Canonical Option.Absent has no fields. Result has one field in either case.
+    if Projection == 1u32 && Token == Base + 1u32 {
+        if Slot != 4294967295u32 { return Invalid; }
+        return Projectionˉresult(true, false, Empty, Payloadˉroot.Inline);
+    }
+    if Slot >= Bytesˉlength(Metadata) / 8u32 || Slot >= Bytesˉlength(Values) / 8u32 {
+        return Invalid;
+    }
+    let Offset: u32 = Slot * 8u32;
+    if Bytesˉreadˉu32ˉlittle(Metadata, Offset) != Token ||
+        Bytesˉreadˉu32ˉlittle(Metadata, Offset + 4u32) != 1u32 {
+        return Invalid;
+    }
+    var Selected: u32 = Base;
+    if Projection == 3u32 { Selected = Base + 1u32; }
+    if Token != Selected {
+        return Projectionˉresult(true, false, Empty, Payloadˉroot.Inline);
+    }
+    return Projectionˉresult(true, true, Bytesˉslice(Values, Offset, 8u32), Root);
+}

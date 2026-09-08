@@ -1,0 +1,74 @@
+module Foundationˉborrowˉviewˉselfˉtest profile portable;
+
+import Windvaleˉfoundationˉborrowˉview as View;
+
+fn Cell(Low: u32, High: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Low), Bytesˉfromˉu32ˉlittle(High));
+}
+
+fn Admitted(Owner: bytes, Ownerˉtype: u32, Projection: u32, Kind: u32, Metadata: bytes, Values: bytes) -> bool {
+    let Result: View.Projectionˉresult = View.Read(Owner, Ownerˉtype, Projection, Kind, Metadata, Values);
+    return Result.Valid;
+}
+
+export fn Check() -> i32 {
+    let Base: u32 = 2147483904u32;
+    let Value: bytes = Cell(42u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    let Owner: bytes = Cell(0u32, Base);
+    let Metadata: bytes = Cell(Base, 1u32);
+    let Present: View.Projectionˉresult = View.Read(Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if !Present.Valid || !Present.Present || Present.Root != View.Payloadˉroot.Inline ||
+        Bytesˉlength(Present.Value) != 8u32 || Bytesˉreadˉu32ˉlittle(Present.Value, 0u32) != 42u32 { return 1; }
+    let Absent: View.Projectionˉresult = View.Read(Cell(4294967295u32, Base + 1u32), 0u32, 1u32, 9u32, Empty, Empty);
+    if !Absent.Valid || Absent.Present || Bytesˉlength(Absent.Value) != 0u32 { return 2; }
+    let Valid: View.Projectionˉresult = View.Read(Owner, 0u32, 2u32, 9u32, Metadata, Value);
+    if !Valid.Valid || !Valid.Present { return 3; }
+    let Failure: View.Projectionˉresult = View.Read(Cell(0u32, Base + 1u32), 0u32, 3u32, 9u32, Cell(Base + 1u32, 1u32), Value);
+    if !Failure.Valid || !Failure.Present { return 4; }
+    let Other: View.Projectionˉresult = View.Read(Owner, 0u32, 3u32, 9u32, Metadata, Value);
+    let Otherˉvalid: View.Projectionˉresult = View.Read(Cell(0u32, Base + 1u32), 0u32, 2u32, 9u32, Cell(Base + 1u32, 1u32), Value);
+    if !Other.Valid || Other.Present || !Otherˉvalid.Valid || Otherˉvalid.Present { return 5; }
+    var Kind: u32 = 1u32;
+    while Kind <= 35u32 {
+        let Read: View.Projectionˉresult = View.Read(Owner, 0u32, 1u32, Kind, Metadata, Value);
+        if Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32 {
+            if !Read.Valid || Read.Root != View.Payloadˉroot.Descriptor { return 6; }
+        } else if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 {
+            if !Read.Valid || Read.Root != View.Payloadˉroot.Aggregate { return 7; }
+        } else if Kind == 35u32 {
+            if !Read.Valid || Read.Root != View.Payloadˉroot.Callable { return 8; }
+        } else if Kind == 1u32 || Kind == 2u32 || Kind == 4u32 || Kind == 5u32 ||
+            Kind == 8u32 || Kind == 9u32 || Kind == 10u32 || (Kind >= 14u32 && Kind <= 20u32) {
+            if !Read.Valid || Read.Root != View.Payloadˉroot.Inline { return 1; }
+        } else if Read.Valid { return 14; }
+        Kind = Kind + 1u32;
+    }
+    if Admitted(Bytesˉslice(Owner, 0u32, 7u32), 0u32, 1u32, 9u32, Metadata, Value) ||
+        Admitted(Bytesˉconcat(Owner, Value), 0u32, 1u32, 9u32, Metadata, Value) { return 9; }
+    if Admitted(Owner, 4096u32, 1u32, 9u32, Metadata, Value) ||
+        Admitted(Owner, 0u32, 0u32, 9u32, Metadata, Value) ||
+        Admitted(Owner, 0u32, 4u32, 9u32, Metadata, Value) { return 10; }
+    if Admitted(Cell(0u32, Base + 2u32), 0u32, 1u32, 9u32, Metadata, Value) ||
+        Admitted(Owner, 1u32, 1u32, 9u32, Metadata, Value) { return 11; }
+    if Admitted(Cell(1u32, Base), 0u32, 1u32, 9u32, Metadata, Value) ||
+        Admitted(Cell(4294967295u32, Base), 0u32, 1u32, 9u32, Metadata, Value) ||
+        Admitted(Cell(0u32, Base + 1u32), 0u32, 1u32, 9u32, Metadata, Value) { return 12; }
+    if Admitted(Owner, 0u32, 1u32, 9u32, Cell(Base + 1u32, 1u32), Value) ||
+        Admitted(Owner, 0u32, 1u32, 9u32, Cell(Base, 0u32), Value) ||
+        Admitted(Owner, 0u32, 1u32, 9u32, Cell(Base, 2u32), Value) { return 13; }
+    if Admitted(Owner, 0u32, 1u32, 9u32, Bytesˉslice(Metadata, 0u32, 7u32), Value) ||
+        Admitted(Owner, 0u32, 1u32, 9u32, Metadata, Bytesˉslice(Value, 0u32, 7u32)) ||
+        Admitted(Owner, 0u32, 1u32, 0u32, Metadata, Value) ||
+        Admitted(Owner, 0u32, 1u32, 37u32, Metadata, Value) { return 14; }
+    var Full: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < 768u32 { Full = Bytesˉconcat(Full, Metadata); Index = Index + 1u32; }
+    if !Admitted(Cell(767u32, Base), 0u32, 1u32, 9u32, Full, Full) ||
+        Admitted(Owner, 0u32, 1u32, 9u32, Bytesˉconcat(Full, Metadata), Value) ||
+        Admitted(Owner, 0u32, 1u32, 9u32, Metadata, Bytesˉconcat(Full, Value)) { return 15; }
+    let Lastˉbase: u32 = 2148532224u32;
+    if !Admitted(Cell(0u32, Lastˉbase), 4095u32, 1u32, 9u32, Cell(Lastˉbase, 1u32), Value) ||
+        Bytesˉreadˉu32ˉlittle(Owner, 4u32) != Base || Bytesˉreadˉu32ˉlittle(Metadata, 4u32) != 1u32 { return 16; }
+    return 0;
+}

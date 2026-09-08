@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-06
+> Last reviewed: 2026-09-07
 
 ## Status
 
@@ -33,10 +33,11 @@ The [compiler, tools, and libraries completion plan](Compiler-Tools-And-Librarie
 coordinates this library sequence with compiler/runtime support, installed tools,
 real consumers, and testing at substantial chunk boundaries.
 
-Complete canonical Option/Result support as one coherent library, compiler,
-verifier, and runtime chunk. Finish immutable payload-borrow admission and
-bounded execution, then exclusive borrowing, take, and mapping, and migrate a
-real consumer. Preserve exact ownership, failure behavior, authority, and
+The active goal is end-to-end immutable Option/Result borrowing: finish payload
+and lifetime verification, add bounded runtime retention/execution, enable
+complete admission only when those boundaries are ready, and migrate one real
+consumer demonstrating success and safe failure. Exclusive borrowing, take,
+and mapping follow as separate goals. Preserve exact ownership, failure behavior, authority, and
 declared target limits. Windows and Debian evidence is required before claiming
 the chunk complete across hosts. The broader library catalog remains a draft;
 this goal does not accept unreviewed API signatures.
@@ -53,6 +54,14 @@ The [verification throughput redesign](Verification-Throughput-Plan.md) remains
 supporting work with open performance targets; it does not block implementation
 until every verifier is fast. Commit coherent verified results and push them to
 both configured remotes, `origin` and `github`.
+
+The runtime preparation checkpoint now has a bounded, non-consuming payload
+reader and 16 grouped tests in the existing borrow owner (233 total). It checks
+live scalar aggregate cells and identifies the payload's retention category.
+The [view-reader evidence](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.json)
+records the Windows run. Next, wire it into `E1` execution with correct
+descriptor retention, aggregate roots, frame lifetime, and release. No runtime
+instruction or complete WVB 1.39 admission is enabled by this helper alone.
 
 The current operand-integration checkpoint passes 185 focused verifier groups
 on Windows and Debian, including 35 new groups for enum observations, capability
