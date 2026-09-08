@@ -78,6 +78,12 @@ adds nested borrowed payload lifetime coverage (299 Windows groups) and fixes
 Sequence descriptor retention, stack classification, and collection in records,
 variants, and fixed arrays. Three current-source runner regressions each perform
 eight allocation/extraction cycles. Complete candidate admission remains closed.
+The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
+passes 305 component groups on both Windows and Debian with identical WVB bytes.
+It covers borrowed forwarding of an array containing owned Vectors and rejects
+copying, storage into ordinary locals, consuming calls, and Vector extraction.
+This closes the paired-host component checkpoint, not complete candidate-module
+execution or the remaining admission audit.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

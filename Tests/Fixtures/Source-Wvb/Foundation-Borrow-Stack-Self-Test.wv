@@ -115,6 +115,42 @@ fn Namedˉtrial(Input: bytes, Label: text, Parameters: bytes, Count: u32, Return
                 Bytesˉslice(Input, Code + Length, Bytesˉlength(Input) - Code - Length))));
 }
 
+fn Checkˉownedˉpayload(Input: bytes) -> i32 {
+    let U32: bytes = Bytesˉfromˉu8(5u8);
+    let Empty: bytes = Bytesˉslice(U32, 0u32, 0u32);
+    let Array: bytes = Cell(22u8, 5u32);
+    let Option: bytes = Cell(11u8, 4u32);
+    let View: bytes = Cell(29u8, 4u32);
+    let Model: bytes = Composition(Input, Cell(23u8, 6u32), Array);
+    let Copyˉmodel: bytes = Composition(Input, U32, Array);
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    let End: bytes = Bytesˉconcat(Cell(9u8, 42u32), Return);
+    let Borrowˉowner: bytes = Join(Cell(225u8, 0u32), Bytesˉfromˉu32ˉlittle(4u32), Bytesˉfromˉu32ˉlittle(1u32));
+    let Project: bytes = Join(Borrowˉowner, Cell(5u8, 1u32),
+        Bytesˉconcat(Cell(4u8, 1u32), Bytesˉconcat(Cell(196u8, 4u32), Bytesˉfromˉu32ˉlittle(0u32))));
+    if Phase(Model) != 0 || Phase(Copyˉmodel) != 0 { return 240; }
+    let Copyˉreturn: bytes = Trial(Copyˉmodel, Option, 1u32, Array, View, 1u32,
+        Bytesˉconcat(Project, Return), 1u32);
+    if Typedˉresult(Copyˉreturn) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Copyˉreturn)) == 0u32 ||
+        Typedˉresult(Trial(Model, Option, 1u32, Array, View, 1u32,
+            Bytesˉconcat(Project, Return), 1u32)) != 2u32 { return 241; }
+    if Typedˉresult(Trial(Model, Option, 1u32, U32, Bytesˉconcat(View, Array), 2u32,
+        Join(Project, Cell(5u8, 2u32), End), 1u32)) != 2u32 { return 242; }
+    let Target: u32 = Bytesˉreadˉu32ˉlittle(Model, Section(Model, 4u32));
+    let Reader: bytes = Namedˉtrial(Model, "SOwnedPayloadReader", Borrow(Array), 1u32,
+        U32, Empty, 0u32, Join(Cell(4u8, 0u32), Bytesˉfromˉu8(80u8), End), 1u32);
+    let Forwarded: bytes = Trial(Reader, Option, 1u32, U32, View, 1u32,
+        Join(Project, Cell(64u8, Target), Return), 1u32);
+    if Typedˉresult(Forwarded) != 0u32 || Bytesˉlength(Executable.Iˉcontrol(Forwarded)) == 0u32 { return 243; }
+    let Consumer: bytes = Namedˉtrial(Model, "SOwnedPayloadConsumer", Array, 1u32,
+        U32, Empty, 0u32, End, 1u32);
+    if Typedˉresult(Trial(Consumer, Option, 1u32, U32, View, 1u32,
+        Join(Project, Cell(64u8, Target), Return), 1u32)) != 2u32 { return 244; }
+    if Typedˉresult(Trial(Model, Option, 1u32, Cell(23u8, 6u32), View, 1u32,
+        Join(Project, Wide(0u32), Bytesˉconcat(Bytesˉfromˉu8(198u8), Return)), 2u32)) != 2u32 { return 245; }
+    return 0;
+}
+
 fn Checkˉcomposition(Input: bytes) -> i32 {
     let U32: bytes = Bytesˉfromˉu8(5u8);
     let U64: bytes = Bytesˉfromˉu8(10u8);
@@ -615,5 +651,7 @@ export fn Check(Candidate: bytes) -> i32 {
     if Compositionˉresult != 0 { return Compositionˉresult; }
     let Operandsˉresult: i32 = Checkˉoperands(Input);
     if Operandsˉresult != 0 { return Operandsˉresult; }
+    let Ownedˉresult: i32 = Checkˉownedˉpayload(Input);
+    if Ownedˉresult != 0 { return Ownedˉresult; }
     return Checkˉauthority();
 }

@@ -111,8 +111,12 @@ Two active tracks intentionally use different bytecode generations:
   The [nested Sequence checkpoint](../Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
   extends this to 299 groups and fixes Sequence retention/release in aggregate
   reads, with three source-built Windows runner regressions.
-  Complete candidate execution remains pending. Remaining owned-payload
-  reconciliation and the complete audit still prevent complete 1.39 admission.
+  The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
+  passes 305 component groups on Windows and Debian with identical bytecode.
+  It permits borrowed forwarding of an array containing owned Vectors while
+  rejecting copying, consuming calls, and Vector extraction. Complete candidate
+  execution and the admission audit remain pending; component evidence does not
+  open complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.

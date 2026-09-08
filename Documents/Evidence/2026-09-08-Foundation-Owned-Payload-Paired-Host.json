@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-owned-payload-paired-host",
+  "date": "2026-09-08",
+  "subject": "Owned payload forwarding and escape rejection on Windows and Debian",
+  "claim": "305 focused Foundation owner groups pass on each host with identical owner WVB bytes. Six new groups cover an Option payload containing an array of owned Vectors: safe borrowed forwarding, Copy-array control, and rejection of copying, ordinary storage, consuming calls, and Vector extraction.",
+  "source": {
+    "kind": "Other",
+    "value": "Test-only worktree based on 339261fd12fccc3890823ac4356025cb3dffc9c0; implementation unchanged from that commit. Exact changed fixture and test driver identities recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "305 Foundation owner groups, including 120 typed-stack and 46 frame/scanner/value groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 127958,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 44925,
+          "sha256": "46e4b0828ff7fcbbd4fe04f8e1fecf692900c8b83c8ecb2edf49cf6f42b82896"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122876,
+          "sha256": "1ee528ad6e27fd2ce2ec4d89f055104e4f48cb7f5f5ce0408bfb1d96534e1ca7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 873719,
+          "sha256": "36afd0342d189a5061822e5e4b20c23b017e3fd1e85534056f884fda8f94de40"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "305 Foundation owner groups, including 120 typed-stack and 46 frame/scanner/value groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian -- bash -lc 'cd /mnt/d/windvale/dev01 && timeout 600s node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners'",
+      "result": "Passed",
+      "elapsedMilliseconds": 131130,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv",
+          "size": 44925,
+          "sha256": "46e4b0828ff7fcbbd4fe04f8e1fecf692900c8b83c8ecb2edf49cf6f42b82896"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122876,
+          "sha256": "1ee528ad6e27fd2ce2ec4d89f055104e4f48cb7f5f5ce0408bfb1d96534e1ca7"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 873719,
+          "sha256": "36afd0342d189a5061822e5e4b20c23b017e3fd1e85534056f884fda8f94de40"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "31 general and 291 native routing cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The first fixture failed with status 243 on both hosts because its appended helper violated sorted function-name order. Correcting the helper names produced the final passing results; no compiler or runtime implementation was changed.",
+    "This is paired-host execution of the focused component owner, not whole-module WVB 1.39 execution or complete compiler/library qualification. Complete WVB 1.39 admission remains closed.",
+    "The component owner includes shared collector and frame tests. The preceding full scalar runner Sequence regressions were not rerun on Linux and are not promoted to a cross-host claim by this record.",
+    "Immutable Vector extraction remains rejected. The existing typed Vector transfer value also permits mutation and freezing and cannot stand in for an immutable payload reference.",
+    "The broader publication, front-door, bootstrap, and full qualification suites were not run for this test-only change. Existing unrelated passing evidence was retained."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}
