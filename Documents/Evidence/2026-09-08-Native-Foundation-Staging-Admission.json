@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-staging-admission",
+  "date": "2026-09-08",
+  "subject": "Native Foundation staged-content admission",
+  "claim": "The native staging admission checker passes the expanded 23-case selection on Windows and Debian. For each of the record/u32 and allocated-text fixtures, it accepts exact staged content and rejects altered content, truncated chunks, malformed manifests, unsupported source versions and source/destination aliases while preserving the destination sentinel.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 2e21c31e0452cba93d9f4a59d2ad6cf9f62fe609; only focused test and documentation additions. The source-built staging admission WVB from the preceding checkpoint is packaged here without a compiler source change."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "23 staging and admission cases",
+      "tool": "Node.js, current-source staging producer and native admission checker",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-staging Artifacts/Work/Native-Borrow-Staging-Tool.exe Artifacts/Work/Borrow-Text-Diagnostic.wvb --admitter Artifacts/Work/Native-Borrow-Staging-Admission.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "sha256": "75c56da55cc35b312b2410ca414779db90d2a30257a3bcda1e1f7b4447789311",
+          "size": 143542
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Staging-Admission.wvb",
+          "sha256": "2c3a65670c499eb18bd1d8511e19f95f477eb383696ecd60830fa4f39ad7d768",
+          "size": 1329488
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Staging-Admission.exe",
+          "sha256": "aea65e49d96a360c29af145562ac5272650520443451e0bed35adc75adb919a2",
+          "size": 15871488
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Staging-Admission.elf",
+          "sha256": "a22bc535816b6f746b750b0238f73c2f193d9789828cdd01ba2e2ff602612681",
+          "size": 15872000
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Staging-Tool.exe",
+          "sha256": "6c308cb3d29c0ffedf57dd77e9aed338f7f40b0d4221cc3e63a81b0a102175cc",
+          "size": 15757824
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Staging-Tool.elf",
+          "sha256": "652cd57b196d1b98e1426c7b285bba263f51ade16feb3557cc977c6749327e83",
+          "size": 15757312
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same 23 staging and admission cases",
+      "tool": "Node.js, current-source Linux staging producer and admission checker",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-staging /mnt/d/windvale/dev01/Artifacts/Work/Native-Borrow-Staging-Tool.elf /mnt/d/windvale/dev01/Artifacts/Work/Borrow-Text-Diagnostic.wvb --admitter /mnt/d/windvale/dev01/Artifacts/Work/Native-Borrow-Staging-Admission.elf",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Development evidence only. Neither the installed Stage-Compiler-Wvb front door nor the pinned segmented compiler toolset was promoted. The reconstruction owner still needs a bounded split-build path and broader required qualification.",
+    "The 23 cases comprise the preceding 11 producer tests plus six admission outcomes for each of two fixtures. This does not prove every staging geometry, resource alias, lifetime mutation or large-module path.",
+    "The checker is read-only and leaves a preexisting destination sentinel unchanged in every tested outcome. These tests do not qualify the subsequent publishing operation or atomic replacement.",
+    "Both applications use the same previously source-built admission WVB. Packaging used profile 6 on each host, not independent compiler reconstruction or the installed producer's profile-8 qualification.",
+    "Windows admission package cache key 925c2c84b7ced459831006db892240934b8c308fc4082208e8579d920997d42c; Debian key d84ee79d38d14c947b90297bc4ba82c65f636d96bc8ab37aa60beb4a1132b955. Complete verification took 32/33 seconds, staging 50/53 seconds, and container construction 73/71 seconds respectively.",
+    "PlanOnly selected a disproportionate 1860-second plan. Only causal admission packaging and focused execution were run; the full reconstruction and installed-tool qualification gates were not run.",
+    "u64 borrowing coverage, wider owned payloads, exclusive borrow, Take/Map, maintained package-parser migration and overall compiler/libraries completion remain pending."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Staging.json",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md"
+  ]
+}

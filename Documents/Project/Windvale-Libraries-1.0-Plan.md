@@ -124,8 +124,10 @@ packaging reader now admits candidate 1.39. The existing 37-case lowering and
 five-case packaging regressions also pass on each host. The
 [staging checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Staging.json)
 passes eleven cases per host, reproducing both direct-lowering objects exactly.
-The admission checker now compiles with its repaired dependency closure, but
-its execution and installed staging promotion remain pending, along with wider
+The [admission checkpoint](../Evidence/2026-09-08-Native-Foundation-Staging-Admission.json)
+extends that selection to 23 cases per host: valid content is accepted and altered
+content, extents, manifests, versions, and aliases reject without changing the
+destination. Installed staging promotion remains pending, along with wider
 owned payloads and the maintained consumer. This is not full native qualification.
 A parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)

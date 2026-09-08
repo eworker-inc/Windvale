@@ -73,7 +73,8 @@ const Foundationˉenumˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-enum-metadata';
 const Foundationˉnativeˉonly = process.argv.length === 5 &&
     process.argv[2] === '--foundation-native-execution';
-const Foundationˉstagingˉonly = process.argv.length === 5 &&
+const Foundationˉstagingˉonly = (process.argv.length === 5 ||
+    (process.argv.length === 7 && process.argv[5] === '--admitter')) &&
     process.argv[2] === '--foundation-native-staging';
 const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5 || process.argv.length === 7) &&
     process.argv[2] === '--foundation-borrow';
@@ -114,7 +115,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
         '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>|--native-lowerer <lowerer>]]|--foundation-borrow-runtime <runner>|' +
         '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
-        '--foundation-native-staging <producer> <text-fixture.wvb>|' +
+        '--foundation-native-staging <producer> <text-fixture.wvb> [--admitter <checker>]|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -190,7 +191,8 @@ let Borrowˉcomponentˉbytes = null;
 
 try {
     if (Foundationˉstagingˉonly) {
-        await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]));
+        await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]),
+            process.argv.length === 7 ? path.resolve(process.argv[6]) : null);
     } else if (Foundationˉnativeˉonly) {
         const Lowerer = path.resolve(process.argv[3]);
         const Record = path.join(Work, 'Foundation-Record.wvb');
@@ -1677,8 +1679,9 @@ async function Verifyˉfoundationˉnativeˉrejections(Lowerer) {
     }
 }
 
-async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate) {
+async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate, Admitter = null) {
     Requireˉordinaryˉfile(Producer, 67_108_864, 'native staging producer');
+    if (Admitter !== null) Requireˉordinaryˉfile(Admitter, 67_108_864, 'native staging admission checker');
     Requireˉordinaryˉfile(Textˉcandidate, 4096, 'Foundation text fixture');
     const Textˉbytes = readFileSync(Textˉcandidate);
     if (Digest(Textˉbytes) !== 'f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018') {
@@ -1726,6 +1729,8 @@ async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate) {
             if (Position !== Directory.readUInt32LE(12) || Digest(Buffer.concat(Chunks)) !== Expected) {
                 Reject('Foundation staged object differs from direct lowering.');
             }
+            if (Admitter !== null) await Verifyˉfoundationˉstagingˉadmission(
+                Admitter, Input, Prefix, Manifest, Chunks[0], Directory);
         } else {
             const Result = await Runˉdevelopmentˉcommand(Producer, [Input, Prefix, Manifest],
                 Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
@@ -1739,7 +1744,52 @@ async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate) {
         }
         process.stdout.write(`PASS Foundation staging case=${Label}\n`);
     }
-    process.stdout.write(`native Foundation staging status=Passed cases=${Cases.length} qualification=false\n`);
+    process.stdout.write(`native Foundation staging status=Passed cases=${Cases.length + (Admitter === null ? 0 : 12)} qualification=false\n`);
+}
+
+async function Verifyˉfoundationˉstagingˉadmission(Admitter, Input, Prefix, Manifest, Chunk, Directory) {
+    const Destination = Prefix + '.wvo';
+    const Sentinel = Buffer.from('admission must not publish', 'utf8');
+    const Original = readFileSync(Input);
+    writeFileSync(Destination, Sentinel, { flag: 'wx' });
+    for (const Label of ['valid', 'content', 'chunk-length', 'manifest', 'source-version', 'alias']) {
+        writeFileSync(Prefix + '.chunk-0', Chunk);
+        writeFileSync(Manifest, Directory);
+        writeFileSync(Input, Original);
+        if (Label === 'content') {
+            const Changed = Buffer.from(Chunk);
+            Changed[0] ^= 1;
+            writeFileSync(Prefix + '.chunk-0', Changed);
+        } else if (Label === 'chunk-length') {
+            writeFileSync(Prefix + '.chunk-0', Chunk.subarray(0, -1));
+        } else if (Label === 'manifest') {
+            const Changed = Buffer.from(Directory);
+            Changed[6] = 1;
+            writeFileSync(Manifest, Changed);
+        } else if (Label === 'source-version') {
+            const Changed = Buffer.from(Original);
+            Changed[6] = 40;
+            writeFileSync(Input, Changed);
+        }
+        const Result = await Runˉdevelopmentˉcommand(Admitter,
+            [Input, Prefix, Manifest, Label === 'alias' ? Input : Destination],
+            Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+            true, MAXIMUM_DIAGNOSTIC_BYTES);
+        const Expected = {
+            content: 'content=Content', 'chunk-length': 'content=Chunkˉlength',
+            manifest: 'status=Invalidˉmanifest', 'source-version': 'content=Invalidˉplan',
+            alias: 'status=Duplicateˉresource',
+        }[Label];
+        if (Result.Code !== (Label === 'valid' ? 0 : 1) || Result.Output !== '' ||
+            Normalize(Result.Error) !== (Label === 'valid' ? '' : `native x64 staging admission ${Expected}\n`) ||
+            !readFileSync(Destination).equals(Sentinel)) {
+            Reject(`Foundation staging admission ${Label} failed: ${Result.Code} ${Result.Error}`);
+        }
+        process.stdout.write(`PASS Foundation staging admission case=${Label}\n`);
+    }
+    writeFileSync(Prefix + '.chunk-0', Chunk);
+    writeFileSync(Manifest, Directory);
+    writeFileSync(Input, Original);
 }
 
 async function Verifyˉfoundationˉenumˉmetadata(Candidate) {
