@@ -1,10 +1,10 @@
 module Languageˉoneˉborrowˉownedˉreadˉthrough profile portable;
 
-fn Consume(Value: builder<i32, 8u32>) -> i32 {
+fn Consume(Value: builder<i32, 8>) -> i32 {
     return 42;
 }
 
-fn Forward(Value: borrow builder<i32, 8u32>) -> i32 {
+fn Forward(Value: borrow builder<i32, 8>) -> i32 {
     return Consume(Value);
 }
 

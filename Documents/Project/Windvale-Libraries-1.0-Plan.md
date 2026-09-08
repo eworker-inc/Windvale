@@ -95,16 +95,15 @@ runs inside the host envelope, including for direct interpreter callers. Only
 the existing synchronous, portable, capability-free request profile is opened;
 browser/native-lowering and installed-tool limits are unchanged. Both packages
 consume one Windows-built runner WVB. The
-[fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Fresh-Source-Text-Execution.json)
-passes 371 selected groups on Windows, compiling record/u32 and allocated-text
+[paired fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json)
+passes 371 selected groups on each host, compiling record/u32 and allocated-text
 borrows twice with identical bytes and executing both with result 42. The text
 fixture covers absence, unselected Result projections, borrowed helper forwarding,
-and repeated frame-local allocation. Debian completed its component checks and
-rebuilt matching compiler-support bytecode, but stopped during cold native-tool
-setup when the remaining work could no longer fit its allowance. Select the
-remaining construction products separately, then reuse valid caches to finish
-paired fresh-source evidence. Wider payload execution and a maintained real
-consumer still need integration evidence.
+and repeated frame-local allocation. The earlier Debian attempt stopped during
+cold setup; separately completing its remaining native packages and emitter
+construction allowed the focused selection to finish in 36.7 seconds with warm
+caches. Its fresh outputs match Windows exactly. Wider payload execution and a
+maintained real consumer still need integration evidence.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
@@ -156,10 +155,15 @@ The existing 217-group selector passes on Windows; the
 records the exact run and limits. This does not prove runtime retention or
 enable complete admission. The earlier
 [exact classifier evidence](../Evidence/2026-09-06-Foundation-Source-Aggregate-Classification.json)
-records this component scope. Compiler call-site cases
-also move a one-integer record into positive coverage and retain an actual
-builder-owner rejection. Those call-site edits still need compiler front-door
-execution; the focused layout project does not include `Source-Wir-Core.wv`.
+records this component scope. Seven existing compiler call-site cases now pass
+on both hosts in the
+[paired source checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json).
+The positive fixture exercises Copy records, generic boxes, shared byte payloads,
+and forwarding through current analysis/emission; its WVB 1.11 bytes match and
+return 42 in the retained WebAssembly scalar subset. Six invalid cases reach
+`Invalidˉborrow`. The owned-builder fixture's capacity syntax was corrected so
+it tests borrowing instead of failing earlier at source binding. This is selected
+call-site evidence, not the full front-door suite or WVB 1.39 browser support.
 Ordinary record fields that spell concrete generic types remain rejected by the
 existing symbol validator. That separate source-binding gap is not covered by
 the classifier checkpoint; the fixtures must validate their source models

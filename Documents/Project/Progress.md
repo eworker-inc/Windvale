@@ -111,11 +111,11 @@ Two active tracks intentionally use different bytecode generations:
   now returns 42 from the published three-projection fixture on Windows and
   Debian, rejects nine unsafe or malformed variants before execution, and
   passes three earlier-version aggregate Sequence lifetime workloads per host.
-  The [fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Fresh-Source-Text-Execution.json)
-  passes 371 selected groups on Windows: record/u32 and allocated-text borrowing
-  compile deterministically and execute with result 42. Debian stopped during
-  cold tool setup; its completed caches remain reusable. This is not yet paired
-  fresh-source evidence or a maintained real consumer.
+  The [paired fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json)
+  passes 371 selected groups on each host: record/u32 and allocated-text borrows
+  compile identically and return 42. Seven existing call-site cases also pass
+  on both hosts after correcting the owned-builder rejection fixture. A
+  maintained real consumer remains pending.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.

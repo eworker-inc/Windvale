@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-borrow-fresh-paired-host",
+  "date": "2026-09-08",
+  "subject": "Paired fresh-source Foundation borrow execution and effective call-site rejection",
+  "claim": "The existing 371-case Foundation publication/execution selection passes on Debian with the same record/u32 and allocated-text WVB 1.39 bytes as the retained Windows run. Seven existing direct-call cases also pass on both hosts after correcting the owned-builder fixture so it reaches borrowing analysis.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 89433fa7a751566e3d377fc5fb591a6383da7533. The only implementation-area edit is removing the u32 suffix from two builder type capacities in Borrow-Owned-Read-Through.wv; compiler/runtime and Foundation publication inputs are unchanged."
+  },
+  "runs": [
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Current analyzer native packaging from the previously completed Debian WVB",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.sh",
+      "command": "timeout 900s bash Tools/Native/Package-Segmented-Compiler-Wvb.sh 7 /home/dev/.cache/windvale/native-tool-cache/project-split-wvb-optimized-v3/linux-x64/0b88ac60c713dae33791843b60e59bf0ef4646022367b81a86c452e724965b24/Product.wvb Artifacts/Work/Foundation-Fresh-Analyzer.elf --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Analyzer.wvb",
+          "size": 1683785,
+          "sha256": "b926d3d3d7100eab7e91130f4ec6c87d14b8663b61798114e7ebdda855412820"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Fresh-Analyzer.elf",
+          "size": 54542336,
+          "sha256": "2312bd21cf1929c75398c10e3ce0be01b7415ba34ea3cb9e023f0d9ef84e1ad7"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Independent native packaging of the exact Windows-built current emitter WVB",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.sh",
+      "command": "timeout 900s bash Tools/Native/Package-Segmented-Compiler-Wvb.sh 8 /mnt/c/Users/Dev/AppData/Local/Windvale/Native-Tool-Cache/project-split-wvb-optimized-v3/win32-x64/7e9e6b96a66966bfc4710a96ba92e836e267429e8722ceb97f43ab3748b64dbc/Product.wvb Artifacts/Work/Foundation-Fresh-Emitter.elf --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Emitter.wvb",
+          "size": 1574421,
+          "sha256": "9b391dd81b3180e1300d9924a44478655b2a4a39ca5b380c5e61196eab17e18d"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Fresh-Emitter.elf",
+          "size": 32321536,
+          "sha256": "6b136fba9c333e17bb1fea15f7455e9660b5ad48d85dbc65fe07a8ab39b3f4bb"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Current emitter source construction matches the emitter WVB packaged above",
+      "tool": "Tools/Native/Build-Cached-Split-Project-Wvb.mjs",
+      "command": "timeout 600s node Tools/Native/Build-Cached-Split-Project-Wvb.mjs Projects/Tools/Windvale-Compiler-Emission-Driver.wvproj Artifacts/Work/Foundation-Fresh-Linux-Emitter.wvb Artifacts/Work/Foundation-Fresh-Analyzer.elf Artifacts/Work/Foundation-Fresh-Analyzer.identity /home/dev/.cache/windvale/native-tool-cache/segmented-hosted-wvb-v1/linux-x64/5669d973bd275853d5d1ce5c6fada5615cd4fb8fbd67045e0371f0da8b77f2e0/Product.elf Artifacts/Work/Foundation-Fresh-Pinned-Emitter.identity",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Fresh-Linux-Emitter.wvb",
+          "size": 1574421,
+          "sha256": "9b391dd81b3180e1300d9924a44478655b2a4a39ca5b380c5e61196eab17e18d"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "371 selected groups, deterministic fresh publication, record/u32 and text execution both return 42",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "timeout 660s node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow --maximum-seconds 600 --runner Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 36717,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 128073,
+          "sha256": "57e3f2dd56e14807dfd9dfc8bbb17cc02c0ed582fa08148181e0623f31e45503"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+          "size": 11960320,
+          "sha256": "b8c99c6640b04389695b7f6a608696e0e20cd968daade9f42efd0a8ec2e1d5b1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Foundation-Value-Borrow-A.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        },
+        {
+          "path": "Foundation-Text-A.wvb",
+          "size": 2148,
+          "sha256": "f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Retained positive aggregate call-site source compiles, verifies, and returns 42; six source rejections reach Invalidˉborrow and publish no artifacts",
+      "tool": "Selected existing borrow-call-semantics steps from Tools/Native/Test-Language-1.0-Front-Door.cmd, using cached current analyzer/emitter",
+      "command": "Analyzer.exe Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv Borrow-Call.wvss Borrow-Call.wvca Borrow-Call.wvlb Borrow-Call.wvir; Emitter.exe Borrow-Call.wvss Borrow-Call.wvca Borrow-Call.wvlb Borrow-Call.wvir Borrow-Call.wvb; Tools/Native/Verify-Wvb.cmd Borrow-Call.wvb; node Tools/Native/Run-WebAssembly-Scalar-Wvb.mjs Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm Borrow-Call.wvb 42",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Analyzer.exe",
+          "size": 54543360,
+          "sha256": "c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1"
+        },
+        {
+          "path": "Emitter.exe",
+          "size": 32322048,
+          "sha256": "2187d7acdd67044c5fa092af62af191e6fa266d7b24818c3ab28b3a9ea39fc00"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv",
+          "size": 1748,
+          "sha256": "1f25a1dfd17930cc54a12e513313417ea60749e1923fd737da29f93c4faf446a"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Borrow-Owned-Read-Through.wv",
+          "size": 256,
+          "sha256": "1dd670f97596a847a28188f50ea472385aec48c2ad3bf975033956414bb529f9"
+        },
+        {
+          "path": "Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm",
+          "size": 918415,
+          "sha256": "69377b4893021d2c8bcebbc6af415be73bbc5930fb7b1400f9607d42c75f5e98"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Call.wvb",
+          "size": 1984,
+          "sha256": "80aaff4083d8532b276ce4af723664f176fb895d9acf4431d68d8b50fe278acf"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Same seven selected call-site cases; positive WVB matches Windows exactly; six Invalidˉborrow rejections publish no artifacts",
+      "tool": "Selected existing borrow-call-semantics steps from Tools/Native/Test-Language-1.0-Front-Door.sh",
+      "command": "Artifacts/Work/Foundation-Fresh-Analyzer.elf Tests/Fixtures/Language-1.0/Borrow-Call-Main-Pipeline.wv Linux.wvss Linux.wvca Linux.wvlb Linux.wvir; Artifacts/Work/Foundation-Fresh-Emitter.elf Linux.wvss Linux.wvca Linux.wvlb Linux.wvir Linux.wvb; bash Tools/Native/Verify-Wvb.sh Linux.wvb; node Tools/Native/Run-WebAssembly-Scalar-Wvb.mjs Artifacts/WebAssembly-Playground/Wvb-Scalar-Interpreter.wasm Linux.wvb 42; cmp Linux.wvb Borrow-Call.wvb",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Linux.wvb",
+          "size": 1984,
+          "sha256": "80aaff4083d8532b276ce4af723664f176fb895d9acf4431d68d8b50fe278acf"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Windows 371-group evidence is retained unchanged from 2026-09-08-Foundation-Fresh-Source-Text-Execution.json (19548 ms). That record's deliberately interrupted Debian attempt remains historical incomplete evidence; this later completed selection closes its host gap.",
+    "Analyzer packaging stages reported 35 seconds complete verification, 243 seconds staging, and 237 seconds container build. Emitter packaging reported 31, 132, and 139 seconds respectively. These stages ran independently with 900-second outer limits. The final 36717-ms selection uses warm construction caches and is not a cold-build benchmark. Peak working-set memory was not measured.",
+    "Debian packaging cache keys are b09c5b97a04f570ce01765e6132d575c8f3cc984f070e5bd79f2fefcc93d0270 (analyzer) and 1e2d4c9a21b066759922824e29003dba80af0abf636ff07bd4f0a07841f5988c (emitter). Fresh emitter analysis/emission keys are 5a46673cf4327cf864082e51bd91b18fac35444c16871a5099d34af4d399e85c and ece7391236665b7146379d2894c37aba2e3b9a1cbdda468a7210944accb1fdf8. Producer identity files are generated by Write-Split-Compiler-Producer-Identity.mjs.",
+    "Call-site command paths above use logical product/output names. Actual Windows tools were Product.exe in the e600f46d75e5add30045d8fea7b9ec93178cc4538c50351dae2dfa843162dea4 and 149279f2f3af371edcdd7c4e26d4de19b1f208a22ac1b319749e8e09f1522336 segmented-hosted-wvb-v1 cache entries. Output directory was Artifacts/Work/Borrow-Call-Checkpoint-24f26c6591e94232ad61482ac94efa79; Linux used absolute /mnt/d/windvale/dev01 paths. An initial shell-quoted Linux launch failed before successful direct invocation.",
+    "The six rejection inputs are Borrow-Missing-Explicit.wv, Borrow-Immutable-To-Mutable.wv, Borrow-Mutable-From-Let.wv, Borrow-Escape-Local.wv, Borrow-Return.wv, and Borrow-Owned-Read-Through.wv under Tests/Fixtures/Language-1.0. Each uses the same analyzer invocation with a unique output prefix and requires exit 1, wir-status=Invalidˉborrow, and absent wvss/wvca/wvlb/wvir outputs. The last case originally failed at Sourceˉsymbols because builder<i32, 8u32> was invalid type syntax. Correcting both capacities to 8 reaches the intended consuming-call rejection at line 8, column 20.",
+    "The seven call-site cases use WVB 1.11 and the retained WebAssembly scalar subset, with 228 guest and 456324 outer instructions. They prove Copy/shared aggregate read-through and named borrow rejections, not WVB 1.39 browser admission, the complete front-door suite, or arbitrary owned-payload execution.",
+    "The 371-group selection does not run the full 552-case memory/task/borrow owner. The 329-group front-end development bundle does not exercise Source-Wir-Core call sites and was not used as substitute evidence. Broad task, callable, installed-tool, native ABI, OS, bootstrap, and full qualification gates were not run.",
+    "Runner packages still derive from the same previously built runner WVB. This is selected paired-host source compilation and execution, not independent full bootstrap reconstruction or release qualification. Maintained consumer integration, exclusive borrows, take, map, wider payload/native lowering, and installed toolchain promotion remain open."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Fresh-Source-Text-Execution.json",
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}
