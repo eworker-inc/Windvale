@@ -1279,8 +1279,7 @@ preserve the verified loan lifetime before using this internal reader.
 Success reports absence or one eight-byte payload cell plus an inline,
 descriptor, aggregate, or callable root category. These categories identify
 retention work for the caller; they do not grant Copy ownership or admit new
-payload shapes. This component is not yet wired into instruction execution;
-complete WVB 1.39 admission remains closed.
+payload shapes. Complete WVB 1.39 admission remains closed.
 
 The same component now has an internal `Execute` adapter for an exact 13-byte
 `E1` instruction. The caller supplies authenticated owner/view type indices and
@@ -1300,11 +1299,30 @@ original aggregate reachable until its last lease is released, avoiding an
 ownership transfer or a second descriptor-release obligation. Invalid root-state
 geometry returns empty failure, distinct from a successful empty root set.
 These are internal execution-owned structures, not an added WVB format or
-capability. The scalar dispatcher must still carry leases through shapes 29/37,
-locals, calls, operand-stack aliases, collection, and cleanup, and must pass the
-root set to its existing collector. Callable captures and owned payloads retain
-their existing restrictions. Component tests do not prove collector integration,
-frame cleanup, complete candidate execution, or admission.
+capability. The scalar interpreter source now connects these leases to `E1`,
+shapes 29/37, local loads/stores, operand flags, synchronous calls, allocation
+and return collection, frame exit, and guest-failure teardown. Admission stays
+closed while borrowed-owner forced collection, complete candidate execution, and
+the candidate audit remain pending; this source change does not enable candidate
+modules in the public runner.
+
+`Foundation-Borrow-Frames-Core.wv` owns one cached lease per exact owner local,
+view type, and projection in each frame. Repeated instructions reuse that lease;
+the verifier freezes the owner for the function and forbids borrowed results
+escaping it. Frames retain owners until return, not merely the last use. This
+conservative lifetime costs bounded retention: 64 bindings occupy at most 1,792
+bytes, 63 saved frame bases occupy 252 bytes, and operand view flags occupy 64
+bytes, in addition to the lease table. Exhaustion fails closed. Returned shared
+values use existing descriptor retention, while lease handles are never treated
+as aggregate cells. The candidate source path is synchronous and capability-free;
+task/provider composition, callable captures, and owned payloads retain their
+existing restrictions. `Wvb-Scalar-Interpreter-Value-Core.wv` owns the shared
+scalar value readers, descriptor retention, and candidate instruction handling;
+the interpreter keeps allocation commit in a separate bounded helper. Component
+cases exercise frame lifetime, scanner boundaries, direct view operations, local
+validation, and descriptor retention. The source-built Windows runner passes
+existing heap reclamation and ownership workloads, but these are not
+borrowed-owner forced-collection or complete candidate module execution evidence.
 
 The source call checker also has a bounded read-through classification for
 records, variants, and fixed arrays. It consumes freshly constructed generic

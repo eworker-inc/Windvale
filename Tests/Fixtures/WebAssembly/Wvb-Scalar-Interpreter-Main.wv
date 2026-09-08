@@ -1,6 +1,8 @@
 module WebAssemblyˉwvbˉscalarˉinterpreter profile portable;
 
 import Foundationˉsha256 as Sha256;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore as Valueˉcore;
+import Windvaleˉfoundationˉborrowˉframes as Borrowˉframes;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope as Envelopeˉreader;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Fixed;
 import WebAssemblyˉwvbˉscalarˉinterpreterˉformatting as Formatting;
@@ -33,53 +35,6 @@ data Stackˉeffects: bytes = [
     15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
-
-fn Variantˉcaseˉfields(
-    Module: bytes,
-    Typeˉoffsets: bytes,
-    Type: u32,
-    Case: u32
-) -> bytes {
-    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
-    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
-        Typeˉoffsets,
-        Type * 4u32
-    ) + 1u32;
-    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-    let Caseˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
-    if Case >= Caseˉcount { return Invalid; }
-    Cursor = Cursor + 4u32;
-    var Caseˉindex: u32 = 0u32;
-    while Caseˉindex <= Case {
-        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-        let Marker: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-        Cursor = Cursor + 1u32;
-        var Fieldˉcount: u32 = 0u32;
-        if Marker == 1u32 {
-            Fieldˉcount = 1u32;
-        } else if Marker == 2u32 {
-            Fieldˉcount = Bytesˉreadˉu32ˉlittle(Module, Cursor);
-            Cursor = Cursor + 4u32;
-        } else if Marker != 0u32 {
-            return Invalid;
-        }
-        let Fieldˉcursor: u32 = Cursor;
-        var Fieldˉindex: u32 = 0u32;
-        while Fieldˉindex < Fieldˉcount {
-            Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-            Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
-            Fieldˉindex = Fieldˉindex + 1u32;
-        }
-        if Caseˉindex == Case {
-            return Bytesˉconcat(
-                Bytesˉfromˉu32ˉlittle(Fieldˉcount),
-                Bytesˉfromˉu32ˉlittle(Fieldˉcursor)
-            );
-        }
-        Caseˉindex = Caseˉindex + 1u32;
-    }
-    return Invalid;
-}
 
 fn Enumˉtypeˉoffset(
     Typeˉoffsets: bytes,
@@ -296,16 +251,6 @@ fn Invalidˉfunctionˉdirectory(Module: bytes) -> Functionˉdirectory {
     );
 }
 
-fn Shapeˉwidthˉat(Module: bytes, Cursor: u32) -> u32 {
-    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
-        Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 ||
-        Kind == 28u32 || Kind == 29u32 || Kind == 30u32 || Kind == 35u32 {
-        return 5u32;
-    }
-    return 1u32;
-}
-
 fn Readˉfunctionˉdirectory(
     Module: bytes,
     Functions: u32,
@@ -371,6 +316,16 @@ fn Readˉfunctionˉdirectory(
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
                 Module, Functionˉcursor
             ));
+            var Borrowedˉpayload: bool = false;
+            if Shapeˉkind == 37u32 {
+                if Moduleˉminor != 39u32 || Functionˉcursor + 1u32 >= Functionsˉend {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+                Functionˉcursor = Functionˉcursor + 1u32;
+                Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
+                if !Borrowˉframes.Payloadˉkind(Shapeˉkind) { return Invalidˉfunctionˉdirectory(Module); }
+                Borrowedˉpayload = true;
+            }
             if Shapeˉkind == 25u32 {
                 if Moduleˉminor == 33u32 || Moduleˉminor == 34u32 ||
                     Moduleˉminor == 35u32 || Moduleˉminor == 36u32 ||
@@ -428,6 +383,7 @@ fn Readˉfunctionˉdirectory(
             }
             var Parameterˉmode: u8 = 0u8;
             var Localˉshapeˉkind: u32 = Shapeˉkind;
+            if Borrowedˉpayload { Parameterˉmode = 1u8; Localˉshapeˉkind = Shapeˉkind + 64u32; }
             if Shapeˉkind == 23u32 || Shapeˉkind == 26u32 ||
                 Shapeˉkind == 27u32 {
                 Vectorˉparameterˉcount = Vectorˉparameterˉcount + 1u32;
@@ -510,6 +466,16 @@ fn Readˉfunctionˉdirectory(
             Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(
                 Module, Functionˉcursor
             ));
+            var Borrowedˉlocal: bool = false;
+            if Shapeˉkind == 37u32 {
+                if Moduleˉminor != 39u32 || Functionˉcursor + 1u32 >= Functionsˉend {
+                    return Invalidˉfunctionˉdirectory(Module);
+                }
+                Functionˉcursor = Functionˉcursor + 1u32;
+                Shapeˉkind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Functionˉcursor));
+                if !Borrowˉframes.Payloadˉkind(Shapeˉkind) { return Invalidˉfunctionˉdirectory(Module); }
+                Borrowedˉlocal = true;
+            }
             if !Fixed.Shapeˉisˉsupported(Shapeˉkind, Moduleˉminor) ||
                 Shapeˉkind == 21u32 ||
                 Shapeˉkind == 26u32 || Shapeˉkind == 27u32 ||
@@ -542,6 +508,9 @@ fn Readˉfunctionˉdirectory(
                 }
                 Nominalˉtoken = Nominalˉtoken + 1u32;
                 Functionˉcursor = Functionˉcursor + 4u32;
+            }
+            if Borrowedˉlocal || (Moduleˉminor == 39u32 && Shapeˉkind == 29u32) {
+                Shapeˉkind = Shapeˉkind + 64u32;
             }
             Localˉshapes = Bytesˉconcat(
                 Localˉshapes,
@@ -644,7 +613,7 @@ fn Readˉfunctionˉdirectory(
             Borrowedˉbudgetˉparameterˉcount == 0u32) ||
         ((Moduleˉminor == 33u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32) &&
+            Moduleˉminor == 38u32 || Moduleˉminor == 39u32) &&
             Versionˉfeatureˉinstructions == 0u32) {
         return Invalidˉfunctionˉdirectory(Module);
     }
@@ -673,7 +642,7 @@ fn Aggregateˉfieldˉdirectory(
 ) -> bytes {
     if Owner >= 2147483648u32 {
         let Token: u32 = Owner - 2147483648u32;
-        return Variantˉcaseˉfields(
+        return Valueˉcore.Variantˉcaseˉfields(
             Module,
             Typeˉoffsets,
             Token / 256u32 - 1u32,
@@ -689,7 +658,7 @@ fn Aggregateˉfieldˉdirectory(
     Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
     if Kind == 4u32 {
         let Elementˉshape: u32 = Cursor;
-        Cursor = Cursor + Shapeˉwidthˉat(Module, Elementˉshape);
+        Cursor = Cursor + Valueˉcore.Shapeˉwidthˉat(Module, Elementˉshape);
         return Bytesˉconcat(
             Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Module, Cursor)),
             Bytesˉfromˉu32ˉlittle(Elementˉshape)
@@ -765,7 +734,7 @@ fn Localˉaggregateˉroots(
     var Roots: bytes = Bytesˉslice(Values, 0u32, 0u32);
     var Offset: u32 = 0u32;
     while Offset < Length {
-        let Kind: u32 = Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset);
+        let Kind: u32 = Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(Shapes, Shapeˉoffset + Offset));
         if Kind == 7u32 || Kind == 11u32 || Kind == 22u32 ||
             Kind == 28u32 || Kind == 29u32 || Kind == 30u32 {
             Roots = Bytesˉconcat(
@@ -831,7 +800,7 @@ fn Aggregateˉselectedˉfieldˉvalues(
     while Index < Fieldˉcount {
         Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
         let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
+        Cursor = Cursor + Valueˉcore.Shapeˉwidthˉat(Module, Cursor);
         var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
         if Descriptors {
             Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
@@ -1222,7 +1191,7 @@ fn Allocateˉexactˉallocationˉfailure(
         Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 0u32) != 3u32 {
         return Invalid;
     }
-    let Reasonˉshape: u32 = Fieldˉshapeˉat(
+    let Reasonˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Failureˉdirectory, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Reasonˉshape)) != 8u32 {
@@ -1261,14 +1230,14 @@ fn Allocateˉallocationˉfailure(
     let Invalid: Aggregateˉallocation = Aggregateˉallocation(
         false, Empty, Metadata, Records
     );
-    let Failureˉcase: bytes = Variantˉcaseˉfields(
+    let Failureˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Resultˉtype, 1u32
     );
     if Bytesˉlength(Failureˉcase) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Failureˉcase, 0u32) != 1u32 {
         return Invalid;
     }
-    let Failureˉshape: u32 = Fieldˉshapeˉat(
+    let Failureˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 7u32 {
@@ -1590,14 +1559,14 @@ fn Allocateˉforeignˉmemoryˉfailure(
     let Invalid: Aggregateˉallocation = Aggregateˉallocation(
         false, Empty, Metadata, Records
     );
-    let Resultˉfailureˉcase: bytes = Variantˉcaseˉfields(
+    let Resultˉfailureˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Resultˉtype, 1u32
     );
     if Bytesˉlength(Resultˉfailureˉcase) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 0u32) != 1u32 {
         return Invalid;
     }
-    let Failureˉshape: u32 = Fieldˉshapeˉat(
+    let Failureˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 11u32 {
@@ -1609,7 +1578,7 @@ fn Allocateˉforeignˉmemoryˉfailure(
     if Failureˉtype >= Bytesˉlength(Typeˉoffsets) / 4u32 {
         return Invalid;
     }
-    let Failureˉcase: bytes = Variantˉcaseˉfields(
+    let Failureˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Failureˉtype, Case
     );
     var Expectedˉfields: u32 = 0u32;
@@ -1645,7 +1614,7 @@ fn Allocateˉforeignˉmemoryˉfailure(
     }
     if Case == 1u32 { Fields = Bytesˉfromˉu64ˉlittle(Observed); }
     if Case == 2u32 {
-        let Allocationˉshape: u32 = Fieldˉshapeˉat(
+        let Allocationˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
             Module, Bytesˉreadˉu32ˉlittle(Failureˉcase, 4u32), 0u32
         );
         if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Allocationˉshape)) != 7u32 {
@@ -1717,7 +1686,7 @@ fn Executeˉunsafeˉscratchˉconstruct(
         Typeˉoffsets, Abiˉtype * 4u32
     );
     let Abiˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Abiˉcursor));
-    let Resultˉvalidˉcase: bytes = Variantˉcaseˉfields(
+    let Resultˉvalidˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Resultˉtype, 0u32
     );
     if (Abiˉkind != 2u32 && Abiˉkind != 7u32) ||
@@ -1725,7 +1694,7 @@ fn Executeˉunsafeˉscratchˉconstruct(
         Bytesˉreadˉu32ˉlittle(Resultˉvalidˉcase, 0u32) != 1u32 {
         return Invalid;
     }
-    let Scratchˉshape: u32 = Fieldˉshapeˉat(
+    let Scratchˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Resultˉvalidˉcase, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Scratchˉshape)) != 7u32 {
@@ -1741,7 +1710,7 @@ fn Executeˉunsafeˉscratchˉconstruct(
     if Bytesˉlength(Scratchˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Scratchˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Scratchˉdirectory, 4u32),
                 0u32
@@ -1981,7 +1950,7 @@ fn Executeˉunsafeˉscratchˉlength(
     if Bytesˉlength(Scratchˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Scratchˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Scratchˉdirectory, 4u32),
                 0u32
@@ -2033,14 +2002,14 @@ fn Allocateˉforeignˉpointerˉfailure(
         false, Empty, Metadata, Records
     );
     if Failureˉcase > 6u32 { return Invalid; }
-    let Resultˉfailure: bytes = Variantˉcaseˉfields(
+    let Resultˉfailure: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Resultˉtype, 1u32
     );
     if Bytesˉlength(Resultˉfailure) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Resultˉfailure, 0u32) != 1u32 {
         return Invalid;
     }
-    let Failureˉshape: u32 = Fieldˉshapeˉat(
+    let Failureˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Resultˉfailure, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Failureˉshape)) != 11u32 {
@@ -2050,7 +2019,7 @@ fn Allocateˉforeignˉpointerˉfailure(
         Module, Failureˉshape + 1u32
     );
     if Failureˉtype >= Typeˉcount { return Invalid; }
-    let Failureˉfields: bytes = Variantˉcaseˉfields(
+    let Failureˉfields: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Failureˉtype, Failureˉcase
     );
     if Bytesˉlength(Failureˉfields) != 8u32 { return Invalid; }
@@ -2066,7 +2035,7 @@ fn Allocateˉforeignˉpointerˉfailure(
     let Fields: u32 = Bytesˉreadˉu32ˉlittle(Failureˉfields, 4u32);
     var Field: u32 = 0u32;
     while Field < Fieldˉcount {
-        let Fieldˉshape: u32 = Fieldˉshapeˉat(
+        let Fieldˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
             Module, Fields, Field
         );
         var Expectedˉkind: u32 = 10u32;
@@ -2162,14 +2131,14 @@ fn Executeˉunsafeˉwriteˉregion(
     let Abiˉkind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Abiˉcursor));
     if Abiˉkind != 2u32 && Abiˉkind != 7u32 { return Invalid; }
 
-    let Resultˉvalid: bytes = Variantˉcaseˉfields(
+    let Resultˉvalid: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Resultˉtype, 0u32
     );
     if Bytesˉlength(Resultˉvalid) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Resultˉvalid, 0u32) != 1u32 {
         return Invalid;
     }
-    let Regionˉshape: u32 = Fieldˉshapeˉat(
+    let Regionˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Resultˉvalid, 4u32), 0u32
     );
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Regionˉshape)) != 7u32 {
@@ -2185,7 +2154,7 @@ fn Executeˉunsafeˉwriteˉregion(
     if Bytesˉlength(Regionˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Regionˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Regionˉdirectory, 4u32),
                 0u32
@@ -2405,7 +2374,7 @@ fn Executeˉunsafeˉwriteˉpointer(
         Bytesˉlength(Pointerˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 4u32),
                 0u32
@@ -2438,7 +2407,7 @@ fn Executeˉunsafeˉwriteˉpointer(
     if Bytesˉlength(Regionˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Regionˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Regionˉdirectory, 4u32),
                 0u32
@@ -2550,7 +2519,7 @@ fn Executeˉforeignˉcall(
         Bytesˉlength(Pointerˉdirectory) != 8u32 ||
         Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 0u32) != 1u32 ||
         U32ˉfromˉu8(Bytesˉreadˉu8(
-            Module, Fieldˉshapeˉat(
+            Module, Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Pointerˉdirectory, 4u32),
                 0u32
@@ -2934,14 +2903,14 @@ fn Executeˉvectorˉappend(
         if Bytesˉlength(Heap) == 0u32 { return Invalid; }
     } else {
         Resultˉcase = 1u32;
-        let Resultˉfailureˉcase: bytes = Variantˉcaseˉfields(
+        let Resultˉfailureˉcase: bytes = Valueˉcore.Variantˉcaseˉfields(
             Module, Typeˉoffsets, Resultˉtype, 1u32
         );
         if Bytesˉlength(Resultˉfailureˉcase) != 8u32 ||
             Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 0u32) != 1u32 {
             return Invalid;
         }
-        let Appendˉfailureˉshape: u32 = Fieldˉshapeˉat(
+        let Appendˉfailureˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
             Module,
             Bytesˉreadˉu32ˉlittle(Resultˉfailureˉcase, 4u32),
             0u32
@@ -2963,7 +2932,7 @@ fn Executeˉvectorˉappend(
             ) != 2u32 {
             return Invalid;
         }
-        let Collectionˉfailureˉshape: u32 = Fieldˉshapeˉat(
+        let Collectionˉfailureˉshape: u32 = Valueˉcore.Fieldˉshapeˉat(
             Module,
             Bytesˉreadˉu32ˉlittle(Appendˉfailureˉdirectory, 4u32),
             0u32
@@ -3017,22 +2986,6 @@ fn Executeˉvectorˉappend(
     );
 }
 
-fn Fieldˉshapeˉat(
-    Module: bytes,
-    Fields: u32,
-    Field: u32
-) -> u32 {
-    var Cursor: u32 = Fields;
-    var Index: u32 = 0u32;
-    while Index < Field {
-        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
-        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
-        Index = Index + 1u32;
-    }
-    return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
-}
-
 fn Variantˉfieldˉselection(
     Module: bytes,
     Typeˉoffsets: bytes,
@@ -3047,7 +3000,7 @@ fn Variantˉfieldˉselection(
         Field = Case % 64u32;
         Case = Case / 64u32;
     }
-    let Directory: bytes = Variantˉcaseˉfields(
+    let Directory: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module,
         Typeˉoffsets,
         Type,
@@ -3057,7 +3010,7 @@ fn Variantˉfieldˉselection(
         Field >= Bytesˉreadˉu32ˉlittle(Directory, 0u32) {
         return Invalid;
     }
-    let Shape: u32 = Fieldˉshapeˉat(
+    let Shape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module,
         Bytesˉreadˉu32ˉlittle(Directory, 4u32),
         Field
@@ -3140,61 +3093,6 @@ fn Defaultˉfieldˉvalue(
         );
     }
     return Zeroˉcell;
-}
-
-fn Retainˉdescriptor(
-    Allocations: bytes,
-    Allocationˉcount: u32,
-    Value: bytes
-) -> bytes {
-    let Invalid: bytes = Bytesˉslice(Allocations, 0u32, 0u32);
-    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
-    if Length == 0u32 { return Allocations; }
-    var Allocationˉindex: u32 = 4294967295u32;
-    var Scan: u32 = 0u32;
-    while Scan < Allocationˉcount {
-        let Entry: u32 = Scan * 12u32;
-        let References: u32 = Bytesˉreadˉu32ˉlittle(
-            Allocations,
-            Entry + 8u32
-        );
-        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
-        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
-            Allocations,
-            Entry + 4u32
-        );
-        let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
-        if References > 0u32 && Valueˉoffset >= Offset {
-            if Valueˉoffset - Offset <= Allocationˉlength {
-                if Length <= Allocationˉlength - (Valueˉoffset - Offset) {
-                    Allocationˉindex = Scan;
-                    Scan = Allocationˉcount;
-                }
-            }
-        }
-        Scan = Scan + 1u32;
-    }
-    if Allocationˉindex == 4294967295u32 { return Invalid; }
-    let Selectedˉentry: u32 = Allocationˉindex * 12u32;
-    let Selectedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
-        Allocations,
-        Selectedˉentry + 8u32
-    );
-    if Selectedˉreferences == 4294967295u32 { return Invalid; }
-    return Bytesˉconcat(
-        Bytesˉconcat(
-            Bytesˉslice(Allocations, 0u32, Selectedˉentry),
-            Bytesˉconcat(
-                Bytesˉslice(Allocations, Selectedˉentry, 8u32),
-                Bytesˉfromˉu32ˉlittle(Selectedˉreferences + 1u32)
-            )
-        ),
-        Bytesˉslice(
-            Allocations,
-            Selectedˉentry + 12u32,
-            Bytesˉlength(Allocations) - Selectedˉentry - 12u32
-        )
-    );
 }
 
 fn Releaseˉdescriptor(
@@ -4448,9 +4346,9 @@ fn Executeˉlocal(
         let Shapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
             Functionˉshapeˉoffsets, Functionˉindex * 4u32
         ) + Localˉindex * 8u32;
-        let Shapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+        let Shapeˉkind: u32 = Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(
             Localˉshapes, Shapeˉoffset
-        );
+        ));
         if Shapeˉkind == 25u32 &&
             (Bytesˉreadˉu16ˉlittle(Module, 6u32) != 34u32 &&
                 Bytesˉreadˉu16ˉlittle(Module, 6u32) != 35u32 &&
@@ -4462,6 +4360,12 @@ fn Executeˉlocal(
             );
         }
         var Value: bytes = Bytesˉslice(Locals, Localˉindex * 8u32, 8u32);
+        if Shapeˉkind == 93u32 {
+            if Bytesˉreadˉu32ˉlittle(Value, 4u32) == 0u32 {
+                return Localˉexecution(false, true, Empty, Empty, Empty, Empty, 0u32);
+            }
+            Producedˉkind = 5u32;
+        }
         if Shapeˉkind == 7u32 || Shapeˉkind == 8u32 ||
             Shapeˉkind == 11u32 || Shapeˉkind == 22u32 ||
             Shapeˉkind == 23u32 || Shapeˉkind == 24u32 ||
@@ -4509,7 +4413,7 @@ fn Executeˉlocal(
             Shapeˉkind == 23u32 || Shapeˉkind == 24u32 {
             Producedˉkind = 1u32;
             if Shapeˉkind == 24u32 { Producedˉkind = 4u32; }
-            let Retained: bytes = Retainˉdescriptor(
+            let Retained: bytes = Valueˉcore.Retainˉdescriptor(
                 Heapˉallocations, Heapˉallocationˉcount, Value
             );
             if Bytesˉreadˉu32ˉlittle(Value, 4u32) > 0u32 &&
@@ -4545,9 +4449,9 @@ fn Executeˉlocal(
         let Storedˉshapeˉoffset: u32 = Bytesˉreadˉu32ˉlittle(
             Functionˉshapeˉoffsets, Functionˉindex * 4u32
         ) + Storedˉlocalˉoffset;
-        let Storedˉshapeˉkind: u32 = Bytesˉreadˉu32ˉlittle(
+        let Storedˉshapeˉkind: u32 = Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(
             Localˉshapes, Storedˉshapeˉoffset
-        );
+        ));
         if Storedˉshapeˉkind == 3u32 || Storedˉshapeˉkind == 6u32 ||
             Storedˉshapeˉkind == 23u32 || Storedˉshapeˉkind == 24u32 {
             let Previous: bytes = Bytesˉslice(
@@ -5430,7 +5334,8 @@ fn Executeˉaggregate(
     Functionˉcursor: u32,
     Frames: bytes,
     Functionˉcount: u32,
-    Functionˉframeˉmetadata: bytes
+    Functionˉframeˉmetadata: bytes,
+    Borrowˉroots: bytes
 ) -> Extendedˉexecution {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Extendedˉexecution = Extendedˉexecution(
@@ -5612,7 +5517,7 @@ fn Executeˉaggregate(
                             );
                             Recordˉreachableˉvalues = Bytesˉconcat(
                                 Recordˉreachableˉvalues,
-                                Tasks.Retainedˉroots(Taskˉstate)
+                                Bytesˉconcat(Tasks.Retainedˉroots(Taskˉstate), Borrowˉroots)
                             );
                             let Recordˉmarkˉscan: bytes =
                                 Markˉaggregateˉroots(
@@ -5783,7 +5688,7 @@ fn Executeˉaggregate(
             if Bytesˉlength(Fieldˉrecordˉdirectory) != 8u32 {
                 return Invalid;
             }
-            Selectedˉfieldˉcursor = Fieldˉshapeˉat(
+            Selectedˉfieldˉcursor = Valueˉcore.Fieldˉshapeˉat(
                 Module,
                 Bytesˉreadˉu32ˉlittle(Fieldˉrecordˉdirectory, 4u32),
                 Fieldˉindex
@@ -5851,7 +5756,7 @@ fn Executeˉaggregate(
             Stackˉproducedˉkind = 3u32;
         }
         if Fieldˉrequiresˉretain {
-            let Retainedˉallocations: bytes = Retainˉdescriptor(
+            let Retainedˉallocations: bytes = Valueˉcore.Retainˉdescriptor(
                 Heapˉallocations,
                 Heapˉallocationˉcount,
                 Fieldˉvalue
@@ -5950,7 +5855,7 @@ fn Executeˉaggregate(
                 (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
                     Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
-                    Retainˉdescriptor(
+                    Valueˉcore.Retainˉdescriptor(
                         Heapˉallocations,
                         Heapˉallocationˉcount,
                         Arrayˉelementˉvalue
@@ -6068,7 +5973,8 @@ fn Executeˉextended(
     Functionˉcursor: u32,
     Frames: bytes,
     Functionˉcount: u32,
-    Functionˉframeˉmetadata: bytes
+    Functionˉframeˉmetadata: bytes,
+    Borrowˉroots: bytes
 ) -> Extendedˉexecution {
     let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
     let Invalid: Extendedˉexecution = Extendedˉexecution(
@@ -6461,7 +6367,8 @@ fn Executeˉextended(
         Functionˉcursor,
         Frames,
         Functionˉcount,
-        Functionˉframeˉmetadata
+        Functionˉframeˉmetadata,
+        Borrowˉroots
     );
     if !Aggregate.Valid { return Invalid; }
     if Aggregate.Handled {
@@ -6849,9 +6756,9 @@ fn Returningˉlocalˉdescriptors(
     var Localˉoffset: u32 = Functionˉcursor;
     while Localˉoffset > 0u32 {
         Localˉoffset = Localˉoffset - 8u32;
-        let Kind: u32 = Bytesˉreadˉu32ˉlittle(
+        let Kind: u32 = Borrowˉframes.Valueˉkind(Bytesˉreadˉu32ˉlittle(
             Localˉshapes, Shapeˉoffset + Localˉoffset
-        );
+        ));
         if Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32 {
             Released = Bytesˉconcat(
                 Released, Bytesˉslice(Locals, Localˉoffset, 8u32)
@@ -6887,7 +6794,8 @@ fn Returningˉaggregateˉcollection(
     Functionˉshapeˉoffsets: bytes,
     Localˉshapes: bytes,
     Taskˉstate: bytes,
-    Zeroˉcell: bytes
+    Zeroˉcell: bytes,
+    Borrowˉroots: bytes
 ) -> Aggregateˉcollection {
     var Roots: bytes = Stackˉaggregateˉroots(
         Stack, Stackˉrecordˉflagsˉlow, Stackˉrecordˉflagsˉhigh
@@ -6906,7 +6814,7 @@ fn Returningˉaggregateˉcollection(
         Roots,
         Bytesˉslice(Frameˉroots, 1u32, Bytesˉlength(Frameˉroots) - 1u32)
     );
-    Roots = Bytesˉconcat(Roots, Tasks.Retainedˉroots(Taskˉstate));
+    Roots = Bytesˉconcat(Roots, Bytesˉconcat(Tasks.Retainedˉroots(Taskˉstate), Borrowˉroots));
     return Collectˉunreachableˉaggregates(
         Module, Typeˉoffsets, Records, Recordˉmetadata, Roots, Zeroˉcell
     );
@@ -6976,7 +6884,7 @@ fn Executeˉclosureˉcreation(
     }
     var Descriptorˉcursor: u32 = Descriptor + 2u32;
     Descriptorˉcursor = Descriptorˉcursor +
-        Shapeˉwidthˉat(Module, Descriptorˉcursor);
+        Valueˉcore.Shapeˉwidthˉat(Module, Descriptorˉcursor);
     let Publicˉparameters: u32 = Bytesˉreadˉu32ˉlittle(
         Module, Descriptorˉcursor
     );
@@ -7152,7 +7060,7 @@ fn Executeˉcall(
         }
         var Descriptorˉcursor: u32 = Descriptor + 2u32;
         Descriptorˉcursor = Descriptorˉcursor +
-            Shapeˉwidthˉat(Module, Descriptorˉcursor);
+            Valueˉcore.Shapeˉwidthˉat(Module, Descriptorˉcursor);
         Parameters = Bytesˉreadˉu32ˉlittle(
             Module, Descriptorˉcursor
         );
@@ -7315,7 +7223,7 @@ fn Taskˉvariantˉfieldˉnominalˉat(
     Field: u32,
     Expectedˉfields: u32
 ) -> u32 {
-    let Directory: bytes = Variantˉcaseˉfields(
+    let Directory: bytes = Valueˉcore.Variantˉcaseˉfields(
         Module, Typeˉoffsets, Type, Case
     );
     if Bytesˉlength(Directory) != 8u32 ||
@@ -7323,7 +7231,7 @@ fn Taskˉvariantˉfieldˉnominalˉat(
         Field >= Expectedˉfields {
         return 4294967295u32;
     }
-    let Shape: u32 = Fieldˉshapeˉat(
+    let Shape: u32 = Valueˉcore.Fieldˉshapeˉat(
         Module, Bytesˉreadˉu32ˉlittle(Directory, 4u32), Field
     );
     let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
@@ -8965,6 +8873,9 @@ export fn Main(Request: bytes) -> bytes {
         return Invalid;
     }
     var Stack: bytes = Invalid;
+    var Borrowˉstate: Borrowˉframes.State = Borrowˉframes.Begin();
+    var Borrowˉstack: bytes = Invalid;
+    var Borrowˉroots: bytes = Invalid;
     var Closureˉenvironments: bytes = Invalid;
     var Closureˉenvironmentˉcount: u32 = 0u32;
     // Keep descriptor identity separate from cell bits so pop never treats a
@@ -9086,6 +8997,31 @@ export fn Main(Request: bytes) -> bytes {
         Stackˉproduced = (Stackˉeffect & 4u32) != 0u32;
         Stackˉproducedˉkind = (Stackˉeffect >> 3u32) & 1u32;
 
+        var Borrowˉhandled: bool = false;
+        if Moduleˉminor == 39u32 {
+            let Borrowˉresult: Valueˉcore.Borrowˉstep = Valueˉcore.Prepareˉborrowˉstep(
+                Borrowˉstate, Module, Requestˉmajor, Payload, Payloadˉlength,
+                Typeˉoffsets, Localˉshapes,
+                Bytesˉreadˉu32ˉlittle(Functionˉshapeˉoffsets, Functionˉindex * 4u32),
+                Locals, Recordˉmetadata, Records, Stack, Heapˉallocations,
+                Heapˉallocationˉcount, Borrowˉstack, Stackˉconsumed);
+            if !Borrowˉresult.Valid { return Invalid; }
+            Borrowˉstate = Borrowˉframes.State(true, Borrowˉresult.Views,
+                Borrowˉresult.Bindings, Borrowˉresult.Frames, Borrowˉresult.Base);
+            Borrowˉroots = Borrowˉresult.Roots;
+            Borrowˉhandled = Borrowˉresult.Handled;
+            if Borrowˉhandled {
+                Stack = Borrowˉresult.Stack;
+                Heapˉallocations = Borrowˉresult.Allocations;
+                Stackˉconsumed = Borrowˉresult.Consumed;
+                Stackˉproduced = Borrowˉresult.Produced;
+                Stackˉproducedˉkind = Borrowˉresult.Kind;
+                Sectionˉkind = Borrowˉresult.Status;
+                Aggregateˉinstructions = Aggregateˉinstructions + Borrowˉresult.Advance;
+                Mainˉfound = true;
+            }
+        }
+        if !Borrowˉhandled {
         if Payloadˉlength <= 22u32 {
         if Payloadˉlength == 1u32 || Payloadˉlength == 9u32 {
             Stack = Bytesˉconcat(
@@ -9254,7 +9190,8 @@ export fn Main(Request: bytes) -> bytes {
             Functionˉcursor,
             Frames,
             Functionˉcount,
-            Functionˉframeˉmetadata
+            Functionˉframeˉmetadata,
+            Borrowˉroots
         );
         if !Extended.Valid { return Invalid; }
         if Extended.Handled {
@@ -9464,6 +9401,16 @@ export fn Main(Request: bytes) -> bytes {
                 Exportˉindex, Effectiveˉcallˉdepth
             );
             if !Call.Valid { return Invalid; }
+            if Moduleˉminor == 39u32 && Call.Depth > Exportˉindex {
+                if Call.Consumed > Bytesˉlength(Borrowˉstack) { return Invalid; }
+                var Argument: u32 = Bytesˉlength(Borrowˉstack) - Call.Consumed;
+                while Argument < Bytesˉlength(Borrowˉstack) {
+                    if Bytesˉreadˉu8(Borrowˉstack, Argument) == 1u8 { return Invalid; }
+                    Argument = Argument + 1u32;
+                }
+                Borrowˉstate = Borrowˉframes.Enter(Borrowˉstate);
+                if !Borrowˉstate.Valid { return Invalid; }
+            }
             Stack = Call.Stack;
             Stackˉconsumed = Call.Consumed;
             Stackˉproduced = Call.Produced;
@@ -9720,7 +9667,8 @@ export fn Main(Request: bytes) -> bytes {
                         Functionˉframeˉmetadata, Functionˉshapeˉoffsets,
                         Localˉshapes,
                         Taskˉstate,
-                        Zeroˉcell
+                        Zeroˉcell,
+                        Borrowˉroots
                     );
                 if !Returnˉcollection.Valid { return Invalid; }
                 Recordˉmetadata = Returnˉcollection.Metadata;
@@ -9826,6 +9774,7 @@ export fn Main(Request: bytes) -> bytes {
         }
 
         }
+        }
         if Mainˉfound {
             Mainˉfound = true;
         } else {
@@ -9874,179 +9823,27 @@ export fn Main(Request: bytes) -> bytes {
         // Copy operation results first, release consumed owners second, and
         // only then reuse a free span for the pending immutable result.
         if Sectionˉkind == 0u32 {
-            let Releaseˉresult: Descriptorˉreleaseˉexecution =
-                Releaseˉdescriptorsˉandˉleases(
-                    Memoryˉbudgetˉstate,
-                    Heapˉallocations,
-                    Heapˉallocationˉcount,
-                    Allocationˉleases,
-                    Releasedˉdescriptors,
-                    Zeroˉlease
-                );
-            if !Releaseˉresult.Valid { return Invalid; }
-            Memoryˉbudgetˉstate = Releaseˉresult.State;
-            Heapˉallocations = Releaseˉresult.Allocations;
-            Allocationˉleases = Releaseˉresult.Leases;
-
-            if Heapˉallocationˉrequested {
-                let Allocatedˉlength: u32 = Bytesˉlength(
-                    Heapˉallocationˉvalue
-                );
-                var Allocatedˉoffset: u32 = 0u32;
-                if Allocatedˉlength > 0u32 {
-                    var Allocatedˉspaceˉsearching: bool = true;
-                    while Allocatedˉspaceˉsearching {
-                        var Allocatedˉnearestˉoffset: u32 = 65536u32;
-                        var Allocatedˉnearestˉlength: u32 = 0u32;
-                        var Allocatedˉspaceˉscan: u32 = 0u32;
-                        while Allocatedˉspaceˉscan < Heapˉallocationˉcount {
-                            let Allocatedˉspaceˉentry: u32 =
-                                Allocatedˉspaceˉscan * 12u32;
-                            let Allocatedˉspaceˉreferences: u32 =
-                                Bytesˉreadˉu32ˉlittle(
-                                    Heapˉallocations,
-                                    Allocatedˉspaceˉentry + 8u32
-                                );
-                            if Allocatedˉspaceˉreferences > 0u32 {
-                                let Allocatedˉspaceˉoffset: u32 =
-                                    Bytesˉreadˉu32ˉlittle(
-                                        Heapˉallocations,
-                                        Allocatedˉspaceˉentry
-                                    );
-                                if Allocatedˉspaceˉoffset >= Allocatedˉoffset {
-                                    if Allocatedˉspaceˉoffset
-                                        < Allocatedˉnearestˉoffset {
-                                        Allocatedˉnearestˉoffset =
-                                            Allocatedˉspaceˉoffset;
-                                        Allocatedˉnearestˉlength =
-                                            Bytesˉreadˉu32ˉlittle(
-                                                Heapˉallocations,
-                                                Allocatedˉspaceˉentry + 4u32
-                                            );
-                                    }
-                                }
-                            }
-                            Allocatedˉspaceˉscan =
-                                Allocatedˉspaceˉscan + 1u32;
-                        }
-                        if Allocatedˉlength <= Allocatedˉnearestˉoffset
-                            - Allocatedˉoffset {
-                            Allocatedˉspaceˉsearching = false;
-                        } else {
-                            if Allocatedˉnearestˉoffset == 65536u32 {
-                                Allocatedˉoffset = 4294967295u32;
-                                Allocatedˉspaceˉsearching = false;
-                            } else {
-                                Allocatedˉoffset = Allocatedˉnearestˉoffset
-                                    + Allocatedˉnearestˉlength;
-                                if Allocatedˉoffset > 65536u32
-                                    - Allocatedˉlength {
-                                    Allocatedˉoffset = 4294967295u32;
-                                    Allocatedˉspaceˉsearching = false;
-                                }
-                            }
-                        }
-                    }
-                    if Allocatedˉoffset == 4294967295u32 {
-                        Sectionˉkind = 3018u32;
-                    } else {
-                        let Allocatedˉend: u32 =
-                            Allocatedˉoffset + Allocatedˉlength;
-                        let Allocatedˉheapˉlength: u32 = Bytesˉlength(Heap);
-                        var Allocatedˉnextˉheap: bytes = Bytesˉconcat(
-                            Bytesˉslice(Heap, 0u32, Allocatedˉoffset),
-                            Heapˉallocationˉvalue
-                        );
-                        if Allocatedˉend < Allocatedˉheapˉlength {
-                            Allocatedˉnextˉheap = Bytesˉconcat(
-                                Allocatedˉnextˉheap,
-                                Bytesˉslice(
-                                    Heap,
-                                    Allocatedˉend,
-                                    Allocatedˉheapˉlength - Allocatedˉend
-                                )
-                            );
-                        }
-                        Heap = Allocatedˉnextˉheap;
-
-                        var Allocatedˉmetadataˉindex: u32 =
-                            Heapˉallocationˉcount;
-                        var Allocatedˉmetadataˉscan: u32 = 0u32;
-                        while Allocatedˉmetadataˉscan
-                            < Heapˉallocationˉcount {
-                            if Bytesˉreadˉu32ˉlittle(
-                                Heapˉallocations,
-                                Allocatedˉmetadataˉscan * 12u32 + 8u32
-                            ) == 0u32 {
-                                Allocatedˉmetadataˉindex =
-                                    Allocatedˉmetadataˉscan;
-                                Allocatedˉmetadataˉscan =
-                                    Heapˉallocationˉcount;
-                            }
-                            Allocatedˉmetadataˉscan =
-                                Allocatedˉmetadataˉscan + 1u32;
-                        }
-                        let Allocatedˉmetadataˉvalue: bytes = Bytesˉconcat(
-                            Bytesˉfromˉu32ˉlittle(Allocatedˉoffset),
-                            Bytesˉconcat(
-                                Bytesˉfromˉu32ˉlittle(Allocatedˉlength),
-                                Bytesˉfromˉu32ˉlittle(1u32)
-                            )
-                        );
-                        if Allocatedˉmetadataˉindex
-                            == Heapˉallocationˉcount {
-                            if Heapˉallocationˉcount >= 4096u32 {
-                                return Invalid;
-                            }
-                            Heapˉallocations = Bytesˉconcat(
-                                Heapˉallocations,
-                                Allocatedˉmetadataˉvalue
-                            );
-                            Allocationˉleases = Bytesˉconcat(
-                                Allocationˉleases, Zeroˉlease
-                            );
-                            Heapˉallocationˉcount =
-                                Heapˉallocationˉcount + 1u32;
-                        } else {
-                            if Bytesˉreadˉu32ˉlittle(
-                                Allocationˉleases,
-                                Allocatedˉmetadataˉindex * 28u32
-                            ) != 0u32 {
-                                return Invalid;
-                            }
-                            let Allocatedˉmetadataˉentry: u32 =
-                                Allocatedˉmetadataˉindex * 12u32;
-                            Heapˉallocations = Bytesˉconcat(
-                                Bytesˉconcat(
-                                    Bytesˉslice(
-                                        Heapˉallocations,
-                                        0u32,
-                                        Allocatedˉmetadataˉentry
-                                    ),
-                                    Allocatedˉmetadataˉvalue
-                                ),
-                                Bytesˉslice(
-                                    Heapˉallocations,
-                                    Allocatedˉmetadataˉentry + 12u32,
-                                    Bytesˉlength(Heapˉallocations)
-                                        - Allocatedˉmetadataˉentry - 12u32
-                                )
-                            );
-                        }
-                    }
-                }
-                if Sectionˉkind == 0u32 {
-                    Stack = Bytesˉconcat(
-                        Stack,
-                        Bytesˉconcat(
-                            Bytesˉfromˉu32ˉlittle(Allocatedˉoffset),
-                            Bytesˉfromˉu32ˉlittle(Allocatedˉlength)
-                        )
-                    );
-                }
-            }
+            let Committed: Allocationˉcommit = Commitˉallocation(
+                Memoryˉbudgetˉstate, Heap, Heapˉallocations, Heapˉallocationˉcount,
+                Allocationˉleases, Releasedˉdescriptors, Zeroˉlease,
+                Heapˉallocationˉrequested, Heapˉallocationˉvalue, Stack);
+            if !Committed.Valid { return Invalid; }
+            Memoryˉbudgetˉstate = Committed.State;
+            Heap = Committed.Heap;
+            Heapˉallocations = Committed.Allocations;
+            Heapˉallocationˉcount = Committed.Count;
+            Allocationˉleases = Committed.Leases;
+            Stack = Committed.Stack;
+            Sectionˉkind = Committed.Status;
         }
         if Sectionˉkind == 0u32 {
+            if Moduleˉminor == 39u32 {
+                let Tracked: bytes = Borrowˉframes.Track(Borrowˉstack, Stackˉconsumed,
+                    Stackˉproduced, Stackˉproducedˉkind == 5u32);
+                if Bytesˉlength(Tracked) == 0u32 ||
+                    Bytesˉlength(Tracked) - 1u32 != Bytesˉlength(Stack) / 8u32 { return Invalid; }
+                Borrowˉstack = Bytesˉslice(Tracked, 1u32, Bytesˉlength(Tracked) - 1u32);
+            }
             let Tracking: Stackˉtracking = Updateˉstackˉtracking(
                 Stackˉconsumed,
                 Stackˉdescriptorˉcount,
@@ -10081,6 +9878,10 @@ export fn Main(Request: bytes) -> bytes {
         Running = Sectionˉkind == 0u32;
     }
     if Sectionˉkind != 0u32 {
+        if Moduleˉminor == 39u32 {
+            Borrowˉstate = Borrowˉframes.Teardown(Borrowˉstate);
+            if !Borrowˉstate.Valid { return Invalid; }
+        }
         return Failureˉresponse(
             Requestˉmajor,
             Responseˉminor,
@@ -10091,4 +9892,209 @@ export fn Main(Request: bytes) -> bytes {
         );
     }
     return Invalid;
+}
+
+// Keep candidate loan checks and view observations outside the bounded main frame.
+
+record Allocationˉcommit {
+    Valid: bool;
+    State: bytes;
+    Heap: bytes;
+    Allocations: bytes;
+    Count: u32;
+    Leases: bytes;
+    Stack: bytes;
+    Status: u32;
+}
+
+// Preserve release-before-reuse ordering without expanding the interpreter frame.
+fn Commitˉallocation(
+    Initialˉstate: bytes, Initialˉheap: bytes, Initialˉallocations: bytes,
+    Initialˉcount: u32, Initialˉleases: bytes, Releasedˉdescriptors: bytes,
+    Zeroˉlease: bytes, Heapˉallocationˉrequested: bool,
+    Heapˉallocationˉvalue: bytes, Initialˉstack: bytes
+) -> Allocationˉcommit {
+    let Invalid: Allocationˉcommit = Allocationˉcommit(false, Initialˉstate,
+        Initialˉheap, Initialˉallocations, Initialˉcount, Initialˉleases, Initialˉstack, 0u32);
+    var Memoryˉbudgetˉstate: bytes = Initialˉstate;
+    var Heap: bytes = Initialˉheap;
+    var Heapˉallocations: bytes = Initialˉallocations;
+    var Heapˉallocationˉcount: u32 = Initialˉcount;
+    var Allocationˉleases: bytes = Initialˉleases;
+    var Stack: bytes = Initialˉstack;
+    var Sectionˉkind: u32 = 0u32;
+
+    let Releaseˉresult: Descriptorˉreleaseˉexecution =
+        Releaseˉdescriptorsˉandˉleases(
+            Memoryˉbudgetˉstate,
+            Heapˉallocations,
+            Heapˉallocationˉcount,
+            Allocationˉleases,
+            Releasedˉdescriptors,
+            Zeroˉlease
+        );
+    if !Releaseˉresult.Valid { return Invalid; }
+    Memoryˉbudgetˉstate = Releaseˉresult.State;
+    Heapˉallocations = Releaseˉresult.Allocations;
+    Allocationˉleases = Releaseˉresult.Leases;
+
+    if Heapˉallocationˉrequested {
+        let Allocatedˉlength: u32 = Bytesˉlength(
+            Heapˉallocationˉvalue
+        );
+        var Allocatedˉoffset: u32 = 0u32;
+        if Allocatedˉlength > 0u32 {
+            var Allocatedˉspaceˉsearching: bool = true;
+            while Allocatedˉspaceˉsearching {
+                var Allocatedˉnearestˉoffset: u32 = 65536u32;
+                var Allocatedˉnearestˉlength: u32 = 0u32;
+                var Allocatedˉspaceˉscan: u32 = 0u32;
+                while Allocatedˉspaceˉscan < Heapˉallocationˉcount {
+                    let Allocatedˉspaceˉentry: u32 =
+                        Allocatedˉspaceˉscan * 12u32;
+                    let Allocatedˉspaceˉreferences: u32 =
+                        Bytesˉreadˉu32ˉlittle(
+                            Heapˉallocations,
+                            Allocatedˉspaceˉentry + 8u32
+                        );
+                    if Allocatedˉspaceˉreferences > 0u32 {
+                        let Allocatedˉspaceˉoffset: u32 =
+                            Bytesˉreadˉu32ˉlittle(
+                                Heapˉallocations,
+                                Allocatedˉspaceˉentry
+                            );
+                        if Allocatedˉspaceˉoffset >= Allocatedˉoffset {
+                            if Allocatedˉspaceˉoffset
+                                < Allocatedˉnearestˉoffset {
+                                Allocatedˉnearestˉoffset =
+                                    Allocatedˉspaceˉoffset;
+                                Allocatedˉnearestˉlength =
+                                    Bytesˉreadˉu32ˉlittle(
+                                        Heapˉallocations,
+                                        Allocatedˉspaceˉentry + 4u32
+                                    );
+                            }
+                        }
+                    }
+                    Allocatedˉspaceˉscan =
+                        Allocatedˉspaceˉscan + 1u32;
+                }
+                if Allocatedˉlength <= Allocatedˉnearestˉoffset
+                    - Allocatedˉoffset {
+                    Allocatedˉspaceˉsearching = false;
+                } else {
+                    if Allocatedˉnearestˉoffset == 65536u32 {
+                        Allocatedˉoffset = 4294967295u32;
+                        Allocatedˉspaceˉsearching = false;
+                    } else {
+                        Allocatedˉoffset = Allocatedˉnearestˉoffset
+                            + Allocatedˉnearestˉlength;
+                        if Allocatedˉoffset > 65536u32
+                            - Allocatedˉlength {
+                            Allocatedˉoffset = 4294967295u32;
+                            Allocatedˉspaceˉsearching = false;
+                        }
+                    }
+                }
+            }
+            if Allocatedˉoffset == 4294967295u32 {
+                Sectionˉkind = 3018u32;
+            } else {
+                let Allocatedˉend: u32 =
+                    Allocatedˉoffset + Allocatedˉlength;
+                let Allocatedˉheapˉlength: u32 = Bytesˉlength(Heap);
+                var Allocatedˉnextˉheap: bytes = Bytesˉconcat(
+                    Bytesˉslice(Heap, 0u32, Allocatedˉoffset),
+                    Heapˉallocationˉvalue
+                );
+                if Allocatedˉend < Allocatedˉheapˉlength {
+                    Allocatedˉnextˉheap = Bytesˉconcat(
+                        Allocatedˉnextˉheap,
+                        Bytesˉslice(
+                            Heap,
+                            Allocatedˉend,
+                            Allocatedˉheapˉlength - Allocatedˉend
+                        )
+                    );
+                }
+                Heap = Allocatedˉnextˉheap;
+
+                var Allocatedˉmetadataˉindex: u32 =
+                    Heapˉallocationˉcount;
+                var Allocatedˉmetadataˉscan: u32 = 0u32;
+                while Allocatedˉmetadataˉscan
+                    < Heapˉallocationˉcount {
+                    if Bytesˉreadˉu32ˉlittle(
+                        Heapˉallocations,
+                        Allocatedˉmetadataˉscan * 12u32 + 8u32
+                    ) == 0u32 {
+                        Allocatedˉmetadataˉindex =
+                            Allocatedˉmetadataˉscan;
+                        Allocatedˉmetadataˉscan =
+                            Heapˉallocationˉcount;
+                    }
+                    Allocatedˉmetadataˉscan =
+                        Allocatedˉmetadataˉscan + 1u32;
+                }
+                let Allocatedˉmetadataˉvalue: bytes = Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Allocatedˉoffset),
+                    Bytesˉconcat(
+                        Bytesˉfromˉu32ˉlittle(Allocatedˉlength),
+                        Bytesˉfromˉu32ˉlittle(1u32)
+                    )
+                );
+                if Allocatedˉmetadataˉindex
+                    == Heapˉallocationˉcount {
+                    if Heapˉallocationˉcount >= 4096u32 {
+                        return Invalid;
+                    }
+                    Heapˉallocations = Bytesˉconcat(
+                        Heapˉallocations,
+                        Allocatedˉmetadataˉvalue
+                    );
+                    Allocationˉleases = Bytesˉconcat(
+                        Allocationˉleases, Zeroˉlease
+                    );
+                    Heapˉallocationˉcount =
+                        Heapˉallocationˉcount + 1u32;
+                } else {
+                    if Bytesˉreadˉu32ˉlittle(
+                        Allocationˉleases,
+                        Allocatedˉmetadataˉindex * 28u32
+                    ) != 0u32 {
+                        return Invalid;
+                    }
+                    let Allocatedˉmetadataˉentry: u32 =
+                        Allocatedˉmetadataˉindex * 12u32;
+                    Heapˉallocations = Bytesˉconcat(
+                        Bytesˉconcat(
+                            Bytesˉslice(
+                                Heapˉallocations,
+                                0u32,
+                                Allocatedˉmetadataˉentry
+                            ),
+                            Allocatedˉmetadataˉvalue
+                        ),
+                        Bytesˉslice(
+                            Heapˉallocations,
+                            Allocatedˉmetadataˉentry + 12u32,
+                            Bytesˉlength(Heapˉallocations)
+                                - Allocatedˉmetadataˉentry - 12u32
+                        )
+                    );
+                }
+            }
+        }
+        if Sectionˉkind == 0u32 {
+            Stack = Bytesˉconcat(
+                Stack,
+                Bytesˉconcat(
+                    Bytesˉfromˉu32ˉlittle(Allocatedˉoffset),
+                    Bytesˉfromˉu32ˉlittle(Allocatedˉlength)
+                )
+            );
+        }
+    }
+    return Allocationˉcommit(true, Memoryˉbudgetˉstate, Heap, Heapˉallocations,
+        Heapˉallocationˉcount, Allocationˉleases, Stack, Sectionˉkind);
 }

@@ -1,0 +1,222 @@
+module Foundationˉborrowˉframesˉselfˉtest profile portable;
+
+import Windvaleˉfoundationˉborrowˉframes as Frames;
+import Windvaleˉfoundationˉborrowˉview as View;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉfixedˉintegerˉcore as Scanner;
+import WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore as Values;
+
+fn Cell(Low: u32, High: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Low), Bytesˉfromˉu32ˉlittle(High));
+}
+
+fn Code(Local: u32, Type: u32, Projection: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(225u8), Bytesˉconcat(Cell(Local, Type), Bytesˉfromˉu32ˉlittle(Projection)));
+}
+
+// A canonical kind-3 Option type fragment; the complete module gate is not bypassed.
+fn Optionˉtype(Kind: u8) -> bytes {
+    let Prefix: bytes = Textˉtoˉutf8("O");
+    var Type: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Prefix));
+    Type = Bytesˉconcat(Type, Bytesˉfromˉu32ˉlittle(2u32));
+    Type = Bytesˉconcat(Type, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4u32), Textˉtoˉutf8("Some")));
+    Type = Bytesˉconcat(Type, Bytesˉfromˉu8(1u8));
+    Type = Bytesˉconcat(Type, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(5u32), Textˉtoˉutf8("Value")));
+    Type = Bytesˉconcat(Type, Bytesˉfromˉu8(Kind));
+    Type = Bytesˉconcat(Type, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4u32), Textˉtoˉutf8("None")));
+    return Bytesˉconcat(Type, Bytesˉfromˉu8(0u8));
+}
+
+fn Scalarˉstep(Current: Frames.State, Instruction: bytes, Kind: u8,
+    Locals: bytes, Shapes: bytes, Metadata: bytes, Payload: bytes,
+    Stack: bytes, Flags: bytes, Consumed: u32, Allocations: bytes) -> Values.Borrowˉstep {
+    let Type: bytes = Optionˉtype(Kind);
+    let Module: bytes = Bytesˉconcat(Type, Instruction);
+    return Values.Prepareˉborrowˉstep(Current, Module, 1u32, Bytesˉlength(Type),
+        U32ˉfromˉu8(Bytesˉreadˉu8(Instruction, 0u32)), Bytesˉfromˉu32ˉlittle(0u32),
+        Shapes, 0u32, Locals, Metadata, Payload, Stack, Allocations,
+        Bytesˉlength(Allocations) / 12u32, Flags, Consumed);
+}
+
+fn Scalarˉstate(Result: Values.Borrowˉstep) -> Frames.State {
+    return Frames.State(Result.Valid, Result.Views, Result.Bindings, Result.Frames, Result.Base);
+}
+
+fn Checkˉscalar() -> i32 {
+    let Owner: bytes = Cell(0u32, 2147483904u32);
+    let Metadata: bytes = Cell(2147483904u32, 1u32);
+    let Payload: bytes = Cell(42u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Payload, 0u32, 0u32);
+    let Shapes: bytes = Cell(11u32, 1u32);
+    let Viewˉshapes: bytes = Cell(93u32, 1u32);
+    let Flag: bytes = Bytesˉfromˉu8(1u8);
+    let Ordinary: bytes = Bytesˉfromˉu8(0u8);
+    let First: Values.Borrowˉstep = Scalarˉstep(Frames.Begin(), Code(0u32, 0u32, 1u32),
+        9u8, Owner, Shapes, Metadata, Payload, Empty, Empty, 0u32, Empty);
+    if !First.Valid || !First.Handled || !First.Produced || First.Consumed != 0u32 ||
+        First.Kind != 5u32 || First.Advance != 13u32 || Bytesˉlength(First.Roots) != 8u32 { return 27; }
+    let Current: Frames.State = Scalarˉstate(First);
+    let Repeated: Values.Borrowˉstep = Scalarˉstep(Current, Code(0u32, 0u32, 1u32),
+        9u8, Owner, Shapes, Metadata, Payload, Empty, Empty, 0u32, Empty);
+    if !Repeated.Valid || Repeated.Views.Nextˉgeneration != 2u32 ||
+        Bytesˉlength(Repeated.Bindings) != 28u32 { return 28; }
+    let Observe: bytes = Bytesˉconcat(Bytesˉfromˉu8(152u8), Cell(0u32, 0u32));
+    let Project: bytes = Bytesˉconcat(Bytesˉfromˉu8(153u8), Cell(0u32, 0u32));
+    let Case: Values.Borrowˉstep = Scalarˉstep(Current, Observe, 9u8, Owner, Shapes,
+        Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    let Value: Values.Borrowˉstep = Scalarˉstep(Current, Project, 9u8, Owner, Shapes,
+        Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    if !Case.Valid || Case.Kind != 0u32 || Bytesˉreadˉu32ˉlittle(Case.Stack, 0u32) != 1u32 ||
+        !Value.Valid || Value.Consumed != 1u32 || Value.Kind != 0u32 || Value.Advance != 9u32 ||
+        Bytesˉreadˉu32ˉlittle(Value.Stack, 0u32) != 42u32 { return 29; }
+    let Absent: Values.Borrowˉstep = Scalarˉstep(Frames.Begin(), Code(0u32, 0u32, 1u32),
+        9u8, Cell(4294967295u32, 2147483905u32), Shapes, Empty, Empty, Empty, Empty, 0u32, Empty);
+    let Missing: Values.Borrowˉstep = Scalarˉstep(Scalarˉstate(Absent), Project, 9u8,
+        Empty, Empty, Empty, Empty, Absent.Stack, Flag, 1u32, Empty);
+    if !Absent.Valid || Bytesˉlength(Absent.Roots) != 0u32 || !Missing.Valid ||
+        Missing.Status != 3017u32 { return 30; }
+    let Load: bytes = Bytesˉconcat(Bytesˉfromˉu8(4u8), Bytesˉfromˉu32ˉlittle(0u32));
+    let Store: bytes = Bytesˉconcat(Bytesˉfromˉu8(5u8), Bytesˉfromˉu32ˉlittle(0u32));
+    let Loaded: Values.Borrowˉstep = Scalarˉstep(Current, Load, 9u8, First.Stack,
+        Viewˉshapes, Metadata, Payload, Empty, Empty, 0u32, Empty);
+    let Stored: Values.Borrowˉstep = Scalarˉstep(Current, Store, 9u8, First.Stack,
+        Viewˉshapes, Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    let Stale: Values.Borrowˉstep = Scalarˉstep(Frames.Leave(Current), Load, 9u8,
+        First.Stack, Viewˉshapes, Metadata, Payload, Empty, Empty, 0u32, Empty);
+    if !Loaded.Valid || Loaded.Handled || !Stored.Valid || Stale.Valid { return 31; }
+    let Wrongˉstore: Values.Borrowˉstep = Scalarˉstep(Current, Store, 9u8, Owner,
+        Shapes, Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    let Arithmetic: Values.Borrowˉstep = Scalarˉstep(Current, Bytesˉfromˉu8(16u8),
+        9u8, Owner, Shapes, Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    let Escaping: Values.Borrowˉstep = Scalarˉstep(Current, Bytesˉfromˉu8(81u8),
+        9u8, Owner, Shapes, Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    if Wrongˉstore.Valid || Arithmetic.Valid || Escaping.Valid { return 32; }
+    let Popped: Values.Borrowˉstep = Scalarˉstep(Current, Bytesˉfromˉu8(80u8),
+        9u8, Owner, Shapes, Metadata, Payload, First.Stack, Flag, 1u32, Empty);
+    let Returned: Values.Borrowˉstep = Scalarˉstep(Frames.Enter(Current), Bytesˉfromˉu8(81u8),
+        9u8, Owner, Shapes, Metadata, Payload, Payload, Ordinary, 1u32, Empty);
+    if !Popped.Valid || Bytesˉlength(Popped.Roots) != 8u32 || !Returned.Valid ||
+        Bytesˉlength(Returned.Frames) != 0u32 || Bytesˉlength(Returned.Roots) != 8u32 { return 33; }
+    let Descriptor: bytes = Cell(0u32, 3u32);
+    let Allocations: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
+    let Textˉview: Values.Borrowˉstep = Scalarˉstep(Frames.Begin(), Code(0u32, 0u32, 1u32),
+        3u8, Owner, Shapes, Metadata, Descriptor, Empty, Empty, 0u32, Allocations);
+    let Textˉvalue: Values.Borrowˉstep = Scalarˉstep(Scalarˉstate(Textˉview), Project,
+        3u8, Owner, Shapes, Metadata, Descriptor, Textˉview.Stack, Flag, 1u32, Allocations);
+    let Deadˉvalue: Values.Borrowˉstep = Scalarˉstep(Scalarˉstate(Textˉview), Project,
+        3u8, Owner, Shapes, Metadata, Descriptor, Textˉview.Stack, Flag, 1u32, Empty);
+    if !Textˉview.Valid || !Textˉvalue.Valid || Textˉvalue.Kind != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Textˉvalue.Allocations, 8u32) != 2u32 || Deadˉvalue.Valid { return 34; }
+    return 0;
+}
+
+export fn Check() -> i32 {
+    let Owner: bytes = Cell(0u32, 2147483904u32);
+    let Metadata: bytes = Cell(2147483904u32, 1u32);
+    let Value: bytes = Cell(42u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    let Instruction: bytes = Code(0u32, 1u32, 1u32);
+    let Initial: Frames.State = Frames.Begin();
+    let First: Frames.Execution = Frames.Execute(Initial, Instruction, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if !First.State.Valid || Bytesˉlength(First.Handle) != 8u32 || Bytesˉlength(Frames.Roots(First.State)) != 9u32 { return 1; }
+    var Current: Frames.State = First.State;
+    var Index: u32 = 0u32;
+    while Index < 1000u32 {
+        let Repeated: Frames.Execution = Frames.Execute(Current, Instruction, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+        if !Repeated.State.Valid || Bytesˉreadˉu32ˉlittle(Repeated.Handle, 4u32) != 1u32 { return 2; }
+        Current = Repeated.State;
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(Current.Bindings) != 28u32 || Current.Views.Nextˉgeneration != 2u32 { return 2; }
+    let Changed: Frames.Execution = Frames.Execute(Current, Instruction, Owner, 0u32, 1u32, 9u32, Metadata, Cell(43u32, 0u32));
+    let Moved: Frames.Execution = Frames.Execute(Current, Instruction, Cell(1u32, 2147483904u32), 0u32, 1u32, 9u32,
+        Bytesˉconcat(Metadata, Metadata), Bytesˉconcat(Value, Value));
+    if Changed.State.Valid || Moved.State.Valid || Bytesˉlength(Current.Bindings) != 28u32 { return 3; }
+    let Child: Frames.State = Frames.Enter(Current);
+    if !Child.Valid || Child.Base != 28u32 || Bytesˉlength(Child.Frames) != 4u32 || Bytesˉlength(Frames.Roots(Child)) != 9u32 { return 4; }
+    let Nested: Frames.Execution = Frames.Execute(Child, Instruction, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if !Nested.State.Valid || Bytesˉreadˉu32ˉlittle(Nested.Handle, 4u32) != 2u32 || Bytesˉlength(Frames.Roots(Nested.State)) != 17u32 { return 5; }
+    let Returned: Frames.State = Frames.Leave(Nested.State);
+    let Parentˉview: View.Projectionˉresult = View.Observe(Returned.Views, 0u32, 1u32, 1u32);
+    let Childˉview: View.Projectionˉresult = View.Observe(Returned.Views, 1u32, 2u32, 1u32);
+    if !Returned.Valid || !Parentˉview.Valid || Childˉview.Valid || Bytesˉlength(Frames.Roots(Returned)) != 9u32 { return 6; }
+    let Reentered: Frames.State = Frames.Enter(Returned);
+    let Reused: Frames.Execution = Frames.Execute(Reentered, Instruction, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Stale: View.Projectionˉresult = View.Observe(Reused.State.Views, 1u32, 2u32, 1u32);
+    if !Reused.State.Valid || Stale.Valid || Bytesˉreadˉu32ˉlittle(Reused.Handle, 4u32) != 3u32 { return 7; }
+    let Torn: Frames.State = Frames.Teardown(Reused.State);
+    if !Torn.Valid || Bytesˉlength(Torn.Bindings) != 0u32 || Bytesˉlength(Torn.Frames) != 0u32 ||
+        Bytesˉlength(Frames.Roots(Torn)) != 1u32 || Torn.Views.Nextˉgeneration != 4u32 { return 8; }
+    let Exited: Frames.State = Frames.Leave(First.State);
+    if !Exited.Valid || Bytesˉlength(Frames.Roots(Exited)) != 1u32 { return 9; }
+    Current = Initial;
+    Index = 0u32;
+    while Index < 63u32 { Current = Frames.Enter(Current); if !Current.Valid { return 10; } Index = Index + 1u32; }
+    let Tooˉdeep: Frames.State = Frames.Enter(Current);
+    if Tooˉdeep.Valid || Bytesˉlength(Current.Frames) != 252u32 { return 10; }
+    let Emptyˉunwind: Frames.State = Frames.Teardown(Current);
+    if !Emptyˉunwind.Valid || Bytesˉlength(Emptyˉunwind.Frames) != 0u32 { return 11; }
+    Current = Initial;
+    var Locals: bytes = Owner;
+    Index = 0u32;
+    while Index < 6u32 { Locals = Bytesˉconcat(Locals, Locals); Index = Index + 1u32; }
+    Index = 0u32;
+    while Index < 64u32 {
+        let Added: Frames.Execution = Frames.Execute(Current, Code(Index, 1u32, 1u32), Locals, 0u32, 1u32, 9u32, Metadata, Value);
+        if !Added.State.Valid { return 12; }
+        Current = Added.State;
+        Index = Index + 1u32;
+    }
+    let Full: Frames.Execution = Frames.Execute(Current, Code(64u32, 1u32, 1u32), Bytesˉconcat(Locals, Owner), 0u32, 1u32, 9u32, Metadata, Value);
+    if Full.State.Valid || Bytesˉlength(Current.Bindings) != 1792u32 || Bytesˉlength(Frames.Roots(Current)) != 513u32 { return 12; }
+    let Fullˉrepeat: Frames.Execution = Frames.Execute(Current, Instruction, Locals, 0u32, 1u32, 9u32, Metadata, Value);
+    if !Fullˉrepeat.State.Valid || Fullˉrepeat.State.Views.Nextˉgeneration != 65u32 { return 13; }
+    let Allˉreleased: Frames.State = Frames.Teardown(Current);
+    if !Allˉreleased.Valid || Bytesˉlength(Frames.Roots(Allˉreleased)) != 1u32 { return 14; }
+    let Malformed: Frames.State = Frames.State(true, Initial.Views, Value, Empty, 0u32);
+    let Malformedˉleave: Frames.State = Frames.Leave(Malformed);
+    let Badˉbase: Frames.State = Frames.State(true, Initial.Views, Empty, Empty, 28u32);
+    if Malformedˉleave.Valid || Bytesˉlength(Frames.Roots(Malformed)) != 0u32 || Bytesˉlength(Frames.Roots(Badˉbase)) != 0u32 { return 15; }
+    let Flags: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Bytesˉfromˉu8(0u8));
+    let Passed: bytes = Frames.Track(Flags, 1u32, false, false);
+    let Restored: bytes = Frames.Track(Bytesˉslice(Passed, 1u32, 1u32), 0u32, true, false);
+    if Bytesˉlength(Passed) != 2u32 || Bytesˉreadˉu8(Passed, 1u32) != 1u8 ||
+        Bytesˉlength(Restored) != 3u32 || Bytesˉreadˉu8(Restored, 1u32) != 1u8 || Bytesˉreadˉu8(Restored, 2u32) != 0u8 { return 16; }
+    let Projected: bytes = Frames.Track(Bytesˉslice(Flags, 0u32, 1u32), 1u32, true, false);
+    let Popped: bytes = Frames.Track(Bytesˉslice(Flags, 0u32, 1u32), 1u32, false, false);
+    if Bytesˉlength(Projected) != 2u32 || Bytesˉreadˉu8(Projected, 1u32) != 0u8 || Bytesˉlength(Popped) != 1u32 { return 17; }
+    var Fullˉflags: bytes = Bytesˉfromˉu8(0u8);
+    Index = 0u32;
+    while Index < 6u32 { Fullˉflags = Bytesˉconcat(Fullˉflags, Fullˉflags); Index = Index + 1u32; }
+    if Bytesˉlength(Frames.Track(Fullˉflags, 0u32, true, true)) != 0u32 ||
+        Bytesˉlength(Frames.Track(Fullˉflags, 65u32, false, false)) != 0u32 ||
+        Bytesˉlength(Frames.Track(Fullˉflags, 1u32, true, true)) != 65u32 { return 18; }
+    let Absent: Frames.Execution = Frames.Execute(Initial, Instruction, Cell(4294967295u32, 2147483905u32), 0u32, 1u32, 9u32, Empty, Empty);
+    if !Absent.State.Valid || Bytesˉlength(Frames.Roots(Absent.State)) != 1u32 { return 19; }
+    if Frames.Valueˉkind(93u32) != 93u32 || Frames.Valueˉkind(71u32) != 7u32 ||
+        Frames.Valueˉkind(70u32) != 6u32 || Frames.Valueˉkind(7u32) != 7u32 ||
+        Frames.Payloadˉkind(37u32) || Frames.Payloadˉkind(23u32) { return 20; }
+    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 1u32) != 524289u32 { return 21; }
+    Index = 0u32;
+    while Index < 13u32 {
+        if Scanner.Scanˉfunction(Bytesˉslice(Instruction, 0u32, Index), 0u32, Index, 39u32, 1u32) != 0u32 { return 22; }
+        Index = Index + 1u32;
+    }
+    if Scanner.Scanˉfunction(Code(4096u32, 1u32, 1u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 4096u32, 1u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 1u32, 0u32), 0u32, 13u32, 39u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Code(0u32, 1u32, 4u32), 0u32, 13u32, 39u32, 1u32) != 0u32 { return 23; }
+    if Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 38u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 0u32, 13u32, 39u32, 2u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 4294967295u32, 13u32, 39u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Instruction, 0u32, 14u32, 39u32, 1u32) != 0u32 { return 24; }
+    var Many: bytes = Instruction;
+    Index = 0u32;
+    while Index < 12u32 { Many = Bytesˉconcat(Many, Many); Index = Index + 1u32; }
+    if Scanner.Scanˉfunction(Many, 0u32, Bytesˉlength(Many), 39u32, 1u32) != 2147487744u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Many, Instruction), 0u32, Bytesˉlength(Many) + 13u32, 39u32, 1u32) != 0u32 { return 25; }
+    let Return: bytes = Bytesˉfromˉu8(81u8);
+    if Scanner.Scanˉfunction(Return, 0u32, 1u32, 38u32, 1u32) != 1u32 ||
+        Scanner.Scanˉfunction(Return, 0u32, 1u32, 40u32, 1u32) != 0u32 ||
+        Scanner.Scanˉfunction(Bytesˉconcat(Bytesˉfromˉu8(214u8), Value), 0u32, 9u32, 39u32, 1u32) != 0u32 { return 26; }
+    return Checkˉscalar();
+}

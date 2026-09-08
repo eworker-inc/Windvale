@@ -101,8 +101,11 @@ Two active tracks intentionally use different bytecode generations:
   A bounded runtime payload-reader preparation component now passes 16 new
   grouped tests in the [233-group Windows owner](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.json).
   An [internal E1 adapter](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
-  adds view retention, release, and stale-lease rejection. Dispatcher/frame and
-  collector integration remain pending. Remaining owned-payload
+  adds view retention, release, and stale-lease rejection. Scalar source now
+  connects frame-owned leases to dispatch, locals, calls, collector roots, and
+  cleanup. The [frame integration checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
+  passes 287 component groups and source-built runner regression checks on Windows.
+  Borrowed-owner forced collection and complete candidate execution remain pending. Remaining owned-payload
   reconciliation and the complete audit still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery

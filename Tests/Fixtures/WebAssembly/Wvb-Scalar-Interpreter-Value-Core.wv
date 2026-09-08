@@ -1,0 +1,329 @@
+module WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore profile portable;
+
+import Windvaleˉfoundationˉborrowˉview as Borrowˉview;
+import Windvaleˉfoundationˉborrowˉframes as Borrowˉframes;
+
+// Scalar value geometry and retention over verified module directories.
+// Candidate borrowing remains behind the complete interpreter admission gate.
+
+export fn Variantˉcaseˉfields(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Type: u32,
+    Case: u32
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets,
+        Type * 4u32
+    ) + 1u32;
+    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    let Caseˉcount: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    if Case >= Caseˉcount { return Invalid; }
+    Cursor = Cursor + 4u32;
+    var Caseˉindex: u32 = 0u32;
+    while Caseˉindex <= Case {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Marker: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + 1u32;
+        var Fieldˉcount: u32 = 0u32;
+        if Marker == 1u32 {
+            Fieldˉcount = 1u32;
+        } else if Marker == 2u32 {
+            Fieldˉcount = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+            Cursor = Cursor + 4u32;
+        } else if Marker != 0u32 {
+            return Invalid;
+        }
+        let Fieldˉcursor: u32 = Cursor;
+        var Fieldˉindex: u32 = 0u32;
+        while Fieldˉindex < Fieldˉcount {
+            Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+            Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
+            Fieldˉindex = Fieldˉindex + 1u32;
+        }
+        if Caseˉindex == Case {
+            return Bytesˉconcat(
+                Bytesˉfromˉu32ˉlittle(Fieldˉcount),
+                Bytesˉfromˉu32ˉlittle(Fieldˉcursor)
+            );
+        }
+        Caseˉindex = Caseˉindex + 1u32;
+    }
+    return Invalid;
+}
+
+export fn Shapeˉwidthˉat(Module: bytes, Cursor: u32) -> u32 {
+    var Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+    var Prefix: u32 = 0u32;
+    if Kind == 37u32 {
+        if Cursor + 1u32 >= Bytesˉlength(Module) { return 0u32; }
+        Kind = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor + 1u32));
+        if !Borrowˉframes.Payloadˉkind(Kind) { return 0u32; }
+        Prefix = 1u32;
+    }
+    if Kind == 7u32 || Kind == 8u32 || Kind == 11u32 || Kind == 22u32 ||
+        Kind == 23u32 || Kind == 24u32 || Kind == 26u32 || Kind == 27u32 ||
+        Kind == 28u32 || Kind == 29u32 || Kind == 30u32 || Kind == 35u32 {
+        return Prefix + 5u32;
+    }
+    return Prefix + 1u32;
+}
+
+fn Executeˉfoundationˉborrow(
+    Current: Borrowˉframes.State, Module: bytes, Instruction: u32,
+    Typeˉoffsets: bytes, Localˉshapes: bytes, Shapeˉoffset: u32,
+    Locals: bytes, Metadata: bytes, Values: bytes
+) -> Borrowˉframes.Execution {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Borrowˉframes.Execution = Borrowˉframes.Execution(
+        Borrowˉframes.State(false, Current.Views, Current.Bindings, Current.Frames, Current.Base), Empty);
+    if Instruction > Bytesˉlength(Module) || Bytesˉlength(Module) - Instruction < 13u32 { return Invalid; }
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 1u32);
+    let Type: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 5u32);
+    let Projection: u32 = Bytesˉreadˉu32ˉlittle(Module, Instruction + 9u32);
+    if Local >= Bytesˉlength(Locals) / 8u32 || Type >= Bytesˉlength(Typeˉoffsets) / 4u32 ||
+        Projection < 1u32 || Projection > 3u32 || Shapeˉoffset > Bytesˉlength(Localˉshapes) ||
+        Bytesˉlength(Locals) > Bytesˉlength(Localˉshapes) - Shapeˉoffset { return Invalid; }
+    let Localˉoffset: u32 = Shapeˉoffset + Local * 8u32;
+    if Bytesˉreadˉu32ˉlittle(Localˉshapes, Localˉoffset) != 11u32 { return Invalid; }
+    let Ownerˉtoken: u32 = Bytesˉreadˉu32ˉlittle(Localˉshapes, Localˉoffset + 4u32);
+    if Ownerˉtoken == 0u32 || Ownerˉtoken > Bytesˉlength(Typeˉoffsets) / 4u32 { return Invalid; }
+    let Ownerˉtype: u32 = Ownerˉtoken - 1u32;
+    if Projection == 1u32 && Ownerˉtype != Type { return Invalid; }
+    let Present: bytes = Variantˉcaseˉfields(Module, Typeˉoffsets, Type, 0u32);
+    let Absent: bytes = Variantˉcaseˉfields(Module, Typeˉoffsets, Type, 1u32);
+    var Case: u32 = 0u32;
+    if Projection == 3u32 { Case = 1u32; }
+    let Ownerˉcase: bytes = Variantˉcaseˉfields(Module, Typeˉoffsets, Ownerˉtype, Case);
+    if Bytesˉlength(Present) != 8u32 || Bytesˉlength(Absent) != 8u32 ||
+        Bytesˉlength(Ownerˉcase) != 8u32 || Bytesˉreadˉu32ˉlittle(Present, 0u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Absent, 0u32) != 0u32 || Bytesˉreadˉu32ˉlittle(Ownerˉcase, 0u32) != 1u32 { return Invalid; }
+    let Shape: u32 = Fieldˉshapeˉat(Module, Bytesˉreadˉu32ˉlittle(Present, 4u32), 0u32);
+    let Ownerˉshape: u32 = Fieldˉshapeˉat(Module, Bytesˉreadˉu32ˉlittle(Ownerˉcase, 4u32), 0u32);
+    let Width: u32 = Shapeˉwidthˉat(Module, Shape);
+    if Width == 0u32 || Width != Shapeˉwidthˉat(Module, Ownerˉshape) { return Invalid; }
+    var Index: u32 = 0u32;
+    while Index < Width {
+        if Bytesˉreadˉu8(Module, Shape + Index) != Bytesˉreadˉu8(Module, Ownerˉshape + Index) { return Invalid; }
+        Index = Index + 1u32;
+    }
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+    if !Borrowˉframes.Payloadˉkind(Kind) { return Invalid; }
+    return Borrowˉframes.Execute(Current, Bytesˉslice(Module, Instruction, 13u32), Locals,
+        Ownerˉtype, Type, Kind, Metadata, Values);
+}
+
+export fn Fieldˉshapeˉat(
+    Module: bytes,
+    Fields: u32,
+    Field: u32
+) -> u32 {
+    var Cursor: u32 = Fields;
+    var Index: u32 = 0u32;
+    while Index < Field {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
+        Index = Index + 1u32;
+    }
+    return Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+}
+
+export fn Retainˉdescriptor(
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Allocations, 0u32, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length == 0u32 { return Allocations; }
+    var Allocationˉindex: u32 = 4294967295u32;
+    var Scan: u32 = 0u32;
+    while Scan < Allocationˉcount {
+        let Entry: u32 = Scan * 12u32;
+        let References: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 8u32
+        );
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
+        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 4u32
+        );
+        let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+        if References > 0u32 && Valueˉoffset >= Offset {
+            if Valueˉoffset - Offset <= Allocationˉlength {
+                if Length <= Allocationˉlength - (Valueˉoffset - Offset) {
+                    Allocationˉindex = Scan;
+                    Scan = Allocationˉcount;
+                }
+            }
+        }
+        Scan = Scan + 1u32;
+    }
+    if Allocationˉindex == 4294967295u32 { return Invalid; }
+    let Selectedˉentry: u32 = Allocationˉindex * 12u32;
+    let Selectedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+        Allocations,
+        Selectedˉentry + 8u32
+    );
+    if Selectedˉreferences == 4294967295u32 { return Invalid; }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Allocations, 0u32, Selectedˉentry),
+            Bytesˉconcat(
+                Bytesˉslice(Allocations, Selectedˉentry, 8u32),
+                Bytesˉfromˉu32ˉlittle(Selectedˉreferences + 1u32)
+            )
+        ),
+        Bytesˉslice(
+            Allocations,
+            Selectedˉentry + 12u32,
+            Bytesˉlength(Allocations) - Selectedˉentry - 12u32
+        )
+    );
+}
+
+export fn Prepareˉborrowˉstep(
+    Initialˉstate: Borrowˉframes.State, Module: bytes, Requestˉmajor: u32,
+    Payload: u32, Payloadˉlength: u32, Typeˉoffsets: bytes,
+    Localˉshapes: bytes, Shapeˉoffset: u32, Locals: bytes,
+    Recordˉmetadata: bytes, Records: bytes, Initialˉstack: bytes,
+    Initialˉallocations: bytes, Heapˉallocationˉcount: u32,
+    Borrowˉstack: bytes, Initialˉconsumed: u32
+) -> Borrowˉstep {
+    let Empty: bytes = Bytesˉslice(Module, 0u32, 0u32);
+    let Invalid: Borrowˉstep = Borrowˉstep(false, false, Initialˉstate.Views,
+        Initialˉstate.Bindings, Initialˉstate.Frames, Initialˉstate.Base,
+        Empty, Empty, Empty, 0u32, false, 0u32, 0u32, 0u32);
+    var Borrowˉstate: Borrowˉframes.State = Initialˉstate;
+    var Stack: bytes = Initialˉstack;
+    var Heapˉallocations: bytes = Initialˉallocations;
+    var Stackˉconsumed: u32 = Initialˉconsumed;
+    var Stackˉproduced: bool = false;
+    var Stackˉproducedˉkind: u32 = 0u32;
+    var Sectionˉkind: u32 = 0u32;
+    var Advance: u32 = 0u32;
+    var Handled: bool = false;
+    let Typeˉcount: u32 = Bytesˉlength(Typeˉoffsets) / 4u32;
+    let Stackˉdescriptorˉcount: u32 = Bytesˉlength(Stack) / 8u32;
+    let Zeroˉvalue: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    let Zeroˉcell: bytes = Bytesˉconcat(Zeroˉvalue, Zeroˉvalue);
+    var Topˉisˉview: bool = false;
+    if Bytesˉlength(Borrowˉstack) != Stackˉdescriptorˉcount { return Invalid; }
+    if Stackˉdescriptorˉcount > 0u32 {
+        Topˉisˉview = Bytesˉreadˉu8(Borrowˉstack, Stackˉdescriptorˉcount - 1u32) == 1u8;
+    }
+    // The caller selects WVB 1.39; this path is synchronous and capability-free.
+    if Requestˉmajor != 1u32 || Payloadˉlength == 65u32 ||
+        (Payloadˉlength >= 214u32 && Payloadˉlength <= 224u32) { return Invalid; }
+    if Payloadˉlength == 225u32 {
+        let Borrowed: Borrowˉframes.Execution = Executeˉfoundationˉborrow(
+            Borrowˉstate, Module, Payload, Typeˉoffsets, Localˉshapes,
+            Shapeˉoffset,
+            Locals, Recordˉmetadata, Records);
+        if !Borrowed.State.Valid { return Invalid; }
+        Borrowˉstate = Borrowed.State;
+        Stack = Bytesˉconcat(Stack, Borrowed.Handle);
+        Stackˉconsumed = 0u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 5u32;
+        Advance = Advance + 13u32;
+        Handled = true;
+    } else if Topˉisˉview && (Payloadˉlength == 152u32 || Payloadˉlength == 153u32 || Payloadˉlength == 196u32) {
+        let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+        let Selected: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 5u32);
+        let Handle: bytes = Bytesˉslice(Stack, Bytesˉlength(Stack) - 8u32, 8u32);
+        let View: Borrowˉview.Projectionˉresult = Borrowˉview.Observe(Borrowˉstate.Views,
+            Bytesˉreadˉu32ˉlittle(Handle, 0u32), Bytesˉreadˉu32ˉlittle(Handle, 4u32), Viewˉtype);
+        if !View.Valid || Viewˉtype >= Typeˉcount { return Invalid; }
+        Stack = Bytesˉslice(Stack, 0u32, Bytesˉlength(Stack) - 8u32);
+        Stackˉconsumed = 1u32;
+        Stackˉproduced = true;
+        Stackˉproducedˉkind = 0u32;
+        var Value: bytes = Zeroˉcell;
+        if Payloadˉlength == 152u32 {
+            if Selected > 1u32 { return Invalid; }
+            if (Selected == 0u32 && View.Present) || (Selected == 1u32 && !View.Present) {
+                Value = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Zeroˉvalue);
+            }
+        } else {
+            if Selected != 0u32 { return Invalid; }
+            if !View.Present { Sectionˉkind = 3017u32; }
+            else {
+                Value = View.Value;
+                if View.Root == Borrowˉview.Payloadˉroot.Aggregate { Stackˉproducedˉkind = 2u32; }
+                if View.Root == Borrowˉview.Payloadˉroot.Descriptor {
+                    let Retained: bytes = Retainˉdescriptor(Heapˉallocations, Heapˉallocationˉcount, Value);
+                    if Bytesˉlength(Retained) != Bytesˉlength(Heapˉallocations) ||
+                        (Bytesˉreadˉu32ˉlittle(Value, 4u32) > 0u32 && Bytesˉlength(Retained) == 0u32) { return Invalid; }
+                    Heapˉallocations = Retained;
+                    Stackˉproducedˉkind = 1u32;
+                    let Fields: bytes = Variantˉcaseˉfields(Module, Typeˉoffsets, Viewˉtype, 0u32);
+                    if Bytesˉlength(Fields) != 8u32 { return Invalid; }
+                    let Shape: u32 = Fieldˉshapeˉat(Module, Bytesˉreadˉu32ˉlittle(Fields, 4u32), 0u32);
+                    if Bytesˉreadˉu8(Module, Shape) == 24u8 { Stackˉproducedˉkind = 4u32; }
+                }
+            }
+        }
+        Stack = Bytesˉconcat(Stack, Value);
+        Advance = Advance + 9u32;
+        Handled = true;
+    } else {
+        if Payloadˉlength != 5u32 && Payloadˉlength != 80u32 {
+            if Stackˉconsumed > Stackˉdescriptorˉcount { return Invalid; }
+            var Operand: u32 = Stackˉdescriptorˉcount - Stackˉconsumed;
+            while Operand < Stackˉdescriptorˉcount {
+                if Bytesˉreadˉu8(Borrowˉstack, Operand) == 1u8 { return Invalid; }
+                Operand = Operand + 1u32;
+            }
+        }
+        if Payloadˉlength == 4u32 || Payloadˉlength == 5u32 {
+            let Local: u32 = Bytesˉreadˉu32ˉlittle(Module, Payload + 1u32);
+            if Local >= Bytesˉlength(Locals) / 8u32 { return Invalid; }
+            let Viewˉlocalˉshape: u32 = Shapeˉoffset + Local * 8u32;
+            let Isˉview: bool = Bytesˉreadˉu32ˉlittle(Localˉshapes, Viewˉlocalˉshape) == 93u32;
+            if Payloadˉlength == 5u32 && Isˉview != Topˉisˉview { return Invalid; }
+            if Isˉview {
+                let Token: u32 = Bytesˉreadˉu32ˉlittle(Localˉshapes, Viewˉlocalˉshape + 4u32);
+                if Token == 0u32 || Token > Typeˉcount { return Invalid; }
+                var Viewˉlocalˉhandle: bytes = Bytesˉslice(Locals, Local * 8u32, 8u32);
+                if Payloadˉlength == 5u32 { Viewˉlocalˉhandle = Bytesˉslice(Stack, Bytesˉlength(Stack) - 8u32, 8u32); }
+                let Observed: Borrowˉview.Projectionˉresult = Borrowˉview.Observe(Borrowˉstate.Views,
+                    Bytesˉreadˉu32ˉlittle(Viewˉlocalˉhandle, 0u32), Bytesˉreadˉu32ˉlittle(Viewˉlocalˉhandle, 4u32),
+                    Token - 1u32);
+                if !Observed.Valid { return Invalid; }
+            }
+        }
+        if Payloadˉlength == 81u32 {
+            if Topˉisˉview { return Invalid; }
+            Borrowˉstate = Borrowˉframes.Leave(Borrowˉstate);
+            if !Borrowˉstate.Valid { return Invalid; }
+        }
+    }
+    let Retainedˉroots: bytes = Borrowˉframes.Roots(Borrowˉstate);
+    if Bytesˉlength(Retainedˉroots) == 0u32 { return Invalid; }
+    return Borrowˉstep(true, Handled, Borrowˉstate.Views,
+        Borrowˉstate.Bindings, Borrowˉstate.Frames, Borrowˉstate.Base,
+        Bytesˉslice(Retainedˉroots, 1u32, Bytesˉlength(Retainedˉroots) - 1u32),
+        Stack, Heapˉallocations, Stackˉconsumed, Stackˉproduced,
+        Stackˉproducedˉkind, Sectionˉkind, Advance);
+}
+
+export record Borrowˉstep {
+    Valid: bool;
+    Handled: bool;
+    Views: Borrowˉview.Retentionˉstate;
+    Bindings: bytes;
+    Frames: bytes;
+    Base: u32;
+    Roots: bytes;
+    Stack: bytes;
+    Allocations: bytes;
+    Consumed: u32;
+    Produced: bool;
+    Kind: u32;
+    Status: u32;
+    Advance: u32;
+}

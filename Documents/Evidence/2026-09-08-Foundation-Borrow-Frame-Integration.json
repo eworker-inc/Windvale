@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-borrow-frame-integration",
+  "date": "2026-09-08",
+  "subject": "Foundation frame-owned leases and Windows scalar source integration",
+  "claim": "The existing Foundation owner passes 287 Windows groups, including 34 frame/scanner/scalar-value groups. The current-source runner compiles, packages natively, and passes six focused regression checks. Its interpreter loop uses 1996 slots below the unchanged 2047 maximum. Complete WVB 1.39 admission and candidate execution remain unqualified.",
+  "source": {
+    "kind": "Other",
+    "value": "Implementation worktree verified against base b7de1fc107b80444907a1677c686960ba68ce42c; exact source and artifact identities distinguish historical failed attempts from the final passing checkpoint."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "279 grouped Foundation borrow cases, including frame entry/exit, nested teardown, loop lease reuse, stale generation rejection, global slot/depth bounds, stack view flags, and E1 scanner malformed-input boundaries",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 108552,
+      "inputs": [
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7073,
+          "sha256": "1686513cf8e7f4d11d86ac9c0533abcbebe2d7d73268117b42c161f5cce1dfa6"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 9058,
+          "sha256": "8f11ff61cceb6b520f3dd3356935149ab343abfcc6c81a51005e5d946d4aa1da"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 811061,
+          "sha256": "61f455273071f2da43804497cfb544abf84a1eb52af50dcb1f3a6e3899b2ec2b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Full scalar runner source compilation using the existing bootstrap builder",
+      "tool": "Artifacts/Native-Compiler-Reconstruction-Candidate/windows-x64/wvbuild.exe",
+      "command": "wvbuild.exe --workspace Windvale.wvws --project Projects/Tools/Windvale-Wvb-Runner.wvproj Runner.wvb",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 398002,
+          "sha256": "02703bcd011fb43f0a8f655a6d590cb318368ac69ff51639265012fa74278db7"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Intermediate runner compilation with the reconstructed current split compiler",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 250114,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 398157,
+          "sha256": "54894c43afb21ee0cef0ee0a3a13183001d07281a2b4860f8c927b34c6781c07"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+          "size": 1149135,
+          "sha256": "030f13883563c72429a714b492251faee6fdff3efd690460854bc959c5da831a"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Intermediate runner native packaging; bytecode verification passed, native staging rejected function 358 with 2539 total local slots against the 2047 maximum",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb Artifacts/Work/Foundation-Borrow-Frame-Runner.exe --development-cache",
+      "result": "Failed",
+      "elapsedMilliseconds": 22537
+    },
+    {
+      "host": "Windows x64",
+      "target": "Historical in-module helper extraction; analysis-wir exited 2 before bindings or WIR output",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 400818,
+          "sha256": "ca02e076e7835f75103d5c19aeced2be2b1722de19ee21b7bbc05c6c951b162e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Changed verification routing; 31 general and 291 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Final 287-group Foundation owner, including eight direct scalar instruction-handling groups added to the original 26 frame/scanner groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 2483,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 15745,
+          "sha256": "553c5284347c6f676834c66c95c4c7220ec866ed348d49681a44e0af26d49a86"
+        },
+        {
+          "path": "Runtime/Windvale/Foundation-Borrow-Frames-Core.wv",
+          "size": 7073,
+          "sha256": "1686513cf8e7f4d11d86ac9c0533abcbebe2d7d73268117b42c161f5cce1dfa6"
+        },
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 15816,
+          "sha256": "a1a170ebab00444d1ea772833100769414d1f5527871f8eef2afba5f2457cad3"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 839819,
+          "sha256": "55c5049ce1ea72cf425c8c970751bba210d8382707e62788c57942d47f822914"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Final current-source scalar runner compilation after value-core extraction",
+      "tool": "Current split compiler cache 6f70d30efc3ced3a61ec5f9a4b7997b39d85ecf22f1462ed1b9d53326b9aabe0; analyzer sha256 c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1; emitter sha256 2187d7acdd67044c5fa092af62af191e6fa266d7b24818c3ab28b3a9ea39fc00",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 254268,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 386291,
+          "sha256": "fc56fc4187ac0db8e94bdb7dba47d3c9157a6982127b301b9fdff44c4611720c"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 15745,
+          "sha256": "553c5284347c6f676834c66c95c4c7220ec866ed348d49681a44e0af26d49a86"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Wvb-Runner.wvproj",
+          "size": 1470,
+          "sha256": "c9b2d5a13f1916c8bd3fc1660f99cdf67ef8b48dfb15c3de4838b6790243a161"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+          "size": 1152167,
+          "sha256": "f5c5aaab01886c1bd88c1dcac237d49745fcc846c70e19fb67a4850cc6afcfd6"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "All 447 functions satisfy existing native limits; interpreter loop has 1 parameter and 1995 locals, maximum total in the module is 2015. Complete bytecode verification, native staging, linking, transport, and hosted container construction passed.",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb Artifacts/Work/Foundation-Borrow-Frame-Runner.exe --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Frame-Runner.wvb",
+          "size": 1152167,
+          "sha256": "f5c5aaab01886c1bd88c1dcac237d49745fcc846c70e19fb67a4850cc6afcfd6"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe",
+          "size": 11955200,
+          "sha256": "c0088c296d2ea57adadc7769e970f5ee6c885fee4e9a21a9f69f01bad7046a3b"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Scalar return: Result: 42; exit 0",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 87,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+          "size": 174,
+          "sha256": "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Instruction reporting: Result: 42; Instructions: 4; exit 0",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb --report-steps",
+      "result": "Passed",
+      "elapsedMilliseconds": 49,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+          "size": 174,
+          "sha256": "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Text and bytes: Result: 42; exit 0",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Work/Foundation-Borrow-Text-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 47,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Text-Smoke.wvb",
+          "size": 2022,
+          "sha256": "79ba5fc6acf642c340e89829381d9688bcac6270284a78b38713c4dfba193bd7"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Heap reclamation: Result: 4099; exit 0",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Work/Foundation-Borrow-Reclaim-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 1300,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Reclaim-Smoke.wvb",
+          "size": 535,
+          "sha256": "12ed74fbda7923233021f9776e70fdcd92695c96d26d5416ad2fdb97c65f0344"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Aggregate ownership: Result: 69; exit 0",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Work/Foundation-Borrow-Ownership-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 221,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Ownership-Smoke.wvb",
+          "size": 1550,
+          "sha256": "f96203f6345198d8c690947926dbdf348f05f3d74280f55bc499157ff9d909a8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Malformed module rejection: Exit 1; empty stdout; envelope rejection diagnostic sha256 a88ea127be32ffbde27b0944be4e8c232155bec2cbd8ba3ae0449d7d20dfac0a",
+      "command": "Artifacts/Work/Foundation-Borrow-Frame-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvo",
+      "result": "Passed",
+      "elapsedMilliseconds": 44,
+      "inputs": [
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvo",
+          "size": 479,
+          "sha256": "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Passing claims are limited to the named Windows source integration, native package, component tests, and existing admitted-module regression checks. Complete WVB 1.39 admission stays closed; no complete candidate execution or cross-host qualification is claimed.",
+    "Historical failures are preserved above. Duplicate locals were corrected. The in-module borrowing helper form still triggered an unexplained native analyzer exit 2 even though isolated forms compiled; moving value handling and its shared readers to a focused module removed the trigger. This is not a general compiler-diagnostics repair.",
+    "Frame-owned leases retain owners until frame exit, not last use. Repeated exact local/type/projection keys reuse a lease; 64 bindings occupy at most 1792 bytes, 63 saved bases occupy 252 bytes, and 64 operand flags bound state in addition to the 2304-byte view table. This relies on verified frozen direct owners and non-escaping borrowed results.",
+    "The new direct scalar cases cover E1 creation/reuse, case and field observations, absence, live and stale view locals, illegal view operands and returns, frame return roots, and descriptor reference retention. They do not exercise borrowed owners during forced aggregate collection, backing-storage lifetime, callable capture lifetime, or complete candidate module execution. Task/provider, unsafe, callable, and owned-payload restrictions remain.",
+    "Existing text/bytes, heap-reclamation, and aggregate-ownership fixtures were compiled as small temporary projects, then executed by the final source-built runner with exact result checks and 60-second per-process bounds. The instruction-report oracle was checked against the existing reconstruction fixture hash; its correct count is 4, not the initial diagnostic expectation of 2. No retained verifier entry point was added.",
+    "The expanded owner first passed after build/package/execution phases of 28669, 85477, and 1423 ms. Its first summary printed the old count; the corrected 287-group summary was confirmed by the 2483 ms cache-backed run. Final runner package phase timings were 19 seconds for complete verification, 35 for staging, and 53 for container construction. These are warm-bootstrap Windows measurements, not clean-machine, peak-memory, or cross-host performance claims.",
+    "The reviewed automatic plan selected 3450 expected seconds and 13800 maximum seconds and was not executed wholesale. The initial approved cold compiler run took 2161372 ms, populated the compiler cache, and failed target analysis. The user subsequently explicitly approved continuing for all time needed; subsequent builds reused the recorded compiler cache. No repeated broad gate was used.",
+    "Full memory-budget, independent compiler reconstruction, broad native lowering/ABI, browser, OS, real-consumer, and Linux qualification were deferred because this checkpoint does not claim those contracts. Only the current runner target was rebuilt and packaged; no bootstrap candidate artifact was promoted.",
+    "No third-party material was incorporated."
+  ],
+  "related": [
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json"
+  ]
+}

@@ -62,11 +62,21 @@ The [view-reader evidence](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.
 records that Windows run. An internal `E1` adapter now adds explicit view leases,
 alias retention, final release, and generation-checked slot reuse, with 20 more
 grouped cases in the same owner. It exposes original-owner roots for collection
-without transferring payload ownership. Next, carry those leases through the
-scalar dispatcher's borrowed shapes, locals, calls, stack, collector, and cleanup.
-The adapter is not yet wired into module execution; complete WVB 1.39 admission
-remains closed. The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
-records verification and limitations.
+without transferring payload ownership. The scalar source now connects leases
+to borrowed shapes, locals, synchronous calls, stack flags, collector roots, and
+frame cleanup. Frames conservatively retain owners until return and reuse leases
+for repeated projections. Complete WVB 1.39 admission remains closed;
+borrowed-owner forced collection, complete candidate execution, and the admission
+audit are the next gate.
+The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
+records the preceding component evidence. The
+[frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
+passes 287 component groups, including 34 frame, scanner, and scalar-value groups.
+The current-source runner builds, packages, and passes focused Windows execution
+checks for scalar results, reporting, text/bytes, reclamation, aggregate ownership,
+and rejection. Extracted value handling and allocation commit keep the interpreter
+loop below the unchanged native local-slot bound. This does not qualify candidate
+module execution or cross-host behavior.
 
 The current operand-integration checkpoint passes 185 focused verifier groups
 on Windows and Debian, including 35 new groups for enum observations, capability

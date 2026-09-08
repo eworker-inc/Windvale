@@ -2292,6 +2292,9 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Fixed-Integer-Core.wv',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Floating-Core.wv',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv',
+        'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv',
+        'Runtime/Windvale/Foundation-Borrow-Frames-Core.wv',
+        'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
         'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Rune-Core.wv'
     )) {
         Add-Suite @(
@@ -2392,7 +2395,7 @@ foreach ($Path in $Paths) {
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Metadata-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Stack-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv',
-        'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
+        'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Lifetime-Self-Test.wv',
         'Tests/Fixtures/Source-Wvb/Foundation-Owner-Flow-Self-Test.wv',
         'Tools/Native/Verify-Language-1.0-Using-Wir.mjs'
@@ -4750,7 +4753,7 @@ $UseFoundationBorrowDirectoryDevelopment = $FocusedDevelopmentPaths.Count -gt 0 
     $SelectedSuites.Contains('language-1-memory-budget-split-execution') -and
     @($FocusedDevelopmentPaths | Where-Object { $_ -cnotin $FoundationBorrowDirectoryInputs }).Count -eq 0
 $FoundationBorrowOwnerInputs = @(
-    'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv',
     'Projects/Tests/Windvale-Native-Test-Foundation-Owner-Flow.wvproj',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Calls-Self-Test.wv',

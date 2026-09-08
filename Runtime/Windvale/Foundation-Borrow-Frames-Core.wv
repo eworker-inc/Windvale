@@ -1,0 +1,154 @@
+module Windvaleˉfoundationˉborrowˉframes profile portable;
+
+import Windvaleˉfoundationˉborrowˉview as View;
+
+export record State {
+    Valid: bool;
+    Views: View.Retentionˉstate;
+    Bindings: bytes;
+    Frames: bytes;
+    Base: u32;
+}
+
+export record Execution {
+    State: State;
+    Handle: bytes;
+}
+
+fn Empty() -> bytes { return Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32); }
+
+export fn Begin() -> State { return State(true, View.Begin(), Empty(), Empty(), 0u32); }
+
+export fn Payloadˉkind(Kind: u32) -> bool {
+    return (Kind >= 1u32 && Kind <= 11u32) || (Kind >= 14u32 && Kind <= 20u32) ||
+        Kind == 22u32 || Kind == 24u32 || Kind == 35u32;
+}
+
+// Match the verifier's 64 + underlying-kind directory encoding. 93 is a
+// leased Option view, not an aggregate handle, and must remain distinct.
+export fn Valueˉkind(Kind: u32) -> u32 {
+    if Kind >= 64u32 && Kind != 93u32 { return Kind - 64u32; }
+    return Kind;
+}
+
+fn Failure(Current: State) -> State {
+    return State(false, Current.Views, Current.Bindings, Current.Frames, Current.Base);
+}
+
+fn Geometry(Current: State) -> bool {
+    return Current.Valid && Bytesˉlength(Current.Bindings) <= 1792u32 &&
+        Bytesˉlength(Current.Bindings) % 28u32 == 0u32 &&
+        Current.Base <= Bytesˉlength(Current.Bindings) && Current.Base % 28u32 == 0u32 &&
+        Bytesˉlength(Current.Frames) <= 252u32 && Bytesˉlength(Current.Frames) % 4u32 == 0u32;
+}
+
+fn Equal(Left: bytes, Right: bytes) -> bool {
+    if Bytesˉlength(Left) != Bytesˉlength(Right) { return false; }
+    var Index: u32 = 0u32;
+    while Index < Bytesˉlength(Left) {
+        if Bytesˉreadˉu8(Left, Index) != Bytesˉreadˉu8(Right, Index) { return false; }
+        Index = Index + 1u32;
+    }
+    return true;
+}
+
+// E1 freezes its direct owner for the function. One lease per exact
+// local/type/projection in this frame is enough for every non-escaping alias.
+// Repeating an instruction in a loop reuses that lease, not another allocation.
+// Frames own leases until return; no borrowed value may return to its caller.
+export fn Execute(Current: State, Instruction: bytes, Locals: bytes,
+    Ownerˉtype: u32, Viewˉtype: u32, Kind: u32, Metadata: bytes, Values: bytes) -> Execution {
+    let Invalid: Execution = Execution(Failure(Current), Empty());
+    if !Geometry(Current) || Bytesˉlength(Instruction) != 13u32 ||
+        Bytesˉreadˉu8(Instruction, 0u32) != 225u8 || Viewˉtype >= 4096u32 ||
+        Bytesˉreadˉu32ˉlittle(Instruction, 5u32) != Viewˉtype ||
+        Bytesˉlength(Locals) > 32768u32 || Bytesˉlength(Locals) % 8u32 != 0u32 { return Invalid; }
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Instruction, 1u32);
+    if Local >= Bytesˉlength(Locals) / 8u32 { return Invalid; }
+    let Owner: bytes = Bytesˉslice(Locals, Local * 8u32, 8u32);
+    let Selected: View.Projectionˉresult = View.Read(Owner, Ownerˉtype,
+        Bytesˉreadˉu32ˉlittle(Instruction, 9u32), Kind, Metadata, Values);
+    if !Selected.Valid { return Invalid; }
+    let Key: bytes = Bytesˉslice(Instruction, 1u32, 12u32);
+    var Cursor: u32 = Current.Base;
+    while Cursor < Bytesˉlength(Current.Bindings) {
+        if Equal(Key, Bytesˉslice(Current.Bindings, Cursor, 12u32)) {
+            let Handle: bytes = Bytesˉslice(Current.Bindings, Cursor + 20u32, 8u32);
+            let Previous: View.Projectionˉresult = View.Observe(Current.Views,
+                Bytesˉreadˉu32ˉlittle(Handle, 0u32), Bytesˉreadˉu32ˉlittle(Handle, 4u32), Viewˉtype);
+            if !Previous.Valid || !Equal(Owner, Bytesˉslice(Current.Bindings, Cursor + 12u32, 8u32)) ||
+                Previous.Present != Selected.Present || Previous.Root != Selected.Root ||
+                !Equal(Previous.Value, Selected.Value) { return Invalid; }
+            return Execution(Current, Handle);
+        }
+        Cursor = Cursor + 28u32;
+    }
+    if Bytesˉlength(Current.Bindings) == 1792u32 { return Invalid; }
+    let Added: View.Retentionˉresult = View.Execute(Current.Views, Instruction, Locals,
+        Ownerˉtype, Viewˉtype, Kind, Metadata, Values);
+    if !Added.Valid { return Invalid; }
+    let Addedˉhandle: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Added.Slot), Bytesˉfromˉu32ˉlittle(Added.Generation));
+    let Binding: bytes = Bytesˉconcat(Key, Bytesˉconcat(Owner, Addedˉhandle));
+    return Execution(State(true, Added.State, Bytesˉconcat(Current.Bindings, Binding),
+        Current.Frames, Current.Base), Addedˉhandle);
+}
+
+export fn Enter(Current: State) -> State {
+    if !Geometry(Current) || Bytesˉlength(Current.Frames) == 252u32 { return Failure(Current); }
+    return State(true, Current.Views, Current.Bindings,
+        Bytesˉconcat(Current.Frames, Bytesˉfromˉu32ˉlittle(Current.Base)), Bytesˉlength(Current.Bindings));
+}
+
+export fn Leave(Current: State) -> State {
+    if !Geometry(Current) { return Failure(Current); }
+    var Views: View.Retentionˉstate = Current.Views;
+    var Cursor: u32 = Bytesˉlength(Current.Bindings);
+    while Cursor > Current.Base {
+        Cursor = Cursor - 28u32;
+        let Released: View.Retentionˉresult = View.Release(Views,
+            Bytesˉreadˉu32ˉlittle(Current.Bindings, Cursor + 20u32),
+            Bytesˉreadˉu32ˉlittle(Current.Bindings, Cursor + 24u32));
+        if !Released.Valid { return Failure(Current); }
+        Views = Released.State;
+    }
+    var Base: u32 = 0u32;
+    var Frames: bytes = Current.Frames;
+    if Bytesˉlength(Frames) > 0u32 {
+        Base = Bytesˉreadˉu32ˉlittle(Frames, Bytesˉlength(Frames) - 4u32);
+        if Base > Current.Base || Base % 28u32 != 0u32 { return Failure(Current); }
+        Frames = Bytesˉslice(Frames, 0u32, Bytesˉlength(Frames) - 4u32);
+    }
+    return State(true, Views, Bytesˉslice(Current.Bindings, 0u32, Current.Base), Frames, Base);
+}
+
+export fn Teardown(Current: State) -> State {
+    if !Geometry(Current) { return Failure(Current); }
+    var Result: State = Current;
+    while Bytesˉlength(Result.Frames) > 0u32 {
+        Result = Leave(Result);
+        if !Result.Valid { return Failure(Current); }
+    }
+    Result = Leave(Result);
+    if !Result.Valid || Bytesˉlength(View.Roots(Result.Views)) != 1u32 { return Failure(Current); }
+    return Result;
+}
+
+export fn Roots(Current: State) -> bytes {
+    if !Geometry(Current) { return Empty(); }
+    return View.Roots(Current.Views);
+}
+
+// One explicit flag per operand, never inferred from a value cell's bits.
+// The leading success byte preserves failure versus a valid empty stack.
+export fn Track(Flags: bytes, Consumed: u32, Produced: bool, Isˉview: bool) -> bytes {
+    let Count: u32 = Bytesˉlength(Flags);
+    if Count > 64u32 || Consumed > Count { return Empty(); }
+    var Result: bytes = Bytesˉslice(Flags, 0u32, Count - Consumed);
+    if Produced {
+        if Bytesˉlength(Result) == 64u32 { return Empty(); }
+        var Flag: u8 = 0u8;
+        if Isˉview { Flag = 1u8; }
+        Result = Bytesˉconcat(Result, Bytesˉfromˉu8(Flag));
+    }
+    return Bytesˉconcat(Bytesˉfromˉu8(1u8), Result);
+}

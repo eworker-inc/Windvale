@@ -5913,7 +5913,7 @@ if ($SmallComponentPlan.UseFoundationBorrowComponentsDevelopment) {
     throw 'Two small Foundation components unnecessarily acquired the owner-flow product.'
 }
 foreach ($ViewPath in @(
-    'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
+    'Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv',
     'Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv'
 )) {
     $ViewPlan = & $NativePlanner -ChangedPath @($ViewPath) -PassThru -Quiet `
@@ -5924,6 +5924,9 @@ foreach ($ViewPath in @(
     }
 }
 foreach ($IntegrationPath in @(
+    'Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv',
+    'Runtime/Windvale/Foundation-Borrow-Frames-Core.wv',
+    'Runtime/Windvale/Foundation-Borrow-View-Core.wv',
     'Compiler/Windvale/Source-Wvb-Core.wv',
     'Tools/Windvale.Verify/Compiler-Wvb-Verifier-Executable-Core.wv',
     'Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs',
@@ -5938,7 +5941,7 @@ foreach ($IntegrationPath in @(
     }
 }
 if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
-    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=293 expected-seconds=180', [StringComparison]::Ordinal)) {
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=327 expected-seconds=180', [StringComparison]::Ordinal)) {
     throw 'The combined Foundation component dispatch differs.'
 }
 
