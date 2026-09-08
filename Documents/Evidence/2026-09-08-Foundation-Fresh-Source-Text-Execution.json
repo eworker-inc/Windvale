@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-fresh-source-text-execution",
+  "date": "2026-09-08",
+  "subject": "Fresh Foundation payload compilation and scalar execution",
+  "claim": "The selected 371-case checkpoint compiles record/u32 and allocated-text borrow fixtures twice with identical WVB 1.39 bytes and executes both with result 42 on Windows. Debian completed its component checks and rebuilt three matching compiler-support modules, but fresh candidate publication/execution remains incomplete after a deliberate setup-budget stop.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on d3fe034fd6014464fd338e0bf3eca587e7b7f471. Only the retained verifier, its registry count, the new text fixture, and documentation change; compiler/runtime sources and runner packages are unchanged."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "371 selected Foundation groups; fresh deterministic record/u32 and allocated-text publication and execution",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow --maximum-seconds 1800 --runner Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 19548,
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 128073,
+          "sha256": "57e3f2dd56e14807dfd9dfc8bbb17cc02c0ed582fa08148181e0623f31e45503"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Text-Executable.wv",
+          "size": 2281,
+          "sha256": "183bbe3d6c764ab4da63f867d41ff30560fa06f68cb9493561998263df4721ab"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+          "size": 11959296,
+          "sha256": "7b20401ebde388df20a7ca1ce5ad09c864abf4b5e49969a1b842eca28aa8f8ab"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Foundation-Value-Borrow-A.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        },
+        {
+          "path": "Foundation-Text-A.wvb",
+          "size": 2148,
+          "sha256": "f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Focused Foundation source-to-runtime checkpoint, stopped during current analyzer packaging after approximately 23 minutes",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "wsl -d Debian -- bash -lc 'cd /mnt/d/windvale/dev01 && timeout 1860s node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow --maximum-seconds 1800 --runner Artifacts/Work/Foundation-Borrow-Execution-Runner.elf'",
+      "result": "Incomplete",
+      "inputs": [
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 128073,
+          "sha256": "57e3f2dd56e14807dfd9dfc8bbb17cc02c0ed582fa08148181e0623f31e45503"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+          "size": 11960320,
+          "sha256": "b8c99c6640b04389695b7f6a608696e0e20cd968daade9f42efd0a8ec2e1d5b1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Admitter.wvb",
+          "size": 572966,
+          "sha256": "e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e"
+        },
+        {
+          "path": "Validator.wvb",
+          "size": 93436,
+          "sha256": "6d536c93df19b14ea1c03134614e7889d1b440536e45aa0460f4c1780fe37612"
+        },
+        {
+          "path": "Analyzer.wvb",
+          "size": 1683785,
+          "sha256": "b926d3d3d7100eab7e91130f4ec6c87d14b8663b61798114e7ebdda855412820"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; PowerShell",
+      "target": "Verifier routing and retained owner registry: 31 general and 291 native cases; six front-end products and 63 subsets",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Incomplete",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The text fixture checks Option absence, both unselected Result projections, allocated selected text, borrowed helper forwarding, and eight calls with fresh frame-local owners. It is not a full-arena lifetime stress test or a maintained real consumer.",
+    "The initial text fixture used nonexistent Textˉlength and failed source analysis with Invalidˉargument. It was corrected to the implemented Bytesˉlength(Textˉtoˉutf8(Value)); no compiler implementation change was needed.",
+    "The Windows timing uses warm construction caches. It is not a cold-build performance claim; peak working-set memory was not measured.",
+    "Debian cold pinned analyzer/emitter packaging took 461365/311179 ms. Current admitter/validator/analyzer WVB construction took 77277/8574/321016 ms; admitter/validator packaging took 127997/13372 ms. These completed products were cached. The remaining analyzer packaging plus emitter construction and packaging could no longer reasonably fit the 1800-second allowance. The owned staging process group was deliberately terminated with SIGTERM; the wrapper exited 1 and cleaned its temporary work. This is incomplete evidence, not an assertion failure or a passing Debian checkpoint.",
+    "The next Debian work should select the remaining native compiler construction products with an explicit measured budget, then reuse valid products for focused publication/execution. Do not blindly retry the cold pipeline or report the unexecuted 371 groups as passed.",
+    "The runner packages are reused from the preceding runtime checkpoint, built from one Windows-produced runner WVB. This is not independent compiler/bootstrap reconstruction.",
+    "Temporary candidate outputs are removed by the existing verifier cleanup after their byte identities and results are checked. The record/u32 output also matches the previously published pinned candidate.",
+    "The retained full owner includes the new text determinism case and two fresh executions, raising its registered total from 549 to 552. The full 552-case owner was not run. The no-runner publication selection remains 368 groups and does not claim execution.",
+    "The changed-file plan selected the broad front-door and memory-budget owners with 1230 expected seconds. The focused 371-group publication/execution selection directly covers the new fixture's source admission, analysis, emission, and runtime behavior; unrelated full front-door, task, callable, browser, installed-tool, OS, ABI, and complete qualification suites were not run.",
+    "Existing portable, synchronous, capability-free host execution limits remain unchanged. Arbitrary payload execution, exclusive borrowing, take, mapping, maintained-consumer migration, native WVB 1.39 lowering, installed-tool promotion, and overall compiler/library completion remain open."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json",
+    "Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md"
+  ]
+}

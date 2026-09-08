@@ -1,0 +1,70 @@
+#!wv/1 en@1
+module Foundationˉvalueˉborrowˉtextˉexecutable;
+profile core;
+platform linux, windows, windvale;
+authority application;
+
+import Foundationˉoption as Option;
+import Foundationˉresult as Result;
+
+fn Readˉtext(Value: borrow text) -> u32 {
+    return Bytesˉlength(Textˉtoˉutf8(Value));
+}
+
+fn Forwardˉtext(Value: borrow text) -> u32 {
+    return Readˉtext(borrow Value);
+}
+
+fn Observeˉallocated() -> u32 {
+    let Owner: Option.Option<text> = Option.Option.Present<text> {
+        Value: Textˉconcat("borrowed", "-payload")
+    };
+    var Observed: u32 = 0u32;
+    match Option.Borrow(borrow Owner) {
+        case Option.Option.Present { Value: Item } {
+            Observed = Forwardˉtext(borrow Item);
+        }
+        case Option.Option.Absent { }
+    }
+    return Observed;
+}
+
+export fn Main() -> i32 {
+    let Empty: Option.Option<text> = Option.Option.Absent<text> {};
+    match Option.Borrow(borrow Empty) {
+        case Option.Option.Present { Value: Emptyˉitem } { return 1; }
+        case Option.Option.Absent { }
+    }
+    let Good: Result.Result<text, text> = Result.Result.Valid<text, text> {
+        Value: Textˉconcat("o", "k")
+    };
+    let Bad: Result.Result<text, text> = Result.Result.Failure<text, text> {
+        Error: Textˉconcat("safe", "failure")
+    };
+    match Result.Borrowˉfailure(borrow Good) {
+        case Option.Option.Present { Value: Goodˉerror } { return 2; }
+        case Option.Option.Absent { }
+    }
+    match Result.Borrowˉvalid(borrow Bad) {
+        case Option.Option.Present { Value: Badˉvalue } { return 3; }
+        case Option.Option.Absent { }
+    }
+    match Result.Borrowˉvalid(borrow Good) {
+        case Option.Option.Present { Value: Goodˉitem } {
+            if Forwardˉtext(borrow Goodˉitem) != 2u32 { return 4; }
+        }
+        case Option.Option.Absent { return 5; }
+    }
+    match Result.Borrowˉfailure(borrow Bad) {
+        case Option.Option.Present { Value: Badˉitem } {
+            if Readˉtext(borrow Badˉitem) != 11u32 { return 6; }
+        }
+        case Option.Option.Absent { return 7; }
+    }
+    var Iteration: u32 = 0u32;
+    while Iteration < 8u32 {
+        if Observeˉallocated() != 16u32 { return 8; }
+        Iteration = Iteration + 1u32;
+    }
+    return 42;
+}

@@ -68,7 +68,7 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
 const Foundationˉruntimeˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-borrow-runtime';
-const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
+const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5 || process.argv.length === 7) &&
     process.argv[2] === '--foundation-borrow';
 const Foundationˉplanˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-plan';
@@ -81,13 +81,19 @@ const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
 const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
     Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
-if (Foundationˉonly && process.argv.length === 5) {
+if (Foundationˉonly && process.argv.length >= 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
         Number(process.argv[4]) > 3600) {
         process.stderr.write('The explicit development maximum must be 1 through 3600 seconds.\n');
         process.exit(64);
     }
     Maximumˉrunˉmilliseconds = Number(process.argv[4]) * 1000;
+}
+const Foundationˉsourceˉrunner = Foundationˉonly && process.argv.length === 7 ?
+    path.resolve(process.argv[6]) : null;
+if (Foundationˉsourceˉrunner !== null && process.argv[5] !== '--runner') {
+    process.stderr.write('Expected --runner <current-source-runner> after the development maximum.\n');
+    process.exit(64);
 }
 const Started = Date.now();
 const Inspectionˉonly =
@@ -97,7 +103,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
         '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
-        '--foundation-borrow [--maximum-seconds <seconds>]|--foundation-borrow-runtime <runner>|' +
+        '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>]]|--foundation-borrow-runtime <runner>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -108,6 +114,9 @@ if (process.platform !== 'win32' && process.platform !== 'linux') {
 
 const Scriptˉdirectory = path.dirname(fileURLToPath(import.meta.url));
 const Repositoryˉroot = realpathSync(path.resolve(Scriptˉdirectory, '..', '..'));
+if (Foundationˉsourceˉrunner !== null) {
+    Requireˉordinaryˉfile(Foundationˉsourceˉrunner, 134_217_728, 'current-source scalar runner');
+}
 if (Inspectionˉonly) {
     const Candidate = path.resolve(process.argv[3]);
     Requireˉordinaryˉfile(
@@ -195,8 +204,8 @@ if (Developmentˉonly && !Foundationˉruntimeˉonly) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 345 : Foundationˉonly ? 368 : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
-        `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=false ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 345 : Foundationˉonly ? (Foundationˉsourceˉrunner === null ? 368 : 371) : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 305} ` +
+        `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=${Foundationˉsourceˉrunner !== null} ` +
         (Borrowˉcomponentˉbytes === null ? '' :
             `component-wvb-bytes=${Borrowˉcomponentˉbytes.length} component-wvb-sha256=${Digest(Borrowˉcomponentˉbytes)} `) +
         (Borrowˉplanˉbytes === null ? '' :
@@ -292,6 +301,14 @@ async function Runˉfoundationˉruntime(Runner) {
         `runner-sha256=${Digest(readFileSync(Runner))} elapsed-ms=${Date.now() - Started}\n`);
 }
 
+async function Verifyˉfoundationˉfresh(Runner, Candidate, Label) {
+    const Output = await Run(`foundation-fresh-${Label}-execute`, Runner, [Candidate]);
+    if (Normalize(Output) !== 'Result: 42\n') Reject(`Fresh Foundation ${Label} execution differs.`);
+    process.stdout.write(`PASS Foundation fresh source runtime fixture=${Label} ` +
+        `wvb-bytes=${readFileSync(Candidate).length} wvb-sha256=${Digest(readFileSync(Candidate))} ` +
+        `runner-sha256=${Digest(readFileSync(Runner))}\n`);
+}
+
 async function Runˉfoundationˉcomponents() {
     Requireˉfoundationˉcandidate();
     const Wvb = path.join(Work, 'Borrow-Components.wvb');
@@ -359,6 +376,8 @@ async function Runˉpublicationˉandˉexecution() {
     const Foundationˉvalueˉborrowˉb = path.join(
         Work, 'Foundation-Value-Borrow-B.wvb',
     );
+    const Foundationˉtextˉa = path.join(Work, 'Foundation-Text-A.wvb');
+    const Foundationˉtextˉb = path.join(Work, 'Foundation-Text-B.wvb');
     Targetˉdescriptor = path.join(Work, 'Target.wvtd');
     writeFileSync(Targetˉdescriptor, Constructˉtargetˉdescriptor(), { flag: 'wx' });
 
@@ -452,6 +471,17 @@ async function Runˉpublicationˉandˉexecution() {
     );
     await Verifyˉlargeˉborrowˉfreeˉfunctions(Admitter, Analyzer, Emitter, Pinnedˉemitter);
 
+    if (!Foundationˉonly || Foundationˉsourceˉrunner !== null) {
+        for (const [Label, Output] of [['a', Foundationˉtextˉa], ['b', Foundationˉtextˉb]]) {
+            await Compileˉfoundationˉvalueˉborrow(`foundation-text-${Label}-compile`,
+                Admitter, Analyzer, Emitter, Output, 'Foundation-Value-Borrow-Text-Executable.wv');
+        }
+        const Textˉbytes = readFileSync(Foundationˉtextˉa);
+        if (Textˉbytes.readUInt16LE(6) !== 39 || !Textˉbytes.equals(readFileSync(Foundationˉtextˉb))) {
+            Reject('Foundation text borrow publication is not deterministic WVB 1.39.');
+        }
+    }
+
     if (Foundationˉonly) {
         const Legacy = path.join(Work, 'Unchanged-Memory-Budget.wvb');
         await Compile('unchanged-earlier-bytecode', Admitter, Analyzer, Emitter,
@@ -459,6 +489,10 @@ async function Runˉpublicationˉandˉexecution() {
         const Bytes = readFileSync(Legacy);
         if (Bytes.length !== 752 || Digest(Bytes) !== EXPECTED_SUCCESS_SHA256) {
             Reject('An unaffected earlier WVB contract changed.');
+        }
+        if (Foundationˉsourceˉrunner !== null) {
+            await Verifyˉfoundationˉfresh(Foundationˉsourceˉrunner, Foundationˉvalueˉborrowˉa, 'record-u32');
+            await Verifyˉfoundationˉfresh(Foundationˉsourceˉrunner, Foundationˉtextˉa, 'text');
         }
         return;
     }
@@ -1234,6 +1268,8 @@ async function Runˉpublicationˉandˉexecution() {
         String(Runnerˉfragments), String(Runnerˉentry), Runner, Hostˉtarget,
     ]);
     await Runˉfoundationˉruntime(Runner);
+    await Verifyˉfoundationˉfresh(Runner, Foundationˉvalueˉborrowˉa, 'record-u32');
+    await Verifyˉfoundationˉfresh(Runner, Foundationˉtextˉa, 'text');
     await Runˉnode(
         'callable-runner-compatibility',
         'Verify-Language-1.0-Callable-Runner.mjs',
@@ -1378,7 +1414,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${528 + Growˉmalformedˉcases.length +
+        `cases=${531 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1462,6 +1498,7 @@ async function Compileˉfoundationˉvalueˉborrow(
     Analyzer,
     Emitter,
     Output,
+    Fixture = 'Foundation-Value-Payload-Borrow-Wvb.wv',
 ) {
     await Runˉnode(Label, 'Run-Split-Compiler.mjs', [
         Admitter, Validator, Analyzer, Emitter,
@@ -1470,7 +1507,7 @@ async function Compileˉfoundationˉvalueˉborrow(
         '--target-descriptor', Targetˉdescriptor,
         path.join(
             Repositoryˉroot, 'Tests', 'Fixtures', 'Language-1.0',
-            'Foundation-Value-Payload-Borrow-Wvb.wv',
+            Fixture,
         ),
         path.join(
             Repositoryˉroot, 'Libraries', 'Foundation', 'Values', 'Option.wv',

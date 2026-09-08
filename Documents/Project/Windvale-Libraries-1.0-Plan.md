@@ -94,8 +94,17 @@ Debian and rejects nine invalid variants before execution. Complete verification
 runs inside the host envelope, including for direct interpreter callers. Only
 the existing synchronous, portable, capability-free request profile is opened;
 browser/native-lowering and installed-tool limits are unchanged. Both packages
-consume one Windows-built runner WVB; fresh source publication, wider payload
-execution, and a maintained real consumer still need integration evidence.
+consume one Windows-built runner WVB. The
+[fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Fresh-Source-Text-Execution.json)
+passes 371 selected groups on Windows, compiling record/u32 and allocated-text
+borrows twice with identical bytes and executing both with result 42. The text
+fixture covers absence, unselected Result projections, borrowed helper forwarding,
+and repeated frame-local allocation. Debian completed its component checks and
+rebuilt matching compiler-support bytecode, but stopped during cold native-tool
+setup when the remaining work could no longer fit its allowance. Select the
+remaining construction products separately, then reuse valid caches to finish
+paired fresh-source evidence. Wider payload execution and a maintained real
+consumer still need integration evidence.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

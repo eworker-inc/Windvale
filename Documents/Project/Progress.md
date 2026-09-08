@@ -99,11 +99,6 @@ Two active tracks intentionally use different bytecode generations:
   including array and Option projections; its existing 217-group selector passes
   on Windows in the [callable reconciliation checkpoint](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json).
   Runtime leases connect dispatch, locals, calls, collector roots, and cleanup.
-  The [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
-  and [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
-  record borrowed-owner survival, frame-exit slot reuse, and descriptor release.
-  The [nested Sequence checkpoint](../Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
-  fixes Sequence retention/release in aggregate reads.
   The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
   passes 305 component groups on Windows and Debian with identical bytecode.
   It permits borrowed forwarding of an array containing owned Vectors while
@@ -116,6 +111,11 @@ Two active tracks intentionally use different bytecode generations:
   now returns 42 from the published three-projection fixture on Windows and
   Debian, rejects nine unsafe or malformed variants before execution, and
   passes three earlier-version aggregate Sequence lifetime workloads per host.
+  The [fresh-source checkpoint](../Evidence/2026-09-08-Foundation-Fresh-Source-Text-Execution.json)
+  passes 371 selected groups on Windows: record/u32 and allocated-text borrowing
+  compile deterministically and execute with result 42. Debian stopped during
+  cold tool setup; its completed caches remain reusable. This is not yet paired
+  fresh-source evidence or a maintained real consumer.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
