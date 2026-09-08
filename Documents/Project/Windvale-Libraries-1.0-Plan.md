@@ -110,8 +110,10 @@ The [native metadata checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow
 aligns its reader with the complete verifier's profile-neutral rule; 35 grouped
 checks pass on each host. The [native shape checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Shapes.json)
 preserves payload borrow identity through function decoding, with paired-host
-native reader tests. Full native admission remains closed. Next integrate
-Option-view type storage, `E1` instruction lowering, and owner retention/cleanup
+native reader tests. The [Option-view decoder](../Evidence/2026-09-08-Native-Foundation-Borrow-Views.json)
+also retains shape 29's non-owning tag over the ordinary canonical Option type;
+paired-host checks reject lookalike descriptors. Full native admission remains
+closed. Next integrate non-owning storage, `E1` lowering, and owner retention/cleanup
 before migrating the consumer; a parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The

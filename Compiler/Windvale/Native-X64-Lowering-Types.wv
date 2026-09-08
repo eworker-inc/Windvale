@@ -311,6 +311,20 @@ export fn Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
     if Limit > Bytesˉlength(Input) ||
         !Rangeˉisˉvalid(Limit, Cursor, 1u32) { return Invalidˉshape(); }
     let Kind: u8 = Bytesˉreadˉu8(Input, Cursor);
+    if Kind == 29u8 {
+        if Minor != 39u32 || !Rangeˉisˉvalid(Limit, Cursor, 5u32) {
+            return Invalidˉshape();
+        }
+        let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Cursor + 1u32);
+        if Viewˉtype >= 64u32 ||
+            Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(Input, Types, Viewˉtype) != 1u8 {
+            return Invalidˉshape();
+        }
+        return Compilerˉnativeˉx64ˉshape(
+            true, Cursor + 5u32, Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype),
+            Viewˉtype, 29u8
+        );
+    }
     if Kind == 37u8 {
         if Minor != 39u32 { return Invalidˉshape(); }
         let Payload: Compilerˉnativeˉx64ˉshape =
@@ -1008,6 +1022,50 @@ fn Synthesizedˉgenericˉnameˉisˉexact(
         Digit = Digit + 1u32;
     }
     return true;
+}
+
+export fn Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Typeˉindex: u32
+) -> u8 {
+    if Typeˉindex >= Types.Count ||
+        Compilerˉnativeˉx64ˉtypeˉkind(Types, Typeˉindex) != 3u8 ||
+        Compilerˉnativeˉx64ˉtypeˉitemˉcount(Types, Typeˉindex) != 2u32 ||
+        !Synthesizedˉgenericˉnameˉisˉexact(Input, Types, Typeˉindex) {
+        return 0u8;
+    }
+    var Kind: u8 = 0u8;
+    if Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+        Input, Types, Typeˉindex, 0u32, "Present"
+    ) { Kind = 1u8; }
+    if Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+        Input, Types, Typeˉindex, 0u32, "Valid"
+    ) { Kind = 2u8; }
+    if Kind == 0u8 || !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+        Input, Types, Typeˉindex, 0u32, 0u32, "Value"
+    ) { return 0u8; }
+    let Value: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Typeˉindex, 0u32);
+    if !Value.Valid || Value.Type == 0u8 || Value.Borrowˉkind != 0u8 {
+        return 0u8;
+    }
+    let Other: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Typeˉindex, 1u32);
+    if !Other.Valid { return 0u8; }
+    if Kind == 1u8 {
+        if Other.Type != 0u8 || !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+            Input, Types, Typeˉindex, 1u32, "Absent"
+        ) { return 0u8; }
+    } else {
+        if Other.Type == 0u8 || Other.Borrowˉkind != 0u8 ||
+            !Compilerˉnativeˉx64ˉvariantˉcaseˉnameˉis(
+                Input, Types, Typeˉindex, 1u32, "Failure"
+            ) || !Compilerˉnativeˉx64ˉvariantˉfieldˉnameˉis(
+                Input, Types, Typeˉindex, 1u32, 0u32, "Error"
+            ) { return 0u8; }
+    }
+    return Kind;
 }
 
 export fn Compilerˉnativeˉx64ˉunsafeˉtokenˉisˉexact(

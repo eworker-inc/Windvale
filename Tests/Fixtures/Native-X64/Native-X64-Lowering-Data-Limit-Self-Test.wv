@@ -196,6 +196,94 @@ fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
     return true;
 }
 
+fn Encodedˉname(Name: text) -> bytes {
+    let Value: bytes = Textˉtoˉutf8(Name);
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Bytesˉlength(Value)), Value);
+}
+
+fn Foundationˉentry(Name: text, First: text, Field: text,
+    Second: text, Error: text, Hasˉerror: bool) -> bytes {
+    var Entry: bytes = Bytesˉconcat(Bytesˉfromˉu8(3u8), Encodedˉname(Name));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(2u32));
+    Entry = Bytesˉconcat(Entry, Encodedˉname(First));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(1u8));
+    Entry = Bytesˉconcat(Entry, Encodedˉname(Field));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(1u8));
+    Entry = Bytesˉconcat(Entry, Encodedˉname(Second));
+    if Hasˉerror {
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(1u8));
+        Entry = Bytesˉconcat(Entry, Encodedˉname(Error));
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(9u8));
+    } else {
+        Entry = Bytesˉconcat(Entry, Bytesˉfromˉu8(0u8));
+    }
+    return Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Entry);
+}
+
+fn Checkˉfoundationˉview(Section: bytes, Expected: u8) -> bool {
+    let Length: u32 = Bytesˉlength(Section);
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Length);
+    if !Types.Valid || Typeˉreader.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
+        Section, Types, 0u32
+    ) != Expected { return false; }
+    let Input: bytes = Bytesˉconcat(Section,
+        Bytesˉconcat(Bytesˉfromˉu8(29u8), Bytesˉfromˉu32ˉlittle(0u32)));
+    var Minor: u32 = 0u32;
+    while Minor <= 40u32 {
+        let Shape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Input, Length, Length + 5u32, Types, Minor
+            );
+        if Shape.Valid != (Expected == 1u8 && Minor == 39u32) { return false; }
+        if Shape.Valid && (Shape.Borrowˉkind != 29u8 || Shape.Identity != 0u32 ||
+            Shape.Type != 64u8 || Shape.Next != Length + 5u32) { return false; }
+        Minor = Minor + 1u32;
+    }
+    let Stored: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉshapeˉread(Input, Length, Length + 5u32, Types);
+    let Returned: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉreturnˉshapeˉread(Input, Length, Length + 5u32, Types);
+    if Stored.Valid || Returned.Valid { return false; }
+    var Prefix: u32 = 0u32;
+    while Prefix < 5u32 {
+        let Truncated: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉslice(Input, 0u32, Length + Prefix), Length,
+                Length + Prefix, Types, 39u32
+            );
+        if Truncated.Valid { return false; }
+        Prefix = Prefix + 1u32;
+    }
+    return true;
+}
+
+fn Foundationˉviews() -> bool {
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Absent", "Error", false), 1u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0001", "Valid", "Value", "Failure", "Error", true), 2u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY000x", "Present", "Value", "Absent", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvZ0000", "Present", "Value", "Absent", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "Option", "Present", "Value", "Absent", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Other", "Value", "Absent", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Present", "Other", "Absent", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Other", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Absent", "Error", true), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Valid", "Value", "Failure", "Error", false), 0u8) { return false; }
+    if !Checkˉfoundationˉview(Foundationˉentry(
+        "__WvY0000", "Valid", "Value", "Failure", "Other", true), 0u8) { return false; }
+    return true;
+}
+
 fn Exactˉtypeˉsection() -> bytes {
     var Entries: bytes = Repeatˉentry(
         Recordˉtypeˉentry(), 128u32, 116u32
@@ -245,5 +333,6 @@ export fn Main() -> i32 {
         );
     if Oversizedˉtypeˉresult.Valid { return 6; }
     if !Borrowˉshapes(Exactˉtypeˉresult) { return 7; }
+    if !Foundationˉviews() { return 8; }
     return 42;
 }

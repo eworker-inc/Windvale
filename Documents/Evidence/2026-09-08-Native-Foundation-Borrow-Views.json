@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-views",
+  "date": "2026-09-08",
+  "subject": "Canonical native Option view decoding",
+  "claim": "The native function-shape reader recognizes shape 29 only at minor 39 and only for an exact synthesized canonical Option. It retains the ordinary variant nominal identity and a separate non-owning tag. Eleven canonical/lookalike descriptor cases, version and truncated-shape matrices, and the existing payload/data/type checks pass as native code on Windows and Debian with identical WVB bytes.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 74cc6a70d4fc6be3d92b3f205442f9352301556b; changed source identities below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Native data/type reader fixture, including eleven Option/Result descriptor cases; expected exit 42",
+      "tool": "Build-Cached-Project-Wvb.cmd and Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Build-Cached-Project-Wvb.cmd Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj Artifacts/Work/Native-Borrow-Views-Windows.wvb; Tools/Native/Package-Segmented-Compiler-Wvb.cmd 6 Artifacts/Work/Native-Borrow-Views-Windows.wvb Artifacts/Work/Native-Borrow-Views.exe --development-cache; Artifacts/Work/Native-Borrow-Views.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Types.wv",
+          "size": 70732,
+          "sha256": "840abf24026dd5f92b7349cff51af403d147995af3a96f0e91b75ed1bea9fe0d"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv",
+          "size": 15041,
+          "sha256": "26e3b723557348df734d7c770779f957cf32b3b73f25f7643856a72c8237af12"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Views-Windows.wvb",
+          "size": 98863,
+          "sha256": "4e24574a3819b09a98665b52853be524f5f7303c2e622c3da7a40111d77caec0"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Views.exe",
+          "size": 1162240,
+          "sha256": "efe41066503298c57a776de1aa0cf15b2d78d67c67bb061595443c7d1cc3d917"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same native fixture; expected exit 42",
+      "tool": "Build-Cached-Project-Wvb.sh and Package-Segmented-Compiler-Wvb.sh",
+      "command": "bash Tools/Native/Build-Cached-Project-Wvb.sh Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj Artifacts/Work/Native-Borrow-Views-Linux.wvb; bash Tools/Native/Package-Segmented-Compiler-Wvb.sh 6 Artifacts/Work/Native-Borrow-Views-Linux.wvb Artifacts/Work/Native-Borrow-Views.elf --development-cache; Artifacts/Work/Native-Borrow-Views.elf",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Views-Linux.wvb",
+          "size": 98863,
+          "sha256": "4e24574a3819b09a98665b52853be524f5f7303c2e622c3da7a40111d77caec0"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Views.elf",
+          "size": 1163264,
+          "sha256": "e383924e825b9f24bff0d33c4940c32d0a10752e45200ee2e052f81c9294f548"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Native WVB 1.39 module admission remains closed. This is decoding evidence, not E1 execution, non-owning native storage/cleanup, lifetime qualification or maintained consumer migration.",
+    "The Types directory remains ordinary: shape 29 refers to the ordinary canonical Option nominal descriptor, not a new type containing shape 37. No serialized type format or native ABI was changed.",
+    "Descriptor helpers consume an already validated native Types model over the same input. They recognize exact names and single-payload case structure; they do not replace full module, ownership or capability verification.",
+    "Positive canonical descriptor cases use i32 Value and u32 Error. The preceding payload identity matrices remain in the same fixture; no broader aggregate-view execution claim is made.",
+    "PlanOnly selected native-x64-lowering-development and reported managed-test-recovery-source as a coverage gap. Only the causal existing reader fixture was built and executed. Full native development, reconstruction, frozen compiler qualification, browser, editor and installed-tool gates were not run.",
+    "Exclusive borrow, Take/Map, full native admission and the compiler/libraries completion goal remain pending."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Shapes.json",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}
