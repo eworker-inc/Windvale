@@ -73,6 +73,8 @@ const Foundationˉenumˉonly = process.argv.length === 4 &&
     process.argv[2] === '--foundation-enum-metadata';
 const Foundationˉnativeˉonly = process.argv.length === 5 &&
     process.argv[2] === '--foundation-native-execution';
+const Foundationˉstagingˉonly = process.argv.length === 5 &&
+    process.argv[2] === '--foundation-native-staging';
 const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5 || process.argv.length === 7) &&
     process.argv[2] === '--foundation-borrow';
 const Foundationˉplanˉonly = process.argv.length === 3 &&
@@ -84,7 +86,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
 const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
-    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly;
+    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly || Foundationˉenumˉonly || Foundationˉnativeˉonly || Foundationˉstagingˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length >= 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
@@ -112,6 +114,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
         '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
         '--foundation-borrow [--maximum-seconds <seconds> [--runner <runner>|--native-lowerer <lowerer>]]|--foundation-borrow-runtime <runner>|' +
         '--foundation-enum-metadata <text-fixture.wvb>|--foundation-native-execution <lowerer> <text-fixture.wvb>|' +
+        '--foundation-native-staging <producer> <text-fixture.wvb>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -186,7 +189,9 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉnativeˉonly) {
+    if (Foundationˉstagingˉonly) {
+        await Verifyˉfoundationˉstaging(path.resolve(process.argv[3]), path.resolve(process.argv[4]));
+    } else if (Foundationˉnativeˉonly) {
         const Lowerer = path.resolve(process.argv[3]);
         const Record = path.join(Work, 'Foundation-Record.wvb');
         writeFileSync(Record, Requireˉfoundationˉcandidate(), { flag: 'wx' });
@@ -216,7 +221,7 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly) {
+if (Developmentˉonly && !Foundationˉruntimeˉonly && !Foundationˉenumˉonly && !Foundationˉnativeˉonly && !Foundationˉstagingˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
@@ -1670,6 +1675,71 @@ async function Verifyˉfoundationˉnativeˉrejections(Lowerer) {
         }
         process.stdout.write(`PASS Foundation native rejection case=${Label}\n`);
     }
+}
+
+async function Verifyˉfoundationˉstaging(Producer, Textˉcandidate) {
+    Requireˉordinaryˉfile(Producer, 67_108_864, 'native staging producer');
+    Requireˉordinaryˉfile(Textˉcandidate, 4096, 'Foundation text fixture');
+    const Textˉbytes = readFileSync(Textˉcandidate);
+    if (Digest(Textˉbytes) !== 'f6dcb37f75eaca281322961cc5498d2de88fc97f2213bd9fa93963dc1c569018') {
+        Reject('The Foundation text fixture identity differs.');
+    }
+    const Cases = Foundationˉruntimeˉcases(Requireˉfoundationˉcandidate());
+    Cases.push(['text', Textˉbytes, true]);
+    for (const [Label, Bytes, Valid] of Cases) {
+        const Input = path.join(Work, `Stage-${Label}.wvb`);
+        const Prefix = path.join(Work, `Stage-${Label}`);
+        const Manifest = Prefix + '.wvop';
+        writeFileSync(Input, Bytes, { flag: 'wx' });
+        if (Valid) {
+            await Run(`foundation-stage-${Label}`, Producer, [Input, Prefix, Manifest]);
+            Requireˉordinaryˉfile(Manifest, 1024, 'Foundation staging manifest');
+            const Directory = readFileSync(Manifest);
+            if (Directory.length < 24 || Directory.toString('ascii', 0, 4) !== 'WVOP' ||
+                Directory.readUInt32LE(4) !== 1 || Directory.readUInt32LE(8) !== Directory.length) {
+                Reject('Foundation staging manifest envelope differs.');
+            }
+            const Count = Directory.readUInt32LE(16);
+            if (Count < 1 || Count > 16 || Directory.length !== 24 + Count * 12 ||
+                Directory.readUInt32LE(20) !== 4_194_304 || Directory.readUInt32LE(12) > 65_536) {
+                Reject('Foundation staging manifest limits differ.');
+            }
+            const Chunks = [];
+            let Position = 0;
+            for (let Index = 0; Index < Count; Index += 1) {
+                const Entry = 24 + Index * 12;
+                const Length = Directory.readUInt32LE(Entry + 8);
+                if (Directory.readUInt32LE(Entry) !== Index ||
+                    Directory.readUInt32LE(Entry + 4) !== Position || Length < 1 || Length > 65_536 - Position) {
+                    Reject('Foundation staging chunk range differs.');
+                }
+                const File = Prefix + `.chunk-${Index}`;
+                Requireˉordinaryˉfile(File, Length, 'Foundation object chunk');
+                const Chunk = readFileSync(File);
+                if (Chunk.length !== Length) Reject('Foundation staging chunk extent differs.');
+                Chunks.push(Chunk);
+                Position += Length;
+            }
+            const Expected = Label === 'text' ?
+                '24ff3002ce08dc89a85a8171872e170d4b7fc3fbcb9c46f8a3f7d6da76bc3883' :
+                'c88237b300da23b8ea37ed87e5acb014d3ce64715bc0ffe4fc75e53bb66b33f1';
+            if (Position !== Directory.readUInt32LE(12) || Digest(Buffer.concat(Chunks)) !== Expected) {
+                Reject('Foundation staged object differs from direct lowering.');
+            }
+        } else {
+            const Result = await Runˉdevelopmentˉcommand(Producer, [Input, Prefix, Manifest],
+                Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 10_000),
+                true, MAXIMUM_DIAGNOSTIC_BYTES);
+            if (Result.Code !== 1 || Result.Output !== '' ||
+                !Normalize(Result.Error).startsWith('native x64 staging status=Invalidˉwvb ') ||
+                lstatSync(Manifest, { throwIfNoEntry: false }) !== undefined ||
+                lstatSync(Prefix + '.chunk-0', { throwIfNoEntry: false }) !== undefined) {
+                Reject(`Foundation staging rejection ${Label} failed: ${Result.Error}`);
+            }
+        }
+        process.stdout.write(`PASS Foundation staging case=${Label}\n`);
+    }
+    process.stdout.write(`native Foundation staging status=Passed cases=${Cases.length} qualification=false\n`);
 }
 
 async function Verifyˉfoundationˉenumˉmetadata(Candidate) {

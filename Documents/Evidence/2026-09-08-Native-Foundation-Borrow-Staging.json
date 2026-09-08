@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-staging",
+  "date": "2026-09-08",
+  "subject": "Candidate Foundation borrow staged object publication",
+  "claim": "The current-source staging producer passes eleven focused cases on Windows and Debian: record/u32 and allocated-text objects exactly match direct native lowering, and nine malformed inputs reject before publishing a manifest or first chunk. The staging admission project compiles after restoring its missing Foreign-call dependency; execution of that admission checker remains pending.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 0e348fd2c83b8455ec0d0f3eaa0debe30b6982bd with two project dependency additions and the focused staging selector recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "11 candidate staging cases",
+      "tool": "Node.js and explicitly identified source-built staging producer",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-staging Artifacts/Work/Native-Borrow-Staging-Tool.exe Artifacts/Work/Borrow-Text-Diagnostic.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "size": 2842,
+          "path": "Projects/Compiler/Windvale-Native-X64-Lowering-Staging-Admission.wvproj",
+          "sha256": "63eb7558b55eafc3d3f63f807fe673965eacd50c131ec7af73e99f3fc8b72be2"
+        },
+        {
+          "size": 2774,
+          "path": "Projects/Tests/Windvale-Native-Test-Staging-Content-Native.wvproj",
+          "sha256": "4d43d4136895634fa420bfde6410d0fb33a85d16c3ffc13f340c509492a820b0"
+        },
+        {
+          "size": 140736,
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "sha256": "fe48f0583583dbe614e9ab2bef7b814024eb9bc9ab3823d74844de54306c8982"
+        },
+        {
+          "size": 1323640,
+          "path": "Artifacts/Work/Native-Borrow-Staging-Tool.wvb",
+          "sha256": "eb3ebb5011fc77a4604c41bd9fa3293974bd4685b6e7a57cd37fef46193a86e1"
+        },
+        {
+          "size": 15757824,
+          "path": "Artifacts/Work/Native-Borrow-Staging-Tool.exe",
+          "sha256": "6c308cb3d29c0ffedf57dd77e9aed338f7f40b0d4221cc3e63a81b0a102175cc"
+        },
+        {
+          "size": 15757312,
+          "path": "Artifacts/Work/Native-Borrow-Staging-Tool.elf",
+          "sha256": "652cd57b196d1b98e1426c7b285bba263f51ade16feb3557cc977c6749327e83"
+        },
+        {
+          "size": 1329488,
+          "path": "Artifacts/Work/Native-Borrow-Staging-Admission.wvb",
+          "sha256": "2c3a65670c499eb18bd1d8511e19f95f477eb383696ecd60830fa4f39ad7d768"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary staged record/u32 WVO (reconstructed, then removed)",
+          "size": 14812,
+          "sha256": "c88237b300da23b8ea37ed87e5acb014d3ce64715bc0ffe4fc75e53bb66b33f1"
+        },
+        {
+          "path": "temporary staged allocated-text WVO (reconstructed, then removed)",
+          "size": 16419,
+          "sha256": "24ff3002ce08dc89a85a8171872e170d4b7fc3fbcb9c46f8a3f7d6da76bc3883"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same 11 staging cases and exact object identities",
+      "tool": "Node.js and Linux source-built staging producer",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-native-staging /mnt/d/windvale/dev01/Artifacts/Work/Native-Borrow-Staging-Tool.elf /mnt/d/windvale/dev01/Artifacts/Work/Borrow-Text-Diagnostic.wvb",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64",
+      "target": "Current staging producer and repaired admission-checker source compilation",
+      "tool": "Build-Cached-Split-Project-Wvb.mjs with explicit retained Analyzer/Emitter identities",
+      "command": "node Tools/Native/Build-Cached-Split-Project-Wvb.mjs <staging-project.wvproj> <output.wvb> <Analyzer.exe> <Analyzer.identity> <Emitter.exe> <Emitter.identity> --symbol-checkpoint",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Staging producer packages remain development artifacts under Artifacts/Work. The pinned Stage-Compiler-Wvb front door has not been promoted. Staging admission-checker native packaging/execution, changed native-content test-project execution, and full installed workflow qualification remain pending.",
+    "The first staging-admission source build failed with Missing_import for Native-X64-Lowering-Foreign-Call.wv. That dependency was restored in both admission and native-content test project closures; the admission project then compiled.",
+    "Both host staging applications were packaged from the same Windows-built WVB; this is not an independent Debian source reconstruction claim.",
+    "The compiler construction key changed after the hosted packager refresh. This run did not reuse a result under the new key or reconstruct the complete compiler. It explicitly selected retained compiler executables with analyzer SHA-256 c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1 and emitter SHA-256 2187d7acdd67044c5fa092af62af191e6fa266d7b24818c3ab28b3a9ea39fc00, passing their identity sidecars to the existing split-project cache.",
+    "Staging producer WVB construction used source bytes 1399740 and functions 857. Admission-checker construction used source bytes 1412589 and functions 866. Windows package cache key 78ffef2de3a5b0e2fd28886253c627f28cdf12e5dc5571c054684561dbee0a2b; Debian key 28ba59550ea2aa46e49be32b5161700da46b18987f73230372876b8355e03761.",
+    "Checks validate manifest bounds, chunk order, contiguous positions, exact lengths and the complete reconstructed object digest. They do not execute the produced application anew; matching direct lowering is linked to the prior native-execution checkpoint.",
+    "PlanOnly with HEAD^ selected a 4500-second plan and a managed recovery gap; that broad plan was not executed. The clean-worktree PlanOnly call first reported that an explicit base was required. Only causal split construction, producer packaging and focused staging tests were selected.",
+    "Wider owned payloads, exclusive borrowing, Take/Map, maintained consumer migration and overall compiler/libraries completion remain pending."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Execution.json",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md"
+  ]
+}

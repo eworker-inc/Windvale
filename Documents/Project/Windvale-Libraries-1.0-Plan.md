@@ -121,9 +121,13 @@ composes complete verification with bounded candidate admission: record/u32 and
 allocated-text programs execute on both hosts, with 26 focused cases per host.
 Hosted text execution requires the intrinsic service table; the enum-metadata
 packaging reader now admits candidate 1.39. The existing 37-case lowering and
-five-case packaging regressions also pass on each host. Wider owned payloads,
-staging integration, and the maintained consumer remain pending; this is not
-full native qualification. A parallel parser is not the replacement path.
+five-case packaging regressions also pass on each host. The
+[staging checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Staging.json)
+passes eleven cases per host, reproducing both direct-lowering objects exactly.
+The admission checker now compiles with its repaired dependency closure, but
+its execution and installed staging promotion remain pending, along with wider
+owned payloads and the maintained consumer. This is not full native qualification.
+A parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
