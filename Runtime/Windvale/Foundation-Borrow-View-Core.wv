@@ -71,3 +71,164 @@ export fn Read(
     }
     return Projectionˉresult(true, true, Bytesˉslice(Values, Offset, 8u32), Root);
 }
+
+export record Retentionˉstate {
+    Entries: bytes;
+    Nextˉgeneration: u32;
+}
+
+export record Retentionˉresult {
+    Valid: bool;
+    State: Retentionˉstate;
+    Slot: u32;
+    Generation: u32;
+}
+
+// Internal, execution-owned state, not a serialized format or authority token.
+// Each 36-byte entry holds generation, references, view type, root category,
+// owner cell, payload cell, and presence. At most 64 live views use 2,304 bytes.
+// The collector must mark Roots before collection. No payload ownership moves:
+// retaining the original owner preserves its descriptors and nested aggregates.
+export fn Begin() -> Retentionˉstate {
+    return Retentionˉstate(Bytesˉslice(Bytesˉfromˉu32ˉlittle(0u32), 0u32, 0u32), 1u32);
+}
+
+fn Geometry(State: Retentionˉstate) -> bool {
+    return State.Nextˉgeneration > 0u32 && Bytesˉlength(State.Entries) <= 2304u32 &&
+        Bytesˉlength(State.Entries) % 36u32 == 0u32;
+}
+
+fn Live(State: Retentionˉstate, Slot: u32, Generation: u32) -> bool {
+    if !Geometry(State) || Slot >= Bytesˉlength(State.Entries) / 36u32 ||
+        Generation == 0u32 || Generation >= State.Nextˉgeneration { return false; }
+    return Bytesˉreadˉu32ˉlittle(State.Entries, Slot * 36u32) == Generation &&
+        Bytesˉreadˉu32ˉlittle(State.Entries, Slot * 36u32 + 4u32) > 0u32;
+}
+
+fn Replace(Entries: bytes, Offset: u32, Value: bytes) -> bytes {
+    return Bytesˉconcat(Bytesˉconcat(Bytesˉslice(Entries, 0u32, Offset), Value),
+        Bytesˉslice(Entries, Offset + Bytesˉlength(Value),
+            Bytesˉlength(Entries) - Offset - Bytesˉlength(Value)));
+}
+
+// Execute the exact E1 operand against an authenticated direct-owner local.
+// Canonical type/shape authentication and verified loan flow belong to the
+// caller. This adapter does not open module admission or fabricate an owning
+// Option aggregate. The dispatcher must carry the returned lease with the view.
+export fn Execute(
+    State: Retentionˉstate,
+    Instruction: bytes,
+    Locals: bytes,
+    Ownerˉtype: u32,
+    Viewˉtype: u32,
+    Payloadˉkind: u32,
+    Metadata: bytes,
+    Values: bytes
+) -> Retentionˉresult {
+    let Invalid: Retentionˉresult = Retentionˉresult(false, State, 0u32, 0u32);
+    if !Geometry(State) || State.Nextˉgeneration == 4294967295u32 ||
+        Bytesˉlength(Instruction) != 13u32 || Viewˉtype >= 4096u32 ||
+        Bytesˉlength(Locals) > 32768u32 || Bytesˉlength(Locals) % 8u32 != 0u32 {
+        return Invalid;
+    }
+    if Bytesˉreadˉu8(Instruction, 0u32) != 225u8 ||
+        Bytesˉreadˉu32ˉlittle(Instruction, 5u32) != Viewˉtype { return Invalid; }
+    let Local: u32 = Bytesˉreadˉu32ˉlittle(Instruction, 1u32);
+    if Local >= Bytesˉlength(Locals) / 8u32 { return Invalid; }
+    let Owner: bytes = Bytesˉslice(Locals, Local * 8u32, 8u32);
+    let Projection: Projectionˉresult = Read(Owner, Ownerˉtype,
+        Bytesˉreadˉu32ˉlittle(Instruction, 9u32), Payloadˉkind, Metadata, Values);
+    if !Projection.Valid { return Invalid; }
+    let Count: u32 = Bytesˉlength(State.Entries) / 36u32;
+    var Slot: u32 = 0u32;
+    while Slot < Count {
+        if Bytesˉreadˉu32ˉlittle(State.Entries, Slot * 36u32) == 0u32 { break; }
+        Slot = Slot + 1u32;
+    }
+    if Slot >= 64u32 { return Invalid; }
+    let Zero: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32), Bytesˉfromˉu32ˉlittle(0u32));
+    var Payload: bytes = Zero;
+    var Retainedˉowner: bytes = Zero;
+    var Present: u32 = 0u32;
+    var Root: u32 = 0u32;
+    if Projection.Present {
+        Payload = Projection.Value;
+        Retainedˉowner = Owner;
+        Present = 1u32;
+        if Projection.Root == Payloadˉroot.Descriptor { Root = 1u32; }
+        if Projection.Root == Payloadˉroot.Aggregate { Root = 2u32; }
+        if Projection.Root == Payloadˉroot.Callable { Root = 3u32; }
+    }
+    var Entry: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(State.Nextˉgeneration), Bytesˉfromˉu32ˉlittle(1u32));
+    Entry = Bytesˉconcat(Entry, Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Viewˉtype), Bytesˉfromˉu32ˉlittle(Root)));
+    Entry = Bytesˉconcat(Entry, Bytesˉconcat(Retainedˉowner, Payload));
+    Entry = Bytesˉconcat(Entry, Bytesˉfromˉu32ˉlittle(Present));
+    var Entries: bytes = State.Entries;
+    if Slot == Count { Entries = Bytesˉconcat(Entries, Entry); }
+    else { Entries = Replace(Entries, Slot * 36u32, Entry); }
+    return Retentionˉresult(true, Retentionˉstate(Entries, State.Nextˉgeneration + 1u32),
+        Slot, State.Nextˉgeneration);
+}
+
+export fn Observe(State: Retentionˉstate, Slot: u32, Generation: u32, Viewˉtype: u32) -> Projectionˉresult {
+    let Empty: bytes = Bytesˉslice(State.Entries, 0u32, 0u32);
+    let Invalid: Projectionˉresult = Projectionˉresult(false, false, Empty, Payloadˉroot.Inline);
+    if !Live(State, Slot, Generation) || Viewˉtype >= 4096u32 { return Invalid; }
+    let Offset: u32 = Slot * 36u32;
+    if Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 8u32) != Viewˉtype { return Invalid; }
+    let Present: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 32u32);
+    let Kind: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 12u32);
+    if Present > 1u32 || Kind > 3u32 { return Invalid; }
+    if Present == 0u32 { return Projectionˉresult(true, false, Empty, Payloadˉroot.Inline); }
+    var Root: Payloadˉroot = Payloadˉroot.Inline;
+    if Kind == 1u32 { Root = Payloadˉroot.Descriptor; }
+    if Kind == 2u32 { Root = Payloadˉroot.Aggregate; }
+    if Kind == 3u32 { Root = Payloadˉroot.Callable; }
+    return Projectionˉresult(true, true, Bytesˉslice(State.Entries, Offset + 24u32, 8u32), Root);
+}
+
+export fn Retain(State: Retentionˉstate, Slot: u32, Generation: u32) -> Retentionˉresult {
+    let Invalid: Retentionˉresult = Retentionˉresult(false, State, Slot, Generation);
+    if !Live(State, Slot, Generation) { return Invalid; }
+    let Offset: u32 = Slot * 36u32 + 4u32;
+    let References: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset);
+    if References == 4294967295u32 { return Invalid; }
+    return Retentionˉresult(true, Retentionˉstate(Replace(State.Entries, Offset,
+        Bytesˉfromˉu32ˉlittle(References + 1u32)), State.Nextˉgeneration), Slot, Generation);
+}
+
+export fn Release(State: Retentionˉstate, Slot: u32, Generation: u32) -> Retentionˉresult {
+    let Invalid: Retentionˉresult = Retentionˉresult(false, State, Slot, Generation);
+    if !Live(State, Slot, Generation) { return Invalid; }
+    let Offset: u32 = Slot * 36u32;
+    let References: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 4u32);
+    var Entries: bytes = State.Entries;
+    if References > 1u32 { Entries = Replace(Entries, Offset + 4u32, Bytesˉfromˉu32ˉlittle(References - 1u32)); }
+    else {
+        var Zero: bytes = Bytesˉslice(Entries, 0u32, 0u32);
+        while Bytesˉlength(Zero) < 36u32 { Zero = Bytesˉconcat(Zero, Bytesˉfromˉu32ˉlittle(0u32)); }
+        Entries = Replace(Entries, Offset, Zero);
+    }
+    return Retentionˉresult(true, Retentionˉstate(Entries, State.Nextˉgeneration), Slot, Generation);
+}
+
+// A leading success byte distinguishes a valid empty root set from failure.
+// The caller must reject failure, not collect with an empty replacement set.
+export fn Roots(State: Retentionˉstate) -> bytes {
+    let Empty: bytes = Bytesˉslice(State.Entries, 0u32, 0u32);
+    if !Geometry(State) { return Empty; }
+    var Result: bytes = Bytesˉfromˉu8(1u8);
+    var Slot: u32 = 0u32;
+    while Slot < Bytesˉlength(State.Entries) / 36u32 {
+        let Offset: u32 = Slot * 36u32;
+        let Generation: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset);
+        if Generation != 0u32 {
+            if !Live(State, Slot, Generation) { return Empty; }
+            let Present: u32 = Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 32u32);
+            if Present > 1u32 { return Empty; }
+            if Present == 1u32 { Result = Bytesˉconcat(Result, Bytesˉslice(State.Entries, Offset + 16u32, 8u32)); }
+        } else if Bytesˉreadˉu32ˉlittle(State.Entries, Offset + 4u32) != 0u32 { return Empty; }
+        Slot = Slot + 1u32;
+    }
+    return Result;
+}

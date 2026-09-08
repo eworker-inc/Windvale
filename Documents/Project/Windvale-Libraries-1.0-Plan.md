@@ -2,7 +2,7 @@
 
 > Status: Proposed suite catalog with an active Option/Result implementation goal
 > Authority: Informative; accepted specifications and decisions own contracts
-> Last reviewed: 2026-09-07
+> Last reviewed: 2026-09-08
 
 ## Status
 
@@ -55,13 +55,18 @@ supporting work with open performance targets; it does not block implementation
 until every verifier is fast. Commit coherent verified results and push them to
 both configured remotes, `origin` and `github`.
 
-The runtime preparation checkpoint now has a bounded, non-consuming payload
-reader and 16 grouped tests in the existing borrow owner (233 total). It checks
-live scalar aggregate cells and identifies the payload's retention category.
+The runtime preparation checkpoint has a bounded, non-consuming payload
+reader with 16 grouped tests. It checks live scalar aggregate cells and identifies
+the payload's retention category.
 The [view-reader evidence](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.json)
-records the Windows run. Next, wire it into `E1` execution with correct
-descriptor retention, aggregate roots, frame lifetime, and release. No runtime
-instruction or complete WVB 1.39 admission is enabled by this helper alone.
+records that Windows run. An internal `E1` adapter now adds explicit view leases,
+alias retention, final release, and generation-checked slot reuse, with 20 more
+grouped cases in the same owner. It exposes original-owner roots for collection
+without transferring payload ownership. Next, carry those leases through the
+scalar dispatcher's borrowed shapes, locals, calls, stack, collector, and cleanup.
+The adapter is not yet wired into module execution; complete WVB 1.39 admission
+remains closed. The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
+records verification and limitations.
 
 The current operand-integration checkpoint passes 185 focused verifier groups
 on Windows and Debian, including 35 new groups for enum observations, capability

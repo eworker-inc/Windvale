@@ -70,5 +70,114 @@ export fn Check() -> i32 {
     let Lastˉbase: u32 = 2148532224u32;
     if !Admitted(Cell(0u32, Lastˉbase), 4095u32, 1u32, 9u32, Cell(Lastˉbase, 1u32), Value) ||
         Bytesˉreadˉu32ˉlittle(Owner, 4u32) != Base || Bytesˉreadˉu32ˉlittle(Metadata, 4u32) != 1u32 { return 16; }
+    return Checkˉexecution();
+}
+
+fn Instruction(Local: u32, Type: u32, Projection: u32) -> bytes {
+    return Bytesˉconcat(Bytesˉfromˉu8(225u8), Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Local),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Type), Bytesˉfromˉu32ˉlittle(Projection))));
+}
+
+fn Checkˉexecution() -> i32 {
+    let Base: u32 = 2147483904u32;
+    let Owner: bytes = Cell(0u32, Base);
+    let Metadata: bytes = Cell(Base, 1u32);
+    let Value: bytes = Cell(42u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Value, 0u32, 0u32);
+    let Initial: View.Retentionˉstate = View.Begin();
+    let Code: bytes = Instruction(0u32, 1u32, 1u32);
+    let First: View.Retentionˉresult = View.Execute(Initial, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Seen: View.Projectionˉresult = View.Observe(First.State, First.Slot, First.Generation, 1u32);
+    if !First.Valid || !Seen.Valid || !Seen.Present || Bytesˉreadˉu32ˉlittle(Seen.Value, 0u32) != 42u32 { return 17; }
+    let Roots: bytes = View.Roots(First.State);
+    if Bytesˉlength(Roots) != 9u32 || Bytesˉreadˉu32ˉlittle(Roots, 5u32) != Base ||
+        Bytesˉlength(Initial.Entries) != 0u32 || Bytesˉreadˉu32ˉlittle(Metadata, 4u32) != 1u32 { return 18; }
+    let Alias: View.Retentionˉresult = View.Retain(First.State, First.Slot, First.Generation);
+    let Released: View.Retentionˉresult = View.Release(Alias.State, First.Slot, First.Generation);
+    let Stillˉseen: View.Projectionˉresult = View.Observe(Released.State, First.Slot, First.Generation, 1u32);
+    if !Alias.Valid || !Released.Valid || !Stillˉseen.Valid || Bytesˉlength(View.Roots(Released.State)) != 9u32 { return 19; }
+    let Last: View.Retentionˉresult = View.Release(Released.State, First.Slot, First.Generation);
+    let Gone: View.Projectionˉresult = View.Observe(Last.State, First.Slot, First.Generation, 1u32);
+    let Twice: View.Retentionˉresult = View.Release(Last.State, First.Slot, First.Generation);
+    let Deadˉalias: View.Retentionˉresult = View.Retain(Last.State, First.Slot, First.Generation);
+    if !Last.Valid || Gone.Valid || Twice.Valid || Deadˉalias.Valid || Bytesˉlength(View.Roots(Last.State)) != 1u32 { return 20; }
+    let Again: View.Retentionˉresult = View.Execute(Last.State, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Stale: View.Projectionˉresult = View.Observe(Again.State, First.Slot, First.Generation, 1u32);
+    let Staleˉrelease: View.Retentionˉresult = View.Release(Again.State, First.Slot, First.Generation);
+    if !Again.Valid || Again.Slot != First.Slot || Again.Generation == First.Generation || Stale.Valid || Staleˉrelease.Valid { return 21; }
+    let Wrongˉtype: View.Projectionˉresult = View.Observe(First.State, First.Slot, First.Generation, 0u32);
+    let Wrongˉslot: View.Projectionˉresult = View.Observe(First.State, 64u32, First.Generation, 1u32);
+    let Zeroˉgeneration: View.Projectionˉresult = View.Observe(First.State, First.Slot, 0u32, 1u32);
+    if Wrongˉtype.Valid || Wrongˉslot.Valid || Zeroˉgeneration.Valid { return 22; }
+    var Prefix: u32 = 0u32;
+    while Prefix < 13u32 {
+        let Short: View.Retentionˉresult = View.Execute(Initial, Bytesˉslice(Code, 0u32, Prefix), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+        if Short.Valid || Bytesˉlength(Short.State.Entries) != 0u32 { return 23; }
+        Prefix = Prefix + 1u32;
+    }
+    let Long: View.Retentionˉresult = View.Execute(Initial, Bytesˉconcat(Code, Value), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Wrongˉopcode: View.Retentionˉresult = View.Execute(Initial,
+        Bytesˉconcat(Bytesˉfromˉu8(224u8), Bytesˉslice(Code, 1u32, 12u32)), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if Long.Valid || Wrongˉopcode.Valid { return 24; }
+    let Mismatch: View.Retentionˉresult = View.Execute(Initial, Code, Owner, 0u32, 2u32, 9u32, Metadata, Value);
+    let Invalidˉtype: View.Retentionˉresult = View.Execute(Initial, Instruction(0u32, 4096u32, 1u32), Owner, 0u32, 4096u32, 9u32, Metadata, Value);
+    if Mismatch.Valid || Invalidˉtype.Valid { return 25; }
+    let Invalidˉlocal: View.Retentionˉresult = View.Execute(Initial, Instruction(4294967295u32, 1u32, 1u32), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Shortˉlocal: View.Retentionˉresult = View.Execute(Initial, Code, Bytesˉslice(Owner, 0u32, 7u32), 0u32, 1u32, 9u32, Metadata, Value);
+    let Secondˉlocal: View.Retentionˉresult = View.Execute(Initial, Instruction(1u32, 1u32, 1u32), Bytesˉconcat(Value, Owner), 0u32, 1u32, 9u32, Metadata, Value);
+    if Invalidˉlocal.Valid || Shortˉlocal.Valid || !Secondˉlocal.Valid { return 26; }
+    let Invalidˉprojection: View.Retentionˉresult = View.Execute(Initial, Instruction(0u32, 1u32, 4u32), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Deadˉowner: View.Retentionˉresult = View.Execute(Initial, Code, Owner, 0u32, 1u32, 9u32, Cell(Base, 0u32), Value);
+    if Invalidˉprojection.Valid || Deadˉowner.Valid { return 27; }
+    let Absent: View.Retentionˉresult = View.Execute(Initial, Code, Cell(4294967295u32, Base + 1u32), 0u32, 1u32, 9u32, Empty, Empty);
+    let Absentˉvalue: View.Projectionˉresult = View.Observe(Absent.State, Absent.Slot, Absent.Generation, 1u32);
+    if !Absent.Valid || !Absentˉvalue.Valid || Absentˉvalue.Present || Bytesˉlength(View.Roots(Absent.State)) != 1u32 { return 28; }
+    let Valid: View.Retentionˉresult = View.Execute(Initial, Instruction(0u32, 1u32, 2u32), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Failure: View.Retentionˉresult = View.Execute(Initial, Instruction(0u32, 1u32, 3u32), Cell(0u32, Base + 1u32), 0u32, 1u32, 9u32, Cell(Base + 1u32, 1u32), Value);
+    let Other: View.Retentionˉresult = View.Execute(Initial, Instruction(0u32, 1u32, 3u32), Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if !Valid.Valid || !Failure.Valid || !Other.Valid || Bytesˉlength(View.Roots(Other.State)) != 1u32 { return 29; }
+    var Kind: u32 = 1u32;
+    while Kind <= 35u32 {
+        let Expected: View.Projectionˉresult = View.Read(Owner, 0u32, 1u32, Kind, Metadata, Value);
+        let Result: View.Retentionˉresult = View.Execute(Initial, Code, Owner, 0u32, 1u32, Kind, Metadata, Value);
+        if Result.Valid != Expected.Valid { return 30; }
+        if Result.Valid {
+            let Actual: View.Projectionˉresult = View.Observe(Result.State, Result.Slot, Result.Generation, 1u32);
+            if !Actual.Valid || Actual.Root != Expected.Root || Bytesˉlength(View.Roots(Result.State)) != 9u32 { return 30; }
+        }
+        Kind = Kind + 1u32;
+    }
+    var Full: View.Retentionˉstate = Initial;
+    var Index: u32 = 0u32;
+    while Index < 64u32 {
+        let Added: View.Retentionˉresult = View.Execute(Full, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+        if !Added.Valid || Added.Slot != Index { return 31; }
+        Full = Added.State;
+        Index = Index + 1u32;
+    }
+    let Overflow: View.Retentionˉresult = View.Execute(Full, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if Overflow.Valid || Bytesˉlength(Full.Entries) != 2304u32 || Bytesˉlength(View.Roots(Full)) != 513u32 ||
+        Overflow.State.Nextˉgeneration != Full.Nextˉgeneration { return 31; }
+    let Freed: View.Retentionˉresult = View.Release(Full, 31u32, 32u32);
+    let Reused: View.Retentionˉresult = View.Execute(Freed.State, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if !Freed.Valid || !Reused.Valid || Reused.Slot != 31u32 || Reused.Generation != 65u32 { return 32; }
+    let Exhausted: View.Retentionˉresult = View.Execute(View.Retentionˉstate(Empty, 4294967295u32), Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    if Exhausted.Valid || Exhausted.State.Nextˉgeneration != 4294967295u32 { return 33; }
+    let Maximumˉreferences: bytes = Bytesˉconcat(Bytesˉslice(First.State.Entries, 0u32, 4u32),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(4294967295u32), Bytesˉslice(First.State.Entries, 8u32, 28u32)));
+    let Saturated: View.Retentionˉresult = View.Retain(View.Retentionˉstate(Maximumˉreferences, 2u32), 0u32, 1u32);
+    if Saturated.Valid || Bytesˉreadˉu32ˉlittle(Saturated.State.Entries, 4u32) != 4294967295u32 { return 34; }
+    let Badˉstate: View.Retentionˉstate = View.Retentionˉstate(Value, 1u32);
+    let Bad: View.Retentionˉresult = View.Execute(Badˉstate, Code, Owner, 0u32, 1u32, 9u32, Metadata, Value);
+    let Oversized: View.Retentionˉstate = View.Retentionˉstate(Bytesˉconcat(Full.Entries, First.State.Entries), 66u32);
+    if Bad.Valid || Bytesˉlength(View.Roots(Badˉstate)) != 0u32 || Bytesˉlength(View.Roots(Oversized)) != 0u32 { return 35; }
+    Index = 0u32;
+    while Index < 64u32 {
+        let Removed: View.Retentionˉresult = View.Release(Full, Index, Index + 1u32);
+        if !Removed.Valid { return 36; }
+        Full = Removed.State;
+        Index = Index + 1u32;
+    }
+    if Bytesˉlength(View.Roots(Full)) != 1u32 || Bytesˉlength(Full.Entries) != 2304u32 { return 36; }
     return 0;
 }

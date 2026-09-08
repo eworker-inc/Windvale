@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-borrow-retention-adapter",
+  "date": "2026-09-08",
+  "subject": "Internal Foundation E1 view adapter and bounded owner-retention leases",
+  "claim": "The existing Foundation borrow owner passes 253 Windows groups, including 20 new adapter groups. Exact E1 decoding creates generation-checked view leases; aliases preserve original-owner roots until final release. This is component execution, not scalar dispatcher integration or complete WVB 1.39 admission.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 7b43dcbed1ccdbcc48cf41308cb6864fa004dcc8. The two changed WV input identities are below; the owner entry, project inventory, and other WV/bootstrap inputs are unchanged from that base."
+  },
+  "runs": [{
+    "host": "Windows x64; Node.js 24.19.0",
+    "target": "253 grouped Foundation borrow cases, including exact instruction decoding, all projection/root categories, aliases, final release, stale slots, capacity, generation/reference overflow rejection, malformed state geometry, and root-set cleanup",
+    "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+    "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+    "result": "Passed",
+    "elapsedMilliseconds": 99826,
+    "inputs": [
+      {"path": "Runtime/Windvale/Foundation-Borrow-View-Core.wv", "size": 11164, "sha256": "5ee3b16b166a89826560f5de6dd3532054c3dd6f96c773cc409d0928822cb1ba"},
+      {"path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-View-Self-Test.wv", "size": 13821, "sha256": "8b3b6b66dd755cf00097b80b28c7cfe5f8cf065066e975473a689feee5adc75c"}
+    ],
+    "outputs": [{"path": "Borrow-Owners.wvb", "size": 723097, "sha256": "0ba155c49b1718c5337ffb19c9ca776a9172b4de032aec41bdf54b9085343ae4"}]
+  }, {
+    "host": "Windows x64",
+    "target": "Changed verifier summary inventories and routing contracts; 31 general and 291 native cases",
+    "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+    "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+    "result": "Passed"
+  }],
+  "result": "Passed",
+  "evidenceClasses": ["AI-produced", "AI-reviewed", "Machine-verified"],
+  "limitations": [
+    "The planned instruction/frame integration batch is only partially implemented. No scalar dispatcher, borrowed-shape, call-frame, operand-stack, collector, or frame-exit path consumes these leases yet. Module admission remains closed.",
+    "Execute requires authenticated canonical owner/view identities, payload shape, and verified loan flow from its caller. It produces an internal lease, not an ordinary owning Option aggregate. The scalar adapter must carry that lease through every alias and supply Roots to the collector before this can execute admitted modules.",
+    "Original-owner roots avoid transferring or releasing payload ownership. Actual descriptor backing, nested aggregate collection, callable capture lifetime, owner reuse, and forced collection were not exercised by these component cases. Owned payload and callable restrictions are unchanged.",
+    "Retention state belongs to one execution. Callers must preserve the latest returned state, never replay an older snapshot, and never carry handles across executions. Generation exhaustion fails closed. Storage is bounded to 64 entries / 2304 bytes and root output to 513 bytes; no measured peak-memory or full-runtime performance claim is made.",
+    "Build, package, and fresh execution took 25854, 72351, and 1607 ms respectively with existing bootstrap products. This is not a clean-machine construction measurement.",
+    "The reviewed final plan projected 1305 expected seconds and 5700 maximum seconds, exceeding the ten-minute development budget and selecting compiler/lowering owners through specification routing. Only the causal existing focused selector and routing checks were executed. Full memory-budget, compiler reconstruction, native ABI/lowering, browser, OS, real-consumer, and Linux qualification remain deferred.",
+    "No third-party material was incorporated. The implementation uses the existing Windvale reader, source language, and owner test machinery."
+  ],
+  "related": ["Specifications/Compiler-Source-Wvb.md", "Documents/Project/Windvale-Libraries-1.0-Plan.md", "Documents/Evidence/2026-09-07-Foundation-Borrow-View-Reader.json"]
+}

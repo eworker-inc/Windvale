@@ -1282,6 +1282,30 @@ retention work for the caller; they do not grant Copy ownership or admit new
 payload shapes. This component is not yet wired into instruction execution;
 complete WVB 1.39 admission remains closed.
 
+The same component now has an internal `Execute` adapter for an exact 13-byte
+`E1` instruction. The caller supplies authenticated owner/view type indices and
+payload kind; the adapter checks the opcode, expected view index, direct local
+index, selector, and live owner before creating a view lease. Locals are aligned
+eight-byte cells bounded to 4,096 entries. This is not full module authentication.
+`Observe` requires the exact slot, generation, and view type; `Retain` and
+`Release` balance aliases. The final release clears the entry. At most 64 view
+entries occupy 2,304 bytes; allocation, reference-count overflow, and generation
+exhaustion fail without changing state. Generations never wrap within one
+execution. State and handles must not cross executions or be restored from an
+older snapshot; the caller must use each returned state as its current state.
+
+`Roots` returns a success byte followed by at most 64 original owner cells, not
+payload cells. Absent projections retain no owner. A present view keeps the
+original aggregate reachable until its last lease is released, avoiding an
+ownership transfer or a second descriptor-release obligation. Invalid root-state
+geometry returns empty failure, distinct from a successful empty root set.
+These are internal execution-owned structures, not an added WVB format or
+capability. The scalar dispatcher must still carry leases through shapes 29/37,
+locals, calls, operand-stack aliases, collection, and cleanup, and must pass the
+root set to its existing collector. Callable captures and owned payloads retain
+their existing restrictions. Component tests do not prove collector integration,
+frame cleanup, complete candidate execution, or admission.
+
 The source call checker also has a bounded read-through classification for
 records, variants, and fixed arrays. It consumes freshly constructed generic
 layouts and the existing ordinary field plan and type binder: scalar-only

@@ -1,8 +1,8 @@
 # Windvale progress
 
-> Status: Current project snapshot as of 7 September 2026
+> Status: Current project snapshot as of 8 September 2026
 > Authority: Informative; linked specifications and evidence own exact contracts
-> Last reviewed: 2026-09-07
+> Last reviewed: 2026-09-08
 
 <a href="Images/Windvale-Roadmap-August-2026.svg"><img src="Images/Windvale-Roadmap-August-2026.svg" alt="Dated August 2026 Windvale roadmap phase map" width="100%"></a>
 
@@ -100,7 +100,9 @@ Two active tracks intentionally use different bytecode generations:
   on Windows in the [callable reconciliation checkpoint](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json).
   A bounded runtime payload-reader preparation component now passes 16 new
   grouped tests in the [233-group Windows owner](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.json).
-  Instruction integration and retention remain pending. Remaining owned-payload
+  An [internal E1 adapter](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
+  adds view retention, release, and stale-lease rejection. Dispatcher/frame and
+  collector integration remain pending. Remaining owned-payload
   reconciliation and the complete audit still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
