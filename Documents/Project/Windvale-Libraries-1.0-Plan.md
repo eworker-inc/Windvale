@@ -72,7 +72,12 @@ passes 293 Windows component groups. Its six new groups exercise the shared
 production collector with a full arena, a loan-only root, repeated collection,
 frame-exit slot reuse, and descriptor reference release after owner and copy exit.
 This is direct value-core evidence, not execution of a complete candidate module;
-nested borrowed aggregate payloads and paired-host qualification remain pending.
+paired-host qualification remains pending. The
+[nested Sequence checkpoint](../Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
+adds nested borrowed payload lifetime coverage (299 Windows groups) and fixes
+Sequence descriptor retention, stack classification, and collection in records,
+variants, and fixed arrays. Three current-source runner regressions each perform
+eight allocation/extraction cycles. Complete candidate admission remains closed.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

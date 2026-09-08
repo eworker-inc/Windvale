@@ -1302,7 +1302,7 @@ These are internal execution-owned structures, not an added WVB format or
 capability. The scalar interpreter source now connects these leases to `E1`,
 shapes 29/37, local loads/stores, operand flags, synchronous calls, allocation
 and return collection, frame exit, and guest-failure teardown. Admission stays
-closed while borrowed-owner forced collection, complete candidate execution, and
+closed while complete candidate execution and
 the candidate audit remain pending; this source change does not enable candidate
 modules in the public runner.
 
@@ -1317,12 +1317,20 @@ values use existing descriptor retention, while lease handles are never treated
 as aggregate cells. The candidate source path is synchronous and capability-free;
 task/provider composition, callable captures, and owned payloads retain their
 existing restrictions. `Wvb-Scalar-Interpreter-Value-Core.wv` owns the shared
-scalar value readers, descriptor retention, and candidate instruction handling;
+scalar value readers, descriptor retention, aggregate collection, and candidate instruction handling;
 the interpreter keeps allocation commit in a separate bounded helper. Component
 cases exercise frame lifetime, scanner boundaries, direct view operations, local
 validation, and descriptor retention. The source-built Windows runner passes
 existing heap reclamation and ownership workloads, but these are not
-borrowed-owner forced-collection or complete candidate module execution evidence.
+complete candidate module execution evidence. The
+[nested Sequence lifetime checkpoint](../Documents/Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
+adds direct borrowed-owner and nested-payload collection evidence. Aggregate
+descriptor selection includes immutable Sequence fields and array elements;
+ordinary Sequence projections retain their backing allocation and produce the
+Sequence stack classification. This preserves extracted values across owner
+collection while releasing dead aggregate descriptors exactly once. Three
+Windows runner regressions exercise record, variant, and fixed-array Sequence
+extraction over repeated allocation cycles; this does not open minor 39.
 
 The source call checker also has a bounded read-through classification for
 records, variants, and fixed arrays. It consumes freshly constructed generic

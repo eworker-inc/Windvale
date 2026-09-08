@@ -108,6 +108,9 @@ Two active tracks intentionally use different bytecode generations:
   The [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
   adds full-arena borrowed-owner survival, frame-exit slot reuse, and descriptor
   reference-release coverage in the shared production value core (293 Windows groups).
+  The [nested Sequence checkpoint](../Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
+  extends this to 299 groups and fixes Sequence retention/release in aggregate
+  reads, with three source-built Windows runner regressions.
   Complete candidate execution remains pending. Remaining owned-payload
   reconciliation and the complete audit still prevent complete 1.39 admission.
 

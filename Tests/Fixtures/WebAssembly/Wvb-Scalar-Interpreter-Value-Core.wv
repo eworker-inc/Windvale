@@ -56,7 +56,7 @@ fn Aggregateˉselectedˉfieldˉvalues(
         Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
         var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
         if Descriptors {
-            Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+            Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32;
         }
         if Selected {
             Result = Bytesˉconcat(
@@ -89,7 +89,7 @@ export fn Aggregateˉselectedˉownerˉvalues(
             let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
             var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
             if Descriptors {
-                Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+                Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32 || Kind == 24u32;
             }
             var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
             if Selected {

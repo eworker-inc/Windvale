@@ -191,7 +191,7 @@ if (Developmentˉonly) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
     }
     process.stdout.write(
-        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 333 : Foundationˉonly ? 356 : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 293} ` +
+        `native language 1 foundation borrow development status=Passed cases=${Foundationˉcomponentsˉonly ? 339 : Foundationˉonly ? 362 : Foundationˉplanˉonly ? 16 : Foundationˉdirectoriesˉonly ? 24 : 299} ` +
         `selection=${Foundationˉcomponentsˉonly ? 'components' : Foundationˉonly ? 'publication' : Foundationˉplanˉonly ? 'plan' : Foundationˉdirectoriesˉonly ? 'directories' : 'owners'} qualification=false candidate-execution=false ` +
         (Borrowˉcomponentˉbytes === null ? '' :
             `component-wvb-bytes=${Borrowˉcomponentˉbytes.length} component-wvb-sha256=${Digest(Borrowˉcomponentˉbytes)} `) +
@@ -1331,7 +1331,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${506 + Growˉmalformedˉcases.length +
+        `cases=${512 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
@@ -1344,7 +1344,7 @@ async function Runˉpublicationˉandˉexecution() {
         'structured-task-cases=33 structured-task-runtime-cases=46 ' +
         'task-environment-cases=17 task-environment-rejections=9 ' +
         'callable-runner-cases=2 async-call-await-cases=7 ' +
-        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=18 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=114 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=40 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
+        'foundation-borrow-plan-cases=16 foundation-borrow-directory-cases=24 foundation-borrow-owner-cases=18 foundation-borrow-call-cases=18 foundation-borrow-metadata-cases=37 foundation-borrow-stack-cases=114 foundation-borrow-lifetime-cases=30 foundation-borrow-view-cases=36 foundation-borrow-frame-cases=46 foundation-value-borrow-wvb-cases=20 foundation-value-borrow-opcodes=3 large-borrow-free-cases=2 ' +
         `result=42 split-wvb-bytes=${Successˉbytes.length} ` +
         `split-sha256=${Successˉsha256} ` +
         `vector-wvb-bytes=${Vectorˉsuccessˉbytes.length} ` +

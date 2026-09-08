@@ -12,6 +12,18 @@ import path from 'node:path';
 const MAXIMUM_WVB_BYTES = 16_777_216;
 const MAXIMUM_DIAGNOSTIC_BYTES = 65_536;
 
+if (process.argv.length === 6 && process.argv[2] === '--aggregate-lifetimes') {
+    const Selectedˉrunner = path.resolve(process.argv[3]);
+    const Selectedˉbase = path.resolve(process.argv[4]);
+    const Selectedˉwork = path.resolve(process.argv[5]);
+    await Requireˉordinaryˉfile(Selectedˉrunner, 134_217_728, 'runner');
+    await Requireˉordinaryˉdirectory(Selectedˉwork, 'work directory');
+    await Runˉaggregateˉlifetimes(Selectedˉrunner,
+        await Readˉbounded(Selectedˉbase, MAXIMUM_WVB_BYTES, 'base WVB'), Selectedˉwork);
+    console.log('language 1 aggregate Sequence lifetime status=Passed cases=3 cycles=8 result=42');
+    process.exit(0);
+}
+
 if (process.argv.length !== 6) {
     Reject(
         'Usage: node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs ' +
@@ -201,10 +213,11 @@ try {
         }
     }
 
+    await Runˉaggregateˉlifetimes(Runner, Runtime, Work);
     const Digest = createHash('sha256').update(Runtime).digest('hex');
     console.log(
         'language 1 vector-sequence runtime status=Passed ' +
-        `cases=${Mutations.length + 2} result=42 bytes=${Runtime.length} ` +
+        `cases=${Mutations.length + 5} result=42 bytes=${Runtime.length} ` +
         `sha256=${Digest}`,
     );
 } finally {
@@ -296,6 +309,64 @@ function Buildˉruntime(Input) {
         Result.push(Section(Kind, Payloads.get(Kind)));
     }
     return Buffer.concat(Result);
+}
+
+async function Runˉaggregateˉlifetimes(Selectedˉrunner, Base, Directory) {
+    for (const Kind of [7, 11, 22]) {
+        const Candidate = Buildˉaggregateˉlifetime(Base, Kind);
+        const Candidateˉpath = path.join(Directory, `Aggregate-Sequence-${Kind}.wvb`);
+        await writeFile(Candidateˉpath, Candidate, { flag: 'wx' });
+        try {
+            // The runner's complete verifier must admit the module before execution.
+            Requireˉvalidˉexecution(Run(Selectedˉrunner, [Candidateˉpath]),
+                'Result: 42\n', `aggregate Sequence ${Kind}`);
+            console.log(`aggregate Sequence lifetime kind=${Kind} status=Passed bytes=${Candidate.length} sha256=${createHash('sha256').update(Candidate).digest('hex')}`);
+        } finally {
+            await unlink(Candidateˉpath);
+        }
+    }
+}
+
+function Buildˉaggregateˉlifetime(Base, Kind) {
+    const Sections = Inspectˉmodule(Base, Base.readUInt16LE(6));
+    const Sequence = Shape(24, 4);
+    const Types = Buffer.concat([
+        U32(5), U8(1), Stringˉfield('R'), U32(1), Stringˉfield('Value'), Sequence,
+        U8(3), Stringˉfield('V'), U32(2), Stringˉfield('Some'), U8(1),
+        Stringˉfield('Value'), Sequence, Stringˉfield('None'), U8(0),
+        U8(4), Stringˉfield('A'), Sequence, U32(1),
+        U8(5), Stringˉfield('Vec'), Shape(1),
+        U8(6), Stringˉfield('Seq'), Shape(1),
+    ]);
+    const Nominal = Kind === 7 ? 0 : Kind === 11 ? 1 : 2;
+    const Create = Kind === 7 ? Instructionˉu32(104, 0) : Kind === 11
+        ? Buffer.concat([U8(151), U32(1), U32(0)]) : Instructionˉu32(197, 2);
+    const Read = Kind === 7 ? Instructionˉu32(105, 0) : Kind === 11
+        ? Buffer.concat([U8(153), U32(1), U32(0)])
+        : Buffer.concat([Instructionˉu64(129, 0n), U8(198)]);
+    const Extract = Buffer.concat([
+        Instructionˉu64(129, 2047n), Instructionˉu32(199, 3),
+        Instructionˉu32(1, 42), Instructionˉu32(200, 3),
+        U8(201), U32(3), U32(4), Create, Instructionˉu32(5, 0),
+        Instructionˉu32(4, 0), Read, U8(81),
+    ]);
+    const Cycle = Buffer.concat([
+        Instructionˉu32(64, 1), Instructionˉu64(129, 0n),
+        Instructionˉu32(204, 4), Instructionˉu32(5, 0), U8(80),
+    ]);
+    const Main = Buffer.concat([...Array.from({ length: 8 }, () => Cycle),
+        Instructionˉu32(4, 0), U8(81)]);
+    const Functions = Buffer.concat([
+        U32(2), Stringˉfield('Main'), U32(0), Shape(1), U32(1), Shape(1),
+        U32(0), U32(Main.length), U32(2),
+        Stringˉfield('Extract'), U32(0), Sequence, U32(1), Shape(Kind, Nominal),
+        U32(Main.length), U32(Extract.length), U32(2),
+    ]);
+    const Header = Buffer.from(Base.subarray(0, 12));
+    Header.writeUInt16LE(28, 6);
+    const Payloads = [Sections.get(1).payload, U32(0), U32(0), Functions,
+        Buffer.concat([Main, Extract]), Buffer.concat([U32(1), Stringˉfield('Main'), U8(1), U32(0)]), Types];
+    return Buffer.concat([Header, ...Payloads.map((Payload, Index) => Section(Index + 1, Payload))]);
 }
 
 function Buildˉruntimeˉcode() {
@@ -471,6 +542,7 @@ function Run(Command, Arguments) {
     return spawnSync(Command, Arguments, {
         encoding: 'utf8',
         windowsHide: true,
+        timeout: 60_000,
         maxBuffer: MAXIMUM_DIAGNOSTIC_BYTES,
     });
 }

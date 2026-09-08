@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-nested-sequence-lifetime",
+  "date": "2026-09-08",
+  "subject": "Nested borrowed aggregate and Sequence descriptor lifetime",
+  "claim": "299 Windows Foundation groups pass, including nested borrowed payload and Sequence collection cases. The current-source native runner passes three aggregate Sequence extraction/lifetime regressions with eight cycles each and six existing scalar/heap regressions. The previous runner fails the new record-Sequence case during execution.",
+  "source": {
+    "kind": "Other",
+    "value": "Implementation worktree based on 73257851c3ec32acc7d1efcf3bb6b5f1993b2b26; exact relevant source and artifact hashes recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "299 Foundation owner groups; 46 frame/scanner/value groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 122927,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 28053,
+          "sha256": "f0b2dac7e93ed04768c79909e35265fba13273bb0dbcd34bb885f37cf764a3a8"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 30664,
+          "sha256": "51ca9fa23a5e5c942423de30b77d8bef631177bdacb728d541ef7a3da05c531f"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122876,
+          "sha256": "d02c848893df8d16d18f242ab6c725f22091318efa0a8fc0d51717a2bfd5e078"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 869807,
+          "sha256": "90f9bf378d00692d0f2e9e6bbddabba70a98d1f18468fb4dc30c149e06f64ce3"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Ordinary scalar Sequence record/variant-field and array-element reads",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Sequence-Lifetime-Runner.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 30664,
+          "sha256": "51ca9fa23a5e5c942423de30b77d8bef631177bdacb728d541ef7a3da05c531f"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 372523,
+          "sha256": "693db68df99c7fedeaed253853ad2fd6c9578ca88b9dbb415b2114c2f474de6d"
+        }
+      ],
+      "elapsedMilliseconds": 240889,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.wvb",
+          "size": 1152713,
+          "sha256": "bbcbede6a19877e78b10a99811c4338de4ed7265c9d02558e707be7be52158e2"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Current-source native runner packaging",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 Artifacts/Work/Foundation-Sequence-Lifetime-Runner.wvb Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.wvb",
+          "size": 1152713,
+          "sha256": "bbcbede6a19877e78b10a99811c4338de4ed7265c9d02558e707be7be52158e2"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe",
+          "size": 11958784,
+          "sha256": "14bfd7df0469626a90bfe087cbc19e956f1e0741420f57c914e01290b3f2ea74"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Three aggregate Sequence extraction/lifetime cases: record, variant, fixed array; eight cycles each; result 42",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs --aggregate-lifetimes Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb Artifacts/Work",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe",
+          "size": 11958784,
+          "sha256": "14bfd7df0469626a90bfe087cbc19e956f1e0741420f57c914e01290b3f2ea74"
+        },
+        {
+          "path": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+          "size": 21781,
+          "sha256": "d14ee6f30470d3bafdf9bc9717b8257d6c9416011718f59fb892aa40f6ba975b"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Aggregate-Sequence-7.wvb",
+          "size": 558,
+          "sha256": "0985d0d326b29670d4dc9a112195ae79738ddc26c35910f531b53230cc69861c"
+        },
+        {
+          "path": "Aggregate-Sequence-11.wvb",
+          "size": 566,
+          "sha256": "37cc718a06c31b8f71876b912654ee291b700a2a5ac6b6a4548e35f9b08e6be9"
+        },
+        {
+          "path": "Aggregate-Sequence-22.wvb",
+          "size": 563,
+          "sha256": "30780e6850b9bc66898a6d463685ef7f42b6145ff98f84f41d45f069325578c2"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Pre-fix record-Sequence regression rejects after admission: exit 1, phase=execution",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs --aggregate-lifetimes Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb Artifacts/Work",
+      "result": "Failed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Six existing scalar/reporting/text/heap-reclamation/aggregate-ownership/object-rejection regressions; exact stdout/stderr/exit assertions",
+      "tool": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe",
+      "command": "Run Return-42.wvb with and without --report-steps, Foundation-Borrow-Text-Smoke.wvb, Foundation-Borrow-Reclaim-Smoke.wvb, Foundation-Borrow-Ownership-Smoke.wvb, and Return-42.wvo against the current runner",
+      "result": "Passed",
+      "elapsedMilliseconds": 1713,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Sequence-Lifetime-Runner.exe",
+          "size": 11958784,
+          "sha256": "14bfd7df0469626a90bfe087cbc19e956f1e0741420f57c914e01290b3f2ea74"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "31 general and 291 native routing/summary cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The first nested fixture used owner type zero for its type-one child and failed. The corrected fixture passed in the final run.",
+    "Sequence collection omissions were found through source inspection and protected by direct value-core tests. Ordinary aggregate Sequence extraction additionally has a failing old-runner comparison and passing current-runner regressions.",
+    "The user authorized longer testing for this goal after the initial budget stop. The complete 35.5-minute automatic plan was not run; the causal owner and runner regressions were selected. Existing passing component evidence was reused because its declared implementation inputs did not change.",
+    "The first routing rerun detected stale front-door case-count expectations. They were corrected before the passing routing run.",
+    "No Linux qualification, complete WVB 1.39 admission, candidate-module execution, callable-environment retention, exclusive borrowing, take, mapping, or consumer completion is claimed. The aggregate runner regressions are WVB 1.28, not 1.39."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}

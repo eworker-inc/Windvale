@@ -5684,7 +5684,7 @@ foreach ($Contract in @(
             'if "%Development%"=="1"',
             'phase=value-front-end item=3/13',
             'Test-Language-1.0-Front-Door-Development.mjs',
-            'status=Passed cases=492'
+            'status=Passed cases=495'
         )
     },
     @{
@@ -5695,7 +5695,7 @@ foreach ($Contract in @(
             'if [[ $development == true ]]',
             'phase=value-front-end item=3/13',
             'Test-Language-1.0-Front-Door-Development.mjs',
-            'status=Passed cases=492'
+            'status=Passed cases=495'
         )
     },
     @{
@@ -5941,7 +5941,7 @@ foreach ($IntegrationPath in @(
     }
 }
 if (!$ChangedVerification.Contains("@('--foundation-borrow-components')", [StringComparison]::Ordinal) -or
-    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=333 expected-seconds=180', [StringComparison]::Ordinal)) {
+    !$ChangedVerification.Contains('mode=foundation-borrow-components cases=339 expected-seconds=180', [StringComparison]::Ordinal)) {
     throw 'The combined Foundation component dispatch differs.'
 }
 

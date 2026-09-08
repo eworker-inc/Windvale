@@ -5300,6 +5300,7 @@ fn Executeˉaggregate(
         Stackˉproduced = true;
         let Fieldˉrequiresˉretain: bool =
             Selectedˉfieldˉkind == 3u32 || Selectedˉfieldˉkind == 6u32 ||
+            Selectedˉfieldˉkind == 24u32 ||
             (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
                 Selectedˉfieldˉkind == 23u32 &&
                 Payloadˉlength != 153u32);
@@ -5312,6 +5313,9 @@ fn Executeˉaggregate(
         }
         if Selectedˉfieldˉkind == 23u32 {
             Stackˉproducedˉkind = 3u32;
+        }
+        if Selectedˉfieldˉkind == 24u32 {
+            Stackˉproducedˉkind = 4u32;
         }
         if Fieldˉrequiresˉretain {
             let Retainedˉallocations: bytes = Valueˉcore.Retainˉdescriptor(
@@ -5408,8 +5412,12 @@ fn Executeˉaggregate(
         if Arrayˉelementˉkind == 23u32 {
             Stackˉproducedˉkind = 3u32;
         }
+        if Arrayˉelementˉkind == 24u32 {
+            Stackˉproducedˉkind = 4u32;
+        }
         if Sectionˉkind == 0u32 {
             if Arrayˉelementˉkind == 3u32 || Arrayˉelementˉkind == 6u32 ||
+                Arrayˉelementˉkind == 24u32 ||
                 (Bytesˉreadˉu16ˉlittle(Module, 6u32) >= 28u32 &&
                     Arrayˉelementˉkind == 23u32) {
                 let Arrayˉelementˉretainedˉallocations: bytes =
