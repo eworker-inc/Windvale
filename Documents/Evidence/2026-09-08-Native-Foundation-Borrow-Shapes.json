@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-shapes",
+  "date": "2026-09-08",
+  "subject": "Native function-shape borrow identity",
+  "claim": "Decoded native shapes carry a separate Borrow-kind field. Function parameter/local parsing uses the version-aware reader and retains shape 37 payload identity without admitting WVB 1.39 to native lowering. The existing data/type boundary fixture passes as native code on Windows and Debian with identical WVB bytes.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on f4644ffa9d70bbdf74b962426da885a8c174ba46; exact changed source identities below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Native reader: existing six data/type boundary groups plus payload-tag, nominal-identity, version and malformed-shape matrices; exit 42",
+      "tool": "Build-Cached-Project-Wvb.cmd and Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Build-Cached-Project-Wvb.cmd Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj Artifacts/Work/Native-Borrow-Shapes-Windows.wvb; Tools/Native/Package-Segmented-Compiler-Wvb.cmd 6 Artifacts/Work/Native-Borrow-Shapes-Windows.wvb Artifacts/Work/Native-Borrow-Shapes.exe --development-cache; Artifacts/Work/Native-Borrow-Shapes.exe",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 367038,
+          "sha256": "2c479a02c513c82cc2f65405933d1ca974e32f13b45de1c58a88ed94311264bc"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Types.wv",
+          "size": 68332,
+          "sha256": "511e5939dd128d62d35dbd13398b1eb44ffb40273506ef7e6f02bdc14ac99e66"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv",
+          "size": 10457,
+          "sha256": "fcc531ac0fe88bfd91571e44e08fd0f42154961fb679f0bff3fafd4d328f17f8"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Shapes-Windows.wvb",
+          "size": 90036,
+          "sha256": "cfeda192a4808c0277289c933793aaa967ba1c6ff3564bf5b33747440a053c46"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Shapes.exe",
+          "size": 1049088,
+          "sha256": "aa8277c264c030f3ffb83c18584f3d895a5b91b5e778c3e78219e50eda1fb75b"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same native reader fixture; exit 42",
+      "tool": "Build-Cached-Project-Wvb.sh and Package-Segmented-Compiler-Wvb.sh",
+      "command": "bash Tools/Native/Build-Cached-Project-Wvb.sh Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj Artifacts/Work/Native-Borrow-Shapes-Linux.wvb; bash Tools/Native/Package-Segmented-Compiler-Wvb.sh 6 Artifacts/Work/Native-Borrow-Shapes-Linux.wvb Artifacts/Work/Native-Borrow-Shapes.elf --development-cache; Artifacts/Work/Native-Borrow-Shapes.elf",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Shapes-Linux.wvb",
+          "size": 90036,
+          "sha256": "cfeda192a4808c0277289c933793aaa967ba1c6ff3564bf5b33747440a053c46"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Shapes.elf",
+          "size": 1048576,
+          "sha256": "64d28388b7429b7c054a28b18f543c48fd0fb86c9b7e824c38858d95631886dd"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Current lowerer construction; three exact-object regressions and closed minor-39 admission",
+      "tool": "Build-Cached-Project-Wvb.cmd, Package-Segmented-Compiler-Wvb.cmd and current native lowerer",
+      "command": "Build-Cached-Project-Wvb.cmd Projects/Compiler/Windvale-Native-X64-Lowering-Tool.wvproj Artifacts/Work/Native-Borrow-Lowerer.wvb; Package-Segmented-Compiler-Wvb.cmd 6 Artifacts/Work/Native-Borrow-Lowerer.wvb Artifacts/Work/Native-Borrow-Lowerer.exe --development-cache; compare current and pinned lowerer objects for Return-42.wvb, Metadata.wvb and Native-Borrow-Shapes-Windows.wvb; set Return-42 minor to 39 and require Invalid-wvb with no output",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Lowerer.wvb",
+          "size": 748288,
+          "sha256": "6891d2a4c21f77909d1c7b362f7fc2edbe4025934e10a47386a1455e7d5ad83d"
+        },
+        {
+          "path": "Artifacts/Work/Native-Borrow-Lowerer.exe",
+          "size": 10700800,
+          "sha256": "3065336f7f9a644a57e94f98372bea9cad82a8178a74a2ce9ab214c85264ea74"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Regression-0-current.wvo",
+          "size": 479,
+          "sha256": "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Regression-1-current.wvo",
+          "size": 1151,
+          "sha256": "6f1cb53ec55448a7552f2ff5b380446964d16ed32a60aa28b8e55a9ca590845d"
+        },
+        {
+          "path": "Artifacts/Work/Borrow-Regression-2-current.wvo",
+          "size": 1035188,
+          "sha256": "be72d9d616a20033076497e063a847b2f43c648f50fb2c9ff1701ebe7da8abf9"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Native WVB 1.39 admission, shape 29 Option-view storage, E1 instruction lowering, complete lifetime composition, owner retention/cleanup, exclusive borrowing, Take/Map and maintained consumer migration remain pending.",
+    "Shape 37 decoding supports only ordinary payload shapes already representable by the native reader. The matrix tests scalar, record, enum and callable identity; it is not general Vector, Sequence, fixed-array or variant-view execution evidence.",
+    "Version/truncation checks run on scalar and nominal boundary representatives; all 256 nominal entries receive identity checks. Every byte-valued payload tag is exercised against nominal zero (a record).",
+    "Initial fixture compilation rejected duplicate local names; corrected before final builds. Scalar runner attempts returned no diagnostic and are not passing evidence. The retained owner executes this fixture natively. PowerShell mapped its expected nonzero success code to a generic failure until LASTEXITCODE was inspected; both native products returned 42.",
+    "PlanOnly selected native-x64-lowering-development and reported a managed-test-recovery-source coverage gap. Focused existing data/type fixture and current-lowerer comparisons were selected instead; no full reconstruction, 25-case native development suite, frozen compiler qualification, browser or editor suite ran.",
+    "Only the reader fixture was freshly built and executed on both hosts; current-lowerer regression comparisons ran on Windows. This is not paired full native compiler qualification."
+  ],
+  "related": [
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Metadata.json"
+  ]
+}

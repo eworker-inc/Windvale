@@ -57,6 +57,145 @@ fn Repeatˉentry(Entry: bytes, Powerˉcount: u32, Wanted: u32) -> bytes {
     );
 }
 
+fn Checkˉborrowedˉshape(
+    Payload: bytes,
+    Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes
+) -> bool {
+    let Input: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Payload);
+    let Length: u32 = Bytesˉlength(Input);
+    let Ordinary: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉshapeˉread(
+            Payload, 0u32, Bytesˉlength(Payload), Types
+        );
+    let Borrowed: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+            Input, 0u32, Length, Types, 39u32
+        );
+    if !Ordinary.Valid || Ordinary.Borrowˉkind != 0u8 ||
+        !Borrowed.Valid || Borrowed.Next != Length ||
+        Borrowed.Type != Ordinary.Type || Borrowed.Identity != Ordinary.Identity ||
+        Borrowed.Borrowˉkind != 37u8 { return false; }
+    let Stored: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉshapeˉread(Input, 0u32, Length, Types);
+    let Returned: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉreturnˉshapeˉread(Input, 0u32, Length, Types);
+    if Stored.Valid || Returned.Valid { return false; }
+    var Minor: u32 = 0u32;
+    while Minor <= 40u32 {
+        let Versioned: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Input, 0u32, Length, Types, Minor
+            );
+        if Versioned.Valid != (Minor == 39u32) { return false; }
+        Minor = Minor + 1u32;
+    }
+    var Prefix: u32 = 0u32;
+    while Prefix < Length {
+        let Truncated: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉslice(Input, 0u32, Prefix), 0u32, Prefix, Types, 39u32
+            );
+        let Limited: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Input, 0u32, Prefix, Types, 39u32
+            );
+        if Truncated.Valid || Limited.Valid { return false; }
+        Prefix = Prefix + 1u32;
+    }
+    let Oversized: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+            Input, 0u32, Length + 1u32, Types, 39u32
+        );
+    let Cursor: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+            Input, 4294967295u32, Length, Types, 39u32
+        );
+    return !Oversized.Valid && !Cursor.Valid;
+}
+
+fn Borrowˉshapes(Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes) -> bool {
+    var Kind: u32 = 0u32;
+    while Kind < 256u32 {
+        let Payload: bytes = Bytesˉconcat(
+            Bytesˉslice(Bytesˉfromˉu32ˉlittle(Kind), 0u32, 1u32),
+            Bytesˉfromˉu32ˉlittle(0u32)
+        );
+        let Input: bytes = Bytesˉconcat(Bytesˉfromˉu8(37u8), Payload);
+        let Shape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Input, 0u32, Bytesˉlength(Input), Types, 39u32
+            );
+        // Nominal zero is a record, not an enum, variant, or callable.
+        let Expected: bool = Kind >= 1u32 && Kind <= 10u32 && Kind != 8u32;
+        if Shape.Valid != Expected { return false; }
+        if Expected {
+            var Size: u32 = 1u32;
+            if Kind == 7u32 { Size = 5u32; }
+            if !Checkˉborrowedˉshape(Bytesˉslice(Payload, 0u32, Size), Types) {
+                return false;
+            }
+        }
+        Kind = Kind + 1u32;
+    }
+    var Index: u32 = 0u32;
+    while Index < 256u32 {
+        var Tag: u8 = 7u8;
+        if Index >= 116u32 { Tag = 8u8; }
+        if Index >= 180u32 { Tag = 35u8; }
+        let Nominalˉpayload: bytes = Bytesˉconcat(
+            Bytesˉfromˉu8(Tag), Bytesˉfromˉu32ˉlittle(Index)
+        );
+        if Index == 0u32 || Index == 115u32 || Index == 116u32 ||
+            Index == 179u32 || Index == 180u32 || Index == 255u32 {
+            if !Checkˉborrowedˉshape(Nominalˉpayload, Types) { return false; }
+        } else {
+            let Nominalˉinput: bytes = Bytesˉconcat(
+                Bytesˉfromˉu8(37u8), Nominalˉpayload
+            );
+            let Nominalˉshape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+                Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                    Nominalˉinput, 0u32, 6u32, Types, 39u32
+                );
+            if !Nominalˉshape.Valid || Nominalˉshape.Identity != Index ||
+                Nominalˉshape.Borrowˉkind != 37u8 || Nominalˉshape.Next != 6u32 {
+                return false;
+            }
+        }
+        Index = Index + 1u32;
+    }
+    let Outˉofˉrange: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉfromˉu8(37u8), Bytesˉfromˉu8(7u8)),
+        Bytesˉfromˉu32ˉlittle(256u32)
+    );
+    let Rejected: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+            Outˉofˉrange, 0u32, 6u32, Types, 39u32
+        );
+    if Rejected.Valid { return false; }
+    var Minor: u32 = 0u32;
+    while Minor <= 40u32 {
+        let Budget: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉfromˉu8(36u8), 0u32, 1u32, Types, Minor
+            );
+        let Record: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+            Typeˉreader.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
+                Bytesˉconcat(Bytesˉfromˉu8(28u8), Bytesˉfromˉu32ˉlittle(0u32)),
+                0u32, 5u32, Types, Minor
+            );
+        if Budget.Valid != (Minor >= 34u32 && Minor <= 39u32) ||
+            Record.Valid != (Minor >= 35u32 && Minor <= 39u32) { return false; }
+        if Budget.Valid && (Budget.Borrowˉkind != 36u8 || Budget.Identity != 36u32) {
+            return false;
+        }
+        if Record.Valid && (Record.Borrowˉkind != 28u8 || Record.Identity != 0u32) {
+            return false;
+        }
+        Minor = Minor + 1u32;
+    }
+    return true;
+}
+
 fn Exactˉtypeˉsection() -> bytes {
     var Entries: bytes = Repeatˉentry(
         Recordˉtypeˉentry(), 128u32, 116u32
@@ -105,5 +244,6 @@ export fn Main() -> i32 {
             Oversizedˉtypes, 0u32, Bytesˉlength(Oversizedˉtypes)
         );
     if Oversizedˉtypeˉresult.Valid { return 6; }
+    if !Borrowˉshapes(Exactˉtypeˉresult) { return 7; }
     return 42;
 }

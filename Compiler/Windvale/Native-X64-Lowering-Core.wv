@@ -652,25 +652,14 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     var Parameter: u32 = 0u32;
     while Parameter < Parameters {
         let Parameterˉshape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
-            Nominalˉtypes.Compilerˉnativeˉx64ˉshapeˉread(
+            Nominalˉtypes.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input,
                 Signatureˉcursor,
                 Limit,
-                Types
+                Types,
+                Moduleˉminor
             );
         if !Parameterˉshape.Valid {
-            return Compilerˉnativeˉx64ˉinvalidˉfunction();
-        }
-        let Parameterˉkind: u8 = Bytesˉreadˉu8(Input, Signatureˉcursor);
-        if Parameterˉkind == 36u8 &&
-            Moduleˉminor != 34u32 && Moduleˉminor != 35u32 &&
-            Moduleˉminor != 36u32 && Moduleˉminor != 37u32 &&
-            Moduleˉminor != 38u32 {
-            return Compilerˉnativeˉx64ˉinvalidˉfunction();
-        }
-        if Parameterˉkind == 28u8 && Moduleˉminor != 35u32 &&
-            Moduleˉminor != 36u32 && Moduleˉminor != 37u32 &&
-            Moduleˉminor != 38u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉsignatureˉtypeˉisˉsupported(
@@ -688,14 +677,10 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         );
         if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 {
-            var Parameterˉborrowˉkind: u8 = 0u8;
-            if Parameterˉkind == 28u8 || Parameterˉkind == 36u8 {
-                Parameterˉborrowˉkind = Parameterˉkind;
-            }
+            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
             Parameterˉborrowˉkinds = Bytesˉconcat(
                 Parameterˉborrowˉkinds,
-                Bytesˉfromˉu8(Parameterˉborrowˉkind)
+                Bytesˉfromˉu8(Parameterˉshape.Borrowˉkind)
             );
         }
         Signatureˉcursor = Parameterˉshape.Next;
@@ -715,8 +700,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     if !Returnˉshape.Valid {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
-    let Returnˉkind: u8 = Bytesˉreadˉu8(Input, Signatureˉcursor);
-    if Returnˉkind == 36u8 || Returnˉkind == 28u8 {
+    if Returnˉshape.Borrowˉkind != 0u8 {
         return Compilerˉnativeˉx64ˉinvalidˉfunction();
     }
     let Returnˉtype: u8 = Returnˉshape.Type;
@@ -757,24 +741,14 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     var Local: u32 = 0u32;
     while Local < Declaredˉlocals {
         let Localˉshape: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
-            Nominalˉtypes.Compilerˉnativeˉx64ˉshapeˉread(
+            Nominalˉtypes.Compilerˉnativeˉx64ˉfunctionˉshapeˉread(
                 Input,
                 Declaredˉcursor,
                 Limit,
-                Types
+                Types,
+                Moduleˉminor
             );
         if !Localˉshape.Valid {
-            return Compilerˉnativeˉx64ˉinvalidˉfunction();
-        }
-        let Localˉkind: u8 = Bytesˉreadˉu8(Input, Declaredˉcursor);
-        if Localˉkind == 36u8 && Moduleˉminor != 34u32 &&
-            Moduleˉminor != 35u32 && Moduleˉminor != 36u32 &&
-            Moduleˉminor != 37u32 && Moduleˉminor != 38u32 {
-            return Compilerˉnativeˉx64ˉinvalidˉfunction();
-        }
-        if Localˉkind == 28u8 && Moduleˉminor != 35u32 &&
-            Moduleˉminor != 36u32 && Moduleˉminor != 37u32 &&
-            Moduleˉminor != 38u32 {
             return Compilerˉnativeˉx64ˉinvalidˉfunction();
         }
         if !Compilerˉnativeˉx64ˉlocalˉtypeˉisˉsupported(
@@ -790,14 +764,10 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
         );
         if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
             Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-            Moduleˉminor == 38u32 {
-            var Localˉborrowˉkind: u8 = 0u8;
-            if Localˉkind == 28u8 || Localˉkind == 36u8 {
-                Localˉborrowˉkind = Localˉkind;
-            }
+            Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
             Declaredˉborrowˉkinds = Bytesˉconcat(
                 Declaredˉborrowˉkinds,
-                Bytesˉfromˉu8(Localˉborrowˉkind)
+                Bytesˉfromˉu8(Localˉshape.Borrowˉkind)
             );
         }
         Declaredˉcursor = Localˉshape.Next;
@@ -816,7 +786,7 @@ export fn Compilerˉnativeˉx64ˉreadˉfunctionˉat(
     var Localˉborrowˉkinds: bytes = Compilerˉnativeˉx64ˉempty(Input);
     if Moduleˉminor == 34u32 || Moduleˉminor == 35u32 ||
         Moduleˉminor == 36u32 || Moduleˉminor == 37u32 ||
-        Moduleˉminor == 38u32 {
+        Moduleˉminor == 38u32 || Moduleˉminor == 39u32 {
         Localˉborrowˉkinds = Bytesˉconcat(
             Parameterˉborrowˉkinds,
             Declaredˉborrowˉkinds
