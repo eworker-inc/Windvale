@@ -58,6 +58,14 @@ fn Isˉvalid(Input: bytes, Profile: u8) -> bool {
     return Result.Valid;
 }
 
+fn Borrowˉmetadataˉisˉvalid(Input: bytes, Profile: u8) -> bool {
+    let Result: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Input, 0u32, Bytesˉlength(Input), Profile, 39u32
+        );
+    return Result.Valid && Result.Present;
+}
+
 export fn Main() -> i32 {
     let Emptyˉrequirements: bytes = Requirements(0u32, "", 0u32, "", 0u32);
     let Required: bytes = Requirements(
@@ -200,5 +208,50 @@ export fn Main() -> i32 {
             31u32
         );
     if Earlierˉsystemˉresult.Valid { return 19; }
+    let Borrowˉabsent: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Absent, 0u32, Bytesˉlength(Absent), 1u8, 39u32
+        );
+    if !Borrowˉabsent.Valid || Borrowˉabsent.Present { return 20; }
+    let Borrowˉcore: bytes = Envelope(
+        1u8, 2u8, Platforms(2u32, "linux", "windows"),
+        Emptyˉrequirements, Emptyˉrequirements
+    );
+    if !Borrowˉmetadataˉisˉvalid(Borrowˉcore, 1u8) { return 21; }
+    if !Borrowˉmetadataˉisˉvalid(Borrowˉcore, 2u8) { return 22; }
+    if !Borrowˉmetadataˉisˉvalid(Borrowˉcore, 3u8) { return 23; }
+    if !Borrowˉmetadataˉisˉvalid(Valid, 2u8) { return 24; }
+    if Borrowˉmetadataˉisˉvalid(Valid, 1u8) { return 25; }
+    if !Borrowˉmetadataˉisˉvalid(Valid, 3u8) { return 26; }
+    let Borrowˉsystem: bytes = Envelope(
+        1u8, 4u8, Platforms(2u32, "linux", "windows"),
+        Emptyˉrequirements, Emptyˉrequirements
+    );
+    if !Borrowˉmetadataˉisˉvalid(Borrowˉsystem, 3u8) { return 27; }
+    if Borrowˉmetadataˉisˉvalid(Borrowˉsystem, 1u8) { return 28; }
+    if Borrowˉmetadataˉisˉvalid(
+        Bytesˉconcat(Borrowˉcore, Bytesˉfromˉu8(0u8)), 1u8
+    ) { return 29; }
+    var Prefix: u32 = 0u32;
+    while Prefix < Bytesˉlength(Borrowˉcore) {
+        if Borrowˉmetadataˉisˉvalid(
+            Bytesˉslice(Borrowˉcore, 0u32, Prefix), 1u8
+        ) { return 30; }
+        Prefix = Prefix + 1u32;
+    }
+    let Oversizedˉlimit: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Borrowˉcore, 0u32, 4294967295u32, 1u8, 39u32
+        );
+    if Oversizedˉlimit.Valid { return 31; }
+    let Oversizedˉcursor: Metadataˉreader.Compilerˉnativeˉx64ˉmetadata =
+        Metadataˉreader.Compilerˉnativeˉx64ˉmetadataˉread(
+            Borrowˉcore, 4294967295u32, Bytesˉlength(Borrowˉcore),
+            1u8, 39u32
+        );
+    if Oversizedˉcursor.Valid { return 32; }
+    if Borrowˉmetadataˉisˉvalid(Borrowˉcore, 0u8) { return 33; }
+    if Borrowˉmetadataˉisˉvalid(Borrowˉcore, 4u8) { return 34; }
+    if Borrowˉmetadataˉisˉvalid(Borrowˉsystem, 2u8) { return 35; }
     return 0;
 }

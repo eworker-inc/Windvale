@@ -104,6 +104,13 @@ cold setup; separately completing its remaining native packages and emitter
 construction allowed the focused selection to finish in 36.7 seconds with warm
 caches. Its fresh outputs match Windows exactly. Wider payload execution and a
 maintained real consumer still need integration evidence.
+The maintained package parser feeds native package-lock and installation tools.
+Migrating those paths to payload borrowing first requires native WVB 1.39 support.
+The [native metadata checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Metadata.json)
+aligns its reader with the complete verifier's profile-neutral rule; 35 grouped
+checks pass on each host. Full native admission remains closed. Next integrate
+borrowed shape identity, `E1` instruction lowering, and owner retention/cleanup
+before migrating the consumer; a parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

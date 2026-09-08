@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-metadata",
+  "date": "2026-09-08",
+  "subject": "Native metadata alignment for profile-neutral WVB 1.39",
+  "claim": "The native metadata reader now matches the existing complete-verifier rule for WVB 1.39: present metadata sets a minimum profile, explicit broader hosted/system scope is preserved, and absent metadata remains supported. The retained metadata self-test passes 35 grouped checks on Windows and Debian with identical bytes. Full native WVB 1.39 admission remains closed.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on c998c93b948b743cc5fbb3e2811328b30297a1d6; exact changed reader and self-test identities are recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "35 grouped metadata checks, result 0",
+      "tool": "Tools/Native/Build-Cached-Project-Wvb.cmd and Tools/Native/Run-Wvb.cmd",
+      "command": "Tools/Native/Build-Cached-Project-Wvb.cmd Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj Artifacts/Work/Native-Borrow-Metadata-Windows.wvb; Tools/Native/Run-Wvb.cmd Artifacts/Work/Native-Borrow-Metadata-Windows.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Metadata.wv",
+          "size": 15743,
+          "sha256": "46c1a66cd82760e7d99076472332a8e3330a77c29036d1b94f4b1668444f2977"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv",
+          "size": 8820,
+          "sha256": "69c0bcc159ec418381cd41c93d59988d7189182db4163fda769058c587e7dacd"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/windows-x64-wvrun.exe",
+          "size": 10547712,
+          "sha256": "8942e7c0a17182ff15ed79eaf63f7aeb8a8ab7cd4cde5015cd489612c3494972"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Metadata-Windows.wvb",
+          "size": 27671,
+          "sha256": "9cebb597b14b8058f1b3e1ef00cf6ae1ce5e9e5b4761f1bb29cc2a16bedf483f"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "35 grouped metadata checks, result 0",
+      "tool": "Tools/Native/Build-Cached-Project-Wvb.sh and Tools/Native/Run-Wvb.sh",
+      "command": "bash Tools/Native/Build-Cached-Project-Wvb.sh Projects/Tests/Windvale-Native-Test-X64-Lowering-Metadata.wvproj Artifacts/Work/Native-Borrow-Metadata-Linux.wvb; bash Tools/Native/Run-Wvb.sh Artifacts/Work/Native-Borrow-Metadata-Linux.wvb",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Metadata.wv",
+          "size": 15743,
+          "sha256": "46c1a66cd82760e7d99076472332a8e3330a77c29036d1b94f4b1668444f2977"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Metadata-Self-Test.wv",
+          "size": 8820,
+          "sha256": "69c0bcc159ec418381cd41c93d59988d7189182db4163fda769058c587e7dacd"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-Runner-Candidate/linux-x64-wvrun.elf",
+          "size": 10547200,
+          "sha256": "4b9f7ea9eb30e4aa9b713f17d6065a413b4585a27eb8c62e021e95375e27436e"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Native-Borrow-Metadata-Linux.wvb",
+          "size": 27671,
+          "sha256": "9cebb597b14b8058f1b3e1ef00cf6ae1ce5e9e5b4761f1bb29cc2a16bedf483f"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Native-X64-Lowering-Core.wv still rejects minor 39 at its module-structure boundary. No borrowed native type representation, E1 lowering, lifetime/cleanup integration, native consumer migration, installed-tool promotion, or full native execution support is claimed.",
+    "This aligns an internal reader with Tools/Windvale.Verify/Wvb-Metadata-Normalization.wv; it does not define a new WVB metadata contract. Minor 39 permits a declared profile at least as broad as the metadata minimum, through profile 3. Versions 33 through 38 retain their system-profile rule; older versions retain exact derived-profile matching.",
+    "The initial uncommitted draft incorrectly required metadata presence for minor 39 and used exact profile equality. Review against the complete verifier caught that mismatch. The draft and its 32-group self-consistent test result were discarded before the final 35-group runs; they are not evidence for the committed behavior.",
+    "The added groups cover absent metadata, portable minimum under profiles 1/2/3, hosted minimum under profiles 2/3 with rejection at 1, system authority rejection below 3, unknown profiles, trailing bytes, every truncated prefix of a valid portable envelope, and oversized cursor/limit. The existing 19 groups remain in the same test.",
+    "The existing reconstruction owner already constructs and executes this self-test. Only that small project and its pinned runner were selected; no new verifier entry point was added.",
+    "The changed-file plan selected wvb-to-wvo-reconstruction and native-x64-lowering-development (360 expected seconds), plus editor verification. Full reconstruction, native machine emission, editor grammar, broad ABI/OS/bootstrap, and full qualification were not run: only a minor-39 metadata-reader branch and its fixture changed, while full minor-39 native admission remains closed and lexical rules are unchanged.",
+    "Run-Wvb executes the new test bytecode inside the pinned native bytecode interpreter. This is execution of the current metadata reader, not construction of a promoted native lowerer. Timings and peak working-set memory were not collected as a performance benchmark.",
+    "Consumer tracing found that Canonical-Package-Text.wv feeds Package-Lock.wv and Installation-Generation.wv; changing those maintained native paths to E1 borrowing before native support would break them. Native borrow representation, lowering, verification, ownership retention and cleanup must be integrated before that migration; no parallel parser or compatibility implementation was added."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Fresh-Paired-Host.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Specifications/Seed-Bytecode.md",
+    "Specifications/Windvale-Native-Wvb-To-Wvo.md"
+  ]
+}

@@ -171,7 +171,7 @@ cached products keep fresh execution separate from construction. Bounded host
 minor-39 execution now has paired-host evidence. Full-verifier source
 changes retain broader routing.
 
-1. Finish wider payload and source integration, then real-consumer
+1. Finish native borrow lowering and wider payload integration, then real-consumer
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
    qualify the full path on both hosts, then complete exclusive borrow, take, and mapping.
 2. Continue required Libraries 1.0 through primitive ordering, collection

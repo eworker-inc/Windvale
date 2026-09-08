@@ -320,7 +320,11 @@ export fn Compilerˉnativeˉx64ˉmetadataˉread(
                 Expectedˉprofile = 2u8;
             }
         }
-        if Profile != Expectedˉprofile { return Invalidˉresult; }
+        if Minor == 39u32 {
+            // Borrowing preserves explicit scope; metadata supplies its minimum.
+            if U32ˉfromˉu8(Profile) < U32ˉfromˉu8(Expectedˉprofile) ||
+                U32ˉfromˉu8(Profile) > 3u32 { return Invalidˉresult; }
+        } else if Profile != Expectedˉprofile { return Invalidˉresult; }
     }
     return Compilerˉnativeˉx64ˉmetadata(
         true,
