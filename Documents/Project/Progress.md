@@ -55,7 +55,7 @@ materially misleading.
 | Slice 8 source admission | Qualified | The target-aware front door authenticates, analyzes, pairs, emits, verifies, lowers, assembles, links, packages, and executes registered Foreign calls without pointer escape or ambient authority. The real Linux system-profile record consumer uses the canonical Foundation Memory, Result, and Unsafe modules and passes within the [final paired-host gate](../Evidence/2026-09-04-Language-1.0-Slice-8-Qualification.json); separate native ABI cases qualify the Windows path. | Complete. Preserve this evidence unless a declared source, WVB, containment, ABI, or qualification input changes. Decisions [0893](../Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md) and [0895](../Decisions/0895-Bind-Authenticated-Foreign-Declarations-In-A-Private-Compiler-Phase.md) remain historical proposals rather than alternate compilers. |
 | Unsafe Foundation slice | Qualified | Canonical unsafe value types, scratch construction, immutable observation, affine mutable-region containment, exact write-region validation, and contained `Writeˉpointer::<Abi>` derivation execute through WVB 1.37 and are consumed immediately by registered WVB 1.38 bindings. The real record consumer preserves the exact binding, target, lifetime, and authority boundary through native execution. | The bounded compiler/runtime contract is complete. Future library APIs must reuse it without widening authority. |
 | Compiler scale | Qualified | The promoted segmented toolset, WVB-to-WVO lowerer, and WVB runner reconstruct byte for byte. Relocation-free terminal publication and the 50,761,605-byte compiler-scale object are covered. The self-hosted analyzer and emitter reproduce the exact WVB runner and application, resumable symbol checkpoints fail closed, and the final gate reconstructs the compiler independently on Windows and Debian. | Correctness and deterministic reconstruction are complete for Language 1.0. Cold analysis, emission, and qualification latency remain performance work, not an open compiler-semantic gate. |
-| Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. Candidate WVB 1.39 publishes all three immutable Option/Result payload projections and preserves exact borrowed identity across direct helper calls. The focused Windows publication checkpoint passes 39 cases, including native planner tests, structural mutations, deterministic output, and unchanged large borrow-free functions. The current database remains a useful bounded byte-oriented consumer. | Complete-verifier source now passes focused checks on both hosts. Finish runtime admission and execution, then reproduce the full path on Linux. Complete Option/Result exclusive borrow, take, and mapping before primitive ordering, collection mutation/slicing, and bounded byte construction. Migrate and qualify required real consumers afterward; the current database's passing storage suite does not prove those APIs or unsafe-region adoption. |
+| Libraries 1.0 | Active | Foundation memory-budget, collection, byte-buffer, and builder contracts have focused implementations and fixtures. Candidate WVB 1.39 publishes all three immutable Option/Result payload projections and preserves exact borrowed identity across direct helper calls. The focused Windows publication checkpoint passes 39 cases, including native planner tests, structural mutations, deterministic output, and unchanged large borrow-free functions. The current database remains a useful bounded byte-oriented consumer. | Complete-verifier source now passes focused checks on both hosts. The published fixture now executes in the source-built scalar runner on both hosts. Finish wider payload/source integration and a real consumer. Complete Option/Result exclusive borrow, take, and mapping before primitive ordering, collection mutation/slicing, and bounded byte construction. Migrate and qualify required real consumers afterward; the current database's passing storage suite does not prove those APIs or unsafe-region adoption. |
 | WVDB 1.0 | Candidate | Upper-layer identity, tables, typed relationships, indexes, queries, transactions, storage profiles, types, documents/graphs, and backup direction are accepted. Existing storage and service slices remain useful implementation evidence. | Finish normative storage, durability, backup/restore, service, operations, and conformance contracts, then reconcile the implementation against them. |
 | Packages and services | Active | Immutable packages, release admission, installers, offline activation, rollback, command resolution, and rights-limited execution are established foundations. | Define and qualify the complete 1.0 service lifecycle, support, migration, update, compatibility, and recovery promises. |
 | Windvale OS | Ongoing | Probe 40 qualifies protected processes, capability IPC, bounded preemption, generation-safe memory reuse, exact WVB portability, and growing source ownership of the fixed process machine. Filesystem work has bounded host and FAT32 foundations. | Bind a surviving consumer and FAT32 media, enter the ready filesystem provider, complete one bounded guest read with rollback and teardown, then advance networking without claiming arbitrary application launch. |
@@ -79,9 +79,9 @@ Two active tracks intentionally use different bytecode generations:
 - The Libraries 1.0 track has a source-publication candidate at WVB 1.39 for
   immutable Option/Result payload borrowing. Its source writer and bounded
   independent reader pass on Windows. The complete verifier now applies semantic,
-  typed-stack, and lifetime checks to 1.39; execution consumers still reject it
-  pending runtime admission. Direct-call identity has local publication evidence,
-  not execution admission. The verifier's small typed-directory component now
+  typed-stack, and lifetime checks to 1.39. The source-built host scalar runner
+  executes the published fixture on both hosts; installed tools and other targets
+  remain narrower. The verifier's small typed-directory component now
   preserves distinct borrowed payload identities and bounds-checks shape and
   instruction decoding. The control-phase component also checks that each
   payload owner is initialized on every path and cannot be overwritten or
@@ -98,27 +98,24 @@ Two active tracks intentionally use different bytecode generations:
   now rejects borrowed callable copies while preserving exact invocation,
   including array and Option projections; its existing 217-group selector passes
   on Windows in the [callable reconciliation checkpoint](../Evidence/2026-09-07-Foundation-Borrow-Callable-Reconciliation.json).
-  A bounded runtime payload-reader preparation component now passes 16 new
-  grouped tests in the [233-group Windows owner](../Evidence/2026-09-07-Foundation-Borrow-View-Reader.json).
-  An [internal E1 adapter](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
-  adds view retention, release, and stale-lease rejection. Scalar source now
-  connects frame-owned leases to dispatch, locals, calls, collector roots, and
-  cleanup. The [frame integration checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
-  passes 287 component groups and source-built runner regression checks on Windows.
-  The [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
-  adds full-arena borrowed-owner survival, frame-exit slot reuse, and descriptor
-  reference-release coverage in the shared production value core (293 Windows groups).
+  Runtime leases connect dispatch, locals, calls, collector roots, and cleanup.
+  The [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
+  and [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
+  record borrowed-owner survival, frame-exit slot reuse, and descriptor release.
   The [nested Sequence checkpoint](../Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json)
-  extends this to 299 groups and fixes Sequence retention/release in aggregate
-  reads, with three source-built Windows runner regressions.
+  fixes Sequence retention/release in aggregate reads.
   The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
   passes 305 component groups on Windows and Debian with identical bytecode.
   It permits borrowed forwarding of an array containing owned Vectors while
-  rejecting copying, consuming calls, and Vector extraction. Complete candidate
-  execution and the runtime admission audit remain pending. The subsequent
+  rejecting copying, consuming calls, and Vector extraction. Wider payload
+  execution and real-consumer integration remain pending. The subsequent
   [complete-verifier checkpoint](../Evidence/2026-09-08-Foundation-Complete-Verifier.json)
   removes the blanket version rejection and checks phase results through the
   existing metadata and typed-stack matrices: 305 groups pass on both hosts.
+  The [runtime checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
+  now returns 42 from the published three-projection fixture on Windows and
+  Debian, rejects nine unsafe or malformed variants before execution, and
+  passes three earlier-version aggregate Sequence lifetime workloads per host.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery
 contract. A current document must name the track when a WVB version matters.
@@ -170,13 +167,13 @@ and [34 composition groups](../Evidence/2026-09-05-Foundation-Borrow-Composition
 They consume the actual published signatures and projections, check exact
 nominal identities, reject every truncated fixture prefix, and preserve an
 earlier-bytecode regression. Type and local directories avoid repeated scans;
-cached products keep fresh execution separate from construction. Runtime
-minor-39 admission remains closed pending execution checks. Full-verifier source
+cached products keep fresh execution separate from construction. Bounded host
+minor-39 execution now has paired-host evidence. Full-verifier source
 changes retain broader routing.
 
-1. Finish runtime admission and
+1. Finish wider payload and source integration, then real-consumer
    execution for candidate WVB 1.39 immutable Option/Result payload borrowing;
-   reproduce it on Linux, then complete exclusive borrow, take, and mapping.
+   qualify the full path on both hosts, then complete exclusive borrow, take, and mapping.
 2. Continue required Libraries 1.0 through primitive ordering, collection
    mutation and slicing, bounded byte construction, and real consumers.
 3. Advance the remaining WVDB 1.0 specifications and reconcile its useful

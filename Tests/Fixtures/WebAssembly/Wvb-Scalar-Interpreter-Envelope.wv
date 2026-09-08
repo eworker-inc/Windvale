@@ -1,5 +1,7 @@
 module WebAssemblyˉwvbˉscalarˉinterpreterˉenvelope profile portable;
 
+import Windvaleˉcompilerˉwvbˉverifierˉmetadata as Compilerˉverifier;
+
 fn Callableˉshapeˉend(
     Module: bytes,
     Cursor: u32,
@@ -223,7 +225,14 @@ export fn Interpreterˉenvelope(Request: bytes) -> bytes {
     if U32ˉfromˉu8(Bytesˉreadˉu8(Module, 3u32)) != 49u32 { return Invalid; }
     if Bytesˉreadˉu16ˉlittle(Module, 4u32) != 1u32 { return Invalid; }
     let Moduleˉminor: u32 = Bytesˉreadˉu16ˉlittle(Module, 6u32);
-    if Moduleˉminor < 11u32 || Moduleˉminor > 38u32 { return Invalid; }
+    if Moduleˉminor < 11u32 || Moduleˉminor > 39u32 { return Invalid; }
+    // Authenticate loan identity and lifetime before exposing candidate cells.
+    if Moduleˉminor == 39u32 {
+        if Requestˉmajor != 1u32 ||
+            Compilerˉverifier.Compilerˉwvbˉverifyˉmetadata(Module) != 0u32 {
+            return Invalid;
+        }
+    }
     if Bytesˉreadˉu32ˉlittle(Module, 8u32) != 7u32 { return Invalid; }
 
     var Cursor: u32 = 12u32;

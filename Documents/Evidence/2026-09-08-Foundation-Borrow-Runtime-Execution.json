@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-borrow-runtime-execution",
+  "date": "2026-09-08",
+  "subject": "Verified immutable Foundation payload execution in the host scalar runner",
+  "claim": "The published WVB 1.39 fixture returns 42 on Windows and Debian after complete verification inside the host envelope. Nine invalid variants reject before execution. Existing record, variant, and fixed-array Sequence lifetime regressions also pass on both hosts.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on b4b5130856d461a05cb3e7b3ed20944593183442; exact changed source and native artifacts recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "Current-source scalar runner WVB; 447 functions",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 238747,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Envelope.wv",
+          "size": 40089,
+          "sha256": "f694ca2f59aa0743c1a5957fbf7d492ee407eac63b5755eb037a8031690e803c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb",
+          "size": 1152753,
+          "sha256": "88dbed41f516506b8e2166ae127a289165ed1d0aec8610c9ab73a5e549b00447"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Profile-5 native scalar runner packaging",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb Artifacts/Work/Foundation-Borrow-Execution-Runner.exe --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb",
+          "size": 1152753,
+          "sha256": "88dbed41f516506b8e2166ae127a289165ed1d0aec8610c9ab73a5e549b00447"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+          "size": 11959296,
+          "sha256": "7b20401ebde388df20a7ca1ce5ad09c864abf4b5e49969a1b842eca28aa8f8ab"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Published three-projection/borrowed-call candidate returns 42; nine malformed or unsafe mutations reject before execution",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+      "result": "Passed",
+      "elapsedMilliseconds": 523,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+          "size": 11959296,
+          "sha256": "7b20401ebde388df20a7ca1ce5ad09c864abf4b5e49969a1b842eca28aa8f8ab"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 125704,
+          "sha256": "cb073b318ba56cdc4f4f9bae67b304801ccf3973fca7af9e84d4776fea48deba"
+        },
+        {
+          "path": "Published-Foundation-Candidate.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Three WVB 1.28 aggregate Sequence lifetime workloads; eight cycles each; result 42",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs --aggregate-lifetimes Artifacts/Work/Foundation-Borrow-Execution-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb Artifacts/Work",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.exe",
+          "size": 11959296,
+          "sha256": "7b20401ebde388df20a7ca1ce5ad09c864abf4b5e49969a1b842eca28aa8f8ab"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Profile-5 native scalar runner packaging",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.sh",
+      "command": "bash Tools/Native/Package-Segmented-Compiler-Wvb.sh 5 Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb Artifacts/Work/Foundation-Borrow-Execution-Runner.elf --development-cache",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.wvb",
+          "size": 1152753,
+          "sha256": "88dbed41f516506b8e2166ae127a289165ed1d0aec8610c9ab73a5e549b00447"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+          "size": 11960320,
+          "sha256": "b8c99c6640b04389695b7f6a608696e0e20cd968daade9f42efd0a8ec2e1d5b1"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Published three-projection/borrowed-call candidate returns 42; nine malformed or unsafe mutations reject before execution",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-runtime Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+      "result": "Passed",
+      "elapsedMilliseconds": 1121,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+          "size": 11960320,
+          "sha256": "b8c99c6640b04389695b7f6a608696e0e20cd968daade9f42efd0a8ec2e1d5b1"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 125704,
+          "sha256": "cb073b318ba56cdc4f4f9bae67b304801ccf3973fca7af9e84d4776fea48deba"
+        },
+        {
+          "path": "Published-Foundation-Candidate.wvb",
+          "size": 1966,
+          "sha256": "470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL; Node.js 24.20.0",
+      "target": "Three WVB 1.28 aggregate Sequence lifetime workloads; eight cycles each; result 42",
+      "tool": "Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs",
+      "command": "node Tools/Native/Verify-Language-1.0-Vector-Sequence-Runtime.mjs --aggregate-lifetimes Artifacts/Work/Foundation-Borrow-Execution-Runner.elf Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb Artifacts/Work",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Execution-Runner.elf",
+          "size": 11960320,
+          "sha256": "b8c99c6640b04389695b7f6a608696e0e20cd968daade9f42efd0a8ec2e1d5b1"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "The prior Foundation-Sequence-Lifetime-Runner.exe rejected the same published candidate with exit 1 and phase=envelope. It was not expected to pass the new runtime selection.",
+    "The host envelope authenticates minor 39 through the complete verifier before candidate parsing. Request major 1 and existing portable/capability-free/scanner limits remain required. The separate browser envelope is unchanged.",
+    "The invalid variants cover unknown version/opcode, zero/unknown projection, wrong owner/view type, borrowed-parameter read, ownership-taking use, and truncation. This is not exhaustive malformed-module qualification.",
+    "Both native packages use one Windows-built runner WVB. No independent Linux compiler reconstruction or fresh compilation of the pinned candidate source was performed.",
+    "Sequence regressions use WVB 1.28 and do not establish arbitrary borrowed Sequence/Vector/callable payload execution. Remaining payload integration and a maintained real consumer are still required.",
+    "The automatic plan proposed three broad owners with 2130 expected seconds. Focused current-runner construction and execution were selected; unchanged verifier component results were retained. Broad front-door, callable, bootstrap, WebAssembly, OS, installed-tool, and complete qualification suites were not run.",
+    "No complete Option/Result, exclusive-borrow, take, mapping, installed-tool promotion, or compiler/library goal completion is claimed.",
+    "The full existing owner now invokes these ten runtime cases after constructing its runner; its registered total rises from 539 to 549. The complete 549-case owner was not run in this checkpoint. Focused runtime execution was repeated after this orchestration edit, reusing unchanged runner packages."
+  ],
+  "related": [
+    "Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md",
+    "Documents/Evidence/2026-09-08-Foundation-Complete-Verifier.json",
+    "Documents/Evidence/2026-09-08-Foundation-Nested-Sequence-Lifetime.json",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}

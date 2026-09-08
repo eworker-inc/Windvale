@@ -57,9 +57,13 @@ None of these checkpoints is a cross-host or complete Slice 8 claim.
 Candidate WVB 1.39 adds the Foundation value-borrow publication boundary selected
 by
 [Decision 0957](../Documents/Decisions/0957-Represent-Immutable-Foundation-Payload-Borrows-In-Candidate-Wvb-1.39.md).
-It currently has bounded Windows source-writer and independent-reader evidence;
-complete verification, execution, direct borrowed-payload call-parameter
-identity, and Linux reproduction remain pending.
+It has bounded Windows publication evidence, exact borrowed call-parameter
+identity, and complete-verifier checks on both hosts. The source-built host
+scalar runner executes the published three-projection fixture on Windows and
+Debian under
+[Decision 0960](../Documents/Decisions/0960-Admit-Verified-Foundation-Borrows-In-The-Host-Scalar-Runner.md).
+Fresh cross-host source publication, wider payload execution, consumer migration,
+and installed-tool promotion remain pending.
 
 ## Direct compilation result
 
@@ -1279,7 +1283,8 @@ preserve the verified loan lifetime before using this internal reader.
 Success reports absence or one eight-byte payload cell plus an inline,
 descriptor, aggregate, or callable root category. These categories identify
 retention work for the caller; they do not grant Copy ownership or admit new
-payload shapes. Runtime WVB 1.39 admission remains closed.
+payload shapes. The host envelope admits the supported runtime profile only
+after complete verification, as described below.
 
 The same component now has an internal `Execute` adapter for an exact 13-byte
 `E1` instruction. The caller supplies authenticated owner/view type indices and
@@ -1301,10 +1306,9 @@ geometry returns empty failure, distinct from a successful empty root set.
 These are internal execution-owned structures, not an added WVB format or
 capability. The scalar interpreter source now connects these leases to `E1`,
 shapes 29/37, local loads/stores, operand flags, synchronous calls, allocation
-and return collection, frame exit, and guest-failure teardown. Runtime admission stays
-closed while complete candidate execution and
-the candidate audit remain pending; this source change does not enable candidate
-modules in the public runner.
+and return collection, frame exit, and guest-failure teardown. The source-built
+host runner now admits the verified synchronous, capability-free candidate
+profile; this does not change installed or browser runner identities.
 
 `Foundation-Borrow-Frames-Core.wv` owns one cached lease per exact owner local,
 view type, and projection in each frame. Repeated instructions reuse that lease;
@@ -1372,11 +1376,18 @@ control-flow failure, and 0 only after all passes succeed. Metadata
 normalization still precedes this entry point in the public tool. There is no
 candidate bypass or separate verifier. Existing metadata and typed-stack cases
 also check the complete entry point, including every truncated publication prefix.
-This verification boundary does not grant execution support: the scalar runtime,
-native lowerer, WebAssembly targets, packages, and Windvale OS still reject minor
-39. Runtime admission/execution, source value-classification reconciliation, and
-compiler-to-runtime consumer evidence remain required. Composition probes do
-not qualify arbitrary payload or capture classes.
+The host scalar envelope additionally invokes that complete metadata verifier
+for minor 39 before candidate type/function/value parsing. Only request major 1
+is admitted; the existing portable/capability-free profile and synchronous
+scanner restrictions remain in force. Direct interpreter callers use the same
+envelope and cannot bypass verification. Failure returns an empty envelope,
+which the runner reports as unsupported at the envelope phase. The browser
+envelope, native lowerer, installed tools, packages, and Windvale OS retain their
+prior version limits. The
+[runtime checkpoint](../Documents/Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
+executes the published record/u32 fixture and rejects nine invalid variants on
+Windows and Debian. Wider payload execution, source value-classification
+reconciliation, and compiler-to-runtime consumer evidence remain required.
 
 The WVB 1.33-through-1.35 unsafe-scratch boundary is a verified serialization
 and bounded scalar-execution checkpoint. The
@@ -1403,8 +1414,9 @@ success and stale-generation outcomes. Native address formation, native Foreign
 invocation, and cross-host containment remain pending.
 Candidate WVB 1.39 publishes the three canonical immutable Foundation
 value-borrow projections and passes its bounded independent structural reader
-and focused current-source semantic metadata tests.
-Complete verification and every execution target remain pending.
+and complete current-source verification. Its published record/u32 fixture
+executes in the source-built host scalar runner on Windows and Debian; other
+execution targets and installed-tool promotion remain pending.
 
 The deterministic source fixture emits as a 4,231-byte WVB 1.32 module at
 SHA-256

@@ -65,8 +65,8 @@ grouped cases in the same owner. It exposes original-owner roots for collection
 without transferring payload ownership. The scalar source now connects leases
 to borrowed shapes, locals, synchronous calls, stack flags, collector roots, and
 frame cleanup. Frames conservatively retain owners until return and reuse leases
-for repeated projections. Runtime WVB 1.39 admission remains closed;
-complete candidate execution and the admission audit are the next gate.
+for repeated projections. Bounded host WVB 1.39 execution now has paired-host evidence;
+wider payload execution and a real consumer are the next integration gate.
 The [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
 passes 293 Windows component groups. Its six new groups exercise the shared
 production collector with a full arena, a loan-only root, repeated collection,
@@ -77,17 +77,25 @@ paired-host qualification remains pending. The
 adds nested borrowed payload lifetime coverage (299 Windows groups) and fixes
 Sequence descriptor retention, stack classification, and collection in records,
 variants, and fixed arrays. Three current-source runner regressions each perform
-eight allocation/extraction cycles. Runtime candidate admission remains closed.
+eight allocation/extraction cycles. The later runtime checkpoint below opens bounded host admission.
 The [owned-payload checkpoint](../Evidence/2026-09-08-Foundation-Owned-Payload-Paired-Host.json)
 passes 305 component groups on both Windows and Debian with identical WVB bytes.
 It covers borrowed forwarding of an array containing owned Vectors and rejects
 copying, storage into ordinary locals, consuming calls, and Vector extraction.
-This closes the paired-host component checkpoint, not complete candidate-module
-execution or the remaining runtime admission audit. The complete verifier now
+This closes the paired-host component checkpoint, not arbitrary payload
+execution or real-consumer integration. The complete verifier now
 runs minor 39 through its semantic, typed-stack, and control/lifetime passes;
 the existing fixtures check complete-entry-point success and failure stages.
 The [complete-verifier evidence](../Evidence/2026-09-08-Foundation-Complete-Verifier.json)
 records 305 passing groups on each host with identical WVB bytes.
+The [runtime checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Runtime-Execution.json)
+executes the published three-projection/borrowed-call fixture on Windows and
+Debian and rejects nine invalid variants before execution. Complete verification
+runs inside the host envelope, including for direct interpreter callers. Only
+the existing synchronous, portable, capability-free request profile is opened;
+browser/native-lowering and installed-tool limits are unchanged. Both packages
+consume one Windows-built runner WVB; fresh source publication, wider payload
+execution, and a maintained real consumer still need integration evidence.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
@@ -104,8 +112,8 @@ arguments, local stores, plain closure captures, record construction, exact
 nominal identity, and owner lifetime. Construction and fresh execution took
 77.8 and 81.0 seconds with existing bootstrap caches. The
 [exact evidence](../Evidence/2026-09-06-Foundation-Borrow-Operand-Integration.json)
-records that checkpoint's limits. WVB 1.39 execution remains closed while the
-runtime admission audit and source value-classification integration continue.
+records that checkpoint's limits. Wider WVB 1.39 payload execution and
+source value-classification integration continue.
 Exclusive borrowing, take, mapping, and
 the real consumer are still pending; this checkpoint does not complete the chunk.
 
@@ -114,7 +122,7 @@ scratch/region/Foreign numeric arguments, preserves opaque-owner restrictions,
 and records inherited owner-consuming operations in loan flow. Its existing
 focused selector now contains 217 groups, including 30 authority-composition
 groups and two grouped event-handoff checks. The implementation remains a
-component checkpoint: runtime candidate admission/execution,
+component checkpoint: wider candidate payload execution,
 source value-classification reconciliation, wider owned payloads, exclusive
 borrowing, take, mapping, and consumer migration remain open. Final verification
 for this checkpoint is recorded in the
@@ -153,7 +161,7 @@ is incomplete: it reached the opaque-owner fixture and failed there; review
 found and corrected an ambiguous marker that selected the module header. Its
 construction caches are preserved. Later diagnostics found invalid fixture
 declarations being passed into binding; the passing fixture now checks source
-validation first and uses admitted forms. Runtime admission and remaining
+validation first and uses admitted forms. Wider payload execution and remaining
 owned-payload reconciliation remain pending. This checkpoint does not complete immutable borrowing
 or Option/Result.
 

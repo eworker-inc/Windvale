@@ -66,6 +66,8 @@ const EXPECTED_STRUCTURED_TASK_ENVIRONMENT_SHA256 =
     'a2dbb84ef197d10e32286a0bd38971072e200c964a6d620975fde49ba2bcb090';
 
 const Inspectionˉmode = process.argv.length === 4 ? process.argv[2] : '';
+const Foundationˉruntimeˉonly = process.argv.length === 4 &&
+    process.argv[2] === '--foundation-borrow-runtime';
 const Foundationˉonly = (process.argv.length === 3 || process.argv.length === 5) &&
     process.argv[2] === '--foundation-borrow';
 const Foundationˉplanˉonly = process.argv.length === 3 &&
@@ -77,7 +79,7 @@ const Foundationˉownersˉonly = process.argv.length === 3 &&
 const Foundationˉcomponentsˉonly = process.argv.length === 3 &&
     process.argv[2] === '--foundation-borrow-components';
 const Developmentˉonly = Foundationˉonly || Foundationˉplanˉonly ||
-    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly;
+    Foundationˉdirectoriesˉonly || Foundationˉownersˉonly || Foundationˉcomponentsˉonly || Foundationˉruntimeˉonly;
 let Maximumˉrunˉmilliseconds = TOOL_TIMEOUT_MILLISECONDS;
 if (Foundationˉonly && process.argv.length === 5) {
     if (process.argv[3] !== '--maximum-seconds' || !/^[1-9][0-9]{0,3}$/u.test(process.argv[4]) ||
@@ -95,7 +97,7 @@ if (process.argv.length !== 2 && !Inspectionˉonly && !Developmentˉonly) {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs ' +
         '[--foundation-borrow-plan|--foundation-borrow-directories|--foundation-borrow-owners|--foundation-borrow-components|' +
-        '--foundation-borrow [--maximum-seconds <seconds>]|' +
+        '--foundation-borrow [--maximum-seconds <seconds>]|--foundation-borrow-runtime <runner>|' +
         '(--inspect-structured-task|--inspect-function-limits) <module.wvb>]\n',
     );
     process.exit(64);
@@ -167,7 +169,9 @@ let Borrowˉownerˉbytes = null;
 let Borrowˉcomponentˉbytes = null;
 
 try {
-    if (Foundationˉcomponentsˉonly) {
+    if (Foundationˉruntimeˉonly) {
+        await Runˉfoundationˉruntime(path.resolve(process.argv[3]));
+    } else if (Foundationˉcomponentsˉonly) {
         await Runˉfoundationˉcomponents();
     } else {
         if (!Foundationˉdirectoriesˉonly && !Foundationˉownersˉonly) await Runˉfoundationˉplan();
@@ -185,7 +189,7 @@ try {
     }
     rmSync(Resolved, { recursive: true, force: true, maxRetries: 2 });
 }
-if (Developmentˉonly) {
+if (Developmentˉonly && !Foundationˉruntimeˉonly) {
     const Elapsed = Date.now() - Started;
     if (Elapsed > Maximumˉrunˉmilliseconds) {
         Reject('The focused Foundation borrow development budget expired during cleanup.');
@@ -244,6 +248,48 @@ function Requireˉfoundationˉcandidate() {
         Digest(Buffer.from(Values)) !== '470df34f087a5e52674c7d24f51a0734e56759193756962df0805c6f4792b821') {
         Reject('The owner-flow published candidate snapshot identity differs.');
     }
+    return Buffer.from(Values);
+}
+
+async function Runˉfoundationˉruntime(Runner) {
+    Requireˉordinaryˉfile(Runner, 134_217_728, 'current-source scalar runner');
+    const Candidate = Requireˉfoundationˉcandidate();
+    const Code = Parseˉsections(Candidate)[5].payload;
+    const Projection = Code + 62 + 483;
+    if (Candidate[Projection] !== 225) Reject('The published first projection moved.');
+    const Cases = [['published', Candidate, true]];
+    for (const [Label, Offset, Value] of [
+        ['unknown-version', 6, 40],
+        ['zero-projection', Projection + 9, 0],
+        ['unknown-projection', Projection + 9, 4],
+        ['wrong-owner', Projection + 1, 62],
+        ['wrong-view-type', Projection + 5, 4],
+        ['unknown-opcode', Projection, 226],
+        ['borrowed-parameter-read', Code + 1152, 1],
+        ['borrowed-take', Code + 62 + 501, 205],
+    ]) {
+        const Mutated = Buffer.from(Candidate);
+        Mutated[Offset] = Value;
+        Cases.push([Label, Mutated, false]);
+    }
+    Cases.push(['truncated', Candidate.subarray(0, Candidate.length - 1), false]);
+    for (const [Label, Bytes, Valid] of Cases) {
+        const File = path.join(Work, `Borrow-Runtime-${Label}.wvb`);
+        writeFileSync(File, Bytes, { flag: 'wx' });
+        process.stdout.write(`START Foundation runtime case=${Label}\n`);
+        const Result = await Runˉdevelopmentˉcommand(Runner, [File],
+            Developmentˉonly ? Math.min(Started + Maximumˉrunˉmilliseconds, Date.now() + 60_000) :
+                Date.now() + 60_000, true,
+            MAXIMUM_DIAGNOSTIC_BYTES);
+        const Accepted = Valid ? Result.Code === 0 && Normalize(Result.Output) === 'Result: 42\n' &&
+            Result.Error === '' : Result.Code === 1 && Result.Output === '' &&
+            /^(wvb run status=Unsupported profile=portable-main-i32 phase=envelope|wvb run status=Invalid phase=compiler-verification)\n$/u.test(Normalize(Result.Error));
+        if (!Accepted) Reject(`Foundation runtime ${Label} failed: status=${Result.Code}\nstdout=${Result.Output}\nstderr=${Result.Error}`);
+        process.stdout.write(`PASS Foundation runtime case=${Label}\n`);
+    }
+    process.stdout.write(`native Foundation borrow runtime status=Passed cases=${Cases.length} ` +
+        `candidate-execution=true qualification=false wvb-sha256=${Digest(Candidate)} ` +
+        `runner-sha256=${Digest(readFileSync(Runner))} elapsed-ms=${Date.now() - Started}\n`);
 }
 
 async function Runˉfoundationˉcomponents() {
@@ -1187,6 +1233,7 @@ async function Runˉpublicationˉandˉexecution() {
         'image', '5', Runnerˉwvb, Runnerˉcanonicalˉprefix,
         String(Runnerˉfragments), String(Runnerˉentry), Runner, Hostˉtarget,
     ]);
+    await Runˉfoundationˉruntime(Runner);
     await Runˉnode(
         'callable-runner-compatibility',
         'Verify-Language-1.0-Callable-Runner.mjs',
@@ -1331,7 +1378,7 @@ async function Runˉpublicationˉandˉexecution() {
 
     process.stdout.write(
         'native language 1 memory budget, Vector, using, resource, and structured task execution status=Passed ' +
-        `cases=${518 + Growˉmalformedˉcases.length +
+        `cases=${528 + Growˉmalformedˉcases.length +
             Ownedˉaggregateˉmalformedˉcases.length} valid=24 malformed=${
             Malformedˉcases.length + Vectorˉmalformedˉcases.length +
             Appendˉmalformedˉcases.length + Growˉmalformedˉcases.length +
