@@ -1,0 +1,239 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-foundation-borrow-collector-lifetime",
+  "date": "2026-09-08",
+  "subject": "Borrowed-owner lifetime under shared scalar aggregate collection",
+  "claim": "The current Foundation owner passes 293 Windows groups, including six new full-arena, loan-only-root, repeated-collection, frame-exit slot-reuse, and descriptor-reference-release groups. Storage routines moved unchanged into the existing value core; complete WVB 1.39 admission remains closed. The source-built runner packages natively and passes six existing scalar/reporting/text/reclamation/ownership/rejection regressions.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on fbc5000af05d9a92fa17ee039917cd30ed89b2c0; exact changed implementation and verifier inputs recorded below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "293 Foundation owner groups, including 40 frame/scanner/value groups",
+      "tool": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs --foundation-borrow-owners",
+      "result": "Passed",
+      "elapsedMilliseconds": 31790,
+      "inputs": [
+        {
+          "path": "Tests/Fixtures/Source-Wvb/Foundation-Borrow-Frames-Self-Test.wv",
+          "size": 21119,
+          "sha256": "eba282509d5eddd96e64203ef971641ab547a05287041c0643d34df8e2cc84ee"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Main.wv",
+          "size": 372237,
+          "sha256": "ae6e2104b407fca2b296e7f64ee82ab276019b5842db9db525b906f8534f41e5"
+        },
+        {
+          "path": "Tests/Fixtures/WebAssembly/Wvb-Scalar-Interpreter-Value-Core.wv",
+          "size": 30630,
+          "sha256": "e41d8c7732c93f235d6696f632e6b659c1312666caa150f3c0a8011d17c99597"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24030,
+          "sha256": "2520b743c3ac792e50cdc1bb1126a2295189127b443de7267a9306a03baabb4d"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Memory-Budget-Split-Execution.mjs",
+          "size": 122876,
+          "sha256": "c52cf277c69a222c61f1d59e9915b6723bb92b6ff527461866a09217ea53e07d"
+        },
+        {
+          "path": "Tools/Verify/Verify-Changed.ps1",
+          "size": 39351,
+          "sha256": "620d1fa4abe6d69dc7e7d61939ea23203d3d199384872e617cebf96c22ebcec1"
+        },
+        {
+          "path": "Tools/Verify/Verify-Verification-Plan.ps1",
+          "size": 342864,
+          "sha256": "3f2b1bbb9af0250f6cf0a84785b5fc75742f8818295738d73ed3b1cfd14bc43c"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Borrow-Owners.wvb",
+          "size": 860290,
+          "sha256": "7eee8b62231ae62a41393d29c11f049f74c17c7157b4b90b34776d9a6a3ebb91"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Changed-file routing and summary contracts: 31 general and 291 native cases",
+      "tool": "Tools/Verify/Verify-Verification-Plan.ps1",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    },
+    {
+      "host": "Windows x64; Node.js 24.19.0",
+      "target": "Current-source scalar runner; all 447 functions satisfy native bounds, maximum 2015 slots below 2048",
+      "tool": "Tools/Native/Build-Current-Split-Project-Wvb.mjs and existing Requireˉnativeˉfunctionˉlimits oracle",
+      "command": "node Tools/Native/Build-Current-Split-Project-Wvb.mjs Projects/Tools/Windvale-Wvb-Runner.wvproj Artifacts/Work/Foundation-Borrow-Collector-Runner.wvb; inspect all function limits with the existing memory-budget verifier parser",
+      "result": "Passed",
+      "elapsedMilliseconds": 239080,
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.wvb",
+          "size": 1152171,
+          "sha256": "19aa60882480eb724c1e8c5e0f31288554bff82a473c928c570c6ebd54360168"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Current-source native scalar runner packaging",
+      "tool": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd",
+      "command": "Tools/Native/Package-Segmented-Compiler-Wvb.cmd 5 Artifacts/Work/Foundation-Borrow-Collector-Runner.wvb Artifacts/Work/Foundation-Borrow-Collector-Runner.exe --development-cache",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "scalar; exact exit=0, stdout=\"Result: 42\\n\", stderr=\"\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 82,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+          "size": 174,
+          "sha256": "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "report; exact exit=0, stdout=\"Result: 42\\nInstructions: 4\\n\", stderr=\"\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb --report-steps",
+      "result": "Passed",
+      "elapsedMilliseconds": 40,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvb",
+          "size": 174,
+          "sha256": "7933c4ba0cb854477a95750966f9532c2b9eb5888e55ec9ae64ebdf552a08f31"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "text-bytes; exact exit=0, stdout=\"Result: 42\\n\", stderr=\"\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Work/Foundation-Borrow-Text-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 51,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Text-Smoke.wvb",
+          "size": 2022,
+          "sha256": "79ba5fc6acf642c340e89829381d9688bcac6270284a78b38713c4dfba193bd7"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "reclaim; exact exit=0, stdout=\"Result: 4099\\n\", stderr=\"\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Work/Foundation-Borrow-Reclaim-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 1233,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Reclaim-Smoke.wvb",
+          "size": 535,
+          "sha256": "12ed74fbda7923233021f9776e70fdcd92695c96d26d5416ad2fdb97c65f0344"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "ownership; exact exit=0, stdout=\"Result: 69\\n\", stderr=\"\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Work/Foundation-Borrow-Ownership-Smoke.wvb",
+      "result": "Passed",
+      "elapsedMilliseconds": 208,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Ownership-Smoke.wvb",
+          "size": 1550,
+          "sha256": "f96203f6345198d8c690947926dbdf348f05f3d74280f55bc499157ff9d909a8"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "reject-object; exact exit=1, stdout=\"\", stderr=\"wvb run status=Unsupported profile=portable-main-i32 phase=envelope\\n\"",
+      "tool": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+      "command": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvo",
+      "result": "Passed",
+      "elapsedMilliseconds": 46,
+      "inputs": [
+        {
+          "path": "Artifacts/Work/Foundation-Borrow-Collector-Runner.exe",
+          "size": 11955200,
+          "sha256": "471453f5dfe574544280d8a55d428bfb5bce506df755fb886b482d5f9d29740d"
+        },
+        {
+          "path": "Artifacts/Native-Wvb-To-Wvo-Candidate/Return-42.wvo",
+          "size": 479,
+          "sha256": "0d1829bbbc77f3ee3910a70f98528e1078117480332adb5a2d09df8b2d25f3b5"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is direct production value-core collection/retention evidence over canonical type fragments, not execution or complete verification of a WVB 1.39 module.",
+    "Nested borrowed aggregate payloads, callable environments, exclusive borrowing, take, mapping, consumer migration, and paired Windows/Debian qualification remain pending.",
+    "Descriptor tests prove reference-accounting and release eligibility, not physical heap compaction or provider/lease teardown.",
+    "No complete memory-budget, front-door, callable, bootstrap reconstruction, ABI, OS, or browser qualification was run. The automatic implementation plan exceeded the ten-minute development budget; focused causal checks were selected.",
+    "The first runner analysis rejected two unqualified mark/sweep calls after extraction. Both were corrected; this failed intermediate source is not qualified. The prior owner run passed in 121117 ms; changing only export visibility produced identical owner bytecode, allowing package reuse on the final run."
+  ],
+  "related": [
+    "Specifications/Compiler-Source-Wvb.md",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Documents/Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json"
+  ]
+}

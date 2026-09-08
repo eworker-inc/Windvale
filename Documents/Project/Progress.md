@@ -105,7 +105,10 @@ Two active tracks intentionally use different bytecode generations:
   connects frame-owned leases to dispatch, locals, calls, collector roots, and
   cleanup. The [frame integration checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
   passes 287 component groups and source-built runner regression checks on Windows.
-  Borrowed-owner forced collection and complete candidate execution remain pending. Remaining owned-payload
+  The [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
+  adds full-arena borrowed-owner survival, frame-exit slot reuse, and descriptor
+  reference-release coverage in the shared production value core (293 Windows groups).
+  Complete candidate execution remains pending. Remaining owned-payload
   reconciliation and the complete audit still prevent complete 1.39 admission.
 
 The Language 1.0 track does not silently redefine the frozen Seed recovery

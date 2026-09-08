@@ -66,8 +66,13 @@ without transferring payload ownership. The scalar source now connects leases
 to borrowed shapes, locals, synchronous calls, stack flags, collector roots, and
 frame cleanup. Frames conservatively retain owners until return and reuse leases
 for repeated projections. Complete WVB 1.39 admission remains closed;
-borrowed-owner forced collection, complete candidate execution, and the admission
-audit are the next gate.
+complete candidate execution and the admission audit are the next gate.
+The [collector checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Collector-Lifetime.json)
+passes 293 Windows component groups. Its six new groups exercise the shared
+production collector with a full arena, a loan-only root, repeated collection,
+frame-exit slot reuse, and descriptor reference release after owner and copy exit.
+This is direct value-core evidence, not execution of a complete candidate module;
+nested borrowed aggregate payloads and paired-host qualification remain pending.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)

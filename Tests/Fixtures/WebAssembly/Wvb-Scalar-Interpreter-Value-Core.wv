@@ -3,6 +3,448 @@ module WebAssemblyˉwvbˉscalarˉinterpreterˉvalueˉcore profile portable;
 import Windvaleˉfoundationˉborrowˉview as Borrowˉview;
 import Windvaleˉfoundationˉborrowˉframes as Borrowˉframes;
 
+export fn Aggregateˉfieldˉdirectory(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Owner: u32
+) -> bytes {
+    if Owner >= 2147483648u32 {
+        let Token: u32 = Owner - 2147483648u32;
+        return Variantˉcaseˉfields(
+            Module,
+            Typeˉoffsets,
+            Token / 256u32 - 1u32,
+            Token % 256u32
+        );
+    }
+    var Cursor: u32 = Bytesˉreadˉu32ˉlittle(
+        Typeˉoffsets,
+        (Owner - 1u32) * 4u32
+    );
+    let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+    Cursor = Cursor + 1u32;
+    Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    if Kind == 4u32 {
+        let Elementˉshape: u32 = Cursor;
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Elementˉshape);
+        return Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Bytesˉreadˉu32ˉlittle(Module, Cursor)),
+            Bytesˉfromˉu32ˉlittle(Elementˉshape)
+        );
+    }
+    let Fields: u32 = Bytesˉreadˉu32ˉlittle(Module, Cursor);
+    return Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Fields),
+        Bytesˉfromˉu32ˉlittle(Cursor + 4u32)
+    );
+}
+
+fn Aggregateˉselectedˉfieldˉvalues(
+    Module: bytes,
+    Fields: u32,
+    Fieldˉcount: u32,
+    Values: bytes,
+    Valueˉslot: u32,
+    Descriptors: bool
+) -> bytes {
+    var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
+    var Cursor: u32 = Fields;
+    var Index: u32 = 0u32;
+    while Index < Fieldˉcount {
+        Cursor = Cursor + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Cursor);
+        let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Cursor));
+        Cursor = Cursor + Shapeˉwidthˉat(Module, Cursor);
+        var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
+        if Descriptors {
+            Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+        }
+        if Selected {
+            Result = Bytesˉconcat(
+                Result,
+                Bytesˉslice(Values, (Valueˉslot + Index) * 8u32, 8u32)
+            );
+        }
+        Index = Index + 1u32;
+    }
+    return Result;
+}
+
+export fn Aggregateˉselectedˉownerˉvalues(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Owner: u32,
+    Fieldˉcount: u32,
+    Values: bytes,
+    Valueˉslot: u32,
+    Descriptors: bool
+) -> bytes {
+    if Owner < 2147483648u32 {
+        let Typeˉcursor: u32 = Bytesˉreadˉu32ˉlittle(
+            Typeˉoffsets,
+            (Owner - 1u32) * 4u32
+        );
+        if U32ˉfromˉu8(Bytesˉreadˉu8(Module, Typeˉcursor)) == 4u32 {
+            var Shape: u32 = Typeˉcursor + 1u32;
+            Shape = Shape + 4u32 + Bytesˉreadˉu32ˉlittle(Module, Shape);
+            let Kind: u32 = U32ˉfromˉu8(Bytesˉreadˉu8(Module, Shape));
+            var Selected: bool = Kind == 7u32 || Kind == 11u32 || Kind == 22u32;
+            if Descriptors {
+                Selected = Kind == 3u32 || Kind == 6u32 || Kind == 23u32;
+            }
+            var Result: bytes = Bytesˉslice(Values, 0u32, 0u32);
+            if Selected {
+                var Index: u32 = 0u32;
+                while Index < Fieldˉcount {
+                    Result = Bytesˉconcat(
+                        Result,
+                        Bytesˉslice(Values, (Valueˉslot + Index) * 8u32, 8u32)
+                    );
+                    Index = Index + 1u32;
+                }
+            }
+            return Result;
+        }
+    }
+    let Directory: bytes = Aggregateˉfieldˉdirectory(
+        Module, Typeˉoffsets, Owner
+    );
+    if Bytesˉlength(Directory) != 8u32 {
+        return Bytesˉslice(Values, 0u32, 0u32);
+    }
+    return Aggregateˉselectedˉfieldˉvalues(
+        Module,
+        Bytesˉreadˉu32ˉlittle(Directory, 4u32),
+        Fieldˉcount,
+        Values,
+        Valueˉslot,
+        Descriptors
+    );
+}
+
+export fn Markˉaggregateˉroots(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Metadata: bytes,
+    Capacity: u32,
+    Initialˉmarks: bytes,
+    Initialˉroots: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Initialˉmarks, 0u32, 0u32);
+    var Marks: bytes = Initialˉmarks;
+    var Roots: bytes = Initialˉroots;
+    var Cursor: u32 = 0u32;
+    while Cursor < Bytesˉlength(Roots) {
+        let Remaining: u32 = Bytesˉlength(Roots) - Cursor;
+        if Remaining >= 8u32 {
+            let Slot: u32 = Bytesˉreadˉu32ˉlittle(Roots, Cursor);
+            let Type: u32 = Bytesˉreadˉu32ˉlittle(Roots, Cursor + 4u32);
+            if Slot < Capacity {
+                let Entry: u32 = Slot * 8u32;
+                let Owner: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry);
+                let Size: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry + 4u32);
+                if Size > 0u32 && Owner == Type {
+                    if U32ˉfromˉu8(Bytesˉreadˉu8(Marks, Slot)) == 0u32 {
+                        Marks = Bytesˉconcat(
+                            Bytesˉconcat(
+                                Bytesˉslice(Marks, 0u32, Slot),
+                                Bytesˉfromˉu8(1u8)
+                            ),
+                            Bytesˉslice(Marks, Slot + 1u32, Capacity - Slot - 1u32)
+                        );
+                        let Directory: bytes = Aggregateˉfieldˉdirectory(
+                            Module,
+                            Typeˉoffsets,
+                            Owner
+                        );
+                        if Bytesˉlength(Directory) != 8u32 ||
+                            Bytesˉreadˉu32ˉlittle(Directory, 0u32) != Size {
+                            return Empty;
+                        }
+                        Roots = Bytesˉconcat(
+                            Roots,
+                            Aggregateˉselectedˉownerˉvalues(
+                                Module,
+                                Typeˉoffsets,
+                                Owner,
+                                Size,
+                                Records,
+                                Slot,
+                                false
+                            )
+                        );
+                    }
+                }
+            }
+        }
+        Cursor = Cursor + 8u32;
+    }
+    return Marks;
+}
+
+export fn Sweepˉaggregates(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Metadata: bytes,
+    Marks: bytes,
+    Capacity: u32,
+    Zeroˉcell: bytes
+) -> bytes {
+    let Empty: bytes = Bytesˉslice(Metadata, 0u32, 0u32);
+    var Nextˉmetadata: bytes = Empty;
+    var Released: bytes = Empty;
+    var Slot: u32 = 0u32;
+    while Slot < Capacity {
+        let Entry: u32 = Slot * 8u32;
+        let Size: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry + 4u32);
+        var Value: bytes = Zeroˉcell;
+        if Size > 0u32 {
+            if U32ˉfromˉu8(Bytesˉreadˉu8(Marks, Slot)) != 0u32 {
+                Value = Bytesˉslice(Metadata, Entry, 8u32);
+            } else {
+                let Owner: u32 = Bytesˉreadˉu32ˉlittle(Metadata, Entry);
+                if Owner == 0u32 { return Empty; }
+                let Directory: bytes = Aggregateˉfieldˉdirectory(
+                    Module,
+                    Typeˉoffsets,
+                    Owner
+                );
+                if Bytesˉlength(Directory) != 8u32 ||
+                    Bytesˉreadˉu32ˉlittle(Directory, 0u32) != Size {
+                    return Empty;
+                }
+                Released = Bytesˉconcat(
+                    Released,
+                    Aggregateˉselectedˉownerˉvalues(
+                        Module,
+                        Typeˉoffsets,
+                        Owner,
+                        Size,
+                        Records,
+                        Slot,
+                        true
+                    )
+                );
+            }
+        }
+        Nextˉmetadata = Bytesˉconcat(Nextˉmetadata, Value);
+        Slot = Slot + 1u32;
+    }
+    return Bytesˉconcat(Nextˉmetadata, Released);
+}
+
+export record Aggregateˉcollection {
+    Valid: bool;
+    Metadata: bytes;
+    Releasedˉdescriptors: bytes;
+}
+
+export fn Collectˉunreachableˉaggregates(
+    Module: bytes,
+    Typeˉoffsets: bytes,
+    Records: bytes,
+    Initialˉmetadata: bytes,
+    Roots: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉcollection {
+    let Empty: bytes = Bytesˉslice(Initialˉmetadata, 0u32, 0u32);
+    let Capacity: u32 = 768u32;
+    let Metadataˉlength: u32 = Capacity * 8u32;
+    if Bytesˉlength(Initialˉmetadata) != Metadataˉlength ||
+        Bytesˉlength(Roots) % 8u32 != 0u32 {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    var Zeroˉmarks: bytes = Empty;
+    var Markˉslot: u32 = 0u32;
+    while Markˉslot < Capacity {
+        Zeroˉmarks = Bytesˉconcat(Zeroˉmarks, Bytesˉfromˉu8(0u8));
+        Markˉslot = Markˉslot + 1u32;
+    }
+    let Marks: bytes = Markˉaggregateˉroots(
+        Module, Typeˉoffsets, Records, Initialˉmetadata,
+        Capacity, Zeroˉmarks, Roots
+    );
+    if Bytesˉlength(Marks) != Capacity {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    let Swept: bytes = Sweepˉaggregates(
+        Module, Typeˉoffsets, Records, Initialˉmetadata,
+        Marks, Capacity, Zeroˉcell
+    );
+    if Bytesˉlength(Swept) < Metadataˉlength {
+        return Aggregateˉcollection(false, Initialˉmetadata, Empty);
+    }
+    return Aggregateˉcollection(
+        true,
+        Bytesˉslice(Swept, 0u32, Metadataˉlength),
+        Bytesˉslice(
+            Swept, Metadataˉlength,
+            Bytesˉlength(Swept) - Metadataˉlength
+        )
+    );
+}
+
+export record Aggregateˉallocation {
+    Valid: bool;
+    Handle: bytes;
+    Metadata: bytes;
+    Values: bytes;
+}
+
+export fn Allocateˉaggregateˉwithoutˉcollection(
+    Owner: u32,
+    Fields: bytes,
+    Initialˉmetadata: bytes,
+    Initialˉvalues: bytes,
+    Zeroˉcell: bytes
+) -> Aggregateˉallocation {
+    let Empty: bytes = Bytesˉslice(Fields, 0u32, 0u32);
+    let Capacity: u32 = 768u32;
+    let Metadataˉlength: u32 = Capacity * 8u32;
+    let Fieldˉbytes: u32 = Bytesˉlength(Fields);
+    if Owner == 0u32 || Fieldˉbytes == 0u32 || Fieldˉbytes % 8u32 != 0u32 ||
+        Bytesˉlength(Initialˉmetadata) != Metadataˉlength {
+        return Aggregateˉallocation(
+            false, Empty, Initialˉmetadata, Initialˉvalues
+        );
+    }
+    let Fieldˉcount: u32 = Fieldˉbytes / 8u32;
+    var Slot: u32 = Capacity;
+    var Candidate: u32 = 0u32;
+    var Scan: u32 = 0u32;
+    while Scan < Capacity {
+        let Storedˉsize: u32 = Bytesˉreadˉu32ˉlittle(
+            Initialˉmetadata, Scan * 8u32 + 4u32
+        );
+        if Storedˉsize == 0u32 {
+            Scan = Scan + 1u32;
+        } else {
+            if Storedˉsize > Capacity - Scan { return Aggregateˉallocation(
+                false, Empty, Initialˉmetadata, Initialˉvalues
+            ); }
+            if Slot == Capacity && Candidate <= Scan &&
+                Fieldˉcount <= Scan - Candidate {
+                Slot = Candidate;
+            }
+            Candidate = Scan + Storedˉsize;
+            Scan = Candidate;
+        }
+    }
+    if Slot == Capacity && Candidate <= Capacity &&
+        Fieldˉcount <= Capacity - Candidate {
+        Slot = Candidate;
+    }
+    if Slot == Capacity { return Aggregateˉallocation(
+        false, Empty, Initialˉmetadata, Initialˉvalues
+    ); }
+
+    let Metadataˉoffset: u32 = Slot * 8u32;
+    let Allocationˉmetadata: bytes = Bytesˉconcat(
+        Bytesˉfromˉu32ˉlittle(Owner),
+        Bytesˉfromˉu32ˉlittle(Fieldˉcount)
+    );
+    let Metadata: bytes = Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Initialˉmetadata, 0u32, Metadataˉoffset),
+            Allocationˉmetadata
+        ),
+        Bytesˉslice(
+            Initialˉmetadata,
+            Metadataˉoffset + 8u32,
+            Metadataˉlength - Metadataˉoffset - 8u32
+        )
+    );
+
+    let Valueˉoffset: u32 = Slot * 8u32;
+    let Valueˉend: u32 = Valueˉoffset + Fieldˉbytes;
+    var Values: bytes = Initialˉvalues;
+    while Bytesˉlength(Values) < Valueˉoffset {
+        Values = Bytesˉconcat(Values, Zeroˉcell);
+    }
+    if Bytesˉlength(Values) == Valueˉoffset {
+        Values = Bytesˉconcat(Values, Fields);
+    } else {
+        if Valueˉend > Bytesˉlength(Values) { return Aggregateˉallocation(
+            false, Empty, Initialˉmetadata, Initialˉvalues
+        ); }
+        Values = Bytesˉconcat(
+            Bytesˉconcat(
+                Bytesˉslice(Values, 0u32, Valueˉoffset), Fields
+            ),
+            Bytesˉslice(
+                Values,
+                Valueˉend,
+                Bytesˉlength(Values) - Valueˉend
+            )
+        );
+    }
+    return Aggregateˉallocation(
+        true,
+        Bytesˉconcat(
+            Bytesˉfromˉu32ˉlittle(Slot),
+            Bytesˉfromˉu32ˉlittle(Owner)
+        ),
+        Metadata,
+        Values
+    );
+}
+
+export fn Releaseˉdescriptor(
+    Allocations: bytes,
+    Allocationˉcount: u32,
+    Value: bytes
+) -> bytes {
+    let Invalid: bytes = Bytesˉslice(Allocations, 0u32, 0u32);
+    let Length: u32 = Bytesˉreadˉu32ˉlittle(Value, 4u32);
+    if Length == 0u32 { return Allocations; }
+    var Allocationˉindex: u32 = 4294967295u32;
+    var Scan: u32 = 0u32;
+    while Scan < Allocationˉcount {
+        let Entry: u32 = Scan * 12u32;
+        let References: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 8u32
+        );
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Allocations, Entry);
+        let Allocationˉlength: u32 = Bytesˉreadˉu32ˉlittle(
+            Allocations,
+            Entry + 4u32
+        );
+        let Valueˉoffset: u32 = Bytesˉreadˉu32ˉlittle(Value, 0u32);
+        if References > 0u32 && Valueˉoffset >= Offset {
+            if Valueˉoffset - Offset <= Allocationˉlength {
+                if Length <= Allocationˉlength - (Valueˉoffset - Offset) {
+                    Allocationˉindex = Scan;
+                    Scan = Allocationˉcount;
+                }
+            }
+        }
+        Scan = Scan + 1u32;
+    }
+    if Allocationˉindex == 4294967295u32 { return Invalid; }
+    let Selectedˉentry: u32 = Allocationˉindex * 12u32;
+    let Selectedˉreferences: u32 = Bytesˉreadˉu32ˉlittle(
+        Allocations,
+        Selectedˉentry + 8u32
+    );
+    if Selectedˉreferences == 0u32 { return Invalid; }
+    return Bytesˉconcat(
+        Bytesˉconcat(
+            Bytesˉslice(Allocations, 0u32, Selectedˉentry),
+            Bytesˉconcat(
+                Bytesˉslice(Allocations, Selectedˉentry, 8u32),
+                Bytesˉfromˉu32ˉlittle(Selectedˉreferences - 1u32)
+            )
+        ),
+        Bytesˉslice(
+            Allocations,
+            Selectedˉentry + 12u32,
+            Bytesˉlength(Allocations) - Selectedˉentry - 12u32
+        )
+    );
+}
+
 // Scalar value geometry and retention over verified module directories.
 // Candidate borrowing remains behind the complete interpreter admission gate.
 

@@ -41,6 +41,91 @@ fn Scalarˉstate(Result: Values.Borrowˉstep) -> Frames.State {
     return Frames.State(Result.Valid, Result.Views, Result.Bindings, Result.Frames, Result.Base);
 }
 
+fn Checkˉcollection() -> i32 {
+    let Zero: bytes = Cell(0u32, 0u32);
+    let Empty: bytes = Bytesˉslice(Zero, 0u32, 0u32);
+    let Owner: bytes = Cell(0u32, 2147483904u32);
+    let Entry: bytes = Cell(2147483904u32, 1u32);
+    let Payload: bytes = Cell(42u32, 0u32);
+    let Type: bytes = Optionˉtype(9u8);
+    let Offsets: bytes = Bytesˉfromˉu32ˉlittle(0u32);
+    var Metadata: bytes = Empty;
+    var Records: bytes = Empty;
+    var Zeros: bytes = Empty;
+    var Index: u32 = 0u32;
+    while Index < 768u32 {
+        Metadata = Bytesˉconcat(Metadata, Entry);
+        Records = Bytesˉconcat(Records, Payload);
+        Zeros = Bytesˉconcat(Zeros, Zero);
+        Index = Index + 1u32;
+    }
+    let Full: Values.Aggregateˉallocation = Values.Allocateˉaggregateˉwithoutˉcollection(
+        2147483904u32, Payload, Metadata, Records, Zero);
+    let Borrowed: Frames.Execution = Frames.Execute(Frames.Begin(), Code(0u32, 0u32, 1u32),
+        Owner, 0u32, 0u32, 9u32, Metadata, Records);
+    if Full.Valid || !Borrowed.State.Valid { return 35; }
+    let Rootˉpacket: bytes = Frames.Roots(Borrowed.State);
+    let Roots: bytes = Bytesˉslice(Rootˉpacket, 1u32, Bytesˉlength(Rootˉpacket) - 1u32);
+    // No ordinary stack/local root remains: only the frame-owned loan protects slot zero.
+    Index = 0u32;
+    while Index < 8u32 {
+        let Collected: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+            Type, Offsets, Records, Metadata, Roots, Zero);
+        if !Collected.Valid || Bytesˉreadˉu32ˉlittle(Collected.Metadata, 0u32) != 2147483904u32 ||
+            Bytesˉreadˉu32ˉlittle(Collected.Metadata, 8u32) != 0u32 ||
+            Bytesˉlength(Collected.Releasedˉdescriptors) != 0u32 { return 36; }
+        let Reused: Values.Aggregateˉallocation = Values.Allocateˉaggregateˉwithoutˉcollection(
+            2147483904u32, Cell(99u32, 0u32), Collected.Metadata, Records, Zero);
+        let Observed: View.Projectionˉresult = View.Observe(Borrowed.State.Views,
+            Bytesˉreadˉu32ˉlittle(Borrowed.Handle, 0u32),
+            Bytesˉreadˉu32ˉlittle(Borrowed.Handle, 4u32), 0u32);
+        if !Reused.Valid || Bytesˉreadˉu32ˉlittle(Reused.Handle, 0u32) != 1u32 ||
+            !Observed.Valid || Bytesˉreadˉu32ˉlittle(Reused.Values, 0u32) != 42u32 { return 37; }
+        Metadata = Reused.Metadata;
+        Records = Reused.Values;
+        Index = Index + 1u32;
+    }
+    let Exited: Frames.State = Frames.Leave(Borrowed.State);
+    let Exitˉpacket: bytes = Frames.Roots(Exited);
+    let Reclaimed: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+        Type, Offsets, Records, Metadata,
+        Bytesˉslice(Exitˉpacket, 1u32, Bytesˉlength(Exitˉpacket) - 1u32), Zero);
+    let Replacement: Values.Aggregateˉallocation = Values.Allocateˉaggregateˉwithoutˉcollection(
+        2147483904u32, Cell(100u32, 0u32), Reclaimed.Metadata, Records, Zero);
+    let Stale: View.Projectionˉresult = View.Observe(Exited.Views,
+        Bytesˉreadˉu32ˉlittle(Borrowed.Handle, 0u32),
+        Bytesˉreadˉu32ˉlittle(Borrowed.Handle, 4u32), 0u32);
+    if !Exited.Valid || !Reclaimed.Valid || !Replacement.Valid || Stale.Valid ||
+        Bytesˉreadˉu32ˉlittle(Replacement.Handle, 0u32) != 0u32 ||
+        Bytesˉreadˉu32ˉlittle(Replacement.Values, 0u32) != 100u32 { return 38; }
+    let Descriptor: bytes = Cell(0u32, 3u32);
+    let Textˉmetadata: bytes = Bytesˉconcat(Entry, Bytesˉslice(Zeros, 8u32, 6136u32));
+    let Textˉloan: Frames.Execution = Frames.Execute(Frames.Begin(), Code(0u32, 0u32, 1u32),
+        Owner, 0u32, 0u32, 3u32, Textˉmetadata, Descriptor);
+    let Textˉroots: bytes = Frames.Roots(Textˉloan.State);
+    let Textˉlive: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+        Optionˉtype(3u8), Offsets, Descriptor, Textˉmetadata,
+        Bytesˉslice(Textˉroots, 1u32, 8u32), Zero);
+    let Allocations: bytes = Bytesˉconcat(Descriptor, Bytesˉfromˉu32ˉlittle(1u32));
+    let Copied: bytes = Values.Retainˉdescriptor(Allocations, 1u32, Descriptor);
+    let Textˉexit: Frames.State = Frames.Teardown(Textˉloan.State);
+    let Textˉexitˉroots: bytes = Frames.Roots(Textˉexit);
+    let Textˉdead: Values.Aggregateˉcollection = Values.Collectˉunreachableˉaggregates(
+        Optionˉtype(3u8), Offsets, Descriptor, Textˉlive.Metadata,
+        Bytesˉslice(Textˉexitˉroots, 1u32, Bytesˉlength(Textˉexitˉroots) - 1u32), Zero);
+    if !Textˉloan.State.Valid || !Textˉlive.Valid ||
+        Bytesˉlength(Textˉlive.Releasedˉdescriptors) != 0u32 || !Textˉdead.Valid ||
+        Bytesˉlength(Textˉdead.Releasedˉdescriptors) != 8u32 { return 39; }
+    let Ownerˉreleased: bytes = Values.Releaseˉdescriptor(Copied, 1u32, Textˉdead.Releasedˉdescriptors);
+    let Copyˉreleased: bytes = Values.Releaseˉdescriptor(Ownerˉreleased, 1u32, Descriptor);
+    let Doubleˉrelease: bytes = Values.Releaseˉdescriptor(Copyˉreleased, 1u32, Descriptor);
+    if Bytesˉreadˉu32ˉlittle(Copied, 8u32) != 2u32 ||
+        Bytesˉreadˉu32ˉlittle(Ownerˉreleased, 8u32) != 1u32 ||
+        Bytesˉreadˉu32ˉlittle(Copyˉreleased, 8u32) != 0u32 ||
+        Bytesˉlength(Doubleˉrelease) != 0u32 { return 40; }
+    return 0;
+}
+
 fn Checkˉscalar() -> i32 {
     let Owner: bytes = Cell(0u32, 2147483904u32);
     let Metadata: bytes = Cell(2147483904u32, 1u32);
@@ -106,7 +191,7 @@ fn Checkˉscalar() -> i32 {
         3u8, Owner, Shapes, Metadata, Descriptor, Textˉview.Stack, Flag, 1u32, Empty);
     if !Textˉview.Valid || !Textˉvalue.Valid || Textˉvalue.Kind != 1u32 ||
         Bytesˉreadˉu32ˉlittle(Textˉvalue.Allocations, 8u32) != 2u32 || Deadˉvalue.Valid { return 34; }
-    return 0;
+    return Checkˉcollection();
 }
 
 export fn Check() -> i32 {
