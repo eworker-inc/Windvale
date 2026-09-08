@@ -12,8 +12,10 @@ const COMMAND_TIMEOUT_MILLISECONDS = 120_000;
 const CONSTRUCTION_TIMEOUT_MILLISECONDS = 15 * 60_000;
 const PROGRESS_INTERVAL_MILLISECONDS = 30_000;
 
-if (process.argv.length !== 4 ||
+if ((process.argv.length !== 4 && process.argv.length !== 5) ||
     !['windows', 'linux'].includes(process.argv[2])) Usage();
+const Borrowˉonly = process.argv[4] === '--foundation-borrow-emission';
+if (process.argv.length === 5 && !Borrowˉonly) Usage();
 const Target = process.argv[2];
 if ((WINDOWS && Target !== 'windows') || (!WINDOWS && Target !== 'linux')) {
     Reject('The native unsafe write-pointer target does not match this host.');
@@ -57,6 +59,8 @@ const Work = await realpath(await mkdtemp(join(
     'windvale-write-pointer-lowering-',
 )));
 try {
+    await Runˉfoundationˉborrowˉemission();
+    if (!Borrowˉonly) {
     const Canonical = await Readˉfixture(
         join(Fixtureˉdirectory, 'Unsafe-Write-Pointer.wvb.b64'),
         '289f9e338f7922e91be3526239bf5e06d9d5ef701d4d87a003d7fab14adec47f',
@@ -351,13 +355,45 @@ try {
         Reject('The host-specific Foreign execution count differed.');
     }
     process.stdout.write(
-        'native unsafe write pointer lowering status=Passed cases=25 ' +
-        'valid=5 malformed=20 native-execution=1 ' +
+        'native unsafe write pointer lowering status=Passed cases=37 ' +
+        'valid=17 malformed=20 native-execution=2 foundation-borrow-cases=12 ' +
         'foreign-native-execution=linux-only foreign-links=2 compiler-source=current ' +
         'package-cache=development\n',
     );
+    }
 } finally {
     await Removeˉwork(Work);
+}
+
+async function Runˉfoundationˉborrowˉemission() {
+    const Probeˉproject = join(Repositoryˉroot, 'Projects', 'Tests',
+        'Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe.wvproj');
+    const Probeˉwvb = join(Work, 'Borrow-Probe.wvb');
+    const Probe = join(Work, `Borrow-Probe.${Nativeˉextension}`);
+    const Binary = join(Work, 'Borrow-Code.bin');
+    const Executable = join(Work, `Borrow-Code.${Nativeˉextension}`);
+    await Requireˉsuccess(join(Repositoryˉroot, 'Tools', 'Native',
+        `Build-Cached-Project-Wvb.${Extension}`), [Probeˉproject, Probeˉwvb],
+    'foundation-borrow-probe-build', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    await Requireˉsuccess(Packageˉlowerer,
+        ['6', Probeˉwvb, Probe, '--development-cache'],
+        'foundation-borrow-probe-package', CONSTRUCTION_TIMEOUT_MILLISECONDS);
+    await Requireˉsuccess(Probe, [Binary], 'foundation-borrow-probe-generate');
+    const Code = await readFile(Binary);
+    if (Code.length === 0 || Code.length > 16 * 1024) {
+        Reject('The Foundation borrow machine probe exceeded its bounded size.');
+    }
+    await Requireˉsuccess(Packageˉconsole,
+        [Target === 'windows' ? 'windows-x64-console-v1' : 'linux-x64-console-v1',
+            Binary, '0', Executable], 'foundation-borrow-code-package');
+    const Result = await Runˉprocess(Executable, [], 10_000,
+        'foundation-borrow-code-execute');
+    if (Result.Code !== 42) {
+        Reject(`The Foundation borrow machine probe failed: ${Result.Code}\n${Result.Output}`);
+    }
+    process.stdout.write('native foundation borrow emission status=Passed cases=12 ' +
+        `host=${Target} code-bytes=${Code.length} code-sha256=` +
+        createHash('sha256').update(Code).digest('hex') + '\n');
 }
 
 async function Readˉbinary(Path, Expectedˉsize, Expectedˉsha256) {
@@ -665,7 +701,7 @@ async function Removeˉwork(Path) {
 function Usage() {
     process.stderr.write(
         'Usage: node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs ' +
-        '<windows|linux> <repository-root>\n',
+        '<windows|linux> <repository-root> [--foundation-borrow-emission]\n',
     );
     process.exit(64);
 }

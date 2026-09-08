@@ -1068,6 +1068,40 @@ export fn Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
     return Kind;
 }
 
+export fn Compilerˉnativeˉx64ˉfoundationˉborrowˉpayload(
+    Input: bytes,
+    Types: Compilerˉnativeˉx64ˉtypes,
+    Ownerˉtype: u32,
+    Viewˉtype: u32,
+    Projection: u32
+) -> Compilerˉnativeˉx64ˉshape {
+    if Ownerˉtype >= 64u32 || Viewˉtype >= 64u32 ||
+        Projection < 1u32 || Projection > 3u32 ||
+        Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(Input, Types, Viewˉtype) != 1u8 {
+        return Invalidˉshape();
+    }
+    var Expectedˉowner: u8 = 2u8;
+    if Projection == 1u32 { Expectedˉowner = 1u8; }
+    if Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
+        Input, Types, Ownerˉtype
+    ) != Expectedˉowner { return Invalidˉshape(); }
+    var Case: u32 = 0u32;
+    if Projection == 3u32 { Case = 1u32; }
+    let Payload: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Ownerˉtype, Case);
+    let View: Compilerˉnativeˉx64ˉshape =
+        Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Input, Types, Viewˉtype, 0u32);
+    if !Payload.Valid || !View.Valid || Payload.Type != View.Type ||
+        Payload.Identity != View.Identity || Payload.Type == 0u8 ||
+        Payload.Borrowˉkind != 0u8 || View.Borrowˉkind != 0u8 ||
+        (Payload.Type == 10u8 && Payload.Identity == 25u32) {
+        return Invalidˉshape();
+    }
+    return Compilerˉnativeˉx64ˉshape(
+        true, Payload.Next, Payload.Type, Payload.Identity, 37u8
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉunsafeˉtokenˉisˉexact(
     Input: bytes,
     Types: Compilerˉnativeˉx64ˉtypes,

@@ -298,6 +298,20 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     State: Compilerˉnativeˉx64ˉvariantˉstorageˉinput
 ) -> Compilerˉnativeˉx64ˉvariantˉstorageˉstate {
+    if Opcode == 225u8 {
+        if Codeˉoffset > Bytesˉlength(Input) ||
+            Cursor > Bytesˉlength(Input) - Codeˉoffset ||
+            Bytesˉlength(Input) - Codeˉoffset - Cursor < 13u32 {
+            return Invalid(Input);
+        }
+        let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Codeˉoffset + Cursor + 5u32);
+        if Viewˉtype >= 64u32 ||
+            Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
+                Input, Types, Viewˉtype
+            ) != 1u8 { return Invalid(Input); }
+        return Finishˉrecord(Input, Types,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype), State);
+    }
     if Opcode == 151u8 {
         return Variantˉcreateˉstep(Input, Codeˉoffset, Cursor, Types, State);
     }

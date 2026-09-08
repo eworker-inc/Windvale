@@ -1,0 +1,90 @@
+module Nativeˉx64ˉfoundationˉborrowˉmachineˉprobe profile hosted;
+
+import Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest as Probe;
+
+capability file.write_bytes;
+capability process.argument;
+capability process.argument_count;
+
+data Prolog: bytes = [72u8, 129u8, 236u8, 0u8, 4u8, 0u8, 0u8];
+data Epilog: bytes = [72u8, 129u8, 196u8, 0u8, 4u8, 0u8, 0u8, 195u8];
+data Ownerˉaddress: bytes = [72u8, 141u8, 132u8, 36u8, 128u8, 0u8, 0u8, 0u8,
+    72u8, 137u8, 132u8, 36u8, 48u8, 0u8, 0u8, 0u8];
+data Storeˉheader: bytes = [72u8, 199u8, 132u8, 36u8];
+data Compareˉheader: bytes = [72u8, 129u8, 188u8, 36u8];
+data Jumpˉheader: bytes = [15u8, 133u8];
+
+fn Store(Code: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(Code, Bytesˉconcat(Storeˉheader,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Offset), Bytesˉfromˉu32ˉlittle(Value))));
+}
+
+fn Check(Code: bytes, Offset: u32, Value: u32) -> bytes {
+    return Bytesˉconcat(Code, Bytesˉconcat(Compareˉheader,
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Offset),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Value),
+                Bytesˉconcat(Jumpˉheader, Bytesˉfromˉu32ˉlittle(0u32))))));
+}
+
+export fn Main() -> i32 {
+    if process.argument_count() != 1u32 { return 2; }
+    if Probe.Main() != 42 { return 3; }
+    var Code: bytes = Prolog;
+    var Patches: bytes = Bytesˉslice(Prolog, 0u32, 0u32);
+    var Mode: u32 = 0u32;
+    while Mode < 2u32 {
+        var Projection: u32 = 1u32;
+        while Projection <= 3u32 {
+            var Selected: u32 = 0u32;
+            while Selected < 2u32 {
+                var Wantedˉcase: u32 = 0u32;
+                if Projection == 3u32 { Wantedˉcase = 1u32; }
+                var Ownerˉcase: u32 = Wantedˉcase;
+                if Selected == 0u32 { Ownerˉcase = 1u32 - Wantedˉcase; }
+                Code = Bytesˉconcat(Code, Ownerˉaddress);
+                Code = Store(Code, 128u32, Ownerˉcase);
+                Code = Store(Code, 512u32, 0u32);
+                var Start: u32 = 16u32;
+                var Cells: u32 = 1u32;
+                if Mode == 1u32 { Start = 32u32; Cells = 2u32; }
+                var Half: u32 = 0u32;
+                while Half < Cells * 2u32 {
+                    Code = Store(Code, 128u32 + Start + Half * 8u32, 42u32 + Half);
+                    Code = Store(Code, 512u32 + Start + Half * 8u32, 7u32);
+                    Half = Half + 1u32;
+                }
+                let Borrow: bytes = Probe.Borrowˉmachineˉcode(Projection, Mode == 1u32);
+                if Bytesˉlength(Borrow) != 71u32 + 30u32 * Cells { return 4; }
+                Code = Bytesˉconcat(Code, Borrow);
+                Code = Check(Code, 512u32, 1u32 - Selected);
+                Patches = Bytesˉconcat(Patches, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Code) - 4u32));
+                Half = 0u32;
+                while Half < Cells * 2u32 {
+                    var Expected: u32 = 7u32;
+                    if Selected == 1u32 { Expected = 42u32 + Half; }
+                    Code = Check(Code, 512u32 + Start + Half * 8u32, Expected);
+                    Patches = Bytesˉconcat(Patches, Bytesˉfromˉu32ˉlittle(Bytesˉlength(Code) - 4u32));
+                    Half = Half + 1u32;
+                }
+                Selected = Selected + 1u32;
+            }
+            Projection = Projection + 1u32;
+        }
+        Mode = Mode + 1u32;
+    }
+    Code = Bytesˉconcat(Code, Bytesˉconcat(Bytesˉfromˉu8(184u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(42u32), Epilog)));
+    let Failure: u32 = Bytesˉlength(Code);
+    Code = Bytesˉconcat(Code, Bytesˉconcat(Bytesˉfromˉu8(184u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(1u32), Epilog)));
+    var Patch: u32 = 0u32;
+    while Patch < Bytesˉlength(Patches) / 4u32 {
+        let Offset: u32 = Bytesˉreadˉu32ˉlittle(Patches, Patch * 4u32);
+        Code = Bytesˉconcat(Bytesˉslice(Code, 0u32, Offset),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(Failure - Offset - 4u32),
+                Bytesˉslice(Code, Offset + 4u32, Bytesˉlength(Code) - Offset - 4u32)));
+        Patch = Patch + 1u32;
+    }
+    file.write_bytes(process.argument(0u32), Code);
+    return 0;
+}

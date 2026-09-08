@@ -1,5 +1,5 @@
 windvale-project 2
-root "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv"
+root "Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Call-Arguments.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Capabilities.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Data.wv"
@@ -14,4 +14,5 @@ source "Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv"
 source "Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv"
 source "Compiler/Windvale/Native-X64-Provider-Call.wv"
+source "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv"
 emit wvb

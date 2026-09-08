@@ -1225,7 +1225,7 @@ export fn Compilerˉnativeˉx64ˉrecordˉoperation(Opcode: u8) -> bool {
 export fn Compilerˉnativeˉx64ˉvariantˉoperation(Opcode: u8) -> bool {
     let Numeric: u32 = U32ˉfromˉu8(Opcode);
     if Numeric >= 151u32 && Numeric <= 153u32 { return true; }
-    return Opcode == 196u8;
+    return Opcode == 196u8 || Opcode == 225u8;
 }
 
 export fn Compilerˉnativeˉx64ˉisˉi32ˉcomparison(Opcode: u8) -> bool {
@@ -1306,6 +1306,7 @@ export fn Compilerˉnativeˉx64ˉinstructionˉsize(Opcode: u8) -> u32 {
     if Opcode == 106u8 { return 9u32; }
     if Compilerˉnativeˉx64ˉisˉenumˉcomparison(Opcode) { return 1u32; }
     if Opcode == 109u8 { return 1u32; }
+    if Opcode == 225u8 { return 13u32; }
     if Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) { return 9u32; }
     if Opcode == 40u8 { return 1u32; }
     if Opcode == 48u8 { return 5u32; }
@@ -2714,6 +2715,27 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉblock(
                 Bodyˉbytes
             );
             var Nominalˉstate: bytes = Valueˉstate;
+            if Opcode == 225u8 {
+                let Borrowˉowner: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input, Section.Payloadˉoffset + Cursor + 1u32);
+                if Bytesˉreadˉu16ˉlittle(Input, 6u32) != 39u32 ||
+                    Borrowˉowner >= Function.Locals ||
+                    Bytesˉlength(Function.Localˉborrowˉkinds) != Function.Locals {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                let Borrowˉownerˉtype: u8 = Bytesˉreadˉu8(Function.Localˉtypes, Borrowˉowner);
+                if !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉvariant(Borrowˉownerˉtype) ||
+                    Bytesˉreadˉu8(Function.Localˉborrowˉkinds, Borrowˉowner) != 0u8 {
+                    return Compilerˉnativeˉx64ˉinvalidˉblock();
+                }
+                let Borrowˉpayload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+                    Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉborrowˉpayload(
+                        Input, Types,
+                        Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Borrowˉownerˉtype),
+                        Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset + Cursor + 5u32),
+                        Bytesˉreadˉu32ˉlittle(Input, Section.Payloadˉoffset + Cursor + 9u32));
+                if !Borrowˉpayload.Valid { return Compilerˉnativeˉx64ˉinvalidˉblock(); }
+            }
             if Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) {
                 Nominalˉstate =
                     Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉvalue(
@@ -4578,6 +4600,10 @@ export fn Compilerˉnativeˉx64ˉemittedˉbytes(
         return Enums.Compilerˉnativeˉx64ˉenumˉnameˉbytes();
     }
     if Compilerˉnativeˉx64ˉvariantˉoperation(Opcode) {
+        if Opcode == 225u8 {
+            return Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
+                Input, Types, Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32));
+        }
         let Variantˉtypeˉindex: u32 = Bytesˉreadˉu32ˉlittle(
             Input,
             Offset + 1u32

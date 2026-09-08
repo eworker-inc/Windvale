@@ -278,6 +278,30 @@ export fn Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
     Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
     State: Compilerˉnativeˉx64ˉvariantˉanalysisˉstate
 ) -> Compilerˉnativeˉx64ˉvariantˉanalysisˉstate {
+    if Opcode == 225u8 {
+        if Instructionˉoffset > Bytesˉlength(Input) ||
+            Bytesˉlength(Input) - Instructionˉoffset < 13u32 {
+            return Invalid(Input);
+        }
+        let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 5u32);
+        let Projection: u32 = Bytesˉreadˉu32ˉlittle(Input, Instructionˉoffset + 9u32);
+        if Viewˉtype >= 64u32 || Projection < 1u32 || Projection > 3u32 ||
+            Nominalˉtypes.Compilerˉnativeˉx64ˉfoundationˉvariantˉkind(
+                Input, Types, Viewˉtype
+            ) != 1u8 { return Invalid(Input); }
+        return Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+            true,
+            Bytesˉconcat(State.Stack,
+                Bytesˉfromˉu8(Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype))),
+            State.Depth + 1u32,
+            State.I32ˉvalues, State.Boolˉvalues, State.Textˉvalues, State.U8ˉvalues,
+            State.U32ˉvalues, State.Bytesˉvalues, State.Enumˉvalues,
+            State.Recordˉvalues + 1u32,
+            State.Bodyˉbytes + Variantˉinstructions.Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
+                Input, Types, Viewˉtype
+            )
+        );
+    }
     if Opcode == 151u8 {
         return Analyzeˉcreate(Input, Instructionˉoffset, Types, State);
     }

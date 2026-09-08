@@ -2,6 +2,11 @@ module Nativeˉx64ˉloweringˉdataˉlimitˉselfˉtest profile portable;
 
 import Compilerˉnativeˉx64ˉloweringˉdata as Dataˉreader;
 import Compilerˉnativeˉx64ˉloweringˉtypes as Typeˉreader;
+import Compilerˉnativeˉx64ˉloweringˉvariantˉinstructions as Variantˉemitter;
+import Compilerˉnativeˉx64ˉloweringˉvariantˉanalysis as Variantˉanalysis;
+import Compilerˉnativeˉx64ˉloweringˉvariantˉstorage as Variantˉstorage;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉinstructions as Recordˉemitter;
+import Compilerˉnativeˉx64ˉloweringˉrecordˉstorage as Recordˉstorage;
 
 fn Exactˉdataˉsection() -> bytes {
     var Entry: bytes = Bytesˉfromˉu32ˉlittle(1u32);
@@ -284,6 +289,160 @@ fn Foundationˉviews() -> bool {
     return true;
 }
 
+export fn Borrowˉmachineˉcode(Projection: u32, Recordˉpayload: bool) -> bytes {
+    let Option: bytes = Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Absent", "Error", false);
+    var Section: bytes = Option;
+    var View: u32 = 0u32;
+    if Recordˉpayload {
+        var Record: bytes = Bytesˉconcat(Bytesˉfromˉu8(1u8), Encodedˉname("Packet"));
+        Record = Bytesˉconcat(Record, Bytesˉfromˉu32ˉlittle(2u32));
+        Record = Bytesˉconcat(Record, Encodedˉname("First"));
+        Record = Bytesˉconcat(Record, Bytesˉfromˉu8(1u8));
+        Record = Bytesˉconcat(Record, Encodedˉname("Second"));
+        Record = Bytesˉconcat(Record, Bytesˉfromˉu8(1u8));
+        // This fixture's Value shape is at byte 43, after its encoded names.
+        let Variant: bytes = Bytesˉconcat(Bytesˉslice(Option, 4u32, 39u32),
+            Bytesˉconcat(Bytesˉfromˉu8(7u8),
+                Bytesˉconcat(Bytesˉfromˉu32ˉlittle(0u32),
+                    Bytesˉslice(Option, 44u32, Bytesˉlength(Option) - 44u32))));
+        Section = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(2u32), Bytesˉconcat(Record, Variant));
+        View = 1u32;
+    }
+    let Length: u32 = Bytesˉlength(Section);
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Length);
+    let Empty: bytes = Bytesˉslice(Section, 0u32, 0u32);
+    if !Types.Valid || Projection < 1u32 || Projection > 3u32 { return Empty; }
+    let Input: bytes = Bytesˉconcat(Section, Bytesˉconcat(Bytesˉfromˉu8(225u8),
+        Bytesˉconcat(Bytesˉfromˉu32ˉlittle(3u32),
+            Bytesˉconcat(Bytesˉfromˉu32ˉlittle(View), Bytesˉfromˉu32ˉlittle(Projection)))));
+    let Emitted: Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate =
+        Variantˉemitter.Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
+            Input, Length, 225u8,
+            Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉlayout(
+                4u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 20u32, 24u32, 30u32),
+            Types,
+            Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage(
+                true, Empty, Bytesˉfromˉu32ˉlittle(2u32), Empty, 0u32, 4u32, 1u32),
+            Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate(
+                Empty, Empty, Empty, 0u32, 0u32, 0u32, 0u32, 0u32,
+                0u32, 0u32, 0u32, 0u32));
+    return Emitted.Result;
+}
+
+fn Borrowˉemission() -> bool {
+    let Section: bytes = Foundationˉentry(
+        "__WvY0000", "Present", "Value", "Absent", "Error", false);
+    let Length: u32 = Bytesˉlength(Section);
+    let Types: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(Section, 0u32, Length);
+    if !Types.Valid { return false; }
+    let Empty: bytes = Bytesˉslice(Section, 0u32, 0u32);
+    let Valueˉshape: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+        Typeˉreader.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(Section, Types, 0u32, 0u32);
+    let Otherˉoption: bytes = Bytesˉconcat(
+        Bytesˉconcat(Bytesˉslice(Section, 4u32, Valueˉshape.Next - 5u32),
+            Bytesˉfromˉu8(9u8)),
+        Bytesˉslice(Section, Valueˉshape.Next, Length - Valueˉshape.Next));
+    let Resultˉsection: bytes = Foundationˉentry(
+        "__WvY0002", "Valid", "Value", "Failure", "Error", true);
+    let Combined: bytes = Bytesˉconcat(Bytesˉfromˉu32ˉlittle(3u32),
+        Bytesˉconcat(Bytesˉslice(Section, 4u32, Length - 4u32),
+            Bytesˉconcat(Otherˉoption,
+                Bytesˉslice(Resultˉsection, 4u32, Bytesˉlength(Resultˉsection) - 4u32))));
+    let Combinedˉtypes: Typeˉreader.Compilerˉnativeˉx64ˉtypes =
+        Typeˉreader.Compilerˉnativeˉx64ˉhostedˉtypesˉread(
+            Combined, 0u32, Bytesˉlength(Combined));
+    if !Combinedˉtypes.Valid { return false; }
+    var Selection: u32 = 0u32;
+    while Selection <= 4u32 {
+        var Ownerˉindex: u32 = 0u32;
+        while Ownerˉindex <= 3u32 {
+            var Viewˉindex: u32 = 0u32;
+            while Viewˉindex <= 3u32 {
+                let Matched: Typeˉreader.Compilerˉnativeˉx64ˉshape =
+                    Typeˉreader.Compilerˉnativeˉx64ˉfoundationˉborrowˉpayload(
+                        Combined, Combinedˉtypes, Ownerˉindex, Viewˉindex, Selection);
+                let Expected: bool =
+                    (Selection == 1u32 && Ownerˉindex < 2u32 && Viewˉindex == Ownerˉindex) ||
+                    (Selection == 2u32 && Ownerˉindex == 2u32 && Viewˉindex == 0u32) ||
+                    (Selection == 3u32 && Ownerˉindex == 2u32 && Viewˉindex == 1u32);
+                if Matched.Valid != Expected { return false; }
+                if Matched.Valid && Matched.Borrowˉkind != 37u8 { return false; }
+                Viewˉindex = Viewˉindex + 1u32;
+            }
+            Ownerˉindex = Ownerˉindex + 1u32;
+        }
+        Selection = Selection + 1u32;
+    }
+    let Shape: Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉlayout =
+        Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉlayout(
+            4u32, 2u32, 0u32, 0u32, 0u32, 0u32, 0u32, 20u32, 24u32, 30u32);
+    let Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage =
+        Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage(
+            true, Empty, Bytesˉfromˉu32ˉlittle(2u32), Empty, 0u32, 2u32, 1u32);
+    let State: Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate =
+        Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate(
+            Empty, Bytesˉfromˉu8(1u8), Bytesˉfromˉu32ˉlittle(2u32),
+            1u32, 2u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32, 0u32);
+    let Analysis: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+        Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate(
+            true, Bytesˉfromˉu8(1u8), 1u32, 2u32, 0u32, 0u32, 0u32,
+            0u32, 0u32, 0u32, 0u32, 7u32);
+    var Projection: u32 = 0u32;
+    while Projection <= 4u32 {
+        var Input: bytes = Bytesˉconcat(Section, Bytesˉfromˉu8(225u8));
+        Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(3u32));
+        Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(0u32));
+        Input = Bytesˉconcat(Input, Bytesˉfromˉu32ˉlittle(Projection));
+        let Planned: Variantˉanalysis.Compilerˉnativeˉx64ˉvariantˉanalysisˉstate =
+            Variantˉanalysis.Compilerˉnativeˉx64ˉanalyzeˉvariantˉinstruction(
+                Input, Length, 225u8, Types, Analysis);
+        if Planned.Valid != (Projection >= 1u32 && Projection <= 3u32) { return false; }
+        if Planned.Valid {
+            let Emitted: Recordˉemitter.Compilerˉnativeˉx64ˉrecordˉstate =
+                Variantˉemitter.Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
+                    Input, Length, 225u8, Shape, Types, Storage, State);
+            let Code: bytes = Emitted.Result;
+            var Expectedˉcase: u32 = 0u32;
+            if Projection == 3u32 { Expectedˉcase = 1u32; }
+            if Bytesˉlength(Code) != 101u32 || Planned.Bodyˉbytes != 108u32 ||
+                Planned.Depth != 2u32 || Planned.Recordˉvalues != 1u32 ||
+                Emitted.Stackˉdepth != 2u32 || Emitted.Nextˉrecord != 1u32 ||
+                Bytesˉreadˉu32ˉlittle(Emitted.Stackˉslots, 0u32) != 2u32 ||
+                Bytesˉreadˉu32ˉlittle(Emitted.Stackˉslots, 4u32) != 20u32 {
+                return false;
+            }
+            // JNE lands on the view-pointer publication, past all payload reads.
+            if Bytesˉreadˉu32ˉlittle(Code, 7u32) != 1u32 ||
+                Bytesˉreadˉu32ˉlittle(Code, 22u32) != 48u32 ||
+                Bytesˉreadˉu32ˉlittle(Code, 33u32) != Expectedˉcase ||
+                Bytesˉreadˉu8(Code, 37u32) != 15u8 ||
+                Bytesˉreadˉu8(Code, 38u32) != 133u8 ||
+                Bytesˉreadˉu32ˉlittle(Code, 39u32) != 42u32 ||
+                Bytesˉreadˉu32ˉlittle(Code, 58u32) != 16u32 ||
+                Bytesˉreadˉu8(Code, 85u32) != 72u8 ||
+                Bytesˉreadˉu8(Code, 86u32) != 141u8 ||
+                Bytesˉreadˉu32ˉlittle(Code, 89u32) != 512u32 ||
+                Bytesˉreadˉu32ˉlittle(Code, 97u32) != 320u32 { return false; }
+            let Stored: Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉstate =
+                Variantˉstorage.Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(
+                    Input, Length, 0u32, 225u8, Types,
+                    Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉinput(
+                        Bytesˉfromˉu32ˉlittle(4294967295u32), 1u32,
+                        Empty, Empty, 0u32, 0u32, 0u32));
+            if !Stored.Valid || Stored.Depth != 2u32 || Stored.Recordˉvalues != 1u32 ||
+                Stored.Scratchˉvalues != 1u32 ||
+                Bytesˉreadˉu32ˉlittle(Stored.Stackˉrecords, 0u32) != 4294967295u32 {
+                return false;
+            }
+        }
+        Projection = Projection + 1u32;
+    }
+    return true;
+}
+
 fn Exactˉtypeˉsection() -> bytes {
     var Entries: bytes = Repeatˉentry(
         Recordˉtypeˉentry(), 128u32, 116u32
@@ -334,5 +493,6 @@ export fn Main() -> i32 {
     if Oversizedˉtypeˉresult.Valid { return 6; }
     if !Borrowˉshapes(Exactˉtypeˉresult) { return 7; }
     if !Foundationˉviews() { return 8; }
+    if !Borrowˉemission() { return 9; }
     return 42;
 }

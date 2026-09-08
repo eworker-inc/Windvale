@@ -140,6 +140,95 @@ export fn Compilerˉnativeˉx64ˉvariantˉisˉcaseˉbytes() -> u32 {
     return 42u32;
 }
 
+fn Borrowˉpayloadˉcells(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Viewˉtype: u32
+) -> u32 {
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input, Types, Viewˉtype, 0u32
+        );
+    if !Payload.Valid || Payload.Type == 0u8 { return 0u32; }
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        return Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉwidth(
+            Input, Types,
+            Nominalˉtypes.Compilerˉnativeˉx64ˉrecordˉtypeˉindex(Payload.Type)
+        );
+    }
+    return 1u32;
+}
+
+export fn Compilerˉnativeˉx64ˉfoundationˉborrowˉbytes(
+    Input: bytes,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Viewˉtype: u32
+) -> u32 {
+    return 71u32 + 30u32 * Borrowˉpayloadˉcells(Input, Types, Viewˉtype);
+}
+
+// The caller must verify E1's exact owner/view relationship and loan lifetime.
+// Backing bytes are non-owning observations; no authority or release is acquired.
+fn Emitˉborrow(
+    Input: bytes,
+    Offset: u32,
+    Shape: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉlayout,
+    Types: Nominalˉtypes.Compilerˉnativeˉx64ˉtypes,
+    Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
+    State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
+) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    let Owner: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 1u32);
+    let Viewˉtype: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 5u32);
+    let Projection: u32 = Bytesˉreadˉu32ˉlittle(Input, Offset + 9u32);
+    var Ownerˉcase: u32 = 0u32;
+    if Projection == 3u32 { Ownerˉcase = 1u32; }
+    let Payload: Nominalˉtypes.Compilerˉnativeˉx64ˉshape =
+        Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉcaseˉpayload(
+            Input, Types, Viewˉtype, 0u32
+        );
+    let Cells: u32 = Borrowˉpayloadˉcells(Input, Types, Viewˉtype);
+    var Payloadˉstart: u32 = 1u32;
+    if Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉrecord(Payload.Type) {
+        Payloadˉstart = 2u32;
+    }
+    let Target: u32 = Shape.Recordˉbase + State.Nextˉrecord;
+    let Backing: u32 = Shape.Scratchˉbase + Bytesˉreadˉu32ˉlittle(
+        Storage.Scratchˉoffsets, State.Nextˉrecord * 4u32
+    );
+    var Output: bytes = Typeˉtag(State.Result, Viewˉtype);
+    Output = Storeˉtag(Output, 1u32, Backing);
+    Output = Loadˉrdx(Output, Owner);
+    Output = Appendˉbyte(Output, 139u8);
+    Output = Appendˉbyte(Output, 130u8);
+    Output = Appendˉu32(Output, 0u32);
+    Output = Appendˉbyte(Output, 61u8);
+    Output = Appendˉu32(Output, Ownerˉcase);
+    Output = Appendˉbyte(Output, 15u8);
+    Output = Appendˉbyte(Output, 133u8);
+    // An unselected case must not read any payload bytes.
+    Output = Appendˉu32(Output, 12u32 + 30u32 * Cells);
+    Output = Storeˉtag(Output, 0u32, Backing);
+    var Cell: u32 = 0u32;
+    while Cell < Cells {
+        Output = Loadˉrecordˉfield(Output, Payloadˉstart + Cell, false);
+        Output = Storeˉrax(Output, Backing + Payloadˉstart + Cell);
+        Output = Loadˉrecordˉfield(Output, Payloadˉstart + Cell, true);
+        Output = Storeˉraxˉfield(Output, Backing + Payloadˉstart + Cell);
+        Cell = Cell + 1u32;
+    }
+    Output = Frameˉaddress(Output, Backing);
+    Output = Storeˉrax(Output, Target);
+    return Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate(
+        Output,
+        Bytesˉconcat(State.Stackˉtypes,
+            Bytesˉfromˉu8(Nominalˉtypes.Compilerˉnativeˉx64ˉvariantˉtype(Viewˉtype))),
+        Bytesˉconcat(State.Stackˉslots, Bytesˉfromˉu32ˉlittle(Target)),
+        State.Stackˉdepth + 1u32,
+        State.Nextˉi32, State.Nextˉbool, State.Nextˉtext, State.Nextˉu8,
+        State.Nextˉu32, State.Nextˉbytes, State.Nextˉenum, State.Nextˉrecord + 1u32
+    );
+}
+
 export fn Compilerˉnativeˉx64ˉvariantˉpayloadˉbytes(
     Payloadˉtype: u8
 ) -> u32 {
@@ -460,6 +549,9 @@ export fn Compilerˉnativeˉx64ˉemitˉvariantˉinstruction(
     Storage: Recordˉstorage.Compilerˉnativeˉx64ˉrecordˉstorage,
     State: Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate
 ) -> Recordˉinstructions.Compilerˉnativeˉx64ˉrecordˉstate {
+    if Opcode == 225u8 {
+        return Emitˉborrow(Input, Offset, Shape, Types, Storage, State);
+    }
     if Opcode == 151u8 {
         return Emitˉcreate(Input, Offset, Shape, Types, Storage, State);
     }

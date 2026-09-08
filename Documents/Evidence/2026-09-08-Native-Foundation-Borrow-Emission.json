@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-native-foundation-borrow-emission",
+  "date": "2026-09-08",
+  "subject": "Native immutable Foundation borrowing emission and storage preparation",
+  "claim": "The E1 emitter, instruction sizing, scratch planning and owner-local read tracking are integrated behind closed native minor-39 admission. Twelve selected/unselected scalar and two-cell record machine-code cases pass on Windows and Debian with identical 3633-byte code. The current-source native lowering regression owner passes 37 cases on each host.",
+  "source": {
+    "kind": "Other",
+    "value": "Worktree based on 46365164aa11338065e0be77a2e84581ac9c9dd3; changed implementation, project and verifier identities below."
+  },
+  "runs": [
+    {
+      "host": "Windows x64",
+      "target": "37 cases: 17 valid including 12 Foundation machine-code cases, 20 malformed; existing return, metadata and Foreign linking regressions",
+      "tool": "Node.js owner with cached current-source Windvale construction and native console packaging",
+      "command": "node Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs windows D:/windvale/dev01",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Core.wv",
+          "size": 368768,
+          "sha256": "ab8ab62e73d8b535295df783b6228d9dde3b703d362dcd7cec4c87f05c0bb9aa"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Record-Local-Liveness.wv",
+          "size": 13872,
+          "sha256": "d3e7fd21203a62d54347b75d9478d34a43af49493e6a8eadb51934ea8222feec"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Record-Storage.wv",
+          "size": 60712,
+          "sha256": "8f38c030e19467ee556f48c600a5824154cf75a6e9254b646bd671eb3cdf7c9d"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Types.wv",
+          "size": 72178,
+          "sha256": "782678cf629302edd45223fd2096ea90624761d27bb7c742c2a8674ecedf3ef9"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Variant-Analysis.wv",
+          "size": 14037,
+          "sha256": "dacabc9d243e28ad807752f4bc5f91abdc9b7e2013105a74f6e5bec52e6d0050"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Variant-Instructions.wv",
+          "size": 22039,
+          "sha256": "e83e3b6b3dba793721790e18cde979d2de591c9820f40fb32c8296b67b023f04"
+        },
+        {
+          "path": "Compiler/Windvale/Native-X64-Lowering-Variant-Storage.wv",
+          "size": 10138,
+          "sha256": "f2c4cdad0159a7711a1e654a25055e655c25d2e8d670e38715cb24a87ee7ea4c"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-X64-Lowering-Data-Limit.wvproj",
+          "size": 993,
+          "sha256": "01e6e7ce3e4751e3f22437a67c2642178b8f70e4b947a72ccbc194af9d47b16e"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Lowering-Data-Limit-Self-Test.wv",
+          "size": 24559,
+          "sha256": "47e526a1eeb1a4e6e99351931e78ee2264538ea7d4c7ec9b8651b9fd425ada04"
+        },
+        {
+          "path": "Tests/Native/Verification-Owners.txt",
+          "size": 24058,
+          "sha256": "0ed2457fe1ff679b1e3c06461e52c894487e4672c0a145928d27c5bbd94c9277"
+        },
+        {
+          "path": "Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs",
+          "size": 29545,
+          "sha256": "989477372dc2a48b96109b0ce5382d3c9f00ced69d4af2b815fe2a0d421a2b87"
+        },
+        {
+          "path": "Projects/Tests/Windvale-Native-Test-X64-Foundation-Borrow-Machine-Probe.wvproj",
+          "size": 1074,
+          "sha256": "760101d9af35b374af5197f5efe83e933243636063a9e7c7118edfbcfc2a2502"
+        },
+        {
+          "path": "Tests/Fixtures/Native-X64/Native-X64-Foundation-Borrow-Machine-Probe.wv",
+          "size": 4202,
+          "sha256": "7fde0e894789d657bb8d391ad15234ec7fe85f799c2405fd969918be18511834"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "Temporary owner workspace/Borrow-Code.bin (removed after run)",
+          "size": 3633,
+          "sha256": "2abd07a6a1218a712c530e977507c23b41257696005c6916fc4d1698a6f8699e"
+        }
+      ]
+    },
+    {
+      "host": "Debian x64 under WSL",
+      "target": "Same 37 cases, with existing Foreign native execution on Linux",
+      "tool": "Node.js owner with cached current-source Windvale construction and native console packaging",
+      "command": "wsl -d Debian -- node /mnt/d/windvale/dev01/Tools/Native/Test-Native-Unsafe-Write-Pointer-Lowering.mjs linux /mnt/d/windvale/dev01",
+      "result": "Passed",
+      "outputs": [
+        {
+          "path": "Temporary owner workspace/Borrow-Code.bin (removed after run)",
+          "size": 3633,
+          "sha256": "2abd07a6a1218a712c530e977507c23b41257696005c6916fc4d1698a6f8699e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64",
+      "target": "Owner routing and summary metadata: 31 general and 291 native routing cases",
+      "tool": "PowerShell verification-plan owner",
+      "command": "pwsh -NoProfile -File Tools/Verify/Verify-Verification-Plan.ps1",
+      "result": "Passed"
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "Native WVB 1.39 module admission remains closed. Machine-code snippet execution does not establish full candidate-module execution, lifetime safety, authority preservation, cleanup or real-consumer integration.",
+    "The probe invokes the maintained data/type fixture, including 80 owner/view/projection combinations and structural emission/storage checks. Its 12 machine cases cover scalar and two-cell record payloads only; descriptor and owned-payload execution are not qualified.",
+    "E1 snapshots selected payload cells without acquiring ownership. The complete caller-side lifetime proof and native borrowed call/value/cleanup integration remain pending before admission can open. Owner-local use tracking at E1 is not proof of retention for the entire loan.",
+    "Unselected cases preserve sentinel payload storage; structural checks verify the branch skips payload instructions. No guard-page unreadable-owner-payload test was run.",
+    "Passing construction uses existing development caches keyed by source and tool inputs. This is not independent clean bootstrap reconstruction. Raw machine probes were temporary and removed by the existing owner.",
+    "PlanOnly selected seed and native-x64-lowering-development, editor checks and a managed-test-recovery-source gap. The causal existing native owner and routing verifier were selected directly. Full native development, compiler reconstruction, frozen compiler qualification, browser, editor and installed-tool gates were not run because this checkpoint does not change their claimed surface.",
+    "Exclusive borrow, Take/Map, maintained package consumer migration and the full compiler/libraries goal remain pending."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Native-Foundation-Borrow-Views.json",
+    "Documents/Project/Windvale-Libraries-1.0-Plan.md",
+    "Specifications/Compiler-Source-Wvb.md"
+  ]
+}

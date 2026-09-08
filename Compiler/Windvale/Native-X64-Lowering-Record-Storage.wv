@@ -190,6 +190,7 @@ fn Instructionˉsize(Opcode: u8) -> u32 {
     if Numeric >= 143u32 && Numeric <= 148u32 { return 1u32; }
     if Numeric >= 151u32 && Numeric <= 153u32 { return 9u32; }
     if Opcode == 196u8 { return 9u32; }
+    if Opcode == 225u8 { return 13u32; }
     if Opcode == 161u8 || Opcode == 162u8 ||
         Opcode == 165u8 || Opcode == 166u8 { return 1u32; }
     if Numeric >= 173u32 {
@@ -1294,7 +1295,26 @@ export fn Compilerˉnativeˉx64ˉrecordˉstorageˉread(
         }
 
         if Opcode == 151u8 || Opcode == 152u8 || Opcode == 153u8 ||
-            Opcode == 196u8 {
+            Opcode == 196u8 || Opcode == 225u8 {
+            if Opcode == 225u8 {
+                let Borrowˉlocal: u32 = Bytesˉreadˉu32ˉlittle(
+                    Input, Codeˉoffset + Cursor + 1u32);
+                if Borrowˉlocal >= Locals { return Invalid(Input); }
+                if !Nominalˉtypes.Compilerˉnativeˉx64ˉtypeˉisˉvariant(
+                    Bytesˉreadˉu8(Localˉtypes, Borrowˉlocal)
+                ) { return Invalid(Input); }
+                if Borrowˉlocal >= Parameters {
+                    let Borrowˉrecord: u32 = Bytesˉreadˉu32ˉlittle(
+                        Recordˉlocals.Indices, Borrowˉlocal * 4u32);
+                    if Borrowˉrecord == 4294967295u32 { return Invalid(Input); }
+                    let Borrowˉcell: u32 = Currentˉblock * Recordˉlocals.Count + Borrowˉrecord;
+                    if !Cellˉeventˉexists(Cellˉevents, 2u8, Borrowˉcell) &&
+                        !Cellˉeventˉexists(Cellˉevents, 1u8, Borrowˉcell) {
+                        Cellˉevents = Bytesˉconcat(Cellˉevents, Bytesˉconcat(
+                            Bytesˉfromˉu8(1u8), Bytesˉfromˉu32ˉlittle(Borrowˉcell)));
+                    }
+                }
+            }
             let Variantˉstate:
                 Variantˉstorage.Compilerˉnativeˉx64ˉvariantˉstorageˉstate =
                 Variantˉstorage.Compilerˉnativeˉx64ˉanalyzeˉvariantˉstorage(

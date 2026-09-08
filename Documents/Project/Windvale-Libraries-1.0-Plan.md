@@ -112,9 +112,13 @@ checks pass on each host. The [native shape checkpoint](../Evidence/2026-09-08-N
 preserves payload borrow identity through function decoding, with paired-host
 native reader tests. The [Option-view decoder](../Evidence/2026-09-08-Native-Foundation-Borrow-Views.json)
 also retains shape 29's non-owning tag over the ordinary canonical Option type;
-paired-host checks reject lookalike descriptors. Full native admission remains
-closed. Next integrate non-owning storage, `E1` lowering, and owner retention/cleanup
-before migrating the consumer; a parallel parser is not the replacement path.
+paired-host checks reject lookalike descriptors. The
+[native emission checkpoint](../Evidence/2026-09-08-Native-Foundation-Borrow-Emission.json)
+adds `E1` machine-code emission, scratch planning, and owner-local read tracking.
+Twelve scalar/record machine-code cases and the 37-case lowering owner pass on
+both hosts. Full native admission remains closed: next integrate complete lifetime
+verification, borrowed calls, and owner retention/cleanup before migrating the
+consumer; a parallel parser is not the replacement path.
 The [adapter checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Retention-Adapter.json)
 records the preceding component evidence. The
 [frame checkpoint](../Evidence/2026-09-08-Foundation-Borrow-Frame-Integration.json)
