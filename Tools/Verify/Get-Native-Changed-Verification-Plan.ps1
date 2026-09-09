@@ -1441,6 +1441,9 @@ function Add-Native-Tool-Suite {
         'Write-Canonical-Language-1.0-Target-Descriptor'
     )) {
         Add-Suite 'language-1-front-door'
+        if ($Stem -eq 'Write-Canonical-Language-1.0-Target-Descriptor') {
+            Add-Suite 'language-1-production-admission-ingress'
+        }
         return
     }
     if ($Stem -eq 'Run-Split-Compiler') {
@@ -3064,6 +3067,9 @@ foreach ($Path in $Paths) {
             'Projects/Tools/Windvale-Package-Bundle-Verifier.wvproj'
         )) {
         Add-Suite @('package-bundle', 'offline-package-stage')
+    } elseif ($Path.StartsWith('Projects/Targets/', [StringComparison]::Ordinal) -and
+        [IO.Path]::GetExtension($Path) -eq '.wvtd') {
+        Add-Suite 'language-1-production-admission-ingress'
     } elseif ($Path -eq 'Windvale.wvws' -or
         $Path -eq 'Specifications/Windvale-Project.md' -or
         $Path.StartsWith('Tests/Fixtures/Project/', [StringComparison]::Ordinal)) {

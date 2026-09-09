@@ -146,8 +146,14 @@ through the existing compiler phases. It rejects a pre-existing output rather
 than replacing it. This development integration is not installed-toolchain or
 cross-host qualification. The maintained admission owner has a focused
 `--project4-products <reader> <admitter> <validator> <analyzer> <emitter>`
-selection with 14 cases. Complete qualification and broader target, alias, and
+selection with 16 cases, including explicit Windows and Linux x64/no-foreign
+targets. Complete qualification and broader target, alias, and
 profile evidence remain required before promotion.
+
+Maintained [explicit target inputs](../Projects/Targets/README.md) provide the
+registered Windows and Linux x64/no-foreign descriptors. The target writer's
+`--target <registry-name>` option selects these without consulting the host;
+its original one-path invocation retains the Linux foreign-ABI descriptor.
 
 ## Workspace-relative paths
 

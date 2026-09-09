@@ -671,7 +671,9 @@ $NativeCases = @(
             'Documents/Decisions/0893-Authenticate-Production-Source-Analysis-Ingress.md',
             'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.cmd',
             'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs',
-            'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh'
+            'Tools/Native/Test-Language-1.0-Production-Admission-Ingress.sh',
+            'Projects/Targets/Windows-X64-No-Foreign.wvtd',
+            'Projects/Targets/Linux-X64-No-Foreign.wvtd'
         )
         Suites = @('language-1-production-admission-ingress')
         Gaps = @()
@@ -778,7 +780,7 @@ $NativeCases = @(
         Paths = @(
             'Tools/Native/Write-Canonical-Language-1.0-Target-Descriptor.mjs'
         )
-        Suites = @('language-1-front-door')
+        Suites = @('language-1-front-door', 'language-1-production-admission-ingress')
         Gaps = @()
         VerifyPlan = $false
     },

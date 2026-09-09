@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-project4-explicit-host-targets",
+  "date": "2026-09-08",
+  "subject": "Explicit Windows/Linux x64 no-foreign project targets",
+  "claim": "The maintained Project 4 selector passes 16 cases on Windows and real Debian. The target writer produces exact registered Windows and Linux no-foreign WVTD bytes matching the maintained files; each target compiles the same Foundation Option/Result text-borrow consumer to identical WVB. The writer rejects unknown registry names and preserves existing descriptors, and its legacy invocation retains the original Linux foreign-ABI bytes.",
+  "source": {
+    "kind": "Other",
+    "value": "Base e1b41772 plus the exact inputs below. Reader/admitter/validator/analyzer/emitter products and Foundation source/profile inputs are unchanged from the related authenticated-admission evidence record."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Explicit registered host target generation and Project 4 admission",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-products READER ADMITTER VALIDATOR ANALYZER EMITTER",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Write-Canonical-Language-1.0-Target-Descriptor.mjs",
+          "size": 1717,
+          "sha256": "b4ccc71f2af4e74854b56b371f398fbeae942b3fb80688ed4f1a3b4baeaa0453"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 150018,
+          "sha256": "8175cb18751eca8c5684be2f5427b1d4bb762716b14cdc40acb72ee8dc3992c0"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/project4/Windows-X64-No-Foreign.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        },
+        {
+          "path": "temporary/project4/Linux-X64-No-Foreign.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    },
+    {
+      "host": "Real Debian WSL x64, Node 24.20.0",
+      "target": "Explicit registered host target generation and Project 4 admission",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-products READER ADMITTER VALIDATOR ANALYZER EMITTER",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Write-Canonical-Language-1.0-Target-Descriptor.mjs",
+          "size": 1717,
+          "sha256": "b4ccc71f2af4e74854b56b371f398fbeae942b3fb80688ed4f1a3b4baeaa0453"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 150018,
+          "sha256": "8175cb18751eca8c5684be2f5427b1d4bb762716b14cdc40acb72ee8dc3992c0"
+        },
+        {
+          "path": "Projects/Targets/Windows-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "6f490fe60e6725079fe3179b97dae9c02ca3452d8c9476437bfe761294e95e5e"
+        },
+        {
+          "path": "Projects/Targets/Linux-X64-No-Foreign.wvtd",
+          "size": 64,
+          "sha256": "dc066e7a15a4e7b736475b21ef87b40c83ad6f7231816d137a905980730a6c55"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/project4/Windows-X64-No-Foreign.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        },
+        {
+          "path": "temporary/project4/Linux-X64-No-Foreign.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is focused development evidence, not full admission-owner construction, cold qualification, native consumer execution, or installed-toolchain promotion. The full default owner now contains 24 ingress plus 16 Project 4 cases; that full 40-case selection was not run.",
+    "Source and retained product identities not repeated here are bound by the related prior admission record. The selected Foundation fixture and English profile are unchanged; broader profile/target combinations remain unqualified.",
+    "Maintained package-project migration was exercised separately in the worktree but is not claimed by this record. Its public build-helper integration remains unfinished.",
+    "Temporary generated files are checked before normal owner cleanup. Windows/Linux names select build targets explicitly, not the compiler host or runtime capability grants."
+  ],
+  "related": [
+    "Documents/Evidence/2026-09-08-Project4-Authenticated-Admission.json",
+    "Specifications/Windvale-Project.md",
+    "Specifications/Windvale-Language-1.0-Target-Descriptor.md",
+    "Projects/Targets/README.md"
+  ]
+}

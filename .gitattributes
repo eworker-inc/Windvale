@@ -47,6 +47,7 @@ SHA256SUMS text eol=lf
 *.b64 text eol=lf
 *.patch text eol=lf whitespace=-blank-at-eof,-trailing-space
 *.wvb binary
+*.wvtd binary
 *.wvnf binary
 *.wvo binary
 *.wasm binary

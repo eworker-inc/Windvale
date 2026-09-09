@@ -3138,6 +3138,33 @@ async function Runˉproject4ˉcases(Work, Products, Reader) {
     await Case('reordered-sources', Template.replace(
         'source "Option.wv"\nsource "Result.wv"',
         'source "Result.wv"\nsource "Option.wv"'), true);
+    const Writer = join(SCRIPT_DIRECTORY, 'Write-Canonical-Language-1.0-Target-Descriptor.mjs');
+    for (const [Name, Registry, Build] of [
+        ['Windows-X64-No-Foreign', 'windows.x86_64.none_v1', 1],
+        ['Linux-X64-No-Foreign', 'linux.x86_64.none_v1', 2],
+    ]) {
+        const File = join(Work, `${Name}.wvtd`);
+        await Requireˉsuccess(`project4-write-${Name}`, process.execPath,
+            [Writer, '--target', Registry, File], CASE_TIMEOUT_MILLISECONDS);
+        const Bytes = await readFile(File);
+        Require(Bytes.equals(Constructˉwvtd(Build)) && Bytes.equals(await readFile(
+            join(REPOSITORY_ROOT, 'Projects', 'Targets', `${Name}.wvtd`))),
+        `The ${Name} descriptor differs from its registered encoding or maintained bytes.`);
+        await Case(Name, Template.replace('"Target.wvtd"', `"${Name}.wvtd"`), true);
+        const Repeated = await Runˉbounded(process.execPath,
+            [Writer, '--target', Registry, File], `project4-preserve-${Name}`);
+        Require(Repeated.code !== 0 && (await readFile(File)).equals(Bytes),
+            'The target writer changed a pre-existing descriptor.');
+    }
+    const Legacy = join(Work, 'Legacy-target.wvtd');
+    await Requireˉsuccess('project4-legacy-target-writer', process.execPath,
+        [Writer, Legacy], CASE_TIMEOUT_MILLISECONDS);
+    Require((await readFile(Legacy)).equals(Target), 'The legacy target writer changed bytes.');
+    const Unknown = join(Work, 'Unknown-target.wvtd');
+    const Rejectedˉtarget = await Runˉbounded(process.execPath,
+        [Writer, '--target', 'unknown.target', Unknown], 'project4-unknown-target');
+    Require(Rejectedˉtarget.code === 64 && !await lstat(Unknown).then(() => true, () => false),
+        'An unknown target reached descriptor publication.');
     await Case('existing-output', Template, false, true, 'must be a new .wvb path');
     await Case('missing-target', Template.replace(/^target-descriptor.*\n/mu, ''),
         false, false, 'WVP1004');
@@ -3166,7 +3193,7 @@ async function Runˉproject4ˉcases(Work, Products, Reader) {
     await writeFile(join(Work, 'Restricted.wv'), Restricted, { flag: 'wx' });
     await Case('target-platform-mismatch', Template.replace('root "Main.wv"', 'root "Restricted.wv"'),
         false, false, 'source admission status=Rejected');
-    Require(Count === 14, 'Project 4 case inventory changed without review.');
+    Require(Count === 16, 'Project 4 case inventory changed without review.');
     process.stdout.write(`project4 admission status=Passed cases=${Count} ` +
         `host=${process.platform} wvb-sha256=${Sha256(Baseline)} qualification=false\n`);
 }
@@ -3226,7 +3253,7 @@ async function Main() {
         const Inputs = await Writeˉproductionˉinputs(Work);
         process.stdout.write('START production admission ingress phase=execute item=3/4 cases=24\n');
         await Runˉproductionˉcases(Work, Products, Inputs);
-        process.stdout.write('START production admission ingress phase=project4 item=4/4 cases=14\n');
+        process.stdout.write('START production admission ingress phase=project4 item=4/4 cases=16\n');
         const Projectˉwork = join(Work, 'Project4');
         await mkdir(Projectˉwork);
         await Runˉproject4ˉcases(Projectˉwork, Products, Products.wvproject);
@@ -3237,7 +3264,7 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 production admission ingress status=Passed ' +
-            'cases=38 ingress-cases=24 project4-cases=14 deterministic=Verified compiler-profile=8 tool-profile=7 ' +
+            'cases=40 ingress-cases=24 project4-cases=16 deterministic=Verified compiler-profile=8 tool-profile=7 ' +
             'verifier-profile=2 runner-profile=5 ' +
             'final-publication-owner=split-compiler\n'
         );
