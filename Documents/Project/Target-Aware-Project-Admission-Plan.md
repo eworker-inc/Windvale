@@ -2,7 +2,7 @@
 
 > Status: Current; Project 4 direction approved, integration in progress
 > Authority: Informative; existing specifications and accepted decisions remain authoritative
-> Last reviewed: 2026-09-08
+> Last reviewed: 2026-09-09
 
 The package-library migration needs a project build that supplies the same
 explicit target and authenticated source admission already used by the split
@@ -13,17 +13,32 @@ integration.
 
 The native manifest tool and split coordinator now have a Project 4 development
 path. The maintained admission verifier's `--project4-products` selection passes
-14 cases on Windows and real Debian using explicit retained products. It builds
+16 cases on Windows and real Debian using explicit retained products. It builds
 the existing Option/Result text-borrow consumer, preserves output bytes when
 source directives are reordered, and rejects the selected invalid inputs without
 publication. The existing 13 failure/cleanup test groups also pass on both hosts.
 Exact identities and limits are in the
 [development admission evidence](../Evidence/2026-09-08-Project4-Authenticated-Admission.json).
 
+The additional cases select the maintained Windows and Linux no-foreign target
+descriptors explicitly. Their consumer outputs match the existing target case;
+the build host does not choose the target. Descriptor generation, rejection, and
+exact-byte checks are recorded in the
+[explicit host-target evidence](../Evidence/2026-09-08-Project4-Explicit-Host-Targets.json).
+
 The full verifier includes the new cases but has not been run through complete
 tool construction or cold qualification. Installed product selection, maintained
 package manifest migration, full target/alias/profile coverage, and project build
 cache integration remain unfinished. This checkpoint is not production promotion.
+
+The next integration checkpoint is a reusable current-source compiler product
+set, followed by normal project-build routing through authenticated admission.
+The current split-compiler cache constructs only the analyzer and emitter; the
+Project 4 path also needs the native manifest reader, admitter, and authenticator,
+plus the foreign binder when required. Repository `Build-Wvb` launchers and the
+installer inventories still select the older build driver. Retained diagnostic
+executables must not be substituted into those inventories or labeled current
+solely because selected consumer tests pass.
 
 ## Current boundary
 
