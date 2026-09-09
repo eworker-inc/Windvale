@@ -8,6 +8,11 @@ capability file.read_bytes;
 capability process.argument;
 capability process.argument_count;
 
+fn Windvaleˉprojectˉtoolˉquote(Value: text) -> text {
+    // Admitted paths and lowercase digests contain no JSON escape characters.
+    return Textˉconcat("\"", Textˉconcat(Value, "\""));
+}
+
 fn Windvaleˉprojectˉtoolˉfailure(Scan: Project.Windvaleˉprojectˉscan) -> text {
     var Report: text = "project status=";
     Report = Textˉconcat(Report, Project.Windvaleˉprojectˉdiagnosticˉcode(Scan.Status));
@@ -25,22 +30,66 @@ fn Windvaleˉprojectˉtoolˉpath(Path: Project.Windvaleˉprojectˉpath) -> text 
     Report = Textˉconcat(Report, " column=");
     Report = Textˉconcat(Report, U32ˉformat(Path.Column));
     Report = Textˉconcat(Report, " value=");
-    return Textˉconcat(Report, Textˉquote(Textˉfromˉutf8(Path.Value)));
+    return Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Path.Value)));
+}
+
+fn Windvaleˉprojectˉtoolˉinventory(Input: bytes, Scan: Project.Windvaleˉprojectˉscan) -> i32 {
+    if Scan.Version != 4u32 {
+        diagnostic.write_line("project status=WVP1001 reason=target-aware-project-required");
+        return 1;
+    }
+    let Lock: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉsourceˉlockˉpath(Input, Scan);
+    let Profile: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉsourceˉprofileˉpath(Input, Scan);
+    let Target: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉtargetˉdescriptorˉpath(Input, Scan);
+    if !Lock.Found || !Profile.Found || !Target.Found {
+        diagnostic.write_line("project status=Internal");
+        return 70;
+    }
+    var Report: text = "{\"inventoryVersion\":1,\"projectVersion\":4,\"sources\":[";
+    var Index: u32 = 0u32;
+    while Index < Scan.Modules {
+        let Path: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(Input, Scan, Index);
+        if !Path.Found {
+            diagnostic.write_line("project status=Internal");
+            return 70;
+        }
+        if Index != 0u32 { Report = Textˉconcat(Report, ","); }
+        Report = Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Path.Value)));
+        Index = Index + 1u32;
+    }
+    Report = Textˉconcat(Report, "],\"sourceInputLock\":");
+    Report = Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Lock.Value)));
+    Report = Textˉconcat(Report, ",\"sourceInputLockSha256\":");
+    Report = Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Project.Windvaleˉprojectˉsourceˉlockˉhash(Input, Scan))));
+    Report = Textˉconcat(Report, ",\"sourceProfile\":");
+    Report = Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Profile.Value)));
+    Report = Textˉconcat(Report, ",\"targetDescriptor\":");
+    Report = Textˉconcat(Report, Windvaleˉprojectˉtoolˉquote(Textˉfromˉutf8(Target.Value)));
+    console.write_line(Textˉconcat(Report, "}"));
+    return 0;
 }
 
 export fn Main() -> i32 {
-    if process.argument_count() != 1u32 {
-        diagnostic.write_line("Usage: project-manifest <project.wvproj>");
+    let Arguments: u32 = process.argument_count();
+    if Arguments != 1u32 && Arguments != 2u32 {
+        diagnostic.write_line("Usage: project-manifest [--inventory] <project.wvproj>");
         return 64;
     }
-
-    let Input: bytes = file.read_bytes(process.argument(0u32));
+    if Arguments == 2u32 {
+        let Mode: bytes = Textˉtoˉutf8(process.argument(0u32));
+        if !Project.Windvaleˉprojectˉspanˉequalsˉtext(Mode, 0u32, Bytesˉlength(Mode), "--inventory") {
+            diagnostic.write_line("Usage: project-manifest [--inventory] <project.wvproj>");
+            return 64;
+        }
+    }
+    let Input: bytes = file.read_bytes(process.argument(Arguments - 1u32));
     let Scan: Project.Windvaleˉprojectˉscan = Project.Windvaleˉprojectˉscanˉmanifest(Input);
     if Scan.Status != Project.Windvaleˉprojectˉstatus.Valid {
         diagnostic.write_line(Windvaleˉprojectˉtoolˉfailure(Scan));
         return 1;
     }
 
+    if Arguments == 2u32 { return Windvaleˉprojectˉtoolˉinventory(Input, Scan); }
     console.write_line(
         Textˉconcat("project status=Valid modules=", U32ˉformat(Scan.Modules))
     );

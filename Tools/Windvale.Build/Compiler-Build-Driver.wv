@@ -511,6 +511,12 @@ fn Compilerˉbuildˉdriverˉrunˉproject(Arguments: u32) -> i32 {
         ));
         return 1;
     }
+    if Scan.Version == 4u32 {
+        diagnostic.write_line(
+            "build status=Projectˉrejected code=WVP1001 reason=target-aware-admission-required"
+        );
+        return 1;
+    }
     if Scan.Modules > 63u32 {
         let Excess: Project.Windvaleˉprojectˉpath = Project.Windvaleˉprojectˉpathˉat(
             Manifest, Scan, 63u32

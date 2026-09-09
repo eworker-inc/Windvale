@@ -54,8 +54,8 @@ const TEMPORARY_PREFIX = 'windvale-production-admission-ingress-';
 const COLD_DOUBLE_BUILD_ENVIRONMENT =
     'WINDVALE_PRODUCTION_ADMISSION_INGRESS_COLD_DOUBLE_BUILD';
 const EXPECTED_COORDINATOR = Object.freeze({
-    bytes: 57_210,
-    sha256: '56b99776726834e9f48fa2fa33a1d21dee810e74a748b5a8a8be345431c10823',
+    bytes: 63_497,
+    sha256: '7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5',
 });
 
 const PINNED_COMPILER = Object.freeze({
@@ -81,6 +81,10 @@ const PINNED_COMPILER = Object.freeze({
 // identities remain measured until paired Windows/Linux evidence supplies both
 // host values.
 const EXPECTED_PRODUCTS = Object.freeze({
+    wvproject: Object.freeze({
+        bytes: 40_574,
+        sha256: 'f80225c3924eadf412f040e6e25912d4f5ff15b70376f1f5a3db12386af7d5cb',
+    }),
     wvadmit: Object.freeze({
         bytes: 572_966,
         sha256: 'e9d202c4b6b3f6b90fba3db9462ab9ba7f6d0e76be58884f56f54e80efba749e',
@@ -2269,6 +2273,8 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         Pinned[Name] = { application: Application, identity: Identity };
     }
     const Projects = {
+        wvproject: join(REPOSITORY_ROOT, 'Projects', 'Tools',
+            'Windvale-Project-Manifest.wvproj'),
         wvadmit: join(REPOSITORY_ROOT, 'Projects', 'Tools',
             'Windvale-Compiler-Admission-Driver.wvproj'),
         wvauth: join(REPOSITORY_ROOT, 'Projects', 'Tools',
@@ -2297,7 +2303,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
         ];
         process.stdout.write(
             `START production admission product=${Name} ` +
-            `item=${Productˉindex}/7 build=1/${Buildˉmode.buildsPerProduct} ` +
+            `item=${Productˉindex}/8 build=1/${Buildˉmode.buildsPerProduct} ` +
             `build-mode=${Buildˉmode.name}\n`
         );
         await Requireˉsuccess(`${Name}-build-1`, process.execPath,
@@ -2308,7 +2314,7 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             const Second = join(Work, `${Name}-B.wvb`);
             process.stdout.write(
                 `START production admission product=${Name} ` +
-                `item=${Productˉindex}/7 build=2/2 ` +
+                `item=${Productˉindex}/8 build=2/2 ` +
                 `build-mode=${Buildˉmode.name}\n`
             );
             await Requireˉsuccess(`${Name}-build-2`, process.execPath,
@@ -2407,6 +2413,9 @@ async function Buildˉandˉpackageˉproducts(Work, Buildˉmode) {
             identity: Currentˉemitterˉidentity,
         }
     );
+    await Buildˉproduct('wvproject', Projects.wvproject,
+        { application: Applications.wvanalyze, identity: Currentˉanalyzerˉidentity },
+        { application: Applications.wvemit, identity: Currentˉemitterˉidentity });
     return Applications;
 }
 
@@ -3071,7 +3080,119 @@ async function Runˉproductionˉcases(Work, Products, Inputs) {
     await Requireˉcoordinatorˉcleanup();
 }
 
+async function Runˉproject4ˉcases(Work, Products, Reader) {
+    const Reference = join(REPOSITORY_ROOT, 'Documents', 'Project',
+        'Language-1.0-Localization-Workloads', '01-Source-Profile-Admission', 'Reference-Artifacts');
+    const Workspace = join(Work, 'Workspace.wvws');
+    await writeFile(Workspace, 'windvale-workspace 1\n', { flag: 'wx' });
+    const Files = [
+        ['Main.wv', join(REPOSITORY_ROOT, 'Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Text-Executable.wv')],
+        ['Option.wv', join(REPOSITORY_ROOT, 'Libraries/Foundation/Values/Option.wv')],
+        ['Result.wv', join(REPOSITORY_ROOT, 'Libraries/Foundation/Values/Result.wv')],
+        ['Inputs.wvlock', join(Reference, 'Source-Inputs.wvlock')],
+        ['Profile.wvsp', join(Reference, 'En-Source-Profile.wvsp')],
+    ];
+    for (const [Name, Source] of Files) {
+        await writeFile(join(Work, Name), await readFile(Source), { flag: 'wx' });
+    }
+    const Target = Constructˉwvtd();
+    await writeFile(join(Work, 'Target.wvtd'), Target, { flag: 'wx' });
+    const Digest = Sha256(await readFile(join(Work, 'Inputs.wvlock')));
+    const Template = 'windvale-project 4\nroot "Main.wv"\n' +
+        'source "Option.wv"\nsource "Result.wv"\n' +
+        'source-input-lock "Inputs.wvlock"\n' +
+        `source-input-lock-sha256 ${Digest}\n` +
+        'source-profile "Profile.wvsp"\ntarget-descriptor "Target.wvtd"\nemit wvb\n';
+    let Baseline = null;
+    let Count = 0;
+    async function Case(Name, Manifest, Accepted, Existing = false, Diagnostic = null) {
+        const Project = join(Work, `${Name}.wvproj`);
+        const Output = join(Work, `${Name}.wvb`);
+        await writeFile(Project, Manifest, { flag: 'wx' });
+        const Preserved = Buffer.from('preserve-existing-project-output');
+        if (Existing) await writeFile(Output, Preserved, { flag: 'wx' });
+        const Arguments = [SPLIT_COMPILER, Products.wvadmit, Products.wvauth,
+            Products.wvanalyze, Products.wvemit, '--workspace', Workspace,
+            '--project', Project, '--manifest-reader', Reader, Output];
+        const Result = await Runˉsentinelˉcoordinator(Work, Products, null, Output,
+            `project4-${Name}`, 15_000, 20_000, true, Arguments);
+        Require((Result.code === 0) === Accepted,
+            `Project 4 ${Name}: exit=${Result.code} ${Result.error.toString('utf8')}`);
+        if (Diagnostic !== null) Require(Result.error.toString('utf8').includes(Diagnostic),
+            `Project 4 ${Name} missed its expected failure boundary.`);
+        if (Accepted) {
+            const Bytes = await readFile(Output);
+            Require(Result.output.toString('utf8').includes('wvauth status=Accepted'),
+                `Project 4 ${Name} did not authenticate its admitted inputs.`);
+            if (Baseline === null) Baseline = Bytes;
+            else Require(Bytes.equals(Baseline), 'Project source order changed WVB output.');
+        } else if (Existing) {
+            Require((await readFile(Output)).equals(Preserved), 'Project build changed existing output.');
+        } else {
+            Require(!await lstat(Output).then(() => true, () => false),
+                `Rejected Project 4 ${Name} published output.`);
+        }
+        process.stdout.write(`PASS project4 admission case=${Name} item=${++Count}\n`);
+    }
+    await Case('valid', Template, true);
+    await Case('reordered-sources', Template.replace(
+        'source "Option.wv"\nsource "Result.wv"',
+        'source "Result.wv"\nsource "Option.wv"'), true);
+    await Case('existing-output', Template, false, true, 'must be a new .wvb path');
+    await Case('missing-target', Template.replace(/^target-descriptor.*\n/mu, ''),
+        false, false, 'WVP1004');
+    await Case('duplicate-target', Template + 'target-descriptor "Target.wvtd"\n',
+        false, false, 'WVP1004');
+    await Case('project3', Template.replace('windvale-project 4', 'windvale-project 3')
+        .replace(/^target-descriptor.*\n/mu, ''), false, false, 'WVP1001');
+    await Case('escaping-target', Template.replace('"Target.wvtd"', '"../Target.wvtd"'),
+        false, false, 'WVP1006');
+    await Case('missing-target-file', Template.replace('"Target.wvtd"', '"Absent.wvtd"'), false);
+    await writeFile(join(Work, 'Malformed.wvtd'), Buffer.alloc(64), { flag: 'wx' });
+    await Case('malformed-target', Template.replace('"Target.wvtd"', '"Malformed.wvtd"'),
+        false, false, 'source admission status=Rejected');
+    await writeFile(join(Work, 'Oversized.wvtd'), Buffer.alloc(321), { flag: 'wx' });
+    await Case('oversized-target', Template.replace('"Target.wvtd"', '"Oversized.wvtd"'),
+        false, false, 'bounded ordinary file');
+    await writeFile(join(Work, 'Linked.wvtd'), Target, { flag: 'wx' });
+    await link(join(Work, 'Linked.wvtd'), join(Work, 'Alias.wvtd'));
+    await Case('hardlink-target', Template.replace('"Target.wvtd"', '"Linked.wvtd"'),
+        false, false, 'aliased or nonordinary workspace path');
+    await Case('missing-profile', Template.replace('"Profile.wvsp"', '"Absent.wvsp"'), false);
+    await Case('wrong-lock-digest', Template.replace(Digest, '0'.repeat(64)),
+        false, false, 'source admission status=Rejected');
+    const Restricted = (await readFile(join(Work, 'Main.wv'), 'utf8'))
+        .replace('platform linux, windows, windvale;', 'platform windvale;');
+    await writeFile(join(Work, 'Restricted.wv'), Restricted, { flag: 'wx' });
+    await Case('target-platform-mismatch', Template.replace('root "Main.wv"', 'root "Restricted.wv"'),
+        false, false, 'source admission status=Rejected');
+    Require(Count === 14, 'Project 4 case inventory changed without review.');
+    process.stdout.write(`project4 admission status=Passed cases=${Count} ` +
+        `host=${process.platform} wvb-sha256=${Sha256(Baseline)} qualification=false\n`);
+}
+
 async function Main() {
+    if (process.argv[2] === '--project4-products') {
+        Require(process.argv.length === 8,
+            'Usage: --project4-products <reader> <admitter> <validator> <analyzer> <emitter>');
+        await Verifyˉcontracts();
+        const Paths = process.argv.slice(3).map(Value => resolve(Value));
+        for (const Product of Paths) {
+            const Information = await lstat(Product);
+            Require(Information.isFile() && !Information.isSymbolicLink() &&
+                Information.size > 0 && Information.size <= 134_217_728,
+            'Project 4 test products must be bounded ordinary files.');
+        }
+        const Temporaryˉroot = await realpath(resolve(tmpdir()));
+        const Work = await mkdtemp(join(Temporaryˉroot, TEMPORARY_PREFIX));
+        try {
+            await Runˉproject4ˉcases(Work, { wvadmit: Paths[1], wvauth: Paths[2],
+                wvanalyze: Paths[3], wvemit: Paths[4] }, Paths[0]);
+        } finally {
+            await Removeˉwork(Work, Temporaryˉroot);
+        }
+        return;
+    }
     if (process.argv.length !== 2) {
         Reject('The production-admission-ingress owner accepts no arguments.');
     }
@@ -3081,18 +3202,18 @@ async function Main() {
     const Work = await mkdtemp(join(Temporaryˉroot, TEMPORARY_PREFIX));
     let Passed = false;
     try {
-        process.stdout.write('START production admission ingress phase=sentinels item=1/3\n');
+        process.stdout.write('START production admission ingress phase=sentinels item=1/4\n');
         await Runˉsentinelˉinfrastructure(Work);
-        process.stdout.write('PASS  production admission ingress phase=sentinels item=1/3 cases=13\n');
+        process.stdout.write('PASS  production admission ingress phase=sentinels item=1/4 cases=13\n');
         if (process.env.WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY ===
             '1') {
             Passed = true;
             return;
         }
-        process.stdout.write('START production admission ingress phase=products item=2/3\n');
+        process.stdout.write('START production admission ingress phase=products item=2/4\n');
         const Products = await Buildˉandˉpackageˉproducts(Work, Buildˉmode);
         process.stdout.write(
-            'PASS  production admission ingress phase=products item=2/3 ' +
+            'PASS  production admission ingress phase=products item=2/4 ' +
             `build-mode=${Buildˉmode.name} ` +
             `wvb-identity=${Buildˉmode.coldDoubleBuild
                 ? 'Recorded-candidate-match'
@@ -3103,8 +3224,12 @@ async function Main() {
             'verifier-profile=2 runner-profile=5\n'
         );
         const Inputs = await Writeˉproductionˉinputs(Work);
-        process.stdout.write('START production admission ingress phase=execute item=3/3 cases=24\n');
+        process.stdout.write('START production admission ingress phase=execute item=3/4 cases=24\n');
         await Runˉproductionˉcases(Work, Products, Inputs);
+        process.stdout.write('START production admission ingress phase=project4 item=4/4 cases=14\n');
+        const Projectˉwork = join(Work, 'Project4');
+        await mkdir(Projectˉwork);
+        await Runˉproject4ˉcases(Projectˉwork, Products, Products.wvproject);
         Passed = true;
     } finally {
         await Removeˉwork(Work, Temporaryˉroot);
@@ -3112,7 +3237,7 @@ async function Main() {
     if (Passed) {
         process.stdout.write(
             'native language 1 production admission ingress status=Passed ' +
-            'cases=24 deterministic=Verified compiler-profile=8 tool-profile=7 ' +
+            'cases=38 ingress-cases=24 project4-cases=14 deterministic=Verified compiler-profile=8 tool-profile=7 ' +
             'verifier-profile=2 runner-profile=5 ' +
             'final-publication-owner=split-compiler\n'
         );

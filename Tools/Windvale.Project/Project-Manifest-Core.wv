@@ -569,6 +569,11 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     ) {
         Version = 3u32;
     }
+    if Windvaleˉprojectˉspanˉequalsˉtext(
+        Input, Header.Offset, Header.Length, "windvale-project 4"
+    ) {
+        Version = 4u32;
+    }
     if Version == 0u32 {
         return Windvaleˉprojectˉfailure(
             Windvaleˉprojectˉstatus.Invalidˉheader, Header.Offset, 1u32, 1u32
@@ -599,6 +604,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     var Sourceˉprofileˉlength: u32 = 0u32;
     var Sourceˉprofileˉline: u32 = 0u32;
     var Sourceˉprofileˉcolumn: u32 = 0u32;
+    var Targetˉdirectory: bytes = Windvaleˉprojectˉempty();
 
     while More {
         Lineˉnumber = Lineˉnumber + 1u32;
@@ -615,7 +621,30 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         }
 
         if Line.Length != 0u32 {
-            if Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+            if Version == 4u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                Input, Line.Offset, Line.Length, "target-descriptor \""
+            ) {
+                if Bytesˉlength(Targetˉdirectory) != 0u32 {
+                    return Windvaleˉprojectˉfailure(
+                        Windvaleˉprojectˉstatus.Invalidˉsingleton,
+                        Line.Offset, Lineˉnumber, 1u32
+                    );
+                }
+                let Targetˉpath: bytes = Windvaleˉprojectˉreadˉpath(
+                    Input, Line, Lineˉnumber, "target-descriptor \"", ".wvtd"
+                );
+                let Targetˉstatus: Windvaleˉprojectˉstatus =
+                    Windvaleˉprojectˉpathˉscanˉstatus(Targetˉpath);
+                if Targetˉstatus != Windvaleˉprojectˉstatus.Valid {
+                    return Windvaleˉprojectˉfailure(
+                        Targetˉstatus,
+                        Windvaleˉprojectˉpathˉscanˉfield(Targetˉpath, 5u32),
+                        Lineˉnumber,
+                        Windvaleˉprojectˉpathˉscanˉfield(Targetˉpath, 6u32)
+                    );
+                }
+                Targetˉdirectory = Windvaleˉprojectˉappendˉsource(Targetˉdirectory, Targetˉpath);
+            } else if Windvaleˉprojectˉspanˉstartsˉwithˉtext(
                 Input, Line.Offset, Line.Length, "root \""
             ) {
                 if Hasˉroot {
@@ -672,7 +701,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                     Sourceˉdirectory = Windvaleˉprojectˉappendˉsource(Sourceˉdirectory, Sourceˉpath);
                     Sources = Sources + 1u32;
                 } else {
-                    if Version == 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                    if Version >= 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
                         Input, Line.Offset, Line.Length, "source-input-lock \""
                     ) {
                         if Hasˉsourceˉlock {
@@ -703,7 +732,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                         Sourceˉlockˉline = Windvaleˉprojectˉpathˉscanˉfield(Lockˉpath, 3u32);
                         Sourceˉlockˉcolumn = Windvaleˉprojectˉpathˉscanˉfield(Lockˉpath, 4u32);
                     } else {
-                        if Version == 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                        if Version >= 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
                             Input, Line.Offset, Line.Length,
                             "source-input-lock-sha256 "
                         ) {
@@ -747,7 +776,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
                             Sourceˉlockˉhashˉoffset = Line.Offset + Prefixˉlength;
                             Sourceˉlockˉhashˉlength = 64u32;
                         } else {
-                            if Version == 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
+                            if Version >= 3u32 && Windvaleˉprojectˉspanˉstartsˉwithˉtext(
                                 Input, Line.Offset, Line.Length, "source-profile \""
                             ) {
                                 if Hasˉsourceˉprofile {
@@ -806,6 +835,11 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         }
     }
 
+    if Version == 4u32 && Bytesˉlength(Targetˉdirectory) == 0u32 {
+        return Windvaleˉprojectˉfailure(
+            Windvaleˉprojectˉstatus.Invalidˉsingleton, Total, Lineˉnumber, 1u32
+        );
+    }
     if !Hasˉroot {
         return Windvaleˉprojectˉfailure(
             Windvaleˉprojectˉstatus.Invalidˉsingleton,
@@ -822,7 +856,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
             1u32
         );
     }
-    if Version == 3u32 {
+    if Version >= 3u32 {
         if !Hasˉsourceˉlock {
             return Windvaleˉprojectˉfailure(
                 Windvaleˉprojectˉstatus.Invalidˉsingleton,
@@ -850,7 +884,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
     }
 
     var Artifactˉdirectory: bytes = Windvaleˉprojectˉempty();
-    if Version == 3u32 {
+    if Version >= 3u32 {
         Artifactˉdirectory = Bytesˉconcat(
             Artifactˉdirectory, Bytesˉfromˉu32ˉlittle(Sourceˉlockˉoffset)
         );
@@ -883,6 +917,7 @@ export fn Windvaleˉprojectˉscanˉmanifest(Input: bytes) -> Windvaleˉprojectˉ
         );
     }
 
+    Artifactˉdirectory = Bytesˉconcat(Artifactˉdirectory, Targetˉdirectory);
     return Windvaleˉprojectˉscan(
         Windvaleˉprojectˉstatus.Valid,
         Version,
@@ -958,19 +993,18 @@ export fn Windvaleˉprojectˉpathˉat(
 fn Windvaleˉprojectˉartifactˉpath(
     Input: bytes,
     Scan: Windvaleˉprojectˉscan,
-    Profile: bool
+    Index: u32
 ) -> Windvaleˉprojectˉpath {
     let Empty: bytes = Windvaleˉprojectˉempty();
-    if Scan.Status != Windvaleˉprojectˉstatus.Valid || Scan.Version != 3u32 ||
-        Bytesˉlength(Scan.Artifactˉdirectory) != 40u32 {
+    if !Windvaleˉprojectˉartifactˉdirectoryˉvalid(Scan) || Index > 2u32 ||
+        (Index == 2u32 && Scan.Version != 4u32) {
         return Windvaleˉprojectˉpath(false, 0u32, 0u32, 0u32, 0u32, 0u32, Empty);
     }
     var Entry: u32 = 0u32;
-    var Index: u32 = 0u32;
-    if Profile {
+    if Index == 1u32 {
         Entry = 24u32;
-        Index = 1u32;
     }
+    if Index == 2u32 { Entry = 40u32; }
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Scan.Artifactˉdirectory, Entry);
     let Length: u32 = Bytesˉreadˉu32ˉlittle(Scan.Artifactˉdirectory, Entry + 4u32);
     let Line: u32 = Bytesˉreadˉu32ˉlittle(Scan.Artifactˉdirectory, Entry + 8u32);
@@ -987,22 +1021,35 @@ export fn Windvaleˉprojectˉsourceˉlockˉpath(
     Input: bytes,
     Scan: Windvaleˉprojectˉscan
 ) -> Windvaleˉprojectˉpath {
-    return Windvaleˉprojectˉartifactˉpath(Input, Scan, false);
+    return Windvaleˉprojectˉartifactˉpath(Input, Scan, 0u32);
 }
 
 export fn Windvaleˉprojectˉsourceˉprofileˉpath(
     Input: bytes,
     Scan: Windvaleˉprojectˉscan
 ) -> Windvaleˉprojectˉpath {
-    return Windvaleˉprojectˉartifactˉpath(Input, Scan, true);
+    return Windvaleˉprojectˉartifactˉpath(Input, Scan, 1u32);
+}
+
+fn Windvaleˉprojectˉartifactˉdirectoryˉvalid(Scan: Windvaleˉprojectˉscan) -> bool {
+    if Scan.Status != Windvaleˉprojectˉstatus.Valid { return false; }
+    if Scan.Version == 3u32 { return Bytesˉlength(Scan.Artifactˉdirectory) == 40u32; }
+    if Scan.Version == 4u32 { return Bytesˉlength(Scan.Artifactˉdirectory) == 56u32; }
+    return false;
+}
+
+export fn Windvaleˉprojectˉtargetˉdescriptorˉpath(
+    Input: bytes,
+    Scan: Windvaleˉprojectˉscan
+) -> Windvaleˉprojectˉpath {
+    return Windvaleˉprojectˉartifactˉpath(Input, Scan, 2u32);
 }
 
 export fn Windvaleˉprojectˉsourceˉlockˉhash(
     Input: bytes,
     Scan: Windvaleˉprojectˉscan
 ) -> bytes {
-    if Scan.Status != Windvaleˉprojectˉstatus.Valid || Scan.Version != 3u32 ||
-        Bytesˉlength(Scan.Artifactˉdirectory) != 40u32 {
+    if !Windvaleˉprojectˉartifactˉdirectoryˉvalid(Scan) {
         return Windvaleˉprojectˉempty();
     }
     let Offset: u32 = Bytesˉreadˉu32ˉlittle(Scan.Artifactˉdirectory, 16u32);

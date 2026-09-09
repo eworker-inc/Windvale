@@ -13,6 +13,7 @@ import {
 } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { Orderˉsplitˉprojectˉsourceˉpayloads } from './Split-Project-Source-Ordering-Core.mjs';
 
 const WINDOWS = process.platform === 'win32';
 const TEMPORARY_PREFIX = 'windvale-split-compiler-';
@@ -44,7 +45,8 @@ if (process.argv.length < 7) Usage();
 
 const Hasˉforeignˉbinder = process.argv[6] === '--foreign-binder';
 const Authenticatedˉargumentˉoffset = Hasˉforeignˉbinder ? 8 : 6;
-const Authenticated =
+const Projectˉmode = process.argv[Authenticatedˉargumentˉoffset] === '--workspace';
+const Authenticated = Projectˉmode ||
     process.argv[Authenticatedˉargumentˉoffset] === '--source-input-lock';
 const Admitter = path.resolve(process.argv[2]);
 let Validator = null;
@@ -110,7 +112,12 @@ await Requireˉordinaryˉfile(
     Emitter, 1, MAXIMUM_PRODUCT_COMMAND_BYTES, 'source emitter product'
 );
 
-if (Authenticated) {
+if (Projectˉmode) {
+    if (Arguments.length !== 7 || Arguments[0] !== '--workspace' ||
+        Arguments[2] !== '--project' || Arguments[4] !== '--manifest-reader') {
+        Usage();
+    }
+} else if (Authenticated) {
     if (Arguments.length < 8 ||
         Arguments[0] !== '--source-input-lock' ||
         Arguments[3] !== '--source-profile' ||
@@ -130,59 +137,6 @@ const Outputˉparent = await Requireˉordinaryˉdirectory(
 );
 
 let Inputˉsnapshots = null;
-if (Authenticated) {
-    Reportˉactivity('input-snapshot');
-    const Sourceˉpaths = Arguments.slice(7, -1);
-    if (Sourceˉpaths.length < 1 || Sourceˉpaths.length > MAXIMUM_SOURCE_MODULES) {
-        Reject('The authenticated source closure must contain 1 through 64 modules.');
-    }
-    if (!/^[0-9a-f]{64}$/u.test(Arguments[2])) {
-        Reject('The source-input lock digest must be canonical lowercase SHA-256.');
-    }
-    const Lock = await Readˉordinaryˉsnapshot(
-        Arguments[1], 1, MAXIMUM_LOCK_BYTES, 'source-input lock'
-    );
-    const Profile = await Readˉordinaryˉsnapshot(
-        Arguments[4], 1, MAXIMUM_PROFILE_BYTES, 'source profile'
-    );
-    const Target = await Readˉordinaryˉsnapshot(
-        Arguments[6], WVTD_MINIMUM_BYTES, WVTD_MAXIMUM_BYTES,
-        'target descriptor'
-    );
-    const Sources = [];
-    const Sourceˉpayloadˉbudget = MAXIMUM_PHASE_VALUE_BYTES -
-        (16 + Sourceˉpaths.length * 8);
-    let Sourceˉpayloadˉbytes = 0;
-    for (let Index = 0; Index < Sourceˉpaths.length; Index += 1) {
-        const Source = await Readˉordinaryˉsnapshot(
-            Sourceˉpaths[Index], 1, MAXIMUM_PHASE_VALUE_BYTES,
-            `source module ${Index}`
-        );
-        if (Sourceˉpayloadˉbytes > Sourceˉpayloadˉbudget ||
-            Source.bytes.length > Sourceˉpayloadˉbudget - Sourceˉpayloadˉbytes) {
-            Reject('The source closure exceeds the 4 MiB canonical WVSS bound.');
-        }
-        Sourceˉpayloadˉbytes += Source.bytes.length;
-        Sources.push(Source);
-    }
-    const Canonicalˉinputs = [
-        Lock.path, Profile.path, Target.path,
-        ...Sources.map(Source => Source.path),
-    ];
-    Requireˉdistinctˉpaths(Canonicalˉinputs, 'authenticated input');
-    Requireˉdistinctˉidentities(
-        [Lock.identity, Profile.identity, Target.identity,
-            ...Sources.map(Source => Source.identity)],
-        'authenticated input'
-    );
-    Inputˉsnapshots = {
-        lock: Lock.bytes,
-        lockDigest: Arguments[2],
-        profile: Profile.bytes,
-        sources: Sources.map(Source => Source.bytes),
-        target: Target.bytes,
-    };
-}
 
 class Splitˉcompilerˉfailure extends Error {
     constructor(Status, Diagnostics) {
@@ -204,6 +158,18 @@ let Publicationˉcandidate = null;
 let Publicationˉcandidateˉidentity = null;
 let Privateˉtreeˉcleanupˉsafe = true;
 try {
+    let Projectˉboundary = null;
+    if (Projectˉmode) {
+        const Project = await Readˉprojectˉarguments(Arguments);
+        Arguments = Project.arguments;
+        Projectˉboundary = Project.boundary;
+    }
+    if (Authenticated) {
+        Inputˉsnapshots = await Readˉauthenticatedˉinputs(Arguments, Projectˉboundary);
+        if (Projectˉmode) {
+            Inputˉsnapshots.sources = Orderˉsplitˉprojectˉsourceˉpayloads(Inputˉsnapshots.sources);
+        }
+    }
     const Sourceˉset = path.join(Temporary, 'Admitted.wvss');
     const Analyzedˉsourceˉset = path.join(Temporary, 'Analyzed.wvss');
     const Manifest = path.join(Temporary, 'Manifest.wvca');
@@ -1067,6 +1033,159 @@ function Runˉboundedˉtaskkill(Processˉidentifier) {
     });
 }
 
+async function Requireˉprojectˉpath(Boundary, Candidate) {
+    const Relative = path.relative(Boundary.root, path.resolve(Candidate));
+    if (Relative === '' || Relative === '..' || Relative.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(Relative)) {
+        Reject('A project input escapes the explicit workspace.');
+    }
+    let Cursor = Boundary.root;
+    const Segments = Relative.split(path.sep);
+    for (let Index = 0; Index < Segments.length; Index += 1) {
+        Cursor = path.join(Cursor, Segments[Index]);
+        const Information = await lstat(Cursor, { bigint: true });
+        if (Information.isSymbolicLink() || Information.dev !== Boundary.identity.dev ||
+            !Pathsˉequal(await realpath(Cursor), Cursor) ||
+            (Index + 1 < Segments.length && !Information.isDirectory()) ||
+            (Index + 1 === Segments.length &&
+                (!Information.isFile() || Information.nlink !== 1n))) {
+            Reject('A project input uses an aliased or nonordinary workspace path.');
+        }
+    }
+}
+
+async function Readˉprojectˉarguments(Projectˉarguments) {
+    const Workspace = path.resolve(Projectˉarguments[1]);
+    const Project = path.resolve(Projectˉarguments[3]);
+    const Reader = path.resolve(Projectˉarguments[5]);
+    if (!Workspace.endsWith('.wvws') || !Project.endsWith('.wvproj')) {
+        Reject('Project admission requires lowercase .wvws and .wvproj paths.');
+    }
+    const Root = await Requireˉordinaryˉdirectory(path.dirname(Workspace), 'workspace root');
+    const Boundary = {
+        root: Root,
+        identity: await lstat(Root, { bigint: true }),
+        snapshots: [],
+    };
+    await Requireˉprojectˉpath(Boundary, Workspace);
+    await Requireˉprojectˉpath(Boundary, Project);
+    const Marker = await Readˉordinaryˉsnapshot(Workspace, 20, 22, 'workspace marker');
+    if (!['windvale-workspace 1', 'windvale-workspace 1\n', 'windvale-workspace 1\r\n']
+        .some(Value => Marker.bytes.equals(Buffer.from(Value)))) {
+        Reject('The explicit workspace marker is not Workspace 1.');
+    }
+    const Manifest = await Readˉordinaryˉsnapshot(Project, 1, 65_536, 'project manifest');
+    Boundary.snapshots = [Marker, Manifest];
+    await Requireˉordinaryˉfile(Reader, 1, MAXIMUM_PRODUCT_COMMAND_BYTES, 'native manifest reader');
+    const Snapshot = path.join(Temporary, 'Project.wvproj');
+    await Writeˉprivateˉsnapshot(Snapshot, Manifest.bytes, Temporary);
+    const Report = await Runˉrequired(Reader, ['--inventory', Snapshot], 'project-admission');
+    const Text = Report.toString('utf8').replace(/\r?\n$/u, '');
+    let Inventory;
+    try { Inventory = JSON.parse(Text); }
+    catch { Reject('The native manifest reader returned invalid inventory JSON.'); }
+    const Keys = ['inventoryVersion', 'projectVersion', 'sources', 'sourceInputLock',
+        'sourceInputLockSha256', 'sourceProfile', 'targetDescriptor'];
+    if (Inventory === null || typeof Inventory !== 'object' ||
+        JSON.stringify(Inventory) !== Text || Object.keys(Inventory).join(',') !== Keys.join(',') ||
+        Inventory.inventoryVersion !== 1 || Inventory.projectVersion !== 4 ||
+        !Array.isArray(Inventory.sources) || Inventory.sources.length < 1 ||
+        Inventory.sources.length > MAXIMUM_SOURCE_MODULES ||
+        typeof Inventory.sourceInputLockSha256 !== 'string' ||
+        !/^[0-9a-f]{64}$/u.test(Inventory.sourceInputLockSha256)) {
+        Reject('The native manifest reader returned an unsupported inventory.');
+    }
+    const Paths = [Inventory.sourceInputLock, Inventory.sourceProfile,
+        Inventory.targetDescriptor, ...Inventory.sources];
+    const Resolved = [];
+    for (const Value of Paths) {
+        if (typeof Value !== 'string' || Value.length === 0 || Value.length > 4096 ||
+            path.isAbsolute(Value) || Value.includes('\\')) {
+            Reject('The native project inventory contains an invalid input path.');
+        }
+        const Candidate = path.resolve(Root, Value);
+        await Requireˉprojectˉpath(Boundary, Candidate);
+        Resolved.push(Candidate);
+    }
+    return {
+        arguments: ['--source-input-lock', Resolved[0], Inventory.sourceInputLockSha256,
+            '--source-profile', Resolved[1], '--target-descriptor', Resolved[2],
+            ...Resolved.slice(3), Projectˉarguments.at(-1)],
+        boundary: Boundary,
+    };
+}
+
+async function Requireˉprojectˉinputˉboundary(Boundary, Inputs) {
+    const All = [...Boundary.snapshots, ...Inputs];
+    Requireˉdistinctˉpaths(All.map(Input => Input.path), 'project input');
+    Requireˉdistinctˉidentities(All.map(Input => Input.identity), 'project input');
+    for (const Input of All) {
+        await Requireˉprojectˉpath(Boundary, Input.path);
+        const Current = await lstat(Input.path, { bigint: true });
+        if (!Sameˉidentity(Current, Input.identity) || Current.size !== Input.identity.size) {
+            Reject('A project input changed identity during admission.');
+        }
+    }
+}
+
+async function Readˉauthenticatedˉinputs(Inputˉarguments, Boundary) {
+    const Arguments = Inputˉarguments;
+    Reportˉactivity('input-snapshot');
+    const Sourceˉpaths = Arguments.slice(7, -1);
+    if (Sourceˉpaths.length < 1 || Sourceˉpaths.length > MAXIMUM_SOURCE_MODULES) {
+        Reject('The authenticated source closure must contain 1 through 64 modules.');
+    }
+    if (!/^[0-9a-f]{64}$/u.test(Arguments[2])) {
+        Reject('The source-input lock digest must be canonical lowercase SHA-256.');
+    }
+    const Lock = await Readˉordinaryˉsnapshot(
+        Arguments[1], 1, MAXIMUM_LOCK_BYTES, 'source-input lock'
+    );
+    const Profile = await Readˉordinaryˉsnapshot(
+        Arguments[4], 1, MAXIMUM_PROFILE_BYTES, 'source profile'
+    );
+    const Target = await Readˉordinaryˉsnapshot(
+        Arguments[6], WVTD_MINIMUM_BYTES, WVTD_MAXIMUM_BYTES,
+        'target descriptor'
+    );
+    const Sources = [];
+    const Sourceˉpayloadˉbudget = MAXIMUM_PHASE_VALUE_BYTES -
+        (16 + Sourceˉpaths.length * 8);
+    let Sourceˉpayloadˉbytes = 0;
+    for (let Index = 0; Index < Sourceˉpaths.length; Index += 1) {
+        const Source = await Readˉordinaryˉsnapshot(
+            Sourceˉpaths[Index], 1, MAXIMUM_PHASE_VALUE_BYTES,
+            `source module ${Index}`
+        );
+        if (Sourceˉpayloadˉbytes > Sourceˉpayloadˉbudget ||
+            Source.bytes.length > Sourceˉpayloadˉbudget - Sourceˉpayloadˉbytes) {
+            Reject('The source closure exceeds the 4 MiB canonical WVSS bound.');
+        }
+        Sourceˉpayloadˉbytes += Source.bytes.length;
+        Sources.push(Source);
+    }
+    const Canonicalˉinputs = [
+        Lock.path, Profile.path, Target.path,
+        ...Sources.map(Source => Source.path),
+    ];
+    Requireˉdistinctˉpaths(Canonicalˉinputs, 'authenticated input');
+    Requireˉdistinctˉidentities(
+        [Lock.identity, Profile.identity, Target.identity,
+            ...Sources.map(Source => Source.identity)],
+        'authenticated input'
+    );
+    if (Boundary !== null) {
+        await Requireˉprojectˉinputˉboundary(Boundary, [Lock, Profile, Target, ...Sources]);
+    }
+    return {
+        lock: Lock.bytes,
+        lockDigest: Arguments[2],
+        profile: Profile.bytes,
+        sources: Sources.map(Source => Source.bytes),
+        target: Target.bytes,
+    };
+}
+
 async function Readˉordinaryˉsnapshot(Candidate, Minimum, Maximum, Label) {
     const Resolved = path.resolve(Candidate);
     const Canonical = await Requireˉordinaryˉfile(
@@ -1494,7 +1613,9 @@ function Usage() {
         '<emitter> [--foreign-binder <wvbind>] --source-input-lock <lock> ' +
         '<sha256> --source-profile ' +
         '<profile> --target-descriptor <target.wvtd> <root.wv> ' +
-        '[dependency.wv ...] <output.wvb>; or the retained Project 2 form ' +
+        '[dependency.wv ...] <output.wvb>; Project 4 replaces the source arguments ' +
+        'with --workspace <workspace.wvws> --project <project.wvproj> ' +
+        '--manifest-reader <native-reader> <output.wvb>; retained Project 2: ' +
         '<admitter> <analyzer> <emitter> <root.wv> [dependency.wv ...] ' +
         '<output.wvb>',
     );

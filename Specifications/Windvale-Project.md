@@ -97,6 +97,58 @@ the supplied profile before parsing it. A missing, changed, malformed, unlisted,
 or unsupported profile fails without output publication. Project 2 remains
 byte-for-byte valid and does not acquire an ambient profile.
 
+## Project 4 target-aware format
+
+Project 4 is an accepted format with parser implementation in progress, not yet
+a qualified production build entry point. See
+[the explicit-target decision](../Documents/Decisions/0961-Require-An-Explicit-Target-In-Project-4.md).
+The existing profile-only build driver must reject Project 4 rather than route
+it through descriptorless compilation.
+
+The first line is exactly `windvale-project 4`. All Project 3 directives and
+bounds apply, with exactly one additional directive:
+
+```text
+target-descriptor "Inputs/Target.wvtd"
+```
+
+The path ends in lowercase `.wvtd` and uses the same 4,096-byte lexical path
+bound. Directive order is immaterial. Missing or repeated targets produce
+`WVP1004`; malformed directives produce `WVP1003`; invalid paths produce
+`WVP1006`. Project 2 and Project 3 continue rejecting this directive.
+
+Parser acceptance does not validate target contents or prove host containment.
+The build provider must snapshot the selected target as a distinct, bounded
+ordinary input, reject aliases and workspace escapes, and exclude it from
+output publication targets. The existing target-aware compiler admission phase
+validates the descriptor and authenticates target and foreign-catalog evidence
+before compilation and publication. No target may be inferred from the host.
+The exact target bytes must participate in reusable build-result identities.
+
+### Native inventory handoff
+
+The native manifest tool's `--inventory <project.wvproj>` mode accepts Project 4
+only. On success it emits one compact JSON object and a line feed, with these
+fields in order: `inventoryVersion` (1), `projectVersion` (4), `sources` (root
+first, followed by the declared sources), `sourceInputLock`,
+`sourceInputLockSha256`, `sourceProfile`, and `targetDescriptor`.
+Paths are the exact admitted workspace-relative strings; the lock digest is the
+admitted lowercase hexadecimal string. No source bytes or host-resolved paths
+are emitted. Rejection writes a diagnostic, returns nonzero, and emits no
+successful inventory. The one-argument human-readable report remains separate.
+
+The development split coordinator accepts the explicit product inputs followed
+by `--workspace <workspace.wvws> --project <project.wvproj>
+--manifest-reader <native-reader> <new-output.wvb>`. It snapshots the project
+before invoking the reader and consumes only inventory version 1 for Project 4.
+It admits the selected source, profile, target, and authenticated foreign catalog
+through the existing compiler phases. It rejects a pre-existing output rather
+than replacing it. This development integration is not installed-toolchain or
+cross-host qualification. The maintained admission owner has a focused
+`--project4-products <reader> <admitter> <validator> <analyzer> <emitter>`
+selection with 14 cases. Complete qualification and broader target, alias, and
+profile evidence remain required before promotion.
+
 ## Workspace-relative paths
 
 Every project path is relative to the workspace source root, regardless of the
@@ -104,7 +156,8 @@ directory containing the `.wvproj`. Encoded path text is nonempty and limited to
 4,096 bytes. A path:
 
 - uses `/` as its only separator;
-- ends in its directive's lowercase suffix: `.wv`, `.wvlock`, or `.wvsp`;
+- ends in its directive's lowercase suffix: `.wv`, `.wvlock`, `.wvsp`, or
+  Project 4's `.wvtd`;
 - contains segments that begin and end with an ASCII letter or digit;
 - permits `.`, `_`, or `-` only inside a segment;
 - contains no native separator, colon, control character, quotation mark, empty

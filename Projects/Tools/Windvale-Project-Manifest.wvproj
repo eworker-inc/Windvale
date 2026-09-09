@@ -1,0 +1,4 @@
+windvale-project 2
+root "Tools/Windvale.Project/Project-Manifest-Tool.wv"
+source "Tools/Windvale.Project/Project-Manifest-Core.wv"
+emit wvb

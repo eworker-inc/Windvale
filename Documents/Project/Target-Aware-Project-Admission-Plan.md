@@ -9,6 +9,22 @@ explicit target and authenticated source admission already used by the split
 compiler. Reconstructing the current build driver alone does not provide that
 integration.
 
+## Development checkpoint
+
+The native manifest tool and split coordinator now have a Project 4 development
+path. The maintained admission verifier's `--project4-products` selection passes
+14 cases on Windows and real Debian using explicit retained products. It builds
+the existing Option/Result text-borrow consumer, preserves output bytes when
+source directives are reordered, and rejects the selected invalid inputs without
+publication. The existing 13 failure/cleanup test groups also pass on both hosts.
+Exact identities and limits are in the
+[development admission evidence](../Evidence/2026-09-08-Project4-Authenticated-Admission.json).
+
+The full verifier includes the new cases but has not been run through complete
+tool construction or cold qualification. Installed product selection, maintained
+package manifest migration, full target/alias/profile coverage, and project build
+cache integration remain unfinished. This checkpoint is not production promotion.
+
 ## Current boundary
 
 [Project 3](../../Specifications/Windvale-Project.md#project-3-text-format)

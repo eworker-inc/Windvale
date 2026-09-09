@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "2026-09-08-project4-authenticated-admission",
+  "date": "2026-09-08",
+  "subject": "Development Project 4 target-aware project compilation",
+  "claim": "The maintained focused Project 4 selection passes 14 cases on Windows and real Debian with retained native products. The existing Option/Result text-borrow consumer compiles through native project parsing, source admission, authentication, analysis, and emission. Source reordering yields identical WVB bytes. Existing-output preservation, missing/duplicate/escaping target, Project 3 rejection, missing target/profile files, malformed/oversized/hardlinked target, wrong lock digest, and target/platform mismatch reject without publication. All 13 existing coordinator failure/cleanup sentinel groups also pass on both hosts.",
+  "source": {
+    "kind": "Other",
+    "value": "Base c0be29f4 plus the exact current-source inputs recorded below. The package migration is excluded: this maintained selection uses the committed Foundation text-borrow fixture and Option/Result libraries. Retained producer labels resolve by exact byte size and SHA-256, not a machine-specific cache path."
+  },
+  "runs": [
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Project 4 native manifest handoff and authenticated compilation",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-products READER ADMITTER VALIDATOR ANALYZER EMITTER (windows input identities below)",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 148216,
+          "sha256": "9892da65118a9067c94ce9dcb738cd5ab46f66a7e1f0a2570fd0f4b6fd13517e"
+        },
+        {
+          "path": "Tools/Windvale.Project/Project-Manifest-Core.wv",
+          "size": 42766,
+          "sha256": "26407cac48dd308c7e70499fbf70716bb1e2d97a19f1551bc6af2599ea1e99eb"
+        },
+        {
+          "path": "Tools/Windvale.Project/Project-Manifest-Tool.wv",
+          "size": 4995,
+          "sha256": "9b8dddbbe33480a207570a806a930abbeb0483068189d27d5c5879323d28e081"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Build-Driver.wv",
+          "size": 24785,
+          "sha256": "fa6dd4ba86f9287a5b6de815f57a06ace196247f4cd439bc35fc6eb5cfe53cf4"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Project-Manifest.wvproj",
+          "size": 140,
+          "sha256": "9acfb04111021b7d24003597da22934169c6dbc30dc247399c324d3d673eb5f5"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Text-Executable.wv",
+          "size": 2281,
+          "sha256": "183bbe3d6c764ab4da63f867d41ff30560fa06f68cb9493561998263df4721ab"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Option.wv",
+          "size": 172,
+          "sha256": "b6778dccb5b85a59e4209ffd15627218b704d672bdd667ed68da7ceef85aff3d"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Result.wv",
+          "size": 184,
+          "sha256": "032a2173c582139cbf9b95b8656705417afef11dc19ae2dc2315be5f1379713a"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Manifest-Tool-Quoted.exe",
+          "size": 543232,
+          "sha256": "b5412df05041d8539089e17e3e8d29e280f08487b38aa2b4480cca4ae87d5a74"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.exe",
+          "size": 32662528,
+          "sha256": "149cc58fe1d6e6537edc4689596dd2c810e3bff3e497bb60c9848e1cb1d22d30"
+        },
+        {
+          "path": "retained/windows/Admitter.exe",
+          "size": 13605888,
+          "sha256": "8dd9055238337a55f03a777474e4e78375fa8b548ddcc62e4a8efecb26f5cc7e"
+        },
+        {
+          "path": "retained/windows/Validator.exe",
+          "size": 983552,
+          "sha256": "30977d1260c3479d8507399bb29bee4350095d33b6d5bad9995a0eeac3baa1ad"
+        },
+        {
+          "path": "retained/windows/Analyzer.exe",
+          "size": 54543360,
+          "sha256": "c134287105790988fb1fc98ee628e6d7f7af803644443839615e98fd0e5abbf1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/project4/valid.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        },
+        {
+          "path": "temporary/project4/reordered-sources.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    },
+    {
+      "host": "Real Debian WSL x64, Node 24.20.0",
+      "target": "Project 4 native manifest handoff and authenticated compilation",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs --project4-products READER ADMITTER VALIDATOR ANALYZER EMITTER (linux input identities below)",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 148216,
+          "sha256": "9892da65118a9067c94ce9dcb738cd5ab46f66a7e1f0a2570fd0f4b6fd13517e"
+        },
+        {
+          "path": "Tools/Windvale.Project/Project-Manifest-Core.wv",
+          "size": 42766,
+          "sha256": "26407cac48dd308c7e70499fbf70716bb1e2d97a19f1551bc6af2599ea1e99eb"
+        },
+        {
+          "path": "Tools/Windvale.Project/Project-Manifest-Tool.wv",
+          "size": 4995,
+          "sha256": "9b8dddbbe33480a207570a806a930abbeb0483068189d27d5c5879323d28e081"
+        },
+        {
+          "path": "Tools/Windvale.Build/Compiler-Build-Driver.wv",
+          "size": 24785,
+          "sha256": "fa6dd4ba86f9287a5b6de815f57a06ace196247f4cd439bc35fc6eb5cfe53cf4"
+        },
+        {
+          "path": "Projects/Tools/Windvale-Project-Manifest.wvproj",
+          "size": 140,
+          "sha256": "9acfb04111021b7d24003597da22934169c6dbc30dc247399c324d3d673eb5f5"
+        },
+        {
+          "path": "Tests/Fixtures/Language-1.0/Foundation-Value-Borrow-Text-Executable.wv",
+          "size": 2281,
+          "sha256": "183bbe3d6c764ab4da63f867d41ff30560fa06f68cb9493561998263df4721ab"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Option.wv",
+          "size": 172,
+          "sha256": "b6778dccb5b85a59e4209ffd15627218b704d672bdd667ed68da7ceef85aff3d"
+        },
+        {
+          "path": "Libraries/Foundation/Values/Result.wv",
+          "size": 184,
+          "sha256": "032a2173c582139cbf9b95b8656705417afef11dc19ae2dc2315be5f1379713a"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/Source-Inputs.wvlock",
+          "size": 760,
+          "sha256": "9e2ca572552ed52ed496142d18539f2f55fed2bbdfb1ec602f283b5d72386f3e"
+        },
+        {
+          "path": "Documents/Project/Language-1.0-Localization-Workloads/01-Source-Profile-Admission/Reference-Artifacts/En-Source-Profile.wvsp",
+          "size": 508,
+          "sha256": "e678b1b5daae2c0d87179f2fcd162b1b002cebe8617fc0fb155a5b78a1bdaf27"
+        },
+        {
+          "path": "Artifacts/Work/Project4-Manifest-Tool-Quoted.elf",
+          "size": 544768,
+          "sha256": "6be91f284e394fc82a3e2c2b1d98929c77c36225562c872b720423cc986e3647"
+        },
+        {
+          "path": "Artifacts/Work/Read-Through-Validated-Emitter.elf",
+          "size": 32661504,
+          "sha256": "fdb25e86d3c8905836cf22389d00574c29d6786d77e16ba6a69a296959ad675d"
+        },
+        {
+          "path": "Artifacts/Work/Foundation-Fresh-Analyzer.elf",
+          "size": 54542336,
+          "sha256": "2312bd21cf1929c75398c10e3ce0be01b7415ba34ea3cb9e023f0d9ef84e1ad7"
+        },
+        {
+          "path": "retained/linux/Admitter.elf",
+          "size": 13606912,
+          "sha256": "2b3f81a0cb522c4749733660c85ff752eee1237bc4fd0251da7732e5909fde72"
+        },
+        {
+          "path": "retained/linux/Validator.elf",
+          "size": 983040,
+          "sha256": "10df0b7942d64b92ff0b34ba0ad1dea7b0a8984f35c0b83c5a514848e7d17df1"
+        }
+      ],
+      "outputs": [
+        {
+          "path": "temporary/project4/valid.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        },
+        {
+          "path": "temporary/project4/reordered-sources.wvb",
+          "size": 2136,
+          "sha256": "1b1293e962655d904b61b9d8b0348ddc9da13886764387c0512b6f64daac0c4e"
+        }
+      ]
+    },
+    {
+      "host": "Windows x64, Node 24.19.0",
+      "target": "Existing 13 admission coordinator failure/cleanup sentinel groups",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY=1 node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 148216,
+          "sha256": "9892da65118a9067c94ce9dcb738cd5ab46f66a7e1f0a2570fd0f4b6fd13517e"
+        }
+      ]
+    },
+    {
+      "host": "Real Debian WSL x64, Node 24.20.0",
+      "target": "Existing 13 admission coordinator failure/cleanup sentinel groups",
+      "tool": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "command": "WINDVALE_PRODUCTION_ADMISSION_INGRESS_SENTINELS_ONLY=1 node Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+      "result": "Passed",
+      "inputs": [
+        {
+          "path": "Tools/Native/Run-Split-Compiler.mjs",
+          "size": 63497,
+          "sha256": "7bde3558890c7b871313727204ccc3949b6f63f891d8381d6fbd6bac245442d5"
+        },
+        {
+          "path": "Tools/Native/Split-Project-Source-Ordering-Core.mjs",
+          "size": 1518,
+          "sha256": "ec694fb3745dbc3d7f908e5297e52513d3c370ba965ee2286a7bcc260e495443"
+        },
+        {
+          "path": "Tools/Native/Test-Language-1.0-Production-Admission-Ingress.mjs",
+          "size": 148216,
+          "sha256": "9892da65118a9067c94ce9dcb738cd5ab46f66a7e1f0a2570fd0f4b6fd13517e"
+        }
+      ]
+    }
+  ],
+  "result": "Passed",
+  "evidenceClasses": [
+    "AI-produced",
+    "AI-reviewed",
+    "Machine-verified"
+  ],
+  "limitations": [
+    "This is development evidence, not installed-toolchain promotion, a release gate, or completion of the compiler/library goal.",
+    "The full admission owner now includes 24 existing ingress cases and 14 Project 4 cases with eight constructed products. That full construction/default selection and isolated cold double-build qualification were not run. The broad change-aware plan was disproportionate (6735 expected seconds); only causal focused checks ran.",
+    "The native reader WVB identity is f80225c3924eadf412f040e6e25912d4f5ff15b70376f1f5a3db12386af7d5cb (40574 bytes). Both hosted native reader products derive from that Windows-produced WVB; independent compiler-source reconstruction on Linux is not claimed.",
+    "The focused selection receives retained products explicitly. Installed product discovery, maintained package Project 4 manifests, target-descriptor distribution, and complete project build cache identity remain unfinished.",
+    "Source-ordering evidence covers the English profile and the selected three-source closure only. Localized profiles, additional aliases and hostile root substitution, malformed reader inventory, and other target configurations require further coverage before broader claims.",
+    "The pre-existing build-driver source explicitly rejects Project 4 to prevent descriptorless fallback, but that oversized driver was not reconstructed or executed from current source. Its current-source guard has review evidence only.",
+    "Consumer WVBs are inspected before test cleanup. Their identical hash matches previously verified text-borrow WVB; this record does not claim new native consumer execution.",
+    "The native report uses delimiter concatenation only for already validated ASCII paths/digests, which cannot contain JSON escape characters. A prior Text_quote rendering path crashed; its general native/runtime cause remains unresolved and is not qualified by these passes.",
+    "The separate Project4-Manifest-Self-Test fixture has earlier direct native execution evidence but is not part of the 14-case admission selection. No complete parser or Project 4 qualification is inferred."
+  ],
+  "related": [
+    "Specifications/Windvale-Project.md",
+    "Documents/Decisions/0961-Require-An-Explicit-Target-In-Project-4.md",
+    "Documents/Project/Target-Aware-Project-Admission-Plan.md",
+    "Documents/Project/Compiler-Tools-And-Libraries-Completion-Plan.md"
+  ]
+}
